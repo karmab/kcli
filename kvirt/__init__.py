@@ -213,22 +213,6 @@ class Kvirt:
         conn.defineXML(vmxml)
         vm = conn.lookupByName(name)
         vm.setAutostart(1)
-        xml = vm.XMLDesc(0)
-        root = ET.fromstring(xml)
-        macs = {}
-        for element in root.getiterator('interface'):
-            mac = element.find('mac').get('address')
-            network = element.find('source').get('network')
-            bridge = element.find('source').get('bridge')
-            if bridge:
-                macs[bridge] = mac
-            else:
-                macs[network] = mac
-        for net in [net1, net2, net3, net4]:
-            if not net:
-                break
-            else:
-                self.macaddr.append(macs[net])
 
     def getmacs(self, name):
         conn = self.conn
@@ -423,3 +407,31 @@ class Kvirt:
                         deleted = True
             if deleted:
                 storage.refresh(0)
+
+    def clone(self, old, new):
+        conn = self.conn
+        oldvm = conn.lookupByName(old)
+        oldxml = oldvm.XMLDesc(0)
+        tree = ET.fromstring(oldxml)
+        uuid = tree.getiterator('uuid')[0]
+        tree.remove(uuid)
+        for vmname in tree.getiterator('name'):
+            vmname.text = new
+        firstdisk = True
+        for disk in tree.getiterator('disk'):
+            if firstdisk:
+                source = disk.find('source')
+                oldfile = source.get('file')
+                newfile = oldfile.replace(old, new)
+                source.set('file', newfile)
+                firstdisk = False
+            else:
+                devices = tree.getiterator('devices')[0]
+                devices.remove(disk)
+        for interface in tree.getiterator('interface'):
+            mac = interface.find('mac')
+            interface.remove(mac)
+        newxml = ET.tostring(tree)
+        print newxml
+        # conn.defineXML(newxml)
+        # ET.fromstring(xml)

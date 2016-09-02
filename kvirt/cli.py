@@ -85,11 +85,13 @@ def list(config):
 
 
 @cli.command()
-@click.option('-b', '--base', help='Base template')
+@click.option('-b', '--base', help='Base vm')
 @click.argument('name')
 @pass_config
-def template(config, base, name):
+def clone(config, base, name):
     click.secho("Deploying vm %s from template %s..." % (name, base), fg='green')
+    k = config.k
+    k.clone(base, name)
 
 
 @cli.command()
