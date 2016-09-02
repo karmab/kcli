@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from prettytable import PrettyTable
-import os
-import sys
-import time
 import libvirt
 import xml.etree.ElementTree as ET
+import os
 
 KB = 1024 * 1024
 MB = 1024 * 1024
@@ -52,7 +50,7 @@ class Kvirt:
     def exists(self, name):
         conn = self.conn
         try:
-            vm = conn.lookupByName(name)
+            conn.lookupByName(name)
             return True
         except:
             return False
@@ -92,7 +90,6 @@ class Kvirt:
         for element in root.getiterator('path'):
             storagepath = element.text
             break
-        allocation = 0
         diskxml = """<volume>
                         <name>%s</name>
                         <key>%s/%s</key>
@@ -119,7 +116,7 @@ class Kvirt:
                     <path>%s/%s</path>
                     <format type='%s'/>
                     </target>
-                    </volume>""" % (storagename2, storagepath, storagename2, disksize2, storagepath, storagename2, diskformat1)
+                    </volume>""" % (storagename2, storagepath, storagename2, disksize2, storagepath, storagename2, diskformat2)
             storagepool.createXML(diskxml, 0)
         storagepool.refresh(0)
         diskdev1, diskbus1 = 'vda', 'virtio'
@@ -302,7 +299,6 @@ class Kvirt:
             storagename = stor
             storage = conn.storagePoolLookupByName(stor)
             s = storage.info()
-            used = float(s[2]) / 1024 / 1024 / 1024
             available = float(s[3]) / 1024 / 1024 / 1024
             if available > bestsize:
                 beststoragedomain = storagename
@@ -331,8 +327,9 @@ class Kvirt:
     def console(self, name):
         conn = self.conn
         vm = conn.lookupByName(name)
-        if not vm or vm.isActive() == 0:
-            return None, None, None, None
+        if not vm.isActive():
+            print "VM down"
+            return
         else:
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
@@ -344,35 +341,45 @@ class Kvirt:
                     host = self.host
                 protocol = attributes['type']
                 port = attributes['port']
-                if protocol == "spice":
-                    # sport = attributes['tlsPort']
-                    return host, port, None, protocol
+                url = "%s://%s:%s" % (protocol, host, port)
+                if os.path.exists('/Users'):
+                    os.popen("/Applications/RemoteViewer.app/Contents/MacOS/RemoteViewer %s &" % url)
                 else:
-                    return host, port, None, protocol
+                    os.popen("remote-viewer %s &" % url)
 
     def info(self, name):
         conn = self.conn
         vm = conn.lookupByName(name)
         if not vm:
-            return None
-        else:
-            xml = vm.XMLDesc(0)
-            root = ET.fromstring(xml)
-            print dir(vm)
-            print "name: %s" % name
-            for element in root.getiterator('interface'):
-                mac = element.find('mac').get('address')
-                network = element.find('source').get('network')
-                bridge = element.find('source').get('bridge')
-                if bridge:
-                    macs[bridge] = mac
-                else:
-                    macs[network] = mac
-            for net in [net1, net2, net3, net4]:
-                if not net:
-                    break
-                else:
-                    self.macaddr.append(macs[net])
+            print "VM %s not found" % name
+        state = 'down'
+        memory = int(vm.maxMemory()) / MB
+        if vm.isActive():
+            state = 'up'
+        print "name: %s" % name
+        print "status: %s" % state
+        if vm.isActive():
+            print "cpus: %s" % vm.maxVcpus()
+        print "memory: %sGB" % memory
+        xml = vm.XMLDesc(0)
+        root = ET.fromstring(xml)
+        for element in root.getiterator('interface'):
+            device = element.find('target').get('dev').replace('vnet', 'eth')
+            mac = element.find('mac').get('address')
+            network = element.find('source').get('network')
+            bridge = element.find('source').get('bridge')
+            if bridge:
+                print "net interfaces: %s mac: %s net: %s type: bridge" % (device, mac, bridge)
+            else:
+                print "net interfaces: %s mac: %s net: %s type: router" % (device, mac, network)
+        for element in root.getiterator('disk'):
+            device = element.find('target').get('dev')
+            diskformat = 'file'
+            disktype = element.find('driver').get('type')
+            path = element.find('source').get('file')
+            storage = conn.storageVolLookupByPath(path)
+            disksize = float(storage.info()[1]) / 1024 / 1024 / 1024
+            print "diskname: %s disksize: %sGB diskformat: %s type: %s  path: %s" % (device, disksize, diskformat, disktype, path)
 
     def getisos(self):
         isos = []

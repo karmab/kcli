@@ -4,7 +4,6 @@ import click
 from kvirt import Kvirt
 import ConfigParser
 import os
-import sys
 
 VERSION = '0.1.1'
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
@@ -18,11 +17,11 @@ class Config():
             print "Missing ini file.Leaving..."
             os._exit(1)
         c.read(inifile)
-        if not 'default' in c.sections() or 'client' not in c.options('default'):
+        if 'default' not in c.sections() or 'client' not in c.options('default'):
             print "Missing default section in inifile.Leaving..."
             os._exit(1)
         client = c.get('default', 'client')
-        if not client in c.sections():
+        if client not in c.sections():
             print "Missing section for client %s in inifile.Leaving..." % client
             os._exit(1)
         options = c.options(client)
@@ -63,11 +62,18 @@ def stop(config, name):
 
 
 @cli.command()
+@click.argument('name')
+@pass_config
+def console(config, name):
+    k = config.k
+    k.console(name)
+
+
+@cli.command()
 @click.confirmation_option(help='Are you sure?')
 @click.argument('name')
 @pass_config
 def delete(config, name):
-    k = config.k
     click.secho("Deleted vm %s..." % name, fg='red')
 
 
@@ -77,13 +83,13 @@ def list(config):
     k = config.k
     print k.list()
 
+
 @cli.command()
 @click.option('-b', '--base', help='Base template')
 @click.argument('name')
 @pass_config
 def template(config, base, name):
-    k = config.k
-    click.secho("Deploying vm %s from template %s..." % (name, base) , fg='green')
+    click.secho("Deploying vm %s from template %s..." % (name, base), fg='green')
 
 
 @cli.command()
@@ -91,15 +97,15 @@ def template(config, base, name):
 @click.argument('name')
 @pass_config
 def update(config, memory, name):
-    k = config.k
     click.secho("Updated memory of vm %s to %d..." % (name, memory), fg='green')
+
 
 @cli.command()
 @click.argument('name')
 @pass_config
 def info(config, name):
     k = config.k
-    print k.info(name)
+    k.info(name)
 
 if __name__ == '__main__':
-  cli()
+    cli()
