@@ -49,8 +49,8 @@ def cli(config):
 @pass_config
 def start(config, name):
     k = config.k
-    click.secho("Start vm %s" % name, fg='green')
-    print k.start(name)
+    click.secho("Started vm %s..." % name, fg='green')
+    k.start(name)
 
 
 @cli.command()
@@ -58,7 +58,7 @@ def start(config, name):
 @pass_config
 def stop(config, name):
     k = config.k
-    click.echo("Stop vm %s" % name)
+    click.secho("Stopped vm %s..." % name, fg='green')
     k.stop(name)
 
 
@@ -68,7 +68,7 @@ def stop(config, name):
 @pass_config
 def delete(config, name):
     k = config.k
-    click.echo("Delete vm %s" % name)
+    click.secho("Deleted vm %s..." % name, fg='red')
 
 
 @cli.command()
@@ -77,6 +77,14 @@ def list(config):
     k = config.k
     print k.list()
 
+@cli.command()
+@click.option('-b', '--base', help='Base template')
+@click.argument('name')
+@pass_config
+def template(config, base, name):
+    k = config.k
+    click.secho("Deploying vm %s from template %s..." % (name, base) , fg='green')
+
 
 @cli.command()
 @click.option('-m', '--memory', help='Memory to set')
@@ -84,7 +92,14 @@ def list(config):
 @pass_config
 def update(config, memory, name):
     k = config.k
-    click.echo("Update memory of vm %s to %d" % (name, memory))
+    click.secho("Updated memory of vm %s to %d..." % (name, memory), fg='green')
+
+@cli.command()
+@click.argument('name')
+@pass_config
+def info(config, name):
+    k = config.k
+    print k.info(name)
 
 if __name__ == '__main__':
-    cli()
+  cli()
