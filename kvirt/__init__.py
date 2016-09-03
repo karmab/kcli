@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from prettytable import PrettyTable
-import libvirt
+from libvirt import open
 import xml.etree.ElementTree as ET
 import os
 
@@ -38,7 +38,7 @@ class Kvirt:
         else:
             url = "qemu///system"
             self.macaddr = []
-        self.conn = libvirt.open(url)
+        self.conn = open(url)
         self.host = host
         self.macaddr = []
 
@@ -408,6 +408,20 @@ class Kvirt:
             if deleted:
                 storage.refresh(0)
 
+    def _xmldisk(self, path, size):
+        size = int(size)
+        name = path.split('/')[-1]
+        disk = """
+<volume>
+<name>%s</name>
+<allocation>0</allocation>
+<capacity unit="G">%d</capacity>
+<target>
+<path>%s</path>
+</target>
+</volume>""" % (name, size, path)
+        return disk
+
     def clone(self, old, new):
         conn = self.conn
         oldvm = conn.lookupByName(old)
@@ -421,10 +435,16 @@ class Kvirt:
         for disk in tree.getiterator('disk'):
             if firstdisk:
                 source = disk.find('source')
-                oldfile = source.get('file')
-                newfile = oldfile.replace(old, new)
-                source.set('file', newfile)
+                oldpath = source.get('file')
+                newpath = oldpath.replace(old, new)
+                source.set('file', newpath)
                 firstdisk = False
+                oldvolume = conn.storageVolLookupByPath(oldpath)
+                oldinfo = oldvolume.info()
+                oldvolumesize = (float(oldinfo[1]) / 1024 / 1024 / 1024)
+                newvolumexml = self._xmldisk(newpath, oldvolumesize)
+                pool = oldvolume.storagePoolLookupByVolume()
+                pool.createXMLFrom(newvolumexml, oldvolume, 0)
             else:
                 devices = tree.getiterator('devices')[0]
                 devices.remove(disk)
@@ -432,6 +452,4 @@ class Kvirt:
             mac = interface.find('mac')
             interface.remove(mac)
         newxml = ET.tostring(tree)
-        print newxml
-        # conn.defineXML(newxml)
-        # ET.fromstring(xml)
+        conn.defineXML(newxml)
