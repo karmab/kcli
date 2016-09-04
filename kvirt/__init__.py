@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from prettytable import PrettyTable
-from libvirt import open
+from libvirt import open, VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE
 import xml.etree.ElementTree as ET
 import os
 
@@ -74,7 +74,7 @@ class Kvirt:
         elif net1 in networks:
             sourcenet1 = 'network'
         else:
-            print "Invalid netwark.Leaving..."
+            print "Invalid network %s .Leaving..." % net1
             return
         type, machine, emulator = 'kvm', 'pc', '/usr/libexec/qemu-kvm'
         # type, machine, emulator = 'kvm', 'pc', '/usr/bin/qemu-system-x86_64'
@@ -178,8 +178,11 @@ class Kvirt:
         if net2:
             if net2 in bridges:
                 sourcenet2 = 'bridge'
-            else:
+            elif net2 in networks:
                 sourcenet2 = 'network'
+            else:
+                print "Invalid network %s.Leaving..." % net2
+                return
             vmxml = """%s
              <interface type='%s'>
               <source %s='%s'/>
@@ -188,8 +191,11 @@ class Kvirt:
         if net3:
             if net3 in bridges:
                 sourcenet3 = 'bridge'
-            else:
+            elif net3 in networks:
                 sourcenet3 = 'network'
+            else:
+                print "Invalid network %s.Leaving..." % net3
+                return
             vmxml = """%s
              <interface type='%s'>
               <source %s='%s'/>
@@ -198,8 +204,11 @@ class Kvirt:
         if net4:
             if net4 in bridges:
                 sourcenet4 = 'bridge'
-            else:
+            elif net4 in networks:
                 sourcenet4 = 'network'
+            else:
+                print "Invalid network %s.Leaving..." % net4
+                return
             vmxml = """%s
              <interface type='%s'>
               <source %s='%s'/>
@@ -336,30 +345,41 @@ class Kvirt:
                     os.popen("remote-viewer %s &" % url)
 
     def info(self, name):
+        ips = []
         conn = self.conn
         vm = conn.lookupByName(name)
         if not vm:
             print "VM %s not found" % name
         state = 'down'
-        memory = int(vm.maxMemory()) / MB
+        memory = float(vm.info()[1])
+        if memory > 1024:
+            memory = memory / 1024
         if vm.isActive():
             state = 'up'
         print "name: %s" % name
         print "status: %s" % state
         if vm.isActive():
             print "cpus: %s" % vm.maxVcpus()
-        print "memory: %sGB" % memory
+        print "memory: %sMB" % int(memory)
         xml = vm.XMLDesc(0)
         root = ET.fromstring(xml)
+        nicnumber = 0
         for element in root.getiterator('interface'):
-            device = element.find('target').get('dev').replace('vnet', 'eth')
+            device = "eth%s" % nicnumber
             mac = element.find('mac').get('address')
             network = element.find('source').get('network')
             bridge = element.find('source').get('bridge')
             if bridge:
                 print "net interfaces: %s mac: %s net: %s type: bridge" % (device, mac, bridge)
             else:
-                print "net interfaces: %s mac: %s net: %s type: router" % (device, mac, network)
+                print "net interfaces: %s mac: %s net: %s type: routed" % (device, mac, network)
+                network = conn.networkLookupByName(network)
+            if vm.isActive():
+                for address in vm.interfaceAddresses(VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE).values():
+                    if address['hwaddr'] == mac:
+                        ip = address['addrs'][0]['addr']
+                        ips.append(ip)
+            nicnumber = nicnumber + 1
         for element in root.getiterator('disk'):
             disktype = element.get('device')
             if disktype == 'cdrom':
@@ -371,6 +391,8 @@ class Kvirt:
             storage = conn.storageVolLookupByPath(path)
             disksize = float(storage.info()[1]) / 1024 / 1024 / 1024
             print "diskname: %s disksize: %sGB diskformat: %s type: %s  path: %s" % (device, disksize, diskformat, drivertype, path)
+        for ip in ips:
+            print "ip: %s" % ip
 
     def getisos(self):
         isos = []
@@ -409,6 +431,7 @@ class Kvirt:
         for storage in conn.listStoragePools():
             deleted = False
             storage = conn.storagePoolLookupByName(storage)
+            storage.refresh(0)
             for stor in storage.listVolumes():
                 for disk in disks:
                     if stor in disk:
