@@ -16,6 +16,7 @@ guestrhel532 = "rhel_5"
 guestrhel564 = "rhel_5x64"
 guestrhel632 = "rhel_6"
 guestrhel664 = "rhel_6x64"
+guestrhel764 = "rhel_7x64"
 guestother = "other"
 guestotherlinux = "other_linux"
 guestwindowsxp = "windows_xp"
@@ -55,7 +56,7 @@ class Kvirt:
         except:
             return False
 
-    def create(self, name, clu, numcpu, numinterfaces, netinterface, diskthin1, disksize1, diskinterface, memory, storagedomain, guestid, net1, net2=None, net3=None, net4=None, mac1=None, mac2=None, launched=True, iso=None, diskthin2=None, disksize2=None, vnc=False):
+    def create(self, name, numcpu='2', diskthin1=True, disksize1=10, diskinterface='virtio', memory=512, storagedomain='default', guestid='guestrhel764', net1=None, net2=None, net3=None, net4=None, mac1=None, mac2=None, launched=True, iso=None, diskthin2=None, disksize2=None, vnc=False):
         if vnc:
             display = 'vnc'
         else:
@@ -70,19 +71,22 @@ class Kvirt:
                 bridges.append(net)
         if net1 in bridges:
             sourcenet1 = 'bridge'
-        else:
+        elif net1 in networks:
             sourcenet1 = 'network'
-        # type,machine,emulator = 'kvm','pc','/usr/libexec/qemu-kvm'
-        type, machine, emulator = 'kvm', 'pc', '/usr/bin/qemu-system-x86_64'
-        memory = memory * 1024
+        else:
+            print "Invalid netwark.Leaving..."
+            return
+        type, machine, emulator = 'kvm', 'pc', '/usr/libexec/qemu-kvm'
+        # type, machine, emulator = 'kvm', 'pc', '/usr/bin/qemu-system-x86_64'
+        # memory = memory * 1024
         diskformat1, diskformat2 = 'raw', 'raw'
         disksize1 = disksize1 * GB
         if diskthin1:
-            diskformat1 = 'cow'
+            diskformat1 = 'qcow2'
         if disksize2:
             disksize2 = disksize2 * GB
             if diskthin2:
-                diskformat2 = 'cow'
+                diskformat2 = 'qcow2'
         storagename = "%s.img" % name
         storagepool = conn.storagePoolLookupByName(storagedomain)
         poolxml = storagepool.XMLDesc(0)
@@ -357,13 +361,16 @@ class Kvirt:
             else:
                 print "net interfaces: %s mac: %s net: %s type: router" % (device, mac, network)
         for element in root.getiterator('disk'):
+            disktype = element.get('device')
+            if disktype == 'cdrom':
+                continue
             device = element.find('target').get('dev')
             diskformat = 'file'
-            disktype = element.find('driver').get('type')
+            drivertype = element.find('driver').get('type')
             path = element.find('source').get('file')
             storage = conn.storageVolLookupByPath(path)
             disksize = float(storage.info()[1]) / 1024 / 1024 / 1024
-            print "diskname: %s disksize: %sGB diskformat: %s type: %s  path: %s" % (device, disksize, diskformat, disktype, path)
+            print "diskname: %s disksize: %sGB diskformat: %s type: %s  path: %s" % (device, disksize, diskformat, drivertype, path)
 
     def getisos(self):
         isos = []
