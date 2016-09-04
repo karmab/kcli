@@ -74,7 +74,9 @@ def console(config, name):
 @click.argument('name')
 @pass_config
 def delete(config, name):
+    k = config.k
     click.secho("Deleted vm %s..." % name, fg='red')
+    k.delete(name)
 
 
 @cli.command()
@@ -86,12 +88,13 @@ def list(config):
 
 @cli.command()
 @click.option('-b', '--base', help='Base vm')
+@click.option('-f', '--full', is_flag=True)
 @click.argument('name')
 @pass_config
-def clone(config, base, name):
+def clone(config, base, full, name):
     click.secho("Deploying vm %s from template %s..." % (name, base), fg='green')
     k = config.k
-    k.clone(base, name)
+    k.clone(base, name, full)
 
 
 @cli.command()

@@ -380,9 +380,12 @@ class Kvirt:
                     isos.append("%s/%s" % (storagepath, volume))
         return isos
 
-    def remove(self, name):
+    def delete(self, name):
         conn = self.conn
-        vm = conn.lookupByName(name)
+        try:
+            vm = conn.lookupByName(name)
+        except:
+            return
         status = {0: 'down', 1: 'up'}
         vmxml = vm.XMLDesc(0)
         root = ET.fromstring(vmxml)
@@ -408,9 +411,17 @@ class Kvirt:
             if deleted:
                 storage.refresh(0)
 
-    def _xmldisk(self, path, size):
+    def _xmldisk(self, path, size, backing=None, diskformat='qcow2'):
         size = int(size)
         name = path.split('/')[-1]
+        if backing is not None:
+            backingstore = """
+<backingStore>
+<path>%s</path>
+<format type='qcow2'/>
+</backingStore>""" % backing
+        else:
+            backingstore = "<backingStore/>"
         disk = """
 <volume>
 <name>%s</name>
@@ -418,11 +429,13 @@ class Kvirt:
 <capacity unit="G">%d</capacity>
 <target>
 <path>%s</path>
+<format type='%s'/>
 </target>
-</volume>""" % (name, size, path)
+%s
+</volume>""" % (name, size, path, diskformat, backingstore)
         return disk
 
-    def clone(self, old, new):
+    def clone(self, old, new, full=False):
         conn = self.conn
         oldvm = conn.lookupByName(old)
         oldxml = oldvm.XMLDesc(0)
@@ -433,18 +446,24 @@ class Kvirt:
             vmname.text = new
         firstdisk = True
         for disk in tree.getiterator('disk'):
-            if firstdisk:
+            if firstdisk or full:
                 source = disk.find('source')
                 oldpath = source.get('file')
+                backingstore = disk.find('backingStore')
+                backing = None
+                for b in backingstore.getiterator():
+                    backingstoresource = b.find('source')
+                    if backingstoresource is not None:
+                        backing = backingstoresource.get('file')
                 newpath = oldpath.replace(old, new)
                 source.set('file', newpath)
-                firstdisk = False
                 oldvolume = conn.storageVolLookupByPath(oldpath)
                 oldinfo = oldvolume.info()
                 oldvolumesize = (float(oldinfo[1]) / 1024 / 1024 / 1024)
-                newvolumexml = self._xmldisk(newpath, oldvolumesize)
+                newvolumexml = self._xmldisk(newpath, oldvolumesize, backing)
                 pool = oldvolume.storagePoolLookupByVolume()
                 pool.createXMLFrom(newvolumexml, oldvolume, 0)
+                firstdisk = False
             else:
                 devices = tree.getiterator('devices')[0]
                 devices.remove(disk)
