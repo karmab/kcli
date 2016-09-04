@@ -389,7 +389,7 @@ class Kvirt:
             drivertype = element.find('driver').get('type')
             path = element.find('source').get('file')
             storage = conn.storageVolLookupByPath(path)
-            disksize = float(storage.info()[1]) / 1024 / 1024 / 1024
+            disksize = int(float(storage.info()[1]) / 1024 / 1024 / 1024)
             print "diskname: %s disksize: %sGB diskformat: %s type: %s  path: %s" % (device, disksize, diskformat, drivertype, path)
         for ip in ips:
             print "ip: %s" % ip
