@@ -6,12 +6,8 @@ import xml.etree.ElementTree as ET
 import os
 
 KB = 1024 * 1024
-MB = 1024 * 1024
+MB = 1024 * KB
 GB = 1024 * MB
-guestrhel332 = "rhel_3"
-guestrhel364 = "rhel_3x64"
-guestrhel432 = "rhel_4"
-guestrhel464 = "rhel_4x64"
 guestrhel532 = "rhel_5"
 guestrhel564 = "rhel_5x64"
 guestrhel632 = "rhel_6"
@@ -56,7 +52,7 @@ class Kvirt:
         except:
             return False
 
-    def create(self, name, numcpu='2', diskthin1=True, disksize1=10, diskinterface='virtio', memory=512, storagedomain='default', guestid='guestrhel764', net1=None, net2=None, net3=None, net4=None, mac1=None, mac2=None, launched=True, iso=None, diskthin2=None, disksize2=None, vnc=False):
+    def create(self, name, numcpu='2', diskthin1=True, disksize1=40, diskinterface='virtio', backing=None, memory=512, pool='default', guestid='guestrhel764', net1=None, net2=None, net3=None, net4=None, mac1=None, mac2=None, launched=True, iso=None, diskthin2=None, disksize2=None, vnc=False):
         if vnc:
             display = 'vnc'
         else:
@@ -76,53 +72,52 @@ class Kvirt:
         else:
             print "Invalid network %s .Leaving..." % net1
             return
-        type, machine, emulator = 'kvm', 'pc', '/usr/libexec/qemu-kvm'
+        virttype, machine, emulator = 'kvm', 'pc', '/usr/libexec/qemu-kvm'
         # type, machine, emulator = 'kvm', 'pc', '/usr/bin/qemu-system-x86_64'
-        # memory = memory * 1024
         diskformat1, diskformat2 = 'raw', 'raw'
-        disksize1 = disksize1 * GB
+        disksize1 = disksize1
         if diskthin1:
             diskformat1 = 'qcow2'
         if disksize2:
-            disksize2 = disksize2 * GB
+            disksize2 = disksize2
             if diskthin2:
                 diskformat2 = 'qcow2'
-        storagename = "%s.img" % name
-        storagepool = conn.storagePoolLookupByName(storagedomain)
-        poolxml = storagepool.XMLDesc(0)
+        storagename1 = "%s_1.img" % name
+        pool = conn.storagePoolLookupByName(pool)
+        poolxml = pool.XMLDesc(0)
         root = ET.fromstring(poolxml)
         for element in root.getiterator('path'):
-            storagepath = element.text
+            poolpath = element.text
             break
-        diskxml = """<volume>
-                        <name>%s</name>
-                        <key>%s/%s</key>
-                        <source>
-                        </source>
-                        <capacity unit='bytes'>%s</capacity>
-                        <allocation unit='bytes'>0</allocation>
-                        <target>
-                        <path>%s/%s</path>
-                        <format type='%s'/>
-                        </target>
-                        </volume>""" % (storagename, storagepath, storagename, disksize1, storagepath, storagename, diskformat1)
-        storagepool.createXML(diskxml, 0)
+        diskpath1 = "%s/%s" % (poolpath, storagename1)
+        if backing is not None:
+            try:
+                pool.refresh(0)
+                backingvolume = pool.storageVolLookupByName(backing)
+            except:
+                print "Invalid backing volume %s.Leaving..." % backing
+                return
+            backing = backingvolume.path()
+            backingxml = """<backingStore type='file' index='1'>
+        <format type='raw'/>
+        <source file='%s'/>
+        <backingStore/>
+      </backingStore>""" % backing
+        else:
+            backingvolume = None
+            backingxml = '<backingStore/>'
+        diskxml1 = self._xmldisk(path=diskpath1, size=disksize1, backing=backing, diskformat=diskformat1)
+        pool.createXML(diskxml1, 0)
+        # if backing is not None:
+        #    pool.createXML(diskxml1, 0)
+        # else:
+        #     pool.createXML(diskxml1, 0)
         if disksize2:
-            storagename2 = "%s-1.img" % name
-            diskxml = """<volume>
-                    <name>%s</name>
-                    <key>%s/%s</key>
-                    <source>
-                    </source>
-                    <capacity unit='bytes'>%s</capacity>
-                    <allocation unit='bytes'>0</allocation>
-                    <target>
-                    <path>%s/%s</path>
-                    <format type='%s'/>
-                    </target>
-                    </volume>""" % (storagename2, storagepath, storagename2, disksize2, storagepath, storagename2, diskformat2)
-            storagepool.createXML(diskxml, 0)
-        storagepool.refresh(0)
+            storagename2 = "%s_2.img" % name
+            diskpath2 = "%s/%s" % (poolpath, storagename2)
+            diskxml2 = self._xmldisk(path=diskpath2, size=disksize2, diskformat=diskformat2)
+            pool.createXML(diskxml2, 0)
+        pool.refresh(0)
         diskdev1, diskbus1 = 'vda', 'virtio'
         diskdev2, diskbus2 = 'vdb', 'virtio'
         if diskinterface != 'virtio':
@@ -132,7 +127,7 @@ class Kvirt:
             iso = ''
         vmxml = """<domain type='%s'>
                   <name>%s</name>
-                  <memory>%d</memory>
+                  <memory unit='MiB'>%d</memory>
                   <vcpu>%s</vcpu>
                   <os>
                     <type arch='x86_64' machine='%s'>hvm</type>
@@ -152,18 +147,18 @@ class Kvirt:
                   <devices>
                     <emulator>%s</emulator>
                     <disk type='file' device='disk'>
-                      <driver name='qemu' type='%s'/>
-                      <source file='%s/%s'/>
-                      <target dev='%s' bus='%s'/>
-                    </disk>""" % (type, name, memory, numcpu, machine, emulator, diskformat1, storagepath, storagename, diskdev1, diskbus1)
+                    <driver name='qemu' type='%s'/>
+                    <source file='%s'/>
+                    %s
+                    <target dev='%s' bus='%s'/>
+                    </disk>""" % (virttype, name, memory, numcpu, machine, emulator, diskformat1, diskpath1, backingxml, diskdev1, diskbus1)
         if disksize2:
             vmxml = """%s
                     <disk type='file' device='disk'>
                     <driver name='qemu' type='%s'/>
-                    <source file='%s/%s'/>
+                    <source file='%s'/>
                     <target dev='%s' bus='%s'/>
-                    </disk>""" % (vmxml, diskformat1, storagepath, storagename2, diskdev2, diskbus2)
-
+                    </disk>""" % (vmxml, diskformat1, diskpath2, diskdev2, diskbus2)
         vmxml = """%s
                 <disk type='file' device='cdrom'>
                       <driver name='qemu' type='raw'/>
@@ -318,7 +313,12 @@ class Kvirt:
         for vm in conn.listAllDomains(0):
             name = vm.name()
             state = status[vm.isActive()]
-            vms.add_row([name, state, ''])
+            ip = ''
+            if vm.isActive():
+                for address in vm.interfaceAddresses(VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE).values():
+                    ip = address['addrs'][0]['addr']
+                    break
+            vms.add_row([name, state, ip])
         return vms
 
     def console(self, name):
@@ -365,13 +365,14 @@ class Kvirt:
         root = ET.fromstring(xml)
         nicnumber = 0
         for element in root.getiterator('interface'):
+            networktype = element.get('type')
             device = "eth%s" % nicnumber
             mac = element.find('mac').get('address')
-            network = element.find('source').get('network')
-            bridge = element.find('source').get('bridge')
-            if bridge:
+            if networktype == 'bridge':
+                bridge = element.find('source').get('bridge')
                 print "net interfaces: %s mac: %s net: %s type: bridge" % (device, mac, bridge)
             else:
+                network = element.find('source').get('network')
                 print "net interfaces: %s mac: %s net: %s type: routed" % (device, mac, network)
                 network = conn.networkLookupByName(network)
             if vm.isActive():
@@ -442,24 +443,27 @@ class Kvirt:
                 storage.refresh(0)
 
     def _xmldisk(self, path, size, backing=None, diskformat='qcow2'):
-        size = int(size)
+        size = int(size) * GB
         name = path.split('/')[-1]
         if backing is not None:
             backingstore = """
 <backingStore>
 <path>%s</path>
-<format type='qcow2'/>
-</backingStore>""" % backing
+<format type='%s'/>
+</backingStore>""" % (backing, diskformat)
         else:
             backingstore = "<backingStore/>"
         disk = """
-<volume>
+<volume type='file'>
 <name>%s</name>
-<allocation>0</allocation>
-<capacity unit="G">%d</capacity>
+<capacity unit="bytes">%d</capacity>
 <target>
 <path>%s</path>
 <format type='%s'/>
+<permissions>
+<mode>0644</mode>
+</permissions>
+<compat>1.1</compat>
 </target>
 %s
 </volume>""" % (name, size, path, diskformat, backingstore)
