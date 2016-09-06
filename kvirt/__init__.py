@@ -5,7 +5,6 @@ from libvirt import open as libvirtopen
 from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE
 import os
 import xml.etree.ElementTree as ET
-import yaml
 
 
 KB = 1024 * 1024
@@ -55,7 +54,7 @@ class Kvirt:
         except:
             return False
 
-    def create(self, name, numcpus=2, diskthin1=True, disksize1=40, diskinterface='virtio', backing=None, memory=512, pool='default', guestid='guestrhel764', net1=None, net2=None, net3=None, net4=None, iso=None, diskthin2=None, disksize2=None, vnc=False, cloudinit=False, start=True, keys=None, cmds=None):
+    def create(self, name, numcpus=2, diskthin1=True, disksize1=40, diskinterface='virtio', backing=None, memory=512, pool='default', guestid='guestrhel764', net1=None, net2=None, net3=None, net4=None, iso=None, diskthin2=None, disksize2=None, vnc=False, cloudinit=False, start=True, keys=None, cmds=None, description=''):
         if vnc:
             display = 'vnc'
         else:
@@ -127,6 +126,7 @@ class Kvirt:
             iso = "%s/%s.iso" % (poolpath, name)
         vmxml = """<domain type='%s'>
                   <name>%s</name>
+                  <description>%s</description>
                   <memory unit='MiB'>%d</memory>
                   <vcpu>%d</vcpu>
                   <os>
@@ -151,7 +151,7 @@ class Kvirt:
                     <source file='%s'/>
                     %s
                     <target dev='%s' bus='%s'/>
-                    </disk>""" % (virttype, name, memory, numcpus, machine, emulator, diskformat1, diskpath1, backingxml, diskdev1, diskbus1)
+                    </disk>""" % (virttype, name, description, memory, numcpus, machine, emulator, diskformat1, diskpath1, backingxml, diskdev1, diskbus1)
         if disksize2:
             vmxml = """%s
                     <disk type='file' device='disk'>
@@ -294,18 +294,19 @@ class Kvirt:
             return status[vm.isActive()]
 
     def list(self):
-        vms = PrettyTable(["Name", "Status", "Ips"])
+        vms = PrettyTable(["Name", "Status", "Ips", "Description"])
         conn = self.conn
         status = {0: 'down', 1: 'up'}
         for vm in conn.listAllDomains(0):
             name = vm.name()
             state = status[vm.isActive()]
+            description = ''
             ip = ''
             if vm.isActive():
                 for address in vm.interfaceAddresses(VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE).values():
                     ip = address['addrs'][0]['addr']
                     break
-            vms.add_row([name, state, ip])
+            vms.add_row([name, state, ip, description])
         return vms
 
     def console(self, name):
@@ -542,30 +543,3 @@ class Kvirt:
         with open("/tmp/%s.iso" % name) as origin:
             stream.sendAll(self.handler, origin)
             stream.finish()
-
-    def plan(self, plan='kvirt', inputfile='kvirt_plan.yml'):
-        with open(inputfile, 'r') as entries:
-            vms = yaml.load(entries)
-            for name in vms:
-                profile = vms[name]
-                pool = profile.get('pool', 'default')
-                template = profile.get('pool', 'template')
-                numcpus = profile.get('numcpus', 2)
-                memory = profile.get('memory', 512)
-                disksize1 = profile.get('disksize1', '10')
-                diskinterface = profile.get('diskinterface', 'virtio')
-                diskthin1 = profile.get('diskthin1', True)
-                disksize2 = profile.get('disksize2', None)
-                diskthin2 = profile.get('diskthin2')
-                guestid = profile.get('guestid', 'guestrhel764')
-                vnc = profile.get('vnc', False)
-                cloudinit = profile.get('cloudinit', True)
-                start = profile.get('start', True)
-                keys = profile.get('keys', None)
-                cmds = profile.get('cmds', None)
-                net1 = profile.get('net1', 'default')
-                net2 = profile.get('net2', None)
-                net3 = profile.get('net3', None)
-                net4 = profile.get('net4', None)
-                iso = profile.get('iso', None)
-                self.create(name=name, numcpus=numcpus, diskthin1=diskthin1, disksize1=disksize1, diskinterface=diskinterface, backing=template, memory=memory, pool=pool, guestid=guestid, net1=net1, net2=net2, net3=net3, net4=net4, iso=iso, diskthin2=diskthin2, disksize2=disksize2, vnc=vnc, cloudinit=cloudinit, start=start, keys=keys, cmds=cmds)

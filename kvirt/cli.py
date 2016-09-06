@@ -4,6 +4,7 @@ import click
 from kvirt import Kvirt
 import ConfigParser
 import os
+import yaml
 
 VERSION = '0.1.1'
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
@@ -26,6 +27,7 @@ class Config():
             os._exit(1)
         defaults = {}
         default = dict(c.items('default'))
+        defaults['net1'] = default['net1'] if 'net1' in default.keys() else 'default'
         defaults['pool'] = int(default['pool']) if 'pool' in default.keys() else 'default'
         defaults['numcpus'] = int(default['numcpus']) if 'numcpus' in default.keys() else 2
         defaults['memory'] = int(default['memory']) if 'memory' in default.keys() else 512
@@ -136,7 +138,7 @@ def create(config, profile, name):
         os._exit(1)
     profile = profiles[profile]
     template = profile.get('template')
-    net1 = profile.get('net1')
+    net1 = profile.get('net1', default['net1'])
     net2 = profile.get('net2')
     net3 = profile.get('net3')
     net4 = profile.get('net4')
@@ -190,10 +192,9 @@ def report(config):
 
 @cli.command()
 @click.option('-f', '--inputfile', help='Input file')
-@click.argument('plan')
+@click.option('-d', '--delete', is_flag=True)
 @pass_config
-def plan(config, inputfile, plan):
-    click.secho("Deploying vms from plan %s" % (plan), fg='green')
+def plan(config, inputfile, delete):
     if inputfile is None:
         if os.path.exists('kvirt_plan.yml'):
             click.secho("using default input file kvirt_plan.yml", fg='green')
@@ -201,8 +202,42 @@ def plan(config, inputfile, plan):
         else:
             click.secho("No input file found nor default kvirt_plan.yml.Leaving....", fg='red')
             os._exit(1)
+    click.secho("Handling vms from %s" % (inputfile), fg='green')
+    if delete:
+        click.confirm('Are you sure about deleting them', abort=True)
     k = config.k
-    k.plan(plan=plan, inputfile=inputfile)
+    default = config.default
+    with open(inputfile, 'r') as entries:
+        vms = yaml.load(entries)
+        for name in vms:
+            if delete:
+                k.delete(name)
+                click.secho("%s deleted!" % name, fg='green')
+                continue
+            profile = vms[name]
+            pool = profile.get('pool', default['pool'])
+            template = profile.get('template')
+            numcpus = profile.get('numcpus', default['numcpus'])
+            memory = profile.get('memory', default['memory'])
+            disksize1 = profile.get('disksize1', default['disksize1'])
+            diskinterface = profile.get('diskinterface', default['diskinterface'])
+            diskthin1 = profile.get('diskthin1', default['diskthin1'])
+            # disksize2 = profile.get('disksize2')
+            disksize2 = None
+            diskthin2 = profile.get('diskthin2')
+            guestid = profile.get('guestid', default['guestid'])
+            vnc = profile.get('vnc', default['vnc'])
+            cloudinit = profile.get('cloudinit', default['cloudinit'])
+            start = profile.get('start', default['start'])
+            net1 = profile.get('net1', default['net1'])
+            net2 = profile.get('net2')
+            net3 = profile.get('net3')
+            net4 = profile.get('net4')
+            iso = profile.get('iso')
+            keys = profile.get('keys')
+            cmds = profile.get('cmds')
+            k.create(name=name, numcpus=int(numcpus), diskthin1=diskthin1, disksize1=int(disksize1), diskinterface=diskinterface, backing=template, memory=int(memory), pool=pool, guestid=guestid, net1=net1, net2=net2, net3=net3, net4=net4, iso=iso, diskthin2=diskthin2, disksize2=disksize2, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds)
+            click.secho("%s deployed!" % name, fg='green')
 
 
 @cli.command()
