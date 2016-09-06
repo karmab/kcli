@@ -53,7 +53,7 @@ class Kvirt:
         except:
             return False
 
-    def create(self, name, numcpu='2', diskthin1=True, disksize1=40, diskinterface='virtio', backing=None, memory=512, pool='default', guestid='guestrhel764', net1=None, net2=None, net3=None, net4=None, mac1=None, mac2=None, launched=True, iso=None, diskthin2=None, disksize2=None, vnc=False, cloudinit=False):
+    def create(self, name, numcpus=2, diskthin1=True, disksize1=40, diskinterface='virtio', backing=None, memory=512, pool='default', guestid='guestrhel764', net1=None, net2=None, net3=None, net4=None, iso=None, diskthin2=None, disksize2=None, vnc=False, cloudinit=False):
         if vnc:
             display = 'vnc'
         else:
@@ -76,7 +76,6 @@ class Kvirt:
         virttype, machine, emulator = 'kvm', 'pc', '/usr/libexec/qemu-kvm'
         # type, machine, emulator = 'kvm', 'pc', '/usr/bin/qemu-system-x86_64'
         diskformat1, diskformat2 = 'raw', 'raw'
-        disksize1 = disksize1
         if diskthin1:
             diskformat1 = 'qcow2'
         if disksize2:
@@ -109,10 +108,6 @@ class Kvirt:
             backingxml = '<backingStore/>'
         diskxml1 = self._xmldisk(path=diskpath1, size=disksize1, backing=backing, diskformat=diskformat1)
         pool.createXML(diskxml1, 0)
-        # if backing is not None:
-        #    pool.createXML(diskxml1, 0)
-        # else:
-        #     pool.createXML(diskxml1, 0)
         if disksize2:
             storagename2 = "%s_2.img" % name
             diskpath2 = "%s/%s" % (poolpath, storagename2)
@@ -131,7 +126,7 @@ class Kvirt:
         vmxml = """<domain type='%s'>
                   <name>%s</name>
                   <memory unit='MiB'>%d</memory>
-                  <vcpu>%s</vcpu>
+                  <vcpu>%d</vcpu>
                   <os>
                     <type arch='x86_64' machine='%s'>hvm</type>
                     <boot dev='hd'/>
@@ -154,7 +149,7 @@ class Kvirt:
                     <source file='%s'/>
                     %s
                     <target dev='%s' bus='%s'/>
-                    </disk>""" % (virttype, name, memory, numcpu, machine, emulator, diskformat1, diskpath1, backingxml, diskdev1, diskbus1)
+                    </disk>""" % (virttype, name, memory, numcpus, machine, emulator, diskformat1, diskpath1, backingxml, diskdev1, diskbus1)
         if disksize2:
             vmxml = """%s
                     <disk type='file' device='disk'>
@@ -369,8 +364,9 @@ class Kvirt:
         for ip in ips:
             print "ip: %s" % ip
 
-    def getisos(self):
+    def volumes(self, iso=False):
         isos = []
+        templates = []
         conn = self.conn
         for storage in conn.listStoragePools():
             storage = conn.storagePoolLookupByName(storage)
@@ -382,7 +378,13 @@ class Kvirt:
             for volume in storage.listVolumes():
                 if volume.endswith('iso'):
                     isos.append("%s/%s" % (storagepath, volume))
-        return isos
+                elif volume.endswith('qcow2'):
+                    # volumeinfo = storage.storageVolLookupByName(volume)
+                    templates.append("%s/%s" % (storagepath, volume))
+        if iso:
+            return isos
+        else:
+            return templates
 
     def delete(self, name):
         conn = self.conn
@@ -490,13 +492,13 @@ class Kvirt:
                 userdata.write("ssh_authorized_keys:\n")
                 for key in keys:
                     userdata.write("- ssh-rsa %s\n" % key)
-            else:
-                home = os.environ['HOME']
-                with open("%s/.ssh/id_rsa.pub" % home, 'r') as ssh:
+            elif os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME']):
+                publickeyfile = "%s/.ssh/id_rsa.pub" % os.environ['HOME']
+                with open(publickeyfile, 'r') as ssh:
                     key = ssh.read().rstrip()
                     userdata.write("ssh_authorized_keys:\n")
                     userdata.write("- %s\n" % key)
-                if cmds is not None:
+            if cmds is not None:
                     userdata.write("runcmd:\n")
                     for cmd in cmds:
                         userdata.write("- %s\n" % cmd)
