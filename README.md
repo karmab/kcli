@@ -19,6 +19,9 @@ virt-customize -a centos7.qcow2 --run-command 'sed -i "s/SELINUX=enforcing/SELIN
 # you can also use genisoimage
 mkisofs  -o x.iso --volid cidata --joliet --rock user-data meta-data
 
+## demos
+https://asciinema.org/a/31k7y6eu95ylhxnfyrqcx3qtj
+
 
 ##Problems?
 

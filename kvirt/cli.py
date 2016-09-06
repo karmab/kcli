@@ -35,6 +35,7 @@ class Config():
         defaults['guestid'] = default['guestid'] if 'guestid' in default.keys() else 'guestrhel764'
         defaults['vnc'] = bool(default['vnc']) if 'vnc' in default.keys() else False
         defaults['cloudinit'] = bool(default['cloudinit']) if 'cloudinit' in default.keys() else True
+        defaults['start'] = bool(default['start']) if 'start' in default.keys() else True
         self.default = defaults
         options = c.options(client)
         host = c.get(client, 'host') if 'host' in options else '127.0.0.1'
@@ -155,7 +156,10 @@ def create(config, profile, name):
     guestid = profile.get('guestid', default['guestid'])
     vnc = bool(profile.get('vnc', default['vnc']))
     cloudinit = bool(profile.get('cloudinit', default['cloudinit']))
-    k.create(name=name, numcpus=numcpus, diskthin1=diskthin1, disksize1=disksize1, diskinterface=diskinterface, backing=template, memory=memory, pool=pool, guestid=guestid, net1=net1, net2=net2, net3=net3, net4=net4, iso=iso, diskthin2=diskthin2, disksize2=disksize2, vnc=vnc, cloudinit=cloudinit)
+    start = bool(profile.get('start', default['start']))
+    keys = profile.get('keys', None)
+    cmds = profile.get('cmds', None)
+    k.create(name=name, numcpus=numcpus, diskthin1=diskthin1, disksize1=disksize1, diskinterface=diskinterface, backing=template, memory=memory, pool=pool, guestid=guestid, net1=net1, net2=net2, net3=net3, net4=net4, iso=iso, diskthin2=diskthin2, disksize2=disksize2, vnc=vnc, cloudinit=cloudinit, start=start, keys=keys, cmds=cmds)
 
 
 @cli.command()

@@ -53,7 +53,7 @@ class Kvirt:
         except:
             return False
 
-    def create(self, name, numcpus=2, diskthin1=True, disksize1=40, diskinterface='virtio', backing=None, memory=512, pool='default', guestid='guestrhel764', net1=None, net2=None, net3=None, net4=None, iso=None, diskthin2=None, disksize2=None, vnc=False, cloudinit=False):
+    def create(self, name, numcpus=2, diskthin1=True, disksize1=40, diskinterface='virtio', backing=None, memory=512, pool='default', guestid='guestrhel764', net1=None, net2=None, net3=None, net4=None, iso=None, diskthin2=None, disksize2=None, vnc=False, cloudinit=False, start=True, keys=None, cmds=None):
         if vnc:
             display = 'vnc'
         else:
@@ -220,10 +220,14 @@ class Kvirt:
         vm = conn.lookupByName(name)
         vm.setAutostart(1)
         if cloudinit:
-            keys = None
-            cmds = None
+            if keys is not None:
+                keys = keys.split(';')
+            if cmds is not None:
+                cmds = cmds.split(';')
             self._cloudinit(name, keys=keys, cmds=cmds)
             self._uploadiso(name, pool=pool)
+        if start:
+            vm.create()
 
     def start(self, name):
         conn = self.conn
