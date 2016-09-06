@@ -487,18 +487,19 @@ class Kvirt:
         with open('/tmp/user-data', 'w') as userdata:
             userdata.write('#cloud-config\nhostname: %s\n' % name)
             if keys is not None:
-                userdata.write("ssh_authorized_keys:")
+                userdata.write("ssh_authorized_keys:\n")
                 for key in keys:
                     userdata.write("- ssh-rsa %s\n" % key)
             else:
                 home = os.environ['HOME']
                 with open("%s/.ssh/id_rsa.pub" % home, 'r') as ssh:
                     key = ssh.read().rstrip()
+                    userdata.write("ssh_authorized_keys:\n")
                     userdata.write("- %s\n" % key)
-            if cmds is not None:
-                userdata.write("runcmd:")
-                for cmd in cmds:
-                    userdata.write("- %s" % cmd)
+                if cmds is not None:
+                    userdata.write("runcmd:\n")
+                    for cmd in cmds:
+                        userdata.write("- %s\n" % cmd)
         os.system("mkisofs --quiet -o /tmp/%s.iso --volid cidata --joliet --rock /tmp/user-data /tmp/meta-data" % name)
 
     def handler(self, stream, data, file_):
