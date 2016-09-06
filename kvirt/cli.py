@@ -183,9 +183,26 @@ def update(config, memory, name):
 @cli.command()
 @pass_config
 def report(config):
-    click.secho("Information about setup...", fg='green')
+    click.secho("Reporting setup...", fg='green')
     k = config.k
     k.report()
+
+
+@cli.command()
+@click.option('-f', '--inputfile', help='Input file')
+@click.argument('plan')
+@pass_config
+def plan(config, inputfile, plan):
+    click.secho("Deploying vms from plan %s" % (plan), fg='green')
+    if inputfile is None:
+        if os.path.exists('kvirt_plan.yml'):
+            click.secho("using default input file kvirt_plan.yml", fg='green')
+            inputfile = 'kvirt_plan.yml'
+        else:
+            click.secho("No input file found nor default kvirt_plan.yml.Leaving....", fg='red')
+            os._exit(1)
+    k = config.k
+    k.plan(plan=plan, inputfile=inputfile)
 
 
 @cli.command()

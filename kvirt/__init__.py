@@ -3,8 +3,10 @@
 from prettytable import PrettyTable
 from libvirt import open as libvirtopen
 from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE
-import xml.etree.ElementTree as ET
 import os
+import xml.etree.ElementTree as ET
+import yaml
+
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -540,3 +542,30 @@ class Kvirt:
         with open("/tmp/%s.iso" % name) as origin:
             stream.sendAll(self.handler, origin)
             stream.finish()
+
+    def plan(self, plan='kvirt', inputfile='kvirt_plan.yml'):
+        with open(inputfile, 'r') as entries:
+            vms = yaml.load(entries)
+            for name in vms:
+                profile = vms[name]
+                pool = profile.get('pool', 'default')
+                template = profile.get('pool', 'template')
+                numcpus = profile.get('numcpus', 2)
+                memory = profile.get('memory', 512)
+                disksize1 = profile.get('disksize1', '10')
+                diskinterface = profile.get('diskinterface', 'virtio')
+                diskthin1 = profile.get('diskthin1', True)
+                disksize2 = profile.get('disksize2', None)
+                diskthin2 = profile.get('diskthin2')
+                guestid = profile.get('guestid', 'guestrhel764')
+                vnc = profile.get('vnc', False)
+                cloudinit = profile.get('cloudinit', True)
+                start = profile.get('start', True)
+                keys = profile.get('keys', None)
+                cmds = profile.get('cmds', None)
+                net1 = profile.get('net1', 'default')
+                net2 = profile.get('net2', None)
+                net3 = profile.get('net3', None)
+                net4 = profile.get('net4', None)
+                iso = profile.get('iso', None)
+                self.create(name=name, numcpus=numcpus, diskthin1=diskthin1, disksize1=disksize1, diskinterface=diskinterface, backing=template, memory=memory, pool=pool, guestid=guestid, net1=net1, net2=net2, net3=net3, net4=net4, iso=iso, diskthin2=diskthin2, disksize2=disksize2, vnc=vnc, cloudinit=cloudinit, start=start, keys=keys, cmds=cmds)
