@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from prettytable import PrettyTable
-from libvirt import open, VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE
+from libvirt import open as libvirtopen
+from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE
 import xml.etree.ElementTree as ET
 import os
 
@@ -35,7 +36,7 @@ class Kvirt:
         else:
             url = "qemu///system"
             self.macaddr = []
-        self.conn = open(url)
+        self.conn = libvirtopen(url)
         self.host = host
         self.macaddr = []
 
@@ -52,7 +53,7 @@ class Kvirt:
         except:
             return False
 
-    def create(self, name, numcpu='2', diskthin1=True, disksize1=40, diskinterface='virtio', backing=None, memory=512, pool='default', guestid='guestrhel764', net1=None, net2=None, net3=None, net4=None, mac1=None, mac2=None, launched=True, iso=None, diskthin2=None, disksize2=None, vnc=False):
+    def create(self, name, numcpu='2', diskthin1=True, disksize1=40, diskinterface='virtio', backing=None, memory=512, pool='default', guestid='guestrhel764', net1=None, net2=None, net3=None, net4=None, mac1=None, mac2=None, launched=True, iso=None, diskthin2=None, disksize2=None, vnc=False, cloudinit=False):
         if vnc:
             display = 'vnc'
         else:
@@ -125,6 +126,8 @@ class Kvirt:
             diskdev2, diskbus2 = 'hdb', 'ide'
         if not iso:
             iso = ''
+        if cloudinit:
+            iso = "%s/%s.iso" % (poolpath, name)
         vmxml = """<domain type='%s'>
                   <name>%s</name>
                   <memory unit='MiB'>%d</memory>
@@ -221,26 +224,11 @@ class Kvirt:
         conn.defineXML(vmxml)
         vm = conn.lookupByName(name)
         vm.setAutostart(1)
-
-    def getmacs(self, name):
-        conn = self.conn
-        try:
-            vm = conn.lookupByName(name)
-        except:
-            return None
-        xml = vm.XMLDesc(0)
-        root = ET.fromstring(xml)
-        macs = []
-        for element in root.getiterator('interface'):
-            mac = element.find('mac').get('address')
-            network = element.find('source').get('network')
-            bridge = element.find('source').get('bridge')
-            if bridge:
-                netname = bridge
-            else:
-                netname = network
-            macs.append("%s=%s" % (netname, mac))
-        return macs
+        if cloudinit:
+            keys = None
+            cmds = None
+            self._cloudinit(name, keys=keys, cmds=cmds)
+            self._uploadiso(name, pool=pool)
 
     def start(self, name):
         conn = self.conn
@@ -282,20 +270,6 @@ class Kvirt:
             # Type,Status, Total space in Gb, Available space in Gb
             results[storagename] = [float(used), float(available), storagename]
         return results
-
-    def beststorage(self):
-        bestsize = 0
-        beststoragedomain = ''
-        conn = self.conn
-        for stor in conn.listStoragePools():
-            storagename = stor
-            storage = conn.storagePoolLookupByName(stor)
-            s = storage.info()
-            available = float(s[3]) / 1024 / 1024 / 1024
-            if available > bestsize:
-                beststoragedomain = storagename
-                bestsize = available
-        return beststoragedomain
 
     def status(self, name):
         conn = self.conn
@@ -424,7 +398,7 @@ class Kvirt:
             source = element.find('source')
             if source is not None:
                 imagefile = element.find('source').get('file')
-                if 'iso' not in imagefile:
+                if 'iso' not in imagefile or name in imagefile:
                     disks.append(imagefile)
         if status[vm.isActive()] != "down":
             vm.destroy()
@@ -506,3 +480,44 @@ class Kvirt:
             interface.remove(mac)
         newxml = ET.tostring(tree)
         conn.defineXML(newxml)
+
+    def _cloudinit(self, name, keys=None, cmds=None):
+        with open('/tmp/meta-data', 'w') as metadata:
+            metadata.write('instance-id: XXX\nlocal-hostname: %s\n' % name)
+        with open('/tmp/user-data', 'w') as userdata:
+            userdata.write('#cloud-config\nhostname: %s\n' % name)
+            if keys is not None:
+                userdata.write("ssh_authorized_keys:")
+                for key in keys:
+                    userdata.write("- ssh-rsa %s\n" % key)
+            else:
+                home = os.environ['HOME']
+                with open("%s/.ssh/id_rsa.pub" % home, 'r') as ssh:
+                    key = ssh.read().rstrip()
+                    userdata.write("- %s\n" % key)
+            if cmds is not None:
+                userdata.write("runcmd:")
+                for cmd in cmds:
+                    userdata.write("- %s" % cmd)
+        os.system("mkisofs --quiet -o /tmp/%s.iso --volid cidata --joliet --rock /tmp/user-data /tmp/meta-data" % name)
+
+    def handler(self, stream, data, file_):
+        return file_.read(data)
+
+    def _uploadiso(self, name, pool='default'):
+        conn = self.conn
+        # pool = conn.storagePoolLookupByName(pool)
+        poolxml = pool.XMLDesc(0)
+        root = ET.fromstring(poolxml)
+        for element in root.getiterator('path'):
+            poolpath = element.text
+            break
+        isopath = "%s/%s.iso" % (poolpath, name)
+        isoxml = self._xmldisk(path=isopath, size=0, diskformat='raw')
+        pool.createXML(isoxml, 0)
+        isovolume = conn.storageVolLookupByPath(isopath)
+        stream = conn.newStream(0)
+        isovolume.upload(stream, 0, 0)
+        with open("/tmp/%s.iso" % name) as origin:
+            stream.sendAll(self.handler, origin)
+            stream.finish()
