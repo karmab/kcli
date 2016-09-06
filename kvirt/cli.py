@@ -181,6 +181,14 @@ def update(config, memory, name):
 
 
 @cli.command()
+@pass_config
+def report(config):
+    click.secho("Information about setup...", fg='green')
+    k = config.k
+    k.report()
+
+
+@cli.command()
 @click.argument('name')
 @pass_config
 def info(config, name):

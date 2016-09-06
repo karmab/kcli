@@ -257,9 +257,12 @@ class Kvirt:
         else:
             vm.restart()
 
-    def getstorage(self):
-        results = {}
+    def report(self):
         conn = self.conn
+        hostname = conn.getHostname()
+        cpus = conn.getCPUMap()[0]
+        memory = conn.getInfo()[1]
+        print "Host: %s Cpu:%s Memory:%sMB" % (hostname, cpus, memory)
         for storage in conn.listStoragePools():
             storagename = storage
             storage = conn.storagePoolLookupByName(storage)
@@ -267,8 +270,17 @@ class Kvirt:
             used = "%.2f" % (float(s[2]) / 1024 / 1024 / 1024)
             available = "%.2f" % (float(s[3]) / 1024 / 1024 / 1024)
             # Type,Status, Total space in Gb, Available space in Gb
-            results[storagename] = [float(used), float(available), storagename]
-        return results
+            used = float(used)
+            available = float(available)
+            print "Storage: %s Used space: %sGB Available space:%sGB" % (storagename, used, available)
+        for interface in conn.listAllInterfaces():
+            interfacename = interface.name()
+            if interfacename == 'lo':
+                continue
+            print "Network: %s Type: bridged" % (interfacename)
+        for network in conn.listAllNetworks():
+            networkname = network.name()
+            print "Network: %s Type: routed" % (networkname)
 
     def status(self, name):
         conn = self.conn
