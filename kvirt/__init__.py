@@ -53,7 +53,7 @@ class Kvirt:
         except:
             return False
 
-    def create(self, name, description='', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disksize1=10, diskthin1=True, diskinterface1='virtio', disksize2=0, diskthin2=True, diskinterface2='virtio', net1=None, net2=None, net3=None, net4=None, iso=None, vnc=False, cloudinit=False, start=True, keys=None, cmds=None):
+    def create(self, name, description='', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disksize1=10, diskthin1=True, diskinterface1='virtio', disksize2=0, diskthin2=True, diskinterface2='virtio', net1='default', net2=None, net3=None, net4=None, iso=None, vnc=False, cloudinit=True, start=True, keys=None, cmds=None):
         if vnc:
             display = 'vnc'
         else:
@@ -227,7 +227,7 @@ class Kvirt:
         if cloudinit:
             if keys is not None:
                 keys = keys.split(';')
-            if cmds is not None:
+            if cmds is not None and type(cmds) == 'str':
                 cmds = cmds.split(';')
             self._cloudinit(name, keys=keys, cmds=cmds)
             self._uploadiso(name, pool=pool)

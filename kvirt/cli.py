@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import click
+from defaults import NET1, POOL, NUMCPUS, MEMORY, DISKSIZE1, DISKINTERFACE1, DISKTHIN1, DISKINTERFACE2, DISKTHIN2, GUESTID, VNC, CLOUDINIT, START
 from prettytable import PrettyTable
 from kvirt import Kvirt
 import os
@@ -27,19 +28,19 @@ class Config():
             os._exit(1)
         defaults = {}
         default = ini['default']
-        defaults['net1'] = default.get('net1', 'default')
-        defaults['pool'] = default.get('pool', 'default')
-        defaults['numcpus'] = int(default.get('numcpus', 2))
-        defaults['memory'] = int(default.get('memory', 512))
-        defaults['disksize1'] = int(default.get('disksize1', '10'))
-        defaults['diskinterface1'] = default.get('diskinterface1', 'virtio')
-        defaults['diskinterface2'] = default.get('diskinterface2', 'virtio')
-        defaults['diskthin1'] = bool(default.get('diskthin1', True))
-        defaults['diskthin2'] = bool(default.get('diskthin2', True))
-        defaults['guestid'] = default.get('guestid', 'guestrhel764')
-        defaults['vnc'] = bool(default.get('vnc', False))
-        defaults['cloudinit'] = bool(default.get('cloudinit', True))
-        defaults['start'] = bool(default.get('start', True))
+        defaults['net1'] = default.get('net1', NET1)
+        defaults['pool'] = default.get('pool', POOL)
+        defaults['numcpus'] = int(default.get('numcpus', NUMCPUS))
+        defaults['memory'] = int(default.get('memory', MEMORY))
+        defaults['disksize1'] = int(default.get('disksize1', DISKSIZE1))
+        defaults['diskinterface1'] = default.get('diskinterface1', DISKINTERFACE1)
+        defaults['diskinterface2'] = default.get('diskinterface2', DISKINTERFACE2)
+        defaults['diskthin1'] = bool(default.get('diskthin1', DISKTHIN1))
+        defaults['diskthin2'] = bool(default.get('diskthin2', DISKTHIN2))
+        defaults['guestid'] = default.get('guestid', GUESTID)
+        defaults['vnc'] = bool(default.get('vnc', VNC))
+        defaults['cloudinit'] = bool(default.get('cloudinit', CLOUDINIT))
+        defaults['start'] = bool(default.get('start', START))
         self.default = defaults
         options = ini[client]
         host = options.get('host', '127.0.0.1')
@@ -242,6 +243,15 @@ def plan(config, inputfile, delete, plan):
             iso = profile.get('iso')
             keys = profile.get('keys')
             cmds = profile.get('cmds')
+            script = profile.get('script')
+            if script is not None and os.path.exists(script):
+                scriptlines = [line.strip() for line in open(script).readlines()]
+                if not scriptlines:
+                    break
+                if cmds is not None:
+                    cmds = cmds + scriptlines
+                else:
+                    cmds = scriptlines
             description = plan
             k.create(name=name, description=description, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disksize1=disksize1, diskthin1=diskthin1, diskinterface1=diskinterface1, disksize2=disksize2, diskthin2=diskthin2, diskinterface2=diskinterface2, net1=net1, net2=net2, net3=net3, net4=net4, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds)
             click.secho("%s deployed!" % name, fg='green')
