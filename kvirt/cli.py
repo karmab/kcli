@@ -3,7 +3,6 @@
 import click
 from prettytable import PrettyTable
 from kvirt import Kvirt
-import ConfigParser
 import os
 import yaml
 
@@ -13,52 +12,47 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 class Config():
     def load(self):
-        c = ConfigParser.ConfigParser()
-        inifile = "%s/kvirt.ini" % os.environ.get('HOME')
+        inifile = "%s/kvirt.yml" % os.environ.get('HOME')
         if not os.path.exists(inifile):
-            print "Missing kvirt.ini file.Leaving..."
+            print "Missing kvirt.yml file.Leaving..."
             os._exit(1)
-        c.read(inifile)
-        if 'default' not in c.sections() or 'client' not in c.options('default'):
-            print "Missing default section in inifile.Leaving..."
+        with open(inifile, 'r') as entries:
+            ini = yaml.load(entries)
+        if 'default' not in ini or 'client' not in ini['default']:
+            print "Missing default section in config file.Leaving..."
             os._exit(1)
-        client = c.get('default', 'client')
-        if client not in c.sections():
-            print "Missing section for client %s in inifile.Leaving..." % client
+        client = ini['default']['client']
+        if client not in ini:
+            print "Missing section for client %s in config file.Leaving..." % client
             os._exit(1)
         defaults = {}
-        default = dict(c.items('default'))
-        defaults['net1'] = default['net1'] if 'net1' in default.keys() else 'default'
-        defaults['pool'] = int(default['pool']) if 'pool' in default.keys() else 'default'
-        defaults['numcpus'] = int(default['numcpus']) if 'numcpus' in default.keys() else 2
-        defaults['memory'] = int(default['memory']) if 'memory' in default.keys() else 512
-        defaults['disksize1'] = default['disksize1'] if 'disksize1' in default.keys() else '10'
-        defaults['diskinterface1'] = default['diskinterface1'] if 'diskinterface1' in default.keys() else 'virtio'
-        defaults['diskinterface2'] = default['diskinterface2'] if 'diskinterface2' in default.keys() else 'virtio'
-        defaults['diskthin1'] = bool(default['diskthin1']) if 'diskthin1' in default.keys() else True
-        defaults['diskthin2'] = bool(default['diskthin2']) if 'diskthin2' in default.keys() else True
-        defaults['guestid'] = default['guestid'] if 'guestid' in default.keys() else 'guestrhel764'
-        defaults['vnc'] = bool(default['vnc']) if 'vnc' in default.keys() else False
-        defaults['cloudinit'] = bool(default['cloudinit']) if 'cloudinit' in default.keys() else True
-        defaults['start'] = bool(default['start']) if 'start' in default.keys() else True
+        default = ini['default']
+        defaults['net1'] = default.get('net1', 'default')
+        defaults['pool'] = default.get('pool', 'default')
+        defaults['numcpus'] = int(default.get('numcpus', 2))
+        defaults['memory'] = int(default.get('memory', 512))
+        defaults['disksize1'] = int(default.get('disksize1', '10'))
+        defaults['diskinterface1'] = default.get('diskinterface1', 'virtio')
+        defaults['diskinterface2'] = default.get('diskinterface2', 'virtio')
+        defaults['diskthin1'] = bool(default.get('diskthin1', True))
+        defaults['diskthin2'] = bool(default.get('diskthin2', True))
+        defaults['guestid'] = default.get('guestid', 'guestrhel764')
+        defaults['vnc'] = bool(default.get('vnc', False))
+        defaults['cloudinit'] = bool(default.get('cloudinit', True))
+        defaults['start'] = bool(default.get('start', True))
         self.default = defaults
-        options = c.options(client)
-        host = c.get(client, 'host') if 'host' in options else '127.0.0.1'
-        port = c.get(client, 'port') if 'port' in options else None
-        user = c.get(client, 'user') if 'user' in options else 'root'
-        protocol = c.get(client, 'protocol') if 'protocol' in options else 'ssh'
+        options = ini[client]
+        host = options.get('host', '127.0.0.1')
+        port = options.get('port', None)
+        user = options.get('user', 'root')
+        protocol = options.get('protocol', 'ssh')
         self.k = Kvirt(host=host, port=port, user=user, protocol=protocol)
-        profilefile = "%s/kvirt_profiles.ini" % os.environ.get('HOME')
-        if not os.path.exists(inifile):
-            print "Missing kvirt_profiles.ini file.Leaving..."
+        profilefile = "%s/kvirt_profiles.yml" % os.environ.get('HOME')
+        if not os.path.exists(profilefile):
+            print "Missing kvirt_profiles.yml file.Leaving..."
             os._exit(1)
-        c = ConfigParser.ConfigParser()
-        c.read(profilefile)
-        profiles = {}
-        for prof in c.sections():
-            for option in c.options(prof):
-                profiles.setdefault(prof, {option: c.get(prof, option)})[option] = c.get(prof, option)
-        self.profiles = profiles
+        with open(profilefile, 'r') as entries:
+            self.profiles = yaml.load(entries)
 
 pass_config = click.make_pass_decorator(Config, ensure=True)
 
@@ -168,7 +162,6 @@ def create(config, profile, name):
     start = profile.get('start', default['start'])
     keys = profile.get('keys', None)
     cmds = profile.get('cmds', None)
-    # k.create(name=name, numcpus=int(numcpus), diskthin1=diskthin1, disksize1=int(disksize1), diskinterface=diskinterface, backing=template, memory=memory, pool=pool, guestid=guestid, net1=net1, net2=net2, net3=net3, net4=net4, iso=iso, diskthin2=diskthin2, disksize2=int(disksize2), vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds)
     k.create(name=name, description=description, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disksize1=disksize1, diskthin1=diskthin1, diskinterface1=diskinterface1, disksize2=disksize2, diskthin2=diskthin2, diskinterface2=diskinterface2, net1=net1, net2=net2, net3=net3, net4=net4, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds)
 
 
@@ -222,7 +215,7 @@ def plan(config, inputfile, delete, plan):
         else:
             click.secho("No input file found nor default kvirt_plan.yml.Leaving....", fg='red')
             os._exit(1)
-    click.secho("Handling vms from %s" % (inputfile), fg='green')
+    click.secho("Deploying vms from plan %s" % (plan), fg='green')
     default = config.default
     with open(inputfile, 'r') as entries:
         vms = yaml.load(entries)
@@ -249,7 +242,7 @@ def plan(config, inputfile, delete, plan):
             iso = profile.get('iso')
             keys = profile.get('keys')
             cmds = profile.get('cmds')
-            # k.create(name=name, numcpus=int(numcpus), diskthin1=diskthin1, disksize1=int(disksize1), diskinterface=diskinterface, backing=template, memory=int(memory), pool=pool, guestid=guestid, net1=net1, net2=net2, net3=net3, net4=net4, iso=iso, diskthin2=diskthin2, disksize2=int(disksize2), vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds, description=plan)
+            description = plan
             k.create(name=name, description=description, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disksize1=disksize1, diskthin1=diskthin1, diskinterface1=diskinterface1, disksize2=disksize2, diskthin2=diskthin2, diskinterface2=diskinterface2, net1=net1, net2=net2, net3=net3, net4=net4, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds)
             click.secho("%s deployed!" % name, fg='green')
 

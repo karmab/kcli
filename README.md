@@ -1,7 +1,6 @@
 ###kcli repository
 
 [![Build Status](https://travis-ci.org/karmab/kcli.svg?branch=master)](https://travis-ci.org/karmab/kcli)
-[![Code Climate](https://codeclimate.com/github/karmab/kcli/badges/gpa.svg)](https://codeclimate.com/github/karmab/kcli)
 [![Pypi](http://img.shields.io/pypi/v/kcli.svg)](https://pypi.python.org/pypi/kcli/)
 
 This script is meant to interact with a local/remote libvirt daemon and to easily deploy from templates ( using cloudinit)
