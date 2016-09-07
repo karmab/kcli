@@ -53,7 +53,7 @@ class Kvirt:
         except:
             return False
 
-    def create(self, name, numcpus=2, diskthin1=True, disksize1=40, diskinterface='virtio', backing=None, memory=512, pool='default', guestid='guestrhel764', net1=None, net2=None, net3=None, net4=None, iso=None, diskthin2=None, disksize2=None, vnc=False, cloudinit=False, start=True, keys=None, cmds=None, description=''):
+    def create(self, name, description='', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disksize1=10, diskthin1=True, diskinterface1='virtio', disksize2=0, diskthin2=True, diskinterface2='virtio', net1=None, net2=None, net3=None, net4=None, iso=None, vnc=False, cloudinit=False, start=True, keys=None, cmds=None):
         if vnc:
             display = 'vnc'
         else:
@@ -75,13 +75,12 @@ class Kvirt:
             return
         virttype, machine, emulator = 'kvm', 'pc', '/usr/libexec/qemu-kvm'
         # type, machine, emulator = 'kvm', 'pc', '/usr/bin/qemu-system-x86_64'
-        diskformat1, diskformat2 = 'raw', 'raw'
-        if diskthin1:
-            diskformat1 = 'qcow2'
-        if disksize2:
-            disksize2 = disksize2
-            if diskthin2:
-                diskformat2 = 'qcow2'
+        diskformat1, diskformat2 = 'qcow2', 'qcow2'
+        if not diskthin1:
+            diskformat1 = 'raw'
+        if disksize2 > 0:
+            if not diskthin2:
+                diskformat2 = 'raw'
         storagename1 = "%s_1.img" % name
         pool = conn.storagePoolLookupByName(pool)
         poolxml = pool.XMLDesc(0)
@@ -90,34 +89,39 @@ class Kvirt:
             poolpath = element.text
             break
         diskpath1 = "%s/%s" % (poolpath, storagename1)
-        if backing is not None:
+        if template is not None:
             try:
                 pool.refresh(0)
-                backingvolume = pool.storageVolLookupByName(backing)
+                backingvolume = pool.storageVolLookupByName(template)
+                backingxml = backingvolume.XMLDesc(0)
+                root = ET.fromstring(backingxml)
+                for element in root.getiterator('target'):
+                    backingtype = element.find('format').get('type')
             except:
-                print "Invalid backing volume %s.Leaving..." % backing
+                print "Invalid template %s.Leaving..." % template
                 return
             backing = backingvolume.path()
             backingxml = """<backingStore type='file' index='1'>
-        <format type='raw'/>
+        <format type='%s'/>
         <source file='%s'/>
         <backingStore/>
-      </backingStore>""" % backing
+      </backingStore>""" % (backingtype, backing)
         else:
             backingvolume = None
             backingxml = '<backingStore/>'
         diskxml1 = self._xmldisk(path=diskpath1, size=disksize1, backing=backing, diskformat=diskformat1)
         pool.createXML(diskxml1, 0)
-        if disksize2:
+        if disksize2 > 0:
             storagename2 = "%s_2.img" % name
             diskpath2 = "%s/%s" % (poolpath, storagename2)
-            diskxml2 = self._xmldisk(path=diskpath2, size=disksize2, diskformat=diskformat2)
+            diskxml2 = self._xmldisk(path=diskpath2, size=disksize2, diskformat=diskformat2, backing=None)
             pool.createXML(diskxml2, 0)
         pool.refresh(0)
         diskdev1, diskbus1 = 'vda', 'virtio'
         diskdev2, diskbus2 = 'vdb', 'virtio'
-        if diskinterface != 'virtio':
+        if diskinterface1 != 'virtio':
             diskdev1, diskbus1 = 'hda', 'ide'
+        if diskinterface2 != 'virtio':
             diskdev2, diskbus2 = 'hdb', 'ide'
         if not iso:
             iso = ''
@@ -157,7 +161,7 @@ class Kvirt:
                     <driver name='qemu' type='%s'/>
                     <source file='%s'/>
                     <target dev='%s' bus='%s'/>
-                    </disk>""" % (vmxml, diskformat1, diskpath2, diskdev2, diskbus2)
+                    </disk>""" % (vmxml, diskformat2, diskpath2, diskdev2, diskbus2)
         vmxml = """%s
                 <disk type='file' device='cdrom'>
                       <driver name='qemu' type='raw'/>
@@ -445,7 +449,7 @@ class Kvirt:
                 storage.refresh(0)
 
     def _xmldisk(self, path, size, backing=None, diskformat='qcow2'):
-        size = int(size) * GB
+        size = int(size) * MB
         name = path.split('/')[-1]
         if backing is not None:
             backingstore = """

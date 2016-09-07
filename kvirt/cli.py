@@ -33,8 +33,10 @@ class Config():
         defaults['numcpus'] = int(default['numcpus']) if 'numcpus' in default.keys() else 2
         defaults['memory'] = int(default['memory']) if 'memory' in default.keys() else 512
         defaults['disksize1'] = default['disksize1'] if 'disksize1' in default.keys() else '10'
-        defaults['diskinterface'] = default['diskinterface'] if 'diskinterface' in default.keys() else 'virtio'
+        defaults['diskinterface1'] = default['diskinterface1'] if 'diskinterface1' in default.keys() else 'virtio'
+        defaults['diskinterface2'] = default['diskinterface2'] if 'diskinterface2' in default.keys() else 'virtio'
         defaults['diskthin1'] = bool(default['diskthin1']) if 'diskthin1' in default.keys() else True
+        defaults['diskthin2'] = bool(default['diskthin2']) if 'diskthin2' in default.keys() else True
         defaults['guestid'] = default['guestid'] if 'guestid' in default.keys() else 'guestrhel764'
         defaults['vnc'] = bool(default['vnc']) if 'vnc' in default.keys() else False
         defaults['cloudinit'] = bool(default['cloudinit']) if 'cloudinit' in default.keys() else True
@@ -142,30 +144,32 @@ def create(config, profile, name):
         os._exit(1)
     profile = profiles[profile]
     template = profile.get('template')
+    description = ''
     net1 = profile.get('net1', default['net1'])
-    net2 = profile.get('net2')
-    net3 = profile.get('net3')
-    net4 = profile.get('net4')
-    pool = profile.get('pool', default['pool'])
-    iso = profile.get('iso')
     if template is None or net1 is None:
         click.secho("Missing info from profile %s.Leaving..." % profile, fg='red')
         os._exit(1)
-    numcpus = int(profile.get('numcpus', default['numcpus']))
-    memory = int(profile.get('memory', default['memory']))
-    disksize1 = int(profile.get('disksize1', default['disksize1']))
-    diskinterface = profile.get('diskinterface', default['diskinterface'])
+    numcpus = profile.get('numcpus', default['numcpus'])
+    memory = profile.get('memory', default['memory'])
+    pool = profile.get('pool', default['pool'])
     diskthin1 = bool(profile.get('diskthin1', default['diskthin1']))
-    # disksize2 = profile.get('disksize2')
-    disksize2 = None
+    disksize1 = profile.get('disksize1', default['disksize1'])
+    diskinterface1 = profile.get('diskinterface', default['diskinterface1'])
+    disksize2 = profile.get('disksize2', 0)
     diskthin2 = profile.get('diskthin2')
+    diskinterface2 = profile.get('diskinterface', default['diskinterface2'])
     guestid = profile.get('guestid', default['guestid'])
-    vnc = bool(profile.get('vnc', default['vnc']))
-    cloudinit = bool(profile.get('cloudinit', default['cloudinit']))
-    start = bool(profile.get('start', default['start']))
+    net2 = profile.get('net2')
+    net3 = profile.get('net3')
+    net4 = profile.get('net4')
+    iso = profile.get('iso')
+    vnc = profile.get('vnc', default['vnc'])
+    cloudinit = profile.get('cloudinit', default['cloudinit'])
+    start = profile.get('start', default['start'])
     keys = profile.get('keys', None)
     cmds = profile.get('cmds', None)
-    k.create(name=name, numcpus=numcpus, diskthin1=diskthin1, disksize1=disksize1, diskinterface=diskinterface, backing=template, memory=memory, pool=pool, guestid=guestid, net1=net1, net2=net2, net3=net3, net4=net4, iso=iso, diskthin2=diskthin2, disksize2=disksize2, vnc=vnc, cloudinit=cloudinit, start=start, keys=keys, cmds=cmds)
+    # k.create(name=name, numcpus=int(numcpus), diskthin1=diskthin1, disksize1=int(disksize1), diskinterface=diskinterface, backing=template, memory=memory, pool=pool, guestid=guestid, net1=net1, net2=net2, net3=net3, net4=net4, iso=iso, diskthin2=diskthin2, disksize2=int(disksize2), vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds)
+    k.create(name=name, description=description, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disksize1=disksize1, diskthin1=diskthin1, diskinterface1=diskinterface1, disksize2=disksize2, diskthin2=diskthin2, diskinterface2=diskinterface2, net1=net1, net2=net2, net3=net3, net4=net4, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds)
 
 
 @cli.command()
@@ -229,10 +233,10 @@ def plan(config, inputfile, delete, plan):
             numcpus = profile.get('numcpus', default['numcpus'])
             memory = profile.get('memory', default['memory'])
             disksize1 = profile.get('disksize1', default['disksize1'])
-            diskinterface = profile.get('diskinterface', default['diskinterface'])
+            diskinterface1 = profile.get('diskinterface', default['diskinterface1'])
             diskthin1 = profile.get('diskthin1', default['diskthin1'])
-            # disksize2 = profile.get('disksize2')
-            disksize2 = None
+            disksize2 = profile.get('disksize2', 0)
+            diskinterface2 = profile.get('diskinterface', default['diskinterface2'])
             diskthin2 = profile.get('diskthin2')
             guestid = profile.get('guestid', default['guestid'])
             vnc = profile.get('vnc', default['vnc'])
@@ -245,7 +249,8 @@ def plan(config, inputfile, delete, plan):
             iso = profile.get('iso')
             keys = profile.get('keys')
             cmds = profile.get('cmds')
-            k.create(name=name, numcpus=int(numcpus), diskthin1=diskthin1, disksize1=int(disksize1), diskinterface=diskinterface, backing=template, memory=int(memory), pool=pool, guestid=guestid, net1=net1, net2=net2, net3=net3, net4=net4, iso=iso, diskthin2=diskthin2, disksize2=disksize2, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds, description=plan)
+            # k.create(name=name, numcpus=int(numcpus), diskthin1=diskthin1, disksize1=int(disksize1), diskinterface=diskinterface, backing=template, memory=int(memory), pool=pool, guestid=guestid, net1=net1, net2=net2, net3=net3, net4=net4, iso=iso, diskthin2=diskthin2, disksize2=int(disksize2), vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds, description=plan)
+            k.create(name=name, description=description, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disksize1=disksize1, diskthin1=diskthin1, diskinterface1=diskinterface1, disksize2=disksize2, diskthin2=diskthin2, diskinterface2=diskinterface2, net1=net1, net2=net2, net3=net3, net4=net4, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds)
             click.secho("%s deployed!" % name, fg='green')
 
 
