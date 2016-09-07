@@ -193,8 +193,15 @@ def report(config):
 @cli.command()
 @click.option('-f', '--inputfile', help='Input file')
 @click.option('-d', '--delete', is_flag=True)
+@click.argument('plan')
 @pass_config
-def plan(config, inputfile, delete):
+def plan(config, inputfile, delete, plan):
+    k = config.k
+    if delete:
+        # k.delete(name)
+        click.confirm('Are you sure about deleting this plan', abort=True)
+        click.secho("%s deleted!" % plan, fg='green')
+        return
     if inputfile is None:
         if os.path.exists('kvirt_plan.yml'):
             click.secho("using default input file kvirt_plan.yml", fg='green')
@@ -203,17 +210,10 @@ def plan(config, inputfile, delete):
             click.secho("No input file found nor default kvirt_plan.yml.Leaving....", fg='red')
             os._exit(1)
     click.secho("Handling vms from %s" % (inputfile), fg='green')
-    if delete:
-        click.confirm('Are you sure about deleting them', abort=True)
-    k = config.k
     default = config.default
     with open(inputfile, 'r') as entries:
         vms = yaml.load(entries)
         for name in vms:
-            if delete:
-                k.delete(name)
-                click.secho("%s deleted!" % name, fg='green')
-                continue
             profile = vms[name]
             pool = profile.get('pool', default['pool'])
             template = profile.get('template')
@@ -236,7 +236,7 @@ def plan(config, inputfile, delete):
             iso = profile.get('iso')
             keys = profile.get('keys')
             cmds = profile.get('cmds')
-            k.create(name=name, numcpus=int(numcpus), diskthin1=diskthin1, disksize1=int(disksize1), diskinterface=diskinterface, backing=template, memory=int(memory), pool=pool, guestid=guestid, net1=net1, net2=net2, net3=net3, net4=net4, iso=iso, diskthin2=diskthin2, disksize2=disksize2, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds)
+            k.create(name=name, numcpus=int(numcpus), diskthin1=diskthin1, disksize1=int(disksize1), diskinterface=diskinterface, backing=template, memory=int(memory), pool=pool, guestid=guestid, net1=net1, net2=net2, net3=net3, net4=net4, iso=iso, diskthin2=diskthin2, disksize2=disksize2, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds, description=plan)
             click.secho("%s deployed!" % name, fg='green')
 
 

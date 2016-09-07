@@ -298,9 +298,15 @@ class Kvirt:
         conn = self.conn
         status = {0: 'down', 1: 'up'}
         for vm in conn.listAllDomains(0):
+            xml = vm.XMLDesc(0)
+            root = ET.fromstring(xml)
+            description = root.getiterator('description')
+            if description:
+                description = description[0].text
+            else:
+                description = ''
             name = vm.name()
             state = status[vm.isActive()]
-            description = ''
             ip = ''
             if vm.isActive():
                 for address in vm.interfaceAddresses(VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE).values():
