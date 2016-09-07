@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
     name='kcli',
     version='0.1.1',
-    packages = find_packages(),
+    packages=find_packages(),
     include_package_data=True,
     description='Script to manage libvirt',
     url='http://github.com/karmab/kcli',
