@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from prettytable import PrettyTable
 from libvirt import open as libvirtopen
 from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE
 import os
@@ -294,7 +293,8 @@ class Kvirt:
             return status[vm.isActive()]
 
     def list(self):
-        vms = PrettyTable(["Name", "Status", "Ips", "Description"])
+        # vms = PrettyTable(["Name", "Status", "Ips", "Description"])
+        vms = []
         conn = self.conn
         status = {0: 'down', 1: 'up'}
         for vm in conn.listAllDomains(0):
@@ -312,7 +312,8 @@ class Kvirt:
                 for address in vm.interfaceAddresses(VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE).values():
                     ip = address['addrs'][0]['addr']
                     break
-            vms.add_row([name, state, ip, description])
+            # vms.add_row([name, state, ip, description])
+            vms.append([name, state, ip, description])
         return vms
 
     def console(self, name):

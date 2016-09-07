@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import click
+from prettytable import PrettyTable
 from kvirt import Kvirt
 import ConfigParser
 import os
@@ -121,7 +122,10 @@ def list(config, profiles, templates, isos):
         for iso in k.volumes(iso=True):
             print iso
     else:
-        print k.list()
+        vms = PrettyTable(["Name", "Status", "Ips", "Description"])
+        for vm in k.list():
+            vms.add_row(vm)
+        print vms
 
 
 @cli.command()
@@ -198,9 +202,14 @@ def report(config):
 def plan(config, inputfile, delete, plan):
     k = config.k
     if delete:
-        # k.delete(name)
         click.confirm('Are you sure about deleting this plan', abort=True)
-        click.secho("%s deleted!" % plan, fg='green')
+        for vm in k.list():
+            name = vm[0]
+            description = vm[3]
+            if description == plan:
+                k.delete(name)
+                click.secho("%s deleted!" % name, fg='green')
+        click.secho("Plan %s deleted!" % plan, fg='green')
         return
     if inputfile is None:
         if os.path.exists('kvirt_plan.yml'):
