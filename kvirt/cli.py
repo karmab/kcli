@@ -132,9 +132,12 @@ def list(config, profiles, templates, isos):
 
 @cli.command()
 @click.option('-p', '--profile', help='Profile to use')
+@click.option('-1', '--ip', help='Optional Ip to assign to eth0')
+@click.option('-2', '--netmask', help='Optional Netmask')
+@click.option('-3', '--gateway', help='Optional Gateway')
 @click.argument('name')
 @pass_config
-def create(config, profile, name):
+def create(config, profile, ip, netmask, gateway, name):
     click.secho("Deploying vm %s from profile %s..." % (name, profile), fg='green')
     k = config.k
     default = config.default
@@ -168,7 +171,7 @@ def create(config, profile, name):
     start = profile.get('start', default['start'])
     keys = profile.get('keys', None)
     cmds = profile.get('cmds', None)
-    k.create(name=name, description=description, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disksize1=disksize1, diskthin1=diskthin1, diskinterface1=diskinterface1, disksize2=disksize2, diskthin2=diskthin2, diskinterface2=diskinterface2, net1=net1, net2=net2, net3=net3, net4=net4, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds)
+    k.create(name=name, description=description, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disksize1=disksize1, diskthin1=diskthin1, diskinterface1=diskinterface1, disksize2=disksize2, diskthin2=diskthin2, diskinterface2=diskinterface2, net1=net1, net2=net2, net3=net3, net4=net4, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds, ip=ip, netmask=netmask, gateway=gateway)
 
 
 @cli.command()

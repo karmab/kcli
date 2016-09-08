@@ -56,7 +56,7 @@ class Kvirt:
         except:
             return False
 
-    def create(self, name, description='', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disksize1=10, diskthin1=True, diskinterface1='virtio', disksize2=0, diskthin2=True, diskinterface2='virtio', net1='default', net2=None, net3=None, net4=None, iso=None, vnc=False, cloudinit=True, start=True, keys=None, cmds=None):
+    def create(self, name, description='', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disksize1=10, diskthin1=True, diskinterface1='virtio', disksize2=0, diskthin2=True, diskinterface2='virtio', net1='default', net2=None, net3=None, net4=None, iso=None, vnc=False, cloudinit=True, start=True, keys=None, cmds=None, ip=None, netmask=None, gateway=None):
         if vnc:
             display = 'vnc'
         else:
@@ -232,7 +232,7 @@ class Kvirt:
                 keys = keys.split(';')
             if cmds is not None and isinstance(cmds, str):
                 cmds = cmds.split(';')
-            self._cloudinit(name, keys=keys, cmds=cmds)
+            self._cloudinit(name=name, keys=keys, cmds=cmds, ip=ip, netmask=netmask, gateway=gateway)
             self._uploadiso(name, pool=pool)
         if start:
             vm.create()
@@ -516,11 +516,16 @@ class Kvirt:
         newxml = ET.tostring(tree)
         conn.defineXML(newxml)
 
-    def _cloudinit(self, name, keys=None, cmds=None):
+    def _cloudinit(self, name, keys=None, cmds=None, ip=None, netmask=None, gateway=None):
         with open('/tmp/meta-data', 'w') as metadata:
             metadata.write('instance-id: XXX\nlocal-hostname: %s\n' % name)
         with open('/tmp/user-data', 'w') as userdata:
             userdata.write('#cloud-config\nhostname: %s\n' % name)
+            if ip is not None and gateway is not None and gateway is not None:
+                userdata.write("nicname: eth0\n")
+                userdata.write("ip: %s\n" % ip)
+                userdata.write("netmask: %s\n" % netmask)
+                userdata.write("gateway: %s\n" % gateway)
             if keys is not None:
                 userdata.write("ssh_authorized_keys:\n")
                 for key in keys:
@@ -535,7 +540,17 @@ class Kvirt:
                     userdata.write("runcmd:\n")
                     for cmd in cmds:
                         userdata.write("- %s\n" % cmd)
-        os.system("mkisofs --quiet -o /tmp/%s.iso --volid cidata --joliet --rock /tmp/user-data /tmp/meta-data" % name)
+        isocmd = "mkisofs --quiet -o /tmp/%s.iso --volid cidata --joliet --rock /tmp/user-data /tmp/meta-data" % name
+        if ip is not None and gateway is not None and gateway is not None:
+            with open('/tmp/0000', 'w') as userdata:
+                userdata.write('auto lo\niface lo inet loopback\n\n')
+                userdata.write('auto eth0\niface eth0 inet static\n')
+                userdata.write('address %s\n' % ip)
+                userdata.write('netmask %s\n' % netmask)
+                userdata.write('gateway %s\n' % gateway)
+            isocmd = "%s /tmp/0000" % isocmd
+        # os.system("mkisofs --quiet -o /tmp/%s.iso --volid cidata --joliet --rock /tmp/user-data /tmp/meta-data" % name)
+        os.system(isocmd)
 
     def handler(self, stream, data, file_):
         return file_.read(data)

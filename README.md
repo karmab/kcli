@@ -54,19 +54,6 @@ Note that the description of the vm will automatically be set to the plan name, 
 
 
 
-## optional: prepare base template
-
-Not needed if you plan to use cloudinit built in feature but here are some indicative steps to tune your template
-
-```
-ROOTPW="unix1234"
-wget http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2
-qemu-img create -f qcow2 centos7.qcow2 40G
-virt-resize --expand /dev/sda1 CentOS-7-x86_64-GenericCloud.qcow2 centos7.qcow2
-virt-customize -a centos7.qcow2 --root-password password:$ROOTPW
-virt-customize -a centos7.qcow2 --run-command 'sed -i "s/PasswordAuthentication no/PasswordAuthentication yes/" /etc/ssh/sshd_config'
-virt-customize -a centos7.qcow2 --run-command 'sed -i "s/SELINUX=enforcing/SELINUX=permissive/" /etc/selinux/config'
-```
 
 ##cloudinit stuff
 
@@ -109,13 +96,12 @@ those parameters can be set either in your config, profile or plan files
 
 ## additional parameters for plan files
 
-- profile: name of one of your profile
-- scripts: path of a custom script to inject with cloudinit. Note that it will override cmds part. You can either specify a full path or relative to where you re running kcli
+- *profile* name of one of your profile
+- *scripts* path of a custom script to inject with cloudinit. Note that it will override cmds part. You can either specify a full path or relative to where you re running kcli
 
 ## TODO
 
 - include README.md and man file in package
-- test with default centos7 cloud image and with ubuntu and rhel one
 - upload to pypi
 - ansible dynamic inventory 
 - ansible_playbook in deployment to apply to the deployment of a plan
@@ -126,6 +112,28 @@ those parameters can be set either in your config, profile or plan files
 - add disk feature
 - create disk3 and disk4 
 - unit tests
+
+## optional: prepare base template
+
+Not needed if you plan to use cloudinit built in feature but here are some indicative steps to tune your template
+
+```
+ROOTPW="unix1234"
+wget http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2
+qemu-img create -f qcow2 centos7.qcow2 40G
+virt-resize --expand /dev/sda1 CentOS-7-x86_64-GenericCloud.qcow2 centos7.qcow2
+virt-customize -a centos7.qcow2 --root-password password:$ROOTPW
+virt-customize -a centos7.qcow2 --run-command 'sed -i "s/PasswordAuthentication no/PasswordAuthentication yes/" /etc/ssh/sshd_config'
+virt-customize -a centos7.qcow2 --run-command 'sed -i "s/SELINUX=enforcing/SELINUX=permissive/" /etc/selinux/config'
+```
+
+and for static networking and multiple nics
+```
+virt-customize -a centos7.qcow2 --run-command 'sed -i "s/dhcp/static/" /etc/sysconfig/network-scripts/ifcfg-eth0'
+virt-customize -a centos7.qcow2 --run-command 'cp /etc/sysconfig/network-scripts/ifcfg-eth0 /etc/sysconfig/network-scripts/ifcfg-eth1'
+virt-customize -a centos7.qcow2 --run-command 'sed -i "s/eth0/eth1/" /etc/sysconfig/network-scripts/ifcfg-eth1'
+``
+
 
 ##Problems?
 
