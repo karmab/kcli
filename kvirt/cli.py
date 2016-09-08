@@ -13,15 +13,17 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 class Config():
     def load(self):
-        inifile = "%s/kvirt.yml" % os.environ.get('HOME')
+        inifile = "%s/kcli.yml" % os.environ.get('HOME')
         if not os.path.exists(inifile):
-            print "Missing kvirt.yml file.Leaving..."
-            os._exit(1)
-        with open(inifile, 'r') as entries:
-            ini = yaml.load(entries)
-        if 'default' not in ini or 'client' not in ini['default']:
-            print "Missing default section in config file.Leaving..."
-            os._exit(1)
+            # print "Missing kcli.yml file.Leaving..."
+            # os._exit(1)
+            ini = {'default': {'client': 'local'}, 'local': {}}
+        else:
+            with open(inifile, 'r') as entries:
+                ini = yaml.load(entries)
+            if 'default' not in ini or 'client' not in ini['default']:
+                print "Missing default section in config file.Leaving..."
+                os._exit(1)
         client = ini['default']['client']
         if client not in ini:
             print "Missing section for client %s in config file.Leaving..." % client
@@ -48,12 +50,14 @@ class Config():
         user = options.get('user', 'root')
         protocol = options.get('protocol', 'ssh')
         self.k = Kvirt(host=host, port=port, user=user, protocol=protocol)
-        profilefile = "%s/kvirt_profiles.yml" % os.environ.get('HOME')
+        profilefile = "%s/kcli_profiles.yml" % os.environ.get('HOME')
         if not os.path.exists(profilefile):
-            print "Missing kvirt_profiles.yml file.Leaving..."
-            os._exit(1)
-        with open(profilefile, 'r') as entries:
-            self.profiles = yaml.load(entries)
+            # print "Missing kcli_profiles.yml file.Leaving..."
+            self.profiles = {}
+            # os._exit(1)
+        else:
+            with open(profilefile, 'r') as entries:
+                self.profiles = yaml.load(entries)
 
 pass_config = click.make_pass_decorator(Config, ensure=True)
 
@@ -200,6 +204,9 @@ def report(config):
 def plan(config, inputfile, delete, plan):
     k = config.k
     if delete:
+        if plan == '':
+            click.secho("That would delete every vm...Not doing that", fg='red')
+            return
         click.confirm('Are you sure about deleting this plan', abort=True)
         for vm in k.list():
             name = vm[0]
@@ -210,11 +217,11 @@ def plan(config, inputfile, delete, plan):
         click.secho("Plan %s deleted!" % plan, fg='green')
         return
     if inputfile is None:
-        if os.path.exists('kvirt_plan.yml'):
-            click.secho("using default input file kvirt_plan.yml", fg='green')
-            inputfile = 'kvirt_plan.yml'
+        if os.path.exists('kcli_plan.yml'):
+            click.secho("using default input file kcli_plan.yml", fg='green')
+            inputfile = 'kcli_plan.yml'
         else:
-            click.secho("No input file found nor default kvirt_plan.yml.Leaving....", fg='red')
+            click.secho("No input file found nor default kcli_plan.yml.Leaving....", fg='red')
             os._exit(1)
     click.secho("Deploying vms from plan %s" % (plan), fg='green')
     default = config.default

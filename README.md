@@ -109,8 +109,20 @@ those parameters can be set either in your config, profile or plan files
 
 ## additional parameters for plan files
 
-TODO
+- scripts: path of a custom script to inject with cloudinit. Will be concatenated with cmds if presents. You can either specify a full path or relative to where you re running kcli
 
+## TODO
+
+- profile extra parameter in plan file
+- provide default options so that kvirt.yml and kvirt_profiles.yml can be optional
+- include README.md and man file in package
+- upload to pypi
+- ansible dynamic inventory 
+- ansible_playbook in deployment to apply to the deployment of a plan
+- progress bar when applicable
+- additional ip, subnet and gateway injection via cloudinit both in plan file and as parameter when using kvm create
+- extra cloudinit variables if usefull
+- unit tests
 
 ##Problems?
 

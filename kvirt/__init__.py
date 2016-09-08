@@ -27,18 +27,18 @@ guestwindows200864 = "windows_2008x64"
 
 class Kvirt:
     def __init__(self, host='127.0.0.1', port=None, user='root', protocol='ssh'):
-        if protocol == 'ssh':
+        if host == '127.0.0.1' or host == 'localhost':
+            url = "qemu://system"
+        elif protocol == 'ssh':
             url = "qemu+%s://%s@%s/system?socket=/var/run/libvirt/libvirt-sock" % (protocol, user, host)
         elif user and port:
             url = "qemu+%s://%s@%s:%s/system?socket=/var/run/libvirt/libvirt-sock" % (protocol, user, host, port)
         elif port:
             url = "qemu+%s://%s:%s/system?socket=/var/run/libvirt/libvirt-sock" % (protocol, host, port)
         else:
-            url = "qemu///system"
-            self.macaddr = []
+            url = "qemu://system"
         self.conn = libvirtopen(url)
         self.host = host
-        self.macaddr = []
 
     def close(self):
         conn = self.conn
