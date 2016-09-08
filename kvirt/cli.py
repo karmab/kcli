@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import click
-from defaults import NET1, POOL, NUMCPUS, MEMORY, DISKSIZE1, DISKINTERFACE1, DISKTHIN1, DISKINTERFACE2, DISKTHIN2, GUESTID, VNC, CLOUDINIT, START
+from defaults import NET1, POOL, NUMCPUS, MEMORY, DISKSIZE1, DISKINTERFACE1, DISKTHIN1, DISKSIZE2, DISKINTERFACE2, DISKTHIN2, GUESTID, VNC, CLOUDINIT, START
 from prettytable import PrettyTable
 from kvirt import Kvirt
 import os
@@ -15,18 +15,17 @@ class Config():
     def load(self):
         inifile = "%s/kcli.yml" % os.environ.get('HOME')
         if not os.path.exists(inifile):
-            # print "Missing kcli.yml file.Leaving..."
-            # os._exit(1)
             ini = {'default': {'client': 'local'}, 'local': {}}
+            click.secho("Using local hypervisor as no kcli.yml was found...", fg='green')
         else:
             with open(inifile, 'r') as entries:
                 ini = yaml.load(entries)
             if 'default' not in ini or 'client' not in ini['default']:
-                print "Missing default section in config file.Leaving..."
+                click.secho("Missing default section in config file. Leaving...", fg='red')
                 os._exit(1)
         client = ini['default']['client']
         if client not in ini:
-            print "Missing section for client %s in config file.Leaving..." % client
+            click.secho("Missing section for client %s in config file. Leaving..." % client, fg='red')
             os._exit(1)
         defaults = {}
         default = ini['default']
@@ -36,8 +35,9 @@ class Config():
         defaults['memory'] = int(default.get('memory', MEMORY))
         defaults['disksize1'] = int(default.get('disksize1', DISKSIZE1))
         defaults['diskinterface1'] = default.get('diskinterface1', DISKINTERFACE1)
-        defaults['diskinterface2'] = default.get('diskinterface2', DISKINTERFACE2)
         defaults['diskthin1'] = bool(default.get('diskthin1', DISKTHIN1))
+        defaults['disksize2'] = int(default.get('disksize1', DISKSIZE2))
+        defaults['diskinterface2'] = default.get('diskinterface2', DISKINTERFACE2)
         defaults['diskthin2'] = bool(default.get('diskthin2', DISKTHIN2))
         defaults['guestid'] = default.get('guestid', GUESTID)
         defaults['vnc'] = bool(default.get('vnc', VNC))
@@ -50,11 +50,12 @@ class Config():
         user = options.get('user', 'root')
         protocol = options.get('protocol', 'ssh')
         self.k = Kvirt(host=host, port=port, user=user, protocol=protocol)
+        if self.k.conn is None:
+            click.secho("Couldnt connect to specify hypervisor %s. Leaving..." % host, fg='red')
+            os._exit(1)
         profilefile = "%s/kcli_profiles.yml" % os.environ.get('HOME')
         if not os.path.exists(profilefile):
-            # print "Missing kcli_profiles.yml file.Leaving..."
             self.profiles = {}
-            # os._exit(1)
         else:
             with open(profilefile, 'r') as entries:
                 self.profiles = yaml.load(entries)
@@ -139,14 +140,14 @@ def create(config, profile, name):
     default = config.default
     profiles = config.profiles
     if profile not in profiles:
-        click.secho("Invalid profile %s.Leaving..." % profile, fg='red')
+        click.secho("Invalid profile %s. Leaving..." % profile, fg='red')
         os._exit(1)
     profile = profiles[profile]
     template = profile.get('template')
     description = ''
     net1 = profile.get('net1', default['net1'])
     if template is None or net1 is None:
-        click.secho("Missing info from profile %s.Leaving..." % profile, fg='red')
+        click.secho("Missing info from profile %s. Leaving..." % profile, fg='red')
         os._exit(1)
     numcpus = profile.get('numcpus', default['numcpus'])
     memory = profile.get('memory', default['memory'])
@@ -229,36 +230,38 @@ def plan(config, inputfile, delete, plan):
         vms = yaml.load(entries)
         for name in vms:
             profile = vms[name]
-            pool = profile.get('pool', default['pool'])
-            template = profile.get('template')
-            numcpus = profile.get('numcpus', default['numcpus'])
-            memory = profile.get('memory', default['memory'])
-            disksize1 = profile.get('disksize1', default['disksize1'])
-            diskinterface1 = profile.get('diskinterface', default['diskinterface1'])
-            diskthin1 = profile.get('diskthin1', default['diskthin1'])
-            disksize2 = profile.get('disksize2', 0)
-            diskinterface2 = profile.get('diskinterface', default['diskinterface2'])
-            diskthin2 = profile.get('diskthin2')
-            guestid = profile.get('guestid', default['guestid'])
-            vnc = profile.get('vnc', default['vnc'])
-            cloudinit = profile.get('cloudinit', default['cloudinit'])
-            start = profile.get('start', default['start'])
-            net1 = profile.get('net1', default['net1'])
-            net2 = profile.get('net2')
-            net3 = profile.get('net3')
-            net4 = profile.get('net4')
-            iso = profile.get('iso')
-            keys = profile.get('keys')
-            cmds = profile.get('cmds')
-            script = profile.get('script')
+            if 'profile' in profile.keys():
+                profiles = config.profiles
+                customprofile = profiles[profile['profile']]
+            else:
+                customprofile = {}
+            pool = next((e for e in [profile.get('pool'), customprofile.get('pool'), default['pool']] if e is not None))
+            template = next((e for e in [profile.get('template'), customprofile.get('template')] if e is not None), None)
+            numcpus = next((e for e in [profile.get('numcpus'), customprofile.get('numcpus'), default['numcpus']] if e is not None))
+            memory = next((e for e in [profile.get('memory'), customprofile.get('memory'), default['memory']] if e is not None))
+            disksize1 = next((e for e in [profile.get('disksize1'), customprofile.get('disksize1'), default['disksize1']] if e is not None))
+            diskinterface1 = next((e for e in [profile.get('diskinterface1'), customprofile.get('diskinterface1'), default['diskinterface1']] if e is not None))
+            diskthin1 = next((e for e in [profile.get('diskthin1'), customprofile.get('diskthin1'), default['diskthin1']] if e is not None))
+            disksize2 = next((e for e in [profile.get('disksize2'), customprofile.get('disksize2'), default['disksize2']] if e is not None))
+            diskinterface2 = next((e for e in [profile.get('diskinterface2'), customprofile.get('diskinterface2'), default['diskinterface2']] if e is not None))
+            diskthin2 = next((e for e in [profile.get('diskthin2'), customprofile.get('diskthin2')] if e is not None), None)
+            guestid = next((e for e in [profile.get('guestid'), customprofile.get('guestid'), default['guestid']] if e is not None))
+            vnc = next((e for e in [profile.get('vnc'), customprofile.get('vnc'), default['vnc']] if e is not None))
+            cloudinit = next((e for e in [profile.get('cloudinit'), customprofile.get('cloudinit'), default['cloudinit']] if e is not None))
+            start = next((e for e in [profile.get('start'), customprofile.get('start'), default['start']] if e is not None))
+            net1 = next((e for e in [profile.get('net1'), customprofile.get('net1'), default['net1']] if e is not None))
+            net2 = next((e for e in [profile.get('net2'), customprofile.get('net2')] if e is not None), None)
+            net3 = next((e for e in [profile.get('net3'), customprofile.get('net3')] if e is not None), None)
+            net4 = next((e for e in [profile.get('net4'), customprofile.get('net4')] if e is not None), None)
+            iso = next((e for e in [profile.get('iso'), customprofile.get('iso')] if e is not None), None)
+            keys = next((e for e in [profile.get('keys'), customprofile.get('keys')] if e is not None), None)
+            cmds = next((e for e in [profile.get('cmds'), customprofile.get('cmds')] if e is not None), None)
+            script = next((e for e in [profile.get('script'), customprofile.get('scripts')] if e is not None), None)
             if script is not None and os.path.exists(script):
                 scriptlines = [line.strip() for line in open(script).readlines()]
                 if not scriptlines:
                     break
-                if cmds is not None:
-                    cmds = cmds + scriptlines
-                else:
-                    cmds = scriptlines
+                cmds = scriptlines
             description = plan
             k.create(name=name, description=description, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disksize1=disksize1, diskthin1=diskthin1, diskinterface1=diskinterface1, disksize2=disksize2, diskthin2=diskthin2, diskinterface2=diskinterface2, net1=net1, net2=net2, net3=net3, net4=net4, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds)
             click.secho("%s deployed!" % name, fg='green')

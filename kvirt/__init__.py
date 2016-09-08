@@ -37,7 +37,10 @@ class Kvirt:
             url = "qemu+%s://%s:%s/system?socket=/var/run/libvirt/libvirt-sock" % (protocol, host, port)
         else:
             url = "qemu:///system"
-        self.conn = libvirtopen(url)
+        try:
+            self.conn = libvirtopen(url)
+        except Exception:
+            self.conn = None
         self.host = host
 
     def close(self):
@@ -227,7 +230,7 @@ class Kvirt:
         if cloudinit:
             if keys is not None:
                 keys = keys.split(';')
-            if cmds is not None and type(cmds) == 'str':
+            if cmds is not None and isinstance(cmds, str):
                 cmds = cmds.split(';')
             self._cloudinit(name, keys=keys, cmds=cmds)
             self._uploadiso(name, pool=pool)
