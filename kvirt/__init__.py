@@ -519,13 +519,14 @@ class Kvirt:
     def _cloudinit(self, name, keys=None, cmds=None, ip=None, netmask=None, gateway=None):
         with open('/tmp/meta-data', 'w') as metadata:
             metadata.write('instance-id: XXX\nlocal-hostname: %s\n' % name)
+            if ip is not None and gateway is not None and gateway is not None:
+                metadata.write("network-interfaces: |\n")
+                metadata.write("  iface eth0 inet static\n")
+                metadata.write("  address %s\n" % ip)
+                metadata.write("  netmask %s\n" % netmask)
+                metadata.write("  gateway %s\n" % gateway)
         with open('/tmp/user-data', 'w') as userdata:
             userdata.write('#cloud-config\nhostname: %s\n' % name)
-            if ip is not None and gateway is not None and gateway is not None:
-                userdata.write("nicname: eth0\n")
-                userdata.write("ip: %s\n" % ip)
-                userdata.write("netmask: %s\n" % netmask)
-                userdata.write("gateway: %s\n" % gateway)
             if keys is not None:
                 userdata.write("ssh_authorized_keys:\n")
                 for key in keys:
@@ -540,17 +541,7 @@ class Kvirt:
                     userdata.write("runcmd:\n")
                     for cmd in cmds:
                         userdata.write("- %s\n" % cmd)
-        isocmd = "mkisofs --quiet -o /tmp/%s.iso --volid cidata --joliet --rock /tmp/user-data /tmp/meta-data" % name
-        if ip is not None and gateway is not None and gateway is not None:
-            with open('/tmp/0000', 'w') as userdata:
-                userdata.write('auto lo\niface lo inet loopback\n\n')
-                userdata.write('auto eth0\niface eth0 inet static\n')
-                userdata.write('address %s\n' % ip)
-                userdata.write('netmask %s\n' % netmask)
-                userdata.write('gateway %s\n' % gateway)
-            isocmd = "%s /tmp/0000" % isocmd
-        # os.system("mkisofs --quiet -o /tmp/%s.iso --volid cidata --joliet --rock /tmp/user-data /tmp/meta-data" % name)
-        os.system(isocmd)
+        os.system("mkisofs --quiet -o /tmp/%s.iso --volid cidata --joliet --rock /tmp/user-data /tmp/meta-data" % name)
 
     def handler(self, stream, data, file_):
         return file_.read(data)

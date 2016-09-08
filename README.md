@@ -106,7 +106,6 @@ those parameters can be set either in your config, profile or plan files
 - ansible dynamic inventory 
 - ansible_playbook in deployment to apply to the deployment of a plan
 - progress bar when applicable
-- additional ip, subnet and gateway injection via cloudinit both in plan file and as parameter when using kvm create
 - extra cloudinit variables if usefull
 - update memory,cpu feature
 - add disk feature
