@@ -11,6 +11,7 @@ It started cos i switched from ovirt and needed a tool similar to [ovirt.py](htt
 pip install kcli
 ```
 You will also need to grab *mkisofs* for cloudinit isos to get generated
+Console access is based on remote-viewer
 
 To deploy from templates, grab images at [openstack](http://docs.openstack.org/image-guide/obtain-images.html)
 ## configuration

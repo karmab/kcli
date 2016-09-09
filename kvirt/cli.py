@@ -7,7 +7,7 @@ from kvirt import Kvirt
 import os
 import yaml
 
-VERSION = '0.99.2'
+VERSION = '0.99.3'
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 
@@ -116,17 +116,17 @@ def delete(config, name):
 def list(config, profiles, templates, isos):
     k = config.k
     if profiles:
-        for profile in config.profiles:
+        for profile in sorted(config.profiles):
             print profile
     elif templates:
-        for template in k.volumes():
+        for template in sorted(k.volumes()):
             print template
     elif isos:
-        for iso in k.volumes(iso=True):
+        for iso in sorted(k.volumes(iso=True)):
             print iso
     else:
         vms = PrettyTable(["Name", "Status", "Ips", "Source", "Description"])
-        for vm in k.list():
+        for vm in sorted(k.list()):
             vms.add_row(vm)
         print vms
 
@@ -151,9 +151,6 @@ def create(config, profile, ip1, ip2, ip3, ip4, name):
     template = profile.get('template')
     description = ''
     net1 = profile.get('net1', default['net1'])
-    if template is None or net1 is None:
-        click.secho("Missing info from profile %s. Leaving..." % profile, fg='red')
-        os._exit(1)
     numcpus = profile.get('numcpus', default['numcpus'])
     memory = profile.get('memory', default['memory'])
     pool = profile.get('pool', default['pool'])
@@ -219,7 +216,7 @@ def plan(config, inputfile, delete, plan):
             click.secho("That would delete every vm...Not doing that", fg='red')
             return
         click.confirm('Are you sure about deleting this plan', abort=True)
-        for vm in k.list():
+        for vm in sorted(k.list()):
             name = vm[0]
             description = vm[4]
             if description == plan:

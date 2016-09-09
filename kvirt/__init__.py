@@ -9,7 +9,7 @@ from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE
 import os
 import xml.etree.ElementTree as ET
 
-__version__ = "0.99.2"
+__version__ = "0.99.3"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -115,7 +115,7 @@ class Kvirt:
         <backingStore/>
       </backingStore>""" % (backingtype, backing)
         else:
-            backingvolume = None
+            backing = None
             backingxml = '<backingStore/>'
         diskxml1 = self._xmldisk(path=diskpath1, size=disksize1, backing=backing, diskformat=diskformat1)
         pool.createXML(diskxml1, 0)
@@ -131,10 +131,13 @@ class Kvirt:
             diskdev1, diskbus1 = 'hda', 'ide'
         if diskinterface2 != 'virtio':
             diskdev2, diskbus2 = 'hdb', 'ide'
-        if not iso:
-            iso = ''
-        if cloudinit:
-            iso = "%s/%s.iso" % (poolpath, name)
+        if iso is None:
+            if cloudinit:
+                iso = "%s/%s.iso" % (poolpath, name)
+            else:
+                iso = ''
+        else:
+            iso = "%s/%s" % (poolpath, iso)
         vmxml = """<domain type='%s'>
                   <name>%s</name>
                   <description>%s</description>
@@ -354,10 +357,7 @@ class Kvirt:
                 protocol = attributes['type']
                 port = attributes['port']
                 url = "%s://%s:%s" % (protocol, host, port)
-                if os.path.exists('/Users'):
-                    os.popen("/Applications/RemoteViewer.app/Contents/MacOS/RemoteViewer %s &" % url)
-                else:
-                    os.popen("remote-viewer %s &" % url)
+                os.popen("remote-viewer %s &" % url)
 
     def info(self, name):
         ips = []
