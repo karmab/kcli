@@ -5,7 +5,7 @@ setup(
     version='0.99.1',
     packages=find_packages(),
     include_package_data=True,
-    description='Script to manage libvirt',
+    description='Libvirt wrapper on steroids',
     url='http://github.com/karmab/kcli',
     author='Karim Boumedhel',
     author_email='karimboumedhel@gmail.com',
