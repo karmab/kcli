@@ -4,7 +4,7 @@
 [![Pypi](http://img.shields.io/pypi/v/kcli.svg)](https://pypi.python.org/pypi/kcli/)
 
 This script is meant to interact with a local/remote libvirt daemon and to easily deploy from templates ( optionally using cloudinit).
-It started cos i switched from ovirt and needed the same tool [ovirt.py](https://github.com/karmab/ovirt)
+It started cos i switched from ovirt and needed a tool similar to [ovirt.py](https://github.com/karmab/ovirt)
 
 ## installation
 ```
@@ -14,12 +14,42 @@ You will also need to grab mkisofs for cloudinit isos to get generated
 
 
 ## configuration
-You need to declare two configuration files
 
-- ~/kvirt.yml : Use this file to specify default settings, client and for every client, indicate connection details and specific settings
-- ~/kvirt_profiles.yml : Use this file to specify profiles (number of cpus, memory, size of disk,network,....) to use when deploying a vm
+If you want to only use your local libvirt daemon, no extra configuration is needed.
+Otherwise you will have to declare your settings in ~/kcli.yml. For instance,
 
-Note that you can specify settings either in default section, client section or within your profile.
+```
+default:
+ client: twix
+ numcpus: 2
+ diskthin1: true
+ memory: 512
+ disksize1: 10
+ protocol: ssh
+ cloudinit: true
+ net1: private1
+
+twix:
+ host: 192.168.0.6
+ pool: images
+```
+
+replace with your own client in default section and indicate host and protocol in the corresponding client section.
+Note that most of the parameters are actually optional, and can be overriden in the profile section ( or in a plan file)
+
+## profile configuration
+
+You can use the file ~/kvirt_profiles.yml to specify profiles (number of cpus, memory, size of disk,network,....) to use when deploying a vm.
+
+The samples directory contains examples to get you started
+
+## Using plans
+
+You can define your own plan files in yaml with a list of vms to create.
+
+You can point at an existing profile within your plans, define all parameters for the vms, or combine both approaches.
+
+Specific script and ip1, ip2, ip3 and ip4 can be used directly in the plan file.
 
 The samples directory contains examples to get you started
 
@@ -64,9 +94,9 @@ mkisofs  -o x.iso --volid cidata --joliet --rock user-data meta-data
 ```
 Also note that if you use cloudinit and dont specify ssh keys to inject, the default ~/.ssh/id_rsa.pub will be used, if present.
 
-## demos
+## demo
 
-[here](https://asciinema.org/a/31k7y6eu95ylhxnfyrqcx3qtj)
+ You can find one [here](https://asciinema.org/a/31k7y6eu95ylhxnfyrqcx3qtj)
 
 ## available parameters
 those parameters can be set either in your config, profile or plan files
@@ -97,12 +127,14 @@ those parameters can be set either in your config, profile or plan files
 ## additional parameters for plan files
 
 - *profile* name of one of your profile
-- *scripts* path of a custom script to inject with cloudinit. Note that it will override cmds part. You can either specify a full path or relative to where you re running kcli
+- *scripts* path of a custom script to inject with cloudinit. Note that it will override cmds part. You can either specify a full path or relative to where you're running kcli
+- *ip1* Primary ip
+- *ip2* Secondary ip
+- *ip3* Third ip
+- *ip4* Fourth ip
 
 ## TODO
 
-- include README.md and man file in package
-- upload to pypi
 - ansible dynamic inventory 
 - ansible_playbook in deployment to apply to the deployment of a plan
 - progress bar when applicable
@@ -131,7 +163,7 @@ and for static networking and multiple nics
 virt-customize -a centos7.qcow2 --run-command 'sed -i "s/dhcp/static/" /etc/sysconfig/network-scripts/ifcfg-eth0'
 virt-customize -a centos7.qcow2 --run-command 'cp /etc/sysconfig/network-scripts/ifcfg-eth0 /etc/sysconfig/network-scripts/ifcfg-eth1'
 virt-customize -a centos7.qcow2 --run-command 'sed -i "s/eth0/eth1/" /etc/sysconfig/network-scripts/ifcfg-eth1'
-``
+```
 
 
 ##Problems?

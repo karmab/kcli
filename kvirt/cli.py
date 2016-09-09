@@ -7,7 +7,7 @@ from kvirt import Kvirt
 import os
 import yaml
 
-VERSION = '0.1.1'
+VERSION = '0.99'
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 
@@ -68,6 +68,7 @@ pass_config = click.make_pass_decorator(Config, ensure=True)
 @pass_config
 # @click.option('-c', '--client',help='client', envvar='CLIENT')
 def cli(config):
+    """ Libvirt wrapper on steroids. Check out https://github.com/karmab/kcli!"""
     config.load()
 
 
@@ -132,12 +133,13 @@ def list(config, profiles, templates, isos):
 
 @cli.command()
 @click.option('-p', '--profile', help='Profile to use')
-@click.option('-1', '--ip', help='Optional Ip to assign to eth0')
-@click.option('-2', '--netmask', help='Optional Netmask')
-@click.option('-3', '--gateway', help='Optional Gateway')
+@click.option('-1', '--ip1', help='Optional Ip to assign to eth0. Netmask and gateway will be retrieved from profile')
+@click.option('-2', '--ip2', help='Optional Ip to assign to eth1. Netmask and gateway will be retrieved from profile')
+@click.option('-3', '--ip3', help='Optional Ip to assign to eth2. Netmask and gateway will be retrieved from profile')
+@click.option('-4', '--ip4', help='Optional Ip to assign to eth3. Netmask and gateway will be retrieved from profile')
 @click.argument('name')
 @pass_config
-def create(config, profile, ip, netmask, gateway, name):
+def create(config, profile, ip1, ip2, ip3, ip4, name):
     click.secho("Deploying vm %s from profile %s..." % (name, profile), fg='green')
     k = config.k
     default = config.default
@@ -171,7 +173,12 @@ def create(config, profile, ip, netmask, gateway, name):
     start = profile.get('start', default['start'])
     keys = profile.get('keys', None)
     cmds = profile.get('cmds', None)
-    k.create(name=name, description=description, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disksize1=disksize1, diskthin1=diskthin1, diskinterface1=diskinterface1, disksize2=disksize2, diskthin2=diskthin2, diskinterface2=diskinterface2, net1=net1, net2=net2, net3=net3, net4=net4, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds, ip=ip, netmask=netmask, gateway=gateway)
+    netmask1 = profile.get('netmask1')
+    gateway1 = profile.get('gateway1')
+    netmask2 = profile.get('netmask2')
+    netmask3 = profile.get('netmask3')
+    netmask4 = profile.get('netmask4')
+    k.create(name=name, description=description, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disksize1=disksize1, diskthin1=diskthin1, diskinterface1=diskinterface1, disksize2=disksize2, diskthin2=diskthin2, diskinterface2=diskinterface2, net1=net1, net2=net2, net3=net3, net4=net4, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds, ip1=ip1, netmask1=netmask1, gateway1=gateway1, ip2=ip2, netmask2=netmask2, ip3=ip3, netmask=netmask3, ip4=ip4, netmask4=netmask4)
 
 
 @cli.command()
@@ -260,13 +267,22 @@ def plan(config, inputfile, delete, plan):
             keys = next((e for e in [profile.get('keys'), customprofile.get('keys')] if e is not None), None)
             cmds = next((e for e in [profile.get('cmds'), customprofile.get('cmds')] if e is not None), None)
             script = next((e for e in [profile.get('script'), customprofile.get('scripts')] if e is not None), None)
+            netmask1 = next((e for e in [profile.get('netmask1'), customprofile.get('netmask1')] if e is not None), None)
+            gateway1 = next((e for e in [profile.get('gateway1'), customprofile.get('gateway1')] if e is not None), None)
+            netmask2 = next((e for e in [profile.get('netmask2'), customprofile.get('netmask2')] if e is not None), None)
+            netmask3 = next((e for e in [profile.get('netmask3'), customprofile.get('netmask3')] if e is not None), None)
+            netmask4 = next((e for e in [profile.get('netmask4'), customprofile.get('netmask4')] if e is not None), None)
+            ip1 = profile.get('ip1')
+            ip2 = profile.get('ip2')
+            ip3 = profile.get('ip3')
+            ip4 = profile.get('ip4')
             if script is not None and os.path.exists(script):
-                scriptlines = [line.strip() for line in open(script).readlines()]
+                scriptlines = [line.strip() for line in open(script).readlines() if line != '\n']
                 if not scriptlines:
                     break
                 cmds = scriptlines
             description = plan
-            k.create(name=name, description=description, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disksize1=disksize1, diskthin1=diskthin1, diskinterface1=diskinterface1, disksize2=disksize2, diskthin2=diskthin2, diskinterface2=diskinterface2, net1=net1, net2=net2, net3=net3, net4=net4, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds)
+            k.create(name=name, description=description, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disksize1=disksize1, diskthin1=diskthin1, diskinterface1=diskinterface1, disksize2=disksize2, diskthin2=diskthin2, diskinterface2=diskinterface2, net1=net1, net2=net2, net3=net3, net4=net4, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds, ip1=ip1, netmask1=netmask1, gateway1=gateway1, ip2=ip2, netmask2=netmask2, ip3=ip3, netmask3=netmask3, ip4=ip4, netmask4=netmask4)
             click.secho("%s deployed!" % name, fg='green')
 
 

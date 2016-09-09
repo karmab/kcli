@@ -1,10 +1,15 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""
+interact with a local/remote libvirt daemon
+"""
 
 from libvirt import open as libvirtopen
 from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE
 import os
 import xml.etree.ElementTree as ET
 
+__version__ = "0.99"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -56,7 +61,7 @@ class Kvirt:
         except:
             return False
 
-    def create(self, name, description='', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disksize1=10, diskthin1=True, diskinterface1='virtio', disksize2=0, diskthin2=True, diskinterface2='virtio', net1='default', net2=None, net3=None, net4=None, iso=None, vnc=False, cloudinit=True, start=True, keys=None, cmds=None, ip=None, netmask=None, gateway=None):
+    def create(self, name, description='', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disksize1=10, diskthin1=True, diskinterface1='virtio', disksize2=0, diskthin2=True, diskinterface2='virtio', net1='default', net2=None, net3=None, net4=None, iso=None, vnc=False, cloudinit=True, start=True, keys=None, cmds=None, ip1=None, netmask1=None, gateway1=None, ip2=None, netmask2=None, ip3=None, netmask3=None, ip4=None, netmask4=None):
         if vnc:
             display = 'vnc'
         else:
@@ -232,7 +237,7 @@ class Kvirt:
                 keys = keys.split(';')
             if cmds is not None and isinstance(cmds, str):
                 cmds = cmds.split(';')
-            self._cloudinit(name=name, keys=keys, cmds=cmds, ip=ip, netmask=netmask, gateway=gateway)
+            self._cloudinit(name=name, keys=keys, cmds=cmds, ip1=ip1, netmask1=netmask1, gateway1=gateway1, ip2=ip2, netmask2=netmask2, ip3=ip3, netmask3=netmask3, ip4=ip4, netmask4=netmask4)
             self._uploadiso(name, pool=pool)
         if start:
             vm.create()
@@ -516,15 +521,27 @@ class Kvirt:
         newxml = ET.tostring(tree)
         conn.defineXML(newxml)
 
-    def _cloudinit(self, name, keys=None, cmds=None, ip=None, netmask=None, gateway=None):
+    def _cloudinit(self, name, keys=None, cmds=None, ip1=None, netmask1=None, gateway1=None, ip2=None, netmask2=None, ip3=None, netmask3=None, ip4=None, netmask4=None):
         with open('/tmp/meta-data', 'w') as metadata:
             metadata.write('instance-id: XXX\nlocal-hostname: %s\n' % name)
-            if ip is not None and gateway is not None and gateway is not None:
+            if ip1 is not None and netmask1 is not None and gateway1 is not None:
                 metadata.write("network-interfaces: |\n")
                 metadata.write("  iface eth0 inet static\n")
-                metadata.write("  address %s\n" % ip)
-                metadata.write("  netmask %s\n" % netmask)
-                metadata.write("  gateway %s\n" % gateway)
+                metadata.write("  address %s\n" % ip1)
+                metadata.write("  netmask %s\n" % netmask1)
+                metadata.write("  gateway %s\n" % gateway1)
+                if ip2 is not None and netmask2 is not None:
+                    metadata.write("  iface eth1 inet static\n")
+                    metadata.write("  address %s\n" % ip2)
+                    metadata.write("  netmask %s\n" % netmask2)
+                if ip3 is not None and netmask3 is not None:
+                    metadata.write("  iface eth2 inet static\n")
+                    metadata.write("  address %s\n" % ip3)
+                    metadata.write("  netmask %s\n" % netmask3)
+                if ip4 is not None and netmask4 is not None:
+                    metadata.write("  iface eth3 inet static\n")
+                    metadata.write("  address %s\n" % ip4)
+                    metadata.write("  netmask %s\n" % netmask4)
         with open('/tmp/user-data', 'w') as userdata:
             userdata.write('#cloud-config\nhostname: %s\n' % name)
             if keys is not None:
