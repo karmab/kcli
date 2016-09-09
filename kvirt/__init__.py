@@ -408,6 +408,7 @@ class Kvirt:
         conn = self.conn
         for storage in conn.listStoragePools():
             storage = conn.storagePoolLookupByName(storage)
+            storage.refresh(0)
             storagexml = storage.XMLDesc(0)
             root = ET.fromstring(storagexml)
             for element in root.getiterator('path'):
