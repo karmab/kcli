@@ -9,7 +9,7 @@ from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE
 import os
 import xml.etree.ElementTree as ET
 
-__version__ = "0.99"
+__version__ = "0.99.1"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -305,7 +305,6 @@ class Kvirt:
             return status[vm.isActive()]
 
     def list(self):
-        # vms = PrettyTable(["Name", "Status", "Ips", "Description"])
         vms = []
         conn = self.conn
         status = {0: 'down', 1: 'up'}
@@ -324,8 +323,13 @@ class Kvirt:
                 for address in vm.interfaceAddresses(VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE).values():
                     ip = address['addrs'][0]['addr']
                     break
-            # vms.add_row([name, state, ip, description])
-            vms.append([name, state, ip, description])
+            source = ''
+            for element in root.getiterator('backingStore'):
+                source = element.find('source')
+                if source is not None:
+                    source = os.path.basename(source.get('file'))
+                    break
+            vms.append([name, state, ip, source, description])
         return vms
 
     def console(self, name):

@@ -144,25 +144,16 @@ those parameters can be set either in your config, profile or plan files
 - create disk3 and disk4 
 - unit tests
 
-## optional: prepare base template
+## using dynamic inventory
 
-Not needed if you plan to use cloudinit built in feature but here are some indicative steps to tune your template
+you can check klist.py in the extra directory and use as a dynamic inventory for ansible
+The script uses sames conf that kcli ( and defaults to local hypervisor if no conf is found)
+note you will only get ansible_ip for vm within private networks, not bridged one as they are not reported
+Interesting thing is that the script will try to guess the type of vm based on its template, if present, and populate ansible_user accordingly
+Try it with
 
 ```
-ROOTPW="unix1234"
-wget http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2
-qemu-img create -f qcow2 centos7.qcow2 40G
-virt-resize --expand /dev/sda1 CentOS-7-x86_64-GenericCloud.qcow2 centos7.qcow2
-virt-customize -a centos7.qcow2 --root-password password:$ROOTPW
-virt-customize -a centos7.qcow2 --run-command 'sed -i "s/PasswordAuthentication no/PasswordAuthentication yes/" /etc/ssh/sshd_config'
-virt-customize -a centos7.qcow2 --run-command 'sed -i "s/SELINUX=enforcing/SELINUX=permissive/" /etc/selinux/config'
-```
-
-and for static networking and multiple nics
-```
-virt-customize -a centos7.qcow2 --run-command 'sed -i "s/dhcp/static/" /etc/sysconfig/network-scripts/ifcfg-eth0'
-virt-customize -a centos7.qcow2 --run-command 'cp /etc/sysconfig/network-scripts/ifcfg-eth0 /etc/sysconfig/network-scripts/ifcfg-eth1'
-virt-customize -a centos7.qcow2 --run-command 'sed -i "s/eth0/eth1/" /etc/sysconfig/network-scripts/ifcfg-eth1'
+python extra/klist.py --list
 ```
 
 

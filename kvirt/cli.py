@@ -7,7 +7,7 @@ from kvirt import Kvirt
 import os
 import yaml
 
-VERSION = '0.99'
+VERSION = '0.99.1'
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 
@@ -125,7 +125,7 @@ def list(config, profiles, templates, isos):
         for iso in k.volumes(iso=True):
             print iso
     else:
-        vms = PrettyTable(["Name", "Status", "Ips", "Description"])
+        vms = PrettyTable(["Name", "Status", "Ips", "Source", "Description"])
         for vm in k.list():
             vms.add_row(vm)
         print vms
@@ -178,7 +178,7 @@ def create(config, profile, ip1, ip2, ip3, ip4, name):
     netmask2 = profile.get('netmask2')
     netmask3 = profile.get('netmask3')
     netmask4 = profile.get('netmask4')
-    k.create(name=name, description=description, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disksize1=disksize1, diskthin1=diskthin1, diskinterface1=diskinterface1, disksize2=disksize2, diskthin2=diskthin2, diskinterface2=diskinterface2, net1=net1, net2=net2, net3=net3, net4=net4, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds, ip1=ip1, netmask1=netmask1, gateway1=gateway1, ip2=ip2, netmask2=netmask2, ip3=ip3, netmask=netmask3, ip4=ip4, netmask4=netmask4)
+    k.create(name=name, description=description, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disksize1=disksize1, diskthin1=diskthin1, diskinterface1=diskinterface1, disksize2=disksize2, diskthin2=diskthin2, diskinterface2=diskinterface2, net1=net1, net2=net2, net3=net3, net4=net4, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds, ip1=ip1, netmask1=netmask1, gateway1=gateway1, ip2=ip2, netmask2=netmask2, ip3=ip3, netmask3=netmask3, ip4=ip4, netmask4=netmask4)
 
 
 @cli.command()
@@ -221,7 +221,7 @@ def plan(config, inputfile, delete, plan):
         click.confirm('Are you sure about deleting this plan', abort=True)
         for vm in k.list():
             name = vm[0]
-            description = vm[3]
+            description = vm[4]
             if description == plan:
                 k.delete(name)
                 click.secho("%s deleted!" % name, fg='green')
