@@ -12,6 +12,7 @@ pip install kcli
 ```
 You will also need to grab *mkisofs* for cloudinit isos to get generated
 
+To deploy from templates, grab images at [openstack](http://docs.openstack.org/image-guide/obtain-images.html)
 ## configuration
 
 If you want to only use your local libvirt daemon, no extra configuration is needed.
