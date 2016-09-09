@@ -228,6 +228,10 @@ class Kvirt:
                 </graphics>
                 <memballoon model='virtio'/>
                 </devices>
+                <cpu match='exact'>
+                  <model>Westmere</model>
+                   <feature policy='require' name='vmx'/>
+                </cpu>
                 </domain>""" % (vmxml, display)
         conn.defineXML(vmxml)
         vm = conn.lookupByName(name)

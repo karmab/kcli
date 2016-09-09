@@ -73,6 +73,8 @@ class KcliInventory(object):
             ip = vm[2]
             template = vm[3]
             description = vm[4]
+            if description == '':
+                description = 'kvirt'
             if description not in metadata:
                 metadata[description] = {"hosts": [name], "vars": {"plan": description}}
             else:

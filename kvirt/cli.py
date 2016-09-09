@@ -191,12 +191,12 @@ def clone(config, base, full, name):
     k.clone(base, name, full)
 
 
-@cli.command()
-@click.option('-m', '--memory', help='Memory to set')
-@click.argument('name')
-@pass_config
-def update(config, memory, name):
-    click.secho("Updated memory of vm %s to %d..." % (name, memory), fg='green')
+# @cli.command()
+# @click.option('-m', '--memory', help='Memory to set')
+# @click.argument('name')
+# @pass_config
+# def update(config, memory, name):
+#     click.secho("Updated memory of vm %s to %d..." % (name, memory), fg='green')
 
 
 @cli.command()

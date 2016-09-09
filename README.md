@@ -10,8 +10,7 @@ It started cos i switched from ovirt and needed a tool similar to [ovirt.py](htt
 ```
 pip install kcli
 ```
-You will also need to grab mkisofs for cloudinit isos to get generated
-
+You will also need to grab *mkisofs* for cloudinit isos to get generated
 
 ## configuration
 
@@ -43,16 +42,6 @@ You can use the file ~/kvirt_profiles.yml to specify profiles (number of cpus, m
 
 The samples directory contains examples to get you started
 
-## Using plans
-
-You can define your own plan files in yaml with a list of vms to create.
-
-You can point at an existing profile within your plans, define all parameters for the vms, or combine both approaches.
-
-Specific script and ip1, ip2, ip3 and ip4 can be used directly in the plan file.
-
-The samples directory contains examples to get you started
-
 ## How to use
 
 - get info on your kvm setup
@@ -76,29 +65,31 @@ The samples directory contains examples to get you started
 - delete all vms from plan x
   - `kcli plan -d x` 
 
-## about deploying plans
-
-you can also define a yaml file with a list of vms to deploy ( look at the sample) and deploy it with kcli plan
-
-Note that the description of the vm will automatically be set to the plan name, and this value will be used when deleting the entire plan as a way to locate matching vms.  
-
-
-
-
 ##cloudinit stuff
 
 if cloudinit is enabled (it is by default), a custom iso is generated on the fly for your vm ( using mkisofs) and uploaded to your kvm instance ( using the API).
+the iso handles static networking configuration, hostname setting, inyecting ssh keys and running specific commands
 
-```
-mkisofs  -o x.iso --volid cidata --joliet --rock user-data meta-data
-```
-Also note that if you use cloudinit and dont specify ssh keys to inject, the default ~/.ssh/id_rsa.pub will be used, if present.
+Also note that if you use cloudinit but dont specify ssh keys to inject, the default ~/.ssh/id_rsa.pub will be used, if present.
+
+## Using plans
+
+you can also define plan files in yaml with a list of vms to deploy ( look at the sample) and deploy it with kcli plan
+
+You can point at an existing profile within your plans, define all parameters for the vms, or combine both approaches.
+
+Specific script and ip1, ip2, ip3 and ip4 can be used directly in the plan file.
+
+The samples directory contains examples to get you started
+
+Note that the description of the vm will automatically be set to the plan name, and this value will be used when deleting the entire plan as a way to locate matching vms.  
 
 ## demo
 
- You can find one [here](https://asciinema.org/a/31k7y6eu95ylhxnfyrqcx3qtj)
+You can find one [here](https://asciinema.org/a/31k7y6eu95ylhxnfyrqcx3qtj)
 
 ## available parameters
+
 those parameters can be set either in your config, profile or plan files
 
 - *numcpus* Defaults to 2
@@ -135,25 +126,31 @@ those parameters can be set either in your config, profile or plan files
 
 ## TODO
 
-- ansible dynamic inventory 
-- ansible_playbook in deployment to apply to the deployment of a plan
 - progress bar when applicable
+- unit tests
 - extra cloudinit variables if usefull
-- update memory,cpu feature
+- update memory, cpu feature
 - add disk feature
 - create disk3 and disk4 
-- unit tests
+- make sure forcing cpu fallback to Westmere doesnt impact features
 
 ## using dynamic inventory
 
-you can check klist.py in the extra directory and use as a dynamic inventory for ansible
-The script uses sames conf that kcli ( and defaults to local hypervisor if no conf is found)
+you can check klist.py in the extra directory and use it as a dynamic inventory for ansible
+The script uses sames conf that kcli ( and as such defaults to local hypervisor if no conf is present)
+
 note you will only get ansible_ip for vm within private networks, not bridged one as they are not reported
+
+vm will be grouped by plan, or put in the kvirt group if they dont belong to any plan.
+
 Interesting thing is that the script will try to guess the type of vm based on its template, if present, and populate ansible_user accordingly
-Try it with
+
+Try it with:
 
 ```
 python extra/klist.py --list
+
+ansible all -i extra/klist.py -m ping
 ```
 
 
