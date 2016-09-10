@@ -9,7 +9,7 @@ from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE
 import os
 import xml.etree.ElementTree as ET
 
-__version__ = "0.99.4"
+__version__ = "0.99.5"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -61,7 +61,7 @@ class Kvirt:
         except:
             return False
 
-    def create(self, name, description='', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disksize1=10, diskthin1=True, diskinterface1='virtio', disksize2=0, diskthin2=True, diskinterface2='virtio', net1='default', net2=None, net3=None, net4=None, iso=None, vnc=False, cloudinit=True, start=True, keys=None, cmds=None, ip1=None, netmask1=None, gateway1=None, ip2=None, netmask2=None, ip3=None, netmask3=None, ip4=None, netmask4=None):
+    def create(self, name, title='', description='kvirt', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disksize1=10, diskthin1=True, diskinterface1='virtio', disksize2=0, diskthin2=True, diskinterface2='virtio', net1='default', net2=None, net3=None, net4=None, iso=None, vnc=False, cloudinit=True, start=True, keys=None, cmds=None, ip1=None, netmask1=None, gateway1=None, ip2=None, netmask2=None, ip3=None, netmask3=None, ip4=None, netmask4=None):
         if vnc:
             display = 'vnc'
         else:
@@ -140,6 +140,7 @@ class Kvirt:
             iso = "%s/%s" % (poolpath, iso)
         vmxml = """<domain type='%s'>
                   <name>%s</name>
+                  <title>%s</title>
                   <description>%s</description>
                   <memory unit='MiB'>%d</memory>
                   <vcpu>%d</vcpu>
@@ -165,7 +166,7 @@ class Kvirt:
                     <source file='%s'/>
                     %s
                     <target dev='%s' bus='%s'/>
-                    </disk>""" % (virttype, name, description, memory, numcpus, machine, emulator, diskformat1, diskpath1, backingxml, diskdev1, diskbus1)
+                    </disk>""" % (virttype, name, title, description, memory, numcpus, machine, emulator, diskformat1, diskpath1, backingxml, diskdev1, diskbus1)
         if disksize2:
             vmxml = """%s
                     <disk type='file' device='disk'>
@@ -323,6 +324,11 @@ class Kvirt:
                 description = description[0].text
             else:
                 description = ''
+            title = root.getiterator('title')
+            if title:
+                title = title[0].text
+            else:
+                title = ''
             name = vm.name()
             state = status[vm.isActive()]
             ip = ''
@@ -336,7 +342,7 @@ class Kvirt:
                 if source is not None:
                     source = os.path.basename(source.get('file'))
                     break
-            vms.append([name, state, ip, source, description])
+            vms.append([name, state, ip, source, description, title])
         return vms
 
     def console(self, name):
@@ -363,6 +369,8 @@ class Kvirt:
         ips = []
         conn = self.conn
         vm = conn.lookupByName(name)
+        xml = vm.XMLDesc(0)
+        root = ET.fromstring(xml)
         if not vm:
             print "VM %s not found" % name
         state = 'down'
@@ -373,11 +381,21 @@ class Kvirt:
             state = 'up'
         print "name: %s" % name
         print "status: %s" % state
+        description = root.getiterator('description')
+        if description:
+            description = description[0].text
+        else:
+            description = ''
+        title = root.getiterator('title')
+        if title:
+            title = title[0].text
+        else:
+            title = ''
+        print "description: %s" % description
+        print "title: %s" % title
         if vm.isActive():
             print "cpus: %s" % vm.maxVcpus()
         print "memory: %sMB" % int(memory)
-        xml = vm.XMLDesc(0)
-        root = ET.fromstring(xml)
         nicnumber = 0
         for element in root.getiterator('interface'):
             networktype = element.get('type')

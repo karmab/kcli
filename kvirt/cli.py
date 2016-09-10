@@ -7,7 +7,7 @@ from kvirt import Kvirt
 import os
 import yaml
 
-VERSION = '0.99.4'
+VERSION = '0.99.5'
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 
@@ -125,7 +125,7 @@ def list(config, profiles, templates, isos):
         for iso in sorted(k.volumes(iso=True)):
             print iso
     else:
-        vms = PrettyTable(["Name", "Status", "Ips", "Source", "Description"])
+        vms = PrettyTable(["Name", "Status", "Ips", "Source", "Description", "Profile"])
         for vm in sorted(k.list()):
             vms.add_row(vm)
         print vms
@@ -147,9 +147,10 @@ def create(config, profile, ip1, ip2, ip3, ip4, name):
     if profile not in profiles:
         click.secho("Invalid profile %s. Leaving..." % profile, fg='red')
         os._exit(1)
+    title = profile
     profile = profiles[profile]
     template = profile.get('template')
-    description = ''
+    description = 'kvirt'
     net1 = profile.get('net1', default['net1'])
     numcpus = profile.get('numcpus', default['numcpus'])
     memory = profile.get('memory', default['memory'])
@@ -175,7 +176,16 @@ def create(config, profile, ip1, ip2, ip3, ip4, name):
     netmask2 = profile.get('netmask2')
     netmask3 = profile.get('netmask3')
     netmask4 = profile.get('netmask4')
-    k.create(name=name, description=description, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disksize1=disksize1, diskthin1=diskthin1, diskinterface1=diskinterface1, disksize2=disksize2, diskthin2=diskthin2, diskinterface2=diskinterface2, net1=net1, net2=net2, net3=net3, net4=net4, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds, ip1=ip1, netmask1=netmask1, gateway1=gateway1, ip2=ip2, netmask2=netmask2, ip3=ip3, netmask3=netmask3, ip4=ip4, netmask4=netmask4)
+    script = profile.get('script')
+    if script is not None:
+        if not os.path.exists(script):
+            click.secho("Script %s not found.Ignoring..." % script, fg='red')
+            script = None
+        else:
+            scriptlines = [line.strip() for line in open(script).readlines() if line != '\n']
+            if scriptlines:
+                cmds = scriptlines
+    k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disksize1=disksize1, diskthin1=diskthin1, diskinterface1=diskinterface1, disksize2=disksize2, diskthin2=diskthin2, diskinterface2=diskinterface2, net1=net1, net2=net2, net3=net3, net4=net4, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds, ip1=ip1, netmask1=netmask1, gateway1=gateway1, ip2=ip2, netmask2=netmask2, ip3=ip3, netmask3=netmask3, ip4=ip4, netmask4=netmask4)
 
 
 @cli.command()
@@ -242,6 +252,8 @@ def plan(config, inputfile, delete, plan):
                 customprofile = profiles[profile['profile']]
             else:
                 customprofile = {}
+            description = plan
+            title = profile['profile']
             pool = next((e for e in [profile.get('pool'), customprofile.get('pool'), default['pool']] if e is not None))
             template = next((e for e in [profile.get('template'), customprofile.get('template')] if e is not None), None)
             numcpus = next((e for e in [profile.get('numcpus'), customprofile.get('numcpus'), default['numcpus']] if e is not None))
@@ -263,7 +275,6 @@ def plan(config, inputfile, delete, plan):
             iso = next((e for e in [profile.get('iso'), customprofile.get('iso')] if e is not None), None)
             keys = next((e for e in [profile.get('keys'), customprofile.get('keys')] if e is not None), None)
             cmds = next((e for e in [profile.get('cmds'), customprofile.get('cmds')] if e is not None), None)
-            script = next((e for e in [profile.get('script'), customprofile.get('scripts')] if e is not None), None)
             netmask1 = next((e for e in [profile.get('netmask1'), customprofile.get('netmask1')] if e is not None), None)
             gateway1 = next((e for e in [profile.get('gateway1'), customprofile.get('gateway1')] if e is not None), None)
             netmask2 = next((e for e in [profile.get('netmask2'), customprofile.get('netmask2')] if e is not None), None)
@@ -273,13 +284,12 @@ def plan(config, inputfile, delete, plan):
             ip2 = profile.get('ip2')
             ip3 = profile.get('ip3')
             ip4 = profile.get('ip4')
+            script = next((e for e in [profile.get('script'), customprofile.get('scripts')] if e is not None), None)
             if script is not None and os.path.exists(script):
                 scriptlines = [line.strip() for line in open(script).readlines() if line != '\n']
-                if not scriptlines:
-                    break
-                cmds = scriptlines
-            description = plan
-            k.create(name=name, description=description, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disksize1=disksize1, diskthin1=diskthin1, diskinterface1=diskinterface1, disksize2=disksize2, diskthin2=diskthin2, diskinterface2=diskinterface2, net1=net1, net2=net2, net3=net3, net4=net4, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds, ip1=ip1, netmask1=netmask1, gateway1=gateway1, ip2=ip2, netmask2=netmask2, ip3=ip3, netmask3=netmask3, ip4=ip4, netmask4=netmask4)
+                if scriptlines:
+                    cmds = scriptlines
+            k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disksize1=disksize1, diskthin1=diskthin1, diskinterface1=diskinterface1, disksize2=disksize2, diskthin2=diskthin2, diskinterface2=diskinterface2, net1=net1, net2=net2, net3=net3, net4=net4, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds, ip1=ip1, netmask1=netmask1, gateway1=gateway1, ip2=ip2, netmask2=netmask2, ip3=ip3, netmask3=netmask3, ip4=ip4, netmask4=netmask4)
             click.secho("%s deployed!" % name, fg='green')
 
 

@@ -115,20 +115,21 @@ those parameters can be set either in your config, profile or plan files
 - *start* Defaults to true
 - *keys* (optional)
 - *cmds* (optional)
+- *profile* name of one of your profile. Only checked in profile or plan file
+- *scripts* path of a custom script to inject with cloudinit. Note that it will override cmds part. You can either specify a full path or relative to where you're running kcli. Only checked in profile or plan file
 
 
 ## additional parameters for plan files
 
-- *profile* name of one of your profile
-- *scripts* path of a custom script to inject with cloudinit. Note that it will override cmds part. You can either specify a full path or relative to where you're running kcli
 - *ip1* Primary ip
 - *ip2* Secondary ip
 - *ip3* Third ip
 - *ip4* Fourth ip
 
+Note those ips can also be provided on command line when creating a single vm
+
 ## TODO
 
-- unit tests
 - extra cloudinit variables if usefull
 - update memory, cpu feature
 - add disk feature
