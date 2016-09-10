@@ -305,11 +305,11 @@ class Kvirt:
     def status(self, name):
         conn = self.conn
         status = {0: 'down', 1: 'up'}
-        vm = conn.lookupByName(name)
-        if not vm:
+        try:
+            vm = conn.lookupByName(name)
+        except:
             return None
-        else:
-            return status[vm.isActive()]
+        return status[vm.isActive()]
 
     def list(self):
         vms = []

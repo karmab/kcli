@@ -128,7 +128,6 @@ those parameters can be set either in your config, profile or plan files
 
 ## TODO
 
-- progress bar when applicable
 - unit tests
 - extra cloudinit variables if usefull
 - update memory, cpu feature
