@@ -9,7 +9,7 @@ from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE
 import os
 import xml.etree.ElementTree as ET
 
-__version__ = "0.99.3"
+__version__ = "0.99.4"
 
 KB = 1024 * 1024
 MB = 1024 * KB
