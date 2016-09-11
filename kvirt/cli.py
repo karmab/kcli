@@ -137,8 +137,14 @@ def switch(config, client):
 def list(config, clients, profiles, templates, isos):
     k = config.k
     if clients:
+        clientstable = PrettyTable(["Name", "Current"])
+        clientstable.align["Name"] = "l"
         for client in sorted(config.clients):
-            print client
+            if client == config.client:
+                clientstable.add_row([client, 'X'])
+            else:
+                clientstable.add_row([client, ''])
+        print clientstable
     elif profiles:
         for profile in sorted(config.profiles):
             print profile
@@ -274,10 +280,11 @@ def plan(config, inputfile, delete, plan):
             if 'profile' in profile.keys():
                 profiles = config.profiles
                 customprofile = profiles[profile['profile']]
+                title = profile['profile']
             else:
                 customprofile = {}
+                title = plan
             description = plan
-            title = profile['profile']
             pool = next((e for e in [profile.get('pool'), customprofile.get('pool'), default['pool']] if e is not None))
             template = next((e for e in [profile.get('template'), customprofile.get('template')] if e is not None), None)
             numcpus = next((e for e in [profile.get('numcpus'), customprofile.get('numcpus'), default['numcpus']] if e is not None))

@@ -61,7 +61,7 @@ class Kvirt:
         except:
             return False
 
-    def create(self, name, title='', description='kvirt', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disksize1=10, diskthin1=True, diskinterface1='virtio', disksize2=0, diskthin2=True, diskinterface2='virtio', net1='default', net2=None, net3=None, net4=None, iso=None, vnc=False, cloudinit=True, start=True, keys=None, cmds=None, ip1=None, netmask1=None, gateway1=None, ip2=None, netmask2=None, ip3=None, netmask3=None, ip4=None, netmask4=None):
+    def create(self, name, title='', description='kvirt', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disksize1=10, diskthin1=True, diskinterface1='virtio', disksize2=0, diskthin2=True, diskinterface2='virtio', net1='default', net2=None, net3=None, net4=None, iso=None, vnc=False, cloudinit=True, start=True, keys=None, cmds=None, ip1=None, netmask1=None, gateway1=None, ip2=None, netmask2=None, ip3=None, netmask3=None, ip4=None, netmask4=None, nested=True):
         if vnc:
             display = 'vnc'
         else:
@@ -138,10 +138,21 @@ class Kvirt:
                 iso = ''
         else:
             iso = "%s/%s" % (poolpath, iso)
+        if ip1 is not None:
+            location = """<sysinfo type='smbios'>
+                    <baseBoard>
+                    <entry name='location'>%s</entry>
+                    </baseBoard>
+                    </sysinfo>""" % ip1
+            sysinfo = "<smbios mode='sysinfo'/>"
+        else:
+            location = ''
+            sysinfo = ''
         vmxml = """<domain type='%s'>
                   <name>%s</name>
                   <title>%s</title>
                   <description>%s</description>
+                  %s
                   <memory unit='MiB'>%d</memory>
                   <vcpu>%d</vcpu>
                   <os>
@@ -149,6 +160,7 @@ class Kvirt:
                     <boot dev='hd'/>
                     <boot dev='cdrom'/>
                     <bootmenu enable='yes'/>
+                    %s
                   </os>
                   <features>
                     <acpi/>
@@ -166,7 +178,7 @@ class Kvirt:
                     <source file='%s'/>
                     %s
                     <target dev='%s' bus='%s'/>
-                    </disk>""" % (virttype, name, title, description, memory, numcpus, machine, emulator, diskformat1, diskpath1, backingxml, diskdev1, diskbus1)
+                    </disk>""" % (virttype, name, title, description, location, memory, numcpus, machine, sysinfo, emulator, diskformat1, diskpath1, backingxml, diskdev1, diskbus1)
         if disksize2:
             vmxml = """%s
                     <disk type='file' device='disk'>
@@ -224,6 +236,13 @@ class Kvirt:
               <source %s='%s'/>
             <model type='virtio'/>
             </interface>""" % (vmxml, sourcenet4, sourcenet4, net4)
+        if nested:
+            nestedxml = """<cpu match='exact'>
+                  <model>Westmere</model>
+                   <feature policy='require' name='vmx'/>
+                </cpu>"""
+        else:
+            nestedxml = ""
         vmxml = """%s
                 <input type='tablet' bus='usb'/>
                  <input type='mouse' bus='ps2'/>
@@ -232,11 +251,8 @@ class Kvirt:
                 </graphics>
                 <memballoon model='virtio'/>
                 </devices>
-                <cpu match='exact'>
-                  <model>Westmere</model>
-                   <feature policy='require' name='vmx'/>
-                </cpu>
-                </domain>""" % (vmxml, display)
+                %s
+                </domain>""" % (vmxml, display, nestedxml)
         conn.defineXML(vmxml)
         vm = conn.lookupByName(name)
         vm.setAutostart(1)
@@ -336,6 +352,11 @@ class Kvirt:
                 for address in vm.interfaceAddresses(VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE).values():
                     ip = address['addrs'][0]['addr']
                     break
+            for entry in root.getiterator('entry'):
+                attributes = entry.attrib
+                if attributes['name'] == 'location':
+                    ip = entry.text
+                    break
             source = ''
             for element in root.getiterator('backingStore'):
                 source = element.find('source')
@@ -413,6 +434,12 @@ class Kvirt:
                     if address['hwaddr'] == mac:
                         ip = address['addrs'][0]['addr']
                         ips.append(ip)
+        for entry in root.getiterator('entry'):
+            attributes = entry.attrib
+            if attributes['name'] == 'location':
+                ip = entry.text
+                ips.append(ip)
+                break
             nicnumber = nicnumber + 1
         for element in root.getiterator('disk'):
             disktype = element.get('device')

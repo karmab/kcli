@@ -98,10 +98,10 @@ those parameters can be set either in your config, profile or plan files
 - *memory* Defaults to 512
 - *guestid* Defaults to guestrhel764
 - *pool* Defaults to default
-- *disksize1* Defaults to 10
 - *template* Should point to your base cloud image(optional)
+- *disksize1* Defaults to 10
 - *diskthin1* Defaults to true
-- *diskinterface1* Defaults to virtio
+- *diskinterface1* Defaults to virtio. Could also be ide, if vm lacks virtio drivers
 - *disksize2* Defaults to 0( not created by default)
 - *diskthin2* Defaults to true
 - *diskinterface2* Defaults to virtio  
