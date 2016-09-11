@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import click
+import fileinput
 from defaults import NET1, POOL, NUMCPUS, MEMORY, DISKSIZE1, DISKINTERFACE1, DISKTHIN1, DISKSIZE2, DISKINTERFACE2, DISKTHIN2, GUESTID, VNC, CLOUDINIT, START
 from prettytable import PrettyTable
 from kvirt import Kvirt
@@ -23,9 +24,10 @@ class Config():
             if 'default' not in ini or 'client' not in ini['default']:
                 click.secho("Missing default section in config file. Leaving...", fg='red')
                 os._exit(1)
-        client = ini['default']['client']
-        if client not in ini:
-            click.secho("Missing section for client %s in config file. Leaving..." % client, fg='red')
+        self.clients = [e for e in ini if e != 'default']
+        self.client = ini['default']['client']
+        if self.client not in ini:
+            click.secho("Missing section for client %s in config file. Leaving..." % self.client, fg='red')
             os._exit(1)
         defaults = {}
         default = ini['default']
@@ -44,7 +46,7 @@ class Config():
         defaults['cloudinit'] = bool(default.get('cloudinit', CLOUDINIT))
         defaults['start'] = bool(default.get('start', START))
         self.default = defaults
-        options = ini[client]
+        options = ini[self.client]
         host = options.get('host', '127.0.0.1')
         port = options.get('port', None)
         user = options.get('user', 'root')
@@ -109,13 +111,35 @@ def delete(config, name):
 
 
 @cli.command()
+@click.argument('client')
+@pass_config
+def switch(config, client):
+    # k = config.k
+    if client not in config.clients:
+        click.secho("Client %s not found in config.Leaving...." % client, fg='green')
+        os._exit(1)
+    click.secho("Switching to client %s..." % client, fg='green')
+    inifile = "%s/kcli.yml" % os.environ.get('HOME')
+    if os.path.exists(inifile):
+        for line in fileinput.input(inifile, inplace=True):
+            if 'client' in line:
+                print " client: %s" % client
+            else:
+                print line
+
+
+@cli.command()
+@click.option('-c', '--clients', is_flag=True)
 @click.option('-p', '--profiles', is_flag=True)
 @click.option('-t', '--templates', is_flag=True)
 @click.option('-i', '--isos', is_flag=True)
 @pass_config
-def list(config, profiles, templates, isos):
+def list(config, clients, profiles, templates, isos):
     k = config.k
-    if profiles:
+    if clients:
+        for client in sorted(config.clients):
+            print client
+    elif profiles:
         for profile in sorted(config.profiles):
             print profile
     elif templates:
@@ -209,7 +233,7 @@ def clone(config, base, full, name):
 @cli.command()
 @pass_config
 def report(config):
-    click.secho("Reporting setup...", fg='green')
+    click.secho("Reporting setup for client %s..." % config.client, fg='green')
     k = config.k
     k.report()
 
