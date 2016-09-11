@@ -9,7 +9,7 @@ It started cos i switched from ovirt and needed a tool similar to [ovirt.py](htt
 
 ## demo
 
-[![asciicast](https://asciinema.org/a/3p0cn60p0c0j9wd3hzyrs4m0f.png)](https://asciinema.org/a/3p0cn60p0c0j9wd3hzyrs4m0f)
+[![asciicast](https://asciinema.org/a/3p0cn60p0c0j9wd3hzyrs4m0f.png)](https://asciinema.org/a/3p0cn60p0c0j9wd3hzyrs4m0f?autoplay=1)
 
 ## installation
 ```
