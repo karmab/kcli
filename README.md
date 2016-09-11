@@ -4,6 +4,7 @@
 [![Pypi](http://img.shields.io/pypi/v/kcli.svg)](https://pypi.python.org/pypi/kcli/)
 
 This script is meant to interact with a local/remote libvirt daemon and to easily deploy from templates ( optionally using cloudinit).
+It will also report ips for any vm connected to a dhcp enabled libvirt network and generally for every vm deployed from this client
 It started cos i switched from ovirt and needed a tool similar to [ovirt.py](https://github.com/karmab/ovirt)
 
 ## installation
@@ -66,6 +67,8 @@ The samples directory contains examples to get you started
  - `kcli plan -f x.yml x`
 - delete all vms from plan x
   - `kcli plan -d x` 
+- switch active client to bumblefoot
+  - `kcli switch bumblefoot` 
 
 ##cloudinit stuff
 
@@ -88,7 +91,7 @@ Note that the description of the vm will automatically be set to the plan name, 
 
 ## demo
 
-You can find one [here](https://asciinema.org/a/31k7y6eu95ylhxnfyrqcx3qtj)
+[![asciicast](https://asciinema.org/a/3p0cn60p0c0j9wd3hzyrs4m0f.png)](https://asciinema.org/a/3p0cn60p0c0j9wd3hzyrs4m0f)
 
 ## available parameters
 
@@ -140,8 +143,6 @@ Note those ips can also be provided on command line when creating a single vm
 
 you can check klist.py in the extra directory and use it as a dynamic inventory for ansible
 The script uses sames conf that kcli ( and as such defaults to local hypervisor if no conf is present)
-
-note you will only get ansible_ip for vm within private networks, not bridged one as they are not reported
 
 vm will be grouped by plan, or put in the kvirt group if they dont belong to any plan.
 

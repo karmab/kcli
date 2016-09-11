@@ -9,7 +9,7 @@ from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE
 import os
 import xml.etree.ElementTree as ET
 
-__version__ = "0.99.6"
+__version__ = "0.99.7"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -139,18 +139,18 @@ class Kvirt:
         else:
             iso = "%s/%s" % (poolpath, iso)
         if ip1 is not None:
-            location = """<sysinfo type='smbios'>
-                    <baseBoard>
-                    <entry name='location'>%s</entry>
-                    </baseBoard>
-                    </sysinfo>""" % ip1
-            sysinfo = "<smbios mode='sysinfo'/>"
+            location = "<entry name='location'>%s</entry>" % ip1
         else:
             location = ''
-            sysinfo = ''
+        location = """<sysinfo type='smbios'>
+                    <baseBoard>
+                    %s
+                    <entry name='asset'>%s</entry>
+                    </baseBoard>
+                    </sysinfo>""" % (location, title)
+        sysinfo = "<smbios mode='sysinfo'/>"
         vmxml = """<domain type='%s'>
                   <name>%s</name>
-                  <title>%s</title>
                   <description>%s</description>
                   %s
                   <memory unit='MiB'>%d</memory>
@@ -178,7 +178,7 @@ class Kvirt:
                     <source file='%s'/>
                     %s
                     <target dev='%s' bus='%s'/>
-                    </disk>""" % (virttype, name, title, description, location, memory, numcpus, machine, sysinfo, emulator, diskformat1, diskpath1, backingxml, diskdev1, diskbus1)
+                    </disk>""" % (virttype, name, description, location, memory, numcpus, machine, sysinfo, emulator, diskformat1, diskpath1, backingxml, diskdev1, diskbus1)
         if disksize2:
             vmxml = """%s
                     <disk type='file' device='disk'>
@@ -340,14 +340,10 @@ class Kvirt:
                 description = description[0].text
             else:
                 description = ''
-            title = root.getiterator('title')
-            if title:
-                title = title[0].text
-            else:
-                title = ''
             name = vm.name()
             state = status[vm.isActive()]
             ip = ''
+            title = ''
             if vm.isActive():
                 for address in vm.interfaceAddresses(VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE).values():
                     ip = address['addrs'][0]['addr']
@@ -356,7 +352,8 @@ class Kvirt:
                 attributes = entry.attrib
                 if attributes['name'] == 'location':
                     ip = entry.text
-                    break
+                if attributes['name'] == 'asset':
+                    title = entry.text
             source = ''
             for element in root.getiterator('backingStore'):
                 source = element.find('source')
@@ -407,13 +404,13 @@ class Kvirt:
             description = description[0].text
         else:
             description = ''
-        title = root.getiterator('title')
-        if title:
-            title = title[0].text
-        else:
-            title = ''
+        title = ''
+        for entry in root.getiterator('entry'):
+            attributes = entry.attrib
+            if attributes['name'] == 'asset':
+                title = entry.text
         print "description: %s" % description
-        print "title: %s" % title
+        print "profile: %s" % title
         if vm.isActive():
             print "cpus: %s" % vm.maxVcpus()
         print "memory: %sMB" % int(memory)
