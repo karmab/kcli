@@ -7,6 +7,10 @@ This script is meant to interact with a local/remote libvirt daemon and to easil
 It will also report ips for any vm connected to a dhcp enabled libvirt network and generally for every vm deployed from this client
 It started cos i switched from ovirt and needed a tool similar to [ovirt.py](https://github.com/karmab/ovirt)
 
+## demo
+
+[![asciicast](https://asciinema.org/a/3p0cn60p0c0j9wd3hzyrs4m0f.png)](https://asciinema.org/a/3p0cn60p0c0j9wd3hzyrs4m0f)
+
 ## installation
 ```
 pip install kcli
@@ -89,9 +93,6 @@ The samples directory contains examples to get you started
 
 Note that the description of the vm will automatically be set to the plan name, and this value will be used when deleting the entire plan as a way to locate matching vms.  
 
-## demo
-
-[![asciicast](https://asciinema.org/a/3p0cn60p0c0j9wd3hzyrs4m0f.png)](https://asciinema.org/a/3p0cn60p0c0j9wd3hzyrs4m0f)
 
 ## available parameters
 
@@ -155,7 +156,6 @@ python extra/klist.py --list
 
 ansible all -i extra/klist.py -m ping
 ```
-
 
 ##Problems?
 
