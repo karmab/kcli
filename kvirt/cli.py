@@ -8,7 +8,7 @@ from kvirt import Kvirt
 import os
 import yaml
 
-VERSION = '0.99.7'
+VERSION = '0.99.8'
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 
