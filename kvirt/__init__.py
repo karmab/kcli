@@ -9,7 +9,7 @@ from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE
 import os
 import xml.etree.ElementTree as ET
 
-__version__ = "0.99.8"
+__version__ = "0.99.9"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -61,12 +61,17 @@ class Kvirt:
         except:
             return False
 
-    def create(self, name, title='', description='kvirt', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disksize1=10, diskthin1=True, diskinterface1='virtio', disksize2=0, diskthin2=True, diskinterface2='virtio', net1='default', net2=None, net3=None, net4=None, iso=None, vnc=False, cloudinit=True, start=True, keys=None, cmds=None, ip1=None, netmask1=None, gateway1=None, ip2=None, netmask2=None, ip3=None, netmask3=None, ip4=None, netmask4=None, nested=True):
+    def create(self, name, title='', description='kvirt', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disksize1=10, diskthin1=True, diskinterface1='virtio', disksize2=0, diskthin2=True, diskinterface2='virtio', disksize3=0, diskthin3=True, diskinterface3='virtio', disksize4=0, diskthin4=True, diskinterface4='virtio', net1='default', net2=None, net3=None, net4=None, iso=None, vnc=False, cloudinit=True, start=True, keys=None, cmds=None, ip1=None, netmask1=None, gateway1=None, ip2=None, netmask2=None, ip3=None, netmask3=None, ip4=None, netmask4=None, nested=True):
         if vnc:
             display = 'vnc'
         else:
             display = 'spice'
         conn = self.conn
+        volumes = {}
+        for p in conn.listStoragePools():
+            poo = conn.storagePoolLookupByName(p)
+            for vol in poo.listAllVolumes():
+                volumes[vol.name()] = {'pool': poo, 'object': vol}
         networks = []
         bridges = []
         for net in conn.listNetworks():
@@ -84,11 +89,18 @@ class Kvirt:
         virttype, machine, emulator = 'kvm', 'pc', '/usr/libexec/qemu-kvm'
         # type, machine, emulator = 'kvm', 'pc', '/usr/bin/qemu-system-x86_64'
         diskformat1, diskformat2 = 'qcow2', 'qcow2'
+        diskformat3, diskformat4 = 'qcow2', 'qcow2'
         if not diskthin1:
             diskformat1 = 'raw'
         if disksize2 > 0:
             if not diskthin2:
                 diskformat2 = 'raw'
+        if disksize3 > 0:
+            if not diskthin3:
+                diskformat3 = 'raw'
+        if disksize4 > 0:
+            if not diskthin4:
+                diskformat4 = 'raw'
         storagename1 = "%s_1.img" % name
         pool = conn.storagePoolLookupByName(pool)
         poolxml = pool.XMLDesc(0)
@@ -100,7 +112,8 @@ class Kvirt:
         if template is not None:
             try:
                 pool.refresh(0)
-                backingvolume = pool.storageVolLookupByName(template)
+                # backingvolume = pool.storageVolLookupByName(template)
+                backingvolume = volumes[template]['object']
                 backingxml = backingvolume.XMLDesc(0)
                 root = ET.fromstring(backingxml)
                 for element in root.getiterator('target'):
@@ -118,26 +131,44 @@ class Kvirt:
             backing = None
             backingxml = '<backingStore/>'
         diskxml1 = self._xmldisk(path=diskpath1, size=disksize1, backing=backing, diskformat=diskformat1)
-        pool.createXML(diskxml1, 0)
         if disksize2 > 0:
             storagename2 = "%s_2.img" % name
             diskpath2 = "%s/%s" % (poolpath, storagename2)
             diskxml2 = self._xmldisk(path=diskpath2, size=disksize2, diskformat=diskformat2, backing=None)
-            pool.createXML(diskxml2, 0)
+        if disksize3 > 0:
+            storagename3 = "%s_3.img" % name
+            diskpath3 = "%s/%s" % (poolpath, storagename3)
+            diskxml3 = self._xmldisk(path=diskpath3, size=disksize3, diskformat=diskformat3, backing=None)
+        if disksize4 > 0:
+            storagename4 = "%s_4.img" % name
+            diskpath4 = "%s/%s" % (poolpath, storagename4)
+            diskxml4 = self._xmldisk(path=diskpath4, size=disksize4, diskformat=diskformat4, backing=None)
         pool.refresh(0)
         diskdev1, diskbus1 = 'vda', 'virtio'
         diskdev2, diskbus2 = 'vdb', 'virtio'
+        diskdev3, diskbus3 = 'vdc', 'virtio'
+        diskdev4, diskbus4 = 'vdd', 'virtio'
         if diskinterface1 != 'virtio':
             diskdev1, diskbus1 = 'hda', 'ide'
         if diskinterface2 != 'virtio':
             diskdev2, diskbus2 = 'hdb', 'ide'
+        if diskinterface3 != 'virtio':
+            diskdev3, diskbus3 = 'hdb', 'ide'
+        if diskinterface4 != 'virtio':
+            diskdev4, diskbus4 = 'hdb', 'ide'
         if iso is None:
             if cloudinit:
                 iso = "%s/%s.iso" % (poolpath, name)
             else:
                 iso = ''
         else:
-            iso = "%s/%s" % (poolpath, iso)
+            try:
+                iso = "%s/%s" % (poolpath, iso)
+                isovolume = volumes[template][iso]
+                iso = isovolume.path()
+            except:
+                print "Invalid Iso %s.Leaving..." % iso
+                return
         if ip1 is not None:
             location = "<entry name='location'>%s</entry>" % ip1
         else:
@@ -186,6 +217,20 @@ class Kvirt:
                     <source file='%s'/>
                     <target dev='%s' bus='%s'/>
                     </disk>""" % (vmxml, diskformat2, diskpath2, diskdev2, diskbus2)
+        if disksize3:
+            vmxml = """%s
+                    <disk type='file' device='disk'>
+                    <driver name='qemu' type='%s'/>
+                    <source file='%s'/>
+                    <target dev='%s' bus='%s'/>
+                    </disk>""" % (vmxml, diskformat3, diskpath3, diskdev3, diskbus3)
+        if disksize4:
+            vmxml = """%s
+                    <disk type='file' device='disk'>
+                    <driver name='qemu' type='%s'/>
+                    <source file='%s'/>
+                    <target dev='%s' bus='%s'/>
+                    </disk>""" % (vmxml, diskformat4, diskpath4, diskdev4, diskbus4)
         vmxml = """%s
                 <disk type='file' device='cdrom'>
                       <driver name='qemu' type='raw'/>
@@ -253,6 +298,13 @@ class Kvirt:
                 </devices>
                 %s
                 </domain>""" % (vmxml, display, nestedxml)
+        pool.createXML(diskxml1, 0)
+        if disksize2 > 0:
+            pool.createXML(diskxml2, 0)
+        if disksize3 > 0:
+            pool.createXML(diskxml3, 0)
+        if disksize4 > 0:
+            pool.createXML(diskxml4, 0)
         conn.defineXML(vmxml)
         vm = conn.lookupByName(name)
         vm.setAutostart(1)
@@ -389,11 +441,13 @@ class Kvirt:
     def info(self, name):
         ips = []
         conn = self.conn
-        vm = conn.lookupByName(name)
-        xml = vm.XMLDesc(0)
-        root = ET.fromstring(xml)
-        if not vm:
+        try:
+            vm = conn.lookupByName(name)
+            xml = vm.XMLDesc(0)
+            root = ET.fromstring(xml)
+        except:
             print "VM %s not found" % name
+            return
         state = 'down'
         memory = root.getiterator('memory')[0]
         unit = memory.attrib['unit']
@@ -454,8 +508,8 @@ class Kvirt:
             diskformat = 'file'
             drivertype = element.find('driver').get('type')
             path = element.find('source').get('file')
-            storage = conn.storageVolLookupByPath(path)
-            disksize = int(float(storage.info()[1]) / 1024 / 1024 / 1024)
+            volume = conn.storageVolLookupByPath(path)
+            disksize = int(float(volume.info()[1]) / 1024 / 1024 / 1024)
             print "diskname: %s disksize: %sGB diskformat: %s type: %s  path: %s" % (device, disksize, diskformat, drivertype, path)
         for ip in ips:
             print "ip: %s" % ip
@@ -476,7 +530,6 @@ class Kvirt:
                 if volume.endswith('iso'):
                     isos.append("%s/%s" % (storagepath, volume))
                 elif volume.endswith('qcow2'):
-                    # volumeinfo = storage.storageVolLookupByName(volume)
                     templates.append("%s/%s" % (storagepath, volume))
         if iso:
             return isos

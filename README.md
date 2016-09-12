@@ -135,7 +135,6 @@ Note those ips can also be provided on command line when creating a single vm
 ## TODO
 
 - add disk feature
-- create disk3 and disk4 
 
 ## using dynamic inventory
 
