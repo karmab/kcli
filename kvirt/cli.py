@@ -228,12 +228,18 @@ def clone(config, base, full, name):
     k.clone(base, name, full)
 
 
-# @cli.command()
-# @click.option('-m', '--memory', help='Memory to set')
-# @click.argument('name')
-# @pass_config
-# def update(config, memory, name):
-#     click.secho("Updated memory of vm %s to %d..." % (name, memory), fg='green')
+@cli.command()
+@click.option('-1', '--ip', help='Ip to set')
+@click.option('-m', '--memory', help='Memory to set')
+@click.argument('name')
+@pass_config
+def update(config, ip, memory, name):
+    k = config.k
+    if ip is not None:
+        click.secho("Updated ip of vm %s to %s..." % (name, ip), fg='green')
+        k.setip(name, ip)
+    elif memory is not None:
+        click.secho("Updated memory of vm %s to %d..." % (name, memory), fg='green')
 
 
 @cli.command()

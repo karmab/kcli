@@ -345,9 +345,12 @@ class Kvirt:
             ip = ''
             title = ''
             if vm.isActive():
-                for address in vm.interfaceAddresses(VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE).values():
-                    ip = address['addrs'][0]['addr']
-                    break
+                try:
+                    for address in vm.interfaceAddresses(VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE).values():
+                        ip = address['addrs'][0]['addr']
+                        break
+                except:
+                    ip = ''
             for entry in root.getiterator('entry'):
                 attributes = entry.attrib
                 if attributes['name'] == 'location':
@@ -356,9 +359,9 @@ class Kvirt:
                     title = entry.text
             source = ''
             for element in root.getiterator('backingStore'):
-                source = element.find('source')
-                if source is not None:
-                    source = os.path.basename(source.get('file'))
+                s = element.find('source')
+                if s is not None:
+                    source = os.path.basename(s.get('file'))
                     break
             vms.append([name, state, ip, source, description, title])
         return vms
@@ -631,3 +634,41 @@ class Kvirt:
         with open("/tmp/%s.iso" % name) as origin:
             stream.sendAll(self.handler, origin)
             stream.finish()
+
+    def setip(self, name, ip):
+        conn = self.conn
+        vm = conn.lookupByName(name)
+        xml = vm.XMLDesc(0)
+        root = ET.fromstring(xml)
+        if not vm:
+            print "VM %s not found" % name
+        if vm.isActive() == 1:
+            print "Machine up. Cant update..."
+            return
+        os = root.getiterator('os')[0]
+        smbios = os.find('smbios')
+        if smbios is None:
+            newsmbios = ET.Element("smbios", mode="sysinfo")
+            os.append(newsmbios)
+        sysinfo = root.getiterator('sysinfo')
+        baseboard = root.getiterator('baseBoard')
+        if not sysinfo:
+            sysinfo = ET.Element("sysinfo", type="smbios")
+            root.append(sysinfo)
+        sysinfo = root.getiterator('sysinfo')[0]
+        if not baseboard:
+            baseboard = ET.Element("baseBoard")
+            sysinfo.append(baseboard)
+        baseboard = root.getiterator('baseBoard')[0]
+        locationfound = False
+        for entry in root.getiterator('entry'):
+            attributes = entry.attrib
+            if attributes['name'] == 'location':
+                entry.text = ip
+            locationfound = True
+        if not locationfound:
+            location = ET.Element("entry", name="location")
+            location.text = ip
+            baseboard.append(location)
+        newxml = ET.tostring(root)
+        conn.defineXML(newxml)
