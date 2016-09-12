@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 import click
 import fileinput
@@ -74,7 +74,6 @@ pass_config = click.make_pass_decorator(Config, ensure=True)
 @click.group(context_settings=CONTEXT_SETTINGS)
 @click.version_option(version=VERSION)
 @pass_config
-# @click.option('-c', '--client',help='client', envvar='CLIENT')
 def cli(config):
     """ Libvirt wrapper on steroids. Check out https://github.com/karmab/kcli!"""
     config.load()
@@ -232,6 +231,7 @@ def create(config, profile, ip1, ip2, ip3, ip4, name):
 
 @cli.command()
 @click.option('-b', '--base', help='Base template')
+@click.option('-f', '--full', is_flag=True)
 @click.argument('name')
 @pass_config
 def clone(config, base, full, name):

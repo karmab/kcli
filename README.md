@@ -5,7 +5,7 @@
 
 This script is meant to interact with a local/remote libvirt daemon and to easily deploy from templates ( optionally using cloudinit).
 It will also report ips for any vm connected to a dhcp enabled libvirt network and generally for every vm deployed from this client
-It started cos i switched from ovirt and needed a tool similar to [ovirt.py](https://github.com/karmab/ovirt)
+It started because i switched from ovirt and needed a tool similar to [ovirt.py](https://github.com/karmab/ovirt)
 
 ## demo
 
@@ -67,10 +67,20 @@ The samples directory contains examples to get you started
  - `kcli start vm1` 
 - stop vm
  - `kcli start vm1` 
+- get remote-viewer console
+ - `kcli console vm1` 
 - deploy multiple vms using plan x defined in x.yml file 
  - `kcli plan -f x.yml x`
 - delete all vms from plan x
   - `kcli plan -d x` 
+- add 5GB disk to vm1
+  - `kcli add -s 5 vm1` 
+- update to 2GB memory  vm1
+  - `kcli update -m 2048 vm1` 
+- update internal ip ( usefull for ansible inventory over existing bridged vms)
+  - `kcli update -1 192.168.0.40 vm1` 
+- clone vm1 to new vm2
+  - `kcli clone -b vm1 vm2` 
 - switch active client to bumblefoot
   - `kcli switch bumblefoot` 
 
@@ -109,6 +119,12 @@ those parameters can be set either in your config, profile or plan files
 - *disksize2* Defaults to 0( not created by default)
 - *diskthin2* Defaults to true
 - *diskinterface2* Defaults to virtio  
+- *disksize3* Defaults to 0( not created by default)
+- *diskthin3* Defaults to true
+- *diskinterface3* Defaults to virtio  
+- *disksize4* Defaults to 0( not created by default)
+- *diskthin4* Defaults to true
+- *diskinterface4* Defaults to virtio  
 - *net1* Defaults to default
 - *net2* (optional)
 - *net3* (optional)
@@ -117,9 +133,9 @@ those parameters can be set either in your config, profile or plan files
 - *vnc* Defaults to false (use spice instead)
 - *cloudinit* Defaults to true
 - *start* Defaults to true
-- *keys* (optional)
-- *cmds* (optional)
-- *profile* name of one of your profile. Only checked in profile or plan file
+- *keys* (optional). Array of public keys to inject
+- *cmds* (optional). Array of commands to run
+- *profile* name of one of your profile. Only checked in plan file
 - *scripts* path of a custom script to inject with cloudinit. Note that it will override cmds part. You can either specify a full path or relative to where you're running kcli. Only checked in profile or plan file
 
 
@@ -132,10 +148,11 @@ those parameters can be set either in your config, profile or plan files
 
 Note those ips can also be provided on command line when creating a single vm
 
-## using dynamic inventory
+## ansible dynamic inventory
 
-you can check klist.py in the extra directory and use it as a dynamic inventory for ansible
-The script uses sames conf that kcli ( and as such defaults to local hypervisor if no conf is present)
+you can check klist.py in the extra directory and use it as a dynamic inventory for ansible.
+
+The script uses sames conf as kcli ( and as such defaults to local hypervisor if no configuration file is found)
 
 vm will be grouped by plan, or put in the kvirt group if they dont belong to any plan.
 

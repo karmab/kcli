@@ -298,10 +298,6 @@ class Kvirt:
         vm = conn.lookupByName(name)
         vm.setAutostart(1)
         if cloudinit:
-            if keys is not None:
-                keys = keys.split(';')
-            if cmds is not None and isinstance(cmds, str):
-                cmds = cmds.split(';')
             self._cloudinit(name=name, keys=keys, cmds=cmds, ip1=ip1, netmask1=netmask1, gateway1=gateway1, ip2=ip2, netmask2=netmask2, ip3=ip3, netmask3=netmask3, ip4=ip4, netmask4=netmask4)
             self._uploadiso(name, pool=pool)
         if start:
@@ -629,6 +625,9 @@ class Kvirt:
             interface.remove(mac)
         newxml = ET.tostring(tree)
         conn.defineXML(newxml)
+        vm = conn.lookupByName(new)
+        vm.setAutostart(1)
+        vm.create()
 
     def _cloudinit(self, name, keys=None, cmds=None, ip1=None, netmask1=None, gateway1=None, ip2=None, netmask2=None, ip3=None, netmask3=None, ip4=None, netmask4=None):
         with open('/tmp/meta-data', 'w') as metadata:
@@ -656,7 +655,7 @@ class Kvirt:
             if keys is not None:
                 userdata.write("ssh_authorized_keys:\n")
                 for key in keys:
-                    userdata.write("- ssh-rsa %s\n" % key)
+                    userdata.write("- %s\n" % key)
             elif os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME']):
                 publickeyfile = "%s/.ssh/id_rsa.pub" % os.environ['HOME']
                 with open(publickeyfile, 'r') as ssh:
@@ -674,7 +673,6 @@ class Kvirt:
 
     def _uploadiso(self, name, pool='default'):
         conn = self.conn
-        # pool = conn.storagePoolLookupByName(pool)
         poolxml = pool.XMLDesc(0)
         root = ET.fromstring(poolxml)
         for element in root.getiterator('path'):
