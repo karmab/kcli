@@ -231,15 +231,20 @@ def clone(config, base, full, name):
 @cli.command()
 @click.option('-1', '--ip', help='Ip to set')
 @click.option('-m', '--memory', help='Memory to set')
+@click.option('-c', '--numcpus', help='Number of cpus to set')
 @click.argument('name')
 @pass_config
-def update(config, ip, memory, name):
+def update(config, ip, memory, numcpus, name):
     k = config.k
     if ip is not None:
         click.secho("Updated ip of vm %s to %s..." % (name, ip), fg='green')
         k.setip(name, ip)
     elif memory is not None:
-        click.secho("Updated memory of vm %s to %d..." % (name, memory), fg='green')
+        click.secho("Updated memory of vm %s to %s..." % (name, memory), fg='green')
+        k.setmemory(name, memory)
+    elif numcpus is not None:
+        click.secho("Updated numcpus of vm %s to %s..." % (name, numcpus), fg='green')
+        k.setcpu(name, numcpus)
 
 
 @cli.command()

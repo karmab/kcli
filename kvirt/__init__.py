@@ -395,9 +395,14 @@ class Kvirt:
         if not vm:
             print "VM %s not found" % name
         state = 'down'
-        memory = float(vm.info()[1])
-        if memory > 1024:
-            memory = memory / 1024
+        memory = root.getiterator('memory')[0]
+        unit = memory.attrib['unit']
+        memory = memory.text
+        if unit == 'KiB':
+            memory = float(memory) / 1024
+            memory = int(memory)
+        numcpus = root.getiterator('vcpu')[0]
+        numcpus = numcpus.text
         if vm.isActive():
             state = 'up'
         print "name: %s" % name
@@ -407,16 +412,16 @@ class Kvirt:
             description = description[0].text
         else:
             description = ''
-        title = ''
+        title = None
         for entry in root.getiterator('entry'):
             attributes = entry.attrib
             if attributes['name'] == 'asset':
                 title = entry.text
         print "description: %s" % description
-        print "profile: %s" % title
-        if vm.isActive():
-            print "cpus: %s" % vm.maxVcpus()
-        print "memory: %sMB" % int(memory)
+        if title is not None:
+            print "profile: %s" % title
+        print "cpus: %s" % numcpus
+        print "memory: %sMB" % memory
         nicnumber = 0
         for element in root.getiterator('interface'):
             networktype = element.get('type')
@@ -670,5 +675,29 @@ class Kvirt:
             location = ET.Element("entry", name="location")
             location.text = ip
             baseboard.append(location)
+        newxml = ET.tostring(root)
+        conn.defineXML(newxml)
+
+    def setmemory(self, name, memory):
+        conn = self.conn
+        vm = conn.lookupByName(name)
+        xml = vm.XMLDesc(0)
+        root = ET.fromstring(xml)
+        if not vm:
+            print "VM %s not found" % name
+        memorynode = root.getiterator('memory')[0]
+        memorynode.text = memory
+        newxml = ET.tostring(root)
+        conn.defineXML(newxml)
+
+    def setcpu(self, name, numcpus):
+        conn = self.conn
+        vm = conn.lookupByName(name)
+        xml = vm.XMLDesc(0)
+        root = ET.fromstring(xml)
+        if not vm:
+            print "VM %s not found" % name
+        cpunode = root.getiterator('vcpu')[0]
+        cpunode.text = numcpus
         newxml = ET.tostring(root)
         conn.defineXML(newxml)
