@@ -132,10 +132,6 @@ those parameters can be set either in your config, profile or plan files
 
 Note those ips can also be provided on command line when creating a single vm
 
-## TODO
-
-- add disk feature
-
 ## using dynamic inventory
 
 you can check klist.py in the extra directory and use it as a dynamic inventory for ansible

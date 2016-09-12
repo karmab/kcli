@@ -249,14 +249,28 @@ def clone(config, base, full, name):
 def update(config, ip, memory, numcpus, name):
     k = config.k
     if ip is not None:
-        click.secho("Updated ip of vm %s to %s..." % (name, ip), fg='green')
+        click.secho("Updating ip of vm %s to %s..." % (name, ip), fg='green')
         k.setip(name, ip)
     elif memory is not None:
-        click.secho("Updated memory of vm %s to %s..." % (name, memory), fg='green')
+        click.secho("Updating memory of vm %s to %s..." % (name, memory), fg='green')
         k.setmemory(name, memory)
     elif numcpus is not None:
-        click.secho("Updated numcpus of vm %s to %s..." % (name, numcpus), fg='green')
+        click.secho("Updating numcpus of vm %s to %s..." % (name, numcpus), fg='green')
         k.setcpu(name, numcpus)
+
+
+@cli.command()
+@click.option('-s', '--size', help='Size of the disk to add, in GB')
+@click.option('-p', '--pool', help='Pool')
+@click.argument('name')
+@pass_config
+def add(config, size, pool, name):
+    if size is None:
+        click.secho("Missing size. Leaving...", fg='red')
+        os._exit(1)
+    k = config.k
+    click.secho("Adding disk %s..." % (name), fg='green')
+    k.add(name=name, size=size, pool=pool)
 
 
 @cli.command()

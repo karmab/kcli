@@ -7,6 +7,7 @@ interact with a local/remote libvirt daemon
 from libvirt import open as libvirtopen
 from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE
 import os
+import string
 import xml.etree.ElementTree as ET
 
 __version__ = "0.99.9"
@@ -130,19 +131,19 @@ class Kvirt:
         else:
             backing = None
             backingxml = '<backingStore/>'
-        diskxml1 = self._xmldisk(path=diskpath1, size=disksize1, backing=backing, diskformat=diskformat1)
+        volxml1 = self._xmlvolume(path=diskpath1, size=disksize1, backing=backing, diskformat=diskformat1)
         if disksize2 > 0:
             storagename2 = "%s_2.img" % name
             diskpath2 = "%s/%s" % (poolpath, storagename2)
-            diskxml2 = self._xmldisk(path=diskpath2, size=disksize2, diskformat=diskformat2, backing=None)
+            volxml2 = self._xmlvolume(path=diskpath2, size=disksize2, diskformat=diskformat2, backing=None)
         if disksize3 > 0:
             storagename3 = "%s_3.img" % name
             diskpath3 = "%s/%s" % (poolpath, storagename3)
-            diskxml3 = self._xmldisk(path=diskpath3, size=disksize3, diskformat=diskformat3, backing=None)
+            volxml3 = self._xmlvolume(path=diskpath3, size=disksize3, diskformat=diskformat3, backing=None)
         if disksize4 > 0:
             storagename4 = "%s_4.img" % name
             diskpath4 = "%s/%s" % (poolpath, storagename4)
-            diskxml4 = self._xmldisk(path=diskpath4, size=disksize4, diskformat=diskformat4, backing=None)
+            volxml4 = self._xmlvolume(path=diskpath4, size=disksize4, diskformat=diskformat4, backing=None)
         pool.refresh(0)
         diskdev1, diskbus1 = 'vda', 'virtio'
         diskdev2, diskbus2 = 'vdb', 'virtio'
@@ -211,26 +212,14 @@ class Kvirt:
                     <target dev='%s' bus='%s'/>
                     </disk>""" % (virttype, name, description, location, memory, numcpus, machine, sysinfo, emulator, diskformat1, diskpath1, backingxml, diskdev1, diskbus1)
         if disksize2:
-            vmxml = """%s
-                    <disk type='file' device='disk'>
-                    <driver name='qemu' type='%s'/>
-                    <source file='%s'/>
-                    <target dev='%s' bus='%s'/>
-                    </disk>""" % (vmxml, diskformat2, diskpath2, diskdev2, diskbus2)
+            diskxml2 = self._xmldisk(diskpath=diskpath2, diskdev=diskdev2, diskbus=diskbus2, diskformat=diskformat2)
+            vmxml = "%s%s" % (vmxml, diskxml2)
         if disksize3:
-            vmxml = """%s
-                    <disk type='file' device='disk'>
-                    <driver name='qemu' type='%s'/>
-                    <source file='%s'/>
-                    <target dev='%s' bus='%s'/>
-                    </disk>""" % (vmxml, diskformat3, diskpath3, diskdev3, diskbus3)
+            diskxml3 = self._xmldisk(diskpath=diskpath3, diskdev=diskdev3, diskbus=diskbus3, diskformat=diskformat3)
+            vmxml = "%s%s" % (vmxml, diskxml3)
         if disksize4:
-            vmxml = """%s
-                    <disk type='file' device='disk'>
-                    <driver name='qemu' type='%s'/>
-                    <source file='%s'/>
-                    <target dev='%s' bus='%s'/>
-                    </disk>""" % (vmxml, diskformat4, diskpath4, diskdev4, diskbus4)
+            diskxml4 = self._xmldisk(diskpath=diskpath4, diskdev=diskdev4, diskbus=diskbus4, diskformat=diskformat4)
+            vmxml = "%s%s" % (vmxml, diskxml4)
         vmxml = """%s
                 <disk type='file' device='cdrom'>
                       <driver name='qemu' type='raw'/>
@@ -298,13 +287,13 @@ class Kvirt:
                 </devices>
                 %s
                 </domain>""" % (vmxml, display, nestedxml)
-        pool.createXML(diskxml1, 0)
+        pool.createXML(volxml1, 0)
         if disksize2 > 0:
-            pool.createXML(diskxml2, 0)
+            pool.createXML(volxml2, 0)
         if disksize3 > 0:
-            pool.createXML(diskxml3, 0)
+            pool.createXML(volxml3, 0)
         if disksize4 > 0:
-            pool.createXML(diskxml4, 0)
+            pool.createXML(volxml4, 0)
         conn.defineXML(vmxml)
         vm = conn.lookupByName(name)
         vm.setAutostart(1)
@@ -568,7 +557,15 @@ class Kvirt:
             if deleted:
                 storage.refresh(0)
 
-    def _xmldisk(self, path, size, backing=None, diskformat='qcow2'):
+    def _xmldisk(self, diskpath, diskdev, diskbus='virtio', diskformat='qcow2'):
+        diskxml = """<disk type='file' device='disk'>
+        <driver name='qemu' type='%s' />
+        <source file='%s'/>
+        <target bus='%s' dev='%s'/>
+        </disk>""" % (diskformat, diskpath, diskbus, diskdev)
+        return diskxml
+
+    def _xmlvolume(self, path, size, backing=None, diskformat='qcow2'):
         size = int(size) * MB
         name = path.split('/')[-1]
         if backing is not None:
@@ -579,7 +576,7 @@ class Kvirt:
 </backingStore>""" % (backing, diskformat)
         else:
             backingstore = "<backingStore/>"
-        disk = """
+        volume = """
 <volume type='file'>
 <name>%s</name>
 <capacity unit="bytes">%d</capacity>
@@ -593,7 +590,7 @@ class Kvirt:
 </target>
 %s
 </volume>""" % (name, size, path, diskformat, backingstore)
-        return disk
+        return volume
 
     def clone(self, old, new, full=False):
         conn = self.conn
@@ -620,7 +617,7 @@ class Kvirt:
                 oldvolume = conn.storageVolLookupByPath(oldpath)
                 oldinfo = oldvolume.info()
                 oldvolumesize = (float(oldinfo[1]) / 1024 / 1024 / 1024)
-                newvolumexml = self._xmldisk(newpath, oldvolumesize, backing)
+                newvolumexml = self._xmlvolume(newpath, oldvolumesize, backing)
                 pool = oldvolume.storagePoolLookupByVolume()
                 pool.createXMLFrom(newvolumexml, oldvolume, 0)
                 firstdisk = False
@@ -684,7 +681,7 @@ class Kvirt:
             poolpath = element.text
             break
         isopath = "%s/%s.iso" % (poolpath, name)
-        isoxml = self._xmldisk(path=isopath, size=0, diskformat='raw')
+        isoxml = self._xmlvolume(path=isopath, size=0, diskformat='raw')
         pool.createXML(isoxml, 0)
         isovolume = conn.storageVolLookupByPath(isopath)
         stream = conn.newStream(0)
@@ -733,11 +730,13 @@ class Kvirt:
 
     def setmemory(self, name, memory):
         conn = self.conn
-        vm = conn.lookupByName(name)
-        xml = vm.XMLDesc(0)
-        root = ET.fromstring(xml)
-        if not vm:
+        try:
+            vm = conn.lookupByName(name)
+            xml = vm.XMLDesc(0)
+            root = ET.fromstring(xml)
+        except:
             print "VM %s not found" % name
+            return
         memorynode = root.getiterator('memory')[0]
         memorynode.text = memory
         newxml = ET.tostring(root)
@@ -745,12 +744,68 @@ class Kvirt:
 
     def setcpu(self, name, numcpus):
         conn = self.conn
-        vm = conn.lookupByName(name)
-        xml = vm.XMLDesc(0)
-        root = ET.fromstring(xml)
-        if not vm:
+        try:
+            vm = conn.lookupByName(name)
+            xml = vm.XMLDesc(0)
+            root = ET.fromstring(xml)
+        except:
             print "VM %s not found" % name
+            return
         cpunode = root.getiterator('vcpu')[0]
         cpunode.text = numcpus
         newxml = ET.tostring(root)
         conn.defineXML(newxml)
+
+    def add(self, name, size, pool=None, thin=True):
+        conn = self.conn
+        diskformat = 'qcow2'
+        diskbus = 'virtio'
+        if size < 1:
+            print "Incorrect size.Leaving..."
+            return
+        if not thin:
+            diskformat = 'raw'
+        try:
+            vm = conn.lookupByName(name)
+            xml = vm.XMLDesc(0)
+            root = ET.fromstring(xml)
+        except:
+            print "VM %s not found" % name
+            return
+        currentdisk = 0
+        for element in root.getiterator('disk'):
+            disktype = element.get('device')
+            if disktype == 'cdrom':
+                continue
+            path = element.find('source').get('file')
+            currentpoolpath = os.path.dirname(path)
+            currentdisk = currentdisk + 1
+        diskindex = currentdisk + 1
+        diskdev = "vd%s" % string.ascii_lowercase[currentdisk]
+        if pool is not None:
+            pool = conn.storagePoolLookupByName(pool)
+            poolxml = pool.XMLDesc(0)
+            poolroot = ET.fromstring(poolxml)
+            for element in poolroot.getiterator('path'):
+                poolpath = element.text
+                break
+        elif currentpoolpath is not None:
+            poolpath = currentpoolpath
+            for p in conn.listStoragePools():
+                poo = conn.storagePoolLookupByName(p)
+                poolxml = poo.XMLDesc(0)
+                poolroot = ET.fromstring(poolxml)
+                for element in poolroot.getiterator('path'):
+                    if poolpath == currentpoolpath:
+                        pool = poo
+                        break
+        else:
+            print "Pool not found. Leaving...."
+            return
+        pool.refresh(0)
+        storagename = "%s_%d.img" % (name, diskindex)
+        diskpath = "%s/%s" % (poolpath, storagename)
+        volxml = self._xmlvolume(path=diskpath, size=size, diskformat=diskformat, backing=None)
+        diskxml = self._xmldisk(diskpath=diskpath, diskdev=diskdev, diskbus=diskbus, diskformat=diskformat)
+        pool.createXML(volxml, 0)
+        vm.attachDevice(diskxml)
