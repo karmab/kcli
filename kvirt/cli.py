@@ -159,7 +159,7 @@ def list(config, clients, profiles, templates, isos):
         for iso in sorted(k.volumes(iso=True)):
             print iso
     else:
-        vms = PrettyTable(["Name", "Status", "Ips", "Source", "Description", "Profile"])
+        vms = PrettyTable(["Name", "Status", "Ips", "Source", "Description/Plan", "Profile"])
         for vm in sorted(k.list()):
             vms.add_row(vm)
         print vms
@@ -282,10 +282,12 @@ def report(config):
 
 @cli.command()
 @click.option('-f', '--inputfile', help='Input file')
+@click.option('-s', '--start', is_flag=True)
+@click.option('-w', '--stop', is_flag=True)
 @click.option('-d', '--delete', is_flag=True)
 @click.argument('plan')
 @pass_config
-def plan(config, inputfile, delete, plan):
+def plan(config, inputfile, start, stop, delete, plan):
     k = config.k
     if delete:
         if plan == '':
@@ -299,6 +301,26 @@ def plan(config, inputfile, delete, plan):
                 k.delete(name)
                 click.secho("%s deleted!" % name, fg='green')
         click.secho("Plan %s deleted!" % plan, fg='green')
+        return
+    if start:
+        click.secho("Starting vms from plan %s" % (plan), fg='green')
+        for vm in sorted(k.list()):
+            name = vm[0]
+            description = vm[4]
+            if description == plan:
+                k.start(name)
+                click.secho("%s started!" % name, fg='green')
+        click.secho("Plan %s started!" % plan, fg='green')
+        return
+    if stop:
+        click.secho("Stopping vms from plan %s" % (plan), fg='green')
+        for vm in sorted(k.list()):
+            name = vm[0]
+            description = vm[4]
+            if description == plan:
+                k.stop(name)
+                click.secho("%s stopped!" % name, fg='green')
+        click.secho("Plan %s stopped!" % plan, fg='green')
         return
     if inputfile is None:
         if os.path.exists('kcli_plan.yml'):
