@@ -12,11 +12,20 @@ It started because i switched from ovirt and needed a tool similar to [ovirt.py]
 [![asciicast](https://asciinema.org/a/3p0cn60p0c0j9wd3hzyrs4m0f.png)](https://asciinema.org/a/3p0cn60p0c0j9wd3hzyrs4m0f?autoplay=1)
 
 ## installation
+
+install requirements. you will also need to grab *mkisofs* for cloudinit isos to get generated
+Console access is based on remote-viewer
+For instance if using a rhel based distribution:
+
+```
+yum -y install gcc libvirt-devel python-devel genisoimage
+```
+
+then you can install from pypi
+
 ```
 pip install kcli
 ```
-You will also need to grab *mkisofs* for cloudinit isos to get generated
-Console access is based on remote-viewer
 
 To deploy from templates, grab images at [openstack](http://docs.openstack.org/image-guide/obtain-images.html)
 ## configuration

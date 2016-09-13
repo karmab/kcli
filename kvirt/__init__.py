@@ -10,7 +10,7 @@ import os
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -169,15 +169,15 @@ class Kvirt:
                 print "Invalid Iso %s.Leaving..." % iso
                 return
         if ip1 is not None:
-            location = "<entry name='location'>%s</entry>" % ip1
+            version = "<entry name='version'>%s</entry>" % ip1
         else:
-            location = ''
-        location = """<sysinfo type='smbios'>
-                    <baseBoard>
+            version = ''
+        version = """<sysinfo type='smbios'>
+                    <system>
                     %s
-                    <entry name='asset'>%s</entry>
-                    </baseBoard>
-                    </sysinfo>""" % (location, title)
+                    <entry name='product'>%s</entry>
+                    </system>
+                    </sysinfo>""" % (version, title)
         sysinfo = "<smbios mode='sysinfo'/>"
         vmxml = """<domain type='%s'>
                   <name>%s</name>
@@ -208,7 +208,7 @@ class Kvirt:
                     <source file='%s'/>
                     %s
                     <target dev='%s' bus='%s'/>
-                    </disk>""" % (virttype, name, description, location, memory, numcpus, machine, sysinfo, emulator, diskformat1, diskpath1, backingxml, diskdev1, diskbus1)
+                    </disk>""" % (virttype, name, description, version, memory, numcpus, machine, sysinfo, emulator, diskformat1, diskpath1, backingxml, diskdev1, diskbus1)
         if disksize2:
             diskxml2 = self._xmldisk(diskpath=diskpath2, diskdev=diskdev2, diskbus=diskbus2, diskformat=diskformat2)
             vmxml = "%s%s" % (vmxml, diskxml2)
@@ -388,9 +388,9 @@ class Kvirt:
                     ip = ''
             for entry in root.getiterator('entry'):
                 attributes = entry.attrib
-                if attributes['name'] == 'location':
+                if attributes['name'] == 'version':
                     ip = entry.text
-                if attributes['name'] == 'asset':
+                if attributes['name'] == 'product':
                     title = entry.text
             source = ''
             for element in root.getiterator('backingStore'):
@@ -452,7 +452,7 @@ class Kvirt:
         title = None
         for entry in root.getiterator('entry'):
             attributes = entry.attrib
-            if attributes['name'] == 'asset':
+            if attributes['name'] == 'product':
                 title = entry.text
         print "description: %s" % description
         if title is not None:
@@ -478,7 +478,7 @@ class Kvirt:
                         ips.append(ip)
         for entry in root.getiterator('entry'):
             attributes = entry.attrib
-            if attributes['name'] == 'location':
+            if attributes['name'] == 'version':
                 ip = entry.text
                 ips.append(ip)
                 break
@@ -702,25 +702,25 @@ class Kvirt:
             newsmbios = ET.Element("smbios", mode="sysinfo")
             os.append(newsmbios)
         sysinfo = root.getiterator('sysinfo')
-        baseboard = root.getiterator('baseBoard')
+        system = root.getiterator('system')
         if not sysinfo:
             sysinfo = ET.Element("sysinfo", type="smbios")
             root.append(sysinfo)
         sysinfo = root.getiterator('sysinfo')[0]
-        if not baseboard:
-            baseboard = ET.Element("baseBoard")
-            sysinfo.append(baseboard)
-        baseboard = root.getiterator('baseBoard')[0]
-        locationfound = False
+        if not system:
+            system = ET.Element("system")
+            sysinfo.append(system)
+        system = root.getiterator('system')[0]
+        versionfound = False
         for entry in root.getiterator('entry'):
             attributes = entry.attrib
-            if attributes['name'] == 'location':
+            if attributes['name'] == 'version':
                 entry.text = ip
-            locationfound = True
-        if not locationfound:
-            location = ET.Element("entry", name="location")
-            location.text = ip
-            baseboard.append(location)
+            versionfound = True
+        if not versionfound:
+            version = ET.Element("entry", name="version")
+            version.text = ip
+            system.append(version)
         newxml = ET.tostring(root)
         conn.defineXML(newxml)
 
