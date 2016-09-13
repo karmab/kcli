@@ -8,10 +8,11 @@ if os.path.exists('README.rst'):
 
 setup(
     name='kcli',
-    version='1.0.2',
+    version='1.0.3',
     packages=find_packages(),
     include_package_data=True,
     description=description,
+    long_description=long_description,
     url='http://github.com/karmab/kcli',
     author='Karim Boumedhel',
     author_email='karimboumedhel@gmail.com',
