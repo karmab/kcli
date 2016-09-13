@@ -10,7 +10,7 @@ import os
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "1.0.3"
+__version__ = "1.0.4"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -693,9 +693,6 @@ class Kvirt:
         root = ET.fromstring(xml)
         if not vm:
             print "VM %s not found" % name
-        if vm.isActive() == 1:
-            print "Machine up. Cant update..."
-            return
         os = root.getiterator('os')[0]
         smbios = os.find('smbios')
         if smbios is None:
@@ -805,3 +802,33 @@ class Kvirt:
         diskxml = self._xmldisk(diskpath=diskpath, diskdev=diskdev, diskbus=diskbus, diskformat=diskformat)
         pool.createXML(volxml, 0)
         vm.attachDevice(diskxml)
+
+    def ssh(self, name):
+        user = 'root'
+        conn = self.conn
+        vm = conn.lookupByName(name)
+        if not vm:
+            print "VM %s not found" % name
+        if vm.isActive() != 1:
+            print "Machine down. Cant ssh..."
+            return
+        vm = [v for v in self.list() if v[0] == name][0]
+        template = vm[3]
+        if template != '':
+            if 'centos' in template.lower():
+                user = 'centos'
+            elif 'cirros' in template.lower():
+                user = 'cirros'
+            elif 'ubuntu' in template.lower():
+                user = 'ubuntu'
+            elif 'fedora' in template.lower():
+                user = 'fedora'
+            elif 'rhel' in template.lower():
+                user = 'rhel'
+            elif 'debian' in template.lower():
+                user = 'debian'
+        ip = vm[2]
+        if ip == '':
+            print "No ip found. Cant ssh..."
+        else:
+            os.system("ssh %s@%s" % (user, ip))

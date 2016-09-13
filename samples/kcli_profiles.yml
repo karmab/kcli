@@ -12,6 +12,8 @@ centos27:
  template: CentOS-7-x86_64-GenericCloud.qcow2
  numcpus: 2
  net1: localnet
+ netmask1: 255.255.255.0
+ gateway1: 192.168.0.254
  net2: private1
  pool: vms
  disksize2: 2

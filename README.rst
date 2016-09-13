@@ -103,6 +103,9 @@ How to use
 -  ``kcli update -1 192.168.0.40 vm1``
 -  clone vm1 to new vm2
 -  ``kcli clone -b vm1 vm2``
+-  connect by ssh to the vm ( retrieving ip and adjusting user based on
+   the template)
+-  ``kcli ssh vm1``
 -  switch active client to bumblefoot
 -  ``kcli switch bumblefoot``
 

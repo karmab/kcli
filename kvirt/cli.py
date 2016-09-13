@@ -4,11 +4,10 @@ import click
 import fileinput
 from defaults import NET1, POOL, NUMCPUS, MEMORY, DISKSIZE1, DISKINTERFACE1, DISKTHIN1, DISKSIZE2, DISKINTERFACE2, DISKTHIN2, DISKSIZE3, DISKINTERFACE3, DISKTHIN3, DISKSIZE4, DISKINTERFACE4, DISKTHIN4, GUESTID, VNC, CLOUDINIT, START
 from prettytable import PrettyTable
-from kvirt import Kvirt
+from kvirt import Kvirt, __version__
 import os
 import yaml
 
-VERSION = '1.0.3'
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 
@@ -72,7 +71,7 @@ pass_config = click.make_pass_decorator(Config, ensure=True)
 
 
 @click.group(context_settings=CONTEXT_SETTINGS)
-@click.version_option(version=VERSION)
+@click.version_option(version=__version__)
 @pass_config
 def cli(config):
     """ Libvirt wrapper on steroids. Check out https://github.com/karmab/kcli!"""
@@ -373,6 +372,14 @@ def plan(config, inputfile, delete, plan):
 def info(config, name):
     k = config.k
     k.info(name)
+
+
+@cli.command()
+@click.argument('name')
+@pass_config
+def ssh(config, name):
+    k = config.k
+    k.ssh(name)
 
 if __name__ == '__main__':
     cli()
