@@ -10,7 +10,7 @@ import os
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "1.0.4"
+__version__ = "1.0.5"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -725,6 +725,7 @@ class Kvirt:
 
     def setmemory(self, name, memory):
         conn = self.conn
+        memory = str(int(memory) * KB)
         try:
             vm = conn.lookupByName(name)
             xml = vm.XMLDesc(0)
@@ -734,6 +735,8 @@ class Kvirt:
             return
         memorynode = root.getiterator('memory')[0]
         memorynode.text = memory
+        currentmemory = root.getiterator('currentMemory')[0]
+        currentmemory.text = memory
         newxml = ET.tostring(root)
         conn.defineXML(newxml)
 
