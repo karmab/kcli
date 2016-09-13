@@ -693,6 +693,8 @@ class Kvirt:
         root = ET.fromstring(xml)
         if not vm:
             print "VM %s not found" % name
+        if vm.isActive() == 1:
+            print "Machine up. Change will only appear upon next reboot"
         os = root.getiterator('os')[0]
         smbios = os.find('smbios')
         if smbios is None:
