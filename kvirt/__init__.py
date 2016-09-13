@@ -10,7 +10,7 @@ import os
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "1.0"
+__version__ = "1.0.1"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -117,17 +117,15 @@ class Kvirt:
                 backingvolume = volumes[template]['object']
                 backingxml = backingvolume.XMLDesc(0)
                 root = ET.fromstring(backingxml)
-                for element in root.getiterator('target'):
-                    backingtype = element.find('format').get('type')
             except:
                 print "Invalid template %s.Leaving..." % template
                 return
             backing = backingvolume.path()
             backingxml = """<backingStore type='file' index='1'>
-        <format type='%s'/>
+        <format type='raw'/>
         <source file='%s'/>
         <backingStore/>
-      </backingStore>""" % (backingtype, backing)
+      </backingStore>""" % backing
         else:
             backing = None
             backingxml = '<backingStore/>'
@@ -555,7 +553,7 @@ class Kvirt:
 
     def _xmldisk(self, diskpath, diskdev, diskbus='virtio', diskformat='qcow2'):
         diskxml = """<disk type='file' device='disk'>
-        <driver name='qemu' type='%s' />
+        <driver name='qemu' type='%s' cache='none'/>
         <source file='%s'/>
         <target bus='%s' dev='%s'/>
         </disk>""" % (diskformat, diskpath, diskbus, diskdev)
