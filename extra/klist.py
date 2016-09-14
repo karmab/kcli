@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 
 '''
 ansible dynamic inventory script for use with kcli
@@ -64,6 +64,7 @@ class KcliInventory(object):
         self.args = parser.parse_args()
 
     def get(self):
+        ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety']
         k = self.k
         metadata = {'_meta': {'hostvars': {}}}
         hostvalues = metadata['_meta']['hostvars']
@@ -88,7 +89,7 @@ class KcliInventory(object):
                     hostvalues[name]['ansible_user'] = 'centos'
                 elif 'cirros' in template.lower():
                     hostvalues[name]['ansible_user'] = 'cirros'
-                elif 'ubuntu' in template.lower():
+                elif [x for x in ubuntus if x in template.lower()]:
                     hostvalues[name]['ansible_user'] = 'ubuntu'
                 elif 'fedora' in template.lower():
                     hostvalues[name]['ansible_user'] = 'fedora'

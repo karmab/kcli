@@ -10,7 +10,7 @@ import os
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "1.0.5"
+__version__ = "1.0.6"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -809,6 +809,7 @@ class Kvirt:
         vm.attachDevice(diskxml)
 
     def ssh(self, name):
+        ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety']
         user = 'root'
         conn = self.conn
         vm = conn.lookupByName(name)
@@ -824,7 +825,7 @@ class Kvirt:
                 user = 'centos'
             elif 'cirros' in template.lower():
                 user = 'cirros'
-            elif 'ubuntu' in template.lower():
+            elif [x for x in ubuntus if x in template.lower()]:
                 user = 'ubuntu'
             elif 'fedora' in template.lower():
                 user = 'fedora'

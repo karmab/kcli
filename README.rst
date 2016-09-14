@@ -212,6 +212,17 @@ Try it with:
 
     ansible all -i extra/klist.py -m ping
 
+issues found with cloud images
+------------------------------
+
+-  for ubuntu latest images ( xenial), one needs to use something like
+   guestfish to edit /boot/grub/grub.cfg and /etc/default/grub and
+   remove console=ttyS0 from it Also note that you need to install
+   python-simplejson ( actually bringing python2.7) to allow ansible to
+   work
+-  debian images are freezing. rebooting fixes the issue but as such
+   cloudinit doesnt get applied...
+
 Problems?
 ---------
 
