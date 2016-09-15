@@ -830,7 +830,7 @@ class Kvirt:
             elif 'fedora' in template.lower():
                 user = 'fedora'
             elif 'rhel' in template.lower():
-                user = 'rhel'
+                user = 'cloud-user'
             elif 'debian' in template.lower():
                 user = 'debian'
         ip = vm[2]
