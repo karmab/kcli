@@ -686,7 +686,7 @@ class Kvirt:
             stream.sendAll(self.handler, origin)
             stream.finish()
 
-    def setip(self, name, ip):
+    def update_ip(self, name, ip):
         conn = self.conn
         vm = conn.lookupByName(name)
         xml = vm.XMLDesc(0)
@@ -715,7 +715,7 @@ class Kvirt:
             attributes = entry.attrib
             if attributes['name'] == 'version':
                 entry.text = ip
-            versionfound = True
+                versionfound = True
         if not versionfound:
             version = ET.Element("entry", name="version")
             version.text = ip
@@ -723,7 +723,7 @@ class Kvirt:
         newxml = ET.tostring(root)
         conn.defineXML(newxml)
 
-    def setmemory(self, name, memory):
+    def update_memory(self, name, memory):
         conn = self.conn
         memory = str(int(memory) * KB)
         try:
@@ -740,7 +740,7 @@ class Kvirt:
         newxml = ET.tostring(root)
         conn.defineXML(newxml)
 
-    def setcpu(self, name, numcpus):
+    def update_cpu(self, name, numcpus):
         conn = self.conn
         try:
             vm = conn.lookupByName(name)
@@ -754,7 +754,7 @@ class Kvirt:
         newxml = ET.tostring(root)
         conn.defineXML(newxml)
 
-    def add(self, name, size, pool=None, thin=True):
+    def add_disk(self, name, size, pool=None, thin=True):
         conn = self.conn
         diskformat = 'qcow2'
         diskbus = 'virtio'

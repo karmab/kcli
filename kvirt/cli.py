@@ -249,13 +249,13 @@ def update(config, ip, memory, numcpus, name):
     k = config.k
     if ip is not None:
         click.secho("Updating ip of vm %s to %s..." % (name, ip), fg='green')
-        k.setip(name, ip)
+        k.update_ip(name, ip)
     elif memory is not None:
         click.secho("Updating memory of vm %s to %s..." % (name, memory), fg='green')
-        k.setmemory(name, memory)
+        k.update_memory(name, memory)
     elif numcpus is not None:
         click.secho("Updating numcpus of vm %s to %s..." % (name, numcpus), fg='green')
-        k.setcpu(name, numcpus)
+        k.update_cpu(name, numcpus)
 
 
 @cli.command()
@@ -269,7 +269,7 @@ def add(config, size, pool, name):
         os._exit(1)
     k = config.k
     click.secho("Adding disk %s..." % (name), fg='green')
-    k.add(name=name, size=size, pool=pool)
+    k.add_disk(name=name, size=size, pool=pool)
 
 
 @cli.command()
