@@ -1,4 +1,4 @@
-export HYPERVISOR_IP="192.1268.0.101"
+export HYPERVISOR_IP="192.168.0.101"
 export PASSWORD="unix1234"
 echo `hostname -I` `hostname -s` >> /etc/hosts
 yum -y install http://plain.resources.ovirt.org/pub/yum-repo/ovirt-release40.rpm
