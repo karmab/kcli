@@ -19,5 +19,7 @@ sed -i "s/PasswordAuthentication no/PasswordAuthentication yes/" /etc/ssh/sshd_c
 systemctl restart sshd
 yum -y install vdsm
 ovirt-shell -E "add host --address `hostname -I` --cluster-name Default --name `hostname -s` --root_password $PASSWORD"
+sleep 120
 ovirt-shell -E "add storagedomain --name vms --host-name `hostname -s` --type data --storage-type nfs --storage-address `hostname -I` --storage-path /vms"
+sleep 20
 ovirt-shell -E "add storagedomain --name vms --parent-datacenter-name Default"
