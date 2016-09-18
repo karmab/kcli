@@ -21,5 +21,7 @@ yum -y install vdsm
 ovirt-shell -E "add host --address `hostname -I` --cluster-name Default --name `hostname -s` --root_password $PASSWORD"
 sleep 120
 ovirt-shell -E "add storagedomain --name vms --host-name `hostname -s` --type data --storage-type nfs --storage-address `hostname -I` --storage-path /vms"
+ovirt-shell -E "add storagedomain --name isos --host-name `hostname -s` --type iso --storage-type nfs --storage-address `hostname -I` --storage-path /isos"
 sleep 20
 ovirt-shell -E "add storagedomain --name vms --parent-datacenter-name Default"
+ovirt-shell -E "add storagedomain --name isos --parent-datacenter-name Default"
