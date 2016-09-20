@@ -4,6 +4,6 @@ vm1:
   net1: private1
   pool: vms
   template: centos7.qcow2
-  script: samples/vm1.sh
+  script1: samples/vm1.sh
 vm2:
   profile: base7

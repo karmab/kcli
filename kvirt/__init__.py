@@ -10,7 +10,7 @@ import os
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "1.0.6"
+__version__ = "1.0.8"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -62,7 +62,7 @@ class Kvirt:
         except:
             return False
 
-    def create(self, name, title='', description='kvirt', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disksize1=10, diskthin1=True, diskinterface1='virtio', disksize2=0, diskthin2=True, diskinterface2='virtio', disksize3=0, diskthin3=True, diskinterface3='virtio', disksize4=0, diskthin4=True, diskinterface4='virtio', net1='default', net2=None, net3=None, net4=None, iso=None, vnc=False, cloudinit=True, start=True, keys=None, cmds=None, ip1=None, netmask1=None, gateway1=None, ip2=None, netmask2=None, ip3=None, netmask3=None, ip4=None, netmask4=None, nested=True):
+    def create(self, name, title='', description='kvirt', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disksize1=10, diskthin1=True, diskinterface1='virtio', disksize2=0, diskthin2=True, diskinterface2='virtio', disksize3=0, diskthin3=True, diskinterface3='virtio', disksize4=0, diskthin4=True, diskinterface4='virtio', net1='default', net2=None, net3=None, net4=None, iso=None, vnc=False, cloudinit=True, start=True, keys=None, cmds=None, ip1=None, netmask1=None, gateway1=None, ip2=None, netmask2=None, ip3=None, netmask3=None, ip4=None, netmask4=None, nested=True, dns=None, search=None):
         if vnc:
             display = 'vnc'
         else:
@@ -296,7 +296,7 @@ class Kvirt:
         vm = conn.lookupByName(name)
         vm.setAutostart(1)
         if cloudinit:
-            self._cloudinit(name=name, keys=keys, cmds=cmds, ip1=ip1, netmask1=netmask1, gateway1=gateway1, ip2=ip2, netmask2=netmask2, ip3=ip3, netmask3=netmask3, ip4=ip4, netmask4=netmask4)
+            self._cloudinit(name=name, keys=keys, cmds=cmds, ip1=ip1, netmask1=netmask1, gateway1=gateway1, ip2=ip2, netmask2=netmask2, ip3=ip3, netmask3=netmask3, ip4=ip4, netmask4=netmask4, dns=dns, search=search)
             self._uploadiso(name, pool=pool)
         if start:
             vm.create()
@@ -627,7 +627,7 @@ class Kvirt:
         vm.setAutostart(1)
         vm.create()
 
-    def _cloudinit(self, name, keys=None, cmds=None, ip1=None, netmask1=None, gateway1=None, ip2=None, netmask2=None, ip3=None, netmask3=None, ip4=None, netmask4=None):
+    def _cloudinit(self, name, keys=None, cmds=None, ip1=None, netmask1=None, gateway1=None, ip2=None, netmask2=None, ip3=None, netmask3=None, ip4=None, netmask4=None, dns=None, search=None):
         with open('/tmp/meta-data', 'w') as metadata:
             metadata.write('instance-id: XXX\nlocal-hostname: %s\n' % name)
             if ip1 is not None and netmask1 is not None and gateway1 is not None:
@@ -648,6 +648,10 @@ class Kvirt:
                     metadata.write("  iface eth3 inet static\n")
                     metadata.write("  address %s\n" % ip4)
                     metadata.write("  netmask %s\n" % netmask4)
+                if dns is not None:
+                    metadata.write("  dns-nameservers %s\n" % dns)
+                if search is not None:
+                    metadata.write("  dns-search %s\n" % search)
         with open('/tmp/user-data', 'w') as userdata:
             userdata.write('#cloud-config\nhostname: %s\n' % name)
             if keys is not None:

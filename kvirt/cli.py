@@ -216,16 +216,25 @@ def create(config, profile, ip1, ip2, ip3, ip4, name):
     netmask2 = profile.get('netmask2')
     netmask3 = profile.get('netmask3')
     netmask4 = profile.get('netmask4')
-    script = profile.get('script')
-    if script is not None:
-        if not os.path.exists(script):
-            click.secho("Script %s not found.Ignoring..." % script, fg='red')
-            script = None
+    dns = profile.get('dns')
+    search = profile.get('search')
+    script1 = profile.get('script1')
+    script2 = profile.get('script2')
+    if script1 is not None:
+        if not os.path.exists(script1):
+            click.secho("Script1 %s not found.Ignoring..." % script1, fg='red')
         else:
-            scriptlines = [line.strip() for line in open(script).readlines() if line != '\n']
-            if scriptlines:
-                cmds = scriptlines
-    k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disksize1=disksize1, diskthin1=diskthin1, diskinterface1=diskinterface1, disksize2=disksize2, diskthin2=diskthin2, diskinterface2=diskinterface2, disksize3=disksize3, diskthin3=diskthin3, diskinterface3=diskinterface3, disksize4=disksize4, diskthin4=diskthin4, diskinterface4=diskinterface4, net1=net1, net2=net2, net3=net3, net4=net4, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds, ip1=ip1, netmask1=netmask1, gateway1=gateway1, ip2=ip2, netmask2=netmask2, ip3=ip3, netmask3=netmask3, ip4=ip4, netmask4=netmask4)
+            scriptlines1 = [line.strip() for line in open(script1).readlines() if line != '\n']
+            if scriptlines1:
+                cmds = scriptlines1
+                if script2 is not None:
+                    if not os.path.exists(script2):
+                        click.secho("Script2 %s not found.Ignoring..." % script2, fg='red')
+                    else:
+                        scriptlines2 = [line.strip() for line in open(script2).readlines() if line != '\n']
+                        if scriptlines2:
+                            cmds = cmds.extend(scriptlines2)
+    k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disksize1=disksize1, diskthin1=diskthin1, diskinterface1=diskinterface1, disksize2=disksize2, diskthin2=diskthin2, diskinterface2=diskinterface2, disksize3=disksize3, diskthin3=diskthin3, diskinterface3=diskinterface3, disksize4=disksize4, diskthin4=diskthin4, diskinterface4=diskinterface4, net1=net1, net2=net2, net3=net3, net4=net4, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds, ip1=ip1, netmask1=netmask1, gateway1=gateway1, ip2=ip2, netmask2=netmask2, ip3=ip3, netmask3=netmask3, ip4=ip4, netmask4=netmask4, dns=dns, search=search)
 
 
 @cli.command()
@@ -375,16 +384,26 @@ def plan(config, inputfile, start, stop, delete, plan):
             netmask2 = next((e for e in [profile.get('netmask2'), customprofile.get('netmask2')] if e is not None), None)
             netmask3 = next((e for e in [profile.get('netmask3'), customprofile.get('netmask3')] if e is not None), None)
             netmask4 = next((e for e in [profile.get('netmask4'), customprofile.get('netmask4')] if e is not None), None)
+            dns = next((e for e in [profile.get('dns'), customprofile.get('dns')] if e is not None), None)
+            search = next((e for e in [profile.get('search'), customprofile.get('search')] if e is not None), None)
             ip1 = profile.get('ip1')
             ip2 = profile.get('ip2')
             ip3 = profile.get('ip3')
             ip4 = profile.get('ip4')
-            script = next((e for e in [profile.get('script'), customprofile.get('scripts')] if e is not None), None)
-            if script is not None and os.path.exists(script):
-                scriptlines = [line.strip() for line in open(script).readlines() if line != '\n']
-                if scriptlines:
-                    cmds = scriptlines
-            k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disksize1=disksize1, diskthin1=diskthin1, diskinterface1=diskinterface1, disksize2=disksize2, diskthin2=diskthin2, diskinterface2=diskinterface2, disksize3=disksize3, diskthin3=diskthin3, diskinterface3=diskinterface3, disksize4=disksize4, diskthin4=diskthin4, diskinterface4=diskinterface4, net1=net1, net2=net2, net3=net3, net4=net4, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds, ip1=ip1, netmask1=netmask1, gateway1=gateway1, ip2=ip2, netmask2=netmask2, ip3=ip3, netmask3=netmask3, ip4=ip4, netmask4=netmask4)
+            script1 = next((e for e in [profile.get('script1'), customprofile.get('script1')] if e is not None), None)
+            script2 = next((e for e in [profile.get('script2'), customprofile.get('script1')] if e is not None), None)
+            if script1 is not None and os.path.exists(script1):
+                scriptlines1 = [line.strip() for line in open(script1).readlines() if line != '\n']
+                if scriptlines1:
+                    cmds = scriptlines1
+                    if script2 is not None:
+                        if not os.path.exists(script2):
+                            click.secho("Script2 %s not found.Ignoring..." % script2, fg='red')
+                        else:
+                            scriptlines2 = [line.strip() for line in open(script2).readlines() if line != '\n']
+                            if scriptlines2:
+                                cmds = cmds.extend(scriptlines2)
+            k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disksize1=disksize1, diskthin1=diskthin1, diskinterface1=diskinterface1, disksize2=disksize2, diskthin2=diskthin2, diskinterface2=diskinterface2, disksize3=disksize3, diskthin3=diskthin3, diskinterface3=diskinterface3, disksize4=disksize4, diskthin4=diskthin4, diskinterface4=diskinterface4, net1=net1, net2=net2, net3=net3, net4=net4, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds, ip1=ip1, netmask1=netmask1, gateway1=gateway1, ip2=ip2, netmask2=netmask2, ip3=ip3, netmask3=netmask3, ip4=ip4, netmask4=netmask4, dns=dns, search=search)
             click.secho("%s deployed!" % name, fg='green')
 
 

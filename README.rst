@@ -129,8 +129,8 @@ look at the sample) and deploy it with kcli plan
 You can point at an existing profile within your plans, define all
 parameters for the vms, or combine both approaches.
 
-Specific script and ip1, ip2, ip3 and ip4 can be used directly in the
-plan file.
+Specific script1 ( and script2) ip1, ip2, ip3 and ip4 can be used
+directly in the plan file ( or in profiles one)
 
 The samples directory contains examples to get you started
 
@@ -166,16 +166,28 @@ those parameters can be set either in your config, profile or plan files
 -  *net3* (optional)
 -  *net4* (optional)
 -  *iso* ( optional)
+-  *netmask1* (optional)
+-  *netmask2* (optional)
+-  *netmask3* (optional)
+-  *netmask4* (optional)
+-  *gateway1* (optional)
+-  *dns* (optional) Dns servers
+-  *search* (optional) Dns search domain
 -  *vnc* Defaults to false (use spice instead)
 -  *cloudinit* Defaults to true
 -  *start* Defaults to true
 -  *keys* (optional). Array of public keys to inject
 -  *cmds* (optional). Array of commands to run
 -  *profile* name of one of your profile. Only checked in plan file
--  *scripts* path of a custom script to inject with cloudinit. Note that
+-  *script1* path of a custom script to inject with cloudinit. Note that
    it will override cmds part. You can either specify a full path or
    relative to where you're running kcli. Only checked in profile or
    plan file
+-  *script2* path of an additional script to inject with cloudinit. Note
+   that it will override cmds part. You can either specify a full path
+   or relative to where you're running kcli. Only checked in profile or
+   plan file. You can use script1 as a base script to do common things
+   (like subscribing your rhel vms ) and customize using script2
 
 additional parameters for plan files
 ------------------------------------
@@ -217,9 +229,9 @@ issues found with cloud images
 
 -  for ubuntu latest images ( xenial), one needs to use something like
    guestfish to edit /boot/grub/grub.cfg and /etc/default/grub and
-   remove console=ttyS0 from it Also note that you need to install
-   python-simplejson ( actually bringing python2.7) to allow ansible to
-   work
+   remove console=ttyS0 from it.
+-  Also note that you need to install python-simplejson ( actually
+   bringing python2.7) to allow ansible to work on ubuntu
 -  debian images are freezing. rebooting fixes the issue but as such
    cloudinit doesnt get applied...
 
