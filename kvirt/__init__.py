@@ -10,7 +10,7 @@ import os
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "1.0.8"
+__version__ = "1.0.9"
 
 KB = 1024 * 1024
 MB = 1024 * KB
