@@ -116,7 +116,7 @@ Note that the description of the vm will automatically be set to the plan name, 
 
 When launching a plan, the plan name is optional. If not is provided, the kvirt keyword will be used.
 
-For an advanced use of plans along with scripts, you can check the [uci](UCI.md) page to deploy all upstream projects associated with Red Hat Cloud Infrastructure products ( or downstream versions too)
+For an advanced use of plans along with scripts, you can check the [uci](uci/README.md) page to deploy all upstream projects associated with Red Hat Cloud Infrastructure products ( or downstream versions too)
 
 ## available parameters
 
