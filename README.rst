@@ -67,7 +67,9 @@ profile configuration
 You can use the file ~/kvirt\_profiles.yml to specify profiles (number
 of cpus, memory, size of disk,network,....) to use when deploying a vm.
 
-The samples directory contains examples to get you started
+The `samples
+directory <https://github.com/karmab/kcli/tree/master/samples>`__
+contains examples to get you started
 
 How to use
 ----------
@@ -138,6 +140,10 @@ Note that the description of the vm will automatically be set to the
 plan name, and this value will be used when deleting the entire plan as
 a way to locate matching vms.
 
+For an advanced use of plans along with scripts, you can check the
+`uci <UCI.md>`__ page to deploy all upstream projects associated with
+Red Hat Cloud Infrastructure products
+
 available parameters
 --------------------
 
@@ -172,7 +178,7 @@ those parameters can be set either in your config, profile or plan files
 -  *netmask4* (optional)
 -  *gateway1* (optional)
 -  *dns* (optional) Dns servers
--  *search* (optional) Dns search domain
+-  *domain* (optional) Dns search domain
 -  *vnc* Defaults to false (use spice instead)
 -  *cloudinit* Defaults to true
 -  *start* Defaults to true
@@ -183,11 +189,13 @@ those parameters can be set either in your config, profile or plan files
    it will override cmds part. You can either specify a full path or
    relative to where you're running kcli. Only checked in profile or
    plan file
--  *script2* path of an additional script to inject with cloudinit. Note
-   that it will override cmds part. You can either specify a full path
-   or relative to where you're running kcli. Only checked in profile or
-   plan file. You can use script1 as a base script to do common things
-   (like subscribing your rhel vms ) and customize using script2
+-  *script2* path of an additional script to inject with cloudinit. Only
+   checked in profile or plan file. You can use script1 as a base script
+   to do common things (like subscribing your rhel vms ) and customize
+   using script2, script3, script4 and script5
+-  *script3* path of an additional script to inject with cloudinit
+-  *script4* path of an additional script to inject with cloudinit
+-  *script5* path of an additional script to inject with cloudinit
 
 additional parameters for plan files
 ------------------------------------

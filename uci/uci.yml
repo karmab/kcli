@@ -1,0 +1,51 @@
+foreman:
+ template: CentOS-7-x86_64-GenericCloud.qcow2
+ memory: 4096
+ numcpus: 2
+ net1: cinet
+ disksize1: 40
+ pool: vms
+ script2: foreman/repo.sh
+ script1: foreman/install.sh
+
+manageiq:
+ template: manageiq-openstack-darga-3.qc2
+ memory: 6144
+ numcpus: 2
+ net1: cinet
+ disksize1: 45
+ disksize2: 10
+ pool: vms
+ script1: manageiq/install.sh
+
+origin:
+ template: CentOS-7-x86_64-GenericCloud.qcow2
+ numcpus: 2
+ memory: 2048
+ net1: cinet
+ disksize2: 20
+ pool: vms
+ script1: openshift/install.sh
+
+rdo:
+ template: CentOS-7-x86_64-GenericCloud.qcow2
+ memory: 6144
+ numcpus: 2
+ disksize2: 40
+ net1: cinet
+ pool: vms
+ script1: openstack/repo.sh
+ script2: openstack/install.sh
+ script3: openstack/provision.sh
+
+ovirt:
+ template: CentOS-7-x86_64-GenericCloud.qcow2
+ memory: 8192
+ numcpus: 2
+ net1: cinet
+ disksize1: 60
+ pool: vms
+ script1: ovirt/repo.sh
+ script2: ovirt/nfs.sh
+ script3: ovirt/install.sh
+ script4: ovirt/provision.sh

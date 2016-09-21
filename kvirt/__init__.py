@@ -62,7 +62,7 @@ class Kvirt:
         except:
             return False
 
-    def create(self, name, title='', description='kvirt', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disksize1=10, diskthin1=True, diskinterface1='virtio', disksize2=0, diskthin2=True, diskinterface2='virtio', disksize3=0, diskthin3=True, diskinterface3='virtio', disksize4=0, diskthin4=True, diskinterface4='virtio', net1='default', net2=None, net3=None, net4=None, iso=None, vnc=False, cloudinit=True, start=True, keys=None, cmds=None, ip1=None, netmask1=None, gateway1=None, ip2=None, netmask2=None, ip3=None, netmask3=None, ip4=None, netmask4=None, nested=True, dns=None, search=None):
+    def create(self, name, title='', description='kvirt', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disksize1=10, diskthin1=True, diskinterface1='virtio', disksize2=0, diskthin2=True, diskinterface2='virtio', disksize3=0, diskthin3=True, diskinterface3='virtio', disksize4=0, diskthin4=True, diskinterface4='virtio', net1='default', net2=None, net3=None, net4=None, iso=None, vnc=False, cloudinit=True, start=True, keys=None, cmds=None, ip1=None, netmask1=None, gateway1=None, ip2=None, netmask2=None, ip3=None, netmask3=None, ip4=None, netmask4=None, nested=True, dns=None, domain=None):
         if vnc:
             display = 'vnc'
         else:
@@ -296,7 +296,7 @@ class Kvirt:
         vm = conn.lookupByName(name)
         vm.setAutostart(1)
         if cloudinit:
-            self._cloudinit(name=name, keys=keys, cmds=cmds, ip1=ip1, netmask1=netmask1, gateway1=gateway1, ip2=ip2, netmask2=netmask2, ip3=ip3, netmask3=netmask3, ip4=ip4, netmask4=netmask4, dns=dns, search=search)
+            self._cloudinit(name=name, keys=keys, cmds=cmds, ip1=ip1, netmask1=netmask1, gateway1=gateway1, ip2=ip2, netmask2=netmask2, ip3=ip3, netmask3=netmask3, ip4=ip4, netmask4=netmask4, dns=dns, domain=domain)
             self._uploadiso(name, pool=pool)
         if start:
             vm.create()
@@ -627,9 +627,13 @@ class Kvirt:
         vm.setAutostart(1)
         vm.create()
 
-    def _cloudinit(self, name, keys=None, cmds=None, ip1=None, netmask1=None, gateway1=None, ip2=None, netmask2=None, ip3=None, netmask3=None, ip4=None, netmask4=None, dns=None, search=None):
+    def _cloudinit(self, name, keys=None, cmds=None, ip1=None, netmask1=None, gateway1=None, ip2=None, netmask2=None, ip3=None, netmask3=None, ip4=None, netmask4=None, dns=None, domain=None):
         with open('/tmp/meta-data', 'w') as metadata:
-            metadata.write('instance-id: XXX\nlocal-hostname: %s\n' % name)
+            if domain is not None:
+                localhostname = "%s.%s" % (name, domain)
+            else:
+                localhostname = name
+            metadata.write('instance-id: XXX\nlocal-hostname: %s\n' % localhostname)
             if ip1 is not None and netmask1 is not None and gateway1 is not None:
                 metadata.write("network-interfaces: |\n")
                 metadata.write("  iface eth0 inet static\n")
@@ -650,10 +654,12 @@ class Kvirt:
                     metadata.write("  netmask %s\n" % netmask4)
                 if dns is not None:
                     metadata.write("  dns-nameservers %s\n" % dns)
-                if search is not None:
-                    metadata.write("  dns-search %s\n" % search)
+                if domain is not None:
+                    metadata.write("  dns-search %s\n" % domain)
         with open('/tmp/user-data', 'w') as userdata:
             userdata.write('#cloud-config\nhostname: %s\n' % name)
+            if domain is not None:
+                userdata.write("fqdn: %s.%s\n" % (name, domain))
             if keys is not None:
                 userdata.write("ssh_authorized_keys:\n")
                 for key in keys:

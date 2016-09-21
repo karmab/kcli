@@ -1,0 +1,4 @@
+:foreman:
+ :host: 'https://127.0.0.1/'
+ :username: 'admin'
+ :password: 'unix1234'

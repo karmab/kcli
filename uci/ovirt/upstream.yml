@@ -1,0 +1,11 @@
+ovirt:
+ template: CentOS-7-x86_64-GenericCloud.qcow2
+ memory: 8192
+ numcpus: 2
+ net1: cinet
+ disksize1: 60
+ pool: vms
+ script1: repo.sh
+ script2: nfs.sh
+ script3: install.sh
+ script4: provision.sh

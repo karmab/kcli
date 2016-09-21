@@ -1,0 +1,56 @@
+osp:
+ template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+ memory: 6144
+ numcpus: 2
+ disksize2: 40
+ net1: cinet
+ pool: vms
+ script1: register.sh
+ script2: openstack/subscription.sh
+ script3: openstack/install.sh
+ script4: openstack/provision.sh
+
+rhev:
+ template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+ memory: 8192
+ numcpus: 2
+ net1: cinet
+ disksize1: 60
+ pool: vms
+ script1: register.sh
+ script2: nfs.sh
+ script3: ovirt/subscription.sh
+ script4: ovirt/install.sh
+ script5: ovirt/provision.sh
+
+cloudforms:
+ template: cfme-rhos-5.6.1.2-1.x86_64.qcow2
+ memory: 6144
+ numcpus: 2
+ net1: cinet
+ disksize1: 45
+ disksize2: 10
+ pool: vms
+ script1: manageiq/install.sh
+
+openshift:
+ template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+ numcpus: 2
+ memory: 2048
+ net1: cinet
+ disksize2: 20
+ pool: vms
+ script1: register.sh
+ script2: openshift/subscription.sh
+ script3: openshift/install.sh
+
+satellite:
+ template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+ memory: 4096
+ numcpus: 2
+ net1: cinet
+ disksize1: 40
+ pool: vms
+ script1: register.sh
+ script2: foreman/subscription.sh
+ script3: foreman/install.sh

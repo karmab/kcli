@@ -1,0 +1,12 @@
+rhev:
+ template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+ memory: 8192
+ numcpus: 2
+ net1: cinet
+ disksize1: 60
+ pool: vms
+ script1: ../register.sh
+ script2: nfs.sh
+ script3: subscription.sh
+ script4: install.sh
+ script5: provision.sh

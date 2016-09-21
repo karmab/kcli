@@ -1,0 +1,11 @@
+osp:
+ template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+ memory: 6144
+ numcpus: 2
+ disksize2: 40
+ net1: cinet
+ pool: vms
+ script1: ../register.sh
+ script2: subscription.sh
+ script3: install.sh
+ script4: provision.sh

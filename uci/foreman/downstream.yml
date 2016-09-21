@@ -1,0 +1,10 @@
+satellite:
+ template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+ memory: 4096
+ numcpus: 2
+ net1: cinet
+ disksize1: 40
+ pool: vms
+ script1: ../register.sh
+ script2: subscription.sh
+ script3: install.sh
