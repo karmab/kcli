@@ -224,36 +224,46 @@ def create(config, profile, ip1, ip2, ip3, ip4, name):
     script4 = profile.get('script4')
     script5 = profile.get('script5')
     if script1 is not None:
+        script1 = os.path.expanduser(script1)
         if not os.path.exists(script1):
             click.secho("Script1 %s not found.Ignoring..." % script1, fg='red')
+            os._exit(1)
         else:
             scriptlines1 = [line.strip() for line in open(script1).readlines() if line != '\n']
             if scriptlines1:
                 cmds = scriptlines1
                 if script2 is not None:
+                    script2 = os.path.expanduser(script2)
                     if not os.path.exists(script2):
                         click.secho("Script2 %s not found.Ignoring..." % script2, fg='red')
+                        os._exit(1)
                     else:
                         scriptlines2 = [line.strip() for line in open(script2).readlines() if line != '\n']
                         if scriptlines2:
                             cmds.extend(scriptlines2)
                 if script3 is not None:
+                    script3 = os.path.expanduser(script3)
                     if not os.path.exists(script3):
                         click.secho("Script3 %s not found.Ignoring..." % script3, fg='red')
+                        os._exit(1)
                     else:
                         scriptlines3 = [line.strip() for line in open(script3).readlines() if line != '\n']
                         if scriptlines3:
                             cmds.extend(scriptlines3)
                 if script4 is not None:
+                    script4 = os.path.expanduser(script4)
                     if not os.path.exists(script4):
                         click.secho("Script4 %s not found.Ignoring..." % script4, fg='red')
+                        os._exit(1)
                     else:
                         scriptlines4 = [line.strip() for line in open(script4).readlines() if line != '\n']
                         if scriptlines4:
                             cmds.extend(scriptlines4)
                 if script5 is not None:
+                    script5 = os.path.expanduser(script5)
                     if not os.path.exists(script5):
                         click.secho("Script5 %s not found.Ignoring..." % script5, fg='red')
+                        os._exit(1)
                     else:
                         scriptlines5 = [line.strip() for line in open(script5).readlines() if line != '\n']
                         if scriptlines5:
@@ -318,9 +328,11 @@ def report(config):
 @click.option('-s', '--start', is_flag=True)
 @click.option('-w', '--stop', is_flag=True)
 @click.option('-d', '--delete', is_flag=True)
-@click.argument('plan')
+@click.argument('plan', required=False)
 @pass_config
 def plan(config, inputfile, start, stop, delete, plan):
+    if plan is None:
+        plan = 'kvirt'
     k = config.k
     if delete:
         if plan == '':
@@ -414,11 +426,11 @@ def plan(config, inputfile, start, stop, delete, plan):
             ip2 = profile.get('ip2')
             ip3 = profile.get('ip3')
             ip4 = profile.get('ip4')
-            script1 = next((e for e in [profile.get('script1'), customprofile.get('script1')] if e is not None), None)
-            script2 = next((e for e in [profile.get('script2'), customprofile.get('script2')] if e is not None), None)
-            script3 = next((e for e in [profile.get('script3'), customprofile.get('script3')] if e is not None), None)
-            script4 = next((e for e in [profile.get('script4'), customprofile.get('script4')] if e is not None), None)
-            script5 = next((e for e in [profile.get('script5'), customprofile.get('script5')] if e is not None), None)
+            script1 = next((os.path.expanduser(e) for e in [profile.get('script1'), customprofile.get('script1')] if e is not None), None)
+            script2 = next((os.path.expanduser(e) for e in [profile.get('script2'), customprofile.get('script2')] if e is not None), None)
+            script3 = next((os.path.expanduser(e) for e in [profile.get('script3'), customprofile.get('script3')] if e is not None), None)
+            script4 = next((os.path.expanduser(e) for e in [profile.get('script4'), customprofile.get('script4')] if e is not None), None)
+            script5 = next((os.path.expanduser(e) for e in [profile.get('script5'), customprofile.get('script5')] if e is not None), None)
             if script1 is not None and os.path.exists(script1):
                 scriptlines1 = [line.strip() for line in open(script1).readlines() if line != '\n']
                 if scriptlines1:

@@ -112,9 +112,11 @@ Specific script1 ( and script2) ip1, ip2, ip3 and ip4 can be used directly in th
 
 The samples directory contains examples to get you started
 
-Note that the description of the vm will automatically be set to the plan name, and this value will be used when deleting the entire plan as a way to locate matching vms.  
+Note that the description of the vm will automatically be set to the plan name, and this value will be used when deleting the entire plan as a way to locate matching vms.
 
-For an advanced use of plans along with scripts, you can check the [uci](UCI.md) page to deploy all upstream projects associated with Red Hat Cloud Infrastructure products
+When launching a plan, the plan name is optional. If not is provided, the kvirt keyword will be used.
+
+For an advanced use of plans along with scripts, you can check the [uci](UCI.md) page to deploy all upstream projects associated with Red Hat Cloud Infrastructure products ( or downstream versions too)
 
 ## available parameters
 
