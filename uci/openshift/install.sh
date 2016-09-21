@@ -9,5 +9,3 @@ wget -O /root/oc.tar.gz https://github.com/openshift/origin/releases/download/v1
 cd /root ; tar zxvf oc.tar.gz
 mv /root/openshift-origin-client-tools-v1.3.0-3ab7af3d097b57f933eccef684a714f2368804e7-linux-64bit/oc /usr/bin
 rm -rf  /root/openshift*
-systemctl start docker --ignore-dependencies
-oc cluster up

@@ -1,6 +1,6 @@
 export HYPERVISOR_IP=`hostname -I`
 export PASSWORD="unix1234"
-wget -O /root/.ovirtshellrc https://raw.githubusercontent.com/karmab/kcli/master/samples/ovirt/ovirtshellrc
+wget -O /root/.ovirtshellrc https://raw.githubusercontent.com/karmab/kcli/master/uci/ovirt/ovirtshellrc
 sed -i "s/username =.*/username = admin@internal/" /root/.ovirtshellrc
 sed -i "s/password =.*/password = $PASSWORD/" /root/.ovirtshellrc
 sed -i "s/insecure = False/insecure = True/" /root/.ovirtshellrc

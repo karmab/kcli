@@ -5,5 +5,7 @@ foreman:
  net1: cinet
  disksize1: 40
  pool: vms
- script2: repo.sh
- script1: install.sh
+ script1: repo.sh
+ script2: install.sh
+ script3: upstream.sh
+ script4: hammer.sh

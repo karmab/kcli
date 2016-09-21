@@ -5,8 +5,10 @@ foreman:
  net1: cinet
  disksize1: 40
  pool: vms
- script2: foreman/repo.sh
- script1: foreman/install.sh
+ script1: foreman/repo.sh
+ script2: foreman/install.sh
+ script3: foreman/upstream.sh
+ script4: foreman/hammer.sh
 
 manageiq:
  template: manageiq-openstack-darga-3.qc2
@@ -26,6 +28,7 @@ origin:
  disksize2: 20
  pool: vms
  script1: openshift/install.sh
+ script2: openshift/upstream.sh
 
 rdo:
  template: CentOS-7-x86_64-GenericCloud.qcow2

@@ -1,10 +1,11 @@
-openshift:
+ose:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
  numcpus: 2
  memory: 2048
  net1: cinet
  disksize2: 20
  pool: vms
- script1: ../register.sh
+ script1: ~/register.sh
  script2: subscription.sh
  script3: install.sh
+ script4: downstream.sh
