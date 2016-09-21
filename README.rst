@@ -144,8 +144,8 @@ When launching a plan, the plan name is optional. If not is provided,
 the kvirt keyword will be used.
 
 For an advanced use of plans along with scripts, you can check the
-`uci <UCI.md>`__ page to deploy all upstream projects associated with
-Red Hat Cloud Infrastructure products ( or downstream versions too)
+`uci <uci/README.md>`__ page to deploy all upstream projects associated
+with Red Hat Cloud Infrastructure products ( or downstream versions too)
 
 available parameters
 --------------------

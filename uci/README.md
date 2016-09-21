@@ -14,8 +14,8 @@ Note that a single vm is deployed for every project and as such all services are
 
 ##installation
 
-- The deployment makes use of a private routed network on your libvirt host, named cinet, with dhcp,  using 192.168.5.0, reserving ips starting from 192.168.5.200 as openstack floating ip pool
-You can save the corresponding [XML](cinet.xml):
+- The deployment makes use of a private routed network on your libvirt host, named cinet, with dhcp,  using 192.168.5.0, reserving ips starting from 192.168.5.200 as openstack floating ip pool.
+To define it, You can save the corresponding [XML](cinet.xml):
 
 ```
 <name>cinet</name>
@@ -39,7 +39,7 @@ virsh net-define cinet.xml
 virsh net-start cinet
 ```
 
--  You can then use the plan files and scripts in the [uci](https://github.com/karmab/kcli/tree/master/uci) directory (You might want to tweak the openstack.sh to match your external network setup)
+-  You can then use the plan files and scripts in the [uci](https://github.com/karmab/kcli/tree/master/uci) directory
 
 ```
 kcli plan -f uci.yml uci
@@ -47,7 +47,7 @@ kcli plan -f uci.yml uci
 
 ##i want rhci
 
-Provided you have the subscriptions, you can save the sample [register.sh script[(register.sh) to your home directory, edit itto match your credentials and pool info and launch the deployment:
+Provided you have the subscriptions, you can save the sample [register.sh script](register.sh) to your home directory, edit it to match your credentials and pool info and launch the deployment:
 
 ```
 kcli plan -f rhci.yml rhci
@@ -58,7 +58,7 @@ kcli plan -f rhci.yml rhci
 You can also easily launch individual upstream/downstream product directly from the corresponding directory . For instance to launch upstream ovirt, run the following commands (optionally specifying a plan name)
 
 ```
-cd ovirt
+cd uci/ovirt
 kcli plan -f upstream.yml
 ```
 
