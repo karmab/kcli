@@ -1,11 +1,13 @@
-<network>
 <name>cinet</name>
 <forward mode='nat'>
   <nat>
     <port start='1024' end='65535'/>
   </nat>
 </forward>
-<domain name='uci'/>
+<domain name='cinet'/>
 <ip address='192.168.5.1' netmask='255.255.255.0'>
+  <dhcp>
+    <range start='192.168.5.100' end='192.168.5.199'/>
+  </dhcp>
 </ip>
 </network>
