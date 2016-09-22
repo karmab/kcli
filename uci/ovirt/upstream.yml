@@ -5,7 +5,8 @@ ovirt:
  net1: cinet
  disksize1: 60
  pool: vms
- script1: repo.sh
- script2: nfs.sh
- script3: install.sh
- script4: provision.sh
+ scripts: 
+  - repo.sh
+  - nfs.sh
+  - install.sh
+  - provision.sh

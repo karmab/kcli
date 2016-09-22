@@ -108,7 +108,7 @@ you can also define plan files in yaml with a list of vms to deploy ( look at th
 
 You can point at an existing profile within your plans, define all parameters for the vms, or combine both approaches.
 
-Specific script1 ( and script2) ip1, ip2, ip3 and ip4 can be used directly in the plan file ( or in profiles one)
+Specific scripts, ip1, ip2, ip3 and ip4 can be used directly in the plan file ( or in profiles one)
 
 The samples directory contains examples to get you started
 
@@ -157,11 +157,7 @@ those parameters can be set either in your config, profile or plan files
 - *keys* (optional). Array of public keys to inject
 - *cmds* (optional). Array of commands to run
 - *profile* name of one of your profile. Only checked in plan file
-- *script1* path of a custom script to inject with cloudinit. Note that it will override cmds part. You can either specify a full path or relative to where you're running kcli. Only checked in profile or plan file
-- *script2* path of an additional script to inject with cloudinit. Only checked in profile or plan file. You can use script1 as a base script to do common things (like subscribing your rhel vms )  and customize using script2, script3, script4 and script5
-- *script3* path of an additional script to inject with cloudinit
-- *script4* path of an additional script to inject with cloudinit
-- *script5* path of an additional script to inject with cloudinit
+- *scripts* array of paths of custom script to inject with cloudinit. Note that it will override cmds part. You can either specify full paths or relative to where you're running kcli. Only checked in profile or plan file
 
 
 ## additional parameters for plan files

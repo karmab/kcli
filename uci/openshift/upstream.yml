@@ -5,5 +5,6 @@ origin:
  net1: cinet
  disksize2: 20
  pool: vms
- script1: install.sh
- script2: upstream.sh
+ scripts: 
+  - install.sh
+  - upstream.sh

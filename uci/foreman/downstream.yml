@@ -5,8 +5,9 @@ satellite:
  net1: cinet
  disksize1: 40
  pool: vms
- script1: ~/register_satellite.sh
- script2: subscription.sh
- script3: install.sh
- script4: downstream.sh
- script5: hammer.sh
+ scripts: 
+  - ~/register_satellite.sh
+  - subscription.sh
+  - install.sh
+  - downstream.sh
+  - hammer.sh

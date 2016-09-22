@@ -6,4 +6,5 @@ allinone:
  net2: localnet
  disksize1: 60
  pool: vms
- script1: allinone.sh
+ scripts: 
+  - allinone.sh

@@ -5,10 +5,11 @@ osp:
  disksize2: 40
  net1: cinet
  pool: vms
- script1: ~/register.sh
- script2: openstack/subscription.sh
- script3: openstack/install.sh
- script4: openstack/provision.sh
+ scripts: 
+  - ~/register.sh
+  - openstack/subscription.sh
+  - openstack/install.sh
+  - openstack/provision.sh
 
 rhv:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
@@ -17,11 +18,12 @@ rhv:
  net1: cinet
  disksize1: 60
  pool: vms
- script1: ~/register.sh
- script2: ovirt/nfs.sh
- script3: ovirt/subscription.sh
- script4: ovirt/install.sh
- script5: ovirt/provision.sh
+ scripts: 
+  - ~/register.sh
+  - ovirt/nfs.sh
+  - ovirt/subscription.sh
+  - ovirt/install.sh
+  - ovirt/provision.sh
 
 cloudforms:
  template: cfme-rhos-5.6.1.2-1.x86_64.qcow2
@@ -31,7 +33,8 @@ cloudforms:
  disksize1: 45
  disksize2: 10
  pool: vms
- script1: manageiq/install.sh
+ scripts: 
+  - manageiq/install.sh
 
 ose:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
@@ -40,10 +43,11 @@ ose:
  net1: cinet
  disksize2: 20
  pool: vms
- script1: ~/register.sh
- script2: openshift/subscription.sh
- script3: openshift/install.sh
- script4: openshift/downstream.sh
+ scripts: 
+  - ~/register.sh
+  - openshift/subscription.sh
+  - openshift/install.sh
+  - openshift/downstream.sh
 
 satellite:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
@@ -52,8 +56,9 @@ satellite:
  net1: cinet
  disksize1: 40
  pool: vms
- script1: ~/register.sh
- script2: foreman/subscription.sh
- script3: foreman/install.sh
- script4: foreman/downstream.sh
- script5: foreman/hammer.sh
+ scripts: 
+  - ~/register.sh
+  - foreman/subscription.sh
+  - foreman/install.sh
+  - foreman/downstream.sh
+  - foreman/hammer.sh

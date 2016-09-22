@@ -5,10 +5,11 @@ foreman:
  net1: cinet
  disksize1: 40
  pool: vms
- script1: foreman/repo.sh
- script2: foreman/install.sh
- script3: foreman/upstream.sh
- script4: foreman/hammer.sh
+ scripts: 
+  - foreman/repo.sh
+  - foreman/install.sh
+  - foreman/upstream.sh
+  - foreman/hammer.sh
 
 manageiq:
  template: manageiq-openstack-darga-3.qc2
@@ -18,7 +19,8 @@ manageiq:
  disksize1: 45
  disksize2: 10
  pool: vms
- script1: manageiq/install.sh
+ scripts: 
+  - manageiq/install.sh
 
 origin:
  template: CentOS-7-x86_64-GenericCloud.qcow2
@@ -27,8 +29,9 @@ origin:
  net1: cinet
  disksize2: 20
  pool: vms
- script1: openshift/install.sh
- script2: openshift/upstream.sh
+ scripts: 
+  - openshift/install.sh
+  - openshift/upstream.sh
 
 rdo:
  template: CentOS-7-x86_64-GenericCloud.qcow2
@@ -37,9 +40,12 @@ rdo:
  disksize2: 40
  net1: cinet
  pool: vms
- script1: openstack/repo.sh
- script2: openstack/install.sh
- script3: openstack/provision.sh
+ scripts: 
+  - openstack/repo.sh
+ scripts: 
+  - openstack/install.sh
+ scripts: 
+  - openstack/provision.sh
 
 ovirt:
  template: CentOS-7-x86_64-GenericCloud.qcow2
@@ -48,7 +54,8 @@ ovirt:
  net1: cinet
  disksize1: 60
  pool: vms
- script1: ovirt/repo.sh
- script2: ovirt/nfs.sh
- script3: ovirt/install.sh
- script4: ovirt/provision.sh
+ scripts: 
+  - ovirt/repo.sh
+  - ovirt/nfs.sh
+  - ovirt/install.sh
+  - ovirt/provision.sh

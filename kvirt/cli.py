@@ -218,56 +218,19 @@ def create(config, profile, ip1, ip2, ip3, ip4, name):
     netmask4 = profile.get('netmask4')
     dns = profile.get('dns')
     domain = profile.get('domain')
-    script1 = profile.get('script1')
-    script2 = profile.get('script2')
-    script3 = profile.get('script3')
-    script4 = profile.get('script4')
-    script5 = profile.get('script5')
-    if script1 is not None:
-        script1 = os.path.expanduser(script1)
-        if not os.path.exists(script1):
-            click.secho("Script1 %s not found.Ignoring..." % script1, fg='red')
-            os._exit(1)
-        else:
-            scriptlines1 = [line.strip() for line in open(script1).readlines() if line != '\n']
-            if scriptlines1:
-                cmds = scriptlines1
-                if script2 is not None:
-                    script2 = os.path.expanduser(script2)
-                    if not os.path.exists(script2):
-                        click.secho("Script2 %s not found.Ignoring..." % script2, fg='red')
-                        os._exit(1)
-                    else:
-                        scriptlines2 = [line.strip() for line in open(script2).readlines() if line != '\n']
-                        if scriptlines2:
-                            cmds.extend(scriptlines2)
-                if script3 is not None:
-                    script3 = os.path.expanduser(script3)
-                    if not os.path.exists(script3):
-                        click.secho("Script3 %s not found.Ignoring..." % script3, fg='red')
-                        os._exit(1)
-                    else:
-                        scriptlines3 = [line.strip() for line in open(script3).readlines() if line != '\n']
-                        if scriptlines3:
-                            cmds.extend(scriptlines3)
-                if script4 is not None:
-                    script4 = os.path.expanduser(script4)
-                    if not os.path.exists(script4):
-                        click.secho("Script4 %s not found.Ignoring..." % script4, fg='red')
-                        os._exit(1)
-                    else:
-                        scriptlines4 = [line.strip() for line in open(script4).readlines() if line != '\n']
-                        if scriptlines4:
-                            cmds.extend(scriptlines4)
-                if script5 is not None:
-                    script5 = os.path.expanduser(script5)
-                    if not os.path.exists(script5):
-                        click.secho("Script5 %s not found.Ignoring..." % script5, fg='red')
-                        os._exit(1)
-                    else:
-                        scriptlines5 = [line.strip() for line in open(script5).readlines() if line != '\n']
-                        if scriptlines5:
-                            cmds.extend(scriptlines5)
+    scripts = profile.get('scripts')
+    if scripts is not None:
+        scriptcmds = []
+        for script in scripts:
+            script = os.path.expanduser(script)
+            if not os.path.exists(script):
+                click.secho("Script %s not found.Ignoring..." % script, fg='red')
+            else:
+                scriptlines = [line.strip() for line in open(script).readlines() if line != '\n']
+                if scriptlines:
+                    scriptcmds.extend(scriptlines)
+        if scriptcmds:
+            cmds = scriptcmds
     k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disksize1=disksize1, diskthin1=diskthin1, diskinterface1=diskinterface1, disksize2=disksize2, diskthin2=diskthin2, diskinterface2=diskinterface2, disksize3=disksize3, diskthin3=diskthin3, diskinterface3=diskinterface3, disksize4=disksize4, diskthin4=diskthin4, diskinterface4=diskinterface4, net1=net1, net2=net2, net3=net3, net4=net4, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds, ip1=ip1, netmask1=netmask1, gateway1=gateway1, ip2=ip2, netmask2=netmask2, ip3=ip3, netmask3=netmask3, ip4=ip4, netmask4=netmask4, dns=dns, domain=domain)
 
 
@@ -426,43 +389,19 @@ def plan(config, inputfile, start, stop, delete, plan):
             ip2 = profile.get('ip2')
             ip3 = profile.get('ip3')
             ip4 = profile.get('ip4')
-            script1 = next((os.path.expanduser(e) for e in [profile.get('script1'), customprofile.get('script1')] if e is not None), None)
-            script2 = next((os.path.expanduser(e) for e in [profile.get('script2'), customprofile.get('script2')] if e is not None), None)
-            script3 = next((os.path.expanduser(e) for e in [profile.get('script3'), customprofile.get('script3')] if e is not None), None)
-            script4 = next((os.path.expanduser(e) for e in [profile.get('script4'), customprofile.get('script4')] if e is not None), None)
-            script5 = next((os.path.expanduser(e) for e in [profile.get('script5'), customprofile.get('script5')] if e is not None), None)
-            if script1 is not None and os.path.exists(script1):
-                scriptlines1 = [line.strip() for line in open(script1).readlines() if line != '\n']
-                if scriptlines1:
-                    cmds = scriptlines1
-                    if script2 is not None:
-                        if not os.path.exists(script2):
-                            click.secho("Script2 %s not found.Ignoring..." % script2, fg='red')
-                        else:
-                            scriptlines2 = [line.strip() for line in open(script2).readlines() if line != '\n']
-                            if scriptlines2:
-                                cmds.extend(scriptlines2)
-                    if script3 is not None:
-                        if not os.path.exists(script3):
-                            click.secho("Script3 %s not found.Ignoring..." % script3, fg='red')
-                        else:
-                            scriptlines3 = [line.strip() for line in open(script3).readlines() if line != '\n']
-                            if scriptlines3:
-                                cmds.extend(scriptlines3)
-                    if script4 is not None:
-                        if not os.path.exists(script4):
-                            click.secho("Script4 %s not found.Ignoring..." % script4, fg='red')
-                        else:
-                            scriptlines4 = [line.strip() for line in open(script4).readlines() if line != '\n']
-                            if scriptlines4:
-                                cmds.extend(scriptlines4)
-                    if script5 is not None:
-                        if not os.path.exists(script5):
-                            click.secho("Script5 %s not found.Ignoring..." % script5, fg='red')
-                        else:
-                            scriptlines5 = [line.strip() for line in open(script5).readlines() if line != '\n']
-                            if scriptlines5:
-                                cmds.extend(scriptlines5)
+            scripts = next((e for e in [profile.get('scripts'), customprofile.get('scripts')] if e is not None), None)
+            if scripts is not None:
+                scriptcmds = []
+                for script in scripts:
+                    script = os.path.expanduser(script)
+                    if not os.path.exists(script):
+                        click.secho("Script %s not found.Ignoring..." % script, fg='red')
+                    else:
+                        scriptlines = [line.strip() for line in open(script).readlines() if line != '\n']
+                        if scriptlines:
+                            scriptcmds.extend(scriptlines)
+                if scriptcmds:
+                    cmds = scriptcmds
             k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disksize1=disksize1, diskthin1=diskthin1, diskinterface1=diskinterface1, disksize2=disksize2, diskthin2=diskthin2, diskinterface2=diskinterface2, disksize3=disksize3, diskthin3=diskthin3, diskinterface3=diskinterface3, disksize4=disksize4, diskthin4=diskthin4, diskinterface4=diskinterface4, net1=net1, net2=net2, net3=net3, net4=net4, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds, ip1=ip1, netmask1=netmask1, gateway1=gateway1, ip2=ip2, netmask2=netmask2, ip3=ip3, netmask3=netmask3, ip4=ip4, netmask4=netmask4, dns=dns, domain=domain)
             click.secho("%s deployed!" % name, fg='green')
 

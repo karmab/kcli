@@ -6,7 +6,8 @@ engine:
  net2: localnet
  disksize1: 60
  pool: vms
- script1: engine.sh
+ scripts: 
+  - engine.sh
 
 hypervisor:
  template: CentOS-7-x86_64-GenericCloud.qcow2
@@ -15,4 +16,5 @@ hypervisor:
  net1: private1
  net2: localnet
  pool: vms
- script1: hypervisor.sh
+ scripts: 
+  - hypervisor.sh

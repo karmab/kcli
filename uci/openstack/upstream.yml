@@ -5,6 +5,7 @@ rdo:
  disksize2: 40
  net1: cinet
  pool: vms
- script1: repo.sh
- script2: install.sh
- script3: provision.sh
+ scripts: 
+  - repo.sh
+  - install.sh
+  - provision.sh

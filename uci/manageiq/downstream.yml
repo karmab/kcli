@@ -6,4 +6,5 @@ cloudforms:
  disksize1: 45
  disksize2: 10
  pool: vms
- script1: install.sh
+ scripts: 
+  - install.sh
