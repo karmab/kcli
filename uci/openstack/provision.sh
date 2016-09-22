@@ -20,7 +20,7 @@ sed -i "s/OS_PASSWORD=.*/OS_PASSWORD=$ADMIN_PASSWORD/" /root/keystonerc_admin
 source /root/keystonerc_testk
 wget http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
 glance image-create --name "cirros" --disk-format qcow2 --container-format bare --file cirros-0.3.4-x86_64-disk.img
-tail -1 /root.ssh/authorized_keys > /root/testk.pub
+tail -1 /root/.ssh/authorized_keys > /root/testk.pub
 nova keypair-add --pub-key /root/testk.pub testk
 neutron net-create private
 neutron subnet-create --name 10.0.0.0/24 --allocation-pool start=10.0.0.2,end=10.0.0.254 --gateway 10.0.0.1 private 10.0.0.0/24

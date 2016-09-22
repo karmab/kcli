@@ -331,12 +331,12 @@ def plan(config, inputfile, start, stop, delete, plan):
         click.secho("Plan %s stopped!" % plan, fg='green')
         return
     if inputfile is None:
-        if os.path.exists('kcli_plan.yml'):
-            click.secho("using default input file kcli_plan.yml", fg='green')
-            inputfile = 'kcli_plan.yml'
-        else:
-            click.secho("No input file found nor default kcli_plan.yml.Leaving....", fg='red')
-            os._exit(1)
+        inputfile = 'kcli_plan.yml'
+        click.secho("using default input file kcli_plan.yml", fg='green')
+    inputfile = os.path.expanduser(inputfile)
+    if not os.path.exists(inputfile):
+        click.secho("No input file found nor default kcli_plan.yml.Leaving....", fg='red')
+        os._exit(1)
     click.secho("Deploying vms from plan %s" % (plan), fg='green')
     default = config.default
     with open(inputfile, 'r') as entries:
