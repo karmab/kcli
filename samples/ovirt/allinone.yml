@@ -2,8 +2,9 @@ allinone:
  template: CentOS-7-x86_64-GenericCloud.qcow2
  memory: 8192
  numcpus: 2
- net1: private1
- net2: localnet
+ nets: 
+  - private1
+  - localnet
  disksize1: 60
  pool: vms
  scripts: 

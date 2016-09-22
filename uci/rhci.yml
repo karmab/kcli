@@ -3,7 +3,8 @@ osp:
  memory: 6144
  numcpus: 2
  disksize2: 40
- net1: cinet
+ nets: 
+  - cinet
  pool: vms
  scripts: 
   - ~/register.sh
@@ -15,7 +16,8 @@ rhv:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
  memory: 8192
  numcpus: 2
- net1: cinet
+ nets:
+  - cinet
  disksize1: 60
  pool: vms
  scripts: 
@@ -29,7 +31,8 @@ cloudforms:
  template: cfme-rhos-5.6.1.2-1.x86_64.qcow2
  memory: 6144
  numcpus: 2
- net1: cinet
+ nets:
+  - cinet
  disksize1: 45
  disksize2: 10
  pool: vms
@@ -40,7 +43,8 @@ ose:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
  numcpus: 2
  memory: 2048
- net1: cinet
+ nets: 
+  - cinet
  disksize2: 20
  pool: vms
  scripts: 
@@ -53,7 +57,8 @@ satellite:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
  memory: 4096
  numcpus: 2
- net1: cinet
+ nets: 
+  - cinet
  disksize1: 40
  pool: vms
  scripts: 

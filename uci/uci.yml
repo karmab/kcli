@@ -2,7 +2,8 @@ foreman:
  template: CentOS-7-x86_64-GenericCloud.qcow2
  memory: 4096
  numcpus: 2
- net1: cinet
+ nets: 
+  - cinet
  disksize1: 40
  pool: vms
  scripts: 
@@ -15,7 +16,8 @@ manageiq:
  template: manageiq-openstack-darga-3.qc2
  memory: 6144
  numcpus: 2
- net1: cinet
+ nets: 
+  - cinet
  disksize1: 45
  disksize2: 10
  pool: vms
@@ -26,7 +28,8 @@ origin:
  template: CentOS-7-x86_64-GenericCloud.qcow2
  numcpus: 2
  memory: 2048
- net1: cinet
+ nets:
+  - cinet
  disksize2: 20
  pool: vms
  scripts: 
@@ -38,7 +41,8 @@ rdo:
  memory: 6144
  numcpus: 2
  disksize2: 40
- net1: cinet
+ nets:
+  - cinet
  pool: vms
  scripts: 
   - openstack/repo.sh
@@ -51,7 +55,8 @@ ovirt:
  template: CentOS-7-x86_64-GenericCloud.qcow2
  memory: 8192
  numcpus: 2
- net1: cinet
+ nets: 
+  - cinet
  disksize1: 60
  pool: vms
  scripts: 

@@ -62,7 +62,7 @@ class Kvirt:
         except:
             return False
 
-    def create(self, name, title='', description='kvirt', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disksize1=10, diskthin1=True, diskinterface1='virtio', disksize2=0, diskthin2=True, diskinterface2='virtio', disksize3=0, diskthin3=True, diskinterface3='virtio', disksize4=0, diskthin4=True, diskinterface4='virtio', net1='default', net2=None, net3=None, net4=None, iso=None, vnc=False, cloudinit=True, start=True, keys=None, cmds=None, ip1=None, netmask1=None, gateway1=None, ip2=None, netmask2=None, ip3=None, netmask3=None, ip4=None, netmask4=None, nested=True, dns=None, domain=None):
+    def create(self, name, title='', description='kvirt', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disksize1=10, diskthin1=True, diskinterface1='virtio', disksize2=0, diskthin2=True, diskinterface2='virtio', disksize3=0, diskthin3=True, diskinterface3='virtio', disksize4=0, diskthin4=True, diskinterface4='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, start=True, keys=None, cmds=None, ip1=None, netmask1=None, gateway=None, ip2=None, netmask2=None, ip3=None, netmask3=None, ip4=None, netmask4=None, nested=True, dns=None, domain=None):
         if vnc:
             display = 'vnc'
         else:
@@ -80,13 +80,6 @@ class Kvirt:
         for net in conn.listInterfaces():
             if net != 'lo':
                 bridges.append(net)
-        if net1 in bridges:
-            sourcenet1 = 'bridge'
-        elif net1 in networks:
-            sourcenet1 = 'network'
-        else:
-            print "Invalid network %s .Leaving..." % net1
-            return
         virttype, machine, emulator = 'kvm', 'pc', '/usr/libexec/qemu-kvm'
         # type, machine, emulator = 'kvm', 'pc', '/usr/bin/qemu-system-x86_64'
         diskformat1, diskformat2 = 'qcow2', 'qcow2'
@@ -224,50 +217,20 @@ class Kvirt:
                       <source file='%s'/>
                       <target dev='hdc' bus='ide'/>
                       <readonly/>
-                  </disk>
-                 <interface type='%s'>
-                  <source %s='%s'/>
-                <model type='virtio'/>
-                </interface>""" % (vmxml, iso, sourcenet1, sourcenet1, net1)
-        if net2:
-            if net2 in bridges:
-                sourcenet2 = 'bridge'
-            elif net2 in networks:
-                sourcenet2 = 'network'
+                  </disk>""" % (vmxml, iso)
+        for net in nets:
+            if net in bridges:
+                sourcenet = 'bridge'
+            elif net in networks:
+                sourcenet = 'network'
             else:
-                print "Invalid network %s.Leaving..." % net2
+                print "Invalid network %s.Leaving..." % net
                 return
             vmxml = """%s
              <interface type='%s'>
               <source %s='%s'/>
             <model type='virtio'/>
-            </interface>""" % (vmxml, sourcenet2, sourcenet2, net2)
-        if net3:
-            if net3 in bridges:
-                sourcenet3 = 'bridge'
-            elif net3 in networks:
-                sourcenet3 = 'network'
-            else:
-                print "Invalid network %s.Leaving..." % net3
-                return
-            vmxml = """%s
-             <interface type='%s'>
-              <source %s='%s'/>
-            <model type='virtio'/>
-            </interface>""" % (vmxml, sourcenet3, sourcenet3, net3)
-        if net4:
-            if net4 in bridges:
-                sourcenet4 = 'bridge'
-            elif net4 in networks:
-                sourcenet4 = 'network'
-            else:
-                print "Invalid network %s.Leaving..." % net4
-                return
-            vmxml = """%s
-             <interface type='%s'>
-              <source %s='%s'/>
-            <model type='virtio'/>
-            </interface>""" % (vmxml, sourcenet4, sourcenet4, net4)
+            </interface>""" % (vmxml, sourcenet, sourcenet, net)
         if nested:
             nestedxml = """<cpu match='exact'>
                   <model>Westmere</model>
@@ -296,7 +259,7 @@ class Kvirt:
         vm = conn.lookupByName(name)
         vm.setAutostart(1)
         if cloudinit:
-            self._cloudinit(name=name, keys=keys, cmds=cmds, ip1=ip1, netmask1=netmask1, gateway1=gateway1, ip2=ip2, netmask2=netmask2, ip3=ip3, netmask3=netmask3, ip4=ip4, netmask4=netmask4, dns=dns, domain=domain)
+            self._cloudinit(name=name, keys=keys, cmds=cmds, ip1=ip1, netmask1=netmask1, gateway=gateway, ip2=ip2, netmask2=netmask2, ip3=ip3, netmask3=netmask3, ip4=ip4, netmask4=netmask4, dns=dns, domain=domain)
             self._uploadiso(name, pool=pool)
         if start:
             vm.create()
@@ -627,19 +590,19 @@ class Kvirt:
         vm.setAutostart(1)
         vm.create()
 
-    def _cloudinit(self, name, keys=None, cmds=None, ip1=None, netmask1=None, gateway1=None, ip2=None, netmask2=None, ip3=None, netmask3=None, ip4=None, netmask4=None, dns=None, domain=None):
+    def _cloudinit(self, name, keys=None, cmds=None, ip1=None, netmask1=None, gateway=None, ip2=None, netmask2=None, ip3=None, netmask3=None, ip4=None, netmask4=None, dns=None, domain=None):
         with open('/tmp/meta-data', 'w') as metadata:
             if domain is not None:
                 localhostname = "%s.%s" % (name, domain)
             else:
                 localhostname = name
             metadata.write('instance-id: XXX\nlocal-hostname: %s\n' % localhostname)
-            if ip1 is not None and netmask1 is not None and gateway1 is not None:
+            if ip1 is not None and netmask1 is not None and gateway is not None:
                 metadata.write("network-interfaces: |\n")
                 metadata.write("  iface eth0 inet static\n")
                 metadata.write("  address %s\n" % ip1)
                 metadata.write("  netmask %s\n" % netmask1)
-                metadata.write("  gateway %s\n" % gateway1)
+                metadata.write("  gateway %s\n" % gateway)
                 if ip2 is not None and netmask2 is not None:
                     metadata.write("  iface eth1 inet static\n")
                     metadata.write("  address %s\n" % ip2)

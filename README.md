@@ -42,7 +42,8 @@ default:
  disksize1: 10
  protocol: ssh
  cloudinit: true
- net1: private1
+ nets: 
+  - private1
 
 twix:
  host: 192.168.0.6
@@ -141,16 +142,13 @@ those parameters can be set either in your config, profile or plan files
 - *disksize4* Defaults to 0( not created by default)
 - *diskthin4* Defaults to true
 - *diskinterface4* Defaults to virtio  
-- *net1* Defaults to default
-- *net2* (optional)
-- *net3* (optional)
-- *net4* (optional)
+- *nets* Array of networks Defaults to ['default']
 - *iso* ( optional)
 - *netmask1* (optional)
 - *netmask2* (optional)
 - *netmask3* (optional)
 - *netmask4* (optional)
-- *gateway1* (optional)
+- *gateway* (optional)
 - *dns* (optional) Dns servers
 - *domain* (optional) Dns search domain
 - *vnc* Defaults to false (use spice instead)

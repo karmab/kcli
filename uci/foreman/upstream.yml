@@ -2,7 +2,8 @@ foreman:
  template: CentOS-7-x86_64-GenericCloud.qcow2
  memory: 4096
  numcpus: 2
- net1: cinet
+ nets:
+  - cinet
  disksize1: 40
  pool: vms
  scripts: 

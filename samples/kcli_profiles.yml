@@ -2,7 +2,8 @@ centos:
  template: CentOS-7-x86_64-GenericCloud.qcow2
  numcpus: 2
  memory: 1024
- net1: private1
+ nets: 
+  - private1
  pool: vms
  cmds: 
   - echo magico | passwd --stdin root
@@ -11,10 +12,11 @@ centos:
 centos27:
  template: CentOS-7-x86_64-GenericCloud.qcow2
  numcpus: 2
- net1: localnet
+ nets: 
+  - localnet
+  - private
  netmask1: 255.255.255.0
  gateway1: 192.168.0.254
- net2: private1
  pool: vms
  disksize2: 2
  diskthin2: false

@@ -11,3 +11,5 @@ ovirt-shell -E "add host --address $HYPERVISOR_IP --cluster-name Default --name 
 sleep 120
 ovirt-shell -E "add storagedomain --name vms --host-name `hostname -s` --type data --storage-type nfs --storage-address $HYPERVISOR_IP --storage-path /vms"
 ovirt-shell -E "add storagedomain --name vms --parent-datacenter-name Default"
+ovirt-shell -E "add storagedomain --name isos --host-name `hostname -s` --type iso --storage-type nfs --storage-address $HYPERVISOR_IP --storage-path /isos"
+ovirt-shell -E "add storagedomain --name isos --parent-datacenter-name Default"

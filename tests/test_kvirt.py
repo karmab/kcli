@@ -17,7 +17,7 @@ def test_list():
 
 def test_create():
     k = getk()
-    k.create('test', numcpus=1, memory=512, pool='vms', net1='private1')
+    k.create('test', numcpus=1, memory=512, pool='vms', nets=['private1'])
     status = k.status('test')
     assert status is not None
 

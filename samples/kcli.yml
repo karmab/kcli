@@ -6,7 +6,8 @@ default:
  disksize1: 10
  protocol: ssh
  cloudinit: true
- net1: private1
+ nets: 
+  - private1
 
 twix:
  host: 192.168.0.6

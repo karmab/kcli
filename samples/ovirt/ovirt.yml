@@ -2,8 +2,9 @@ engine:
  template: CentOS-7-x86_64-GenericCloud.qcow2
  memory: 6144
  numcpus: 2
- net1: private1
- net2: localnet
+ nets:
+  - private1
+  - localnet
  disksize1: 60
  pool: vms
  scripts: 
@@ -13,8 +14,9 @@ hypervisor:
  template: CentOS-7-x86_64-GenericCloud.qcow2
  memory: 3072
  numcpus: 2
- net1: private1
- net2: localnet
+ nets: 
+  - private1
+  - localnet
  pool: vms
  scripts: 
   - hypervisor.sh

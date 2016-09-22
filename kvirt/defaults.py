@@ -1,4 +1,4 @@
-NET1 = 'default'
+NETS = ['default']
 POOL = 'default'
 NUMCPUS = 2
 MEMORY = 512

@@ -3,7 +3,8 @@ rdo:
  memory: 6144
  numcpus: 2
  disksize2: 40
- net1: cinet
+ nets:
+  - cinet
  pool: vms
  scripts: 
   - repo.sh

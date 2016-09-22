@@ -1,7 +1,8 @@
 vm1:
   memory: 512
   numcpus: 2
-  net1: private1
+  nets: 
+   - private1
   pool: vms
   template: centos7.qcow2
   scripts:

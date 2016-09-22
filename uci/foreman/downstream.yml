@@ -2,7 +2,8 @@ satellite:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
  memory: 4096
  numcpus: 2
- net1: cinet
+ nets: 
+  - cinet
  disksize1: 40
  pool: vms
  scripts: 

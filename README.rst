@@ -50,7 +50,8 @@ settings in ~/kcli.yml. For instance,
      disksize1: 10
      protocol: ssh
      cloudinit: true
-     net1: private1
+     nets: 
+      - private1
 
     twix:
      host: 192.168.0.6
@@ -143,6 +144,9 @@ a way to locate matching vms.
 When launching a plan, the plan name is optional. If not is provided,
 the kvirt keyword will be used.
 
+If a file with the plan isnt specified with -f , the file kcli\_plan.yml
+in the current directory will be used, if available.
+
 For an advanced use of plans along with scripts, you can check the
 `uci <uci/README.md>`__ page to deploy all upstream projects associated
 with Red Hat Cloud Infrastructure products ( or downstream versions too)
@@ -170,10 +174,7 @@ those parameters can be set either in your config, profile or plan files
 -  *disksize4* Defaults to 0( not created by default)
 -  *diskthin4* Defaults to true
 -  *diskinterface4* Defaults to virtio
--  *net1* Defaults to default
--  *net2* (optional)
--  *net3* (optional)
--  *net4* (optional)
+-  *nets* Array of networks Defaults to ['default']
 -  *iso* ( optional)
 -  *netmask1* (optional)
 -  *netmask2* (optional)

@@ -2,7 +2,8 @@ ose:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
  numcpus: 2
  memory: 2048
- net1: cinet
+ nets:
+  - cinet
  disksize2: 20
  pool: vms
  scripts: 

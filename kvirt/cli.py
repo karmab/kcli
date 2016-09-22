@@ -2,7 +2,7 @@
 
 import click
 import fileinput
-from defaults import NET1, POOL, NUMCPUS, MEMORY, DISKSIZE1, DISKINTERFACE1, DISKTHIN1, DISKSIZE2, DISKINTERFACE2, DISKTHIN2, DISKSIZE3, DISKINTERFACE3, DISKTHIN3, DISKSIZE4, DISKINTERFACE4, DISKTHIN4, GUESTID, VNC, CLOUDINIT, START
+from defaults import NETS, POOL, NUMCPUS, MEMORY, DISKSIZE1, DISKINTERFACE1, DISKTHIN1, DISKSIZE2, DISKINTERFACE2, DISKTHIN2, DISKSIZE3, DISKINTERFACE3, DISKTHIN3, DISKSIZE4, DISKINTERFACE4, DISKTHIN4, GUESTID, VNC, CLOUDINIT, START
 from prettytable import PrettyTable
 from kvirt import Kvirt, __version__
 import os
@@ -30,7 +30,7 @@ class Config():
             os._exit(1)
         defaults = {}
         default = ini['default']
-        defaults['net1'] = default.get('net1', NET1)
+        defaults['nets'] = default.get('nets', NETS)
         defaults['pool'] = default.get('pool', POOL)
         defaults['numcpus'] = int(default.get('numcpus', NUMCPUS))
         defaults['memory'] = int(default.get('memory', MEMORY))
@@ -185,7 +185,7 @@ def create(config, profile, ip1, ip2, ip3, ip4, name):
     profile = profiles[profile]
     template = profile.get('template')
     description = 'kvirt'
-    net1 = profile.get('net1', default['net1'])
+    nets = profile.get('nets', default['nets'])
     numcpus = profile.get('numcpus', default['numcpus'])
     memory = profile.get('memory', default['memory'])
     pool = profile.get('pool', default['pool'])
@@ -202,9 +202,6 @@ def create(config, profile, ip1, ip2, ip3, ip4, name):
     diskthin4 = profile.get('diskthin4')
     diskinterface4 = profile.get('diskinterface4', default['diskinterface4'])
     guestid = profile.get('guestid', default['guestid'])
-    net2 = profile.get('net2')
-    net3 = profile.get('net3')
-    net4 = profile.get('net4')
     iso = profile.get('iso')
     vnc = profile.get('vnc', default['vnc'])
     cloudinit = profile.get('cloudinit', default['cloudinit'])
@@ -212,7 +209,7 @@ def create(config, profile, ip1, ip2, ip3, ip4, name):
     keys = profile.get('keys', None)
     cmds = profile.get('cmds', None)
     netmask1 = profile.get('netmask1')
-    gateway1 = profile.get('gateway1')
+    gateway = profile.get('gateway')
     netmask2 = profile.get('netmask2')
     netmask3 = profile.get('netmask3')
     netmask4 = profile.get('netmask4')
@@ -231,7 +228,7 @@ def create(config, profile, ip1, ip2, ip3, ip4, name):
                     scriptcmds.extend(scriptlines)
         if scriptcmds:
             cmds = scriptcmds
-    k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disksize1=disksize1, diskthin1=diskthin1, diskinterface1=diskinterface1, disksize2=disksize2, diskthin2=diskthin2, diskinterface2=diskinterface2, disksize3=disksize3, diskthin3=diskthin3, diskinterface3=diskinterface3, disksize4=disksize4, diskthin4=diskthin4, diskinterface4=diskinterface4, net1=net1, net2=net2, net3=net3, net4=net4, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds, ip1=ip1, netmask1=netmask1, gateway1=gateway1, ip2=ip2, netmask2=netmask2, ip3=ip3, netmask3=netmask3, ip4=ip4, netmask4=netmask4, dns=dns, domain=domain)
+    k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disksize1=disksize1, diskthin1=diskthin1, diskinterface1=diskinterface1, disksize2=disksize2, diskthin2=diskthin2, diskinterface2=diskinterface2, disksize3=disksize3, diskthin3=diskthin3, diskinterface3=diskinterface3, disksize4=disksize4, diskthin4=diskthin4, diskinterface4=diskinterface4, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds, ip1=ip1, netmask1=netmask1, gateway=gateway, ip2=ip2, netmask2=netmask2, ip3=ip3, netmask3=netmask3, ip4=ip4, netmask4=netmask4, dns=dns, domain=domain)
 
 
 @cli.command()
@@ -371,15 +368,12 @@ def plan(config, inputfile, start, stop, delete, plan):
             vnc = next((e for e in [profile.get('vnc'), customprofile.get('vnc'), default['vnc']] if e is not None))
             cloudinit = next((e for e in [profile.get('cloudinit'), customprofile.get('cloudinit'), default['cloudinit']] if e is not None))
             start = next((e for e in [profile.get('start'), customprofile.get('start'), default['start']] if e is not None))
-            net1 = next((e for e in [profile.get('net1'), customprofile.get('net1'), default['net1']] if e is not None))
-            net2 = next((e for e in [profile.get('net2'), customprofile.get('net2')] if e is not None), None)
-            net3 = next((e for e in [profile.get('net3'), customprofile.get('net3')] if e is not None), None)
-            net4 = next((e for e in [profile.get('net4'), customprofile.get('net4')] if e is not None), None)
+            nets = next((e for e in [profile.get('nets'), customprofile.get('nets'), default['nets']] if e is not None))
             iso = next((e for e in [profile.get('iso'), customprofile.get('iso')] if e is not None), None)
             keys = next((e for e in [profile.get('keys'), customprofile.get('keys')] if e is not None), None)
             cmds = next((e for e in [profile.get('cmds'), customprofile.get('cmds')] if e is not None), None)
             netmask1 = next((e for e in [profile.get('netmask1'), customprofile.get('netmask1')] if e is not None), None)
-            gateway1 = next((e for e in [profile.get('gateway1'), customprofile.get('gateway1')] if e is not None), None)
+            gateway = next((e for e in [profile.get('gateway'), customprofile.get('gateway')] if e is not None), None)
             netmask2 = next((e for e in [profile.get('netmask2'), customprofile.get('netmask2')] if e is not None), None)
             netmask3 = next((e for e in [profile.get('netmask3'), customprofile.get('netmask3')] if e is not None), None)
             netmask4 = next((e for e in [profile.get('netmask4'), customprofile.get('netmask4')] if e is not None), None)
@@ -402,7 +396,7 @@ def plan(config, inputfile, start, stop, delete, plan):
                             scriptcmds.extend(scriptlines)
                 if scriptcmds:
                     cmds = scriptcmds
-            k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disksize1=disksize1, diskthin1=diskthin1, diskinterface1=diskinterface1, disksize2=disksize2, diskthin2=diskthin2, diskinterface2=diskinterface2, disksize3=disksize3, diskthin3=diskthin3, diskinterface3=diskinterface3, disksize4=disksize4, diskthin4=diskthin4, diskinterface4=diskinterface4, net1=net1, net2=net2, net3=net3, net4=net4, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds, ip1=ip1, netmask1=netmask1, gateway1=gateway1, ip2=ip2, netmask2=netmask2, ip3=ip3, netmask3=netmask3, ip4=ip4, netmask4=netmask4, dns=dns, domain=domain)
+            k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disksize1=disksize1, diskthin1=diskthin1, diskinterface1=diskinterface1, disksize2=disksize2, diskthin2=diskthin2, diskinterface2=diskinterface2, disksize3=disksize3, diskthin3=diskthin3, diskinterface3=diskinterface3, disksize4=disksize4, diskthin4=diskthin4, diskinterface4=diskinterface4, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds, ip1=ip1, netmask1=netmask1, gateway=gateway, ip2=ip2, netmask2=netmask2, ip3=ip3, netmask3=netmask3, ip4=ip4, netmask4=netmask4, dns=dns, domain=domain)
             click.secho("%s deployed!" % name, fg='green')
 
 
