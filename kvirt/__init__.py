@@ -88,6 +88,7 @@ class Kvirt:
         disksxml = ''
         volsxml = []
         for index, disk in enumerate(disks):
+            print disk
             if disk is None:
                 disksize = default_disksize
                 diskthin = default_diskthin
