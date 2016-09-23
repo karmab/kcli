@@ -11,7 +11,7 @@ import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "1.0.13"
+__version__ = "1.0.14"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -212,14 +212,15 @@ class Kvirt:
                 </cpu>"""
         else:
             nestedxml = ""
-        serialxml = """<serial type='pty'>
+        if self.host in ['localhost', '127.0.0.1']:
+            serialxml = """<serial type='pty'>
                        <target port='0'/>
                        </serial>
                        <console type='pty'>
                        <target type='serial' port='0'/>
                        </console>"""
-        serialxml = ''
-        tcpxml = """ <serial type="tcp">
+        else:
+            serialxml = """ <serial type="tcp">
                      <source mode="bind" host="127.0.0.1" service="%s"/>
                      <protocol type="telnet"/>
                      <target port="0"/>
@@ -253,10 +254,9 @@ class Kvirt:
                     %s
                     %s
                     %s
-                    %s
                   </devices>
                     %s
-                    </domain>""" % (virttype, name, description, version, memory, numcpus, machine, sysinfo, emulator, disksxml, netxml, isoxml, displayxml, serialxml, tcpxml, nestedxml)
+                    </domain>""" % (virttype, name, description, version, memory, numcpus, machine, sysinfo, emulator, disksxml, netxml, isoxml, displayxml, serialxml, nestedxml)
         pool = conn.storagePoolLookupByName(pool)
         pool.refresh(0)
         for volxml in volsxml:
@@ -407,7 +407,11 @@ class Kvirt:
             for element in serial:
                 serialport = element.find('source').get('service')
                 if serialport:
-                    os.system("ssh %s telnet 127.0.0.1 %s" % (self.host, serialport))
+                    if self.host in ['localhost', '127.0.0.1']:
+                        serialcommand = "telnet 127.0.0.1 %s" % serialport
+                    else:
+                        serialcommand = "ssh %s telnet 127.0.0.1 %s" % (self.host, serialport)
+                    os.system(serialcommand)
                 else:
                     print "No serial Console found. Leaving..."
                     return
