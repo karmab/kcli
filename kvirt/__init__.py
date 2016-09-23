@@ -92,10 +92,17 @@ class Kvirt:
                 disksize = default_disksize
                 diskthin = default_diskthin
                 diskinterface = default_diskinterface
-            else:
+            elif isinstance(disk, int):
+                disksize = disk
+                diskthin = default_diskthin
+                diskinterface = default_diskinterface
+            elif isinstance(disk, dict):
                 disksize = disk.get('size', default_disksize)
                 diskthin = disk.get('thin', default_diskthin)
                 diskinterface = disk.get('interface', default_diskinterface)
+            else:
+                print "Invalid disk entry.Leaving..."
+                return
             letter = chr(index + ord('a'))
             diskdev, diskbus = 'vd%s' % letter, 'virtio'
             if diskinterface != 'virtio':
