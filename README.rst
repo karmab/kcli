@@ -94,6 +94,10 @@ How to use
 -  ``kcli start vm1``
 -  get remote-viewer console
 -  ``kcli console vm1``
+-  get serial console ( over tcp!!!). Note that it will only work with
+   vms created with kcli and will require telnet client to be installed
+   on host
+-  ``kcli console -s vm1``
 -  deploy multiple vms using plan x defined in x.yml file
 -  ``kcli plan -f x.yml x``
 -  delete all vms from plan x
