@@ -13,10 +13,10 @@ centos27:
  template: CentOS-7-x86_64-GenericCloud.qcow2
  numcpus: 2
  nets: 
-  - localnet
+  - name: localnet
+    mask: 255.255.255.0
+    gateway: 192.168.0.254
   - private
- netmask1: 255.255.255.0
- gateway1: 192.168.0.254
  pool: vms
  disks:
   - size: 10

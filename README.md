@@ -80,6 +80,8 @@ The [samples directory](https://github.com/karmab/kcli/tree/master/samples) cont
  - `kcli start vm1` 
 - get remote-viewer console
  - `kcli console vm1` 
+- get serial console ( over tcp!!!). Note that it will only work with vms created with kcli
+ - `kcli console -s vm1` 
 - deploy multiple vms using plan x defined in x.yml file 
  - `kcli plan -f x.yml x`
 - delete all vms from plan x
@@ -131,10 +133,34 @@ those parameters can be set either in your config, profile or plan files
 - *guestid* Defaults to guestrhel764
 - *pool* Defaults to default
 - *template* Should point to your base cloud image(optional)
-- *disks* Array of disks to define. For each of them, you can specify size, thin ( as boolean) and interface ( either ide or virtio).If you omit parameters, default values will be used from config or profile file ( You can actually let the entire entry blank or just indicate a size number directly)
+- *disks* Array of disks to define. For each of them, you can specify size, thin ( as boolean) and interface ( either ide or virtio).If you omit parameters, default values will be used from config or profile file ( You can actually let the entire entry blank or just indicate a size number directly). For instance:
+
+```
+disks:
+ - size: 20
+ - size: 10
+   thin: False
+   format: ide
+```
+Within a disk section, you can use the word size, thin and format as keys
+
+
 - *diskthin* Value used when not specified in the disk entry. Defaults to true
 - *diskinterface* Value used when not specified in the disk entry. Defaults to virtio. Could also be ide, if vm lacks virtio drivers
-- *nets* Array of networks Defaults to ['default']
+- *nets* Array of networks. Defaults to ['default']. You can mix simple strings pointing to the name of your and more complex information provided as hash. For instance:
+
+```
+nets:
+ - private1
+ - name: private2:
+   nic: eth1
+   mask: 255.255.255.0
+   gateway: 192.168.0.1
+```
+Within a net section, you can use name, nic, ip, mask and gateway as keys.
+
+Note that up to 8 ips can also be provided on command line when creating a single vm ( with the flag -1, -2, -3,-4,...)
+
 - *iso* ( optional)
 - *netmasks* (optional)
 - *gateway* (optional)
@@ -148,12 +174,6 @@ those parameters can be set either in your config, profile or plan files
 - *profile* name of one of your profile. Only checked in plan file
 - *scripts* array of paths of custom script to inject with cloudinit. Note that it will override cmds part. You can either specify full paths or relative to where you're running kcli. Only checked in profile or plan file
 
-
-## additional parameters for plan files
-
-- *ips* Array of ips. Length of this array must match Lenght of the netmask array 
-
-Note that up to 4 ips can also be provided on command line when creating a single vm ( with the flag -1, -2, -3 and -4)
 
 ## ansible dynamic inventory
 

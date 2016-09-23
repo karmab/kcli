@@ -89,11 +89,15 @@ def stop(config, name):
 
 
 @cli.command()
+@click.option('-s', '--serial', is_flag=True)
 @click.argument('name')
 @pass_config
-def console(config, name):
+def console(config, serial, name):
     k = config.k
-    k.console(name)
+    if serial:
+        k.serialconsole(name)
+    else:
+        k.console(name)
 
 
 @cli.command()
@@ -163,9 +167,13 @@ def list(config, clients, profiles, templates, isos):
 @click.option('-2', '--ip2', help='Optional Ip to assign to eth1. Netmask and gateway will be retrieved from profile')
 @click.option('-3', '--ip3', help='Optional Ip to assign to eth2. Netmask and gateway will be retrieved from profile')
 @click.option('-4', '--ip4', help='Optional Ip to assign to eth3. Netmask and gateway will be retrieved from profile')
+@click.option('-5', '--ip5', help='Optional Ip to assign to eth4. Netmask and gateway will be retrieved from profile')
+@click.option('-6', '--ip6', help='Optional Ip to assign to eth5. Netmask and gateway will be retrieved from profile')
+@click.option('-7', '--ip7', help='Optional Ip to assign to eth6. Netmask and gateway will be retrieved from profile')
+@click.option('-8', '--ip8', help='Optional Ip to assign to eth8. Netmask and gateway will be retrieved from profile')
 @click.argument('name')
 @pass_config
-def create(config, profile, ip1, ip2, ip3, ip4, name):
+def create(config, profile, ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8, name):
     click.secho("Deploying vm %s from profile %s..." % (name, profile), fg='green')
     k = config.k
     default = config.default
@@ -209,15 +217,7 @@ def create(config, profile, ip1, ip2, ip3, ip4, name):
                     scriptcmds.extend(scriptlines)
         if scriptcmds:
             cmds = scriptcmds
-    ips = None
-    if ip1 is not None:
-        ips = [ip1]
-        if ip2 is not None:
-            ips.extend(ip2)
-            if ip3 is not None:
-                ips.extend(ip3)
-                if ip4 is not None:
-                    ips.extend(ip4)
+    ips = [ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8]
     k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain)
 
 

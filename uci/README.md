@@ -61,6 +61,8 @@ You can also easily launch individual upstream/downstream product directly from 
 cd uci/ovirt
 kcli plan -f upstream.yml
 ```
+You can do the same for downstream. Note that for openstack, there are per version downstream plan files to ease testing ( currently kilo, liberty and mitaka )
+
 
 ##limitations 
 

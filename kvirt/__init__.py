@@ -7,10 +7,11 @@ interact with a local/remote libvirt daemon
 from libvirt import open as libvirtopen
 from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE
 import os
+import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "1.0.11"
+__version__ = "1.0.12"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -83,12 +84,13 @@ class Kvirt:
         for net in conn.listInterfaces():
             if net != 'lo':
                 bridges.append(net)
-        virttype, machine, emulator = 'kvm', 'pc', '/usr/libexec/qemu-kvm'
-        # type, machine, emulator = 'kvm', 'pc', '/usr/bin/qemu-system-x86_64'
+        virttype = 'kvm'
+        machine = 'pc'
+        sysinfo = "<smbios mode='sysinfo'/>"
+        emulator = '/usr/libexec/qemu-kvm'
         disksxml = ''
         volsxml = []
         for index, disk in enumerate(disks):
-            print disk
             if disk is None:
                 disksize = default_disksize
                 diskthin = default_diskthin
@@ -130,10 +132,10 @@ class Kvirt:
                     return
                 backing = backingvolume.path()
                 backingxml = """<backingStore type='file' index='1'>
-                <format type='raw'/>
-                <source file='%s'/>
-                <backingStore/>
-                </backingStore>""" % backing
+                                <format type='raw'/>
+                                <source file='%s'/>
+                                <backingStore/>
+                                </backingStore>""" % backing
             else:
                 backing = None
                 backingxml = '<backingStore/>'
@@ -145,6 +147,39 @@ class Kvirt:
                     %s
                     <target dev='%s' bus='%s'/>
                     </disk>""" % (disksxml, diskformat, diskpath, backingxml, diskdev, diskbus)
+        netxml = ''
+        version = ''
+        for index, net in enumerate(nets):
+            if isinstance(net, str):
+                netname = net
+            elif isinstance(net, dict) and 'name' in net:
+                netname = net['name']
+                ip = None
+                if ips and len(ips) > index and ips[index] is not None:
+                    ip = ips[index]
+                    nets[index]['ip'] = ip
+                elif 'ip' in nets[index]:
+                    ip = nets[index]['ip']
+                if index == 0 and ip is not None:
+                    version = "<entry name='version'>%s</entry>" % ips[0]
+            if netname in bridges:
+                sourcenet = 'bridge'
+            elif netname in networks:
+                sourcenet = 'network'
+            else:
+                print "Invalid network %s.Leaving..." % netname
+                return
+            netxml = """%s
+                     <interface type='%s'>
+                     <source %s='%s'/>
+                     <model type='virtio'/>
+                     </interface>""" % (netxml, sourcenet, sourcenet, netname)
+        version = """<sysinfo type='smbios'>
+                     <system>
+                     %s
+                     <entry name='product'>%s</entry>
+                     </system>
+                     </sysinfo>""" % (version, title)
         if iso is None:
             if cloudinit:
                 iso = "%s/%s.iso" % (poolpath, name)
@@ -158,17 +193,37 @@ class Kvirt:
             except:
                 print "Invalid Iso %s.Leaving..." % iso
                 return
-        if ips is not None and len(ips) > 0:
-            version = "<entry name='version'>%s</entry>" % ips[0]
+        isoxml = """<disk type='file' device='cdrom'>
+                      <driver name='qemu' type='raw'/>
+                      <source file='%s'/>
+                      <target dev='hdc' bus='ide'/>
+                      <readonly/>
+                    </disk>""" % (iso)
+        displayxml = """<input type='tablet' bus='usb'/>
+                        <input type='mouse' bus='ps2'/>
+                        <graphics type='%s' port='-1' autoport='yes' listen='0.0.0.0'>
+                        <listen type='address' address='0.0.0.0'/>
+                        </graphics>
+                        <memballoon model='virtio'/>""" % (display)
+        if nested:
+            nestedxml = """<cpu match='exact'>
+                  <model>Westmere</model>
+                   <feature policy='require' name='vmx'/>
+                </cpu>"""
         else:
-            version = ''
-        version = """<sysinfo type='smbios'>
-                    <system>
-                    %s
-                    <entry name='product'>%s</entry>
-                    </system>
-                    </sysinfo>""" % (version, title)
-        sysinfo = "<smbios mode='sysinfo'/>"
+            nestedxml = ""
+        serialxml = """<serial type='pty'>
+                       <target port='0'/>
+                       </serial>
+                       <console type='pty'>
+                       <target type='serial' port='0'/>
+                       </console>"""
+        serialxml = ''
+        tcpxml = """ <serial type="tcp">
+                     <source mode="bind" host="127.0.0.1" service="%s"/>
+                     <protocol type="telnet"/>
+                     <target port="0"/>
+                     </serial>""" % self._get_free_port()
         vmxml = """<domain type='%s'>
                   <name>%s</name>
                   <description>%s</description>
@@ -193,53 +248,25 @@ class Kvirt:
                   <on_crash>restart</on_crash>
                   <devices>
                     <emulator>%s</emulator>
-                    %s""" % (virttype, name, description, version, memory, numcpus, machine, sysinfo, emulator, disksxml)
-        vmxml = """%s
-                <disk type='file' device='cdrom'>
-                      <driver name='qemu' type='raw'/>
-                      <source file='%s'/>
-                      <target dev='hdc' bus='ide'/>
-                      <readonly/>
-                  </disk>""" % (vmxml, iso)
-        for net in nets:
-            if net in bridges:
-                sourcenet = 'bridge'
-            elif net in networks:
-                sourcenet = 'network'
-            else:
-                print "Invalid network %s.Leaving..." % net
-                return
-            vmxml = """%s
-             <interface type='%s'>
-              <source %s='%s'/>
-            <model type='virtio'/>
-            </interface>""" % (vmxml, sourcenet, sourcenet, net)
-        if nested:
-            nestedxml = """<cpu match='exact'>
-                  <model>Westmere</model>
-                   <feature policy='require' name='vmx'/>
-                </cpu>"""
-        else:
-            nestedxml = ""
-        vmxml = """%s
-                <input type='tablet' bus='usb'/>
-                 <input type='mouse' bus='ps2'/>
-                <graphics type='%s' port='-1' autoport='yes' listen='0.0.0.0'>
-                 <listen type='address' address='0.0.0.0'/>
-                </graphics>
-                <memballoon model='virtio'/>
-                </devices>
-                %s
-                </domain>""" % (vmxml, display, nestedxml)
+                    %s
+                    %s
+                    %s
+                    %s
+                    %s
+                    %s
+                  </devices>
+                    %s
+                    </domain>""" % (virttype, name, description, version, memory, numcpus, machine, sysinfo, emulator, disksxml, netxml, isoxml, displayxml, serialxml, tcpxml, nestedxml)
         pool = conn.storagePoolLookupByName(pool)
         pool.refresh(0)
         for volxml in volsxml:
             pool.createXML(volxml, 0)
+        # print vmxml
         conn.defineXML(vmxml)
         vm = conn.lookupByName(name)
         vm.setAutostart(1)
         if cloudinit:
-            self._cloudinit(name=name, keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain)
+            self._cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain)
             self._uploadiso(name, pool=pool)
         if start:
             vm.create()
@@ -363,6 +390,27 @@ class Kvirt:
                 port = attributes['port']
                 url = "%s://%s:%s" % (protocol, host, port)
                 os.popen("remote-viewer %s &" % url)
+
+    def serialconsole(self, name):
+        conn = self.conn
+        vm = conn.lookupByName(name)
+        if not vm.isActive():
+            print "VM down"
+            return
+        else:
+            xml = vm.XMLDesc(0)
+            root = ET.fromstring(xml)
+            serial = root.getiterator('serial')
+            if not serial:
+                print "No serial Console found. Leaving..."
+                return
+            for element in serial:
+                serialport = element.find('source').get('service')
+                if serialport:
+                    os.system("ssh %s telnet 127.0.0.1 %s" % (self.host, serialport))
+                else:
+                    print "No serial Console found. Leaving..."
+                    return
 
     def info(self, name):
         ips = []
@@ -570,26 +618,46 @@ class Kvirt:
         vm.setAutostart(1)
         vm.create()
 
-    def _cloudinit(self, name, keys=None, cmds=None, ips=None, netmasks=None, gateway=None, dns=None, domain=None):
-        with open('/tmp/meta-data', 'w') as metadata:
+    def _cloudinit(self, name, keys=None, cmds=None, nets=[], gateway=None, dns=None, domain=None):
+        default_gateway = gateway
+        with open('/tmp/meta-data', 'w') as metadatafile:
             if domain is not None:
                 localhostname = "%s.%s" % (name, domain)
             else:
                 localhostname = name
-            metadata.write('instance-id: XXX\nlocal-hostname: %s\n' % localhostname)
-            if ips and netmasks and gateway is not None and len(ips) == len(netmasks):
-                metadata.write("network-interfaces: |\n")
-                for index, ip in enumerate(ips):
-                    netmask = netmasks[index]
-                    metadata.write("  iface eth%d inet static\n" % index)
-                    metadata.write("  address %s\n" % ip)
-                    metadata.write("  netmask %s\n" % netmask)
-                    if index == 0:
-                        metadata.write("  gateway %s\n" % gateway)
-                if dns is not None:
-                    metadata.write("  dns-nameservers %s\n" % dns)
-                if domain is not None:
-                    metadata.write("  dns-search %s\n" % domain)
+            metadatafile.write('instance-id: XXX\nlocal-hostname: %s\n' % localhostname)
+            metadata = ''
+            if nets:
+                for index, net in enumerate(nets):
+                    if isinstance(net, str):
+                        if index == 0:
+                            continue
+                        nicname = "eth%d" % index
+                        ip = None
+                        netmask = None
+                    elif isinstance(net, dict):
+                        nicname = net.get('nic', "eth%d" % index)
+                        ip = net.get('ip')
+                        netmask = net.get('mask')
+                    metadata += "  auto %s\n" % nicname
+                    if ip is not None and netmask is not None:
+                        metadata += "  iface %s inet static\n" % nicname
+                        metadata += "  address %s\n" % ip
+                        metadata += "  netmask %s\n" % netmask
+                        gateway = net.get('gateway')
+                        if index == 0 and default_gateway is not None:
+                            metadata += "  gateway %s\n" % default_gateway
+                        elif gateway is not None:
+                            metadata += "  gateway %s\n" % gateway
+                    else:
+                        metadata += "  iface %s inet dhcp\n" % nicname
+                if metadata:
+                    metadatafile.write("network-interfaces: |\n")
+                    metadatafile.write(metadata)
+                    if dns is not None:
+                        metadatafile.write("  dns-nameservers %s\n" % dns)
+                    if domain is not None:
+                        metadatafile.write("  dns-search %s\n" % domain)
         with open('/tmp/user-data', 'w') as userdata:
             userdata.write('#cloud-config\nhostname: %s\n' % name)
             if domain is not None:
@@ -782,3 +850,10 @@ class Kvirt:
             print "No ip found. Cant ssh..."
         else:
             os.system("ssh %s@%s" % (user, ip))
+
+    def _get_free_port(self):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.bind(('localhost', 0))
+        addr, port = s.getsockname()
+        s.close()
+        return port
