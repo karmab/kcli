@@ -4,8 +4,9 @@ cloudforms:
  numcpus: 2
  nets:
   - cinet
- disksize1: 45
- disksize2: 10
+ disks:
+  - size: 45
+  - size: 10
  pool: vms
  scripts: 
   - install.sh

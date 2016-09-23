@@ -39,7 +39,8 @@ default:
  numcpus: 2
  diskthin1: true
  memory: 512
- disksize1: 10
+ disks:
+  - size: 10
  protocol: ssh
  cloudinit: true
  nets: 
@@ -109,7 +110,7 @@ you can also define plan files in yaml with a list of vms to deploy ( look at th
 
 You can point at an existing profile within your plans, define all parameters for the vms, or combine both approaches.
 
-Specific scripts, ip1, ip2, ip3 and ip4 can be used directly in the plan file ( or in profiles one)
+Specific scripts and ips arrays can be used directly in the plan file ( or in profiles one)
 
 The samples directory contains examples to get you started
 
@@ -130,24 +131,12 @@ those parameters can be set either in your config, profile or plan files
 - *guestid* Defaults to guestrhel764
 - *pool* Defaults to default
 - *template* Should point to your base cloud image(optional)
-- *disksize1* Defaults to 10
-- *diskthin1* Defaults to true
-- *diskinterface1* Defaults to virtio. Could also be ide, if vm lacks virtio drivers
-- *disksize2* Defaults to 0( not created by default)
-- *diskthin2* Defaults to true
-- *diskinterface2* Defaults to virtio  
-- *disksize3* Defaults to 0( not created by default)
-- *diskthin3* Defaults to true
-- *diskinterface3* Defaults to virtio  
-- *disksize4* Defaults to 0( not created by default)
-- *diskthin4* Defaults to true
-- *diskinterface4* Defaults to virtio  
+- *disks* Array of disks to define. For each of them, you can specify size, thin ( as boolean) and interface ( either ide or virtio).If you omit parameters, default values will be used from config or profile file ( You can actually let the entire entry blank )
+- *diskthin* Value used when not specified in the disk entry. Defaults to true
+- *diskinterface* Value used when not specified in the disk entry. Defaults to virtio. Could also be ide, if vm lacks virtio drivers
 - *nets* Array of networks Defaults to ['default']
 - *iso* ( optional)
-- *netmask1* (optional)
-- *netmask2* (optional)
-- *netmask3* (optional)
-- *netmask4* (optional)
+- *netmasks* (optional)
 - *gateway* (optional)
 - *dns* (optional) Dns servers
 - *domain* (optional) Dns search domain
@@ -162,12 +151,9 @@ those parameters can be set either in your config, profile or plan files
 
 ## additional parameters for plan files
 
-- *ip1* Primary ip
-- *ip2* Secondary ip
-- *ip3* Third ip
-- *ip4* Fourth ip
+- *ips* Array of ips. Length of this array must match Lenght of the netmask array 
 
-Note those ips can also be provided on command line when creating a single vm
+Note that up to 4 ips can also be provided on command line when creating a single vm ( with the flag -1, -2, -3 and -4)
 
 ## ansible dynamic inventory
 

@@ -2,7 +2,9 @@ osp:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
  memory: 6144
  numcpus: 2
- disksize2: 40
+ disks: 
+  - size: 10
+  - size: 40
  nets:
  - cinet
  pool: vms

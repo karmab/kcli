@@ -4,7 +4,8 @@ ovirt:
  numcpus: 2
  nets:
   - cinet
- disksize1: 60
+ disks:
+  - size: 60
  pool: vms
  scripts: 
   - repo.sh

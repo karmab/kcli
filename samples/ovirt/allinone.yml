@@ -5,7 +5,8 @@ allinone:
  nets: 
   - private1
   - localnet
- disksize1: 60
+ disks:
+  - size: 60
  pool: vms
  scripts: 
   - allinone.sh

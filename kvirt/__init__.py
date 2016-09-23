@@ -62,7 +62,10 @@ class Kvirt:
         except:
             return False
 
-    def create(self, name, title='', description='kvirt', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disksize1=10, diskthin1=True, diskinterface1='virtio', disksize2=0, diskthin2=True, diskinterface2='virtio', disksize3=0, diskthin3=True, diskinterface3='virtio', disksize4=0, diskthin4=True, diskinterface4='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, start=True, keys=None, cmds=None, ip1=None, netmask1=None, gateway=None, ip2=None, netmask2=None, ip3=None, netmask3=None, ip4=None, netmask4=None, nested=True, dns=None, domain=None):
+    def create(self, name, title='', description='kvirt', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, start=True, keys=None, cmds=None, ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None):
+        default_diskinterface = diskinterface
+        default_diskthin = diskthin
+        default_disksize = disksize
         if vnc:
             display = 'vnc'
         else:
@@ -82,72 +85,58 @@ class Kvirt:
                 bridges.append(net)
         virttype, machine, emulator = 'kvm', 'pc', '/usr/libexec/qemu-kvm'
         # type, machine, emulator = 'kvm', 'pc', '/usr/bin/qemu-system-x86_64'
-        diskformat1, diskformat2 = 'qcow2', 'qcow2'
-        diskformat3, diskformat4 = 'qcow2', 'qcow2'
-        if not diskthin1:
-            diskformat1 = 'raw'
-        if disksize2 > 0:
-            if not diskthin2:
-                diskformat2 = 'raw'
-        if disksize3 > 0:
-            if not diskthin3:
-                diskformat3 = 'raw'
-        if disksize4 > 0:
-            if not diskthin4:
-                diskformat4 = 'raw'
-        storagename1 = "%s_1.img" % name
-        pool = conn.storagePoolLookupByName(pool)
-        poolxml = pool.XMLDesc(0)
-        root = ET.fromstring(poolxml)
-        for element in root.getiterator('path'):
-            poolpath = element.text
-            break
-        diskpath1 = "%s/%s" % (poolpath, storagename1)
-        if template is not None:
-            try:
-                pool.refresh(0)
-                # backingvolume = pool.storageVolLookupByName(template)
-                backingvolume = volumes[template]['object']
-                backingxml = backingvolume.XMLDesc(0)
-                root = ET.fromstring(backingxml)
-            except:
-                print "Invalid template %s.Leaving..." % template
-                return
-            backing = backingvolume.path()
-            backingxml = """<backingStore type='file' index='1'>
-        <format type='raw'/>
-        <source file='%s'/>
-        <backingStore/>
-      </backingStore>""" % backing
-        else:
-            backing = None
-            backingxml = '<backingStore/>'
-        volxml1 = self._xmlvolume(path=diskpath1, size=disksize1, backing=backing, diskformat=diskformat1)
-        if disksize2 > 0:
-            storagename2 = "%s_2.img" % name
-            diskpath2 = "%s/%s" % (poolpath, storagename2)
-            volxml2 = self._xmlvolume(path=diskpath2, size=disksize2, diskformat=diskformat2, backing=None)
-        if disksize3 > 0:
-            storagename3 = "%s_3.img" % name
-            diskpath3 = "%s/%s" % (poolpath, storagename3)
-            volxml3 = self._xmlvolume(path=diskpath3, size=disksize3, diskformat=diskformat3, backing=None)
-        if disksize4 > 0:
-            storagename4 = "%s_4.img" % name
-            diskpath4 = "%s/%s" % (poolpath, storagename4)
-            volxml4 = self._xmlvolume(path=diskpath4, size=disksize4, diskformat=diskformat4, backing=None)
-        pool.refresh(0)
-        diskdev1, diskbus1 = 'vda', 'virtio'
-        diskdev2, diskbus2 = 'vdb', 'virtio'
-        diskdev3, diskbus3 = 'vdc', 'virtio'
-        diskdev4, diskbus4 = 'vdd', 'virtio'
-        if diskinterface1 != 'virtio':
-            diskdev1, diskbus1 = 'hda', 'ide'
-        if diskinterface2 != 'virtio':
-            diskdev2, diskbus2 = 'hdb', 'ide'
-        if diskinterface3 != 'virtio':
-            diskdev3, diskbus3 = 'hdb', 'ide'
-        if diskinterface4 != 'virtio':
-            diskdev4, diskbus4 = 'hdb', 'ide'
+        disksxml = ''
+        volsxml = []
+        for index, disk in enumerate(disks):
+            if disk is None:
+                disksize = default_disksize
+                diskthin = default_diskthin
+                diskinterface = default_diskinterface
+            else:
+                disksize = disk.get('size', default_disksize)
+                diskthin = disk.get('thin', default_diskthin)
+                diskinterface = disk.get('interface', default_diskinterface)
+            letter = chr(index + ord('a'))
+            diskdev, diskbus = 'vd%s' % letter, 'virtio'
+            if diskinterface != 'virtio':
+                diskdev, diskbus = 'hd%s' % letter, 'ide'
+            diskformat = 'qcow2'
+            if not diskthin:
+                diskformat = 'raw'
+            storagename = "%s_%d.img" % (name, index + 1)
+            storagepool = conn.storagePoolLookupByName(pool)
+            poolxml = storagepool.XMLDesc(0)
+            root = ET.fromstring(poolxml)
+            for element in root.getiterator('path'):
+                poolpath = element.text
+                break
+            diskpath = "%s/%s" % (poolpath, storagename)
+            if template is not None and index == 0:
+                try:
+                    storagepool.refresh(0)
+                    backingvolume = volumes[template]['object']
+                    backingxml = backingvolume.XMLDesc(0)
+                    root = ET.fromstring(backingxml)
+                except:
+                    print "Invalid template %s.Leaving..." % template
+                    return
+                backing = backingvolume.path()
+                backingxml = """<backingStore type='file' index='1'>
+                <format type='raw'/>
+                <source file='%s'/>
+                <backingStore/>
+                </backingStore>""" % backing
+            else:
+                backing = None
+                backingxml = '<backingStore/>'
+            volxml = self._xmlvolume(path=diskpath, size=disksize, backing=backing, diskformat=diskformat)
+            volsxml.append(volxml)
+            disksxml = """%s<disk type='file' device='disk'>
+                    <driver name='qemu' type='%s'/>
+                    <source file='%s'/>
+                    %s
+                    <target dev='%s' bus='%s'/>
+                    </disk>""" % (disksxml, diskformat, diskpath, backingxml, diskdev, diskbus)
         if iso is None:
             if cloudinit:
                 iso = "%s/%s.iso" % (poolpath, name)
@@ -161,8 +150,8 @@ class Kvirt:
             except:
                 print "Invalid Iso %s.Leaving..." % iso
                 return
-        if ip1 is not None:
-            version = "<entry name='version'>%s</entry>" % ip1
+        if ips is not None and len(ips) > 0:
+            version = "<entry name='version'>%s</entry>" % ips[0]
         else:
             version = ''
         version = """<sysinfo type='smbios'>
@@ -196,21 +185,7 @@ class Kvirt:
                   <on_crash>restart</on_crash>
                   <devices>
                     <emulator>%s</emulator>
-                    <disk type='file' device='disk'>
-                    <driver name='qemu' type='%s'/>
-                    <source file='%s'/>
-                    %s
-                    <target dev='%s' bus='%s'/>
-                    </disk>""" % (virttype, name, description, version, memory, numcpus, machine, sysinfo, emulator, diskformat1, diskpath1, backingxml, diskdev1, diskbus1)
-        if disksize2:
-            diskxml2 = self._xmldisk(diskpath=diskpath2, diskdev=diskdev2, diskbus=diskbus2, diskformat=diskformat2)
-            vmxml = "%s%s" % (vmxml, diskxml2)
-        if disksize3:
-            diskxml3 = self._xmldisk(diskpath=diskpath3, diskdev=diskdev3, diskbus=diskbus3, diskformat=diskformat3)
-            vmxml = "%s%s" % (vmxml, diskxml3)
-        if disksize4:
-            diskxml4 = self._xmldisk(diskpath=diskpath4, diskdev=diskdev4, diskbus=diskbus4, diskformat=diskformat4)
-            vmxml = "%s%s" % (vmxml, diskxml4)
+                    %s""" % (virttype, name, description, version, memory, numcpus, machine, sysinfo, emulator, disksxml)
         vmxml = """%s
                 <disk type='file' device='cdrom'>
                       <driver name='qemu' type='raw'/>
@@ -248,18 +223,15 @@ class Kvirt:
                 </devices>
                 %s
                 </domain>""" % (vmxml, display, nestedxml)
-        pool.createXML(volxml1, 0)
-        if disksize2 > 0:
-            pool.createXML(volxml2, 0)
-        if disksize3 > 0:
-            pool.createXML(volxml3, 0)
-        if disksize4 > 0:
-            pool.createXML(volxml4, 0)
+        pool = conn.storagePoolLookupByName(pool)
+        pool.refresh(0)
+        for volxml in volsxml:
+            pool.createXML(volxml, 0)
         conn.defineXML(vmxml)
         vm = conn.lookupByName(name)
         vm.setAutostart(1)
         if cloudinit:
-            self._cloudinit(name=name, keys=keys, cmds=cmds, ip1=ip1, netmask1=netmask1, gateway=gateway, ip2=ip2, netmask2=netmask2, ip3=ip3, netmask3=netmask3, ip4=ip4, netmask4=netmask4, dns=dns, domain=domain)
+            self._cloudinit(name=name, keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain)
             self._uploadiso(name, pool=pool)
         if start:
             vm.create()
@@ -590,31 +562,22 @@ class Kvirt:
         vm.setAutostart(1)
         vm.create()
 
-    def _cloudinit(self, name, keys=None, cmds=None, ip1=None, netmask1=None, gateway=None, ip2=None, netmask2=None, ip3=None, netmask3=None, ip4=None, netmask4=None, dns=None, domain=None):
+    def _cloudinit(self, name, keys=None, cmds=None, ips=None, netmasks=None, gateway=None, dns=None, domain=None):
         with open('/tmp/meta-data', 'w') as metadata:
             if domain is not None:
                 localhostname = "%s.%s" % (name, domain)
             else:
                 localhostname = name
             metadata.write('instance-id: XXX\nlocal-hostname: %s\n' % localhostname)
-            if ip1 is not None and netmask1 is not None and gateway is not None:
+            if ips and netmasks and gateway is not None and len(ips) == len(netmasks):
                 metadata.write("network-interfaces: |\n")
-                metadata.write("  iface eth0 inet static\n")
-                metadata.write("  address %s\n" % ip1)
-                metadata.write("  netmask %s\n" % netmask1)
-                metadata.write("  gateway %s\n" % gateway)
-                if ip2 is not None and netmask2 is not None:
-                    metadata.write("  iface eth1 inet static\n")
-                    metadata.write("  address %s\n" % ip2)
-                    metadata.write("  netmask %s\n" % netmask2)
-                if ip3 is not None and netmask3 is not None:
-                    metadata.write("  iface eth2 inet static\n")
-                    metadata.write("  address %s\n" % ip3)
-                    metadata.write("  netmask %s\n" % netmask3)
-                if ip4 is not None and netmask4 is not None:
-                    metadata.write("  iface eth3 inet static\n")
-                    metadata.write("  address %s\n" % ip4)
-                    metadata.write("  netmask %s\n" % netmask4)
+                for index, ip in enumerate(ips):
+                    netmask = netmasks[index]
+                    metadata.write("  iface eth%d inet static\n" % index)
+                    metadata.write("  address %s\n" % ip)
+                    metadata.write("  netmask %s\n" % netmask)
+                    if index == 0:
+                        metadata.write("  gateway %s\n" % gateway)
                 if dns is not None:
                     metadata.write("  dns-nameservers %s\n" % dns)
                 if domain is not None:

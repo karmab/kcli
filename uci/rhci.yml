@@ -2,7 +2,8 @@ osp:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
  memory: 6144
  numcpus: 2
- disksize2: 40
+ disks:
+  - size: 40
  nets: 
   - cinet
  pool: vms
@@ -18,7 +19,8 @@ rhv:
  numcpus: 2
  nets:
   - cinet
- disksize1: 60
+ disks:
+  -size: 60
  pool: vms
  scripts: 
   - ~/register.sh
@@ -33,8 +35,9 @@ cloudforms:
  numcpus: 2
  nets:
   - cinet
- disksize1: 45
- disksize2: 10
+ disks:
+  - size: 45
+  - size: 10
  pool: vms
  scripts: 
   - manageiq/install.sh
@@ -45,7 +48,9 @@ ose:
  memory: 2048
  nets: 
   - cinet
- disksize2: 20
+ disks:
+  - size: 10
+  - size: 20
  pool: vms
  scripts: 
   - ~/register.sh
@@ -59,7 +64,8 @@ satellite:
  numcpus: 2
  nets: 
   - cinet
- disksize1: 40
+ disks:
+  - size: 40
  pool: vms
  scripts: 
   - ~/register.sh

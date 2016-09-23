@@ -4,7 +4,9 @@ ose:
  memory: 2048
  nets:
   - cinet
- disksize2: 20
+ disks:
+  - size: 10
+  - size: 20
  pool: vms
  scripts: 
   - ~/register.sh

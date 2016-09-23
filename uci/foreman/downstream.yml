@@ -4,7 +4,8 @@ satellite:
  numcpus: 2
  nets: 
   - cinet
- disksize1: 40
+ disks:
+  - size: 40
  pool: vms
  scripts: 
   - ~/register_satellite.sh
