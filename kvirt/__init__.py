@@ -117,9 +117,13 @@ class Kvirt:
             storagepool = conn.storagePoolLookupByName(pool)
             poolxml = storagepool.XMLDesc(0)
             root = ET.fromstring(poolxml)
+            poolpath = None
             for element in root.getiterator('path'):
                 poolpath = element.text
                 break
+            if poolpath is None:
+                print "Pool %s not found.Leaving..." % poolpath
+                return
             diskpath = "%s/%s" % (poolpath, storagename)
             if template is not None and index == 0:
                 try:
