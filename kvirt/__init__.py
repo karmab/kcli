@@ -87,7 +87,8 @@ class Kvirt:
         virttype = 'kvm'
         machine = 'pc'
         sysinfo = "<smbios mode='sysinfo'/>"
-        emulator = '/usr/libexec/qemu-kvm'
+        # emulator = '/usr/libexec/qemu-kvm'
+        emulator = '/usr/bin/qemu-kvm'
         disksxml = ''
         volsxml = []
         for index, disk in enumerate(disks):
@@ -114,16 +115,17 @@ class Kvirt:
             if not diskthin:
                 diskformat = 'raw'
             storagename = "%s_%d.img" % (name, index + 1)
-            storagepool = conn.storagePoolLookupByName(pool)
+            try:
+                storagepool = conn.storagePoolLookupByName(pool)
+            except:
+                print "Pool %s not found.Leaving..." % pool
+                return 1
             poolxml = storagepool.XMLDesc(0)
             root = ET.fromstring(poolxml)
             poolpath = None
             for element in root.getiterator('path'):
                 poolpath = element.text
                 break
-            if poolpath is None:
-                print "Pool %s not found.Leaving..." % poolpath
-                return
             diskpath = "%s/%s" % (poolpath, storagename)
             if template is not None and index == 0:
                 try:

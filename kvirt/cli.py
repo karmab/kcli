@@ -125,7 +125,7 @@ def switch(config, client):
             if 'client' in line:
                 print " client: %s" % client
             else:
-                print line
+                print line.strip()
 
 
 @cli.command()
