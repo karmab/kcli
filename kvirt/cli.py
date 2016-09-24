@@ -342,7 +342,7 @@ def plan(config, inputfile, start, stop, delete, plan):
             template = next((e for e in [profile.get('template'), customprofile.get('template')] if e is not None), None)
             numcpus = next((e for e in [profile.get('numcpus'), customprofile.get('numcpus'), default['numcpus']] if e is not None))
             memory = next((e for e in [profile.get('memory'), customprofile.get('memory'), default['memory']] if e is not None))
-            disks = next((e for e in [profile.get('disks'), customprofile.get('disks'), default['disksizes']] if e is not None))
+            disks = next((e for e in [profile.get('disks'), customprofile.get('disks'), default['disks']] if e is not None))
             disksize = next((e for e in [profile.get('disksize'), customprofile.get('disksize'), default['disksize']] if e is not None))
             diskinterface = next((e for e in [profile.get('diskinterface'), customprofile.get('diskinterface'), default['diskinterface']] if e is not None))
             diskthin = next((e for e in [profile.get('diskthin'), customprofile.get('diskthin'), default['diskthin']] if e is not None))
