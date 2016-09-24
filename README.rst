@@ -57,6 +57,13 @@ settings in ~/kcli.yml. For instance,
     twix:
      host: 192.168.0.6
      pool: images
+     emulator: /usr/libexec/qemu-kvm
+
+    bumblefoot:
+     host: 192.168.0.4
+     pool: images
+
+Note the use of a specific emulator for centos7/rhel7 hypervisors.
 
 replace with your own client in default section and indicate host and
 protocol in the corresponding client section. Note that most of the

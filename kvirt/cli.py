@@ -2,7 +2,7 @@
 
 import click
 import fileinput
-from defaults import NETS, POOL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, START
+from defaults import NETS, POOL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, START, EMULATOR
 from prettytable import PrettyTable
 from kvirt import Kvirt, __version__
 import os
@@ -42,6 +42,7 @@ class Config():
         defaults['vnc'] = bool(default.get('vnc', VNC))
         defaults['cloudinit'] = bool(default.get('cloudinit', CLOUDINIT))
         defaults['start'] = bool(default.get('start', START))
+        defaults['emulator'] = default.get('emulator', EMULATOR)
         self.default = defaults
         options = ini[self.client]
         host = options.get('host', '127.0.0.1')
@@ -205,6 +206,8 @@ def create(config, profile, ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8, name):
     dns = profile.get('dns')
     domain = profile.get('domain')
     scripts = profile.get('scripts')
+    emulator = profile.get('emulator', default['emulator'])
+    k.emulator = emulator
     if scripts is not None:
         scriptcmds = []
         for script in scripts:
@@ -218,7 +221,11 @@ def create(config, profile, ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8, name):
         if scriptcmds:
             cmds = scriptcmds
     ips = [ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8]
-    k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain)
+    result = k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain)
+    if result == 0:
+        click.secho("%s deployed!" % name, fg='green')
+    else:
+        click.secho("%s not deployed! :(" % name, fg='green')
 
 
 @cli.command()
@@ -358,6 +365,8 @@ def plan(config, inputfile, start, stop, delete, plan):
             gateway = next((e for e in [profile.get('gateway'), customprofile.get('gateway')] if e is not None), None)
             dns = next((e for e in [profile.get('dns'), customprofile.get('dns')] if e is not None), None)
             domain = next((e for e in [profile.get('domain'), customprofile.get('domain')] if e is not None), None)
+            emulator = next((e for e in [profile.get('emulator'), customprofile.get('emulator'), default['emulator']] if e is not None))
+            k.emulator = emulator
             ips = profile.get('ips')
             scripts = next((e for e in [profile.get('scripts'), customprofile.get('scripts')] if e is not None), None)
             if scripts is not None:
@@ -372,8 +381,11 @@ def plan(config, inputfile, start, stop, delete, plan):
                             scriptcmds.extend(scriptlines)
                 if scriptcmds:
                     cmds = scriptcmds
-            k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain)
-            click.secho("%s deployed!" % name, fg='green')
+            result = k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain)
+            if result == 0:
+                click.secho("%s deployed!" % name, fg='green')
+            else:
+                click.secho("%s not deployed! :(" % name, fg='green')
 
 
 @cli.command()

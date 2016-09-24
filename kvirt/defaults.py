@@ -10,3 +10,4 @@ GUESTID = 'guestrhel764'
 VNC = False
 CLOUDINIT = True
 START = True
+EMULATOR = '/usr/bin/qemu-kvm'

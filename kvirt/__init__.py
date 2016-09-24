@@ -33,22 +33,24 @@ guestwindows200864 = "windows_2008x64"
 
 
 class Kvirt:
-    def __init__(self, host='127.0.0.1', port=None, user='root', protocol='ssh'):
-        if host == '127.0.0.1' or host == 'localhost':
-            url = "qemu:///system"
-        elif protocol == 'ssh':
-            url = "qemu+%s://%s@%s/system?socket=/var/run/libvirt/libvirt-sock" % (protocol, user, host)
-        elif user and port:
-            url = "qemu+%s://%s@%s:%s/system?socket=/var/run/libvirt/libvirt-sock" % (protocol, user, host, port)
-        elif port:
-            url = "qemu+%s://%s:%s/system?socket=/var/run/libvirt/libvirt-sock" % (protocol, host, port)
-        else:
-            url = "qemu:///system"
+    def __init__(self, host='127.0.0.1', port=None, user='root', protocol='ssh', url=None, emulator='/usr/bin/qemu-kvm'):
+        if url is None:
+            if host == '127.0.0.1' or host == 'localhost':
+                url = "qemu:///system"
+            elif protocol == 'ssh':
+                url = "qemu+%s://%s@%s/system?socket=/var/run/libvirt/libvirt-sock" % (protocol, user, host)
+            elif user and port:
+                url = "qemu+%s://%s@%s:%s/system?socket=/var/run/libvirt/libvirt-sock" % (protocol, user, host, port)
+            elif port:
+                url = "qemu+%s://%s:%s/system?socket=/var/run/libvirt/libvirt-sock" % (protocol, host, port)
+            else:
+                url = "qemu:///system"
         try:
             self.conn = libvirtopen(url)
         except Exception:
             self.conn = None
         self.host = host
+        self.emulator = emulator
 
     def close(self):
         conn = self.conn
@@ -64,6 +66,7 @@ class Kvirt:
             return False
 
     def create(self, name, title='', description='kvirt', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, start=True, keys=None, cmds=None, ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None):
+        emulator = self.emulator
         default_diskinterface = diskinterface
         default_diskthin = diskthin
         default_disksize = disksize
@@ -87,8 +90,6 @@ class Kvirt:
         virttype = 'kvm'
         machine = 'pc'
         sysinfo = "<smbios mode='sysinfo'/>"
-        # emulator = '/usr/libexec/qemu-kvm'
-        emulator = '/usr/bin/qemu-kvm'
         disksxml = ''
         volsxml = []
         for index, disk in enumerate(disks):
@@ -106,7 +107,7 @@ class Kvirt:
                 diskinterface = disk.get('interface', default_diskinterface)
             else:
                 print "Invalid disk entry.Leaving..."
-                return
+                return 1
             letter = chr(index + ord('a'))
             diskdev, diskbus = 'vd%s' % letter, 'virtio'
             if diskinterface != 'virtio':
@@ -135,7 +136,7 @@ class Kvirt:
                     root = ET.fromstring(backingxml)
                 except:
                     print "Invalid template %s.Leaving..." % template
-                    return
+                    return 1
                 backing = backingvolume.path()
                 backingxml = """<backingStore type='file' index='1'>
                                 <format type='raw'/>
@@ -174,7 +175,7 @@ class Kvirt:
                 sourcenet = 'network'
             else:
                 print "Invalid network %s.Leaving..." % netname
-                return
+                return 1
             netxml = """%s
                      <interface type='%s'>
                      <source %s='%s'/>
@@ -198,7 +199,7 @@ class Kvirt:
                 iso = isovolume.path()
             except:
                 print "Invalid Iso %s.Leaving..." % iso
-                return
+                return 1
         isoxml = """<disk type='file' device='cdrom'>
                       <driver name='qemu' type='raw'/>
                       <source file='%s'/>
@@ -276,6 +277,7 @@ class Kvirt:
             self._uploadiso(name, pool=pool)
         if start:
             vm.create()
+        return 0
 
     def start(self, name):
         conn = self.conn
@@ -283,7 +285,7 @@ class Kvirt:
         vm = conn.lookupByName(name)
         vm = conn.lookupByName(name)
         if status[vm.isActive()] == "up":
-            return
+            return 1
         else:
             vm.create()
 
