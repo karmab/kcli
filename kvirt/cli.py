@@ -15,7 +15,7 @@ class Config():
     def load(self):
         inifile = "%s/kcli.yml" % os.environ.get('HOME')
         if not os.path.exists(inifile):
-            ini = {'default': {'client': 'local'}, 'local': {}}
+            ini = {'default': {'client': 'local'}, 'local': {'pool': 'default'}}
             click.secho("Using local hypervisor as no kcli.yml was found...", fg='green')
         else:
             with open(inifile, 'r') as entries:
