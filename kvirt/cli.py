@@ -7,6 +7,7 @@ from prettytable import PrettyTable
 from kvirt import Kvirt, __version__
 import os
 import yaml
+from shutil import copyfile
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
@@ -44,20 +45,23 @@ class Config():
         defaults['start'] = bool(default.get('start', START))
         self.default = defaults
         options = ini[self.client]
-        host = options.get('host', '127.0.0.1')
-        port = options.get('port', None)
-        user = options.get('user', 'root')
-        protocol = options.get('protocol', 'ssh')
-        self.k = Kvirt(host=host, port=port, user=user, protocol=protocol)
-        if self.k.conn is None:
-            click.secho("Couldnt connect to specify hypervisor %s. Leaving..." % host, fg='red')
-            os._exit(1)
+        self.host = options.get('host', '127.0.0.1')
+        self.port = options.get('port', None)
+        self.user = options.get('user', 'root')
+        self.protocol = options.get('protocol', 'ssh')
         profilefile = "%s/kcli_profiles.yml" % os.environ.get('HOME')
         if not os.path.exists(profilefile):
             self.profiles = {}
         else:
             with open(profilefile, 'r') as entries:
                 self.profiles = yaml.load(entries)
+
+    def get(self):
+        k = Kvirt(host=self.host, port=self.port, user=self.user, protocol=self.protocol)
+        if k.conn is None:
+            click.secho("Couldnt connect to specify hypervisor %s. Leaving..." % self.host, fg='red')
+            os._exit(1)
+        return k
 
 pass_config = click.make_pass_decorator(Config, ensure=True)
 
@@ -74,7 +78,7 @@ def cli(config):
 @click.argument('name')
 @pass_config
 def start(config, name):
-    k = config.k
+    k = config.get()
     click.secho("Started vm %s..." % name, fg='green')
     k.start(name)
 
@@ -83,7 +87,7 @@ def start(config, name):
 @click.argument('name')
 @pass_config
 def stop(config, name):
-    k = config.k
+    k = config.get()
     click.secho("Stopped vm %s..." % name, fg='green')
     k.stop(name)
 
@@ -93,7 +97,7 @@ def stop(config, name):
 @click.argument('name')
 @pass_config
 def console(config, serial, name):
-    k = config.k
+    k = config.get()
     if serial:
         k.serialconsole(name)
     else:
@@ -105,7 +109,7 @@ def console(config, serial, name):
 @click.argument('name')
 @pass_config
 def delete(config, name):
-    k = config.k
+    k = config.get()
     click.secho("Deleted vm %s..." % name, fg='red')
     k.delete(name)
 
@@ -114,7 +118,6 @@ def delete(config, name):
 @click.argument('client')
 @pass_config
 def switch(config, client):
-    # k = config.k
     if client not in config.clients:
         click.secho("Client %s not found in config.Leaving...." % client, fg='green')
         os._exit(1)
@@ -135,7 +138,7 @@ def switch(config, client):
 @click.option('-i', '--isos', is_flag=True)
 @pass_config
 def list(config, clients, profiles, templates, isos):
-    k = config.k
+    k = config.get()
     if clients:
         clientstable = PrettyTable(["Name", "Current"])
         clientstable.align["Name"] = "l"
@@ -175,7 +178,7 @@ def list(config, clients, profiles, templates, isos):
 @pass_config
 def create(config, profile, ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8, name):
     click.secho("Deploying vm %s from profile %s..." % (name, profile), fg='green')
-    k = config.k
+    k = config.get()
     default = config.default
     profiles = config.profiles
     if profile not in profiles:
@@ -232,7 +235,7 @@ def create(config, profile, ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8, name):
 @pass_config
 def clone(config, base, full, name):
     click.secho("Cloning vm %s from vm %s..." % (name, base), fg='green')
-    k = config.k
+    k = config.get()
     k.clone(base, name, full)
 
 
@@ -243,7 +246,7 @@ def clone(config, base, full, name):
 @click.argument('name')
 @pass_config
 def update(config, ip, memory, numcpus, name):
-    k = config.k
+    k = config.get()
     if ip is not None:
         click.secho("Updating ip of vm %s to %s..." % (name, ip), fg='green')
         k.update_ip(name, ip)
@@ -264,7 +267,7 @@ def add(config, size, pool, name):
     if size is None:
         click.secho("Missing size. Leaving...", fg='red')
         os._exit(1)
-    k = config.k
+    k = config.get()
     click.secho("Adding disk %s..." % (name), fg='green')
     k.add_disk(name=name, size=size, pool=pool)
 
@@ -273,7 +276,7 @@ def add(config, size, pool, name):
 @pass_config
 def report(config):
     click.secho("Reporting setup for client %s..." % config.client, fg='green')
-    k = config.k
+    k = config.get()
     k.report()
 
 
@@ -287,7 +290,7 @@ def report(config):
 def plan(config, inputfile, start, stop, delete, plan):
     if plan is None:
         plan = 'kvirt'
-    k = config.k
+    k = config.get()
     if delete:
         if plan == '':
             click.secho("That would delete every vm...Not doing that", fg='red')
@@ -387,7 +390,7 @@ def plan(config, inputfile, start, stop, delete, plan):
 @click.argument('name')
 @pass_config
 def info(config, name):
-    k = config.k
+    k = config.get()
     k.info(name)
 
 
@@ -395,8 +398,22 @@ def info(config, name):
 @click.argument('name')
 @pass_config
 def ssh(config, name):
-    k = config.k
+    k = config.get()
     k.ssh(name)
+
+
+@cli.command()
+@click.option('-s', '--simple', is_flag=True)
+def bootstrap(simple):
+    click.secho("Bootstrapping env", fg='green')
+    if simple:
+        ini = {'default': {'client': 'local'}, 'local': {'pool': 'default', 'nets': ['default']}}
+        path = os.path.expanduser('~/kcli.yml')
+        if os.path.exists(path):
+            copyfile(path, "%s.bck" % path)
+        with open(path, 'w') as conf_file:
+            yaml.dump(ini, conf_file, default_flow_style=False)
+
 
 if __name__ == '__main__':
     cli()
