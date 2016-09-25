@@ -4,10 +4,10 @@ kcli repository
 |Build Status| |Pypi|
 
 This script is meant to interact with a local/remote libvirt daemon and
-to easily deploy from templates ( optionally using cloudinit). It will
-also report ips for any vm connected to a dhcp enabled libvirt network
-and generally for every vm deployed from this client It started because
-i switched from ovirt and needed a tool similar to
+to easily deploy from templates (optionally using cloudinit). It will
+also report IPs for any VM connected to a dhcp-enabled libvirt network
+and generally for every VM deployed from this client. It started because
+I switched from ovirt and needed a tool similar to
 `ovirt.py <https://github.com/karmab/ovirt>`__
 
 demo
@@ -51,7 +51,7 @@ settings in ~/kcli.yml. For instance,
       - size: 10
      protocol: ssh
      cloudinit: true
-     nets: 
+     nets:
       - private1
 
     twix:
@@ -60,14 +60,14 @@ settings in ~/kcli.yml. For instance,
 
 replace with your own client in default section and indicate host and
 protocol in the corresponding client section. Note that most of the
-parameters are actually optional, and can be overriden in the profile
-section ( or in a plan file)
+parameters are actually optional, and can be overridden in the profile
+section or in a plan file.
 
 profile configuration
 ---------------------
 
 You can use the file ~/kvirt\_profiles.yml to specify profiles (number
-of cpus, memory, size of disk,network,....) to use when deploying a vm.
+of CPUs, memory, size of disk, network,....) to use when deploying a VM.
 
 The `samples
 directory <https://github.com/karmab/kcli/tree/master/samples>`__
@@ -78,40 +78,40 @@ How to use
 
 -  get info on your kvm setup
 -  ``kcli report``
--  list vms, along with their private ip ( and plan if applicable)
+-  list VMs, along with their private IP (and plan if applicable)
 -  ``kcli list``
 -  list templates
 -  ``kcli list -t``
--  create vm from profile base7
+-  create VM from profile base7
 -  ``kcli create -p base7 myvm``
--  delete vm
+-  delete VM
 -  ``kcli delete vm1``
--  get detailed info on a specific vm
+-  get detailed info on a specific VM
 -  ``kcli info vm1``
--  start vm
+-  start VM
 -  ``kcli start vm1``
--  stop vm
+-  stop VM
 -  ``kcli start vm1``
 -  get remote-viewer console
 -  ``kcli console vm1``
--  get serial console ( over tcp!!!). Note that it will only work with
-   vms created with kcli and will require telnet client to be installed
+-  get serial console (over tcp!!!). Note that it will only work with
+   VMs created with kcli and will require telnet client to be installed
    on host
 -  ``kcli console -s vm1``
--  deploy multiple vms using plan x defined in x.yml file
+-  deploy multiple VMs using plan x defined in x.yml file
 -  ``kcli plan -f x.yml x``
--  delete all vms from plan x
+-  delete all VMs from plan x
 -  ``kcli plan -d x``
 -  add 5GB disk to vm1
 -  ``kcli add -s 5 vm1``
 -  update to 2GB memory vm1
 -  ``kcli update -m 2048 vm1``
--  update internal ip ( usefull for ansible inventory over existing
-   bridged vms)
+-  update internal IP (useful for ansible inventory over existing
+   bridged VMs)
 -  ``kcli update -1 192.168.0.40 vm1``
 -  clone vm1 to new vm2
 -  ``kcli clone -b vm1 vm2``
--  connect by ssh to the vm ( retrieving ip and adjusting user based on
+-  connect by ssh to the VM (retrieving IP and adjusting user based on
    the template)
 -  ``kcli ssh vm1``
 -  switch active client to bumblefoot
@@ -120,10 +120,10 @@ How to use
 cloudinit stuff
 ---------------
 
-if cloudinit is enabled (it is by default), a custom iso is generated on
-the fly for your vm ( using mkisofs) and uploaded to your kvm instance (
-using the API). the iso handles static networking configuration,
-hostname setting, inyecting ssh keys and running specific commands
+if cloudinit is enabled (it is by default), a custom ISO is generated on
+the fly for your VM (using mkisofs) and uploaded to your KVM instance
+(using the API). The ISO handles static networking configuration,
+hostname setting, injecting ssh keys and running specific commands
 
 Also note that if you use cloudinit but dont specify ssh keys to inject,
 the default ~/.ssh/id\_rsa.pub will be used, if present.
@@ -131,20 +131,20 @@ the default ~/.ssh/id\_rsa.pub will be used, if present.
 Using plans
 -----------
 
-you can also define plan files in yaml with a list of vms to deploy (
+you can also define plan files in yaml with a list of VMs to deploy (
 look at the sample) and deploy it with kcli plan
 
 You can point at an existing profile within your plans, define all
-parameters for the vms, or combine both approaches.
+parameters for the VMs, or combine both approaches.
 
-Specific scripts and ips arrays can be used directly in the plan file (
+Specific scripts and IPs arrays can be used directly in the plan file (
 or in profiles one)
 
 The samples directory contains examples to get you started
 
-Note that the description of the vm will automatically be set to the
+Note that the description of the VM will automatically be set to the
 plan name, and this value will be used when deleting the entire plan as
-a way to locate matching vms.
+a way to locate matching VMs.
 
 When launching a plan, the plan name is optional. If not is provided,
 the kvirt keyword will be used.
@@ -154,7 +154,7 @@ in the current directory will be used, if available.
 
 For an advanced use of plans along with scripts, you can check the
 `uci <uci/README.md>`__ page to deploy all upstream projects associated
-with Red Hat Cloud Infrastructure products ( or downstream versions too)
+with Red Hat Cloud Infrastructure products (or downstream versions too)
 
 available parameters
 --------------------
@@ -167,9 +167,9 @@ those parameters can be set either in your config, profile or plan files
 -  *pool* Defaults to default
 -  *template* Should point to your base cloud image(optional)
 -  *disks* Array of disks to define. For each of them, you can specify
-   size, thin ( as boolean) and interface ( either ide or virtio).If you
+   size, thin (as boolean) and interface (either ide or virtio).If you
    omit parameters, default values will be used from config or profile
-   file ( You can actually let the entire entry blank or just indicate a
+   file (You can actually let the entire entry blank or just indicate a
    size number directly). For instance:
 
 ::
@@ -186,7 +186,7 @@ keys
 -  *diskthin* Value used when not specified in the disk entry. Defaults
    to true
 -  *diskinterface* Value used when not specified in the disk entry.
-   Defaults to virtio. Could also be ide, if vm lacks virtio drivers
+   Defaults to virtio. Could also be ide, if VM lacks virtio drivers
 -  *nets* Array of networks. Defaults to ['default']. You can mix simple
    strings pointing to the name of your and more complex information
    provided as hash. For instance:
@@ -200,13 +200,13 @@ keys
        mask: 255.255.255.0
        gateway: 192.168.0.1
 
-Within a net section, you can use name, nic, ip, mask and gateway as
+Within a net section, you can use name, nic, IP, mask and gateway as
 keys.
 
-Note that up to 8 ips can also be provided on command line when creating
-a single vm ( with the flag -1, -2, -3,-4,...)
+Note that up to 8 IPs can also be provided on command line when creating
+a single VM (with the flag -1, -2, -3,-4,...)
 
--  *iso* ( optional)
+-  *iso* (optional)
 -  *netmasks* (optional)
 -  *gateway* (optional)
 -  *dns* (optional) Dns servers
@@ -228,13 +228,13 @@ ansible dynamic inventory
 you can check klist.py in the extra directory and use it as a dynamic
 inventory for ansible.
 
-The script uses sames conf as kcli ( and as such defaults to local
+The script uses sames conf as kcli (and as such defaults to local
 hypervisor if no configuration file is found)
 
-vm will be grouped by plan, or put in the kvirt group if they dont
+VM will be grouped by plan, or put in the kvirt group if they dont
 belong to any plan.
 
-Interesting thing is that the script will try to guess the type of vm
+Interesting thing is that the script will try to guess the type of VM
 based on its template, if present, and populate ansible\_user
 accordingly
 
@@ -249,10 +249,10 @@ Try it with:
 issues found with cloud images
 ------------------------------
 
--  for ubuntu latest images ( xenial), one needs to use something like
+-  for ubuntu latest images (xenial), one needs to use something like
    guestfish to edit /boot/grub/grub.cfg and /etc/default/grub and
    remove console=ttyS0 from it.
--  Also note that you need to install python-simplejson ( actually
+-  Also note that you need to install python-simplejson (actually
    bringing python2.7) to allow ansible to work on ubuntu
 -  debian images are freezing. rebooting fixes the issue but as such
    cloudinit doesnt get applied...
