@@ -153,7 +153,7 @@ Within a disk section, you can use the word size, thin and format as keys
 
 - *diskthin* Value used when not specified in the disk entry. Defaults to true
 - *diskinterface* Value used when not specified in the disk entry. Defaults to virtio. Could also be ide, if vm lacks virtio drivers
-- *nets* Array of networks. Defaults to ['default']. You can mix simple strings pointing to the name of your and more complex information provided as hash. For instance:
+- *nets* Array of networks. Defaults to ['default']. You can mix simple strings pointing to the name of your network and more complex information provided as hash. For instance:
 
 ```
 nets:
