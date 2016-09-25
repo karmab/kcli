@@ -33,7 +33,7 @@ guestwindows200864 = "windows_2008x64"
 
 
 class Kvirt:
-    def __init__(self, host='127.0.0.1', port=None, user='root', protocol='ssh', url=None, emulator='/usr/bin/qemu-kvm'):
+    def __init__(self, host='127.0.0.1', port=None, user='root', protocol='ssh', url=None):
         if url is None:
             if host == '127.0.0.1' or host == 'localhost':
                 url = "qemu:///system"
@@ -50,7 +50,6 @@ class Kvirt:
         except Exception:
             self.conn = None
         self.host = host
-        self.emulator = emulator
 
     def close(self):
         conn = self.conn
@@ -66,7 +65,6 @@ class Kvirt:
             return False
 
     def create(self, name, title='', description='kvirt', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, start=True, keys=None, cmds=None, ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None):
-        emulator = self.emulator
         default_diskinterface = diskinterface
         default_diskthin = diskthin
         default_disksize = disksize
@@ -255,7 +253,6 @@ class Kvirt:
                   <on_reboot>restart</on_reboot>
                   <on_crash>restart</on_crash>
                   <devices>
-                    <emulator>%s</emulator>
                     %s
                     %s
                     %s
@@ -263,7 +260,7 @@ class Kvirt:
                     %s
                   </devices>
                     %s
-                    </domain>""" % (virttype, name, description, version, memory, numcpus, machine, sysinfo, emulator, disksxml, netxml, isoxml, displayxml, serialxml, nestedxml)
+                    </domain>""" % (virttype, name, description, version, memory, numcpus, machine, sysinfo, disksxml, netxml, isoxml, displayxml, serialxml, nestedxml)
         pool = conn.storagePoolLookupByName(pool)
         pool.refresh(0)
         for volxml in volsxml:

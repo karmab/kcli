@@ -2,7 +2,7 @@
 
 import click
 import fileinput
-from defaults import NETS, POOL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, START, EMULATOR
+from defaults import NETS, POOL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, START
 from prettytable import PrettyTable
 from kvirt import Kvirt, __version__
 import os
@@ -42,7 +42,6 @@ class Config():
         defaults['vnc'] = bool(default.get('vnc', VNC))
         defaults['cloudinit'] = bool(default.get('cloudinit', CLOUDINIT))
         defaults['start'] = bool(default.get('start', START))
-        defaults['emulator'] = default.get('emulator', EMULATOR)
         self.default = defaults
         options = ini[self.client]
         host = options.get('host', '127.0.0.1')
@@ -206,8 +205,6 @@ def create(config, profile, ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8, name):
     dns = profile.get('dns')
     domain = profile.get('domain')
     scripts = profile.get('scripts')
-    emulator = profile.get('emulator', default['emulator'])
-    k.emulator = emulator
     if scripts is not None:
         scriptcmds = []
         for script in scripts:
@@ -225,7 +222,7 @@ def create(config, profile, ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8, name):
     if result == 0:
         click.secho("%s deployed!" % name, fg='green')
     else:
-        click.secho("%s not deployed! :(" % name, fg='green')
+        click.secho("%s not deployed! :(" % name, fg='red')
 
 
 @cli.command()
@@ -365,8 +362,6 @@ def plan(config, inputfile, start, stop, delete, plan):
             gateway = next((e for e in [profile.get('gateway'), customprofile.get('gateway')] if e is not None), None)
             dns = next((e for e in [profile.get('dns'), customprofile.get('dns')] if e is not None), None)
             domain = next((e for e in [profile.get('domain'), customprofile.get('domain')] if e is not None), None)
-            emulator = next((e for e in [profile.get('emulator'), customprofile.get('emulator'), default['emulator']] if e is not None))
-            k.emulator = emulator
             ips = profile.get('ips')
             scripts = next((e for e in [profile.get('scripts'), customprofile.get('scripts')] if e is not None), None)
             if scripts is not None:
@@ -385,7 +380,7 @@ def plan(config, inputfile, start, stop, delete, plan):
             if result == 0:
                 click.secho("%s deployed!" % name, fg='green')
             else:
-                click.secho("%s not deployed! :(" % name, fg='green')
+                click.secho("%s not deployed! :(" % name, fg='red')
 
 
 @cli.command()
