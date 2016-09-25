@@ -37,8 +37,15 @@ To deploy from templates, grab images at
 ## configuration
 
 If you want to only use your local libvirt daemon, no extra
-configuration is needed. Otherwise you will have to declare your
-settings in ~/kcli.yml. For instance,
+configuration is needed. If you want to generate a basic setting files,
+you can use the following command:
+
+::
+
+    kcli bootstrap -s 
+
+Otherwise you will have to declare your settings in ~/kcli.yml. For
+instance,
 
 ::
 
