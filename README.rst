@@ -66,6 +66,12 @@ pool with a path
 
     kcli bootstrap -a -n twix -H 192.168.0.6 --pool vms --poolpath /home/vms
 
+Or even use an existing disk for LVM based images
+
+::
+
+    kcli bootstrap -a -n twix -H 192.168.0.6 --pool vms --poolpath /dev/vdb --pooltype lvm
+
 Otherwise you will have to declare your settings in ~/kcli.yml. For
 instance,
 

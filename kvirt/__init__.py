@@ -13,7 +13,7 @@ import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "1.0.19"
+__version__ = "1.0.20"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -311,22 +311,30 @@ class Kvirt:
         hostname = conn.getHostname()
         cpus = conn.getCPUMap()[0]
         memory = conn.getInfo()[1]
-        print "Host: %s Cpu:%s Memory:%sMB" % (hostname, cpus, memory)
-        for storage in conn.listStoragePools():
-            storagename = storage
-            storage = conn.storagePoolLookupByName(storage)
-            s = storage.info()
+        print "Host:%s Cpu:%s Memory:%sMB\n" % (hostname, cpus, memory)
+        for pool in conn.listStoragePools():
+            poolname = pool
+            pool = conn.storagePoolLookupByName(pool)
+            poolxml = pool.XMLDesc(0)
+            root = ET.fromstring(poolxml)
+            pooltype = root.getiterator('pool')[0].get('type')
+            if pooltype == 'dir':
+                poolpath = root.getiterator('path')[0].text
+            else:
+                poolpath = root.getiterator('device')[0].get('path')
+            s = pool.info()
             used = "%.2f" % (float(s[2]) / 1024 / 1024 / 1024)
             available = "%.2f" % (float(s[3]) / 1024 / 1024 / 1024)
             # Type,Status, Total space in Gb, Available space in Gb
             used = float(used)
             available = float(available)
-            print "Storage: %s Used space: %sGB Available space:%sGB" % (storagename, used, available)
+            print "Storage:%s Type:%s Path:%s Used space:%sGB Available space:%sGB" % (poolname, pooltype, poolpath, used, available)
+        print
         for interface in conn.listAllInterfaces():
             interfacename = interface.name()
             if interfacename == 'lo':
                 continue
-            print "Network: %s Type: bridged" % (interfacename)
+            print "Network:%s Type:bridged" % (interfacename)
         for network in conn.listAllNetworks():
             networkname = network.name()
             netxml = network.XMLDesc(0)
@@ -344,7 +352,7 @@ class Kvirt:
                 dhcp = True
             else:
                 dhcp = False
-            print "Network: %s Type: routed Cidr: %s Dhcp:%s" % (networkname, cidr, dhcp)
+            print "Network:%s Type:routed Cidr:%s Dhcp:%s" % (networkname, cidr, dhcp)
 
     def status(self, name):
         conn = self.conn
@@ -459,8 +467,8 @@ class Kvirt:
         numcpus = numcpus.text
         if vm.isActive():
             state = 'up'
-        print "name: %s" % name
-        print "status: %s" % state
+        print "name:%s" % name
+        print "status:%s" % state
         description = root.getiterator('description')
         if description:
             description = description[0].text
@@ -471,11 +479,11 @@ class Kvirt:
             attributes = entry.attrib
             if attributes['name'] == 'product':
                 title = entry.text
-        print "description: %s" % description
+        print "description:%s" % description
         if title is not None:
             print "profile: %s" % title
-        print "cpus: %s" % numcpus
-        print "memory: %sMB" % memory
+        print "cpus:%s" % numcpus
+        print "memory:%sMB" % memory
         nicnumber = 0
         for element in root.getiterator('interface'):
             networktype = element.get('type')
@@ -483,10 +491,10 @@ class Kvirt:
             mac = element.find('mac').get('address')
             if networktype == 'bridge':
                 bridge = element.find('source').get('bridge')
-                print "net interfaces: %s mac: %s net: %s type: bridge" % (device, mac, bridge)
+                print "net interfaces:%s mac:%s net:%s type:bridge" % (device, mac, bridge)
             else:
                 network = element.find('source').get('network')
-                print "net interfaces: %s mac: %s net: %s type: routed" % (device, mac, network)
+                print "net interfaces:%s mac: %s net: %s type:routed" % (device, mac, network)
                 network = conn.networkLookupByName(network)
             if vm.isActive():
                 for address in vm.interfaceAddresses(VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE).values():
@@ -510,9 +518,9 @@ class Kvirt:
             path = element.find('source').get('file')
             volume = conn.storageVolLookupByPath(path)
             disksize = int(float(volume.info()[1]) / 1024 / 1024 / 1024)
-            print "diskname: %s disksize: %sGB diskformat: %s type: %s  path: %s" % (device, disksize, diskformat, drivertype, path)
+            print "diskname:%s disksize:%sGB diskformat:%s type:%s path:%s" % (device, disksize, diskformat, drivertype, path)
         for ip in ips:
-            print "ip: %s" % ip
+            print "ip:%s" % ip
 
     def volumes(self, iso=False):
         isos = []
@@ -884,18 +892,36 @@ class Kvirt:
         s.close()
         return port
 
-    def create_pool(self, name, path):
+    def create_pool(self, name, poolpath, pooltype='dir'):
         conn = self.conn
-        poolxml = """<pool type='dir'>
-                    <name>%s</name>
-                    <source>
-                    </source>
-                    <target>
-                    <path>%s</path>
-                    </target>
-                    </pool>""" % (name, path)
+        if pooltype == 'dir':
+            poolxml = """<pool type='dir'>
+                         <name>%s</name>
+                         <source>
+                         </source>
+                         <target>
+                         <path>%s</path>
+                         </target>
+                         </pool>""" % (name, poolpath)
+        elif pooltype == 'lvm':
+            poolxml = """<pool type='logical'>
+                         <name>%s</name>
+                         <source>
+                         <device path='%s'/>
+                         <name>%s</name>
+                         <format type='lvm2'/>
+                         </source>
+                         <target>
+                         <path>/dev/%s</path>
+                         </target>
+                         </pool>""" % (name, poolpath, name, name)
+        else:
+            print "Invalid pool type %s.Leaving..." % pooltype
+            return
         pool = conn.storagePoolDefineXML(poolxml, 0)
         pool.setAutostart(True)
+        if pooltype == 'lvm':
+            pool.build()
         pool.create()
 
     def create_network(self, name=None, cidr=None, dhcp=True):
@@ -949,7 +975,7 @@ class Kvirt:
         pool.destroy()
         pool.undefine()
 
-    def bootstrap(self, pool=None, poolpath=None, nets={}):
+    def bootstrap(self, pool=None, poolpath=None, pooltype='dir', nets={}):
         conn = self.conn
         volumes = {}
         try:
@@ -959,7 +985,7 @@ class Kvirt:
         except:
             if poolpath is not None:
                 print "Pool %s not found...Creating it" % pool
-                self.create_pool(name=pool, path=poolpath)
+                self.create_pool(name=pool, poolpath=poolpath, pooltype=pooltype)
         networks = []
         for net in conn.listNetworks():
             networks.append(net)

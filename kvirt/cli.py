@@ -429,7 +429,8 @@ def ssh(config, name):
 @click.option('-U', '--url', help='URL to use')
 @click.option('--pool', help='Pool to use')
 @click.option('--poolpath', help='Pool Path to use')
-def bootstrap(genfile, auto, name, host, port, user, protocol, url, pool, poolpath):
+@click.option('--pooltype', help='Pool Type to use', type=click.Choice(['dir', 'lvm']))
+def bootstrap(genfile, auto, name, host, port, user, protocol, url, pool, poolpath, pooltype):
     click.secho("Bootstrapping env", fg='green')
     if genfile or auto:
         if host is None and url is None:
@@ -522,7 +523,7 @@ def bootstrap(genfile, auto, name, host, port, user, protocol, url, pool, poolpa
     if k.conn is None:
         click.secho("Couldnt connect to specify hypervisor %s. Leaving..." % host, fg='red')
         os._exit(1)
-    k.bootstrap(pool=pool, poolpath=poolpath, nets=nets)
+    k.bootstrap(pool=pool, poolpath=poolpath, pooltype=pooltype, nets=nets)
     # TODO:
     # DOWNLOAD CIRROS ( AND CENTOS7? ) IMAGES TO POOL ?
     path = os.path.expanduser('~/kcli.yml')
