@@ -13,7 +13,7 @@ import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "1.0.17"
+__version__ = "1.0.18"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -936,13 +936,16 @@ class Kvirt:
         network.destroy()
         network.undefine()
 
-    def delete_pool(self, name):
+    def delete_pool(self, name, full=False):
         conn = self.conn
         try:
             pool = conn.storagePoolLookupByName(name)
         except:
             print "Pool %s not found. Leaving..." % name
             return
+        if full:
+            for vol in pool.listAllVolumes():
+                vol.delete(0)
         pool.destroy()
         pool.undefine()
 

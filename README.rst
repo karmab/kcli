@@ -6,9 +6,18 @@ kcli repository
 This script is meant to interact with a local/remote libvirt daemon and
 to easily deploy from templates ( optionally using cloudinit). It will
 also report ips for any vm connected to a dhcp enabled libvirt network
-and generally for every vm deployed from this client It started because
-i switched from ovirt and needed a tool similar to
+and generally for every vm deployed from this client.
+
+It started because i switched from ovirt and needed a tool similar to
 `ovirt.py <https://github.com/karmab/ovirt>`__
+
+Why should i use this instead of vagrant
+----------------------------------------
+
+-  easy syntax to launch single or multiple vms
+-  cloudinit based customization, not over ssh
+-  no need of using custom images, the public ones will do
+-  spice/vnc consoles and tcp serial ones
 
 demo
 ----
@@ -36,9 +45,9 @@ To deploy from templates, grab images at
 `openstack <http://docs.openstack.org/image-guide/obtain-images.html>`__
 ## configuration
 
-If you want to only use your local libvirt daemon, no extra
-configuration is needed. If you want to generate a basic setting files,
-you can use the following command:
+If you want to only use your local libvirt daemon, no configuration is
+needed. If you want to generate a basic settings file, you can use the
+following command:
 
 ::
 
@@ -77,13 +86,10 @@ instance,
     twix:
      host: 192.168.0.6
      pool: images
-     emulator: /usr/libexec/qemu-kvm
 
     bumblefoot:
      host: 192.168.0.4
      pool: images
-
-Note the use of a specific emulator for centos7/rhel7 hypervisors.
 
 replace with your own client in default section and indicate host and
 protocol in the corresponding client section. Note that most of the
@@ -272,6 +278,13 @@ Try it with:
     python extra/klist.py --list
 
     ansible all -i extra/klist.py -m ping
+
+testing
+-------
+
+basic testing can be run with pytest. If using a remote hypervisor, you
+ll want to set the *KVIRT\_HOST* and *KVIRT\_USER* environment variables
+so that it points to your host with the corresponding user.
 
 issues found with cloud images
 ------------------------------

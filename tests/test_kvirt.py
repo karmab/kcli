@@ -8,14 +8,11 @@ from kvirt import Kvirt
 class TestK:
     @classmethod
     def setup_class(self):
-        host = os.environ.get('KVIRT_HOST', '127.0.0.1')
-        k = Kvirt(host)
-        network = "test_%s" % ''.join(random.choice(string.lowercase) for i in range(5))
-        pool = "test_%s" % ''.join(random.choice(string.lowercase) for i in range(5))
+        self.host = os.environ.get('KVIRT_HOST', '127.0.0.1')
+        self.user = os.environ.get('KVIRT_USER', 'root')
+        k = Kvirt(self.host)
         name = "test_%s" % ''.join(random.choice(string.lowercase) for i in range(5))
-        self.pool = pool
         self.name = name
-        self.network = network
         self.conn = k
 
     def test_list(self):
@@ -25,28 +22,28 @@ class TestK:
 
     def test_create_network(self):
         k = self.conn
-        network = self.network
-        k.create_network(name=network, cidr='192.168.99.0/24', dhcp=True)
+        name = self.name
+        counter = random.randint(1, 254)
+        k.create_network(name=name, cidr='10.0.%s.0/24' % counter, dhcp=True)
         assert True
 
     def test_create_pool(self):
         k = self.conn
-        pool = self.pool
-        k.create_pool(name=pool, path='/tmp')
+        name = self.name
+        os.system("ssh %s@%s 'mkdir /%s; chown qemu.qemu /%s'" % (self.user, self.host, name, name))
+        k.create_pool(name=name, path='/%s' % name)
         assert True
 
-    def test_create(self):
+    def test_create_vm(self):
         k = self.conn
         name = self.name
-        network = self.network
-        pool = self.pool
         time.sleep(10)
-        k.create(name, numcpus=1, memory=512, pool=pool, nets=[network])
+        k.create(name, numcpus=1, memory=512, pool=name, nets=[name])
         status = k.status(name)
         print status
         assert status is not None
 
-    def test_delete(self):
+    def test_delete_vm(self):
         k = self.conn
         name = self.name
         k.delete(name)
@@ -55,9 +52,9 @@ class TestK:
 
     @classmethod
     def teardown_class(self):
-        print "prout"
+        print "Cleaning stuff"
         k = self.conn
-        network = self.network
-        pool = self.pool
-        k.delete_network(network)
-        k.delete_pool(pool)
+        name = self.name
+        time.sleep(10)
+        k.delete_network(name)
+        k.delete_pool(name, full=True)
