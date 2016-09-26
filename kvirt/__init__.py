@@ -13,7 +13,7 @@ import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "1.0.16"
+__version__ = "1.0.17"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -66,15 +66,26 @@ class Kvirt:
         except:
             return False
 
-    def create(self, name, title='', description='kvirt', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, start=True, keys=None, cmds=None, ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None):
+    def create(self, name, title='', description='kvirt', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, start=True, keys=None, cmds=None, ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None):
         default_diskinterface = diskinterface
         default_diskthin = diskthin
         default_disksize = disksize
+        conn = self.conn
+        try:
+            storagepool = conn.storagePoolLookupByName(pool)
+        except:
+            print "Pool %s not found.Leaving..." % pool
+            return 1
+        poolxml = storagepool.XMLDesc(0)
+        root = ET.fromstring(poolxml)
+        poolpath = None
+        for element in root.getiterator('path'):
+            poolpath = element.text
+            break
         if vnc:
             display = 'vnc'
         else:
             display = 'spice'
-        conn = self.conn
         volumes = {}
         for p in conn.listStoragePools():
             poo = conn.storagePoolLookupByName(p)
@@ -116,17 +127,6 @@ class Kvirt:
             if not diskthin:
                 diskformat = 'raw'
             storagename = "%s_%d.img" % (name, index + 1)
-            try:
-                storagepool = conn.storagePoolLookupByName(pool)
-            except:
-                print "Pool %s not found.Leaving..." % pool
-                return 1
-            poolxml = storagepool.XMLDesc(0)
-            root = ET.fromstring(poolxml)
-            poolpath = None
-            for element in root.getiterator('path'):
-                poolpath = element.text
-                break
             diskpath = "%s/%s" % (poolpath, storagename)
             if template is not None and index == 0:
                 try:
@@ -329,7 +329,22 @@ class Kvirt:
             print "Network: %s Type: bridged" % (interfacename)
         for network in conn.listAllNetworks():
             networkname = network.name()
-            print "Network: %s Type: routed" % (networkname)
+            netxml = network.XMLDesc(0)
+            cidr = 'N/A'
+            root = ET.fromstring(netxml)
+            ip = root.getiterator('ip')
+            if ip:
+                attributes = ip[0].attrib
+                firstip = attributes.get('address')
+                netmask = attributes.get('netmask')
+                ip = IPNetwork('%s/%s' % (firstip, netmask))
+                cidr = ip.cidr
+            dhcp = root.getiterator('dhcp')
+            if dhcp:
+                dhcp = True
+            else:
+                dhcp = False
+            print "Network: %s Type: routed Cidr: %s Dhcp:%s" % (networkname, cidr, dhcp)
 
     def status(self, name):
         conn = self.conn
@@ -869,6 +884,68 @@ class Kvirt:
         s.close()
         return port
 
+    def create_pool(self, name, path):
+        conn = self.conn
+        poolxml = """<pool type='dir'>
+                    <name>%s</name>
+                    <source>
+                    </source>
+                    <target>
+                    <path>%s</path>
+                    </target>
+                    </pool>""" % (name, path)
+        pool = conn.storagePoolDefineXML(poolxml, 0)
+        pool.setAutostart(True)
+        pool.create()
+
+    def create_network(self, name=None, cidr=None, dhcp=True):
+        conn = self.conn
+        range = IpRange(cidr)
+        netmask = IPNetwork(cidr).netmask
+        gateway = range[1]
+        if dhcp:
+            start = range[2]
+            end = range[-2]
+            dhcpxml = """<dhcp>
+                    <range start='%s' end='%s'/>
+                    </dhcp>""" % (start, end)
+        else:
+            dhcpxml = ''
+        networkxml = """<network><name>%s</name>
+                    <forward mode='nat'>
+                    <nat>
+                    <port start='1024' end='65535'/>
+                    </nat>
+                    </forward>
+                    <domain name='%s'/>
+                    <ip address='%s' netmask='%s'>
+                    %s
+                    </ip>
+                    </network>""" % (name, name, gateway, netmask, dhcpxml)
+        new_net = conn.networkDefineXML(networkxml)
+        new_net.setAutostart(True)
+        new_net.create()
+
+    def delete_network(self, name=None):
+        conn = self.conn
+        try:
+            network = conn.networkLookupByName(name)
+        except:
+            print "Network %s not found. Leaving..." % name
+            return
+        network.destroy()
+        network.undefine()
+
+    def delete_pool(self, name):
+        conn = self.conn
+        try:
+            pool = conn.storagePoolLookupByName(name)
+        except:
+            print "Pool %s not found. Leaving..." % name
+            return
+        pool.destroy()
+        pool.undefine()
+
     def bootstrap(self, pool=None, poolpath=None, nets={}):
         conn = self.conn
         volumes = {}
@@ -879,42 +956,13 @@ class Kvirt:
         except:
             if poolpath is not None:
                 print "Pool %s not found...Creating it" % pool
-                poolxml = """<pool type='dir'>
-                            <name>%s</name>
-                            <source>
-                            </source>
-                            <target>
-                            <path>%s</path>
-                            </target>
-                            </pool>""" % (pool, poolpath)
-                pool = conn.storagePoolDefineXML(poolxml, 0)
-                pool.setAutostart(True)
-                pool.create()
+                self.create_pool(name=pool, path=poolpath)
         networks = []
         for net in conn.listNetworks():
             networks.append(net)
         for net in nets:
             if net not in networks:
                 print "Network %s not found...Creating it" % net
-                cidr = nets[net]['cidr']
-                range = IpRange(cidr)
-                netmask = IPNetwork(cidr).netmask
-                gateway = range[1]
-                start = range[2]
-                end = range[-2]
-                networkxml = """<network><name>%s</name>
-                            <forward mode='nat'>
-                            <nat>
-                            <port start='1024' end='65535'/>
-                            </nat>
-                            </forward>
-                            <domain name='%s'/>
-                            <ip address='%s' netmask='%s'>
-                            <dhcp>
-                            <range start='%s' end='%s'/>
-                            </dhcp>
-                            </ip>
-                            </network>""" % (net, net, gateway, netmask, start, end)
-                new_net = conn.networkDefineXML(networkxml)
-                new_net.setAutostart(True)
-                new_net.create()
+                cidr = nets[net].get('cidr')
+                dhcp = bool(nets[net].get('dchp', True))
+                self.create_network(name=net, cidr=cidr, dhcp=dhcp)

@@ -229,7 +229,10 @@ def create(config, profile, ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8, name):
                 if scriptlines:
                     scriptcmds.extend(scriptlines)
         if scriptcmds:
-            cmds = scriptcmds
+            if cmds is None:
+                cmds = scriptcmds
+            else:
+                cmds = cmds + scriptcmds
     ips = [ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8]
     result = k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain)
     if result == 0:
@@ -288,6 +291,7 @@ def report(config):
     click.secho("Reporting setup for client %s..." % config.client, fg='green')
     k = config.get()
     k.report()
+    k.delete_pool('vms')
 
 
 @cli.command()
@@ -388,7 +392,10 @@ def plan(config, inputfile, start, stop, delete, plan):
                         if scriptlines:
                             scriptcmds.extend(scriptlines)
                 if scriptcmds:
-                    cmds = scriptcmds
+                    if cmds is None:
+                        cmds = scriptcmds
+                    else:
+                        cmds = cmds + scriptcmds
             result = k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain)
             if result == 0:
                 click.secho("%s deployed!" % name, fg='green')
