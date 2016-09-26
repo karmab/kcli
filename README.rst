@@ -42,7 +42,20 @@ you can use the following command:
 
 ::
 
-    kcli bootstrap -s 
+    kcli bootstrap -f
+
+You can also go through wizard
+
+::
+
+    kcli bootstrap
+
+And for advanced bootstrapping, you can specify a target name, host, a
+pool with a path
+
+::
+
+    kcli bootstrap -a -n twix -H 192.168.0.6 --pool vms --poolpath /home/vms
 
 Otherwise you will have to declare your settings in ~/kcli.yml. For
 instance,

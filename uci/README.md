@@ -18,7 +18,7 @@ Note that a single vm is deployed for every project and as such all services are
 To define it, You can save the corresponding [XML](cinet.xml):
 
 ```
-<name>cinet</name>
+<network><name>cinet</name>
 <forward mode='nat'>
   <nat>
     <port start='1024' end='65535'/>

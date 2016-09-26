@@ -4,6 +4,8 @@
 interact with a local/remote libvirt daemon
 """
 
+from iptools import IpRange
+from netaddr import IPNetwork
 from libvirt import open as libvirtopen
 from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE
 import os
@@ -866,3 +868,53 @@ class Kvirt:
         addr, port = s.getsockname()
         s.close()
         return port
+
+    def bootstrap(self, pool=None, poolpath=None, nets={}):
+        conn = self.conn
+        volumes = {}
+        try:
+            pool = conn.storagePoolLookupByName(pool)
+            for vol in pool.listAllVolumes():
+                volumes[vol.name()] = {'object': vol}
+        except:
+            if poolpath is not None:
+                print "Pool %s not found...Creating it" % pool
+                poolxml = """<pool type='dir'>
+                            <name>%s</name>
+                            <source>
+                            </source>
+                            <target>
+                            <path>%s</path>
+                            </target>
+                            </pool>""" % (pool, poolpath)
+                pool = conn.storagePoolDefineXML(poolxml, 0)
+                pool.setAutostart(True)
+                pool.create()
+        networks = []
+        for net in conn.listNetworks():
+            networks.append(net)
+        for net in nets:
+            if net not in networks:
+                print "Network %s not found...Creating it" % net
+                cidr = nets[net]['cidr']
+                range = IpRange(cidr)
+                netmask = IPNetwork(cidr).netmask
+                gateway = range[1]
+                start = range[2]
+                end = range[-2]
+                networkxml = """<network><name>%s</name>
+                            <forward mode='nat'>
+                            <nat>
+                            <port start='1024' end='65535'/>
+                            </nat>
+                            </forward>
+                            <domain name='%s'/>
+                            <ip address='%s' netmask='%s'>
+                            <dhcp>
+                            <range start='%s' end='%s'/>
+                            </dhcp>
+                            </ip>
+                            </network>""" % (net, net, gateway, netmask, start, end)
+                new_net = conn.networkDefineXML(networkxml)
+                new_net.setAutostart(True)
+                new_net.create()

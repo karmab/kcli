@@ -20,15 +20,21 @@ class Config():
             click.secho("Using local hypervisor as no kcli.yml was found...", fg='green')
         else:
             with open(inifile, 'r') as entries:
-                ini = yaml.load(entries)
+                try:
+                    ini = yaml.load(entries)
+                except:
+                    self.host = None
+                    return
             if 'default' not in ini or 'client' not in ini['default']:
                 click.secho("Missing default section in config file. Leaving...", fg='red')
-                os._exit(1)
+                self.host = None
+                return
         self.clients = [e for e in ini if e != 'default']
         self.client = ini['default']['client']
         if self.client not in ini:
             click.secho("Missing section for client %s in config file. Leaving..." % self.client, fg='red')
-            os._exit(1)
+            self.host = None
+            return
         defaults = {}
         default = ini['default']
         defaults['nets'] = default.get('nets', NETS)
@@ -49,6 +55,7 @@ class Config():
         self.port = options.get('port', None)
         self.user = options.get('user', 'root')
         self.protocol = options.get('protocol', 'ssh')
+        self.url = options.get('url', None)
         profilefile = "%s/kcli_profiles.yml" % os.environ.get('HOME')
         if not os.path.exists(profilefile):
             self.profiles = {}
@@ -57,7 +64,10 @@ class Config():
                 self.profiles = yaml.load(entries)
 
     def get(self):
-        k = Kvirt(host=self.host, port=self.port, user=self.user, protocol=self.protocol)
+        if self.host is None:
+            click.secho("Problem parsing your configuration file", fg='red')
+            os._exit(1)
+        k = Kvirt(host=self.host, port=self.port, user=self.user, protocol=self.protocol, url=self.url)
         if k.conn is None:
             click.secho("Couldnt connect to specify hypervisor %s. Leaving..." % self.host, fg='red')
             os._exit(1)
@@ -403,16 +413,118 @@ def ssh(config, name):
 
 
 @cli.command()
-@click.option('-s', '--simple', is_flag=True)
-def bootstrap(simple):
+@click.option('-f', '--genfile', is_flag=True)
+@click.option('-a', '--auto', is_flag=True)
+@click.option('-n', '--name', help='Name to use')
+@click.option('-H', '--host', help='Host to use')
+@click.option('-p', '--port', help='Port to use')
+@click.option('-u', '--user', help='User to use', default='root')
+@click.option('-P', '--protocol', help='Protocol to use', default='ssh')
+@click.option('-U', '--url', help='URL to use')
+@click.option('--pool', help='Pool to use')
+@click.option('--poolpath', help='Pool Path to use')
+def bootstrap(genfile, auto, name, host, port, user, protocol, url, pool, poolpath):
     click.secho("Bootstrapping env", fg='green')
-    if simple:
-        ini = {'default': {'client': 'local'}, 'local': {'pool': 'default', 'nets': ['default']}}
-        path = os.path.expanduser('~/kcli.yml')
-        if os.path.exists(path):
-            copyfile(path, "%s.bck" % path)
-        with open(path, 'w') as conf_file:
-            yaml.dump(ini, conf_file, default_flow_style=False)
+    if genfile or auto:
+        if host is None and url is None:
+            url = 'qemu:///system'
+            host = '127.0.0.1'
+        if pool is None:
+            pool = 'default'
+        if poolpath is None:
+            poolpath = '/var/lib/libvirt/images'
+        nets = {'default': {'cidr': '192.168.122.0/24'}, 'cinet': {'cidr': '192.168.5.0/24'}}
+        # disks = [{'size': 10}]
+        if host == '127.0.0.1':
+            ini = {'default': {'client': 'local'}, 'local': {'pool': pool, 'nets': ['default']}}
+        else:
+            if name is None:
+                name = host
+            ini = {'default': {'client': name}}
+            ini[name] = {'host': host, 'pool': pool, 'nets': ['default']}
+            if protocol is not None:
+                ini[name]['protocol'] = protocol
+            if user is not None:
+                ini[name]['user'] = user
+            if port is not None:
+                ini[name]['port'] = port
+            if url is not None:
+                ini[name]['url'] = url
+    else:
+        ini = {'default': {}}
+        default = ini['default']
+        click.secho("We will configure kcli together !", fg='blue')
+        if name is None:
+            name = raw_input("Enter your default client name[local]: ") or 'local'
+            client = name
+        if pool is None:
+            pool = raw_input("Enter your default pool[default]: ") or 'default'
+        default['pool'] = pool
+        size = raw_input("Enter your client first disk size[10]: ") or '10'
+        default['disks'] = [{'size': size}]
+        net = raw_input("Enter your client first network[default]: ") or 'default'
+        default['nets'] = [net]
+        cloudinit = raw_input("Use cloudinit[True]: ") or 'True'
+        default['cloudinit'] = cloudinit
+        diskthin = raw_input("Use thin disks[True]: ") or 'True'
+        default['diskthin'] = diskthin
+        ini['default']['client'] = client
+        ini[client] = {}
+        client = ini[client]
+        if host is None:
+            host = raw_input("Enter your client hostname/ip[localhost]: ") or 'localhost'
+        client['host'] = host
+        if url is None:
+            url = raw_input("Enter your client url: ") or None
+            if url is not None:
+                client['url'] = url
+            else:
+                if protocol is None:
+                    protocol = raw_input("Enter your client protocol[ssh]: ") or 'ssh'
+                client['protocol'] = protocol
+                if port is None:
+                    port = raw_input("Enter your client port: ") or None
+                    if port is not None:
+                        client['port'] = port
+                user = raw_input("Enter your client user[root]: ") or 'root'
+                client['user'] = user
+        pool = raw_input("Enter your client pool[%s]: " % default['pool']) or default['pool']
+        client['pool'] = pool
+        poolcreate = raw_input("Create pool if not there[Y]: ") or 'Y'
+        if poolcreate == 'Y':
+            poolpath = raw_input("Enter yourpool path[/var/lib/libvirt/images]: ") or '/var/lib/libvirt/images'
+        else:
+            poolpath = None
+        client['pool'] = pool
+        size = raw_input("Enter your client first disk size[%s]: " % default['disks'][0]['size']) or default['disks'][0]['size']
+        client['disks'] = [{'size': size}]
+        net = raw_input("Enter your client first network[%s]: " % default['nets'][0]) or default['nets'][0]
+        client['nets'] = [net]
+        nets = {}
+        netcreate = raw_input("Create net if not there[Y]: ") or 'Y'
+        if netcreate == 'Y':
+            cidr = raw_input("Enter cidr [192.168.122.0/24]: ") or '192.168.122.0/24'
+            nets[net] = {'cidr': cidr, 'dhcp': True}
+        cinetcreate = raw_input("Create cinet network for uci demos if not there[N]") or 'N'
+        if cinetcreate == 'Y':
+            nets['cinet'] = {'cidr': '192.168.5.0/24', 'dhcp': True}
+        cloudinit = raw_input("Use cloudinit for this client[%s]: " % default['cloudinit']) or default['cloudinit']
+        client['cloudinit'] = cloudinit
+        diskthin = raw_input("Use thin disks for this client[%s]: " % default['diskthin']) or default['diskthin']
+        client['diskthin'] = diskthin
+    k = Kvirt(host=host, port=port, user=user, protocol=protocol, url=url)
+    if k.conn is None:
+        click.secho("Couldnt connect to specify hypervisor %s. Leaving..." % host, fg='red')
+        os._exit(1)
+    k.bootstrap(pool=pool, poolpath=poolpath, nets=nets)
+    # TODO:
+    # DOWNLOAD CIRROS ( AND CENTOS7? ) IMAGES TO POOL ?
+    path = os.path.expanduser('~/kcli.yml')
+    if os.path.exists(path):
+        copyfile(path, "%s.bck" % path)
+    with open(path, 'w') as conf_file:
+        yaml.safe_dump(ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True)
+    click.secho("Environment bootstrapped!", fg='green')
 
 
 if __name__ == '__main__':
