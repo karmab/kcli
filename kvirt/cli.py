@@ -291,7 +291,6 @@ def report(config):
     click.secho("Reporting setup for client %s..." % config.client, fg='green')
     k = config.get()
     k.report()
-    k.delete_pool('vms')
 
 
 @cli.command()
