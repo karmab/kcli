@@ -2,7 +2,7 @@
 
 import click
 import fileinput
-from defaults import NETS, POOL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, START
+from .defaults import NETS, POOL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, START
 from prettytable import PrettyTable
 from kvirt import Kvirt, __version__
 import os
