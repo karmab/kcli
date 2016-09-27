@@ -13,7 +13,7 @@ import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "1.0.22"
+__version__ = "1.0.23"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -483,7 +483,7 @@ class Kvirt:
                 title = entry.text
         print("description:%s" % description)
         if title is not None:
-            print "profile: %s" % title
+            print("profile: %s" % title)
         print("cpus:%s" % numcpus)
         print("memory:%sMB" % memory)
         nicnumber = 0
