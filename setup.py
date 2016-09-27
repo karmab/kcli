@@ -8,7 +8,7 @@ if os.path.exists('README.rst'):
 
 setup(
     name='kcli',
-    version='1.0.21',
+    version='1.0.22',
     packages=find_packages(),
     include_package_data=True,
     description=description,
@@ -22,6 +22,8 @@ setup(
         'Click',
         'iptools',
         'netaddr',
+        'PyYAML',
+        'prettytable',
     ],
     entry_points='''
         [console_scripts]
