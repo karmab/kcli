@@ -74,7 +74,7 @@ class Kvirt:
         try:
             storagepool = conn.storagePoolLookupByName(pool)
         except:
-            print "Pool %s not found.Leaving..." % pool
+            print("Pool %s not found.Leaving..." % pool)
             return 1
         poolxml = storagepool.XMLDesc(0)
         root = ET.fromstring(poolxml)
@@ -118,7 +118,7 @@ class Kvirt:
                 diskthin = disk.get('thin', default_diskthin)
                 diskinterface = disk.get('interface', default_diskinterface)
             else:
-                print "Invalid disk entry.Leaving..."
+                print("Invalid disk entry.Leaving...")
                 return 1
             letter = chr(index + ord('a'))
             diskdev, diskbus = 'vd%s' % letter, 'virtio'
@@ -136,7 +136,7 @@ class Kvirt:
                     backingxml = backingvolume.XMLDesc(0)
                     root = ET.fromstring(backingxml)
                 except:
-                    print "Invalid template %s.Leaving..." % template
+                    print("Invalid template %s.Leaving..." % template)
                     return 1
                 backing = backingvolume.path()
                 backingxml = """<backingStore type='file' index='1'>
@@ -177,7 +177,7 @@ class Kvirt:
             elif netname in networks:
                 sourcenet = 'network'
             else:
-                print "Invalid network %s.Leaving..." % netname
+                print("Invalid network %s.Leaving..." % netname)
                 return 1
             netxml = """%s
                      <interface type='%s'>
@@ -201,7 +201,7 @@ class Kvirt:
                 isovolume = volumes[template][iso]
                 iso = isovolume.path()
             except:
-                print "Invalid Iso %s.Leaving..." % iso
+                print("Invalid Iso %s.Leaving..." % iso)
                 return 1
         isoxml = """<disk type='file' device='cdrom'>
                       <driver name='qemu' type='raw'/>
@@ -313,7 +313,7 @@ class Kvirt:
         hostname = conn.getHostname()
         cpus = conn.getCPUMap()[0]
         memory = conn.getInfo()[1]
-        print "Host:%s Cpu:%s Memory:%sMB\n" % (hostname, cpus, memory)
+        print("Host:%s Cpu:%s Memory:%sMB\n" % (hostname, cpus, memory))
         for pool in conn.listStoragePools():
             poolname = pool
             pool = conn.storagePoolLookupByName(pool)
@@ -330,13 +330,13 @@ class Kvirt:
             # Type,Status, Total space in Gb, Available space in Gb
             used = float(used)
             available = float(available)
-            print "Storage:%s Type:%s Path:%s Used space:%sGB Available space:%sGB" % (poolname, pooltype, poolpath, used, available)
+            print("Storage:%s Type:%s Path:%s Used space:%sGB Available space:%sGB" % (poolname, pooltype, poolpath, used, available))
         print
         for interface in conn.listAllInterfaces():
             interfacename = interface.name()
             if interfacename == 'lo':
                 continue
-            print "Network:%s Type:bridged" % (interfacename)
+            print("Network:%s Type:bridged" % (interfacename))
         for network in conn.listAllNetworks():
             networkname = network.name()
             netxml = network.XMLDesc(0)
@@ -354,7 +354,7 @@ class Kvirt:
                 dhcp = True
             else:
                 dhcp = False
-            print "Network:%s Type:routed Cidr:%s Dhcp:%s" % (networkname, cidr, dhcp)
+            print("Network:%s Type:routed Cidr:%s Dhcp:%s" % (networkname, cidr, dhcp))
 
     def status(self, name):
         conn = self.conn
@@ -407,7 +407,7 @@ class Kvirt:
         conn = self.conn
         vm = conn.lookupByName(name)
         if not vm.isActive():
-            print "VM down"
+            print("VM down")
             return
         else:
             xml = vm.XMLDesc(0)
@@ -427,14 +427,14 @@ class Kvirt:
         conn = self.conn
         vm = conn.lookupByName(name)
         if not vm.isActive():
-            print "VM down"
+            print("VM down")
             return
         else:
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
             serial = root.getiterator('serial')
             if not serial:
-                print "No serial Console found. Leaving..."
+                print("No serial Console found. Leaving...")
                 return
             for element in serial:
                 serialport = element.find('source').get('service')
@@ -445,7 +445,7 @@ class Kvirt:
                         serialcommand = "ssh %s telnet 127.0.0.1 %s" % (self.host, serialport)
                     os.system(serialcommand)
                 else:
-                    print "No serial Console found. Leaving..."
+                    print("No serial Console found. Leaving...")
                     return
 
     def info(self, name):
@@ -456,7 +456,7 @@ class Kvirt:
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
         except:
-            print "VM %s not found" % name
+            print("VM %s not found" % name)
             return
         state = 'down'
         memory = root.getiterator('memory')[0]
@@ -469,8 +469,8 @@ class Kvirt:
         numcpus = numcpus.text
         if vm.isActive():
             state = 'up'
-        print "name:%s" % name
-        print "status:%s" % state
+        print("name:%s" % name)
+        print("status:%s" % state)
         description = root.getiterator('description')
         if description:
             description = description[0].text
@@ -481,11 +481,11 @@ class Kvirt:
             attributes = entry.attrib
             if attributes['name'] == 'product':
                 title = entry.text
-        print "description:%s" % description
+        print("description:%s" % description)
         if title is not None:
             print "profile: %s" % title
-        print "cpus:%s" % numcpus
-        print "memory:%sMB" % memory
+        print("cpus:%s" % numcpus)
+        print("memory:%sMB" % memory)
         nicnumber = 0
         for element in root.getiterator('interface'):
             networktype = element.get('type')
@@ -493,10 +493,10 @@ class Kvirt:
             mac = element.find('mac').get('address')
             if networktype == 'bridge':
                 bridge = element.find('source').get('bridge')
-                print "net interfaces:%s mac:%s net:%s type:bridge" % (device, mac, bridge)
+                print("net interfaces:%s mac:%s net:%s type:bridge" % (device, mac, bridge))
             else:
                 network = element.find('source').get('network')
-                print "net interfaces:%s mac: %s net: %s type:routed" % (device, mac, network)
+                print("net interfaces:%s mac: %s net: %s type:routed" % (device, mac, network))
                 network = conn.networkLookupByName(network)
             if vm.isActive():
                 for address in vm.interfaceAddresses(VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE).values():
@@ -520,9 +520,9 @@ class Kvirt:
             path = element.find('source').get('file')
             volume = conn.storageVolLookupByPath(path)
             disksize = int(float(volume.info()[1]) / 1024 / 1024 / 1024)
-            print "diskname:%s disksize:%sGB diskformat:%s type:%s path:%s" % (device, disksize, diskformat, drivertype, path)
+            print("diskname:%s disksize:%sGB diskformat:%s type:%s path:%s" % (device, disksize, diskformat, drivertype, path))
         for ip in ips:
-            print "ip:%s" % ip
+            print("ip:%s" % ip)
 
     def volumes(self, iso=False):
         isos = []
@@ -750,9 +750,9 @@ class Kvirt:
         xml = vm.XMLDesc(0)
         root = ET.fromstring(xml)
         if not vm:
-            print "VM %s not found" % name
+            print("VM %s not found" % name)
         if vm.isActive() == 1:
-            print "Machine up. Change will only appear upon next reboot"
+            print("Machine up. Change will only appear upon next reboot")
         os = root.getiterator('os')[0]
         smbios = os.find('smbios')
         if smbios is None:
@@ -789,7 +789,7 @@ class Kvirt:
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
         except:
-            print "VM %s not found" % name
+            print("VM %s not found" % name)
             return
         memorynode = root.getiterator('memory')[0]
         memorynode.text = memory
@@ -805,7 +805,7 @@ class Kvirt:
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
         except:
-            print "VM %s not found" % name
+            print("VM %s not found" % name)
             return
         cpunode = root.getiterator('vcpu')[0]
         cpunode.text = numcpus
@@ -817,7 +817,7 @@ class Kvirt:
         diskformat = 'qcow2'
         diskbus = 'virtio'
         if size < 1:
-            print "Incorrect size.Leaving..."
+            print("Incorrect size.Leaving...")
             return
         if not thin:
             diskformat = 'raw'
@@ -826,7 +826,7 @@ class Kvirt:
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
         except:
-            print "VM %s not found" % name
+            print("VM %s not found" % name)
             return
         currentdisk = 0
         for element in root.getiterator('disk'):
@@ -858,7 +858,7 @@ class Kvirt:
                         pool = poo
                         break
         else:
-            print "Pool not found. Leaving...."
+            print("Pool not found. Leaving....")
             return
         pool.refresh(0)
         storagename = "%s_%d.img" % (name, diskindex)
@@ -876,9 +876,9 @@ class Kvirt:
         conn = self.conn
         vm = conn.lookupByName(name)
         if not vm:
-            print "VM %s not found" % name
+            print("VM %s not found" % name)
         if vm.isActive() != 1:
-            print "Machine down. Cant ssh..."
+            print("Machine down. Cant ssh...")
             return
         vm = [v for v in self.list() if v[0] == name][0]
         template = vm[3]
@@ -897,7 +897,7 @@ class Kvirt:
                 user = 'debian'
         ip = vm[2]
         if ip == '':
-            print "No ip found. Cant ssh..."
+            print("No ip found. Cant ssh...")
         else:
             os.system("ssh %s@%s" % (user, ip))
 
@@ -932,7 +932,7 @@ class Kvirt:
                          </target>
                          </pool>""" % (name, poolpath, name, name)
         else:
-            print "Invalid pool type %s.Leaving..." % pooltype
+            print("Invalid pool type %s.Leaving..." % pooltype)
             return
         pool = conn.storagePoolDefineXML(poolxml, 0)
         pool.setAutostart(True)
@@ -973,7 +973,7 @@ class Kvirt:
         try:
             network = conn.networkLookupByName(name)
         except:
-            print "Network %s not found. Leaving..." % name
+            print("Network %s not found. Leaving..." % name)
             return
         network.destroy()
         network.undefine()
@@ -983,7 +983,7 @@ class Kvirt:
         try:
             pool = conn.storagePoolLookupByName(name)
         except:
-            print "Pool %s not found. Leaving..." % name
+            print("Pool %s not found. Leaving..." % name)
             return
         if full:
             for vol in pool.listAllVolumes():
@@ -1000,14 +1000,14 @@ class Kvirt:
                 volumes[vol.name()] = {'object': vol}
         except:
             if poolpath is not None:
-                print "Pool %s not found...Creating it" % pool
+                print("Pool %s not found...Creating it" % pool)
                 self.create_pool(name=pool, poolpath=poolpath, pooltype=pooltype)
         networks = []
         for net in conn.listNetworks():
             networks.append(net)
         for net in nets:
             if net not in networks:
-                print "Network %s not found...Creating it" % net
+                print("Network %s not found...Creating it" % net)
                 cidr = nets[net].get('cidr')
                 dhcp = bool(nets[net].get('dchp', True))
                 self.create_network(name=net, cidr=cidr, dhcp=dhcp)

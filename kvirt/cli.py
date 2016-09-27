@@ -136,9 +136,9 @@ def switch(config, client):
     if os.path.exists(inifile):
         for line in fileinput.input(inifile, inplace=True):
             if 'client' in line:
-                print " client: %s" % client
+                print(" client: %s" % client)
             else:
-                print line.rstrip()
+                print(line.rstrip())
 
 
 @cli.command()
@@ -157,21 +157,21 @@ def list(config, clients, profiles, templates, isos):
                 clientstable.add_row([client, 'X'])
             else:
                 clientstable.add_row([client, ''])
-        print clientstable
+        print(clientstable)
     elif profiles:
         for profile in sorted(config.profiles):
-            print profile
+            print(profile)
     elif templates:
         for template in sorted(k.volumes()):
-            print template
+            print(template)
     elif isos:
         for iso in sorted(k.volumes(iso=True)):
-            print iso
+            print(iso)
     else:
         vms = PrettyTable(["Name", "Status", "Ips", "Source", "Description/Plan", "Profile"])
         for vm in sorted(k.list()):
             vms.add_row(vm)
-        print vms
+        print(vms)
 
 
 @cli.command()
