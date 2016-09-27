@@ -16,7 +16,6 @@ env:
 - KVIRT_LIBVIRTUSER=libvirtd KVIRT_PATH=/x KVIRT_TYPE=qemu
 python:
 - 2.7
-- 3.5
 notifications:
   email: false
 before_install:
