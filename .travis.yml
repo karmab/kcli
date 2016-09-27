@@ -1,21 +1,34 @@
 language: python
 sudo: required
+dist: trusty
+addons:
+  apt:
+    packages:
+    - python-pip
+    - pkg-config
+    - libvirt-dev
+    - python-dev
+    - genisoimage
+    - qemu-kvm
+    - telnet
+    - libvirt-bin
+env:
+- KVIRT_LIBVIRTUSER=libvirtd KVIRT_PATH=/home/travis KVIRT_TYPE=qemu
 python:
 - 2.7
-- 3.3
-- 3.4
 - 3.5
 notifications:
   email: false
 before_install:
+#- sudo usermod -aG libvirtd $USER
+- sudo chmod 777 /var/run/libvirt/libvirt-sock
 - pip install pep8
 - pip install misspellings
 
 install:
-- apt-get -y install python-pip pkg-config libvirt-dev python-dev genisoimage qemu-kvm telnet python-libvirt libvirt-bin
 - pip install .
 
 script:
 - find . -name \*.py -exec pep8 --ignore=E501,E402 {} +
 - find . -name '*.py' | misspellings -f -
-- py.test
+# - py.test

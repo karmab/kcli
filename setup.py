@@ -18,7 +18,7 @@ setup(
     author_email='karimboumedhel@gmail.com',
     license='GPL',
     install_requires=[
-        'libvirt-python',
+        'libvirt-python>=2.2.0',
         'Click',
         'iptools',
         'netaddr',

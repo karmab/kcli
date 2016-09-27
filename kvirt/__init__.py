@@ -7,7 +7,10 @@ interact with a local/remote libvirt daemon
 from iptools import IpRange
 from netaddr import IPNetwork
 from libvirt import open as libvirtopen
-from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE
+try:
+    from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE
+except:
+    pass
 import os
 import socket
 import string
@@ -66,7 +69,7 @@ class Kvirt:
         except:
             return False
 
-    def create(self, name, title='', description='kvirt', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, start=True, keys=None, cmds=None, ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None):
+    def create(self, name, virttype='kvm', title='', description='kvirt', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, start=True, keys=None, cmds=None, ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None):
         default_diskinterface = diskinterface
         default_diskthin = diskthin
         default_disksize = disksize
@@ -99,7 +102,6 @@ class Kvirt:
         for net in conn.listInterfaces():
             if net != 'lo':
                 bridges.append(net)
-        virttype = 'kvm'
         machine = 'pc'
         sysinfo = "<smbios mode='sysinfo'/>"
         disksxml = ''
@@ -215,7 +217,7 @@ class Kvirt:
                         <listen type='address' address='0.0.0.0'/>
                         </graphics>
                         <memballoon model='virtio'/>""" % (display)
-        if nested:
+        if nested and virttype == 'kvm':
             nestedxml = """<cpu match='exact'>
                   <model>Westmere</model>
                    <feature policy='require' name='vmx'/>
@@ -878,7 +880,7 @@ class Kvirt:
         if not vm:
             print("VM %s not found" % name)
         if vm.isActive() != 1:
-            print("Machine down. Cant ssh...")
+            print("Machine down. Cannot ssh...")
             return
         vm = [v for v in self.list() if v[0] == name][0]
         template = vm[3]
@@ -897,7 +899,7 @@ class Kvirt:
                 user = 'debian'
         ip = vm[2]
         if ip == '':
-            print("No ip found. Cant ssh...")
+            print("No ip found. Cannot ssh...")
         else:
             os.system("ssh %s@%s" % (user, ip))
 

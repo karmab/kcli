@@ -33,7 +33,7 @@ yum -y install gcc libvirt-devel python-devel genisoimage qemu-kvm telnet python
 If using a debian based distribution:
 
 ```
-apt-get -y install python-pip pkg-config libvirt-dev python-dev genisoimage qemu-kvm telnet libvirt-bin
+apt-get -y install python-pip pkg-config libvirt-dev genisoimage qemu-kvm telnet libvirt-bin
 ```
 
 then you can install from pypi
