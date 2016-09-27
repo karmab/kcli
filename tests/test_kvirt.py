@@ -10,6 +10,7 @@ class TestK:
     def setup_class(self):
         self.host = os.environ.get('KVIRT_HOST', '127.0.0.1')
         self.user = os.environ.get('KVIRT_USER', 'root')
+        self.libvirtuser = os.environ.get('KVIRT_LIBVIRTUSER', 'qemu')
         k = Kvirt(self.host)
         name = "test_%s" % ''.join(random.choice(string.lowercase) for i in range(5))
         self.name = name
@@ -30,7 +31,12 @@ class TestK:
     def test_create_pool(self):
         k = self.conn
         name = self.name
-        os.system("ssh %s@%s 'mkdir /%s; chown qemu.qemu /%s'" % (self.user, self.host, name, name))
+        libvirtuser = self.libvirtuser
+        if self.host == '127.0.0.1' or self.host == 'localhost':
+                cmd = "mkdir /%s; chown %s.%s /%s" % (name, libvirtuser, libvirtuser, name)
+        else:
+                cmd = "ssh %s@%s 'mkdir /%s; chown %s.%s /%s'" % (self.user, self.host, name, libvirtuser, libvirtuser, name)
+        os.system(cmd)
         k.create_pool(name=name, poolpath='/%s' % name)
         assert True
 
