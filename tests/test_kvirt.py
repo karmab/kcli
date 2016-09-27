@@ -31,7 +31,7 @@ class TestK:
         k = self.conn
         name = self.name
         os.system("ssh %s@%s 'mkdir /%s; chown qemu.qemu /%s'" % (self.user, self.host, name, name))
-        k.create_pool(name=name, path='/%s' % name)
+        k.create_pool(name=name, poolpath='/%s' % name)
         assert True
 
     def test_create_vm(self):

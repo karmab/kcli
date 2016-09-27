@@ -27,7 +27,7 @@ Console access is based on remote-viewer
 For instance if using a rhel based distribution:
 
 ```
-yum -y install gcc libvirt-devel python-devel genisoimage
+yum -y install gcc libvirt-devel python-devel genisoimage qemu-kvm telnet
 ```
 
 then you can install from pypi

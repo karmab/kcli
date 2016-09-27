@@ -78,6 +78,7 @@ class Kvirt:
             return 1
         poolxml = storagepool.XMLDesc(0)
         root = ET.fromstring(poolxml)
+        pooltype = root.getiterator('pool')[0].get('type')
         poolpath = None
         for element in root.getiterator('path'):
             poolpath = element.text
@@ -146,8 +147,10 @@ class Kvirt:
             else:
                 backing = None
                 backingxml = '<backingStore/>'
-            volxml = self._xmlvolume(path=diskpath, size=disksize, backing=backing, diskformat=diskformat)
+            volxml = self._xmlvolume(path=diskpath, size=disksize, pooltype=pooltype, backing=backing, diskformat=diskformat)
             volsxml.append(volxml)
+            if pooltype == 'logical':
+                diskformat = 'raw'
             disksxml = """%s<disk type='file' device='disk'>
                     <driver name='qemu' type='%s'/>
                     <source file='%s'/>
@@ -267,7 +270,6 @@ class Kvirt:
         pool.refresh(0)
         for volxml in volsxml:
             pool.createXML(volxml, 0)
-        # print vmxml
         conn.defineXML(vmxml)
         vm = conn.lookupByName(name)
         vm.setAutostart(1)
@@ -584,9 +586,19 @@ class Kvirt:
         </disk>""" % (diskformat, diskpath, diskbus, diskdev)
         return diskxml
 
-    def _xmlvolume(self, path, size, backing=None, diskformat='qcow2'):
+    def _xmlvolume(self, path, size, pooltype='file', backing=None, diskformat='qcow2'):
         size = int(size) * MB
         name = path.split('/')[-1]
+        if pooltype == 'block':
+            volume = """<volume type='block'>
+                        <name>%s</name>
+                        <capacity unit="bytes">%d</capacity>
+                        <target>
+                        <path>%s</path>
+                        <compat>1.1</compat>
+                      </target>
+                    </volume>""" % (name, size, path)
+            return volume
         if backing is not None:
             backingstore = """
 <backingStore>
@@ -830,6 +842,7 @@ class Kvirt:
             pool = conn.storagePoolLookupByName(pool)
             poolxml = pool.XMLDesc(0)
             poolroot = ET.fromstring(poolxml)
+            pooltype = poolroot.getiterator('pool')[0].get('type')
             for element in poolroot.getiterator('path'):
                 poolpath = element.text
                 break
@@ -839,6 +852,7 @@ class Kvirt:
                 poo = conn.storagePoolLookupByName(p)
                 poolxml = poo.XMLDesc(0)
                 poolroot = ET.fromstring(poolxml)
+                pooltype = poolroot.getiterator('pool')[0].get('type')
                 for element in poolroot.getiterator('path'):
                     if poolpath == currentpoolpath:
                         pool = poo
@@ -849,7 +863,9 @@ class Kvirt:
         pool.refresh(0)
         storagename = "%s_%d.img" % (name, diskindex)
         diskpath = "%s/%s" % (poolpath, storagename)
-        volxml = self._xmlvolume(path=diskpath, size=size, diskformat=diskformat, backing=None)
+        volxml = self._xmlvolume(path=diskpath, size=size, pooltype=pooltype, diskformat=diskformat, backing=None)
+        if pooltype == 'logical':
+            diskformat = 'raw'
         diskxml = self._xmldisk(diskpath=diskpath, diskdev=diskdev, diskbus=diskbus, diskformat=diskformat)
         pool.createXML(volxml, 0)
         vm.attachDevice(diskxml)
