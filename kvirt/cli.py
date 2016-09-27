@@ -429,8 +429,7 @@ def ssh(config, name):
 @click.option('-U', '--url', help='URL to use')
 @click.option('--pool', help='Pool to use')
 @click.option('--poolpath', help='Pool Path to use')
-@click.option('--pooltype', help='Pool Type to use', type=click.Choice(['dir', 'lvm']))
-def bootstrap(genfile, auto, name, host, port, user, protocol, url, pool, poolpath, pooltype):
+def bootstrap(genfile, auto, name, host, port, user, protocol, url, pool, poolpath):
     click.secho("Bootstrapping env", fg='green')
     if genfile or auto:
         if host is None and url is None:
@@ -440,6 +439,10 @@ def bootstrap(genfile, auto, name, host, port, user, protocol, url, pool, poolpa
             pool = 'default'
         if poolpath is None:
             poolpath = '/var/lib/libvirt/images'
+        if '/dev' in poolpath:
+            pooltype = 'logical'
+        else:
+            pooltype = 'dir'
         nets = {'default': {'cidr': '192.168.122.0/24'}, 'cinet': {'cidr': '192.168.5.0/24'}}
         # disks = [{'size': 10}]
         if host == '127.0.0.1':

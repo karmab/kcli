@@ -13,7 +13,7 @@ import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "1.0.20"
+__version__ = "1.0.21"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -919,7 +919,7 @@ class Kvirt:
                          <path>%s</path>
                          </target>
                          </pool>""" % (name, poolpath)
-        elif pooltype == 'lvm':
+        elif pooltype == 'logical':
             poolxml = """<pool type='logical'>
                          <name>%s</name>
                          <source>
@@ -936,7 +936,7 @@ class Kvirt:
             return
         pool = conn.storagePoolDefineXML(poolxml, 0)
         pool.setAutostart(True)
-        if pooltype == 'lvm':
+        if pooltype == 'logical':
             pool.build()
         pool.create()
 
