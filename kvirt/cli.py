@@ -80,7 +80,7 @@ pass_config = click.make_pass_decorator(Config, ensure=True)
 @click.version_option(version=__version__)
 @pass_config
 def cli(config):
-    """ Libvirt wrapper on steroids. Check out https://github.com/karmab/kcli!"""
+    """Libvirt wrapper on steroids. Check out https://github.com/karmab/kcli!"""
     config.load()
 
 
@@ -88,6 +88,7 @@ def cli(config):
 @click.argument('name')
 @pass_config
 def start(config, name):
+    """Start vm"""
     k = config.get()
     click.secho("Started vm %s..." % name, fg='green')
     k.start(name)
@@ -97,6 +98,7 @@ def start(config, name):
 @click.argument('name')
 @pass_config
 def stop(config, name):
+    """Stop vm"""
     k = config.get()
     click.secho("Stopped vm %s..." % name, fg='green')
     k.stop(name)
@@ -107,6 +109,7 @@ def stop(config, name):
 @click.argument('name')
 @pass_config
 def console(config, serial, name):
+    """Vnc/Spice/Serial console"""
     k = config.get()
     if serial:
         k.serialconsole(name)
@@ -119,6 +122,7 @@ def console(config, serial, name):
 @click.argument('name')
 @pass_config
 def delete(config, name):
+    """Delete vm"""
     k = config.get()
     click.secho("Deleted vm %s..." % name, fg='red')
     k.delete(name)
@@ -128,6 +132,7 @@ def delete(config, name):
 @click.argument('client')
 @pass_config
 def switch(config, client):
+    """Switch from a client to another"""
     if client not in config.clients:
         click.secho("Client %s not found in config.Leaving...." % client, fg='green')
         os._exit(1)
@@ -146,9 +151,22 @@ def switch(config, client):
 @click.option('-p', '--profiles', is_flag=True)
 @click.option('-t', '--templates', is_flag=True)
 @click.option('-i', '--isos', is_flag=True)
+@click.option('-P', '--pools', is_flag=True)
+@click.option('-n', '--networks', is_flag=True)
 @pass_config
-def list(config, clients, profiles, templates, isos):
+def list(config, clients, profiles, templates, isos, pools, networks):
+    """List clients, profiles, templates, isos, pools or vms"""
     k = config.get()
+    if pools:
+        pools = k.list_pools()
+        for pool in sorted(pools):
+            print(pool)
+        return
+    if networks:
+        networks = k.list_networks()
+        for network in sorted(networks):
+            print(network)
+        return
     if clients:
         clientstable = PrettyTable(["Name", "Current"])
         clientstable.align["Name"] = "l"
@@ -187,6 +205,7 @@ def list(config, clients, profiles, templates, isos):
 @click.argument('name')
 @pass_config
 def create(config, profile, ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8, name):
+    """Create vm from given profile"""
     click.secho("Deploying vm %s from profile %s..." % (name, profile), fg='green')
     k = config.get()
     default = config.default
@@ -242,14 +261,16 @@ def create(config, profile, ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8, name):
 
 
 @cli.command()
-@click.option('-b', '--base', help='Base template')
+@click.option('-b', '--base', help='Base VM')
 @click.option('-f', '--full', is_flag=True)
+@click.option('-s', '--start', is_flag=True)
 @click.argument('name')
 @pass_config
-def clone(config, base, full, name):
+def clone(config, base, full, start, name):
+    """Clone existing vm"""
     click.secho("Cloning vm %s from vm %s..." % (name, base), fg='green')
     k = config.get()
-    k.clone(base, name, full)
+    k.clone(base, name, full=full, start=start)
 
 
 @cli.command()
@@ -259,6 +280,7 @@ def clone(config, base, full, name):
 @click.argument('name')
 @pass_config
 def update(config, ip, memory, numcpus, name):
+    """Update ip, memory or numcpus"""
     k = config.get()
     if ip is not None:
         click.secho("Updating ip of vm %s to %s..." % (name, ip), fg='green')
@@ -277,6 +299,7 @@ def update(config, ip, memory, numcpus, name):
 @click.argument('name')
 @pass_config
 def add(config, size, pool, name):
+    """Add disk to vm"""
     if size is None:
         click.secho("Missing size. Leaving...", fg='red')
         os._exit(1)
@@ -286,8 +309,30 @@ def add(config, size, pool, name):
 
 
 @cli.command()
+@click.option('-d', '--delete', is_flag=True)
+@click.option('-f', '--full', is_flag=True)
+@click.option('-t', '--pooltype', help='Type of the pool', type=click.Choice(['dir', 'logical']), default='dir')
+@click.option('-p', '--path', help='Path of the pool')
+@click.argument('pool')
+@pass_config
+def pool(config, delete, full, pooltype, path, pool):
+    """Create/Delete pool"""
+    k = config.get()
+    if delete:
+        click.secho("Deleting pool %s..." % (pool), fg='green')
+        k.delete_pool(name=pool, full=full)
+        return
+    if path is None:
+        click.secho("Missing path. Leaving...", fg='red')
+        return
+    click.secho("Adding pool %s..." % (pool), fg='green')
+    k.create_pool(name=pool, poolpath=path, pooltype=pooltype)
+
+
+@cli.command()
 @pass_config
 def report(config):
+    """Report hypervisor setup"""
     click.secho("Reporting setup for client %s..." % config.client, fg='green')
     k = config.get()
     k.report()
@@ -301,6 +346,7 @@ def report(config):
 @click.argument('plan', required=False)
 @pass_config
 def plan(config, inputfile, start, stop, delete, plan):
+    """Create/Delete/Stop/Start vms from plan file"""
     if plan is None:
         plan = 'kvirt'
     k = config.get()
@@ -406,6 +452,7 @@ def plan(config, inputfile, start, stop, delete, plan):
 @click.argument('name')
 @pass_config
 def info(config, name):
+    """Info about vm"""
     k = config.get()
     k.info(name)
 
@@ -414,6 +461,7 @@ def info(config, name):
 @click.argument('name')
 @pass_config
 def ssh(config, name):
+    """Ssh into vm"""
     k = config.get()
     k.ssh(name)
 
@@ -430,6 +478,7 @@ def ssh(config, name):
 @click.option('--pool', help='Pool to use')
 @click.option('--poolpath', help='Pool Path to use')
 def bootstrap(genfile, auto, name, host, port, user, protocol, url, pool, poolpath):
+    """Bootstrap hypervisor, creating config file and optionally pools and network"""
     click.secho("Bootstrapping env", fg='green')
     if genfile or auto:
         if host is None and url is None:

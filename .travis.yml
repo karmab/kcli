@@ -13,7 +13,7 @@ addons:
     - telnet
     - libvirt-bin
 env:
-- KVIRT_LIBVIRTUSER=libvirtd KVIRT_PATH=/x KVIRT_TYPE=qemu
+- KVIRT_LIBVIRT_USER=libvirtd KVIRT_PATH=/x KVIRT_TYPE=qemu
 python:
 - 2.7
 notifications:

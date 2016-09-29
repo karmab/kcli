@@ -12,7 +12,7 @@ class TestK:
         self.user = os.environ.get('KVIRT_USER', 'root')
         self.path = os.environ.get('KVIRT_PATH', '')
         self.virttype = os.environ.get('KVIRT_TYPE', 'kvm')
-        self.libvirt_user = os.environ.get('KVIRT_LIBVIRTUSER', 'qemu')
+        self.libvirt_user = os.environ.get('KVIRT_LIBVIRT_USER', 'qemu')
         k = Kvirt(self.host)
         name = "test_%s" % ''.join(random.choice(string.lowercase) for i in range(5))
         self.name = name
@@ -31,12 +31,15 @@ class TestK:
 
     def test_create_pool(self):
         k = self.conn
-        if self.host == '127.0.0.1' or self.host == 'localhost':
-                cmd = "mkdir %s/%s; chgrp %s %s/%s" % (self.path, self.name, self.libvirt_user, self.path, self.name)
-        else:
-                cmd = "ssh %s@%s 'mkdir %s/%s; chgrp %s %s/%s'" % (self.user, self.host, self.path, self.name, self.libvirt_user, self.path, self.name)
-        os.system(cmd)
-        k.create_pool(name=self.name, poolpath='%s/%s' % (self.path, self.name))
+        # if self.host == '127.0.0.1' or self.host == 'localhost':
+        #    cmd1 = "test -d %s/%s || mkdir %s/%s" % (self.path, self.name, self.path, self.name)
+        #    cmd2 = "chown %s %s/%s; " % (self.libvirt_user, self.path, self.name)
+        # else:
+        #    cmd1 = 'ssh %s@%s "test -d %s/%s || mkdir %s/%s"' % (self.user, self.host, self.path, self.name, self.path, self.name)
+        #    cmd2 = 'ssh %s@%s "chgrp %s %s/%s"' % (self.user, self.host, self.libvirt_user, self.path, self.name)
+        # os.system(cmd1)
+        # os.system(cmd2)
+        k.create_pool(name=self.name, poolpath='%s/%s' % (self.path, self.name), user=self.libvirt_user)
         assert True
 
     def test_create_vm(self):

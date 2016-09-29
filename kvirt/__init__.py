@@ -16,7 +16,7 @@ import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "1.0.24"
+__version__ = "1.0.25"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -55,6 +55,11 @@ class Kvirt:
         except Exception:
             self.conn = None
         self.host = host
+        self.user = user
+        self.port = port
+        self.protocol = protocol
+        if self.protocol == 'ssh' and port is None:
+            self.port = '22'
 
     def close(self):
         conn = self.conn
@@ -443,8 +448,11 @@ class Kvirt:
                 if serialport:
                     if self.host in ['localhost', '127.0.0.1']:
                         serialcommand = "telnet 127.0.0.1 %s" % serialport
+                    elif self.protocol != 'ssh':
+                        print("Remote serial Console requires using ssh . Leaving...")
+                        return
                     else:
-                        serialcommand = "ssh %s telnet 127.0.0.1 %s" % (self.host, serialport)
+                        serialcommand = "ssh -p %s %s@%s telnet 127.0.0.1 %s" % (self.port, self.user, self.host, serialport)
                     os.system(serialcommand)
                 else:
                     print("No serial Console found. Leaving...")
@@ -625,7 +633,7 @@ class Kvirt:
 </volume>""" % (name, size, path, diskformat, backingstore)
         return volume
 
-    def clone(self, old, new, full=False):
+    def clone(self, old, new, full=False, start=False):
         conn = self.conn
         oldvm = conn.lookupByName(old)
         oldxml = oldvm.XMLDesc(0)
@@ -660,11 +668,16 @@ class Kvirt:
         for interface in tree.getiterator('interface'):
             mac = interface.find('mac')
             interface.remove(mac)
+        if self.host not in ['127.0.0.1', 'localhost']:
+            for serial in tree.getiterator('serial'):
+                source = serial.find('source')
+                source.set('service', str(self._get_free_port()))
         newxml = ET.tostring(tree)
         conn.defineXML(newxml)
         vm = conn.lookupByName(new)
-        vm.setAutostart(1)
-        vm.create()
+        if start:
+            vm.setAutostart(1)
+            vm.create()
 
     def _cloudinit(self, name, keys=None, cmds=None, nets=[], gateway=None, dns=None, domain=None):
         default_gateway = gateway
@@ -910,9 +923,23 @@ class Kvirt:
         s.close()
         return port
 
-    def create_pool(self, name, poolpath, pooltype='dir'):
+    def create_pool(self, name, poolpath, pooltype='dir', user='qemu'):
         conn = self.conn
+        for pool in conn.listStoragePools():
+            if pool == name:
+                print "Pool %s allready there.Leavinf..." % name
+                return
         if pooltype == 'dir':
+            if self.host == 'localhost' or self.host == '127.0.0.1':
+                if not os.path.exists(poolpath):
+                    os.makedirs(poolpath)
+            elif self.protocol == 'ssh':
+                cmd1 = 'ssh -p %s %s@%s "test -d %s || mkdir %s"' % (self.port, self.user, self.host, poolpath, poolpath)
+                cmd2 = 'ssh %s@%s "chown %s %s"' % (self.user, self.host, user, poolpath)
+                os.system(cmd1)
+                os.system(cmd2)
+            else:
+                print("Make sur %s directory exists on hypervisor" % name)
             poolxml = """<pool type='dir'>
                          <name>%s</name>
                          <source>
@@ -980,6 +1007,21 @@ class Kvirt:
         network.destroy()
         network.undefine()
 
+    def list_pools(self):
+        pools = []
+        conn = self.conn
+        for pool in conn.listStoragePools():
+            pools.append(pool)
+        return pools
+
+    def list_networks(self):
+        networks = []
+        conn = self.conn
+        for network in conn.listAllNetworks():
+            name = network.name()
+            networks.append(name)
+        return networks
+
     def delete_pool(self, name, full=False):
         conn = self.conn
         try:
@@ -990,7 +1032,8 @@ class Kvirt:
         if full:
             for vol in pool.listAllVolumes():
                 vol.delete(0)
-        pool.destroy()
+        if pool.isActive():
+            pool.destroy()
         pool.undefine()
 
     def bootstrap(self, pool=None, poolpath=None, pooltype='dir', nets={}):
