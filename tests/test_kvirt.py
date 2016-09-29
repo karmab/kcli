@@ -12,7 +12,7 @@ class TestK:
         self.user = os.environ.get('KVIRT_USER', 'root')
         self.path = os.environ.get('KVIRT_PATH', '')
         self.virttype = os.environ.get('KVIRT_TYPE', 'kvm')
-        self.libvirt_user = os.environ.get('KVIRT_LIBVIRT_USER', 'qemu')
+        selsf.libvirt_user = os.environ.get('KVIRT_LIBVIRT_USER', 'qemu')
         k = Kvirt(self.host)
         name = "test_%s" % ''.join(random.choice(string.lowercase) for i in range(5))
         self.name = name

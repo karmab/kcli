@@ -3,7 +3,6 @@ notifications:
   email:
     recipients:
       - karimboumedhel@gmail.com
-    on_success: [never]
 sudo: required
 dist: trusty
 addons:
