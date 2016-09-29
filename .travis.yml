@@ -1,4 +1,9 @@
 language: python
+notifications:
+  email:
+    recipients:
+      - karimboumedhel@gmail.com
+    on_success: [never]
 sudo: required
 dist: trusty
 addons:
@@ -14,6 +19,8 @@ addons:
     - libvirt-bin
 env:
 - KVIRT_LIBVIRT_USER=libvirtd KVIRT_PATH=/x KVIRT_TYPE=qemu
+
+
 python:
 - 2.7
 notifications:
