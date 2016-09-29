@@ -19,11 +19,8 @@ addons:
 env:
 - KVIRT_LIBVIRT_USER=libvirtd KVIRT_PATH=/x KVIRT_TYPE=qemu
 
-
 python:
 - 2.7
-notifications:
-  email: false
 before_install:
 #- sudo usermod -aG libvirtd $USER
 - sudo chmod 777 /var/run/libvirt/libvirt-sock
