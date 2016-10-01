@@ -83,7 +83,7 @@ class Kvirt:
             storagepool = conn.storagePoolLookupByName(pool)
         except:
             print("Pool %s not found.Leaving..." % pool)
-            return 1
+            return {'result': 'failure', 'reason': "Pool %s not found" % pool}
         poolxml = storagepool.XMLDesc(0)
         root = ET.fromstring(poolxml)
         pooltype = root.getiterator('pool')[0].get('type')
@@ -126,7 +126,7 @@ class Kvirt:
                 diskinterface = disk.get('interface', default_diskinterface)
             else:
                 print("Invalid disk entry.Leaving...")
-                return 1
+                return {'result': 'failure', 'reason': "Invalid disk entry"}
             letter = chr(index + ord('a'))
             diskdev, diskbus = 'vd%s' % letter, 'virtio'
             if diskinterface != 'virtio':
@@ -144,7 +144,7 @@ class Kvirt:
                     root = ET.fromstring(backingxml)
                 except:
                     print("Invalid template %s.Leaving..." % template)
-                    return 1
+                    return {'result': 'failure', 'reason': "Invalid template %s" % template}
                 backing = backingvolume.path()
                 backingxml = """<backingStore type='file' index='1'>
                                 <format type='raw'/>
@@ -185,7 +185,6 @@ class Kvirt:
                 sourcenet = 'network'
             else:
                 print("Invalid network %s.Leaving..." % netname)
-                return 1
             netxml = """%s
                      <interface type='%s'>
                      <source %s='%s'/>
@@ -209,7 +208,7 @@ class Kvirt:
                 iso = isovolume.path()
             except:
                 print("Invalid Iso %s.Leaving..." % iso)
-                return 1
+                return {'result': 'failure', 'reason': "Invalid iso %s" % iso}
         isoxml = """<disk type='file' device='cdrom'>
                       <driver name='qemu' type='raw'/>
                       <source file='%s'/>
@@ -285,7 +284,7 @@ class Kvirt:
             self._uploadiso(name, pool=pool)
         if start:
             vm.create()
-        return 0
+        return {'result': 'success'}
 
     def start(self, name):
         conn = self.conn
@@ -927,7 +926,7 @@ class Kvirt:
         conn = self.conn
         for pool in conn.listStoragePools():
             if pool == name:
-                print "Pool %s allready there.Leavinf..." % name
+                print "Pool %s already there.Leaving..." % name
                 return
         if pooltype == 'dir':
             if self.host == 'localhost' or self.host == '127.0.0.1':

@@ -218,7 +218,7 @@ Note that up to 8 ips can also be provided on command line when creating a singl
 - *scripts* array of paths of custom script to inject with cloudinit. Note that it will override cmds part. You can either specify full paths or relative to where you're running kcli. Only checked in profile or plan file
 
 
-## ansible dynamic inventory
+## ansible support
 
 you can check klist.py in the extra directory and use it as a dynamic inventory for ansible.
 
@@ -235,6 +235,9 @@ python extra/klist.py --list
 
 ansible all -i extra/klist.py -m ping
 ```
+
+Additionally, there s an ansible kcli/kvirt module under extras, with a sample playbook
+
 
 ## testing
 

@@ -33,7 +33,13 @@ instance if using a rhel based distribution:
 
 ::
 
-    yum -y install gcc libvirt-devel python-devel genisoimage
+    yum -y install gcc libvirt-devel python-devel genisoimage qemu-kvm telnet python-pip
+
+If using a debian based distribution:
+
+::
+
+    apt-get -y install python-pip pkg-config libvirt-dev genisoimage qemu-kvm telnet libvirt-bin
 
 then you can install from pypi
 
@@ -261,8 +267,8 @@ a single vm ( with the flag -1, -2, -3,-4,...)
    paths or relative to where you're running kcli. Only checked in
    profile or plan file
 
-ansible dynamic inventory
--------------------------
+ansible support
+---------------
 
 you can check klist.py in the extra directory and use it as a dynamic
 inventory for ansible.
@@ -284,6 +290,9 @@ Try it with:
     python extra/klist.py --list
 
     ansible all -i extra/klist.py -m ping
+
+Additionally, there s an ansible kcli/kvirt module under extras, with a
+sample playbook
 
 testing
 -------
