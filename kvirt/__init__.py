@@ -846,8 +846,6 @@ class Kvirt:
             disktype = element.get('device')
             if disktype == 'cdrom':
                 continue
-            path = element.find('source').get('file')
-            currentpoolpath = os.path.dirname(path)
             currentdisk = currentdisk + 1
         diskindex = currentdisk + 1
         diskdev = "vd%s" % string.ascii_lowercase[currentdisk]
@@ -859,17 +857,6 @@ class Kvirt:
             for element in poolroot.getiterator('path'):
                 poolpath = element.text
                 break
-        elif currentpoolpath is not None:
-            poolpath = currentpoolpath
-            for p in conn.listStoragePools():
-                poo = conn.storagePoolLookupByName(p)
-                poolxml = poo.XMLDesc(0)
-                poolroot = ET.fromstring(poolxml)
-                pooltype = poolroot.getiterator('pool')[0].get('type')
-                for element in poolroot.getiterator('path'):
-                    if poolpath == currentpoolpath:
-                        pool = poo
-                        break
         else:
             print("Pool not found. Leaving....")
             return

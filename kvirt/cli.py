@@ -304,6 +304,9 @@ def add(config, size, pool, name):
     if size is None:
         click.secho("Missing size. Leaving...", fg='red')
         os._exit(1)
+    if pool is None:
+        click.secho("Missing pool. Leaving...", fg='red')
+        os._exit(1)
     k = config.get()
     click.secho("Adding disk %s..." % (name), fg='green')
     k.add_disk(name=name, size=size, pool=pool)
