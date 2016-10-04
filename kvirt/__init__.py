@@ -20,7 +20,6 @@ __version__ = "1.0.25"
 
 KB = 1024 * 1024
 MB = 1024 * KB
-GB = 1024 * MB
 guestrhel532 = "rhel_5"
 guestrhel564 = "rhel_5x64"
 guestrhel632 = "rhel_6"
@@ -797,7 +796,7 @@ class Kvirt:
 
     def update_memory(self, name, memory):
         conn = self.conn
-        memory = str(int(memory) * KB)
+        memory = str(int(memory) * 1024)
         try:
             vm = conn.lookupByName(name)
             xml = vm.XMLDesc(0)
