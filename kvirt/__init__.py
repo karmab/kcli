@@ -288,21 +288,27 @@ class Kvirt:
     def start(self, name):
         conn = self.conn
         status = {0: 'down', 1: 'up'}
-        vm = conn.lookupByName(name)
-        vm = conn.lookupByName(name)
-        if status[vm.isActive()] == "up":
-            return 1
-        else:
-            vm.create()
+        try:
+            vm = conn.lookupByName(name)
+            vm = conn.lookupByName(name)
+            if status[vm.isActive()] == "up":
+                return 1
+            else:
+                vm.create()
+        except:
+            print "VM %s not found" % name
 
     def stop(self, name):
         conn = self.conn
         status = {0: 'down', 1: 'up'}
-        vm = conn.lookupByName(name)
-        if status[vm.isActive()] == "down":
-            return
-        else:
-            vm.destroy()
+        try:
+            vm = conn.lookupByName(name)
+            if status[vm.isActive()] == "down":
+                return
+            else:
+                vm.destroy()
+        except:
+            print "VM %s not found" % name
 
     def restart(self, name):
         conn = self.conn
