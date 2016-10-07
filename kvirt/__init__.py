@@ -16,7 +16,7 @@ import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "1.0.27"
+__version__ = "1.0.28"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -960,9 +960,13 @@ class Kvirt:
             pool.build()
         pool.create()
 
-    def create_network(self, name=None, cidr=None, dhcp=True):
+    def create_network(self, name, cidr, dhcp=True):
         conn = self.conn
-        range = IpRange(cidr)
+        try:
+            range = IpRange(cidr)
+        except TypeError:
+            print "Invalid Cidr %s.Leaving..." % cidr
+            return
         netmask = IPNetwork(cidr).netmask
         gateway = range[1]
         if dhcp:

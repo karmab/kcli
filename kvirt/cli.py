@@ -472,8 +472,23 @@ def ssh(config, name):
 
 
 @cli.command()
+@click.option('-d', '--delete', is_flag=True)
+@click.option('-c', '--cidr', help='Cidr of the net')
+@click.option('--dhcp', is_flag=True, help='Enable dhcp on the net')
+@click.argument('name')
+@pass_config
+def network(config, delete, cidr, dhcp, name):
+    """Create Network"""
+    k = config.get()
+    if delete:
+        k.delete_network(name=name)
+    else:
+        k.create_network(name=name, cidr=cidr, dhcp=dhcp)
+
+
+@cli.command()
 @click.option('-f', '--genfile', is_flag=True)
-@click.option('-a', '--auto', is_flag=True)
+@click.option('-a', '--auto', is_flag=True, help="Don't ask for anything")
 @click.option('-n', '--name', help='Name to use')
 @click.option('-H', '--host', help='Host to use')
 @click.option('-p', '--port', help='Port to use')

@@ -141,6 +141,8 @@ The [samples directory](https://github.com/karmab/kcli/tree/master/samples) cont
   - `kcli ssh vm1` 
 - switch active client to bumblefoot
   - `kcli switch bumblefoot` 
+- add a new network
+  - `kcli network -c 192.168.7.0/24 --dhcp mynet` 
 
 ##cloudinit stuff
 
