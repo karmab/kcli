@@ -296,7 +296,7 @@ class Kvirt:
             else:
                 vm.create()
         except:
-            print "VM %s not found" % name
+            print("VM %s not found" % name)
 
     def stop(self, name):
         conn = self.conn
@@ -308,7 +308,7 @@ class Kvirt:
             else:
                 vm.destroy()
         except:
-            print "VM %s not found" % name
+            print("VM %s not found" % name)
 
     def restart(self, name):
         conn = self.conn
@@ -918,7 +918,7 @@ class Kvirt:
         conn = self.conn
         for pool in conn.listStoragePools():
             if pool == name:
-                print "Pool %s already there.Leaving..." % name
+                print("Pool %s already there.Leaving..." % name)
                 return
         if pooltype == 'dir':
             if self.host == 'localhost' or self.host == '127.0.0.1':
@@ -965,7 +965,7 @@ class Kvirt:
         try:
             range = IpRange(cidr)
         except TypeError:
-            print "Invalid Cidr %s.Leaving..." % cidr
+            print("Invalid Cidr %s.Leaving..." % cidr)
             return
         netmask = IPNetwork(cidr).netmask
         gateway = range[1]
