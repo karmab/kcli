@@ -601,7 +601,7 @@ class Kvirt:
         return diskxml
 
     def _xmlvolume(self, path, size, pooltype='file', backing=None, diskformat='qcow2'):
-        size = int(size) * MB
+        size = int(size * MB)
         name = path.split('/')[-1]
         if pooltype == 'block':
             volume = """<volume type='block'>
@@ -754,7 +754,10 @@ class Kvirt:
             poolpath = element.text
             break
         isopath = "%s/%s.iso" % (poolpath, name)
-        isoxml = self._xmlvolume(path=isopath, size=0, diskformat='raw')
+        isosize = float(os.path.getsize("/tmp/%s.iso" % name))/1024/1024/1024
+        if int(isosize * MB) == 0:
+            isosize = float(1/MB)
+        isoxml = self._xmlvolume(path=isopath, size=isosize, diskformat='raw')
         pool.createXML(isoxml, 0)
         isovolume = conn.storageVolLookupByPath(isopath)
         stream = conn.newStream(0)
