@@ -18,10 +18,10 @@ class TestK:
         self.name = name
         self.conn = k
 
-    def test_list(self):
-        k = self.conn
-        klist = k.list()
-        assert klist is not None
+#    def test_list(self):
+#        k = self.conn
+#        klist = k.list()
+#        assert klist is not None
 
     def test_create_network(self):
         k = self.conn
