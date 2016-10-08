@@ -13,7 +13,7 @@ import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "1.0.35"
+__version__ = "1.0.36"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -607,6 +607,8 @@ class Kvirt:
 
     def _xmlvolume(self, path, size, pooltype='file', backing=None, diskformat='qcow2'):
         size = int(size) * MB
+        if size == 0 and pooltype != 'file':
+            size = 500 * 1024
         name = path.split('/')[-1]
         if pooltype == 'block':
             volume = """<volume type='block'>
@@ -762,10 +764,7 @@ class Kvirt:
             poolpath = element.text
             break
         isopath = "%s/%s.iso" % (poolpath, name)
-        isosize = float(os.path.getsize("/tmp/%s.iso" % name)) / 1024 / 1024 / 1024
-        if int(isosize * MB) == 0:
-            isosize = float(1 / MB)
-        isoxml = self._xmlvolume(path=isopath, size=isosize, diskformat='raw')
+        isoxml = self._xmlvolume(path=isopath, size=0, diskformat='raw')
         pool.createXML(isoxml, 0)
         isovolume = conn.storageVolLookupByPath(isopath)
         stream = conn.newStream(0)
