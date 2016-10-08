@@ -607,7 +607,6 @@ class Kvirt:
 
     def _xmlvolume(self, path, size, pooltype='file', backing=None, diskformat='qcow2'):
         size = int(size * MB)
-        print "coco1"
         name = path.split('/')[-1]
         if pooltype == 'block':
             volume = """<volume type='block'>
@@ -619,7 +618,6 @@ class Kvirt:
                       </target>
                     </volume>""" % (name, size, path)
             return volume
-        print "coco2"
         if backing is not None:
             backingstore = """
 <backingStore>
@@ -642,7 +640,6 @@ class Kvirt:
 </target>
 %s
 </volume>""" % (name, size, path, diskformat, backingstore)
-        print "coco3"
         return volume
 
     def clone(self, old, new, full=False, start=False):
