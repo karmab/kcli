@@ -147,7 +147,7 @@ class Kvirt:
                     return {'result': 'failure', 'reason': "Invalid template %s" % template}
                 backing = backingvolume.path()
                 backingxml = """<backingStore type='file' index='1'>
-                                <format type='raw'/>
+                                <format type='qcow2'/>
                                 <source file='%s'/>
                                 <backingStore/>
                                 </backingStore>""" % backing
@@ -451,17 +451,14 @@ class Kvirt:
             for element in serial:
                 serialport = element.find('source').get('service')
                 if serialport:
-                    if self.host in ['localhost', '127.0.0.1']:
-                        serialcommand = "telnet 127.0.0.1 %s" % serialport
-                    elif self.protocol != 'ssh':
+                    if self.protocol != 'ssh':
                         print("Remote serial Console requires using ssh . Leaving...")
                         return
                     else:
                         serialcommand = "ssh -p %s %s@%s telnet 127.0.0.1 %s" % (self.port, self.user, self.host, serialport)
                     os.system(serialcommand)
-                else:
-                    print("No serial Console found. Leaving...")
-                    return
+                elif self.host in ['localhost', '127.0.0.1']:
+                    os.system('virsh console %s' % name)
 
     def info(self, name):
         ips = []
@@ -603,6 +600,7 @@ class Kvirt:
 
     def _xmlvolume(self, path, size, pooltype='file', backing=None, diskformat='qcow2'):
         size = int(size * MB)
+        print "coco1"
         name = path.split('/')[-1]
         if pooltype == 'block':
             volume = """<volume type='block'>
@@ -614,6 +612,7 @@ class Kvirt:
                       </target>
                     </volume>""" % (name, size, path)
             return volume
+        print "coco2"
         if backing is not None:
             backingstore = """
 <backingStore>
@@ -636,6 +635,7 @@ class Kvirt:
 </target>
 %s
 </volume>""" % (name, size, path, diskformat, backingstore)
+        print "coco3"
         return volume
 
     def clone(self, old, new, full=False, start=False):
@@ -876,6 +876,7 @@ class Kvirt:
         pool.refresh(0)
         storagename = "%s_%d.img" % (name, diskindex)
         diskpath = "%s/%s" % (poolpath, storagename)
+        print diskpath, size, pooltype, diskformat
         volxml = self._xmlvolume(path=diskpath, size=size, pooltype=pooltype, diskformat=diskformat, backing=None)
         if pooltype == 'logical':
             diskformat = 'raw'

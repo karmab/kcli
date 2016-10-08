@@ -34,7 +34,6 @@ If using a debian based distribution:
 
 ```
 apt-get -y install python-pip pkg-config libvirt-dev genisoimage qemu-kvm telnet libvirt-bin python-dev libyaml-dev
-ln -s /usr/bin/genisoimage /usr/local/bin/mkisofs
 ```
 
 then you can install from pypi
@@ -46,7 +45,7 @@ pip install kcli
 To deploy from templates, grab images at [openstack](http://docs.openstack.org/image-guide/obtain-images.html)
 ## configuration
 
-If you want to only use your local libvirt daemon, no configuration is needed.
+If you only want to use your local libvirt daemon, no configuration is needed.
 If you want to generate a basic settings file, you can use the following command:
 
 ```
@@ -120,7 +119,7 @@ The [samples directory](https://github.com/karmab/kcli/tree/master/samples) cont
  - `kcli report`
 - list vms, along with their private ip ( and plan if applicable)
  - `kcli list`
-- list templates
+- list templates ( Note that it will find them out based on their qcow2 extension...)
  - `kcli list -t`
 - create vm from profile base7
  - `kcli create -p base7 myvm`
@@ -156,6 +155,7 @@ The [samples directory](https://github.com/karmab/kcli/tree/master/samples) cont
   - `kcli network -c 192.168.7.0/24 --dhcp mynet` 
 
 ##templates
+
 Templates should be in the same storage pool as the VM, in order to benefit from the Copy-on-Write mechanism.
 
 For a regular file-backed storage pool, download the image you want, and put it in the backing store directory.

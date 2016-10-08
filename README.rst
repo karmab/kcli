@@ -39,7 +39,8 @@ If using a debian based distribution:
 
 ::
 
-    apt-get -y install python-pip pkg-config libvirt-dev genisoimage qemu-kvm telnet libvirt-bin
+    apt-get -y install python-pip pkg-config libvirt-dev genisoimage qemu-kvm telnet libvirt-bin python-dev libyaml-dev
+    ln -s /usr/bin/genisoimage /usr/local/bin/mkisofs
 
 then you can install from pypi
 
@@ -72,11 +73,24 @@ pool with a path
 
     kcli bootstrap -a -n twix -H 192.168.0.6 --pool vms --poolpath /home/vms
 
-Or even use an existing disk for LVM based images
+Or even use an existing disk for LVM based images (note that the disk
+will be made into an LVM physical volume, so it should be empty):
 
 ::
 
     kcli bootstrap -a -n twix -H 192.168.0.6 --pool vms --poolpath /dev/vdb --pooltype lvm
+
+You can add an additional storage pool with:
+
+::
+
+    kcli pool -f -t logical -p /dev/sda ssd
+
+And define additional networks with:
+
+::
+
+    kcli network -c 10.0.1.0/24 private11 --dhcp
 
 Otherwise you will have to declare your settings in ~/kcli.yml. For
 instance,
@@ -86,7 +100,7 @@ instance,
     default:
      client: twix
      numcpus: 2
-     diskthin1: true
+     diskthin: true
      memory: 512
      disks:
       - size: 10
@@ -163,6 +177,31 @@ How to use
 -  ``kcli switch bumblefoot``
 -  add a new network
 -  ``kcli network -c 192.168.7.0/24 --dhcp mynet``
+
+templates
+---------
+
+Templates should be in the same storage pool as the VM, in order to
+benefit from the Copy-on-Write mechanism.
+
+For a regular file-backed storage pool, download the image you want, and
+put it in the backing store directory.
+
+For an LVM-backed storage pool, convert the image to raw format, and
+upload it to the pool. Assuming a volume group with name ``vms``, do:
+
+::
+
+    TEMPLATE=xenial-server-cloudimg-amd64-disk1.img
+
+    qemu-img convert -f qcow2 -O raw $TEMPLATE ${TEMPLATE}.raw
+    TSIZE=`ls -l ${TEMPLATE}.raw | tr -s ' ' | cut -d' ' -f5`
+    TSIZE=`ls --size -q ${TEMPLATE}.raw | cut -d' ' -f1`
+    virsh vol-create-as vms $TEMPLATE $TSIZE
+    virsh vol-upload --pool vms $TEMPLATE ${TEMPLATE}.raw
+
+Note that LVM-backed storage pools are currently not working with
+``kcli list -t``.
 
 cloudinit stuff
 ---------------
