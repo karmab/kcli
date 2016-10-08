@@ -16,7 +16,7 @@ import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "1.0.30"
+__version__ = "1.0.31"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -741,7 +741,7 @@ class Kvirt:
                     userdata.write("runcmd:\n")
                     for cmd in cmds:
                         userdata.write("- %s\n" % cmd)
-        isocmd = '/bin/mkisofs'
+        isocmd = 'mkisofs'
         if os.path.exists('/bin/genisoimage'):
             isocmd = '/bin/genisoimage'
         os.system("%s --quiet -o /tmp/%s.iso --volid cidata --joliet --rock /tmp/user-data /tmp/meta-data" % (isocmd, name))
