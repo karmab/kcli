@@ -193,10 +193,8 @@ upload it to the pool. Assuming a volume group with name ``vms``, do:
 ::
 
     TEMPLATE=xenial-server-cloudimg-amd64-disk1.img
-
     qemu-img convert -f qcow2 -O raw $TEMPLATE ${TEMPLATE}.raw
     TSIZE=`ls -l ${TEMPLATE}.raw | tr -s ' ' | cut -d' ' -f5`
-    TSIZE=`ls --size -q ${TEMPLATE}.raw | cut -d' ' -f1`
     virsh vol-create-as vms $TEMPLATE $TSIZE
     virsh vol-upload --pool vms $TEMPLATE ${TEMPLATE}.raw
 
@@ -250,15 +248,16 @@ those parameters can be set either in your config, profile or plan files
 -  *pool* Defaults to default
 -  *template* Should point to your base cloud image(optional)
 -  *disks* Array of disks to define. For each of them, you can specify
-   size, thin ( as boolean) and interface ( either ide or virtio).If you
-   omit parameters, default values will be used from config or profile
-   file ( You can actually let the entire entry blank or just indicate a
-   size number directly). For instance:
+   pool, size, thin ( as boolean) and interface ( either ide or
+   virtio).If you omit parameters, default values will be used from
+   config or profile file ( You can actually let the entire entry blank
+   or just indicate a size number directly). For instance:
 
 ::
 
     disks:
      - size: 20
+       pool: vms
      - size: 10
        thin: False
        format: ide

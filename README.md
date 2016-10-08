@@ -204,11 +204,12 @@ those parameters can be set either in your config, profile or plan files
 - *guestid* Defaults to guestrhel764
 - *pool* Defaults to default
 - *template* Should point to your base cloud image(optional)
-- *disks* Array of disks to define. For each of them, you can specify size, thin ( as boolean) and interface ( either ide or virtio).If you omit parameters, default values will be used from config or profile file ( You can actually let the entire entry blank or just indicate a size number directly). For instance:
+- *disks* Array of disks to define. For each of them, you can specify pool, size, thin ( as boolean) and interface ( either ide or virtio).If you omit parameters, default values will be used from config or profile file ( You can actually let the entire entry blank or just indicate a size number directly). For instance:
 
 ```
 disks:
  - size: 20
+   pool: vms
  - size: 10
    thin: False
    format: ide

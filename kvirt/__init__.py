@@ -13,7 +13,7 @@ import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "1.0.39"
+__version__ = "1.0.40"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -74,18 +74,19 @@ class Kvirt:
         default_diskinterface = diskinterface
         default_diskthin = diskthin
         default_disksize = disksize
+        default_pool = pool
         conn = self.conn
         try:
-            storagepool = conn.storagePoolLookupByName(pool)
+            default_storagepool = conn.storagePoolLookupByName(default_pool)
         except:
-            print("Pool %s not found.Leaving..." % pool)
-            return {'result': 'failure', 'reason': "Pool %s not found" % pool}
-        poolxml = storagepool.XMLDesc(0)
-        root = ET.fromstring(poolxml)
-        pooltype = root.getiterator('pool')[0].get('type')
-        poolpath = None
+            print("Pool %s not found.Leaving..." % default_pool)
+            return {'result': 'failure', 'reason': "Pool %s not found" % default_pool}
+        default_poolxml = default_storagepool.XMLDesc(0)
+        root = ET.fromstring(default_poolxml)
+        default_pooltype = root.getiterator('pool')[0].get('type')
+        default_poolpath = None
         for element in root.getiterator('path'):
-            poolpath = element.text
+            default_poolpath = element.text
             break
         if vnc:
             display = 'vnc'
@@ -106,20 +107,37 @@ class Kvirt:
         machine = 'pc'
         sysinfo = "<smbios mode='sysinfo'/>"
         disksxml = ''
-        volsxml = []
+        volsxml = {}
         for index, disk in enumerate(disks):
             if disk is None:
                 disksize = default_disksize
                 diskthin = default_diskthin
                 diskinterface = default_diskinterface
+                diskpooltype = default_pooltype
+                diskpoolpath = default_poolpath
             elif isinstance(disk, int):
                 disksize = disk
                 diskthin = default_diskthin
                 diskinterface = default_diskinterface
+                diskpooltype = default_pooltype
+                diskpoolpath = default_poolpath
             elif isinstance(disk, dict):
                 disksize = disk.get('size', default_disksize)
                 diskthin = disk.get('thin', default_diskthin)
                 diskinterface = disk.get('interface', default_diskinterface)
+                diskpool = disk.get('pool', default_pool)
+                try:
+                    storagediskpool = conn.storagePoolLookupByName(diskpool)
+                except:
+                    print("Pool %s not found.Leaving..." % diskpool)
+                    return {'result': 'failure', 'reason': "Pool %s not found" % diskpool}
+                diskpoolxml = storagediskpool.XMLDesc(0)
+                root = ET.fromstring(diskpoolxml)
+                diskpooltype = root.getiterator('pool')[0].get('type')
+                diskpoolpath = None
+                for element in root.getiterator('path'):
+                    diskpoolpath = element.text
+                    break
             else:
                 print("Invalid disk entry.Leaving...")
                 return {'result': 'failure', 'reason': "Invalid disk entry"}
@@ -131,10 +149,10 @@ class Kvirt:
             if not diskthin:
                 diskformat = 'raw'
             storagename = "%s_%d.img" % (name, index + 1)
-            diskpath = "%s/%s" % (poolpath, storagename)
+            diskpath = "%s/%s" % (diskpoolpath, storagename)
             if template is not None and index == 0:
                 try:
-                    storagepool.refresh(0)
+                    default_storagepool.refresh(0)
                     backingvolume = volumes[template]['object']
                     backingxml = backingvolume.XMLDesc(0)
                     root = ET.fromstring(backingxml)
@@ -150,9 +168,12 @@ class Kvirt:
             else:
                 backing = None
                 backingxml = '<backingStore/>'
-            volxml = self._xmlvolume(path=diskpath, size=disksize, pooltype=pooltype, backing=backing, diskformat=diskformat)
-            volsxml.append(volxml)
-            if pooltype == 'logical':
+            volxml = self._xmlvolume(path=diskpath, size=disksize, pooltype=diskpooltype, backing=backing, diskformat=diskformat)
+            if diskpool in volsxml:
+                volsxml[diskpool].append(volxml)
+            else:
+                volsxml[diskpool] = [volxml]
+            if diskpooltype == 'logical':
                 diskformat = 'raw'
             disksxml = """%s<disk type='file' device='disk'>
                     <driver name='qemu' type='%s'/>
@@ -194,12 +215,12 @@ class Kvirt:
                      </sysinfo>""" % (version, title)
         if iso is None:
             if cloudinit:
-                iso = "%s/%s.iso" % (poolpath, name)
+                iso = "%s/%s.iso" % (default_poolpath, name)
             else:
                 iso = ''
         else:
             try:
-                iso = "%s/%s" % (poolpath, iso)
+                iso = "%s/%s" % (default_poolpath, iso)
                 isovolume = volumes[template][iso]
                 iso = isovolume.path()
             except:
@@ -268,16 +289,17 @@ class Kvirt:
                   </devices>
                     %s
                     </domain>""" % (virttype, name, description, version, memory, numcpus, machine, sysinfo, disksxml, netxml, isoxml, displayxml, serialxml, nestedxml)
-        pool = conn.storagePoolLookupByName(pool)
-        pool.refresh(0)
-        for volxml in volsxml:
-            pool.createXML(volxml, 0)
+        for pool in volsxml:
+            storagepool = conn.storagePoolLookupByName(pool)
+            storagepool.refresh(0)
+            for volxml in volsxml[pool]:
+                storagepool.createXML(volxml, 0)
         conn.defineXML(vmxml)
         vm = conn.lookupByName(name)
         vm.setAutostart(1)
         if cloudinit:
             self._cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain)
-            self._uploadiso(name, pool=pool)
+            self._uploadiso(name, pool=default_storagepool)
         if start:
             vm.create()
         return {'result': 'success'}
