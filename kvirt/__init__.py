@@ -754,9 +754,9 @@ class Kvirt:
             poolpath = element.text
             break
         isopath = "%s/%s.iso" % (poolpath, name)
-        isosize = float(os.path.getsize("/tmp/%s.iso" % name))/1024/1024/1024
+        isosize = float(os.path.getsize("/tmp/%s.iso" % name)) / 1024 / 1024 / 1024
         if int(isosize * MB) == 0:
-            isosize = float(1/MB)
+            isosize = float(1 / MB)
         isoxml = self._xmlvolume(path=isopath, size=isosize, diskformat='raw')
         pool.createXML(isoxml, 0)
         isovolume = conn.storageVolLookupByPath(isopath)
