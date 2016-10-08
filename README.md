@@ -172,8 +172,6 @@ virsh vol-create-as vms $TEMPLATE $TSIZE
 virsh vol-upload --pool vms $TEMPLATE ${TEMPLATE}.raw
 ```
 
-Note that LVM-backed storage pools are currently not working with `kcli list -t`.
-
 ##cloudinit stuff
 
 if cloudinit is enabled (it is by default), a custom iso is generated on the fly for your vm ( using mkisofs) and uploaded to your kvm instance ( using the API).

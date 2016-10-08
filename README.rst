@@ -200,9 +200,6 @@ upload it to the pool. Assuming a volume group with name ``vms``, do:
     virsh vol-create-as vms $TEMPLATE $TSIZE
     virsh vol-upload --pool vms $TEMPLATE ${TEMPLATE}.raw
 
-Note that LVM-backed storage pools are currently not working with
-``kcli list -t``.
-
 cloudinit stuff
 ---------------
 
