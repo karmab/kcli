@@ -164,10 +164,12 @@ For an LVM-backed storage pool, convert the image to raw format, and upload it t
 
 ```
 TEMPLATE=xenial-server-cloudimg-amd64-disk1.img
-TSIZE=`ls --size -q $TEMPLATE | cut -d' ' -f1`
+
 qemu-img convert -f qcow2 -O raw $TEMPLATE ${TEMPLATE}.raw
+TSIZE=`ls -l ${TEMPLATE}.raw | tr -s ' ' | cut -d' ' -f5`
+TSIZE=`ls --size -q ${TEMPLATE}.raw | cut -d' ' -f1`
 virsh vol-create-as vms $TEMPLATE $TSIZE
-virsh vol-upload --pool vms $TEMPLATE $TEMPLATE
+virsh vol-upload --pool vms $TEMPLATE ${TEMPLATE}.raw
 ```
 
 Note that LVM-backed storage pools are currently not working with `kcli list -t`.
