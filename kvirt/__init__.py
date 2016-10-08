@@ -13,7 +13,7 @@ import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "1.0.36"
+__version__ = "1.0.37"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -607,7 +607,7 @@ class Kvirt:
 
     def _xmlvolume(self, path, size, pooltype='file', backing=None, diskformat='qcow2'):
         size = int(size) * MB
-        if size == 0 and pooltype != 'file':
+        if int(size) == 0:
             size = 500 * 1024
         name = path.split('/')[-1]
         if pooltype == 'block':
