@@ -13,7 +13,7 @@ import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "1.0.34"
+__version__ = "1.0.35"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -606,7 +606,7 @@ class Kvirt:
         return diskxml
 
     def _xmlvolume(self, path, size, pooltype='file', backing=None, diskformat='qcow2'):
-        size = int(size * MB)
+        size = int(size) * MB
         name = path.split('/')[-1]
         if pooltype == 'block':
             volume = """<volume type='block'>
@@ -880,7 +880,6 @@ class Kvirt:
         pool.refresh(0)
         storagename = "%s_%d.img" % (name, diskindex)
         diskpath = "%s/%s" % (poolpath, storagename)
-        print diskpath, size, pooltype, diskformat
         volxml = self._xmlvolume(path=diskpath, size=size, pooltype=pooltype, diskformat=diskformat, backing=None)
         if pooltype == 'logical':
             diskformat = 'raw'

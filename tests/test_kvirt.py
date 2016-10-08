@@ -31,14 +31,6 @@ class TestK:
 
     def test_create_pool(self):
         k = self.conn
-        # if self.host == '127.0.0.1' or self.host == 'localhost':
-        #    cmd1 = "test -d %s/%s || mkdir %s/%s" % (self.path, self.name, self.path, self.name)
-        #    cmd2 = "chown %s %s/%s; " % (self.libvirt_user, self.path, self.name)
-        # else:
-        #    cmd1 = 'ssh %s@%s "test -d %s/%s || mkdir %s/%s"' % (self.user, self.host, self.path, self.name, self.path, self.name)
-        #    cmd2 = 'ssh %s@%s "chgrp %s %s/%s"' % (self.user, self.host, self.libvirt_user, self.path, self.name)
-        # os.system(cmd1)
-        # os.system(cmd2)
         k.create_pool(name=self.name, poolpath='%s/%s' % (self.path, self.name), user=self.libvirt_user)
         assert True
 
@@ -49,6 +41,11 @@ class TestK:
         status = k.status(self.name)
         print(status)
         assert status is not None
+
+    def test_add_disk(self):
+        k = self.conn
+        k.add_disk(name=self.name, size=1, pool=self.name)
+        assert True
 
     def test_delete_vm(self):
         k = self.conn

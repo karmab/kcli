@@ -40,7 +40,6 @@ If using a debian based distribution:
 ::
 
     apt-get -y install python-pip pkg-config libvirt-dev genisoimage qemu-kvm telnet libvirt-bin python-dev libyaml-dev
-    ln -s /usr/bin/genisoimage /usr/local/bin/mkisofs
 
 then you can install from pypi
 
@@ -52,7 +51,7 @@ To deploy from templates, grab images at
 `openstack <http://docs.openstack.org/image-guide/obtain-images.html>`__
 ## configuration
 
-If you want to only use your local libvirt daemon, no configuration is
+If you only want to use your local libvirt daemon, no configuration is
 needed. If you want to generate a basic settings file, you can use the
 following command:
 
@@ -139,7 +138,8 @@ How to use
 -  ``kcli report``
 -  list vms, along with their private ip ( and plan if applicable)
 -  ``kcli list``
--  list templates
+-  list templates ( Note that it will find them out based on their qcow2
+   extension...)
 -  ``kcli list -t``
 -  create vm from profile base7
 -  ``kcli create -p base7 myvm``
@@ -345,13 +345,15 @@ so that it points to your host with the corresponding user.
 issues found with cloud images
 ------------------------------
 
--  for ubuntu latest images ( xenial), one needs to use something like
-   guestfish to edit /boot/grub/grub.cfg and /etc/default/grub and
-   remove console=ttyS0 from it.
 -  Also note that you need to install python-simplejson ( actually
    bringing python2.7) to allow ansible to work on ubuntu
 -  debian images are freezing. rebooting fixes the issue but as such
    cloudinit doesnt get applied...
+
+TODO
+----
+
+-  remove all the print for the kvirt module and only return data
 
 Problems?
 ---------

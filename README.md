@@ -275,14 +275,14 @@ Additionally, there s an ansible kcli/kvirt module under extras, with a sample p
 
 basic testing can be run with pytest. If using a remote hypervisor, you ll want to set the *KVIRT_HOST* and *KVIRT_USER* environment variables so that it points to your host with the corresponding user.
 
-
-
-
 ## issues found with cloud images
 
-- for ubuntu latest images ( xenial), one needs to use something like guestfish to edit /boot/grub/grub.cfg and /etc/default/grub and remove console=ttyS0 from it.
 - Also note that you need to install python-simplejson ( actually bringing python2.7) to allow ansible to work on ubuntu
 - debian images are freezing. rebooting fixes the issue but as such cloudinit doesnt get applied...
+
+## TODO 
+ 
+- remove all the print for the kvirt module and only return data
 
 ##Problems?
 
