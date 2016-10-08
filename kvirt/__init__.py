@@ -8,16 +8,12 @@ from distutils.spawn import find_executable
 from iptools import IpRange
 from netaddr import IPNetwork
 from libvirt import open as libvirtopen
-try:
-    from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE
-except:
-    pass
 import os
 import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "1.0.32"
+__version__ = "1.0.33"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -379,7 +375,13 @@ class Kvirt:
 
     def list(self):
         vms = []
+        leases = {}
         conn = self.conn
+        for network in conn.listAllNetworks():
+            for lease in network.DHCPLeases():
+                ip = lease['ipaddr']
+                mac = lease['mac']
+                leases[mac] = ip
         status = {0: 'down', 1: 'up'}
         for vm in conn.listAllDomains(0):
             xml = vm.XMLDesc(0)
@@ -393,12 +395,13 @@ class Kvirt:
             state = status[vm.isActive()]
             ip = ''
             title = ''
+            for element in root.getiterator('interface'):
+                mac = element.find('mac').get('address')
+                break
             if vm.isActive():
-                try:
-                    for address in vm.interfaceAddresses(VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE).values():
-                        ip = address['addrs'][0]['addr']
-                        break
-                except:
+                if mac in leases:
+                    ip = leases[mac]
+                else:
                     ip = ''
             for entry in root.getiterator('entry'):
                 attributes = entry.attrib
@@ -462,7 +465,13 @@ class Kvirt:
 
     def info(self, name):
         ips = []
+        leases = {}
         conn = self.conn
+        for network in conn.listAllNetworks():
+            for lease in network.DHCPLeases():
+                ip = lease['ipaddr']
+                mac = lease['mac']
+                leases[mac] = ip
         try:
             vm = conn.lookupByName(name)
             xml = vm.XMLDesc(0)
@@ -511,10 +520,8 @@ class Kvirt:
                 print("net interfaces:%s mac: %s net: %s type:routed" % (device, mac, network))
                 network = conn.networkLookupByName(network)
             if vm.isActive():
-                for address in vm.interfaceAddresses(VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE).values():
-                    if address['hwaddr'] == mac:
-                        ip = address['addrs'][0]['addr']
-                        ips.append(ip)
+                if mac in leases:
+                    ips.append(leases[mac])
         for entry in root.getiterator('entry'):
             attributes = entry.attrib
             if attributes['name'] == 'version':
