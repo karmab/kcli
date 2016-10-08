@@ -13,7 +13,7 @@ import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "1.0.37"
+__version__ = "1.0.38"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -152,8 +152,8 @@ class Kvirt:
                 backingxml = '<backingStore/>'
             volxml = self._xmlvolume(path=diskpath, size=disksize, pooltype=pooltype, backing=backing, diskformat=diskformat)
             volsxml.append(volxml)
-            if pooltype == 'logical':
-                diskformat = 'raw'
+            # if pooltype == 'logical':
+            #    diskformat = 'raw'
             disksxml = """%s<disk type='file' device='disk'>
                     <driver name='qemu' type='%s'/>
                     <source file='%s'/>
