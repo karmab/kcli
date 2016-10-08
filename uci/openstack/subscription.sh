@@ -1,1 +1,1 @@
-subscription_mitaka.sh
+subscription_newton.sh

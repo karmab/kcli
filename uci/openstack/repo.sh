@@ -1,1 +1,1 @@
-yum install -y centos-release-openstack-mitaka
+repo_newton.sh
