@@ -4,6 +4,7 @@
 interact with a local/remote libvirt daemon
 """
 
+from distutils.spawn import find_executable
 from iptools import IpRange
 from netaddr import IPNetwork
 from libvirt import open as libvirtopen
@@ -742,8 +743,8 @@ class Kvirt:
                     for cmd in cmds:
                         userdata.write("- %s\n" % cmd)
         isocmd = 'mkisofs'
-        if os.path.exists('/bin/genisoimage'):
-            isocmd = '/bin/genisoimage'
+        if find_executable('genisoimage') is not None:
+            isocmd = 'genisoimage'
         os.system("%s --quiet -o /tmp/%s.iso --volid cidata --joliet --rock /tmp/user-data /tmp/meta-data" % (isocmd, name))
 
     def handler(self, stream, data, file_):
