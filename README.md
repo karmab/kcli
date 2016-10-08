@@ -22,7 +22,7 @@ It started because i switched from ovirt and needed a tool similar to [ovirt.py]
 
 ## installation
 
-install requirements. you will also need to grab *mkisofs* for cloudinit isos to get generated
+install requirements. you will also need to grab *genisoimage* ( or *mkisofs* on OSX) for cloudinit isos to get generated
 Console access is based on remote-viewer
 For instance if using a rhel based distribution:
 

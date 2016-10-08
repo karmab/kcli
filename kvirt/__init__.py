@@ -741,7 +741,10 @@ class Kvirt:
                     userdata.write("runcmd:\n")
                     for cmd in cmds:
                         userdata.write("- %s\n" % cmd)
-        os.system("mkisofs --quiet -o /tmp/%s.iso --volid cidata --joliet --rock /tmp/user-data /tmp/meta-data" % name)
+        isocmd = '/bin/mkisofs'
+        if os.path.exists('/bin/genisoimage'):
+            isocmd = '/bin/genisoimage'
+        os.system("%s --quiet -o /tmp/%s.iso --volid cidata --joliet --rock /tmp/user-data /tmp/meta-data" % (isocmd, name))
 
     def handler(self, stream, data, file_):
         return file_.read(data)

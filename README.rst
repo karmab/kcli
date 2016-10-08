@@ -27,9 +27,9 @@ demo
 installation
 ------------
 
-install requirements. you will also need to grab *mkisofs* for cloudinit
-isos to get generated Console access is based on remote-viewer For
-instance if using a rhel based distribution:
+install requirements. you will also need to grab *genisoimage* ( or
+*mkisofs* on OSX) for cloudinit isos to get generated Console access is
+based on remote-viewer For instance if using a rhel based distribution:
 
 ::
 
