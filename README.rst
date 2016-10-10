@@ -161,8 +161,10 @@ How to use
 -  ``kcli plan -f x.yml x``
 -  delete all vms from plan x
 -  ``kcli plan -d x``
--  add 5GB disk to vm1
--  ``kcli add -s 5 vm1``
+-  add 5GB disk to vm1, using pool named vms
+-  ``kcli disk -s 5 -p vms vm1``
+-  delete disk named vm1\_2.img from vm1
+-  ``kcli disk -d -n vm1_2.img  vm1``
 -  update to 2GB memory vm1
 -  ``kcli update -m 2048 vm1``
 -  update internal ip ( usefull for ansible inventory over existing

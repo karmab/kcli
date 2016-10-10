@@ -12,6 +12,11 @@ from shutil import copyfile
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 
+def abort_if_false(ctx, param, value):
+    if not value:
+        ctx.abort()
+
+
 class Config():
     def load(self):
         inifile = "%s/kcli.yml" % os.environ.get('HOME')
@@ -151,10 +156,11 @@ def switch(config, client):
 @click.option('-p', '--profiles', is_flag=True)
 @click.option('-t', '--templates', is_flag=True)
 @click.option('-i', '--isos', is_flag=True)
+@click.option('-d', '--disks', is_flag=True)
 @click.option('-P', '--pools', is_flag=True)
 @click.option('-n', '--networks', is_flag=True)
 @pass_config
-def list(config, clients, profiles, templates, isos, pools, networks):
+def list(config, clients, profiles, templates, isos, disks, pools, networks):
     """List clients, profiles, templates, isos, pools or vms"""
     k = config.get()
     if pools:
@@ -185,6 +191,17 @@ def list(config, clients, profiles, templates, isos, pools, networks):
     elif isos:
         for iso in sorted(k.volumes(iso=True)):
             print(iso)
+    elif disks:
+        click.secho("Listing disk %s...", fg='green')
+        diskstable = PrettyTable(["Name", "Pool", "Path"])
+        diskstable.align["Name"] = "l"
+        k = config.get()
+        disks = k.list_disks()
+        for disk in disks:
+            path = disks[disk]['path']
+            pool = disks[disk]['pool']
+            diskstable.add_row([disk, pool, path])
+        print diskstable
     else:
         vms = PrettyTable(["Name", "Status", "Ips", "Source", "Description/Plan", "Profile"])
         for vm in sorted(k.list()):
@@ -295,12 +312,19 @@ def update(config, ip, memory, numcpus, name):
 
 
 @cli.command()
+@click.option('-d', '--delete', is_flag=True)
 @click.option('-s', '--size', help='Size of the disk to add, in GB')
+@click.option('-n', '--diskname', help='Name or Path of the disk, when deleting')
 @click.option('-p', '--pool', help='Pool')
 @click.argument('name')
 @pass_config
-def add(config, size, pool, name):
-    """Add disk to vm"""
+def disk(config, delete, size, diskname, pool, name):
+    """Add/Delete disk of vm"""
+    if delete:
+        click.secho("Deleting disk %s from %s..." % (diskname, name), fg='green')
+        k = config.get()
+        k.delete_disk(name, diskname)
+        return
     if size is None:
         click.secho("Missing size. Leaving...", fg='red')
         os._exit(1)

@@ -13,7 +13,7 @@ import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "1.0.40"
+__version__ = "1.0.41"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -486,7 +486,7 @@ class Kvirt:
                     os.system('virsh console %s' % name)
 
     def info(self, name):
-        ips = []
+        # ips = []
         leases = {}
         conn = self.conn
         for network in conn.listAllNetworks():
@@ -512,8 +512,8 @@ class Kvirt:
         numcpus = numcpus.text
         if vm.isActive():
             state = 'up'
-        print("name:%s" % name)
-        print("status:%s" % state)
+        print("name: %s" % name)
+        print("status: %s" % state)
         description = root.getiterator('description')
         if description:
             description = description[0].text
@@ -524,11 +524,11 @@ class Kvirt:
             attributes = entry.attrib
             if attributes['name'] == 'product':
                 title = entry.text
-        print("description:%s" % description)
+        print("description: %s" % description)
         if title is not None:
             print("profile: %s" % title)
-        print("cpus:%s" % numcpus)
-        print("memory:%sMB" % memory)
+        print("cpus: %s" % numcpus)
+        print("memory: %sMB" % memory)
         nicnumber = 0
         for element in root.getiterator('interface'):
             networktype = element.get('type')
@@ -536,21 +536,22 @@ class Kvirt:
             mac = element.find('mac').get('address')
             if networktype == 'bridge':
                 bridge = element.find('source').get('bridge')
-                print("net interfaces:%s mac:%s net:%s type:bridge" % (device, mac, bridge))
+                print("net interfaces: %s mac: %s net: %s type: bridge" % (device, mac, bridge))
             else:
                 network = element.find('source').get('network')
-                print("net interfaces:%s mac: %s net: %s type:routed" % (device, mac, network))
+                print("net interfaces:%s mac: %s net: %s type: routed" % (device, mac, network))
                 network = conn.networkLookupByName(network)
             if vm.isActive():
                 if mac in leases:
-                    ips.append(leases[mac])
+                    # ips.append(leases[mac])
+                    print("ip: %s" % leases[mac])
+            nicnumber = nicnumber + 1
         for entry in root.getiterator('entry'):
             attributes = entry.attrib
             if attributes['name'] == 'version':
                 ip = entry.text
-                ips.append(ip)
+                print("ip: %s" % ip)
                 break
-            nicnumber = nicnumber + 1
         for element in root.getiterator('disk'):
             disktype = element.get('device')
             if disktype == 'cdrom':
@@ -561,9 +562,9 @@ class Kvirt:
             path = element.find('source').get('file')
             volume = conn.storageVolLookupByPath(path)
             disksize = int(float(volume.info()[1]) / 1024 / 1024 / 1024)
-            print("diskname:%s disksize:%sGB diskformat:%s type:%s path:%s" % (device, disksize, diskformat, drivertype, path))
-        for ip in ips:
-            print("ip:%s" % ip)
+            print("diskname: %s disksize: %sGB diskformat: %s type: %s path: %s" % (device, disksize, diskformat, drivertype, path))
+        # for ip in ips:
+        #    print("ip:%s" % ip)
 
     def volumes(self, iso=False):
         isos = []
@@ -907,6 +908,38 @@ class Kvirt:
         diskxml = self._xmldisk(diskpath=diskpath, diskdev=diskdev, diskbus=diskbus, diskformat=diskformat)
         pool.createXML(volxml, 0)
         vm.attachDevice(diskxml)
+
+    def delete_disk(self, name, diskname):
+        try:
+            vm = self.conn.lookupByName(name)
+            xml = vm.XMLDesc(0)
+            root = ET.fromstring(xml)
+        except:
+            print("VM %s not found" % name)
+            return
+        for element in root.getiterator('disk'):
+            disktype = element.get('device')
+            diskdev = element.find('target').get('dev')
+            diskbus = element.find('target').get('bus')
+            diskformat = element.find('driver').get('type')
+            if disktype == 'cdrom':
+                continue
+            diskpath = element.find('source').get('file')
+            volume = self.conn.storageVolLookupByPath(diskpath)
+            if volume.name() == diskname or volume.path() == diskname:
+                diskxml = self._xmldisk(diskpath=diskpath, diskdev=diskdev, diskbus=diskbus, diskformat=diskformat)
+                vm.detachDevice(diskxml)
+                volume.delete(0)
+                return
+        print("Disk %s not found in %s" % (diskname, name))
+
+    def list_disks(self):
+        volumes = {}
+        for p in self.conn.listStoragePools():
+            poo = self.conn.storagePoolLookupByName(p)
+            for volume in poo.listAllVolumes():
+                volumes[volume.name()] = {'pool': poo.name(), 'path': volume.path()}
+        return volumes
 
     def ssh(self, name):
         ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety']
