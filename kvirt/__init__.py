@@ -13,7 +13,7 @@ import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "1.0.42"
+__version__ = "1.0.43"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -160,6 +160,12 @@ class Kvirt:
                     print("Invalid template %s.Leaving..." % template)
                     return {'result': 'failure', 'reason': "Invalid template %s" % template}
                 backing = backingvolume.path()
+                if '/dev' in backing and diskpooltype == 'dir':
+                    print("lvm template cant be used with a dir pool.Leaving...")
+                    return {'result': 'failure', 'reason': "lvm template cant be used with a dir pool.Leaving..."}
+                if '/dev' not in backing and diskpooltype == 'logical':
+                    print("file template cant be used with a lvm pool.Leaving...")
+                    return {'result': 'failure', 'reason': "file template cant be used with a lvm pool.Leaving..."}
                 backingxml = """<backingStore type='file' index='1'>
                                 <format type='qcow2'/>
                                 <source file='%s'/>
