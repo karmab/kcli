@@ -315,10 +315,11 @@ def update(config, ip, memory, numcpus, name):
 @click.option('-d', '--delete', is_flag=True)
 @click.option('-s', '--size', help='Size of the disk to add, in GB')
 @click.option('-n', '--diskname', help='Name or Path of the disk, when deleting')
+@click.option('-t', '--template', help='Name or Path of a Template, when adding')
 @click.option('-p', '--pool', help='Pool')
 @click.argument('name')
 @pass_config
-def disk(config, delete, size, diskname, pool, name):
+def disk(config, delete, size, diskname, template, pool, name):
     """Add/Delete disk of vm"""
     if delete:
         click.secho("Deleting disk %s from %s..." % (diskname, name), fg='green')
@@ -333,7 +334,7 @@ def disk(config, delete, size, diskname, pool, name):
         os._exit(1)
     k = config.get()
     click.secho("Adding disk %s..." % (name), fg='green')
-    k.add_disk(name=name, size=size, pool=pool)
+    k.add_disk(name=name, size=size, pool=pool, template=template)
 
 
 @cli.command()

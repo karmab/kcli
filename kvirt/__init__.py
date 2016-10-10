@@ -864,7 +864,7 @@ class Kvirt:
         newxml = ET.tostring(root)
         conn.defineXML(newxml)
 
-    def add_disk(self, name, size, pool=None, thin=True):
+    def add_disk(self, name, size, pool=None, thin=True, template=None):
         conn = self.conn
         diskformat = 'qcow2'
         diskbus = 'virtio'
@@ -899,10 +899,21 @@ class Kvirt:
         else:
             print("Pool not found. Leaving....")
             return
+        if template is not None:
+            volumes = {}
+            for p in conn.listStoragePools():
+                poo = conn.storagePoolLookupByName(p)
+                for vol in poo.listAllVolumes():
+                    volumes[vol.name()] = vol.path()
+            if template not in volumes and template not in volumes.values():
+                print("Invalid template %s.Leaving..." % template)
+            if template in volumes:
+                template = volumes[template]
         pool.refresh(0)
         storagename = "%s_%d.img" % (name, diskindex)
         diskpath = "%s/%s" % (poolpath, storagename)
-        volxml = self._xmlvolume(path=diskpath, size=size, pooltype=pooltype, diskformat=diskformat, backing=None)
+        volxml = self._xmlvolume(path=diskpath, size=size, pooltype=pooltype,
+                                 diskformat=diskformat, backing=template)
         if pooltype == 'logical':
             diskformat = 'raw'
         diskxml = self._xmldisk(diskpath=diskpath, diskdev=diskdev, diskbus=diskbus, diskformat=diskformat)
