@@ -13,7 +13,7 @@ import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "1.0.44"
+__version__ = "1.0.45"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -924,10 +924,14 @@ class Kvirt:
         diskxml = self._xmldisk(diskpath=diskpath, diskdev=diskdev, diskbus=diskbus, diskformat=diskformat)
         pool.createXML(volxml, 0)
         vm.attachDevice(diskxml)
+        vm = conn.lookupByName(name)
+        vmxml = vm.XMLDesc(0)
+        conn.defineXML(vmxml)
 
     def delete_disk(self, name, diskname):
+        conn = self.conn
         try:
-            vm = self.conn.lookupByName(name)
+            vm = conn.lookupByName(name)
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
         except:
@@ -946,6 +950,9 @@ class Kvirt:
                 diskxml = self._xmldisk(diskpath=diskpath, diskdev=diskdev, diskbus=diskbus, diskformat=diskformat)
                 vm.detachDevice(diskxml)
                 volume.delete(0)
+                vm = conn.lookupByName(name)
+                vmxml = vm.XMLDesc(0)
+                conn.defineXML(vmxml)
                 return
         print("Disk %s not found in %s" % (diskname, name))
 
