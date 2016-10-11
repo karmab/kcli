@@ -13,7 +13,7 @@ import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "1.0.43"
+__version__ = "1.0.44"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -425,12 +425,11 @@ class Kvirt:
             title = ''
             for element in root.getiterator('interface'):
                 mac = element.find('mac').get('address')
-                break
-            if vm.isActive():
-                if mac in leases:
-                    ip = leases[mac]
-                else:
-                    ip = ''
+                if vm.isActive():
+                    if mac in leases:
+                        ip = leases[mac]
+                    else:
+                        ip = ''
             for entry in root.getiterator('entry'):
                 attributes = entry.attrib
                 if attributes['name'] == 'version':

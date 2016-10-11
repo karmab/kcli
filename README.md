@@ -8,13 +8,14 @@ It will also report ips for any vm connected to a dhcp enabled libvirt network a
 
 It started because i switched from ovirt and needed a tool similar to [ovirt.py](https://github.com/karmab/ovirt)
 
-##  Why should i use this instead of vagrant
+##  Why should i use this instead of vagrant for kvm
 
 - easy syntax to launch single or multiple vms
 - cloudinit based customization, not over ssh
 - no need of using custom images, the public ones will do
 - spice/vnc consoles and tcp serial ones
-
+- to be fair, i' ve only tested the code against kvm, so vagrant is a better
+  option if you' re running on virtualbox o vmware fusion
 
 ## demo
 
