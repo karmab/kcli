@@ -13,7 +13,7 @@ import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "1.0.45"
+__version__ = "1.0.46"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -113,12 +113,14 @@ class Kvirt:
                 disksize = default_disksize
                 diskthin = default_diskthin
                 diskinterface = default_diskinterface
+                diskpool = default_pool
                 diskpooltype = default_pooltype
                 diskpoolpath = default_poolpath
             elif isinstance(disk, int):
                 disksize = disk
                 diskthin = default_diskthin
                 diskinterface = default_diskinterface
+                diskpool = default_pool
                 diskpooltype = default_pooltype
                 diskpoolpath = default_poolpath
             elif isinstance(disk, dict):
