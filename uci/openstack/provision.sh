@@ -10,9 +10,9 @@ sed -i "s/OS_PASSWORD=.*/OS_PASSWORD=testk/" /root/keystonerc_testk
 sed -i "s/OS_TENANT_NAME=admin/OS_TENANT_NAME=testk/" /root/keystonerc_testk
 sed -i "s/keystone_admin/keystone_testk/" /root/keystonerc_testk
 source /root/keystonerc_admin
-keystone tenant-create --name testk
-keystone user-create  --name testk --tenant testk --pass testk
-keystone user-role-add --user=testk --role=admin --tenant=testk
+openstack project create testk
+openstack user create  --project testk --password testk testk
+openstack role add --user=testk --project=testk admin
 neutron net-create external --router:external
 neutron subnet-create --name $EXTERNAL_SUBNET --allocation-pool start=$EXTERNAL_START,end=$EXTERNAL_END --disable-dhcp --gateway $EXTERNAL_GATEWAY external $EXTERNAL_SUBNET
 keystone password-update --new-password $ADMIN_PASSWORD

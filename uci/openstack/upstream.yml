@@ -8,6 +8,8 @@ rdo:
  nets:
   - cinet
  pool: vms
+ cmds:
+  - echo unix1234 | passwd --stdin root
  scripts: 
   - repo.sh
   - install.sh

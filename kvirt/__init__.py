@@ -13,7 +13,7 @@ import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "1.0.47"
+__version__ = "1.0.48"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -489,7 +489,7 @@ class Kvirt:
                         print("Remote serial Console requires using ssh . Leaving...")
                         return
                     else:
-                        serialcommand = "ssh -p %s %s@%s telnet 127.0.0.1 %s" % (self.port, self.user, self.host, serialport)
+                        serialcommand = "ssh -p %s %s@%s nc 127.0.0.1 %s" % (self.port, self.user, self.host, serialport)
                     os.system(serialcommand)
                 elif self.host in ['localhost', '127.0.0.1']:
                     os.system('virsh console %s' % name)

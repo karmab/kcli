@@ -28,13 +28,13 @@ Console access is based on remote-viewer
 For instance if using a rhel based distribution:
 
 ```
-yum -y install gcc libvirt-devel python-devel genisoimage qemu-kvm telnet python-pip
+yum -y install gcc libvirt-devel python-devel genisoimage qemu-kvm nmap-ncat python-pip
 ```
 
 If using a debian based distribution:
 
 ```
-apt-get -y install python-pip pkg-config libvirt-dev genisoimage qemu-kvm telnet libvirt-bin python-dev libyaml-dev
+apt-get -y install python-pip pkg-config libvirt-dev genisoimage qemu-kvm netcat libvirt-bin python-dev libyaml-dev
 ```
 
 then you can install from pypi
@@ -134,7 +134,7 @@ The [samples directory](https://github.com/karmab/kcli/tree/master/samples) cont
  - `kcli start vm1` 
 - get remote-viewer console
  - `kcli console vm1` 
-- get serial console ( over tcp!!!). Note that it will only work with vms created with kcli and will require telnet client to be installed on host
+- get serial console ( over tcp!!!). Note that it will only work with vms created with kcli and will require netcat client to be installed on host
  - `kcli console -s vm1` 
 - deploy multiple vms using plan x defined in x.yml file 
  - `kcli plan -f x.yml x`
