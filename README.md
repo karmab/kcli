@@ -156,6 +156,10 @@ The [samples directory](https://github.com/karmab/kcli/tree/master/samples) cont
   - `kcli switch bumblefoot` 
 - add a new network
   - `kcli network -c 192.168.7.0/24 --dhcp mynet` 
+- add a new nic from network private1
+- - `kcli nic -n private1 myvm`
+- delete nic eth2 from vm
+- - `kcli nic -di eth2 myvm`
 
 ##templates
 

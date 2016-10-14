@@ -339,6 +339,27 @@ def disk(config, delete, size, diskname, template, pool, name):
 
 @cli.command()
 @click.option('-d', '--delete', is_flag=True)
+@click.option('-i', '--interface', help='Name of the interface, when deleting')
+@click.option('-n', '--network', help='Network')
+@click.argument('name')
+@pass_config
+def nic(config, delete, interface, network, name):
+    """Add/Delete nic of vm"""
+    if delete:
+        click.secho("Deleting nic from %s..." % (name), fg='green')
+        k = config.get()
+        k.delete_nic(name, interface)
+        return
+    if network is None:
+        click.secho("Missing network. Leaving...", fg='red')
+        os._exit(1)
+    k = config.get()
+    click.secho("Adding Nic %s..." % (name), fg='green')
+    k.add_nic(name=name, network=network)
+
+
+@cli.command()
+@click.option('-d', '--delete', is_flag=True)
 @click.option('-f', '--full', is_flag=True)
 @click.option('-t', '--pooltype', help='Type of the pool', type=click.Choice(['dir', 'logical']), default='dir')
 @click.option('-p', '--path', help='Path of the pool')

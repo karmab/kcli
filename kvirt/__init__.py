@@ -13,7 +13,7 @@ import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "1.0.48"
+__version__ = "1.0.49"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -967,6 +967,73 @@ class Kvirt:
             for volume in poo.listAllVolumes():
                 volumes[volume.name()] = {'pool': poo.name(), 'path': volume.path()}
         return volumes
+
+    def add_nic(self, name, network):
+        conn = self.conn
+        networks = {}
+        for interface in conn.listAllInterfaces():
+            networks[interface.name()] = 'bridge'
+        for net in conn.listAllNetworks():
+            networks[net.name()] = 'network'
+        try:
+            vm = conn.lookupByName(name)
+        except:
+            print("VM %s not found" % name)
+            return
+        if network not in networks:
+            print("Network %s not found" % network)
+            return
+        else:
+            networktype = networks[network]
+            source = "<source %s='%s'/>" % (networktype, network)
+        nicxml = """<interface type='%s'>
+                    %s
+                    <model type='virtio'/>
+                    </interface>""" % (networktype, source)
+        vm.attachDevice(nicxml)
+        vm = conn.lookupByName(name)
+        vmxml = vm.XMLDesc(0)
+        conn.defineXML(vmxml)
+
+    def delete_nic(self, name, interface):
+        conn = self.conn
+        networks = {}
+        nicnumber = 0
+        for n in conn.listAllInterfaces():
+            networks[n.name()] = 'bridge'
+        for n in conn.listAllNetworks():
+            networks[n.name()] = 'network'
+        try:
+            vm = conn.lookupByName(name)
+            xml = vm.XMLDesc(0)
+            root = ET.fromstring(xml)
+        except:
+            print("VM %s not found" % name)
+            return
+        for element in root.getiterator('interface'):
+            device = "eth%s" % nicnumber
+            if device == interface:
+                mac = element.find('mac').get('address')
+                networktype = element.get('type')
+                if networktype == 'bridge':
+                    network = element.find('source').get('bridge')
+                    source = "<source %s='%s'/>" % (networktype, network)
+                else:
+                    network = element.find('source').get('network')
+                    source = "<source %s='%s'/>" % (networktype, network)
+                break
+            else:
+                nicnumber += 1
+        nicxml = """<interface type='%s'>
+                    <mac address='%s'/>
+                    %s
+                    <model type='virtio'/>
+                    </interface>""" % (networktype, mac, source)
+        print nicxml
+        vm.detachDevice(nicxml)
+        vm = conn.lookupByName(name)
+        vmxml = vm.XMLDesc(0)
+        conn.defineXML(vmxml)
 
     def ssh(self, name):
         ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety']
