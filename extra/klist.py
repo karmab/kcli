@@ -53,7 +53,7 @@ class KcliInventory(object):
             self.inventory = empty()
         # If no groups or vars are present, return an empty inventory.
         else:
-            self.inventory = self.empty()
+            self.inventory = empty()
         print json.dumps(self.inventory)
 
     # Read the command line args passed to the script.
