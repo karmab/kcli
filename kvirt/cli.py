@@ -445,6 +445,9 @@ def plan(config, inputfile, start, stop, delete, plan):
     with open(inputfile, 'r') as entries:
         vms = yaml.load(entries)
         for name in vms:
+            if k.exists(name):
+                click.secho("%s skipped!" % name, fg='blue')
+                continue
             profile = vms[name]
             if 'profile' in profile.keys():
                 profiles = config.profiles
