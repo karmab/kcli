@@ -240,6 +240,7 @@ nets:
 Within a net section, you can use name, nic, ip, mask and gateway as keys.
 
 Note that up to 8 ips can also be provided on command line when creating a single vm ( with the flag -1, -2, -3,-4,...)
+Also note that if you force cloudinit to False, but still specific ip, a reservation will be made if the corresponding network has dhcp and when the provided ipbelongs to the network range
 
 - *iso* ( optional)
 - *netmasks* (optional)

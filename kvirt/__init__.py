@@ -6,14 +6,14 @@ interact with a local/remote libvirt daemon
 
 from distutils.spawn import find_executable
 from iptools import IpRange
-from netaddr import IPNetwork
+from netaddr import IPAddress, IPNetwork
 from libvirt import open as libvirtopen
 import os
 import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "1.0.49"
+__version__ = "1.0.50"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -308,6 +308,14 @@ class Kvirt:
         if cloudinit:
             self._cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain)
             self._uploadiso(name, pool=default_storagepool)
+        else:
+            xml = vm.XMLDesc(0)
+            vmxml = ET.fromstring(xml)
+            macs = []
+            for element in vmxml.getiterator('interface'):
+                mac = element.find('mac').get('address')
+                macs.append(mac)
+            self._reserve_ip(name, nets, macs)
         if start:
             vm.create()
         return {'result': 'success'}
@@ -628,6 +636,21 @@ class Kvirt:
                         deleted = True
             if deleted:
                 storage.refresh(0)
+        for element in root.getiterator('interface'):
+            mac = element.find('mac').get('address')
+            networktype = element.get('type')
+            if networktype != 'bridge':
+                network = element.find('source').get('network')
+                network = conn.networkLookupByName(network)
+                netxml = network.XMLDesc(0)
+                root = ET.fromstring(netxml)
+                for host in root.getiterator('host'):
+                    hostmac = host.get('mac')
+                    ip = host.get('ip')
+                    name = host.get('name')
+                    if hostmac == mac:
+                        hostentry = "<host mac='%s' name='%s' ip='%s'/>" % (mac, name, ip)
+                        network.update(2, 4, 0, hostentry, 1)
 
     def _xmldisk(self, diskpath, diskdev, diskbus='virtio', diskformat='qcow2'):
         diskxml = """<disk type='file' device='disk'>
@@ -722,6 +745,32 @@ class Kvirt:
             vm.setAutostart(1)
             vm.create()
 
+    def _reserve_ip(self, name, nets, macs):
+        conn = self.conn
+        for index, net in enumerate(nets):
+            if not isinstance(net, dict):
+                continue
+            ip = net.get('ip')
+            network = net.get('name')
+            mac = macs[index]
+            if ip is None or network is None:
+                continue
+            network = conn.networkLookupByName(network)
+            oldnetxml = network.XMLDesc()
+            root = ET.fromstring(oldnetxml)
+            ipentry = root.getiterator('ip')
+            if ipentry:
+                attributes = ipentry[0].attrib
+                firstip = attributes.get('address')
+                netmask = attributes.get('netmask')
+                netip = IPNetwork('%s/%s' % (firstip, netmask))
+            dhcp = root.getiterator('dhcp')
+            if not dhcp:
+                continue
+            if not IPAddress(ip) in netip:
+                continue
+            network.update(4, 4, 0, '<host mac="%s" name="%s" ip="%s" />' % (mac, name, ip), 1)
+
     def _cloudinit(self, name, keys=None, cmds=None, nets=[], gateway=None, dns=None, domain=None):
         default_gateway = gateway
         with open('/tmp/meta-data', 'w') as metadatafile:
@@ -814,11 +863,11 @@ class Kvirt:
             print("VM %s not found" % name)
         if vm.isActive() == 1:
             print("Machine up. Change will only appear upon next reboot")
-        os = root.getiterator('os')[0]
-        smbios = os.find('smbios')
+        osentry = root.getiterator('os')[0]
+        smbios = osentry.find('smbios')
         if smbios is None:
             newsmbios = ET.Element("smbios", mode="sysinfo")
-            os.append(newsmbios)
+            osentry.append(newsmbios)
         sysinfo = root.getiterator('sysinfo')
         system = root.getiterator('system')
         if not sysinfo:
