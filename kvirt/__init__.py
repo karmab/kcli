@@ -202,6 +202,9 @@ class Kvirt:
                     nets[index]['ip'] = ip
                 elif 'ip' in nets[index]:
                     ip = nets[index]['ip']
+                mac = None
+                if 'mac' in nets[index]:
+                    mac = "<mac address='%s'/>" % nets[index]['mac']
                 if index == 0 and ip is not None:
                     version = "<entry name='version'>%s</entry>" % ips[0]
             if netname in bridges:
@@ -212,9 +215,10 @@ class Kvirt:
                 print("Invalid network %s.Leaving..." % netname)
             netxml = """%s
                      <interface type='%s'>
+                     %s
                      <source %s='%s'/>
                      <model type='virtio'/>
-                     </interface>""" % (netxml, sourcenet, sourcenet, netname)
+                     </interface>""" % (netxml, sourcenet, mac, sourcenet, netname)
         version = """<sysinfo type='smbios'>
                      <system>
                      %s
