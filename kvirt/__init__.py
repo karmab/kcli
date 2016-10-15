@@ -1060,6 +1060,8 @@ class Kvirt:
                 user = 'cloud-user'
             elif 'debian' in template.lower():
                 user = 'debian'
+            elif 'arch' in template.lower():
+                user = 'arch'
         ip = vm[2]
         if ip == '':
             print("No ip found. Cannot ssh...")
