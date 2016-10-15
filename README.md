@@ -163,6 +163,8 @@ The [samples directory](https://github.com/karmab/kcli/tree/master/samples) cont
 
 ##templates
 
+For templates to work with cloud-init, they require the "NoCloud" datasource to be enabled! Typically configured in /etc/cloud/cloud.cfg.d/90\*.
+
 Templates should be in the same storage pool as the VM, in order to benefit from the Copy-on-Write mechanism.
 
 For a regular file-backed storage pool, download the image you want, and put it in the backing store directory.
@@ -283,6 +285,7 @@ basic testing can be run with pytest. If using a remote hypervisor, you ll want 
 
 - Also note that you need to install python-simplejson ( actually bringing python2.7) to allow ansible to work on ubuntu
 - debian images are freezing. rebooting fixes the issue but as such cloudinit doesnt get applied...
+- debian/archlinux images are missing the NoCloud datasource for cloud-init. Edit them with guestfish to make them work with cloud-init.
 
 ## TODO 
  
