@@ -97,6 +97,8 @@ class KcliInventory(object):
                     hostvalues[name]['ansible_user'] = 'cloud-user'
                 elif 'debian' in template.lower():
                     hostvalues[name]['ansible_user'] = 'debian'
+                elif 'arch' in template.lower():
+                    hostvalues[name]['ansible_user'] = 'arch'
         return metadata
 
 # Get the inventory.
