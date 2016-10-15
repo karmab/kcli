@@ -203,7 +203,7 @@ class Kvirt:
                 elif 'ip' in nets[index]:
                     ip = nets[index]['ip']
                 if index == 0 and ip is not None:
-                    version = "<entry name='version'>%s</entry>" % ips[0]
+                    version = "<entry name='version'>%s</entry>" % ip
             if netname in bridges:
                 sourcenet = 'bridge'
             elif netname in networks:
