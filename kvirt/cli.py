@@ -2,7 +2,7 @@
 
 import click
 import fileinput
-from .defaults import NETS, POOL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, START
+from .defaults import NETS, POOL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, START
 from prettytable import PrettyTable
 from kvirt import Kvirt, __version__
 import os
@@ -10,6 +10,14 @@ import yaml
 from shutil import copyfile
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+
+
+def handle_response(result, name, element='', action='deployed'):
+    if result['result'] == 'success':
+        click.secho("%s%s %s!" % (element, name, action), fg='green')
+    else:
+        reason = result['reason']
+        click.secho("%s%s not %s because %s :(" % (element, name, action, reason), fg='red')
 
 
 def abort_if_false(ctx, param, value):
@@ -53,6 +61,7 @@ class Config():
         defaults['guestid'] = default.get('guestid', GUESTID)
         defaults['vnc'] = bool(default.get('vnc', VNC))
         defaults['cloudinit'] = bool(default.get('cloudinit', CLOUDINIT))
+        defaults['reserveip'] = bool(default.get('reserveip', RESERVEIP))
         defaults['start'] = bool(default.get('start', START))
         self.default = defaults
         options = ini[self.client]
@@ -96,7 +105,8 @@ def start(config, name):
     """Start vm"""
     k = config.get()
     click.secho("Started vm %s..." % name, fg='green')
-    k.start(name)
+    result = k.start(name)
+    handle_response(result, name, element='', action='started')
 
 
 @cli.command()
@@ -106,7 +116,8 @@ def stop(config, name):
     """Stop vm"""
     k = config.get()
     click.secho("Stopped vm %s..." % name, fg='green')
-    k.stop(name)
+    result = k.stop(name)
+    handle_response(result, name, element='', action='stopped')
 
 
 @cli.command()
@@ -170,8 +181,14 @@ def list(config, clients, profiles, templates, isos, disks, pools, networks):
         return
     if networks:
         networks = k.list_networks()
+        click.secho("Listing disk %s...", fg='green')
+        networkstable = PrettyTable(["Name", "Pool", "Path"])
+        networkstable.align["Name"] = "l"
         for network in sorted(networks):
-            print(network)
+            cidr = networks[network]['cidr']
+            dhcp = networks[network]['dhcp']
+            networkstable.add_row([network, cidr, dhcp])
+        print networkstable
         return
     if clients:
         clientstable = PrettyTable(["Name", "Current"])
@@ -246,6 +263,7 @@ def create(config, profile, ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8, name):
     iso = profile.get('iso')
     vnc = profile.get('vnc', default['vnc'])
     cloudinit = profile.get('cloudinit', default['cloudinit'])
+    reserveip = profile.get('reserveip', default['reservip'])
     start = profile.get('start', default['start'])
     keys = profile.get('keys', None)
     cmds = profile.get('cmds', None)
@@ -270,12 +288,8 @@ def create(config, profile, ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8, name):
             else:
                 cmds = cmds + scriptcmds
     ips = [ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8]
-    result = k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain)
-    if result['result'] == 'success':
-        click.secho("%s deployed!" % name, fg='green')
-    else:
-        reason = result['reason']
-        click.secho("%s not deployed because of %s :(" % (name, reason), fg='red')
+    result = k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain)
+    handle_response(result, name)
 
 
 @cli.command()
@@ -443,12 +457,26 @@ def plan(config, inputfile, start, stop, delete, plan):
     click.secho("Deploying vms from plan %s" % (plan), fg='green')
     default = config.default
     with open(inputfile, 'r') as entries:
-        vms = yaml.load(entries)
-        for name in vms:
+        entries = yaml.load(entries)
+        networks = [net for net in entries if 'type' in entries[net] and entries[net]['type'] == 'network']
+        for name in networks:
+            profile = entries[name]
+            del entries[name]
+            if k.net_exists(name):
+                click.secho("%s skipped!" % name, fg='blue')
+                continue
+            cidr = profile.get('cidr')
+            nat = bool(profile.get('nat', True))
+            if cidr is None:
+                print "Missing Cidr for network %s. Not creating it..." % name
+                continue
+            dhcp = profile.get('dhcp', True)
+            k.create_network(name=name, cidr=cidr, dhcp=dhcp, nat=nat)
+            click.secho("Network %s deployed!" % name, fg='green')
+        for name in entries:
             if k.exists(name):
                 click.secho("%s skipped!" % name, fg='blue')
                 continue
-            profile = vms[name]
             if 'profile' in profile.keys():
                 profiles = config.profiles
                 customprofile = profiles[profile['profile']]
@@ -468,6 +496,7 @@ def plan(config, inputfile, start, stop, delete, plan):
             guestid = next((e for e in [profile.get('guestid'), customprofile.get('guestid'), default['guestid']] if e is not None))
             vnc = next((e for e in [profile.get('vnc'), customprofile.get('vnc'), default['vnc']] if e is not None))
             cloudinit = next((e for e in [profile.get('cloudinit'), customprofile.get('cloudinit'), default['cloudinit']] if e is not None))
+            reserveip = next((e for e in [profile.get('reserveip'), customprofile.get('reserveip'), default['reserveip']] if e is not None))
             start = next((e for e in [profile.get('start'), customprofile.get('start'), default['start']] if e is not None))
             nets = next((e for e in [profile.get('nets'), customprofile.get('nets'), default['nets']] if e is not None))
             iso = next((e for e in [profile.get('iso'), customprofile.get('iso')] if e is not None), None)
@@ -494,12 +523,8 @@ def plan(config, inputfile, start, stop, delete, plan):
                         cmds = scriptcmds
                     else:
                         cmds = cmds + scriptcmds
-            result = k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain)
-            if result['result'] == 'success':
-                click.secho("%s deployed!" % name, fg='green')
-            else:
-                reason = result['reason']
-                click.secho("%s not deployed because of %s :(" % (name, reason), fg='red')
+            result = k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain)
+            handle_response(result, name)
 
 
 @cli.command()
@@ -522,17 +547,24 @@ def ssh(config, name):
 
 @cli.command()
 @click.option('-d', '--delete', is_flag=True)
+@click.option('-i', '--isolated', is_flag=True, help='Isolated Network')
 @click.option('-c', '--cidr', help='Cidr of the net')
 @click.option('--dhcp', is_flag=True, help='Enable dhcp on the net')
 @click.argument('name')
 @pass_config
-def network(config, delete, cidr, dhcp, name):
+def network(config, delete, isolated, cidr, dhcp, name):
     """Create Network"""
     k = config.get()
     if delete:
-        k.delete_network(name=name)
+        result = k.delete_network(name=name)
+        handle_response(result, name, element='Network ')
     else:
-        k.create_network(name=name, cidr=cidr, dhcp=dhcp)
+        if isolated:
+            nat = False
+        else:
+            nat = True
+        result = k.create_network(name=name, cidr=cidr, dhcp=dhcp, nat=nat)
+        handle_response(result, name, element='Network ')
 
 
 @cli.command()

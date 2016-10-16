@@ -13,7 +13,7 @@ import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "1.0.52"
+__version__ = "2.0.0"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -64,13 +64,20 @@ class Kvirt:
 
     def exists(self, name):
         conn = self.conn
+        for vm in conn.listAllDomains():
+            if vm.name() == name:
+                return True
+        return False
+
+    def net_exists(self, name):
+        conn = self.conn
         try:
-            conn.lookupByName(name)
+            conn.networkLookupByName(name)
             return True
         except:
             return False
 
-    def create(self, name, virttype='kvm', title='', description='kvirt', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, start=True, keys=None, cmds=None, ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None):
+    def create(self, name, virttype='kvm', title='', description='kvirt', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, start=True, keys=None, cmds=None, ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None):
         default_diskinterface = diskinterface
         default_diskthin = diskthin
         default_disksize = disksize
@@ -79,7 +86,6 @@ class Kvirt:
         try:
             default_storagepool = conn.storagePoolLookupByName(default_pool)
         except:
-            print("Pool %s not found.Leaving..." % default_pool)
             return {'result': 'failure', 'reason': "Pool %s not found" % default_pool}
         default_poolxml = default_storagepool.XMLDesc(0)
         root = ET.fromstring(default_poolxml)
@@ -133,7 +139,6 @@ class Kvirt:
                 try:
                     storagediskpool = conn.storagePoolLookupByName(diskpool)
                 except:
-                    print("Pool %s not found.Leaving..." % diskpool)
                     return {'result': 'failure', 'reason': "Pool %s not found" % diskpool}
                 diskpoolxml = storagediskpool.XMLDesc(0)
                 root = ET.fromstring(diskpoolxml)
@@ -143,7 +148,6 @@ class Kvirt:
                     diskpoolpath = element.text
                     break
             else:
-                print("Invalid disk entry.Leaving...")
                 return {'result': 'failure', 'reason': "Invalid disk entry"}
             letter = chr(index + ord('a'))
             diskdev, diskbus = 'vd%s' % letter, 'virtio'
@@ -164,14 +168,11 @@ class Kvirt:
                     backingxml = backingvolume.XMLDesc(0)
                     root = ET.fromstring(backingxml)
                 except:
-                    print("Invalid template %s.Leaving..." % template)
                     return {'result': 'failure', 'reason': "Invalid template %s" % template}
                 backing = backingvolume.path()
                 if '/dev' in backing and diskpooltype == 'dir':
-                    print("lvm template can't be used with a dir pool.Leaving...")
                     return {'result': 'failure', 'reason': "lvm template cant be used with a dir pool.Leaving..."}
                 if '/dev' not in backing and diskpooltype == 'logical':
-                    print("file template cant be used with a lvm pool.Leaving...")
                     return {'result': 'failure', 'reason': "file template cant be used with a lvm pool.Leaving..."}
                 backingxml = """<backingStore type='file' index='1'>
                                 <format type='qcow2'/>
@@ -214,7 +215,7 @@ class Kvirt:
             elif netname in networks:
                 sourcenet = 'network'
             else:
-                print("Invalid network %s.Leaving..." % netname)
+                return {'result': 'failure', 'reason': "Invalid network %s" % netname}
             netxml = """%s
                      <interface type='%s'>
                      <source %s='%s'/>
@@ -237,7 +238,6 @@ class Kvirt:
                 isovolume = volumes[template][iso]
                 iso = isovolume.path()
             except:
-                print("Invalid Iso %s.Leaving..." % iso)
                 return {'result': 'failure', 'reason': "Invalid iso %s" % iso}
         isoxml = """<disk type='file' device='cdrom'>
                       <driver name='qemu' type='raw'/>
@@ -313,7 +313,7 @@ class Kvirt:
         if cloudinit:
             self._cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain)
             self._uploadiso(name, pool=default_storagepool)
-        else:
+        if reserveip:
             xml = vm.XMLDesc(0)
             vmxml = ET.fromstring(xml)
             macs = []
@@ -336,7 +336,7 @@ class Kvirt:
             else:
                 vm.create()
         except:
-            print("VM %s not found" % name)
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
 
     def stop(self, name):
         conn = self.conn
@@ -348,7 +348,7 @@ class Kvirt:
             else:
                 vm.destroy()
         except:
-            print("VM %s not found" % name)
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
 
     def restart(self, name):
         conn = self.conn
@@ -585,8 +585,6 @@ class Kvirt:
             volume = conn.storageVolLookupByPath(path)
             disksize = int(float(volume.info()[1]) / 1024 / 1024 / 1024)
             print("diskname: %s disksize: %sGB diskformat: %s type: %s path: %s" % (device, disksize, diskformat, drivertype, path))
-        # for ip in ips:
-        #    print("ip:%s" % ip)
 
     def volumes(self, iso=False):
         isos = []
@@ -1175,13 +1173,18 @@ class Kvirt:
             pool.build()
         pool.create()
 
-    def create_network(self, name, cidr, dhcp=True):
+    def create_network(self, name, cidr, dhcp=True, nat=True):
         conn = self.conn
+        networks = self.list_networks()
+        cidrs = [network['cidr'] for network in networks.values()]
+        if name in networks:
+            return {'result': 'failure', 'reason': "Network %s already exists" % name}
         try:
             range = IpRange(cidr)
         except TypeError:
-            print("Invalid Cidr %s.Leaving..." % cidr)
-            return
+            return {'result': 'failure', 'reason': "Invalid Cidr %s" % cidr}
+        if IPNetwork(cidr) in cidrs:
+            return {'result': 'failure', 'reason': "Cidr %s already exists" % cidr}
         netmask = IPNetwork(cidr).netmask
         gateway = range[1]
         if dhcp:
@@ -1192,30 +1195,32 @@ class Kvirt:
                     </dhcp>""" % (start, end)
         else:
             dhcpxml = ''
+        if nat:
+            natxml = "<forward mode='nat'><nat><port start='1024' end='65535'/></nat></forward>"
+        else:
+            natxml = ''
         networkxml = """<network><name>%s</name>
-                    <forward mode='nat'>
-                    <nat>
-                    <port start='1024' end='65535'/>
-                    </nat>
-                    </forward>
+                    %s
                     <domain name='%s'/>
                     <ip address='%s' netmask='%s'>
                     %s
                     </ip>
-                    </network>""" % (name, name, gateway, netmask, dhcpxml)
+                    </network>""" % (name, natxml, name, gateway, netmask, dhcpxml)
         new_net = conn.networkDefineXML(networkxml)
         new_net.setAutostart(True)
         new_net.create()
+        return {'result': 'success'}
 
     def delete_network(self, name=None):
         conn = self.conn
         try:
             network = conn.networkLookupByName(name)
         except:
-            print("Network %s not found. Leaving..." % name)
-            return
-        network.destroy()
+            return {'result': 'failure', 'reason': "Network %s not found" % name}
+        if network.isActive():
+            network.destroy()
         network.undefine()
+        return {'result': 'success'}
 
     def list_pools(self):
         pools = []
@@ -1225,11 +1230,26 @@ class Kvirt:
         return pools
 
     def list_networks(self):
-        networks = []
+        networks = {}
         conn = self.conn
         for network in conn.listAllNetworks():
-            name = network.name()
-            networks.append(name)
+            networkname = network.name()
+            netxml = network.XMLDesc(0)
+            cidr = 'N/A'
+            root = ET.fromstring(netxml)
+            ip = root.getiterator('ip')
+            if ip:
+                attributes = ip[0].attrib
+                firstip = attributes.get('address')
+                netmask = attributes.get('netmask')
+                ip = IPNetwork('%s/%s' % (firstip, netmask))
+                cidr = ip.cidr
+            dhcp = root.getiterator('dhcp')
+            if dhcp:
+                dhcp = True
+            else:
+                dhcp = False
+            networks[networkname] = {'cidr': cidr, 'dhcp': dhcp}
         return networks
 
     def delete_pool(self, name, full=False):

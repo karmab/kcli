@@ -9,5 +9,6 @@ DISKS = [{'size': DISKSIZE}]
 GUESTID = 'guestrhel764'
 VNC = False
 CLOUDINIT = True
+RESERVEIP = False
 START = True
 EMULATOR = '/usr/bin/qemu-kvm'

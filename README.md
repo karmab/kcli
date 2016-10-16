@@ -93,6 +93,7 @@ default:
   - size: 10
  protocol: ssh
  cloudinit: true
+ reserveip: false
  nets: 
   - private1
 
@@ -186,7 +187,16 @@ Also note that if you use cloudinit but dont specify ssh keys to inject, the def
 
 ## Using plans
 
-you can also define plan files in yaml with a list of vms to deploy ( look at the sample) and deploy it with kcli plan
+you can also define plan files in yaml with a list of networks and vms to deploy ( look at the sample) and deploy it with kcli plan
+Networks should be listed first. For instance, to define a network named mynet
+
+```
+mynet:
+ type: network
+ cidr: 192.168.95.0/24
+```
+You can also use the boolean keyword dhcp ( mostly to disable it ) and isolated . Note that when not specified, dhcp and nat will be enabled
+
 
 You can point at an existing profile within your plans, define all parameters for the vms, or combine both approaches.
 
@@ -240,7 +250,7 @@ nets:
 Within a net section, you can use name, nic, ip, mask and gateway as keys.
 
 Note that up to 8 ips can also be provided on command line when creating a single vm ( with the flag -1, -2, -3,-4,...)
-Also note that if you force cloudinit to False, but still specific ip, a reservation will be made if the corresponding network has dhcp and when the provided ipbelongs to the network range
+Also note that if you set reserveip  to True, a reservation will be made if the corresponding network has dhcp and when the provided ip belongs to the network range
 
 - *iso* ( optional)
 - *netmasks* (optional)
@@ -249,6 +259,7 @@ Also note that if you force cloudinit to False, but still specific ip, a reserva
 - *domain* (optional) Dns search domain
 - *vnc* Defaults to false (use spice instead)
 - *cloudinit* Defaults to true
+- *reserveip* Defaults to false
 - *start* Defaults to true
 - *keys* (optional). Array of public keys to inject
 - *cmds* (optional). Array of commands to run
@@ -288,7 +299,9 @@ basic testing can be run with pytest. If using a remote hypervisor, you ll want 
 
 ## TODO 
  
+- create shared disks in plan files 
 - remove all the print for the kvirt module and only return data
+- change the try, except blocks for object checks with parsing of the list methods that libvirt provides for most object
 
 ##Problems?
 
