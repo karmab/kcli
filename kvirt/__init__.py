@@ -202,7 +202,7 @@ class Kvirt:
                     nets[index]['ip'] = ip
                 elif 'ip' in nets[index]:
                     ip = nets[index]['ip']
-                mac = None
+                mac = ''
                 if 'mac' in nets[index]:
                     mac = "<mac address='%s'/>" % nets[index]['mac']
                 if index == 0 and ip is not None:
