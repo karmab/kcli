@@ -210,7 +210,7 @@ those parameters can be set either in your config, profile or plan files
 - *memory* Defaults to 512
 - *guestid* Defaults to guestrhel764
 - *pool* Defaults to default
-- *template* Should point to your base cloud image(optional)
+- *template* Should point to your base cloud image(optional). You can either specify short name or complete path. Note that if you omit the full path and your image lives in several pools, the one from last ( alphabetical ) pool will be used.
 - *disks* Array of disks to define. For each of them, you can specify pool, size, thin ( as boolean) and interface ( either ide or virtio).If you omit parameters, default values will be used from config or profile file ( You can actually let the entire entry blank or just indicate a size number directly). For instance:
 
 ```

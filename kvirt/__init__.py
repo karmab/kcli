@@ -13,7 +13,7 @@ import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "1.0.51"
+__version__ = "1.0.52"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -93,10 +93,12 @@ class Kvirt:
         else:
             display = 'spice'
         volumes = {}
+        volumespaths = {}
         for p in conn.listStoragePools():
             poo = conn.storagePoolLookupByName(p)
             for vol in poo.listAllVolumes():
                 volumes[vol.name()] = {'pool': poo, 'object': vol}
+                volumespaths[vol.path()] = {'pool': poo, 'object': vol}
         networks = []
         bridges = []
         for net in conn.listNetworks():
@@ -155,7 +157,10 @@ class Kvirt:
             if template is not None and index == 0:
                 try:
                     default_storagepool.refresh(0)
-                    backingvolume = volumes[template]['object']
+                    if '/' in template:
+                        backingvolume = volumespaths[template]['object']
+                    else:
+                        backingvolume = volumes[template]['object']
                     backingxml = backingvolume.XMLDesc(0)
                     root = ET.fromstring(backingxml)
                 except:
@@ -163,7 +168,7 @@ class Kvirt:
                     return {'result': 'failure', 'reason': "Invalid template %s" % template}
                 backing = backingvolume.path()
                 if '/dev' in backing and diskpooltype == 'dir':
-                    print("lvm template cant be used with a dir pool.Leaving...")
+                    print("lvm template can't be used with a dir pool.Leaving...")
                     return {'result': 'failure', 'reason': "lvm template cant be used with a dir pool.Leaving..."}
                 if '/dev' not in backing and diskpooltype == 'logical':
                     print("file template cant be used with a lvm pool.Leaving...")
