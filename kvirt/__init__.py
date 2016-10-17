@@ -13,7 +13,7 @@ import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "2.1"
+__version__ = "2.2"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -332,9 +332,10 @@ class Kvirt:
             vm = conn.lookupByName(name)
             vm = conn.lookupByName(name)
             if status[vm.isActive()] == "up":
-                return 1
+                return {'result': 'success'}
             else:
                 vm.create()
+                return {'result': 'success'}
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
 
@@ -344,9 +345,10 @@ class Kvirt:
         try:
             vm = conn.lookupByName(name)
             if status[vm.isActive()] == "down":
-                return
+                return {'result': 'success'}
             else:
                 vm.destroy()
+                return {'result': 'success'}
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
 
@@ -355,9 +357,10 @@ class Kvirt:
         status = {0: 'down', 1: 'up'}
         vm = conn.lookupByName(name)
         if status[vm.isActive()] == "down":
-            return
+            return {'result': 'success'}
         else:
             vm.restart()
+            return {'result': 'success'}
 
     def report(self):
         conn = self.conn
