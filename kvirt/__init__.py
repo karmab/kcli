@@ -1250,6 +1250,11 @@ class Kvirt:
             else:
                 dhcp = False
             networks[networkname] = {'cidr': cidr, 'dhcp': dhcp}
+        for interface in conn.listAllInterfaces():
+            interfacename = interface.name()
+            if interfacename == 'lo':
+                continue
+            networks[interfacename] = {'cidr': 'N/A', 'dhcp': 'N/A'}
         return networks
 
     def delete_pool(self, name, full=False):

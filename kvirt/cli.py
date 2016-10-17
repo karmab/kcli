@@ -181,7 +181,7 @@ def list(config, clients, profiles, templates, isos, disks, pools, networks):
         return
     if networks:
         networks = k.list_networks()
-        click.secho("Listing disk %s...", fg='green')
+        click.secho("Listing Networks %s...", fg='green')
         networkstable = PrettyTable(["Name", "Pool", "Path"])
         networkstable.align["Name"] = "l"
         for network in sorted(networks):
