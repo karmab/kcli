@@ -182,12 +182,13 @@ def list(config, clients, profiles, templates, isos, disks, pools, networks):
     if networks:
         networks = k.list_networks()
         click.secho("Listing Networks %s...", fg='green')
-        networkstable = PrettyTable(["Name", "Pool", "Path"])
+        networkstable = PrettyTable(["Name", "Type", "Cidr", "Dhcp"])
         networkstable.align["Name"] = "l"
         for network in sorted(networks):
+            networktype = networks[network]['type']
             cidr = networks[network]['cidr']
             dhcp = networks[network]['dhcp']
-            networkstable.add_row([network, cidr, dhcp])
+            networkstable.add_row([network, networktype, cidr, dhcp])
         print networkstable
         return
     if clients:
@@ -558,7 +559,7 @@ def network(config, delete, isolated, cidr, dhcp, name):
     k = config.get()
     if delete:
         result = k.delete_network(name=name)
-        handle_response(result, name, element='Network ')
+        handle_response(result, name, element='Network ', action='deleted')
     else:
         if isolated:
             nat = False
