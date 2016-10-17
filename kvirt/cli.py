@@ -474,6 +474,7 @@ def plan(config, inputfile, start, stop, delete, plan):
             k.create_network(name=name, cidr=cidr, dhcp=dhcp, nat=nat)
             click.secho("Network %s deployed!" % name, fg='green')
         for name in entries:
+            profile = entries[name]
             if k.exists(name):
                 click.secho("%s skipped!" % name, fg='blue')
                 continue
