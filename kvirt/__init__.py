@@ -13,7 +13,7 @@ import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "2.3"
+__version__ = "2.4"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -1252,12 +1252,29 @@ class Kvirt:
                 dhcp = True
             else:
                 dhcp = False
-            networks[networkname] = {'cidr': cidr, 'dhcp': dhcp, 'type': 'routed'}
+            forward = root.getiterator('forward')
+            if forward:
+                attributes = forward[0].attrib
+                mode = attributes.get('mode')
+            else:
+                mode = 'isolated'
+            networks[networkname] = {'cidr': cidr, 'dhcp': dhcp, 'type': 'routed', 'mode': mode}
         for interface in conn.listAllInterfaces():
             interfacename = interface.name()
             if interfacename == 'lo':
                 continue
-            networks[interfacename] = {'cidr': 'N/A', 'dhcp': 'N/A', 'type': 'bridged'}
+            netxml = interface.XMLDesc(0)
+            root = ET.fromstring(netxml)
+            ip = root.getiterator('ip')
+            if ip:
+                attributes = ip[0].attrib
+                ip = attributes.get('address')
+                prefix = attributes.get('prefix')
+                ip = IPNetwork('%s/%s' % (ip, prefix))
+                cidr = ip.cidr
+            else:
+                cidr = 'N/A'
+            networks[interfacename] = {'cidr': cidr, 'dhcp': 'N/A', 'type': 'bridged', 'mode': 'N/A'}
         return networks
 
     def delete_pool(self, name, full=False):

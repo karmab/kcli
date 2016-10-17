@@ -181,14 +181,15 @@ def list(config, clients, profiles, templates, isos, disks, pools, networks):
         return
     if networks:
         networks = k.list_networks()
-        click.secho("Listing Networks %s...", fg='green')
-        networkstable = PrettyTable(["Name", "Type", "Cidr", "Dhcp"])
+        click.secho("Listing Networks...", fg='green')
+        networkstable = PrettyTable(["Name", "Type", "Cidr", "Dhcp", "Mode"])
         networkstable.align["Name"] = "l"
         for network in sorted(networks):
             networktype = networks[network]['type']
             cidr = networks[network]['cidr']
             dhcp = networks[network]['dhcp']
-            networkstable.add_row([network, networktype, cidr, dhcp])
+            mode = networks[network]['mode']
+            networkstable.add_row([network, networktype, cidr, dhcp, mode])
         print networkstable
         return
     if clients:
