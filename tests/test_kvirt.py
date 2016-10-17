@@ -47,6 +47,18 @@ class TestK:
         k.add_disk(name=self.name, size=1, pool=self.name)
         assert True
 
+    def test_stop_vm(self):
+        k = self.conn
+        k.stop(self.name)
+        status = k.status(self.name)
+        assert status == 'down'
+
+    def test_start_vm(self):
+        k = self.conn
+        k.start(self.name)
+        status = k.status(self.name)
+        assert status == 'up'
+
     def test_delete_vm(self):
         k = self.conn
         k.delete(self.name)
