@@ -423,7 +423,7 @@ def plan(config, inputfile, start, stop, delete, plan):
         if plan == '':
             click.secho("That would delete every vm...Not doing that", fg='red')
             return
-        click.confirm('Are you sure about deleting this plan', abort=True)
+        click.confirm('Are you sure about deleting plan %s' % plan, abort=True)
         for vm in sorted(k.list()):
             name = vm[0]
             description = vm[4]
@@ -478,8 +478,8 @@ def plan(config, inputfile, start, stop, delete, plan):
                 print "Missing Cidr for network %s. Not creating it..." % net
                 continue
             dhcp = profile.get('dhcp', True)
-            k.create_network(name=net, cidr=cidr, dhcp=dhcp, nat=nat)
-            click.secho("Network %s deployed!" % net, fg='green')
+            result = k.create_network(name=net, cidr=cidr, dhcp=dhcp, nat=nat)
+            handle_response(result, net, element='Network ')
         if vmentries:
             click.secho("Deploying Vms...", fg='green')
         for name in vmentries:

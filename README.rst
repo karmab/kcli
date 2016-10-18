@@ -317,7 +317,7 @@ keys
 
     nets:
      - private1
-     - name: private2:
+     - name: private2
        nic: eth1
        ip: 192.168.0.220
        mask: 255.255.255.0
