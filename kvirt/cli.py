@@ -265,7 +265,7 @@ def create(config, profile, ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8, name):
     iso = profile.get('iso')
     vnc = profile.get('vnc', default['vnc'])
     cloudinit = profile.get('cloudinit', default['cloudinit'])
-    reserveip = profile.get('reserveip', default['reservip'])
+    reserveip = profile.get('reserveip', default['reserveip'])
     start = profile.get('start', default['start'])
     keys = profile.get('keys', None)
     cmds = profile.get('cmds', None)
@@ -462,27 +462,27 @@ def plan(config, inputfile, start, stop, delete, plan):
     default = config.default
     with open(inputfile, 'r') as entries:
         entries = yaml.load(entries)
-        vms = [entry for entry in entries if 'type' not in entries[entry] or entries[entry]['type'] == 'vm']
-        disks = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'disk']
-        networks = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'network']
-        if networks:
+        vmentries = [entry for entry in entries if 'type' not in entries[entry] or entries[entry]['type'] == 'vm']
+        diskentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'disk']
+        networkentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'network']
+        if networkentries:
             click.secho("Deploying Networks...", fg='green')
-        for name in networks:
-            profile = entries[name]
-            if k.net_exists(name):
-                click.secho("%s skipped!" % name, fg='blue')
+        for net in networkentries:
+            profile = entries[net]
+            if k.net_exists(net):
+                click.secho("%s skipped!" % net, fg='blue')
                 continue
             cidr = profile.get('cidr')
             nat = bool(profile.get('nat', True))
             if cidr is None:
-                print "Missing Cidr for network %s. Not creating it..." % name
+                print "Missing Cidr for network %s. Not creating it..." % net
                 continue
             dhcp = profile.get('dhcp', True)
-            k.create_network(name=name, cidr=cidr, dhcp=dhcp, nat=nat)
-            click.secho("Network %s deployed!" % name, fg='green')
-        if vms:
+            k.create_network(name=net, cidr=cidr, dhcp=dhcp, nat=nat)
+            click.secho("Network %s deployed!" % net, fg='green')
+        if vmentries:
             click.secho("Deploying Vms...", fg='green')
-        for name in vms:
+        for name in vmentries:
             profile = entries[name]
             if k.exists(name):
                 click.secho("%s skipped!" % name, fg='blue')
@@ -535,29 +535,31 @@ def plan(config, inputfile, start, stop, delete, plan):
                         cmds = cmds + scriptcmds
             result = k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain)
             handle_response(result, name)
-        if disks:
+        if diskentries:
             click.secho("Deploying Disks...", fg='green')
-        for name in disks:
-            profile = entries[name]
+        for disk in diskentries:
+            profile = entries[disk]
             pool = profile.get('pool')
             vms = profile.get('vms')
             template = profile.get('template')
             size = int(profile.get('size', 10))
             if pool is None:
-                print "Missing Key Pool for disk section %s. Not creating it..." % name
+                print "Missing Key Pool for disk section %s. Not creating it..." % disk
                 continue
             if vms is None:
-                print "Missing or Incorrect Key Vms for disk section %s. Not creating it..." % name
+                print "Missing or Incorrect Key Vms for disk section %s. Not creating it..." % disk
                 continue
-            if k.disk_exists(pool, name):
-                click.secho("%s skipped!" % name, fg='blue')
+            if k.disk_exists(pool, disk):
+                click.secho("Disk %s skipped!" % disk, fg='blue')
                 continue
             if len(vms) > 1:
                 shareable = True
             else:
                 shareable = False
+            newdisk = k.create_disk(disk, size=size, pool=pool, template=template)
             for index, vm in enumerate(vms):
-                k.add_disk(name=vm, size=size, pool=pool, template=template, shareable=shareable)
+                k.add_disk(name=vm, size=size, pool=pool, template=template, shareable=shareable, existing=newdisk)
+                click.secho("Disk %s deployed!" % disk, fg='green')
 
 
 @cli.command()

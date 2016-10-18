@@ -13,7 +13,7 @@ import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "2.4"
+__version__ = "2.5"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -81,7 +81,8 @@ class Kvirt:
         conn = self.conn
         try:
             storage = conn.storagePoolLookupByName(pool)
-            for stor in storage.listVolumes():
+            storage.refresh()
+            for stor in sorted(storage.listVolumes()):
                 if stor == name:
                     return True
         except:
@@ -647,7 +648,10 @@ class Kvirt:
             for stor in storage.listVolumes():
                 for disk in disks:
                     if stor in disk:
-                        volume = storage.storageVolLookupByName(stor)
+                        try:
+                            volume = storage.storageVolLookupByName(stor)
+                        except:
+                            continue
                         volume.delete(0)
                         deleted = True
             if deleted:
@@ -943,7 +947,104 @@ class Kvirt:
         newxml = ET.tostring(root)
         conn.defineXML(newxml)
 
-    def add_disk(self, name, size, pool=None, thin=True, template=None, shareable=False):
+    def create_disk(self, name, size, pool=None, thin=True, template=None):
+        conn = self.conn
+        diskformat = 'qcow2'
+        if size < 1:
+            print("Incorrect size.Leaving...")
+            return
+        if not thin:
+            diskformat = 'raw'
+        if pool is not None:
+            pool = conn.storagePoolLookupByName(pool)
+            poolxml = pool.XMLDesc(0)
+            poolroot = ET.fromstring(poolxml)
+            pooltype = poolroot.getiterator('pool')[0].get('type')
+            for element in poolroot.getiterator('path'):
+                poolpath = element.text
+                break
+        else:
+            print("Pool not found. Leaving....")
+            return
+        if template is not None:
+            volumes = {}
+            for p in conn.listStoragePools():
+                poo = conn.storagePoolLookupByName(p)
+                for vol in poo.listAllVolumes():
+                    volumes[vol.name()] = vol.path()
+            if template not in volumes and template not in volumes.values():
+                print("Invalid template %s.Leaving..." % template)
+            if template in volumes:
+                template = volumes[template]
+        pool.refresh(0)
+        diskpath = "%s/%s" % (poolpath, name)
+        if pooltype == 'logical':
+            diskformat = 'raw'
+        volxml = self._xmlvolume(path=diskpath, size=size, pooltype=pooltype,
+                                 diskformat=diskformat, backing=template)
+        pool.createXML(volxml, 0)
+        return diskpath
+
+#    def add_disk(self, name, size, pool=None, thin=True, template=None, shareable=False):
+#        conn = self.conn
+#        diskformat = 'qcow2'
+#        diskbus = 'virtio'
+#        if size < 1:
+#            print("Incorrect size.Leaving...")
+#            return
+#        if not thin:
+#            diskformat = 'raw'
+#        try:
+#            vm = conn.lookupByName(name)
+#            xml = vm.XMLDesc(0)
+#            root = ET.fromstring(xml)
+#        except:
+#            print("VM %s not found" % name)
+#            return
+#        currentdisk = 0
+#        for element in root.getiterator('disk'):
+#            disktype = element.get('device')
+#            if disktype == 'cdrom':
+#                continue
+#            currentdisk = currentdisk + 1
+#        diskindex = currentdisk + 1
+#        diskdev = "vd%s" % string.ascii_lowercase[currentdisk]
+#        if pool is not None:
+#            pool = conn.storagePoolLookupByName(pool)
+#            poolxml = pool.XMLDesc(0)
+#            poolroot = ET.fromstring(poolxml)
+#            pooltype = poolroot.getiterator('pool')[0].get('type')
+#            for element in poolroot.getiterator('path'):
+#                poolpath = element.text
+#                break
+#        else:
+#            print("Pool not found. Leaving....")
+#            return
+#        if template is not None:
+#            volumes = {}
+#            for p in conn.listStoragePools():
+#                poo = conn.storagePoolLookupByName(p)
+#                for vol in poo.listAllVolumes():
+#                    volumes[vol.name()] = vol.path()
+#            if template not in volumes and template not in volumes.values():
+#                print("Invalid template %s.Leaving..." % template)
+#            if template in volumes:
+#                template = volumes[template]
+#        pool.refresh(0)
+#        storagename = "%s_%d.img" % (name, diskindex)
+#        diskpath = "%s/%s" % (poolpath, storagename)
+#        volxml = self._xmlvolume(path=diskpath, size=size, pooltype=pooltype,
+#                                 diskformat=diskformat, backing=template)
+#        if pooltype == 'logical':
+#            diskformat = 'raw'
+#        diskxml = self._xmldisk(diskpath=diskpath, diskdev=diskdev, diskbus=diskbus, diskformat=diskformat, shareable=shareable)
+#        pool.createXML(volxml, 0)
+#        vm.attachDevice(diskxml)
+#        vm = conn.lookupByName(name)
+#        vmxml = vm.XMLDesc(0)
+#        conn.defineXML(vmxml)
+
+    def add_disk(self, name, size, pool=None, thin=True, template=None, shareable=False, existing=None):
         conn = self.conn
         diskformat = 'qcow2'
         diskbus = 'virtio'
@@ -967,36 +1068,12 @@ class Kvirt:
             currentdisk = currentdisk + 1
         diskindex = currentdisk + 1
         diskdev = "vd%s" % string.ascii_lowercase[currentdisk]
-        if pool is not None:
-            pool = conn.storagePoolLookupByName(pool)
-            poolxml = pool.XMLDesc(0)
-            poolroot = ET.fromstring(poolxml)
-            pooltype = poolroot.getiterator('pool')[0].get('type')
-            for element in poolroot.getiterator('path'):
-                poolpath = element.text
-                break
+        if existing is None:
+            storagename = "%s_%d.img" % (name, diskindex)
+            diskpath = self.create_disk(name=storagename, size=size, pool=pool, thin=thin, template=template)
         else:
-            print("Pool not found. Leaving....")
-            return
-        if template is not None:
-            volumes = {}
-            for p in conn.listStoragePools():
-                poo = conn.storagePoolLookupByName(p)
-                for vol in poo.listAllVolumes():
-                    volumes[vol.name()] = vol.path()
-            if template not in volumes and template not in volumes.values():
-                print("Invalid template %s.Leaving..." % template)
-            if template in volumes:
-                template = volumes[template]
-        pool.refresh(0)
-        storagename = "%s_%d.img" % (name, diskindex)
-        diskpath = "%s/%s" % (poolpath, storagename)
-        volxml = self._xmlvolume(path=diskpath, size=size, pooltype=pooltype,
-                                 diskformat=diskformat, backing=template)
-        if pooltype == 'logical':
-            diskformat = 'raw'
+            diskpath = existing
         diskxml = self._xmldisk(diskpath=diskpath, diskdev=diskdev, diskbus=diskbus, diskformat=diskformat, shareable=shareable)
-        pool.createXML(volxml, 0)
         vm.attachDevice(diskxml)
         vm = conn.lookupByName(name)
         vmxml = vm.XMLDesc(0)

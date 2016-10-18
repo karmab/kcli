@@ -187,8 +187,8 @@ Also note that if you use cloudinit but dont specify ssh keys to inject, the def
 
 ## Using plans
 
-you can also define plan files in yaml with a list of networks and vms to deploy ( look at the sample) and deploy it with kcli plan
-Networks should be listed first. For instance, to define a network named mynet
+you can also define plan files in yaml with a list of vms, disks, and networks and vms to deploy ( look at the sample) and deploy it with kcli plan
+For instance, to define a network named mynet
 
 ```
 mynet:
@@ -198,7 +198,19 @@ mynet:
 You can also use the boolean keyword dhcp ( mostly to disable it ) and isolated . Note that when not specified, dhcp and nat will be enabled
 
 
-You can point at an existing profile within your plans, define all parameters for the vms, or combine both approaches.
+To define a shared disk named shared1.img between two vms ( that typically would be defined within the same plan ):
+
+```
+share1.img:
+ type: disk
+ size: 5
+ pool: vms
+ vms:
+  - centos1
+  - centos2
+```
+
+Regarding Vms, You can point at an existing profile within your plans, define all parameters for the vms, or combine both approaches.
 
 Specific scripts and ips arrays can be used directly in the plan file ( or in profiles one)
 
@@ -299,7 +311,6 @@ basic testing can be run with pytest. If using a remote hypervisor, you ll want 
 
 ## TODO 
  
-- create shared disks in plan files 
 - remove all the print for the kvirt module and only return data
 - change the try, except blocks for object checks with parsing of the list methods that libvirt provides for most object
 
