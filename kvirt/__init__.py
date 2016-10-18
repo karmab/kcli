@@ -77,6 +77,16 @@ class Kvirt:
         except:
             return False
 
+    def disk_exists(self, pool, name):
+        conn = self.conn
+        try:
+            storage = conn.storagePoolLookupByName(pool)
+            for stor in storage.listVolumes():
+                if stor == name:
+                    return True
+        except:
+            return False
+
     def create(self, name, virttype='kvm', title='', description='kvirt', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, start=True, keys=None, cmds=None, ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None):
         default_diskinterface = diskinterface
         default_diskthin = diskthin
@@ -658,12 +668,17 @@ class Kvirt:
                         hostentry = "<host mac='%s' name='%s' ip='%s'/>" % (mac, name, ip)
                         network.update(2, 4, 0, hostentry, 1)
 
-    def _xmldisk(self, diskpath, diskdev, diskbus='virtio', diskformat='qcow2'):
+    def _xmldisk(self, diskpath, diskdev, diskbus='virtio', diskformat='qcow2', shareable=False):
+        if shareable:
+            sharexml = '<shareable/>'
+        else:
+            sharexml = ''
         diskxml = """<disk type='file' device='disk'>
         <driver name='qemu' type='%s' cache='none'/>
         <source file='%s'/>
         <target bus='%s' dev='%s'/>
-        </disk>""" % (diskformat, diskpath, diskbus, diskdev)
+        %s
+        </disk>""" % (diskformat, diskpath, diskbus, diskdev, sharexml)
         return diskxml
 
     def _xmlvolume(self, path, size, pooltype='file', backing=None, diskformat='qcow2'):
@@ -928,7 +943,7 @@ class Kvirt:
         newxml = ET.tostring(root)
         conn.defineXML(newxml)
 
-    def add_disk(self, name, size, pool=None, thin=True, template=None):
+    def add_disk(self, name, size, pool=None, thin=True, template=None, shareable=False):
         conn = self.conn
         diskformat = 'qcow2'
         diskbus = 'virtio'
@@ -980,7 +995,7 @@ class Kvirt:
                                  diskformat=diskformat, backing=template)
         if pooltype == 'logical':
             diskformat = 'raw'
-        diskxml = self._xmldisk(diskpath=diskpath, diskdev=diskdev, diskbus=diskbus, diskformat=diskformat)
+        diskxml = self._xmldisk(diskpath=diskpath, diskdev=diskdev, diskbus=diskbus, diskformat=diskformat, shareable=shareable)
         pool.createXML(volxml, 0)
         vm.attachDevice(diskxml)
         vm = conn.lookupByName(name)

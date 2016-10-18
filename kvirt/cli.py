@@ -211,12 +211,12 @@ def list(config, clients, profiles, templates, isos, disks, pools, networks):
         for iso in sorted(k.volumes(iso=True)):
             print(iso)
     elif disks:
-        click.secho("Listing disk %s...", fg='green')
+        click.secho("Listing disks...", fg='green')
         diskstable = PrettyTable(["Name", "Pool", "Path"])
         diskstable.align["Name"] = "l"
         k = config.get()
         disks = k.list_disks()
-        for disk in disks:
+        for disk in sorted(disks):
             path = disks[disk]['path']
             pool = disks[disk]['pool']
             diskstable.add_row([disk, pool, path])
@@ -338,6 +338,9 @@ def update(config, ip, memory, numcpus, name):
 def disk(config, delete, size, diskname, template, pool, name):
     """Add/Delete disk of vm"""
     if delete:
+        if diskname is None:
+            click.secho("Missing diskname. Leaving...", fg='red')
+            os._exit(1)
         click.secho("Deleting disk %s from %s..." % (diskname, name), fg='green')
         k = config.get()
         k.delete_disk(name, diskname)
@@ -456,14 +459,16 @@ def plan(config, inputfile, start, stop, delete, plan):
     if not os.path.exists(inputfile):
         click.secho("No input file found nor default kcli_plan.yml.Leaving....", fg='red')
         os._exit(1)
-    click.secho("Deploying vms from plan %s" % (plan), fg='green')
     default = config.default
     with open(inputfile, 'r') as entries:
         entries = yaml.load(entries)
-        networks = [net for net in entries if 'type' in entries[net] and entries[net]['type'] == 'network']
+        vms = [entry for entry in entries if 'type' not in entries[entry] or entries[entry]['type'] == 'vm']
+        disks = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'disk']
+        networks = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'network']
+        if networks:
+            click.secho("Deploying Networks...", fg='green')
         for name in networks:
             profile = entries[name]
-            del entries[name]
             if k.net_exists(name):
                 click.secho("%s skipped!" % name, fg='blue')
                 continue
@@ -475,7 +480,9 @@ def plan(config, inputfile, start, stop, delete, plan):
             dhcp = profile.get('dhcp', True)
             k.create_network(name=name, cidr=cidr, dhcp=dhcp, nat=nat)
             click.secho("Network %s deployed!" % name, fg='green')
-        for name in entries:
+        if vms:
+            click.secho("Deploying Vms...", fg='green')
+        for name in vms:
             profile = entries[name]
             if k.exists(name):
                 click.secho("%s skipped!" % name, fg='blue')
@@ -528,6 +535,29 @@ def plan(config, inputfile, start, stop, delete, plan):
                         cmds = cmds + scriptcmds
             result = k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain)
             handle_response(result, name)
+        if disks:
+            click.secho("Deploying Disks...", fg='green')
+        for name in disks:
+            profile = entries[name]
+            pool = profile.get('pool')
+            vms = profile.get('vms')
+            template = profile.get('template')
+            size = int(profile.get('size', 10))
+            if pool is None:
+                print "Missing Key Pool for disk section %s. Not creating it..." % name
+                continue
+            if vms is None:
+                print "Missing or Incorrect Key Vms for disk section %s. Not creating it..." % name
+                continue
+            if k.disk_exists(pool, name):
+                click.secho("%s skipped!" % name, fg='blue')
+                continue
+            if len(vms) > 1:
+                shareable = True
+            else:
+                shareable = False
+            for index, vm in enumerate(vms):
+                k.add_disk(name=vm, size=size, pool=pool, template=template, shareable=shareable)
 
 
 @cli.command()
