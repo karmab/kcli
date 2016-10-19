@@ -323,7 +323,7 @@ class Kvirt:
         vm.setAutostart(1)
         if cloudinit:
             self._cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain)
-            self._uploadiso(name, pool=default_storagepool)
+            self._uploadimage(name, pool=default_storagepool)
         if reserveip:
             xml = vm.XMLDesc(0)
             vmxml = ET.fromstring(xml)
@@ -862,21 +862,22 @@ class Kvirt:
     def handler(self, stream, data, file_):
         return file_.read(data)
 
-    def _uploadiso(self, name, pool='default'):
+    def _uploadimage(self, name, pool='default', origin='/tmp', suffix='.iso'):
+        name = "%s%s" % (name, suffix)
         conn = self.conn
         poolxml = pool.XMLDesc(0)
         root = ET.fromstring(poolxml)
         for element in root.getiterator('path'):
             poolpath = element.text
             break
-        isopath = "%s/%s.iso" % (poolpath, name)
-        isoxml = self._xmlvolume(path=isopath, size=0, diskformat='raw')
-        pool.createXML(isoxml, 0)
-        isovolume = conn.storageVolLookupByPath(isopath)
+        imagepath = "%s/%s" % (poolpath, name)
+        imagexml = self._xmlvolume(path=imagepath, size=0, diskformat='raw')
+        pool.createXML(imagexml, 0)
+        imagevolume = conn.storageVolLookupByPath(imagepath)
         stream = conn.newStream(0)
-        isovolume.upload(stream, 0, 0)
-        with open("/tmp/%s.iso" % name) as origin:
-            stream.sendAll(self.handler, origin)
+        imagevolume.upload(stream, 0, 0)
+        with open("%s/%s" % (origin, name)) as ori:
+            stream.sendAll(self.handler, ori)
             stream.finish()
 
     def update_ip(self, name, ip):
@@ -1267,6 +1268,21 @@ class Kvirt:
         if pooltype == 'logical':
             pool.build()
         pool.create()
+
+    def add_image(self, image, pool):
+        conn = self.conn
+        pools = [p for p in conn.listStoragePools() if p == pool]
+        if not pools:
+            print("Pool %s not found.Leaving..." % pool)
+            return
+        pool = conn.storagePoolLookupByName(pool)
+        if self.host == 'localhost' or self.host == '127.0.0.1':
+            cmd = 'wget -P /tmp %s"' % (image)
+        elif self.protocol == 'ssh':
+            cmd = 'ssh -p %s %s@%s "wget -P /tmp %s"' % (self.port, self.user, self.host, image)
+        os.system(cmd)
+        image = image.split('/')[:-1]
+        self._uploadimage(image, pool=pool, suffix='')
 
     def create_network(self, name, cidr, dhcp=True, nat=True):
         conn = self.conn
