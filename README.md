@@ -59,10 +59,10 @@ You can also go through wizard
 kcli bootstrap
 ```
 
-And for advanced bootstrapping, you can specify a target name, host, a pool with a path
+And for advanced bootstrapping, you can specify a target name, host, a pool with a path, and have centos cloud image downloaded
 
 ```
-kcli bootstrap -a -n twix -H 192.168.0.6 --pool vms --poolpath /home/vms
+kcli bootstrap -a -n twix -H 192.168.0.6 --pool vms --poolpath /home/vms -t 
 ```
 
 Or even use an existing disk for LVM based images (note that the disk will be made into an LVM physical volume, so it should be empty):
@@ -79,6 +79,11 @@ kcli pool -f -t logical -p /dev/sda ssd
 And define additional networks with:
 ```
 kcli network -c 10.0.1.0/24 private11 --dhcp
+```
+
+And download a fedora template:
+```
+kcli download -p vms -t fedora
 ```
 
 Otherwise you will have to declare your settings in ~/kcli.yml. For instance,
