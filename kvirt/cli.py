@@ -17,7 +17,7 @@ def handle_response(result, name, element='', action='deployed'):
         click.secho("%s%s %s!" % (element, name, action), fg='green')
     else:
         reason = result['reason']
-        click.secho("%s%s not %s because %s :(" % (element, name, action, reason), fg='red')
+        click.secho("%s%s not %s because %s" % (element, name, action, reason), fg='red')
 
 
 def abort_if_false(ctx, param, value):
