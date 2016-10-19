@@ -737,8 +737,8 @@ def bootstrap(genfile, auto, name, host, port, user, protocol, url, pool, poolpa
 
 
 @cli.command()
-@click.option('--pool', help='Pool to use')
-@click.option('--image', type=click.Choice(['centos', 'fedora', 'debian', 'ubuntu', 'cirros']), help='Image to grab from internet')
+@click.option('-p', '--pool', help='Pool to use')
+@click.option('-i', '--image', type=click.Choice(['centos', 'fedora', 'debian', 'ubuntu', 'cirros']), help='Image to grab from internet')
 @pass_config
 def download(config, pool, image):
     """Download cloud image and upload it to specified pool"""
