@@ -556,10 +556,10 @@ def plan(config, inputfile, start, stop, delete, plan):
                 shareable = True
             else:
                 shareable = False
-            newdisk = k.create_disk(disk, size=size, pool=pool, template=template)
-            for index, vm in enumerate(vms):
-                k.add_disk(name=vm, size=size, pool=pool, template=template, shareable=shareable, existing=newdisk)
-                click.secho("Disk %s deployed!" % disk, fg='green')
+            newdisk = k.create_disk(disk, size=size, pool=pool, template=template, thin=False)
+            click.secho("Disk %s deployed!" % disk, fg='green')
+            for vm in vms:
+                k.add_disk(name=vm, size=size, pool=pool, template=template, shareable=shareable, existing=newdisk, thin=False)
 
 
 @cli.command()
