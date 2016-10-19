@@ -1271,18 +1271,18 @@ class Kvirt:
 
     def add_image(self, image, pool):
         conn = self.conn
-        pools = [p for p in conn.listStoragePools() if p == pool]
-        if not pools:
-            print("Pool %s not found.Leaving..." % pool)
-            return
-        pool = conn.storagePoolLookupByName(pool)
+        try:
+            pool = conn.storagePoolLookupByName(pool)
+        except:
+            return {'result': 'failure', 'reason': "Pool %s not found" % pool}
         if self.host == 'localhost' or self.host == '127.0.0.1':
-            cmd = 'wget -P /tmp %s"' % (image)
+            cmd = 'wget -P /tmp %s' % (image)
         elif self.protocol == 'ssh':
             cmd = 'ssh -p %s %s@%s "wget -P /tmp %s"' % (self.port, self.user, self.host, image)
         os.system(cmd)
-        image = image.split('/')[:-1]
+        image = image.split('/')[-1]
         self._uploadimage(image, pool=pool, suffix='')
+        return {'result': 'success'}
 
     def create_network(self, name, cidr, dhcp=True, nat=True):
         conn = self.conn
@@ -1399,10 +1399,11 @@ class Kvirt:
             pool.destroy()
         pool.undefine()
 
-    def bootstrap(self, pool=None, poolpath=None, pooltype='dir', nets={}, images=[]):
+    def bootstrap(self, pool=None, poolpath=None, pooltype='dir', nets={}, image=None):
         conn = self.conn
         volumes = {}
         try:
+            poolname = pool
             pool = conn.storagePoolLookupByName(pool)
             for vol in pool.listAllVolumes():
                 volumes[vol.name()] = {'object': vol}
@@ -1410,8 +1411,8 @@ class Kvirt:
             if poolpath is not None:
                 print("Pool %s not found...Creating it" % pool)
                 self.create_pool(name=pool, poolpath=poolpath, pooltype=pooltype)
-        for image in images:
-            self.add_image(image, pool)
+        if image is not None and image.split('/')[-1] not in volumes:
+            self.add_image(image, poolname)
         networks = []
         for net in conn.listNetworks():
             networks.append(net)

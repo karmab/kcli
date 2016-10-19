@@ -2,7 +2,7 @@
 
 import click
 import fileinput
-from .defaults import NETS, POOL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, START, IMAGES
+from .defaults import NETS, POOL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, START, IMAGE, IMAGES
 from prettytable import PrettyTable
 from kvirt import Kvirt, __version__
 import os
@@ -613,8 +613,8 @@ def network(config, delete, isolated, cidr, dhcp, name):
 @click.option('-U', '--url', help='URL to use')
 @click.option('--pool', help='Pool to use')
 @click.option('--poolpath', help='Pool Path to use')
-@click.option('-i', '--images', is_flag=True, help="Grab Cloud Images")
-def bootstrap(genfile, auto, name, host, port, user, protocol, url, pool, poolpath, images):
+@click.option('-i', '--image', is_flag=True, help="Grab Centos Cloud Image")
+def bootstrap(genfile, auto, name, host, port, user, protocol, url, pool, poolpath, image):
     """Bootstrap hypervisor, creating config file and optionally pools and network"""
     click.secho("Bootstrapping env", fg='green')
     if genfile or auto:
@@ -629,8 +629,8 @@ def bootstrap(genfile, auto, name, host, port, user, protocol, url, pool, poolpa
             pooltype = 'logical'
         else:
             pooltype = 'dir'
-        if images:
-            images = IMAGES
+        if image:
+            image = IMAGE
         nets = {'default': {'cidr': '192.168.122.0/24'}, 'cinet': {'cidr': '192.168.5.0/24'}}
         # disks = [{'size': 10}]
         if host == '127.0.0.1':
@@ -702,9 +702,9 @@ def bootstrap(genfile, auto, name, host, port, user, protocol, url, pool, poolpa
         client['pool'] = pool
         imagecreate = raw_input("Download images for you?[N]: ") or 'N'
         if imagecreate == 'Y':
-            images = IMAGES
+            image = IMAGE
         else:
-            images = None
+            image = None
         size = raw_input("Enter your client first disk size[%s]: " % default['disks'][0]['size']) or default['disks'][0]['size']
         client['disks'] = [{'size': size}]
         net = raw_input("Enter your client first network[%s]: " % default['nets'][0]) or default['nets'][0]
@@ -725,7 +725,7 @@ def bootstrap(genfile, auto, name, host, port, user, protocol, url, pool, poolpa
     if k.conn is None:
         click.secho("Couldnt connect to specify hypervisor %s. Leaving..." % host, fg='red')
         os._exit(1)
-    k.bootstrap(pool=pool, poolpath=poolpath, pooltype=pooltype, nets=nets, images=images)
+    k.bootstrap(pool=pool, poolpath=poolpath, pooltype=pooltype, nets=nets, image=image)
     # TODO:
     # DOWNLOAD CIRROS ( AND CENTOS7? ) IMAGES TO POOL ?
     path = os.path.expanduser('~/kcli.yml')
@@ -734,6 +734,25 @@ def bootstrap(genfile, auto, name, host, port, user, protocol, url, pool, poolpa
     with open(path, 'w') as conf_file:
         yaml.safe_dump(ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     click.secho("Environment bootstrapped!", fg='green')
+
+
+@cli.command()
+@click.option('--pool', help='Pool to use')
+@click.option('--image', type=click.Choice(['centos', 'fedora', 'debian', 'ubuntu', 'cirros']), help='Image to grab from internet')
+@pass_config
+def download(config, pool, image):
+    """Download cloud image and upload it to specified pool"""
+    if pool is None:
+        click.secho("Missing pool.Leaving...", fg='red')
+        return
+    if image is None:
+        click.secho("Missing image.Leaving...", fg='red')
+        return
+    k = config.get()
+    click.secho("Handling template %s..." % image, fg='green')
+    image = IMAGES[image]
+    result = k.add_image(image, pool)
+    handle_response(result, image, element='Template', action='Added')
 
 
 if __name__ == '__main__':
