@@ -1399,7 +1399,7 @@ class Kvirt:
             pool.destroy()
         pool.undefine()
 
-    def bootstrap(self, pool=None, poolpath=None, pooltype='dir', nets={}):
+    def bootstrap(self, pool=None, poolpath=None, pooltype='dir', nets={}, images=[]):
         conn = self.conn
         volumes = {}
         try:
@@ -1410,6 +1410,8 @@ class Kvirt:
             if poolpath is not None:
                 print("Pool %s not found...Creating it" % pool)
                 self.create_pool(name=pool, poolpath=poolpath, pooltype=pooltype)
+        for image in images:
+            self.add_image(image, pool)
         networks = []
         for net in conn.listNetworks():
             networks.append(net)
