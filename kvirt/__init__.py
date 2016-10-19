@@ -4,7 +4,7 @@
 interact with a local/remote libvirt daemon
 """
 
-from default import TEMPLATES
+from defaults import TEMPLATES
 from distutils.spawn import find_executable
 from iptools import IpRange
 from netaddr import IPAddress, IPNetwork
