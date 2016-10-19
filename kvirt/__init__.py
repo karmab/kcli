@@ -4,6 +4,7 @@
 interact with a local/remote libvirt daemon
 """
 
+from default import TEMPLATES
 from distutils.spawn import find_executable
 from iptools import IpRange
 from netaddr import IPAddress, IPNetwork
@@ -13,7 +14,7 @@ import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "2.8"
+__version__ = "2.9"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -603,6 +604,7 @@ class Kvirt:
     def volumes(self, iso=False):
         isos = []
         templates = []
+        default_templates = [os.path.basename(t) for t in TEMPLATES.values()]
         conn = self.conn
         for storage in conn.listStoragePools():
             storage = conn.storagePoolLookupByName(storage)
@@ -615,7 +617,7 @@ class Kvirt:
             for volume in storage.listVolumes():
                 if volume.endswith('iso'):
                     isos.append("%s/%s" % (storagepath, volume))
-                elif volume.endswith('qcow2'):
+                elif volume.endswith('qcow2') or volume in default_templates:
                     templates.append("%s/%s" % (storagepath, volume))
         if iso:
             return isos
@@ -689,7 +691,7 @@ class Kvirt:
         size = int(size) * MB
         if int(size) == 0:
             size = 500 * 1024
-        name = path.split('/')[-1]
+        name = os.path.basename(path)
         if pooltype == 'block':
             volume = """<volume type='block'>
                         <name>%s</name>
@@ -1271,7 +1273,7 @@ class Kvirt:
 
     def add_image(self, image, pool):
         poolname = pool
-        shortimage = image.split('/')[-1]
+        shortimage = os.path.basename(image)
         conn = self.conn
         volumes = []
         try:
@@ -1417,7 +1419,7 @@ class Kvirt:
             if poolpath is not None:
                 print("Pool %s not found...Creating it" % pool)
                 self.create_pool(name=pool, poolpath=poolpath, pooltype=pooltype)
-        if image is not None and image.split('/')[-1] not in volumes:
+        if image is not None and os.path.basename(image) not in volumes:
             self.add_image(image, poolname)
         networks = []
         for net in conn.listNetworks():
