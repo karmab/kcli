@@ -1280,7 +1280,7 @@ class Kvirt:
         except:
             return {'result': 'failure', 'reason': "Pool %s not found" % pool}
         if shortimage in volumes:
-            return {'result': 'failure', 'reason': "Template %s allready existing in pool" % (shortimage, pool)}
+            return {'result': 'failure', 'reason': "Template %s allready existing in pool %s" % (shortimage, pool)}
         if self.host == 'localhost' or self.host == '127.0.0.1':
             cmd = 'wget -P /tmp %s' % (image)
         elif self.protocol == 'ssh':
