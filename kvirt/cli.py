@@ -2,7 +2,7 @@
 
 import click
 import fileinput
-from .defaults import NETS, POOL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, START, IMAGE, IMAGES
+from .defaults import NETS, POOL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, START, TEMPLATE, TEMPLATES
 from prettytable import PrettyTable
 from kvirt import Kvirt, __version__
 import os
@@ -613,8 +613,8 @@ def network(config, delete, isolated, cidr, dhcp, name):
 @click.option('-U', '--url', help='URL to use')
 @click.option('--pool', help='Pool to use')
 @click.option('--poolpath', help='Pool Path to use')
-@click.option('-i', '--image', is_flag=True, help="Grab Centos Cloud Image")
-def bootstrap(genfile, auto, name, host, port, user, protocol, url, pool, poolpath, image):
+@click.option('-t', '--template', is_flag=True, help="Grab Centos Cloud Image")
+def bootstrap(genfile, auto, name, host, port, user, protocol, url, pool, poolpath, template):
     """Bootstrap hypervisor, creating config file and optionally pools and network"""
     click.secho("Bootstrapping env", fg='green')
     if genfile or auto:
@@ -629,8 +629,8 @@ def bootstrap(genfile, auto, name, host, port, user, protocol, url, pool, poolpa
             pooltype = 'logical'
         else:
             pooltype = 'dir'
-        if image:
-            image = IMAGE
+        if template:
+            template = TEMPLATE
         nets = {'default': {'cidr': '192.168.122.0/24'}, 'cinet': {'cidr': '192.168.5.0/24'}}
         # disks = [{'size': 10}]
         if host == '127.0.0.1':
@@ -700,11 +700,11 @@ def bootstrap(genfile, auto, name, host, port, user, protocol, url, pool, poolpa
         else:
             pooltype = 'dir'
         client['pool'] = pool
-        imagecreate = raw_input("Download images for you?[N]: ") or 'N'
-        if imagecreate == 'Y':
-            image = IMAGE
+        templatecreate = raw_input("Download centos7 image for you?[N]: ") or 'N'
+        if templatecreate == 'Y':
+            template = TEMPLATE
         else:
-            image = None
+            template = None
         size = raw_input("Enter your client first disk size[%s]: " % default['disks'][0]['size']) or default['disks'][0]['size']
         client['disks'] = [{'size': size}]
         net = raw_input("Enter your client first network[%s]: " % default['nets'][0]) or default['nets'][0]
@@ -725,7 +725,7 @@ def bootstrap(genfile, auto, name, host, port, user, protocol, url, pool, poolpa
     if k.conn is None:
         click.secho("Couldnt connect to specify hypervisor %s. Leaving..." % host, fg='red')
         os._exit(1)
-    k.bootstrap(pool=pool, poolpath=poolpath, pooltype=pooltype, nets=nets, image=image)
+    k.bootstrap(pool=pool, poolpath=poolpath, pooltype=pooltype, nets=nets, template=template)
     # TODO:
     # DOWNLOAD CIRROS ( AND CENTOS7? ) IMAGES TO POOL ?
     path = os.path.expanduser('~/kcli.yml')
@@ -738,21 +738,21 @@ def bootstrap(genfile, auto, name, host, port, user, protocol, url, pool, poolpa
 
 @cli.command()
 @click.option('-p', '--pool', help='Pool to use')
-@click.option('-i', '--image', type=click.Choice(['centos', 'fedora', 'debian', 'ubuntu', 'cirros']), help='Image to grab from internet')
+@click.option('-t', '--template', type=click.Choice(['centos', 'fedora', 'debian', 'ubuntu', 'cirros']), help='Template/Image to grab from internet')
 @pass_config
-def download(config, pool, image):
-    """Download cloud image and upload it to specified pool"""
+def download(config, pool, template):
+    """Download cloud template and upload it to specified pool"""
     if pool is None:
         click.secho("Missing pool.Leaving...", fg='red')
         return
-    if image is None:
-        click.secho("Missing image.Leaving...", fg='red')
+    if template is None:
+        click.secho("Missing template.Leaving...", fg='red')
         return
     k = config.get()
-    click.secho("Handling template %s..." % image, fg='green')
-    image = IMAGES[image]
-    result = k.add_image(image, pool)
-    handle_response(result, image, element='Template', action='Added')
+    click.secho("Handling template %s..." % template, fg='green')
+    template = TEMPLATES[template]
+    result = k.add_image(template, pool)
+    handle_response(result, template, element='Template', action='Added')
 
 
 if __name__ == '__main__':
