@@ -690,6 +690,12 @@ def bootstrap(genfile, auto, name, host, port, user, protocol, url, pool, poolpa
             poolpath = raw_input("Enter yourpool path[/var/lib/libvirt/images]: ") or '/var/lib/libvirt/images'
         else:
             poolpath = None
+        if poolpath is None:
+            pooltype = None
+        elif '/dev' in poolpath:
+            pooltype = 'logical'
+        else:
+            pooltype = 'dir'
         client['pool'] = pool
         size = raw_input("Enter your client first disk size[%s]: " % default['disks'][0]['size']) or default['disks'][0]['size']
         client['disks'] = [{'size': size}]
