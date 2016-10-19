@@ -752,7 +752,7 @@ def download(config, pool, template):
     click.secho("Handling template %s..." % template, fg='green')
     template = TEMPLATES[template]
     result = k.add_image(template, pool)
-    handle_response(result, template, element='Template', action='Added')
+    handle_response(result, template, element='Template ', action='Added')
 
 
 if __name__ == '__main__':

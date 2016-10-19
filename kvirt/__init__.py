@@ -1270,6 +1270,7 @@ class Kvirt:
         pool.create()
 
     def add_image(self, image, pool):
+        poolname = pool
         shortimage = image.split('/')[-1]
         conn = self.conn
         volumes = []
@@ -1278,9 +1279,9 @@ class Kvirt:
             for vol in pool.listAllVolumes():
                 volumes.append(vol.name())
         except:
-            return {'result': 'failure', 'reason': "Pool %s not found" % pool}
+            return {'result': 'failure', 'reason': "Pool %s not found" % poolname}
         if shortimage in volumes:
-            return {'result': 'failure', 'reason': "Template %s allready existing in pool %s" % (shortimage, pool)}
+            return {'result': 'failure', 'reason': "Template %s allready exists in pool %s" % (shortimage, poolname)}
         if self.host == 'localhost' or self.host == '127.0.0.1':
             cmd = 'wget -P /tmp %s' % (image)
         elif self.protocol == 'ssh':
