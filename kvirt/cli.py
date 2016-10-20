@@ -2,7 +2,7 @@
 
 import click
 import fileinput
-from .defaults import NETS, POOL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, START, TEMPLATE, TEMPLATES
+from .defaults import NETS, POOL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, START, TEMPLATES
 from prettytable import PrettyTable
 from kvirt import Kvirt, __version__
 import os
@@ -630,7 +630,7 @@ def bootstrap(genfile, auto, name, host, port, user, protocol, url, pool, poolpa
         else:
             pooltype = 'dir'
         if template:
-            template = TEMPLATE
+            template = TEMPLATES['centos']
         nets = {'default': {'cidr': '192.168.122.0/24'}, 'cinet': {'cidr': '192.168.5.0/24'}}
         # disks = [{'size': 10}]
         if host == '127.0.0.1':
@@ -702,7 +702,7 @@ def bootstrap(genfile, auto, name, host, port, user, protocol, url, pool, poolpa
         client['pool'] = pool
         templatecreate = raw_input("Download centos7 image for you?[N]: ") or 'N'
         if templatecreate == 'Y':
-            template = TEMPLATE
+            template = TEMPLATES['centos']
         else:
             template = None
         size = raw_input("Enter your client first disk size[%s]: " % default['disks'][0]['size']) or default['disks'][0]['size']
