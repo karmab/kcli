@@ -323,6 +323,7 @@ class Kvirt:
         vm = conn.lookupByName(name)
         vm.setAutostart(1)
         if cloudinit:
+            print(dns)
             self._cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain)
             self._uploadimage(name, pool=default_storagepool)
         if reserveip:
@@ -800,6 +801,7 @@ class Kvirt:
 
     def _cloudinit(self, name, keys=None, cmds=None, nets=[], gateway=None, dns=None, domain=None):
         default_gateway = gateway
+        print(dns)
         with open('/tmp/meta-data', 'w') as metadatafile:
             if domain is not None:
                 localhostname = "%s.%s" % (name, domain)
@@ -949,6 +951,19 @@ class Kvirt:
         cpunode.text = numcpus
         newxml = ET.tostring(root)
         conn.defineXML(newxml)
+
+    def update_start(self, name, start=True):
+        conn = self.conn
+        try:
+            vm = conn.lookupByName(name)
+        except:
+            print("VM %s not found" % name)
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        if start:
+            vm.setAutostart(1)
+        else:
+            vm.setAutostart(0)
+        return {'result': 'success'}
 
     def create_disk(self, name, size, pool=None, thin=True, template=None):
         conn = self.conn

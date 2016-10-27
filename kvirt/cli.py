@@ -297,7 +297,7 @@ def create(config, profile, ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8, name):
 @cli.command()
 @click.option('-b', '--base', help='Base VM')
 @click.option('-f', '--full', is_flag=True)
-@click.option('-s', '--start', is_flag=True)
+@click.option('-s', '--start', is_flag=True, help='Start cloned VM')
 @click.argument('name')
 @pass_config
 def clone(config, base, full, start, name):
@@ -311,9 +311,11 @@ def clone(config, base, full, start, name):
 @click.option('-1', '--ip', help='Ip to set')
 @click.option('-m', '--memory', help='Memory to set')
 @click.option('-c', '--numcpus', help='Number of cpus to set')
+@click.option('-a', '--autostart', is_flag=True, help='Set VM to autostart')
+@click.option('-n', '--noautostart', is_flag=True, help='Prevent VM from autostart')
 @click.argument('name')
 @pass_config
-def update(config, ip, memory, numcpus, name):
+def update(config, ip, memory, numcpus, autostart, noautostart, name):
     """Update ip, memory or numcpus"""
     k = config.get()
     if ip is not None:
@@ -325,6 +327,12 @@ def update(config, ip, memory, numcpus, name):
     elif numcpus is not None:
         click.secho("Updating numcpus of vm %s to %s..." % (name, numcpus), fg='green')
         k.update_cpu(name, numcpus)
+    elif autostart:
+        click.secho("Setting autostart for vm %s..." % (name), fg='green')
+        k.update_start(name, start=True)
+    elif noautostart:
+        click.secho("Removing autostart for vm %s..." % (name), fg='green')
+        k.update_start(name, start=False)
 
 
 @cli.command()
@@ -408,13 +416,15 @@ def report(config):
 
 
 @cli.command()
+@click.option('-a', '--autostart', is_flag=True, help='Set all vms from plan to autostart')
+@click.option('-n', '--noautostart', is_flag=True, help='Prevent all vms from plan to autostart')
 @click.option('-f', '--inputfile', help='Input file')
-@click.option('-s', '--start', is_flag=True)
+@click.option('-s', '--start', is_flag=True, help='start all vms from plan')
 @click.option('-w', '--stop', is_flag=True)
 @click.option('-d', '--delete', is_flag=True)
 @click.argument('plan', required=False)
 @pass_config
-def plan(config, inputfile, start, stop, delete, plan):
+def plan(config, autostart, noautostart, inputfile, start, stop, delete, plan):
     """Create/Delete/Stop/Start vms from plan file"""
     if plan is None:
         plan = 'kvirt'
@@ -431,6 +441,26 @@ def plan(config, inputfile, start, stop, delete, plan):
                 k.delete(name)
                 click.secho("%s deleted!" % name, fg='green')
         click.secho("Plan %s deleted!" % plan, fg='green')
+        return
+    if autostart:
+        click.secho("Set vms from plan %s to autostart" % (plan), fg='green')
+        for vm in sorted(k.list()):
+            name = vm[0]
+            description = vm[4]
+            if description == plan:
+                k.update_start(name, start=True)
+                click.secho("%s set to autostart!" % name, fg='green')
+        click.secho("Plan %s started!" % plan, fg='green')
+        return
+    if noautostart:
+        click.secho("Preventing vms from plan %s to autostart" % (plan), fg='green')
+        for vm in sorted(k.list()):
+            name = vm[0]
+            description = vm[4]
+            if description == plan:
+                k.update_start(name, start=False)
+                click.secho("%s prevented to autostart!" % name, fg='green')
+        click.secho("Plan %s started!" % plan, fg='green')
         return
     if start:
         click.secho("Starting vms from plan %s" % (plan), fg='green')
