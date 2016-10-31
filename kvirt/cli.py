@@ -450,7 +450,6 @@ def plan(config, autostart, noautostart, inputfile, start, stop, delete, plan):
             if description == plan:
                 k.update_start(name, start=True)
                 click.secho("%s set to autostart!" % name, fg='green')
-        click.secho("Plan %s started!" % plan, fg='green')
         return
     if noautostart:
         click.secho("Preventing vms from plan %s to autostart" % (plan), fg='green')
@@ -460,7 +459,6 @@ def plan(config, autostart, noautostart, inputfile, start, stop, delete, plan):
             if description == plan:
                 k.update_start(name, start=False)
                 click.secho("%s prevented to autostart!" % name, fg='green')
-        click.secho("Plan %s started!" % plan, fg='green')
         return
     if start:
         click.secho("Starting vms from plan %s" % (plan), fg='green')
