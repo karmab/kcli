@@ -510,59 +510,59 @@ def plan(config, autostart, noautostart, inputfile, start, stop, delete, plan):
             handle_response(result, net, element='Network ')
         if vmentries:
             click.secho("Deploying Vms...", fg='green')
-        for name in vmentries:
-            profile = entries[name]
-            if k.exists(name):
-                click.secho("%s skipped!" % name, fg='blue')
-                continue
-            if 'profile' in profile.keys():
-                profiles = config.profiles
-                customprofile = profiles[profile['profile']]
-                title = profile['profile']
-            else:
-                customprofile = {}
-                title = plan
-            description = plan
-            pool = next((e for e in [profile.get('pool'), customprofile.get('pool'), default['pool']] if e is not None))
-            template = next((e for e in [profile.get('template'), customprofile.get('template')] if e is not None), None)
-            numcpus = next((e for e in [profile.get('numcpus'), customprofile.get('numcpus'), default['numcpus']] if e is not None))
-            memory = next((e for e in [profile.get('memory'), customprofile.get('memory'), default['memory']] if e is not None))
-            disks = next((e for e in [profile.get('disks'), customprofile.get('disks'), default['disks']] if e is not None))
-            disksize = next((e for e in [profile.get('disksize'), customprofile.get('disksize'), default['disksize']] if e is not None))
-            diskinterface = next((e for e in [profile.get('diskinterface'), customprofile.get('diskinterface'), default['diskinterface']] if e is not None))
-            diskthin = next((e for e in [profile.get('diskthin'), customprofile.get('diskthin'), default['diskthin']] if e is not None))
-            guestid = next((e for e in [profile.get('guestid'), customprofile.get('guestid'), default['guestid']] if e is not None))
-            vnc = next((e for e in [profile.get('vnc'), customprofile.get('vnc'), default['vnc']] if e is not None))
-            cloudinit = next((e for e in [profile.get('cloudinit'), customprofile.get('cloudinit'), default['cloudinit']] if e is not None))
-            reserveip = next((e for e in [profile.get('reserveip'), customprofile.get('reserveip'), default['reserveip']] if e is not None))
-            start = next((e for e in [profile.get('start'), customprofile.get('start'), default['start']] if e is not None))
-            nets = next((e for e in [profile.get('nets'), customprofile.get('nets'), default['nets']] if e is not None))
-            iso = next((e for e in [profile.get('iso'), customprofile.get('iso')] if e is not None), None)
-            keys = next((e for e in [profile.get('keys'), customprofile.get('keys')] if e is not None), None)
-            cmds = next((e for e in [profile.get('cmds'), customprofile.get('cmds')] if e is not None), None)
-            netmasks = next((e for e in [profile.get('netmasks'), customprofile.get('netmasks')] if e is not None), None)
-            gateway = next((e for e in [profile.get('gateway'), customprofile.get('gateway')] if e is not None), None)
-            dns = next((e for e in [profile.get('dns'), customprofile.get('dns')] if e is not None), None)
-            domain = next((e for e in [profile.get('domain'), customprofile.get('domain')] if e is not None), None)
-            ips = profile.get('ips')
-            scripts = next((e for e in [profile.get('scripts'), customprofile.get('scripts')] if e is not None), None)
-            if scripts is not None:
-                scriptcmds = []
-                for script in scripts:
-                    script = os.path.expanduser(script)
-                    if not os.path.exists(script):
-                        click.secho("Script %s not found.Ignoring..." % script, fg='red')
-                    else:
-                        scriptlines = [line.strip() for line in open(script).readlines() if line != '\n']
-                        if scriptlines:
-                            scriptcmds.extend(scriptlines)
-                if scriptcmds:
-                    if cmds is None:
-                        cmds = scriptcmds
-                    else:
-                        cmds = cmds + scriptcmds
-            result = k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain)
-            handle_response(result, name)
+            for name in vmentries:
+                profile = entries[name]
+                if k.exists(name):
+                    click.secho("%s skipped!" % name, fg='blue')
+                    continue
+                if 'profile' in profile.keys():
+                    profiles = config.profiles
+                    customprofile = profiles[profile['profile']]
+                    title = profile['profile']
+                else:
+                    customprofile = {}
+                    title = plan
+                description = plan
+                pool = next((e for e in [profile.get('pool'), customprofile.get('pool'), default['pool']] if e is not None))
+                template = next((e for e in [profile.get('template'), customprofile.get('template')] if e is not None), None)
+                numcpus = next((e for e in [profile.get('numcpus'), customprofile.get('numcpus'), default['numcpus']] if e is not None))
+                memory = next((e for e in [profile.get('memory'), customprofile.get('memory'), default['memory']] if e is not None))
+                disks = next((e for e in [profile.get('disks'), customprofile.get('disks'), default['disks']] if e is not None))
+                disksize = next((e for e in [profile.get('disksize'), customprofile.get('disksize'), default['disksize']] if e is not None))
+                diskinterface = next((e for e in [profile.get('diskinterface'), customprofile.get('diskinterface'), default['diskinterface']] if e is not None))
+                diskthin = next((e for e in [profile.get('diskthin'), customprofile.get('diskthin'), default['diskthin']] if e is not None))
+                guestid = next((e for e in [profile.get('guestid'), customprofile.get('guestid'), default['guestid']] if e is not None))
+                vnc = next((e for e in [profile.get('vnc'), customprofile.get('vnc'), default['vnc']] if e is not None))
+                cloudinit = next((e for e in [profile.get('cloudinit'), customprofile.get('cloudinit'), default['cloudinit']] if e is not None))
+                reserveip = next((e for e in [profile.get('reserveip'), customprofile.get('reserveip'), default['reserveip']] if e is not None))
+                start = next((e for e in [profile.get('start'), customprofile.get('start'), default['start']] if e is not None))
+                nets = next((e for e in [profile.get('nets'), customprofile.get('nets'), default['nets']] if e is not None))
+                iso = next((e for e in [profile.get('iso'), customprofile.get('iso')] if e is not None), None)
+                keys = next((e for e in [profile.get('keys'), customprofile.get('keys')] if e is not None), None)
+                cmds = next((e for e in [profile.get('cmds'), customprofile.get('cmds')] if e is not None), None)
+                netmasks = next((e for e in [profile.get('netmasks'), customprofile.get('netmasks')] if e is not None), None)
+                gateway = next((e for e in [profile.get('gateway'), customprofile.get('gateway')] if e is not None), None)
+                dns = next((e for e in [profile.get('dns'), customprofile.get('dns')] if e is not None), None)
+                domain = next((e for e in [profile.get('domain'), customprofile.get('domain')] if e is not None), None)
+                ips = profile.get('ips')
+                scripts = next((e for e in [profile.get('scripts'), customprofile.get('scripts')] if e is not None), None)
+                if scripts is not None:
+                    scriptcmds = []
+                    for script in scripts:
+                        script = os.path.expanduser(script)
+                        if not os.path.exists(script):
+                            click.secho("Script %s not found.Ignoring..." % script, fg='red')
+                        else:
+                            scriptlines = [line.strip() for line in open(script).readlines() if line != '\n']
+                            if scriptlines:
+                                scriptcmds.extend(scriptlines)
+                    if scriptcmds:
+                        if cmds is None:
+                            cmds = scriptcmds
+                        else:
+                            cmds = cmds + scriptcmds
+                result = k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain)
+                handle_response(result, name)
         if diskentries:
             click.secho("Deploying Disks...", fg='green')
         for disk in diskentries:
