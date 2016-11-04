@@ -1,4 +1,4 @@
-ose:
+ocp:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
  numcpus: 2
  memory: 2048
@@ -11,5 +11,4 @@ ose:
  scripts: 
   - ~/register.sh
   - subscription.sh
-  - install.sh
   - downstream.sh

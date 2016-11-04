@@ -323,7 +323,6 @@ class Kvirt:
         vm = conn.lookupByName(name)
         vm.setAutostart(1)
         if cloudinit:
-            print(dns)
             self._cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain)
             self._uploadimage(name, pool=default_storagepool)
         if reserveip:
