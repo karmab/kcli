@@ -1202,9 +1202,11 @@ class Kvirt:
         ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety']
         user = 'root'
         conn = self.conn
-        vm = conn.lookupByName(name)
-        if not vm:
+        try:
+            vm = conn.lookupByName(name)
+        except:
             print("VM %s not found" % name)
+            return
         if vm.isActive() != 1:
             print("Machine down. Cannot ssh...")
             return
