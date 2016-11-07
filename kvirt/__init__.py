@@ -800,7 +800,6 @@ class Kvirt:
 
     def _cloudinit(self, name, keys=None, cmds=None, nets=[], gateway=None, dns=None, domain=None):
         default_gateway = gateway
-        print(dns)
         with open('/tmp/meta-data', 'w') as metadatafile:
             if domain is not None:
                 localhostname = "%s.%s" % (name, domain)
