@@ -170,8 +170,9 @@ def switch(config, client):
 @click.option('-d', '--disks', is_flag=True)
 @click.option('-P', '--pools', is_flag=True)
 @click.option('-n', '--networks', is_flag=True)
+@click.option('-f', '--filters', type=click.Choice(['up', 'down']))
 @pass_config
-def list(config, clients, profiles, templates, isos, disks, pools, networks):
+def list(config, clients, profiles, templates, isos, disks, pools, networks, filters):
     """List clients, profiles, templates, isos, pools or vms"""
     k = config.get()
     if pools:
@@ -224,7 +225,12 @@ def list(config, clients, profiles, templates, isos, disks, pools, networks):
     else:
         vms = PrettyTable(["Name", "Status", "Ips", "Source", "Description/Plan", "Profile"])
         for vm in sorted(k.list()):
-            vms.add_row(vm)
+            if filters:
+                status = vm[1]
+                if status == filters:
+                    vms.add_row(vm)
+            else:
+                vms.add_row(vm)
         print(vms)
 
 
