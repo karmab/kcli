@@ -432,7 +432,7 @@ def report(config):
 @click.option('-t', '--delay', default=0, help="Delay between each vm's creation")
 @click.argument('plan', required=False)
 @pass_config
-def plan(config, autostart, noautostart, inputfile, start, stop, delete, time, plan):
+def plan(config, autostart, noautostart, inputfile, start, stop, delete, delay, plan):
     """Create/Delete/Stop/Start vms from plan file"""
     if plan is None:
         plan = 'kvirt'
@@ -571,8 +571,8 @@ def plan(config, autostart, noautostart, inputfile, start, stop, delete, time, p
                             cmds = cmds + scriptcmds
                 result = k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain)
                 handle_response(result, name)
-                if time > 0:
-                    sleep(time)
+                if delay > 0:
+                    sleep(delay)
         if diskentries:
             click.secho("Deploying Disks...", fg='green')
         for disk in diskentries:
