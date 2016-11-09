@@ -6,6 +6,7 @@ from .defaults import NETS, POOL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFAC
 from prettytable import PrettyTable
 from kvirt import Kvirt, __version__
 import os
+from time import sleep
 import yaml
 from shutil import copyfile
 
@@ -428,9 +429,10 @@ def report(config):
 @click.option('-s', '--start', is_flag=True, help='start all vms from plan')
 @click.option('-w', '--stop', is_flag=True)
 @click.option('-d', '--delete', is_flag=True)
+@click.option('-t', '--delay', default=0, help="Delay between each vm's creation")
 @click.argument('plan', required=False)
 @pass_config
-def plan(config, autostart, noautostart, inputfile, start, stop, delete, plan):
+def plan(config, autostart, noautostart, inputfile, start, stop, delete, time, plan):
     """Create/Delete/Stop/Start vms from plan file"""
     if plan is None:
         plan = 'kvirt'
@@ -569,6 +571,8 @@ def plan(config, autostart, noautostart, inputfile, start, stop, delete, plan):
                             cmds = cmds + scriptcmds
                 result = k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain)
                 handle_response(result, name)
+                if time > 0:
+                    sleep(time)
         if diskentries:
             click.secho("Deploying Disks...", fg='green')
         for disk in diskentries:
