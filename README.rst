@@ -277,8 +277,9 @@ If a file with the plan isnt specified with -f , the file kcli\_plan.yml
 in the current directory will be used, if available.
 
 For an advanced use of plans along with scripts, you can check the
-`uci <uci/README.md>`__ page to deploy all upstream projects associated
-with Red Hat Cloud Infrastructure products ( or downstream versions too)
+`plans <plans/README.md>`__ page to deploy all upstream projects
+associated with Red Hat Cloud Infrastructure products ( or downstream
+versions too)
 
 available parameters
 --------------------

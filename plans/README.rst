@@ -1,10 +1,8 @@
-uci deployment
---------------
+plans deployment
+----------------
 
 As an advanced use of kcli, i have created a deployment plan and
-specific scripts that will deploy the following elements. As they are
-the upstream for *Red Hat Cloud Infrastructure* products, i m using the
-term "Upstream Cloud Infrastructure" to refer to them:
+specific scripts that will deploy the following elements.
 
 -  openstack rdo
 -  ovirt
@@ -25,7 +23,7 @@ installation
 
 ::
 
-    <name>cinet</name>
+    <network><name>cinet</name>
     <forward mode='nat'>
       <nat>
         <port start='1024' end='65535'/>
@@ -47,7 +45,8 @@ And create it with those commands
     virsh net-start cinet
 
 -  You can then use the plan files and scripts in the
-   `uci <https://github.com/karmab/kcli/tree/master/uci>`__ directory
+   `plans <https://github.com/karmab/kcli/tree/master/plans>`__
+   directory
 
 ::
 
@@ -74,8 +73,12 @@ name)
 
 ::
 
-    cd uci/ovirt
+    cd plans/ovirt
     kcli plan -f upstream.yml
+
+You can do the same for downstream. Note that for openstack, there are
+per version downstream plan files to ease testing ( currently kilo,
+liberty and mitaka )
 
 limitations
 -----------
