@@ -1,0 +1,14 @@
+ovirt35:
+ template: CentOS-7-x86_64-GenericCloud.qcow2
+ memory: 8192
+ numcpus: 2
+ nets:
+  - cinet
+ disks:
+  - size: 60
+ pool: vms
+ scripts: 
+  - repo35.sh
+  - nfs.sh
+  - install.sh
+  - provision.sh
