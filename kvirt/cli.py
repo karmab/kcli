@@ -610,12 +610,14 @@ def info(config, name):
 
 
 @cli.command()
+@click.option('-L', help='Local Forwarding')
+@click.option('-R', help='Remote Forwarding')
 @click.argument('name')
 @pass_config
-def ssh(config, name):
+def ssh(config, l, r, name):
     """Ssh into vm"""
     k = config.get()
-    k.ssh(name)
+    k.ssh(name, local=l, remote=r)
 
 
 @cli.command()

@@ -1198,7 +1198,7 @@ class Kvirt:
         vmxml = vm.XMLDesc(0)
         conn.defineXML(vmxml)
 
-    def ssh(self, name):
+    def ssh(self, name, local=None, remote=None):
         ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety']
         user = 'root'
         conn = self.conn
@@ -1231,7 +1231,13 @@ class Kvirt:
         if ip == '':
             print("No ip found. Cannot ssh...")
         else:
-            os.system("ssh %s@%s" % (user, ip))
+            sshcommand = "%s@%s" % (user, ip)
+            if local is not None:
+                sshcommand = "-L %s %s" % (local, sshcommand)
+            if remote is not None:
+                sshcommand = "-R %s %s" % (remote, sshcommand)
+            sshcommand = "ssh %s" % sshcommand
+            os.system(sshcommand)
 
     def _get_free_port(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
