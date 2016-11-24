@@ -1,4 +1,4 @@
-eat_template_version: 2013-05-23
+heat_template_version: 2013-05-23
 
 description: This template deploys a Full testing stack
 
