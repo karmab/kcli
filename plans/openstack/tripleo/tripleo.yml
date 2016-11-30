@@ -10,25 +10,26 @@ tripleopublic:
 
 undercloud:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
- memory: 4096
+ memory: 6144
  numcpus: 2
  disks:
   - size: 20
  nets: 
-  - name: tripleoprovisioning
-    ip: 10.0.0.10
-    mask: 255.255.255.0
-    gateway: 10.0.0.1
   - name: tripleopublic
     ip: 192.168.101.10
     mask: 255.255.255.0
     gateway: 192.168.101.1
+  - name: tripleoprovisioning
+    ip: 10.0.0.10
+    mask: 255.255.255.0
+    gateway: 10.0.0.1
  dns: 192.168.101.1
  pool: vms
- cmds: 
+ cmds:
+  - echo nameserver 192.168.101.1 > /etc/resolv.conf
   - echo unix1234 | passwd --stdin root
   - echo undercloud.osp.poc > /etc/hostname
-  - echo 192.168.100.10 undercloud.osp.poc undercloud > /etc/hosts
+  - echo 192.168.100.10 undercloud.osp.poc undercloud >> /etc/hosts
  scripts: 
   - ~/register.sh
   - mitaka.sh
