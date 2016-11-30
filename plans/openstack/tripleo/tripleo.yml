@@ -5,7 +5,7 @@ tripleoprovisioning:
 
 tripleopublic:
  type: network
- cidr: 192.168.100.0/24
+ cidr: 192.168.101.0/24
  dhcp: true
 
 undercloud:
@@ -20,10 +20,10 @@ undercloud:
     mask: 255.255.255.0
     gateway: 10.0.0.1
   - name: tripleopublic
-    ip: 192.168.100.10
+    ip: 192.168.101.10
     mask: 255.255.255.0
-    gateway: 192.168.100.1
- dns: 192.168.100.1
+    gateway: 192.168.101.1
+ dns: 192.168.101.1
  pool: vms
  cmds: 
   - echo unix1234 | passwd --stdin root
@@ -31,20 +31,5 @@ undercloud:
   - echo 192.168.100.10 undercloud.osp.poc undercloud > /etc/hosts
  scripts: 
   - ~/register.sh
-  - kilo.sh
-  - useradd stack
-  - echo stack | sudo passwd --stdin stack
-  - echo "stack ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/stack
-  - chmod 0440 /etc/sudoers.d/stack
-  - yum install -y python-rdomanager-oscplugin
-
-
-machine01:
- memory: 1024
- numcpus: 2
- disks:
-  - size: 10
- nets: 
-  - name: tripleoprovisioning
- pool: vms
- start: False
+  - mitaka.sh
+  - undercloud.sh
