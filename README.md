@@ -264,7 +264,7 @@ nets:
    mask: 255.255.255.0
    gateway: 192.168.0.1
 ```
-Within a net section, you can use name, nic, ip, mask and gateway as keys.
+Within a net section, you can use name, nic, ip, mac, mask and gateway as keys.
 
 Note that up to 8 ips can also be provided on command line when creating a single vm ( with the flag -1, -2, -3,-4,...)
 Also note that if you set reserveip  to True, a reservation will be made if the corresponding network has dhcp and when the provided ip belongs to the network range
@@ -318,6 +318,7 @@ basic testing can be run with pytest. If using a remote hypervisor, you ll want 
  
 - remove all the print for the kvirt module and only return data
 - change the try, except blocks for object checks with parsing of the list methods that libvirt provides for most object
+- add basic validation of ips, netmasks, macs,...  within plan file
 
 ##Problems?
 

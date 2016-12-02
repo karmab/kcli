@@ -14,7 +14,7 @@ import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "2.11"
+__version__ = "2.12"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -220,6 +220,11 @@ class Kvirt:
                     nets[index]['ip'] = ip
                 elif 'ip' in nets[index]:
                     ip = nets[index]['ip']
+                if 'mac' in nets[index]:
+                    mac = nets[index]['mac']
+                    macxml = "<mac address='%s'/>" % mac
+                else:
+                    macxml = ''
                 if index == 0 and ip is not None:
                     version = "<entry name='version'>%s</entry>" % ip
             if netname in bridges:
@@ -230,9 +235,10 @@ class Kvirt:
                 return {'result': 'failure', 'reason': "Invalid network %s" % netname}
             netxml = """%s
                      <interface type='%s'>
+                     %s
                      <source %s='%s'/>
                      <model type='virtio'/>
-                     </interface>""" % (netxml, sourcenet, sourcenet, netname)
+                     </interface>""" % (netxml, sourcenet, macxml, sourcenet, netname)
         version = """<sysinfo type='smbios'>
                      <system>
                      %s

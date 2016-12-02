@@ -10,10 +10,10 @@ tripleopublic:
 
 undercloud:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
- memory: 6144
+ memory: 8192
  numcpus: 2
  disks:
-  - size: 20
+  - size: 50
  nets: 
   - name: tripleopublic
     ip: 192.168.101.10
@@ -29,8 +29,56 @@ undercloud:
   - echo nameserver 192.168.101.1 > /etc/resolv.conf
   - echo unix1234 | passwd --stdin root
   - echo undercloud.osp.poc > /etc/hostname
-  - echo 192.168.100.10 undercloud.osp.poc undercloud >> /etc/hosts
+  - echo 192.168.101.10 undercloud.osp.poc undercloud >> /etc/hosts
  scripts: 
   - ~/register.sh
   - mitaka.sh
-  - undercloud.sh
+  - undercloud_pre.sh
+
+controller01:
+ memory: 4096
+ numcpus: 2
+ disks:
+  - size: 30
+ nets:
+  - name: tripleoprovisioning
+    mac: aa:bb:cc:dd:ee:01
+  - name: tripleopublic
+ pool: vms
+ start: False
+
+controller02:
+ memory: 4096
+ numcpus: 2
+ disks:
+  - size: 30
+ nets:
+  - name: tripleoprovisioning
+    mac: aa:bb:cc:dd:ee:02
+  - name: tripleopublic
+ pool: vms
+ start: False
+
+controller03:
+ memory: 4096
+ numcpus: 2
+ disks:
+  - size: 30
+ nets:
+  - name: tripleoprovisioning
+    mac: aa:bb:cc:dd:ee:03
+  - name: tripleopublic
+ pool: vms
+ start: False
+
+compute01:
+ memory: 4096
+ numcpus: 2
+ disks:
+  - size: 30
+ nets:
+  - name: tripleoprovisioning
+    mac: aa:bb:cc:dd:ee:04
+  - name: tripleopublic
+ pool: vms
+ start: False
