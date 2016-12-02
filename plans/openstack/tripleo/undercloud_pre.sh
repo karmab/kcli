@@ -8,6 +8,7 @@ yum install -y python-rdomanager-oscplugin wget vim screen
 yum -y install rhosp-director-images rhosp-director-images-ipa
 su - stack -c "wget https://raw.githubusercontent.com/karmab/kcli/master/plans/openstack/tripleo/undercloud.conf"
 su - stack -c "wget https://raw.githubusercontent.com/karmab/kcli/master/plans/openstack/tripleo/undercloud.sh"
+su - stack -c "wget https://raw.githubusercontent.com/karmab/kcli/master/plans/openstack/tripleo/instackenv.json"
 systemctl stop NetworkManager
 systemctl disable NetworkManager
 yum -y update
