@@ -9,6 +9,7 @@ yum -y install rhosp-director-images rhosp-director-images-ipa
 su - stack -c "wget https://raw.githubusercontent.com/karmab/kcli/master/plans/openstack/tripleo/undercloud.conf"
 su - stack -c "wget https://raw.githubusercontent.com/karmab/kcli/master/plans/openstack/tripleo/undercloud.sh"
 su - stack -c "wget https://raw.githubusercontent.com/karmab/kcli/master/plans/openstack/tripleo/instackenv.json"
+su - stack -c "wget https://raw.githubusercontent.com/karmab/kcli/master/plans/openstack/tripleo/assign_profiles.sh"
 systemctl stop NetworkManager
 systemctl disable NetworkManager
 yum -y update

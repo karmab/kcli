@@ -36,7 +36,7 @@ undercloud:
   - undercloud_pre.sh
 
 controller01:
- memory: 4096
+ memory: 5120
  numcpus: 2
  disks:
   - size: 30
@@ -48,10 +48,10 @@ controller01:
  start: False
 
 controller02:
- memory: 4096
+ memory: 5120
  numcpus: 2
  disks:
-  - size: 30
+  - size: 50
  nets:
   - name: tripleoprovisioning
     mac: aa:bb:cc:dd:ee:02
@@ -60,10 +60,10 @@ controller02:
  start: False
 
 controller03:
- memory: 4096
+ memory: 5120
  numcpus: 2
  disks:
-  - size: 30
+  - size: 50
  nets:
   - name: tripleoprovisioning
     mac: aa:bb:cc:dd:ee:03
@@ -75,7 +75,7 @@ compute01:
  memory: 4096
  numcpus: 2
  disks:
-  - size: 30
+  - size: 50
  nets:
   - name: tripleoprovisioning
     mac: aa:bb:cc:dd:ee:04

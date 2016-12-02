@@ -14,7 +14,7 @@ import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "2.12"
+__version__ = "2.13"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -208,6 +208,7 @@ class Kvirt:
                     <target dev='%s' bus='%s'/>
                     </disk>""" % (disksxml, diskformat, diskpath, backingxml, diskdev, diskbus)
         netxml = ''
+        macxml = ''
         version = ''
         for index, net in enumerate(nets):
             if isinstance(net, str):
@@ -223,8 +224,6 @@ class Kvirt:
                 if 'mac' in nets[index]:
                     mac = nets[index]['mac']
                     macxml = "<mac address='%s'/>" % mac
-                else:
-                    macxml = ''
                 if index == 0 and ip is not None:
                     version = "<entry name='version'>%s</entry>" % ip
             if netname in bridges:

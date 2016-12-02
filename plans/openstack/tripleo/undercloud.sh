@@ -8,7 +8,11 @@ neutron subnet-update `neutron subnet-list -c id -f value` --dns-nameserver 8.8.
 ssh-keyscan -H 192.168.101.1 >> ~/.ssh/known_hosts
 tr '\n' '@' < .ssh/id_rsa  > prout
 sed -i "s/@/\\\\n/g" prout
-# edit damn instackenv.json to put the correct key
 openstack baremetal import --json ~/instackenv.json
 openstack baremetal configure boot
+openstack baremetal introspection bulk start
+sh assign_profiles.sh
 
+# ISSUES FOUND
+# edit damn instackenv.json to put the correct key
+# you will need http://mirror.centos.org/centos/7/cloud/x86_64/openstack-mitaka/common/ipxe-roms-qemu-20160127-1.git6366fa7a.el7.noarch.rpm if using a centos hypervisor
