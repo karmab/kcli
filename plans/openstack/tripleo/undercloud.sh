@@ -6,13 +6,15 @@ for i in /usr/share/rhosp-director-images/overcloud-full-latest-9.0.tar /usr/sha
 openstack overcloud image upload --image-path /home/stack/images
 neutron subnet-update `neutron subnet-list -c id -f value` --dns-nameserver 8.8.8.8
 ssh-keyscan -H 192.168.101.1 >> ~/.ssh/known_hosts
-tr '\n' '@' < .ssh/id_rsa  > prout
-sed -i "s/@/\\\\n/g" prout
+sh instackenv.sh
+#tr '\n' '@' < .ssh/id_rsa  > prout
+#sed -i "s/@/\\\\n/g" prout
 openstack baremetal import --json ~/instackenv.json
 openstack baremetal configure boot
 openstack baremetal introspection bulk start
-sh assign_profiles.sh
+sh assignprofiles.sh
+#openstack overcloud deploy --templates
 
 # ISSUES FOUND
-# edit damn instackenv.json to put the correct key
 # you will need http://mirror.centos.org/centos/7/cloud/x86_64/openstack-mitaka/common/ipxe-roms-qemu-20160127-1.git6366fa7a.el7.noarch.rpm if using a centos hypervisor
+

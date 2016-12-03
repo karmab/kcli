@@ -1,3 +1,4 @@
+jq . << EOF > ~/instackenv.json
 {
   "ssh-user": "root",
   "ssh-key": "",
@@ -7,7 +8,7 @@
   "nodes": [
     {
       "pm_addr": "192.168.101.1",
-      "pm_password": "",
+      "pm_password": "$(cat ~/.ssh/id_rsa)",
       "pm_type": "pxe_ssh",
       "mac": [
         "aa:bb:cc:dd:ee:01"
@@ -20,7 +21,7 @@
     },
     {
       "pm_addr": "192.168.101.1",
-      "pm_password": "",
+      "pm_password": "$(cat ~/.ssh/id_rsa)",
       "pm_type": "pxe_ssh",
       "mac": [
         "aa:bb:cc:dd:ee:02"
@@ -33,7 +34,7 @@
     },
     {
       "pm_addr": "192.168.101.1",
-      "pm_password": "",
+      "pm_password": "$(cat ~/.ssh/id_rsa)",
       "pm_type": "pxe_ssh",
       "mac": [
         "aa:bb:cc:dd:ee:03"
@@ -46,7 +47,7 @@
     },
     {
       "pm_addr": "192.168.101.1",
-      "pm_password": "",
+      "pm_password": "$(cat ~/.ssh/id_rsa)",
       "pm_type": "pxe_ssh",
       "mac": [
         "aa:bb:cc:dd:ee:04"
@@ -59,3 +60,4 @@
     }
   ]
 }
+EOF
