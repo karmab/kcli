@@ -5,8 +5,8 @@ counter=0
 for uuid in $uuids ; do
 counter=$(( counter +1))
   if [ $counter -eq 4 ] ; then
-    ironic node-update $uuid add properties/capabilities='profile:control,boot_option:local'
-  else
     ironic node-update $uuid add properties/capabilities='profile:compute,boot_option:local'
+  else
+    ironic node-update $uuid add properties/capabilities='profile:control,boot_option:local'
   fi
 done
