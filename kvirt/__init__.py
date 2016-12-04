@@ -183,9 +183,9 @@ class Kvirt:
                     return {'result': 'failure', 'reason': "Invalid template %s" % template}
                 backing = backingvolume.path()
                 if '/dev' in backing and diskpooltype == 'dir':
-                    return {'result': 'failure', 'reason': "lvm template cant be used with a dir pool.Leaving..."}
+                    return {'result': 'failure', 'reason': "lvm template can not be used with a dir pool.Leaving..."}
                 if '/dev' not in backing and diskpooltype == 'logical':
-                    return {'result': 'failure', 'reason': "file template cant be used with a lvm pool.Leaving..."}
+                    return {'result': 'failure', 'reason': "file template can not be used with a lvm pool.Leaving..."}
                 backingxml = """<backingStore type='file' index='1'>
                                 <format type='qcow2'/>
                                 <source file='%s'/>
@@ -1309,7 +1309,7 @@ class Kvirt:
         except:
             return {'result': 'failure', 'reason': "Pool %s not found" % poolname}
         if shortimage in volumes:
-            return {'result': 'failure', 'reason': "Template %s allready exists in pool %s" % (shortimage, poolname)}
+            return {'result': 'failure', 'reason': "Template %s already exists in pool %s" % (shortimage, poolname)}
         if self.host == 'localhost' or self.host == '127.0.0.1':
             cmd = 'wget -P /tmp %s' % (image)
         elif self.protocol == 'ssh':
