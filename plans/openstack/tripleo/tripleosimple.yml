@@ -39,7 +39,7 @@ controller01:
  memory: 5120
  numcpus: 2
  disks:
-  - size: 30
+  - size: 50
  nets:
   - name: tripleoprovisioning
     mac: aa:bb:cc:dd:ee:01

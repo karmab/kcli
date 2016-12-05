@@ -506,7 +506,7 @@ def plan(config, autostart, noautostart, inputfile, start, stop, delete, delay, 
         for net in networkentries:
             profile = entries[net]
             if k.net_exists(net):
-                click.secho("%s skipped!" % net, fg='blue')
+                click.secho("Network %s skipped!" % net, fg='blue')
                 continue
             cidr = profile.get('cidr')
             nat = bool(profile.get('nat', True))
@@ -521,7 +521,7 @@ def plan(config, autostart, noautostart, inputfile, start, stop, delete, delay, 
             for name in vmentries:
                 profile = entries[name]
                 if k.exists(name):
-                    click.secho("%s skipped!" % name, fg='blue')
+                    click.secho("VM %s skipped!" % name, fg='blue')
                     continue
                 if 'profile' in profile.keys():
                     profiles = config.profiles
