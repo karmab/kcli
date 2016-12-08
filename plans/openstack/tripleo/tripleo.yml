@@ -2,6 +2,7 @@ tripleoprovisioning:
  type: network
  cidr: 10.0.0.0/24
  dhcp: false
+ nat: false
 
 tripleopublic:
  type: network
@@ -35,43 +36,20 @@ undercloud:
   - mitaka.sh
   - undercloud_pre.sh
 
-controller01:
- memory: 5120
+tricontroller01:
+ cloudinit: false
+ memory: 6144
  numcpus: 2
  disks:
   - size: 50
  nets:
   - name: tripleoprovisioning
     mac: aa:bb:cc:dd:ee:01
-  - name: tripleopublic
  pool: vms
- start: False
+ start: false
 
-controller02:
- memory: 5120
- numcpus: 2
- disks:
-  - size: 50
- nets:
-  - name: tripleoprovisioning
-    mac: aa:bb:cc:dd:ee:02
-  - name: tripleopublic
- pool: vms
- start: False
-
-controller03:
- memory: 5120
- numcpus: 2
- disks:
-  - size: 50
- nets:
-  - name: tripleoprovisioning
-    mac: aa:bb:cc:dd:ee:03
-  - name: tripleopublic
- pool: vms
- start: False
-
-compute01:
+tricompute01:
+ cloudinit: false
  memory: 4096
  numcpus: 2
  disks:
@@ -79,6 +57,5 @@ compute01:
  nets:
   - name: tripleoprovisioning
     mac: aa:bb:cc:dd:ee:04
-  - name: tripleopublic
  pool: vms
- start: False
+ start: false

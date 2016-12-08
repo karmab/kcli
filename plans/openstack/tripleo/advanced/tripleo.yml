@@ -2,11 +2,43 @@ tripleoprovisioning:
  type: network
  cidr: 10.0.0.0/24
  dhcp: false
+ nat: false
 
 tripleopublic:
  type: network
  cidr: 192.168.101.0/24
  dhcp: true
+
+tripleointernalAPI:
+ type: network
+ cidr: 172.16.0.0/24
+ dhcp: false
+ nat: false
+
+tripleotenant:
+ type: network
+ cidr: 172.17.0.0/24
+ dhcp: false
+ nat: false
+
+tripleostorage:
+ type: network
+ cidr: 172.18.0.0/24
+ dhcp: false
+ nat: false
+
+tripleomanagement:
+ type: network
+ cidr: 172.20.0.0/24
+ dhcp: false
+ nat: false
+
+tripleofloating:
+ type: network
+ cidr: 10.1.1.0/24
+ dhcp: false
+ nat: false
+
 
 undercloud:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
@@ -35,7 +67,8 @@ undercloud:
   - mitaka.sh
   - undercloud_pre.sh
 
-controller01:
+tricontroller01:
+ cloudinit: False
  memory: 5120
  numcpus: 2
  disks:
@@ -43,10 +76,38 @@ controller01:
  nets:
   - name: tripleoprovisioning
     mac: aa:bb:cc:dd:ee:01
+  - name: tripleopublic
  pool: vms
  start: False
 
-compute01:
+tricontroller02:
+ cloudinit: False
+ memory: 5120
+ numcpus: 2
+ disks:
+  - size: 50
+ nets:
+  - name: tripleoprovisioning
+    mac: aa:bb:cc:dd:ee:02
+  - name: tripleopublic
+ pool: vms
+ start: False
+
+tricontroller03:
+ cloudinit: False
+ memory: 5120
+ numcpus: 2
+ disks:
+  - size: 50
+ nets:
+  - name: tripleoprovisioning
+    mac: aa:bb:cc:dd:ee:03
+  - name: tripleopublic
+ pool: vms
+ start: False
+
+tricompute01:
+ cloudinit: False
  memory: 4096
  numcpus: 2
  disks:
@@ -54,5 +115,6 @@ compute01:
  nets:
   - name: tripleoprovisioning
     mac: aa:bb:cc:dd:ee:04
+  - name: tripleopublic
  pool: vms
  start: False
