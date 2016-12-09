@@ -4,7 +4,7 @@ notifications:
     recipients:
       - karimboumedhel@gmail.com
 sudo: required
-dist: precise
+dist: trusty
 addons:
   apt:
     packages:
@@ -35,4 +35,4 @@ install:
 script:
 - find . -name \*.py -exec pep8 --ignore=E501,E402 {} +
 - find . -name '*.py' | misspellings -f -
-- py.test
+- py.test -vv
