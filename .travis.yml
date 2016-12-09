@@ -4,7 +4,7 @@ notifications:
     recipients:
       - karimboumedhel@gmail.com
 sudo: required
-dist: trusty
+dist: precise
 addons:
   apt:
     packages:
