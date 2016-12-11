@@ -1,0 +1,24 @@
+heat_template_version: 2014-10-16
+
+description: >
+  Extra hostname configuration
+
+parameters:
+  servers:
+    type: json
+  myparam:
+    type: string
+
+resources:
+  ExtraConfig:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      config: {get_file: /home/stack/templates/environments/postconfig.sh}
+
+  ExtraDeployments:
+    type: OS::Heat::SoftwareDeployments
+    properties:
+      servers:  {get_param: servers}
+      config: {get_resource: ExtraConfig}
+      actions: ['CREATE','UPDATE']
