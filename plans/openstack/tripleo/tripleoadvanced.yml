@@ -9,37 +9,6 @@ tripleopublic:
  cidr: 192.168.101.0/24
  dhcp: true
 
-tripleointernalAPI:
- type: network
- cidr: 172.16.0.0/24
- dhcp: false
- nat: false
-
-tripleotenant:
- type: network
- cidr: 172.17.0.0/24
- dhcp: false
- nat: false
-
-tripleostorage:
- type: network
- cidr: 172.18.0.0/24
- dhcp: false
- nat: false
-
-tripleomanagement:
- type: network
- cidr: 172.20.0.0/24
- dhcp: false
- nat: false
-
-tripleofloating:
- type: network
- cidr: 10.1.1.0/24
- dhcp: false
- nat: false
-
-
 undercloud:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
  memory: 8192
@@ -77,6 +46,7 @@ tricontroller01:
   - name: tripleoprovisioning
     mac: aa:bb:cc:dd:ee:01
   - name: tripleopublic
+  - name: tripleopublic
  pool: vms
  start: False
 
@@ -89,6 +59,7 @@ tricontroller02:
  nets:
   - name: tripleoprovisioning
     mac: aa:bb:cc:dd:ee:02
+  - name: tripleopublic
   - name: tripleopublic
  pool: vms
  start: False
@@ -103,6 +74,7 @@ tricontroller03:
   - name: tripleoprovisioning
     mac: aa:bb:cc:dd:ee:03
   - name: tripleopublic
+  - name: tripleopublic
  pool: vms
  start: False
 
@@ -115,6 +87,7 @@ tricompute01:
  nets:
   - name: tripleoprovisioning
     mac: aa:bb:cc:dd:ee:04
+  - name: tripleopublic
   - name: tripleopublic
  pool: vms
  start: False

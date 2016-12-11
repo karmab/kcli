@@ -1362,6 +1362,10 @@ class Kvirt:
             network = conn.networkLookupByName(name)
         except:
             return {'result': 'failure', 'reason': "Network %s not found" % name}
+        machines = self.network_ports(name)
+        if machines:
+            machines = ','.join(machines)
+            return {'result': 'failure', 'reason': "Network %s is beeing used by %s" % (name, machines)}
         if network.isActive():
             network.destroy()
         network.undefine()
@@ -1456,3 +1460,38 @@ class Kvirt:
                 cidr = nets[net].get('cidr')
                 dhcp = bool(nets[net].get('dchp', True))
                 self.create_network(name=net, cidr=cidr, dhcp=dhcp)
+
+    def network_ports(self, name):
+        conn = self.conn
+        machines = []
+        for vm in conn.listAllDomains(0):
+            xml = vm.XMLDesc(0)
+            root = ET.fromstring(xml)
+            for element in root.getiterator('interface'):
+                networktype = element.get('type')
+                if networktype == 'bridge':
+                    network = element.find('source').get('bridge')
+                else:
+                    network = element.find('source').get('network')
+            if network == name:
+                machines.append(vm.name())
+        return machines
+
+    def vm_ports(self, name):
+        conn = self.conn
+        networks = []
+        try:
+            vm = conn.lookupByName(name)
+        except:
+            print("VM %s not found" % name)
+            return
+        xml = vm.XMLDesc(0)
+        root = ET.fromstring(xml)
+        for element in root.getiterator('interface'):
+            networktype = element.get('type')
+            if networktype == 'bridge':
+                network = element.find('source').get('bridge')
+            else:
+                network = element.find('source').get('network')
+            networks.append(network)
+        return networks

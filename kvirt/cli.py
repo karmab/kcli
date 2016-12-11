@@ -438,6 +438,7 @@ def plan(config, autostart, noautostart, inputfile, start, stop, delete, delay, 
         plan = 'kvirt'
     k = config.get()
     if delete:
+        networks = []
         if plan == '':
             click.secho("That would delete every vm...Not doing that", fg='red')
             return
@@ -446,8 +447,15 @@ def plan(config, autostart, noautostart, inputfile, start, stop, delete, delay, 
             name = vm[0]
             description = vm[4]
             if description == plan:
+                vmnetworks = k.vm_ports(name)
+                for network in vmnetworks:
+                    if network != 'default' and network not in networks:
+                        networks.append(network)
                 k.delete(name)
                 click.secho("%s deleted!" % name, fg='green')
+        for network in networks:
+            k.delete_network(network)
+            click.secho("Unused network %s deleted!" % network, fg='green')
         click.secho("Plan %s deleted!" % plan, fg='green')
         return
     if autostart:

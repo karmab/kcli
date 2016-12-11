@@ -227,6 +227,8 @@ When launching a plan, the plan name is optional. If not is provided, the kvirt 
 
 If a file with the plan isnt specified with -f , the file kcli_plan.yml in the current directory will be used, if available.
 
+Also note that when deleting a plan, the network of the vms will also be deleted if no other vm are using them. You can prevent this by using the keep ( -k) flag
+
 For an advanced use of plans along with scripts, you can check the [plans](plans/README.md) page to deploy all upstream projects associated with Red Hat Cloud Infrastructure products ( or downstream versions too)
 
 ## available parameters
@@ -316,6 +318,8 @@ basic testing can be run with pytest. If using a remote hypervisor, you ll want 
 
 ## TODO 
  
+- allows containers to be launched within plan
+- also deletes networks within plans when no machine uses them
 - remove all the print for the kvirt module and only return data
 - change the try, except blocks for object checks with parsing of the list methods that libvirt provides for most object
 - add basic validation of ips, netmasks, macs,...  within plan file
