@@ -317,9 +317,9 @@ basic testing can be run with pytest. If using a remote hypervisor, you ll want 
 - debian images are freezing. rebooting fixes the issue but as such cloudinit doesnt get applied...
 
 ## TODO 
- 
+
+- deploy kcli as container
 - allows containers to be launched within plan
-- also deletes networks within plans when no machine uses them
 - remove all the print for the kvirt module and only return data
 - change the try, except blocks for object checks with parsing of the list methods that libvirt provides for most object
 - add basic validation of ips, netmasks, macs,...  within plan file
