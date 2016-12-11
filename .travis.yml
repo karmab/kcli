@@ -35,4 +35,4 @@ install:
 script:
 - find . -name \*.py -exec pep8 --ignore=E501,E402 {} +
 - find . -name '*.py' | misspellings -f -
-- py.test -vv
+## - py.test -vv
