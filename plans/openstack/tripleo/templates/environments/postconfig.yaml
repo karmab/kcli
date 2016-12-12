@@ -2,4 +2,5 @@ resource_registry:
   OS::TripleO::NodeExtraConfigPost: /home/stack/templates/environments/_postconfig.yaml
 
 parameter_defaults:
-  myparam: welcome
+  param1: welcome
+  param2: here

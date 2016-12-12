@@ -1,12 +1,14 @@
 heat_template_version: 2014-10-16
 
 description: >
-  Extra hostname configuration
+  Post Configuration
 
 parameters:
   servers:
     type: json
-  myparam:
+  param1:
+    type: string
+  param2:
     type: string
 
 resources:
@@ -14,6 +16,9 @@ resources:
     type: OS::Heat::SoftwareConfig
     properties:
       group: script
+      inputs:
+        - name: PARAM1
+        - name: PARAM2
       config: {get_file: /home/stack/templates/environments/postconfig.sh}
 
   ExtraDeployments:
@@ -22,3 +27,6 @@ resources:
       servers:  {get_param: servers}
       config: {get_resource: ExtraConfig}
       actions: ['CREATE','UPDATE']
+      input_values:
+        PARAM1: {get_param: param1}
+        PARAM2: {get_param: param2}
