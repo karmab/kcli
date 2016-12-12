@@ -14,7 +14,7 @@ import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "2.14"
+__version__ = "2.15"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -208,9 +208,9 @@ class Kvirt:
                     <target dev='%s' bus='%s'/>
                     </disk>""" % (disksxml, diskformat, diskpath, backingxml, diskdev, diskbus)
         netxml = ''
-        macxml = ''
         version = ''
         for index, net in enumerate(nets):
+            macxml = ''
             if isinstance(net, str):
                 netname = net
             elif isinstance(net, dict) and 'name' in net:
