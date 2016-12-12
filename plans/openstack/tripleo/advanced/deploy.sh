@@ -5,6 +5,7 @@ openstack overcloud deploy --templates /usr/share/openstack-tripleo-heat-templat
     -e /home/stack/templates/HostnameMap.yaml \
     -e /home/stack/templates/ips-from-pool-all.yaml \
     -e /home/stack/templates/environments/password.yaml \
+    -e /home/stack/templates/environments/postconfig.yaml \
     --control-scale 3 \
     --compute-scale 1 \
     --control-flavor control \
