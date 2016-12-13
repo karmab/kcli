@@ -632,10 +632,10 @@ def ssh(config, l, r, name):
 @click.option('-d', '--delete', is_flag=True)
 @click.option('-i', '--isolated', is_flag=True, help='Isolated Network')
 @click.option('-c', '--cidr', help='Cidr of the net')
-@click.option('--dhcp', is_flag=True, help='Enable dhcp on the net')
+@click.option('--nodhcp', is_flag=True, help='Disable dhcp on the net')
 @click.argument('name')
 @pass_config
-def network(config, delete, isolated, cidr, dhcp, name):
+def network(config, delete, isolated, cidr, nodhcp, name):
     """Create Network"""
     k = config.get()
     if delete:
@@ -646,6 +646,7 @@ def network(config, delete, isolated, cidr, dhcp, name):
             nat = False
         else:
             nat = True
+        dhcp = not nodhcp
         result = k.create_network(name=name, cidr=cidr, dhcp=dhcp, nat=nat)
         handle_response(result, name, element='Network ')
 
