@@ -1,6 +1,6 @@
 export ADMIN_PASSWORD="unix1234"
 echo `hostname -I` `hostname -s` >> /etc/hosts
-subscription-manager repos --enable=rhel-7-server-rh-common-rpms --enable=rhel-7-server-openstack-10-rpms --enable=rhel-ha-for-rhel-7-server-rpms --enable=rhel-7-server-extras-rpms
+subscription-manager repos --enable=rhel-7-server-rh-common-rpms --enable=rhel-7-server-openstack-10-rpms --enable=rhel-ha-for-rhel-7-server-rpms --enable=rhel-7-server-extras-rpms --enable=rhel-7-server-openstack-10-devtools-rpms
 yum update -y
 yum install -y openstack-packstack wget vim screen
 HOME=/root packstack --gen-answer-file=/root/answers.txt
