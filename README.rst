@@ -51,7 +51,25 @@ then you can install from pypi
 
 To deploy from templates, grab images at
 `openstack <http://docs.openstack.org/image-guide/obtain-images.html>`__
-## configuration
+
+I use docker, i m cool
+----------------------
+
+grab image
+
+``docker pull karmab/kcli``
+
+if running locally, launch it with:
+
+``docker run -it -v /var/run/libvirt:/var/run/libvirt karmab/kcli /bin/bash``
+
+if using a remote hypervisor, launch it with a local kcli.yml file and
+providing you ssh keys too
+
+``docker run -ti -v ~/kcli.yml:/root/kcli.yml -v ~/.ssh:/root/.ssh karmab/kcli /bin/bash``
+
+configuration
+-------------
 
 If you only want to use your local libvirt daemon, no configuration is
 needed. If you want to generate a basic settings file, you can use the
@@ -405,7 +423,6 @@ TODO
 ----
 
 -  allows containers to be launched within plan
--  also deletes networks within plans when no machine uses them
 -  remove all the print for the kvirt module and only return data
 -  change the try, except blocks for object checks with parsing of the
    list methods that libvirt provides for most object

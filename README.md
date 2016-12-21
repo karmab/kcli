@@ -51,7 +51,7 @@ grab image
 
 `docker pull karmab/kcli`
 
-if running locally, use the launch it with.
+if running locally, launch it with:
 
 `docker run -it -v /var/run/libvirt:/var/run/libvirt karmab/kcli /bin/bash`
 
