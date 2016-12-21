@@ -44,6 +44,21 @@ pip install kcli
 ```
 
 To deploy from templates, grab images at [openstack](http://docs.openstack.org/image-guide/obtain-images.html)
+
+## I use docker, i m cool
+
+grab image
+
+`docker pull karmab/kcli`
+
+if running locally, use the launch it with.
+
+`docker run -it -v /var/run/libvirt:/var/run/libvirt karmab/kcli /bin/bash`
+
+if using a remote hypervisor, launch it with a local kcli.yml file and providing you ssh keys too
+
+`docker run -ti -v ~/kcli.yml:/root/kcli.yml -v ~/.ssh:/root/.ssh karmab/kcli /bin/bash`
+
 ## configuration
 
 If you only want to use your local libvirt daemon, no configuration is needed.
@@ -318,7 +333,6 @@ basic testing can be run with pytest. If using a remote hypervisor, you ll want 
 
 ## TODO 
 
-- deploy kcli as container
 - allows containers to be launched within plan
 - remove all the print for the kvirt module and only return data
 - change the try, except blocks for object checks with parsing of the list methods that libvirt provides for most object
