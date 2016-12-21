@@ -55,7 +55,7 @@ if running locally, launch it with:
 
 `docker run -it -v /var/run/libvirt:/var/run/libvirt karmab/kcli /bin/bash`
 
-if using a remote hypervisor, launch it with a local kcli.yml file and providing you ssh keys too
+if using a remote hypervisor, launch it with a local kcli.yml file and providing your ssh keys too
 
 `docker run -ti -v ~/kcli.yml:/root/kcli.yml -v ~/.ssh:/root/.ssh karmab/kcli /bin/bash`
 
