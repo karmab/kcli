@@ -3,10 +3,10 @@ foreman:
  memory: 4096
  numcpus: 2
  nets:
-  - cinet
+  - default
  disks:
   - size: 40
- pool: vms
+ pool: default
  scripts: 
   - repo.sh
   - install.sh

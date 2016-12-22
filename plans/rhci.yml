@@ -1,3 +1,8 @@
+default:
+ type: network
+ cidr: 192.168.122.0/24
+ dhcp: true
+
 osp:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
  memory: 6144
@@ -5,8 +10,8 @@ osp:
  disks:
   - size: 40
  nets: 
-  - cinet
- pool: vms
+  - default
+ pool: default
  scripts: 
   - ~/register.sh
   - openstack/subscription.sh
@@ -18,10 +23,10 @@ rhv:
  memory: 8192
  numcpus: 2
  nets:
-  - cinet
+  - default
  disks:
   -size: 60
- pool: vms
+ pool: default
  scripts: 
   - ~/register.sh
   - ovirt/nfs.sh
@@ -34,11 +39,11 @@ cloudforms:
  memory: 6144
  numcpus: 2
  nets:
-  - cinet
+  - default
  disks:
   - size: 45
   - size: 10
- pool: vms
+ pool: default
  scripts: 
   - manageiq/install.sh
 
@@ -47,11 +52,11 @@ ose:
  numcpus: 2
  memory: 2048
  nets: 
-  - cinet
+  - default
  disks:
   - size: 10
   - size: 20
- pool: vms
+ pool: default
  scripts: 
   - ~/register.sh
   - openshift/subscription.sh
@@ -63,10 +68,10 @@ satellite:
  memory: 4096
  numcpus: 2
  nets: 
-  - cinet
+  - default
  disks:
   - size: 40
- pool: vms
+ pool: default
  scripts: 
   - ~/register.sh
   - foreman/subscription.sh

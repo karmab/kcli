@@ -6,8 +6,8 @@ rdo:
   - size: 10
   - size: 40
  nets:
-  - cinet
- pool: vms
+  - default
+ pool: default
  cmds:
   - echo unix1234 | passwd --stdin root
  scripts: 

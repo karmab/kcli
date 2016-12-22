@@ -13,32 +13,7 @@ Note that a single vm is deployed for every project and as such all services are
 
 ##installation
 
-- The deployment makes use of a private routed network on your libvirt host, named cinet, with dhcp,  using 192.168.5.0, reserving ips starting from 192.168.5.200 as openstack floating ip pool.
-To define it, You can save the corresponding [XML](cinet.xml):
-
-```
-<network><name>cinet</name>
-<forward mode='nat'>
-  <nat>
-    <port start='1024' end='65535'/>
-  </nat>
-</forward>
-<domain name='cinet'/>
-<ip address='192.168.5.1' netmask='255.255.255.0'>
-  <dhcp>
-    <range start='192.168.5.100' end='192.168.5.199'/>
-  </dhcp>
-</ip>
-</network>
-```
-And create it with those commands
-
-```
-virsh net-define cinet.xml
-virsh net-start cinet
-```
-
--  You can then use the plan files and scripts in the [plans](https://github.com/karmab/kcli/tree/master/plans) directory
+- The deployment makes use of your private default routed network on your libvirt host, with dhcp,  using 192.168.122.0, reserving ips starting from 192.168.5.200 as openstack floating ip pool. You can then use the plan files and scripts in the [plans](https://github.com/karmab/kcli/tree/master/plans) directory
 
 ```
 kcli plan -f uci.yml uci

@@ -1,3 +1,8 @@
+private1:
+ type: network
+  cidr: 192.168.60.0/24
+  dhcp: true
+
 allinone:
  template: CentOS-7-x86_64-GenericCloud.qcow2
  memory: 8192

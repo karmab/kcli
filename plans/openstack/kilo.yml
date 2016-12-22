@@ -6,8 +6,8 @@ kilo:
   - size: 10
   - size: 40
  nets:
- - cinet
- pool: vms
+ - default
+ pool: default
  scripts: 
   - ~/register.sh
   - subscription_kilo.sh

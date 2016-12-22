@@ -3,11 +3,11 @@ origin:
  numcpus: 2
  memory: 2048
  nets:
-  - cinet
+  - default
  disks:
   - size: 10
   - size: 20
- pool: vms
+ pool: default
  scripts: 
   - install.sh
   - upstream.sh

@@ -25,7 +25,7 @@ undercloud:
     mask: 255.255.255.0
     gateway: 10.0.0.1
  dns: 192.168.101.1
- pool: vms
+ pool: default
  cmds:
   - echo nameserver 192.168.101.1 > /etc/resolv.conf
   - echo unix1234 | passwd --stdin root
@@ -45,7 +45,7 @@ tricontroller01:
  nets:
   - name: tripleoprovisioning
     mac: aa:bb:cc:dd:ee:01
- pool: vms
+ pool: default
  start: false
 
 tricompute01:
@@ -57,5 +57,5 @@ tricompute01:
  nets:
   - name: tripleoprovisioning
     mac: aa:bb:cc:dd:ee:04
- pool: vms
+ pool: default
  start: false

@@ -3,10 +3,10 @@ ovirt35:
  memory: 8192
  numcpus: 2
  nets:
-  - cinet
+  - default
  disks:
   - size: 60
- pool: vms
+ pool: default
  scripts: 
   - repo35.sh
   - nfs.sh

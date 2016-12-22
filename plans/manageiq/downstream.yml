@@ -3,10 +3,10 @@ cloudforms:
  memory: 6144
  numcpus: 2
  nets:
-  - cinet
+  - default
  disks:
   - size: 45
   - size: 10
- pool: vms
+ pool: default
  scripts: 
   - install.sh

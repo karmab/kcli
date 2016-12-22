@@ -3,10 +3,10 @@ satellite:
  memory: 4096
  numcpus: 2
  nets: 
-  - cinet
+  - default
  disks:
   - size: 40
- pool: vms
+ pool: default
  scripts: 
   - ~/register_satellite.sh
   - subscription.sh

@@ -1,12 +1,17 @@
+cinet:
+ type: network
+ cidr: 192.168.5.0/24
+ dhcp: true
+
 foreman:
  template: CentOS-7-x86_64-GenericCloud.qcow2
  memory: 4096
  numcpus: 2
  nets: 
-  - cinet
+  - default
  disks:
   - size: 40
- pool: vms
+ pool: default
  scripts: 
   - foreman/repo.sh
   - foreman/install.sh
@@ -18,11 +23,11 @@ manageiq:
  memory: 6144
  numcpus: 2
  nets: 
-  - cinet
+  - default
  disks:
   - size: 45
   - size: 10
- pool: vms
+ pool: default
  scripts: 
   - manageiq/install.sh
 
@@ -31,11 +36,11 @@ origin:
  numcpus: 2
  memory: 2048
  nets:
-  - cinet
+  - default
  disks:
   - size: 10
   - size: 20
- pool: vms
+ pool: default
  scripts: 
   - openshift/install.sh
   - openshift/upstream.sh
@@ -47,8 +52,8 @@ rdo:
   - size: 10
   - size: 40
  nets:
-  - cinet
- pool: vms
+  - default
+ pool: default
  scripts: 
   - openstack/repo.sh
  scripts: 
@@ -61,10 +66,10 @@ ovirt:
  memory: 8192
  numcpus: 2
  nets: 
-  - cinet
+  - default
  disks:
   - size: 60
- pool: vms
+ pool: default
  scripts: 
   - ovirt/repo.sh
   - ovirt/nfs.sh
