@@ -1,3 +1,4 @@
+sleep 10
 subscription-manager register --force --username=ZZZ --password='ZZZ'
 subscription-manager subscribe --pool=ZZZ
 subscription-manager attach --auto

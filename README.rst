@@ -55,18 +55,25 @@ To deploy from templates, grab images at
 I use docker, i m cool
 ----------------------
 
-grab image
+grab latest image
 
 ``docker pull karmab/kcli``
 
 if running locally, launch it with:
 
-``docker run -it -v /var/run/libvirt:/var/run/libvirt karmab/kcli /bin/bash``
+``docker run -it -v /var/run/libvirt:/var/run/libvirt -v ~/.ssh:/root/.ssh karmab/kcli /bin/bash``
 
-if using a remote hypervisor, launch it with a local kcli.yml file and
-providing you ssh keys too
+if using a remote hypervisor, launch it with a local kcli.yml file
+pointing to tthis hypervisor and providing your ssh keys too
 
 ``docker run -ti -v ~/kcli.yml:/root/kcli.yml -v ~/.ssh:/root/.ssh karmab/kcli /bin/bash``
+
+In both cases, you can also provide a kcli\_profiles.yml ( and you could
+also use a dedicated plan directory )
+
+``docker run -it -v /var/run/libvirt:/var/run/libvirt -v ~/kcli_profiles.yml:/root/kcli_profiles.yml  -v ~/.ssh:/root/.ssh karmab/kcli /bin/bash``
+
+``docker run -ti -v ~/kcli.yml:/root/kcli.yml -v ~/kcli_profiles.yml:/root/kcli_profiles.yml -v ~/.ssh:/root/.ssh karmab/kcli /bin/bash``
 
 configuration
 -------------

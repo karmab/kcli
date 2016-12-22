@@ -515,17 +515,18 @@ class Kvirt:
             if not serial:
                 print("No serial Console found. Leaving...")
                 return
-            for element in serial:
-                serialport = element.find('source').get('service')
-                if serialport:
-                    if self.protocol != 'ssh':
-                        print("Remote serial Console requires using ssh . Leaving...")
-                        return
-                    else:
-                        serialcommand = "ssh -p %s %s@%s nc 127.0.0.1 %s" % (self.port, self.user, self.host, serialport)
-                    os.system(serialcommand)
-                elif self.host in ['localhost', '127.0.0.1']:
-                    os.system('virsh console %s' % name)
+            elif self.host in ['localhost', '127.0.0.1']:
+                os.system('virsh console %s' % name)
+            else:
+                for element in serial:
+                    serialport = element.find('source').get('service')
+                    if serialport:
+                        if self.protocol != 'ssh':
+                            print("Remote serial Console requires using ssh . Leaving...")
+                            return
+                        else:
+                            serialcommand = "ssh -p %s %s@%s nc 127.0.0.1 %s" % (self.port, self.user, self.host, serialport)
+                        os.system(serialcommand)
 
     def info(self, name):
         # ips = []
