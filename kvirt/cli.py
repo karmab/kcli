@@ -680,7 +680,7 @@ def bootstrap(genfile, auto, name, host, port, user, protocol, url, pool, poolpa
             pooltype = 'dir'
         if template:
             template = TEMPLATES['centos']
-        nets = {'default': {'cidr': '192.168.122.0/24'}, 'cinet': {'cidr': '192.168.5.0/24'}}
+        nets = {'default': {'cidr': '192.168.122.0/24'}}
         # disks = [{'size': 10}]
         if host == '127.0.0.1':
             ini = {'default': {'client': 'local'}, 'local': {'pool': pool, 'nets': ['default']}}
@@ -763,9 +763,6 @@ def bootstrap(genfile, auto, name, host, port, user, protocol, url, pool, poolpa
         if netcreate == 'Y':
             cidr = raw_input("Enter cidr [192.168.122.0/24]: ") or '192.168.122.0/24'
             nets[net] = {'cidr': cidr, 'dhcp': True}
-        cinetcreate = raw_input("Create cinet network for uci demos if not there[N]") or 'N'
-        if cinetcreate == 'Y':
-            nets['cinet'] = {'cidr': '192.168.5.0/24', 'dhcp': True}
         cloudinit = raw_input("Use cloudinit for this client[%s]: " % default['cloudinit']) or default['cloudinit']
         client['cloudinit'] = cloudinit
         diskthin = raw_input("Use thin disks for this client[%s]: " % default['diskthin']) or default['diskthin']
