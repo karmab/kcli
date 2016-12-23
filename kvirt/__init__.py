@@ -114,6 +114,7 @@ class Kvirt:
         volumespaths = {}
         for p in conn.listStoragePools():
             poo = conn.storagePoolLookupByName(p)
+            poo.refresh(0)
             for vol in poo.listAllVolumes():
                 volumes[vol.name()] = {'pool': poo, 'object': vol}
                 volumespaths[vol.path()] = {'pool': poo, 'object': vol}
@@ -649,8 +650,10 @@ class Kvirt:
             source = element.find('source')
             if source is not None:
                 imagefile = element.find('source').get('file')
-                if 'iso' not in imagefile or name in imagefile:
+                if imagefile == "%s.iso" % name or name in imagefile:
                     disks.append(imagefile)
+                else:
+                    continue
         if status[vm.isActive()] != "down":
             vm.destroy()
         vm.undefine()
