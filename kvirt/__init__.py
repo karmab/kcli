@@ -251,9 +251,14 @@ class Kvirt:
                 iso = ''
         else:
             try:
-                iso = "%s/%s" % (default_poolpath, iso)
-                isovolume = volumes[template][iso]
+                if os.path.isabs(iso):
+                    shortiso = os.path.basename(iso)
+                else:
+                    shortiso = iso
+                isovolume = volumes[shortiso]['object']
                 iso = isovolume.path()
+                # iso = "%s/%s" % (default_poolpath, iso)
+                # iso = "%s/%s" % (isopath, iso)
             except:
                 return {'result': 'failure', 'reason': "Invalid iso %s" % iso}
         isoxml = """<disk type='file' device='cdrom'>
