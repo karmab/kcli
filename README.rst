@@ -1,7 +1,7 @@
 kcli repository
 ===============
 
-|Build Status| |Pypi|
+|Build Status| |Pypi| |image2|
 
 This script is meant to interact with a local/remote libvirt daemon and
 to easily deploy from templates ( optionally using cloudinit). It will
@@ -448,5 +448,7 @@ karmab
    :target: https://travis-ci.org/karmab/kcli
 .. |Pypi| image:: http://img.shields.io/pypi/v/kcli.svg
    :target: https://pypi.python.org/pypi/kcli/
+.. |image2| image:: https://images.microbadger.com/badges/image/karmab/kcli.svg
+   :target: https://microbadger.com/images/karmab/kcli
 .. |asciicast| image:: https://asciinema.org/a/3p0cn60p0c0j9wd3hzyrs4m0f.png
    :target: https://asciinema.org/a/3p0cn60p0c0j9wd3hzyrs4m0f?autoplay=1
