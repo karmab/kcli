@@ -1,3 +1,5 @@
+VERSION="10"
+ssh-keygen -N '' -t rsa -f /home/stack/.ssh/id_rsa
 yum clean all
 screen openstack undercloud install
 mkdir images
@@ -9,7 +11,7 @@ mkdir images
 wget https://raw.githubusercontent.com/karmab/kcli/master/plans/openstack/tripleo/templates.tar.gz
 tar zxvf templates.tar.gz
 cd ~/images
-for i in /usr/share/rhosp-director-images/overcloud-full-latest-9.0.tar /usr/share/rhosp-director-images/ironic-python-agent-latest-9.0.tar; do tar -xvf $i; done
+for i in /usr/share/rhosp-director-images/overcloud-full-latest-$VERSION.0.tar /usr/share/rhosp-director-images/ironic-python-agent-latest-$VERSION.0.tar; do tar -xvf $i; done
 source ~/stackrc
 openstack overcloud image upload --image-path /home/stack/images
 neutron subnet-update `neutron subnet-list -c id -f value` --dns-nameserver 8.8.8.8
@@ -27,4 +29,5 @@ sh assignprofiles.sh
 
 # ISSUES FOUND
 # you will need http://mirror.centos.org/centos/7/cloud/x86_64/openstack-mitaka/common/ipxe-roms-qemu-20160127-1.git6366fa7a.el7.noarch.rpm if using a centos hypervisor
-
+# on newton, i had to make some adjustements:
+# set interface_driver to neutron.agent.linux.interface.OVSInterfaceDriver on metadata__agent.ini  for service to start

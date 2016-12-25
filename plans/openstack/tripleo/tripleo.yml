@@ -2,7 +2,6 @@ tripleoprovisioning:
  type: network
  cidr: 10.0.0.0/24
  dhcp: false
- nat: false
 
 tripleopublic:
  type: network
@@ -27,13 +26,14 @@ undercloud:
  dns: 192.168.101.1
  pool: default
  cmds:
-  - echo nameserver 192.168.101.1 > /etc/resolv.conf
+  - sleep 10
+  - echo nameserver 192.168.101.1 >> /etc/resolv.conf
   - echo unix1234 | passwd --stdin root
   - echo undercloud.osp.poc > /etc/hostname
   - echo 192.168.101.10 undercloud.osp.poc undercloud >> /etc/hosts
  scripts: 
   - ~/register.sh
-  - mitaka.sh
+  - newton.sh
   - undercloud_pre.sh
 
 tricontroller01:

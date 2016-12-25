@@ -6,7 +6,7 @@ tripleoprovisioning:
 tripleopublic:
  type: network
  cidr: 192.168.101.0/24
- dhcp: true
+ dhcp: false
 
 undercloud:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
@@ -19,17 +19,19 @@ undercloud:
     ip: 192.168.101.10
     mask: 255.255.255.0
     gateway: 192.168.101.1
+    dns: 192.168.101.1
   - name: tripleoprovisioning
     ip: 10.0.0.10
     mask: 255.255.255.0
     gateway: 10.0.0.1
- dns: 192.168.101.1
+    dns: 10.0.0.1
  pool: default
  cmds:
-  - echo nameserver 192.168.101.1 > /etc/resolv.conf
   - echo unix1234 | passwd --stdin root
   - echo undercloud.osp.poc > /etc/hostname
   - echo 192.168.101.10 undercloud.osp.poc undercloud >> /etc/hosts
+  - echo GATEWAY=10.0.0.1 >> /etc/sysconfig/network
+  - echo nameserver 192.168.101.1 >> /etc/resolv.conf
  scripts: 
   - ~/register.sh
   - newton.sh

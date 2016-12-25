@@ -843,15 +843,21 @@ class Kvirt:
                             metadata += "  gateway %s\n" % default_gateway
                         elif gateway is not None:
                             metadata += "  gateway %s\n" % gateway
+                        dns = net.get('dns')
+                        if dns is not None:
+                            metadata += "  dns-nameservers %s\n" % dns
+                        domain = net.get('dns')
+                        if domain is not None:
+                            metadatafile.write("  dns-search %s\n" % domain)
                     else:
                         metadata += "  iface %s inet dhcp\n" % nicname
                 if metadata:
                     metadatafile.write("network-interfaces: |\n")
                     metadatafile.write(metadata)
-                    if dns is not None:
-                        metadatafile.write("  dns-nameservers %s\n" % dns)
-                    if domain is not None:
-                        metadatafile.write("  dns-search %s\n" % domain)
+                    # if dns is not None:
+                    #    metadatafile.write("  dns-nameservers %s\n" % dns)
+                    # if domain is not None:
+                    #    metadatafile.write("  dns-search %s\n" % domain)
         with open('/tmp/user-data', 'w') as userdata:
             userdata.write('#cloud-config\nhostname: %s\n' % name)
             if domain is not None:
