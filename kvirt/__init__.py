@@ -846,7 +846,7 @@ class Kvirt:
                         dns = net.get('dns')
                         if dns is not None:
                             metadata += "  dns-nameservers %s\n" % dns
-                        domain = net.get('dns')
+                        domain = net.get('domain')
                         if domain is not None:
                             metadatafile.write("  dns-search %s\n" % domain)
                     else:

@@ -1,5 +1,6 @@
 VERSION="10"
 ssh-keygen -N '' -t rsa -f /home/stack/.ssh/id_rsa
+ssh-copy-id -i ~/.ssh/id_rsa.pub root@192.168.101.1
 yum clean all
 screen openstack undercloud install
 mkdir images
