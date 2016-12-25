@@ -28,7 +28,7 @@ undercloud:
  cmds:
   - echo unix1234 | passwd --stdin root
   - echo undercloud.osp.poc > /etc/hostname
-  - echo 192.168.101.10 undercloud.osp.poc undercloud >> /etc/hosts
+  - echo 192.168.101.10 undercloud.localdomain undercloud >> /etc/hosts
   - echo GATEWAY=192.168.101.1 >> /etc/sysconfig/network
   - echo nameserver 192.168.101.1 >> /etc/resolv.conf
  scripts: 
