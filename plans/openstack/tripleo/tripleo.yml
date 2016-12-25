@@ -33,7 +33,7 @@ undercloud:
   - echo 192.168.101.10 undercloud.osp.poc undercloud >> /etc/hosts
  scripts: 
   - ~/register.sh
-  - newton.sh
+  - mitaka.sh
   - undercloud_pre.sh
 
 tricontroller01:

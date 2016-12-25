@@ -875,7 +875,10 @@ class Kvirt:
             if cmds is not None:
                     userdata.write("runcmd:\n")
                     for cmd in cmds:
-                        userdata.write("- %s\n" % cmd)
+                        if cmd.startswith('#'):
+                            continue
+                        else:
+                            userdata.write("- %s\n" % cmd)
         isocmd = 'mkisofs'
         if find_executable('genisoimage') is not None:
             isocmd = 'genisoimage'
