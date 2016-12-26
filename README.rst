@@ -226,6 +226,11 @@ How to use
 templates
 ---------
 
+For templates to work with cloud-init, they require the "NoCloud"
+datasource to be enabled! Enable the datasource in the cloud-init
+configuration. For debian-based systems, you can find this configuration
+in ``/etc/cloud/cloud.cfg.d/90\*``.
+
 Templates should be in the same storage pool as the VM, in order to
 benefit from the Copy-on-Write mechanism.
 
@@ -243,13 +248,20 @@ upload it to the pool. Assuming a volume group with name ``vms``, do:
     virsh vol-create-as vms $TEMPLATE $TSIZE
     virsh vol-upload --pool vms $TEMPLATE ${TEMPLATE}.raw
 
+Note that disks based on a LVM template always have the same size as the
+template disk! The code above creates a template-disk that is only just
+big enough to match the size of the (raw) template. You may want to grow
+this disk to a reasonable size before creating VM's that use it!
+Alternatively, you can set the TSIZE parameter above to a static value,
+rather than using the size of the image.
+
 cloudinit stuff
 ---------------
 
 if cloudinit is enabled (it is by default), a custom iso is generated on
 the fly for your vm ( using mkisofs) and uploaded to your kvm instance (
-using the API). the iso handles static networking configuration,
-hostname setting, inyecting ssh keys and running specific commands
+using the API). The iso handles static networking configuration,
+hostname setting, injecting ssh keys and running specific commands
 
 Also note that if you use cloudinit but dont specify ssh keys to inject,
 the default ~/.ssh/id\_rsa.pub will be used, if present.
@@ -421,15 +433,18 @@ so that it points to your host with the corresponding user.
 issues found with cloud images
 ------------------------------
 
--  Also note that you need to install python-simplejson ( actually
-   bringing python2.7) to allow ansible to work on ubuntu
--  debian images are freezing. rebooting fixes the issue but as such
-   cloudinit doesnt get applied...
+-  Note that you need to install python-simplejson (actually bringing
+   python2.7) to allow ansible to work on ubuntu
+-  debian/archlinux images are missing the NoCloud datasource for
+   cloud-init. Edit them with guestfish to make them work with
+   cloud-init.
 
 TODO
 ----
 
 -  allows containers to be launched within plan
+-  find a way to easily share the plan files ( for instance, adding a
+   list of urls in the conf and a fetch subcommand )
 -  remove all the print for the kvirt module and only return data
 -  change the try, except blocks for object checks with parsing of the
    list methods that libvirt provides for most object
