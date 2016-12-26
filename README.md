@@ -4,14 +4,14 @@
 [![Pypi](http://img.shields.io/pypi/v/kcli.svg)](https://pypi.python.org/pypi/kcli/)
 [![](https://images.microbadger.com/badges/image/karmab/kcli.svg)](https://microbadger.com/images/karmab/kcli "Get your own image badge on microbadger.com")
 
-This script is meant to interact with a local/remote libvirt daemon and to easily deploy from templates ( optionally using cloudinit).
-It will also report ips for any vm connected to a dhcp enabled libvirt network and generally for every vm deployed from this client.
+This script is meant to interact with a local/remote libvirt daemon and to easily deploy from templates (optionally using cloudinit).
+It will also report IPS for any VM connected to a dhcp-enabled libvirt network and generally for every VM deployed from this client.
 
-It started because i switched from ovirt and needed a tool similar to [ovirt.py](https://github.com/karmab/ovirt)
+It started because I switched from ovirt and needed a tool similar to [ovirt.py](https://github.com/karmab/ovirt)
 
 ##  Why should i use this instead of vagrant for kvm
 
-- easy syntax to launch single or multiple vms
+- easy syntax to launch single or multiple VMS
 - cloudinit based customization, not over ssh
 - no need of using custom images, the public ones will do
 - spice/vnc consoles and tcp serial ones
@@ -24,7 +24,7 @@ It started because i switched from ovirt and needed a tool similar to [ovirt.py]
 
 ## installation
 
-install requirements. you will also need to grab *genisoimage* ( or *mkisofs* on OSX) for cloudinit isos to get generated
+install requirements. you will also need to grab *genisoimage* (or *mkisofs* on OSX) for cloudinit isos to get generated
 Console access is based on remote-viewer
 For instance if using a rhel based distribution:
 
@@ -60,7 +60,7 @@ if using a remote hypervisor, launch it with a local kcli.yml file pointing to t
 
 `docker run -ti -v ~/kcli.yml:/root/kcli.yml -v ~/.ssh:/root/.ssh karmab/kcli /bin/bash`
 
-In both cases, you can also provide a kcli_profiles.yml ( and you could also use a  dedicated plan directory  )
+In both cases, you can also provide a kcli_profiles.yml (and you could also use a  dedicated plan directory)
 
 `docker run -it -v /var/run/libvirt:/var/run/libvirt -v ~/kcli_profiles.yml:/root/kcli_profiles.yml  -v ~/.ssh:/root/.ssh karmab/kcli /bin/bash`
 
@@ -121,7 +121,7 @@ default:
  protocol: ssh
  cloudinit: true
  reserveip: false
- nets: 
+ nets:
   - private1
 
 twix:
@@ -134,11 +134,11 @@ bumblefoot:
 ```
 
 replace with your own client in default section and indicate host and protocol in the corresponding client section.
-Note that most of the parameters are actually optional, and can be overriden in the profile section ( or in a plan file)
+Note that most of the parameters are actually optional, and can be overridden in the profile section (or in a plan file)
 
 ## profile configuration
 
-You can use the file ~/kvirt_profiles.yml to specify profiles (number of cpus, memory, size of disk,network,....) to use when deploying a vm.
+You can use the file ~/kvirt_profiles.yml to specify profiles (number of CPUS, memory, size of disk, network,....) to use when deploying a VM.
 
 The [samples directory](https://github.com/karmab/kcli/tree/master/samples) contains examples to get you started
 
@@ -146,27 +146,27 @@ The [samples directory](https://github.com/karmab/kcli/tree/master/samples) cont
 
 - get info on your kvm setup
  - `kcli report`
-- list vms, along with their private ip ( and plan if applicable)
+- list VMS, along with their private IP (and plan if applicable)
  - `kcli list`
-- list templates ( Note that it will find them out based on their qcow2 extension...)
+- list templates (Note that it will find them out based on their qcow2 extension...)
  - `kcli list -t`
-- create vm from profile base7
+- create VM from profile base7
  - `kcli create -p base7 myvm`
-- delete vm
+- delete VM
  - `kcli delete vm1`
-- get detailed info on a specific vm
+- get detailed info on a specific VM
  - `kcli info vm1` 
-- start vm
+- start VM
  - `kcli start vm1` 
-- stop vm
+- stop VM
  - `kcli start vm1` 
 - get remote-viewer console
  - `kcli console vm1` 
-- get serial console ( over tcp!!!). Note that it will only work with vms created with kcli and will require netcat client to be installed on host
+- get serial console (over tcp!!!). Note that it will only work with VMS created with kcli and will require netcat client to be installed on host
  - `kcli console -s vm1` 
-- deploy multiple vms using plan x defined in x.yml file 
+- deploy multiple VMS using plan x defined in x.yml file 
  - `kcli plan -f x.yml x`
-- delete all vms from plan x
+- delete all VM from plan x
   - `kcli plan -d x` 
 - add 5GB disk to vm1, using pool named vms
   - `kcli disk -s 5 -p vms vm1` 
@@ -174,11 +174,11 @@ The [samples directory](https://github.com/karmab/kcli/tree/master/samples) cont
   - `kcli disk -d -n vm1_2.img  vm1` 
 - update to 2GB memory  vm1
   - `kcli update -m 2048 vm1` 
-- update internal ip ( usefull for ansible inventory over existing bridged vms)
+- update internal IP (usefull for ansible inventory over existing bridged VMS)
   - `kcli update -1 192.168.0.40 vm1` 
 - clone vm1 to new vm2
   - `kcli clone -b vm1 vm2` 
-- connect by ssh to the vm ( retrieving ip and adjusting user based on the template)
+- connect by ssh to the VM (retrieving IP and adjusting user based on the template)
   - `kcli ssh vm1` 
 - switch active client to bumblefoot
   - `kcli switch bumblefoot` 
@@ -186,7 +186,7 @@ The [samples directory](https://github.com/karmab/kcli/tree/master/samples) cont
   - `kcli network -c 192.168.7.0/24 --dhcp mynet` 
 - add a new nic from network private1
 - - `kcli nic -n private1 myvm`
-- delete nic eth2 from vm
+- delete nic eth2 from VM
 - - `kcli nic -di eth2 myvm`
 
 ##templates
@@ -211,14 +211,14 @@ Note that disks based on a LVM template always have the same size as the templat
 
 ##cloudinit stuff
 
-if cloudinit is enabled (it is by default), a custom iso is generated on the fly for your vm ( using mkisofs) and uploaded to your kvm instance ( using the API).
+if cloudinit is enabled (it is by default), a custom iso is generated on the fly for your VM (using mkisofs) and uploaded to your kvm instance (using the API).
 The iso handles static networking configuration, hostname setting, injecting ssh keys and running specific commands
 
 Also note that if you use cloudinit but dont specify ssh keys to inject, the default ~/.ssh/id_rsa.pub will be used, if present.
 
 ## Using plans
 
-you can also define plan files in yaml with a list of vms, disks, and networks and vms to deploy ( look at the sample) and deploy it with kcli plan
+you can also define plan files in yaml with a list of VMS, disks, and networks and VMS to deploy (look at the sample) and deploy it with kcli plan
 For instance, to define a network named mynet
 
 ```
@@ -226,10 +226,10 @@ mynet:
  type: network
  cidr: 192.168.95.0/24
 ```
-You can also use the boolean keyword dhcp ( mostly to disable it ) and isolated . Note that when not specified, dhcp and nat will be enabled
+You can also use the boolean keyword dhcp (mostly to disable it) and isolated . Note that when not specified, dhcp and nat will be enabled
 
 
-To define a shared disk named shared1.img between two vms ( that typically would be defined within the same plan ):
+To define a shared disk named shared1.img between two VMS (that typically would be defined within the same plan):
 
 ```
 share1.img:
@@ -241,21 +241,21 @@ share1.img:
   - centos2
 ```
 
-Regarding Vms, You can point at an existing profile within your plans, define all parameters for the vms, or combine both approaches.
+Regarding VMS, You can point at an existing profile within your plans, define all parameters for the VMS, or combine both approaches.
 
-Specific scripts and ips arrays can be used directly in the plan file ( or in profiles one)
+Specific scripts and IPS arrays can be used directly in the plan file (or in profiles one)
 
 The samples directory contains examples to get you started
 
-Note that the description of the vm will automatically be set to the plan name, and this value will be used when deleting the entire plan as a way to locate matching vms.
+Note that the description of the VM will automatically be set to the plan name, and this value will be used when deleting the entire plan as a way to locate matching VMS.
 
 When launching a plan, the plan name is optional. If not is provided, the kvirt keyword will be used.
 
 If a file with the plan isnt specified with -f , the file kcli_plan.yml in the current directory will be used, if available.
 
-Also note that when deleting a plan, the network of the vms will also be deleted if no other vm are using them. You can prevent this by using the keep ( -k) flag
+Also note that when deleting a plan, the network of the VMS will also be deleted if no other VM are using them. You can prevent this by using the keep (-k) flag
 
-For an advanced use of plans along with scripts, you can check the [plans](plans/README.md) page to deploy all upstream projects associated with Red Hat Cloud Infrastructure products ( or downstream versions too)
+For an advanced use of plans along with scripts, you can check the [plans](plans/README.md) page to deploy all upstream projects associated with Red Hat Cloud Infrastructure products (or downstream versions too)
 
 ## available parameters
 
@@ -265,8 +265,8 @@ those parameters can be set either in your config, profile or plan files
 - *memory* Defaults to 512
 - *guestid* Defaults to guestrhel764
 - *pool* Defaults to default
-- *template* Should point to your base cloud image(optional). You can either specify short name or complete path. Note that if you omit the full path and your image lives in several pools, the one from last ( alphabetical ) pool will be used.
-- *disks* Array of disks to define. For each of them, you can specify pool, size, thin ( as boolean) and interface ( either ide or virtio).If you omit parameters, default values will be used from config or profile file ( You can actually let the entire entry blank or just indicate a size number directly). For instance:
+- *template* Should point to your base cloud image(optional). You can either specify short name or complete path. Note that if you omit the full path and your image lives in several pools, the one from last (alphabetical) pool will be used.
+- *disks* Array of disks to define. For each of them, you can specify pool, size, thin (as boolean) and interface (either ide or virtio).If you omit parameters, default values will be used from config or profile file (You can actually let the entire entry blank or just indicate a size number directly). For instance:
 
 ```
 disks:
@@ -280,7 +280,7 @@ Within a disk section, you can use the word size, thin and format as keys
 
 
 - *diskthin* Value used when not specified in the disk entry. Defaults to true
-- *diskinterface* Value used when not specified in the disk entry. Defaults to virtio. Could also be ide, if vm lacks virtio drivers
+- *diskinterface* Value used when not specified in the disk entry. Defaults to virtio. Could also be ide, if VM lacks virtio drivers
 - *nets* Array of networks. Defaults to ['default']. You can mix simple strings pointing to the name of your network and more complex information provided as hash. For instance:
 
 ```
@@ -292,12 +292,12 @@ nets:
    mask: 255.255.255.0
    gateway: 192.168.0.1
 ```
-Within a net section, you can use name, nic, ip, mac, mask and gateway as keys.
+Within a net section, you can use name, nic, IP, mac, mask and gateway as keys.
 
-Note that up to 8 ips can also be provided on command line when creating a single vm ( with the flag -1, -2, -3,-4,...)
-Also note that if you set reserveip  to True, a reservation will be made if the corresponding network has dhcp and when the provided ip belongs to the network range
+Note that up to 8 IPS can also be provided on command line when creating a single VM (with the flag -1, -2, -3,-4,...)
+Also note that if you set reserveip  to True, a reservation will be made if the corresponding network has dhcp and when the provided IP belongs to the network range
 
-- *iso* ( optional)
+- *iso* (optional)
 - *netmasks* (optional)
 - *gateway* (optional)
 - *dns* (optional) Dns servers
@@ -316,11 +316,11 @@ Also note that if you set reserveip  to True, a reservation will be made if the 
 
 you can check klist.py in the extra directory and use it as a dynamic inventory for ansible.
 
-The script uses sames conf as kcli ( and as such defaults to local hypervisor if no configuration file is found)
+The script uses sames conf as kcli (and as such defaults to local hypervisor if no configuration file is found)
 
-vm will be grouped by plan, or put in the kvirt group if they dont belong to any plan.
+VM will be grouped by plan, or put in the kvirt group if they dont belong to any plan.
 
-Interesting thing is that the script will try to guess the type of vm based on its template, if present, and populate ansible_user accordingly
+Interesting thing is that the script will try to guess the type of VM based on its template, if present, and populate ansible_user accordingly
 
 Try it with:
 
@@ -345,10 +345,10 @@ basic testing can be run with pytest. If using a remote hypervisor, you ll want 
 ## TODO 
 
 - allows containers to be launched within plan
-- find a way to easily share the plan files ( for instance, adding a list of urls in the conf and a fetch subcommand )
+- find a way to easily share the plan files (for instance, adding a list of urls in the conf and a fetch subcommand)
 - remove all the print for the kvirt module and only return data
 - change the try, except blocks for object checks with parsing of the list methods that libvirt provides for most object
-- add basic validation of ips, netmasks, macs,...  within plan file
+- add basic validation of IPS, netmasks, macs,...  within plan file
 
 ##Problems?
 
