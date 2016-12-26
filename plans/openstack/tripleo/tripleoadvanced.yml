@@ -38,7 +38,7 @@ undercloud:
 
 tricontroller01:
  cloudinit: False
- memory: 5120
+ memory: 6144
  numcpus: 2
  disks:
   - size: 50
@@ -52,7 +52,7 @@ tricontroller01:
 
 tricontroller02:
  cloudinit: False
- memory: 5120
+ memory: 6144
  numcpus: 2
  disks:
   - size: 50
@@ -66,7 +66,7 @@ tricontroller02:
 
 tricontroller03:
  cloudinit: False
- memory: 5120
+ memory: 6144
  numcpus: 2
  disks:
   - size: 50
