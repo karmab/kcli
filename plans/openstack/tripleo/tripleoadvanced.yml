@@ -1,13 +1,13 @@
 tripleoprovisioning:
  type: network
  cidr: 10.0.0.0/24
- dhcp: false
- nat: false
+ dhcp: False
+ nat: False
 
 tripleopublic:
  type: network
  cidr: 192.168.101.0/24
- dhcp: false
+ dhcp: False
 
 undercloud:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
@@ -35,6 +35,7 @@ undercloud:
   - ~/register.sh
   - newton.sh
   - undercloud_pre.sh
+ nested: False
 
 tricontroller01:
  cloudinit: False
@@ -49,6 +50,7 @@ tricontroller01:
   - name: tripleopublic
  pool: default
  start: False
+ nested: False
 
 tricontroller02:
  cloudinit: False
@@ -63,6 +65,7 @@ tricontroller02:
   - name: tripleopublic
  pool: default
  start: False
+ nested: False
 
 tricontroller03:
  cloudinit: False
@@ -77,6 +80,7 @@ tricontroller03:
   - name: tripleopublic
  pool: default
  start: False
+ nested: False
 
 tricompute01:
  cloudinit: False
@@ -91,3 +95,4 @@ tricompute01:
   - name: tripleopublic
  pool: default
  start: False
+ nested: False

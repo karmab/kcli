@@ -11,4 +11,5 @@ openstack overcloud deploy --templates /usr/share/openstack-tripleo-heat-templat
     --control-flavor control \
     --compute-flavor compute \
     --neutron-tunnel-types vxlan \
-    --neutron-network-type vxlan
+    --neutron-network-type vxlan \
+    --libvirt-type qemu

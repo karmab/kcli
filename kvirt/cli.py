@@ -2,7 +2,7 @@
 
 import click
 import fileinput
-from .defaults import NETS, POOL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, START, TEMPLATES
+from .defaults import NETS, POOL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, START, TEMPLATES, NESTED
 from prettytable import PrettyTable
 from kvirt import Kvirt, __version__
 import os
@@ -63,6 +63,7 @@ class Config():
         defaults['vnc'] = bool(default.get('vnc', VNC))
         defaults['cloudinit'] = bool(default.get('cloudinit', CLOUDINIT))
         defaults['reserveip'] = bool(default.get('reserveip', RESERVEIP))
+        defaults['nested'] = bool(default.get('nested', NESTED))
         defaults['start'] = bool(default.get('start', START))
         self.default = defaults
         options = ini[self.client]
@@ -273,6 +274,7 @@ def create(config, profile, ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8, name):
     vnc = profile.get('vnc', default['vnc'])
     cloudinit = profile.get('cloudinit', default['cloudinit'])
     reserveip = profile.get('reserveip', default['reserveip'])
+    nested = profile.get('nested', default['nested'])
     start = profile.get('start', default['start'])
     keys = profile.get('keys', None)
     cmds = profile.get('cmds', None)
@@ -297,7 +299,7 @@ def create(config, profile, ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8, name):
             else:
                 cmds = cmds + scriptcmds
     ips = [ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8]
-    result = k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain)
+    result = k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=bool(nested))
     handle_response(result, name)
 
 
@@ -551,6 +553,7 @@ def plan(config, autostart, noautostart, inputfile, start, stop, delete, delay, 
                 vnc = next((e for e in [profile.get('vnc'), customprofile.get('vnc'), default['vnc']] if e is not None))
                 cloudinit = next((e for e in [profile.get('cloudinit'), customprofile.get('cloudinit'), default['cloudinit']] if e is not None))
                 reserveip = next((e for e in [profile.get('reserveip'), customprofile.get('reserveip'), default['reserveip']] if e is not None))
+                nested = next((e for e in [profile.get('nested'), customprofile.get('nested'), default['nested']] if e is not None))
                 start = next((e for e in [profile.get('start'), customprofile.get('start'), default['start']] if e is not None))
                 nets = next((e for e in [profile.get('nets'), customprofile.get('nets'), default['nets']] if e is not None))
                 iso = next((e for e in [profile.get('iso'), customprofile.get('iso')] if e is not None), None)
@@ -577,7 +580,7 @@ def plan(config, autostart, noautostart, inputfile, start, stop, delete, delay, 
                             cmds = scriptcmds
                         else:
                             cmds = cmds + scriptcmds
-                result = k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain)
+                result = k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=nested)
                 handle_response(result, name)
                 if delay > 0:
                     sleep(delay)

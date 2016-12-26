@@ -4,24 +4,24 @@ export EXTERNAL_START="192.168.5.200"
 export EXTERNAL_END="192.168.5.254"
 export EXTERNAL_GATEWAY="192.168.5.1"
 export EXTERNAL_FLOATING="192.168.5.201"
-cp /root/keystonerc_admin /root/keystonerc_testk
-sed -i "s/OS_USERNAME=admin/OS_USERNAME=testk/" /root/keystonerc_testk
-sed -i "s/OS_PASSWORD=.*/OS_PASSWORD=testk/" /root/keystonerc_testk
-sed -i "s/OS_TENANT_NAME=admin/OS_TENANT_NAME=testk/" /root/keystonerc_testk
-sed -i "s/keystone_admin/keystone_testk/" /root/keystonerc_testk
-source /root/keystonerc_admin
+cp ~/keystonerc_admin ~/keystonerc_testk
+sed -i "s/OS_USERNAME=admin/OS_USERNAME=testk/" ~/keystonerc_testk
+sed -i "s/OS_PASSWORD=.*/OS_PASSWORD=testk/" ~/keystonerc_testk
+sed -i "s/OS_TENANT_NAME=admin/OS_TENANT_NAME=testk/" ~/keystonerc_testk
+sed -i "s/keystone_admin/keystone_testk/" ~/keystonerc_testk
+source ~/keystonerc_admin
 openstack project create testk
 openstack user create  --project testk --password testk testk
 openstack role add --user=testk --project=testk admin
 neutron net-create external --router:external
 neutron subnet-create --name $EXTERNAL_SUBNET --allocation-pool start=$EXTERNAL_START,end=$EXTERNAL_END --disable-dhcp --gateway $EXTERNAL_GATEWAY external $EXTERNAL_SUBNET
 keystone password-update --new-password $ADMIN_PASSWORD
-sed -i "s/OS_PASSWORD=.*/OS_PASSWORD=$ADMIN_PASSWORD/" /root/keystonerc_admin
-source /root/keystonerc_testk
+sed -i "s/OS_PASSWORD=.*/OS_PASSWORD=$ADMIN_PASSWORD/" ~/keystonerc_admin
+source ~/keystonerc_testk
 wget http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
 glance image-create --name "cirros" --disk-format qcow2 --container-format bare --file cirros-0.3.4-x86_64-disk.img
-tail -1 /root/.ssh/authorized_keys > /root/testk.pub
-nova keypair-add --pub-key /root/testk.pub testk
+tail -1 /root/.ssh/authorized_keys > ~/testk.pub
+nova keypair-add --pub-key ~/testk.pub testk
 neutron net-create private
 neutron subnet-create --name 10.0.0.0/24 --allocation-pool start=10.0.0.2,end=10.0.0.254 --gateway 10.0.0.1 private 10.0.0.0/24
 neutron router-create router
