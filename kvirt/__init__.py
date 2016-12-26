@@ -14,7 +14,7 @@ import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "2.16"
+__version__ = "2.17"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -334,7 +334,7 @@ class Kvirt:
         vm = conn.lookupByName(name)
         vm.setAutostart(1)
         if cloudinit:
-            self._cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain)
+            self._cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain, reserveip=reserveip)
             self._uploadimage(name, pool=default_storagepool)
         if reserveip:
             xml = vm.XMLDesc(0)
@@ -812,7 +812,7 @@ class Kvirt:
                 continue
             network.update(4, 4, 0, '<host mac="%s" name="%s" ip="%s" />' % (mac, name, ip), 1)
 
-    def _cloudinit(self, name, keys=None, cmds=None, nets=[], gateway=None, dns=None, domain=None):
+    def _cloudinit(self, name, keys=None, cmds=None, nets=[], gateway=None, dns=None, domain=None, reserveip=False):
         default_gateway = gateway
         with open('/tmp/meta-data', 'w') as metadatafile:
             if domain is not None:
@@ -834,7 +834,7 @@ class Kvirt:
                         ip = net.get('ip')
                         netmask = net.get('mask')
                     metadata += "  auto %s\n" % nicname
-                    if ip is not None and netmask is not None:
+                    if ip is not None and netmask is not None and not reserveip:
                         metadata += "  iface %s inet static\n" % nicname
                         metadata += "  address %s\n" % ip
                         metadata += "  netmask %s\n" % netmask
