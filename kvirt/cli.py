@@ -669,12 +669,10 @@ def plan(config, autostart, container, noautostart, inputfile, start, stop, dele
             for container in containerentries:
                 name = "%s_%s" % (plan, container)
                 profile = entries[container]
-                image = profile.get('template')
-                image = profile.get('image')
+                image = next((e for e in [profile.get('image'), profile.get('template')] if e is not None), None)
                 nets = profile.get('nets')
                 ports = profile.get('ports')
-                volumes = profile.get('disks')
-                volumes = profile.get('volumes')
+                volumes = next((e for e in [profile.get('volumes'), profile.get('disks')] if e is not None), None)
                 cmd = profile.get('cmd')
                 click.secho("Container %s deployed!" % container, fg='green')
                 k.create_container(name=name, image=image, nets=nets, cmd=cmd, ports=ports, volumes=volumes)

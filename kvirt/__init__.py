@@ -15,7 +15,7 @@ import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "2.18"
+__version__ = "2.19"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -1562,11 +1562,11 @@ class Kvirt:
                     portinfo = "%s -p %s:%s" % (portinfo, portnumber, portnumber)
             volumeinfo = ''
             if volumes is not None:
-                for volume in ports:
-                    if isinstance(port, int):
+                for volume in volumes:
+                    if isinstance(volume, int):
                         origin = volume
                         destination = volume
-                    elif isinstance(port, dict):
+                    elif isinstance(volume, dict):
                         path = volume.get('path')
                         origin = volume.get('origin')
                         destination = volume.get('destination')
@@ -1582,7 +1582,6 @@ class Kvirt:
             if cmd is not None:
                 dockercommand = "%s %s" % (dockercommand, cmd)
             command = "ssh -p %s %s@%s %s" % (self.port, self.user, self.host, dockercommand)
-            print command
             os.system(command)
 
     def delete_container(self, name):
