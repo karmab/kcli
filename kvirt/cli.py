@@ -134,12 +134,15 @@ def stop(config, container, name):
 
 @cli.command()
 @click.option('-s', '--serial', is_flag=True)
+@click.option('--container', is_flag=True)
 @click.argument('name')
 @pass_config
-def console(config, serial, name):
-    """Vnc/Spice/Serial console"""
+def console(config, serial, container, name):
+    """Vnc/Spice/Serial/Container console"""
     k = config.get()
-    if serial:
+    if container:
+        k.console_container(name)
+    elif serial:
         k.serialconsole(name)
     else:
         k.console(name)

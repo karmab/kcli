@@ -15,7 +15,7 @@ import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "2.19"
+__version__ = "3.00"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -1621,6 +1621,21 @@ class Kvirt:
         else:
             dockercommand = "docker stop %s" % name
             command = "ssh -p %s %s@%s %s" % (self.port, self.user, self.host, dockercommand)
+            os.system(command)
+
+    def console_container(self, name):
+        if self.host == '127.0.0.1':
+            # base_url = 'unix://var/run/docker.sock'
+            dockercommand = "docker attach %s" % name
+            os.system(dockercommand)
+            # d = docker.DockerClient(base_url=base_url)
+            # containers = [container.id for container in d.containers.list() if container.name == name]
+            # if containers:
+            #    for container in containers:
+            #        container.attach()
+        else:
+            dockercommand = "docker attach %s" % name
+            command = "ssh -t -p %s %s@%s %s" % (self.port, self.user, self.host, dockercommand)
             os.system(command)
 
     def list_containers(self):

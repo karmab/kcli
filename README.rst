@@ -425,8 +425,8 @@ as keys. mode can either be rw o ro and when origin or destination are
 missing, path is used and the same path is used for origin and
 destination of the volume.
 
-Additionally, basic commands ( start, stop, plan, list) accept a
-*--container* flag.
+Additionally, basic commands ( start, stop, console, plan, list) accept
+a *--container* flag.
 
 Also note that while python sdk is used when connecting locally,
 commands are rather proxied other ssh when using a remote host ( reasons
@@ -485,7 +485,6 @@ issues found with cloud images
 TODO
 ----
 
--  allows containers to be launched within plan
 -  find a way to easily share the plan files (for instance, adding a
    list of urls in the conf and a fetch subcommand)
 -  remove all the print for the kvirt module and only return data

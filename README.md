@@ -333,7 +333,7 @@ The following keywords can be used:
 Within a volumes section, you can use path, origin, destination and mode as keys. mode can either be rw o ro and when origin or destination are missing, path is used and the same path is used for origin and destination of the volume.
 
 
-Additionally, basic commands ( start, stop, plan, list) accept a *--container* flag.
+Additionally, basic commands ( start, stop, console, plan, list) accept a *--container* flag.
 
 Also note that while python sdk is used when connecting locally, commands are rather proxied other ssh when using a remote host ( reasons beeing to prevent mismatch of version between local and remote docker and because enabling remote access for docker is considered insecure and needs some uncommon additional steps )
 
@@ -373,7 +373,6 @@ basic testing can be run with pytest. If using a remote hypervisor, you ll want 
 
 ## TODO 
 
-- allows containers to be launched within plan
 - find a way to easily share the plan files (for instance, adding a list of urls in the conf and a fetch subcommand)
 - remove all the print for the kvirt module and only return data
 - change the try, except blocks for object checks with parsing of the list methods that libvirt provides for most object
