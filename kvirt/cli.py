@@ -494,8 +494,7 @@ def plan(config, autostart, container, noautostart, inputfile, start, stop, dele
         if container:
             for cont in sorted(k.list_containers()):
                 name = cont[0]
-                containerplan = cont[3]
-                if containerplan == plan:
+                if name.startswith(plan):
                     k.delete_container(name)
                     click.secho("Container %s deleted!" % name, fg='green')
         for network in networks:
@@ -670,7 +669,9 @@ def plan(config, autostart, container, noautostart, inputfile, start, stop, dele
         if containerentries:
             click.secho("Deploying Containers...", fg='green')
             for container in containerentries:
-                name = "%s_%s" % (plan, container)
+                if k.exists_container(container):
+                    click.secho("Container %s skipped!" % container, fg='blue')
+                    continue
                 profile = entries[container]
                 image = next((e for e in [profile.get('image'), profile.get('template')] if e is not None), None)
                 nets = profile.get('nets')
@@ -678,7 +679,7 @@ def plan(config, autostart, container, noautostart, inputfile, start, stop, dele
                 volumes = next((e for e in [profile.get('volumes'), profile.get('disks')] if e is not None), None)
                 cmd = profile.get('cmd')
                 click.secho("Container %s deployed!" % container, fg='green')
-                k.create_container(name=name, image=image, nets=nets, cmd=cmd, ports=ports, volumes=volumes)
+                k.create_container(name=container, image=image, nets=nets, cmd=cmd, ports=ports, volumes=volumes)
                 # handle_response(result, name)
 
 

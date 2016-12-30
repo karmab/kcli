@@ -15,7 +15,7 @@ import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "3.00"
+__version__ = "3.01"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -1525,21 +1525,21 @@ class Kvirt:
         #    elif isinstance(net, dict) and 'name' in net:
         #        netname = net['name']
         #    nets[i] = self._get_bridge(netname)
-        for i, volume in enumerate(volumes):
-            if isinstance(volume, str):
-                volumes[i] = {volume: {'bind': volume, 'mode': 'rw'}}
-            elif isinstance(volume, dict):
-                path = volume.get('path')
-                origin = volume.get('origin')
-                destination = volume.get('destination')
-                mode = volume.get('mode', 'rw')
-                if origin is None or destination is None:
-                    if path is None:
-                        continue
-                    volumes[i] = {path: {'bind': path, 'mode': mode}}
-                else:
-                    volumes[i] = {origin: {'bind': destination, 'mode': mode}}
         if self.host == '127.0.0.1':
+            for i, volume in enumerate(volumes):
+                if isinstance(volume, str):
+                    volumes[i] = {volume: {'bind': volume, 'mode': 'rw'}}
+                elif isinstance(volume, dict):
+                    path = volume.get('path')
+                    origin = volume.get('origin')
+                    destination = volume.get('destination')
+                    mode = volume.get('mode', 'rw')
+                    if origin is None or destination is None:
+                        if path is None:
+                            continue
+                        volumes[i] = {path: {'bind': path, 'mode': mode}}
+                    else:
+                        volumes[i] = {origin: {'bind': destination, 'mode': mode}}
             if ports is not None:
                 ports = {'%s/tcp' % k: k for k in ports}
             base_url = 'unix://var/run/docker.sock'
@@ -1563,7 +1563,7 @@ class Kvirt:
             volumeinfo = ''
             if volumes is not None:
                 for volume in volumes:
-                    if isinstance(volume, int):
+                    if isinstance(volume, str):
                         origin = volume
                         destination = volume
                     elif isinstance(volume, dict):
@@ -1669,6 +1669,23 @@ class Kvirt:
                 command = command.strip().replace('"', '')
                 containers.append([name, state, source, plan, command])
         return containers
+
+    def exists_container(self, name):
+        if self.host == '127.0.0.1':
+            base_url = 'unix://var/run/docker.sock'
+            d = docker.DockerClient(base_url=base_url)
+            containers = [container.id for container in d.containers.list() if container.name == name]
+            if containers:
+                return True
+        else:
+            dockercommand = "docker ps -a --format '{{.Names}}'"
+            command = "ssh -p %s %s@%s %s" % (self.port, self.user, self.host, dockercommand)
+            results = os.popen(command).readlines()
+            for container in results:
+                containername = container.strip()
+                if containername == name:
+                    return True
+        return False
 
     def _get_bridge(self, name):
         conn = self.conn
