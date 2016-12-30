@@ -101,25 +101,35 @@ def cli(config):
 
 
 @cli.command()
+@click.option('--container', is_flag=True)
 @click.argument('name')
 @pass_config
-def start(config, name):
-    """Start vm"""
+def start(config, container, name):
+    """Start vm/container"""
     k = config.get()
-    click.secho("Started vm %s..." % name, fg='green')
-    result = k.start(name)
-    handle_response(result, name, element='', action='started')
+    if container:
+        click.secho("Started container %s..." % name, fg='green')
+        k.start_container(name)
+    else:
+        click.secho("Started vm %s..." % name, fg='green')
+        result = k.start(name)
+        handle_response(result, name, element='', action='started')
 
 
 @cli.command()
+@click.option('--container', is_flag=True)
 @click.argument('name')
 @pass_config
-def stop(config, name):
-    """Stop vm"""
+def stop(config, container, name):
+    """Stop vm/container"""
     k = config.get()
-    click.secho("Stopped vm %s..." % name, fg='green')
-    result = k.stop(name)
-    handle_response(result, name, element='', action='stopped')
+    if container:
+        click.secho("Stopped container %s..." % name, fg='green')
+        k.stop_container(name)
+    else:
+        click.secho("Stopped vm %s..." % name, fg='green')
+        result = k.stop(name)
+        handle_response(result, name, element='', action='stopped')
 
 
 @cli.command()
@@ -137,13 +147,18 @@ def console(config, serial, name):
 
 @cli.command()
 @click.confirmation_option(help='Are you sure?')
+@click.option('--container', is_flag=True)
 @click.argument('name')
 @pass_config
-def delete(config, name):
-    """Delete vm"""
+def delete(config, container, name):
+    """Delete vm/container"""
     k = config.get()
-    click.secho("Deleted vm %s..." % name, fg='red')
-    k.delete(name)
+    if container:
+        click.secho("Deleted container %s..." % name, fg='red')
+        k.delete_container(name)
+    else:
+        click.secho("Deleted vm %s..." % name, fg='red')
+        k.delete(name)
 
 
 @cli.command()
@@ -172,9 +187,10 @@ def switch(config, client):
 @click.option('-d', '--disks', is_flag=True)
 @click.option('-P', '--pools', is_flag=True)
 @click.option('-n', '--networks', is_flag=True)
+@click.option('--containers', is_flag=True)
 @click.option('-f', '--filters', type=click.Choice(['up', 'down']))
 @pass_config
-def list(config, clients, profiles, templates, isos, disks, pools, networks, filters):
+def list(config, clients, profiles, templates, isos, disks, pools, networks, containers, filters):
     """List clients, profiles, templates, isos, pools or vms"""
     k = config.get()
     if pools:
@@ -224,6 +240,17 @@ def list(config, clients, profiles, templates, isos, disks, pools, networks, fil
             pool = disks[disk]['pool']
             diskstable.add_row([disk, pool, path])
         print diskstable
+    elif containers:
+        click.secho("Listing containers...", fg='green')
+        containers = PrettyTable(["Name", "Status", "Image", "Plan", "Command"])
+        for container in k.list_containers():
+            if filters:
+                status = container[1]
+                if status == filters:
+                    containers.add_row(container)
+            else:
+                containers.add_row(container)
+        print containers
     else:
         vms = PrettyTable(["Name", "Status", "Ips", "Source", "Description/Plan", "Profile"])
         for vm in sorted(k.list()):
@@ -238,6 +265,7 @@ def list(config, clients, profiles, templates, isos, disks, pools, networks, fil
 
 @cli.command()
 @click.option('-p', '--profile', help='Profile to use')
+@click.option('--container', is_flag=True)
 @click.option('-1', '--ip1', help='Optional Ip to assign to eth0. Netmask and gateway will be retrieved from profile')
 @click.option('-2', '--ip2', help='Optional Ip to assign to eth1. Netmask and gateway will be retrieved from profile')
 @click.option('-3', '--ip3', help='Optional Ip to assign to eth2. Netmask and gateway will be retrieved from profile')
@@ -248,12 +276,16 @@ def list(config, clients, profiles, templates, isos, disks, pools, networks, fil
 @click.option('-8', '--ip8', help='Optional Ip to assign to eth8. Netmask and gateway will be retrieved from profile')
 @click.argument('name')
 @pass_config
-def create(config, profile, ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8, name):
+def create(config, profile, container, ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8, name):
     """Create vm from given profile"""
-    click.secho("Deploying vm %s from profile %s..." % (name, profile), fg='green')
     k = config.get()
     default = config.default
     profiles = config.profiles
+    if container:
+        click.secho("Deploying container %s from image %s..." % (name, profile), fg='green')
+        k.create_container(name, profile)
+        return
+    click.secho("Deploying vm %s from profile %s..." % (name, profile), fg='green')
     if profile not in profiles:
         click.secho("Invalid profile %s. Leaving..." % profile, fg='red')
         os._exit(1)
@@ -426,6 +458,7 @@ def report(config):
 
 @cli.command()
 @click.option('-a', '--autostart', is_flag=True, help='Set all vms from plan to autostart')
+@click.option('-c', '--container', is_flag=True, help='Handle container')
 @click.option('-n', '--noautostart', is_flag=True, help='Prevent all vms from plan to autostart')
 @click.option('-f', '--inputfile', help='Input file')
 @click.option('-s', '--start', is_flag=True, help='start all vms from plan')
@@ -434,7 +467,7 @@ def report(config):
 @click.option('-t', '--delay', default=0, help="Delay between each vm's creation")
 @click.argument('plan', required=False)
 @pass_config
-def plan(config, autostart, noautostart, inputfile, start, stop, delete, delay, plan):
+def plan(config, autostart, container, noautostart, inputfile, start, stop, delete, delay, plan):
     """Create/Delete/Stop/Start vms from plan file"""
     if plan is None:
         plan = 'kvirt'
@@ -454,7 +487,14 @@ def plan(config, autostart, noautostart, inputfile, start, stop, delete, delay, 
                     if network != 'default' and network not in networks:
                         networks.append(network)
                 k.delete(name)
-                click.secho("%s deleted!" % name, fg='green')
+                click.secho("VM %s deleted!" % name, fg='green')
+        if container:
+            for cont in sorted(k.list_containers()):
+                name = cont[0]
+                containerplan = cont[3]
+                if containerplan == plan:
+                    k.delete_container(name)
+                    click.secho("Container %s deleted!" % name, fg='green')
         for network in networks:
             k.delete_network(network)
             click.secho("Unused network %s deleted!" % network, fg='green')
@@ -485,7 +525,14 @@ def plan(config, autostart, noautostart, inputfile, start, stop, delete, delay, 
             description = vm[4]
             if description == plan:
                 k.start(name)
-                click.secho("%s started!" % name, fg='green')
+                click.secho("VM %s started!" % name, fg='green')
+        if container:
+            for cont in sorted(k.list_containers()):
+                name = cont[0]
+                containerplan = cont[3]
+                if containerplan == plan:
+                    k.start_container(name)
+                    click.secho("Container %s started!" % name, fg='green')
         click.secho("Plan %s started!" % plan, fg='green')
         return
     if stop:
@@ -496,6 +543,13 @@ def plan(config, autostart, noautostart, inputfile, start, stop, delete, delay, 
             if description == plan:
                 k.stop(name)
                 click.secho("%s stopped!" % name, fg='green')
+        if container:
+            for cont in sorted(k.list_containers()):
+                name = cont[0]
+                containerplan = cont[3]
+                if containerplan == plan:
+                    k.stop_container(name)
+                    click.secho("Container %s stopped!" % name, fg='green')
         click.secho("Plan %s stopped!" % plan, fg='green')
         return
     if inputfile is None:
@@ -511,6 +565,7 @@ def plan(config, autostart, noautostart, inputfile, start, stop, delete, delay, 
         vmentries = [entry for entry in entries if 'type' not in entries[entry] or entries[entry]['type'] == 'vm']
         diskentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'disk']
         networkentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'network']
+        containerentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'container']
         if networkentries:
             click.secho("Deploying Networks...", fg='green')
         for net in networkentries:
@@ -609,6 +664,21 @@ def plan(config, autostart, noautostart, inputfile, start, stop, delete, delay, 
             click.secho("Disk %s deployed!" % disk, fg='green')
             for vm in vms:
                 k.add_disk(name=vm, size=size, pool=pool, template=template, shareable=shareable, existing=newdisk, thin=False)
+        if containerentries:
+            click.secho("Deploying Containers...", fg='green')
+            for container in containerentries:
+                name = "%s_%s" % (plan, container)
+                profile = entries[container]
+                image = profile.get('template')
+                image = profile.get('image')
+                nets = profile.get('nets')
+                ports = profile.get('ports')
+                volumes = profile.get('disks')
+                volumes = profile.get('volumes')
+                cmd = profile.get('cmd')
+                click.secho("Container %s deployed!" % container, fg='green')
+                k.create_container(name=name, image=image, nets=nets, cmd=cmd, ports=ports, volumes=volumes)
+                # handle_response(result, name)
 
 
 @cli.command()

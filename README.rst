@@ -396,6 +396,49 @@ network has dhcp and when the provided IP belongs to the network range
    paths or relative to where you're running kcli. Only checked in
    profile or plan file
 
+docker support
+--------------
+
+docker support is mainly enabled as a commodity to launch some
+containers along vms in plan files. So the following can be used in a
+plan file to launch a container:
+
+::
+
+    centos:
+     type: container
+      image: centos
+      cmd: /bin/bash
+
+The following keywords can be used:
+
+-  *image* name of the image to pull ( You can alternatively use the
+   keyword *template*
+-  *cmd* command to run within the container
+-  *ports* array of ports to map between host and container
+-  *volumes* array of volumes to map between host and container. You can
+   alternatively use the keyword *disks*. You can also use more complex
+   information provided as a hash
+
+Within a volumes section, you can use path, origin, destination and mode
+as keys. mode can either be rw o ro and when origin or destination are
+missing, path is used and the same path is used for origin and
+destination of the volume.
+
+Additionally, basic commands ( start, stop, plan, list) accept a
+*--container* flag.
+
+Also note that while python sdk is used when connecting locally,
+commands are rather proxied other ssh when using a remote host ( reasons
+beeing to prevent mismatch of version between local and remote docker
+and because enabling remote access for docker is considered insecure and
+needs some uncommon additional steps )
+
+Finally, note that if using the docker version of kcli against your
+local host , you'll need to pass a docker socket:
+
+``docker run -it -v /var/run/libvirt:/var/run/libvirt -v ~/.ssh:/root/.ssh karmab/kcli -v /var/run/docker.sock:/var/run/docker.sock /bin/bash``
+
 ansible support
 ---------------
 

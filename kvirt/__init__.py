@@ -5,6 +5,7 @@ interact with a local/remote libvirt daemon
 """
 
 from defaults import TEMPLATES
+import docker
 from distutils.spawn import find_executable
 from iptools import IpRange
 from netaddr import IPAddress, IPNetwork
@@ -14,7 +15,7 @@ import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "2.17"
+__version__ = "2.18"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -1513,3 +1514,161 @@ class Kvirt:
                 network = element.find('source').get('network')
             networks.append(network)
         return networks
+
+    def create_container(self, name, image, nets=None, cmd=None, ports=[], volumes=[]):
+        # if not nets:
+        #    return
+        # for i, net in enumerate(nets):
+        #    print net
+        #    if isinstance(net, str):
+        #        netname = net
+        #    elif isinstance(net, dict) and 'name' in net:
+        #        netname = net['name']
+        #    nets[i] = self._get_bridge(netname)
+        for i, volume in enumerate(volumes):
+            if isinstance(volume, str):
+                volumes[i] = {volume: {'bind': volume, 'mode': 'rw'}}
+            elif isinstance(volume, dict):
+                path = volume.get('path')
+                origin = volume.get('origin')
+                destination = volume.get('destination')
+                mode = volume.get('mode', 'rw')
+                if origin is None or destination is None:
+                    if path is None:
+                        continue
+                    volumes[i] = {path: {'bind': path, 'mode': mode}}
+                else:
+                    volumes[i] = {origin: {'bind': destination, 'mode': mode}}
+        if self.host == '127.0.0.1':
+            if ports is not None:
+                ports = {'%s/tcp' % k: k for k in ports}
+            base_url = 'unix://var/run/docker.sock'
+            d = docker.DockerClient(base_url=base_url)
+            # d.containers.run(image, name=name, command=cmd, networks=nets, detach=True, ports=ports)
+            d.containers.run(image, name=name, command=cmd, detach=True, ports=ports, volumes=volumes, stdin_open=True, tty=True)
+        else:
+            # netinfo = ''
+            # for net in nets:
+            #    netinfo = "%s --net=%s" % (netinfo, net)
+            portinfo = ''
+            if ports is not None:
+                for port in ports:
+                    if isinstance(port, int):
+                        portnumber = port
+                    elif isinstance(port, dict) and 'port' in port:
+                        portnumber = port['port']
+                    else:
+                        continue
+                    portinfo = "%s -p %s:%s" % (portinfo, portnumber, portnumber)
+            volumeinfo = ''
+            if volumes is not None:
+                for volume in ports:
+                    if isinstance(port, int):
+                        origin = volume
+                        destination = volume
+                    elif isinstance(port, dict):
+                        path = volume.get('path')
+                        origin = volume.get('origin')
+                        destination = volume.get('destination')
+                        if origin is None or destination is None:
+                            if path is None:
+                                continue
+                            origin = path
+                            destination = path
+                    volumeinfo = "%s -v %s:%s" % (volumeinfo, origin, destination)
+            # dockercommand = "docker run %s %s --name % s %s" % (netinfo, portinfo, name, image)
+            # dockercommand = "docker run -it %s --name %s -d %s" % (portinfo, name, image)
+            dockercommand = "docker run -it %s %s --name %s -d %s" % (volumeinfo, portinfo, name, image)
+            if cmd is not None:
+                dockercommand = "%s %s" % (dockercommand, cmd)
+            command = "ssh -p %s %s@%s %s" % (self.port, self.user, self.host, dockercommand)
+            print command
+            os.system(command)
+
+    def delete_container(self, name):
+        if self.host == '127.0.0.1':
+            base_url = 'unix://var/run/docker.sock'
+            d = docker.DockerClient(base_url=base_url)
+            containers = [container.id for container in d.containers.list() if container.name == name]
+            if containers:
+                for container in containers:
+                    container.remove(force=True)
+        else:
+            dockercommand = "docker rm -f %s" % name
+            command = "ssh -p %s %s@%s %s" % (self.port, self.user, self.host, dockercommand)
+            os.system(command)
+
+    def start_container(self, name):
+        if self.host == '127.0.0.1':
+            base_url = 'unix://var/run/docker.sock'
+            d = docker.DockerClient(base_url=base_url)
+            containers = [container.id for container in d.containers.list() if container.name == name]
+            if containers:
+                for container in containers:
+                    container.start()
+        else:
+            dockercommand = "docker start %s" % name
+            command = "ssh -p %s %s@%s %s" % (self.port, self.user, self.host, dockercommand)
+            os.system(command)
+
+    def stop_container(self, name):
+        if self.host == '127.0.0.1':
+            base_url = 'unix://var/run/docker.sock'
+            d = docker.DockerClient(base_url=base_url)
+            containers = [container.id for container in d.containers.list() if container.name == name]
+            if containers:
+                for container in containers:
+                    container.stop()
+        else:
+            dockercommand = "docker stop %s" % name
+            command = "ssh -p %s %s@%s %s" % (self.port, self.user, self.host, dockercommand)
+            os.system(command)
+
+    def list_containers(self):
+        containers = []
+        if self.host == '127.0.0.1':
+            base_url = 'unix://var/run/docker.sock'
+            d = docker.DockerClient(base_url=base_url)
+            # containers = [container.name for container in d.containers.list()]
+            for container in d.containers.list():
+                name = container.name
+                state = container.status
+                state = state.split(' ')[0]
+                source = container.attrs.Image
+                plan = name.split('_')[0]
+                command = container.attrs.Cmd
+                containers.append([name, state, source, plan, command])
+        else:
+            containers = []
+            # dockercommand = "docker ps --format '{{.Names}}'"
+            dockercommand = "docker ps -a --format '{{.Names}},{{.Status}},{{.Image}},{{.Command}}'"
+            command = "ssh -p %s %s@%s %s" % (self.port, self.user, self.host, dockercommand)
+            results = os.popen(command).readlines()
+            for container in results:
+                #    containers.append(container.strip())
+                name, state, source, command = container.split(',')
+                if state.startswith('Up'):
+                    state = 'up'
+                else:
+                    state = 'down'
+                plan = name.split('_')[0]
+                command = command.strip().replace('"', '')
+                containers.append([name, state, source, plan, command])
+        return containers
+
+    def _get_bridge(self, name):
+        conn = self.conn
+        bridges = [interface.name() for interface in conn.listAllInterfaces()]
+        if name in bridges:
+            return name
+        try:
+            net = self.conn.networkLookupByName(name)
+        except:
+            return None
+        netxml = net.XMLDesc(0)
+        root = ET.fromstring(netxml)
+        bridge = root.getiterator('bridge')
+        if bridge:
+            attributes = bridge[0].attrib
+            bridge = attributes.get('name')
+        return bridge
