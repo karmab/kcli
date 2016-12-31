@@ -290,8 +290,12 @@ def create(config, profile, container, ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8, n
         return
     click.secho("Deploying vm %s from profile %s..." % (name, profile), fg='green')
     if profile not in profiles:
-        click.secho("Invalid profile %s. Leaving..." % profile, fg='red')
-        os._exit(1)
+        click.secho("profile %s not found. Trying to use the profile as template and default values..." % profile, fg='blue')
+        result = k.create(name=name, memory=1024, template=profile)
+        handle_response(result, name)
+        return
+        # click.secho("Invalid profile %s. Leaving..." % profile, fg='red')
+        # os._exit(1)
     title = profile
     profile = profiles[profile]
     template = profile.get('template')
