@@ -245,7 +245,7 @@ def list(config, clients, profiles, templates, isos, disks, pools, networks, con
         print diskstable
     elif containers:
         click.secho("Listing containers...", fg='green')
-        containers = PrettyTable(["Name", "Status", "Image", "Plan", "Command"])
+        containers = PrettyTable(["Name", "Status", "Image", "Plan", "Command", "Ports"])
         for container in k.list_containers():
             if filters:
                 status = container[1]
@@ -283,13 +283,27 @@ def create(config, profile, container, ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8, n
     """Create vm from given profile"""
     k = config.get()
     default = config.default
-    profiles = config.profiles
+    containerprofiles = {k: v for k, v in config.profiles.iteritems() if 'type' in v and v['type'] == 'container'}
+    vmprofiles = {k: v for k, v in config.profiles.iteritems() if 'type' not in v or v['type'] == 'vm'}
     if container:
-        click.secho("Deploying container %s from image %s..." % (name, profile), fg='green')
-        k.create_container(name, profile)
-        return
+        if profile not in containerprofiles:
+            click.secho("profile %s not found. Trying to use the profile as image and default values..." % profile, fg='blue')
+            k.create_container(name, profile)
+            return
+        else:
+            click.secho("Deploying vm %s from profile %s..." % (name, profile), fg='green')
+            profile = containerprofiles[profile]
+            image = next((e for e in [profile.get('image'), profile.get('template')] if e is not None), None)
+            if image is None:
+                click.secho("Missing image in profile %s. Leaving..." % profile, fg='red')
+                os._exit(1)
+            cmd = profile.get('cmd', None)
+            ports = profile.get('ports', None)
+            volumes = next((e for e in [profile.get('volumes'), profile.get('disks')] if e is not None), None)
+            k.create_container(name, image, nets=None, cmd=cmd, ports=ports, volumes=volumes)
+            return
     click.secho("Deploying vm %s from profile %s..." % (name, profile), fg='green')
-    if profile not in profiles:
+    if profile not in vmprofiles:
         click.secho("profile %s not found. Trying to use the profile as template and default values..." % profile, fg='blue')
         result = k.create(name=name, memory=1024, template=profile)
         handle_response(result, name)
@@ -297,7 +311,7 @@ def create(config, profile, container, ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8, n
         # click.secho("Invalid profile %s. Leaving..." % profile, fg='red')
         # os._exit(1)
     title = profile
-    profile = profiles[profile]
+    profile = vmprofiles[profile]
     template = profile.get('template')
     description = 'kvirt'
     nets = profile.get('nets', default['nets'])
@@ -476,6 +490,8 @@ def report(config):
 @pass_config
 def plan(config, autostart, container, noautostart, inputfile, start, stop, delete, delay, plan):
     """Create/Delete/Stop/Start vms from plan file"""
+    vmprofiles = {key: value for key, value in config.profiles.iteritems() if 'type' not in value or value['type'] == 'vm'}
+    containerprofiles = {key: value for key, value in config.profiles.iteritems() if 'type' in value and value['type'] == 'container'}
     if plan is None:
         plan = 'kvirt'
     k = config.get()
@@ -594,9 +610,8 @@ def plan(config, autostart, container, noautostart, inputfile, start, stop, dele
                 if k.exists(name):
                     click.secho("VM %s skipped!" % name, fg='blue')
                     continue
-                if 'profile' in profile.keys():
-                    profiles = config.profiles
-                    customprofile = profiles[profile['profile']]
+                if 'profile' in profile and profile['profile'] in vmprofiles:
+                    customprofile = vmprofiles[profile['profile']]
                     title = profile['profile']
                 else:
                     customprofile = {}
@@ -672,18 +687,23 @@ def plan(config, autostart, container, noautostart, inputfile, start, stop, dele
                 k.add_disk(name=vm, size=size, pool=pool, template=template, shareable=shareable, existing=newdisk, thin=False)
         if containerentries:
             click.secho("Deploying Containers...", fg='green')
+            label = plan
             for container in containerentries:
                 if k.exists_container(container):
                     click.secho("Container %s skipped!" % container, fg='blue')
                     continue
                 profile = entries[container]
-                image = next((e for e in [profile.get('image'), profile.get('template')] if e is not None), None)
-                nets = profile.get('nets')
-                ports = profile.get('ports')
-                volumes = next((e for e in [profile.get('volumes'), profile.get('disks')] if e is not None), None)
-                cmd = profile.get('cmd')
+                if 'profile' in profile and profile['profile'] in containerprofiles:
+                    customprofile = containerprofiles[profile['profile']]
+                else:
+                    customprofile = {}
+                image = next((e for e in [profile.get('image'), profile.get('template'), customprofile.get('image'), customprofile.get('template')] if e is not None), None)
+                nets = next((e for e in [profile.get('nets'), customprofile.get('nets')] if e is not None), None)
+                ports = next((e for e in [profile.get('ports'), customprofile.get('ports')] if e is not None), None)
+                volumes = next((e for e in [profile.get('volumes'), profile.get('disks'), customprofile.get('volumes'), customprofile.get('disks')] if e is not None), None)
+                cmd = next((e for e in [profile.get('cmd'), customprofile.get('cmd')] if e is not None), None)
                 click.secho("Container %s deployed!" % container, fg='green')
-                k.create_container(name=container, image=image, nets=nets, cmd=cmd, ports=ports, volumes=volumes)
+                k.create_container(name=container, image=image, nets=nets, cmd=cmd, ports=ports, volumes=volumes, label=label)
                 # handle_response(result, name)
 
 

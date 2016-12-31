@@ -1515,7 +1515,7 @@ class Kvirt:
             networks.append(network)
         return networks
 
-    def create_container(self, name, image, nets=None, cmd=None, ports=[], volumes=[]):
+    def create_container(self, name, image, nets=None, cmd=None, ports=[], volumes=[], label=None):
         # if not nets:
         #    return
         # for i, net in enumerate(nets):
@@ -1546,10 +1546,16 @@ class Kvirt:
                         volumes[i] = {origin: {'bind': destination, 'mode': mode}}
             if ports is not None:
                 ports = {'%s/tcp' % k: k for k in ports}
+            if label is not None and isinstance(label, str) and len(label.split('=')) == 2:
+                key, value = label.split('=')
+                labels = {key: value}
+            else:
+                labels = None
             base_url = 'unix://var/run/docker.sock'
+
             d = docker.DockerClient(base_url=base_url)
             # d.containers.run(image, name=name, command=cmd, networks=nets, detach=True, ports=ports)
-            d.containers.run(image, name=name, command=cmd, detach=True, ports=ports, volumes=volumes, stdin_open=True, tty=True)
+            d.containers.run(image, name=name, command=cmd, detach=True, ports=ports, volumes=volumes, stdin_open=True, tty=True, labels=labels)
         else:
             # netinfo = ''
             # for net in nets:
@@ -1593,7 +1599,7 @@ class Kvirt:
                     volumeinfo = "%s -v %s:%s" % (volumeinfo, origin, destination)
             # dockercommand = "docker run %s %s --name % s %s" % (netinfo, portinfo, name, image)
             # dockercommand = "docker run -it %s --name %s -d %s" % (portinfo, name, image)
-            dockercommand = "docker run -it %s %s --name %s -d %s" % (volumeinfo, portinfo, name, image)
+            dockercommand = "docker run -it %s %s --name %s -l %s -d %s" % (volumeinfo, portinfo, name, label, image)
             if cmd is not None:
                 dockercommand = "%s %s" % (dockercommand, cmd)
             command = "ssh -p %s %s@%s %s" % (self.port, self.user, self.host, dockercommand)
@@ -1664,25 +1670,43 @@ class Kvirt:
                 state = container.status
                 state = state.split(' ')[0]
                 source = container.attrs.Image
-                plan = name.split('_')[0]
+                labels = container.attrs['Config']['Labels']
+                if 'plan' in labels:
+                    plan = labels['plan']
+                else:
+                    plan = ''
                 command = container.attrs.Cmd
-                containers.append([name, state, source, plan, command])
+                ports = container.attrs['NetworkSettings']['Ports']
+                if ports:
+                    portinfo = ''
+                    for port in ports:
+                        hostport = ports[port][0]['HostPort']
+                        hostip = ports[port][0]['HostIp']
+                        newport = "%s:%s->%s" % (hostip, hostport, port)
+                        portinfo = "%s,%s" % (portinfo, newport)
+                else:
+                    ports = ''
+                containers.append([name, state, source, plan, command, ports])
         else:
             containers = []
             # dockercommand = "docker ps --format '{{.Names}}'"
-            dockercommand = "docker ps -a --format '{{.Names}},{{.Status}},{{.Image}},{{.Command}}'"
+            dockercommand = "docker ps -a --format \"'{{.Names}}?{{.Status}}?{{.Image}}?{{.Command}}?{{.Ports}}?{{.Label \\\"plan\\\"}}'\""
             command = "ssh -p %s %s@%s %s" % (self.port, self.user, self.host, dockercommand)
             results = os.popen(command).readlines()
             for container in results:
                 #    containers.append(container.strip())
-                name, state, source, command = container.split(',')
+                name, state, source, command, ports, plan = container.split('?')
                 if state.startswith('Up'):
                     state = 'up'
                 else:
                     state = 'down'
-                plan = name.split('_')[0]
+                # labels = {i.split('=')[0]: i.split('=')[1] for i in labels.split(',')}
+                # if 'plan' in labels:
+                #    plan = labels['plan']
+                # else:
+                #     plan = ''
                 command = command.strip().replace('"', '')
-                containers.append([name, state, source, plan, command])
+                containers.append([name, state, source, plan, command, ports])
         return containers
 
     def exists_container(self, name):
