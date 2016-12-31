@@ -4,3 +4,4 @@ MAINTAINER Karim Boumedhel <karimboumedhel@gmail.com>
 RUN yum -y install epel-release
 RUN yum -y install gcc libvirt-devel python-devel genisoimage qemu-kvm nmap-ncat python-pip openssh-clients
 RUN pip install kcli
+RUN pip install docker

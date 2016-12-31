@@ -1528,7 +1528,11 @@ class Kvirt:
         if self.host == '127.0.0.1':
             for i, volume in enumerate(volumes):
                 if isinstance(volume, str):
-                    volumes[i] = {volume: {'bind': volume, 'mode': 'rw'}}
+                    if len(volume.split(':')) == 2:
+                        origin, destination = volume.split(':')
+                        volumes[i] = {origin: {'bind': destination, 'mode': 'rw'}}
+                    else:
+                        volumes[i] = {volume: {'bind': volume, 'mode': 'rw'}}
                 elif isinstance(volume, dict):
                     path = volume.get('path')
                     origin = volume.get('origin')
@@ -1554,18 +1558,29 @@ class Kvirt:
             if ports is not None:
                 for port in ports:
                     if isinstance(port, int):
-                        portnumber = port
-                    elif isinstance(port, dict) and 'port' in port:
-                        portnumber = port['port']
+                        oriport = port
+                        destport = port
+                    elif isinstance(port, str):
+                        if len(port.split(':')) == 2:
+                            oriport, destport = port.split(':')
+                        else:
+                            oriport = port
+                            destport = port
+                    elif isinstance(port, dict) and 'origin' in port and 'destination' in port:
+                        oriport = port['origin']
+                        destport = port['destination']
                     else:
                         continue
-                    portinfo = "%s -p %s:%s" % (portinfo, portnumber, portnumber)
+                    portinfo = "%s -p %s:%s" % (portinfo, oriport, destport)
             volumeinfo = ''
             if volumes is not None:
                 for volume in volumes:
                     if isinstance(volume, str):
-                        origin = volume
-                        destination = volume
+                        if len(volume.split(':')) == 2:
+                            origin, destination = volume.split(':')
+                        else:
+                            origin = volume
+                            destination = volume
                     elif isinstance(volume, dict):
                         path = volume.get('path')
                         origin = volume.get('origin')

@@ -314,13 +314,17 @@ Also note that if you set reserveip  to True, a reservation will be made if the 
 
 ## docker support
 
-docker support is mainly enabled as a commodity to launch some containers along vms in plan files. So the following can be used in a plan file to launch a container:
+docker support is mainly enabled as a commodity to launch some containers along vms in plan files. Of course, you will need docker installed on the hypervisor. So the following can be used in a plan file to launch a container:
 
 ```
 centos:
  type: container
   image: centos
   cmd: /bin/bash
+  ports:
+   - 5500
+  volumes:
+   - /root/coco
 ```
 
 The following keywords can be used:
@@ -330,8 +334,12 @@ The following keywords can be used:
 - *ports* array of ports to map between host and container
 - *volumes* array of volumes to map between host and container. You can alternatively use the keyword *disks*. You can also use more complex information provided as a hash
 
-Within a volumes section, you can use path, origin, destination and mode as keys. mode can either be rw o ro and when origin or destination are missing, path is used and the same path is used for origin and destination of the volume.
+Within a volumes section, you can use path, origin, destination and mode as keys. mode can either be rw o ro and when origin or destination are missing, path is used and the same path is used for origin and destination of the volume. You can also use this typical docker syntax:
 
+```
+volumes:
+ - /home/cocorico:/root/cocorico
+```
 
 Additionally, basic commands ( start, stop, console, plan, list) accept a *--container* flag.
 
