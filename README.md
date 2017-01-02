@@ -347,7 +347,7 @@ Also note that while python sdk is used when connecting locally, commands are ra
 
 Finally, note that if using the docker version of kcli against your local host , you'll need to pass a docker socket:
 
-`docker run -it -v /var/run/libvirt:/var/run/libvirt -v ~/.ssh:/root/.ssh karmab/kcli -v /var/run/docker.sock:/var/run/docker.sock /bin/bash`
+`docker run -it -v /var/run/libvirt:/var/run/libvirt -v ~/.ssh:/root/.ssh -v /var/run/docker.sock:/var/run/docker.sock karmab/kcli /bin/bash`
 
 ## ansible support
 

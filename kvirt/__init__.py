@@ -1597,8 +1597,6 @@ class Kvirt:
                             origin = path
                             destination = path
                     volumeinfo = "%s -v %s:%s" % (volumeinfo, origin, destination)
-            # dockercommand = "docker run %s %s --name % s %s" % (netinfo, portinfo, name, image)
-            # dockercommand = "docker run -it %s --name %s -d %s" % (portinfo, name, image)
             dockercommand = "docker run -it %s %s --name %s -l %s -d %s" % (volumeinfo, portinfo, name, label, image)
             if cmd is not None:
                 dockercommand = "%s %s" % (dockercommand, cmd)
@@ -1609,7 +1607,7 @@ class Kvirt:
         if self.host == '127.0.0.1':
             base_url = 'unix://var/run/docker.sock'
             d = docker.DockerClient(base_url=base_url)
-            containers = [container.id for container in d.containers.list() if container.name == name]
+            containers = [container for container in d.containers.list() if container.name == name]
             if containers:
                 for container in containers:
                     container.remove(force=True)
@@ -1622,7 +1620,7 @@ class Kvirt:
         if self.host == '127.0.0.1':
             base_url = 'unix://var/run/docker.sock'
             d = docker.DockerClient(base_url=base_url)
-            containers = [container.id for container in d.containers.list() if container.name == name]
+            containers = [container for container in d.containers.list(all=True) if container.name == name]
             if containers:
                 for container in containers:
                     container.start()
@@ -1635,7 +1633,7 @@ class Kvirt:
         if self.host == '127.0.0.1':
             base_url = 'unix://var/run/docker.sock'
             d = docker.DockerClient(base_url=base_url)
-            containers = [container.id for container in d.containers.list() if container.name == name]
+            containers = [container for container in d.containers.list() if container.name == name]
             if containers:
                 for container in containers:
                     container.stop()
@@ -1665,17 +1663,17 @@ class Kvirt:
             base_url = 'unix://var/run/docker.sock'
             d = docker.DockerClient(base_url=base_url)
             # containers = [container.name for container in d.containers.list()]
-            for container in d.containers.list():
+            for container in d.containers.list(all=True):
                 name = container.name
                 state = container.status
                 state = state.split(' ')[0]
-                source = container.attrs.Image
+                source = container.attrs['Config']['Image']
                 labels = container.attrs['Config']['Labels']
                 if 'plan' in labels:
                     plan = labels['plan']
                 else:
                     plan = ''
-                command = container.attrs.Cmd
+                command = container.attrs['Config']['Cmd']
                 ports = container.attrs['NetworkSettings']['Ports']
                 if ports:
                     portinfo = ''
@@ -1713,7 +1711,7 @@ class Kvirt:
         if self.host == '127.0.0.1':
             base_url = 'unix://var/run/docker.sock'
             d = docker.DockerClient(base_url=base_url)
-            containers = [container.id for container in d.containers.list() if container.name == name]
+            containers = [container.id for container in d.containers.list(all=True) if container.name == name]
             if containers:
                 return True
         else:
