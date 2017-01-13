@@ -218,8 +218,9 @@ Also note that if you use cloudinit but dont specify ssh keys to inject, the def
 
 ## Using plans
 
-you can also define plan files in yaml with a list of VMS, disks, and networks and VMS to deploy (look at the sample) and deploy it with kcli plan
-For instance, to define a network named mynet
+you can also define plan files in yaml with a list of VMS, disks, and networks and VMS to deploy (look at the sample) and deploy it with kcli plan.
+
+For instance, to define a network named mynet:
 
 ```
 mynet:
