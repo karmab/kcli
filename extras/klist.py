@@ -23,7 +23,6 @@ class KcliInventory(object):
         inifile = "%s/kcli.yml" % os.environ.get('HOME')
         if not os.path.exists(inifile):
             ini = {'default': {'client': 'local'}, 'local': {}}
-            print "Using local hypervisor as no kcli.yml was found..."
         else:
             with open(inifile, 'r') as entries:
                 ini = yaml.load(entries)

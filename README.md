@@ -56,7 +56,7 @@ if running locally, launch it with:
 
 `docker run -it -v /var/run/libvirt:/var/run/libvirt -v ~/.ssh:/root/.ssh karmab/kcli /bin/bash`
 
-if using a remote hypervisor, launch it with a local kcli.yml file pointing to tthis hypervisor and providing your ssh keys too
+if using a remote hypervisor, launch it with a local kcli.yml file pointing to this hypervisor and providing your ssh keys too
 
 `docker run -ti -v ~/kcli.yml:/root/kcli.yml -v ~/.ssh:/root/.ssh karmab/kcli /bin/bash`
 
@@ -138,7 +138,7 @@ Note that most of the parameters are actually optional, and can be overridden in
 
 ## profile configuration
 
-You can use the file ~/kvirt_profiles.yml to specify profiles (number of CPUS, memory, size of disk, network,....) to use when deploying a VM.
+You can use the file ~/kcli_profiles.yml to specify profiles (number of CPUS, memory, size of disk, network,....) to use when deploying a VM.
 
 The [samples directory](https://github.com/karmab/kcli/tree/master/samples) contains examples to get you started
 
