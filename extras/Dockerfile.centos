@@ -2,10 +2,8 @@ FROM centos:7
 MAINTAINER Karim Boumedhel <karimboumedhel@gmail.com>
 
 # Group the package installation
-RUN yum clean all && \
-    yum -y install epel-release && \
-    yum -y install gcc libvirt-devel python-devel genisoimage qemu-kvm nmap-ncat python-pip openssh-clients && \
-    yum clean all
+RUN yum -y install epel-release && \
+    yum -y install gcc libvirt-devel python-devel genisoimage qemu-kvm nmap-ncat python-pip openssh-clients
 
 # Group the pip installation
 RUN pip install --no-cache-dir kcli docker

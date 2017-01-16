@@ -11,39 +11,40 @@ and generally for every VM deployed from this client.
 It started because I switched from ovirt and needed a tool similar to
 `ovirt.py <https://github.com/karmab/ovirt>`__
 
-Why should i use this instead of vagrant for kvm
-------------------------------------------------
+Why should I use this instead of vagrant for kvm?
+-------------------------------------------------
 
--  easy syntax to launch single or multiple VMS
--  cloudinit based customization, not over ssh
--  no need of using custom images, the public ones will do
--  spice/vnc consoles and tcp serial ones
--  to be fair, i' ve only tested the code against kvm, so vagrant is a
-   better option if you' re running on virtualbox o vmware fusion
+-  Easy syntax to launch single or multiple VMS
+-  Cloudinit based customization, not over ssh
+-  No need of using custom images, the public ones will do
+-  Spice/VNC consoles and TCP serial ones
+-  To be fair, I've only tested the code against kvm, so vagrant is a
+   better option if you're running on Virtualbox o VMWare Fusion
 
-demo
-----
+Demo!
+-----
 
 |asciicast|
 
-installation
+Installation
 ------------
 
-install requirements. you will also need to grab *genisoimage* (or
-*mkisofs* on OSX) for cloudinit isos to get generated Console access is
-based on remote-viewer For instance if using a rhel based distribution:
+1. Install requirements. you will also need to grab *genisoimage* (or
+   *mkisofs* on OSX) for cloudinit isos to get generated Console access
+   is based on remote-viewer For instance if using a RHEL based
+   distribution:
 
 ::
 
     yum -y install gcc libvirt-devel python-devel genisoimage qemu-kvm nmap-ncat python-pip
 
-If using a debian based distribution:
+If using a Debian based distribution:
 
 ::
 
     apt-get -y install python-pip pkg-config libvirt-dev genisoimage qemu-kvm netcat libvirt-bin python-dev libyaml-dev
 
-then you can install from pypi
+2. Install kcli from pypi
 
 ::
 
@@ -52,30 +53,39 @@ then you can install from pypi
 To deploy from templates, grab images at
 `openstack <http://docs.openstack.org/image-guide/obtain-images.html>`__
 
-I use docker, i m cool
+I use docker, I'm cool
 ----------------------
 
-grab latest image
+Pull the latest image:
 
 ``docker pull karmab/kcli``
 
-if running locally, launch it with:
+If running locally, launch it with:
 
-``docker run -it -v /var/run/libvirt:/var/run/libvirt -v ~/.ssh:/root/.ssh karmab/kcli /bin/bash``
+``docker run --rm -v /var/run/libvirt:/var/run/libvirt -v ~/.ssh:/root/.ssh karmab/kcli``
 
-if using a remote hypervisor, launch it with a local kcli.yml file
-pointing to tthis hypervisor and providing your ssh keys too
+If using a remote hypervisor, launch it with a local kcli.yml file
+pointing to this hypervisor and providing your ssh keys too
 
-``docker run -ti -v ~/kcli.yml:/root/kcli.yml -v ~/.ssh:/root/.ssh karmab/kcli /bin/bash``
+``docker run --rm -v ~/kcli.yml:/root/kcli.yml -v ~/.ssh:/root/.ssh karmab/kcli``
 
 In both cases, you can also provide a kcli\_profiles.yml (and you could
 also use a dedicated plan directory)
 
-``docker run -it -v /var/run/libvirt:/var/run/libvirt -v ~/kcli_profiles.yml:/root/kcli_profiles.yml  -v ~/.ssh:/root/.ssh karmab/kcli /bin/bash``
+``docker run --rm -v /var/run/libvirt:/var/run/libvirt -v ~/kcli_profiles.yml:/root/kcli_profiles.yml  -v ~/.ssh:/root/.ssh karmab/kcli``
 
-``docker run -ti -v ~/kcli.yml:/root/kcli.yml -v ~/kcli_profiles.yml:/root/kcli_profiles.yml -v ~/.ssh:/root/.ssh karmab/kcli /bin/bash``
+``docker run --rm -v ~/kcli.yml:/root/kcli.yml -v ~/kcli_profiles.yml:/root/kcli_profiles.yml -v ~/.ssh:/root/.ssh karmab/kcli``
 
-configuration
+The entrypoint is defined as kcli, so you can type commands directly as:
+
+``docker run --rm -v ~/kcli.yml:/root/kcli.yml -v ~/kcli_profiles.yml:/root/kcli_profiles.yml -v ~/.ssh:/root/.ssh karmab/kcli list``
+
+As a bonus, you can alias kcli and run kcli as if it is installed
+locally instead a Docker container:
+
+``alias kcli = "docker run --rm -v ~/kcli.yml:/root/kcli.yml -v ~/kcli_profiles.yml:/root/kcli_profiles.yml -v ~/.ssh:/root/.ssh karmab/kcli"``
+
+Configuration
 -------------
 
 If you only want to use your local libvirt daemon, no configuration is
@@ -97,7 +107,7 @@ pool with a path, and have centos cloud image downloaded
 
 ::
 
-    kcli bootstrap -a -n twix -H 192.168.0.6 --pool vms --poolpath /home/vms -t 
+    kcli bootstrap -a -n twix -H 192.168.0.6 --pool vms --poolpath /home/vms -t
 
 Or even use an existing disk for LVM based images (note that the disk
 will be made into an LVM physical volume, so it should be empty):
@@ -150,16 +160,16 @@ instance,
      host: 192.168.0.4
      pool: images
 
-replace with your own client in default section and indicate host and
+Replace with your own client in default section and indicate host and
 protocol in the corresponding client section. Note that most of the
 parameters are actually optional, and can be overridden in the profile
 section (or in a plan file)
 
-profile configuration
+Profile configuration
 ---------------------
 
-You can use the file ~/kvirt\_profiles.yml to specify profiles (number
-of CPUS, memory, size of disk, network,....) to use when deploying a VM.
+You can use the file ~/kcli\_profiles.yml to specify profiles (number of
+CPUS, memory, size of disk, network,....) to use when deploying a VM.
 
 The `samples
 directory <https://github.com/karmab/kcli/tree/master/samples>`__
@@ -168,62 +178,62 @@ contains examples to get you started
 How to use
 ----------
 
--  get info on your kvm setup
+-  Get info on your kvm setup
 -  ``kcli report``
--  list VMS, along with their private IP (and plan if applicable)
+-  List VMS, along with their private IP (and plan if applicable)
 -  ``kcli list``
--  list templates (Note that it will find them out based on their qcow2
+-  List templates (Note that it will find them out based on their qcow2
    extension...)
 -  ``kcli list -t``
--  create VM from profile base7
+-  Create VM from profile base7
 -  ``kcli create -p base7 myvm``
--  delete VM
+-  Delete VM
 -  ``kcli delete vm1``
--  get detailed info on a specific VM
+-  Get detailed info on a specific VM
 -  ``kcli info vm1``
--  start VM
+-  Start VM
 -  ``kcli start vm1``
--  stop VM
+-  Stop VM
 -  ``kcli start vm1``
--  get remote-viewer console
+-  Get remote-viewer console
 -  ``kcli console vm1``
--  get serial console (over tcp!!!). Note that it will only work with
+-  Get serial console (over TCP!!!). Note that it will only work with
    VMS created with kcli and will require netcat client to be installed
    on host
 -  ``kcli console -s vm1``
--  deploy multiple VMS using plan x defined in x.yml file
+-  Deploy multiple VMS using plan x defined in x.yml file
 -  ``kcli plan -f x.yml x``
--  delete all VM from plan x
+-  Delete all VM from plan x
 -  ``kcli plan -d x``
--  add 5GB disk to vm1, using pool named vms
+-  Add 5GB disk to vm1, using pool named vms
 -  ``kcli disk -s 5 -p vms vm1``
--  delete disk named vm1\_2.img from vm1
+-  Delete disk named vm1\_2.img from vm1
 -  ``kcli disk -d -n vm1_2.img  vm1``
--  update to 2GB memory vm1
+-  Update to 2GB memory vm1
 -  ``kcli update -m 2048 vm1``
--  update internal IP (usefull for ansible inventory over existing
+-  Update internal IP (useful for ansible inventory over existing
    bridged VMS)
 -  ``kcli update -1 192.168.0.40 vm1``
--  clone vm1 to new vm2
+-  Clone vm1 to new vm2
 -  ``kcli clone -b vm1 vm2``
--  connect by ssh to the VM (retrieving IP and adjusting user based on
+-  Connect by ssh to the VM (retrieving IP and adjusting user based on
    the template)
 -  ``kcli ssh vm1``
--  switch active client to bumblefoot
+-  Switch active client to bumblefoot
 -  ``kcli switch bumblefoot``
--  add a new network
+-  Add a new network
 -  ``kcli network -c 192.168.7.0/24 --dhcp mynet``
--  add a new nic from network private1
+-  Add a new nic from network private1
 -  
 
    -  ``kcli nic -n private1 myvm``
 
--  delete nic eth2 from VM
+-  Delete nic eth2 from VM
 -  
 
    -  ``kcli nic -di eth2 myvm``
 
-templates
+Templates
 ---------
 
 For templates to work with cloud-init, they require the "NoCloud"
@@ -255,13 +265,14 @@ this disk to a reasonable size before creating VM's that use it!
 Alternatively, you can set the TSIZE parameter above to a static value,
 rather than using the size of the image.
 
-cloudinit stuff
+Cloudinit stuff
 ---------------
 
-if cloudinit is enabled (it is by default), a custom iso is generated on
+If cloudinit is enabled (it is by default), a custom iso is generated on
 the fly for your VM (using mkisofs) and uploaded to your kvm instance
-(using the API). The iso handles static networking configuration,
-hostname setting, injecting ssh keys and running specific commands
+(using the libvirt API, not using ssh commands, pretty cool, huh?). The
+iso handles static networking configuration, hostname setting, injecting
+ssh keys and running specific commands
 
 Also note that if you use cloudinit but dont specify ssh keys to inject,
 the default ~/.ssh/id\_rsa.pub will be used, if present.
@@ -269,9 +280,11 @@ the default ~/.ssh/id\_rsa.pub will be used, if present.
 Using plans
 -----------
 
-you can also define plan files in yaml with a list of VMS, disks, and
+You can also define plan files in yaml with a list of VMS, disks, and
 networks and VMS to deploy (look at the sample) and deploy it with kcli
-plan For instance, to define a network named mynet
+plan.
+
+For instance, to define a network named mynet:
 
 ::
 
@@ -299,9 +312,9 @@ Regarding VMS, You can point at an existing profile within your plans,
 define all parameters for the VMS, or combine both approaches.
 
 Specific scripts and IPS arrays can be used directly in the plan file
-(or in profiles one)
+(or in profiles one).
 
-The samples directory contains examples to get you started
+The samples directory contains examples to get you started.
 
 Note that the description of the VM will automatically be set to the
 plan name, and this value will be used when deleting the entire plan as
@@ -320,12 +333,12 @@ keep (-k) flag
 For an advanced use of plans along with scripts, you can check the
 `plans <plans/README.md>`__ page to deploy all upstream projects
 associated with Red Hat Cloud Infrastructure products (or downstream
-versions too)
+versions too).
 
-available parameters
+Available parameters
 --------------------
 
-those parameters can be set either in your config, profile or plan files
+Those parameters can be set either in your config, profile or plan files
 
 -  *numcpus* Defaults to 2
 -  *memory* Defaults to 512
@@ -377,7 +390,7 @@ as keys.
 Note that up to 8 IPS can also be provided on command line when creating
 a single VM (with the flag -1, -2, -3,-4,...) Also note that if you set
 reserveip to True, a reservation will be made if the corresponding
-network has dhcp and when the provided IP belongs to the network range
+network has dhcp and when the provided IP belongs to the network range.
 
 -  *iso* (optional)
 -  *netmasks* (optional)
@@ -396,10 +409,10 @@ network has dhcp and when the provided IP belongs to the network range
    paths or relative to where you're running kcli. Only checked in
    profile or plan file
 
-docker support
+Docker support
 --------------
 
-docker support is mainly enabled as a commodity to launch some
+Docker support is mainly enabled as a commodity to launch some
 containers along vms in plan files. Of course, you will need docker
 installed on the hypervisor. So the following can be used in a plan file
 to launch a container:
@@ -447,16 +460,16 @@ needs some uncommon additional steps )
 Finally, note that if using the docker version of kcli against your
 local host , you'll need to pass a docker socket:
 
-``docker run -it -v /var/run/libvirt:/var/run/libvirt -v ~/.ssh:/root/.ssh karmab/kcli -v /var/run/docker.sock:/var/run/docker.sock /bin/bash``
+``docker run --rm -v /var/run/libvirt:/var/run/libvirt -v ~/.ssh:/root/.ssh -v /var/run/docker.sock:/var/run/docker.sock karmab/kcli``
 
-ansible support
+Ansible support
 ---------------
 
-you can check klist.py in the extra directory and use it as a dynamic
+You can check klist.py in the extra directory and use it as a dynamic
 inventory for ansible.
 
 The script uses sames conf as kcli (and as such defaults to local
-hypervisor if no configuration file is found)
+hypervisor if no configuration file is found).
 
 VM will be grouped by plan, or put in the kvirt group if they dont
 belong to any plan.
@@ -470,37 +483,36 @@ Try it with:
 ::
 
     python extra/klist.py --list
-
     ansible all -i extra/klist.py -m ping
 
-Additionally, there s an ansible kcli/kvirt module under extras, with a
+Additionally, there is an ansible kcli/kvirt module under extras, with a
 sample playbook
 
-testing
+Testing
 -------
 
-basic testing can be run with pytest. If using a remote hypervisor, you
+Basic testing can be run with pytest. If using a remote hypervisor, you
 ll want to set the *KVIRT\_HOST* and *KVIRT\_USER* environment variables
 so that it points to your host with the corresponding user.
 
-issues found with cloud images
+Issues found with cloud images
 ------------------------------
 
 -  Note that you need to install python-simplejson (actually bringing
-   python2.7) to allow ansible to work on ubuntu
--  debian/archlinux images are missing the NoCloud datasource for
+   python2.7) to allow ansible to work on Ubuntu
+-  Debian/Archlinux images are missing the NoCloud datasource for
    cloud-init. Edit them with guestfish to make them work with
    cloud-init.
 
 TODO
 ----
 
--  find a way to easily share the plan files (for instance, adding a
+-  Find a way to easily share the plan files (for instance, adding a
    list of urls in the conf and a fetch subcommand)
--  remove all the print for the kvirt module and only return data
--  change the try, except blocks for object checks with parsing of the
+-  Remove all the print for the kvirt module and only return data
+-  Change the try, except blocks for object checks with parsing of the
    list methods that libvirt provides for most object
--  add basic validation of IPS, netmasks, macs,... within plan file
+-  Add basic validation of IPS, netmasks, macs,... within plan file
 
 Problems?
 ---------
