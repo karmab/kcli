@@ -501,6 +501,7 @@ def plan(config, autostart, container, noautostart, inputfile, start, stop, dele
             click.secho("That would delete every vm...Not doing that", fg='red')
             return
         click.confirm('Are you sure about deleting plan %s' % plan, abort=True)
+        found = False
         for vm in sorted(k.list()):
             name = vm[0]
             description = vm[4]
@@ -511,16 +512,22 @@ def plan(config, autostart, container, noautostart, inputfile, start, stop, dele
                         networks.append(network)
                 k.delete(name)
                 click.secho("VM %s deleted!" % name, fg='green')
+                found = True
         if container:
             for cont in sorted(k.list_containers()):
                 name = cont[0]
                 if name.startswith(plan):
                     k.delete_container(name)
                     click.secho("Container %s deleted!" % name, fg='green')
+                    found = True
         for network in networks:
             k.delete_network(network)
             click.secho("Unused network %s deleted!" % network, fg='green')
-        click.secho("Plan %s deleted!" % plan, fg='green')
+            found = True
+        if found:
+            click.secho("Plan %s deleted!" % plan, fg='green')
+        else:
+            click.secho("Nothing to do for plan %s" % plan, fg='red')
         return
     if autostart:
         click.secho("Set vms from plan %s to autostart" % (plan), fg='green')
