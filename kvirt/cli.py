@@ -72,7 +72,8 @@ class Config():
         self.user = options.get('user', 'root')
         self.protocol = options.get('protocol', 'ssh')
         self.url = options.get('url', None)
-        profilefile = "%s/kcli_profiles.yml" % os.environ.get('HOME')
+        profilefile = default.get('profiles', "%s/kcli_profiles.yml" % os.environ.get('HOME'))
+        profilefile = os.path.expanduser(profilefile)
         if not os.path.exists(profilefile):
             self.profiles = {}
         else:

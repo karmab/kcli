@@ -150,6 +150,7 @@ Note that most of the parameters are actually optional, and can be overridden in
 ## Profile configuration
 
 You can use the file ~/kcli_profiles.yml to specify profiles (number of CPUS, memory, size of disk, network,....) to use when deploying a VM.
+To use a different profiles file, you can use the key profiles in the default section of ~/kcli.yml and put desired path
 
 The [samples directory](https://github.com/karmab/kcli/tree/master/samples) contains examples to get you started
 
