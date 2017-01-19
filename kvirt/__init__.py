@@ -873,6 +873,14 @@ class Kvirt:
                     key = ssh.read().rstrip()
                     userdata.write("ssh_authorized_keys:\n")
                     userdata.write("- %s\n" % key)
+            elif os.path.exists("%s/.ssh/id_dsa.pub" % os.environ['HOME']):
+                publickeyfile = "%s/.ssh/id_dsa.pub" % os.environ['HOME']
+                with open(publickeyfile, 'r') as ssh:
+                    key = ssh.read().rstrip()
+                    userdata.write("ssh_authorized_keys:\n")
+                    userdata.write("- %s\n" % key)
+            else:
+                print("neither id_rsa.pub or id_dsa public keys found in your .ssh directory, you might have trouble accessing the vm")
             if cmds is not None:
                     userdata.write("runcmd:\n")
                     for cmd in cmds:
