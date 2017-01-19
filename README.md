@@ -222,7 +222,7 @@ virsh vol-upload --pool vms $TEMPLATE ${TEMPLATE}.raw
 Note that disks based on a LVM template always have the same size as the template disk! The code above creates a template-disk that is only just big enough to match the size of the (raw) template. You may want to grow this disk to a reasonable size before creating VM's that use it! Alternatively, you can set the TSIZE parameter above to a static value, rather than using the size of the image.
 
 Note also that kcli uses the default ssh_user according to the different [cloud images](http://docs.openstack.org/image-guide/obtain-images.html).
-To infere It, kcli checks the template name. So for example, your centos image MUST contain the term "centos" in the file name,
+To infer It, kcli checks the template name. So for example, your centos image MUST contain the term "centos" in the file name,
 otherwise the default user "root" will be used. 
 You can nose around the code here [`kvirt/_init_.py`](https://github.com/karmab/kcli/blob/master/kvirt/__init__.py#L1240)
 
