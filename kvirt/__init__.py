@@ -1700,12 +1700,11 @@ class Kvirt:
                     portinfo = []
                     for port in ports:
                         if ports[port] is None:
-                            hostport = port
-                            hostip = '0.0.0.0'
+                            newport = port
                         else:
                             hostport = ports[port][0]['HostPort']
                             hostip = ports[port][0]['HostIp']
-                        newport = "%s:%s->%s" % (hostip, hostport, port)
+                            newport = "%s:%s->%s" % (hostip, hostport, port)
                         portinfo.append(newport)
                     portinfo = ','.join(portinfo)
                 else:
