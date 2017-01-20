@@ -1707,9 +1707,9 @@ class Kvirt:
                             hostip = ports[port][0]['HostIp']
                         newport = "%s:%s->%s" % (hostip, hostport, port)
                         portinfo.append(newport)
+                    portinfo = ','.join(portinfo)
                 else:
-                    ports = ''
-                portinfo = ','.join(portinfo)
+                    portinfo = ''
                 containers.append([name, state, source, plan, command, portinfo])
         else:
             containers = []
