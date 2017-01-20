@@ -15,7 +15,7 @@ import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "4.0"
+__version__ = "4.1"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -1691,17 +1691,26 @@ class Kvirt:
                 else:
                     plan = ''
                 command = container.attrs['Config']['Cmd']
+                if command is None:
+                    command = ''
+                else:
+                    command = command[0]
                 ports = container.attrs['NetworkSettings']['Ports']
                 if ports:
-                    portinfo = ''
+                    portinfo = []
                     for port in ports:
-                        hostport = ports[port][0]['HostPort']
-                        hostip = ports[port][0]['HostIp']
+                        if ports[port] is None:
+                            hostport = port
+                            hostip = '0.0.0.0'
+                        else:
+                            hostport = ports[port][0]['HostPort']
+                            hostip = ports[port][0]['HostIp']
                         newport = "%s:%s->%s" % (hostip, hostport, port)
-                        portinfo = "%s,%s" % (portinfo, newport)
+                        portinfo.append(newport)
                 else:
                     ports = ''
-                containers.append([name, state, source, plan, command, ports])
+                portinfo = ','.join(portinfo)
+                containers.append([name, state, source, plan, command, portinfo])
         else:
             containers = []
             # dockercommand = "docker ps --format '{{.Names}}'"
