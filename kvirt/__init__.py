@@ -15,7 +15,7 @@ import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "3.02"
+__version__ = "4.0"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -1335,14 +1335,23 @@ class Kvirt:
                 volumes.append(vol.name())
         except:
             return {'result': 'failure', 'reason': "Pool %s not found" % poolname}
+        poolxml = pool.XMLDesc(0)
+        root = ET.fromstring(poolxml)
+        pooltype = root.getiterator('pool')[0].get('type')
+        if pooltype == 'dir':
+            poolpath = root.getiterator('path')[0].text
+        else:
+            poolpath = root.getiterator('device')[0].get('path')
+            return {'result': 'failure', 'reason': "Upload to a lvm pool not implemented not found"}
         if shortimage in volumes:
             return {'result': 'failure', 'reason': "Template %s already exists in pool %s" % (shortimage, poolname)}
         if self.host == 'localhost' or self.host == '127.0.0.1':
-            cmd = 'wget -P /tmp %s' % (image)
+            cmd = 'wget -P %s %s' % (poolpath, image)
         elif self.protocol == 'ssh':
-            cmd = 'ssh -p %s %s@%s "wget -P /tmp %s"' % (self.port, self.user, self.host, image)
+            cmd = 'ssh -p %s %s@%s "wget -P %s %s"' % (self.port, self.user, self.host, poolpath, image)
         os.system(cmd)
-        self._uploadimage(shortimage, pool=pool, suffix='')
+        pool.refresh()
+        # self._uploadimage(shortimage, pool=pool, suffix='')
         return {'result': 'success'}
 
     def create_network(self, name, cidr, dhcp=True, nat=True):
@@ -1561,7 +1570,7 @@ class Kvirt:
                 labels = None
             base_url = 'unix://var/run/docker.sock'
 
-            d = docker.DockerClient(base_url=base_url)
+            d = docker.DockerClient(base_url=base_url, version='1.22')
             # d.containers.run(image, name=name, command=cmd, networks=nets, detach=True, ports=ports)
             d.containers.run(image, name=name, command=cmd, detach=True, ports=ports, volumes=volumes, stdin_open=True, tty=True, labels=labels)
         else:
@@ -1614,7 +1623,7 @@ class Kvirt:
     def delete_container(self, name):
         if self.host == '127.0.0.1':
             base_url = 'unix://var/run/docker.sock'
-            d = docker.DockerClient(base_url=base_url)
+            d = docker.DockerClient(base_url=base_url, version='1.22')
             containers = [container for container in d.containers.list() if container.name == name]
             if containers:
                 for container in containers:
@@ -1627,7 +1636,7 @@ class Kvirt:
     def start_container(self, name):
         if self.host == '127.0.0.1':
             base_url = 'unix://var/run/docker.sock'
-            d = docker.DockerClient(base_url=base_url)
+            d = docker.DockerClient(base_url=base_url, version='1.22')
             containers = [container for container in d.containers.list(all=True) if container.name == name]
             if containers:
                 for container in containers:
@@ -1640,7 +1649,7 @@ class Kvirt:
     def stop_container(self, name):
         if self.host == '127.0.0.1':
             base_url = 'unix://var/run/docker.sock'
-            d = docker.DockerClient(base_url=base_url)
+            d = docker.DockerClient(base_url=base_url, version='1.22')
             containers = [container for container in d.containers.list() if container.name == name]
             if containers:
                 for container in containers:
@@ -1669,7 +1678,7 @@ class Kvirt:
         containers = []
         if self.host == '127.0.0.1':
             base_url = 'unix://var/run/docker.sock'
-            d = docker.DockerClient(base_url=base_url)
+            d = docker.DockerClient(base_url=base_url, version='1.22')
             # containers = [container.name for container in d.containers.list()]
             for container in d.containers.list(all=True):
                 name = container.name
@@ -1718,7 +1727,7 @@ class Kvirt:
     def exists_container(self, name):
         if self.host == '127.0.0.1':
             base_url = 'unix://var/run/docker.sock'
-            d = docker.DockerClient(base_url=base_url)
+            d = docker.DockerClient(base_url=base_url, version='1.22')
             containers = [container.id for container in d.containers.list(all=True) if container.name == name]
             if containers:
                 return True

@@ -102,7 +102,7 @@ def cli(config):
 
 
 @cli.command()
-@click.option('--container', is_flag=True)
+@click.option('-c', '--container', is_flag=True)
 @click.argument('name')
 @pass_config
 def start(config, container, name):
@@ -118,7 +118,7 @@ def start(config, container, name):
 
 
 @cli.command()
-@click.option('--container', is_flag=True)
+@click.option('-c', '--container', is_flag=True)
 @click.argument('name')
 @pass_config
 def stop(config, container, name):
@@ -135,15 +135,12 @@ def stop(config, container, name):
 
 @cli.command()
 @click.option('-s', '--serial', is_flag=True)
-@click.option('--container', is_flag=True)
 @click.argument('name')
 @pass_config
-def console(config, serial, container, name):
+def console(config, serial, name):
     """Vnc/Spice/Serial/Container console"""
     k = config.get()
-    if container:
-        k.console_container(name)
-    elif serial:
+    if serial:
         k.serialconsole(name)
     else:
         k.console(name)
@@ -166,21 +163,75 @@ def delete(config, container, name):
 
 
 @cli.command()
-@click.argument('client')
+@click.option('-s', '--switch', 'client', help='Switch To indicated client')
+@click.option('-l', '--list', 'listing', help='List Hypervisors', is_flag=True)
+@click.option('-r', '--report', 'report', help='Report Hypervisor Information', is_flag=True)
+@click.option('-p', '--profiles', help='List Profiles', is_flag=True)
+@click.option('-t', '--templates', help='List Templates', is_flag=True)
+@click.option('-i', '--isos', help='List Isos', is_flag=True)
+@click.option('-d', '--disks', help='List Disks', is_flag=True)
+@click.option('-p', '--pool', default='default', help='Pool to use when downloading')
+@click.option('--template', type=click.Choice(['centos', 'fedora', 'debian', 'ubuntu', 'cirros']), help='Template/Image to download')
+@click.option('--download', help='Download Template/Image', is_flag=True)
 @pass_config
-def switch(config, client):
-    """Switch from a client to another"""
-    if client not in config.clients:
-        click.secho("Client %s not found in config.Leaving...." % client, fg='green')
-        os._exit(1)
-    click.secho("Switching to client %s..." % client, fg='green')
-    inifile = "%s/kcli.yml" % os.environ.get('HOME')
-    if os.path.exists(inifile):
-        for line in fileinput.input(inifile, inplace=True):
-            if 'client' in line:
-                print(" client: %s" % client)
+def host(config, client, listing, report, profiles, templates, isos, disks, pool, template, download):
+    """List and Handle host"""
+    k = config.get()
+    if listing:
+        clientstable = PrettyTable(["Name", "Current"])
+        clientstable.align["Name"] = "l"
+        for client in sorted(config.clients):
+            if client == config.client:
+                clientstable.add_row([client, 'X'])
             else:
-                print(line.rstrip())
+                clientstable.add_row([client, ''])
+        print(clientstable)
+    elif report:
+        k.report()
+    elif profiles:
+        for profile in sorted(config.profiles):
+            print(profile)
+    elif templates:
+        for template in sorted(k.volumes()):
+            print(template)
+    elif isos:
+        for iso in sorted(k.volumes(iso=True)):
+            print(iso)
+    elif client:
+        if client not in config.clients:
+            click.secho("Client %s not found in config.Leaving...." % client, fg='green')
+            os._exit(1)
+        click.secho("Switching to client %s..." % client, fg='green')
+        inifile = "%s/kcli.yml" % os.environ.get('HOME')
+        if os.path.exists(inifile):
+            for line in fileinput.input(inifile, inplace=True):
+                if 'client' in line:
+                    print(" client: %s" % client)
+                else:
+                    print(line.rstrip())
+    elif disks:
+        click.secho("Listing disks...", fg='green')
+        diskstable = PrettyTable(["Name", "Pool", "Path"])
+        diskstable.align["Name"] = "l"
+        k = config.get()
+        disks = k.list_disks()
+        for disk in sorted(disks):
+            path = disks[disk]['path']
+            pool = disks[disk]['pool']
+            diskstable.add_row([disk, pool, path])
+        print diskstable
+    elif download:
+        if pool is None:
+            click.secho("Missing pool.Leaving...", fg='red')
+            return
+        if template is None:
+            click.secho("Missing template.Leaving...", fg='red')
+            return
+        click.secho("Grabbing template %s..." % template, fg='green')
+        template = TEMPLATES[template]
+        shortname = os.path.basename(template)
+        result = k.add_image(template, pool)
+        handle_response(result, shortname, element='Template ', action='Added')
 
 
 @cli.command()
@@ -192,15 +243,19 @@ def switch(config, client):
 @click.option('-P', '--pools', is_flag=True)
 @click.option('-n', '--networks', is_flag=True)
 @click.option('--containers', is_flag=True)
+@click.option('--plans', is_flag=True)
 @click.option('-f', '--filters', type=click.Choice(['up', 'down']))
 @pass_config
-def list(config, clients, profiles, templates, isos, disks, pools, networks, containers, filters):
+def list(config, clients, profiles, templates, isos, disks, pools, networks, containers, plans, filters):
     """List clients, profiles, templates, isos, pools or vms"""
     k = config.get()
     if pools:
+        poolstable = PrettyTable(["Pool"])
+        poolstable.align["Pool"] = "l"
         pools = k.list_pools()
         for pool in sorted(pools):
-            print(pool)
+            poolstable.add_row([pool])
+        print(poolstable)
         return
     if networks:
         networks = k.list_networks()
@@ -225,14 +280,23 @@ def list(config, clients, profiles, templates, isos, disks, pools, networks, con
                 clientstable.add_row([client, ''])
         print(clientstable)
     elif profiles:
+        profilestable = PrettyTable(["Profile"])
+        profilestable.align["Profile"] = "l"
         for profile in sorted(config.profiles):
-            print(profile)
+                profilestable.add_row([profile])
+        print(profilestable)
     elif templates:
+        templatestable = PrettyTable(["Template"])
+        templatestable.align["Template"] = "l"
         for template in sorted(k.volumes()):
-            print(template)
+                templatestable.add_row([template])
+        print(templatestable)
     elif isos:
+        isostable = PrettyTable(["Iso"])
+        isostable.align["Iso"] = "l"
         for iso in sorted(k.volumes(iso=True)):
-            print(iso)
+                isostable.add_row([iso])
+        print(isostable)
     elif disks:
         click.secho("Listing disks...", fg='green')
         diskstable = PrettyTable(["Name", "Pool", "Path"])
@@ -255,6 +319,20 @@ def list(config, clients, profiles, templates, isos, disks, pools, networks, con
             else:
                 containers.add_row(container)
         print containers
+    elif plans:
+        vms = {}
+        plans = PrettyTable(["Name", "Vms"])
+        for vm in sorted(k.list(), key=lambda x: x[4]):
+                vmname = vm[0]
+                plan = vm[4]
+                if plan in vms:
+                    vms[plan].append(vmname)
+                else:
+                    vms[plan] = [vmname]
+        for plan in sorted(vms):
+            planvms = ','.join(vms[plan])
+            plans.add_row([plan, planvms])
+        print(plans)
     else:
         vms = PrettyTable(["Name", "Status", "Ips", "Source", "Description/Plan", "Profile"])
         for vm in sorted(k.list()):
@@ -269,7 +347,20 @@ def list(config, clients, profiles, templates, isos, disks, pools, networks, con
 
 @cli.command()
 @click.option('-p', '--profile', help='Profile to use')
-@click.option('--container', is_flag=True)
+@click.argument('name', required=False)
+def create(profile, name):
+    """Deprecated command. Use kcli vm instead"""
+    click.secho("Deprecated command. Use kcli vm instead", fg='blue')
+
+
+@cli.command()
+@click.option('-p', '--profile', help='Profile to use')
+@click.option('-l', '--list', 'listing', help='List Vms', is_flag=True)
+@click.option('-i', '--info', 'info', help='Info about Vm', is_flag=True)
+@click.option('-f', '--filters', type=click.Choice(['up', 'down']))
+@click.option('-s', '--start', 'start', help='Start Vm', is_flag=True)
+@click.option('-w', '--stop', 'stop', help='Stop Vm', is_flag=True)
+@click.option('--ssh', 'ssh', help='Ssh Vm', is_flag=True)
 @click.option('-1', '--ip1', help='Optional Ip to assign to eth0. Netmask and gateway will be retrieved from profile')
 @click.option('-2', '--ip2', help='Optional Ip to assign to eth1. Netmask and gateway will be retrieved from profile')
 @click.option('-3', '--ip3', help='Optional Ip to assign to eth2. Netmask and gateway will be retrieved from profile')
@@ -278,31 +369,48 @@ def list(config, clients, profiles, templates, isos, disks, pools, networks, con
 @click.option('-6', '--ip6', help='Optional Ip to assign to eth5. Netmask and gateway will be retrieved from profile')
 @click.option('-7', '--ip7', help='Optional Ip to assign to eth6. Netmask and gateway will be retrieved from profile')
 @click.option('-8', '--ip8', help='Optional Ip to assign to eth8. Netmask and gateway will be retrieved from profile')
-@click.argument('name')
+@click.option('-L', help='Local Forwarding')
+@click.option('-R', help='Remote Forwarding')
+@click.argument('name', required=False)
 @pass_config
-def create(config, profile, container, ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8, name):
-    """Create vm from given profile"""
+def vm(config, profile, listing, info, filters, start, stop, ssh, ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8, l, r, name):
+    """Create/Delete/Start/Stop/List vms"""
     k = config.get()
+    if listing:
+        vms = PrettyTable(["Name", "Status", "Ips", "Source", "Description/Plan", "Profile"])
+        for vm in sorted(k.list()):
+            if filters:
+                status = vm[1]
+                if status == filters:
+                    vms.add_row(vm)
+            else:
+                vms.add_row(vm)
+        print(vms)
+        return
+    if name is None:
+        click.secho("Missing vm name", fg='red')
+        return
+    if info:
+        k.info(name)
+        return
+    if start:
+        click.secho("Started vm %s..." % name, fg='green')
+        result = k.start(name)
+        handle_response(result, name, element='', action='started')
+        return
+    if stop:
+        click.secho("Stopped vm %s..." % name, fg='green')
+        result = k.stop(name)
+        handle_response(result, name, element='', action='stopped')
+        return
+    if ssh:
+        k.ssh(name, local=l, remote=r)
+        return
+    if profile is None:
+        click.secho("Missing profile", fg='red')
+        return
     default = config.default
-    containerprofiles = {k: v for k, v in config.profiles.iteritems() if 'type' in v and v['type'] == 'container'}
     vmprofiles = {k: v for k, v in config.profiles.iteritems() if 'type' not in v or v['type'] == 'vm'}
-    if container:
-        if profile not in containerprofiles:
-            click.secho("profile %s not found. Trying to use the profile as image and default values..." % profile, fg='blue')
-            k.create_container(name, profile)
-            return
-        else:
-            click.secho("Deploying vm %s from profile %s..." % (name, profile), fg='green')
-            profile = containerprofiles[profile]
-            image = next((e for e in [profile.get('image'), profile.get('template')] if e is not None), None)
-            if image is None:
-                click.secho("Missing image in profile %s. Leaving..." % profile, fg='red')
-                os._exit(1)
-            cmd = profile.get('cmd', None)
-            ports = profile.get('ports', None)
-            volumes = next((e for e in [profile.get('volumes'), profile.get('disks')] if e is not None), None)
-            k.create_container(name, image, nets=None, cmd=cmd, ports=ports, volumes=volumes)
-            return
     click.secho("Deploying vm %s from profile %s..." % (name, profile), fg='green')
     if profile not in vmprofiles:
         click.secho("profile %s not found. Trying to use the profile as template and default values..." % profile, fg='blue')
@@ -371,19 +479,19 @@ def clone(config, base, full, start, name):
 
 
 @cli.command()
-@click.option('-1', '--ip', help='Ip to set')
+@click.option('-1', '--ip1', help='Ip to set')
 @click.option('-m', '--memory', help='Memory to set')
 @click.option('-c', '--numcpus', help='Number of cpus to set')
 @click.option('-a', '--autostart', is_flag=True, help='Set VM to autostart')
 @click.option('-n', '--noautostart', is_flag=True, help='Prevent VM from autostart')
 @click.argument('name')
 @pass_config
-def update(config, ip, memory, numcpus, autostart, noautostart, name):
+def update(config, ip1, memory, numcpus, autostart, noautostart, name):
     """Update ip, memory or numcpus"""
     k = config.get()
-    if ip is not None:
-        click.secho("Updating ip of vm %s to %s..." % (name, ip), fg='green')
-        k.update_ip(name, ip)
+    if ip1 is not None:
+        click.secho("Updating ip of vm %s to %s..." % (name, ip1), fg='green')
+        k.update_ip(name, ip1)
     elif memory is not None:
         click.secho("Updating memory of vm %s to %s..." % (name, memory), fg='green')
         k.update_memory(name, memory)
@@ -449,15 +557,24 @@ def nic(config, delete, interface, network, name):
 
 
 @cli.command()
+@click.option('-l', '--list', 'listing', help='List Pools', is_flag=True)
 @click.option('-d', '--delete', is_flag=True)
 @click.option('-f', '--full', is_flag=True)
 @click.option('-t', '--pooltype', help='Type of the pool', type=click.Choice(['dir', 'logical']), default='dir')
 @click.option('-p', '--path', help='Path of the pool')
-@click.argument('pool')
+@click.argument('pool', required=False)
 @pass_config
-def pool(config, delete, full, pooltype, path, pool):
+def pool(config, listing, delete, full, pooltype, path, pool):
     """Create/Delete pool"""
     k = config.get()
+    if listing:
+        pools = k.list_pools()
+        for pool in sorted(pools):
+            print(pool)
+        return
+    if pool is None:
+        click.secho("Missing pool name", fg='red')
+        return
     if delete:
         click.secho("Deleting pool %s..." % (pool), fg='green')
         k.delete_pool(name=pool, full=full)
@@ -470,15 +587,7 @@ def pool(config, delete, full, pooltype, path, pool):
 
 
 @cli.command()
-@pass_config
-def report(config):
-    """Report hypervisor setup"""
-    click.secho("Reporting setup for client %s..." % config.client, fg='green')
-    k = config.get()
-    k.report()
-
-
-@cli.command()
+@click.option('-l', '--list', 'listing', help='List Pools', is_flag=True)
 @click.option('-a', '--autostart', is_flag=True, help='Set all vms from plan to autostart')
 @click.option('-c', '--container', is_flag=True, help='Handle container')
 @click.option('-n', '--noautostart', is_flag=True, help='Prevent all vms from plan to autostart')
@@ -489,13 +598,28 @@ def report(config):
 @click.option('-t', '--delay', default=0, help="Delay between each vm's creation")
 @click.argument('plan', required=False)
 @pass_config
-def plan(config, autostart, container, noautostart, inputfile, start, stop, delete, delay, plan):
+def plan(config, listing, autostart, container, noautostart, inputfile, start, stop, delete, delay, plan):
     """Create/Delete/Stop/Start vms from plan file"""
     vmprofiles = {key: value for key, value in config.profiles.iteritems() if 'type' not in value or value['type'] == 'vm'}
     containerprofiles = {key: value for key, value in config.profiles.iteritems() if 'type' in value and value['type'] == 'container'}
+    k = config.get()
+    if listing:
+        vms = {}
+        plans = PrettyTable(["Name", "Vms"])
+        for vm in sorted(k.list(), key=lambda x: x[4]):
+                vmname = vm[0]
+                plan = vm[4]
+                if plan in vms:
+                    vms[plan].append(vmname)
+                else:
+                    vms[plan] = [vmname]
+        for plan in sorted(vms):
+            planvms = ','.join(vms[plan])
+            plans.add_row([plan, planvms])
+        print(plans)
+        return
     if plan is None:
         plan = 'kvirt'
-    k = config.get()
     if delete:
         networks = []
         if plan == '':
@@ -716,15 +840,6 @@ def plan(config, autostart, container, noautostart, inputfile, start, stop, dele
 
 
 @cli.command()
-@click.argument('name')
-@pass_config
-def info(config, name):
-    """Info about vm"""
-    k = config.get()
-    k.info(name)
-
-
-@cli.command()
 @click.option('-L', help='Local Forwarding')
 @click.option('-R', help='Remote Forwarding')
 @click.argument('name')
@@ -736,15 +851,32 @@ def ssh(config, l, r, name):
 
 
 @cli.command()
+@click.option('-l', '--list', 'listing', help='List Networks', is_flag=True)
 @click.option('-d', '--delete', is_flag=True)
 @click.option('-i', '--isolated', is_flag=True, help='Isolated Network')
 @click.option('-c', '--cidr', help='Cidr of the net')
 @click.option('--nodhcp', is_flag=True, help='Disable dhcp on the net')
-@click.argument('name')
+@click.argument('name', required=False)
 @pass_config
-def network(config, delete, isolated, cidr, nodhcp, name):
-    """Create Network"""
+def network(config, listing, delete, isolated, cidr, nodhcp, name):
+    """Create/Delete/List Network"""
     k = config.get()
+    if listing:
+        networks = k.list_networks()
+        click.secho("Listing Networks...", fg='green')
+        networkstable = PrettyTable(["Name", "Type", "Cidr", "Dhcp", "Mode"])
+        networkstable.align["Name"] = "l"
+        for network in sorted(networks):
+            networktype = networks[network]['type']
+            cidr = networks[network]['cidr']
+            dhcp = networks[network]['dhcp']
+            mode = networks[network]['mode']
+            networkstable.add_row([network, networktype, cidr, dhcp, mode])
+        print networkstable
+        return
+    if name is None:
+        click.secho("Missing Network", fg='red')
+        return
     if delete:
         result = k.delete_network(name=name)
         handle_response(result, name, element='Network ', action='deleted')
@@ -771,7 +903,7 @@ def network(config, delete, isolated, cidr, nodhcp, name):
 @click.option('--poolpath', help='Pool Path to use')
 @click.option('-t', '--template', is_flag=True, help="Grab Centos Cloud Image")
 def bootstrap(genfile, auto, name, host, port, user, protocol, url, pool, poolpath, template):
-    """Bootstrap hypervisor, creating config file and optionally pools and network"""
+    """Handle hypervisor, reporting or bootstrapping by creating config file and optionally pools and network"""
     click.secho("Bootstrapping env", fg='green')
     if genfile or auto:
         if host is None and url is None:
@@ -890,23 +1022,63 @@ def bootstrap(genfile, auto, name, host, port, user, protocol, url, pool, poolpa
 
 
 @cli.command()
-@click.option('-p', '--pool', help='Pool to use')
-@click.option('-t', '--template', type=click.Choice(['centos', 'fedora', 'debian', 'ubuntu', 'cirros']), help='Template/Image to grab from internet')
+@click.option('-p', '--profile', help='Profile to use')
+@click.option('-l', '--list', 'listing', help='List vms', is_flag=True)
+@click.option('-f', '--filters', type=click.Choice(['up', 'down']))
+@click.option('-s', '--start', 'start', help='Start Container', is_flag=True)
+@click.option('-w', '--stop', 'stop', help='Stop Container', is_flag=True)
+@click.option('-c', '--console', help='Console of the Container', is_flag=True)
+@click.argument('name', required=False)
 @pass_config
-def download(config, pool, template):
-    """Download cloud template and upload it to specified pool"""
-    if pool is None:
-        click.secho("Missing pool.Leaving...", fg='red')
-        return
-    if template is None:
-        click.secho("Missing template.Leaving...", fg='red')
-        return
+def container(config, profile, listing, filters, start, stop, console, name):
+    """Create/Delete/List containers"""
     k = config.get()
-    click.secho("Handling template %s..." % template, fg='green')
-    template = TEMPLATES[template]
-    shortname = os.path.basename(template)
-    result = k.add_image(template, pool)
-    handle_response(result, shortname, element='Template ', action='Added')
+    if listing:
+        click.secho("Listing containers...", fg='green')
+        containers = PrettyTable(["Name", "Status", "Image", "Plan", "Command", "Ports"])
+        for container in k.list_containers():
+            if filters:
+                status = container[1]
+                if status == filters:
+                    containers.add_row(container)
+            else:
+                containers.add_row(container)
+        print containers
+        return
+    if name is None:
+        click.secho("Missing container name", fg='red')
+        return
+    if start:
+        click.secho("Started container %s..." % name, fg='green')
+        k.start_container(name)
+        return
+    if stop:
+        click.secho("Stopped container %s..." % name, fg='green')
+        k.stop_container(name)
+        return
+    if console:
+        k.console_container(name)
+        return
+    if profile is None:
+        click.secho("Missing profile", fg='red')
+        return
+    containerprofiles = {k: v for k, v in config.profiles.iteritems() if 'type' in v and v['type'] == 'container'}
+    if profile not in containerprofiles:
+        click.secho("profile %s not found. Trying to use the profile as image and default values..." % profile, fg='blue')
+        k.create_container(name, profile)
+        return
+    else:
+        click.secho("Deploying vm %s from profile %s..." % (name, profile), fg='green')
+        profile = containerprofiles[profile]
+        image = next((e for e in [profile.get('image'), profile.get('template')] if e is not None), None)
+        if image is None:
+            click.secho("Missing image in profile %s. Leaving..." % profile, fg='red')
+            os._exit(1)
+        cmd = profile.get('cmd', None)
+        ports = profile.get('ports', None)
+        volumes = next((e for e in [profile.get('volumes'), profile.get('disks')] if e is not None), None)
+        k.create_container(name, image, nets=None, cmd=cmd, ports=ports, volumes=volumes)
+        return
 
 
 if __name__ == '__main__':

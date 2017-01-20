@@ -18,8 +18,6 @@ Why should I use this instead of vagrant for kvm?
 -  Cloudinit based customization, not over ssh
 -  No need of using custom images, the public ones will do
 -  Spice/VNC consoles and TCP serial ones
--  To be fair, I've only tested the code against kvm, so vagrant is a
-   better option if you're running on Virtualbox o VMWare Fusion
 
 Demo!
 -----
@@ -132,7 +130,7 @@ And download a fedora template:
 
 ::
 
-    kcli download -p vms -t fedora
+    kcli host --download -t fedora
 
 Otherwise you will have to declare your settings in ~/kcli.yml. For
 instance,
@@ -169,7 +167,9 @@ Profile configuration
 ---------------------
 
 You can use the file ~/kcli\_profiles.yml to specify profiles (number of
-CPUS, memory, size of disk, network,....) to use when deploying a VM.
+CPUS, memory, size of disk, network,....) to use when deploying a VM. To
+use a different profiles file, you can use the key profiles in the
+default section of ~/kcli.yml and put desired path
 
 The `samples
 directory <https://github.com/karmab/kcli/tree/master/samples>`__
@@ -179,22 +179,22 @@ How to use
 ----------
 
 -  Get info on your kvm setup
--  ``kcli report``
+-  ``kcli host --report``
 -  List VMS, along with their private IP (and plan if applicable)
--  ``kcli list``
+-  ``kcli list`` or (``kcli vm -l``)
 -  List templates (Note that it will find them out based on their qcow2
    extension...)
 -  ``kcli list -t``
 -  Create VM from profile base7
--  ``kcli create -p base7 myvm``
+-  ``kcli vm -p base7 myvm``
 -  Delete VM
 -  ``kcli delete vm1``
 -  Get detailed info on a specific VM
--  ``kcli info vm1``
+-  ``kcli vm -i vm1``
 -  Start VM
--  ``kcli start vm1``
+-  ``kcli start vm1`` (or ``kcli vm --start vm1``)
 -  Stop VM
--  ``kcli start vm1``
+-  ``kcli stop vm1`` (or ``kcli vm --stop vm1``)
 -  Get remote-viewer console
 -  ``kcli console vm1``
 -  Get serial console (over TCP!!!). Note that it will only work with
@@ -220,7 +220,7 @@ How to use
    the template)
 -  ``kcli ssh vm1``
 -  Switch active client to bumblefoot
--  ``kcli switch bumblefoot``
+-  ``kcli host --switch bumblefoot``
 -  Add a new network
 -  ``kcli network -c 192.168.7.0/24 --dhcp mynet``
 -  Add a new nic from network private1
@@ -264,6 +264,14 @@ big enough to match the size of the (raw) template. You may want to grow
 this disk to a reasonable size before creating VM's that use it!
 Alternatively, you can set the TSIZE parameter above to a static value,
 rather than using the size of the image.
+
+Note also that kcli uses the default ssh\_user according to the
+different `cloud
+images <http://docs.openstack.org/image-guide/obtain-images.html>`__. To
+infer It, kcli checks the template name. So for example, your centos
+image MUST contain the term "centos" in the file name, otherwise the
+default user "root" will be used. You can nose around the code here
+```kvirt/_init_.py`` <https://github.com/karmab/kcli/blob/master/kvirt/__init__.py#L1240>`__
 
 Cloudinit stuff
 ---------------
@@ -487,6 +495,16 @@ Try it with:
 
 Additionally, there is an ansible kcli/kvirt module under extras, with a
 sample playbook
+
+Bash Completion
+---------------
+
+Create a file named kcli-complete.sh with the following content and
+source it ( in your bash profile for instance )
+
+::
+
+    _KCLI_COMPLETE=source kcli
 
 Testing
 -------
