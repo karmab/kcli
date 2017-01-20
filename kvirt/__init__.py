@@ -15,7 +15,7 @@ import socket
 import string
 import xml.etree.ElementTree as ET
 
-__version__ = "4.1"
+__version__ = "4.2"
 
 KB = 1024 * 1024
 MB = 1024 * KB
