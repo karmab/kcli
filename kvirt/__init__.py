@@ -1684,6 +1684,10 @@ class Kvirt:
                 name = container.name
                 state = container.status
                 state = state.split(' ')[0]
+                if state.startswith('running'):
+                    state = 'up'
+                else:
+                    state = 'down'
                 source = container.attrs['Config']['Image']
                 labels = container.attrs['Config']['Labels']
                 if 'plan' in labels:
