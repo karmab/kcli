@@ -9,7 +9,7 @@ It will also report IPS for any VM connected to a dhcp-enabled libvirt network a
 
 It started because I switched from ovirt and needed a tool similar to [ovirt.py](https://github.com/karmab/ovirt)
 
-##  Why should I use this instead of vagrant for kvm?
+##  Why I use this instead of vagrant for kvm?
 
 - Easy syntax to launch single or multiple VMS
 - Cloudinit based customization, not over ssh
@@ -29,6 +29,13 @@ For instance if using a RHEL based distribution:
 ```
 yum -y install gcc libvirt-devel python-devel genisoimage qemu-kvm nmap-ncat python-pip
 ```
+
+On Fedora, you' will need an additional package 
+
+```
+yum -y install redhat-rpm-config
+```
+
 
 If using a Debian based distribution:
 
