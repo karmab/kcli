@@ -1,0 +1,13 @@
+tower:
+ template: rhel-guest-image-7.3-35.x86_64.qcow2
+ numcpus: 2
+ memory: 4096
+ nets:
+  - default
+ disks:
+  - size: 30
+ pool: default
+ scripts: 
+  - ~/register.sh
+  - subscription.sh
+  - downstream.sh
