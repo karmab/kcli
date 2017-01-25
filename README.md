@@ -320,7 +320,8 @@ nets:
 Within a net section, you can use name, nic, IP, mac, mask and gateway as keys.
 
 Note that up to 8 IPS can also be provided on command line when creating a single VM (with the flag -1, -2, -3,-4,...)
-Also note that if you set reserveip  to True, a reservation will be made if the corresponding network has dhcp and when the provided IP belongs to the network range.
+Also note that if you set reserveip  to True , a reservation will be made if the corresponding network has dhcp and when the provided IP belongs to the network range.
+You can also set reservedns to True to create a DNS entry for the host in the corresponding network ( Only done for the first nic)
 
 - *iso* (optional)
 - *netmasks* (optional)

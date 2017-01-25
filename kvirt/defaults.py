@@ -10,6 +10,7 @@ GUESTID = 'guestrhel764'
 VNC = False
 CLOUDINIT = True
 RESERVEIP = False
+RESERVEDNS = False
 NESTED = True
 START = True
 EMULATOR = '/usr/bin/qemu-kvm'

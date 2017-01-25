@@ -13,6 +13,7 @@ from libvirt import open as libvirtopen
 import os
 import socket
 import string
+import time
 import xml.etree.ElementTree as ET
 
 __version__ = "4.2"
@@ -90,7 +91,7 @@ class Kvirt:
         except:
             return False
 
-    def create(self, name, virttype='kvm', title='', description='kvirt', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, start=True, keys=None, cmds=None, ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None):
+    def create(self, name, virttype='kvm', title='', description='kvirt', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, reservedns=False, start=True, keys=None, cmds=None, ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None):
         default_diskinterface = diskinterface
         default_diskthin = diskthin
         default_disksize = disksize
@@ -347,6 +348,8 @@ class Kvirt:
             self._reserve_ip(name, nets, macs)
         if start:
             vm.create()
+        if reservedns:
+            self._reserve_dns(name, nets)
         return {'result': 'success'}
 
     def start(self, name):
@@ -614,6 +617,27 @@ class Kvirt:
             disksize = int(float(volume.info()[1]) / 1024 / 1024 / 1024)
             print("diskname: %s disksize: %sGB diskformat: %s type: %s path: %s" % (device, disksize, diskformat, drivertype, path))
 
+    def ip(self, name):
+        leases = {}
+        conn = self.conn
+        for network in conn.listAllNetworks():
+            for lease in network.DHCPLeases():
+                ip = lease['ipaddr']
+                mac = lease['mac']
+                leases[mac] = ip
+        try:
+            vm = conn.lookupByName(name)
+            xml = vm.XMLDesc(0)
+            root = ET.fromstring(xml)
+        except:
+            return None
+        nic = root.getiterator('interface')[0]
+        mac = nic.find('mac').get('address')
+        if vm.isActive() and mac in leases:
+            return leases[mac]
+        else:
+            return None
+
     def volumes(self, iso=False):
         isos = []
         templates = []
@@ -684,10 +708,16 @@ class Kvirt:
                 for host in root.getiterator('host'):
                     hostmac = host.get('mac')
                     ip = host.get('ip')
-                    name = host.get('name')
+                    hostname = host.get('name')
                     if hostmac == mac:
-                        hostentry = "<host mac='%s' name='%s' ip='%s'/>" % (mac, name, ip)
+                        hostentry = "<host mac='%s' name='%s' ip='%s'/>" % (mac, hostname, ip)
                         network.update(2, 4, 0, hostentry, 1)
+                for host in root.getiterator('host'):
+                    ip = host.get('ip')
+                    hostname = host.find('hostname')
+                    if hostname is not None and hostname.text == name:
+                        hostentry = '<host ip="%s"><hostname>%s</hostname></host>' % (ip, name)
+                        network.update(2, 10, 0, hostentry, 1)
 
     def _xmldisk(self, diskpath, diskdev, diskbus='virtio', diskformat='qcow2', shareable=False):
         if shareable:
@@ -812,6 +842,40 @@ class Kvirt:
             if not IPAddress(ip) in netip:
                 continue
             network.update(4, 4, 0, '<host mac="%s" name="%s" ip="%s" />' % (mac, name, ip), 1)
+
+    def _reserve_dns(self, name, nets):
+        conn = self.conn
+        net = nets[0]
+        ip = None
+        if isinstance(net, dict):
+            ip = net.get('ip')
+            network = net.get('name')
+        else:
+            network = net
+        if ip is None:
+            counter = 0
+            while counter != 60:
+                ip = self.ip(name)
+                if ip is None:
+                    time.sleep(5)
+                    print("Waiting 5 seconds to grab ip and create DNS record")
+                    counter += 10
+                else:
+                    break
+        if ip is None:
+            print("Couldn't assign DNS")
+            return
+        network = conn.networkLookupByName(network)
+        oldnetxml = network.XMLDesc()
+        root = ET.fromstring(oldnetxml)
+        dns = root.getiterator('dns')
+        if not dns:
+            base = root.getiterator('network')[0]
+            dns = ET.Element("dns")
+            base.append(dns)
+            newxml = ET.tostring(root)
+            conn.networkDefineXML(newxml)
+        network.update(4, 10, 0, '<host ip="%s"><hostname>%s</hostname></host>' % (ip, name), 1)
 
     def _cloudinit(self, name, keys=None, cmds=None, nets=[], gateway=None, dns=None, domain=None, reserveip=False):
         default_gateway = gateway
