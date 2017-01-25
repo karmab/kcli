@@ -318,10 +318,9 @@ nets:
 ```
 
 Within a net section, you can use name, nic, IP, mac, mask and gateway as keys.
-
 Note that up to 8 IPS can also be provided on command line when creating a single VM (with the flag -1, -2, -3,-4,...)
-Also note that if you set reserveip  to True , a reservation will be made if the corresponding network has dhcp and when the provided IP belongs to the network range.
-You can also set reservedns to True to create a DNS entry for the host in the corresponding network ( Only done for the first nic)
+
+The complete list of options you can use goes as follow:
 
 - *iso* (optional)
 - *netmasks* (optional)
@@ -331,11 +330,17 @@ You can also set reservedns to True to create a DNS entry for the host in the co
 - *vnc* Defaults to false (use spice instead)
 - *cloudinit* Defaults to true
 - *reserveip* Defaults to false
+- *reservedns* Defaults to false
 - *start* Defaults to true
 - *keys* (optional). Array of public keys to inject
 - *cmds* (optional). Array of commands to run
 - *profile* name of one of your profile. Only checked in plan file
 - *scripts* array of paths of custom script to inject with cloudinit. Note that it will override cmds part. You can either specify full paths or relative to where you're running kcli. Only checked in profile or plan file
+
+## IP and DNS Reservations
+
+if you set reserveip  to True, a reservation will be made if the corresponding network has dhcp and when the provided IP belongs to the network range.
+You can also set reservedns to True to create a DNS entry for the host in the corresponding network ( Only done for the first nic)
 
 ## Docker support
 

@@ -16,7 +16,7 @@ import string
 import time
 import xml.etree.ElementTree as ET
 
-__version__ = "4.2"
+__version__ = "4.3"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -1607,24 +1607,26 @@ class Kvirt:
         #        netname = net['name']
         #    nets[i] = self._get_bridge(netname)
         if self.host == '127.0.0.1':
-            for i, volume in enumerate(volumes):
-                if isinstance(volume, str):
-                    if len(volume.split(':')) == 2:
-                        origin, destination = volume.split(':')
-                        volumes[i] = {origin: {'bind': destination, 'mode': 'rw'}}
-                    else:
-                        volumes[i] = {volume: {'bind': volume, 'mode': 'rw'}}
-                elif isinstance(volume, dict):
-                    path = volume.get('path')
-                    origin = volume.get('origin')
-                    destination = volume.get('destination')
-                    mode = volume.get('mode', 'rw')
-                    if origin is None or destination is None:
-                        if path is None:
-                            continue
-                        volumes[i] = {path: {'bind': path, 'mode': mode}}
-                    else:
-                        volumes[i] = {origin: {'bind': destination, 'mode': mode}}
+            finalvolumes = {}
+            if volumes is not None:
+                for i, volume in enumerate(volumes):
+                    if isinstance(volume, str):
+                        if len(volume.split(':')) == 2:
+                            origin, destination = volume.split(':')
+                            finalvolumes[origin] = {'bind': destination, 'mode': 'rw'}
+                        else:
+                            finalvolumes[volume] = {'bind': volume, 'mode': 'rw'}
+                    elif isinstance(volume, dict):
+                        path = volume.get('path')
+                        origin = volume.get('origin')
+                        destination = volume.get('destination')
+                        mode = volume.get('mode', 'rw')
+                        if origin is None or destination is None:
+                            if path is None:
+                                continue
+                            finalvolumes[origin] = {'bind': path, 'mode': mode}
+                        else:
+                            finalvolumes[origin] = {'bind': destination, 'mode': mode}
             if ports is not None:
                 ports = {'%s/tcp' % k: k for k in ports}
             if label is not None and isinstance(label, str) and len(label.split('=')) == 2:
@@ -1636,7 +1638,7 @@ class Kvirt:
 
             d = docker.DockerClient(base_url=base_url, version='1.22')
             # d.containers.run(image, name=name, command=cmd, networks=nets, detach=True, ports=ports)
-            d.containers.run(image, name=name, command=cmd, detach=True, ports=ports, volumes=volumes, stdin_open=True, tty=True, labels=labels)
+            d.containers.run(image, name=name, command=cmd, detach=True, ports=ports, volumes=finalvolumes, stdin_open=True, tty=True, labels=labels)
         else:
             # netinfo = ''
             # for net in nets:

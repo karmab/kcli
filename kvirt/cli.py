@@ -1026,8 +1026,8 @@ def bootstrap(genfile, auto, name, host, port, user, protocol, url, pool, poolpa
 
 @cli.command()
 @click.option('-p', '--profile', help='Profile to use')
-@click.option('-l', '--list', 'listing', help='List vms', is_flag=True)
-@click.option('-f', '--filters', type=click.Choice(['up', 'down']))
+@click.option('-l', '--list', 'listing', help='List Containers', is_flag=True)
+@click.option('-f', '--filters', help="Filter output when listing", type=click.Choice(['up', 'down']))
 @click.option('-s', '--start', 'start', help='Start Container', is_flag=True)
 @click.option('-w', '--stop', 'stop', help='Stop Container', is_flag=True)
 @click.option('-c', '--console', help='Console of the Container', is_flag=True)
