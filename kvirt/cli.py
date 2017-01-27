@@ -9,6 +9,7 @@ import os
 from time import sleep
 import yaml
 from shutil import copyfile
+import namesgenerator
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
@@ -621,7 +622,7 @@ def plan(config, listing, autostart, container, noautostart, inputfile, start, s
         print(plans)
         return
     if plan is None:
-        plan = 'kvirt'
+        plan = namesgenerator.get_random_name()
     if delete:
         networks = []
         if plan == '':
