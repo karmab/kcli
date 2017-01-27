@@ -349,7 +349,7 @@ class Kvirt:
         if start:
             vm.create()
         if reservedns:
-            self._reserve_dns(name, nets)
+            self._reserve_dns(name, nets, domain)
         return {'result': 'success'}
 
     def start(self, name):
@@ -843,7 +843,7 @@ class Kvirt:
                 continue
             network.update(4, 4, 0, '<host mac="%s" name="%s" ip="%s" />' % (mac, name, ip), 1)
 
-    def _reserve_dns(self, name, nets):
+    def _reserve_dns(self, name, nets, domain):
         conn = self.conn
         net = nets[0]
         ip = None
@@ -875,7 +875,12 @@ class Kvirt:
             base.append(dns)
             newxml = ET.tostring(root)
             conn.networkDefineXML(newxml)
-        network.update(4, 10, 0, '<host ip="%s"><hostname>%s</hostname></host>' % (ip, name), 1)
+        if domain is not None:
+            # If there is a domain, add it to the dns too :)
+            network.update(4, 10, 0, '<host ip="%s"><hostname>%s</hostname><hostname>%s.%s</hostname></host>' % (ip, name,name,domain), 1)
+        else: 
+            network.update(4, 10, 0, '<host ip="%s"><hostname>%s</hostname></host>' % (ip, name), 1)
+
 
     def _cloudinit(self, name, keys=None, cmds=None, nets=[], gateway=None, dns=None, domain=None, reserveip=False):
         default_gateway = gateway
