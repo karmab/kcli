@@ -644,7 +644,8 @@ def plan(config, listing, autostart, container, noautostart, inputfile, start, s
         if container:
             for cont in sorted(k.list_containers()):
                 name = cont[0]
-                if name.startswith(plan):
+                container_plan = cont[3]
+                if container_plan == plan:
                     k.delete_container(name)
                     click.secho("Container %s deleted!" % name, fg='green')
                     found = True
