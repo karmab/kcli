@@ -16,7 +16,7 @@ import string
 import time
 import xml.etree.ElementTree as ET
 
-__version__ = "4.3"
+__version__ = "4.4"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -877,10 +877,9 @@ class Kvirt:
             conn.networkDefineXML(newxml)
         if domain is not None:
             # If there is a domain, add it to the dns too :)
-            network.update(4, 10, 0, '<host ip="%s"><hostname>%s</hostname><hostname>%s.%s</hostname></host>' % (ip, name,name,domain), 1)
-        else: 
+            network.update(4, 10, 0, '<host ip="%s"><hostname>%s</hostname><hostname>%s.%s</hostname></host>' % (ip, name, name, domain), 1)
+        else:
             network.update(4, 10, 0, '<host ip="%s"><hostname>%s</hostname></host>' % (ip, name), 1)
-
 
     def _cloudinit(self, name, keys=None, cmds=None, nets=[], gateway=None, dns=None, domain=None, reserveip=False):
         default_gateway = gateway
@@ -1470,7 +1469,7 @@ class Kvirt:
         machines = self.network_ports(name)
         if machines:
             machines = ','.join(machines)
-            return {'result': 'failure', 'reason': "Network %s is beeing used by %s" % (name, machines)}
+            return {'result': 'failure', 'reason': "Network %s is being used by %s" % (name, machines)}
         if network.isActive():
             network.destroy()
         network.undefine()
