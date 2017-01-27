@@ -823,7 +823,7 @@ def plan(config, listing, autostart, container, noautostart, inputfile, start, s
                 k.add_disk(name=vm, size=size, pool=pool, template=template, shareable=shareable, existing=newdisk, thin=False)
         if containerentries:
             click.secho("Deploying Containers...", fg='green')
-            label = plan
+            label = "plan=%s" % (plan)
             for container in containerentries:
                 if k.exists_container(container):
                     click.secho("Container %s skipped!" % container, fg='blue')
