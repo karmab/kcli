@@ -644,7 +644,8 @@ def plan(config, listing, autostart, container, noautostart, inputfile, start, s
         if container:
             for cont in sorted(k.list_containers()):
                 name = cont[0]
-                if name.startswith(plan):
+                container_plan = cont[3]
+                if container_plan == plan:
                     k.delete_container(name)
                     click.secho("Container %s deleted!" % name, fg='green')
                     found = True
@@ -823,7 +824,7 @@ def plan(config, listing, autostart, container, noautostart, inputfile, start, s
                 k.add_disk(name=vm, size=size, pool=pool, template=template, shareable=shareable, existing=newdisk, thin=False)
         if containerentries:
             click.secho("Deploying Containers...", fg='green')
-            label = plan
+            label = "plan=%s" % (plan)
             for container in containerentries:
                 if k.exists_container(container):
                     click.secho("Container %s skipped!" % container, fg='blue')
