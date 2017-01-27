@@ -273,7 +273,8 @@ The samples directory contains examples to get you started.
 
 Note that the description of the VM will automatically be set to the plan name, and this value will be used when deleting the entire plan as a way to locate matching VMS.
 
-When launching a plan, the plan name is optional. If not is provided, the kvirt keyword will be used.
+When launching a plan, the plan name is optional. If not is provided, a random generated keyword will be used.
+This keyword will be a fun name based on this cool python project: https://github.com/shamrin/namesgenerator, which emulates Docker conatiner names :).
 
 If a file with the plan isnt specified with -f , the file kcli_plan.yml in the current directory will be used, if available.
 
