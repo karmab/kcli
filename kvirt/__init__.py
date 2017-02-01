@@ -41,12 +41,10 @@ class Kvirt:
         if url is None:
             if host == '127.0.0.1' or host == 'localhost':
                 url = "qemu:///system"
+            elif port:
+                url = "qemu+%s://%s@%s:%s/system?socket=/var/run/libvirt/libvirt-sock" % (protocol, user, host, port)
             elif protocol == 'ssh':
                 url = "qemu+%s://%s@%s/system?socket=/var/run/libvirt/libvirt-sock" % (protocol, user, host)
-            elif user and port:
-                url = "qemu+%s://%s@%s:%s/system?socket=/var/run/libvirt/libvirt-sock" % (protocol, user, host, port)
-            elif port:
-                url = "qemu+%s://%s:%s/system?socket=/var/run/libvirt/libvirt-sock" % (protocol, host, port)
             else:
                 url = "qemu:///system"
         try:

@@ -13,7 +13,7 @@ for i in /usr/share/rhosp-director-images/overcloud-full-latest-$VERSION.0.tar /
 source ~/stackrc
 openstack overcloud image upload --image-path /home/stack/images
 neutron subnet-update `neutron subnet-list -c id -f value` --dns-nameserver 8.8.8.8
-cd $TYPE
+cd ~/$TYPE
 sh instackenv.sh
 openstack baremetal import --json ~/instackenv.json
 sleep 3

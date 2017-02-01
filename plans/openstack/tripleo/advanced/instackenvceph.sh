@@ -58,6 +58,45 @@ jq . << EOF > ~/instackenv.json
       "disk": "30",
       "arch": "x86_64",
       "pm_user": "$USER"
+    },
+    {
+      "pm_addr": "192.168.101.1",
+      "pm_password": "$(cat ~/.ssh/id_rsa)",
+      "pm_type": "pxe_ssh",
+      "mac": [
+        "aa:bb:cc:dd:ee:05"
+      ],
+      "cpu": "2",
+      "memory": "4096",
+      "disk": "30",
+      "arch": "x86_64",
+      "pm_user": "$USER"
+    },
+    {
+      "pm_addr": "192.168.101.1",
+      "pm_password": "$(cat ~/.ssh/id_rsa)",
+      "pm_type": "pxe_ssh",
+      "mac": [
+        "aa:bb:cc:dd:ee:06"
+      ],
+      "cpu": "2",
+      "memory": "4096",
+      "disk": "30",
+      "arch": "x86_64",
+      "pm_user": "$USER"
+    },
+    {
+      "pm_addr": "192.168.101.1",
+      "pm_password": "$(cat ~/.ssh/id_rsa)",
+      "pm_type": "pxe_ssh",
+      "mac": [
+        "aa:bb:cc:dd:ee:07"
+      ],
+      "cpu": "2",
+      "memory": "4096",
+      "disk": "30",
+      "arch": "x86_64",
+      "pm_user": "$USER"
     }
   ]
 }
