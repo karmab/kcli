@@ -432,7 +432,7 @@ class Kvirt:
                     ip = IPNetwork('%s/%s' % (firstip, netmask))
                     cidr = ip.cidr
                 except:
-                    cidr = " ** Error getting IP information **"
+                    cidr = "N/A"
             dhcp = root.getiterator('dhcp')
             if dhcp:
                 dhcp = True
