@@ -426,8 +426,13 @@ class Kvirt:
                 attributes = ip[0].attrib
                 firstip = attributes.get('address')
                 netmask = attributes.get('netmask')
-                ip = IPNetwork('%s/%s' % (firstip, netmask))
-                cidr = ip.cidr
+                if netmask is None:
+                    netmask = attributes.get('prefix')
+                try:
+                    ip = IPNetwork('%s/%s' % (firstip, netmask))
+                    cidr = ip.cidr
+                except:
+                    cidr = " ** Error getting IP information **"
             dhcp = root.getiterator('dhcp')
             if dhcp:
                 dhcp = True
