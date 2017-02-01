@@ -539,6 +539,7 @@ class Kvirt:
     def info(self, name):
         # ips = []
         leases = {}
+        starts = {0: 'no', 1: 'yes'}
         conn = self.conn
         for network in conn.listAllNetworks():
             for lease in network.DHCPLeases():
@@ -553,6 +554,7 @@ class Kvirt:
             print("VM %s not found" % name)
             return
         state = 'down'
+        autostart = starts[vm.autostart()]
         memory = root.getiterator('memory')[0]
         unit = memory.attrib['unit']
         memory = memory.text
@@ -565,6 +567,7 @@ class Kvirt:
             state = 'up'
         print("name: %s" % name)
         print("status: %s" % state)
+        print("autostart: %s" % autostart)
         description = root.getiterator('description')
         if description:
             description = description[0].text
