@@ -151,9 +151,45 @@ bumblefoot:
 ```
 
 Replace with your own client in default section and indicate host and protocol in the corresponding client section.
-Note that most of the parameters are actually optional, and can be overridden in the profile section (or in a plan file)
+Note that most of the parameters are actually optional, and can be overridden in the default, host or profile section (or in a plan file)
 
-## Profile configuration
+## Available parameters for configuration of a specific hypervisor
+
+- *host* Defaults to True
+- *port* Defaults to False
+- *user* Defaults to root
+- *protocol* Defaults to ssh
+- *url* can be used to specify an exotic qemu url
+
+## Available parameters for profile/plan files
+
+- *numcpus* Defaults to 2
+- *memory* Defaults to 512M
+- *guestid* Defaults to guestrhel764
+- *pool* Defaults to default
+- *template* Should point to your base cloud image(optional). You can either specify short name or complete path. Note that if you omit the full path and your image lives in several pools, the one from last (alphabetical) pool will be used.
+- *disksize* Defaults to 10GB
+- *diskinterface* Defaults to virtio. You can set it to ide if using legacy operating systems
+- *diskthin* Defaults to True
+- *disks* Array of disks to define. For each of them, you can specify pool, size, thin (as boolean) and interface (either ide or virtio).If you omit parameters, default values will be used from config or profile file (You can actually let the entire entry blank or just indicate a size number directly)
+- *iso* (optional)
+- *nets* (optional)
+- *gateway* (optional)
+- *dns* (optional) Dns servers
+- *domain* (optional) Dns search domain
+- *start* Defaults to true
+- *vnc* Defaults to false (use spice instead)
+- *cloudinit* Defaults to true
+- *reserveip* Defaults to false
+- *reservedns* Defaults to false
+- *keys* (optional). Array of ssh public keys to inject
+- *cmds* (optional). Array of commands to run
+- *profile* name of one of your profile. Only checked in plan file
+- *scripts* array of paths of custom script to inject with cloudinit. Note that it will override cmds part. You can either specify full paths or relative to where you're running kcli. Only checked in profile or plan file
+- *nested* Defaults to True
+- *tunnel* Defaults to False. Setting it to true will make kcli use tunnels for console and for ssh access
+
+## Profiles configuration
 
 You can use the file ~/kcli_profiles.yml to specify profiles (number of CPUS, memory, size of disk, network,....) to use when deploying a VM.
 To use a different profiles file, you can use the key profiles in the default section of ~/kcli.yml and put desired path
@@ -282,17 +318,9 @@ Also note that when deleting a plan, the network of the VMS will also be deleted
 
 For an advanced use of plans along with scripts, you can check the [plans](plans/README.md) page to deploy all upstream projects associated with Red Hat Cloud Infrastructure products (or downstream versions too).
 
-## Available parameters
+## Disk parameters
 
-Those parameters can be set either in your config, profile or plan files
-
-- *numcpus* Defaults to 2
-- *memory* Defaults to 512
-- *guestid* Defaults to guestrhel764
-- *pool* Defaults to default
-- *template* Should point to your base cloud image(optional). You can either specify short name or complete path. Note that if you omit the full path and your image lives in several pools, the one from last (alphabetical) pool will be used.
-- *disks* Array of disks to define. For each of them, you can specify pool, size, thin (as boolean) and interface (either ide or virtio).If you omit parameters, default values will be used from config or profile file (You can actually let the entire entry blank or just indicate a size number directly). For instance:
-
+You can add disk this way in your profile or plan files
 ```
 disks:
  - size: 20
@@ -320,23 +348,6 @@ nets:
 
 Within a net section, you can use name, nic, IP, mac, mask and gateway as keys.
 Note that up to 8 IPS can also be provided on command line when creating a single VM (with the flag -1, -2, -3,-4,...)
-
-The complete list of options you can use goes as follow:
-
-- *iso* (optional)
-- *netmasks* (optional)
-- *gateway* (optional)
-- *dns* (optional) Dns servers
-- *domain* (optional) Dns search domain
-- *vnc* Defaults to false (use spice instead)
-- *cloudinit* Defaults to true
-- *reserveip* Defaults to false
-- *reservedns* Defaults to false
-- *start* Defaults to true
-- *keys* (optional). Array of public keys to inject
-- *cmds* (optional). Array of commands to run
-- *profile* name of one of your profile. Only checked in plan file
-- *scripts* array of paths of custom script to inject with cloudinit. Note that it will override cmds part. You can either specify full paths or relative to where you're running kcli. Only checked in profile or plan file
 
 ## IP and DNS Reservations
 

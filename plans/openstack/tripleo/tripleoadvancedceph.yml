@@ -84,7 +84,7 @@ tricontroller03:
 
 tricompute01:
  cloudinit: False
- memory: 4096
+ memory: 6144
  numcpus: 2
  disks:
   - size: 50
@@ -99,12 +99,12 @@ tricompute01:
 
 triceph01:
  cloudinit: False
- memory: 2048
+ memory: 5144
  numcpus: 2
  disks:
   - size: 50
-  - size: 20
-  - size: 30
+  - size: 50
+  - size: 50
  nets:
   - name: tripleoprovisioning
     mac: aa:bb:cc:dd:ee:05
@@ -116,12 +116,12 @@ triceph01:
 
 triceph02:
  cloudinit: False
- memory: 2048
+ memory: 5144
  numcpus: 2
  disks:
   - size: 50
-  - size: 20
-  - size: 30
+  - size: 50
+  - size: 50
  nets:
   - name: tripleoprovisioning
     mac: aa:bb:cc:dd:ee:06
@@ -133,12 +133,12 @@ triceph02:
 
 triceph03:
  cloudinit: False
- memory: 2048
+ memory: 5144
  numcpus: 2
  disks:
   - size: 50
-  - size: 20
-  - size: 30
+  - size: 50
+  - size: 50
  nets:
   - name: tripleoprovisioning
     mac: aa:bb:cc:dd:ee:07

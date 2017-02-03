@@ -16,7 +16,7 @@ import string
 import time
 import xml.etree.ElementTree as ET
 
-__version__ = "4.4"
+__version__ = "4.5"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -89,7 +89,7 @@ class Kvirt:
         except:
             return False
 
-    def create(self, name, virttype='kvm', title='', description='kvirt', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, reservedns=False, start=True, keys=None, cmds=None, ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None):
+    def create(self, name, virttype='kvm', title='', description='kvirt', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, reservedns=False, start=True, keys=None, cmds=None, ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False):
         default_diskinterface = diskinterface
         default_diskthin = diskthin
         default_disksize = disksize
@@ -268,12 +268,16 @@ class Kvirt:
                       <target dev='hdc' bus='ide'/>
                       <readonly/>
                     </disk>""" % (iso)
+        if tunnel:
+            listen = '127.0.0.1'
+        else:
+            listen = '0.0.0.0'
         displayxml = """<input type='tablet' bus='usb'/>
                         <input type='mouse' bus='ps2'/>
-                        <graphics type='%s' port='-1' autoport='yes' listen='0.0.0.0'>
-                        <listen type='address' address='0.0.0.0'/>
+                        <graphics type='%s' port='-1' autoport='yes' listen='%s'>
+                        <listen type='address' address='%s'/>
                         </graphics>
-                        <memballoon model='virtio'/>""" % (display)
+                        <memballoon model='virtio'/>""" % (display, listen, listen)
         if nested and virttype == 'kvm':
             nestedxml = """<cpu match='exact'>
                   <model>Westmere</model>
@@ -495,7 +499,7 @@ class Kvirt:
             vms.append([name, state, ip, source, description, title])
         return vms
 
-    def console(self, name):
+    def console(self, name, tunnel=False):
         conn = self.conn
         vm = conn.lookupByName(name)
         if not vm.isActive():
@@ -506,12 +510,15 @@ class Kvirt:
             root = ET.fromstring(xml)
             for element in root.getiterator('graphics'):
                 attributes = element.attrib
-                if attributes['listen'] == '127.0.0.1':
+                if attributes['listen'] == '127.0.0.1' or tunnel:
                     host = '127.0.0.1'
                 else:
                     host = self.host
                 protocol = attributes['type']
                 port = attributes['port']
+                if tunnel:
+                    consolecommand = "ssh -f -p %s -L %s:127.0.0.1:%s %s@%s sleep 10" % (self.port, port, port, self.user, self.host)
+                    os.popen(consolecommand)
                 url = "%s://%s:%s" % (protocol, host, port)
                 os.popen("remote-viewer %s &" % url)
 
@@ -1304,7 +1311,7 @@ class Kvirt:
         vmxml = vm.XMLDesc(0)
         conn.defineXML(vmxml)
 
-    def ssh(self, name, local=None, remote=None):
+    def ssh(self, name, local=None, remote=None, tunnel=False):
         ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety']
         user = 'root'
         conn = self.conn
@@ -1342,6 +1349,8 @@ class Kvirt:
                 sshcommand = "-L %s %s" % (local, sshcommand)
             if remote is not None:
                 sshcommand = "-R %s %s" % (remote, sshcommand)
+            if self.host not in ['localhost', '127.0.0.1'] and tunnel:
+                sshcommand = "-o ProxyCommand='ssh -p %s -W %%h:%%p %s@%s' %s" % (self.port, self.user, self.host, sshcommand)
             sshcommand = "ssh %s" % sshcommand
             os.system(sshcommand)
 

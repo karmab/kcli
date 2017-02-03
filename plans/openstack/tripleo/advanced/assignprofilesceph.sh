@@ -9,8 +9,8 @@ for uuid in $uuids ; do
     ironic node-update $uuid add properties/capabilities="node:compute-0,profile:compute,boot_option:local"
   else
     #ironic node-update $uuid add properties/capabilities='profile:control,boot_option:local'
-    othercounter=$(( counter -4))
-    ironic node-update $uuid add properties/capabilities="node:ceph-$counter,profile:ceph,boot_option:local"
+    other=$(( counter -4))
+    ironic node-update $uuid add properties/capabilities="node:ceph-storage-$other,profile:ceph-storage,boot_option:local"
   fi
 counter=$(( counter +1))
 done

@@ -2,7 +2,7 @@
 
 import click
 import fileinput
-from .defaults import NETS, POOL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, START, TEMPLATES, NESTED
+from .defaults import NETS, POOL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, START, TEMPLATES, NESTED, TUNNEL
 from prettytable import PrettyTable
 from kvirt import Kvirt, __version__
 import os
@@ -67,6 +67,7 @@ class Config():
         defaults['reservedns'] = bool(default.get('reservedns', RESERVEDNS))
         defaults['nested'] = bool(default.get('nested', NESTED))
         defaults['start'] = bool(default.get('start', START))
+        defaults['tunnel'] = default.get('tunnel', TUNNEL)
         self.default = defaults
         options = ini[self.client]
         self.host = options.get('host', '127.0.0.1')
@@ -74,6 +75,7 @@ class Config():
         self.user = options.get('user', 'root')
         self.protocol = options.get('protocol', 'ssh')
         self.url = options.get('url', None)
+        self.tunnel = bool(options.get('tunnel', defaults['tunnel']))
         profilefile = default.get('profiles', "%s/kcli_profiles.yml" % os.environ.get('HOME'))
         profilefile = os.path.expanduser(profilefile)
         if not os.path.exists(profilefile):
@@ -142,10 +144,11 @@ def stop(config, container, name):
 def console(config, serial, name):
     """Vnc/Spice/Serial/Container console"""
     k = config.get()
+    tunnel = config.tunnel
     if serial:
         k.serialconsole(name)
     else:
-        k.console(name)
+        k.console(name=name, tunnel=tunnel)
 
 
 @cli.command()
@@ -378,6 +381,7 @@ def create(profile, name):
 def vm(config, profile, listing, info, filters, start, stop, ssh, ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8, l, r, name):
     """Create/Delete/Start/Stop/List vms"""
     k = config.get()
+    tunnel = config.tunnel
     if listing:
         vms = PrettyTable(["Name", "Status", "Ips", "Source", "Description/Plan", "Profile"])
         for vm in sorted(k.list()):
@@ -464,7 +468,7 @@ def vm(config, profile, listing, info, filters, start, stop, ssh, ip1, ip2, ip3,
             else:
                 cmds = cmds + scriptcmds
     ips = [ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8]
-    result = k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=bool(nested))
+    result = k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=bool(nested), tunnel=tunnel)
     handle_response(result, name)
 
 
@@ -606,6 +610,7 @@ def plan(config, listing, autostart, container, noautostart, inputfile, start, s
     vmprofiles = {key: value for key, value in config.profiles.iteritems() if 'type' not in value or value['type'] == 'vm'}
     containerprofiles = {key: value for key, value in config.profiles.iteritems() if 'type' in value and value['type'] == 'container'}
     k = config.get()
+    tunnel = config.tunnel
     if listing:
         vms = {}
         plans = PrettyTable(["Name", "Vms"])
@@ -793,7 +798,7 @@ def plan(config, listing, autostart, container, noautostart, inputfile, start, s
                             cmds = scriptcmds
                         else:
                             cmds = cmds + scriptcmds
-                result = k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=nested)
+                result = k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=nested, tunnel=tunnel)
                 handle_response(result, name)
                 if delay > 0:
                     sleep(delay)
@@ -852,7 +857,8 @@ def plan(config, listing, autostart, container, noautostart, inputfile, start, s
 def ssh(config, l, r, name):
     """Ssh into vm"""
     k = config.get()
-    k.ssh(name, local=l, remote=r)
+    tunnel = config.tunnel
+    k.ssh(name, local=l, remote=r, tunnel=tunnel)
 
 
 @cli.command()
