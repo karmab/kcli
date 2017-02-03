@@ -149,6 +149,7 @@ class Kvirt:
                 diskthin = disk.get('thin', default_diskthin)
                 diskinterface = disk.get('interface', default_diskinterface)
                 diskpool = disk.get('pool', default_pool)
+                diskwwn = disk.get('wwn')
                 try:
                     storagediskpool = conn.storagePoolLookupByName(diskpool)
                 except:
@@ -202,12 +203,18 @@ class Kvirt:
                 volsxml[diskpool] = [volxml]
             if diskpooltype == 'logical':
                 diskformat = 'raw'
+            if diskwwn is not None:
+                diskwwn = '0x%016x' % diskwwn
+                diskwwn = "<wwn>%s</wwn>" % diskwwn
+            else:
+                diskwwn = ''
             disksxml = """%s<disk type='file' device='disk'>
                     <driver name='qemu' type='%s'/>
                     <source file='%s'/>
                     %s
                     <target dev='%s' bus='%s'/>
-                    </disk>""" % (disksxml, diskformat, diskpath, backingxml, diskdev, diskbus)
+                    %s
+                    </disk>""" % (disksxml, diskformat, diskpath, backingxml, diskdev, diskbus, diskwwn)
         netxml = ''
         version = ''
         for index, net in enumerate(nets):

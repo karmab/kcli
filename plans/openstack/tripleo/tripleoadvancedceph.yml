@@ -103,6 +103,7 @@ triceph01:
  numcpus: 2
  disks:
   - size: 50
+    wwn: 0x0000000000000001
   - size: 50
   - size: 50
  nets:
@@ -120,6 +121,7 @@ triceph02:
  numcpus: 2
  disks:
   - size: 50
+    wwn: 0x0000000000000001
   - size: 50
   - size: 50
  nets:
@@ -137,6 +139,7 @@ triceph03:
  numcpus: 2
  disks:
   - size: 50
+    wwn: 0x0000000000000001
   - size: 50
   - size: 50
  nets:

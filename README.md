@@ -171,7 +171,7 @@ Note that most of the parameters are actually optional, and can be overridden in
 - *disksize* Defaults to 10GB
 - *diskinterface* Defaults to virtio. You can set it to ide if using legacy operating systems
 - *diskthin* Defaults to True
-- *disks* Array of disks to define. For each of them, you can specify pool, size, thin (as boolean) and interface (either ide or virtio).If you omit parameters, default values will be used from config or profile file (You can actually let the entire entry blank or just indicate a size number directly)
+- *disks* Array of disks to define. For each of them, you can specify pool, size, thin (as boolean), interface (either ide or virtio) and a wwn.If you omit parameters, default values will be used from config or profile file (You can actually let the entire entry blank or just indicate a size number directly)
 - *iso* (optional)
 - *nets* (optional)
 - *gateway* (optional)
