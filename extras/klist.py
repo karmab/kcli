@@ -34,13 +34,14 @@ class KcliInventory(object):
             print "Missing section for client %s in config file. Leaving..." % client
             os._exit(1)
         options = ini[client]
-        host = options.get('host', '127.0.0.1')
-        port = options.get('port', None)
-        user = options.get('user', 'root')
+        self.host = options.get('host', '127.0.0.1')
+        self.port = options.get('port', 22)
+        self.user = options.get('user', 'root')
         protocol = options.get('protocol', 'ssh')
-        self.k = Kvirt(host=host, port=port, user=user, protocol=protocol)
+        self.tunnel = options.get('tunnel', False)
+        self.k = Kvirt(host=self.host, port=self.port, user=self.user, protocol=protocol)
         if self.k.conn is None:
-            print "Couldnt connect to specify hypervisor %s. Leaving..." % host
+            print "Couldnt connect to specify hypervisor %s. Leaving..." % self.host
             os._exit(1)
 
         # Called with `--list`.
@@ -65,6 +66,7 @@ class KcliInventory(object):
     def get(self):
         ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety']
         k = self.k
+        tunnel = self.tunnel
         metadata = {'_meta': {'hostvars': {}}}
         hostvalues = metadata['_meta']['hostvars']
         for vm in k.list():
@@ -81,6 +83,8 @@ class KcliInventory(object):
             else:
                 metadata[description]["hosts"].append(name)
             hostvalues[name] = {'status': status}
+            if tunnel:
+                hostvalues[name]['ansible_ssh_common_args'] = "-o ProxyCommand='ssh -p %s -W %%h:%%p %s@%s'" % (self.port, self.user, self.host)
             if ip != '':
                 hostvalues[name]['ansible_host'] = ip
             if template != '':
