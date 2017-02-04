@@ -203,7 +203,7 @@ class Kvirt:
                 volsxml[diskpool] = [volxml]
             if diskpooltype == 'logical':
                 diskformat = 'raw'
-            if diskwwn is not None:
+            if diskwwn is not None and diskbus == 'ide':
                 diskwwn = '0x%016x' % diskwwn
                 diskwwn = "<wwn>%s</wwn>" % diskwwn
             else:
