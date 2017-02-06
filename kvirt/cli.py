@@ -869,8 +869,6 @@ def scp(config, source, destination):
     """Scp into vm"""
     k = config.get()
     tunnel = config.tunnel
-    print source.split(':')
-    print destination.split(':')
     if len(source.split(':')) == 2:
         name = source.split(':')[0]
         source = source.split(':')[1]
