@@ -1318,7 +1318,7 @@ class Kvirt:
         vmxml = vm.XMLDesc(0)
         conn.defineXML(vmxml)
 
-    def ssh(self, name, local=None, remote=None, tunnel=False):
+    def _ssh_credentials(self, name):
         ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety']
         user = 'root'
         conn = self.conn
@@ -1326,10 +1326,10 @@ class Kvirt:
             vm = conn.lookupByName(name)
         except:
             print("VM %s not found" % name)
-            return
+            return '', ''
         if vm.isActive() != 1:
             print("Machine down. Cannot ssh...")
-            return
+            return '', ''
         vm = [v for v in self.list() if v[0] == name][0]
         template = vm[3]
         if template != '':
@@ -1350,16 +1350,37 @@ class Kvirt:
         ip = vm[2]
         if ip == '':
             print("No ip found. Cannot ssh...")
+        return user, ip
+
+    def ssh(self, name, local=None, remote=None, tunnel=False):
+        user, ip = self._ssh_credentials(name)
+        if ip == '':
+            return
         else:
             sshcommand = "%s@%s" % (user, ip)
+            if self.host not in ['localhost', '127.0.0.1'] and tunnel:
+                sshcommand = "-o ProxyCommand='ssh -p %s -W %%h:%%p %s@%s' %s" % (self.port, self.user, self.host, sshcommand)
             if local is not None:
                 sshcommand = "-L %s %s" % (local, sshcommand)
             if remote is not None:
                 sshcommand = "-R %s %s" % (remote, sshcommand)
-            if self.host not in ['localhost', '127.0.0.1'] and tunnel:
-                sshcommand = "-o ProxyCommand='ssh -p %s -W %%h:%%p %s@%s' %s" % (self.port, self.user, self.host, sshcommand)
             sshcommand = "ssh %s" % sshcommand
             os.system(sshcommand)
+
+    def scp(self, name, source=None, destination=None, tunnel=False, download=False):
+        user, ip = self._ssh_credentials(name)
+        if ip == '':
+            print("No ip found. Cannot scp...")
+        else:
+            if self.host not in ['localhost', '127.0.0.1'] and tunnel:
+                arguments = "-o ProxyCommand='ssh -p %s -W %%h:%%p %s@%s'" % (self.port, self.user, self.host)
+            else:
+                arguments = ''
+            if download:
+                scpcommand = "scp %s %s@%s:%s %s" % (arguments, user, ip, source, destination)
+            else:
+                scpcommand = "scp %s %s %s@%s:%s" % (arguments, source, user, ip, destination)
+            os.system(scpcommand)
 
     def _get_free_port(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

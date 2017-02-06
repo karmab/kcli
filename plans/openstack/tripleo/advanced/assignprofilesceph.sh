@@ -11,7 +11,8 @@ for uuid in $uuids ; do
     #ironic node-update $uuid add properties/capabilities='profile:control,boot_option:local'
     other=$(( counter -4))
     ironic node-update $uuid add properties/capabilities="node:ceph-storage-$other,profile:ceph-storage,boot_option:local"
-    ironic node-update $uuid add properties/root_device='{"wwn": "0x0000000000000001"}'
+    ##ironic node-update $uuid add properties/root_device='{"wwn": "0x0000000000000001"}'
+    ironic node-update $uuid add properties/root_device='{"name": "/dev/vda"}'
   fi
 counter=$(( counter +1))
 done

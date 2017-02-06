@@ -862,6 +862,26 @@ def ssh(config, l, r, name):
 
 
 @cli.command()
+@click.argument('source', nargs=1)
+@click.argument('destination', nargs=1)
+@pass_config
+def scp(config, source, destination):
+    """Scp into vm"""
+    k = config.get()
+    tunnel = config.tunnel
+    print source.split(':')
+    print destination.split(':')
+    if len(source.split(':')) == 2:
+        name = source.split(':')[0]
+        source = source.split(':')[1]
+        k.scp(name, source=source, destination=destination, tunnel=tunnel, download=True)
+    elif len(destination.split(':')) == 2:
+        name = destination.split(':')[0]
+        destination = destination.split(':')[1]
+        k.scp(name, source=source, destination=destination, tunnel=tunnel, download=False)
+
+
+@cli.command()
 @click.option('-l', '--list', 'listing', help='List Networks', is_flag=True)
 @click.option('-d', '--delete', is_flag=True)
 @click.option('-i', '--isolated', is_flag=True, help='Isolated Network')
