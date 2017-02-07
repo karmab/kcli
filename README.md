@@ -155,8 +155,8 @@ Note that most of the parameters are actually optional, and can be overridden in
 
 ## Available parameters for configuration of a specific hypervisor
 
-- *host* Defaults to True
-- *port* Defaults to False
+- *host* Defaults to 127.0.0.1
+- *port*
 - *user* Defaults to root
 - *protocol* Defaults to ssh
 - *url* can be used to specify an exotic qemu url

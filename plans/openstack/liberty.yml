@@ -3,8 +3,7 @@ liberty:
  memory: 6144
  numcpus: 2
  disks: 
-  - size: 10
-  - size: 40
+  - size: 50
  nets:
  - default
  pool: default
