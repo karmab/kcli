@@ -1,4 +1,3 @@
-export V2
 export ADMIN_PASSWORD="unix1234"
 echo `hostname -I` `hostname -s` >> /etc/hosts
 yum update -y
