@@ -10,5 +10,5 @@ sed -i "s/CONFIG_PROVISION_DEMO=y/CONFIG_PROVISION_DEMO=n/" /root/answers.txt
 sed -i "s/CONFIG_SWIFT_INSTALL=y/CONFIG_SWIFT_INSTALL=n/" /root/answers.txt
 sed -i "s/CONFIG_NEUTRON_OVS_BRIDGE_MAPPINGS=/CONFIG_NEUTRON_OVS_BRIDGE_MAPPINGS=external:br-ex/" /root/answers.txt
 sed -i "s/CONFIG_NEUTRON_OVS_BRIDGE_IFACES=/CONFIG_NEUTRON_OVS_BRIDGE_IFACES=br-ex:eth0/" /root/answers.txt
-[ -v $V3 ] && sed -i "s/CONFIG_KEYSTONE_API_VERSION=v2.0/CONFIG_KEYSTONE_API_VERSION=v3/" /root/answers.txt
+#sed -i "s/CONFIG_KEYSTONE_API_VERSION=v2.0/CONFIG_KEYSTONE_API_VERSION=v3/" /root/answers.txt
 HOME=/root packstack --answer-file=/root/answers.txt
