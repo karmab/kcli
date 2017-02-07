@@ -16,7 +16,7 @@ import string
 import time
 import xml.etree.ElementTree as ET
 
-__version__ = "4.5"
+__version__ = "4.6"
 
 KB = 1024 * 1024
 MB = 1024 * KB

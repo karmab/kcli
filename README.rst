@@ -172,8 +172,8 @@ host or profile section (or in a plan file)
 Available parameters for configuration of a specific hypervisor
 ---------------------------------------------------------------
 
--  *host* Defaults to True
--  *port* Defaults to False
+-  *host* Defaults to 127.0.0.1
+-  *port*
 -  *user* Defaults to root
 -  *protocol* Defaults to ssh
 -  *url* can be used to specify an exotic qemu url
