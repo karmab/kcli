@@ -695,7 +695,7 @@ class Kvirt:
             source = element.find('source')
             if source is not None:
                 imagefile = element.find('source').get('file')
-                if imagefile == "%s.iso" % name or "%s_" % name in imagefile:
+                if imagefile.endswith("%s.iso" % name) or "%s_" % name in imagefile:
                     disks.append(imagefile)
                 else:
                     continue
