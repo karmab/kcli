@@ -805,6 +805,7 @@ def plan(config, client, get, path, listing, autostart, container, noautostart, 
                 dns = next((e for e in [profile.get('dns'), customprofile.get('dns')] if e is not None), None)
                 domain = next((e for e in [profile.get('domain'), customprofile.get('domain')] if e is not None), None)
                 ips = profile.get('ips')
+                sharedkey = bool(profile.get('sharedkey', False))
                 scripts = next((e for e in [profile.get('scripts'), customprofile.get('scripts')] if e is not None), None)
                 if scripts is not None:
                     scriptcmds = []
@@ -821,7 +822,25 @@ def plan(config, client, get, path, listing, autostart, container, noautostart, 
                             cmds = scriptcmds
                         else:
                             cmds = cmds + scriptcmds
-                result = k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=nested, tunnel=tunnel)
+                files = []
+                if sharedkey:
+                    if not os.path.exists("%s.key" % plan) or not os.path.exists("%s.key.pub" % plan):
+                        os.popen("ssh-keygen -t rsa -N '' -f %s.key" % plan)
+                    publickey = open("%s.key.pub" % plan).read().strip()
+                    privatekey = open("%s.key" % plan).readlines()
+                    if keys is None:
+                        keys = [publickey]
+                    else:
+                        keys.append(publickey)
+                    # sharedkeycmd = "'echo %s >/root/.ssh/id_rsa'" % privatekey
+                    # cmd1 = "'echo %s >/root/.ssh/id_rsa'" % privatekey
+                    # cmd2 = "chmod 600 /root/.ssh/id_rsa"
+                    # if cmds is None:
+                    #    cmds = [cmd1, cmd2]
+                    # else:
+                    #    cmds.extend([cmd1, cmd2])
+                    files = [{'path': '/root/.ssh/id_rsa', 'content': privatekey}]
+                result = k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=nested, tunnel=tunnel, files=files)
                 handle_response(result, name)
                 if delay > 0:
                     sleep(delay)

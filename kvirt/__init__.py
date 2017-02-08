@@ -16,7 +16,7 @@ import string
 import time
 import xml.etree.ElementTree as ET
 
-__version__ = "5.0"
+__version__ = "5.1"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -89,7 +89,7 @@ class Kvirt:
         except:
             return False
 
-    def create(self, name, virttype='kvm', title='', description='kvirt', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, reservedns=False, start=True, keys=None, cmds=None, ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False):
+    def create(self, name, virttype='kvm', title='', description='kvirt', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, reservedns=False, start=True, keys=None, cmds=None, ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[]):
         default_diskinterface = diskinterface
         default_diskthin = diskthin
         default_disksize = disksize
@@ -345,7 +345,7 @@ class Kvirt:
         vm = conn.lookupByName(name)
         vm.setAutostart(1)
         if cloudinit:
-            self._cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain, reserveip=reserveip)
+            self._cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain, reserveip=reserveip, files=files)
             self._uploadimage(name, pool=default_storagepool)
         if reserveip:
             xml = vm.XMLDesc(0)
@@ -877,8 +877,8 @@ class Kvirt:
             while counter != 60:
                 ip = self.ip(name)
                 if ip is None:
-                    time.sleep(5)
-                    print("Waiting 5 seconds to grab ip and create DNS record...")
+                    time.sleep(3)
+                    print("Waiting 3 seconds to grab ip and create DNS record...")
                     counter += 10
                 else:
                     break
@@ -901,7 +901,7 @@ class Kvirt:
         else:
             network.update(4, 10, 0, '<host ip="%s"><hostname>%s</hostname></host>' % (ip, name), 1)
 
-    def _cloudinit(self, name, keys=None, cmds=None, nets=[], gateway=None, dns=None, domain=None, reserveip=False):
+    def _cloudinit(self, name, keys=None, cmds=None, nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[]):
         default_gateway = gateway
         with open('/tmp/meta-data', 'w') as metadatafile:
             if domain is not None:
@@ -951,24 +951,23 @@ class Kvirt:
             userdata.write('#cloud-config\nhostname: %s\n' % name)
             if domain is not None:
                 userdata.write("fqdn: %s.%s\n" % (name, domain))
-            if keys is not None:
+            if keys is not None or os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME']) or os.path.exists("%s/.ssh/id_dsa.pub" % os.environ['HOME']):
                 userdata.write("ssh_authorized_keys:\n")
+            else:
+                print("neither id_rsa.pub or id_dsa public keys found in your .ssh directory, you might have trouble accessing the vm")
+            if keys is not None:
                 for key in keys:
                     userdata.write("- %s\n" % key)
-            elif os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME']):
+            if os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME']):
                 publickeyfile = "%s/.ssh/id_rsa.pub" % os.environ['HOME']
                 with open(publickeyfile, 'r') as ssh:
                     key = ssh.read().rstrip()
-                    userdata.write("ssh_authorized_keys:\n")
                     userdata.write("- %s\n" % key)
-            elif os.path.exists("%s/.ssh/id_dsa.pub" % os.environ['HOME']):
+            if os.path.exists("%s/.ssh/id_dsa.pub" % os.environ['HOME']):
                 publickeyfile = "%s/.ssh/id_dsa.pub" % os.environ['HOME']
                 with open(publickeyfile, 'r') as ssh:
                     key = ssh.read().rstrip()
-                    userdata.write("ssh_authorized_keys:\n")
                     userdata.write("- %s\n" % key)
-            else:
-                print("neither id_rsa.pub or id_dsa public keys found in your .ssh directory, you might have trouble accessing the vm")
             if cmds is not None:
                     userdata.write("runcmd:\n")
                     for cmd in cmds:
@@ -976,6 +975,23 @@ class Kvirt:
                             continue
                         else:
                             userdata.write("- %s\n" % cmd)
+            if files:
+                userdata.write('ssh_pwauth: True\n')
+                userdata.write('disable_root: false\n')
+                userdata.write("write_files:\n")
+                for fil in files:
+                    if not isinstance(fil, dict):
+                        continue
+                path = fil.get('path')
+                owner = fil.get('owner', 'root')
+                permissions = fil.get('permissions', '0600')
+                content = fil.get('content')
+                userdata.write("- owner: %s:%s\n" % (owner, owner))
+                userdata.write("  path: %s\n" % path)
+                userdata.write("  permissions: '%s'\n" % (permissions))
+                userdata.write("  content: | \n")
+                for line in content:
+                    userdata.write("     %s\n" % line.strip())
         isocmd = 'mkisofs'
         if find_executable('genisoimage') is not None:
             isocmd = 'genisoimage'

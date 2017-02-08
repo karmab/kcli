@@ -187,7 +187,8 @@ Note that most of the parameters are actually optional, and can be overridden in
 - *profile* name of one of your profile. Only checked in plan file
 - *scripts* array of paths of custom script to inject with cloudinit. Note that it will override cmds part. You can either specify full paths or relative to where you're running kcli. Only checked in profile or plan file
 - *nested* Defaults to True
-- *tunnel* Defaults to False. Setting it to true will make kcli use tunnels for console and for ssh access
+- *tunnel* Defaults to False. Setting it to true will make kcli use tunnels for console and for ssh access. You want that if you only open ssh port to your hypervisor!
+- *sharedkey* Defaults to False. Set it to true so that a private/public key gets shared between all the nodes of your plan. Additionally, root access will be allowed
 
 ## Profiles configuration
 

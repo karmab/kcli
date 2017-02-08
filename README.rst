@@ -217,7 +217,11 @@ Available parameters for profile/plan files
    profile or plan file
 -  *nested* Defaults to True
 -  *tunnel* Defaults to False. Setting it to true will make kcli use
-   tunnels for console and for ssh access
+   tunnels for console and for ssh access. You want that if you only
+   open ssh port to your hypervisor!
+-  *sharedkey* Defaults to False. Set it to true so that a
+   private/public key gets shared between all the nodes of your plan.
+   Additionally, root access will be allowed
 
 Profiles configuration
 ----------------------
@@ -409,7 +413,7 @@ You can use the following to retrieve plans from a github repo:
 
 ::
 
-    kcli plan --get kcli plan -g github.com/karmab/kcli/plans/ovirt -p ovirt
+    kcli plan --get kcli plan -g github.com/karmab/kcli/plans -p karmab_plans
 
 The url can also be in: - an arbitary url ( github api is not used in
 this case) - raw github format to retrieve a single file - a github
