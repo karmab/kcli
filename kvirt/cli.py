@@ -10,6 +10,7 @@ from time import sleep
 import yaml
 from shutil import copyfile
 import namesgenerator
+import plansutils
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
@@ -610,6 +611,8 @@ def pool(config, client, listing, delete, full, pooltype, path, pool):
 
 @cli.command()
 @click.option('-C', '--client', 'client', help='Use specific client')
+@click.option('-g', '--get', 'get', help='Download specific plan(s). Use --path for specific directory')
+@click.option('-p', '--path', 'path', default='plans', help='Path where to download plans. Defaults to plan')
 @click.option('-l', '--list', 'listing', help='List Pools', is_flag=True)
 @click.option('-a', '--autostart', is_flag=True, help='Set all vms from plan to autostart')
 @click.option('-c', '--container', is_flag=True, help='Handle container')
@@ -621,7 +624,7 @@ def pool(config, client, listing, delete, full, pooltype, path, pool):
 @click.option('-t', '--delay', default=0, help="Delay between each vm's creation")
 @click.argument('plan', required=False)
 @pass_config
-def plan(config, client, listing, autostart, container, noautostart, inputfile, start, stop, delete, delay, plan):
+def plan(config, client, get, path, listing, autostart, container, noautostart, inputfile, start, stop, delete, delay, plan):
     """Create/Delete/Stop/Start vms from plan file"""
     vmprofiles = {key: value for key, value in config.profiles.iteritems() if 'type' not in value or value['type'] == 'vm'}
     containerprofiles = {key: value for key, value in config.profiles.iteritems() if 'type' in value and value['type'] == 'container'}
@@ -730,6 +733,10 @@ def plan(config, client, listing, autostart, container, noautostart, inputfile, 
                     k.stop_container(name)
                     click.secho("Container %s stopped!" % name, fg='green')
         click.secho("Plan %s stopped!" % plan, fg='green')
+        return
+    if get is not None:
+        click.secho("Retrieving specified plan from %s to %s" % (get, path), fg='green')
+        plansutils.fetch(get, path)
         return
     if inputfile is None:
         inputfile = 'kcli_plan.yml'

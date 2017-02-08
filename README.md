@@ -318,6 +318,17 @@ Also note that when deleting a plan, the network of the VMS will also be deleted
 
 For an advanced use of plans along with scripts, you can check the [plans](plans/README.md) page to deploy all upstream projects associated with Red Hat Cloud Infrastructure products (or downstream versions too).
 
+## Sharing plans
+
+You can use the following to retrieve plans from a github repo:
+```
+kcli plan --get kcli plan -g github.com/karmab/kcli/plans/ovirt -p ovirt
+```
+The url can also be in:
+- an arbitary url ( github api is not used in this case)
+- raw github format to retrieve a single file
+- a github linkk
+
 ## Disk parameters
 
 You can add disk this way in your profile or plan files
