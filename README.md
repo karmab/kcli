@@ -322,7 +322,7 @@ For an advanced use of plans along with scripts, you can check the [plans](plans
 
 You can use the following to retrieve plans from a github repo:
 ```
-kcli plan --get kcli plan -g github.com/karmab/kcli/plans/ovirt -p ovirt
+kcli plan --get kcli plan -g github.com/karmab/kcli/plans -p karmab_plans
 ```
 The url can also be in:
 - an arbitary url ( github api is not used in this case)
