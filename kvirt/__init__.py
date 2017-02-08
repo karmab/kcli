@@ -878,7 +878,7 @@ class Kvirt:
                 ip = self.ip(name)
                 if ip is None:
                     time.sleep(5)
-                    print("Waiting 5 seconds to grab ip and create DNS record")
+                    print("Waiting 5 seconds to grab ip and create DNS record...")
                     counter += 10
                 else:
                     break
