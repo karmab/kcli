@@ -1,0 +1,25 @@
+vm1:
+ template: CentOS-7-x86_64-GenericCloud.qcow2
+ memory: 1024
+ numcpus: 2
+ sharedkey: true
+ reservedns: true
+ disks: 
+  - size: 10
+ nets:
+  - default
+ cmds:
+  - echo unix1234 | passwd --stdin root
+
+vm2:
+ template: CentOS-7-x86_64-GenericCloud.qcow2
+ memory: 1024
+ numcpus: 2
+ sharedkey: true
+ reservedns: true
+ disks: 
+  - size: 10
+ nets:
+  - default
+ cmds:
+  - echo unix1234 | passwd --stdin root
