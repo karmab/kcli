@@ -1383,7 +1383,7 @@ class Kvirt:
             sshcommand = "ssh %s" % sshcommand
             os.system(sshcommand)
 
-    def scp(self, name, source=None, destination=None, tunnel=False, download=False):
+    def scp(self, name, source=None, destination=None, tunnel=False, download=False, recursive=False):
         user, ip = self._ssh_credentials(name)
         if ip == '':
             print("No ip found. Cannot scp...")
@@ -1392,10 +1392,13 @@ class Kvirt:
                 arguments = "-o ProxyCommand='ssh -p %s -W %%h:%%p %s@%s'" % (self.port, self.user, self.host)
             else:
                 arguments = ''
+            scpcommand = 'scp'
+            if recursive:
+                scpcommand = "%s -r" % scpcommand
             if download:
-                scpcommand = "scp %s %s@%s:%s %s" % (arguments, user, ip, source, destination)
+                scpcommand = "%s %s %s@%s:%s %s" % (scpcommand, arguments, user, ip, source, destination)
             else:
-                scpcommand = "scp %s %s %s@%s:%s" % (arguments, source, user, ip, destination)
+                scpcommand = "%s %s %s %s@%s:%s" % (scpcommand, arguments, source, user, ip, destination)
             os.system(scpcommand)
 
     def _get_free_port(self):

@@ -532,7 +532,7 @@ def update(config, client, ip1, memory, numcpus, autostart, noautostart, name):
 @click.option('-s', '--size', help='Size of the disk to add, in GB')
 @click.option('-n', '--diskname', help='Name or Path of the disk, when deleting')
 @click.option('-t', '--template', help='Name or Path of a Template, when adding')
-@click.option('-p', '--pool', help='Pool')
+@click.option('-p', '--pool', default='default', help='Pool')
 @click.argument('name')
 @pass_config
 def disk(config, client, delete, size, diskname, template, pool, name):
@@ -906,21 +906,22 @@ def ssh(config, client, l, r, name):
 
 @cli.command()
 @click.option('-C', '--client', 'client', help='Use specific client')
+@click.option('-r', '--recursive', 'recursive', help='Recursive', is_flag=True)
 @click.argument('source', nargs=1)
 @click.argument('destination', nargs=1)
 @pass_config
-def scp(config, client, source, destination):
+def scp(config, client, recursive, source, destination):
     """Scp into vm"""
     k = config.get(client)
     tunnel = config.tunnel
     if len(source.split(':')) == 2:
         name = source.split(':')[0]
         source = source.split(':')[1]
-        k.scp(name, source=source, destination=destination, tunnel=tunnel, download=True)
+        k.scp(name, source=source, destination=destination, tunnel=tunnel, download=True, recursive=recursive)
     elif len(destination.split(':')) == 2:
         name = destination.split(':')[0]
         destination = destination.split(':')[1]
-        k.scp(name, source=source, destination=destination, tunnel=tunnel, download=False)
+        k.scp(name, source=source, destination=destination, tunnel=tunnel, download=False, recursive=recursive)
 
 
 @cli.command()

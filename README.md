@@ -4,6 +4,8 @@
 [![Pypi](http://img.shields.io/pypi/v/kcli.svg)](https://pypi.python.org/pypi/kcli/)
 [![](https://images.microbadger.com/badges/image/karmab/kcli.svg)](https://microbadger.com/images/karmab/kcli "Get your own image badge on microbadger.com")
 
+![Screenshot](kcli.jpg)
+
 This script is meant to interact with a local/remote libvirt daemon and to easily deploy from templates (optionally using cloudinit).
 It will also report IPS for any VM connected to a dhcp-enabled libvirt network and generally for every VM deployed from this client.
 
@@ -441,10 +443,20 @@ Basic testing can be run with pytest. If using a remote hypervisor, you ll want 
 
 ## TODO
 
-- Find a way to easily share the plan files (for instance, adding a list of urls in the conf and a fetch subcommand)
+- Web UI
+- Scaling Plan
+- Plan View (Vagrant Style)
+- VirtualBox/Hyve support
+- Multiple Hypervisors in kcli list/ Random hypervisor vm creation
+- Switch from click to basic optparse (so i can have python3 support and tox)
 - Remove all the print for the kvirt module and only return data
 - Change the try, except blocks for object checks with parsing of the list methods that libvirt provides for most object
 - Add basic validation of IPS, netmasks, macs,...  within plan file
+
+## Contributors
+
+- Gotrunks: Logo Art design
+
 
 ## Problems?
 
