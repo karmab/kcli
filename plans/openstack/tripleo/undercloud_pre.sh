@@ -19,4 +19,5 @@ su - stack -c "wget -P advanced https://raw.githubusercontent.com/karmab/kcli/ma
 systemctl stop NetworkManager
 systemctl disable NetworkManager
 yum -y update
+su - stack -c "openstack undercloud install"
 reboot

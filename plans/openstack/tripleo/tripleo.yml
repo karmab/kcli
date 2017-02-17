@@ -10,7 +10,7 @@ tripleopublic:
  dhcp: True
 
 undercloud:
- template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+ template: rhel-guest-image-7.3-35.x86_64.qcow2
  memory: 8192
  numcpus: 2
  disks:
@@ -29,8 +29,8 @@ undercloud:
   - sleep 10
   - echo nameserver 192.168.101.1 >> /etc/resolv.conf
   - echo unix1234 | passwd --stdin root
-  - echo undercloud.osp.poc > /etc/hostname
-  - echo 192.168.101.10 undercloud.osp.poc undercloud >> /etc/hosts
+  - echo undercloud.localdomain > /etc/hostname
+  - echo 192.168.101.10 undercloud.localdomain undercloud >> /etc/hosts
  scripts: 
   - ~/register.sh
   - newton.sh

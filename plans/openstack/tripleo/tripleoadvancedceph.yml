@@ -10,7 +10,7 @@ tripleopublic:
  dhcp: False
 
 undercloud:
- template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+ template: rhel-guest-image-7.3-35.x86_64.qcow2
  memory: 8192
  numcpus: 2
  disks:
@@ -39,8 +39,8 @@ undercloud:
 
 tricontroller01:
  cloudinit: False
- memory: 6144
- numcpus: 2
+ memory: 7168
+ numcpus: 4
  disks:
   - size: 50
  nets:
@@ -54,8 +54,8 @@ tricontroller01:
 
 tricontroller02:
  cloudinit: False
- memory: 6144
- numcpus: 2
+ memory: 7168
+ numcpus: 4
  disks:
   - size: 50
  nets:
@@ -69,8 +69,8 @@ tricontroller02:
 
 tricontroller03:
  cloudinit: False
- memory: 6144
- numcpus: 2
+ memory: 7168
+ numcpus: 4
  disks:
   - size: 50
  nets:
@@ -84,8 +84,8 @@ tricontroller03:
 
 tricompute01:
  cloudinit: False
- memory: 6144
- numcpus: 2
+ memory: 7168
+ numcpus: 4
  disks:
   - size: 50
  nets:
@@ -99,8 +99,8 @@ tricompute01:
 
 triceph01:
  cloudinit: False
- memory: 5144
- numcpus: 2
+ memory: 7168
+ numcpus: 4
  disks:
   - size: 50
     wwn: 0x0000000000000001
@@ -117,8 +117,8 @@ triceph01:
 
 triceph02:
  cloudinit: False
- memory: 5144
- numcpus: 2
+ memory: 7168
+ numcpus: 4
  disks:
   - size: 50
     wwn: 0x0000000000000001
@@ -135,8 +135,8 @@ triceph02:
 
 triceph03:
  cloudinit: False
- memory: 5144
- numcpus: 2
+ memory: 7168
+ numcpus: 4
  disks:
   - size: 50
     wwn: 0x0000000000000001

@@ -1901,3 +1901,30 @@ class Kvirt:
             attributes = bridge[0].attrib
             bridge = attributes.get('name')
         return bridge
+
+    def play(self, name, playbook, variables=[], verbose=False):
+        counter = 0
+        while counter != 60:
+            ip = self.ip(name)
+            if ip is None:
+                time.sleep(3)
+                print("Waiting 3 seconds for ip to come up")
+                counter += 10
+            else:
+                break
+        # login = self._ssh_credentials(name)[0]
+        # extravars = '-e "ansible_ssh_user=%s"' % login
+        extravars = ''
+        ansiblecommand = "ansible-playbook"
+        if verbose:
+            ansiblecommand = "%s -vvv" % ansiblecommand
+        if variables is not None:
+            for variable in variables:
+                if not isinstance(variable, dict) or len(variable.keys()) != 1:
+                    continue
+                else:
+                    key, value = variable.keys()[0], variable[variable.keys()[0]]
+                    extravars = "%s -e \"%s=%s\"" % (extravars, key, value)
+        print("Ansible Command run:")
+        print("%s -T 20 -i ~/klist.py %s %s" % (ansiblecommand, extravars, playbook))
+        os.system("%s -T 20 -i ~/klist.py %s %s" % (ansiblecommand, extravars, playbook))
