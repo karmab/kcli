@@ -639,6 +639,7 @@ def pool(config, client, listing, delete, full, pooltype, path, pool):
 @pass_config
 def plan(config, client, get, path, listing, autostart, container, noautostart, inputfile, start, stop, delete, delay, plan):
     """Create/Delete/Stop/Start vms from plan file"""
+    newhosts = []
     vmprofiles = {key: value for key, value in config.profiles.iteritems() if 'type' not in value or value['type'] == 'vm'}
     containerprofiles = {key: value for key, value in config.profiles.iteritems() if 'type' in value and value['type'] == 'container'}
     k = config.get(client)
@@ -765,6 +766,7 @@ def plan(config, client, get, path, listing, autostart, container, noautostart, 
         diskentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'disk']
         networkentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'network']
         containerentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'container']
+        ansibleentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'ansible']
         if networkentries:
             click.secho("Deploying Networks...", fg='green')
         for net in networkentries:
@@ -855,6 +857,7 @@ def plan(config, client, get, path, listing, autostart, container, noautostart, 
                     files = [{'path': '/root/.ssh/id_rsa', 'content': privatekey}]
                 result = k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=nested, tunnel=tunnel, files=files)
                 handle_response(result, name)
+                newhosts.append(name)
                 ansible = next((e for e in [profile.get('ansible'), customprofile.get('ansible')] if e is not None), None)
                 if ansible is not None:
                     for element in ansible:
@@ -879,10 +882,10 @@ def plan(config, client, get, path, listing, autostart, container, noautostart, 
             template = profile.get('template')
             size = int(profile.get('size', 10))
             if pool is None:
-                print "Missing Key Pool for disk section %s. Not creating it..." % disk
+                click.secho("Missing Key Pool for disk section %s. Not creating it..." % disk, fg='red')
                 continue
             if vms is None:
-                print "Missing or Incorrect Key Vms for disk section %s. Not creating it..." % disk
+                click.secho("Missing or Incorrect Key Vms for disk section %s. Not creating it..." % disk, fg='red')
                 continue
             if k.disk_exists(pool, disk):
                 click.secho("Disk %s skipped!" % disk, fg='blue')
@@ -915,6 +918,31 @@ def plan(config, client, get, path, listing, autostart, container, noautostart, 
                 click.secho("Container %s deployed!" % container, fg='green')
                 k.create_container(name=container, image=image, nets=nets, cmd=cmd, ports=ports, volumes=volumes, label=label)
                 # handle_response(result, name)
+        if ansibleentries and len(ansibleentries) == 1:
+            if len(newhosts) != len(vmentries):
+                click.secho("Ansible skipped as we are not deploying from scratch", fg='blue')
+                return
+            ansible = entries[ansibleentries[0]]
+            if 'playbook' not in ansible:
+                click.secho("Missing Playbook for ansible.Ignoring...", fg='red')
+                return
+            playbook = ansible['playbook']
+            if 'verbose' in ansible:
+                verbose = element['verbose']
+            else:
+                verbose = False
+            with open("/tmp/%s.inv" % plan, "w") as f:
+                f.write("[%s]\n" % plan)
+                for name in newhosts:
+                    inventory = k.inventory(name)
+                    if inventory is not None:
+                        f.write("%s\n" % inventory)
+            ansiblecommand = "ansible-playbook"
+            if verbose:
+                ansiblecommand = "%s -vvv" % ansiblecommand
+            print("Ansible Command run:")
+            print("%s -T 20 -i /tmp/%s.inv %s" % (ansiblecommand, plan, playbook))
+            os.system("%s -T 20 -i /tmp/%s.inv %s" % (ansiblecommand, plan, playbook))
 
 
 @cli.command()

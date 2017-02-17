@@ -1933,3 +1933,18 @@ class Kvirt:
         # os.system("%s -T 20 -i ~/klist.py %s %s" % (ansiblecommand, extravars, playbook))
         print("%s -T 20 -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
         os.system("%s -T 20 -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
+
+    def inventory(self, name):
+        counter = 0
+        while counter != 60:
+            ip = self.ip(name)
+            if ip is None:
+                time.sleep(3)
+                counter += 10
+            else:
+                break
+        login = self._ssh_credentials(name)[0]
+        if ip is not None:
+            return "%s ansible_host=%s ansible_user=%s" % (name, ip, login)
+        else:
+            return None
