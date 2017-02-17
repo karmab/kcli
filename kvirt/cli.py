@@ -855,6 +855,19 @@ def plan(config, client, get, path, listing, autostart, container, noautostart, 
                     files = [{'path': '/root/.ssh/id_rsa', 'content': privatekey}]
                 result = k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=nested, tunnel=tunnel, files=files)
                 handle_response(result, name)
+                ansible = next((e for e in [profile.get('ansible'), customprofile.get('ansible')] if e is not None), None)
+                if ansible is not None:
+                    for element in ansible:
+                        if 'playbook' not in element:
+                            continue
+                        playbook = element['playbook']
+                        if 'variables' in element:
+                            variables = element['variables']
+                        if 'verbose' in element:
+                            verbose = element['verbose']
+                        else:
+                            verbose = False
+                        k.play(name, playbook=playbook, variables=variables, verbose=verbose)
                 if delay > 0:
                     sleep(delay)
         if diskentries:

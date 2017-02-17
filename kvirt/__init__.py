@@ -1912,19 +1912,24 @@ class Kvirt:
                 counter += 10
             else:
                 break
-        # login = self._ssh_credentials(name)[0]
-        # extravars = '-e "ansible_ssh_user=%s"' % login
-        extravars = ''
+        login = self._ssh_credentials(name)[0]
+        inventory = "%s ansible_host=%s ansible_user=%s" % (name, ip, login)
         ansiblecommand = "ansible-playbook"
         if verbose:
             ansiblecommand = "%s -vvv" % ansiblecommand
+        # extravars = ''
         if variables is not None:
             for variable in variables:
                 if not isinstance(variable, dict) or len(variable.keys()) != 1:
                     continue
                 else:
                     key, value = variable.keys()[0], variable[variable.keys()[0]]
-                    extravars = "%s -e \"%s=%s\"" % (extravars, key, value)
+                    # extravars = "%s -e \"%s=%s\"" % (extravars, key, value)
+                    inventory = "%s %s=%s" % (inventory, key, value)
+        with open("/tmp/%s.inv" % name, 'w') as f:
+            f.write(inventory)
         print("Ansible Command run:")
-        print("%s -T 20 -i ~/klist.py %s %s" % (ansiblecommand, extravars, playbook))
-        os.system("%s -T 20 -i ~/klist.py %s %s" % (ansiblecommand, extravars, playbook))
+        # print("%s -T 20 -i ~/klist.py %s %s" % (ansiblecommand, extravars, playbook))
+        # os.system("%s -T 20 -i ~/klist.py %s %s" % (ansiblecommand, extravars, playbook))
+        print("%s -T 20 -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
+        os.system("%s -T 20 -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
