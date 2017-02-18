@@ -687,6 +687,7 @@ class Kvirt:
             vm = conn.lookupByName(name)
         except:
             return
+        ip = self.ip(name)
         status = {0: 'down', 1: 'up'}
         vmxml = vm.XMLDesc(0)
         root = ET.fromstring(vmxml)
@@ -738,6 +739,8 @@ class Kvirt:
                     if hostname is not None and hostname.text == name:
                         hostentry = '<host ip="%s"><hostname>%s</hostname></host>' % (ip, name)
                         network.update(2, 10, 0, hostentry, 1)
+        if ip is not None:
+            os.system("ssh-keygen -q -R %s >/dev/null" % ip)
 
     def _xmldisk(self, diskpath, diskdev, diskbus='virtio', diskformat='qcow2', shareable=False):
         if shareable:
