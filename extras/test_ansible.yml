@@ -1,0 +1,23 @@
+myplay:
+ type: ansible
+ playbook: prout.yml
+ vms:
+  - x
+
+x:
+ template: CentOS-7-x86_64-GenericCloud.qcow2
+ memory: 1024
+ numcpus: 1
+ disks:
+  - size: 10
+ nets: 
+  - default
+
+y:
+ template: CentOS-7-x86_64-GenericCloud.qcow2
+ memory: 1024
+ numcpus: 1
+ disks:
+  - size: 10
+ nets: 
+  - default

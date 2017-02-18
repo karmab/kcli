@@ -84,7 +84,7 @@ class Config():
             os._exit(1)
         options = self.ini[self.client]
         self.host = options.get('host', '127.0.0.1')
-        self.port = options.get('port', None)
+        self.port = options.get('port', 22)
         self.user = options.get('user', 'root')
         self.protocol = options.get('protocol', 'ssh')
         self.url = options.get('url', None)
@@ -493,7 +493,27 @@ def vm(config, client, profile, listing, info, filters, start, stop, ssh, ip1, i
                 verbose = element['verbose']
             else:
                 verbose = False
-            k.play(name, playbook=playbook, variables=variables, verbose=verbose)
+            # k.play(name, playbook=playbook, variables=variables, verbose=verbose)
+            with open("/tmp/%s.inv" % name, "w") as f:
+                inventory = k.inventory(name)
+                if inventory is not None:
+                    if variables is not None:
+                        for variable in variables:
+                            if not isinstance(variable, dict) or len(variable.keys()) != 1:
+                                continue
+                            else:
+                                key, value = variable.keys()[0], variable[variable.keys()[0]]
+                                inventory = "%s %s=%s" % (inventory, key, value)
+                    f.write("%s\n" % inventory)
+                if config.tunnel:
+                    f.write("[%s:vars]\n" % plan)
+                    f.write("ansible_ssh_common_args='-o ProxyCommand=\"ssh -p %s -W %%h:%%p %s@%s\"'\n" % (config.port, config.user, config.host))
+            ansiblecommand = "ansible-playbook"
+            if verbose:
+                ansiblecommand = "%s -vvv" % ansiblecommand
+            print("Ansible Command run:")
+            print("%s -T 20 -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
+            os.system("%s -T 20 -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
 
 
 @cli.command()
@@ -639,7 +659,7 @@ def pool(config, client, listing, delete, full, pooltype, path, pool):
 @pass_config
 def plan(config, client, get, path, listing, autostart, container, noautostart, inputfile, start, stop, delete, delay, plan):
     """Create/Delete/Stop/Start vms from plan file"""
-    newhosts = []
+    newvms = []
     vmprofiles = {key: value for key, value in config.profiles.iteritems() if 'type' not in value or value['type'] == 'vm'}
     containerprofiles = {key: value for key, value in config.profiles.iteritems() if 'type' in value and value['type'] == 'container'}
     k = config.get(client)
@@ -857,7 +877,8 @@ def plan(config, client, get, path, listing, autostart, container, noautostart, 
                     files = [{'path': '/root/.ssh/id_rsa', 'content': privatekey}]
                 result = k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=nested, tunnel=tunnel, files=files)
                 handle_response(result, name)
-                newhosts.append(name)
+                if result['result'] == 'success':
+                    newvms.append(name)
                 ansible = next((e for e in [profile.get('ansible'), customprofile.get('ansible')] if e is not None), None)
                 if ansible is not None:
                     for element in ansible:
@@ -918,31 +939,46 @@ def plan(config, client, get, path, listing, autostart, container, noautostart, 
                 click.secho("Container %s deployed!" % container, fg='green')
                 k.create_container(name=container, image=image, nets=nets, cmd=cmd, ports=ports, volumes=volumes, label=label)
                 # handle_response(result, name)
-        if ansibleentries and len(ansibleentries) == 1:
-            if len(newhosts) != len(vmentries):
-                click.secho("Ansible skipped as we are not deploying from scratch", fg='blue')
+        if ansibleentries:
+            if not newvms:
+                click.secho("Ansible skipped as no new vm within playbook provisioned", fg='blue')
                 return
-            ansible = entries[ansibleentries[0]]
-            if 'playbook' not in ansible:
-                click.secho("Missing Playbook for ansible.Ignoring...", fg='red')
-                return
-            playbook = ansible['playbook']
-            if 'verbose' in ansible:
-                verbose = element['verbose']
-            else:
-                verbose = False
-            with open("/tmp/%s.inv" % plan, "w") as f:
-                f.write("[%s]\n" % plan)
-                for name in newhosts:
-                    inventory = k.inventory(name)
-                    if inventory is not None:
-                        f.write("%s\n" % inventory)
-            ansiblecommand = "ansible-playbook"
-            if verbose:
-                ansiblecommand = "%s -vvv" % ansiblecommand
-            print("Ansible Command run:")
-            print("%s -T 20 -i /tmp/%s.inv %s" % (ansiblecommand, plan, playbook))
-            os.system("%s -T 20 -i /tmp/%s.inv %s" % (ansiblecommand, plan, playbook))
+            for item, entry in enumerate(ansibleentries):
+                ansible = entries[ansibleentries[item]]
+                if 'playbook' not in ansible:
+                    click.secho("Missing Playbook for ansible.Ignoring...", fg='red')
+                    return
+                playbook = ansible['playbook']
+                if 'verbose' in ansible:
+                    verbose = ansible['verbose']
+                else:
+                    verbose = False
+                vms = []
+                if 'vms' in ansible:
+                    vms = ansible['vms']
+                    for vm in vms:
+                        if vm not in newvms:
+                            vms.remove(vm)
+                else:
+                    vms = newvms
+                if not vms:
+                    click.secho("Ansible skipped as no new vm within playbook provisioned", fg='blue')
+                    return
+                with open("/tmp/%s.inv" % plan, "w") as f:
+                    f.write("[%s]\n" % plan)
+                    for name in newvms:
+                        inventory = k.inventory(name)
+                        if inventory is not None:
+                            f.write("%s\n" % inventory)
+                    if config.tunnel:
+                        f.write("[%s:vars]\n" % plan)
+                        f.write("ansible_ssh_common_args='-o ProxyCommand=\"ssh -p %s -W %%h:%%p %s@%s\"'\n" % (config.port, config.user, config.host))
+                ansiblecommand = "ansible-playbook"
+                if verbose:
+                    ansiblecommand = "%s -vvv" % ansiblecommand
+                print("Ansible Command run:")
+                print("%s -T 20 -i /tmp/%s.inv %s" % (ansiblecommand, plan, playbook))
+                os.system("%s -T 20 -i /tmp/%s.inv %s" % (ansiblecommand, plan, playbook))
 
 
 @cli.command()

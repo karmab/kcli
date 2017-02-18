@@ -874,11 +874,11 @@ class Kvirt:
             network = net
         if ip is None:
             counter = 0
-            while counter != 60:
+            while counter != 80:
                 ip = self.ip(name)
                 if ip is None:
-                    time.sleep(3)
-                    print("Waiting 3 seconds to grab ip and create DNS record...")
+                    time.sleep(5)
+                    print("Waiting 5 seconds to grab ip and create DNS record...")
                     counter += 10
                 else:
                     break
@@ -1904,11 +1904,11 @@ class Kvirt:
 
     def play(self, name, playbook, variables=[], verbose=False):
         counter = 0
-        while counter != 60:
+        while counter != 80:
             ip = self.ip(name)
             if ip is None:
-                time.sleep(3)
-                print("Waiting 3 seconds for ip to come up")
+                time.sleep(5)
+                print("Retrieving ip of %s..." % name)
                 counter += 10
             else:
                 break
@@ -1927,7 +1927,7 @@ class Kvirt:
                     # extravars = "%s -e \"%s=%s\"" % (extravars, key, value)
                     inventory = "%s %s=%s" % (inventory, key, value)
         with open("/tmp/%s.inv" % name, 'w') as f:
-            f.write(inventory)
+            f.write("%s\n" % inventory)
         print("Ansible Command run:")
         # print("%s -T 20 -i ~/klist.py %s %s" % (ansiblecommand, extravars, playbook))
         # os.system("%s -T 20 -i ~/klist.py %s %s" % (ansiblecommand, extravars, playbook))
@@ -1936,10 +1936,11 @@ class Kvirt:
 
     def inventory(self, name):
         counter = 0
-        while counter != 60:
+        while counter != 80:
             ip = self.ip(name)
             if ip is None:
-                time.sleep(3)
+                time.sleep(5)
+                print("Retrieving ip of %s..." % name)
                 counter += 10
             else:
                 break
