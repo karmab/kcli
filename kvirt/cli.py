@@ -89,7 +89,6 @@ class Config():
         self.protocol = options.get('protocol', 'ssh')
         self.url = options.get('url', None)
         self.tunnel = bool(options.get('tunnel', self.default['tunnel']))
-        self.timeout = options.get('timeout', 12)
         if self.host is None:
             click.secho("Problem parsing your configuration file", fg='red')
             os._exit(1)
@@ -512,7 +511,9 @@ def vm(config, client, profile, listing, info, filters, start, stop, ssh, ip1, i
             ansiblecommand = "ansible-playbook"
             if verbose:
                 ansiblecommand = "%s -vvv" % ansiblecommand
-            sleep(config.timeout)
+            ansibleconfig = os.path.expanduser('~/.ansible.cfg')
+            with open(ansibleconfig, "w") as f:
+                f.write("[ssh_connection]\nretries=10\n")
             print("Running: %s -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
             os.system("%s -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
 
@@ -977,7 +978,9 @@ def plan(config, client, get, path, listing, autostart, container, noautostart, 
                 ansiblecommand = "ansible-playbook"
                 if verbose:
                     ansiblecommand = "%s -vvv" % ansiblecommand
-                sleep(config.timeout)
+                ansibleconfig = os.path.expanduser('~/.ansible.cfg')
+                with open(ansibleconfig, "w") as f:
+                    f.write("[ssh_connection]\nretries=10\n")
                 print("Running: %s -i /tmp/%s.inv %s" % (ansiblecommand, plan, playbook))
                 os.system("%s -i /tmp/%s.inv %s" % (ansiblecommand, plan, playbook))
 
