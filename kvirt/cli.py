@@ -511,9 +511,9 @@ def vm(config, client, profile, listing, info, filters, start, stop, ssh, ip1, i
             ansiblecommand = "ansible-playbook"
             if verbose:
                 ansiblecommand = "%s -vvv" % ansiblecommand
-            print("Ansible Command run:")
-            print("%s -T 20 -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
-            os.system("%s -T 20 -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
+            sleep(10)
+            print("Running: %s -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
+            os.system("%s -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
 
 
 @cli.command()
@@ -976,9 +976,9 @@ def plan(config, client, get, path, listing, autostart, container, noautostart, 
                 ansiblecommand = "ansible-playbook"
                 if verbose:
                     ansiblecommand = "%s -vvv" % ansiblecommand
-                print("Ansible Command run:")
-                print("%s -T 20 -i /tmp/%s.inv %s" % (ansiblecommand, plan, playbook))
-                os.system("%s -T 20 -i /tmp/%s.inv %s" % (ansiblecommand, plan, playbook))
+                sleep(10)
+                print("Running: %s -i /tmp/%s.inv %s" % (ansiblecommand, plan, playbook))
+                os.system("%s -i /tmp/%s.inv %s" % (ansiblecommand, plan, playbook))
 
 
 @cli.command()
