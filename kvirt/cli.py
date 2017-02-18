@@ -190,6 +190,19 @@ def delete(config, client, container, name):
 @pass_config
 def host(config, client, switch, listing, report, profiles, templates, isos, disks, pool, template, download):
     """List and Handle host"""
+    if switch:
+        if switch not in config.clients:
+            click.secho("Client %s not found in config.Leaving...." % switch, fg='green')
+            os._exit(1)
+        click.secho("Switching to client %s..." % switch, fg='green')
+        inifile = "%s/kcli.yml" % os.environ.get('HOME')
+        if os.path.exists(inifile):
+            for line in fileinput.input(inifile, inplace=True):
+                if 'client' in line:
+                    print(" client: %s" % switch)
+                else:
+                    print(line.rstrip())
+        return
     k = config.get(client)
     if listing:
         clientstable = PrettyTable(["Name", "Current"])
@@ -211,18 +224,6 @@ def host(config, client, switch, listing, report, profiles, templates, isos, dis
     elif isos:
         for iso in sorted(k.volumes(iso=True)):
             print(iso)
-    elif switch:
-        if switch not in config.clients:
-            click.secho("Client %s not found in config.Leaving...." % switch, fg='green')
-            os._exit(1)
-        click.secho("Switching to client %s..." % switch, fg='green')
-        inifile = "%s/kcli.yml" % os.environ.get('HOME')
-        if os.path.exists(inifile):
-            for line in fileinput.input(inifile, inplace=True):
-                if 'client' in line:
-                    print(" client: %s" % switch)
-                else:
-                    print(line.rstrip())
     elif disks:
         click.secho("Listing disks...", fg='green')
         diskstable = PrettyTable(["Name", "Pool", "Path"])
