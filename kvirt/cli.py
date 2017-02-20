@@ -392,9 +392,28 @@ def create(profile, name):
 @pass_config
 def vm(config, client, profile, listing, info, filters, start, stop, ssh, ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8, l, r, name):
     """Create/Delete/Start/Stop/List vms"""
-    k = config.get(client)
-    tunnel = config.tunnel
+    if client == 'all':
+        clients = []
+        for cli in sorted(config.clients):
+            clients.append(cli)
+    else:
+        k = config.get(client)
+        tunnel = config.tunnel
     if listing:
+        if client == 'all':
+            vms = PrettyTable(["Name", "Hypervisor", "Status", "Ips", "Source", "Description/Plan", "Profile"])
+            for client in sorted(clients):
+                k = config.get(client)
+                for vm in sorted(k.list()):
+                    vm.insert(1, client)
+                    if filters:
+                        status = vm[2]
+                        if status == filters:
+                            vms.add_row(vm)
+                    else:
+                        vms.add_row(vm)
+            print(vms)
+        return
         vms = PrettyTable(["Name", "Status", "Ips", "Source", "Description/Plan", "Profile"])
         for vm in sorted(k.list()):
             if filters:
@@ -505,10 +524,9 @@ def vm(config, client, profile, listing, info, filters, start, stop, ssh, ip1, i
                             else:
                                 key, value = variable.keys()[0], variable[variable.keys()[0]]
                                 inventory = "%s %s=%s" % (inventory, key, value)
-                    f.write("%s\n" % inventory)
                 if config.tunnel:
-                    f.write("[%s:vars]\n" % plan)
-                    f.write("ansible_ssh_common_args='-o ProxyCommand=\"ssh -p %s -W %%h:%%p %s@%s\"'\n" % (config.port, config.user, config.host))
+                    inventory = "%s ansible_ssh_common_args='-o ProxyCommand=\"ssh -p %s -W %%h:%%p %s@%s\"'\n" % (inventory, config.port, config.user, config.host)
+                f.write("%s\n" % inventory)
             ansiblecommand = "ansible-playbook"
             if verbose:
                 ansiblecommand = "%s -vvv" % ansiblecommand

@@ -740,7 +740,7 @@ class Kvirt:
                         hostentry = '<host ip="%s"><hostname>%s</hostname></host>' % (ip, name)
                         network.update(2, 10, 0, hostentry, 1)
         if ip is not None:
-            os.system("ssh-keygen -q -R %s >/dev/null" % ip)
+            os.system("ssh-keygen -q -R %s >/dev/null 2>&1" % ip)
 
     def _xmldisk(self, diskpath, diskdev, diskbus='virtio', diskformat='qcow2', shareable=False):
         if shareable:
