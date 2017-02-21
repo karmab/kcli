@@ -985,16 +985,23 @@ class Kvirt:
                 for fil in files:
                     if not isinstance(fil, dict):
                         continue
-                path = fil.get('path')
-                owner = fil.get('owner', 'root')
-                permissions = fil.get('permissions', '0600')
-                content = fil.get('content')
-                userdata.write("- owner: %s:%s\n" % (owner, owner))
-                userdata.write("  path: %s\n" % path)
-                userdata.write("  permissions: '%s'\n" % (permissions))
-                userdata.write("  content: | \n")
-                for line in content:
-                    userdata.write("     %s\n" % line.strip())
+                    if fil.get('content') is None and fil.get('origin') is None:
+                        continue
+                    path = fil.get('path')
+                    owner = fil.get('owner', 'root')
+                    permissions = fil.get('permissions', '0600')
+                    userdata.write("- owner: %s:%s\n" % (owner, owner))
+                    userdata.write("  path: %s\n" % path)
+                    userdata.write("  permissions: '%s'\n" % (permissions))
+                    origin = fil.get('origin')
+                    if origin is not None:
+                        with open(os.path.expanduser(origin), 'r') as f:
+                            content = f.readlines()
+                    else:
+                        content = fil.get('content')
+                    userdata.write("  content: | \n")
+                    for line in content:
+                        userdata.write("     %s\n" % line.strip())
         isocmd = 'mkisofs'
         if find_executable('genisoimage') is not None:
             isocmd = 'genisoimage'

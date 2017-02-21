@@ -1,4 +1,4 @@
-private1:
+private:
  type: network
   cidr: 192.168.60.0/24
   dhcp: true
@@ -8,10 +8,10 @@ allinone:
  memory: 8192
  numcpus: 2
  nets: 
-  - private1
+  - private
   - localnet
  disks:
   - size: 60
- pool: vms
+ pool: default
  scripts: 
   - allinone.sh

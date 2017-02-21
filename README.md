@@ -141,7 +141,7 @@ default:
  cloudinit: true
  reserveip: false
  nets:
-  - private1
+  - default
 
 twix:
  host: 192.168.0.6
@@ -241,8 +241,8 @@ The [samples directory](https://github.com/karmab/kcli/tree/master/samples) cont
   - `kcli host --switch bumblefoot`
 - Add a new network
   - `kcli network -c 192.168.7.0/24 --dhcp mynet`
-- Add a new nic from network private1
-- - `kcli nic -n private1 myvm`
+- Add a new nic from network default
+- - `kcli nic -n default myvm`
 - Delete nic eth2 from VM
 - - `kcli nic -di eth2 myvm`
 
@@ -352,8 +352,8 @@ Within a disk section, you can use the word size, thin and format as keys
 
 ```
 nets:
- - private1
- - name: private2
+ - default
+ - name: private
    nic: eth1
    ip: 192.168.0.220
    mask: 255.255.255.0

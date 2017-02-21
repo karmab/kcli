@@ -8,12 +8,12 @@ default:
  protocol: ssh
  cloudinit: true
  nets: 
-  - private1
+  - default
 
 twix:
  host: 192.168.0.6
  protocol: ssh
- pool: images
+ pool: default
  disks:
   - size: 10
 
@@ -21,6 +21,6 @@ twix:
 bumblefoot:
  host: 192.168.0.4
  protocol: ssh
- pool: images
+ pool: default
  disks:
   - size: 10
