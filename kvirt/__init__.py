@@ -16,7 +16,7 @@ import string
 import time
 import xml.etree.ElementTree as ET
 
-__version__ = "5.1"
+__version__ = "5.2"
 
 KB = 1024 * 1024
 MB = 1024 * KB
@@ -985,7 +985,16 @@ class Kvirt:
                 for fil in files:
                     if not isinstance(fil, dict):
                         continue
-                    if fil.get('content') is None and fil.get('origin') is None:
+                    origin = fil.get('origin')
+                    content = fil.get('content')
+                    if origin is not None:
+                        origin = os.path.expanduser(origin)
+                        if not os.path.exists(origin):
+                            print("Skipping file %s as not found" % origin)
+                            continue
+                        with open(origin, 'r') as f:
+                            content = f.readlines()
+                    elif content is None:
                         continue
                     path = fil.get('path')
                     owner = fil.get('owner', 'root')
@@ -994,13 +1003,8 @@ class Kvirt:
                     userdata.write("  path: %s\n" % path)
                     userdata.write("  permissions: '%s'\n" % (permissions))
                     origin = fil.get('origin')
-                    if origin is not None:
-                        with open(os.path.expanduser(origin), 'r') as f:
-                            content = f.readlines()
-                    else:
-                        content = fil.get('content')
                     userdata.write("  content: | \n")
-                    for line in content:
+                    for line in content.split('\n'):
                         userdata.write("     %s\n" % line.strip())
         isocmd = 'mkisofs'
         if find_executable('genisoimage') is not None:

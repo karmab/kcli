@@ -883,7 +883,8 @@ def plan(config, client, get, path, listing, autostart, container, noautostart, 
                     if not os.path.exists("%s.key" % plan) or not os.path.exists("%s.key.pub" % plan):
                         os.popen("ssh-keygen -t rsa -N '' -f %s.key" % plan)
                     publickey = open("%s.key.pub" % plan).read().strip()
-                    privatekey = open("%s.key" % plan).readlines()
+                    # privatekey = open("%s.key" % plan).readlines()
+                    privatekey = open("%s.key" % plan).read().strip()
                     if keys is None:
                         keys = [publickey]
                     else:

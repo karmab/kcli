@@ -159,7 +159,7 @@ instance,
      cloudinit: true
      reserveip: false
      nets:
-      - private1
+      - default
 
     twix:
      host: 192.168.0.6
@@ -227,6 +227,10 @@ Available parameters for profile/plan files
 -  *sharedkey* Defaults to False. Set it to true so that a
    private/public key gets shared between all the nodes of your plan.
    Additionally, root access will be allowed
+-  *files* (optional)- Array of files to inject to the vm. For ecach of
+   the them , you can specify path, owner ( root by default) ,
+   permissions (600 by default ) and either origin or content to gather
+   content data directly or from specified origin
 
 Profiles configuration
 ----------------------
@@ -288,10 +292,10 @@ How to use
 -  ``kcli host --switch bumblefoot``
 -  Add a new network
 -  ``kcli network -c 192.168.7.0/24 --dhcp mynet``
--  Add a new nic from network private1
+-  Add a new nic from network default
 -  
 
-   -  ``kcli nic -n private1 myvm``
+   -  ``kcli nic -n default myvm``
 
 -  Delete nic eth2 from VM
 -  
@@ -452,8 +456,8 @@ keys
 ::
 
     nets:
-     - private1
-     - name: private2
+     - default
+     - name: private
        nic: eth1
        ip: 192.168.0.220
        mask: 255.255.255.0

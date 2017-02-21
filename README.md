@@ -191,6 +191,7 @@ Note that most of the parameters are actually optional, and can be overridden in
 - *nested* Defaults to True
 - *tunnel* Defaults to False. Setting it to true will make kcli use tunnels for console and for ssh access. You want that if you only open ssh port to your hypervisor!
 - *sharedkey* Defaults to False. Set it to true so that a private/public key gets shared between all the nodes of your plan. Additionally, root access will be allowed
+- *files* (optional)- Array of files to inject to the vm. For ecach of the them , you can specify path, owner ( root by default) , permissions (600 by default ) and either origin or content to gather content data directly or from specified origin
 
 ## Profiles configuration
 
