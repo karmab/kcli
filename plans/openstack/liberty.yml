@@ -1,4 +1,4 @@
-eduliberty:
+liberty:
  template: rhel-guest-image-7.3-35.x86_64.qcow2
  memory: 16384
  numcpus: 2
