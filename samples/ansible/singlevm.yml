@@ -1,0 +1,14 @@
+testansible:
+ template: CentOS-7-x86_64-GenericCloud.qcow2
+ numcpus: 2
+ nets:
+  - default
+ pool: default
+ cmds:
+  - echo magico | passwd --stdin root
+ ansible:
+  - playbook: prout.yml
+    verbose: true
+    variables:
+     - x: 8
+     - z: 12

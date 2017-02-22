@@ -11,12 +11,15 @@ It will also report IPS for any VM connected to a dhcp-enabled libvirt network a
 
 It started because I switched from ovirt and needed a tool similar to [ovirt.py](https://github.com/karmab/ovirt)
 
-##  Why I use this instead of vagrant for kvm?
+##  Wouldnt it be cool to:
 
-- Easy syntax to launch single or multiple VMS
-- Cloudinit based customization, not over ssh
-- No need of using custom images, the public ones will do
-- Spice/VNC consoles and TCP serial ones
+- Interact with libvirt without XML
+- Declare all your objects(vm, containers, networks, ansible,...) in a single yaml file!
+- Easily Test all Redhat Infrastructure products, and their upstream counterpart
+- Easily share private keys between your vms
+- Inject all configuration with cloudinit
+- Use the default cloud images
+
 
 ## Demo!
 
@@ -207,8 +210,8 @@ Note that most of the parameters are actually optional, and can be overridden in
 
 ## Profiles configuration
 
-You can use the file ~/kcli_profiles.yml to specify profiles (number of CPUS, memory, size of disk, network,....) to use when deploying a VM.
-To use a different profiles file, you can use the key profiles in the default section of ~/kcli.yml and put desired path
+You can use the file *~/kcli_profiles.yml* to specify profiles (number of CPUS, memory, size of disk, network,....) to use when deploying a VM.
+To use a different profiles file, you can use the key profiles in the default section of *~/kcli.yml* and put desired path
 
 The [samples directory](https://github.com/karmab/kcli/tree/master/samples) contains examples to get you started
 
@@ -216,6 +219,8 @@ The [samples directory](https://github.com/karmab/kcli/tree/master/samples) cont
 
 - Get info on your kvm setup
  - `kcli host --report`
+- Switch active client to bumblefoot
+  - `kcli host --switch bumblefoot`
 - List VMS, along with their private IP (and plan if applicable)
  - `kcli list` or (`kcli vm -l`)
 - List templates (Note that it will find them out based on their qcow2 extension...)
@@ -250,14 +255,21 @@ The [samples directory](https://github.com/karmab/kcli/tree/master/samples) cont
   - `kcli clone -b vm1 vm2`
 - Connect by ssh to the VM (retrieving IP and adjusting user based on the template)
   - `kcli ssh vm1`
-- Switch active client to bumblefoot
-  - `kcli host --switch bumblefoot`
 - Add a new network
   - `kcli network -c 192.168.7.0/24 --dhcp mynet`
 - Add a new nic from network default
-- - `kcli nic -n default myvm`
+ - `kcli nic -n default myvm`
 - Delete nic eth2 from VM
-- - `kcli nic -di eth2 myvm`
+ - `kcli nic -di eth2 myvm`
+
+## Multiple hypervisors
+
+If you have multiple hypervisors, you can generally use the flag *-C $CLIENT* to temporarily point to a specific one.
+
+You can also use the following to list all you vms :
+ 
+`kcli list -C all`  
+
 
 ## Templates
 
@@ -280,9 +292,8 @@ virsh vol-upload --pool vms $TEMPLATE ${TEMPLATE}.raw
 Note that disks based on a LVM template always have the same size as the template disk! The code above creates a template-disk that is only just big enough to match the size of the (raw) template. You may want to grow this disk to a reasonable size before creating VM's that use it! Alternatively, you can set the TSIZE parameter above to a static value, rather than using the size of the image.
 
 Note also that kcli uses the default ssh_user according to the different [cloud images](http://docs.openstack.org/image-guide/obtain-images.html).
-To infer It, kcli checks the template name. So for example, your centos image MUST contain the term "centos" in the file name,
+To guess it, kcli checks the template name. So for example, your centos image MUST contain the term "centos" in the file name,
 otherwise the default user "root" will be used. 
-You can nose around the code here [`kvirt/_init_.py`](https://github.com/karmab/kcli/blob/master/kvirt/__init__.py#L1240)
 
 ## Cloudinit stuff
 
@@ -293,7 +304,7 @@ Also note that if you use cloudinit but dont specify ssh keys to inject, the def
 
 ## Using plans
 
-You can also define plan files in yaml with a list of VMS, disks, and networks and VMS to deploy (look at the sample) and deploy it with kcli plan.
+You can also define plan files in yaml with a list of profiles, VMS, disks, and networks and VMS to deploy (look at the sample) and deploy it with kcli plan.
 
 For instance, to define a network named mynet:
 
@@ -317,7 +328,24 @@ share1.img:
   - centos2
 ```
 
-Regarding VMS, You can point at an existing profile within your plans, define all parameters for the VMS, or combine both approaches.
+Regarding VMS, You can point at an existing profile in your plans, define all parameters for the VMS, or combine both approaches. You can even add your own profile definitions in the plan file and reference them within the same plan:
+
+```YAML
+big:
+  type: profile
+  template: CentOS-7-x86_64-GenericCloud.qcow2
+  memory: 6144
+  numcpus: 1
+  disks:
+   - size: 45
+  nets:
+   - default
+  pool: default
+
+myvm:
+  profile: big
+```
+
 
 Specific scripts and IPS arrays can be used directly in the plan file (or in profiles one).
 
@@ -326,7 +354,7 @@ The samples directory contains examples to get you started.
 Note that the description of the VM will automatically be set to the plan name, and this value will be used when deleting the entire plan as a way to locate matching VMS.
 
 When launching a plan, the plan name is optional. If not is provided, a random generated keyword will be used.
-This keyword will be a fun name based on this cool python project: [name generator](https://github.com/shamrin/namesgenerator), which emulates Docker container names :).
+This keyword will be a fun name based on this cool project: [name generator](https://github.com/shamrin/namesgenerator), which emulates Docker container names
 
 If a file with the plan isnt specified with -f , the file kcli_plan.yml in the current directory will be used, if available.
 
@@ -337,6 +365,7 @@ For an advanced use of plans along with scripts, you can check the [plans](plans
 ## Sharing plans
 
 You can use the following to retrieve plans from a github repo:
+
 ```YAML
 kcli plan --get kcli plan -g github.com/karmab/kcli/plans -p karmab_plans
 ```

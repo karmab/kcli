@@ -811,6 +811,9 @@ def plan(config, client, get, path, listing, autostart, container, noautostart, 
         networkentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'network']
         containerentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'container']
         ansibleentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'ansible']
+        profileentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'profile']
+        for p in profileentries:
+            vmprofiles[p] = entries[p]
         if networkentries:
             click.secho("Deploying Networks...", fg='green')
         for net in networkentries:
