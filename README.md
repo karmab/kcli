@@ -299,7 +299,7 @@ otherwise the default user "root" will be used.
 ## Cloudinit stuff
 
 If cloudinit is enabled (it is by default), a custom iso is generated on the fly for your VM (using mkisofs) and uploaded to your kvm instance (using the libvirt API, not using ssh commands, pretty cool, huh?).
-The iso handles static networking configuration, hostname setting, injecting ssh keys and running specific commands
+The iso handles static networking configuration, hostname setting, injecting ssh keys and running specific commands and entire scripts, and copying entire files
 
 Also note that if you use cloudinit but dont specify ssh keys to inject, the default ~/.ssh/id_rsa.pub will be used, if present.
 
@@ -382,7 +382,7 @@ kcli plan --get kcli plan -g github.com/karmab/kcli/plans -p karmab_plans
 The url can also be in:
 - an arbitary url ( github api is not used in this case)
 - raw github format to retrieve a single file
-- a github linkk
+- a github link
 
 ## Disk parameters
 
