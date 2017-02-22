@@ -28,7 +28,7 @@ It started because I switched from ovirt and needed a tool similar to [ovirt.py]
 Console access is based on remote-viewer
 For instance if using a RHEL based distribution:
 
-```Shell
+```bash
 yum -y install gcc libvirt-devel python-devel genisoimage qemu-kvm nmap-ncat python-pip
 ```
 
