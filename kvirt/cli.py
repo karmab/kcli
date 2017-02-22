@@ -502,6 +502,8 @@ def vm(config, client, profile, listing, info, filters, start, stop, ssh, ip1, i
     ips = [ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8]
     result = k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=bool(nested), tunnel=tunnel, files=files)
     handle_response(result, name)
+    if result['result'] != 'success':
+        return
     ansible = profile.get('ansible')
     if ansible is not None:
         for element in ansible:

@@ -8,6 +8,7 @@ from defaults import TEMPLATES
 import docker
 from distutils.spawn import find_executable
 from iptools import IpRange
+# from jinja2 import Environment
 from netaddr import IPAddress, IPNetwork
 from libvirt import open as libvirtopen
 import os
@@ -992,8 +993,12 @@ class Kvirt:
                         if not os.path.exists(origin):
                             print("Skipping file %s as not found" % origin)
                             continue
-                        with open(origin, 'r') as f:
-                            content = f.readlines()
+                        # if origin.endswith('j2'):
+                        #    origin = open(origin, 'r').read()
+                        #    content = Environment().from_string(origin).render(name=name, gateway=gateway, dns=dns, domain=domain)
+                        # else:
+                        #    content = open(origin, 'r').readlines()
+                        content = open(origin, 'r').readlines()
                     elif content is None:
                         continue
                     path = fil.get('path')
@@ -1002,7 +1007,6 @@ class Kvirt:
                     userdata.write("- owner: %s:%s\n" % (owner, owner))
                     userdata.write("  path: %s\n" % path)
                     userdata.write("  permissions: '%s'\n" % (permissions))
-                    origin = fil.get('origin')
                     userdata.write("  content: | \n")
                     for line in content.split('\n'):
                         userdata.write("     %s\n" % line.strip())
