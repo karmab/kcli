@@ -28,26 +28,26 @@ It started because I switched from ovirt and needed a tool similar to [ovirt.py]
 Console access is based on remote-viewer
 For instance if using a RHEL based distribution:
 
-```
+```Shell
 yum -y install gcc libvirt-devel python-devel genisoimage qemu-kvm nmap-ncat python-pip
 ```
 
 On Fedora, you' will need an additional package 
 
-```
+```Shell
 yum -y install redhat-rpm-config
 ```
 
 
 If using a Debian based distribution:
 
-```
+```Shell
 apt-get -y install python-pip pkg-config libvirt-dev genisoimage qemu-kvm netcat libvirt-bin python-dev libyaml-dev
 ```
 
 2. Install kcli from pypi
 
-```
+```Shell
 pip install kcli
 ```
 
@@ -57,11 +57,15 @@ To deploy from templates, grab images at [openstack](http://docs.openstack.org/i
 
 Pull the latest image:
 
-`docker pull karmab/kcli`
+```Shell
+docker pull karmab/kcli
+```
 
 If running locally, launch it with:
 
-`docker run --rm -v /var/run/libvirt:/var/run/libvirt -v ~/.ssh:/root/.ssh karmab/kcli`
+```Shell
+docker run --rm -v /var/run/libvirt:/var/run/libvirt -v ~/.ssh:/root/.ssh karmab/kcli
+```
 
 If using a remote hypervisor, launch it with a local kcli.yml file pointing to this hypervisor and providing your ssh keys too
 
@@ -69,67 +73,75 @@ If using a remote hypervisor, launch it with a local kcli.yml file pointing to t
 
 In both cases, you can also provide a kcli_profiles.yml (and you could also use a dedicated plan directory)
 
-`docker run --rm -v /var/run/libvirt:/var/run/libvirt -v ~/kcli_profiles.yml:/root/kcli_profiles.yml  -v ~/.ssh:/root/.ssh karmab/kcli`
+```Shell
+docker run --rm -v /var/run/libvirt:/var/run/libvirt -v ~/kcli_profiles.yml:/root/kcli_profiles.yml  -v ~/.ssh:/root/.ssh karmab/kcli
+```
 
-`docker run --rm -v ~/kcli.yml:/root/kcli.yml -v ~/kcli_profiles.yml:/root/kcli_profiles.yml -v ~/.ssh:/root/.ssh karmab/kcli`
+```Shell
+docker run --rm -v ~/kcli.yml:/root/kcli.yml -v ~/kcli_profiles.yml:/root/kcli_profiles.yml -v ~/.ssh:/root/.ssh karmab/kcli
+```
 
 The entrypoint is defined as kcli, so you can type commands directly as:
 
-`docker run --rm -v ~/kcli.yml:/root/kcli.yml -v ~/kcli_profiles.yml:/root/kcli_profiles.yml -v ~/.ssh:/root/.ssh karmab/kcli list`
+```Shell
+docker run --rm -v ~/kcli.yml:/root/kcli.yml -v ~/kcli_profiles.yml:/root/kcli_profiles.yml -v ~/.ssh:/root/.ssh karmab/kcli list
+```
 
 As a bonus, you can alias kcli and run kcli as if it is installed locally instead a Docker container:
 
-`alias kcli = "docker run --rm -v ~/kcli.yml:/root/kcli.yml -v ~/kcli_profiles.yml:/root/kcli_profiles.yml -v ~/.ssh:/root/.ssh karmab/kcli"`
+```Shell
+alias kcli = "docker run --rm -v ~/kcli.yml:/root/kcli.yml -v ~/kcli_profiles.yml:/root/kcli_profiles.yml -v ~/.ssh:/root/.ssh karmab/kcli"
+```
 
 ## Configuration
 
 If you only want to use your local libvirt daemon, no configuration is needed.
 If you want to generate a basic settings file, you can use the following command:
 
-```
+```Shell
 kcli bootstrap -f
 ```
 
 You can also go through wizard
 
-```
+```Shell
 kcli bootstrap
 ```
 
 And for advanced bootstrapping, you can specify a target name, host, a pool with a path, and have centos cloud image downloaded
 
-```
+```Shell
 kcli bootstrap -a -n twix -H 192.168.0.6 --pool vms --poolpath /home/vms -t
 ```
 
 Or even use an existing disk for LVM based images (note that the disk will be made into an LVM physical volume, so it should be empty):
 
-```
+```Shell
 kcli bootstrap -a -n twix -H 192.168.0.6 --pool vms --poolpath /dev/vdb --pooltype lvm
 ```
 
 You can add an additional storage pool with:
 
-```
+```Shell
 kcli pool -f -t logical -p /dev/sda ssd
 ```
 
 And define additional networks with:
 
-```
+```Shell
 kcli network -c 10.0.1.0/24 private11 --dhcp
 ```
 
 And download a fedora template:
 
-```
+```Shell
 kcli host --download -t fedora
 ```
 
 
 Otherwise you will have to declare your settings in ~/kcli.yml. For instance,
 
-```
+```YAML
 default:
  client: twix
  numcpus: 2
@@ -257,7 +269,7 @@ For a regular file-backed storage pool, download the image you want, and put it 
 
 For an LVM-backed storage pool, convert the image to raw format, and upload it to the pool. Assuming a volume group with name `vms`, do:
 
-```
+```Shell
 TEMPLATE=xenial-server-cloudimg-amd64-disk1.img
 qemu-img convert -f qcow2 -O raw $TEMPLATE ${TEMPLATE}.raw
 TSIZE=`ls -l ${TEMPLATE}.raw | tr -s ' ' | cut -d' ' -f5`
@@ -285,7 +297,7 @@ You can also define plan files in yaml with a list of VMS, disks, and networks a
 
 For instance, to define a network named mynet:
 
-```
+```YAML
 mynet:
  type: network
  cidr: 192.168.95.0/24
@@ -295,7 +307,7 @@ You can also use the boolean keyword dhcp (mostly to disable it) and isolated . 
 
 To define a shared disk named shared1.img between two VMS (that typically would be defined within the same plan):
 
-```
+```YAML
 share1.img:
  type: disk
  size: 5
@@ -325,7 +337,7 @@ For an advanced use of plans along with scripts, you can check the [plans](plans
 ## Sharing plans
 
 You can use the following to retrieve plans from a github repo:
-```
+```YAML
 kcli plan --get kcli plan -g github.com/karmab/kcli/plans -p karmab_plans
 ```
 The url can also be in:
@@ -336,7 +348,7 @@ The url can also be in:
 ## Disk parameters
 
 You can add disk this way in your profile or plan files
-```
+```YAML
 disks:
  - size: 20
    pool: vms
@@ -351,7 +363,7 @@ Within a disk section, you can use the word size, thin and format as keys
 - *diskinterface* Value used when not specified in the disk entry. Defaults to virtio. Could also be ide, if VM lacks virtio drivers
 - *nets* Array of networks. Defaults to ['default']. You can mix simple strings pointing to the name of your network and more complex information provided as hash. For instance:
 
-```
+```YAML
 nets:
  - default
  - name: private
@@ -373,7 +385,7 @@ You can also set reservedns to True to create a DNS entry for the host in the co
 
 Docker support is mainly enabled as a commodity to launch some containers along vms in plan files. Of course, you will need docker installed on the hypervisor. So the following can be used in a plan file to launch a container:
 
-```
+```YAML
 centos:
  type: container
   image: centos
@@ -393,7 +405,7 @@ The following keywords can be used:
 
 Within a volumes section, you can use path, origin, destination and mode as keys. mode can either be rw o ro and when origin or destination are missing, path is used and the same path is used for origin and destination of the volume. You can also use this typical docker syntax:
 
-```
+```YAML
 volumes:
  - /home/cocorico:/root/cocorico
 ```
@@ -418,18 +430,41 @@ Interesting thing is that the script will try to guess the type of VM based on i
 
 Try it with:
 
-```
+```Shell
 python extra/klist.py --list
 ansible all -i extra/klist.py -m ping
 ```
 
 Additionally, there is an ansible kcli/kvirt module under extras, with a sample playbook
 
+You can also use the key ansible within a profile
+
+```YAML
+ansible:
+ - playbook: frout.yml
+   verbose: true
+   variables:
+    - x: 8
+    - z: 12
+```
+
+In a plan file, you can also define additional sections with the ansible type and point to your playbook, optionally enabling verbose and using the key hosts to specify a list of vms to run the given playbook instead. You wont define variables in this case, as you can leverage host_vars and groups_vars directory for this purpose
+
+```YAML
+myplay:
+ type: ansible
+ verbose: false
+ playbook: prout.yml
+```
+
+
+Note that when leveraging ansible this way, an inventory file will be generated on the fly for you and let in */tmp/$PLAN.inv* 
+
 ## Bash Completion
 
 Create a file named kcli-complete.sh with the following content and source it ( in your bash profile for instance ) 
 
-```
+```Shell
 _KCLI_COMPLETE=source kcli
 ```
 

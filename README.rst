@@ -37,25 +37,25 @@ Installation
    is based on remote-viewer For instance if using a RHEL based
    distribution:
 
-::
+.. code:: shell
 
     yum -y install gcc libvirt-devel python-devel genisoimage qemu-kvm nmap-ncat python-pip
 
 On Fedora, you' will need an additional package
 
-::
+.. code:: shell
 
     yum -y install redhat-rpm-config
 
 If using a Debian based distribution:
 
-::
+.. code:: shell
 
     apt-get -y install python-pip pkg-config libvirt-dev genisoimage qemu-kvm netcat libvirt-bin python-dev libyaml-dev
 
 2. Install kcli from pypi
 
-::
+.. code:: shell
 
     pip install kcli
 
@@ -67,11 +67,15 @@ I use docker, I'm cool
 
 Pull the latest image:
 
-``docker pull karmab/kcli``
+.. code:: shell
+
+    docker pull karmab/kcli
 
 If running locally, launch it with:
 
-``docker run --rm -v /var/run/libvirt:/var/run/libvirt -v ~/.ssh:/root/.ssh karmab/kcli``
+.. code:: shell
+
+    docker run --rm -v /var/run/libvirt:/var/run/libvirt -v ~/.ssh:/root/.ssh karmab/kcli
 
 If using a remote hypervisor, launch it with a local kcli.yml file
 pointing to this hypervisor and providing your ssh keys too
@@ -81,18 +85,26 @@ pointing to this hypervisor and providing your ssh keys too
 In both cases, you can also provide a kcli\_profiles.yml (and you could
 also use a dedicated plan directory)
 
-``docker run --rm -v /var/run/libvirt:/var/run/libvirt -v ~/kcli_profiles.yml:/root/kcli_profiles.yml  -v ~/.ssh:/root/.ssh karmab/kcli``
+.. code:: shell
 
-``docker run --rm -v ~/kcli.yml:/root/kcli.yml -v ~/kcli_profiles.yml:/root/kcli_profiles.yml -v ~/.ssh:/root/.ssh karmab/kcli``
+    docker run --rm -v /var/run/libvirt:/var/run/libvirt -v ~/kcli_profiles.yml:/root/kcli_profiles.yml  -v ~/.ssh:/root/.ssh karmab/kcli
+
+.. code:: shell
+
+    docker run --rm -v ~/kcli.yml:/root/kcli.yml -v ~/kcli_profiles.yml:/root/kcli_profiles.yml -v ~/.ssh:/root/.ssh karmab/kcli
 
 The entrypoint is defined as kcli, so you can type commands directly as:
 
-``docker run --rm -v ~/kcli.yml:/root/kcli.yml -v ~/kcli_profiles.yml:/root/kcli_profiles.yml -v ~/.ssh:/root/.ssh karmab/kcli list``
+.. code:: shell
+
+    docker run --rm -v ~/kcli.yml:/root/kcli.yml -v ~/kcli_profiles.yml:/root/kcli_profiles.yml -v ~/.ssh:/root/.ssh karmab/kcli list
 
 As a bonus, you can alias kcli and run kcli as if it is installed
 locally instead a Docker container:
 
-``alias kcli = "docker run --rm -v ~/kcli.yml:/root/kcli.yml -v ~/kcli_profiles.yml:/root/kcli_profiles.yml -v ~/.ssh:/root/.ssh karmab/kcli"``
+.. code:: shell
+
+    alias kcli = "docker run --rm -v ~/kcli.yml:/root/kcli.yml -v ~/kcli_profiles.yml:/root/kcli_profiles.yml -v ~/.ssh:/root/.ssh karmab/kcli"
 
 Configuration
 -------------
@@ -101,52 +113,52 @@ If you only want to use your local libvirt daemon, no configuration is
 needed. If you want to generate a basic settings file, you can use the
 following command:
 
-::
+.. code:: shell
 
     kcli bootstrap -f
 
 You can also go through wizard
 
-::
+.. code:: shell
 
     kcli bootstrap
 
 And for advanced bootstrapping, you can specify a target name, host, a
 pool with a path, and have centos cloud image downloaded
 
-::
+.. code:: shell
 
     kcli bootstrap -a -n twix -H 192.168.0.6 --pool vms --poolpath /home/vms -t
 
 Or even use an existing disk for LVM based images (note that the disk
 will be made into an LVM physical volume, so it should be empty):
 
-::
+.. code:: shell
 
     kcli bootstrap -a -n twix -H 192.168.0.6 --pool vms --poolpath /dev/vdb --pooltype lvm
 
 You can add an additional storage pool with:
 
-::
+.. code:: shell
 
     kcli pool -f -t logical -p /dev/sda ssd
 
 And define additional networks with:
 
-::
+.. code:: shell
 
     kcli network -c 10.0.1.0/24 private11 --dhcp
 
 And download a fedora template:
 
-::
+.. code:: shell
 
     kcli host --download -t fedora
 
 Otherwise you will have to declare your settings in ~/kcli.yml. For
 instance,
 
-::
+.. code:: yaml
 
     default:
      client: twix
@@ -319,7 +331,7 @@ put it in the backing store directory.
 For an LVM-backed storage pool, convert the image to raw format, and
 upload it to the pool. Assuming a volume group with name ``vms``, do:
 
-::
+.. code:: shell
 
     TEMPLATE=xenial-server-cloudimg-amd64-disk1.img
     qemu-img convert -f qcow2 -O raw $TEMPLATE ${TEMPLATE}.raw
@@ -363,7 +375,7 @@ plan.
 
 For instance, to define a network named mynet:
 
-::
+.. code:: yaml
 
     mynet:
      type: network
@@ -375,7 +387,7 @@ isolated . Note that when not specified, dhcp and nat will be enabled
 To define a shared disk named shared1.img between two VMS (that
 typically would be defined within the same plan):
 
-::
+.. code:: yaml
 
     share1.img:
      type: disk
@@ -420,7 +432,7 @@ Sharing plans
 
 You can use the following to retrieve plans from a github repo:
 
-::
+.. code:: yaml
 
     kcli plan --get kcli plan -g github.com/karmab/kcli/plans -p karmab_plans
 
@@ -433,7 +445,7 @@ Disk parameters
 
 You can add disk this way in your profile or plan files
 
-::
+.. code:: yaml
 
     disks:
      - size: 20
@@ -453,7 +465,7 @@ keys
    strings pointing to the name of your network and more complex
    information provided as hash. For instance:
 
-::
+.. code:: yaml
 
     nets:
      - default
@@ -483,7 +495,7 @@ containers along vms in plan files. Of course, you will need docker
 installed on the hypervisor. So the following can be used in a plan file
 to launch a container:
 
-::
+.. code:: yaml
 
     centos:
      type: container
@@ -509,7 +521,7 @@ as keys. mode can either be rw o ro and when origin or destination are
 missing, path is used and the same path is used for origin and
 destination of the volume. You can also use this typical docker syntax:
 
-::
+.. code:: yaml
 
     volumes:
      - /home/cocorico:/root/cocorico
@@ -546,7 +558,7 @@ accordingly
 
 Try it with:
 
-::
+.. code:: shell
 
     python extra/klist.py --list
     ansible all -i extra/klist.py -m ping
@@ -554,13 +566,40 @@ Try it with:
 Additionally, there is an ansible kcli/kvirt module under extras, with a
 sample playbook
 
+You can also use the key ansible within a profile
+
+.. code:: yaml
+
+    ansible:
+     - playbook: frout.yml
+       verbose: true
+       variables:
+        - x: 8
+        - z: 12
+
+In a plan file, you can also define additional sections with the ansible
+type and point to your playbook, optionally enabling verbose and using
+the key hosts to specify a list of vms to run the given playbook
+instead. You wont define variables in this case, as you can leverage
+host\_vars and groups\_vars directory for this purpose
+
+.. code:: yaml
+
+    myplay:
+     type: ansible
+     verbose: false
+     playbook: prout.yml
+
+Note that when leveraging ansible this way, an inventory file will be
+generated on the fly for you and let in */tmp/$PLAN.inv*
+
 Bash Completion
 ---------------
 
 Create a file named kcli-complete.sh with the following content and
 source it ( in your bash profile for instance )
 
-::
+.. code:: shell
 
     _KCLI_COMPLETE=source kcli
 
