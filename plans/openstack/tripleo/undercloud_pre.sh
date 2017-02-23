@@ -19,5 +19,9 @@ su - stack -c "wget -P advanced https://raw.githubusercontent.com/karmab/kcli/ma
 systemctl stop NetworkManager
 systemctl disable NetworkManager
 yum -y update
+wget http://cbs.centos.org/kojifiles/packages/openvswitch/2.5.0/22.git20160727.el7/x86_64/openvswitch-2.5.0-22.git20160727.el7.x86_64.rpm
+yum -y localinstall openvswitch-2.5.0-22.git20160727.el7.x86_64.rpm
 su - stack -c "openstack undercloud install"
+mv openvswitch-2.5.0-22.git20160727.el7.x86_64.rpm /var/www/html
+restoreconf -Frv /var/www/html
 reboot
