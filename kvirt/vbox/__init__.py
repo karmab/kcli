@@ -5,9 +5,9 @@ interact with a local/remote libvirt daemon
 """
 
 # from defaults import TEMPLATES
-# from distutils.spawn import find_executable
-# from iptools import IpRange
-# from netaddr import IPAddress, IPNetwork
+from distutils.spawn import find_executable
+from iptools import IpRange
+from netaddr import IPNetwork
 import os
 import socket
 import string
@@ -83,12 +83,8 @@ class KBox:
             default_storagepool = conn.storagePoolLookupByName(default_pool)
         except:
             return {'result': 'failure', 'reason': "Pool %s not found" % default_pool}
-        default_poolxml = default_storagepool.XMLDesc(0)
-        default_pooltype = root.getiterator('pool')[0].get('type')
+        default_pooltype = ''
         default_poolpath = None
-        for element in root.getiterator('path'):
-            default_poolpath = element.text
-            break
         if vnc:
             display = 'vnc'
         else:
@@ -134,16 +130,11 @@ class KBox:
                 diskpool = disk.get('pool', default_pool)
                 diskwwn = disk.get('wwn')
                 try:
-                    storagediskpool = conn.storagePoolLookupByName(diskpool)
+                    print('x')
                 except:
                     return {'result': 'failure', 'reason': "Pool %s not found" % diskpool}
-                diskpoolxml = storagediskpool.XMLDesc(0)
-                root = ET.fromstring(diskpoolxml)
-                diskpooltype = root.getiterator('pool')[0].get('type')
+                diskpooltype = ''
                 diskpoolpath = None
-                for element in root.getiterator('path'):
-                    diskpoolpath = element.text
-                    break
             else:
                 return {'result': 'failure', 'reason': "Invalid disk entry"}
             letter = chr(index + ord('a'))
@@ -163,7 +154,6 @@ class KBox:
                     else:
                         backingvolume = volumes[template]['object']
                     backingxml = backingvolume.XMLDesc(0)
-                    root = ET.fromstring(backingxml)
                 except:
                     return {'result': 'failure', 'reason': "Invalid template %s" % template}
                 backing = backingvolume.path()
@@ -331,8 +321,7 @@ class KBox:
             self._cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain, reserveip=reserveip, files=files)
             self._uploadimage(name, pool=default_storagepool)
         if reserveip:
-            xml = vm.XMLDesc(0)
-            vmxml = ET.fromstring(xml)
+            vmxml = ''
             macs = []
             for element in vmxml.getiterator('interface'):
                 mac = element.find('mac').get('address')
@@ -395,13 +384,11 @@ class KBox:
         for pool in conn.listStoragePools():
             poolname = pool
             pool = conn.storagePoolLookupByName(pool)
-            poolxml = pool.XMLDesc(0)
-            root = ET.fromstring(poolxml)
-            pooltype = root.getiterator('pool')[0].get('type')
+            pooltype = ''
             if pooltype == 'dir':
-                poolpath = root.getiterator('path')[0].text
+                poolpath = ''
             else:
-                poolpath = root.getiterator('device')[0].get('path')
+                poolpath = ''
             s = pool.info()
             used = "%.2f" % (float(s[2]) / 1024 / 1024 / 1024)
             available = "%.2f" % (float(s[3]) / 1024 / 1024 / 1024)
@@ -417,10 +404,8 @@ class KBox:
             print("Network:%s Type:bridged" % (interfacename))
         for network in conn.listAllNetworks():
             networkname = network.name()
-            netxml = network.XMLDesc(0)
             cidr = 'N/A'
-            root = ET.fromstring(netxml)
-            ip = root.getiterator('ip')
+            ip = ''
             if ip:
                 attributes = ip[0].attrib
                 firstip = attributes.get('address')
@@ -432,7 +417,7 @@ class KBox:
                     cidr = ip.cidr
                 except:
                     cidr = "N/A"
-            dhcp = root.getiterator('dhcp')
+            dhcp = ''
             if dhcp:
                 dhcp = True
             else:
@@ -451,47 +436,16 @@ class KBox:
 
     def list(self):
         vms = []
-        leases = {}
+        # leases = {}
         conn = self.conn
-        for network in conn.listAllNetworks():
-            for lease in network.DHCPLeases():
-                ip = lease['ipaddr']
-                mac = lease['mac']
-                leases[mac] = ip
         status = {'PoweredOff': 'down', 'PoweredOn': 'up', 'FirstOnline': 'up'}
-        for vm in conn.listAllDomains(0):
-            xml = vm.XMLDesc(0)
-            root = ET.fromstring(xml)
-            description = root.getiterator('description')
-            if description:
-                description = description[0].text
-            else:
-                description = ''
-            name = vm.name()
+        for vm in conn.machines:
+            name = vm.name
             state = status[str(vm.state)]
-            ips = []
-            title = ''
-            for element in root.getiterator('interface'):
-                mac = element.find('mac').get('address')
-                if str(vm.state):
-                    if mac in leases:
-                        ips.append(leases[mac])
-                if ips:
-                    ip = ips[-1]
-                else:
-                    ip = ''
-            for entry in root.getiterator('entry'):
-                attributes = entry.attrib
-                if attributes['name'] == 'version':
-                    ip = entry.text
-                if attributes['name'] == 'product':
-                    title = entry.text
+            ip = ''
             source = ''
-            for element in root.getiterator('backingStore'):
-                s = element.find('source')
-                if s is not None:
-                    source = os.path.basename(s.get('file'))
-                    break
+            description = vm.description
+            title = 'N/A'
             vms.append([name, state, ip, source, description, title])
         return vms
 
@@ -502,21 +456,13 @@ class KBox:
             print("VM down")
             return
         else:
-            xml = vm.XMLDesc(0)
-            root = ET.fromstring(xml)
-            for element in root.getiterator('graphics'):
-                attributes = element.attrib
-                if attributes['listen'] == '127.0.0.1' or tunnel:
-                    host = '127.0.0.1'
-                else:
-                    host = self.host
-                protocol = attributes['type']
-                port = attributes['port']
-                if tunnel:
-                    consolecommand = "ssh -f -p %s -L %s:127.0.0.1:%s %s@%s sleep 10" % (self.port, port, port, self.user, self.host)
-                    os.popen(consolecommand)
-                url = "%s://%s:%s" % (protocol, host, port)
-                os.popen("remote-viewer %s &" % url)
+            # session = vm.create_session()
+            vm.launch_vm_process(None, 'gui', '')
+            # console = session.console
+            # print dir(console)
+            # console.show_console_window()
+            return
+            # os.popen("remote-viewer %s &" % url)
 
     def serialconsole(self, name):
         conn = self.conn
@@ -525,9 +471,10 @@ class KBox:
             print("VM down")
             return
         else:
-            xml = vm.XMLDesc(0)
-            root = ET.fromstring(xml)
-            serial = root.getiterator('serial')
+            # session = vm.create_session()
+            vm.launch_vm_process(None, 'gui', '')
+            # console = session.console
+            serial = ''
             if not serial:
                 print("No serial Console found. Leaving...")
                 return
@@ -546,7 +493,7 @@ class KBox:
 
     def info(self, name):
         # ips = []
-        leases = {}
+        # leases = {}
         status = {'PoweredOff': 'down', 'PoweredOn': 'up', 'FirstOnline': 'up'}
         starts = {False: 'no', True: 'yes'}
         conn = self.conn
@@ -575,21 +522,19 @@ class KBox:
             print("profile: %s" % title)
         print("cpus: %s" % numcpus)
         print("memory: %sMB" % memory)
-        nics = vm.get_network_adapter(0)
         for n in range(7):
             nic = vm.get_network_adapter(n)
             enabled = nic.enabled
             if not enabled:
                 break
-            device = "eth%s" %n
-            mac = ':'.join(nic.mac_address[i:i+2] for i in range(0, len(nic.mac_address), 2))
+            device = "eth%s" % n
+            mac = ':'.join(nic.mac_address[i: i + 2] for i in range(0, len(nic.mac_address), 2))
             network = 'default'
             networktype = 'routed'
             if nic.nat_network != '':
                 networktype = 'internal'
                 network = nic.internal_network
             print("net interfaces:%s mac: %s net: %s type: %s" % (device, mac, network, networktype))
-        
         for index, dev in enumerate(['a', 'b', 'c', 'd', 'e']):
             try:
                 disk = vm.get_medium('SATA', index, 0)
@@ -608,13 +553,13 @@ class KBox:
     def volumes(self, iso=False):
         isos = []
         templates = []
-        default_templates = [os.path.basename(t) for t in TEMPLATES.values()]
+        # default_templates = [os.path.basename(t) for t in TEMPLATES.values()]
+        default_templates = []
         conn = self.conn
         for storage in conn.listStoragePools():
             storage = conn.storagePoolLookupByName(storage)
             storage.refresh(0)
-            storagexml = storage.XMLDesc(0)
-            root = ET.fromstring(storagexml)
+            root = ''
             for element in root.getiterator('path'):
                 storagepath = element.text
                 break
@@ -636,12 +581,9 @@ class KBox:
             return
         vm.remove(True)
 
-
     def clone(self, old, new, full=False, start=False):
         conn = self.conn
-        oldvm = conn.lookupByName(old)
-        oldxml = oldvm.XMLDesc(0)
-        tree = ET.fromstring(oldxml)
+        tree = ''
         uuid = tree.getiterator('uuid')[0]
         tree.remove(uuid)
         for vmname in tree.getiterator('name'):
@@ -676,8 +618,6 @@ class KBox:
             for serial in tree.getiterator('serial'):
                 source = serial.find('source')
                 source.set('service', str(self._get_free_port()))
-        newxml = ET.tostring(tree)
-        conn.defineXML(newxml)
         vm = conn.lookupByName(new)
         if start:
             vm.setAutostart(1)
@@ -799,8 +739,7 @@ class KBox:
     def update_ip(self, name, ip):
         conn = self.conn
         vm = conn.find_machine(name)
-        xml = vm.XMLDesc(0)
-        root = ET.fromstring(xml)
+        root = ''
         if not vm:
             print("VM %s not found" % name)
         if str(vm.state) == 1:
@@ -808,16 +747,16 @@ class KBox:
         osentry = root.getiterator('os')[0]
         smbios = osentry.find('smbios')
         if smbios is None:
-            newsmbios = ET.Element("smbios", mode="sysinfo")
+            newsmbios = ''
             osentry.append(newsmbios)
         sysinfo = root.getiterator('sysinfo')
         system = root.getiterator('system')
         if not sysinfo:
-            sysinfo = ET.Element("sysinfo", type="smbios")
+            sysinfo = ''
             root.append(sysinfo)
         sysinfo = root.getiterator('sysinfo')[0]
         if not system:
-            system = ET.Element("system")
+            system = ''
             sysinfo.append(system)
         system = root.getiterator('system')[0]
         versionfound = False
@@ -827,10 +766,10 @@ class KBox:
                 entry.text = ip
                 versionfound = True
         if not versionfound:
-            version = ET.Element("entry", name="version")
+            version = ''
             version.text = ip
             system.append(version)
-        newxml = ET.tostring(root)
+        newxml = ''
         conn.defineXML(newxml)
 
     def update_memory(self, name, memory):
@@ -838,8 +777,8 @@ class KBox:
         memory = str(int(memory) * 1024)
         try:
             vm = conn.find_machine(name)
-            xml = vm.XMLDesc(0)
-            root = ET.fromstring(xml)
+            root = ''
+            print vm
         except:
             print("VM %s not found" % name)
             return
@@ -847,21 +786,21 @@ class KBox:
         memorynode.text = memory
         currentmemory = root.getiterator('currentMemory')[0]
         currentmemory.text = memory
-        newxml = ET.tostring(root)
+        newxml = ''
         conn.defineXML(newxml)
 
     def update_cpu(self, name, numcpus):
         conn = self.conn
         try:
             vm = conn.find_machine(name)
-            xml = vm.XMLDesc(0)
-            root = ET.fromstring(xml)
+            print vm
+            root = ''
         except:
             print("VM %s not found" % name)
             return
         cpunode = root.getiterator('vcpu')[0]
         cpunode.text = numcpus
-        newxml = ET.tostring(root)
+        newxml = ''
         conn.defineXML(newxml)
 
     def update_start(self, name, start=True):
@@ -887,8 +826,7 @@ class KBox:
             diskformat = 'raw'
         if pool is not None:
             pool = conn.storagePoolLookupByName(pool)
-            poolxml = pool.XMLDesc(0)
-            poolroot = ET.fromstring(poolxml)
+            poolroot = ''
             pooltype = poolroot.getiterator('pool')[0].get('type')
             for element in poolroot.getiterator('path'):
                 poolpath = element.text
@@ -926,8 +864,7 @@ class KBox:
             diskformat = 'raw'
         try:
             vm = conn.find_machine(name)
-            xml = vm.XMLDesc(0)
-            root = ET.fromstring(xml)
+            root = ''
         except:
             print("VM %s not found" % name)
             return
@@ -954,8 +891,7 @@ class KBox:
         conn = self.conn
         try:
             vm = conn.find_machine(name)
-            xml = vm.XMLDesc(0)
-            root = ET.fromstring(xml)
+            root = ''
         except:
             print("VM %s not found" % name)
             return
@@ -1023,8 +959,7 @@ class KBox:
             networks[n.name()] = 'network'
         try:
             vm = conn.find_machine(name)
-            xml = vm.XMLDesc(0)
-            root = ET.fromstring(xml)
+            root = ''
         except:
             print("VM %s not found" % name)
             return
@@ -1175,7 +1110,6 @@ class KBox:
 
     def add_image(self, image, pool):
         poolname = pool
-        shortimage = os.path.basename(image)
         conn = self.conn
         volumes = []
         try:
@@ -1184,16 +1118,7 @@ class KBox:
                 volumes.append(vol.name())
         except:
             return {'result': 'failure', 'reason': "Pool %s not found" % poolname}
-        poolxml = pool.XMLDesc(0)
-        root = ET.fromstring(poolxml)
-        pooltype = root.getiterator('pool')[0].get('type')
-        if pooltype == 'dir':
-            poolpath = root.getiterator('path')[0].text
-        else:
-            poolpath = root.getiterator('device')[0].get('path')
-            return {'result': 'failure', 'reason': "Upload to a lvm pool not implemented not found"}
-        if shortimage in volumes:
-            return {'result': 'failure', 'reason': "Template %s already exists in pool %s" % (shortimage, poolname)}
+        poolpath = ''
         if self.host == 'localhost' or self.host == '127.0.0.1':
             cmd = 'wget -P %s %s' % (poolpath, image)
         elif self.protocol == 'ssh':
@@ -1267,9 +1192,8 @@ class KBox:
         conn = self.conn
         for network in conn.listAllNetworks():
             networkname = network.name()
-            netxml = network.XMLDesc(0)
             cidr = 'N/A'
-            root = ET.fromstring(netxml)
+            root = ''
             ip = root.getiterator('ip')
             if ip:
                 attributes = ip[0].attrib
@@ -1293,8 +1217,7 @@ class KBox:
             interfacename = interface.name()
             if interfacename == 'lo':
                 continue
-            netxml = interface.XMLDesc(0)
-            root = ET.fromstring(netxml)
+            root = ''
             ip = root.getiterator('ip')
             if ip:
                 attributes = ip[0].attrib
