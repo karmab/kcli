@@ -5,6 +5,8 @@ import fileinput
 from .defaults import NETS, POOL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, START, TEMPLATES, NESTED, TUNNEL
 from prettytable import PrettyTable
 from kvirt import Kvirt, __version__
+from vbox import KBox
+
 import os
 from time import sleep
 import yaml
@@ -89,6 +91,9 @@ class Config():
         self.protocol = options.get('protocol', 'ssh')
         self.url = options.get('url', None)
         self.tunnel = bool(options.get('tunnel', self.default['tunnel']))
+        self.type = options.get('type', 'kvirt')
+        if self.type == 'vbox':
+            return KBox()
         if self.host is None:
             click.secho("Problem parsing your configuration file", fg='red')
             os._exit(1)
@@ -413,17 +418,18 @@ def vm(config, client, profile, listing, info, filters, start, stop, ssh, ip1, i
                     else:
                         vms.add_row(vm)
             print(vms)
-        return
-        vms = PrettyTable(["Name", "Status", "Ips", "Source", "Description/Plan", "Profile"])
-        for vm in sorted(k.list()):
-            if filters:
-                status = vm[1]
-                if status == filters:
+            return
+        else:
+            vms = PrettyTable(["Name", "Status", "Ips", "Source", "Description/Plan", "Profile"])
+            for vm in sorted(k.list()):
+                if filters:
+                    status = vm[1]
+                    if status == filters:
+                        vms.add_row(vm)
+                else:
                     vms.add_row(vm)
-            else:
-                vms.add_row(vm)
-        print(vms)
-        return
+            print(vms)
+            return
     if name is None:
         click.secho("Missing vm name", fg='red')
         return
