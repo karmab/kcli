@@ -33,6 +33,7 @@ guestwindows2003 = "windows_2003"
 guestwindows200364 = "windows_2003x64"
 guestwindows2008 = "windows_2008"
 guestwindows200864 = "windows_2008x64"
+status = {'PoweredOff': 'down', 'PoweredOn': 'up', 'FirstOnline': 'up', 'Aborted': 'down', 'Saved': 'down'}
 
 
 class KBox:
@@ -335,7 +336,6 @@ class KBox:
 
     def start(self, name):
         conn = self.conn
-        status = {'PoweredOff': 'down', 'PoweredOn': 'up', 'FirstOnline': 'up'}
         try:
             vm = conn.find_machine(name)
             if status[str(vm.state)] == "up":
@@ -349,7 +349,6 @@ class KBox:
 
     def stop(self, name):
         conn = self.conn
-        status = {'PoweredOff': 'down', 'PoweredOn': 'up', 'FirstOnline': 'up'}
         vm = conn.find_machine(name)
         try:
             vm = conn.find_machine(name)
@@ -365,7 +364,6 @@ class KBox:
 
     def restart(self, name):
         conn = self.conn
-        status = {'PoweredOff': 'down', 'PoweredOn': 'up', 'FirstOnline': 'up'}
         vm = conn.find_machine(name)
         if status[str(vm.state)] == "down":
             return {'result': 'success'}
@@ -426,7 +424,6 @@ class KBox:
 
     def status(self, name):
         conn = self.conn
-        status = {'PoweredOff': 'down', 'PoweredOn': 'up', 'FirstOnline': 'up'}
         try:
             vm = conn.find_machine(name)
             print dir(vm)
@@ -438,7 +435,6 @@ class KBox:
         vms = []
         # leases = {}
         conn = self.conn
-        status = {'PoweredOff': 'down', 'PoweredOn': 'up', 'FirstOnline': 'up'}
         for vm in conn.machines:
             name = vm.name
             state = status[str(vm.state)]
@@ -456,13 +452,7 @@ class KBox:
             print("VM down")
             return
         else:
-            # session = vm.create_session()
             vm.launch_vm_process(None, 'gui', '')
-            # console = session.console
-            # print dir(console)
-            # console.show_console_window()
-            return
-            # os.popen("remote-viewer %s &" % url)
 
     def serialconsole(self, name):
         conn = self.conn
@@ -471,30 +461,16 @@ class KBox:
             print("VM down")
             return
         else:
-            # session = vm.create_session()
-            vm.launch_vm_process(None, 'gui', '')
-            # console = session.console
-            serial = ''
-            if not serial:
+            serial = vm.get_serial_port(0)
+            if not serial.enabled:
                 print("No serial Console found. Leaving...")
                 return
-            elif self.host in ['localhost', '127.0.0.1']:
-                os.system('virsh console %s' % name)
-            else:
-                for element in serial:
-                    serialport = element.find('source').get('service')
-                    if serialport:
-                        if self.protocol != 'ssh':
-                            print("Remote serial Console requires using ssh . Leaving...")
-                            return
-                        else:
-                            serialcommand = "ssh -p %s %s@%s nc 127.0.0.1 %s" % (self.port, self.user, self.host, serialport)
-                        os.system(serialcommand)
+            serialport = serial.path
+            os.system("nc 127.0.0.1 %s" % serialport)
 
     def info(self, name):
         # ips = []
         # leases = {}
-        status = {'PoweredOff': 'down', 'PoweredOn': 'up', 'FirstOnline': 'up'}
         starts = {False: 'no', True: 'yes'}
         conn = self.conn
         # for network in conn.listAllNetworks():
@@ -543,9 +519,10 @@ class KBox:
             device = 'sd%s' % dev
             path = disk.name
             disksize = disk.logical_size / 1024 / 1024 / 1024
-            drivertype = disk.name.split('.')[1]
+            drivertype = os.path.splitext(disk.name)[1].replace('.', '')
             diskformat = 'file'
             print("diskname: %s disksize: %sGB diskformat: %s type: %s path: %s" % (device, disksize, diskformat, drivertype, path))
+            return
 
     def ip(self, name):
         return None
