@@ -5,38 +5,39 @@ interact with a local/remote libvirt daemon
 """
 
 # from defaults import TEMPLATES
-from distutils.spawn import find_executable
+# from distutils.spawn import find_executable
 from iptools import IpRange
 from netaddr import IPNetwork
 import os
-import socket
 import string
 import time
-from virtualbox import VirtualBox
+from virtualbox import VirtualBox, library, Session
+from kvirt import common
+import yaml
 
 
 __version__ = "5.3"
 
 KB = 1024 * 1024
 MB = 1024 * KB
-guestrhel532 = "rhel_5"
-guestrhel564 = "rhel_5x64"
-guestrhel632 = "rhel_6"
-guestrhel664 = "rhel_6x64"
-guestrhel764 = "rhel_7x64"
-guestother = "other"
-guestotherlinux = "other_linux"
-guestwindowsxp = "windows_xp"
-guestwindows7 = "windows_7"
-guestwindows764 = "windows_7x64"
-guestwindows2003 = "windows_2003"
-guestwindows200364 = "windows_2003x64"
-guestwindows2008 = "windows_2008"
-guestwindows200864 = "windows_2008x64"
+guestrhel532 = "RedHat"
+guestrhel564 = "RedHat_64"
+guestrhel632 = "RedHat"
+guestrhel664 = "RedHat_64"
+guestrhel764 = "RedHat_64"
+guestother = "Other"
+guestotherlinux = "Linux"
+guestwindowsxp = "WindowsXP"
+guestwindows7 = "Windows7"
+guestwindows764 = "Windows7_64"
+guestwindows2003 = "Windows2003"
+guestwindows200364 = "Windows2003_64"
+guestwindows2008 = "Windows2008_64"
+guestwindows200864 = "Windows2008_64"
 status = {'PoweredOff': 'down', 'PoweredOn': 'up', 'FirstOnline': 'up', 'Aborted': 'down', 'Saved': 'down'}
 
 
-class KBox:
+class Kbox:
     def __init__(self):
         try:
             self.conn = VirtualBox()
@@ -74,22 +75,79 @@ class KBox:
         except:
             return False
 
-    def create(self, name, virttype='kvm', title='', description='kvirt', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, reservedns=False, start=True, keys=None, cmds=None, ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[]):
+    def create(self, name, virttype='vbox', title='', description='kvirt', numcpus=2, memory=512, guestid='Linux', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, reservedns=False, start=True, keys=None, cmds=None, ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[]):
         default_diskinterface = diskinterface
         default_diskthin = diskthin
         default_disksize = disksize
         default_pool = pool
+        default_pooltype = 'file'
+        default_poolpath = '/tmp'
         conn = self.conn
-        try:
-            default_storagepool = conn.storagePoolLookupByName(default_pool)
-        except:
-            return {'result': 'failure', 'reason': "Pool %s not found" % default_pool}
-        default_pooltype = ''
-        default_poolpath = None
-        if vnc:
-            display = 'vnc'
-        else:
-            display = 'spice'
+        vm = conn.create_machine("", name, [], guestid, "")
+        vm.cpu_count = numcpus
+        vm.add_storage_controller('SATA', library.StorageBus(2))
+        # interface = library.IVirtualBox()
+        # medium = conn.create_hard_disk("VDI", "/tmp/proutos.vdi")
+        # progress = medium.create_base_storage(1024 * 1024, [library.MediumVariant.fixed])
+        # progress.wait_for_completion()
+        # opened_medium = conn.open_medium("rhel-guest-image-7.2-20160302.0.x86_64.vdi", library.DeviceType.hard_disk, library.AccessMode.read_write, False)
+        # print opened_medium
+        # session.machine.attach_device("SAS", 2, 0, library.DeviceType.hard_disk, opened_medium)
+        # vm.add_storage_controller('IDE', library.StorageBus(1))
+        vm.memory_size = memory
+        vm.description = description
+        serial = vm.get_serial_port(0)
+        serial.server = True
+        serial.enabled = True
+        serial.path = str(common.get_free_port())
+        serial.host_mode = library.PortMode.tcp
+        for index, net in enumerate(nets):
+            nic = vm.get_network_adapter(index)
+            nic.enabled = True
+            if isinstance(net, str):
+                # nic.nat_network = net
+                nic.internal_network = net
+                # network = nic.internal_network
+            elif isinstance(net, dict) and 'name' in net:
+                nic.nat_network = net['name']
+                ip = None
+                if ips and len(ips) > index and ips[index] is not None:
+                    ip = ips[index]
+                    nets[index]['ip'] = ip
+                elif 'ip' in nets[index]:
+                    ip = nets[index]['ip']
+                if 'mac' in nets[index]:
+                    nic.mac_address = nets[index]['mac'].replace(':', '')
+        vm.save_settings()
+        conn.register_machine(vm)
+        session = Session()
+        vm.lock_machine(session, library.LockType.write)
+        machine = session.machine
+        if cloudinit:
+            common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain, reserveip=reserveip, files=files)
+            medium = conn.create_medium('RAW', '/tmp/%s.iso' % name, library.AccessMode.read_only, library.DeviceType.dvd)
+            progress = medium.create_base_storage(368, [library.MediumVariant.fixed])
+            progress.wait_for_completion()
+            dvd = conn.open_medium('/tmp/%s.iso' % name, library.DeviceType.dvd, library.AccessMode.read_only, False)
+            machine.attach_device("SATA", 0, 0, library.DeviceType.dvd, dvd)
+        machine.save_settings()
+        session.unlock_machine()
+        return
+        # for index, dev in enumerate(['a', 'b', 'c', 'd', 'e']):
+        #    try:
+        #        disk = vm.get_medium('SATA', index, 0)
+        #    except:
+        #        break
+        #    device = 'sd%s' % dev
+        #    path = disk.name
+        #    disksize = disk.logical_size / 1024 / 1024 / 1024
+        #    drivertype = os.path.splitext(disk.name)[1].replace('.', '')
+        #    diskformat = 'file'
+        #    return
+        # if vnc:
+        #    display = 'vnc'
+        # else:
+        #    display = 'spice'
         volumes = {}
         volumespaths = {}
         for p in conn.listStoragePools():
@@ -105,10 +163,6 @@ class KBox:
         for net in conn.listInterfaces():
             if net != 'lo':
                 bridges.append(net)
-        machine = 'pc'
-        sysinfo = "<smbios mode='sysinfo'/>"
-        disksxml = ''
-        volsxml = {}
         for index, disk in enumerate(disks):
             if disk is None:
                 disksize = default_disksize
@@ -130,102 +184,33 @@ class KBox:
                 diskinterface = disk.get('interface', default_diskinterface)
                 diskpool = disk.get('pool', default_pool)
                 diskwwn = disk.get('wwn')
-                try:
-                    print('x')
-                except:
-                    return {'result': 'failure', 'reason': "Pool %s not found" % diskpool}
-                diskpooltype = ''
-                diskpoolpath = None
             else:
                 return {'result': 'failure', 'reason': "Invalid disk entry"}
-            letter = chr(index + ord('a'))
-            diskdev, diskbus = 'vd%s' % letter, 'virtio'
-            if diskinterface != 'virtio':
-                diskdev, diskbus = 'hd%s' % letter, 'ide'
-            diskformat = 'qcow2'
-            if not diskthin:
-                diskformat = 'raw'
-            storagename = "%s_%d.img" % (name, index + 1)
-            diskpath = "%s/%s" % (diskpoolpath, storagename)
             if template is not None and index == 0:
-                try:
-                    default_storagepool.refresh(0)
-                    if '/' in template:
-                        backingvolume = volumespaths[template]['object']
-                    else:
-                        backingvolume = volumes[template]['object']
-                    backingxml = backingvolume.XMLDesc(0)
-                except:
-                    return {'result': 'failure', 'reason': "Invalid template %s" % template}
-                backing = backingvolume.path()
-                if '/dev' in backing and diskpooltype == 'dir':
-                    return {'result': 'failure', 'reason': "lvm template can not be used with a dir pool.Leaving..."}
-                if '/dev' not in backing and diskpooltype == 'logical':
-                    return {'result': 'failure', 'reason': "file template can not be used with a lvm pool.Leaving..."}
-                backingxml = """<backingStore type='file' index='1'>
-                                <format type='qcow2'/>
-                                <source file='%s'/>
-                                <backingStore/>
-                                </backingStore>""" % backing
+                print diskpooltype, diskpoolpath, diskpool, diskwwn
+                print "prout"
+                # return {'result': 'failure', 'reason': "Invalid template %s" % template}
             else:
-                backing = None
-                backingxml = '<backingStore/>'
-            volxml = self._xmlvolume(path=diskpath, size=disksize, pooltype=diskpooltype, backing=backing, diskformat=diskformat)
-            if diskpool in volsxml:
-                volsxml[diskpool].append(volxml)
-            else:
-                volsxml[diskpool] = [volxml]
-            if diskpooltype == 'logical':
-                diskformat = 'raw'
-            if diskwwn is not None and diskbus == 'ide':
-                diskwwn = '0x%016x' % diskwwn
-                diskwwn = "<wwn>%s</wwn>" % diskwwn
-            else:
-                diskwwn = ''
-            disksxml = """%s<disk type='file' device='disk'>
-                    <driver name='qemu' type='%s'/>
-                    <source file='%s'/>
-                    %s
-                    <target dev='%s' bus='%s'/>
-                    %s
-                    </disk>""" % (disksxml, diskformat, diskpath, backingxml, diskdev, diskbus, diskwwn)
-        netxml = ''
-        version = ''
-        for index, net in enumerate(nets):
-            macxml = ''
-            if isinstance(net, str):
-                netname = net
-            elif isinstance(net, dict) and 'name' in net:
-                netname = net['name']
-                ip = None
-                if ips and len(ips) > index and ips[index] is not None:
-                    ip = ips[index]
-                    nets[index]['ip'] = ip
-                elif 'ip' in nets[index]:
-                    ip = nets[index]['ip']
-                if 'mac' in nets[index]:
-                    mac = nets[index]['mac']
-                    macxml = "<mac address='%s'/>" % mac
-                if index == 0 and ip is not None:
-                    version = "<entry name='version'>%s</entry>" % ip
-            if netname in bridges:
-                sourcenet = 'bridge'
-            elif netname in networks:
-                sourcenet = 'network'
-            else:
-                return {'result': 'failure', 'reason': "Invalid network %s" % netname}
-            netxml = """%s
-                     <interface type='%s'>
-                     %s
-                     <source %s='%s'/>
-                     <model type='virtio'/>
-                     </interface>""" % (netxml, sourcenet, macxml, sourcenet, netname)
-        version = """<sysinfo type='smbios'>
-                     <system>
-                     %s
-                     <entry name='product'>%s</entry>
-                     </system>
-                     </sysinfo>""" % (version, title)
+                print "prout"
+                # storagename = "%s_%d.img" % (name, index + 1)
+                # diskpath = "%s/%s" % (diskpoolpath, storagename)
+                # medium = conn.create_medium('RAW', '/tmp/%s.iso' % name, library.AccessMode.read_only, library.DeviceType.dvd)
+                # progress = medium.create_base_storage(368, [library.MediumVariant.fixed])
+                # progress.wait_for_completion()
+                # dvd = conn.open_medium('/tmp/%s.iso' % name, library.DeviceType.dvd, library.AccessMode.read_only, False)
+                # machine.attach_device("SATA", 0, 0, library.DeviceType.dvd, dvd)
+                # try:
+                #    print('x')
+                # except:
+                #    return {'result': 'failure', 'reason': "Pool %s not found" % diskpool}
+                # diskpooltype = ''
+                # diskpoolpath = None
+            # if netname in bridges:
+            #    sourcenet = 'bridge'
+            # elif netname in networks:
+            #    sourcenet = 'network'
+            # else:
+            #    return {'result': 'failure', 'reason': "Invalid network %s" % netname}
         if iso is None:
             if cloudinit:
                 iso = "%s/%s.iso" % (default_poolpath, name)
@@ -237,101 +222,27 @@ class KBox:
                     shortiso = os.path.basename(iso)
                 else:
                     shortiso = iso
-                isovolume = volumes[shortiso]['object']
-                iso = isovolume.path()
                 # iso = "%s/%s" % (default_poolpath, iso)
                 # iso = "%s/%s" % (isopath, iso)
+                print shortiso
             except:
                 return {'result': 'failure', 'reason': "Invalid iso %s" % iso}
-        isoxml = """<disk type='file' device='cdrom'>
-                      <driver name='qemu' type='raw'/>
-                      <source file='%s'/>
-                      <target dev='hdc' bus='ide'/>
-                      <readonly/>
-                    </disk>""" % (iso)
-        if tunnel:
-            listen = '127.0.0.1'
-        else:
-            listen = '0.0.0.0'
-        displayxml = """<input type='tablet' bus='usb'/>
-                        <input type='mouse' bus='ps2'/>
-                        <graphics type='%s' port='-1' autoport='yes' listen='%s'>
-                        <listen type='address' address='%s'/>
-                        </graphics>
-                        <memballoon model='virtio'/>""" % (display, listen, listen)
-        if nested and virttype == 'kvm':
-            nestedxml = """<cpu match='exact'>
-                  <model>Westmere</model>
-                   <feature policy='require' name='vmx'/>
-                </cpu>"""
-        else:
-            nestedxml = ""
-        if self.host in ['localhost', '127.0.0.1']:
-            serialxml = """<serial type='pty'>
-                       <target port='0'/>
-                       </serial>
-                       <console type='pty'>
-                       <target type='serial' port='0'/>
-                       </console>"""
-        else:
-            serialxml = """ <serial type="tcp">
-                     <source mode="bind" host="127.0.0.1" service="%s"/>
-                     <protocol type="telnet"/>
-                     <target port="0"/>
-                     </serial>""" % self._get_free_port()
-        vmxml = """<domain type='%s'>
-                  <name>%s</name>
-                  <description>%s</description>
-                  %s
-                  <memory unit='MiB'>%d</memory>
-                  <vcpu>%d</vcpu>
-                  <os>
-                    <type arch='x86_64' machine='%s'>hvm</type>
-                    <boot dev='hd'/>
-                    <boot dev='cdrom'/>
-                    <bootmenu enable='yes'/>
-                    %s
-                  </os>
-                  <features>
-                    <acpi/>
-                    <apic/>
-                    <pae/>
-                  </features>
-                  <clock offset='utc'/>
-                  <on_poweroff>destroy</on_poweroff>
-                  <on_reboot>restart</on_reboot>
-                  <on_crash>restart</on_crash>
-                  <devices>
-                    %s
-                    %s
-                    %s
-                    %s
-                    %s
-                  </devices>
-                    %s
-                    </domain>""" % (virttype, name, description, version, memory, numcpus, machine, sysinfo, disksxml, netxml, isoxml, displayxml, serialxml, nestedxml)
-        for pool in volsxml:
-            storagepool = conn.storagePoolLookupByName(pool)
-            storagepool.refresh(0)
-            for volxml in volsxml[pool]:
-                storagepool.createXML(volxml, 0)
-        conn.defineXML(vmxml)
-        vm = conn.find_machine(name)
+        # if nested and virttype == 'kvm':
+        #    print "prout"
+        # else:
+        #    print "prout"
         vm.setAutostart(1)
-        if cloudinit:
-            self._cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain, reserveip=reserveip, files=files)
-            self._uploadimage(name, pool=default_storagepool)
-        if reserveip:
-            vmxml = ''
-            macs = []
-            for element in vmxml.getiterator('interface'):
-                mac = element.find('mac').get('address')
-                macs.append(mac)
-            self._reserve_ip(name, nets, macs)
-        if start:
-            vm.create()
-        if reservedns:
-            self._reserve_dns(name, nets, domain)
+        # if reserveip:
+        #    vmxml = ''
+        #    macs = []
+        #    for element in vmxml.getiterator('interface'):
+        #        mac = element.find('mac').get('address')
+        #        macs.append(mac)
+        #    self._reserve_ip(name, nets, macs)
+        # if start:
+        #    vm.create()
+        # if reservedns:
+        #    self._reserve_dns(name, nets, domain)
         return {'result': 'success'}
 
     def start(self, name):
@@ -343,6 +254,7 @@ class KBox:
             else:
                 vm = conn.find_machine(name)
                 vm.launch_vm_process(None, 'headless', '')
+
                 return {'result': 'success'}
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
@@ -516,6 +428,7 @@ class KBox:
                 disk = vm.get_medium('SATA', index, 0)
             except:
                 break
+            print disk.type_p
             device = 'sd%s' % dev
             path = disk.name
             disksize = disk.logical_size / 1024 / 1024 / 1024
@@ -525,26 +438,32 @@ class KBox:
             return
 
     def ip(self, name):
-        return None
+        conn = self.conn
+        try:
+            vm = conn.find_machine(name)
+        except:
+            print("VM %s not found" % name)
+            return None
+        # session = vm.create_session()
+        # guest = session.console.guest
+        properties = vm.get_guest_property('/VirtualBox/GuestInfo/Net/0/V4/IP')
+        print properties
 
     def volumes(self, iso=False):
         isos = []
         templates = []
-        # default_templates = [os.path.basename(t) for t in TEMPLATES.values()]
-        default_templates = []
-        conn = self.conn
-        for storage in conn.listStoragePools():
-            storage = conn.storagePoolLookupByName(storage)
-            storage.refresh(0)
-            root = ''
-            for element in root.getiterator('path'):
-                storagepath = element.text
-                break
-            for volume in storage.listVolumes():
-                if volume.endswith('iso'):
-                    isos.append("%s/%s" % (storagepath, volume))
-                elif volume.endswith('qcow2') or volume in default_templates:
-                    templates.append("%s/%s" % (storagepath, volume))
+        poolinfo = self._pool_info()
+        # if iso:
+        #    for iso in conn.dvd_images:
+        #        isos.append(iso.name)
+        #    return isos
+        for pool in poolinfo:
+            path = pool['path']
+            for entry in os.listdir(path):
+                if entry.endswith('qcow2'):
+                    templates.append(entry)
+                elif entry.endswith('iso'):
+                    isos.append(entry)
         if iso:
             return isos
         else:
@@ -594,124 +513,11 @@ class KBox:
         if self.host not in ['127.0.0.1', 'localhost']:
             for serial in tree.getiterator('serial'):
                 source = serial.find('source')
-                source.set('service', str(self._get_free_port()))
+                source.set('service', str(common.get_free_port()))
         vm = conn.lookupByName(new)
         if start:
             vm.setAutostart(1)
             vm.create()
-
-    def _cloudinit(self, name, keys=None, cmds=None, nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[]):
-        default_gateway = gateway
-        with open('/tmp/meta-data', 'w') as metadatafile:
-            if domain is not None:
-                localhostname = "%s.%s" % (name, domain)
-            else:
-                localhostname = name
-            metadatafile.write('instance-id: XXX\nlocal-hostname: %s\n' % localhostname)
-            metadata = ''
-            if nets:
-                for index, net in enumerate(nets):
-                    if isinstance(net, str):
-                        if index == 0:
-                            continue
-                        nicname = "eth%d" % index
-                        ip = None
-                        netmask = None
-                    elif isinstance(net, dict):
-                        nicname = net.get('nic', "eth%d" % index)
-                        ip = net.get('ip')
-                        netmask = net.get('mask')
-                    metadata += "  auto %s\n" % nicname
-                    if ip is not None and netmask is not None and not reserveip:
-                        metadata += "  iface %s inet static\n" % nicname
-                        metadata += "  address %s\n" % ip
-                        metadata += "  netmask %s\n" % netmask
-                        gateway = net.get('gateway')
-                        if index == 0 and default_gateway is not None:
-                            metadata += "  gateway %s\n" % default_gateway
-                        elif gateway is not None:
-                            metadata += "  gateway %s\n" % gateway
-                        dns = net.get('dns')
-                        if dns is not None:
-                            metadata += "  dns-nameservers %s\n" % dns
-                        domain = net.get('domain')
-                        if domain is not None:
-                            metadatafile.write("  dns-search %s\n" % domain)
-                    else:
-                        metadata += "  iface %s inet dhcp\n" % nicname
-                if metadata:
-                    metadatafile.write("network-interfaces: |\n")
-                    metadatafile.write(metadata)
-                    # if dns is not None:
-                    #    metadatafile.write("  dns-nameservers %s\n" % dns)
-                    # if domain is not None:
-                    #    metadatafile.write("  dns-search %s\n" % domain)
-        with open('/tmp/user-data', 'w') as userdata:
-            userdata.write('#cloud-config\nhostname: %s\n' % name)
-            if domain is not None:
-                userdata.write("fqdn: %s.%s\n" % (name, domain))
-            if keys is not None or os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME']) or os.path.exists("%s/.ssh/id_dsa.pub" % os.environ['HOME']):
-                userdata.write("ssh_authorized_keys:\n")
-            else:
-                print("neither id_rsa.pub or id_dsa public keys found in your .ssh directory, you might have trouble accessing the vm")
-            if keys is not None:
-                for key in keys:
-                    userdata.write("- %s\n" % key)
-            if os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME']):
-                publickeyfile = "%s/.ssh/id_rsa.pub" % os.environ['HOME']
-                with open(publickeyfile, 'r') as ssh:
-                    key = ssh.read().rstrip()
-                    userdata.write("- %s\n" % key)
-            if os.path.exists("%s/.ssh/id_dsa.pub" % os.environ['HOME']):
-                publickeyfile = "%s/.ssh/id_dsa.pub" % os.environ['HOME']
-                with open(publickeyfile, 'r') as ssh:
-                    key = ssh.read().rstrip()
-                    userdata.write("- %s\n" % key)
-            if cmds is not None:
-                    userdata.write("runcmd:\n")
-                    for cmd in cmds:
-                        if cmd.startswith('#'):
-                            continue
-                        else:
-                            userdata.write("- %s\n" % cmd)
-            if files:
-                userdata.write('ssh_pwauth: True\n')
-                userdata.write('disable_root: false\n')
-                userdata.write("write_files:\n")
-                for fil in files:
-                    if not isinstance(fil, dict):
-                        continue
-                    origin = fil.get('origin')
-                    content = fil.get('content')
-                    if origin is not None:
-                        origin = os.path.expanduser(origin)
-                        if not os.path.exists(origin):
-                            print("Skipping file %s as not found" % origin)
-                            continue
-                        # if origin.endswith('j2'):
-                        #    origin = open(origin, 'r').read()
-                        #    content = Environment().from_string(origin).render(name=name, gateway=gateway, dns=dns, domain=domain)
-                        # else:
-                        #    content = open(origin, 'r').readlines()
-                        content = open(origin, 'r').readlines()
-                    elif content is None:
-                        continue
-                    path = fil.get('path')
-                    owner = fil.get('owner', 'root')
-                    permissions = fil.get('permissions', '0600')
-                    userdata.write("- owner: %s:%s\n" % (owner, owner))
-                    userdata.write("  path: %s\n" % path)
-                    userdata.write("  permissions: '%s'\n" % (permissions))
-                    userdata.write("  content: | \n")
-                    for line in content.split('\n'):
-                        userdata.write("     %s\n" % line.strip())
-        isocmd = 'mkisofs'
-        if find_executable('genisoimage') is not None:
-            isocmd = 'genisoimage'
-        os.system("%s --quiet -o /tmp/%s.iso --volid cidata --joliet --rock /tmp/user-data /tmp/meta-data" % (isocmd, name))
-
-    def handler(self, stream, data, file_):
-        return file_.read(data)
 
     def update_ip(self, name, ip):
         conn = self.conn
@@ -788,9 +594,10 @@ class KBox:
             print("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if start:
-            vm.setAutostart(1)
+            vm.autostart_enabled = True
         else:
-            vm.setAutostart(0)
+            vm.autostart_enabled = False
+        vm.save_settings()
         return {'result': 'success'}
 
     def create_disk(self, name, size, pool=None, thin=True, template=None):
@@ -893,10 +700,20 @@ class KBox:
 
     def list_disks(self):
         volumes = {}
-        for p in self.conn.listStoragePools():
-            poo = self.conn.storagePoolLookupByName(p)
-            for volume in poo.listAllVolumes():
-                volumes[volume.name()] = {'pool': poo.name(), 'path': volume.path()}
+        interface = library.IVirtualBox()
+        poolinfo = self._pool_info()
+        for disk in interface.hard_disks:
+            path = disk.location
+            if poolinfo is not None:
+                pathdir = os.path.dirname(path)
+                pools = [pool['name'] for pool in poolinfo if pool['path'] == pathdir]
+                if pools:
+                    pool = pools[0]
+                else:
+                    pool = ''
+            else:
+                pool = ''
+            volumes[disk.name] = {'pool': pool, 'path': disk.location}
         return volumes
 
     def add_nic(self, name, network):
@@ -1032,58 +849,23 @@ class KBox:
                 scpcommand = "%s %s %s %s@%s:%s" % (scpcommand, arguments, source, user, ip, destination)
             os.system(scpcommand)
 
-    def _get_free_port(self):
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.bind(('localhost', 0))
-        addr, port = s.getsockname()
-        s.close()
-        return port
-
     def create_pool(self, name, poolpath, pooltype='dir', user='qemu'):
-        conn = self.conn
-        for pool in conn.listStoragePools():
-            if pool == name:
-                print("Pool %s already there.Leaving..." % name)
-                return
-        if pooltype == 'dir':
-            if self.host == 'localhost' or self.host == '127.0.0.1':
-                if not os.path.exists(poolpath):
-                    os.makedirs(poolpath)
-            elif self.protocol == 'ssh':
-                cmd1 = 'ssh -p %s %s@%s "test -d %s || mkdir %s"' % (self.port, self.user, self.host, poolpath, poolpath)
-                cmd2 = 'ssh %s@%s "chown %s %s"' % (self.user, self.host, user, poolpath)
-                os.system(cmd1)
-                os.system(cmd2)
-            else:
-                print("Make sur %s directory exists on hypervisor" % name)
-            poolxml = """<pool type='dir'>
-                         <name>%s</name>
-                         <source>
-                         </source>
-                         <target>
-                         <path>%s</path>
-                         </target>
-                         </pool>""" % (name, poolpath)
-        elif pooltype == 'logical':
-            poolxml = """<pool type='logical'>
-                         <name>%s</name>
-                         <source>
-                         <device path='%s'/>
-                         <name>%s</name>
-                         <format type='lvm2'/>
-                         </source>
-                         <target>
-                         <path>/dev/%s</path>
-                         </target>
-                         </pool>""" % (name, poolpath, name, name)
-        else:
-            print("Invalid pool type %s.Leaving..." % pooltype)
+        pools = self.list_pools()
+        poolpath = os.path.expanduser(poolpath)
+        if name in pools:
             return
-        pool = conn.storagePoolDefineXML(poolxml, 0)
-        pool.setAutostart(True)
-        if pooltype == 'logical':
-            pool.build()
-        pool.create()
+        if not os.path.exists(poolpath):
+            os.makedirs(poolpath)
+        poolfile = "%s/.vbox.yml" % os.environ.get('HOME')
+        if not os.path.exists(poolfile):
+            poolinfo = [{'name': name, 'path': poolpath}]
+        else:
+            poolinfo = self._pool_info()
+            poolinfo.append({'name': name, 'path': poolpath})
+        with open(poolfile, 'w') as f:
+            for pool in poolinfo:
+                f.write("\n- name: %s\n" % pool['name'])
+                f.write("  path: %s" % pool['path'])
 
     def add_image(self, image, pool):
         poolname = pool
@@ -1106,6 +888,11 @@ class KBox:
 
     def create_network(self, name, cidr, dhcp=True, nat=True):
         conn = self.conn
+        print dir(conn)
+        natnetworks = conn.nat_networks
+        internalnetworks = conn.internal_networks
+        print natnetworks, internalnetworks
+        return
         networks = self.list_networks()
         cidrs = [network['cidr'] for network in networks.values()]
         if name in networks:
@@ -1157,12 +944,20 @@ class KBox:
         network.undefine()
         return {'result': 'success'}
 
+    def _pool_info(self):
+        poolfile = "%s/.vbox.yml" % os.environ.get('HOME')
+        if not os.path.exists(poolfile):
+            return None
+        with open(poolfile, 'r') as entries:
+            poolinfo = yaml.load(entries)
+        return poolinfo
+
     def list_pools(self):
-        pools = []
-        conn = self.conn
-        for pool in conn.listStoragePools():
-            pools.append(pool)
-        return pools
+        poolinfo = self._pool_info()
+        if poolinfo is None:
+            return []
+        else:
+            return [pool['name'] for pool in poolinfo]
 
     def list_networks(self):
         networks = {}
@@ -1208,18 +1003,19 @@ class KBox:
         return networks
 
     def delete_pool(self, name, full=False):
-        conn = self.conn
-        try:
-            pool = conn.storagePoolLookupByName(name)
-        except:
-            print("Pool %s not found. Leaving..." % name)
+        poolfile = "%s/.vbox.yml" % os.environ.get('HOME')
+        pools = self.list_pools()
+        if not os.path.exists(poolfile) or name not in pools:
             return
-        if full:
-            for vol in pool.listAllVolumes():
-                vol.delete(0)
-        if pool.isActive():
-            pool.destroy()
-        pool.undefine()
+        else:
+            poolinfo = self._pool_info()
+            with open(poolfile, 'w') as f:
+                for pool in poolinfo:
+                    if pool['name'] == name:
+                        continue
+                    else:
+                        f.write("- name: %s\n" % pool['name'])
+                        f.write("  path: %s" % pool['path'])
 
     def bootstrap(self, pool=None, poolpath=None, pooltype='dir', nets={}, image=None):
         print "Nothing to do"

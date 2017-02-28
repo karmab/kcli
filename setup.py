@@ -8,7 +8,7 @@ if os.path.exists('README.rst'):
 
 setup(
     name='kcli',
-    version='5.3',
+    version='5.4',
     packages=find_packages(),
     include_package_data=True,
     description=description,
@@ -25,6 +25,7 @@ setup(
         'netaddr',
         'PyYAML',
         'prettytable',
+        'pyvbox',
     ],
     entry_points='''
         [console_scripts]

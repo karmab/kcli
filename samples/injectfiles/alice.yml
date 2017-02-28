@@ -1,0 +1,18 @@
+alice:
+ type: network
+ cidr: 192.168.8.0/24
+ dhcp: True
+ nat: true
+
+alice01:
+ template: CentOS-7-x86_64-GenericCloud.qcow2
+ memory: 512
+ numcpus: 1
+ disks:
+  - size: 10
+ nets:
+  - name: alice
+ files:
+  - path: /root/coco
+    origin: coco.txt
+

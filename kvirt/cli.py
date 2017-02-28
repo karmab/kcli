@@ -2,17 +2,20 @@
 
 import click
 import fileinput
-from .defaults import NETS, POOL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, START, TEMPLATES, NESTED, TUNNEL
+# from .defaults import NETS, POOL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, START, TEMPLATES, NESTED, TUNNEL
+from defaults import NETS, POOL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, START, TEMPLATES, NESTED, TUNNEL
 from prettytable import PrettyTable
-from kvirt import Kvirt, __version__
-from vbox import KBox
-
+# from kvirt import Kvirt, __version__
+from kvm import Kvirt, __version__
+from vbox import Kbox
 import os
 from time import sleep
 import yaml
 from shutil import copyfile
-import namesgenerator
-import plansutils
+import ansibleutils
+import dockerutils
+import nameutils
+import common
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
@@ -93,7 +96,7 @@ class Config():
         self.tunnel = bool(options.get('tunnel', self.default['tunnel']))
         self.type = options.get('type', 'kvirt')
         if self.type == 'vbox':
-            return KBox()
+            return Kbox()
         if self.host is None:
             click.secho("Problem parsing your configuration file", fg='red')
             os._exit(1)
@@ -124,7 +127,7 @@ def start(config, client, container, name):
     k = config.get(client)
     if container:
         click.secho("Started container %s..." % name, fg='green')
-        k.start_container(name)
+        dockerutils.start_container(k, name)
     else:
         click.secho("Started vm %s..." % name, fg='green')
         result = k.start(name)
@@ -141,7 +144,7 @@ def stop(config, client, container, name):
     k = config.get(client)
     if container:
         click.secho("Stopped container %s..." % name, fg='green')
-        k.stop_container(name)
+        dockerutils.stop_container(k, name)
     else:
         click.secho("Stopped vm %s..." % name, fg='green')
         result = k.stop(name)
@@ -174,7 +177,7 @@ def delete(config, client, container, name):
     k = config.get(client)
     if container:
         click.secho("Deleted container %s..." % name, fg='red')
-        k.delete_container(name)
+        dockerutils.delete_container(k, name)
     else:
         click.secho("Deleted vm %s..." % name, fg='red')
         k.delete(name)
@@ -332,7 +335,7 @@ def list(config, client, clients, profiles, templates, isos, disks, pools, netwo
     elif containers:
         click.secho("Listing containers...", fg='green')
         containers = PrettyTable(["Name", "Status", "Image", "Plan", "Command", "Ports"])
-        for container in k.list_containers():
+        for container in dockerutils.list_containers(k):
             if filters:
                 status = container[1]
                 if status == filters:
@@ -524,7 +527,7 @@ def vm(config, client, profile, listing, info, filters, start, stop, ssh, ip1, i
                 verbose = False
             # k.play(name, playbook=playbook, variables=variables, verbose=verbose)
             with open("/tmp/%s.inv" % name, "w") as f:
-                inventory = k.inventory(name)
+                inventory = ansibleutils.inventory(k, name)
                 if inventory is not None:
                     if variables is not None:
                         for variable in variables:
@@ -710,7 +713,7 @@ def plan(config, client, get, path, listing, autostart, container, noautostart, 
         print(plans)
         return
     if plan is None:
-        plan = namesgenerator.get_random_name()
+        plan = nameutils.get_random_name()
     if delete:
         networks = []
         if plan == '':
@@ -730,11 +733,11 @@ def plan(config, client, get, path, listing, autostart, container, noautostart, 
                 click.secho("VM %s deleted!" % name, fg='green')
                 found = True
         if container:
-            for cont in sorted(k.list_containers()):
+            for cont in sorted(dockerutils.list_containers(k)):
                 name = cont[0]
                 container_plan = cont[3]
                 if container_plan == plan:
-                    k.delete_container(name)
+                    dockerutils.delete_container(k, name)
                     click.secho("Container %s deleted!" % name, fg='green')
                     found = True
         for network in networks:
@@ -773,11 +776,11 @@ def plan(config, client, get, path, listing, autostart, container, noautostart, 
                 k.start(name)
                 click.secho("VM %s started!" % name, fg='green')
         if container:
-            for cont in sorted(k.list_containers()):
+            for cont in sorted(dockerutils.list_containers(k)):
                 name = cont[0]
                 containerplan = cont[3]
                 if containerplan == plan:
-                    k.start_container(name)
+                    dockerutils.start_container(k, name)
                     click.secho("Container %s started!" % name, fg='green')
         click.secho("Plan %s started!" % plan, fg='green')
         return
@@ -790,17 +793,17 @@ def plan(config, client, get, path, listing, autostart, container, noautostart, 
                 k.stop(name)
                 click.secho("%s stopped!" % name, fg='green')
         if container:
-            for cont in sorted(k.list_containers()):
+            for cont in sorted(dockerutils.list_containers(k)):
                 name = cont[0]
                 containerplan = cont[3]
                 if containerplan == plan:
-                    k.stop_container(name)
+                    dockerutils.stop_container(k, name)
                     click.secho("Container %s stopped!" % name, fg='green')
         click.secho("Plan %s stopped!" % plan, fg='green')
         return
     if get is not None:
         click.secho("Retrieving specified plan from %s to %s" % (get, path), fg='green')
-        plansutils.fetch(get, path)
+        common.fetch(get, path)
         return
     if inputfile is None:
         inputfile = 'kcli_plan.yml'
@@ -928,7 +931,7 @@ def plan(config, client, get, path, listing, autostart, container, noautostart, 
                             verbose = element['verbose']
                         else:
                             verbose = False
-                        k.play(name, playbook=playbook, variables=variables, verbose=verbose)
+                        ansibleutils.play(k, name, playbook=playbook, variables=variables, verbose=verbose)
                 if delay > 0:
                     sleep(delay)
         if diskentries:
@@ -960,7 +963,7 @@ def plan(config, client, get, path, listing, autostart, container, noautostart, 
             click.secho("Deploying Containers...", fg='green')
             label = "plan=%s" % (plan)
             for container in containerentries:
-                if k.exists_container(container):
+                if dockerutils.exists_container(k, container):
                     click.secho("Container %s skipped!" % container, fg='blue')
                     continue
                 profile = entries[container]
@@ -974,7 +977,7 @@ def plan(config, client, get, path, listing, autostart, container, noautostart, 
                 volumes = next((e for e in [profile.get('volumes'), profile.get('disks'), customprofile.get('volumes'), customprofile.get('disks')] if e is not None), None)
                 cmd = next((e for e in [profile.get('cmd'), customprofile.get('cmd')] if e is not None), None)
                 click.secho("Container %s deployed!" % container, fg='green')
-                k.create_container(name=container, image=image, nets=nets, cmd=cmd, ports=ports, volumes=volumes, label=label)
+                dockerutils.create_container(k, name=container, image=image, nets=nets, cmd=cmd, ports=ports, volumes=volumes, label=label)
                 # handle_response(result, name)
         if ansibleentries:
             if not newvms:
@@ -1004,7 +1007,7 @@ def plan(config, client, get, path, listing, autostart, container, noautostart, 
                 with open("/tmp/%s.inv" % plan, "w") as f:
                     f.write("[%s]\n" % plan)
                     for name in newvms:
-                        inventory = k.inventory(name)
+                        inventory = ansibleutils.inventory(k, name)
                         if inventory is not None:
                             f.write("%s\n" % inventory)
                     if config.tunnel:
@@ -1241,7 +1244,7 @@ def container(config, client, profile, listing, filters, start, stop, console, n
     if listing:
         click.secho("Listing containers...", fg='green')
         containers = PrettyTable(["Name", "Status", "Image", "Plan", "Command", "Ports"])
-        for container in k.list_containers():
+        for container in dockerutils.list_containers(k):
             if filters:
                 status = container[1]
                 if status == filters:
@@ -1255,14 +1258,14 @@ def container(config, client, profile, listing, filters, start, stop, console, n
         return
     if start:
         click.secho("Started container %s..." % name, fg='green')
-        k.start_container(name)
+        dockerutils.start_container(k, name)
         return
     if stop:
         click.secho("Stopped container %s..." % name, fg='green')
-        k.stop_container(name)
+        dockerutils.stop_container(k, name)
         return
     if console:
-        k.console_container(name)
+        dockerutils.console_container(k, name)
         return
     if profile is None:
         click.secho("Missing profile", fg='red')
@@ -1270,7 +1273,7 @@ def container(config, client, profile, listing, filters, start, stop, console, n
     containerprofiles = {k: v for k, v in config.profiles.iteritems() if 'type' in v and v['type'] == 'container'}
     if profile not in containerprofiles:
         click.secho("profile %s not found. Trying to use the profile as image and default values..." % profile, fg='blue')
-        k.create_container(name, profile)
+        dockerutils.create_container(k, name, profile)
         return
     else:
         click.secho("Deploying vm %s from profile %s..." % (name, profile), fg='green')
@@ -1282,7 +1285,7 @@ def container(config, client, profile, listing, filters, start, stop, console, n
         cmd = profile.get('cmd', None)
         ports = profile.get('ports', None)
         volumes = next((e for e in [profile.get('volumes'), profile.get('disks')] if e is not None), None)
-        k.create_container(name, image, nets=None, cmd=cmd, ports=ports, volumes=volumes)
+        dockerutils.create_container(k, name, image, nets=None, cmd=cmd, ports=ports, volumes=volumes)
         return
 
 
