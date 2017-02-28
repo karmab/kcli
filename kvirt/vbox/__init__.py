@@ -9,10 +9,10 @@ interact with a local/remote libvirt daemon
 from iptools import IpRange
 from netaddr import IPNetwork
 import os
-import string
 import time
 from virtualbox import VirtualBox, library, Session
 from kvirt import common
+import string
 import yaml
 
 
@@ -91,7 +91,7 @@ class Kbox:
         # opened_medium = conn.open_medium("rhel-guest-image-7.2-20160302.0.x86_64.vdi", library.DeviceType.hard_disk, library.AccessMode.read_write, False)
         # print opened_medium
         # session.machine.attach_device("SAS", 2, 0, library.DeviceType.hard_disk, opened_medium)
-        # vm.add_storage_controller('IDE', library.StorageBus(1))
+        vm.add_storage_controller('IDE', library.StorageBus(1))
         vm.memory_size = memory
         vm.description = description
         serial = vm.get_serial_port(0)
@@ -127,7 +127,7 @@ class Kbox:
             progress = medium.create_base_storage(368, [library.MediumVariant.fixed])
             progress.wait_for_completion()
             dvd = conn.open_medium('/tmp/%s.iso' % name, library.DeviceType.dvd, library.AccessMode.read_only, False)
-            machine.attach_device("SATA", 0, 0, library.DeviceType.dvd, dvd)
+            machine.attach_device("IDE", 0, 0, library.DeviceType.dvd, dvd)
         machine.save_settings()
         session.unlock_machine()
         return
@@ -285,52 +285,31 @@ class Kbox:
 
     def report(self):
         conn = self.conn
-        hostname = conn.getHostname()
-        cpus = conn.getCPUMap()[0]
-        memory = conn.getInfo()[1]
+        host = conn.host
+        hostname = os.uname()[1]
+        cpus = host.processor_count
+        memory = host.memory_size
         print("Host:%s Cpu:%s Memory:%sMB\n" % (hostname, cpus, memory))
-        for pool in conn.listStoragePools():
-            poolname = pool
-            pool = conn.storagePoolLookupByName(pool)
-            pooltype = ''
-            if pooltype == 'dir':
-                poolpath = ''
-            else:
-                poolpath = ''
-            s = pool.info()
-            used = "%.2f" % (float(s[2]) / 1024 / 1024 / 1024)
-            available = "%.2f" % (float(s[3]) / 1024 / 1024 / 1024)
+        for pool in self._pool_info():
+            poolname = pool['name']
+            pooltype = 'dir'
+            poolpath = pool['path']
+            # used = "%.2f" % (float(s[2]) / 1024 / 1024 / 1024)
+            # available = "%.2f" % (float(s[3]) / 1024 / 1024 / 1024)
             # Type,Status, Total space in Gb, Available space in Gb
-            used = float(used)
-            available = float(available)
-            print("Storage:%s Type:%s Path:%s Used space:%sGB Available space:%sGB" % (poolname, pooltype, poolpath, used, available))
+            # print("Storage:%s Type:%s Path:%s Used space:%sGB Available space:%sGB" % (poolname, pooltype, poolpath, used, available))
+            print("Storage:%s Type:%s Path:%s" % (poolname, pooltype, poolpath))
         print
-        for interface in conn.listAllInterfaces():
-            interfacename = interface.name()
-            if interfacename == 'lo':
-                continue
-            print("Network:%s Type:bridged" % (interfacename))
-        for network in conn.listAllNetworks():
-            networkname = network.name()
-            cidr = 'N/A'
-            ip = ''
-            if ip:
-                attributes = ip[0].attrib
-                firstip = attributes.get('address')
-                netmask = attributes.get('netmask')
-                if netmask is None:
-                    netmask = attributes.get('prefix')
-                try:
-                    ip = IPNetwork('%s/%s' % (firstip, netmask))
-                    cidr = ip.cidr
-                except:
-                    cidr = "N/A"
-            dhcp = ''
-            if dhcp:
-                dhcp = True
-            else:
-                dhcp = False
-            print("Network:%s Type:routed Cidr:%s Dhcp:%s" % (networkname, cidr, dhcp))
+        dhcp = {}
+        dhcpservers = conn.dhcp_servers
+        for dhcpserver in dhcpservers:
+            dhcp[dhcpserver.network_name] = dhcpserver.ip_address
+        for network in conn.internal_networks:
+            print("Network:%s Type:internal" % (network))
+        for network in conn.nat_networks:
+            print("Network:%s Type:routed" % (network))
+        return
+        # print("Network:%s Type:routed Cidr:%s Dhcp:%s" % (networkname, cidr, dhcp))
 
     def status(self, name):
         conn = self.conn
@@ -421,19 +400,22 @@ class Kbox:
                 networktype = 'internal'
                 network = nic.internal_network
             print("net interfaces:%s mac: %s net: %s type: %s" % (device, mac, network, networktype))
-        for index, dev in enumerate(['a', 'b', 'c', 'd', 'e']):
+        disks = []
+        for index in range(10):
             try:
                 disk = vm.get_medium('SATA', index, 0)
             except:
-                break
-            print disk.type_p
-            device = 'sd%s' % dev
+                continue
             path = disk.name
-            disksize = disk.logical_size / 1024 / 1024 / 1024
+            if path.endswith('.iso'):
+                continue
+            device = 'sd%s' % string.lowercase[len(disks)]
+            disks.append(0)
+            disksize = disk.size / 1024 / 1024 / 1024
             drivertype = os.path.splitext(disk.name)[1].replace('.', '')
             diskformat = 'file'
             print("diskname: %s disksize: %sGB diskformat: %s type: %s path: %s" % (device, disksize, diskformat, drivertype, path))
-            return
+        return
 
     def ip(self, name):
         conn = self.conn
@@ -451,15 +433,16 @@ class Kbox:
         isos = []
         templates = []
         poolinfo = self._pool_info()
-        # if iso:
-        #    for iso in conn.dvd_images:
-        #        isos.append(iso.name)
-        #    return isos
         for pool in poolinfo:
             path = pool['path']
             for entry in os.listdir(path):
-                if entry.endswith('qcow2'):
+                if entry.endswith('qcow2') and entry not in templates:
                     templates.append(entry)
+                elif entry.startswith('KVIRT'):
+                    entry = entry.replace('KVIRT_', '').replace('.vdi', '.qcow2')
+                    print entry
+                    if entry not in templates:
+                        templates.append(entry)
                 elif entry.endswith('iso'):
                     isos.append(entry)
         if iso:
@@ -598,121 +581,131 @@ class Kbox:
         vm.save_settings()
         return {'result': 'success'}
 
+    def _convert_qcow2(self, name):
+        newname = name.replace('qcow2', 'vdi')
+        os.system("qemu-img convert -f qcow2 %s -O vdi KVIRT_%s" % (name, newname))
+
     def create_disk(self, name, size, pool=None, thin=True, template=None):
         conn = self.conn
-        diskformat = 'qcow2'
+        # diskformat = 'qcow2'
         if size < 1:
             print("Incorrect size.Leaving...")
             return
-        if not thin:
-            diskformat = 'raw'
+        size = int(size) * 1024 * 1024 * 1024
+        # if not thin:
+        #     diskformat = 'raw'
         if pool is not None:
-            pool = conn.storagePoolLookupByName(pool)
-            poolroot = ''
-            pooltype = poolroot.getiterator('pool')[0].get('type')
-            for element in poolroot.getiterator('path'):
-                poolpath = element.text
-                break
-        else:
-            print("Pool not found. Leaving....")
-            return
+            pool = [p['path'] for p in self._pool_info() if p['name'] == pool]
+            if pool:
+                poolpath = pool[0]
+            else:
+                print("Pool not found. Leaving....")
+                return
         if template is not None:
-            volumes = {}
-            for p in conn.listStoragePools():
-                poo = conn.storagePoolLookupByName(p)
-                for vol in poo.listAllVolumes():
-                    volumes[vol.name()] = vol.path()
+            volumes = self.volumes()
             if template not in volumes and template not in volumes.values():
                 print("Invalid template %s.Leaving..." % template)
             if template in volumes:
                 template = volumes[template]
-        pool.refresh(0)
-        diskpath = "%s/%s" % (poolpath, name)
-        if pooltype == 'logical':
-            diskformat = 'raw'
-        volxml = self._xmlvolume(path=diskpath, size=size, pooltype=pooltype,
-                                 diskformat=diskformat, backing=template)
-        pool.createXML(volxml, 0)
+        diskpath = "%s/%s.vdi" % (poolpath, name)
+        disk = conn.create_medium('VDI', diskpath, library.AccessMode.read_write, library.DeviceType.hard_disk)
+        progress = disk.create_base_storage(size, [library.MediumVariant.fixed])
+        progress.wait_for_completion()
         return diskpath
 
     def add_disk(self, name, size, pool=None, thin=True, template=None, shareable=False, existing=None):
         conn = self.conn
-        diskformat = 'qcow2'
-        diskbus = 'virtio'
+        # diskformat = 'qcow2'
         if size < 1:
             print("Incorrect size.Leaving...")
             return
-        if not thin:
-            diskformat = 'raw'
+        # if not thin:
+        #     diskformat = 'raw'
         try:
             vm = conn.find_machine(name)
-            root = ''
         except:
             print("VM %s not found" % name)
             return
-        currentdisk = 0
-        for element in root.getiterator('disk'):
-            disktype = element.get('device')
-            if disktype == 'cdrom':
+        disks = []
+        for index, dev in enumerate(string.lowercase[:10]):
+            try:
+                vm.get_medium('SATA', index, 0)
+                disks.append(0)
+            except:
                 continue
-            currentdisk = currentdisk + 1
-        diskindex = currentdisk + 1
-        diskdev = "vd%s" % string.ascii_lowercase[currentdisk]
+        index = len(disks)
         if existing is None:
-            storagename = "%s_%d.img" % (name, diskindex)
+            storagename = "%s_%d" % (name, index)
             diskpath = self.create_disk(name=storagename, size=size, pool=pool, thin=thin, template=template)
         else:
-            diskpath = existing
-        diskxml = self._xmldisk(diskpath=diskpath, diskdev=diskdev, diskbus=diskbus, diskformat=diskformat, shareable=shareable)
-        vm.attachDevice(diskxml)
-        vm = conn.find_machine(name)
-        vmxml = vm.XMLDesc(0)
-        conn.defineXML(vmxml)
+            disks = self.list_disks()
+            if existing in disks:
+                diskpath = disks[existing]['path']
+            else:
+                diskpath = existing
+        session = Session()
+        vm.lock_machine(session, library.LockType.write)
+        machine = session.machine
+        disk = conn.open_medium(diskpath, library.DeviceType.hard_disk, library.AccessMode.read_write, True)
+        machine.attach_device("SATA", index, 0, library.DeviceType.hard_disk, disk)
+        machine.save_settings()
+        session.unlock_machine()
 
     def delete_disk(self, name, diskname):
         conn = self.conn
         try:
             vm = conn.find_machine(name)
-            root = ''
         except:
             print("VM %s not found" % name)
             return
-        for element in root.getiterator('disk'):
-            disktype = element.get('device')
-            diskdev = element.find('target').get('dev')
-            diskbus = element.find('target').get('bus')
-            diskformat = element.find('driver').get('type')
-            if disktype == 'cdrom':
+        if status[str(vm.state)] == "up":
+            print("VM %s up. Leaving" % name)
+            return
+        for index in range(10):
+            try:
+                disk = vm.get_medium('SATA', index, 0)
+            except:
                 continue
-            diskpath = element.find('source').get('file')
-            volume = self.conn.storageVolLookupByPath(diskpath)
-            if volume.name() == diskname or volume.path() == diskname:
-                diskxml = self._xmldisk(diskpath=diskpath, diskdev=diskdev, diskbus=diskbus, diskformat=diskformat)
-                vm.detachDevice(diskxml)
-                volume.delete(0)
-                vm = conn.find_machine(name)
-                vmxml = vm.XMLDesc(0)
-                conn.defineXML(vmxml)
+            if disk.name == diskname:
+                session = Session()
+                vm.lock_machine(session, library.LockType.write)
+                machine = session.machine
+                # dvd = conn.open_medium('/tmp/%s.iso' % name, library.DeviceType.dvd, library.AccessMode.read_only, False)
+                machine.detach_device("SATA", index, 0)
+                machine.save_settings()
+                session.unlock_machine()
+                disk.delete_storage()
                 return
         print("Disk %s not found in %s" % (diskname, name))
 
     def list_disks(self):
         volumes = {}
-        interface = library.IVirtualBox()
         poolinfo = self._pool_info()
-        for disk in interface.hard_disks:
-            path = disk.location
-            if poolinfo is not None:
-                pathdir = os.path.dirname(path)
-                pools = [pool['name'] for pool in poolinfo if pool['path'] == pathdir]
-                if pools:
-                    pool = pools[0]
+        for pool in poolinfo:
+            poolname = pool['name']
+            path = pool['path']
+            for entry in os.listdir(path):
+                if entry.endswith('vdi') and not entry.startswith('KVIRT_'):
+                    volumes[entry] = {'pool': poolname, 'path': "%s/%s" % (path, entry)}
                 else:
-                    pool = ''
-            else:
-                pool = ''
-            volumes[disk.name] = {'pool': pool, 'path': disk.location}
+                    continue
         return volumes
+        # volumes = {}
+        # interface = library.IVirtualBox()
+        # poolinfo = self._pool_info()
+        # for disk in interface.hard_disks:
+        #     path = disk.location
+        #     if poolinfo is not None:
+        #         pathdir = os.path.dirname(path)
+        #         pools = [pool['name'] for pool in poolinfo if pool['path'] == pathdir]
+        #         if pools:
+        #             pool = pools[0]
+        #         else:
+        #             pool = ''
+        #     else:
+        #         pool = ''
+        #     volumes[disk.name] = {'pool': pool, 'path': disk.location}
+        # return volumes
 
     def add_nic(self, name, network):
         conn = self.conn
