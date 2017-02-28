@@ -2,11 +2,9 @@
 
 import click
 import fileinput
-# from .defaults import NETS, POOL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, START, TEMPLATES, NESTED, TUNNEL
 from defaults import NETS, POOL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, START, TEMPLATES, NESTED, TUNNEL
 from prettytable import PrettyTable
-# from kvirt import Kvirt, __version__
-from kvm import Kvirt, __version__
+from kvm import Kvirt
 from vbox import Kbox
 import os
 from time import sleep
@@ -16,6 +14,8 @@ import ansibleutils
 import dockerutils
 import nameutils
 import common
+
+__version__ = '5.7'
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 

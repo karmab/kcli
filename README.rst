@@ -22,6 +22,7 @@ Wouldnt it be cool to:
 -  Interact with libvirt without XML
 -  Declare all your objects(vm, containers, networks, ansible,...) in a
    single yaml file!
+-  Easily grab and share those files from github
 -  Easily Test all Redhat Infrastructure products, and their upstream
    counterpart
 -  Easily share private keys between your vms
@@ -190,8 +191,8 @@ protocol in the corresponding client section. Note that most of the
 parameters are actually optional, and can be overridden in the default,
 host or profile section (or in a plan file)
 
-Available parameters for configuration of a specific hypervisor
----------------------------------------------------------------
+Available parameters for a hypervisor
+-------------------------------------
 
 -  *host* Defaults to 127.0.0.1
 -  *port*
@@ -369,7 +370,8 @@ If cloudinit is enabled (it is by default), a custom iso is generated on
 the fly for your VM (using mkisofs) and uploaded to your kvm instance
 (using the libvirt API, not using ssh commands, pretty cool, huh?). The
 iso handles static networking configuration, hostname setting, injecting
-ssh keys and running specific commands
+ssh keys and running specific commands and entire scripts, and copying
+entire files
 
 Also note that if you use cloudinit but dont specify ssh keys to inject,
 the default ~/.ssh/id\_rsa.pub will be used, if present.
@@ -379,7 +381,14 @@ Using plans
 
 You can also define plan files in yaml with a list of profiles, VMS,
 disks, and networks and VMS to deploy (look at the sample) and deploy it
-with kcli plan.
+with kcli plan. The following type can be used within a plan:
+
+-  vm ( this is the type used when none is specified)
+-  network
+-  disk
+-  container
+-  profile
+-  ansible
 
 For instance, to define a network named mynet:
 
@@ -463,8 +472,7 @@ You can use the following to retrieve plans from a github repo:
     kcli plan --get kcli plan -g github.com/karmab/kcli/plans -p karmab_plans
 
 The url can also be in: - an arbitary url ( github api is not used in
-this case) - raw github format to retrieve a single file - a github
-linkk
+this case) - raw github format to retrieve a single file - a github link
 
 Disk parameters
 ---------------

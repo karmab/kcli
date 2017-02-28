@@ -16,8 +16,6 @@ from kvirt import common
 import yaml
 
 
-__version__ = "5.3"
-
 KB = 1024 * 1024
 MB = 1024 * KB
 guestrhel532 = "RedHat"

@@ -4,7 +4,7 @@
 interact with a local/remote libvirt daemon
 """
 
-from defaults import TEMPLATES
+from kvirt import defaults
 from iptools import IpRange
 # from jinja2 import Environment
 from kvirt import common
@@ -659,7 +659,7 @@ class Kvirt:
     def volumes(self, iso=False):
         isos = []
         templates = []
-        default_templates = [os.path.basename(t) for t in TEMPLATES.values()]
+        default_templates = [os.path.basename(t) for t in defaults.TEMPLATES.values()]
         conn = self.conn
         for storage in conn.listStoragePools():
             storage = conn.storagePoolLookupByName(storage)
