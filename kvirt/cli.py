@@ -37,7 +37,11 @@ class Config():
     def load(self):
         inifile = "%s/kcli.yml" % os.environ.get('HOME')
         if not os.path.exists(inifile):
-            ini = {'default': {'client': 'local'}, 'local': {'pool': 'default'}}
+            if os.path.exists('/Users'):
+                _type = 'vbox'
+            else:
+                _type = 'kvm'
+            ini = {'default': {'client': 'local'}, 'local': {'pool': 'default', 'type': _type}}
             click.secho("Using local hypervisor as no kcli.yml was found...", fg='green')
         else:
             with open(inifile, 'r') as entries:
@@ -94,7 +98,7 @@ class Config():
         self.protocol = options.get('protocol', 'ssh')
         self.url = options.get('url', None)
         self.tunnel = bool(options.get('tunnel', self.default['tunnel']))
-        self.type = options.get('type', 'kvirt')
+        self.type = options.get('type', 'kvm')
         if self.type == 'vbox':
             return Kbox()
         if self.host is None:
