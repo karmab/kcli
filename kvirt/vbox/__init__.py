@@ -95,13 +95,14 @@ class Kbox:
         nat_networks = [network.network_name for network in conn.nat_networks]
         internal_networks = [network for network in conn.internal_networks]
         for index, net in enumerate(nets):
+            ip = None
             nic = vm.get_network_adapter(index)
+            nic.adapter_type = library.NetworkAdapterType.virtio
             nic.enabled = True
             if isinstance(net, str):
                 network = net
             elif isinstance(net, dict) and 'name' in net:
                 network = net['name']
-                ip = None
                 if ips and len(ips) > index and ips[index] is not None:
                     ip = ips[index]
                     vm.set_extra_data('ip', ip)
