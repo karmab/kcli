@@ -92,31 +92,40 @@ class Kbox:
         serial.enabled = True
         serial.path = str(common.get_free_port())
         serial.host_mode = library.PortMode.tcp
+        nat_networks = [network.network_name for network in conn.nat_networks]
+        internal_networks = [network for network in conn.internal_networks]
         for index, net in enumerate(nets):
             nic = vm.get_network_adapter(index)
             nic.enabled = True
-            nic.attachment_type = library.NetworkAttachmentType.nat
-            if index == 0:
-                natengine = nic.nat_engine
-                natengine.add_redirect('ssh', library.NATProtocol.tcp, '', common.get_free_port(), '', 22)
             if isinstance(net, str):
-                # nic.attachment_type = library.NetworkAttachmentType.internal
-                # nic.attachment_type = library.NetworkAttachmentType.nat
-                # nic.attachment_type = library.NetworkAttachmentType.nat_network
-                # nic.internal_network = net
-                # nic.nat_network = net
-                continue
+                network = net
             elif isinstance(net, dict) and 'name' in net:
-                # nic.internal_network = net['name']
-                # nic.nat_network = net['name']
+                network = net['name']
                 ip = None
                 if ips and len(ips) > index and ips[index] is not None:
                     ip = ips[index]
+                    vm.set_extra_data('ip', ip)
                     nets[index]['ip'] = ip
                 elif 'ip' in nets[index]:
                     ip = nets[index]['ip']
+                    vm.set_extra_data('ip', ip)
                 if 'mac' in nets[index]:
                     nic.mac_address = nets[index]['mac'].replace(':', '')
+            if network in internal_networks:
+                nic.attachment_type = library.NetworkAttachmentType.internal
+                nic.internal_network = network
+            elif network in nat_networks:
+                nic.attachment_type = library.NetworkAttachmentType.nat_network
+                nic.nat_network = network
+                if ip is not None and index == 0:
+                    natengine = nic.nat_engine
+                    nat_network = [n for n in conn.nat_networks if n.network_name == network][0]
+                    nat_network.add_port_forward_rule(False, 'ssh_%s' % name, library.NATProtocol.tcp, '', common.get_free_port(), ip, 22)
+            else:
+                nic.attachment_type = library.NetworkAttachmentType.nat
+                if index == 0:
+                    natengine = nic.nat_engine
+                    natengine.add_redirect('ssh_%s' % name, library.NATProtocol.tcp, '', common.get_free_port(), '', 22)
         vm.save_settings()
         conn.register_machine(vm)
         session = Session()
@@ -158,7 +167,6 @@ class Kbox:
             else:
                 diskpath = self.create_disk(diskname, disksize, pool=diskpool, thin=diskthin, template=None)
             disk = conn.open_medium(diskpath, library.DeviceType.hard_disk, library.AccessMode.read_write, False)
-            print disksize
             disksize = disksize * 1024 * 1024 * 1024
             progress = disk.resize(disksize)
             progress.wait_for_completion()
@@ -276,7 +284,6 @@ class Kbox:
 
     def list(self):
         vms = []
-        # leases = {}
         conn = self.conn
         for vm in conn.machines:
             name = vm.name
@@ -285,20 +292,28 @@ class Kbox:
             source = vm.get_extra_data('template')
             description = vm.description
             profile = vm.get_extra_data('profile')
+            ip = vm.get_extra_data('ip')
             for n in range(7):
                 nic = vm.get_network_adapter(n)
                 enabled = nic.enabled
                 if not enabled:
                     continue
-                # elif str(nic.attachment_type) == 'NATNetwork':
-                #    networktype = 'natnetwork'
-                #    network = nic.nat_network
                 if str(nic.attachment_type) == 'NAT':
                     for redirect in nic.nat_engine.redirects:
                         redirect = redirect.split(',')
                         hostport = redirect[3]
                         guestport = redirect[5]
                         if guestport == '22':
+                            port = hostport
+                            break
+                elif str(nic.attachment_type) == 'NATNetwork':
+                    nat_network = [n for n in conn.nat_networks if n.network_name == nic.nat_network][0]
+                    for rule in nat_network.port_forward_rules4:
+                        rule = rule.split(':')
+                        hostport = rule[3]
+                        guestip = rule[4][1:-1]
+                        guestport = rule[5]
+                        if guestport == '22' and guestip == ip:
                             port = hostport
                             break
             vms.append([name, state, port, source, description, profile])
@@ -331,15 +346,8 @@ class Kbox:
             os.system("nc 127.0.0.1 %s" % serialport)
 
     def info(self, name):
-        # ips = []
-        # leases = {}
         starts = {False: 'no', True: 'yes'}
         conn = self.conn
-        # for network in conn.listAllNetworks():
-        #    for lease in network.DHCPLeases():
-        #        ip = lease['ipaddr']
-        #        mac = lease['mac']
-        #        leases[mac] = ip
         try:
             vm = conn.find_machine(name)
         except:
@@ -357,6 +365,7 @@ class Kbox:
         description = vm.description
         print("description: %s" % description)
         profile = vm.get_extra_data('profile')
+        ip = vm.get_extra_data('ip')
         if profile != '':
             print("profile: %s" % profile)
         print("cpus: %s" % numcpus)
@@ -374,6 +383,15 @@ class Kbox:
             elif str(nic.attachment_type) == 'NATNetwork':
                 networktype = 'natnetwork'
                 network = nic.nat_network
+                nat_network = [n for n in conn.nat_networks if n.network_name == network][0]
+                if ip != '':
+                    for rule in nat_network.port_forward_rules4:
+                        rule = rule.split(':')
+                        hostport = rule[3]
+                        guestip = rule[4][1:-1]
+                        guestport = rule[5]
+                        if guestport == '22' and guestip == ip:
+                            hostports.append(hostport)
             elif str(nic.attachment_type) == 'Null':
                 networktype = 'unassigned'
                 network = 'N/A'
@@ -408,25 +426,19 @@ class Kbox:
             drivertype = os.path.splitext(disk.name)[1].replace('.', '')
             diskformat = 'file'
             print("diskname: %s disksize: %sGB diskformat: %s type: %s path: %s" % (device, disksize, diskformat, drivertype, path))
+            if ip != '':
+                print("ip: %s" % (ip))
             for hostport in hostports:
                 print("ssh port: %s" % (hostport))
         return
 
     def ip(self, name):
-        conn = self.conn
-        try:
-            vm = conn.find_machine(name)
-        except:
-            print("VM %s not found" % name)
+        vm = [vm for vm in self.list() if vm[0] == name]
+        if not vm:
             return None
-        # session = vm.create_session()
-        # guest = session.console.guest
-        natnetworks = conn.nat_networks
-        print natnetworks
-        for n in natnetworks:
-            print dir(n)
-        properties = vm.get_guest_property('/VirtualBox/GuestInfo/Net/0/V4/IP')
-        print properties
+        else:
+            port = vm[0][2]
+            return port
 
     def volumes(self, iso=False):
         isos = []
@@ -914,3 +926,24 @@ class Kbox:
             for pool in poolinfo:
                 f.write("\n- name: %s\n" % pool['name'])
                 f.write("  path: %s" % pool['path'])
+
+    def vm_ports(self, name):
+        conn = self.conn
+        networks = []
+        try:
+            vm = conn.find_machine(name)
+        except:
+            print("VM %s not found" % name)
+            return
+        for n in range(7):
+            nic = vm.get_network_adapter(n)
+            enabled = nic.enabled
+            if not enabled:
+                continue
+            if str(nic.attachment_type) == 'Internal':
+                networks.append(nic.internal_network)
+            elif str(nic.attachment_type) == 'NATNetwork':
+                networks.append(nic.nat_network)
+            elif str(nic.attachment_type) == 'Bridged':
+                networks.append(nic.bridged_interface)
+        return networks

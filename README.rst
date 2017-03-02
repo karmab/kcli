@@ -682,6 +682,18 @@ TODO
    list methods that libvirt provides for most object
 -  Add basic validation of IPS, netmasks, macs,... within plan file
 
+ABOUT VIRTUALBOX SUPPORT
+------------------------
+
+While the tool should pretty much work the same why on this hypervisor,
+there are some issues:
+
+-  it's impossible to connect using ip, so port forwarding is used
+   instead ( only with NAT)
+-  with NATnetworks ( not NAT!), it's impossible to gather the lease ips
+   assigned to the guest, and as such set proper forwarding rules for
+   ssh access
+
 Contributors
 ------------
 

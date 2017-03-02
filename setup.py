@@ -1,14 +1,14 @@
 from setuptools import setup, find_packages
 
 import os
-description = 'Libvirt wrapper on steroids'
+description = 'Libvirt/VirtualBox wrapper on steroids'
 long_description = description
 if os.path.exists('README.rst'):
     long_description = open('README.rst').read()
 
 setup(
     name='kcli',
-    version='5.9',
+    version='5.10',
     packages=find_packages(),
     include_package_data=True,
     description=description,

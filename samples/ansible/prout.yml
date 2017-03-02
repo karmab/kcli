@@ -1,6 +1,6 @@
 ---
 - name: Test playbook for alfredo
-  hosts: test
+  hosts: testansible
   gather_facts: true
   tasks:
     - name: do whatever

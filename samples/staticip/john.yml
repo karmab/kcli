@@ -1,17 +1,17 @@
 john:
  type: network
  cidr: 192.168.8.0/24
- dhcp: False
+ dhcp: True
  nat: true
 
-john01:
- template: CentOS-7-x86_64-GenericCloud.qcow2
+john02:
+ template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
  memory: 512
  numcpus: 1
  disks:
   - size: 10
  nets:
-  - name: fran
+  - name: john
     ip: 192.168.8.2
     mask: 255.255.255.0
     gateway: 192.168.8.1
