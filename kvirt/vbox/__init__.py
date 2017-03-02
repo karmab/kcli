@@ -6,8 +6,7 @@ interact with a local/remote libvirt daemon
 
 # from defaults import TEMPLATES
 # from distutils.spawn import find_executable
-# from iptools import IpRange
-from netaddr import IPNetwork
+# from netaddr import IPNetwork
 import os
 import time
 from virtualbox import VirtualBox, library, Session
@@ -54,26 +53,27 @@ class Kbox:
                 return True
         return False
 
-#    def net_exists(self, name):
-#        conn = self.conn
-#        try:
-#            conn.networkLookupByName(name)
-#            return True
-#        except:
-#            return False
-
-    def disk_exists(self, pool, name):
+    def net_exists(self, name):
         conn = self.conn
-        try:
-            storage = conn.storagePoolLookupByName(pool)
-            storage.refresh()
-            for stor in sorted(storage.listVolumes()):
-                if stor == name:
-                    return True
-        except:
+        networks = []
+        for network in conn.internal_networks:
+            networks.append(network)
+        for network in conn.nat_networks:
+            networks.append(network.network_name)
+        if name in networks:
+            return True
+        else:
             return False
 
+    def disk_exists(self, pool, name):
+        disks = self.list_disks()
+        if name in disks:
+            return True
+        else:
+            return True
+
     def create(self, name, virttype='vbox', title='', description='kvirt', numcpus=2, memory=512, guestid='Linux_64', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, reservedns=False, start=True, keys=None, cmds=None, ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[]):
+        guestid = 'Linux_64'
         default_diskinterface = diskinterface
         default_diskthin = diskthin
         default_disksize = disksize
@@ -83,16 +83,10 @@ class Kbox:
         vm = conn.create_machine("", name, [], guestid, "")
         vm.cpu_count = numcpus
         vm.add_storage_controller('SATA', library.StorageBus(2))
-        # interface = library.IVirtualBox()
-        # medium = conn.create_hard_disk("VDI", "/tmp/proutos.vdi")
-        # progress = medium.create_base_storage(1024 * 1024, [library.MediumVariant.fixed])
-        # progress.wait_for_completion()
-        # opened_medium = conn.open_medium("rhel-guest-image-7.2-20160302.0.x86_64.vdi", library.DeviceType.hard_disk, library.AccessMode.read_write, False)
-        # print opened_medium
-        # session.machine.attach_device("SAS", 2, 0, library.DeviceType.hard_disk, opened_medium)
         vm.add_storage_controller('IDE', library.StorageBus(1))
         vm.memory_size = memory
         vm.description = description
+        vm.set_extra_data('profile', title)
         serial = vm.get_serial_port(0)
         serial.server = True
         serial.enabled = True
@@ -101,12 +95,20 @@ class Kbox:
         for index, net in enumerate(nets):
             nic = vm.get_network_adapter(index)
             nic.enabled = True
+            nic.attachment_type = library.NetworkAttachmentType.nat
+            if index == 0:
+                natengine = nic.nat_engine
+                natengine.add_redirect('ssh', library.NATProtocol.tcp, '', common.get_free_port(), '', 22)
             if isinstance(net, str):
+                # nic.attachment_type = library.NetworkAttachmentType.internal
+                # nic.attachment_type = library.NetworkAttachmentType.nat
+                # nic.attachment_type = library.NetworkAttachmentType.nat_network
+                # nic.internal_network = net
                 # nic.nat_network = net
-                nic.internal_network = net
-                # network = nic.internal_network
+                continue
             elif isinstance(net, dict) and 'name' in net:
-                nic.nat_network = net['name']
+                # nic.internal_network = net['name']
+                # nic.nat_network = net['name']
                 ip = None
                 if ips and len(ips) > index and ips[index] is not None:
                     ip = ips[index]
@@ -127,27 +129,6 @@ class Kbox:
             progress.wait_for_completion()
             dvd = conn.open_medium('/tmp/%s.iso' % name, library.DeviceType.dvd, library.AccessMode.read_only, False)
             machine.attach_device("IDE", 0, 0, library.DeviceType.dvd, dvd)
-        # machine.save_settings()
-        # session.unlock_machine()
-        # if vnc:
-        #    display = 'vnc'
-        # else:
-        #    display = 'spice'
-        # volumes = {}
-        # volumespaths = {}
-        # for p in conn.listStoragePools():
-        #     poo = conn.storagePoolLookupByName(p)
-        #     poo.refresh(0)
-        #     for vol in poo.listAllVolumes():
-        #         volumes[vol.name()] = {'pool': poo, 'object': vol}
-        #         volumespaths[vol.path()] = {'pool': poo, 'object': vol}
-        # networks = []
-        # bridges = []
-        # for net in conn.listNetworks():
-        #     networks.append(net)
-        # for net in conn.listInterfaces():
-        #     if net != 'lo':
-        #         bridges.append(net)
         for index, disk in enumerate(disks):
             if disk is None:
                 disksize = default_disksize
@@ -172,14 +153,21 @@ class Kbox:
             diskname = "%s_%d" % (name, index)
             if template is not None and index == 0:
                 diskpath = self.create_disk(diskname, disksize, pool=diskpool, thin=diskthin, template=template)
+                machine.set_extra_data('template', template)
                 # return {'result': 'failure', 'reason': "Invalid template %s" % template}
             else:
                 diskpath = self.create_disk(diskname, disksize, pool=diskpool, thin=diskthin, template=None)
             disk = conn.open_medium(diskpath, library.DeviceType.hard_disk, library.AccessMode.read_write, False)
+            print disksize
+            disksize = disksize * 1024 * 1024 * 1024
+            progress = disk.resize(disksize)
+            progress.wait_for_completion()
             machine.attach_device("SATA", index, 0, library.DeviceType.hard_disk, disk)
         machine.save_settings()
         session.unlock_machine()
-        return
+        if start:
+            self.start(name)
+        return {'result': 'success'}
         if iso is None:
             if cloudinit:
                 iso = "%s/%s.iso" % (default_poolpath, name)
@@ -200,7 +188,6 @@ class Kbox:
         #    print "prout"
         # else:
         #    print "prout"
-        vm.setAutostart(1)
         # if reserveip:
         #    vmxml = ''
         #    macs = []
@@ -208,8 +195,6 @@ class Kbox:
         #        mac = element.find('mac').get('address')
         #        macs.append(mac)
         #    self._reserve_ip(name, nets, macs)
-        # if start:
-        #    vm.create()
         # if reservedns:
         #    self._reserve_dns(name, nets, domain)
         return {'result': 'success'}
@@ -230,7 +215,6 @@ class Kbox:
 
     def stop(self, name):
         conn = self.conn
-        vm = conn.find_machine(name)
         try:
             vm = conn.find_machine(name)
             if status[str(vm.state)] == "down":
@@ -286,7 +270,6 @@ class Kbox:
         conn = self.conn
         try:
             vm = conn.find_machine(name)
-            print dir(vm)
         except:
             return None
         return status[str(str(vm.state))]
@@ -298,11 +281,27 @@ class Kbox:
         for vm in conn.machines:
             name = vm.name
             state = status[str(vm.state)]
-            ip = ''
-            source = ''
+            port = ''
+            source = vm.get_extra_data('template')
             description = vm.description
-            title = 'N/A'
-            vms.append([name, state, ip, source, description, title])
+            profile = vm.get_extra_data('profile')
+            for n in range(7):
+                nic = vm.get_network_adapter(n)
+                enabled = nic.enabled
+                if not enabled:
+                    continue
+                # elif str(nic.attachment_type) == 'NATNetwork':
+                #    networktype = 'natnetwork'
+                #    network = nic.nat_network
+                if str(nic.attachment_type) == 'NAT':
+                    for redirect in nic.nat_engine.redirects:
+                        redirect = redirect.split(',')
+                        hostport = redirect[3]
+                        guestport = redirect[5]
+                        if guestport == '22':
+                            port = hostport
+                            break
+            vms.append([name, state, port, source, description, profile])
         return vms
 
     def console(self, name, tunnel=False):
@@ -344,6 +343,7 @@ class Kbox:
             print("VM %s not found" % name)
             return
         state = 'down'
+        hostports = []
         autostart = starts[vm.autostart_enabled]
         memory = vm.memory_size
         numcpus = vm.cpu_count
@@ -353,9 +353,9 @@ class Kbox:
         print("autostart: %s" % autostart)
         description = vm.description
         print("description: %s" % description)
-        title = 'N/A'
-        if title is not None:
-            print("profile: %s" % title)
+        profile = vm.get_extra_data('profile')
+        if profile != '':
+            print("profile: %s" % profile)
         print("cpus: %s" % numcpus)
         print("memory: %sMB" % memory)
         for n in range(7):
@@ -365,11 +365,30 @@ class Kbox:
                 break
             device = "eth%s" % n
             mac = ':'.join(nic.mac_address[i: i + 2] for i in range(0, len(nic.mac_address), 2))
-            network = 'default'
-            networktype = 'routed'
-            if nic.nat_network != '':
+            if str(nic.attachment_type) == 'Internal':
                 networktype = 'internal'
                 network = nic.internal_network
+            elif str(nic.attachment_type) == 'NATNetwork':
+                networktype = 'natnetwork'
+                network = nic.nat_network
+            elif str(nic.attachment_type) == 'Null':
+                networktype = 'unassigned'
+                network = 'N/A'
+            elif str(nic.attachment_type) == 'Bridged':
+                networktype = 'bridged'
+                network = nic.bridged_interface
+            elif str(nic.attachment_type) == 'NAT':
+                networktype = 'nat'
+                network = 'N/A'
+                for redirect in nic.nat_engine.redirects:
+                    redirect = redirect.split(',')
+                    hostport = redirect[3]
+                    guestport = redirect[5]
+                    if guestport == '22':
+                        hostports.append(hostport)
+            else:
+                networktype = 'N/A'
+                network = 'N/A'
             print("net interfaces:%s mac: %s net: %s type: %s" % (device, mac, network, networktype))
         disks = []
         for index in range(10):
@@ -386,6 +405,8 @@ class Kbox:
             drivertype = os.path.splitext(disk.name)[1].replace('.', '')
             diskformat = 'file'
             print("diskname: %s disksize: %sGB diskformat: %s type: %s path: %s" % (device, disksize, diskformat, drivertype, path))
+            for hostport in hostports:
+                print("ssh port: %s" % (hostport))
         return
 
     def ip(self, name):
@@ -397,6 +418,10 @@ class Kbox:
             return None
         # session = vm.create_session()
         # guest = session.console.guest
+        natnetworks = conn.nat_networks
+        print natnetworks
+        for n in natnetworks:
+            print dir(n)
         properties = vm.get_guest_property('/VirtualBox/GuestInfo/Net/0/V4/IP')
         print properties
 
@@ -472,39 +497,17 @@ class Kbox:
 
     def update_ip(self, name, ip):
         conn = self.conn
-        vm = conn.find_machine(name)
-        root = ''
-        if not vm:
+        try:
+            vm = conn.find_machine(name)
+        except:
             print("VM %s not found" % name)
-        if str(vm.state) == 1:
-            print("Machine up. Change will only appear upon next reboot")
-        osentry = root.getiterator('os')[0]
-        smbios = osentry.find('smbios')
-        if smbios is None:
-            newsmbios = ''
-            osentry.append(newsmbios)
-        sysinfo = root.getiterator('sysinfo')
-        system = root.getiterator('system')
-        if not sysinfo:
-            sysinfo = ''
-            root.append(sysinfo)
-        sysinfo = root.getiterator('sysinfo')[0]
-        if not system:
-            system = ''
-            sysinfo.append(system)
-        system = root.getiterator('system')[0]
-        versionfound = False
-        for entry in root.getiterator('entry'):
-            attributes = entry.attrib
-            if attributes['name'] == 'version':
-                entry.text = ip
-                versionfound = True
-        if not versionfound:
-            version = ''
-            version.text = ip
-            system.append(version)
-        newxml = ''
-        conn.defineXML(newxml)
+            return
+        session = Session()
+        vm.lock_machine(session, library.LockType.write)
+        machine = session.machine
+        machine.set_extra_data('ip', ip)
+        machine.save_settings()
+        session.unlock_machine()
 
     def update_memory(self, name, memory):
         conn = self.conn
@@ -514,8 +517,12 @@ class Kbox:
         except:
             print("VM %s not found" % name)
             return
-        vm.memory_size = memory
-        vm.save_settings()
+        session = Session()
+        vm.lock_machine(session, library.LockType.write)
+        machine = session.machine
+        machine.memory_size = memory
+        machine.save_settings()
+        session.unlock_machine()
 
     def update_cpu(self, name, numcpus):
         conn = self.conn
@@ -653,7 +660,7 @@ class Kbox:
             poolname = pool['name']
             path = pool['path']
             for entry in os.listdir(path):
-                if entry.endswith('vdi') and not entry.startswith('KVIRT_'):
+                if entry.endswith('vdi'):
                     volumes[entry] = {'pool': poolname, 'path': "%s/%s" % (path, entry)}
                 else:
                     continue
@@ -677,69 +684,59 @@ class Kbox:
 
     def add_nic(self, name, network):
         conn = self.conn
-        networks = {}
-        for interface in conn.listAllInterfaces():
-            networks[interface.name()] = 'bridge'
-        for net in conn.listAllNetworks():
-            networks[net.name()] = 'network'
-        try:
-            vm = conn.find_machine(name)
-        except:
-            print("VM %s not found" % name)
-            return
+        networks = self.list_networks()
         if network not in networks:
             print("Network %s not found" % network)
             return
-        else:
-            networktype = networks[network]
-            source = "<source %s='%s'/>" % (networktype, network)
-        nicxml = """<interface type='%s'>
-                    %s
-                    <model type='virtio'/>
-                    </interface>""" % (networktype, source)
-        vm.attachDevice(nicxml)
-        vm = conn.find_machine(name)
-        vmxml = vm.XMLDesc(0)
-        conn.defineXML(vmxml)
-
-    def delete_nic(self, name, interface):
-        conn = self.conn
-        networks = {}
-        nicnumber = 0
-        for n in conn.listAllInterfaces():
-            networks[n.name()] = 'bridge'
-        for n in conn.listAllNetworks():
-            networks[n.name()] = 'network'
+        networktype = networks[network]['type']
         try:
             vm = conn.find_machine(name)
-            root = ''
         except:
             print("VM %s not found" % name)
             return
-        for element in root.getiterator('interface'):
-            device = "eth%s" % nicnumber
-            if device == interface:
-                mac = element.find('mac').get('address')
-                networktype = element.get('type')
-                if networktype == 'bridge':
-                    network = element.find('source').get('bridge')
-                    source = "<source %s='%s'/>" % (networktype, network)
+        if self.status(name) == 'up':
+            print("VM %s must be down" % name)
+            return
+        session = Session()
+        # try:
+        #     vm.unlock_machine()
+        # except:
+        #     pass
+        vm.lock_machine(session, library.LockType.write)
+        machine = session.machine
+        for n in range(7):
+            nic = machine.get_network_adapter(n)
+            if not nic.enabled:
+                nic.enabled = True
+                nic.nat_network = network
+                if networktype == 'internal':
+                    nic.attachment_type = library.NetworkAttachmentType.internal
+                    nic.internal_network = network
                 else:
-                    network = element.find('source').get('network')
-                    source = "<source %s='%s'/>" % (networktype, network)
+                    nic.attachment_type = library.NetworkAttachmentType.nat_network
+                    nic.nat_network = network
                 break
-            else:
-                nicnumber += 1
-        nicxml = """<interface type='%s'>
-                    <mac address='%s'/>
-                    %s
-                    <model type='virtio'/>
-                    </interface>""" % (networktype, mac, source)
-        print nicxml
-        vm.detachDevice(nicxml)
-        vm = conn.find_machine(name)
-        vmxml = vm.XMLDesc(0)
-        conn.defineXML(vmxml)
+        machine.save_settings()
+        session.unlock_machine()
+
+    def delete_nic(self, name, interface):
+        conn = self.conn
+        try:
+            vm = conn.find_machine(name)
+        except:
+            print("VM %s not found" % name)
+            return
+        if self.status(name) == 'up':
+            print("VM %s must be down" % name)
+            return
+        session = Session()
+        vm.lock_machine(session, library.LockType.write)
+        machine = session.machine
+        number = int(interface[-1])
+        nic = machine.get_network_adapter(number)
+        nic.enabled = False
+        machine.save_settings()
+        session.unlock_machine()
 
     def _ssh_credentials(self, name):
         ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety']
@@ -750,7 +747,7 @@ class Kbox:
         except:
             print("VM %s not found" % name)
             return '', ''
-        if str(vm.state) != 1:
+        if str(vm.state) == 0:
             print("Machine down. Cannot ssh...")
             return '', ''
         vm = [v for v in self.list() if v[0] == name][0]
@@ -770,19 +767,17 @@ class Kbox:
                 user = 'debian'
             elif 'arch' in template.lower():
                 user = 'arch'
-        ip = vm[2]
-        if ip == '':
-            print("No ip found. Cannot ssh...")
-        return user, ip
+        port = vm[2]
+        if port == '':
+            print("No port found. Cannot ssh...")
+        return user, port
 
     def ssh(self, name, local=None, remote=None, tunnel=False):
-        user, ip = self._ssh_credentials(name)
-        if ip == '':
+        user, port = self._ssh_credentials(name)
+        if port == '':
             return
         else:
-            sshcommand = "%s@%s" % (user, ip)
-            if self.host not in ['localhost', '127.0.0.1'] and tunnel:
-                sshcommand = "-o ProxyCommand='ssh -p %s -W %%h:%%p %s@%s' %s" % (self.port, self.user, self.host, sshcommand)
+            sshcommand = "-p %s %s@127.0.0.1" % (port, user)
             if local is not None:
                 sshcommand = "-L %s %s" % (local, sshcommand)
             if remote is not None:
@@ -791,21 +786,17 @@ class Kbox:
             os.system(sshcommand)
 
     def scp(self, name, source=None, destination=None, tunnel=False, download=False, recursive=False):
-        user, ip = self._ssh_credentials(name)
-        if ip == '':
+        user, port = self._ssh_credentials(name)
+        if port == '':
             print("No ip found. Cannot scp...")
         else:
-            if self.host not in ['localhost', '127.0.0.1'] and tunnel:
-                arguments = "-o ProxyCommand='ssh -p %s -W %%h:%%p %s@%s'" % (self.port, self.user, self.host)
-            else:
-                arguments = ''
-            scpcommand = 'scp'
+            scpcommand = 'scp -P %s' % port
             if recursive:
                 scpcommand = "%s -r" % scpcommand
             if download:
-                scpcommand = "%s %s %s@%s:%s %s" % (scpcommand, arguments, user, ip, source, destination)
+                scpcommand = "%s %s@127.0.0.1:%s %s" % (scpcommand, user, source, destination)
             else:
-                scpcommand = "%s %s %s %s@%s:%s" % (scpcommand, arguments, source, user, ip, destination)
+                scpcommand = "%s %s %s@127.0.0.1:%s" % (scpcommand, source, user, destination)
             os.system(scpcommand)
 
     def create_pool(self, name, poolpath, pooltype='dir', user='qemu'):
@@ -827,61 +818,41 @@ class Kbox:
                 f.write("  path: %s" % pool['path'])
 
     def add_image(self, image, pool):
-        poolname = pool
-        conn = self.conn
-        volumes = []
-        try:
-            pool = conn.storagePoolLookupByName(pool)
-            for vol in pool.listAllVolumes():
-                volumes.append(vol.name())
-        except:
-            return {'result': 'failure', 'reason': "Pool %s not found" % poolname}
-        poolpath = ''
-        if self.host == 'localhost' or self.host == '127.0.0.1':
-            cmd = 'wget -P %s %s' % (poolpath, image)
-        elif self.protocol == 'ssh':
-            cmd = 'ssh -p %s %s@%s "wget -P %s %s"' % (self.port, self.user, self.host, poolpath, image)
+        if pool is not None:
+            pool = [p['path'] for p in self._pool_info() if p['name'] == pool]
+            if pool:
+                poolpath = pool[0]
+            else:
+                print("Pool not found. Leaving....")
+                return
+        cmd = 'wget -P %s %s' % (poolpath, image)
         os.system(cmd)
-        pool.refresh()
         return {'result': 'success'}
 
     def create_network(self, name, cidr, dhcp=True, nat=True):
         conn = self.conn
-        natnetworks = conn.nat_networks
-        internalnetworks = conn.internal_networks
-        print natnetworks, internalnetworks
-        return
-        # networks = self.list_networks()
-        # cidrs = [network['cidr'] for network in networks.values()]
-        # if name in networks:
-        #     return {'result': 'failure', 'reason': "Network %s already exists" % name}
-        # try:
-        #     range = IpRange(cidr)
-        # except TypeError:
-        #     return {'result': 'failure', 'reason': "Invalid Cidr %s" % cidr}
-        # if IPNetwork(cidr) in cidrs:
-        #     return {'result': 'failure', 'reason': "Cidr %s already exists" % cidr}
-        # netmask = IPNetwork(cidr).netmask
-        # gateway = range[1]
-        # # if dhcp:
-        # #    start = range[2]
-        # #    end = range[-2]
+        network = conn.create_nat_network(name)
+        network.network = cidr
+        if dhcp:
+            network.need_dhcp_server = True
         return {'result': 'success'}
 
     def delete_network(self, name=None):
         conn = self.conn
-        try:
-            network = conn.networkLookupByName(name)
-        except:
-            return {'result': 'failure', 'reason': "Network %s not found" % name}
-        machines = self.network_ports(name)
-        if machines:
-            machines = ','.join(machines)
-            return {'result': 'failure', 'reason': "Network %s is being used by %s" % (name, machines)}
-        if network.isActive():
-            network.destroy()
-        network.undefine()
-        return {'result': 'success'}
+        for network in conn.nat_networks:
+            networkname = network.network_name
+            if networkname == name:
+                conn.remove_nat_network(network)
+                return {'result': 'success'}
+        return {'result': 'failure', 'reason': "Network %s not found" % name}
+        # machines = self.network_ports(name)
+        # if machines:
+        #     machines = ','.join(machines)
+        #     return {'result': 'failure', 'reason': "Network %s is being used by %s" % (name, machines)}
+        # if network.isActive():
+        #     network.destroy()
+        # network.undefine()
+        # return {'result': 'success'}
 
     def _pool_info(self):
         poolfile = "%s/.vbox.yml" % os.environ.get('HOME')
@@ -901,44 +872,18 @@ class Kbox:
     def list_networks(self):
         networks = {}
         conn = self.conn
-        for network in conn.listAllNetworks():
-            networkname = network.name()
+        for network in conn.internal_networks:
+            networkname = network
             cidr = 'N/A'
-            root = ''
-            ip = root.getiterator('ip')
-            if ip:
-                attributes = ip[0].attrib
-                firstip = attributes.get('address')
-                netmask = attributes.get('netmask')
-                ip = IPNetwork('%s/%s' % (firstip, netmask))
-                cidr = ip.cidr
-            dhcp = root.getiterator('dhcp')
-            if dhcp:
+            networks[networkname] = {'cidr': cidr, 'dhcp': False, 'type': 'internal', 'mode': 'isolated'}
+        for network in conn.nat_networks:
+            networkname = network.network_name
+            if network.need_dhcp_server:
                 dhcp = True
             else:
                 dhcp = False
-            forward = root.getiterator('forward')
-            if forward:
-                attributes = forward[0].attrib
-                mode = attributes.get('mode')
-            else:
-                mode = 'isolated'
-            networks[networkname] = {'cidr': cidr, 'dhcp': dhcp, 'type': 'routed', 'mode': mode}
-        for interface in conn.listAllInterfaces():
-            interfacename = interface.name()
-            if interfacename == 'lo':
-                continue
-            root = ''
-            ip = root.getiterator('ip')
-            if ip:
-                attributes = ip[0].attrib
-                ip = attributes.get('address')
-                prefix = attributes.get('prefix')
-                ip = IPNetwork('%s/%s' % (ip, prefix))
-                cidr = ip.cidr
-            else:
-                cidr = 'N/A'
-            networks[interfacename] = {'cidr': cidr, 'dhcp': 'N/A', 'type': 'bridged', 'mode': 'N/A'}
+            cidr = network.network
+            networks[networkname] = {'cidr': cidr, 'dhcp': dhcp, 'type': 'routed', 'mode': 'nat'}
         return networks
 
     def delete_pool(self, name, full=False):
@@ -957,4 +902,12 @@ class Kbox:
                         f.write("  path: %s" % pool['path'])
 
     def bootstrap(self, pool=None, poolpath=None, pooltype='dir', nets={}, image=None):
-        print "Nothing to do"
+        print "Not implemented at the moment"
+        poolfile = "%s/.vbox.yml" % os.environ.get('HOME')
+        if os.path.exists(poolfile):
+            return
+        poolinfo = [{'name': pool, 'path': poolpath}]
+        with open(poolfile, 'w') as f:
+            for pool in poolinfo:
+                f.write("\n- name: %s\n" % pool['name'])
+                f.write("  path: %s" % pool['path'])

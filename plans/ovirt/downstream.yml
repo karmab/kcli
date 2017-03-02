@@ -7,6 +7,8 @@ rhv:
  disks:
   - size: 60
  pool: default
+ domain: localdomain
+ reservedns: true
  scripts: 
   - ~/register.sh
   - nfs.sh

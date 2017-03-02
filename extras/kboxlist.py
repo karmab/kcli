@@ -1,12 +1,11 @@
 #!/usr/bin/python
 
 '''
-ansible dynamic inventory script for use with kcli and libvirt
+ansible dynamic inventory script for use with kcli and virtualbox
 '''
 
-from kvirt.kvm import Kvirt
+from kvirt.vbox import Kbox
 import json
-import yaml
 import os
 import argparse
 
@@ -15,31 +14,12 @@ def empty():
     return {'_meta': {'hostvars': {}}}
 
 
-class KcliInventory(object):
+class KBoxInventory(object):
 
     def __init__(self):
         self.inventory = {}
         self.read_cli_args()
-        inifile = "%s/kcli.yml" % os.environ.get('HOME')
-        if not os.path.exists(inifile):
-            ini = {'default': {'client': 'local'}, 'local': {}}
-        else:
-            with open(inifile, 'r') as entries:
-                ini = yaml.load(entries)
-            if 'default' not in ini or 'client' not in ini['default']:
-                print "Missing default section in config file. Leaving..."
-                os._exit(1)
-        client = ini['default']['client']
-        if client not in ini:
-            print "Missing section for client %s in config file. Leaving..." % client
-            os._exit(1)
-        options = ini[client]
-        self.host = options.get('host', '127.0.0.1')
-        self.port = options.get('port', 22)
-        self.user = options.get('user', 'root')
-        protocol = options.get('protocol', 'ssh')
-        self.tunnel = options.get('tunnel', False)
-        self.k = Kvirt(host=self.host, port=self.port, user=self.user, protocol=protocol)
+        self.k = Kbox()
         if self.k.conn is None:
             print "Couldnt connect to specify hypervisor %s. Leaving..." % self.host
             os._exit(1)
@@ -66,13 +46,12 @@ class KcliInventory(object):
     def get(self):
         ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety']
         k = self.k
-        tunnel = self.tunnel
         metadata = {'_meta': {'hostvars': {}}}
         hostvalues = metadata['_meta']['hostvars']
         for vm in k.list():
             name = vm[0]
             status = vm[1]
-            ip = vm[2]
+            port = vm[2]
             template = vm[3]
             description = vm[4]
             profile = vm[5]
@@ -83,10 +62,9 @@ class KcliInventory(object):
             else:
                 metadata[description]["hosts"].append(name)
             hostvalues[name] = {'status': status}
-            if tunnel:
-                hostvalues[name]['ansible_ssh_common_args'] = "-o ProxyCommand='ssh -p %s -W %%h:%%p %s@%s'" % (self.port, self.user, self.host)
-            if ip != '':
-                hostvalues[name]['ansible_host'] = ip
+            hostvalues[name]['ansible_host'] = '127.0.0.1'
+            if port != '':
+                hostvalues[name]['ansible_port'] = port
             if template != '':
                 if 'centos' in template.lower():
                     hostvalues[name]['ansible_user'] = 'centos'
@@ -105,4 +83,4 @@ class KcliInventory(object):
         return metadata
 
 # Get the inventory.
-KcliInventory()
+KBoxInventory()
