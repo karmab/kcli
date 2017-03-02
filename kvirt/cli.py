@@ -15,7 +15,7 @@ import dockerutils
 import nameutils
 import common
 
-__version__ = '5.8'
+__version__ = '5.9'
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
@@ -117,7 +117,7 @@ pass_config = click.make_pass_decorator(Config, ensure=True)
 @click.version_option(version=__version__)
 @pass_config
 def cli(config):
-    """Libvirt wrapper on steroids. Check out https://github.com/karmab/kcli!"""
+    """Libvirt/VirtualBox wrapper on steroids. Check out https://github.com/karmab/kcli!"""
     config.load()
 
 

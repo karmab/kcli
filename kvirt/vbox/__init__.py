@@ -306,12 +306,15 @@ class Kbox:
 
     def console(self, name, tunnel=False):
         conn = self.conn
-        vm = conn.find_machine(name)
-        if not str(vm.state):
-            print("VM down")
+        try:
+            vm = conn.find_machine(name)
+        except:
+            print "VM %s not found" % name
             return
-        else:
+        if self.status(name) == 'down':
             vm.launch_vm_process(None, 'gui', '')
+        else:
+            print "VM %s allready running in headless mode" % name
 
     def serialconsole(self, name):
         conn = self.conn

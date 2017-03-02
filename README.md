@@ -8,19 +8,20 @@
 
 This script is meant to interact with a local/remote libvirt daemon and to easily deploy from templates (optionally using cloudinit).
 It will also report IPS for any VM connected to a dhcp-enabled libvirt network and generally for every VM deployed from this client.
+There is additional support for VirtualBox
 
 It started because I switched from ovirt and needed a tool similar to [ovirt.py](https://github.com/karmab/ovirt)
 
 ##  Wouldnt it be cool to:
 
 - Interact with libvirt without XML
+- Interact The same way with virtualbox
 - Declare all your objects(vm, containers, networks, ansible,...) in a single yaml file!
 - Easily grab and share those files from github
 - Easily Test all Redhat Infrastructure products, and their upstream counterpart
 - Easily share private keys between your vms
 - Inject all configuration with cloudinit
 - Use the default cloud images
-
 
 ## Demo!
 
@@ -42,11 +43,22 @@ On Fedora, you' will need an additional package
 yum -y install redhat-rpm-config
 ```
 
-
 If using a Debian based distribution:
 
 ```Shell
 apt-get -y install python-pip pkg-config libvirt-dev genisoimage qemu-kvm netcat libvirt-bin python-dev libyaml-dev
+```
+
+If you want to use virtualbox, you ll need the following package:
+
+```Shell
+pip install vboxapi
+```
+
+If you want to use virtualbox on macosx, you will also need :
+
+```Shell
+brew install qemu
 ```
 
 2. Install kcli from pypi
@@ -99,7 +111,7 @@ alias kcli = "docker run --rm -v ~/kcli.yml:/root/kcli.yml -v ~/kcli_profiles.ym
 
 ## Configuration
 
-If you only want to use your local libvirt daemon, no configuration is needed.
+If you only want to use your local libvirt or virtualbox daemon, no configuration is needed.
 If you want to generate a basic settings file, you can use the following command:
 
 ```Shell
