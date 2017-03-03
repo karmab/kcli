@@ -8,7 +8,7 @@ if os.path.exists('README.rst'):
 
 setup(
     name='kcli',
-    version='5.11',
+    version='5.12',
     packages=find_packages(),
     include_package_data=True,
     description=description,

@@ -4,9 +4,6 @@
 interact with a local/remote libvirt daemon
 """
 
-# from defaults import TEMPLATES
-# from distutils.spawn import find_executable
-# from netaddr import IPNetwork
 import os
 import time
 from virtualbox import VirtualBox, library, Session
@@ -132,7 +129,7 @@ class Kbox:
         session = Session()
         vm.lock_machine(session, library.LockType.write)
         machine = session.machine
-        if cloudinit:
+        if iso is None and cloudinit:
             common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain, reserveip=reserveip, files=files)
             medium = conn.create_medium('RAW', '/tmp/%s.iso' % name, library.AccessMode.read_only, library.DeviceType.dvd)
             progress = medium.create_base_storage(368, [library.MediumVariant.fixed])
@@ -172,27 +169,22 @@ class Kbox:
             progress = disk.resize(disksize)
             progress.wait_for_completion()
             machine.attach_device("SATA", index, 0, library.DeviceType.hard_disk, disk)
-        machine.save_settings()
-        session.unlock_machine()
-        if start:
-            self.start(name)
-        return {'result': 'success'}
-        if iso is None:
-            if cloudinit:
-                iso = "%s/%s.iso" % (default_poolpath, name)
-            else:
-                iso = ''
-        else:
-            try:
-                if os.path.isabs(iso):
-                    shortiso = os.path.basename(iso)
-                else:
-                    shortiso = iso
-                # iso = "%s/%s" % (default_poolpath, iso)
-                # iso = "%s/%s" % (isopath, iso)
-                print shortiso
-            except:
+        poolpath = default_poolpath
+        for p in self._pool_info():
+            poolname = p['name']
+            if poolname == pool:
+                poolpath = p['path']
+        if iso is not None:
+            if not os.path.isabs(iso):
+                iso = "%s/%s" % (poolpath, iso)
+            if not os.path.exists(iso):
                 return {'result': 'failure', 'reason': "Invalid iso %s" % iso}
+            medium = conn.create_medium('RAW', iso, library.AccessMode.read_only, library.DeviceType.dvd)
+            Gb = 1 * 1024 * 1024 * 1024
+            progress = medium.create_base_storage(Gb, [library.MediumVariant.fixed])
+            progress.wait_for_completion()
+            dvd = conn.open_medium(iso, library.DeviceType.dvd, library.AccessMode.read_only, False)
+            machine.attach_device("IDE", 0, 0, library.DeviceType.dvd, dvd)
         # if nested and virttype == 'kvm':
         #    print "prout"
         # else:
@@ -206,6 +198,10 @@ class Kbox:
         #    self._reserve_ip(name, nets, macs)
         # if reservedns:
         #    self._reserve_dns(name, nets, domain)
+        machine.save_settings()
+        session.unlock_machine()
+        if start:
+            self.start(name)
         return {'result': 'success'}
 
     def start(self, name):
@@ -431,6 +427,7 @@ class Kbox:
                 print("ip: %s" % (ip))
             for hostport in hostports:
                 print("ssh port: %s" % (hostport))
+                break
         return
 
     def ip(self, name):
@@ -587,20 +584,15 @@ class Kbox:
                 print("Pool not found. Leaving....")
                 return
         diskpath = "%s/%s.vdi" % (poolpath, name)
+        disk = conn.create_medium('VDI', diskpath, library.AccessMode.read_write, library.DeviceType.hard_disk)
         if template is not None:
             volumes = self.volumes()
             if template not in volumes and template not in volumes.values():
                 print("Invalid template %s.Leaving..." % template)
                 return
-            # if template.endswith('qcow2'):
-            #    templatepath = "%s/KVIRT_%s" % (poolpath, template.replace('qcow2', 'vdi'))
             templatepath = "%s/%s" % (poolpath, template)
-        disk = conn.create_medium('VDI', diskpath, library.AccessMode.read_write, library.DeviceType.hard_disk)
-        if template in volumes:
-            self._convert_qcow2(templatepath, diskpath)
-            # template = conn.open_medium(templatepath, library.DeviceType.hard_disk, library.AccessMode.read_write, False)
-            # progress = template.clone_to(disk, [library.MediumVariant.fixed], disk)
-            # progress.wait_for_completion()
+            if template in volumes:
+                self._convert_qcow2(templatepath, diskpath)
         else:
             progress = disk.create_base_storage(size, [library.MediumVariant.fixed])
             progress.wait_for_completion()
