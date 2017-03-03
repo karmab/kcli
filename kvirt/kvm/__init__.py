@@ -9,7 +9,7 @@ from iptools import IpRange
 # from jinja2 import Environment
 from kvirt import common
 from netaddr import IPAddress, IPNetwork
-from libvirt import open as libvirtopen
+from libvirt import open as libvirtopen, registerErrorHandler
 import os
 import string
 import time
@@ -32,6 +32,11 @@ guestwindows2003 = "windows_2003"
 guestwindows200364 = "windows_2003x64"
 guestwindows2008 = "windows_2008"
 guestwindows200864 = "windows_2008x64"
+
+
+def libvirt_callback(ignore, err):
+    return
+registerErrorHandler(f=libvirt_callback, ctx=None)
 
 
 class Kvirt:
@@ -684,6 +689,7 @@ class Kvirt:
         try:
             vm = conn.lookupByName(name)
         except:
+            print("vm %s not found" % name)
             return
         ip = self.ip(name)
         status = {0: 'down', 1: 'up'}

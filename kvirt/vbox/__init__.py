@@ -466,6 +466,7 @@ class Kbox:
         try:
             vm = conn.find_machine(name)
         except:
+            print("vm %s not found" % name)
             return
         vm.remove(True)
 

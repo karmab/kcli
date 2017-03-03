@@ -2,7 +2,7 @@ import os
 import random
 import string
 import time
-from kvirt import Kvirt
+from kvirt.kvm import Kvirt
 
 
 class TestK:
