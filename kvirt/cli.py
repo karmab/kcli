@@ -15,7 +15,7 @@ import dockerutils
 import nameutils
 import common
 
-__version__ = '5.12'
+__version__ = '5.13'
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 

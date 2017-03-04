@@ -543,8 +543,8 @@ Basic testing can be run with pytest. If using a remote hypervisor, you ll want 
 
 While the tool should pretty much work the same why on this hypervisor, there are some issues:
 
-- it's impossible to connect using ip, so port forwarding is used instead ( only with NAT)
-- with NATnetworks ( not NAT!), it's impossible to gather the lease ips assigned to the guest, and as such set proper forwarding rules for ssh access
+- it's impossible to connect using ip, so port forwarding is used instead
+- with NATnetworks ( not NAT!), guest addons are needed to gather ip of the vm so they are automatically installed for you. It implies an automatic reboot at the end of provisioning....
 
 ## Contributors
 

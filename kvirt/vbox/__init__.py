@@ -43,6 +43,22 @@ class Kbox:
         conn.close()
         self.conn = None
 
+    def guestinstall(self, template):
+        ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety']
+        template = template.lower()
+        version = self.conn.version
+        commands = ['curl -O http://download.virtualbox.org/virtualbox/%s/VBoxGuestAdditions_%s.iso' % (version, version)]
+        commands.append('mount -o loop VBoxGuestAdditions_5.1.14.iso /mnt')
+        if 'centos' in template or 'rhel' in template or 'fedora' in template:
+            commands.append('yum -y install gcc make kernel-devel-`uname -r`')
+        elif 'debian' in template or [x for x in ubuntus if x in template]:
+            commands.append('apt-get install build-essential linux-headers-`uname -r`')
+        else:
+            return []
+        commands.append('sh /mnt/VBoxLinuxAdditions.run')
+        commands.append('umount /mnt')
+        return commands
+
     def exists(self, name):
         conn = self.conn
         for vmname in conn.machines:
@@ -115,10 +131,10 @@ class Kbox:
             elif network in nat_networks:
                 nic.attachment_type = library.NetworkAttachmentType.nat_network
                 nic.nat_network = network
-                if ip is not None and index == 0:
+                if index == 0:
                     natengine = nic.nat_engine
                     nat_network = [n for n in conn.nat_networks if n.network_name == network][0]
-                    nat_network.add_port_forward_rule(False, 'ssh_%s' % name, library.NATProtocol.tcp, '', common.get_free_port(), ip, 22)
+                    nat_network.add_port_forward_rule(False, 'ssh_%s' % name, library.NATProtocol.tcp, '', common.get_free_port(), '', 22)
             else:
                 nic.attachment_type = library.NetworkAttachmentType.nat
                 if index == 0:
@@ -130,6 +146,20 @@ class Kbox:
         vm.lock_machine(session, library.LockType.write)
         machine = session.machine
         if iso is None and cloudinit:
+            if template is not None:
+                guestcmds = self.guestinstall(template)
+                if cmds is None:
+                    cmds = [guestcmds]
+                elif 'rhel' in template:
+                        register = [c for c in cmds if 'subscription-manager' in c]
+                        if register:
+                            index = cmds.index(register[-1])
+                            cmds[index + 1:index + 1] = guestcmds
+                        else:
+                            cmds = guestcmds + cmds
+                else:
+                    cmds = guestcmds + cmds
+                cmds = cmds + ['reboot']
             common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain, reserveip=reserveip, files=files)
             medium = conn.create_medium('RAW', '/tmp/%s.iso' % name, library.AccessMode.read_only, library.DeviceType.dvd)
             progress = medium.create_base_storage(368, [library.MediumVariant.fixed])
@@ -213,7 +243,6 @@ class Kbox:
             else:
                 vm = conn.find_machine(name)
                 vm.launch_vm_process(None, 'headless', '')
-
                 return {'result': 'success'}
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
@@ -289,7 +318,7 @@ class Kbox:
             source = vm.get_extra_data('template')
             description = vm.description
             profile = vm.get_extra_data('profile')
-            ip = vm.get_extra_data('ip')
+            # ip = vm.get_extra_data('ip')
             for n in range(7):
                 nic = vm.get_network_adapter(n)
                 enabled = nic.enabled
@@ -307,12 +336,21 @@ class Kbox:
                     nat_network = [n for n in conn.nat_networks if n.network_name == nic.nat_network][0]
                     for rule in nat_network.port_forward_rules4:
                         rule = rule.split(':')
+                        rulename = rule[0]
                         hostport = rule[3]
                         guestip = rule[4][1:-1]
-                        guestport = rule[5]
-                        if guestport == '22' and guestip == ip:
+                        if guestip != '':
                             port = hostport
                             break
+                        guestport = rule[5]
+                        if rulename == "ssh_%s" % name and guestip == '':
+                            guestip = self.guestip(name)
+                            if guestip == '':
+                                pass
+                            else:
+                                nat_network.remove_port_forward_rule(False, rulename)
+                                nat_network.add_port_forward_rule(False, rulename, library.NATProtocol.tcp, '', int(hostport), guestip, 22)
+                                port = hostport
             vms.append([name, state, port, source, description, profile])
         return vms
 
@@ -438,6 +476,12 @@ class Kbox:
             port = vm[0][2]
             return port
 
+    def guestip(self, name):
+        conn = self.conn
+        vm = conn.find_machine(name)
+        ip = vm.get_guest_property('/VirtualBox/GuestInfo/Net/0/V4/IP')[0]
+        return ip
+
     def volumes(self, iso=False):
         isos = []
         templates = []
@@ -465,6 +509,19 @@ class Kbox:
         except:
             print("vm %s not found" % name)
             return
+        for n in range(7):
+            nic = vm.get_network_adapter(n)
+            enabled = nic.enabled
+            if not enabled:
+                continue
+            if str(nic.attachment_type) == 'NAT':
+                natengine = nic.nat_engine
+                natengine.remove_redirect('ssh_%s' % name)
+            if str(nic.attachment_type) == 'NATNetwork':
+                nat_network = [n for n in conn.nat_networks if n.network_name == nic.nat_network][0]
+                rule = [rule for rule in nat_network.port_forward_rules4 if rule.split(':')[0] == "ssh_%s" % name]
+                if rule:
+                    nat_network.remove_port_forward_rule(False, "ssh_%s" % name)
         vm.remove(True)
 
     def clone(self, old, new, full=False, start=False):
@@ -777,8 +834,8 @@ class Kbox:
             elif 'arch' in template.lower():
                 user = 'arch'
         port = vm[2]
-        if port == '':
-            print("No port found. Cannot ssh...")
+        # if port == '':
+        #    print("No port found. Cannot ssh...")
         return user, port
 
     def ssh(self, name, local=None, remote=None, tunnel=False):
