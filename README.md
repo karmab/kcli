@@ -545,6 +545,7 @@ While the tool should pretty much work the same why on this hypervisor, there ar
 
 - it's impossible to connect using ip, so port forwarding is used instead
 - with NATnetworks ( not NAT!), guest addons are needed to gather ip of the vm so they are automatically installed for you. It implies an automatic reboot at the end of provisioning....
+- when you specify an unknown network, NAT is used instead. The reason behind is to be able to seamlessly use simple existing plans which make use of the default network ( as found on libvirt)
 
 ## Contributors
 
