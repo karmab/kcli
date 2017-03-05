@@ -6,7 +6,7 @@ RUN yum -y install epel-release && \
     yum -y install gcc libvirt-devel python-devel genisoimage qemu-kvm nmap-ncat python-pip openssh-clients
 
 # Group the pip installation
-RUN pip install --no-cache-dir kcli docker
+RUN pip install --no-cache-dir kcli docker vboxapi
 
 VOLUME ["/var/run/libvirt", "/root/.ssh", "/root"]
 
