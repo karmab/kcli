@@ -100,11 +100,11 @@ class Config():
         self.tunnel = bool(options.get('tunnel', self.default['tunnel']))
         self.type = options.get('type', 'kvm')
         if self.type == 'vbox':
-            return Kbox()
-        if self.host is None:
+            k = Kbox()
+        elif self.host is None:
             click.secho("Problem parsing your configuration file", fg='red')
             os._exit(1)
-        k = Kvirt(host=self.host, port=self.port, user=self.user, protocol=self.protocol, url=self.url)
+            k = Kvirt(host=self.host, port=self.port, user=self.user, protocol=self.protocol, url=self.url)
         if k.conn is None:
             click.secho("Couldnt connect to specify hypervisor %s. Leaving..." % self.host, fg='red')
             os._exit(1)
