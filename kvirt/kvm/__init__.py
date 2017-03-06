@@ -60,6 +60,7 @@ class Kvirt:
         self.protocol = protocol
         if self.protocol == 'ssh' and port is None:
             self.port = '22'
+        self.url = url
 
     def close(self):
         conn = self.conn
@@ -546,7 +547,7 @@ class Kvirt:
                 print("No serial Console found. Leaving...")
                 return
             elif self.host in ['localhost', '127.0.0.1']:
-                os.system('virsh console %s' % name)
+                os.system('virsh -c %s console %s' % (self.url, name))
             else:
                 for element in serial:
                     serialport = element.find('source').get('service')
