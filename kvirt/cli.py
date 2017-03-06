@@ -101,9 +101,10 @@ class Config():
         self.type = options.get('type', 'kvm')
         if self.type == 'vbox':
             k = Kbox()
-        elif self.host is None:
-            click.secho("Problem parsing your configuration file", fg='red')
-            os._exit(1)
+        else:
+            if self.host is None:
+                click.secho("Problem parsing your configuration file", fg='red')
+                os._exit(1)
             k = Kvirt(host=self.host, port=self.port, user=self.user, protocol=self.protocol, url=self.url)
         if k.conn is None:
             click.secho("Couldnt connect to specify hypervisor %s. Leaving..." % self.host, fg='red')
