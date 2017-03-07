@@ -364,11 +364,15 @@ class Kbox:
         if self.status(name) == 'down':
             vm.launch_vm_process(None, 'gui', '')
         else:
-            print "VM %s allready running in headless mode" % name
+            print "VM %s allready running in headless mode.Use kcli console -s instead" % name
 
     def serialconsole(self, name):
         conn = self.conn
-        vm = conn.find_machine(name)
+        try:
+            vm = conn.find_machine(name)
+        except:
+            print "VM %s not found" % name
+            return
         if not str(vm.state):
             print("VM down")
             return

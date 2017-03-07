@@ -99,8 +99,8 @@ If running locally, launch it with:
 
     docker run --rm -v /var/run/libvirt:/var/run/libvirt -v ~/.ssh:/root/.ssh karmab/kcli
 
-If using a remote hypervisor, launch it with a local kcli.yml file
-pointing to this hypervisor and providing your ssh keys too
+If using a remote libvirt hypervisor, launch it with a local kcli.yml
+file pointing to this hypervisor and providing your ssh keys too
 
 ``docker run --rm -v ~/kcli.yml:/root/kcli.yml -v ~/.ssh:/root/.ssh karmab/kcli``
 
@@ -127,6 +127,9 @@ locally instead a Docker container:
 .. code:: shell
 
     alias kcli = "docker run --rm -v ~/kcli.yml:/root/kcli.yml -v ~/kcli_profiles.yml:/root/kcli_profiles.yml -v ~/.ssh:/root/.ssh karmab/kcli"
+
+Note that the container cant be used for virtualbox ( i tried hard but
+there's no way that would work...)
 
 Configuration
 -------------
