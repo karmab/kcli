@@ -60,11 +60,14 @@ If using a Debian based distribution:
 
     apt-get -y install python-pip pkg-config libvirt-dev genisoimage qemu-kvm netcat libvirt-bin python-dev libyaml-dev
 
-If you want to use virtualbox, you ll need the following package:
+If you want to use virtualbox, you ll need the following too:
 
 .. code:: shell
 
-    pip install vboxapi
+    curl -O http://download.virtualbox.org/virtualbox/5.1.14/VirtualBoxSDK-5.1.14-112924.zip
+    unzip VirtualBoxSDK-5.1.14-112924.zip
+    cd sdk/installer
+    VBOX_INSTALL_PATH=/usr/lib/virtualbox python vboxapisetup.py install
 
 If you want to use virtualbox on macosx, you will also need :
 

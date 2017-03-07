@@ -49,10 +49,13 @@ If using a Debian based distribution:
 apt-get -y install python-pip pkg-config libvirt-dev genisoimage qemu-kvm netcat libvirt-bin python-dev libyaml-dev
 ```
 
-If you want to use virtualbox, you ll need the following package:
+If you want to use virtualbox, you ll need the following too:
 
 ```Shell
-pip install vboxapi
+curl -O http://download.virtualbox.org/virtualbox/5.1.14/VirtualBoxSDK-5.1.14-112924.zip
+unzip VirtualBoxSDK-5.1.14-112924.zip
+cd sdk/installer
+VBOX_INSTALL_PATH=/usr/lib/virtualbox python vboxapisetup.py install
 ```
 
 If you want to use virtualbox on macosx, you will also need :
@@ -83,7 +86,7 @@ If running locally, launch it with:
 docker run --rm -v /var/run/libvirt:/var/run/libvirt -v ~/.ssh:/root/.ssh karmab/kcli
 ```
 
-If using a remote hypervisor, launch it with a local kcli.yml file pointing to this hypervisor and providing your ssh keys too
+If using a remote libvirt hypervisor, launch it with a local kcli.yml file pointing to this hypervisor and providing your ssh keys too
 
 `docker run --rm -v ~/kcli.yml:/root/kcli.yml -v ~/.ssh:/root/.ssh karmab/kcli`
 
@@ -108,6 +111,8 @@ As a bonus, you can alias kcli and run kcli as if it is installed locally instea
 ```Shell
 alias kcli = "docker run --rm -v ~/kcli.yml:/root/kcli.yml -v ~/kcli_profiles.yml:/root/kcli_profiles.yml -v ~/.ssh:/root/.ssh karmab/kcli"
 ```
+
+Note that the container cant be used for virtualbox ( i tried hard but there's no way that would work...)
 
 ## Configuration
 
