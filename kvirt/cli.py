@@ -32,6 +32,16 @@ def abort_if_false(ctx, param, value):
     if not value:
         ctx.abort()
 
+_global_options = [
+    click.option('--debug', '-d', 'debug', is_flag=True, help='Debug Mode'),
+]
+
+
+def global_options(func):
+    for option in reversed(_global_options):
+        func = option(func)
+    return func
+
 
 class Config():
     def load(self):
@@ -105,7 +115,7 @@ class Config():
             if self.host is None:
                 click.secho("Problem parsing your configuration file", fg='red')
                 os._exit(1)
-            k = Kvirt(host=self.host, port=self.port, user=self.user, protocol=self.protocol, url=self.url)
+            k = Kvirt(host=self.host, port=self.port, user=self.user, protocol=self.protocol, url=self.url, debug=self.debug)
         if k.conn is None:
             click.secho("Couldnt connect to specify hypervisor %s. Leaving..." % self.host, fg='red')
             os._exit(1)
@@ -116,10 +126,12 @@ pass_config = click.make_pass_decorator(Config, ensure=True)
 
 @click.group(context_settings=CONTEXT_SETTINGS)
 @click.version_option(version=__version__)
+@global_options
 @pass_config
-def cli(config):
+def cli(config, debug):
     """Libvirt/VirtualBox wrapper on steroids. Check out https://github.com/karmab/kcli!"""
     config.load()
+    config.debug = debug
 
 
 @cli.command()
@@ -278,6 +290,7 @@ def host(config, client, switch, listing, report, profiles, templates, isos, dis
 def list(config, client, clients, profiles, templates, isos, disks, pools, networks, containers, plans, filters):
     """List clients, profiles, templates, isos, pools or vms"""
     k = config.get(client)
+    print config.debug
     if pools:
         poolstable = PrettyTable(["Pool"])
         poolstable.align["Pool"] = "l"

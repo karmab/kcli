@@ -40,7 +40,7 @@ registerErrorHandler(f=libvirt_callback, ctx=None)
 
 
 class Kvirt:
-    def __init__(self, host='127.0.0.1', port=None, user='root', protocol='ssh', url=None):
+    def __init__(self, host='127.0.0.1', port=None, user='root', protocol='ssh', url=None, debug=False):
         if url is None:
             if host == '127.0.0.1' or host == 'localhost':
                 url = "qemu:///system"
@@ -52,6 +52,8 @@ class Kvirt:
                 url = "qemu:///system"
         try:
             self.conn = libvirtopen(url)
+            if debug:
+                print("DEBUG:" + self.conn)
         except Exception:
             self.conn = None
         self.host = host
@@ -1322,12 +1324,22 @@ class Kvirt:
         if pooltype == 'dir':
             if self.host == 'localhost' or self.host == '127.0.0.1':
                 if not os.path.exists(poolpath):
-                    os.makedirs(poolpath)
+                    try:
+                        os.makedirs(poolpath)
+                    except OSError:
+                        print("Couldn't create directory %s.Leaving..." % poolpath)
+                        return
             elif self.protocol == 'ssh':
                 cmd1 = 'ssh -p %s %s@%s "test -d %s || mkdir %s"' % (self.port, self.user, self.host, poolpath, poolpath)
-                cmd2 = 'ssh %s@%s "chown %s %s"' % (self.user, self.host, user, poolpath)
-                os.system(cmd1)
-                os.system(cmd2)
+                cmd2 = 'ssh -t %s@%s "sudo chown %s %s"' % (self.user, self.host, user, poolpath)
+                return1 = os.system(cmd1)
+                if return1 > 0:
+                    print("Couldn't create directory %s.Leaving..." % poolpath)
+                    return
+                return2 = os.system(cmd2)
+                if return2 > 0:
+                    print("Couldn't change permission of directory %s to qemu.Leaving..." % poolpath)
+                    return
             else:
                 print("Make sur %s directory exists on hypervisor" % name)
             poolxml = """<pool type='dir'>
