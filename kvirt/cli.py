@@ -290,7 +290,6 @@ def host(config, client, switch, listing, report, profiles, templates, isos, dis
 def list(config, client, clients, profiles, templates, isos, disks, pools, networks, containers, plans, filters):
     """List clients, profiles, templates, isos, pools or vms"""
     k = config.get(client)
-    print config.debug
     if pools:
         poolstable = PrettyTable(["Pool"])
         poolstable.align["Pool"] = "l"
