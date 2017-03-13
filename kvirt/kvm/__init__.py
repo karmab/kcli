@@ -53,7 +53,7 @@ class Kvirt:
         try:
             self.conn = libvirtopen(url)
             if debug:
-                print("DEBUG:" + self.conn)
+                print(self.conn)
         except Exception:
             self.conn = None
         self.host = host

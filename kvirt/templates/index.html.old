@@ -1,0 +1,8 @@
+{% extends "layout.html" %}
+{% block body %}
+
+<h1>Hello, pringado!</h1>
+{% for vm in vms %}
+<div><p>{{ vm[0] }} <b>{{ vm[1] }}</b></p></div>
+{% endfor %}
+{% endblock %}
