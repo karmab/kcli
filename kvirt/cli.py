@@ -543,6 +543,7 @@ def vm(config, profile, listing, info, filters, start, stop, ssh, ip1, ip2, ip3,
             script = os.path.expanduser(script)
             if not os.path.exists(script):
                 click.secho("Script %s not found.Ignoring..." % script, fg='red')
+                return
             else:
                 scriptlines = [line.strip() for line in open(script).readlines() if line != '\n']
                 if scriptlines:
@@ -916,12 +917,14 @@ def plan(config, get, path, listing, autostart, container, noautostart, inputfil
                 ips = profile.get('ips')
                 sharedkey = bool(profile.get('sharedkey', False))
                 scripts = next((e for e in [profile.get('scripts'), customprofile.get('scripts')] if e is not None), None)
+                missingscript = False
                 if scripts is not None:
                     scriptcmds = []
                     for script in scripts:
                         script = os.path.expanduser(script)
                         if not os.path.exists(script):
-                            click.secho("Script %s not found.Ignoring..." % script, fg='red')
+                            click.secho("Script %s not found. Ignoring this vm..." % script, fg='red')
+                            missingscript = True
                         else:
                             scriptlines = [line.strip() for line in open(script).readlines() if line != '\n']
                             if scriptlines:
@@ -931,6 +934,8 @@ def plan(config, get, path, listing, autostart, container, noautostart, inputfil
                             cmds = scriptcmds
                         else:
                             cmds = cmds + scriptcmds
+                if missingscript:
+                    continue
                 files = next((e for e in [profile.get('files'), customprofile.get('files')] if e is not None), [])
                 if sharedkey:
                     if not os.path.exists("%s.key" % plan) or not os.path.exists("%s.key.pub" % plan):
