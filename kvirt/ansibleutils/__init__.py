@@ -59,3 +59,14 @@ def inventory(self, name):
             return "%s ansible_host=127.0.0.1 ansible_user=%s ansible_port=%s" % (name, login, ip)
     else:
         return None
+
+
+def make_inventory(k, plan, vms, tunnel=True):
+    with open("/tmp/%s.inv" % plan, "w") as f:
+        f.write("[%s]\n" % plan)
+        for name in vms:
+            inv = inventory(k, name)
+            if inv is not None:
+                f.write("%s\n" % inv)
+        if tunnel:
+            f.write("[%s:vars]\n" % plan)

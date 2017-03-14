@@ -716,6 +716,7 @@ def pool(config, listing, delete, full, pooltype, path, pool):
 
 
 @cli.command()
+@click.option('-A', '--ansible', 'ansible', help='Generate ansible inventory', is_flag=True)
 @click.option('-g', '--get', 'get', help='Download specific plan(s). Use --path for specific directory')
 @click.option('-p', '--path', 'path', default='plans', help='Path where to download plans. Defaults to plan')
 @click.option('-l', '--list', 'listing', help='List Pools', is_flag=True)
@@ -729,7 +730,7 @@ def pool(config, listing, delete, full, pooltype, path, pool):
 @click.option('-t', '--delay', default=0, help="Delay between each vm's creation")
 @click.argument('plan', required=False)
 @pass_config
-def plan(config, get, path, listing, autostart, container, noautostart, inputfile, start, stop, delete, delay, plan):
+def plan(config, ansible, get, path, listing, autostart, container, noautostart, inputfile, start, stop, delete, delay, plan):
     """Create/Delete/Stop/Start vms from plan file"""
     newvms = []
     vmprofiles = {key: value for key, value in config.profiles.iteritems() if 'type' not in value or value['type'] == 'vm'}
@@ -1047,15 +1048,16 @@ def plan(config, get, path, listing, autostart, container, noautostart, inputfil
                 if not vms:
                     click.secho("Ansible skipped as no new vm within playbook provisioned", fg='blue')
                     return
-                with open("/tmp/%s.inv" % plan, "w") as f:
-                    f.write("[%s]\n" % plan)
-                    for name in newvms:
-                        inventory = ansibleutils.inventory(k, name)
-                        if inventory is not None:
-                            f.write("%s\n" % inventory)
-                    if config.tunnel:
-                        f.write("[%s:vars]\n" % plan)
-                        f.write("ansible_ssh_common_args='-o ProxyCommand=\"ssh -p %s -W %%h:%%p %s@%s\"'\n" % (config.port, config.user, config.host))
+                ansibleutils.make_inventory(k, plan, newvms, tunnel=config.tunnel)
+                # with open("/tmp/%s.inv" % plan, "w") as f:
+                #    f.write("[%s]\n" % plan)
+                #    for name in newvms:
+                #        inventory = ansibleutils.inventory(k, name)
+                #        if inventory is not None:
+                #            f.write("%s\n" % inventory)
+                #    if config.tunnel:
+                #        f.write("[%s:vars]\n" % plan)
+                #        f.write("ansible_ssh_common_args='-o ProxyCommand=\"ssh -p %s -W %%h:%%p %s@%s\"'\n" % (config.port, config.user, config.host))
                 ansiblecommand = "ansible-playbook"
                 if verbose:
                     ansiblecommand = "%s -vvv" % ansiblecommand
@@ -1064,6 +1066,20 @@ def plan(config, get, path, listing, autostart, container, noautostart, inputfil
                     f.write("[ssh_connection]\nretries=10\n")
                 print("Running: %s -i /tmp/%s.inv %s" % (ansiblecommand, plan, playbook))
                 os.system("%s -i /tmp/%s.inv %s" % (ansiblecommand, plan, playbook))
+    if ansible:
+        click.secho("Deploying Ansible Inventory...", fg='green')
+        if os.path.exists("/tmp/%s.inv" % plan):
+            click.secho("Inventory in /tmp/%s.inv skipped!" % (plan), fg='blue')
+        else:
+            click.secho("Creating ansible inventory for plan %s in /tmp/%s.inv" % (plan, plan), fg='green')
+            vms = []
+            for vm in sorted(k.list()):
+                name = vm[0]
+                description = vm[4]
+                if description == plan:
+                    vms.append(name)
+            ansibleutils.make_inventory(k, plan, vms, tunnel=config.tunnel)
+            return
 
 
 @cli.command()
