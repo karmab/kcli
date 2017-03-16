@@ -660,7 +660,7 @@ def disk(config, delete, size, diskname, template, pool, name):
         click.secho("Missing pool. Leaving...", fg='red')
         os._exit(1)
     k = config.get()
-    click.secho("Adding disk %s..." % (name), fg='green')
+    click.secho("Adding disk %s to %s..." % (diskname, name), fg='green')
     k.add_disk(name=name, size=size, pool=pool, template=template)
 
 
