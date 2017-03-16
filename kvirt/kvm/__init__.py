@@ -1542,7 +1542,10 @@ class Kvirt:
                 print("Network %s not found...Creating it" % net)
                 cidr = nets[net].get('cidr')
                 dhcp = bool(nets[net].get('dchp', True))
-                self.create_network(name=net, cidr=cidr, dhcp=dhcp)
+                result = self.create_network(name=net, cidr=cidr, dhcp=dhcp)
+                if result['result'] != 'success':
+                    reason = result['reason']
+                    print("Couldnt create Network %s because %s" % (net, reason))
 
     def network_ports(self, name):
         conn = self.conn
