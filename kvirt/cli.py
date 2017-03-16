@@ -15,7 +15,7 @@ import dockerutils
 import nameutils
 import common
 
-__version__ = '5.15'
+__version__ = '5.16'
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
@@ -1182,6 +1182,8 @@ def bootstrap(genfile, auto, name, host, port, user, protocol, url, pool, poolpa
             pooltype = 'dir'
         if template:
             template = TEMPLATES['centos']
+        else:
+            template = None
         nets = {'default': {'cidr': '192.168.122.0/24'}}
         # disks = [{'size': 10}]
         if host == '127.0.0.1':
@@ -1273,7 +1275,7 @@ def bootstrap(genfile, auto, name, host, port, user, protocol, url, pool, poolpa
     if k.conn is None:
         click.secho("Couldnt connect to specify hypervisor %s. Leaving..." % host, fg='red')
         os._exit(1)
-    k.bootstrap(pool=pool, poolpath=poolpath, pooltype=pooltype, nets=nets, template=template)
+    k.bootstrap(pool=pool, poolpath=poolpath, pooltype=pooltype, nets=nets, image=template)
     # TODO:
     # DOWNLOAD CIRROS ( AND CENTOS7? ) IMAGES TO POOL ?
     path = os.path.expanduser('~/kcli.yml')
