@@ -102,7 +102,6 @@ def create_container(self, name, image, nets=None, cmd=None, ports=[], volumes=[
         envinfo = ''
         if environment is not None:
             for env in environment:
-                print env
                 if isinstance(env, str):
                     if len(env.split(':')) == 2:
                         key, value = env.split(':')
@@ -114,8 +113,9 @@ def create_container(self, name, image, nets=None, cmd=None, ports=[], volumes=[
                         value = env[key]
                     else:
                         continue
-                envinfo = "%s -e %s:%s" % (envinfo, key, value)
+                envinfo = "%s -e %s=%s" % (envinfo, key, value)
         dockercommand = "docker run -it %s %s %s --name %s -l %s -d %s" % (volumeinfo, envinfo, portinfo, name, label, image)
+        print dockercommand
         if cmd is not None:
             dockercommand = "%s %s" % (dockercommand, cmd)
         command = "ssh -p %s %s@%s %s" % (self.port, self.user, self.host, dockercommand)
