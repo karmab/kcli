@@ -3,7 +3,7 @@ export EXTERNAL_SUBNET="192.168.122.0/24"
 export EXTERNAL_START="192.168.122.200"
 export EXTERNAL_END="192.168.122.254"
 export EXTERNAL_GATEWAY="192.168.122.1"
-export EXTERNAL_FLOATING="192.168.122.201"
+export EXTERNAL_FLOATING="192.168.122.202"
 cp ~/keystonerc_admin ~/keystonerc_testk
 sed -i "s/OS_USERNAME=admin/OS_USERNAME=testk/" ~/keystonerc_testk
 sed -i "s/OS_PASSWORD=.*/OS_PASSWORD=testk/" ~/keystonerc_testk
