@@ -14,7 +14,7 @@ source ~/keystonerc_admin
 openstack project create testk
 openstack user create  --project testk --password testk testk
 openstack role add --user=testk --project=testk admin
-neutron net-create external_network --provider:network_type flat --provider:physical_network external --router:external
+neutron net-create external --provider:network_type flat --provider:physical_network external --router:external
 neutron subnet-create --name $EXTERNAL_SUBNET --allocation-pool start=$EXTERNAL_START,end=$EXTERNAL_END --disable-dhcp --gateway $EXTERNAL_GATEWAY external $EXTERNAL_SUBNET
 ##keystone password-update --new-password $ADMIN_PASSWORD
 OLD_PASSWORD=`grep PASSWORD /root/keystonerc_admin | cut -f2 -d'='`
