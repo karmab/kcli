@@ -1,0 +1,49 @@
+rhvengine:
+ template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+ memory: 8192
+ numcpus: 2
+ nets:
+  - default
+ disks:
+  - size: 60
+ pool: default
+ domain: localdomain
+ reservedns: true
+ scripts: 
+  - ~/register.sh
+  - nfs.sh
+  - subscription_engine.sh
+  - engine.sh
+  - provision.sh
+
+rhvnode1:
+ template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+ memory: 8192
+ numcpus: 2
+ nets:
+  - default
+ disks:
+  - size: 60
+ pool: default
+ domain: localdomain
+ reservedns: true
+ scripts: 
+  - ~/register.sh
+  - subscription_node.sh
+  - node.sh
+
+rhvnode2:
+ template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+ memory: 8192
+ numcpus: 2
+ nets:
+  - default
+ disks:
+  - size: 60
+ pool: default
+ domain: localdomain
+ reservedns: true
+ scripts: 
+  - ~/register.sh
+  - subscription_node.sh
+  - node.sh
