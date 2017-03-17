@@ -1019,9 +1019,10 @@ def plan(config, ansible, get, path, listing, autostart, container, noautostart,
                 nets = next((e for e in [profile.get('nets'), customprofile.get('nets')] if e is not None), None)
                 ports = next((e for e in [profile.get('ports'), customprofile.get('ports')] if e is not None), None)
                 volumes = next((e for e in [profile.get('volumes'), profile.get('disks'), customprofile.get('volumes'), customprofile.get('disks')] if e is not None), None)
+                environment = next((e for e in [profile.get('environment'), customprofile.get('environment')] if e is not None), None)
                 cmd = next((e for e in [profile.get('cmd'), customprofile.get('cmd')] if e is not None), None)
                 click.secho("Container %s deployed!" % container, fg='green')
-                dockerutils.create_container(k, name=container, image=image, nets=nets, cmd=cmd, ports=ports, volumes=volumes, label=label)
+                dockerutils.create_container(k, name=container, image=image, nets=nets, cmd=cmd, ports=ports, volumes=volumes, environment=environment, label=label)
                 # handle_response(result, name)
         if ansibleentries:
             if not newvms:
@@ -1341,8 +1342,9 @@ def container(config, profile, listing, filters, start, stop, console, name):
             os._exit(1)
         cmd = profile.get('cmd', None)
         ports = profile.get('ports', None)
+        environment = profile.get('environment', None)
         volumes = next((e for e in [profile.get('volumes'), profile.get('disks')] if e is not None), None)
-        dockerutils.create_container(k, name, image, nets=None, cmd=cmd, ports=ports, volumes=volumes)
+        dockerutils.create_container(k, name, image, nets=None, cmd=cmd, ports=ports, volumes=volumes, environment=environment)
         return
 
 

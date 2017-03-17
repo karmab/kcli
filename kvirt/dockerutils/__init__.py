@@ -8,7 +8,7 @@ import docker
 import os
 
 
-def create_container(self, name, image, nets=None, cmd=None, ports=[], volumes=[], label=None):
+def create_container(self, name, image, nets=None, cmd=None, ports=[], volumes=[], environment=[], label=None):
     if self.host == '127.0.0.1':
         finalvolumes = {}
         if volumes is not None:
@@ -38,10 +38,26 @@ def create_container(self, name, image, nets=None, cmd=None, ports=[], volumes=[
         else:
             labels = None
         base_url = 'unix://var/run/docker.sock'
+        finalenv = {}
+        if environment is not None:
+            for env in enumerate(environment):
+                if isinstance(env, str):
+                    if len(env.split(':')) == 2:
+                        key, value = env.split(':')
+                        finalenv[key] = value
+                    else:
+                        continue
+                elif isinstance(env, dict):
+                    if len(env.keys()) == 1:
+                        key = env.keys[0]
+                        value = env[key]
+                        finalenv[key] = value
+                    else:
+                        continue
 
         d = docker.DockerClient(base_url=base_url, version='1.22')
         # d.containers.run(image, name=name, command=cmd, networks=nets, detach=True, ports=ports)
-        d.containers.run(image, name=name, command=cmd, detach=True, ports=ports, volumes=finalvolumes, stdin_open=True, tty=True, labels=labels)
+        d.containers.run(image, name=name, command=cmd, detach=True, ports=ports, volumes=finalvolumes, stdin_open=True, tty=True, labels=labels, environment=finalenv)
     else:
         # netinfo = ''
         # for net in nets:
@@ -83,7 +99,23 @@ def create_container(self, name, image, nets=None, cmd=None, ports=[], volumes=[
                         origin = path
                         destination = path
                 volumeinfo = "%s -v %s:%s" % (volumeinfo, origin, destination)
-        dockercommand = "docker run -it %s %s --name %s -l %s -d %s" % (volumeinfo, portinfo, name, label, image)
+        envinfo = ''
+        if environment is not None:
+            for env in environment:
+                print env
+                if isinstance(env, str):
+                    if len(env.split(':')) == 2:
+                        key, value = env.split(':')
+                    else:
+                        continue
+                elif isinstance(env, dict):
+                    if len(env.keys()) == 1:
+                        key = env.keys()[0]
+                        value = env[key]
+                    else:
+                        continue
+                envinfo = "%s -e %s:%s" % (envinfo, key, value)
+        dockercommand = "docker run -it %s %s %s --name %s -l %s -d %s" % (volumeinfo, envinfo, portinfo, name, label, image)
         if cmd is not None:
             dockercommand = "%s %s" % (dockercommand, cmd)
         command = "ssh -p %s %s@%s %s" % (self.port, self.user, self.host, dockercommand)
