@@ -112,6 +112,13 @@ As a bonus, you can alias kcli and run kcli as if it is installed locally instea
 alias kcli = "docker run --rm -v ~/kcli.yml:/root/kcli.yml -v ~/kcli_profiles.yml:/root/kcli_profiles.yml -v ~/.ssh:/root/.ssh karmab/kcli"
 ```
 
+If you need a shell access to the container, use the following:
+
+```Shell
+alias kcli = "docker run --rm -v ~/kcli.yml:/root/kcli.yml -v ~/kcli_profiles.yml:/root/kcli_profiles.yml -v ~/.ssh:/root/.ssh --entrypoint=/bin/bash karmab/kcli"
+```
+
+
 Note that the container cant be used for virtualbox ( i tried hard but there's no way that would work...)
 
 ## Configuration
