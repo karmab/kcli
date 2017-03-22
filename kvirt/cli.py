@@ -1208,7 +1208,6 @@ def bootstrap(genfile, auto, name, host, port, user, protocol, url, pool, poolpa
         click.secho("We will configure kcli together !", fg='blue')
         if name is None:
             name = raw_input("Enter your default client name[local]: ") or 'local'
-            client = name
         if pool is None:
             pool = raw_input("Enter your default pool[default]: ") or 'default'
         default['pool'] = pool
@@ -1220,9 +1219,9 @@ def bootstrap(genfile, auto, name, host, port, user, protocol, url, pool, poolpa
         default['cloudinit'] = cloudinit
         diskthin = raw_input("Use thin disks[True]: ") or 'True'
         default['diskthin'] = diskthin
-        ini['default']['client'] = client
-        ini[client] = {}
-        client = ini[client]
+        ini['default']['client'] = name
+        ini[name] = {}
+        client = ini[name]
         if host is None:
             host = raw_input("Enter your client hostname/ip[localhost]: ") or 'localhost'
         client['host'] = host
