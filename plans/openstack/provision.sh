@@ -14,11 +14,10 @@ source ~/keystonerc_admin
 openstack project create testk
 openstack user create  --project testk --password testk testk
 openstack role add --user=testk --project=testk admin
-neutron net-create external --provider:network_type flat --provider:physical_network external --router:external
+neutron net-create external --provider:network_type flat --provider:physical_network external --router:external || neutron net-create external --router:external
 neutron subnet-create --name $EXTERNAL_SUBNET --allocation-pool start=$EXTERNAL_START,end=$EXTERNAL_END --disable-dhcp --gateway $EXTERNAL_GATEWAY external $EXTERNAL_SUBNET
-##keystone password-update --new-password $ADMIN_PASSWORD
 OLD_PASSWORD=`grep PASSWORD /root/keystonerc_admin | cut -f2 -d'='`
-openstack user password set  --original-password $OLD_PASSWORD --password $ADMIN_PASSWORD
+openstack user password set  --original-password $OLD_PASSWORD --password $ADMIN_PASSWORD || keystone password-update --new-password $ADMIN_PASSWORD
 sed -i "s/OS_PASSWORD=.*/OS_PASSWORD=$ADMIN_PASSWORD/" ~/keystonerc_admin
 source ~/keystonerc_testk
 wget http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
