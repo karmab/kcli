@@ -23,9 +23,11 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 def handle_response(result, name, element='', action='deployed'):
     if result['result'] == 'success':
         click.secho("%s%s %s!" % (element, name, action), fg='green')
+        return 0
     else:
         reason = result['reason']
         click.secho("%s%s not %s because %s" % (element, name, action, reason), fg='red')
+        return 1
 
 
 def abort_if_false(ctx, param, value):
@@ -149,7 +151,8 @@ def start(config, container, name):
     else:
         click.secho("Started vm %s..." % name, fg='green')
         result = k.start(name)
-        handle_response(result, name, element='', action='started')
+        code = handle_response(result, name, element='', action='started')
+        os._exit(code)
 
 
 @cli.command()
@@ -165,7 +168,8 @@ def stop(config, container, name):
     else:
         click.secho("Stopped vm %s..." % name, fg='green')
         result = k.stop(name)
-        handle_response(result, name, element='', action='stopped')
+        code = handle_response(result, name, element='', action='stopped')
+        os._exit(code)
 
 
 @cli.command()
@@ -260,15 +264,16 @@ def host(config, switch, listing, report, profiles, templates, isos, disks, pool
     elif download:
         if pool is None:
             click.secho("Missing pool.Leaving...", fg='red')
-            return
+            os._exit(1)
         if template is None:
             click.secho("Missing template.Leaving...", fg='red')
-            return
+            os._exit(1)
         click.secho("Grabbing template %s..." % template, fg='green')
         template = TEMPLATES[template]
         shortname = os.path.basename(template)
         result = k.add_image(template, pool)
-        handle_response(result, shortname, element='Template ', action='Added')
+        code = handle_response(result, shortname, element='Template ', action='Added')
+        os._exit(code)
 
 
 @cli.command()
@@ -479,36 +484,35 @@ def vm(config, profile, listing, info, filters, start, stop, ssh, ip1, ip2, ip3,
             return
     if name is None:
         click.secho("Missing vm name", fg='red')
-        return
+        os._exit(1)
     if info:
         k.info(name)
         return
     if start:
         click.secho("Started vm %s..." % name, fg='green')
         result = k.start(name)
-        handle_response(result, name, element='', action='started')
-        return
+        code = handle_response(result, name, element='', action='started')
+        os._exit(code)
     if stop:
         click.secho("Stopped vm %s..." % name, fg='green')
         result = k.stop(name)
-        handle_response(result, name, element='', action='stopped')
-        return
+        code = handle_response(result, name, element='', action='stopped')
+        os._exit(code)
     if ssh:
         k.ssh(name, local=l, remote=r)
         return
     if profile is None:
         click.secho("Missing profile", fg='red')
-        return
+        os._exit(1)
     default = config.default
     vmprofiles = {k: v for k, v in config.profiles.iteritems() if 'type' not in v or v['type'] == 'vm'}
     click.secho("Deploying vm %s from profile %s..." % (name, profile), fg='green')
     if profile not in vmprofiles:
         click.secho("profile %s not found. Trying to use the profile as template and default values..." % profile, fg='blue')
         result = k.create(name=name, memory=1024, template=profile)
-        handle_response(result, name)
+        code = handle_response(result, name)
+        os._exit(code)
         return
-        # click.secho("Invalid profile %s. Leaving..." % profile, fg='red')
-        # os._exit(1)
     title = profile
     profile = vmprofiles[profile]
     template = profile.get('template')
@@ -543,7 +547,7 @@ def vm(config, profile, listing, info, filters, start, stop, ssh, ip1, ip2, ip3,
             script = os.path.expanduser(script)
             if not os.path.exists(script):
                 click.secho("Script %s not found.Ignoring..." % script, fg='red')
-                return
+                os._exit(1)
             else:
                 scriptlines = [line.strip() for line in open(script).readlines() if line != '\n']
                 if scriptlines:
@@ -703,14 +707,14 @@ def pool(config, listing, delete, full, pooltype, path, pool):
         return
     if pool is None:
         click.secho("Missing pool name", fg='red')
-        return
+        os._exit(1)
     if delete:
         click.secho("Deleting pool %s..." % (pool), fg='green')
         k.delete_pool(name=pool, full=full)
         return
     if path is None:
         click.secho("Missing path. Leaving...", fg='red')
-        return
+        os._exit(1)
     click.secho("Adding pool %s..." % (pool), fg='green')
     k.create_pool(name=pool, poolpath=path, pooltype=pooltype)
 
@@ -758,7 +762,7 @@ def plan(config, ansible, get, path, listing, autostart, container, noautostart,
         networks = []
         if plan == '':
             click.secho("That would delete every vm...Not doing that", fg='red')
-            return
+            os._exit(1)
         click.confirm('Are you sure about deleting plan %s' % plan, abort=True)
         found = False
         for vm in sorted(k.list()):
@@ -788,6 +792,7 @@ def plan(config, ansible, get, path, listing, autostart, container, noautostart,
             click.secho("Plan %s deleted!" % plan, fg='green')
         else:
             click.secho("Nothing to do for plan %s" % plan, fg='red')
+            os._exit(1)
         return
     if autostart:
         click.secho("Set vms from plan %s to autostart" % (plan), fg='green')
@@ -1032,7 +1037,7 @@ def plan(config, ansible, get, path, listing, autostart, container, noautostart,
                 ansible = entries[ansibleentries[item]]
                 if 'playbook' not in ansible:
                     click.secho("Missing Playbook for ansible.Ignoring...", fg='red')
-                    return
+                    os._exit(1)
                 playbook = ansible['playbook']
                 if 'verbose' in ansible:
                     verbose = ansible['verbose']
@@ -1140,7 +1145,7 @@ def network(config, listing, delete, isolated, cidr, nodhcp, name):
         return
     if name is None:
         click.secho("Missing Network", fg='red')
-        return
+        os._exit(1)
     if delete:
         result = k.delete_network(name=name)
         handle_response(result, name, element='Network ', action='deleted')
@@ -1312,7 +1317,7 @@ def container(config, profile, listing, filters, start, stop, console, name):
         return
     if name is None:
         click.secho("Missing container name", fg='red')
-        return
+        os._exit(1)
     if start:
         click.secho("Started container %s..." % name, fg='green')
         dockerutils.start_container(k, name)
@@ -1326,7 +1331,7 @@ def container(config, profile, listing, filters, start, stop, console, name):
         return
     if profile is None:
         click.secho("Missing profile", fg='red')
-        return
+        os._exit(1)
     containerprofiles = {k: v for k, v in config.profiles.iteritems() if 'type' in v and v['type'] == 'container'}
     if profile not in containerprofiles:
         click.secho("profile %s not found. Trying to use the profile as image and default values..." % profile, fg='blue')
