@@ -213,7 +213,7 @@ def delete(config, container, name):
 @click.option('-i', '--isos', help='List Isos', is_flag=True)
 @click.option('-d', '--disks', help='List Disks', is_flag=True)
 @click.option('-p', '--pool', default='default', help='Pool to use when downloading')
-@click.option('--template', type=click.Choice(['centos6', 'centos7', 'fedora24', 'fedora25', 'debian8', 'ubuntu1404', 'ubuntu1604', 'cirros']), help='Template/Image to download')
+@click.option('--template', type=click.Choice(['arch', 'centos6', 'centos7', 'cirros', 'debian8', 'fedora24', 'fedora25', 'gentoo', 'opensuse', 'ubuntu1404', 'ubuntu1604']), help='Template/Image to download')
 @click.option('--download', help='Download Template/Image', is_flag=True)
 @pass_config
 def host(config, switch, listing, report, profiles, templates, isos, disks, pool, template, download):

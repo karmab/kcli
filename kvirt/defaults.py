@@ -15,11 +15,14 @@ RESERVEHOST = False
 NESTED = True
 START = True
 TUNNEL = False
-TEMPLATES = {'cirros': 'https://download.cirros-cloud.net/0.3.5/cirros-0.3.5-x86_64-disk.img',
+TEMPLATES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-image-bootstrap.qcow2',
              'centos6': 'https://cloud.centos.org/centos/6/images/CentOS-6-x86_64-GenericCloud.qcow2',
              'centos7': 'https://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2',
-             'ubuntu1404': 'https://cloud-images.ubuntu.com/trusty/current/trusty-server-cloudimg-amd64-disk1.img',
-             'ubuntu1604': 'https://cloud-images.ubuntu.com/xenial/current/xenial-server-cloudimg-amd64-disk1.img',
+             'cirros': 'https://download.cirros-cloud.net/0.3.5/cirros-0.3.5-x86_64-disk.img',
+             'debian8': 'https://cdimage.debian.org/cdimage/openstack/current-8/debian-8-openstack-amd64.qcow2',
              'fedora24': 'https://download.fedoraproject.org/pub/fedora/linux/releases/24/CloudImages/x86_64/images/Fedora-Cloud-Base-24-1.2.x86_64.qcow2',
              'fedora25': 'https://download.fedoraproject.org/pub/fedora/linux/releases/25/CloudImages/x86_64/images/Fedora-Cloud-Base-25-1.3.x86_64.qcow2',
-             'debian8': 'https://cdimage.debian.org/cdimage/openstack/current-8/debian-8-openstack-amd64.qcow2'}
+             'gentoo': 'http://gentoo.osuosl.org/experimental/amd64/openstack/gentoo-openstack-amd64-default-20170122.qcow2',
+             'opensuse': 'http://download.opensuse.org/pub/opensuse/repositories/Cloud:/Images:/Leap_42.3/images/openSUSE-Leap-42.3-OpenStack.x86_64.qcow2',
+             'ubuntu1404': 'https://cloud-images.ubuntu.com/trusty/current/trusty-server-cloudimg-amd64-disk1.img',
+             'ubuntu1604': 'https://cloud-images.ubuntu.com/xenial/current/xenial-server-cloudimg-amd64-disk1.img'}
