@@ -85,7 +85,7 @@ class Kbox:
         else:
             return True
 
-    def create(self, name, virttype='vbox', title='', description='kvirt', numcpus=2, memory=512, guestid='Linux_64', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, reservedns=False, start=True, keys=None, cmds=None, ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[]):
+    def create(self, name, virttype='vbox', title='', description='kvirt', numcpus=2, memory=512, guestid='Linux_64', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=None, ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[]):
         guestid = 'Linux_64'
         default_diskinterface = diskinterface
         default_diskthin = diskthin
@@ -227,11 +227,13 @@ class Kbox:
         #        macs.append(mac)
         #    self._reserve_ip(name, nets, macs)
         # if reservedns:
-        #    self._reserve_dns(name, nets, domain)
+        #    self.reserve_dns(name, nets, domain)
         machine.save_settings()
         session.unlock_machine()
         if start:
             self.start(name)
+        # if reservehost:
+        #    common.reserve_host(name, nets, domain)
         return {'result': 'success'}
 
     def start(self, name):

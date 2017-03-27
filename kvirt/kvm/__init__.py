@@ -11,6 +11,7 @@ from kvirt import common
 from netaddr import IPAddress, IPNetwork
 from libvirt import open as libvirtopen, registerErrorHandler
 import os
+import re
 import string
 import time
 import xml.etree.ElementTree as ET
@@ -95,7 +96,7 @@ class Kvirt:
         except:
             return False
 
-    def create(self, name, virttype='kvm', title='', description='kvirt', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, reservedns=False, start=True, keys=None, cmds=None, ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[]):
+    def create(self, name, virttype='kvm', title='', description='kvirt', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=None, ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[]):
         default_diskinterface = diskinterface
         default_diskthin = diskthin
         default_disksize = disksize
@@ -364,7 +365,9 @@ class Kvirt:
         if start:
             vm.create()
         if reservedns:
-            self._reserve_dns(name, nets, domain)
+            self.reserve_dns(name, nets, domain)
+        if reservehost:
+            self.reserve_host(name, nets, domain)
         return {'result': 'success'}
 
     def start(self, name):
@@ -693,7 +696,7 @@ class Kvirt:
             vm = conn.lookupByName(name)
         except:
             print("vm %s not found" % name)
-            return
+            return 1
         ip = self.ip(name)
         status = {0: 'down', 1: 'up'}
         vmxml = vm.XMLDesc(0)
@@ -735,19 +738,29 @@ class Kvirt:
                 root = ET.fromstring(netxml)
                 for host in root.getiterator('host'):
                     hostmac = host.get('mac')
-                    ip = host.get('ip')
+                    iphost = host.get('ip')
                     hostname = host.get('name')
                     if hostmac == mac:
-                        hostentry = "<host mac='%s' name='%s' ip='%s'/>" % (mac, hostname, ip)
+                        hostentry = "<host mac='%s' name='%s' ip='%s'/>" % (mac, hostname, iphost)
                         network.update(2, 4, 0, hostentry, 1)
                 for host in root.getiterator('host'):
-                    ip = host.get('ip')
+                    iphost = host.get('ip')
                     hostname = host.find('hostname')
                     if hostname is not None and hostname.text == name:
-                        hostentry = '<host ip="%s"><hostname>%s</hostname></host>' % (ip, name)
+                        hostentry = '<host ip="%s"><hostname>%s</hostname></host>' % (iphost, name)
                         network.update(2, 10, 0, hostentry, 1)
         if ip is not None:
             os.system("ssh-keygen -q -R %s >/dev/null 2>&1" % ip)
+            # delete hosts entry
+            found = False
+            hostentry = "%s %s.* # KVIRT" % (ip, name)
+            for line in open('/etc/hosts'):
+                if re.findall(hostentry, line):
+                    found = True
+                    break
+            if found:
+                os.system("sudo sed -i '/%s/d' /etc/hosts" % hostentry)
+        return 0
 
     def _xmldisk(self, diskpath, diskdev, diskbus='virtio', diskformat='qcow2', shareable=False):
         if shareable:
@@ -873,7 +886,7 @@ class Kvirt:
                 continue
             network.update(4, 4, 0, '<host mac="%s" name="%s" ip="%s" />' % (mac, name, ip), 1)
 
-    def _reserve_dns(self, name, nets, domain):
+    def reserve_dns(self, name, nets, domain):
         conn = self.conn
         net = nets[0]
         ip = None
@@ -910,6 +923,34 @@ class Kvirt:
             network.update(4, 10, 0, '<host ip="%s"><hostname>%s</hostname><hostname>%s.%s</hostname></host>' % (ip, name, name, domain), 1)
         else:
             network.update(4, 10, 0, '<host ip="%s"><hostname>%s</hostname></host>' % (ip, name), 1)
+
+    def reserve_host(self, name, nets, domain):
+        net = nets[0]
+        ip = None
+        if isinstance(net, dict):
+            ip = net.get('ip')
+            netname = net.get('name')
+        else:
+            netname = net
+        if ip is None:
+            counter = 0
+            while counter != 80:
+                ip = self.ip(name)
+                if ip is None:
+                    time.sleep(5)
+                    print("Waiting 5 seconds to grab ip and create HOST record...")
+                    counter += 10
+                else:
+                    break
+        if ip is None:
+            print("Couldn't assign HOST")
+            return
+        hosts = "%s %s %s.%s" % (ip, name, name, netname)
+        if domain is not None:
+            hosts = "%s %s.%s" % (hosts, name, domain)
+        hosts = '"%s # KVIRT"' % hosts
+        hostscmd = "sudo sh -c 'echo %s >>/etc/hosts'" % hosts
+        os.popen(hostscmd)
 
     def handler(self, stream, data, file_):
         return file_.read(data)
@@ -1153,7 +1194,7 @@ class Kvirt:
             root = ET.fromstring(xml)
         except:
             print("VM %s not found" % name)
-            return
+            return 1
         for element in root.getiterator('disk'):
             disktype = element.get('device')
             diskdev = element.find('target').get('dev')
@@ -1222,7 +1263,7 @@ class Kvirt:
             root = ET.fromstring(xml)
         except:
             print("VM %s not found" % name)
-            return
+            return 1
         for element in root.getiterator('interface'):
             device = "eth%s" % nicnumber
             if device == interface:

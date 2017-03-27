@@ -11,6 +11,7 @@ VNC = False
 CLOUDINIT = True
 RESERVEIP = False
 RESERVEDNS = False
+RESERVEHOST = False
 NESTED = True
 START = True
 TUNNEL = False

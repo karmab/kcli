@@ -2,7 +2,7 @@
 
 import click
 import fileinput
-from defaults import NETS, POOL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, START, TEMPLATES, NESTED, TUNNEL
+from defaults import NETS, POOL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, RESERVEHOST, START, TEMPLATES, NESTED, TUNNEL
 from prettytable import PrettyTable
 from kvm import Kvirt
 from vbox import Kbox
@@ -83,6 +83,7 @@ class Config():
         defaults['cloudinit'] = bool(default.get('cloudinit', CLOUDINIT))
         defaults['reserveip'] = bool(default.get('reserveip', RESERVEIP))
         defaults['reservedns'] = bool(default.get('reservedns', RESERVEDNS))
+        defaults['reservehost'] = bool(default.get('reservehost', RESERVEHOST))
         defaults['nested'] = bool(default.get('nested', NESTED))
         defaults['start'] = bool(default.get('start', START))
         defaults['tunnel'] = default.get('tunnel', TUNNEL)
@@ -199,7 +200,8 @@ def delete(config, container, name):
         dockerutils.delete_container(k, name)
     else:
         click.secho("Deleted vm %s..." % name, fg='red')
-        k.delete(name)
+        code = k.delete(name)
+        os._exit(code)
 
 
 @cli.command()
@@ -531,6 +533,7 @@ def vm(config, profile, listing, info, filters, start, stop, ssh, ip1, ip2, ip3,
     cloudinit = profile.get('cloudinit', default['cloudinit'])
     reserveip = profile.get('reserveip', default['reserveip'])
     reservedns = profile.get('reservedns', default['reservedns'])
+    reservehost = profile.get('reservehost', default['reservehost'])
     nested = profile.get('nested', default['nested'])
     start = profile.get('start', default['start'])
     keys = profile.get('keys', None)
@@ -558,7 +561,7 @@ def vm(config, profile, listing, info, filters, start, stop, ssh, ip1, ip2, ip3,
             else:
                 cmds = cmds + scriptcmds
     ips = [ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8]
-    result = k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=bool(nested), tunnel=tunnel, files=files)
+    result = k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns), reservehost=bool(reservehost), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=bool(nested), tunnel=tunnel, files=files)
     handle_response(result, name)
     if result['result'] != 'success':
         return
@@ -910,6 +913,7 @@ def plan(config, ansible, get, path, listing, autostart, container, noautostart,
                 cloudinit = next((e for e in [profile.get('cloudinit'), customprofile.get('cloudinit'), default['cloudinit']] if e is not None))
                 reserveip = next((e for e in [profile.get('reserveip'), customprofile.get('reserveip'), default['reserveip']] if e is not None))
                 reservedns = next((e for e in [profile.get('reservedns'), customprofile.get('reservedns'), default['reservedns']] if e is not None))
+                reservehost = next((e for e in [profile.get('reservehost'), customprofile.get('reservehost'), default['reservehost']] if e is not None))
                 nested = next((e for e in [profile.get('nested'), customprofile.get('nested'), default['nested']] if e is not None))
                 start = next((e for e in [profile.get('start'), customprofile.get('start'), default['start']] if e is not None))
                 nets = next((e for e in [profile.get('nets'), customprofile.get('nets'), default['nets']] if e is not None))
@@ -964,7 +968,7 @@ def plan(config, ansible, get, path, listing, autostart, container, noautostart,
                         files.append({'path': '/root/.ssh/id_rsa', 'content': privatekey})
                     else:
                         files = [{'path': '/root/.ssh/id_rsa', 'content': privatekey}]
-                result = k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=nested, tunnel=tunnel, files=files)
+                result = k.create(name=name, description=description, title=title, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns), reservehost=bool(reservehost), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=nested, tunnel=tunnel, files=files)
                 handle_response(result, name)
                 if result['result'] == 'success':
                     newvms.append(name)
