@@ -209,7 +209,7 @@ def delete(config, container, name):
 @click.argument('name')
 @pass_config
 def info(config, name):
-    """Info vm/container"""
+    """Info vm"""
     k = config.get(config.client)
     code = k.info(name)
     os._exit(code)
