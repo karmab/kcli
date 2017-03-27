@@ -85,7 +85,7 @@ class Kbox:
         else:
             return True
 
-    def create(self, name, virttype='vbox', title='', description='kvirt', numcpus=2, memory=512, guestid='Linux_64', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=None, ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[]):
+    def create(self, name, virttype='vbox', title='', description='kvirt', cpumodel='', cpuflags=[], numcpus=2, memory=512, guestid='Linux_64', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=None, ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[]):
         guestid = 'Linux_64'
         default_diskinterface = diskinterface
         default_diskthin = diskthin
@@ -514,7 +514,7 @@ class Kbox:
             vm = conn.find_machine(name)
         except:
             print("vm %s not found" % name)
-            return
+            return 1
         for n in range(7):
             nic = vm.get_network_adapter(n)
             enabled = nic.enabled
@@ -529,6 +529,7 @@ class Kbox:
                 if rule:
                     nat_network.remove_port_forward_rule(False, "ssh_%s" % name)
         vm.remove(True)
+        return 0
 
     def clone(self, old, new, full=False, start=False):
         conn = self.conn

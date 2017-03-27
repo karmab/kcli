@@ -1,5 +1,6 @@
 NETS = ['default']
 POOL = 'default'
+CPUMODEL = 'Westmere'
 NUMCPUS = 2
 MEMORY = 512
 DISKINTERFACE = 'virtio'

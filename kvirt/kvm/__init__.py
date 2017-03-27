@@ -53,8 +53,7 @@ class Kvirt:
                 url = "qemu:///system"
         try:
             self.conn = libvirtopen(url)
-            if debug:
-                print(self.conn)
+            self.debug = debug
         except Exception:
             self.conn = None
         self.host = host
@@ -96,7 +95,7 @@ class Kvirt:
         except:
             return False
 
-    def create(self, name, virttype='kvm', title='', description='kvirt', numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=None, ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[]):
+    def create(self, name, virttype='kvm', title='', description='kvirt', cpumodel='Westmere', cpuflags=[], numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=None, ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[]):
         default_diskinterface = diskinterface
         default_diskthin = diskthin
         default_disksize = disksize
@@ -292,13 +291,35 @@ class Kvirt:
                         <listen type='address' address='%s'/>
                         </graphics>
                         <memballoon model='virtio'/>""" % (display, listen, listen)
-        if nested and virttype == 'kvm':
-            nestedxml = """<cpu match='exact'>
-                  <model>Westmere</model>
-                   <feature policy='require' name='vmx'/>
-                </cpu>"""
+        if cpumodel == '':
+            cpuxml = ""
+        elif cpumodel == 'host-model':
+            cpuxml = """<cpu mode='host-model'>
+                        <model fallback='allow'/>"""
         else:
-            nestedxml = ""
+            cpuxml = """<cpu mode='custom' match='exact'>
+                        <model fallback='allow'>%s</model>""" % cpumodel
+        if nested and virttype == 'kvm':
+            cpuxml = """%s<feature policy='require' name='vmx'/>""" % cpuxml
+        if cpuflags:
+            for flag in cpuflags:
+                if isinstance(flag, str):
+                    if flag == 'vmx':
+                        continue
+                    cpuxml = """%s<feature policy='require' name='%s'/>""" % (cpuxml, flag)
+                elif isinstance(flag, dict):
+                    feature = flag.get('name')
+                    enable = flag.get('enable')
+                    if feature is None or enable is None or not isinstance(enable, bool):
+                        continue
+                    elif feature == 'vmx':
+                        continue
+                    elif enable:
+                        cpuxml = """%s<feature policy='require' name='%s'/>""" % (cpuxml, feature)
+                    else:
+                        cpuxml = """%s<feature policy='disable' name='%s'/>""" % (cpuxml, feature)
+        if cpuxml != '':
+            cpuxml = "%s</cpu>" % cpuxml
         if self.host in ['localhost', '127.0.0.1']:
             serialxml = """<serial type='pty'>
                        <target port='0'/>
@@ -342,15 +363,22 @@ class Kvirt:
                     %s
                   </devices>
                     %s
-                    </domain>""" % (virttype, name, description, version, memory, numcpus, machine, sysinfo, disksxml, netxml, isoxml, displayxml, serialxml, nestedxml)
+                    </domain>""" % (virttype, name, description, version, memory, numcpus, machine, sysinfo, disksxml, netxml, isoxml, displayxml, serialxml, cpuxml)
+        # for pool in volsxml:
+        #     storagepool = conn.storagePoolLookupByName(pool)
+        #     storagepool.refresh(0)
+        #     for volxml in volsxml[pool]:
+        #         storagepool.createXML(volxml, 0)
+        if self.debug:
+            print(vmxml)
+        conn.defineXML(vmxml)
+        vm = conn.lookupByName(name)
+        vm.setAutostart(1)
         for pool in volsxml:
             storagepool = conn.storagePoolLookupByName(pool)
             storagepool.refresh(0)
             for volxml in volsxml[pool]:
                 storagepool.createXML(volxml, 0)
-        conn.defineXML(vmxml)
-        vm = conn.lookupByName(name)
-        vm.setAutostart(1)
         if cloudinit:
             common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain, reserveip=reserveip, files=files)
             self._uploadimage(name, pool=default_storagepool)
@@ -577,6 +605,8 @@ class Kvirt:
         try:
             vm = conn.lookupByName(name)
             xml = vm.XMLDesc(0)
+            if self.debug:
+                print(xml)
             root = ET.fromstring(xml)
         except:
             print("VM %s not found" % name)
@@ -759,6 +789,7 @@ class Kvirt:
                     found = True
                     break
             if found:
+                print("Deleting hosts entry. sudo password might be asked")
                 os.system("sudo sed -i '/%s/d' /etc/hosts" % hostentry)
         return 0
 
@@ -950,6 +981,7 @@ class Kvirt:
             hosts = "%s %s.%s" % (hosts, name, domain)
         hosts = '"%s # KVIRT"' % hosts
         hostscmd = "sudo sh -c 'echo %s >>/etc/hosts'" % hosts
+        print("Creating hosts entry. sudo password might be asked")
         os.popen(hostscmd)
 
     def handler(self, stream, data, file_):

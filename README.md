@@ -205,6 +205,8 @@ Note that most of the parameters are actually optional, and can be overridden in
 
 ## Available parameters for profile/plan files
 
+- *cpumodel* Defaults to Westmere
+- *cpuflags* (optional). You can specify a list of strings with features to enable or use dict entries with *name* of the feature and *enable* either set to True or False. Note that the value for vmx is ignored, as it s handled by the nested flag
 - *numcpus* Defaults to 2
 - *memory* Defaults to 512M
 - *guestid* Defaults to guestrhel764
@@ -442,9 +444,18 @@ Note that up to 8 IPS can also be provided on command line when creating a singl
 
 ## IP, DNS and HOST Reservations
 
-if you set reserveip  to True, a reservation will be made if the corresponding network has dhcp and when the provided IP belongs to the network range.
-You can also set reservedns to True to create a DNS entry for the host in the corresponding network ( Only done for the first nic)
-You can also set reservehost to True to create a HOST entry for the host in /etc/hosts ( Only done for the first nic). It's done with sudo and the entry gets removed when you delete the host. Note you should use gnu-sed ( from brew ) instead of regular sed on macosx for proper deletion
+If you set *reserveip*  to True, a reservation will be made if the corresponding network has dhcp and when the provided IP belongs to the network range.
+
+You can also set *reservedns* to True to create a DNS entry for the host in the corresponding network ( only done for the first nic)
+
+You can also set *reservehost* to True to create a HOST entry for the host in /etc/hosts ( only done for the first nic). It's done with sudo and the entry gets removed when you delete the host. Note you should use gnu-sed ( from brew ) instead of regular sed on macosx for proper deletion.
+
+If you dont want to be asked for your sudo password each time, here are the commands that are escalated:
+
+```Shell
+ - echo .... # KVIRT >> /etc/hosts
+ - sed -i '/.... # KVIRT/d' /etc/hosts
+```
 
 ## Docker support
 
