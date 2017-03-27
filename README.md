@@ -224,6 +224,7 @@ Note that most of the parameters are actually optional, and can be overridden in
 - *cloudinit* Defaults to true
 - *reserveip* Defaults to false
 - *reservedns* Defaults to false
+- *reservehost* Defaults to false
 - *keys* (optional). Array of ssh public keys to inject
 - *cmds* (optional). Array of commands to run
 - *profile* name of one of your profile. Only checked in plan file
@@ -439,10 +440,11 @@ nets:
 Within a net section, you can use name, nic, IP, mac, mask and gateway as keys.
 Note that up to 8 IPS can also be provided on command line when creating a single VM (with the flag -1, -2, -3,-4,...)
 
-## IP and DNS Reservations
+## IP, DNS and HOST Reservations
 
 if you set reserveip  to True, a reservation will be made if the corresponding network has dhcp and when the provided IP belongs to the network range.
 You can also set reservedns to True to create a DNS entry for the host in the corresponding network ( Only done for the first nic)
+You can also set reservehost to True to create a HOST entry for the host in /etc/hosts ( Only done for the first nic). It's done with sudo and the entry gets removed when you delete the host. Note you should use gnu-sed ( from brew ) instead of regular sed on macosx for proper deletion
 
 ## Docker support
 
