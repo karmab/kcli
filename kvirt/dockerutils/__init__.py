@@ -115,7 +115,6 @@ def create_container(self, name, image, nets=None, cmd=None, ports=[], volumes=[
                         continue
                 envinfo = "%s -e %s=%s" % (envinfo, key, value)
         dockercommand = "docker run -it %s %s %s --name %s -l %s -d %s" % (volumeinfo, envinfo, portinfo, name, label, image)
-        print dockercommand
         if cmd is not None:
             dockercommand = "%s %s" % (dockercommand, cmd)
         command = "ssh -p %s %s@%s %s" % (self.port, self.user, self.host, dockercommand)

@@ -206,6 +206,16 @@ def delete(config, container, name):
 
 
 @cli.command()
+@click.argument('name')
+@pass_config
+def info(config, name):
+    """Info vm/container"""
+    k = config.get(config.client)
+    code = k.info(name)
+    os._exit(code)
+
+
+@cli.command()
 @click.option('-s', '--switch', 'switch', help='Switch To indicated client')
 @click.option('-l', '--list', 'listing', help='List Hypervisors', is_flag=True)
 @click.option('-r', '--report', 'report', help='Report Hypervisor Information', is_flag=True)
@@ -489,8 +499,8 @@ def vm(config, profile, listing, info, filters, start, stop, ssh, ip1, ip2, ip3,
         click.secho("Missing vm name", fg='red')
         os._exit(1)
     if info:
-        k.info(name)
-        return
+        code = k.info(name)
+        os._exit(code)
     if start:
         click.secho("Started vm %s..." % name, fg='green')
         result = k.start(name)

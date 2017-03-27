@@ -610,7 +610,7 @@ class Kvirt:
             root = ET.fromstring(xml)
         except:
             print("VM %s not found" % name)
-            return
+            return 1
         state = 'down'
         autostart = starts[vm.autostart()]
         memory = root.getiterator('memory')[0]
@@ -675,6 +675,7 @@ class Kvirt:
             volume = conn.storageVolLookupByPath(path)
             disksize = int(float(volume.info()[1]) / 1024 / 1024 / 1024)
             print("diskname: %s disksize: %sGB diskformat: %s type: %s path: %s" % (device, disksize, diskformat, drivertype, path))
+        return 0
 
     def ip(self, name):
         leases = {}

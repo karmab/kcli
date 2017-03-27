@@ -393,7 +393,7 @@ class Kbox:
             vm = conn.find_machine(name)
         except:
             print("VM %s not found" % name)
-            return
+            return 1
         state = 'down'
         hostports = []
         autostart = starts[vm.autostart_enabled]
@@ -472,7 +472,7 @@ class Kbox:
             for hostport in hostports:
                 print("ssh port: %s" % (hostport))
                 break
-        return
+        return 0
 
     def ip(self, name):
         vm = [vm for vm in self.list() if vm[0] == name]
