@@ -15,7 +15,7 @@ import dockerutils
 import nameutils
 import common
 
-__version__ = '5.19'
+__version__ = '5.20'
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
@@ -616,7 +616,7 @@ def vm(config, profile, listing, info, filters, start, stop, ssh, ip1, ip2, ip3,
 
 @cli.command()
 @click.option('-b', '--base', help='Base VM')
-@click.option('-f', '--full', is_flag=True)
+@click.option('-f', '--full', is_flag=True, help='Full Clone')
 @click.option('-s', '--start', is_flag=True, help='Start cloned VM')
 @click.argument('name')
 @pass_config
@@ -633,9 +633,12 @@ def clone(config, base, full, start, name):
 @click.option('-c', '--numcpus', help='Number of cpus to set')
 @click.option('-a', '--autostart', is_flag=True, help='Set VM to autostart')
 @click.option('-n', '--noautostart', is_flag=True, help='Prevent VM from autostart')
+@click.option('--dns', is_flag=True, help='Update Dns entry for the vm')
+@click.option('--host', is_flag=True, help='Update Host entry for the vm')
+@click.option('-d', '--domain', help='Domain')
 @click.argument('name')
 @pass_config
-def update(config, ip1, memory, numcpus, autostart, noautostart, name):
+def update(config, ip1, memory, numcpus, autostart, noautostart, dns, host, domain, name):
     """Update ip, memory or numcpus"""
     k = config.get(config.client)
     if ip1 is not None:
@@ -653,6 +656,19 @@ def update(config, ip1, memory, numcpus, autostart, noautostart, name):
     elif noautostart:
         click.secho("Removing autostart for vm %s..." % (name), fg='green')
         k.update_start(name, start=False)
+    elif host:
+        click.secho("Creating Host entry for vm %s..." % (name), fg='green')
+        nets = k.vm_ports(name)
+        if domain is None:
+            domain = nets[0]
+        k.reserve_host(name, nets, domain)
+    elif dns:
+        click.secho("Creating Dns entry for vm %s..." % (name), fg='green')
+        nets = k.vm_ports(name)
+        if domain is None:
+            domain = nets[0]
+        code = k.reserve_dns(name, nets, domain)
+        os._exit(code)
 
 
 @cli.command()

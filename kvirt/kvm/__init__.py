@@ -951,10 +951,15 @@ class Kvirt:
             newxml = ET.tostring(root)
             conn.networkDefineXML(newxml)
         if domain is not None:
-            # If there is a domain, add it to the dns too :)
-            network.update(4, 10, 0, '<host ip="%s"><hostname>%s</hostname><hostname>%s.%s</hostname></host>' % (ip, name, name, domain), 1)
+            dnsentry = '<host ip="%s"><hostname>%s</hostname><hostname>%s.%s</hostname></host>' % (ip, name, name, domain)
         else:
-            network.update(4, 10, 0, '<host ip="%s"><hostname>%s</hostname></host>' % (ip, name), 1)
+            dnsentry = '<host ip="%s"><hostname>%s</hostname></host>' % (ip, name)
+        try:
+            network.update(4, 10, 0, dnsentry, 1)
+            return 0
+        except:
+            print("Entry allready found for %s" % name)
+            return 1
 
     def reserve_host(self, name, nets, domain):
         net = nets[0]
