@@ -373,7 +373,7 @@ class Kvirt:
             print(vmxml)
         conn.defineXML(vmxml)
         vm = conn.lookupByName(name)
-        vm.setAutostart(1)
+        vm.setAutostart(0)
         for pool in volsxml:
             storagepool = conn.storagePoolLookupByName(pool)
             storagepool.refresh(0)

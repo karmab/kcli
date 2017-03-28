@@ -3,7 +3,7 @@
 # import getpass
 # from mock import patch
 from flask import Flask, render_template
-from defaults import NETS, POOL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, START, NESTED, TUNNEL
+from defaults import NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, START, NESTED, TUNNEL
 # from defaults import TEMPLATES
 from kvm import Kvirt
 from vbox import Kbox
@@ -37,6 +37,7 @@ class Config():
         default = ini['default']
         defaults['nets'] = default.get('nets', NETS)
         defaults['pool'] = default.get('pool', POOL)
+        defaults['cpumodel'] = default.get('cpumodel', CPUMODEL)
         defaults['numcpus'] = int(default.get('numcpus', NUMCPUS))
         defaults['memory'] = int(default.get('memory', MEMORY))
         defaults['disks'] = default.get('disks', DISKS)
