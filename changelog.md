@@ -4,6 +4,7 @@
 ## 5.20 (2017-03-27)
 
 - Virtualbox support
+- /etc/hosts support
 - Update DNS/HOSTS for existing vms
 - Cpumodel and cpuflags
 - Support for files in plan
