@@ -12,6 +12,8 @@ There is additional support for VirtualBox
 
 It started because I switched from ovirt and needed a tool similar to [ovirt.py](https://github.com/karmab/ovirt)
 
+## [ChangeLog](changelog.md)
+
 ##  Wouldnt it be cool to:
 
 - Interact with libvirt without XML

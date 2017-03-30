@@ -17,6 +17,9 @@ additional support for VirtualBox
 It started because I switched from ovirt and needed a tool similar to
 `ovirt.py <https://github.com/karmab/ovirt>`__
 
+`ChangeLog <changelog.md>`__
+----------------------------
+
 Wouldnt it be cool to:
 ----------------------
 
