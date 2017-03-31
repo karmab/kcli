@@ -1,21 +1,22 @@
 #!/usr/bin/env python
 
-import click
-import fileinput
 from defaults import NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, RESERVEHOST, START, TEMPLATES, NESTED, TUNNEL
-from prettytable import PrettyTable
 from kvm import Kvirt
-from vbox import Kbox
-import os
-from time import sleep
-import yaml
+from prettytable import PrettyTable
 from shutil import copyfile
+from time import sleep
+from vbox import Kbox
 import ansibleutils
-import dockerutils
-import nameutils
+import click
 import common
+import dockerutils
+import fileinput
+import nameutils
+import os
+import webbrowser
+import yaml
 
-__version__ = '5.20'
+__version__ = '5.21'
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
@@ -898,23 +899,59 @@ def plan(config, ansible, get, path, listing, autostart, container, noautostart,
         containerentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'container']
         ansibleentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'ansible']
         profileentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'profile']
+        templateentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'template']
+        poolentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'pool']
         for p in profileentries:
             vmprofiles[p] = entries[p]
         if networkentries:
             click.secho("Deploying Networks...", fg='green')
         for net in networkentries:
-            profile = entries[net]
+            netprofile = entries[net]
             if k.net_exists(net):
                 click.secho("Network %s skipped!" % net, fg='blue')
                 continue
-            cidr = profile.get('cidr')
-            nat = bool(profile.get('nat', True))
+            cidr = netprofile.get('cidr')
+            nat = bool(netprofile.get('nat', True))
             if cidr is None:
                 print "Missing Cidr for network %s. Not creating it..." % net
                 continue
-            dhcp = profile.get('dhcp', True)
+            dhcp = netprofile.get('dhcp', True)
             result = k.create_network(name=net, cidr=cidr, dhcp=dhcp, nat=nat)
             handle_response(result, net, element='Network ')
+        if poolentries:
+            click.secho("Deploying Pool...", fg='green')
+            pools = k.list_pools()
+            for pool in poolentries:
+                if pool in pools:
+                    click.secho("Pool %s skipped!" % pool, fg='blue')
+                    continue
+                else:
+                    poolprofile = entries[pool]
+                    poolpath = poolprofile.get('path')
+                    if poolpath is None:
+                        click.secho("Pool %s skipped as path is missing!" % pool, fg='blue')
+                        continue
+                    k.create_pool(pool, poolpath)
+        if templateentries:
+            click.secho("Deploying Templates...", fg='green')
+            templates = [os.path.basename(t) for t in k.volumes()]
+            for template in templateentries:
+                if template in templates:
+                    click.secho("Template %s skipped!" % template, fg='blue')
+                    continue
+                else:
+                    templateprofile = entries[template]
+                    pool = templateprofile.get('pool', default['pool'])
+                    url = templateprofile.get('url')
+                    if url is None:
+                        click.secho("Template %s skipped as url is missing!" % template, fg='blue')
+                        continue
+                    if not url.endswith('qcow2') and not url.endswith('img'):
+                        click.secho("Opening url %s for you to download %s" % (url, template), fg='blue')
+                        webbrowser.open(url, new=2, autoraise=True)
+                        continue
+                    result = k.add_image(url, pool, short=template)
+                    handle_response(result, template, element='Template ', action='Added')
         if vmentries:
             click.secho("Deploying Vms...", fg='green')
             for name in vmentries:

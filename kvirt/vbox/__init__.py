@@ -85,7 +85,7 @@ class Kbox:
         else:
             return True
 
-    def create(self, name, virttype='vbox', title='', description='kvirt', cpumodel='', cpuflags=[], numcpus=2, memory=512, guestid='Linux_64', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=None, ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[]):
+    def create(self, name, virttype='vbox', title='', description='kvirt', cpumodel='', cpuflags=[], numcpus=2, memory=512, guestid='Linux_64', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[]):
         guestid = 'Linux_64'
         default_diskinterface = diskinterface
         default_diskthin = diskthin
@@ -148,8 +148,8 @@ class Kbox:
         if iso is None and cloudinit:
             if template is not None:
                 guestcmds = self.guestinstall(template)
-                if cmds is None:
-                    cmds = [guestcmds]
+                if not cmds:
+                    cmds = guestcmds
                 elif 'rhel' in template:
                         register = [c for c in cmds if 'subscription-manager' in c]
                         if register:
@@ -240,14 +240,16 @@ class Kbox:
         conn = self.conn
         try:
             vm = conn.find_machine(name)
-            if status[str(vm.state)] == "up":
-                return {'result': 'success'}
-            else:
-                vm = conn.find_machine(name)
+        except Exception:
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        if status[str(vm.state)] == "up":
+            return {'result': 'success'}
+        else:
+            try:
                 vm.launch_vm_process(None, 'headless', '')
                 return {'result': 'success'}
-        except:
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            except Exception as e:
+                return {'result': 'failure', 'reason': e}
 
     def stop(self, name):
         conn = self.conn
@@ -878,7 +880,11 @@ class Kbox:
         if name in pools:
             return
         if not os.path.exists(poolpath):
-            os.makedirs(poolpath)
+            try:
+                os.makedirs(poolpath)
+            except OSError:
+                print("Couldn't create directory %s.Leaving..." % poolpath)
+                return 1
         poolfile = "%s/.vbox.yml" % os.environ.get('HOME')
         if not os.path.exists(poolfile):
             poolinfo = [{'name': name, 'path': poolpath}]

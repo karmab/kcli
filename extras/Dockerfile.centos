@@ -3,7 +3,7 @@ MAINTAINER Karim Boumedhel <karimboumedhel@gmail.com>
 
 # Group the package installation
 RUN yum -y install epel-release && \
-    yum -y install gcc libvirt-devel python-devel genisoimage qemu-kvm nmap-ncat python-pip openssh-clients unzip wget
+    yum -y install gcc libvirt-devel python-devel genisoimage qemu-kvm nmap-ncat python-pip openssh-clients wget
 
 # Group the pip installation
 RUN pip install --no-cache-dir kcli docker

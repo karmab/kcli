@@ -1,5 +1,11 @@
 # Changelog
 
+## 5.21 (2017-03-31)
+
+- Create pools in the plans
+- Download templates in the plans
+- Optional libvirt+Virtualbox Dockerfile ( with limited support)
+- Fix commands array for virtualbox cloudinit
 
 ## 5.20 (2017-03-27)
 

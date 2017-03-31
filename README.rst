@@ -20,8 +20,8 @@ It started because I switched from ovirt and needed a tool similar to
 `ChangeLog <changelog.md>`__
 ----------------------------
 
-Wouldnt it be cool to:
-----------------------
+Wouldnt it be great to:
+-----------------------
 
 -  Interact with libvirt without XML
 -  Interact The same way with virtualbox
@@ -418,14 +418,21 @@ You can also define plan files in yaml with a list of profiles, VMS,
 disks, and networks and VMS to deploy (look at the sample) and deploy it
 with kcli plan. The following type can be used within a plan:
 
--  vm ( this is the type used when none is specified)
 -  network
+-  template
 -  disk
--  container
+-  pool
 -  profile
 -  ansible
+-  container
+-  vm ( this is the type used when none is specified)
 
-For instance, to define a network named mynet:
+Here are some examples of each type ( additional ones can be found in
+the `samples
+directory <https://github.com/karmab/kcli/tree/master/samples>`__
+
+network
+~~~~~~~
 
 .. code:: yaml
 
@@ -436,8 +443,21 @@ For instance, to define a network named mynet:
 You can also use the boolean keyword dhcp (mostly to disable it) and
 isolated . Note that when not specified, dhcp and nat will be enabled
 
-To define a shared disk named shared1.img between two VMS (that
-typically would be defined within the same plan):
+ template
+~~~~~~~~~
+
+.. code:: yaml
+
+    CentOS-7-x86_64-GenericCloud.qcow2:
+     type: template
+     url: http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2
+
+It will only be downloaded only if not present Note that if you point to
+an url not ending in qcow2 ( or img), your browser will be opened for
+you to proceed
+
+disk
+~~~~
 
 .. code:: yaml
 
@@ -449,10 +469,71 @@ typically would be defined within the same plan):
       - centos1
       - centos2
 
-Regarding VMS, You can point at an existing profile in your plans,
-define all parameters for the VMS, or combine both approaches. You can
-even add your own profile definitions in the plan file and reference
-them within the same plan:
+Note the disk is shared between two VMS (that typically would be defined
+within the same plan):
+
+pool
+~~~~
+
+.. code:: yaml
+
+    mypool:
+      type: pool
+      path: /home/mypool
+
+profile
+~~~~~~~
+
+.. code:: yaml
+
+    myprofile:
+      type: profile
+      template: CentOS-7-x86_64-GenericCloud.qcow2
+      memory: 3072
+      numcpus: 1
+      disks:
+       - size: 15
+       - size: 12
+      nets:
+       - default
+      pool: default
+
+ansible
+~~~~~~~
+
+.. code:: yaml
+
+    myplay:
+     type: ansible
+     verbose: false
+     playbook: prout.yml
+
+Note that an inventory will be created for you in /tmp and that
+*group\_vars* and *host\_vars* directory are taken into account.
+
+container
+~~~~~~~~~
+
+.. code:: yaml
+
+    centos:
+     type: container
+      image: centos
+      cmd: /bin/bash
+      ports:
+       - 5500
+      volumes:
+       - /root/coco
+
+Look at the docker section for details on the parameters
+
+VMS
+~~~
+
+You can point at an existing profile in your plans, define all
+parameters for the VMS, or combine both approaches. You can even add
+your own profile definitions in the plan file and reference them within
+the same plan:
 
 .. code:: yaml
 
@@ -736,7 +817,27 @@ there are some issues:
 Contributors
 ------------
 
--  Gotrunks: Logo Art design
+See `contributors on
+GitHub <https://github.com/karmab/kcli/graphs/contributors>`__
+
+Copyright
+---------
+
+Copyright 2017 Karim Boumedhel
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may
+not use this file except in compliance with the License. You may obtain
+a copy of the License at
+
+::
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 
 Problems?
 ---------

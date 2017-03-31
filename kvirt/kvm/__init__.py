@@ -95,7 +95,7 @@ class Kvirt:
         except:
             return False
 
-    def create(self, name, virttype='kvm', title='', description='kvirt', cpumodel='Westmere', cpuflags=[], numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=None, ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[]):
+    def create(self, name, virttype='kvm', title='', description='kvirt', cpumodel='Westmere', cpuflags=[], numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[]):
         default_diskinterface = diskinterface
         default_diskthin = diskthin
         default_disksize = disksize
@@ -1407,7 +1407,7 @@ class Kvirt:
                         os.makedirs(poolpath)
                     except OSError:
                         print("Couldn't create directory %s.Leaving..." % poolpath)
-                        return
+                        return 1
             elif self.protocol == 'ssh':
                 cmd1 = 'ssh -p %s %s@%s "test -d %s || mkdir %s"' % (self.port, self.user, self.host, poolpath, poolpath)
                 cmd2 = 'ssh -t %s@%s "sudo chown %s %s"' % (self.user, self.host, user, poolpath)
@@ -1450,9 +1450,12 @@ class Kvirt:
             pool.build()
         pool.create()
 
-    def add_image(self, image, pool):
+    def add_image(self, image, pool, short=None):
         poolname = pool
-        shortimage = os.path.basename(image)
+        if short is not None:
+            shortimage = short
+        else:
+            shortimage = os.path.basename(image)
         conn = self.conn
         volumes = []
         try:

@@ -79,7 +79,7 @@ def fetch(url, path, syms=None):
             fetch("%s/%s" % (url, filename), "%s/%s" % (path, filename), syms=syms)
 
 
-def cloudinit(name, keys=None, cmds=None, nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[]):
+def cloudinit(name, keys=None, cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[]):
     default_gateway = gateway
     with open('/tmp/meta-data', 'w') as metadatafile:
         if domain is not None:
@@ -146,7 +146,7 @@ def cloudinit(name, keys=None, cmds=None, nets=[], gateway=None, dns=None, domai
             with open(publickeyfile, 'r') as ssh:
                 key = ssh.read().rstrip()
                 userdata.write("- %s\n" % key)
-        if cmds is not None:
+        if cmds:
                 userdata.write("runcmd:\n")
                 for cmd in cmds:
                     if cmd.startswith('#'):
