@@ -18,3 +18,9 @@ pg_port=''
 pg_database='awx'
 pg_username='awx'
 pg_password='unix1234'
+
+rabbitmq_port=5672
+rabbitmq_vhost=tower
+rabbitmq_username=tower
+rabbitmq_password='unix1234'
+rabbitmq_cookie=rabbitmqcookie
