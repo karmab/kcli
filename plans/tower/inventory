@@ -1,3 +1,6 @@
+[tower:children]
+primary
+
 [primary]
 localhost ansible_connection=local
 
