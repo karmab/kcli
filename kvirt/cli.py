@@ -218,7 +218,6 @@ def info(config, name):
 
 @cli.command()
 @click.option('-s', '--switch', 'switch', help='Switch To indicated client')
-@click.option('-l', '--list', 'listing', help='List Hypervisors', is_flag=True)
 @click.option('-r', '--report', 'report', help='Report Hypervisor Information', is_flag=True)
 @click.option('-p', '--profiles', help='List Profiles', is_flag=True)
 @click.option('-t', '--templates', help='List Templates', is_flag=True)
@@ -228,7 +227,7 @@ def info(config, name):
 @click.option('--template', type=click.Choice(['arch', 'centos6', 'centos7', 'cirros', 'debian8', 'fedora24', 'fedora25', 'gentoo', 'opensuse', 'ubuntu1404', 'ubuntu1604']), help='Template/Image to download')
 @click.option('--download', help='Download Template/Image', is_flag=True)
 @pass_config
-def host(config, switch, listing, report, profiles, templates, isos, disks, pool, template, download):
+def host(config, switch, report, profiles, templates, isos, disks, pool, template, download):
     """List and Handle host"""
     if switch:
         if switch not in config.clients:
@@ -244,16 +243,7 @@ def host(config, switch, listing, report, profiles, templates, isos, disks, pool
                     print(line.rstrip())
         return
     k = config.get(config.client)
-    if listing:
-        clientstable = PrettyTable(["Name", "Current"])
-        clientstable.align["Name"] = "l"
-        for client in sorted(config.clients):
-            if client == config.client:
-                clientstable.add_row([client, 'X'])
-            else:
-                clientstable.add_row([client, ''])
-        print(clientstable)
-    elif report:
+    if report:
         k.report()
     elif profiles:
         for profile in sorted(config.profiles):
@@ -291,6 +281,7 @@ def host(config, switch, listing, report, profiles, templates, isos, disks, pool
 
 
 @cli.command()
+@click.option('-H', '--hosts', is_flag=True)
 @click.option('-c', '--clients', is_flag=True)
 @click.option('-p', '--profiles', is_flag=True)
 @click.option('-t', '--templates', is_flag=True)
@@ -302,7 +293,7 @@ def host(config, switch, listing, report, profiles, templates, isos, disks, pool
 @click.option('--plans', is_flag=True)
 @click.option('-f', '--filters', type=click.Choice(['up', 'down']))
 @pass_config
-def list(config, clients, profiles, templates, isos, disks, pools, networks, containers, plans, filters):
+def list(config, hosts, clients, profiles, templates, isos, disks, pools, networks, containers, plans, filters):
     """List clients, profiles, templates, isos, pools or vms"""
     if config.client == 'all':
         clis = []
@@ -318,6 +309,16 @@ def list(config, clients, profiles, templates, isos, disks, pools, networks, con
         for pool in sorted(pools):
             poolstable.add_row([pool])
         print(poolstable)
+        return
+    if hosts:
+        clientstable = PrettyTable(["Name", "Current"])
+        clientstable.align["Name"] = "l"
+        for client in sorted(config.clients):
+            if client == config.client:
+                clientstable.add_row([client, 'X'])
+            else:
+                clientstable.add_row([client, ''])
+        print(clientstable)
         return
     if networks:
         networks = k.list_networks()
@@ -443,7 +444,6 @@ def create(profile, name):
 
 @cli.command()
 @click.option('-p', '--profile', help='Profile to use')
-@click.option('-l', '--list', 'listing', help='List Vms', is_flag=True)
 @click.option('-i', '--info', 'info', help='Info about Vm', is_flag=True)
 @click.option('-f', '--filters', type=click.Choice(['up', 'down']))
 @click.option('-s', '--start', 'start', help='Start Vm', is_flag=True)
@@ -461,7 +461,7 @@ def create(profile, name):
 @click.option('-R', help='Remote Forwarding')
 @click.argument('name', required=False)
 @pass_config
-def vm(config, profile, listing, info, filters, start, stop, ssh, ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8, l, r, name):
+def vm(config, profile, info, filters, start, stop, ssh, ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8, l, r, name):
     """Create/Delete/Start/Stop/List vms"""
     if config.client == 'all':
         clients = []
@@ -470,32 +470,6 @@ def vm(config, profile, listing, info, filters, start, stop, ssh, ip1, ip2, ip3,
     else:
         k = config.get(config.client)
         tunnel = config.tunnel
-    if listing:
-        if config.client == 'all':
-            vms = PrettyTable(["Name", "Hypervisor", "Status", "Ips", "Source", "Description/Plan", "Profile"])
-            for client in sorted(clients):
-                k = config.get(client)
-                for vm in sorted(k.list()):
-                    vm.insert(1, client)
-                    if filters:
-                        status = vm[2]
-                        if status == filters:
-                            vms.add_row(vm)
-                    else:
-                        vms.add_row(vm)
-            print(vms)
-            return
-        else:
-            vms = PrettyTable(["Name", "Status", "Ips", "Source", "Description/Plan", "Profile"])
-            for vm in sorted(k.list()):
-                if filters:
-                    status = vm[1]
-                    if status == filters:
-                        vms.add_row(vm)
-                else:
-                    vms.add_row(vm)
-            print(vms)
-            return
     if name is None:
         click.secho("Missing vm name", fg='red')
         os._exit(1)
@@ -723,21 +697,15 @@ def nic(config, delete, interface, network, name):
 
 
 @cli.command()
-@click.option('-l', '--list', 'listing', help='List Pools', is_flag=True)
 @click.option('-d', '--delete', is_flag=True)
 @click.option('-f', '--full', is_flag=True)
 @click.option('-t', '--pooltype', help='Type of the pool', type=click.Choice(['dir', 'logical']), default='dir')
 @click.option('-p', '--path', help='Path of the pool')
 @click.argument('pool', required=False)
 @pass_config
-def pool(config, listing, delete, full, pooltype, path, pool):
+def pool(config, delete, full, pooltype, path, pool):
     """Create/Delete pool"""
     k = config.get(config.client)
-    if listing:
-        pools = k.list_pools()
-        for pool in sorted(pools):
-            print(pool)
-        return
     if pool is None:
         click.secho("Missing pool name", fg='red')
         os._exit(1)
@@ -756,7 +724,6 @@ def pool(config, listing, delete, full, pooltype, path, pool):
 @click.option('-A', '--ansible', 'ansible', help='Generate ansible inventory', is_flag=True)
 @click.option('-g', '--get', 'get', help='Download specific plan(s). Use --path for specific directory')
 @click.option('-p', '--path', 'path', default='plans', help='Path where to download plans. Defaults to plan')
-@click.option('-l', '--list', 'listing', help='List Pools', is_flag=True)
 @click.option('-a', '--autostart', is_flag=True, help='Set all vms from plan to autostart')
 @click.option('-c', '--container', is_flag=True, help='Handle container')
 @click.option('-n', '--noautostart', is_flag=True, help='Prevent all vms from plan to autostart')
@@ -767,28 +734,13 @@ def pool(config, listing, delete, full, pooltype, path, pool):
 @click.option('-t', '--delay', default=0, help="Delay between each vm's creation")
 @click.argument('plan', required=False)
 @pass_config
-def plan(config, ansible, get, path, listing, autostart, container, noautostart, inputfile, start, stop, delete, delay, plan):
+def plan(config, ansible, get, path, autostart, container, noautostart, inputfile, start, stop, delete, delay, plan):
     """Create/Delete/Stop/Start vms from plan file"""
     newvms = []
     vmprofiles = {key: value for key, value in config.profiles.iteritems() if 'type' not in value or value['type'] == 'vm'}
     containerprofiles = {key: value for key, value in config.profiles.iteritems() if 'type' in value and value['type'] == 'container'}
     k = config.get(config.client)
     tunnel = config.tunnel
-    if listing:
-        vms = {}
-        plans = PrettyTable(["Name", "Vms"])
-        for vm in sorted(k.list(), key=lambda x: x[4]):
-                vmname = vm[0]
-                plan = vm[4]
-                if plan in vms:
-                    vms[plan].append(vmname)
-                else:
-                    vms[plan] = [vmname]
-        for plan in sorted(vms):
-            planvms = ','.join(vms[plan])
-            plans.add_row([plan, planvms])
-        print(plans)
-        return
     if plan is None:
         plan = nameutils.get_random_name()
     if delete:
@@ -1192,29 +1144,15 @@ def scp(config, recursive, source, destination):
 
 
 @cli.command()
-@click.option('-l', '--list', 'listing', help='List Networks', is_flag=True)
 @click.option('-d', '--delete', is_flag=True)
 @click.option('-i', '--isolated', is_flag=True, help='Isolated Network')
 @click.option('-c', '--cidr', help='Cidr of the net')
 @click.option('--nodhcp', is_flag=True, help='Disable dhcp on the net')
 @click.argument('name', required=False)
 @pass_config
-def network(config, listing, delete, isolated, cidr, nodhcp, name):
+def network(config, delete, isolated, cidr, nodhcp, name):
     """Create/Delete/List Network"""
     k = config.get(config.client)
-    if listing:
-        networks = k.list_networks()
-        click.secho("Listing Networks...", fg='green')
-        networkstable = PrettyTable(["Name", "Type", "Cidr", "Dhcp", "Mode"])
-        networkstable.align["Name"] = "l"
-        for network in sorted(networks):
-            networktype = networks[network]['type']
-            cidr = networks[network]['cidr']
-            dhcp = networks[network]['dhcp']
-            mode = networks[network]['mode']
-            networkstable.add_row([network, networktype, cidr, dhcp, mode])
-        print networkstable
-        return
     if name is None:
         click.secho("Missing Network", fg='red')
         os._exit(1)
@@ -1365,28 +1303,14 @@ def bootstrap(genfile, auto, name, host, port, user, protocol, url, pool, poolpa
 
 @cli.command()
 @click.option('-p', '--profile', help='Profile to use')
-@click.option('-l', '--list', 'listing', help='List Containers', is_flag=True)
-@click.option('-f', '--filters', help="Filter output when listing", type=click.Choice(['up', 'down']))
 @click.option('-s', '--start', 'start', help='Start Container', is_flag=True)
 @click.option('-w', '--stop', 'stop', help='Stop Container', is_flag=True)
 @click.option('-c', '--console', help='Console of the Container', is_flag=True)
 @click.argument('name', required=False)
 @pass_config
-def container(config, profile, listing, filters, start, stop, console, name):
+def container(config, profile, start, stop, console, name):
     """Create/Delete/List containers"""
     k = config.get(config.client)
-    if listing:
-        click.secho("Listing containers...", fg='green')
-        containers = PrettyTable(["Name", "Status", "Image", "Plan", "Command", "Ports"])
-        for container in dockerutils.list_containers(k):
-            if filters:
-                status = container[1]
-                if status == filters:
-                    containers.add_row(container)
-            else:
-                containers.add_row(container)
-        print containers
-        return
     if name is None:
         click.secho("Missing container name", fg='red')
         os._exit(1)

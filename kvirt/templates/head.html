@@ -13,14 +13,15 @@
     <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/jquery.dataTables.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    <!--script src="{{ url_for('static', filename='js/patternfly.min.js') }}"></script-->
     <script src="{{ url_for('static', filename='js/kcli.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/patternfly.min.js') }}"></script>
     {% endblock %}
 
     {% block stylesheets %}
-    <link href="{{ url_for('static', filename='css/patternfly.min.css') }}" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/patternfly-additions.min.css') }}" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/pygments.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/jquery.dataTables.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+    <!--link href="{{ url_for('static', filename='css/patternfly.min.css') }}" rel="stylesheet"-->
+    <link href="{{ url_for('static', filename='css/navbar.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/kcli.css') }}" rel="stylesheet">
     {% endblock %}
 </head>

@@ -1,55 +1,29 @@
-<nav class="navbar navbar-default navbar-pf" role="navigation" style="background-color: #0a350b;">
+<nav role="navigation" class="navbar navbar-custom">
+    <!-- Brand and toggle get grouped for better mobile display -->
     <div class="navbar-header">
-        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse-1">
+        <button type="button" data-target="#navbarCollapse" data-toggle="collapse" class="navbar-toggle">
             <span class="sr-only">Toggle navigation</span>
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
         </button>
-        <a class="navbar-brand" href="{{ url_for('get') }}">
-            <img src="{{ url_for('static', filename='images/kcli.jpg') }}" width="81" height="32" alt="Kcli" />
+        <a href="{{ url_for('get') }}" class="navbar-brand">
+        <img src="{{ url_for('static', filename='images/kcli.jpg') }}" width="81" height="32" alt="Kcli" />
         </a>
     </div>
-    <div class="collapse navbar-collapse navbar-collapse-1">
-        <ul class="nav navbar-nav navbar-utility">
-            <li><a href="https://github.com/karmab/kcli" target="_blank">Documentation</a></li>
+    <!-- Collection of nav links and other content for toggling -->
+    <div id="navbarCollapse" class="collapse navbar-collapse">
+        <ul class="nav navbar-nav">
+            <li class="active"><a href="#"></a></li>
+            <li><a href="{{ url_for('get') }}">Vms</a></li>
+            <li><a href="{{ url_for('get') }}">Containers</a></li>
+            <li><a href="{{ url_for('get') }}">Profiles</a></li>
+            <li><a href="{{ url_for('get') }}">Networks</a></li>
+            <li><a href="{{ url_for('get') }}">Pools</a></li>
+            <li><a href="{{ url_for('get') }}">Plans</a></li>
         </ul>
-        <ul class="nav navbar-nav navbar-primary">
-            {% if active and active == 'vms' %}
-            <li class="active">
-            {% else %}
-            <li>
-            {% endif %}
-                <a href="{{ url_for('get') }}">Vms</a>
-            </li>
-            {% if active and active == 'plans' %}
-            <li class="active">
-            {% else %}
-            <li>
-            {% endif %}
-                <a href="{{ url_for('get') }}">Plans</a>
-            </li>
-            {% if active and active == 'host' %}
-            <li class="active">
-            {% else %}
-            <li>
-            {% endif %}
-                <a href="{{ url_for('get') }}">Host</a>
-            </li>
-            {% if active and active == 'network' %}
-            <li class="active">
-            {% else %}
-            <li>
-            {% endif %}
-                <a href="{{ url_for('get') }}">Network</a>
-            </li>
-            {% if active and active == 'pool' %}
-            <li class="active">
-            {% else %}
-            <li>
-            {% endif %}
-                <a href="{{ url_for('get') }}">Pool</a>
-            </li>
+        <ul class="nav navbar-nav navbar-right">
+            <li><a href="https://github.com/karmab/kcli">Documentation</a></li>
         </ul>
     </div>
 </nav>
