@@ -425,6 +425,43 @@ class Kvirt:
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
 
+    def snapshot(self, name, base, revert=False, delete=False, listing=False):
+        conn = self.conn
+        try:
+            vm = conn.lookupByName(base)
+            vmxml = vm.XMLDesc(0)
+        except:
+            return {'result': 'failure', 'reason': "VM %s not found" % base}
+        if listing:
+            for snapshot in vm.snapshotListNames():
+                print(snapshot)
+            return {'result': 'success'}
+        if revert and name not in vm.snapshotListNames():
+            return {'result': 'failure', 'reason': "Snapshot %s doesn't exist" % name}
+        if delete and name not in vm.snapshotListNames():
+            return {'result': 'failure', 'reason': "Snapshot %s doesn't exist" % name}
+        if delete:
+            snap = vm.snapshotLookupByName(name)
+            snap.delete()
+            return {'result': 'success'}
+        if not revert and name in vm.snapshotListNames():
+            return {'result': 'failure', 'reason': "Snapshot %s allready exists" % name}
+        if revert:
+            snap = vm.snapshotLookupByName(name)
+            vm.revertToSnapshot(snap)
+            return {'result': 'success'}
+        snapxml = """<domainsnapshot>
+          <name>%s</name>
+          <memory snapshot='internal'/>
+          <disks>
+            <disk name='vda' snapshot='internal'/>
+            <disk name='hdc' snapshot='no'/>
+          </disks>
+          %s
+          </domainsnapshot>""" % (name, vmxml)
+        vm.snapshotCreateXML(snapxml)
+        return {'result': 'success'}
+
     def restart(self, name):
         conn = self.conn
         status = {0: 'down', 1: 'up'}
@@ -675,6 +712,16 @@ class Kvirt:
             volume = conn.storageVolLookupByPath(path)
             disksize = int(float(volume.info()[1]) / 1024 / 1024 / 1024)
             print("diskname: %s disksize: %sGB diskformat: %s type: %s path: %s" % (device, disksize, diskformat, drivertype, path))
+        if vm.hasCurrentSnapshot():
+            currentsnapshot = vm.snapshotCurrent().getName()
+        else:
+            currentsnapshot = ''
+        for snapshot in vm.snapshotListNames():
+            if snapshot == currentsnapshot:
+                current = True
+            else:
+                current = False
+            print("snapshot: %s current: %s" % (snapshot, current))
         return 0
 
     def ip(self, name):

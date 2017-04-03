@@ -16,7 +16,7 @@ import os
 import webbrowser
 import yaml
 
-__version__ = '5.21'
+__version__ = '5.22'
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
@@ -143,7 +143,7 @@ def cli(config, debug, client):
 
 @cli.command()
 @click.option('-c', '--container', is_flag=True)
-@click.argument('name')
+@click.argument('name', metavar='VMNAME')
 @pass_config
 def start(config, container, name):
     """Start vm/container"""
@@ -160,7 +160,7 @@ def start(config, container, name):
 
 @cli.command()
 @click.option('-c', '--container', is_flag=True)
-@click.argument('name')
+@click.argument('name', metavar='VMNAME')
 @pass_config
 def stop(config, container, name):
     """Stop vm/container"""
@@ -177,7 +177,7 @@ def stop(config, container, name):
 
 @cli.command()
 @click.option('-s', '--serial', is_flag=True)
-@click.argument('name')
+@click.argument('name', metavar='VMNAME')
 @pass_config
 def console(config, serial, name):
     """Vnc/Spice/Serial/Container console"""
@@ -192,7 +192,7 @@ def console(config, serial, name):
 @cli.command()
 @click.confirmation_option(help='Are you sure?')
 @click.option('--container', is_flag=True)
-@click.argument('name')
+@click.argument('name', metavar='VMNAME')
 @pass_config
 def delete(config, container, name):
     """Delete vm/container"""
@@ -208,7 +208,7 @@ def delete(config, container, name):
 
 
 @cli.command()
-@click.argument('name')
+@click.argument('name', metavar='VMNAME')
 @pass_config
 def info(config, name):
     """Info vm"""
@@ -218,13 +218,13 @@ def info(config, name):
 
 
 @cli.command()
-@click.option('-s', '--switch', 'switch', help='Switch To indicated client')
+@click.option('-s', '--switch', 'switch', help='Switch To indicated client', metavar='CLIENT')
 @click.option('-r', '--report', 'report', help='Report Hypervisor Information', is_flag=True)
 @click.option('-p', '--profiles', help='List Profiles', is_flag=True)
 @click.option('-t', '--templates', help='List Templates', is_flag=True)
 @click.option('-i', '--isos', help='List Isos', is_flag=True)
 @click.option('-d', '--disks', help='List Disks', is_flag=True)
-@click.option('-p', '--pool', default='default', help='Pool to use when downloading')
+@click.option('-p', '--pool', default='default', help='Pool to use when downloading', metavar='POOL')
 @click.option('--template', type=click.Choice(['arch', 'centos6', 'centos7', 'cirros', 'debian8', 'fedora24', 'fedora25', 'gentoo', 'opensuse', 'ubuntu1404', 'ubuntu1604']), help='Template/Image to download')
 @click.option('--download', help='Download Template/Image', is_flag=True)
 @pass_config
@@ -436,33 +436,26 @@ def list(config, hosts, clients, profiles, templates, isos, disks, pools, networ
 
 
 @cli.command()
-@click.option('-p', '--profile', help='Profile to use')
-@click.argument('name', required=False)
-def create(profile, name):
-    """Deprecated command. Use kcli vm instead"""
-    click.secho("Deprecated command. Use kcli vm instead", fg='blue')
-
-
-@cli.command()
-@click.option('-p', '--profile', help='Profile to use')
+@click.option('-p', '--profile', help='Profile to use', metavar='PROFILE')
 @click.option('-i', '--info', 'info', help='Info about Vm', is_flag=True)
 @click.option('-f', '--filters', type=click.Choice(['up', 'down']))
 @click.option('-s', '--start', 'start', help='Start Vm', is_flag=True)
 @click.option('-w', '--stop', 'stop', help='Stop Vm', is_flag=True)
+@click.option('-d', '--delete', 'delete', help='Delete vm', is_flag=True)
 @click.option('--ssh', 'ssh', help='Ssh Vm', is_flag=True)
-@click.option('-1', '--ip1', help='Optional Ip to assign to eth0. Netmask and gateway will be retrieved from profile')
-@click.option('-2', '--ip2', help='Optional Ip to assign to eth1. Netmask and gateway will be retrieved from profile')
-@click.option('-3', '--ip3', help='Optional Ip to assign to eth2. Netmask and gateway will be retrieved from profile')
-@click.option('-4', '--ip4', help='Optional Ip to assign to eth3. Netmask and gateway will be retrieved from profile')
-@click.option('-5', '--ip5', help='Optional Ip to assign to eth4. Netmask and gateway will be retrieved from profile')
-@click.option('-6', '--ip6', help='Optional Ip to assign to eth5. Netmask and gateway will be retrieved from profile')
-@click.option('-7', '--ip7', help='Optional Ip to assign to eth6. Netmask and gateway will be retrieved from profile')
-@click.option('-8', '--ip8', help='Optional Ip to assign to eth8. Netmask and gateway will be retrieved from profile')
+@click.option('-1', '--ip1', help='Optional Ip to assign to eth0. Netmask and gateway will be retrieved from profile', metavar='IP1')
+@click.option('-2', '--ip2', help='Optional Ip to assign to eth1. Netmask and gateway will be retrieved from profile', metavar='IP2')
+@click.option('-3', '--ip3', help='Optional Ip to assign to eth2. Netmask and gateway will be retrieved from profile', metavar='IP3')
+@click.option('-4', '--ip4', help='Optional Ip to assign to eth3. Netmask and gateway will be retrieved from profile', metavar='IP4')
+@click.option('-5', '--ip5', help='Optional Ip to assign to eth4. Netmask and gateway will be retrieved from profile', metavar='IP5')
+@click.option('-6', '--ip6', help='Optional Ip to assign to eth5. Netmask and gateway will be retrieved from profile', metavar='IP6')
+@click.option('-7', '--ip7', help='Optional Ip to assign to eth6. Netmask and gateway will be retrieved from profile', metavar='IP7')
+@click.option('-8', '--ip8', help='Optional Ip to assign to eth8. Netmask and gateway will be retrieved from profile', metavar='IP8')
 @click.option('-L', help='Local Forwarding')
 @click.option('-R', help='Remote Forwarding')
-@click.argument('name', required=False)
+@click.argument('name', required=False, metavar='VMNAME')
 @pass_config
-def vm(config, profile, info, filters, start, stop, ssh, ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8, l, r, name):
+def vm(config, profile, info, filters, start, stop, delete, ssh, ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8, l, r, name):
     """Create/Delete/Start/Stop/List vms"""
     if config.client == 'all':
         clients = []
@@ -486,6 +479,11 @@ def vm(config, profile, info, filters, start, stop, ssh, ip1, ip2, ip3, ip4, ip5
         click.secho("Stopped vm %s..." % name, fg='green')
         result = k.stop(name)
         code = handle_response(result, name, element='', action='stopped')
+        os._exit(code)
+    if delete:
+        code = k.delete(name)
+        if code == 0:
+            click.secho("Deleted vm %s..." % name, fg='red')
         os._exit(code)
     if ssh:
         k.ssh(name, local=l, remote=r)
@@ -591,10 +589,10 @@ def vm(config, profile, info, filters, start, stop, ssh, ip1, ip2, ip3, ip4, ip5
 
 
 @cli.command()
-@click.option('-b', '--base', help='Base VM')
+@click.option('-b', '--base', help='Base VM', metavar='BASE')
 @click.option('-f', '--full', is_flag=True, help='Full Clone')
 @click.option('-s', '--start', is_flag=True, help='Start cloned VM')
-@click.argument('name')
+@click.argument('name', metavar='VMNAME')
 @pass_config
 def clone(config, base, full, start, name):
     """Clone existing vm"""
@@ -604,15 +602,15 @@ def clone(config, base, full, start, name):
 
 
 @cli.command()
-@click.option('-1', '--ip1', help='Ip to set')
-@click.option('-m', '--memory', help='Memory to set')
-@click.option('-c', '--numcpus', help='Number of cpus to set')
+@click.option('-1', '--ip1', help='Ip to set', metavar='IP1')
+@click.option('-m', '--memory', help='Memory to set', metavar='MEMORY')
+@click.option('-c', '--numcpus', help='Number of cpus to set', metavar='NUMCPUS')
 @click.option('-a', '--autostart', is_flag=True, help='Set VM to autostart')
 @click.option('-n', '--noautostart', is_flag=True, help='Prevent VM from autostart')
 @click.option('--dns', is_flag=True, help='Update Dns entry for the vm')
 @click.option('--host', is_flag=True, help='Update Host entry for the vm')
-@click.option('-d', '--domain', help='Domain')
-@click.argument('name')
+@click.option('-d', '--domain', help='Domain', metavar='DOMAIN')
+@click.argument('name', metavar='VMNAME')
 @pass_config
 def update(config, ip1, memory, numcpus, autostart, noautostart, dns, host, domain, name):
     """Update ip, memory or numcpus"""
@@ -649,10 +647,10 @@ def update(config, ip1, memory, numcpus, autostart, noautostart, dns, host, doma
 
 @cli.command()
 @click.option('-d', '--delete', is_flag=True)
-@click.option('-s', '--size', help='Size of the disk to add, in GB')
-@click.option('-n', '--diskname', help='Name or Path of the disk, when deleting')
-@click.option('-t', '--template', help='Name or Path of a Template, when adding')
-@click.option('-p', '--pool', default='default', help='Pool')
+@click.option('-s', '--size', help='Size of the disk to add, in GB', metavar='SIZE')
+@click.option('-n', '--diskname', help='Name or Path of the disk, when deleting', metavar='DISKNAME')
+@click.option('-t', '--template', help='Name or Path of a Template, when adding', metavar='TEMPLATE')
+@click.option('-p', '--pool', default='default', help='Pool', metavar='POOL')
 @click.argument('name')
 @pass_config
 def disk(config, delete, size, diskname, template, pool, name):
@@ -678,9 +676,9 @@ def disk(config, delete, size, diskname, template, pool, name):
 
 @cli.command()
 @click.option('-d', '--delete', is_flag=True)
-@click.option('-i', '--interface', help='Name of the interface, when deleting')
-@click.option('-n', '--network', help='Network')
-@click.argument('name')
+@click.option('-i', '--interface', help='Name of the interface, when deleting', metavar='INTERFACE')
+@click.option('-n', '--network', help='Network', metavar='NETWORK')
+@click.argument('name', metavar='VMNAME')
 @pass_config
 def nic(config, delete, interface, network, name):
     """Add/Delete nic of vm"""
@@ -701,7 +699,7 @@ def nic(config, delete, interface, network, name):
 @click.option('-d', '--delete', is_flag=True)
 @click.option('-f', '--full', is_flag=True)
 @click.option('-t', '--pooltype', help='Type of the pool', type=click.Choice(['dir', 'logical']), default='dir')
-@click.option('-p', '--path', help='Path of the pool')
+@click.option('-p', '--path', help='Path of the pool', metavar='PATH')
 @click.argument('pool', required=False)
 @pass_config
 def pool(config, delete, full, pooltype, path, pool):
@@ -723,8 +721,8 @@ def pool(config, delete, full, pooltype, path, pool):
 
 @cli.command()
 @click.option('-A', '--ansible', 'ansible', help='Generate ansible inventory', is_flag=True)
-@click.option('-g', '--get', 'get', help='Download specific plan(s). Use --path for specific directory')
-@click.option('-p', '--path', 'path', default='plans', help='Path where to download plans. Defaults to plan')
+@click.option('-g', '--get', 'get', help='Download specific plan(s). Use --path for specific directory', metavar='URL')
+@click.option('-p', '--path', 'path', default='plans', help='Path where to download plans. Defaults to plan', metavar='PATH')
 @click.option('-a', '--autostart', is_flag=True, help='Set all vms from plan to autostart')
 @click.option('-c', '--container', is_flag=True, help='Handle container')
 @click.option('-n', '--noautostart', is_flag=True, help='Prevent all vms from plan to autostart')
@@ -732,8 +730,8 @@ def pool(config, delete, full, pooltype, path, pool):
 @click.option('-s', '--start', is_flag=True, help='start all vms from plan')
 @click.option('-w', '--stop', is_flag=True)
 @click.option('-d', '--delete', is_flag=True)
-@click.option('-t', '--delay', default=0, help="Delay between each vm's creation")
-@click.argument('plan', required=False)
+@click.option('-t', '--delay', default=0, help="Delay between each vm's creation", metavar='DELAY')
+@click.argument('plan', required=False, metavar='PLAN')
 @pass_config
 def plan(config, ansible, get, path, autostart, container, noautostart, inputfile, start, stop, delete, delay, plan):
     """Create/Delete/Stop/Start vms from plan file"""
@@ -1114,9 +1112,9 @@ def plan(config, ansible, get, path, autostart, container, noautostart, inputfil
 
 
 @cli.command()
-@click.option('-L', help='Local Forwarding')
-@click.option('-R', help='Remote Forwarding')
-@click.argument('name')
+@click.option('-L', help='Local Forwarding', metavar='LOCAL')
+@click.option('-R', help='Remote Forwarding', metavar='REMOTE')
+@click.argument('name', metavar='VMNAME')
 @pass_config
 def ssh(config, l, r, name):
     """Ssh into vm"""
@@ -1147,9 +1145,9 @@ def scp(config, recursive, source, destination):
 @cli.command()
 @click.option('-d', '--delete', is_flag=True)
 @click.option('-i', '--isolated', is_flag=True, help='Isolated Network')
-@click.option('-c', '--cidr', help='Cidr of the net')
+@click.option('-c', '--cidr', help='Cidr of the net', metavar='CIDR')
 @click.option('--nodhcp', is_flag=True, help='Disable dhcp on the net')
-@click.argument('name', required=False)
+@click.argument('name', required=False, metavar='NETWORK')
 @pass_config
 def network(config, delete, isolated, cidr, nodhcp, name):
     """Create/Delete/List Network"""
@@ -1173,14 +1171,14 @@ def network(config, delete, isolated, cidr, nodhcp, name):
 @cli.command()
 @click.option('-f', '--genfile', is_flag=True)
 @click.option('-a', '--auto', is_flag=True, help="Don't ask for anything")
-@click.option('-n', '--name', help='Name to use')
-@click.option('-H', '--host', help='Host to use')
-@click.option('-p', '--port', help='Port to use')
-@click.option('-u', '--user', help='User to use', default='root')
-@click.option('-P', '--protocol', help='Protocol to use', default='ssh')
-@click.option('-U', '--url', help='URL to use')
-@click.option('--pool', help='Pool to use')
-@click.option('--poolpath', help='Pool Path to use')
+@click.option('-n', '--name', help='Name to use', metavar='CLIENT')
+@click.option('-H', '--host', help='Host to use', metavar='HOST')
+@click.option('-p', '--port', help='Port to use', metavar='PORT')
+@click.option('-u', '--user', help='User to use', default='root', metavar='USER')
+@click.option('-P', '--protocol', help='Protocol to use', default='ssh', metavar='PROTOCOL')
+@click.option('-U', '--url', help='URL to use', metavar='URL')
+@click.option('--pool', help='Pool to use', metavar='POOL')
+@click.option('--poolpath', help='Pool Path to use', metavar='POOLPATH')
 @click.option('-t', '--template', is_flag=True, help="Grab Centos Cloud Image")
 def bootstrap(genfile, auto, name, host, port, user, protocol, url, pool, poolpath, template):
     """Handle hypervisor, reporting or bootstrapping by creating config file and optionally pools and network"""
@@ -1303,11 +1301,11 @@ def bootstrap(genfile, auto, name, host, port, user, protocol, url, pool, poolpa
 
 
 @cli.command()
-@click.option('-p', '--profile', help='Profile to use')
+@click.option('-p', '--profile', help='Profile to use', metavar='PROFILE')
 @click.option('-s', '--start', 'start', help='Start Container', is_flag=True)
 @click.option('-w', '--stop', 'stop', help='Stop Container', is_flag=True)
 @click.option('-c', '--console', help='Console of the Container', is_flag=True)
-@click.argument('name', required=False)
+@click.argument('name', required=False, metavar='NAME')
 @pass_config
 def container(config, profile, start, stop, console, name):
     """Create/Delete/List containers"""
@@ -1347,6 +1345,34 @@ def container(config, profile, start, stop, console, name):
         volumes = next((e for e in [profile.get('volumes'), profile.get('disks')] if e is not None), None)
         dockerutils.create_container(k, name, image, nets=None, cmd=cmd, ports=ports, volumes=volumes, environment=environment)
         return
+
+
+@cli.command()
+@click.option('-n', '--name', help='Use vm name for creation/revert/delete', metavar='VMNAME')
+@click.option('-r', '--revert', 'revert', help='Revert to indicated snapshot', is_flag=True)
+@click.option('-d', '--delete', 'delete', help='Delete indicated snapshot', is_flag=True)
+@click.option('-l', '--listing', 'listing', help='List snapshots', is_flag=True)
+@click.argument('snapshot')
+@pass_config
+def snapshot(config, name, revert, delete, listing, snapshot):
+    """Create/Delete/Revert snapshot"""
+    k = config.get(config.client)
+    if revert:
+        click.secho("Reverting snapshot of %s named %s..." % (name, snapshot), fg='green')
+    elif delete:
+        click.secho("Deleting snapshot of %s named %s..." % (name, snapshot), fg='green')
+    elif listing:
+        click.secho("Listing snapshots of %s..." % (name), fg='green')
+        k.snapshot(snapshot, name, listing=True)
+        return 0
+    elif snapshot is None:
+        click.secho("Missing snapshot name", fg='red')
+        return 1
+    else:
+        click.secho("Creating snapshot of %s named %s..." % (name, snapshot), fg='green')
+    result = k.snapshot(snapshot, name, revert=revert, delete=delete)
+    code = handle_response(result, name, element='', action='snapshotted')
+    os._exit(code)
 
 
 if __name__ == '__main__':

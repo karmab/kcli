@@ -1,5 +1,11 @@
 # Changelog
 
+## 5.22 (2017-04-04)
+
+- kcli snapshot
+- Cleaner options
+- Removed -l from every section in favor of kcli list
+
 ## 5.21 (2017-03-31)
 
 - Create pools in the plans

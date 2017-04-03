@@ -168,6 +168,12 @@ And download a fedora template:
 kcli host --download -t fedora
 ```
 
+Create snapshot snap of vm:
+
+```Shell
+kcli snapshot -n vm1 snap1
+```
+
 
 Otherwise you will have to declare your settings in ~/kcli.yml. For instance,
 
