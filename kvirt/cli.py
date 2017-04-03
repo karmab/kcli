@@ -16,7 +16,7 @@ import os
 import webbrowser
 import yaml
 
-__version__ = '5.22'
+__version__ = '5.23'
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
@@ -1352,7 +1352,7 @@ def container(config, profile, start, stop, console, name):
 @click.option('-r', '--revert', 'revert', help='Revert to indicated snapshot', is_flag=True)
 @click.option('-d', '--delete', 'delete', help='Delete indicated snapshot', is_flag=True)
 @click.option('-l', '--listing', 'listing', help='List snapshots', is_flag=True)
-@click.argument('snapshot')
+@click.argument('snapshot', required=False)
 @pass_config
 def snapshot(config, name, revert, delete, listing, snapshot):
     """Create/Delete/Revert snapshot"""

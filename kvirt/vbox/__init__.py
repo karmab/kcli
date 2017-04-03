@@ -981,7 +981,6 @@ class Kbox:
                         f.write("  path: %s" % pool['path'])
 
     def bootstrap(self, pool=None, poolpath=None, pooltype='dir', nets={}, image=None):
-        print "Not implemented at the moment"
         poolfile = "%s/.vbox.yml" % os.environ.get('HOME')
         if os.path.exists(poolfile):
             return
@@ -998,7 +997,7 @@ class Kbox:
             vm = conn.find_machine(name)
         except:
             print("VM %s not found" % name)
-            return
+            return 1
         for n in range(7):
             nic = vm.get_network_adapter(n)
             enabled = nic.enabled
@@ -1011,3 +1010,28 @@ class Kbox:
             elif str(nic.attachment_type) == 'Bridged':
                 networks.append(nic.bridged_interface)
         return networks
+
+    def snapshot(self, name, base, revert=False, delete=False, listing=False):
+        conn = self.conn
+        try:
+            vm = conn.find_machine(base)
+        except:
+            print("VM %s not found" % base)
+            return 1
+        if listing:
+            snapshot = vm.current_snapshot
+            parent = snapshot.parent
+            print parent.name
+            if snapshot is not None:
+                print snapshot.name
+                for snap in snapshot.children:
+                    print snap.name
+        elif delete:
+            print "not implemented in virtualbox api"
+            return
+            # vm.delete_snapshot(name)
+        else:
+            print "not implemented in virtualbox api"
+            return
+            # progress = vm.take_snapshot(name, name, True)
+            # progress.wait_for_completion()
