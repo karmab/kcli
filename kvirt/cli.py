@@ -201,8 +201,9 @@ def delete(config, container, name):
         click.secho("Deleted container %s..." % name, fg='red')
         dockerutils.delete_container(k, name)
     else:
-        click.secho("Deleted vm %s..." % name, fg='red')
         code = k.delete(name)
+        if code == 0:
+            click.secho("Deleted vm %s..." % name, fg='red')
         os._exit(code)
 
 

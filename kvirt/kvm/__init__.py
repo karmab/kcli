@@ -728,6 +728,9 @@ class Kvirt:
         except:
             print("vm %s not found" % name)
             return 1
+        if vm.snapshotListNames():
+            print("vm %s has snapshots" % name)
+            return 1
         ip = self.ip(name)
         status = {0: 'down', 1: 'up'}
         vmxml = vm.XMLDesc(0)
