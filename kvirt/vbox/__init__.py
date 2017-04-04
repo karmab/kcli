@@ -510,7 +510,7 @@ class Kbox:
         else:
             return templates
 
-    def delete(self, name):
+    def delete(self, name, force=False):
         conn = self.conn
         try:
             vm = conn.find_machine(name)

@@ -16,7 +16,7 @@ import os
 import webbrowser
 import yaml
 
-__version__ = '5.23'
+__version__ = '5.24'
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
@@ -192,16 +192,17 @@ def console(config, serial, name):
 @cli.command()
 @click.confirmation_option(help='Are you sure?')
 @click.option('--container', is_flag=True)
+@click.option('--force', is_flag=True, help='Remove snapshots if needed')
 @click.argument('name', metavar='VMNAME')
 @pass_config
-def delete(config, container, name):
+def delete(config, container, force, name):
     """Delete vm/container"""
     k = config.get(config.client)
     if container:
         click.secho("Deleted container %s..." % name, fg='red')
         dockerutils.delete_container(k, name)
     else:
-        code = k.delete(name)
+        code = k.delete(name, force=force)
         if code == 0:
             click.secho("Deleted vm %s..." % name, fg='red')
         os._exit(code)

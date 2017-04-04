@@ -768,7 +768,7 @@ class Kvirt:
         else:
             return templates
 
-    def delete(self, name):
+    def delete(self, name, force=False):
         conn = self.conn
         try:
             vm = conn.lookupByName(name)
@@ -776,8 +776,14 @@ class Kvirt:
             print("vm %s not found" % name)
             return 1
         if vm.snapshotListNames():
-            print("vm %s has snapshots" % name)
-            return 1
+            if not force:
+                print("vm %s has snapshots" % name)
+                return 1
+            else:
+                for snapshot in vm.snapshotListNames():
+                    print("Deleting snapshot %s" % snapshot)
+                    snap = vm.snapshotLookupByName(snapshot)
+                    snap.delete()
         ip = self.ip(name)
         status = {0: 'down', 1: 'up'}
         vmxml = vm.XMLDesc(0)

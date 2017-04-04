@@ -1,10 +1,11 @@
 # Changelog
 
-## 5.22 (2017-04-04)
+## 5.24 (2017-04-04)
 
 - kcli snapshot
 - Cleaner options
 - Removed -l from every section in favor of kcli list
+- *--force* option to delete vm when it has existing snapshots
 
 ## 5.21 (2017-03-31)
 
