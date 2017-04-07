@@ -106,13 +106,13 @@ class TABLE(object):
 
 
 @app.route("/")
-@app.route('/index')
+@app.route('/vms')
 def get():
     """
     retrieves all vms
     """
     vms = k.list()
-    return render_template('index.html', title='Home', vms=vms)
+    return render_template('vms.html', title='Home', vms=vms)
 
 
 @app.route("/vmaction", methods=['POST'])
