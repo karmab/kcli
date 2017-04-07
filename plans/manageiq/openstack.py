@@ -4,7 +4,7 @@ import json
 import requests
 
 user = "admin"
-password = "smartvm"
+password = "unix1234"
 openstackuser = "admin"
 openstackpassword = "unix1234"
 openstackhost = "openstack.default"

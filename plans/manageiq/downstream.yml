@@ -5,8 +5,10 @@ cloudforms:
  nets:
   - default
  disks:
-  - size: 45
-  - size: 10
+  - size: 50
  pool: default
  scripts: 
-  - install.sh
+  - downstream.sh
+ files:
+  - path: /root/password.rb
+    origin: password.rb

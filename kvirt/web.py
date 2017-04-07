@@ -2,7 +2,7 @@
 
 # import getpass
 # from mock import patch
-from flask import Flask, render_template
+from flask import Flask, render_template, request, jsonify
 from defaults import NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, START, NESTED, TUNNEL
 # from defaults import TEMPLATES
 from kvm import Kvirt
@@ -113,6 +113,32 @@ def get():
     """
     vms = k.list()
     return render_template('index.html', title='Home', vms=vms)
+
+
+@app.route("/vmaction", methods=['POST'])
+def vmaction():
+    """
+    start/stop/delete vm
+    """
+    if 'name' in request.form:
+        name = request.form['name']
+        action = request.form['action']
+        if action == 'start':
+            result = k.start(name)
+        elif action == 'stop':
+            result = k.stop(name)
+        elif action == 'delete':
+            result = k.delete(name)
+        else:
+            result = "Nothing to do"
+        print result
+        response = jsonify(result)
+        response.status_code = 200
+        return response
+    else:
+        failure = {'result': 'failure', 'reason': "Invalid Data"}
+        response.status_code = 400
+        return jsonify(failure)
 
 if __name__ == '__main__':
     global k

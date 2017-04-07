@@ -27,13 +27,11 @@ class KcliInventory(object):
             with open(inifile, 'r') as entries:
                 ini = yaml.load(entries)
             if 'default' not in ini or 'client' not in ini['default']:
-                print "Missing default section in config file. Leaving..."
                 os._exit(1)
         default = ini['default']
         default_tunnel = default.get('tunnel', False)
         client = default['client']
         if client not in ini:
-            print "Missing section for client %s in config file. Leaving..." % client
             os._exit(1)
         options = ini[client]
         self.host = options.get('host', '127.0.0.1')
@@ -43,7 +41,6 @@ class KcliInventory(object):
         self.tunnel = options.get('tunnel', default_tunnel)
         self.k = Kvirt(host=self.host, port=self.port, user=self.user, protocol=protocol)
         if self.k.conn is None:
-            print "Couldnt connect to specify hypervisor %s. Leaving..." % self.host
             os._exit(1)
 
         # Called with `--list`.

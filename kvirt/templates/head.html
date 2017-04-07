@@ -5,23 +5,30 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Libvirt/VirtualBox wrapper on steroids">
-
+    <!--meta http-equiv="refresh" content="10" /-->
     <title>Kcli</title>
     <link rel="shortcut icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
 
     {% block scripts %}
     <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dataTables.checkboxes.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
     <!--script src="{{ url_for('static', filename='js/patternfly.min.js') }}"></script-->
+    <script src="{{ url_for('static', filename='js/actions.js') }}"></script>
     <script src="{{ url_for('static', filename='js/kcli.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap-notify.js') }}"></script>
+    <!--script src="{{ url_for('static', filename='js/refresh.js') }}"></script-->
     {% endblock %}
 
     {% block stylesheets %}
     <link href="{{ url_for('static', filename='css/jquery.dataTables.min.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/dataTables.checkboxes.css') }}" rel="stylesheet" />
     <!--link href="{{ url_for('static', filename='css/patternfly.min.css') }}" rel="stylesheet"-->
-    <link href="{{ url_for('static', filename='css/navbar.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/kcli.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/navbar.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/wheel.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/bootstrap-notify.css') }}" rel="stylesheet">
     {% endblock %}
 </head>

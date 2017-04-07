@@ -4,7 +4,7 @@ import json
 import requests
 
 user = "admin"
-password = "smartvm"
+password = "unix1234"
 rhevuser = "admin@internal"
 rhevpassword = "unix1234"
 rhevhost = "engine.default"

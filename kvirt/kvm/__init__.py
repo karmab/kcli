@@ -761,7 +761,7 @@ class Kvirt:
             for volume in storage.listVolumes():
                 if volume.endswith('iso'):
                     isos.append("%s/%s" % (storagepath, volume))
-                elif volume.endswith('qcow2') or volume in default_templates:
+                elif volume.endswith('qcow2') or volume.endswith('qc2') or volume in default_templates:
                     templates.append("%s/%s" % (storagepath, volume))
         if iso:
             return isos
