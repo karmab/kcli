@@ -4,7 +4,7 @@
 ansible dynamic inventory script for use with kcli and libvirt
 '''
 
-from kvirt.kvm import Kvirt
+from kvirt import Kvirt
 import json
 import yaml
 import os
