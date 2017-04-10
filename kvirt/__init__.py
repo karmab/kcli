@@ -409,7 +409,7 @@ class Kvirt:
             used = float(used)
             available = float(available)
             print("Storage:%s Type:%s Path:%s Used space:%sGB Available space:%sGB" % (poolname, pooltype, poolpath, used, available))
-        print
+        print("\n")
         for interface in conn.listAllInterfaces():
             interfacename = interface.name()
             if interfacename == 'lo':
@@ -1216,7 +1216,7 @@ class Kvirt:
                     %s
                     <model type='virtio'/>
                     </interface>""" % (networktype, mac, source)
-        print nicxml
+        print(nicxml)
         vm.detachDevice(nicxml)
         vm = conn.lookupByName(name)
         vmxml = vm.XMLDesc(0)

@@ -23,16 +23,16 @@ class KcliInventory(object):
         inifile = "%s/kcli.yml" % os.environ.get('HOME')
         if not os.path.exists(inifile):
             ini = {'default': {'client': 'local'}, 'local': {}}
-            print "Using local hypervisor as no kcli.yml was found..."
+            print("Using local hypervisor as no kcli.yml was found...")
         else:
             with open(inifile, 'r') as entries:
                 ini = yaml.load(entries)
             if 'default' not in ini or 'client' not in ini['default']:
-                print "Missing default section in config file. Leaving..."
+                print("Missing default section in config file. Leaving...")
                 os._exit(1)
         client = ini['default']['client']
         if client not in ini:
-            print "Missing section for client %s in config file. Leaving..." % client
+            print("Missing section for client %s in config file. Leaving..." % client)
             os._exit(1)
         options = ini[client]
         host = options.get('host', '127.0.0.1')
@@ -41,7 +41,7 @@ class KcliInventory(object):
         protocol = options.get('protocol', 'ssh')
         self.k = Kvirt(host=host, port=port, user=user, protocol=protocol)
         if self.k.conn is None:
-            print "Couldnt connect to specify hypervisor %s. Leaving..." % host
+            print("Couldnt connect to specify hypervisor %s. Leaving..." % host)
             os._exit(1)
 
         # Called with `--list`.
@@ -54,7 +54,7 @@ class KcliInventory(object):
         # If no groups or vars are present, return an empty inventory.
         else:
             self.inventory = empty()
-        print json.dumps(self.inventory)
+        print(json.dumps(self.inventory))
 
     # Read the command line args passed to the script.
     def read_cli_args(self):

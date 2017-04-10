@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#t!/usr/bin/env python
 
 import click
 import fileinput
@@ -212,7 +212,7 @@ def list(config, clients, profiles, templates, isos, disks, pools, networks, con
             dhcp = networks[network]['dhcp']
             mode = networks[network]['mode']
             networkstable.add_row([network, networktype, cidr, dhcp, mode])
-        print networkstable
+        print(networkstable)
         return
     if clients:
         clientstable = PrettyTable(["Name", "Current"])
@@ -242,7 +242,7 @@ def list(config, clients, profiles, templates, isos, disks, pools, networks, con
             path = disks[disk]['path']
             pool = disks[disk]['pool']
             diskstable.add_row([disk, pool, path])
-        print diskstable
+        print(diskstable)
     elif containers:
         click.secho("Listing containers...", fg='green')
         containers = PrettyTable(["Name", "Status", "Image", "Plan", "Command", "Ports"])
@@ -253,7 +253,7 @@ def list(config, clients, profiles, templates, isos, disks, pools, networks, con
                     containers.add_row(container)
             else:
                 containers.add_row(container)
-        print containers
+        print(containers)
     else:
         vms = PrettyTable(["Name", "Status", "Ips", "Source", "Description/Plan", "Profile"])
         for vm in sorted(k.list()):
@@ -598,7 +598,7 @@ def plan(config, autostart, container, noautostart, inputfile, start, stop, dele
             cidr = profile.get('cidr')
             nat = bool(profile.get('nat', True))
             if cidr is None:
-                print "Missing Cidr for network %s. Not creating it..." % net
+                print("Missing Cidr for network %s. Not creating it..." % net)
                 continue
             dhcp = profile.get('dhcp', True)
             result = k.create_network(name=net, cidr=cidr, dhcp=dhcp, nat=nat)
@@ -669,10 +669,10 @@ def plan(config, autostart, container, noautostart, inputfile, start, stop, dele
             template = profile.get('template')
             size = int(profile.get('size', 10))
             if pool is None:
-                print "Missing Key Pool for disk section %s. Not creating it..." % disk
+                print("Missing Key Pool for disk section %s. Not creating it..." % disk)
                 continue
             if vms is None:
-                print "Missing or Incorrect Key Vms for disk section %s. Not creating it..." % disk
+                print("Missing or Incorrect Key Vms for disk section %s. Not creating it..." % disk)
                 continue
             if k.disk_exists(pool, disk):
                 click.secho("Disk %s skipped!" % disk, fg='blue')
