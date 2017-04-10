@@ -20,7 +20,6 @@ setup(
     install_requires=[
         'libvirt-python>=2.2.0',
         'docker',
-        'Click',
         'iptools',
         'netaddr',
         'PyYAML',

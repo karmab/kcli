@@ -8,6 +8,7 @@ from kvirt import defaults
 from iptools import IpRange
 # from jinja2 import Environment
 from kvirt import common
+from kvirt.base import Kbase
 from netaddr import IPAddress, IPNetwork
 from libvirt import open as libvirtopen, registerErrorHandler
 import os
@@ -40,7 +41,7 @@ def libvirt_callback(ignore, err):
 registerErrorHandler(f=libvirt_callback, ctx=None)
 
 
-class Kvirt:
+class Kvirt(Kbase):
     def __init__(self, host='127.0.0.1', port=None, user='root', protocol='ssh', url=None, debug=False):
         if url is None:
             if host == '127.0.0.1' or host == 'localhost':
@@ -95,7 +96,7 @@ class Kvirt:
         except:
             return False
 
-    def create(self, name, virttype='kvm', title='', description='kvirt', cpumodel='Westmere', cpuflags=[], numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[]):
+    def create(self, name, virttype='kvm', profile='', plan='kvirt', cpumodel='Westmere', cpuflags=[], numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[]):
         default_diskinterface = diskinterface
         default_diskthin = diskthin
         default_disksize = disksize
@@ -105,6 +106,12 @@ class Kvirt:
             default_storagepool = conn.storagePoolLookupByName(default_pool)
         except:
             return {'result': 'failure', 'reason': "Pool %s not found" % default_pool}
+        metadata = """<metadata>
+        <kvirt:info xmlns:kvirt="kvirt">
+        <kvirt:profile>%s</kvirt:profile>""" % profile
+        if template:
+            metadata = """%s
+                        <kvirt:template>%s</kvirt:template>""" % (metadata, template)
         default_poolxml = default_storagepool.XMLDesc(0)
         root = ET.fromstring(default_poolxml)
         default_pooltype = root.getiterator('pool')[0].get('type')
@@ -132,7 +139,7 @@ class Kvirt:
             if net != 'lo':
                 bridges.append(net)
         machine = 'pc'
-        sysinfo = "<smbios mode='sysinfo'/>"
+        # sysinfo = "<smbios mode='sysinfo'/>"
         disksxml = ''
         volsxml = {}
         for index, disk in enumerate(disks):
@@ -222,7 +229,6 @@ class Kvirt:
                     %s
                     </disk>""" % (disksxml, diskformat, diskpath, backingxml, diskdev, diskbus, diskwwn)
         netxml = ''
-        version = ''
         for index, net in enumerate(nets):
             macxml = ''
             if isinstance(net, str):
@@ -239,7 +245,7 @@ class Kvirt:
                     mac = nets[index]['mac']
                     macxml = "<mac address='%s'/>" % mac
                 if index == 0 and ip is not None:
-                    version = "<entry name='version'>%s</entry>" % ip
+                    metadata = """%s<kvirt:ip >%s</kvirt:ip>""" % (metadata, ip)
             if netname in bridges:
                 sourcenet = 'bridge'
             elif netname in networks:
@@ -252,12 +258,10 @@ class Kvirt:
                      <source %s='%s'/>
                      <model type='virtio'/>
                      </interface>""" % (netxml, sourcenet, macxml, sourcenet, netname)
-        version = """<sysinfo type='smbios'>
-                     <system>
-                     %s
-                     <entry name='product'>%s</entry>
-                     </system>
-                     </sysinfo>""" % (version, title)
+        metadata = """%s
+                    <kvirt:plan>%s</kvirt:plan>
+                    </kvirt:info>
+                    </metadata>""" % (metadata, plan)
         if iso is None:
             if cloudinit:
                 iso = "%s/%s.iso" % (default_poolpath, name)
@@ -335,7 +339,6 @@ class Kvirt:
                      </serial>""" % common.get_free_port()
         vmxml = """<domain type='%s'>
                   <name>%s</name>
-                  <description>%s</description>
                   %s
                   <memory unit='MiB'>%d</memory>
                   <vcpu>%d</vcpu>
@@ -344,7 +347,6 @@ class Kvirt:
                     <boot dev='hd'/>
                     <boot dev='cdrom'/>
                     <bootmenu enable='yes'/>
-                    %s
                   </os>
                   <features>
                     <acpi/>
@@ -363,7 +365,7 @@ class Kvirt:
                     %s
                   </devices>
                     %s
-                    </domain>""" % (virttype, name, description, version, memory, numcpus, machine, sysinfo, disksxml, netxml, isoxml, displayxml, serialxml, cpuxml)
+                    </domain>""" % (virttype, name, metadata, memory, numcpus, machine, disksxml, netxml, isoxml, displayxml, serialxml, cpuxml)
         # for pool in volsxml:
         #     storagepool = conn.storagePoolLookupByName(pool)
         #     storagepool.refresh(0)
@@ -450,15 +452,19 @@ class Kvirt:
             snap = vm.snapshotLookupByName(name)
             vm.revertToSnapshot(snap)
             return {'result': 'success'}
+        if vm.isActive() == 0:
+            memoryxml = ''
+        else:
+            memoryxml = "<memory snapshot='internal'/>"
         snapxml = """<domainsnapshot>
           <name>%s</name>
-          <memory snapshot='internal'/>
+          %s
           <disks>
             <disk name='vda' snapshot='internal'/>
             <disk name='hdc' snapshot='no'/>
           </disks>
           %s
-          </domainsnapshot>""" % (name, vmxml)
+          </domainsnapshot>""" % (name, memoryxml, vmxml)
         vm.snapshotCreateXML(snapxml)
         return {'result': 'success'}
 
@@ -545,17 +551,12 @@ class Kvirt:
                 leases[mac] = ip
         status = {0: 'down', 1: 'up'}
         for vm in conn.listAllDomains(0):
+            template, plan, profile = '', '', ''
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
-            description = root.getiterator('description')
-            if description:
-                description = description[0].text
-            else:
-                description = ''
             name = vm.name()
             state = status[vm.isActive()]
             ips = []
-            title = ''
             for element in root.getiterator('interface'):
                 mac = element.find('mac').get('address')
                 if vm.isActive():
@@ -565,19 +566,18 @@ class Kvirt:
                     ip = ips[-1]
                 else:
                     ip = ''
-            for entry in root.getiterator('entry'):
-                attributes = entry.attrib
-                if attributes['name'] == 'version':
-                    ip = entry.text
-                if attributes['name'] == 'product':
-                    title = entry.text
-            source = ''
-            for element in root.getiterator('backingStore'):
-                s = element.find('source')
-                if s is not None:
-                    source = os.path.basename(s.get('file'))
-                    break
-            vms.append([name, state, ip, source, description, title])
+            plan, profile, template = '', '', ''
+            for element in root.getiterator('{kvirt}info'):
+                e = element.find('{kvirt}plan')
+                if e is not None:
+                    plan = e.text
+                e = element.find('{kvirt}profile')
+                if e is not None:
+                    profile = e.text
+                e = element.find('{kvirt}template')
+                if e is not None:
+                    template = e.text
+            vms.append([name, state, ip, template, plan, profile])
         return vms
 
     def console(self, name, tunnel=False):
@@ -773,7 +773,7 @@ class Kvirt:
         try:
             vm = conn.lookupByName(name)
         except:
-            print("vm %s not found" % name)
+            common.pprint("vm %s not found" % name, color='red')
             return 1
         if vm.snapshotListNames():
             if not force:
@@ -1104,6 +1104,45 @@ class Kvirt:
         newxml = ET.tostring(root)
         conn.defineXML(newxml)
 
+    def update_metadata(self, name, metatype, metavalue):
+        ET.register_namespace('kvirt', 'kvirt')
+        conn = self.conn
+        vm = conn.lookupByName(name)
+        xml = vm.XMLDesc(0)
+        root = ET.fromstring(xml)
+        if not vm:
+            print("VM %s not found" % name)
+        if vm.isActive() == 1:
+            print("Machine up. Change will only appear upon next reboot")
+        metadata = root.find('metadata')
+        kroot, kmeta = None, None
+        for element in root.getiterator('{kvirt}info'):
+            kroot = element
+            break
+        for element in root.getiterator('{kvirt}%s' % metatype):
+            kmeta = element
+            break
+        if metadata is None:
+            metadata = ET.Element("metadata")
+            kroot = ET.Element("kvirt:info")
+            kroot.set("xmlns:kvirt", "kvirt")
+            kmeta = ET.Element("kvirt:%s" % metatype)
+            root.append(metadata)
+            metadata.append(kroot)
+            kroot.append(kmeta)
+        elif kroot is None:
+            kroot = ET.Element("kvirt:info")
+            kroot.set("xmlns:kvirt", "kvirt")
+            kmeta = ET.Element("kvirt:%s" % metatype)
+            metadata.append(kroot)
+            kroot.append(kmeta)
+        elif kmeta is None:
+            kmeta = ET.Element("kvirt:%s" % metatype)
+            kroot.append(kmeta)
+        kmeta.text = metavalue
+        newxml = ET.tostring(root)
+        conn.defineXML(newxml)
+
     def update_memory(self, name, memory):
         conn = self.conn
         memory = str(int(memory) * 1024)
@@ -1377,7 +1416,7 @@ class Kvirt:
                     %s
                     <model type='virtio'/>
                     </interface>""" % (networktype, mac, source)
-        print nicxml
+        print(nicxml)
         vm.detachDevice(nicxml)
         vm = conn.lookupByName(name)
         vmxml = vm.XMLDesc(0)

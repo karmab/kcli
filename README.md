@@ -622,7 +622,6 @@ Basic testing can be run with pytest. If using a remote hypervisor, you ll want 
 - Scaling Plan
 - Plan View (Vagrant Style)
 - Random hypervisor vm creation
-- Switch from click to basic optparse (so i can have python3 support and tox)
 - Remove all the print for the kvirt module and only return data
 - Change the try, except blocks for object checks with parsing of the list methods that libvirt provides for most object
 - Add basic validation of IPS, netmasks, macs,...  within plan file

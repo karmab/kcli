@@ -4,9 +4,10 @@
 ansible dynamic inventory script for use with kcli and libvirt
 '''
 
+from kvirt.config import Kconfig
 from kvirt.kvm import Kvirt
+from kvirt.vbox import Kbox
 import json
-import yaml
 import os
 import argparse
 
@@ -20,26 +21,17 @@ class KcliInventory(object):
     def __init__(self):
         self.inventory = {}
         self.read_cli_args()
-        inifile = "%s/kcli.yml" % os.environ.get('HOME')
-        if not os.path.exists(inifile):
-            ini = {'default': {'client': 'local'}, 'local': {}}
+        config = Kconfig()
+        self.host = config.host
+        self.port = config.port
+        self.user = config.user
+        protocol = config.protocol
+        self.tunnel = config.tunnel
+        self.type = config.type
+        if self.type == 'vbox':
+            self.k = Kbox()
         else:
-            with open(inifile, 'r') as entries:
-                ini = yaml.load(entries)
-            if 'default' not in ini or 'client' not in ini['default']:
-                os._exit(1)
-        default = ini['default']
-        default_tunnel = default.get('tunnel', False)
-        client = default['client']
-        if client not in ini:
-            os._exit(1)
-        options = ini[client]
-        self.host = options.get('host', '127.0.0.1')
-        self.port = options.get('port', 22)
-        self.user = options.get('user', 'root')
-        protocol = options.get('protocol', 'ssh')
-        self.tunnel = options.get('tunnel', default_tunnel)
-        self.k = Kvirt(host=self.host, port=self.port, user=self.user, protocol=protocol)
+            self.k = Kvirt(host=self.host, port=self.port, user=self.user, protocol=protocol)
         if self.k.conn is None:
             os._exit(1)
 
@@ -82,10 +74,14 @@ class KcliInventory(object):
             else:
                 metadata[description]["hosts"].append(name)
             hostvalues[name] = {'status': status}
-            if tunnel:
+            if tunnel and self.type == 'kvm':
                 hostvalues[name]['ansible_ssh_common_args'] = "-o ProxyCommand='ssh -p %s -W %%h:%%p %s@%s'" % (self.port, self.user, self.host)
             if ip != '':
-                hostvalues[name]['ansible_host'] = ip
+                if self.type == 'vbox':
+                    hostvalues[name]['ansible_host'] = '127.0.0.1'
+                    hostvalues[name]['ansible_port'] = ip
+                else:
+                    hostvalues[name]['ansible_host'] = ip
             if template != '':
                 if 'centos' in template.lower():
                     hostvalues[name]['ansible_user'] = 'centos'

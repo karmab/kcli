@@ -8,6 +8,7 @@ import os
 import time
 from virtualbox import VirtualBox, library, Session
 from kvirt import common
+from kvirt.base import Kbase
 import string
 import yaml
 
@@ -31,7 +32,7 @@ guestwindows200864 = "Windows2008_64"
 status = {'PoweredOff': 'down', 'PoweredOn': 'up', 'FirstOnline': 'up', 'Aborted': 'down', 'Saved': 'down'}
 
 
-class Kbox:
+class Kbox(Kbase):
     def __init__(self):
         try:
             self.conn = VirtualBox()
@@ -85,7 +86,7 @@ class Kbox:
         else:
             return True
 
-    def create(self, name, virttype='vbox', title='', description='kvirt', cpumodel='', cpuflags=[], numcpus=2, memory=512, guestid='Linux_64', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[]):
+    def create(self, name, virttype='vbox', profile='', plan='kvirt', cpumodel='', cpuflags=[], numcpus=2, memory=512, guestid='Linux_64', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[]):
         guestid = 'Linux_64'
         default_diskinterface = diskinterface
         default_diskthin = diskthin
@@ -98,8 +99,8 @@ class Kbox:
         vm.add_storage_controller('SATA', library.StorageBus(2))
         vm.add_storage_controller('IDE', library.StorageBus(1))
         vm.memory_size = memory
-        vm.description = description
-        vm.set_extra_data('profile', title)
+        vm.description = plan
+        vm.set_extra_data('profile', profile)
         serial = vm.get_serial_port(0)
         serial.server = True
         serial.enabled = True
@@ -1012,26 +1013,27 @@ class Kbox:
         return networks
 
     def snapshot(self, name, base, revert=False, delete=False, listing=False):
-        conn = self.conn
-        try:
-            vm = conn.find_machine(base)
-        except:
-            print("VM %s not found" % base)
-            return 1
-        if listing:
-            snapshot = vm.current_snapshot
-            parent = snapshot.parent
-            print parent.name
-            if snapshot is not None:
-                print snapshot.name
-                for snap in snapshot.children:
-                    print snap.name
-        elif delete:
-            print "not implemented in virtualbox api"
-            return
-            # vm.delete_snapshot(name)
-        else:
-            print "not implemented in virtualbox api"
-            return
-            # progress = vm.take_snapshot(name, name, True)
-            # progress.wait_for_completion()
+        super(Kbox, self).snapshot(name, base, revert, delete, listing)
+        # conn = self.conn
+        # try:
+        #    vm = conn.find_machine(base)
+        # except:
+        #    print("VM %s not found" % base)
+        #    return 1
+        # if listing:
+        #    snapshot = vm.current_snapshot
+        #    parent = snapshot.parent
+        #    print parent.name
+        #    if snapshot is not None:
+        #        print snapshot.name
+        #        for snap in snapshot.children:
+        #            print snap.name
+        # elif delete:
+        #    print "not implemented in virtualbox api"
+        #    return
+        #    # vm.delete_snapshot(name)
+        # else:
+        #    print "not implemented in virtualbox api"
+        #    return
+        #    # progress = vm.take_snapshot(name, name, True)
+        #    # progress.wait_for_completion()
