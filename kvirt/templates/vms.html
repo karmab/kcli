@@ -32,10 +32,21 @@
                 {% set logo = 'Ubuntu.png' %}
             {% else %}
                 {% set logo = 'Tux.png' %}
-            {% endif %}
-            <tr>
+                {% endif %}
+            {% if vm[6] == 'OK' %}
+                {% set report = 'glyphicon glyphicon-ok-circle green' %}
+            {% elif vm[6] == 'Running' %}
+                {% set report = 'glyphicon glyphicon-minus-sign blue' %}
+            {% else %}
+                {% set report = 'glyphicon glyphicon-question-sign' %}
+                {% endif %}
+                <tr>
                 <td><img src="{{ url_for('static', filename='images/'+ logo) }}"/></td>
-                <td>{{ vm[0] }}</td>
+                {% if vm[6] == 'OK' or vm[6] == 'Running' %}
+                <td align="left"><a href="{{ url_for('static', filename='reports/'+ vm[0] + '.txt') }}"><span class="{{ report }}" data-toggle="tooltip" title="Consult Report"></span> {{ vm[0] }}</a></td>
+                {% else %}
+                <td align="left"><span class="{{ report }}"></span> {{ vm[0] }}</td>
+                {% endif %}
                 <td>{{ vm[1] }}</td>
                 <td>{{ vm[2] }}</td>
                 <td>{{ vm[3] }}</td>
@@ -47,11 +58,11 @@
                     <span class="caret"></span>
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
-                        <li onclick="vmstart('{{ vm[0] }}');"><span class="glyphicon glyphicon-play" data-toggle="tooltip" title="Start Vm"></span></li>
+                        <li onclick="vmstart('{{ vm[0] }}');"><span class="glyphicon glyphicon-play green" data-toggle="tooltip" title="Start Vm"></span></li>
                         <li class="divider"></li>
                         <li onclick="vmstop('{{ vm[0] }}');"><span class="glyphicon glyphicon-stop" data-toggle="tooltip" title="Stop Vm"></span></li>
                         <li class="divider"></li>
-                        <li onclick="vmdelete('{{ vm[0] }}');"><span class="glyphicon glyphicon-trash" data-toggle="tooltip" title="Delete Vm"></span></li>
+                        <li onclick="vmdelete('{{ vm[0] }}');"><span class="glyphicon glyphicon-trash red" data-toggle="tooltip" title="Delete Vm"></span></li>
                     </ul></div>
                 </td>
             </tr>
@@ -61,21 +72,11 @@
 
 <script>
 $(document).ready(function() {
-$('#vms').dataTable();
-//$('#vms').dataTable({
-//   'columnDefs': [
-//      {
-//         'targets': 0,
-//         'checkboxes': {
-//            'selectRow': true
-//         }
-//      }
-//   ],
-//   'select': {
-//      'style': 'multi'
-//   },
-//   'order': [[1, 'asc']]
+//$('#vms').dataTable();
 //});
+$('#vms').dataTable({
+    "order": [[ 1, "asc" ]]
+});
 });
 </script>
 {% endblock %}

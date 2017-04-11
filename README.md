@@ -599,14 +599,6 @@ myplay:
 
 Note that when leveraging ansible this way, an inventory file will be generated on the fly for you and let in */tmp/$PLAN.inv* 
 
-## Bash Completion
-
-Create a file named kcli-complete.sh with the following content and source it ( in your bash profile for instance ) 
-
-```Shell
-_KCLI_COMPLETE=source kcli
-```
-
 ## Testing
 
 Basic testing can be run with pytest. If using a remote hypervisor, you ll want to set the *KVIRT_HOST* and *KVIRT_USER* environment variables so that it points to your host with the corresponding user.

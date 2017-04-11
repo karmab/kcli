@@ -30,7 +30,16 @@ def get():
     """
     config = Kconfig()
     k = config.k
-    vms = k.list()
+    reportdir = config.reportdir
+    vms = []
+    for vm in k.list():
+        name = vm[0]
+        if os.path.exists('%s/%s.txt' % (reportdir, name)):
+            if os.path.exists('%s/%s.running' % (reportdir, name)):
+                vm[6] = 'Running'
+            else:
+                vm[6] = 'OK'
+        vms.append(vm)
     return render_template('vms.html', title='Home', vms=vms)
 
 
@@ -65,6 +74,30 @@ def vmaction():
         response = jsonify(failure)
         response.status_code = 400
         return jsonify(failure)
+
+
+@app.route("/report", methods=['POST'])
+def report():
+    """
+    updatestatus
+    """
+    config = Kconfig()
+    k = config.k
+    reportdir = config.reportdir
+    if 'name' in request.form and 'report' in request.form and 'status' in request.form:
+        name = request.form['name']
+        status = request.form['status']
+        report = request.form['report']
+    if not k.exists(name):
+        return "KO"
+    k.update_metadata(name, 'report', status)
+    with open("%s/%s.txt" % (reportdir, name), 'w') as f:
+        f.write(report)
+    if status == 'Running' and not os.path.exists("%s/%s.running" % (reportdir, name)):
+        open("%s/%s.running" % (reportdir, name), 'a').close()
+    if status == 'OK' and os.path.exists("%s/%s.running" % (reportdir, name)):
+        os.remove("%s/%s.running" % (reportdir, name))
+    return 'OK'
 
 
 @app.route('/containers')

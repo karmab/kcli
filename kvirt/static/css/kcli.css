@@ -27,3 +27,19 @@ body {
 .table tbody>tr>td.vert-align{
     vertical-align: middle;
 }
+
+.green {
+        color: #5CB85C;
+}
+
+.red {
+        color: #FF0000;
+}
+
+.blue {
+        color: #0000FF;
+}
+
+.left {
+        text-align: left;
+}

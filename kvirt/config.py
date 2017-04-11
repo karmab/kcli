@@ -4,7 +4,7 @@
 Base Kvirt config class
 """
 
-from defaults import NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, RESERVEHOST, START, NESTED, TUNNEL
+from defaults import NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, RESERVEHOST, START, NESTED, TUNNEL, REPORTURL, REPORTDIR, REPORT, REPORTALL
 import ansibleutils
 import dockerutils
 import nameutils
@@ -61,6 +61,10 @@ class Kconfig:
         defaults['nested'] = bool(default.get('nested', NESTED))
         defaults['start'] = bool(default.get('start', START))
         defaults['tunnel'] = default.get('tunnel', TUNNEL)
+        defaults['reporturl'] = default.get('reporturl', REPORTURL)
+        defaults['reportdir'] = default.get('reportdir', REPORTDIR)
+        defaults['report'] = bool(default.get('report', REPORT))
+        defaults['reportall'] = bool(default.get('reportall', REPORTALL))
         self.default = defaults
         self.ini = ini
         profilefile = default.get('profiles', "%s/kcli_profiles.yml" % os.environ.get('HOME'))
@@ -84,6 +88,8 @@ class Kconfig:
         self.protocol = options.get('protocol', 'ssh')
         self.url = options.get('url', None)
         self.tunnel = bool(options.get('tunnel', self.default['tunnel']))
+        self.reporturl = options.get('reporturl', self.default['reportdir'])
+        self.reportdir = options.get('reportdir', self.default['reportdir'])
         self.type = options.get('type', 'kvm')
         if self.type == 'vbox':
             k = Kbox()
@@ -134,6 +140,8 @@ class Kconfig:
         reservehost = profile.get('reservehost', default['reservehost'])
         nested = profile.get('nested', default['nested'])
         start = profile.get('start', default['start'])
+        report = profile.get('report', default['report'])
+        reportall = profile.get('reportall', default['reportall'])
         keys = profile.get('keys', None)
         cmds = profile.get('cmds', None)
         netmasks = profile.get('netmasks')
@@ -158,6 +166,25 @@ class Kconfig:
                     cmds = scriptcmds
                 else:
                     cmds = cmds + scriptcmds
+        if reportall:
+            reportcmd = 'curl -s -X POST -d "name=%s&status=Running&report=`cat /var/log/cloud-init.log`" %s/report >/dev/null' % (name, self.reporturl)
+            finishcmd = 'curl -s -X POST -d "name=%s&status=OK&report=`cat /var/log/cloud-init.log`" %s/report >/dev/null' % (name, self.reporturl)
+            if cmds is None:
+                cmds = [finishcmd]
+            else:
+                results = []
+                for cmd in cmds[:-1]:
+                    results.append(cmd)
+                    results.append(reportcmd)
+                results.append(cmds[-1])
+                results.append(finishcmd)
+                cmds = results
+        elif report:
+            reportcmd = ['curl -s -X POST -d "name=%s&status=OK&report=`cat /var/log/cloud-init.log`" %s/report /dev/null' % (name, self.reporturl)]
+            if cmds is None:
+                cmds = reportcmd
+            else:
+                cmds = cmds + reportcmd
         ips = [ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8]
         result = k.create(name=name, plan=plan, profile=profilename, cpumodel=cpumodel, cpuflags=cpuflags, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns), reservehost=bool(reservehost), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=bool(nested), tunnel=tunnel, files=files)
         common.handle_response(result, name)
@@ -197,7 +224,7 @@ class Kconfig:
                     f.write("[ssh_connection]\nretries=10\n")
                 print("Running: %s -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
                 os.system("%s -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
-            return 0
+        return 0
 
     def list_plans(self):
         k = self.k
@@ -451,6 +478,7 @@ class Kconfig:
                     reserveip = next((e for e in [profile.get('reserveip'), customprofile.get('reserveip'), default['reserveip']] if e is not None))
                     reservedns = next((e for e in [profile.get('reservedns'), customprofile.get('reservedns'), default['reservedns']] if e is not None))
                     reservehost = next((e for e in [profile.get('reservehost'), customprofile.get('reservehost'), default['reservehost']] if e is not None))
+                    report = next((e for e in [profile.get('report'), customprofile.get('report'), default['report']] if e is not None))
                     nested = next((e for e in [profile.get('nested'), customprofile.get('nested'), default['nested']] if e is not None))
                     start = next((e for e in [profile.get('start'), customprofile.get('start'), default['start']] if e is not None))
                     nets = next((e for e in [profile.get('nets'), customprofile.get('nets'), default['nets']] if e is not None))
@@ -483,6 +511,12 @@ class Kconfig:
                                 cmds = cmds + scriptcmds
                     if missingscript:
                         continue
+                    if report:
+                        reportcmd = ['curl -X POST -d "name=%s&status=OK&report=`cat /var/log/cloud-init.log`" %s/report' % (name, self.reporturl)]
+                        if cmds is None:
+                            cmds = reportcmd
+                        else:
+                            cmds = cmds + reportcmd
                     files = next((e for e in [profile.get('files'), customprofile.get('files')] if e is not None), [])
                     if sharedkey:
                         if not os.path.exists("%s.key" % plan) or not os.path.exists("%s.key.pub" % plan):

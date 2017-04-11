@@ -261,7 +261,7 @@ def list(args):
         print(plans)
     else:
         if config.client == 'all':
-            vms = PrettyTable(["Name", "Hypervisor", "Status", "Ips", "Source", "Description/Plan", "Profile"])
+            vms = PrettyTable(["Name", "Hypervisor", "Status", "Ips", "Source", "Description/Plan", "Profile", "Report"])
             for client in sorted(clis):
                 k = config.get(client)
                 for vm in sorted(k.list()):
@@ -275,7 +275,7 @@ def list(args):
             print(vms)
             return
         else:
-            vms = PrettyTable(["Name", "Status", "Ips", "Source", "Description/Plan", "Profile"])
+            vms = PrettyTable(["Name", "Status", "Ips", "Source", "Description/Plan", "Profile", "Report"])
             for vm in sorted(k.list()):
                 if filters:
                     status = vm[1]
@@ -336,7 +336,6 @@ def update(args):
     k = config.k
     if ip1 is not None:
         common.pprint("Updating ip of vm %s to %s..." % (name, ip1), color='green')
-        # k.update_ip(name, ip1)
         k.update_metadata(name, 'ip', ip1)
     elif plan is not None:
         common.pprint("Updating plan of vm %s to %s..." % (name, plan), color='green')

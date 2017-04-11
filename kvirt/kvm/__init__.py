@@ -566,7 +566,7 @@ class Kvirt(Kbase):
                     ip = ips[-1]
                 else:
                     ip = ''
-            plan, profile, template = '', '', ''
+            plan, profile, template, report = '', '', '', ''
             for element in root.getiterator('{kvirt}info'):
                 e = element.find('{kvirt}plan')
                 if e is not None:
@@ -577,7 +577,10 @@ class Kvirt(Kbase):
                 e = element.find('{kvirt}template')
                 if e is not None:
                     template = e.text
-            vms.append([name, state, ip, template, plan, profile])
+                e = element.find('{kvirt}report')
+                if e is not None:
+                    report = e.text
+            vms.append([name, state, ip, template, plan, profile, report])
         return vms
 
     def console(self, name, tunnel=False):
