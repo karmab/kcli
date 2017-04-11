@@ -70,9 +70,9 @@ function vmcreate(profile){
         success: function(data) {
             $("#wheel").hide();
             if (data == '0') {
-                $('.top-right').notify({message: { text: "Vm "+vm+" Created!!!" }, type: 'success'}).show();
+                $('.top-right').notify({message: { text: "Vm "+name+" Created!!!" }, type: 'success'}).show();
             } else {
-                $('.top-right').notify({message: { text: "VM "+vm+" Failed to Create" }, type: 'danger'}).show();
+                $('.top-right').notify({message: { text: "VM "+name+" Failed to Create" }, type: 'danger'}).show();
             };
         }
     });

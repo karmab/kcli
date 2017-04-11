@@ -4,38 +4,15 @@ from config import Kconfig
 from defaults import TEMPLATES
 from prettytable import PrettyTable
 from shutil import copyfile
-from time import sleep
-import ansibleutils
 import argparse
 import common
 import dockerutils
 import fileinput
-import nameutils
 import os
-import webbrowser
 import yaml
 from kvirt.kvm import Kvirt
 
 __version__ = '5.24'
-
-
-def handle_response(result, name, element='', action='deployed'):
-    if result['result'] == 'success':
-        common.pprint("%s%s %s!" % (element, name, action), color='green')
-        return 0
-    else:
-        reason = result['reason']
-        common.pprint("%s%s not %s because %s" % (element, name, action, reason), color='red')
-        return 1
-
-
-def confirm(message):
-    message = "%s [y/N]: " % message
-    input = raw_input(message)
-    if input.lower() != 'y':
-        common.pprint("Leaving...", color='red')
-        os._exit(1)
-    return
 
 
 def start(args):
@@ -50,7 +27,7 @@ def start(args):
     else:
         common.pprint("Started vm %s..." % name, color='green')
         result = k.start(name)
-        code = handle_response(result, name, element='', action='started')
+        code = common.handle_response(result, name, element='', action='started')
         os._exit(code)
 
 
@@ -66,7 +43,7 @@ def stop(args):
     else:
         common.pprint("Stopped vm %s..." % name, color='green')
         result = k.stop(name)
-        code = handle_response(result, name, element='', action='stopped')
+        code = common.handle_response(result, name, element='', action='stopped')
         os._exit(code)
 
 
@@ -92,7 +69,7 @@ def delete(args):
     global config
     k = config.k
     if not yes:
-        confirm("Are you sure?")
+        common.confirm("Are you sure?")
     if container:
         common.pprint("Deleted container %s..." % name, color='red')
         dockerutils.delete_container(k, name)
@@ -170,7 +147,7 @@ def host(args):
         template = TEMPLATES[template]
         shortname = os.path.basename(template)
         result = k.add_image(template, pool)
-        code = handle_response(result, shortname, element='Template ', action='Added')
+        code = common.handle_response(result, shortname, element='Template ', action='Added')
         os._exit(code)
 
 
@@ -277,16 +254,10 @@ def list(args):
     elif plans:
         vms = {}
         plans = PrettyTable(["Name", "Vms"])
-        for vm in sorted(k.list(), key=lambda x: x[4]):
-                vmname = vm[0]
-                plan = vm[4]
-                if plan in vms:
-                    vms[plan].append(vmname)
-                else:
-                    vms[plan] = [vmname]
-        for plan in sorted(vms):
-            planvms = ','.join(vms[plan])
-            plans.add_row([plan, planvms])
+        for plan in config.list_plans():
+            planname = plan[0]
+            planvms = plan[1]
+            plans.add_row([planname, planvms])
         print(plans)
     else:
         if config.client == 'all':
@@ -329,107 +300,11 @@ def vm(args):
     ip7 = args.ip7
     ip8 = args.ip8
     global config
-    # k = config.k
-    # tunnel = config.tunnel
     if profile is None:
         common.pprint("Missing profile", color='red')
         os._exit(1)
-    # default = config.default
-    config.create_vm(name, profile, ip1=ip1, ip2=ip2, ip3=ip3, ip4=ip4, ip5=ip5, ip6=ip6, ip7=ip7, ip8=ip8)
-#    vmprofiles = {k: v for k, v in config.profiles.iteritems() if 'type' not in v or v['type'] == 'vm'}
-#    common.pprint("Deploying vm %s from profile %s..." % (name, profile), color='green')
-#    if profile not in vmprofiles:
-#        common.pprint("profile %s not found. Trying to use the profile as template and default values..." % profile, color='blue')
-#        result = k.create(name=name, memory=1024, template=profile)
-#        code = handle_response(result, name)
-#        os._exit(code)
-#        return
-#    profilename = profile
-#    profile = vmprofiles[profile]
-#    template = profile.get('template')
-#    plan = 'kvirt'
-#    nets = profile.get('nets', default['nets'])
-#    cpumodel = profile.get('cpumodel', default['cpumodel'])
-#    cpuflags = profile.get('cpuflags', [])
-#    numcpus = profile.get('numcpus', default['numcpus'])
-#    memory = profile.get('memory', default['memory'])
-#    pool = profile.get('pool', default['pool'])
-#    disks = profile.get('disks', default['disks'])
-#    disksize = profile.get('disksize', default['disksize'])
-#    diskinterface = profile.get('diskinterface', default['diskinterface'])
-#    diskthin = profile.get('diskthin', default['diskthin'])
-#    guestid = profile.get('guestid', default['guestid'])
-#    iso = profile.get('iso')
-#    vnc = profile.get('vnc', default['vnc'])
-#    cloudinit = profile.get('cloudinit', default['cloudinit'])
-#    reserveip = profile.get('reserveip', default['reserveip'])
-#    reservedns = profile.get('reservedns', default['reservedns'])
-#    reservehost = profile.get('reservehost', default['reservehost'])
-#    nested = profile.get('nested', default['nested'])
-#    start = profile.get('start', default['start'])
-#    keys = profile.get('keys', None)
-#    cmds = profile.get('cmds', None)
-#    netmasks = profile.get('netmasks')
-#    gateway = profile.get('gateway')
-#    dns = profile.get('dns')
-#    domain = profile.get('domain')
-#    scripts = profile.get('scripts')
-#    files = profile.get('files', [])
-#    if scripts is not None:
-#        scriptcmds = []
-#        for script in scripts:
-#            script = os.path.expanduser(script)
-#            if not os.path.exists(script):
-#                common.pprint("Script %s not found.Ignoring..." % script, color='red')
-#                os._exit(1)
-#            else:
-#                scriptlines = [line.strip() for line in open(script).readlines() if line != '\n']
-#                if scriptlines:
-#                    scriptcmds.extend(scriptlines)
-#        if scriptcmds:
-#            if cmds is None:
-#                cmds = scriptcmds
-#            else:
-#                cmds = cmds + scriptcmds
-#    ips = [ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8]
-#    result = k.create(name=name, plan=plan, profile=profilename, cpumodel=cpumodel, cpuflags=cpuflags, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns), reservehost=bool(reservehost), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=bool(nested), tunnel=tunnel, files=files)
-#    handle_response(result, name)
-#    if result['result'] != 'success':
-#        return
-#    ansible = profile.get('ansible')
-#    if ansible is not None:
-#        for element in ansible:
-#            if 'playbook' not in element:
-#                continue
-#            playbook = element['playbook']
-#            if 'variables' in element:
-#                variables = element['variables']
-#            if 'verbose' in element:
-#                verbose = element['verbose']
-#            else:
-#                verbose = False
-#            # k.play(name, playbook=playbook, variables=variables, verbose=verbose)
-#            with open("/tmp/%s.inv" % name, "w") as f:
-#                inventory = ansibleutils.inventory(k, name)
-#                if inventory is not None:
-#                    if variables is not None:
-#                        for variable in variables:
-#                            if not isinstance(variable, dict) or len(variable.keys()) != 1:
-#                                continue
-#                            else:
-#                                key, value = variable.keys()[0], variable[variable.keys()[0]]
-#                                inventory = "%s %s=%s" % (inventory, key, value)
-#                if config.tunnel:
-#                    inventory = "%s ansible_ssh_common_args='-o ProxyCommand=\"ssh -p %s -W %%h:%%p %s@%s\"'\n" % (inventory, config.port, config.user, config.host)
-#                f.write("%s\n" % inventory)
-#            ansiblecommand = "ansible-playbook"
-#            if verbose:
-#                ansiblecommand = "%s -vvv" % ansiblecommand
-#            ansibleconfig = os.path.expanduser('~/.ansible.cfg')
-#            with open(ansibleconfig, "w") as f:
-#                f.write("[ssh_connection]\nretries=10\n")
-#            print("Running: %s -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
-#            os.system("%s -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
+    code = config.create_vm(name, profile, ip1=ip1, ip2=ip2, ip3=ip3, ip4=ip4, ip5=ip5, ip6=ip6, ip7=ip7, ip8=ip8)
+    os._exit(code)
 
 
 def clone(args):
@@ -579,379 +454,7 @@ def plan(args):
     delete = args.delete
     delay = args.delay
     global config
-    k = config.k
-    newvms = []
-    vmprofiles = {key: value for key, value in config.profiles.iteritems() if 'type' not in value or value['type'] == 'vm'}
-    containerprofiles = {key: value for key, value in config.profiles.iteritems() if 'type' in value and value['type'] == 'container'}
-    tunnel = config.tunnel
-    if plan is None:
-        plan = nameutils.get_random_name()
-    if delete:
-        networks = []
-        if plan == '':
-            common.pprint("That would delete every vm...Not doing that", color='red')
-            os._exit(1)
-        confirm('Are you sure about deleting plan %s' % plan)
-        found = False
-        for vm in sorted(k.list()):
-            name = vm[0]
-            description = vm[4]
-            if description == plan:
-                vmnetworks = k.vm_ports(name)
-                for network in vmnetworks:
-                    if network != 'default' and network not in networks:
-                        networks.append(network)
-                k.delete(name)
-                common.pprint("VM %s deleted!" % name, color='green')
-                found = True
-        if container:
-            for cont in sorted(dockerutils.list_containers(k)):
-                name = cont[0]
-                container_plan = cont[3]
-                if container_plan == plan:
-                    dockerutils.delete_container(k, name)
-                    common.pprint("Container %s deleted!" % name, color='green')
-                    found = True
-        for network in networks:
-            k.delete_network(network)
-            common.pprint("Unused network %s deleted!" % network, color='green')
-            found = True
-        if found:
-            common.pprint("Plan %s deleted!" % plan, color='green')
-        else:
-            common.pprint("Nothing to do for plan %s" % plan, color='red')
-            os._exit(1)
-        return
-    if autostart:
-        common.pprint("Set vms from plan %s to autostart" % (plan), color='green')
-        for vm in sorted(k.list()):
-            name = vm[0]
-            description = vm[4]
-            if description == plan:
-                k.update_start(name, start=True)
-                common.pprint("%s set to autostart!" % name, color='green')
-        return
-    if noautostart:
-        common.pprint("Preventing vms from plan %s to autostart" % (plan), color='green')
-        for vm in sorted(k.list()):
-            name = vm[0]
-            description = vm[4]
-            if description == plan:
-                k.update_start(name, start=False)
-                common.pprint("%s prevented to autostart!" % name, color='green')
-        return
-    if start:
-        common.pprint("Starting vms from plan %s" % (plan), color='green')
-        for vm in sorted(k.list()):
-            name = vm[0]
-            description = vm[4]
-            if description == plan:
-                k.start(name)
-                common.pprint("VM %s started!" % name, color='green')
-        if container:
-            for cont in sorted(dockerutils.list_containers(k)):
-                name = cont[0]
-                containerplan = cont[3]
-                if containerplan == plan:
-                    dockerutils.start_container(k, name)
-                    common.pprint("Container %s started!" % name, color='green')
-        common.pprint("Plan %s started!" % plan, color='green')
-        return
-    if stop:
-        common.pprint("Stopping vms from plan %s" % (plan), color='green')
-        for vm in sorted(k.list()):
-            name = vm[0]
-            description = vm[4]
-            if description == plan:
-                k.stop(name)
-                common.pprint("%s stopped!" % name, color='green')
-        if container:
-            for cont in sorted(dockerutils.list_containers(k)):
-                name = cont[0]
-                containerplan = cont[3]
-                if containerplan == plan:
-                    dockerutils.stop_container(k, name)
-                    common.pprint("Container %s stopped!" % name, color='green')
-        common.pprint("Plan %s stopped!" % plan, color='green')
-        return
-    if get is not None:
-        common.pprint("Retrieving specified plan from %s to %s" % (get, path), color='green')
-        common.fetch(get, path)
-        return
-    if inputfile is None:
-        inputfile = 'kcli_plan.yml'
-        common.pprint("using default input file kcli_plan.yml", color='green')
-    inputfile = os.path.expanduser(inputfile)
-    if not os.path.exists(inputfile):
-        common.pprint("No input file found nor default kcli_plan.yml.Leaving....", color='red')
-        os._exit(1)
-    default = config.default
-    with open(inputfile, 'r') as entries:
-        entries = yaml.load(entries)
-        vmentries = [entry for entry in entries if 'type' not in entries[entry] or entries[entry]['type'] == 'vm']
-        diskentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'disk']
-        networkentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'network']
-        containerentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'container']
-        ansibleentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'ansible']
-        profileentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'profile']
-        templateentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'template']
-        poolentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'pool']
-        for p in profileentries:
-            vmprofiles[p] = entries[p]
-        if networkentries:
-            common.pprint("Deploying Networks...", color='green')
-        for net in networkentries:
-            netprofile = entries[net]
-            if k.net_exists(net):
-                common.pprint("Network %s skipped!" % net, color='blue')
-                continue
-            cidr = netprofile.get('cidr')
-            nat = bool(netprofile.get('nat', True))
-            if cidr is None:
-                print("Missing Cidr for network %s. Not creating it..." % net)
-                continue
-            dhcp = netprofile.get('dhcp', True)
-            result = k.create_network(name=net, cidr=cidr, dhcp=dhcp, nat=nat)
-            handle_response(result, net, element='Network ')
-        if poolentries:
-            common.pprint("Deploying Pool...", color='green')
-            pools = k.list_pools()
-            for pool in poolentries:
-                if pool in pools:
-                    common.pprint("Pool %s skipped!" % pool, color='blue')
-                    continue
-                else:
-                    poolprofile = entries[pool]
-                    poolpath = poolprofile.get('path')
-                    if poolpath is None:
-                        common.pprint("Pool %s skipped as path is missing!" % pool, color='blue')
-                        continue
-                    k.create_pool(pool, poolpath)
-        if templateentries:
-            common.pprint("Deploying Templates...", color='green')
-            templates = [os.path.basename(t) for t in k.volumes()]
-            for template in templateentries:
-                if template in templates:
-                    common.pprint("Template %s skipped!" % template, color='blue')
-                    continue
-                else:
-                    templateprofile = entries[template]
-                    pool = templateprofile.get('pool', default['pool'])
-                    url = templateprofile.get('url')
-                    if url is None:
-                        common.pprint("Template %s skipped as url is missing!" % template, color='blue')
-                        continue
-                    if not url.endswith('qcow2') and not url.endswith('img'):
-                        common.pprint("Opening url %s for you to download %s" % (url, template), color='blue')
-                        webbrowser.open(url, new=2, autoraise=True)
-                        continue
-                    result = k.add_image(url, pool, short=template)
-                    handle_response(result, template, element='Template ', action='Added')
-        if vmentries:
-            common.pprint("Deploying Vms...", color='green')
-            for name in vmentries:
-                profile = entries[name]
-                if k.exists(name):
-                    common.pprint("VM %s skipped!" % name, color='blue')
-                    continue
-                if 'profile' in profile and profile['profile'] in vmprofiles:
-                    customprofile = vmprofiles[profile['profile']]
-                    profilename = profile['profile']
-                else:
-                    customprofile = {}
-                    profilename = plan
-                pool = next((e for e in [profile.get('pool'), customprofile.get('pool'), default['pool']] if e is not None))
-                template = next((e for e in [profile.get('template'), customprofile.get('template')] if e is not None), None)
-                cpumodel = next((e for e in [profile.get('cpumodel'), customprofile.get('cpumodel'), default['cpumodel']] if e is not None))
-                cpuflags = next((e for e in [profile.get('cpuflags'), customprofile.get('cpuflags'), []] if e is not None))
-                numcpus = next((e for e in [profile.get('numcpus'), customprofile.get('numcpus'), default['numcpus']] if e is not None))
-                memory = next((e for e in [profile.get('memory'), customprofile.get('memory'), default['memory']] if e is not None))
-                disks = next((e for e in [profile.get('disks'), customprofile.get('disks'), default['disks']] if e is not None))
-                disksize = next((e for e in [profile.get('disksize'), customprofile.get('disksize'), default['disksize']] if e is not None))
-                diskinterface = next((e for e in [profile.get('diskinterface'), customprofile.get('diskinterface'), default['diskinterface']] if e is not None))
-                diskthin = next((e for e in [profile.get('diskthin'), customprofile.get('diskthin'), default['diskthin']] if e is not None))
-                guestid = next((e for e in [profile.get('guestid'), customprofile.get('guestid'), default['guestid']] if e is not None))
-                vnc = next((e for e in [profile.get('vnc'), customprofile.get('vnc'), default['vnc']] if e is not None))
-                cloudinit = next((e for e in [profile.get('cloudinit'), customprofile.get('cloudinit'), default['cloudinit']] if e is not None))
-                reserveip = next((e for e in [profile.get('reserveip'), customprofile.get('reserveip'), default['reserveip']] if e is not None))
-                reservedns = next((e for e in [profile.get('reservedns'), customprofile.get('reservedns'), default['reservedns']] if e is not None))
-                reservehost = next((e for e in [profile.get('reservehost'), customprofile.get('reservehost'), default['reservehost']] if e is not None))
-                nested = next((e for e in [profile.get('nested'), customprofile.get('nested'), default['nested']] if e is not None))
-                start = next((e for e in [profile.get('start'), customprofile.get('start'), default['start']] if e is not None))
-                nets = next((e for e in [profile.get('nets'), customprofile.get('nets'), default['nets']] if e is not None))
-                iso = next((e for e in [profile.get('iso'), customprofile.get('iso')] if e is not None), None)
-                keys = next((e for e in [profile.get('keys'), customprofile.get('keys')] if e is not None), None)
-                cmds = next((e for e in [profile.get('cmds'), customprofile.get('cmds')] if e is not None), None)
-                netmasks = next((e for e in [profile.get('netmasks'), customprofile.get('netmasks')] if e is not None), None)
-                gateway = next((e for e in [profile.get('gateway'), customprofile.get('gateway')] if e is not None), None)
-                dns = next((e for e in [profile.get('dns'), customprofile.get('dns')] if e is not None), None)
-                domain = next((e for e in [profile.get('domain'), customprofile.get('domain')] if e is not None), None)
-                ips = profile.get('ips')
-                sharedkey = bool(profile.get('sharedkey', False))
-                scripts = next((e for e in [profile.get('scripts'), customprofile.get('scripts')] if e is not None), None)
-                missingscript = False
-                if scripts is not None:
-                    scriptcmds = []
-                    for script in scripts:
-                        script = os.path.expanduser(script)
-                        if not os.path.exists(script):
-                            common.pprint("Script %s not found. Ignoring this vm..." % script, color='red')
-                            missingscript = True
-                        else:
-                            scriptlines = [line.strip() for line in open(script).readlines() if line != '\n']
-                            if scriptlines:
-                                scriptcmds.extend(scriptlines)
-                    if scriptcmds:
-                        if cmds is None:
-                            cmds = scriptcmds
-                        else:
-                            cmds = cmds + scriptcmds
-                if missingscript:
-                    continue
-                files = next((e for e in [profile.get('files'), customprofile.get('files')] if e is not None), [])
-                if sharedkey:
-                    if not os.path.exists("%s.key" % plan) or not os.path.exists("%s.key.pub" % plan):
-                        os.popen("ssh-keygen -t rsa -N '' -f %s.key" % plan)
-                    publickey = open("%s.key.pub" % plan).read().strip()
-                    # privatekey = open("%s.key" % plan).readlines()
-                    privatekey = open("%s.key" % plan).read().strip()
-                    if keys is None:
-                        keys = [publickey]
-                    else:
-                        keys.append(publickey)
-                    # sharedkeycmd = "'echo %s >/root/.ssh/id_rsa'" % privatekey
-                    # cmd1 = "'echo %s >/root/.ssh/id_rsa'" % privatekey
-                    # cmd2 = "chmod 600 /root/.ssh/id_rsa"
-                    # if cmds is None:
-                    #    cmds = [cmd1, cmd2]
-                    # else:
-                    #    cmds.extend([cmd1, cmd2])
-                    if files:
-                        files.append({'path': '/root/.ssh/id_rsa', 'content': privatekey})
-                    else:
-                        files = [{'path': '/root/.ssh/id_rsa', 'content': privatekey}]
-                result = k.create(name=name, plan=plan, profile=profilename, cpumodel=cpumodel, cpuflags=cpuflags, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns), reservehost=bool(reservehost), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=nested, tunnel=tunnel, files=files)
-                handle_response(result, name)
-                if result['result'] == 'success':
-                    newvms.append(name)
-                ansible = next((e for e in [profile.get('ansible'), customprofile.get('ansible')] if e is not None), None)
-                if ansible is not None:
-                    for element in ansible:
-                        if 'playbook' not in element:
-                            continue
-                        playbook = element['playbook']
-                        if 'variables' in element:
-                            variables = element['variables']
-                        if 'verbose' in element:
-                            verbose = element['verbose']
-                        else:
-                            verbose = False
-                        ansibleutils.play(k, name, playbook=playbook, variables=variables, verbose=verbose)
-                if delay > 0:
-                    sleep(delay)
-        if diskentries:
-            common.pprint("Deploying Disks...", color='green')
-        for disk in diskentries:
-            profile = entries[disk]
-            pool = profile.get('pool')
-            vms = profile.get('vms')
-            template = profile.get('template')
-            size = int(profile.get('size', 10))
-            if pool is None:
-                common.pprint("Missing Key Pool for disk section %s. Not creating it..." % disk, color='red')
-                continue
-            if vms is None:
-                common.pprint("Missing or Incorrect Key Vms for disk section %s. Not creating it..." % disk, color='red')
-                continue
-            if k.disk_exists(pool, disk):
-                common.pprint("Disk %s skipped!" % disk, color='blue')
-                continue
-            if len(vms) > 1:
-                shareable = True
-            else:
-                shareable = False
-            newdisk = k.create_disk(disk, size=size, pool=pool, template=template, thin=False)
-            common.pprint("Disk %s deployed!" % disk, color='green')
-            for vm in vms:
-                k.add_disk(name=vm, size=size, pool=pool, template=template, shareable=shareable, existing=newdisk, thin=False)
-        if containerentries:
-            common.pprint("Deploying Containers...", color='green')
-            label = "plan=%s" % (plan)
-            for container in containerentries:
-                if dockerutils.exists_container(k, container):
-                    common.pprint("Container %s skipped!" % container, color='blue')
-                    continue
-                profile = entries[container]
-                if 'profile' in profile and profile['profile'] in containerprofiles:
-                    customprofile = containerprofiles[profile['profile']]
-                else:
-                    customprofile = {}
-                image = next((e for e in [profile.get('image'), profile.get('template'), customprofile.get('image'), customprofile.get('template')] if e is not None), None)
-                nets = next((e for e in [profile.get('nets'), customprofile.get('nets')] if e is not None), None)
-                ports = next((e for e in [profile.get('ports'), customprofile.get('ports')] if e is not None), None)
-                volumes = next((e for e in [profile.get('volumes'), profile.get('disks'), customprofile.get('volumes'), customprofile.get('disks')] if e is not None), None)
-                environment = next((e for e in [profile.get('environment'), customprofile.get('environment')] if e is not None), None)
-                cmd = next((e for e in [profile.get('cmd'), customprofile.get('cmd')] if e is not None), None)
-                common.pprint("Container %s deployed!" % container, color='green')
-                dockerutils.create_container(k, name=container, image=image, nets=nets, cmd=cmd, ports=ports, volumes=volumes, environment=environment, label=label)
-                # handle_response(result, name)
-        if ansibleentries:
-            if not newvms:
-                common.pprint("Ansible skipped as no new vm within playbook provisioned", color='blue')
-                return
-            for item, entry in enumerate(ansibleentries):
-                ansible = entries[ansibleentries[item]]
-                if 'playbook' not in ansible:
-                    common.pprint("Missing Playbook for ansible.Ignoring...", color='red')
-                    os._exit(1)
-                playbook = ansible['playbook']
-                if 'verbose' in ansible:
-                    verbose = ansible['verbose']
-                else:
-                    verbose = False
-                vms = []
-                if 'vms' in ansible:
-                    vms = ansible['vms']
-                    for vm in vms:
-                        if vm not in newvms:
-                            vms.remove(vm)
-                else:
-                    vms = newvms
-                if not vms:
-                    common.pprint("Ansible skipped as no new vm within playbook provisioned", color='blue')
-                    return
-                ansibleutils.make_inventory(k, plan, newvms, tunnel=config.tunnel)
-                # with open("/tmp/%s.inv" % plan, "w") as f:
-                #    f.write("[%s]\n" % plan)
-                #    for name in newvms:
-                #        inventory = ansibleutils.inventory(k, name)
-                #        if inventory is not None:
-                #            f.write("%s\n" % inventory)
-                #    if config.tunnel:
-                #        f.write("[%s:vars]\n" % plan)
-                #        f.write("ansible_ssh_common_args='-o ProxyCommand=\"ssh -p %s -W %%h:%%p %s@%s\"'\n" % (config.port, config.user, config.host))
-                ansiblecommand = "ansible-playbook"
-                if verbose:
-                    ansiblecommand = "%s -vvv" % ansiblecommand
-                ansibleconfig = os.path.expanduser('~/.ansible.cfg')
-                with open(ansibleconfig, "w") as f:
-                    f.write("[ssh_connection]\nretries=10\n")
-                print("Running: %s -i /tmp/%s.inv %s" % (ansiblecommand, plan, playbook))
-                os.system("%s -i /tmp/%s.inv %s" % (ansiblecommand, plan, playbook))
-    if ansible:
-        common.pprint("Deploying Ansible Inventory...", color='green')
-        if os.path.exists("/tmp/%s.inv" % plan):
-            common.pprint("Inventory in /tmp/%s.inv skipped!" % (plan), color='blue')
-        else:
-            common.pprint("Creating ansible inventory for plan %s in /tmp/%s.inv" % (plan, plan), color='green')
-            vms = []
-            for vm in sorted(k.list()):
-                name = vm[0]
-                description = vm[4]
-                if description == plan:
-                    vms.append(name)
-            ansibleutils.make_inventory(k, plan, vms, tunnel=config.tunnel)
-            return
+    config.plan(plan, ansible=ansible, get=get, path=path, autostart=autostart, container=container, noautostart=noautostart, inputfile=inputfile, start=start, stop=stop, delete=delete, delay=delay)
 
 
 def ssh(args):
@@ -997,7 +500,7 @@ def network(args):
         os._exit(1)
     if delete:
         result = k.delete_network(name=name)
-        handle_response(result, name, element='Network ', action='deleted')
+        common.handle_response(result, name, element='Network ', action='deleted')
     else:
         if isolated:
             nat = False
@@ -1005,7 +508,7 @@ def network(args):
             nat = True
         dhcp = not nodhcp
         result = k.create_network(name=name, cidr=cidr, dhcp=dhcp, nat=nat)
-        handle_response(result, name, element='Network ')
+        common.handle_response(result, name, element='Network ')
 
 
 def bootstrap(args):
@@ -1203,8 +706,8 @@ def snapshot(args):
     else:
         common.pprint("Creating snapshot of %s named %s..." % (name, snapshot), color='green')
     result = k.snapshot(snapshot, name, revert=revert, delete=delete)
-    code = handle_response(result, name, element='', action='snapshotted')
-    os._exit(code)
+    code = common.handle_response(result, name, element='', action='snapshotted')
+    return code
 
 
 def cli():

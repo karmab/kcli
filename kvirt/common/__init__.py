@@ -217,3 +217,12 @@ def handle_response(result, name, element='', action='deployed'):
         reason = result['reason']
         pprint("%s%s not %s because %s" % (element, name, action, reason), color='red')
         return 1
+
+
+def confirm(message):
+    message = "%s [y/N]: " % message
+    input = raw_input(message)
+    if input.lower() != 'y':
+        pprint("Leaving...", color='red')
+        os._exit(1)
+    return

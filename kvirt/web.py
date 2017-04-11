@@ -50,16 +50,19 @@ def vmaction():
             result = k.stop(name)
         elif action == 'delete':
             result = k.delete(name)
-        elif action == 'create':
-            result = k.create(name)
+        elif action == 'create' and 'profile' in request.form:
+            profile = request.form['profile']
+            result = config.create_vm(name, profile)
         else:
             result = "Nothing to do"
         print(result)
         response = jsonify(result)
+        print(response)
         response.status_code = 200
         return response
     else:
         failure = {'result': 'failure', 'reason': "Invalid Data"}
+        response = jsonify(failure)
         response.status_code = 400
         return jsonify(failure)
 
