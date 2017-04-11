@@ -2,6 +2,12 @@ ovirt36:
  template: CentOS-7-x86_64-GenericCloud.qcow2
  memory: 8192
  numcpus: 2
+ cpumodel: host-model
+ cpuflags:
+  - name: arat
+    enable: false
+  - name: clflushopt
+    enable: false
  nets:
   - default
  disks:

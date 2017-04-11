@@ -19,6 +19,12 @@ rhvengine:
 rhvnode1:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
  memory: 8192
+ cpumodel: host-model
+ cpuflags:
+  - name: arat
+    enable: false
+  - name: clflushopt
+    enable: false
  numcpus: 2
  nets:
   - default
@@ -35,6 +41,12 @@ rhvnode1:
 rhvnode2:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
  memory: 8192
+ cpumodel: host-model
+ cpuflags:
+  - name: arat
+    enable: false
+  - name: clflushopt
+    enable: false
  numcpus: 2
  nets:
   - default

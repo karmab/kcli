@@ -235,10 +235,10 @@ def list(args):
                 clientstable.add_row([client, ''])
         print(clientstable)
     elif profiles:
-        profilestable = PrettyTable(["Profile"])
+        profilestable = PrettyTable(["Profile", "Numcpus", "Memory", "Pool", "Disks", "Template", "Nets", "Cloudinit", "Nested", "Reservedns", "Reservehost"])
         profilestable.align["Profile"] = "l"
-        for profile in sorted(config.profiles):
-                profilestable.add_row([profile])
+        for profile in sorted(config.list_profiles()):
+                profilestable.add_row(profile)
         print(profilestable)
     elif templates:
         templatestable = PrettyTable(["Template"])
@@ -329,106 +329,107 @@ def vm(args):
     ip7 = args.ip7
     ip8 = args.ip8
     global config
-    k = config.k
-    tunnel = config.tunnel
+    # k = config.k
+    # tunnel = config.tunnel
     if profile is None:
         common.pprint("Missing profile", color='red')
         os._exit(1)
-    default = config.default
-    vmprofiles = {k: v for k, v in config.profiles.iteritems() if 'type' not in v or v['type'] == 'vm'}
-    common.pprint("Deploying vm %s from profile %s..." % (name, profile), color='green')
-    if profile not in vmprofiles:
-        common.pprint("profile %s not found. Trying to use the profile as template and default values..." % profile, color='blue')
-        result = k.create(name=name, memory=1024, template=profile)
-        code = handle_response(result, name)
-        os._exit(code)
-        return
-    profilename = profile
-    profile = vmprofiles[profile]
-    template = profile.get('template')
-    plan = 'kvirt'
-    nets = profile.get('nets', default['nets'])
-    cpumodel = profile.get('cpumodel', default['cpumodel'])
-    cpuflags = profile.get('cpuflags', [])
-    numcpus = profile.get('numcpus', default['numcpus'])
-    memory = profile.get('memory', default['memory'])
-    pool = profile.get('pool', default['pool'])
-    disks = profile.get('disks', default['disks'])
-    disksize = profile.get('disksize', default['disksize'])
-    diskinterface = profile.get('diskinterface', default['diskinterface'])
-    diskthin = profile.get('diskthin', default['diskthin'])
-    guestid = profile.get('guestid', default['guestid'])
-    iso = profile.get('iso')
-    vnc = profile.get('vnc', default['vnc'])
-    cloudinit = profile.get('cloudinit', default['cloudinit'])
-    reserveip = profile.get('reserveip', default['reserveip'])
-    reservedns = profile.get('reservedns', default['reservedns'])
-    reservehost = profile.get('reservehost', default['reservehost'])
-    nested = profile.get('nested', default['nested'])
-    start = profile.get('start', default['start'])
-    keys = profile.get('keys', None)
-    cmds = profile.get('cmds', None)
-    netmasks = profile.get('netmasks')
-    gateway = profile.get('gateway')
-    dns = profile.get('dns')
-    domain = profile.get('domain')
-    scripts = profile.get('scripts')
-    files = profile.get('files', [])
-    if scripts is not None:
-        scriptcmds = []
-        for script in scripts:
-            script = os.path.expanduser(script)
-            if not os.path.exists(script):
-                common.pprint("Script %s not found.Ignoring..." % script, color='red')
-                os._exit(1)
-            else:
-                scriptlines = [line.strip() for line in open(script).readlines() if line != '\n']
-                if scriptlines:
-                    scriptcmds.extend(scriptlines)
-        if scriptcmds:
-            if cmds is None:
-                cmds = scriptcmds
-            else:
-                cmds = cmds + scriptcmds
-    ips = [ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8]
-    result = k.create(name=name, plan=plan, profile=profilename, cpumodel=cpumodel, cpuflags=cpuflags, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns), reservehost=bool(reservehost), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=bool(nested), tunnel=tunnel, files=files)
-    handle_response(result, name)
-    if result['result'] != 'success':
-        return
-    ansible = profile.get('ansible')
-    if ansible is not None:
-        for element in ansible:
-            if 'playbook' not in element:
-                continue
-            playbook = element['playbook']
-            if 'variables' in element:
-                variables = element['variables']
-            if 'verbose' in element:
-                verbose = element['verbose']
-            else:
-                verbose = False
-            # k.play(name, playbook=playbook, variables=variables, verbose=verbose)
-            with open("/tmp/%s.inv" % name, "w") as f:
-                inventory = ansibleutils.inventory(k, name)
-                if inventory is not None:
-                    if variables is not None:
-                        for variable in variables:
-                            if not isinstance(variable, dict) or len(variable.keys()) != 1:
-                                continue
-                            else:
-                                key, value = variable.keys()[0], variable[variable.keys()[0]]
-                                inventory = "%s %s=%s" % (inventory, key, value)
-                if config.tunnel:
-                    inventory = "%s ansible_ssh_common_args='-o ProxyCommand=\"ssh -p %s -W %%h:%%p %s@%s\"'\n" % (inventory, config.port, config.user, config.host)
-                f.write("%s\n" % inventory)
-            ansiblecommand = "ansible-playbook"
-            if verbose:
-                ansiblecommand = "%s -vvv" % ansiblecommand
-            ansibleconfig = os.path.expanduser('~/.ansible.cfg')
-            with open(ansibleconfig, "w") as f:
-                f.write("[ssh_connection]\nretries=10\n")
-            print("Running: %s -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
-            os.system("%s -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
+    # default = config.default
+    config.create_vm(name, profile, ip1=ip1, ip2=ip2, ip3=ip3, ip4=ip4, ip5=ip5, ip6=ip6, ip7=ip7, ip8=ip8)
+#    vmprofiles = {k: v for k, v in config.profiles.iteritems() if 'type' not in v or v['type'] == 'vm'}
+#    common.pprint("Deploying vm %s from profile %s..." % (name, profile), color='green')
+#    if profile not in vmprofiles:
+#        common.pprint("profile %s not found. Trying to use the profile as template and default values..." % profile, color='blue')
+#        result = k.create(name=name, memory=1024, template=profile)
+#        code = handle_response(result, name)
+#        os._exit(code)
+#        return
+#    profilename = profile
+#    profile = vmprofiles[profile]
+#    template = profile.get('template')
+#    plan = 'kvirt'
+#    nets = profile.get('nets', default['nets'])
+#    cpumodel = profile.get('cpumodel', default['cpumodel'])
+#    cpuflags = profile.get('cpuflags', [])
+#    numcpus = profile.get('numcpus', default['numcpus'])
+#    memory = profile.get('memory', default['memory'])
+#    pool = profile.get('pool', default['pool'])
+#    disks = profile.get('disks', default['disks'])
+#    disksize = profile.get('disksize', default['disksize'])
+#    diskinterface = profile.get('diskinterface', default['diskinterface'])
+#    diskthin = profile.get('diskthin', default['diskthin'])
+#    guestid = profile.get('guestid', default['guestid'])
+#    iso = profile.get('iso')
+#    vnc = profile.get('vnc', default['vnc'])
+#    cloudinit = profile.get('cloudinit', default['cloudinit'])
+#    reserveip = profile.get('reserveip', default['reserveip'])
+#    reservedns = profile.get('reservedns', default['reservedns'])
+#    reservehost = profile.get('reservehost', default['reservehost'])
+#    nested = profile.get('nested', default['nested'])
+#    start = profile.get('start', default['start'])
+#    keys = profile.get('keys', None)
+#    cmds = profile.get('cmds', None)
+#    netmasks = profile.get('netmasks')
+#    gateway = profile.get('gateway')
+#    dns = profile.get('dns')
+#    domain = profile.get('domain')
+#    scripts = profile.get('scripts')
+#    files = profile.get('files', [])
+#    if scripts is not None:
+#        scriptcmds = []
+#        for script in scripts:
+#            script = os.path.expanduser(script)
+#            if not os.path.exists(script):
+#                common.pprint("Script %s not found.Ignoring..." % script, color='red')
+#                os._exit(1)
+#            else:
+#                scriptlines = [line.strip() for line in open(script).readlines() if line != '\n']
+#                if scriptlines:
+#                    scriptcmds.extend(scriptlines)
+#        if scriptcmds:
+#            if cmds is None:
+#                cmds = scriptcmds
+#            else:
+#                cmds = cmds + scriptcmds
+#    ips = [ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8]
+#    result = k.create(name=name, plan=plan, profile=profilename, cpumodel=cpumodel, cpuflags=cpuflags, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns), reservehost=bool(reservehost), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=bool(nested), tunnel=tunnel, files=files)
+#    handle_response(result, name)
+#    if result['result'] != 'success':
+#        return
+#    ansible = profile.get('ansible')
+#    if ansible is not None:
+#        for element in ansible:
+#            if 'playbook' not in element:
+#                continue
+#            playbook = element['playbook']
+#            if 'variables' in element:
+#                variables = element['variables']
+#            if 'verbose' in element:
+#                verbose = element['verbose']
+#            else:
+#                verbose = False
+#            # k.play(name, playbook=playbook, variables=variables, verbose=verbose)
+#            with open("/tmp/%s.inv" % name, "w") as f:
+#                inventory = ansibleutils.inventory(k, name)
+#                if inventory is not None:
+#                    if variables is not None:
+#                        for variable in variables:
+#                            if not isinstance(variable, dict) or len(variable.keys()) != 1:
+#                                continue
+#                            else:
+#                                key, value = variable.keys()[0], variable[variable.keys()[0]]
+#                                inventory = "%s %s=%s" % (inventory, key, value)
+#                if config.tunnel:
+#                    inventory = "%s ansible_ssh_common_args='-o ProxyCommand=\"ssh -p %s -W %%h:%%p %s@%s\"'\n" % (inventory, config.port, config.user, config.host)
+#                f.write("%s\n" % inventory)
+#            ansiblecommand = "ansible-playbook"
+#            if verbose:
+#                ansiblecommand = "%s -vvv" % ansiblecommand
+#            ansibleconfig = os.path.expanduser('~/.ansible.cfg')
+#            with open(ansibleconfig, "w") as f:
+#                f.write("[ssh_connection]\nretries=10\n")
+#            print("Running: %s -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
+#            os.system("%s -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
 
 
 def clone(args):

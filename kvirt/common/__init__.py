@@ -207,3 +207,13 @@ def pprint(text, color=None):
         print('\033[1;%sm%s\033[0;0m' % (color, text))
     else:
         print(text)
+
+
+def handle_response(result, name, element='', action='deployed'):
+    if result['result'] == 'success':
+        pprint("%s%s %s!" % (element, name, action), color='green')
+        return 0
+    else:
+        reason = result['reason']
+        pprint("%s%s not %s because %s" % (element, name, action, reason), color='red')
+        return 1

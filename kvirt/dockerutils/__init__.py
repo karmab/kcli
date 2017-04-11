@@ -119,6 +119,7 @@ def create_container(self, name, image, nets=None, cmd=None, ports=[], volumes=[
             dockercommand = "%s %s" % (dockercommand, cmd)
         command = "ssh -p %s %s@%s %s" % (self.port, self.user, self.host, dockercommand)
         os.system(command)
+    return {'result': 'success'}
 
 
 def delete_container(self, name):
@@ -133,6 +134,7 @@ def delete_container(self, name):
         dockercommand = "docker rm -f %s" % name
         command = "ssh -p %s %s@%s %s" % (self.port, self.user, self.host, dockercommand)
         os.system(command)
+    return {'result': 'success'}
 
 
 def start_container(self, name):
@@ -147,6 +149,7 @@ def start_container(self, name):
         dockercommand = "docker start %s" % name
         command = "ssh -p %s %s@%s %s" % (self.port, self.user, self.host, dockercommand)
         os.system(command)
+    return {'result': 'success'}
 
 
 def stop_container(self, name):
@@ -161,6 +164,7 @@ def stop_container(self, name):
         dockercommand = "docker stop %s" % name
         command = "ssh -p %s %s@%s %s" % (self.port, self.user, self.host, dockercommand)
         os.system(command)
+    return {'result': 'success'}
 
 
 def console_container(self, name):
@@ -177,6 +181,7 @@ def console_container(self, name):
         dockercommand = "docker attach %s" % name
         command = "ssh -t -p %s %s@%s %s" % (self.port, self.user, self.host, dockercommand)
         os.system(command)
+    return {'result': 'success'}
 
 
 def list_containers(self):

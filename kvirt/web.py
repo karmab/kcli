@@ -3,92 +3,9 @@
 # import getpass
 # from mock import patch
 from flask import Flask, render_template, request, jsonify
-from defaults import NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, START, NESTED, TUNNEL
-# from defaults import TEMPLATES
-from kvm import Kvirt
-from vbox import Kbox
+from config import Kconfig
+import dockerutils
 import os
-import yaml
-
-
-class Config():
-    def load(self):
-        inifile = "%s/kcli.yml" % os.environ.get('HOME')
-        if not os.path.exists(inifile):
-            if os.path.exists('/Users'):
-                _type = 'vbox'
-            else:
-                _type = 'kvm'
-            ini = {'default': {'client': 'local'}, 'local': {'pool': 'default', 'type': _type}}
-            print("Using local hypervisor as no kcli.yml was found...")
-        else:
-            with open(inifile, 'r') as entries:
-                try:
-                    ini = yaml.load(entries)
-                except:
-                    self.host = None
-                    return
-            if 'default' not in ini or 'client' not in ini['default']:
-                print("Missing default section in config file. Leaving...")
-                self.host = None
-                return
-        self.clients = [e for e in ini if e != 'default']
-        defaults = {}
-        default = ini['default']
-        defaults['nets'] = default.get('nets', NETS)
-        defaults['pool'] = default.get('pool', POOL)
-        defaults['cpumodel'] = default.get('cpumodel', CPUMODEL)
-        defaults['numcpus'] = int(default.get('numcpus', NUMCPUS))
-        defaults['memory'] = int(default.get('memory', MEMORY))
-        defaults['disks'] = default.get('disks', DISKS)
-        defaults['disksize'] = default.get('disksize', DISKSIZE)
-        defaults['diskinterface'] = default.get('diskinterface', DISKINTERFACE)
-        defaults['diskthin'] = default.get('diskthin', DISKTHIN)
-        defaults['guestid'] = default.get('guestid', GUESTID)
-        defaults['vnc'] = bool(default.get('vnc', VNC))
-        defaults['cloudinit'] = bool(default.get('cloudinit', CLOUDINIT))
-        defaults['reserveip'] = bool(default.get('reserveip', RESERVEIP))
-        defaults['reservedns'] = bool(default.get('reservedns', RESERVEDNS))
-        defaults['nested'] = bool(default.get('nested', NESTED))
-        defaults['start'] = bool(default.get('start', START))
-        defaults['tunnel'] = default.get('tunnel', TUNNEL)
-        self.default = defaults
-        self.ini = ini
-        profilefile = default.get('profiles', "%s/kcli_profiles.yml" % os.environ.get('HOME'))
-        profilefile = os.path.expanduser(profilefile)
-        if not os.path.exists(profilefile):
-            self.profiles = {}
-        else:
-            with open(profilefile, 'r') as entries:
-                self.profiles = yaml.load(entries)
-
-    def get(self, client=None):
-        if client is None:
-            self.client = self.ini['default']['client']
-        else:
-            self.client = client
-        if self.client not in self.ini:
-            print("Missing section for client %s in config file. Leaving..." % self.client)
-            os._exit(1)
-        options = self.ini[self.client]
-        self.host = options.get('host', '127.0.0.1')
-        self.port = options.get('port', 22)
-        self.user = options.get('user', 'root')
-        self.protocol = options.get('protocol', 'ssh')
-        self.url = options.get('url', None)
-        self.tunnel = bool(options.get('tunnel', self.default['tunnel']))
-        self.type = options.get('type', 'kvm')
-        if self.type == 'vbox':
-            k = Kbox()
-        else:
-            if self.host is None:
-                print("Problem parsing your configuration file")
-                os._exit(1)
-            k = Kvirt(host=self.host, port=self.port, user=self.user, protocol=self.protocol, url=self.url, debug=self.debug)
-        if k.conn is None:
-            print("Couldnt connect to specify hypervisor %s. Leaving..." % self.host)
-            os._exit(1)
-        return k
 
 app = Flask(__name__)
 try:
@@ -111,6 +28,8 @@ def get():
     """
     retrieves all vms
     """
+    config = Kconfig()
+    k = config.k
     vms = k.list()
     return render_template('vms.html', title='Home', vms=vms)
 
@@ -120,6 +39,8 @@ def vmaction():
     """
     start/stop/delete vm
     """
+    config = Kconfig()
+    k = config.k
     if 'name' in request.form:
         name = request.form['name']
         action = request.form['action']
@@ -129,9 +50,11 @@ def vmaction():
             result = k.stop(name)
         elif action == 'delete':
             result = k.delete(name)
+        elif action == 'create':
+            result = k.create(name)
         else:
             result = "Nothing to do"
-        print result
+        print(result)
         response = jsonify(result)
         response.status_code = 200
         return response
@@ -140,11 +63,59 @@ def vmaction():
         response.status_code = 400
         return jsonify(failure)
 
+
+@app.route('/containers')
+def containers():
+    """
+    retrieves all containers
+    """
+    config = Kconfig()
+    k = config.k
+    containers = dockerutils.list_containers(k)
+    return render_template('containers.html', title='Containers', containers=containers)
+
+
+@app.route("/containeraction", methods=['POST'])
+def containeraction():
+    """
+    start/stop/delete container
+    """
+    config = Kconfig()
+    k = config.k
+    if 'name' in request.form:
+        name = request.form['name']
+        action = request.form['action']
+        if action == 'start':
+            result = dockerutils.start_container(k, name)
+        elif action == 'stop':
+            result = dockerutils.stop_container(k, name)
+        elif action == 'delete':
+            result = dockerutils.delete_container(k, name)
+        else:
+            result = "Nothing to do"
+        print(result)
+        response = jsonify(result)
+        response.status_code = 200
+        return response
+    else:
+        failure = {'result': 'failure', 'reason': "Invalid Data"}
+        response.status_code = 400
+        return jsonify(failure)
+
+
+@app.route('/profiles')
+def profiles():
+    """
+    retrieves all profiles
+    """
+    config = Kconfig()
+    profiles = config.list_profiles()
+    return render_template('profiles.html', title='Profiles', profiles=profiles)
+
+
 if __name__ == '__main__':
-    global k
-    config = Config()
-    config.load()
-    config.debug = debug
-    k = config.get()
+    # global k
+    # config = Kconfig()
+    # k = config.k
     # with patch.object(getpass, "getuser", return_value='default'):
     app.run(host='0.0.0.0', port=port, debug=debug)

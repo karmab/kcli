@@ -1,73 +1,14 @@
-/* Main container layout size and offset */
-
 body {
-    font: 100% verdana, arial, sans-serif;
+    font: 100% verdana, arial, sans-serif; */
     background-color: #fff;
     margin: 50px;
     background-repeat:no-repeat;
     background-size: 100% auto;
 }
 
-.dropdown .dropdown-menu { 
+.dropdown .dropdown-menu .button { 
     font: 100% verdana, arial, sans-serif;
-/*    background-color: #fff; */
     margin: 50px;
-/*    background-repeat:no-repeat;
-    background-size: 100% auto; */
-}
-.dropdown li a{display:block;}
-
-.col-md-custom {
-    -webkit-box-flex: 0;
-    -webkit-flex: 0 0 95%;
-        -ms-flex: 0 0 95%;
-            flex: 0 0 95%;
-    max-width: 95%;
-}
-
-.col-md-offset-custom {
-    margin-left: 2.5%;
-}
-
-/* Home stat highlight badges */
-.stat-highlight {
-    text-align: left;
-    font-weight: bold;
-}
-
-/* Status text styling */
-.status-label {
-    padding-top: 5px;
-    padding-bottom: 5px;
-    font-size: 90%;
-    font-family: monospace;
-    display: inline-block;
-    width: 8em;
-}
-
-.failed, .unreachable {
-    background-color: #a30000;
-}
-.skipped, .ignored {
-    background-color: #047a7b;
-}
-.ok {
-    background-color: #3e7b04;
-}
-.changed {
-    background-color: #9d8000;
-}
-
-/* Table styling */
-/* Wrap pre tags so they don't print endlessly horizontally */
-.table pre, .results pre {
-    white-space: pre-wrap;
-    white-space: -moz-pre-wrap;
-    white-space: -pre-wrap;
-    white-space: -o-pre-wrap;
-    overflow-wrap: break-word;
-    word-wrap: break-word;
-    text-align: left;
 }
 
 .table th {
@@ -85,29 +26,4 @@ body {
 
 .table tbody>tr>td.vert-align{
     vertical-align: middle;
-}
-
-/* Tooltips */
-.tooltip-inner {
-    max-width: 100%;
-}
-
-/* Status icon on left side of report list */
-.list-view-pf-left {
-    max-width: 36px;
-}
-
-/* Width of date on left side of report list */
-.timestamp-heading {
-    max-width: 125px;
-}
-
-/* Combined width of date and playbook path in report list */
-.list-view-pf-description {
-    max-width: 40%;
-}
-
-/* Combined width of playbook highlights/panel items in report list */
-.list-view-pf-additional-info {
-    max-width: 70%;
 }

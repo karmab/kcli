@@ -2,6 +2,12 @@ rhv:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
  memory: 8192
  numcpus: 2
+ cpumodel: host-model
+ cpuflags:
+  - name: arat
+    enable: false
+  - name: clflushopt
+    enable: false
  nets:
   - default
  disks:

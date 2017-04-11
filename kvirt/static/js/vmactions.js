@@ -1,4 +1,4 @@
-function start(vm){
+function vmstart(vm){
   $("#wheel").show();
   data = {'name': vm, 'action': 'start'};
   $.ajax({  
@@ -16,7 +16,7 @@ function start(vm){
 	});
 }
 
-function stop(vm){
+function vmstop(vm){
   $("#wheel").show();
   data = {'name': vm, 'action': 'stop'};
   $.ajax({  
@@ -34,9 +34,13 @@ function stop(vm){
 	});
 }
 
-function kill(vm){
+function vmdelete(vm){
   $("#wheel").show();
   data = {'name': vm, 'action': 'delete'};
+  var r = confirm("Are you sure you want to delete this VM?");
+  if (r != true) {
+    return ;
+  }
   $.ajax({
        type: "POST",
         url: '/vmaction',
@@ -47,6 +51,28 @@ function kill(vm){
                 $('.top-right').notify({message: { text: "Vm "+vm+" Deleted!!!" }, type: 'success'}).show();
             } else {
                 $('.top-right').notify({message: { text: "VM "+vm+" Failed to Delete" }, type: 'danger'}).show();
+            };
+        }
+    });
+}
+
+function vmcreate(profile){
+  var name = prompt("Enter vm name");
+  if (name == null) {
+    return ;
+  }
+  $("#wheel").show();
+  data = {'name': name, 'action': 'create', 'profile': profile};
+  $.ajax({
+       type: "POST",
+        url: '/vmaction',
+        data: data,
+        success: function(data) {
+            $("#wheel").hide();
+            if (data == '0') {
+                $('.top-right').notify({message: { text: "Vm "+vm+" Created!!!" }, type: 'success'}).show();
+            } else {
+                $('.top-right').notify({message: { text: "VM "+vm+" Failed to Create" }, type: 'danger'}).show();
             };
         }
     });

@@ -1,0 +1,66 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div id="wheel"></div>
+<div class='notifications top-right'></div>
+<!--input type="checkbox" id="refresh" >Refresh !-->
+<button type="button" class="btn btn-default" id="refresh" onclick="window.location.reload()" ><span data-toggle="tooltip" title="Refresh Profiles" class="glyphicon glyphicon-refresh"></span></button><p>
+<table id="profiles" class="table table-striped table-bordered" cellspacing="0" width="100%">
+        <thead>
+            <tr>
+                <th>Profile</th>
+                <th>Numcpus</th>
+                <th>Memory</th>
+                <th>Pool</th>
+                <th>Disks</th>
+                <th>Template</th>
+                <th>Nets</th>
+                <th>Cloudinit</th>
+                <th>Nested</th>
+                <th>Reservedns</th>
+                <th>Reservehost</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for profile in profiles %}
+            <tr>
+                <td>{{ profile[0] }}</td>
+                <td>{{ profile[1] }}</td>
+                <td>{{ profile[2] }}</td>
+                <td>{{ profile[3] }}</td>
+                <td>{{ profile[4] }}</td>
+                <td>{{ profile[5] }}</td>
+                <td>{{ profile[6] }}</td>
+                <td>{{ profile[7] }}</td>
+                <td>{{ profile[8] }}</td>
+                <td>{{ profile[9] }}</td>
+                <td>{{ profile[10] }}</td>
+                <td>
+                    <button type="button" class="btn btn-default" id="create" onclick="vmcreate('{{ profile[0] }}');"><span data-toggle="tooltip" title="Create Vm from Profile" class="glyphicon glyphicon-shopping-cart"></span></button><p>
+                </td>
+            </tr>
+            {% endfor %} 
+        </tbody>
+</table>
+
+<script>
+$(document).ready(function() {
+$('#profiles').dataTable();
+//$('#vms').dataTable({
+//   'columnDefs': [
+//      {
+//         'targets': 0,
+//         'checkboxes': {
+//            'selectRow': true
+//         }
+//      }
+//   ],
+//   'select': {
+//      'style': 'multi'
+//   },
+//   'order': [[1, 'asc']]
+//});
+});
+</script>
+{% endblock %}
