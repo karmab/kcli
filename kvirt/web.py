@@ -114,6 +114,40 @@ def containers():
     return render_template('containers.html', title='Containers', containers=containers)
 
 
+@app.route('/networks')
+def networks():
+    """
+    retrieves all networks
+    """
+    config = Kconfig()
+    k = config.k
+    networks = k.list_networks()
+    return render_template('networks.html', title='Networks', networks=networks)
+
+
+@app.route('/pools')
+def pools():
+    """
+    retrieves all pools
+    """
+    config = Kconfig()
+    k = config.k
+    pools = []
+    for pool in k.list_pools():
+        poolpath = k.get_pool_path(pool)
+        pools.append([pool, poolpath])
+    return render_template('pools.html', title='Pools', pools=pools)
+
+
+@app.route('/plans')
+def plans():
+    """
+    retrieves all plans
+    """
+    config = Kconfig()
+    return render_template('plans.html', title='Plans', plans=config.list_plans())
+
+
 @app.route("/containeraction", methods=['POST'])
 def containeraction():
     """
