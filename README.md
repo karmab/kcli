@@ -210,6 +210,8 @@ Note that most of the parameters are actually optional, and can be overridden in
 - *user* Defaults to root
 - *protocol* Defaults to ssh
 - *url* can be used to specify an exotic qemu url
+- *tunnel* Defaults to False. Setting it to true will make kcli use tunnels for console and for ssh access. You want that if you only open ssh port to your hypervisor!
+- *insecure* Defaults to False. Setting it to true will make kcli add options when sshing to machines so that you dont get any warning or check known hosts or changed server ssh keys
 
 ## Available parameters for profile/plan files
 
@@ -240,7 +242,6 @@ Note that most of the parameters are actually optional, and can be overridden in
 - *profile* name of one of your profile. Only checked in plan file
 - *scripts* array of paths of custom script to inject with cloudinit. Note that it will override cmds part. You can either specify full paths or relative to where you're running kcli. Only checked in profile or plan file
 - *nested* Defaults to True
-- *tunnel* Defaults to False. Setting it to true will make kcli use tunnels for console and for ssh access. You want that if you only open ssh port to your hypervisor!
 - *sharedkey* Defaults to False. Set it to true so that a private/public key gets shared between all the nodes of your plan. Additionally, root access will be allowed
 - *files* (optional)- Array of files to inject to the vm. For ecach of the them , you can specify path, owner ( root by default) , permissions (600 by default ) and either origin or content to gather content data directly or from specified origin
 

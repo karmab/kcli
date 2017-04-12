@@ -282,6 +282,9 @@ Available parameters for profile/plan files
 -  *tunnel* Defaults to False. Setting it to true will make kcli use
    tunnels for console and for ssh access. You want that if you only
    open ssh port to your hypervisor!
+-  *insecure* Defaults to False. Setting it to true will make kcli add
+   options when sshing to machines so that you dont get any warning or
+   check known hosts or changed server ssh keys
 -  *sharedkey* Defaults to False. Set it to true so that a
    private/public key gets shared between all the nodes of your plan.
    Additionally, root access will be allowed
@@ -764,16 +767,6 @@ host\_vars and groups\_vars directory for this purpose
 
 Note that when leveraging ansible this way, an inventory file will be
 generated on the fly for you and let in */tmp/$PLAN.inv*
-
-Bash Completion
----------------
-
-Create a file named kcli-complete.sh with the following content and
-source it ( in your bash profile for instance )
-
-.. code:: shell
-
-    _KCLI_COMPLETE=source kcli
 
 Testing
 -------

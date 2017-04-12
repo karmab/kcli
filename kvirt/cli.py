@@ -398,7 +398,6 @@ def disk(args):
             common.pprint("Missing diskname. Leaving...", color='red')
             os._exit(1)
         common.pprint("Deleting disk %s from %s..." % (diskname, name), color='green')
-        global k
         k.delete_disk(name, diskname)
         return
     if size is None:
@@ -421,7 +420,6 @@ def nic(args):
     k = config.k
     if delete:
         common.pprint("Deleting nic from %s..." % (name), color='green')
-        global k
         k.delete_nic(name, interface)
         return
     if network is None:
@@ -477,7 +475,8 @@ def ssh(args):
     global config
     k = config.k
     tunnel = config.tunnel
-    k.ssh(name, local=l, remote=r, tunnel=tunnel)
+    insecure = config.insecure
+    k.ssh(name, local=l, remote=r, tunnel=tunnel, insecure=insecure)
 
 
 def scp(args):

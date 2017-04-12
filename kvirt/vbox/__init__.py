@@ -849,7 +849,7 @@ class Kbox(Kbase):
         #    print("No port found. Cannot ssh...")
         return user, port
 
-    def ssh(self, name, local=None, remote=None, tunnel=False):
+    def ssh(self, name, local=None, remote=None, tunnel=False, insecure=False):
         user, port = self._ssh_credentials(name)
         if port == '':
             return
@@ -859,7 +859,10 @@ class Kbox(Kbase):
                 sshcommand = "-L %s %s" % (local, sshcommand)
             if remote is not None:
                 sshcommand = "-R %s %s" % (remote, sshcommand)
-            sshcommand = "ssh %s" % sshcommand
+            if insecure:
+                sshcommand = "ssh -o LogLevel=quiet -o 'UserKnownHostsFile=/dev/null' -o 'StrictHostKeyChecking=no' %s" % sshcommand
+            else:
+                sshcommand = "ssh %s" % sshcommand
             os.system(sshcommand)
 
     def scp(self, name, source=None, destination=None, tunnel=False, download=False, recursive=False):

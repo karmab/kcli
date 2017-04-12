@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Base Kvirt config class
+Base Kvirt serving as interface for the virtualisation providers
 """
 
 __version__ = '5.24'
@@ -130,7 +130,7 @@ class Kbase(object):
         print("not implemented")
         return
 
-    def ssh(self, name, local=None, remote=None, tunnel=False):
+    def ssh(self, name, local=None, remote=None, tunnel=False, insecure=False):
         print("not implemented")
         return
 

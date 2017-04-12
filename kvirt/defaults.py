@@ -31,3 +31,4 @@ REPORT = False
 REPORTALL = False
 REPORTURL = "http://127.0.0.1:9000"
 REPORTDIR = "static/reports"
+INSECURE = False

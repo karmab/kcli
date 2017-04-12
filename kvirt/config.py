@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Base Kvirt config class
+Kvirt config class
 """
 
-from defaults import NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, RESERVEHOST, START, NESTED, TUNNEL, REPORTURL, REPORTDIR, REPORT, REPORTALL
+from defaults import NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, RESERVEHOST, START, NESTED, TUNNEL, REPORTURL, REPORTDIR, REPORT, REPORTALL, INSECURE
 import ansibleutils
 import dockerutils
 import nameutils
@@ -61,6 +61,7 @@ class Kconfig:
         defaults['nested'] = bool(default.get('nested', NESTED))
         defaults['start'] = bool(default.get('start', START))
         defaults['tunnel'] = default.get('tunnel', TUNNEL)
+        defaults['insecure'] = default.get('insecure', INSECURE)
         defaults['reporturl'] = default.get('reporturl', REPORTURL)
         defaults['reportdir'] = default.get('reportdir', REPORTDIR)
         defaults['report'] = bool(default.get('report', REPORT))
@@ -88,6 +89,7 @@ class Kconfig:
         self.protocol = options.get('protocol', 'ssh')
         self.url = options.get('url', None)
         self.tunnel = bool(options.get('tunnel', self.default['tunnel']))
+        self.insecure = bool(options.get('insecure', self.default['insecure']))
         self.reporturl = options.get('reporturl', self.default['reportdir'])
         self.reportdir = options.get('reportdir', self.default['reportdir'])
         self.type = options.get('type', 'kvm')
@@ -630,15 +632,6 @@ class Kconfig:
                         common.pprint("Ansible skipped as no new vm within playbook provisioned", color='blue')
                         return
                     ansibleutils.make_inventory(k, plan, newvms, tunnel=self.tunnel)
-                    # with open("/tmp/%s.inv" % plan, "w") as f:
-                    #    f.write("[%s]\n" % plan)
-                    #    for name in newvms:
-                    #        inventory = ansibleutils.inventory(k, name)
-                    #        if inventory is not None:
-                    #            f.write("%s\n" % inventory)
-                    #    if config.tunnel:
-                    #        f.write("[%s:vars]\n" % plan)
-                    #        f.write("ansible_ssh_common_args='-o ProxyCommand=\"ssh -p %s -W %%h:%%p %s@%s\"'\n" % (config.port, config.user, config.host))
                     ansiblecommand = "ansible-playbook"
                     if verbose:
                         ansiblecommand = "%s -vvv" % ansiblecommand
