@@ -225,18 +225,32 @@ def list(args):
                 clientstable.add_row([client, ''])
         print(clientstable)
     elif profiles:
-        profiles = config.list_profiles()
-        if short:
-            profilestable = PrettyTable(["Profile"])
-            for profile in sorted(profiles):
-                profilename = profile[0]
-                profilestable.add_row([profilename])
+        if containers:
+            profiles = config.list_containerprofiles()
+            if short:
+                profilestable = PrettyTable(["Profile"])
+                for profile in sorted(profiles):
+                    profilename = profile[0]
+                    profilestable.add_row([profilename])
+            else:
+                profilestable = PrettyTable(["Profile", "Image", "Nets", "Ports", "Volumes", "Cmd"])
+                for profile in sorted(profiles):
+                        profilestable.add_row(profile)
+            profilestable.align["Profile"] = "l"
+            print(profilestable)
         else:
-            profilestable = PrettyTable(["Profile", "Numcpus", "Memory", "Pool", "Disks", "Template", "Nets", "Cloudinit", "Nested", "Reservedns", "Reservehost"])
-            for profile in sorted(profiles):
-                    profilestable.add_row(profile)
-        profilestable.align["Network"] = "l"
-        print(profilestable)
+            profiles = config.list_profiles()
+            if short:
+                profilestable = PrettyTable(["Profile"])
+                for profile in sorted(profiles):
+                    profilename = profile[0]
+                    profilestable.add_row([profilename])
+            else:
+                profilestable = PrettyTable(["Profile", "Numcpus", "Memory", "Pool", "Disks", "Template", "Nets", "Cloudinit", "Nested", "Reservedns", "Reservehost"])
+                for profile in sorted(profiles):
+                        profilestable.add_row(profile)
+            profilestable.align["Profile"] = "l"
+            print(profilestable)
         return
     elif templates:
         templatestable = PrettyTable(["Template"])

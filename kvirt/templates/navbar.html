@@ -29,7 +29,13 @@
                     <li><a href="{{ url_for('containers') }}">List</a></li>
                 </ul>
             </li>
-            <li><a href="{{ url_for('profiles') }}">Profiles</a></li>
+            <li class="dropdown">
+                <a data-toggle="dropdown" class="dropdown-toggle" href="#">Profiles <b class="caret"></b></a>
+                <ul role="menu" class="dropdown-menu">
+                    <li><a href="{{ url_for('vmprofiles') }}">Vms</a></li>
+                    <li><a href="{{ url_for('containerprofiles') }}">Container</a></li>
+                </ul>
+            </li>
             <li class="dropdown">
                 <a data-toggle="dropdown" class="dropdown-toggle" href="#">Networks <b class="caret"></b></a>
                 <ul role="menu" class="dropdown-menu">

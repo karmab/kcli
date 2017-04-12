@@ -217,14 +217,24 @@ def containeraction():
         return jsonify(failure)
 
 
-@app.route('/profiles')
-def profiles():
+@app.route('/vmprofiles')
+def vmprofiles():
     """
-    retrieves all profiles
+    retrieves vm profiles
     """
     config = Kconfig()
     profiles = config.list_profiles()
-    return render_template('profiles.html', title='Profiles', profiles=profiles)
+    return render_template('vmprofiles.html', title='VMProfiles', profiles=profiles)
+
+
+@app.route('/containerprofiles')
+def containerprofiles():
+    """
+    retrieves vm profiles
+    """
+    config = Kconfig()
+    profiles = config.list_containerprofiles()
+    return render_template('containerprofiles.html', title='ContainerProfiles', profiles=profiles)
 
 
 def run():

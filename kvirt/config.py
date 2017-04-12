@@ -253,6 +253,9 @@ class Kconfig:
         results = []
         for profile in sorted(self.profiles):
                 info = self.profiles[profile]
+                profiletype = info.get('type', '')
+                if profiletype == 'container':
+                    continue
                 numcpus = info.get('numcpus', default['pool'])
                 memory = info.get('memory', default['memory'])
                 pool = info.get('pool', default['pool'])
@@ -282,6 +285,22 @@ class Kconfig:
                 reservedns = info.get('reservedns', default['reservedns'])
                 reservehost = info.get('reservehost', default['reservehost'])
                 results.append([profile, numcpus, memory, pool, diskinfo, template, netinfo, cloudinit, nested, reservedns, reservehost])
+        return results
+
+    def list_containerprofiles(self):
+        results = []
+        for profile in sorted(self.profiles):
+                info = self.profiles[profile]
+                if 'type' not in info or info['type'] != 'container':
+                    continue
+                else:
+                    image = next((e for e in [info.get('image'), info.get('template')] if e is not None), '')
+                    nets = info.get('nets', '')
+                    ports = info.get('ports', '')
+                    volumes = next((e for e in [info.get('volumes'), info.get('disks')] if e is not None), '')
+                    # environment = profile.get('environment', '')
+                    cmd = info.get('cmd', '')
+                    results.append([profile, image, nets, ports, volumes, cmd])
         return results
 
     def plan(self, plan, ansible=False, get=None, path='plans', autostart=False, container=False, noautostart=False, inputfile=None, start=False, stop=False, delete=False, delay=0, force=True):

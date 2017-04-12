@@ -305,7 +305,7 @@ If you have multiple hypervisors, you can generally use the flag *-C $CLIENT* to
 
 You can also use the following to list all you vms :
  
-`kcli list -C all`  
+`kcli -C all list`  
 
 
 ## Templates
