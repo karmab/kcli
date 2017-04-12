@@ -284,7 +284,7 @@ class Kconfig:
                 results.append([profile, numcpus, memory, pool, diskinfo, template, netinfo, cloudinit, nested, reservedns, reservehost])
         return results
 
-    def plan(self, plan, ansible=False, get=None, path='plans', autostart=False, container=False, noautostart=False, inputfile=None, start=False, stop=False, delete=False, delay=0):
+    def plan(self, plan, ansible=False, get=None, path='plans', autostart=False, container=False, noautostart=False, inputfile=None, start=False, stop=False, delete=False, delay=0, force=True):
         """Create/Delete/Stop/Start vms from plan file"""
         k = self.k
         newvms = []
@@ -298,7 +298,8 @@ class Kconfig:
             if plan == '':
                 common.pprint("That would delete every vm...Not doing that", color='red')
                 os._exit(1)
-            common.confirm('Are you sure about deleting plan %s' % plan)
+            if not force:
+                common.confirm('Are you sure about deleting plan %s' % plan)
             found = False
             for vm in sorted(k.list()):
                 name = vm[0]
@@ -328,7 +329,7 @@ class Kconfig:
             else:
                 common.pprint("Nothing to do for plan %s" % plan, color='red')
                 os._exit(1)
-            return
+            return 0
         if autostart:
             common.pprint("Set vms from plan %s to autostart" % (plan), color='green')
             for vm in sorted(k.list()):

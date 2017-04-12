@@ -56,10 +56,12 @@ function vmdelete(vm){
     });
 }
 
-function vmcreate(profile){
-  var name = prompt("Enter vm name");
-  if (name == null) {
-    return ;
+function vmcreate(name, profile){
+  if (name == '') {
+    var name = prompt("Enter vm name");
+    if (name == null) {
+        return ;
+    }
   }
   $("#wheel").show();
   data = {'name': name, 'action': 'create', 'profile': profile};

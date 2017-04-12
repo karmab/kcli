@@ -24,7 +24,7 @@ class TABLE(object):
 
 @app.route("/")
 @app.route('/vms')
-def get():
+def vms():
     """
     retrieves all vms
     """
@@ -43,10 +43,20 @@ def get():
     return render_template('vms.html', title='Home', vms=vms)
 
 
+@app.route('/vmscreate')
+def vmscreate():
+    """
+    create vm
+    """
+    config = Kconfig()
+    profiles = config.list_profiles()
+    return render_template('vmscreate.html', title='CreateVm', profiles=profiles)
+
+
 @app.route("/vmaction", methods=['POST'])
 def vmaction():
     """
-    start/stop/delete vm
+    start/stop/delete/create vm
     """
     config = Kconfig()
     k = config.k
@@ -74,6 +84,37 @@ def vmaction():
         response = jsonify(failure)
         response.status_code = 400
         return jsonify(failure)
+
+
+@app.route("/planaction", methods=['POST'])
+def planaction():
+    """
+    start/stop/delete plan
+    """
+    config = Kconfig()
+    if 'name' in request.form:
+        plan = request.form['name']
+        action = request.form['action']
+        if action == 'start':
+            result = config.plan(plan, start=True)
+        elif action == 'stop':
+            result = config.plan(plan, stop=True)
+        elif action == 'delete':
+            result = config.plan(plan, delete=True)
+        # elif action == 'create' and 'profile' in request.form:
+        #    profile = request.form['profile']
+        #     result = config.create_plan(name, profile)
+        else:
+            result = "Nothing to do"
+        print(result)
+        response = jsonify(result)
+        print(response)
+        response.status_code = 200
+        return response
+    else:
+        failure = {'result': 'failure', 'reason': "Invalid Data"}
+        response = jsonify(failure)
+        response.status_code = 400
 
 
 @app.route("/report", methods=['POST'])
