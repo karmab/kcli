@@ -323,6 +323,7 @@ class Kbox(Kbase):
             source = vm.get_extra_data('template')
             description = vm.description
             profile = vm.get_extra_data('profile')
+            report = vm.get_extra_data('report')
             # ip = vm.get_extra_data('ip')
             for n in range(7):
                 nic = vm.get_network_adapter(n)
@@ -356,7 +357,7 @@ class Kbox(Kbase):
                                 nat_network.remove_port_forward_rule(False, rulename)
                                 nat_network.add_port_forward_rule(False, rulename, library.NATProtocol.tcp, '', int(hostport), guestip, 22)
                                 port = hostport
-            vms.append([name, state, port, source, description, profile])
+            vms.append([name, state, port, source, description, profile, report])
         return vms
 
     def console(self, name, tunnel=False):
@@ -576,7 +577,7 @@ class Kbox(Kbase):
             vm.setAutostart(1)
             vm.create()
 
-    def update_ip(self, name, ip):
+    def update_metadata(self, name, metatype, metavalue):
         conn = self.conn
         try:
             vm = conn.find_machine(name)
@@ -586,7 +587,7 @@ class Kbox(Kbase):
         session = Session()
         vm.lock_machine(session, library.LockType.write)
         machine = session.machine
-        machine.set_extra_data('ip', ip)
+        machine.set_extra_data(metatype, metavalue)
         machine.save_settings()
         session.unlock_machine()
 

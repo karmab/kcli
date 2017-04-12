@@ -1070,43 +1070,6 @@ class Kvirt(Kbase):
             stream.sendAll(self.handler, ori)
             stream.finish()
 
-    def update_ip(self, name, ip):
-        conn = self.conn
-        vm = conn.lookupByName(name)
-        xml = vm.XMLDesc(0)
-        root = ET.fromstring(xml)
-        if not vm:
-            print("VM %s not found" % name)
-        if vm.isActive() == 1:
-            print("Machine up. Change will only appear upon next reboot")
-        osentry = root.getiterator('os')[0]
-        smbios = osentry.find('smbios')
-        if smbios is None:
-            newsmbios = ET.Element("smbios", mode="sysinfo")
-            osentry.append(newsmbios)
-        sysinfo = root.getiterator('sysinfo')
-        system = root.getiterator('system')
-        if not sysinfo:
-            sysinfo = ET.Element("sysinfo", type="smbios")
-            root.append(sysinfo)
-        sysinfo = root.getiterator('sysinfo')[0]
-        if not system:
-            system = ET.Element("system")
-            sysinfo.append(system)
-        system = root.getiterator('system')[0]
-        versionfound = False
-        for entry in root.getiterator('entry'):
-            attributes = entry.attrib
-            if attributes['name'] == 'version':
-                entry.text = ip
-                versionfound = True
-        if not versionfound:
-            version = ET.Element("entry", name="version")
-            version.text = ip
-            system.append(version)
-        newxml = ET.tostring(root)
-        conn.defineXML(newxml)
-
     def update_metadata(self, name, metatype, metavalue):
         ET.register_namespace('kvirt', 'kvirt')
         conn = self.conn

@@ -72,10 +72,13 @@
 
 <script>
 $(document).ready(function() {
-//$('#vms').dataTable();
-//});
 $('#vms').dataTable({
-    "order": [[ 1, "asc" ]]
+    "order": [[ 1, "asc" ]],
+    stateSave: true,
+//    "lengthMenu": [[20, 40, 50, -1], [20, 40, 50, "All"]]
+//    "scrollY":        "200px",
+//    "scrollCollapse": true,
+//    "paging":         false
 });
 });
 </script>

@@ -86,10 +86,6 @@ class Kbase(object):
         print("not implemented")
         return
 
-    def update_ip(self, name, ip):
-        print("not implemented")
-        return
-
     def update_metadata(self, name, metatype, metavalue):
         print("not implemented")
         return
