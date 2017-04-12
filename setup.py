@@ -9,8 +9,9 @@ if os.path.exists('README.rst'):
 setup(
     name='kcli',
     version='5.24',
-    packages=find_packages(),
     include_package_data=True,
+    packages=find_packages(),
+    zip_safe=False,
     description=description,
     long_description=long_description,
     url='http://github.com/karmab/kcli',
@@ -20,6 +21,7 @@ setup(
     install_requires=[
         'libvirt-python>=2.2.0',
         'docker',
+        'flask',
         'iptools',
         'netaddr',
         'PyYAML',
@@ -29,5 +31,6 @@ setup(
     entry_points='''
         [console_scripts]
         kcli=kvirt.cli:cli
+        kweb=kvirt.web:run
     ''',
 )

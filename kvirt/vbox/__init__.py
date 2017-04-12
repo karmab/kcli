@@ -1041,3 +1041,8 @@ class Kbox(Kbase):
         #    return
         #    # progress = vm.take_snapshot(name, name, True)
         #    # progress.wait_for_completion()
+
+    def get_pool_path(self, pool):
+        path = [p['path'] for p in self._pool_info() if p['name'] == pool]
+        if path:
+            return path[0]

@@ -177,3 +177,7 @@ class Kbase(object):
     def vm_ports(self, name):
         print("not implemented")
         return
+
+    def get_pool_path(self, pool):
+        print("not implemented")
+        return

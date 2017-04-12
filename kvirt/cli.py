@@ -173,11 +173,17 @@ def list(args):
     else:
         k = config.k
     if pools:
-        poolstable = PrettyTable(["Pool"])
-        poolstable.align["Pool"] = "l"
         pools = k.list_pools()
-        for pool in sorted(pools):
-            poolstable.add_row([pool])
+        if short:
+            for pool in sorted(pools):
+                poolstable = PrettyTable(["Pool"])
+                poolstable.add_row([pool])
+        else:
+            for pool in sorted(pools):
+                poolstable = PrettyTable(["Pool", "Path"])
+                poolpath = k.get_pool_path(pool)
+                poolstable.add_row([pool, poolpath])
+        poolstable.align["Pool"] = "l"
         print(poolstable)
         return
     if hosts:

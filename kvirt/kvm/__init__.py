@@ -1744,3 +1744,15 @@ class Kvirt(Kbase):
             attributes = bridge[0].attrib
             bridge = attributes.get('name')
         return bridge
+
+    def get_pool_path(self, pool):
+        conn = self.conn
+        pool = conn.storagePoolLookupByName(pool)
+        poolxml = pool.XMLDesc(0)
+        root = ET.fromstring(poolxml)
+        pooltype = root.getiterator('pool')[0].get('type')
+        if pooltype == 'dir':
+            poolpath = root.getiterator('path')[0].text
+        else:
+            poolpath = root.getiterator('device')[0].get('path')
+        return poolpath

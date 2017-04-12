@@ -1,4 +1,8 @@
 include README.md
 recursive-include samples *
-recursive-include extra *
+recursive-include plans *
+recursive-include extras *
 recursive-include tests *
+recursive-include kvirt/static *
+recursive-include kvirt/templates *
+

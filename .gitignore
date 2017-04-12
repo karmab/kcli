@@ -1,2 +1,12 @@
+build/
+*.egg
+*.eggs
+*.egg-info
+dist
+build
+eggs
 *pyc
 *retry
+.DS_Store
+.cache/
+kvirt/static/reports/*

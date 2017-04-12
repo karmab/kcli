@@ -150,9 +150,14 @@ def profiles():
     return render_template('profiles.html', title='Profiles', profiles=profiles)
 
 
+def run():
+    app.run(host='0.0.0.0', port=port, debug=debug)
+
+
 if __name__ == '__main__':
     # global k
     # config = Kconfig()
     # k = config.k
     # with patch.object(getpass, "getuser", return_value='default'):
-    app.run(host='0.0.0.0', port=port, debug=debug)
+    # app.run(host='0.0.0.0', port=port, debug=debug)
+    run()
