@@ -75,7 +75,10 @@ class Kconfig:
         else:
             with open(profilefile, 'r') as entries:
                 self.profiles = yaml.load(entries)
-        if client is None:
+        if client == 'all':
+            self.client = 'all'
+            return
+        elif client is None:
             self.client = self.ini['default']['client']
         else:
             self.client = client

@@ -91,6 +91,8 @@ def report():
     if not k.exists(name):
         return "KO"
     k.update_metadata(name, 'report', status)
+    if not os.path.exists(reportdir):
+        os.mkdir(reportdir)
     with open("%s/%s.txt" % (reportdir, name), 'w') as f:
         f.write(report)
     print("Name: %s Status: %s" % (name, status))

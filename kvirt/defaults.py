@@ -30,5 +30,5 @@ TEMPLATES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATES
 REPORT = False
 REPORTALL = False
 REPORTURL = "http://127.0.0.1:9000"
-REPORTDIR = "static/reports"
+REPORTDIR = "/tmp/static/reports"
 INSECURE = False

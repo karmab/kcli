@@ -169,7 +169,8 @@ def list(args):
     if config.client == 'all':
         clis = []
         for cli in sorted(config.clients):
-            clis.append(cli)
+            clientconfig = Kconfig(client=cli)
+            clis.append(clientconfig)
     else:
         k = config.k
     if pools:
@@ -281,10 +282,9 @@ def list(args):
     else:
         if config.client == 'all':
             vms = PrettyTable(["Name", "Hypervisor", "Status", "Ips", "Source", "Description/Plan", "Profile", "Report"])
-            for client in sorted(clis):
-                k = config.get(client)
-                for vm in sorted(k.list()):
-                    vm.insert(1, client)
+            for cli in sorted(clis, key=lambda x: x.client):
+                for vm in sorted(cli.k.list()):
+                    vm.insert(1, cli.client)
                     if filters:
                         status = vm[2]
                         if status == filters:
