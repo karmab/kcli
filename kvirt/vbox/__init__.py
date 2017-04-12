@@ -301,7 +301,7 @@ class Kbox(Kbase):
         for network in conn.internal_networks:
             print("Network:%s Type:internal" % (network))
         for network in conn.nat_networks:
-            print("Network:%s Type:routed" % (network))
+            print("Network:%s Type:routed" % (network.network_name))
         return
         # print("Network:%s Type:routed Cidr:%s Dhcp:%s" % (networkname, cidr, dhcp))
 

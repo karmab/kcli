@@ -164,6 +164,7 @@ def list(args):
     containers = args.containers
     plans = args.plans
     filters = args.filters
+    short = args.short
     global config
     if config.client == 'all':
         clis = []
@@ -180,8 +181,8 @@ def list(args):
         print(poolstable)
         return
     if hosts:
-        clientstable = PrettyTable(["Name", "Current"])
-        clientstable.align["Name"] = "l"
+        clientstable = PrettyTable(["Host", "Current"])
+        clientstable.align["Host"] = "l"
         for client in sorted(config.clients):
             if client == config.client:
                 clientstable.add_row([client, 'X'])
@@ -192,14 +193,19 @@ def list(args):
     if networks:
         networks = k.list_networks()
         common.pprint("Listing Networks...", color='green')
-        networkstable = PrettyTable(["Name", "Type", "Cidr", "Dhcp", "Mode"])
-        networkstable.align["Name"] = "l"
-        for network in sorted(networks):
-            networktype = networks[network]['type']
-            cidr = networks[network]['cidr']
-            dhcp = networks[network]['dhcp']
-            mode = networks[network]['mode']
-            networkstable.add_row([network, networktype, cidr, dhcp, mode])
+        if short:
+            networkstable = PrettyTable(["Network"])
+            for network in sorted(networks):
+                networkstable.add_row([network])
+        else:
+            networkstable = PrettyTable(["Network", "Type", "Cidr", "Dhcp", "Mode"])
+            for network in sorted(networks):
+                networktype = networks[network]['type']
+                cidr = networks[network]['cidr']
+                dhcp = networks[network]['dhcp']
+                mode = networks[network]['mode']
+                networkstable.add_row([network, networktype, cidr, dhcp, mode])
+        networkstable.align["Network"] = "l"
         print(networkstable)
         return
     if clients:
@@ -212,11 +218,19 @@ def list(args):
                 clientstable.add_row([client, ''])
         print(clientstable)
     elif profiles:
-        profilestable = PrettyTable(["Profile", "Numcpus", "Memory", "Pool", "Disks", "Template", "Nets", "Cloudinit", "Nested", "Reservedns", "Reservehost"])
-        profilestable.align["Profile"] = "l"
-        for profile in sorted(config.list_profiles()):
-                profilestable.add_row(profile)
+        profiles = config.list_profiles()
+        if short:
+            profilestable = PrettyTable(["Profile"])
+            for profile in sorted(profiles):
+                profilename = profile[0]
+                profilestable.add_row([profilename])
+        else:
+            profilestable = PrettyTable(["Profile", "Numcpus", "Memory", "Pool", "Disks", "Template", "Nets", "Cloudinit", "Nested", "Reservedns", "Reservehost"])
+            for profile in sorted(profiles):
+                    profilestable.add_row(profile)
+        profilestable.align["Network"] = "l"
         print(profilestable)
+        return
     elif templates:
         templatestable = PrettyTable(["Template"])
         templatestable.align["Template"] = "l"
@@ -233,7 +247,6 @@ def list(args):
         common.pprint("Listing disks...", color='green')
         diskstable = PrettyTable(["Name", "Pool", "Path"])
         diskstable.align["Name"] = "l"
-        # global k
         disks = k.list_disks()
         for disk in sorted(disks):
             path = disks[disk]['path']
@@ -803,6 +816,7 @@ def cli():
     list_parser.add_argument('-P', '--pools', action='store_true')
     list_parser.add_argument('-n', '--networks', action='store_true')
     list_parser.add_argument('--containers', action='store_true')
+    list_parser.add_argument('--short', action='store_true')
     list_parser.add_argument('--plans', action='store_true')
     list_parser.add_argument('-f', '--filters', choices=('up', 'down'))
     list_parser.set_defaults(func=list)
