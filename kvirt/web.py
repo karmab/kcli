@@ -43,14 +43,48 @@ def vms():
     return render_template('vms.html', title='Home', vms=vms)
 
 
-@app.route('/vmscreate')
-def vmscreate():
+@app.route('/vmcreate')
+def vmcreate():
     """
     create vm
     """
     config = Kconfig()
     profiles = config.list_profiles()
-    return render_template('vmscreate.html', title='CreateVm', profiles=profiles)
+    return render_template('vmcreate.html', title='CreateVm', profiles=profiles)
+
+
+@app.route('/containercreate')
+def containercreate():
+    """
+    create container
+    """
+    config = Kconfig()
+    profiles = config.list_containerprofiles()
+    return render_template('containercreate.html', title='CreateContainer', profiles=profiles)
+
+
+@app.route('/poolcreate')
+def poolcreate():
+    """
+    create pool
+    """
+    return render_template('poolcreate.html', title='CreatePool')
+
+
+@app.route('/networkcreate')
+def networkcreate():
+    """
+    create network
+    """
+    return render_template('networkcreate.html', title='CreateNetwork')
+
+
+@app.route('/plancreate')
+def plancreate():
+    """
+    create plan
+    """
+    return render_template('plancreate.html', title='CreateNetwork')
 
 
 @app.route("/vmaction", methods=['POST'])

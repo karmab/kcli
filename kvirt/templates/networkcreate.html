@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div id="wheel"></div>
+<div class='notifications top-right'></div>
+<form id="createnetworkform">
+    <div class="form-group">
+        <label for="inputName">Network</label>
+        <input required="true" class="form-control" id="name" placeholder="Enter Network Name">
+    </div>
+    <div class="form-group">
+        <label for="inputName">Cidr</label>
+        <input required="true" class="form-control" id="cidr" placeholder="Enter Cidr">
+    </div>
+    <div class="checkbox">
+        <label><input id="dhcp" type="checkbox" class="form-check-input" checked >Dhcp</label>
+    </div>
+    <div class="checkbox">
+        <label><input id="isolated" type="checkbox" class="form-check-input" >Isolated</label>
+    </div>
+    <button type="submit" id="createnetworkbutton" class="btn btn-primary">Create</button>
+</form>
+
+<script>
+$(document).ready(function() {
+//$("#createnetworkbutton").click(function() {
+$("#createnetworkform").submit(function() {
+var name = $("#name").val();
+var cidr = $("#cidr").val();
+var isolated = $("#isolated").val();
+var dhcp = $("#dhcp").val();
+networkcreate(name, cidr, dhcp, isolated);
+return ;
+});
+});
+</script>
+{% endblock %}

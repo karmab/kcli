@@ -1,0 +1,43 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div id="wheel"></div>
+<div class='notifications top-right'></div>
+<form id="createplanform">
+    <div class="form-group">
+        <label for="inputName">Name</label>
+        <input type="name" class="form-control" id="name" placeholder="Enter Name">
+    </div>
+    <div class="form-group">
+        <label for="inputName">Url</label>
+        <input class="form-control" id="url" placeholder="Enter Url">
+    </div>
+    <div class="form-group">
+        <label for="inputName">Plan File</label>
+        <input class="form-control" id="planfile" value="kcli_plan.yml" placeholder="Planfile">
+    </div>
+    <div class="form-group">
+        <label for="inputName">Local File</label>
+        <input type="file" class="form-control-file" id="path" placeholder="Enter Path">
+    </div>
+    <div class="checkbox">
+        <label><input id="dhcp" type="checkbox" class="form-check-input" checked >Deploy</label>
+    </div>
+    <button type="submit" id="createplanbutton" class="btn btn-primary">Create</button>
+</form>
+
+<script>
+$(document).ready(function() {
+//$("#createplanbutton").click(function() {
+$("#createplanform").submit(function() {
+var name = $("#name").val();
+var url = $("#url").val();
+var planfile = $("#planfile").val();
+var path = $("#path").val();
+var deploy = $("#dhcp").val();
+plancreate(name, url, deploy);
+return ;
+});
+});
+</script>
+{% endblock %}
