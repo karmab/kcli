@@ -234,6 +234,12 @@ Available parameters for a hypervisor
 -  *user* Defaults to root
 -  *protocol* Defaults to ssh
 -  *url* can be used to specify an exotic qemu url
+-  *tunnel* Defaults to False. Setting it to true will make kcli use
+   tunnels for console and for ssh access. You want that if you only
+   open ssh port to your hypervisor!
+-  *insecure* Defaults to False. Setting it to true will make kcli add
+   options when sshing to machines so that you dont get any warning or
+   check known hosts or changed server ssh keys
 
 Available parameters for profile/plan files
 -------------------------------------------
@@ -279,12 +285,6 @@ Available parameters for profile/plan files
    paths or relative to where you're running kcli. Only checked in
    profile or plan file
 -  *nested* Defaults to True
--  *tunnel* Defaults to False. Setting it to true will make kcli use
-   tunnels for console and for ssh access. You want that if you only
-   open ssh port to your hypervisor!
--  *insecure* Defaults to False. Setting it to true will make kcli add
-   options when sshing to machines so that you dont get any warning or
-   check known hosts or changed server ssh keys
 -  *sharedkey* Defaults to False. Set it to true so that a
    private/public key gets shared between all the nodes of your plan.
    Additionally, root access will be allowed
@@ -434,7 +434,8 @@ with kcli plan. The following type can be used within a plan:
 -  profile
 -  ansible
 -  container
--  vm ( this is the type used when none is specified)
+-  plan ( so you can compose plans from several url)
+-  vm ( this is the type used when none is specified )
 
 Here are some examples of each type ( additional ones can be found in
 the `samples
@@ -535,6 +536,17 @@ container
        - /root/coco
 
 Look at the docker section for details on the parameters
+
+plan's plan ( Also known as inception style)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: yaml
+
+    ovirt:
+      type: plan
+      url: github.com/karmab/kcli/plans/ovirt
+      file: upstream.yml
+      run: true
 
 VMS
 ~~~

@@ -351,7 +351,8 @@ The following type can be used within a plan:
 - profile
 - ansible
 - container
-- vm ( this is the type used when none is specified)
+- plan ( so you can compose plans from several url)
+- vm ( this is the type used when none is specified )
 
 Here are some examples of each type ( additional ones can be found in the [samples directory](https://github.com/karmab/kcli/tree/master/samples)
 
@@ -427,6 +428,16 @@ centos:
    - /root/coco
 ```
 Look at the docker section for details on the parameters
+
+### plan's plan ( Also known as inception style)
+
+```YAML
+ovirt:
+  type: plan
+  url: github.com/karmab/kcli/plans/ovirt
+  file: upstream.yml
+  run: true
+```
 
 ### VMS
 You can point at an existing profile in your plans, define all parameters for the VMS, or combine both approaches. You can even add your own profile definitions in the plan file and reference them within the same plan:

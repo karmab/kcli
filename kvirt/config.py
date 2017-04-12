@@ -400,23 +400,47 @@ class Kconfig:
             profileentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'profile']
             templateentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'template']
             poolentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'pool']
+            planentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'plan']
             for p in profileentries:
                 vmprofiles[p] = entries[p]
+            if planentries:
+                common.pprint("Deploying Plans...", color='green')
+                for planentry in planentries:
+                    details = entries[planentry]
+                    url = details.get('url')
+                    path = details.get('path', plan)
+                    inputfile = details.get('file', 'kcli_plan.yml')
+                    run = details.get('run', False)
+                    if url is None:
+                        common.pprint("Missing Url for plan %s. Not creating it..." % planentry, color='blue')
+                        continue
+                    else:
+                        common.pprint("Grabbing Plan %s!" % planentry, color='green')
+                        path = "%s/%s" % (path, planentry)
+                        if not os.path.exists(plan):
+                            os.mkdir(plan)
+                        common.fetch(url, path)
+                        if run:
+                            os.chdir(path)
+                            common.pprint("Running kcli plan -f %s %s" % (inputfile, plan), color='green')
+                            self.plan(plan, ansible=False, get=None, path=path, autostart=False, container=False, noautostart=False, inputfile=inputfile, start=False, stop=False, delete=False, delay=delay)
+                            os.chdir('../..')
+                return
             if networkentries:
                 common.pprint("Deploying Networks...", color='green')
-            for net in networkentries:
-                netprofile = entries[net]
-                if k.net_exists(net):
-                    common.pprint("Network %s skipped!" % net, color='blue')
-                    continue
-                cidr = netprofile.get('cidr')
-                nat = bool(netprofile.get('nat', True))
-                if cidr is None:
-                    print("Missing Cidr for network %s. Not creating it..." % net)
-                    continue
-                dhcp = netprofile.get('dhcp', True)
-                result = k.create_network(name=net, cidr=cidr, dhcp=dhcp, nat=nat)
-                common.handle_response(result, net, element='Network ')
+                for net in networkentries:
+                    netprofile = entries[net]
+                    if k.net_exists(net):
+                        common.pprint("Network %s skipped!" % net, color='blue')
+                        continue
+                    cidr = netprofile.get('cidr')
+                    nat = bool(netprofile.get('nat', True))
+                    if cidr is None:
+                        common.pprint("Missing Cidr for network %s. Not creating it..." % net, color='blue')
+                        continue
+                    dhcp = netprofile.get('dhcp', True)
+                    result = k.create_network(name=net, cidr=cidr, dhcp=dhcp, nat=nat)
+                    common.handle_response(result, net, element='Network ')
             if poolentries:
                 common.pprint("Deploying Pool...", color='green')
                 pools = k.list_pools()
