@@ -47,10 +47,10 @@ function plandelete(plan){
         data: data,
         success: function(data) {
             $("#wheel").hide();
-            if (data == '0') {
+            if (data.result == 'success') {
                 $('.top-right').notify({message: { text: "Plan "+plan+" Deleted!!!" }, type: 'success'}).show();
             } else {
-                $('.top-right').notify({message: { text: "VM "+plan+" Failed to Delete" }, type: 'danger'}).show();
+                $('.top-right').notify({message: { text: "VM "+plan+" Failed to Delete because of"+ data.reason }, type: 'danger'}).show();
             };
         }
     });

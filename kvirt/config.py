@@ -351,7 +351,7 @@ class Kconfig:
             else:
                 common.pprint("Nothing to do for plan %s" % plan, color='red')
                 os._exit(1)
-            return 0
+            return {'result': 'success'}
         if autostart:
             common.pprint("Set vms from plan %s to autostart" % (plan), color='green')
             for vm in sorted(k.list()):
@@ -360,7 +360,7 @@ class Kconfig:
                 if description == plan:
                     k.update_start(name, start=True)
                     common.pprint("%s set to autostart!" % name, color='green')
-            return
+            return {'result': 'success'}
         if noautostart:
             common.pprint("Preventing vms from plan %s to autostart" % (plan), color='green')
             for vm in sorted(k.list()):
@@ -369,7 +369,7 @@ class Kconfig:
                 if description == plan:
                     k.update_start(name, start=False)
                     common.pprint("%s prevented to autostart!" % name, color='green')
-            return
+            return {'result': 'success'}
         if start:
             common.pprint("Starting vms from plan %s" % (plan), color='green')
             for vm in sorted(k.list()):
@@ -386,7 +386,7 @@ class Kconfig:
                         dockerutils.start_container(k, name)
                         common.pprint("Container %s started!" % name, color='green')
             common.pprint("Plan %s started!" % plan, color='green')
-            return
+            return {'result': 'success'}
         if stop:
             common.pprint("Stopping vms from plan %s" % (plan), color='green')
             for vm in sorted(k.list()):
@@ -403,11 +403,11 @@ class Kconfig:
                         dockerutils.stop_container(k, name)
                         common.pprint("Container %s stopped!" % name, color='green')
             common.pprint("Plan %s stopped!" % plan, color='green')
-            return
+            return {'result': 'success'}
         if get is not None:
             common.pprint("Retrieving specified plan from %s to %s" % (get, path), color='green')
             common.fetch(get, path)
-            return
+            return {'result': 'success'}
         if inputfile is None:
             inputfile = 'kcli_plan.yml'
             common.pprint("using default input file kcli_plan.yml", color='green')
@@ -451,7 +451,7 @@ class Kconfig:
                             common.pprint("Running kcli plan -f %s %s" % (inputfile, plan), color='green')
                             self.plan(plan, ansible=False, get=None, path=path, autostart=False, container=False, noautostart=False, inputfile=inputfile, start=False, stop=False, delete=False, delay=delay)
                             os.chdir('../..')
-                return
+                return {'result': 'success'}
             if networkentries:
                 common.pprint("Deploying Networks...", color='green')
                 for net in networkentries:
@@ -574,19 +574,11 @@ class Kconfig:
                         if not os.path.exists("%s.key" % plan) or not os.path.exists("%s.key.pub" % plan):
                             os.popen("ssh-keygen -t rsa -N '' -f %s.key" % plan)
                         publickey = open("%s.key.pub" % plan).read().strip()
-                        # privatekey = open("%s.key" % plan).readlines()
                         privatekey = open("%s.key" % plan).read().strip()
                         if keys is None:
                             keys = [publickey]
                         else:
                             keys.append(publickey)
-                        # sharedkeycmd = "'echo %s >/root/.ssh/id_rsa'" % privatekey
-                        # cmd1 = "'echo %s >/root/.ssh/id_rsa'" % privatekey
-                        # cmd2 = "chmod 600 /root/.ssh/id_rsa"
-                        # if cmds is None:
-                        #    cmds = [cmd1, cmd2]
-                        # else:
-                        #    cmds.extend([cmd1, cmd2])
                         if files:
                             files.append({'path': '/root/.ssh/id_rsa', 'content': privatekey})
                         else:
@@ -655,7 +647,6 @@ class Kconfig:
                     cmd = next((e for e in [profile.get('cmd'), customprofile.get('cmd')] if e is not None), None)
                     common.pprint("Container %s deployed!" % container, color='green')
                     dockerutils.create_container(k, name=container, image=image, nets=nets, cmd=cmd, ports=ports, volumes=volumes, environment=environment, label=label)
-                    # handle_response(result, name)
             if ansibleentries:
                 if not newvms:
                     common.pprint("Ansible skipped as no new vm within playbook provisioned", color='blue')
@@ -704,3 +695,4 @@ class Kconfig:
                         vms.append(name)
                 ansibleutils.make_inventory(k, plan, vms, tunnel=self.tunnel)
                 return
+        return {'result': 'success'}

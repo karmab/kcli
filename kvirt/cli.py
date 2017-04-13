@@ -511,7 +511,9 @@ def plan(args):
     delete = args.delete
     delay = args.delay
     global config
-    config.plan(plan, ansible=ansible, get=get, path=path, autostart=autostart, container=container, noautostart=noautostart, inputfile=inputfile, start=start, stop=stop, delete=delete, delay=delay)
+    result = config.plan(plan, ansible=ansible, get=get, path=path, autostart=autostart, container=container, noautostart=noautostart, inputfile=inputfile, start=start, stop=stop, delete=delete, delay=delay)
+    code = common.handle_response(result, plan, element='', action='created')
+    return code
 
 
 def ssh(args):
