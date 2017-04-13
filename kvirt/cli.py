@@ -89,53 +89,18 @@ def info(args):
 
 
 def host(args):
-    """List and Handle host"""
+    """Handle host"""
     switch = args.switch
+    enable = args.enable
+    disable = args.disable
     report = args.report
-    profiles = args.profiles
-    templates = args.templates
-    isos = args.isos
-    disks = args.disks
     pool = args.pool
     template = args.template
     download = args.download
     global config
     k = config.k
-    if switch:
-        if switch not in config.clients:
-            common.pprint("Client %s not found in config.Leaving...." % switch, color='green')
-            os._exit(1)
-        common.pprint("Switching to client %s..." % switch, color='green')
-        inifile = "%s/kcli.yml" % os.environ.get('HOME')
-        if os.path.exists(inifile):
-            for line in fileinput.input(inifile, inplace=True):
-                if 'client' in line:
-                    print(" client: %s" % switch)
-                else:
-                    print(line.rstrip())
-        return
     if report:
         k.report()
-    elif profiles:
-        for profile in sorted(config.profiles):
-            print(profile)
-    elif templates:
-        for template in sorted(k.volumes()):
-            print(template)
-    elif isos:
-        for iso in sorted(k.volumes(iso=True)):
-            print(iso)
-    elif disks:
-        common.pprint("Listing disks...", color='green')
-        diskstable = PrettyTable(["Name", "Pool", "Path"])
-        diskstable.align["Name"] = "l"
-        k = config.get()
-        disks = k.list_disks()
-        for disk in sorted(disks):
-            path = disks[disk]['path']
-            pool = disks[disk]['pool']
-            diskstable.add_row([disk, pool, path])
-        print(diskstable)
     elif download:
         if pool is None:
             common.pprint("Missing pool.Leaving...", color='red')
@@ -149,12 +114,76 @@ def host(args):
         result = k.add_image(template, pool)
         code = common.handle_response(result, shortname, element='Template ', action='Added')
         os._exit(code)
+    elif switch:
+        if switch not in config.clients:
+            common.pprint("Client %s not found in config.Leaving...." % switch, color='green')
+            os._exit(1)
+        elif not config.enabled:
+            common.pprint("Client %s is disabled.Leaving...." % switch, color='green')
+            os._exit(1)
+        common.pprint("Switching to client %s..." % switch, color='green')
+        inifile = "%s/kcli.yml" % os.environ.get('HOME')
+        if os.path.exists(inifile):
+            for line in fileinput.input(inifile, inplace=True):
+                if 'client' in line:
+                    print(" client: %s" % switch)
+                else:
+                    print(line.rstrip())
+        return
+    elif enable:
+        client = enable
+        if client not in config.clients:
+            common.pprint("Client %s not found in config.Leaving...." % client, color='green')
+            os._exit(1)
+        common.pprint("Enabling client %s..." % client, color='green')
+        inifile = "%s/kcli.yml" % os.environ.get('HOME')
+        if os.path.exists(inifile):
+            clientreached = False
+            for line in fileinput.input(inifile, inplace=True):
+                if line.startswith("%s:" % client):
+                    clientreached = True
+                    print(line.rstrip())
+                    continue
+                if clientreached and 'enabled' not in config.ini[client]:
+                    print(" enabled: true")
+                    clientreached = False
+                    print(line.rstrip())
+                    continue
+                elif clientreached and line.startswith(' enabled:'):
+                    print(" enabled: true")
+                    clientreached = False
+                else:
+                    print(line.rstrip())
+        return
+    elif disable:
+        client = disable
+        if client not in config.clients:
+            common.pprint("Client %s not found in config.Leaving...." % client, color='green')
+            os._exit(1)
+        common.pprint("Disabling client %s..." % client, color='green')
+        inifile = "%s/kcli.yml" % os.environ.get('HOME')
+        if os.path.exists(inifile):
+            clientreached = False
+            for line in fileinput.input(inifile, inplace=True):
+                if line.startswith("%s:" % client):
+                    clientreached = True
+                    print(line.rstrip())
+                    continue
+                if clientreached and 'enabled' not in config.ini[client]:
+                    print(" enabled: false")
+                    clientreached = False
+                    print(line.rstrip())
+                    continue
+                elif clientreached and line.startswith(' enabled:'):
+                    print(" enabled: false")
+                    clientreached = False
+                else:
+                    print(line.rstrip())
 
 
 def list(args):
-    """List clients, profiles, templates, isos, pools or vms"""
+    """List hosts, profiles, templates, isos, pools or vms"""
     hosts = args.hosts
-    clients = args.clients
     profiles = args.profiles
     templates = args.templates
     isos = args.isos
@@ -189,13 +218,14 @@ def list(args):
         print(poolstable)
         return
     if hosts:
-        clientstable = PrettyTable(["Host", "Current"])
+        clientstable = PrettyTable(["Host", "Enabled", "Current"])
         clientstable.align["Host"] = "l"
         for client in sorted(config.clients):
+            enabled = config.ini[client].get('enabled', True)
             if client == config.client:
-                clientstable.add_row([client, 'X'])
+                clientstable.add_row([client, enabled, 'X'])
             else:
-                clientstable.add_row([client, ''])
+                clientstable.add_row([client, enabled, ''])
         print(clientstable)
         return
     if networks:
@@ -216,15 +246,6 @@ def list(args):
         networkstable.align["Network"] = "l"
         print(networkstable)
         return
-    if clients:
-        clientstable = PrettyTable(["Name", "Current"])
-        clientstable.align["Name"] = "l"
-        for client in sorted(config.clients):
-            if client == config.client:
-                clientstable.add_row([client, 'X'])
-            else:
-                clientstable.add_row([client, ''])
-        print(clientstable)
     elif profiles:
         if containers:
             profiles = config.list_containerprofiles()
@@ -296,7 +317,7 @@ def list(args):
         print(plans)
     else:
         if config.client == 'all':
-            vms = PrettyTable(["Name", "Hypervisor", "Status", "Ips", "Source", "Description/Plan", "Profile", "Report"])
+            vms = PrettyTable(["Name", "Host", "Status", "Ips", "Source", "Description/Plan", "Profile", "Report"])
             for cli in sorted(clis, key=lambda x: x.client):
                 for vm in sorted(cli.k.list()):
                     vm.insert(1, cli.client)
@@ -817,12 +838,10 @@ def cli():
 
     host_info = 'List and Handle host'
     host_parser = subparsers.add_parser('host', description=host_info, help=host_info)
+    host_parser.add_argument('-d', '--disable', help='Disable indicated client', metavar='CLIENT')
+    host_parser.add_argument('-e', '--enable', help='Enable indicated client', metavar='CLIENT')
     host_parser.add_argument('-s', '--switch', help='Switch To indicated client', metavar='CLIENT')
-    host_parser.add_argument('-r', '--report', help='Report Hypervisor Information', action='store_true')
-    host_parser.add_argument('--profiles', help='List Profiles', action='store_true')
-    host_parser.add_argument('-t', '--templates', help='List Templates', action='store_true')
-    host_parser.add_argument('-i', '--isos', help='List Isos', action='store_true')
-    host_parser.add_argument('-d', '--disks', help='List Disks', action='store_true')
+    host_parser.add_argument('-r', '--report', help='Report Host Information', action='store_true')
     host_parser.add_argument('-p', '--pool', default='default', help='Pool to use when downloading', metavar='POOL')
     host_parser.add_argument('--template', choices=('arch', 'centos6', 'centos7', 'cirros', 'debian8', 'fedora24', 'fedora25', 'gentoo', 'opensuse', 'ubuntu1404', 'ubuntu1604'), help='Template/Image to download')
     host_parser.add_argument('--download', help='Download Template/Image', action='store_true')
@@ -836,7 +855,6 @@ def cli():
     list_info = 'List clients, profiles, templates, isos,...'
     list_parser = subparsers.add_parser('list', description=list_info, help=list_info)
     list_parser.add_argument('-H', '--hosts', action='store_true')
-    list_parser.add_argument('-c', '--clients', action='store_true')
     list_parser.add_argument('-p', '--profiles', action='store_true')
     list_parser.add_argument('-t', '--templates', action='store_true')
     list_parser.add_argument('-i', '--isos', action='store_true')
@@ -956,7 +974,7 @@ def cli():
     vm_parser.set_defaults(func=vm)
     args = parser.parse_args()
     config = Kconfig(client=args.client, debug=args.debug)
-    if config.k is None:
+    if args.client != 'all' and not config.enabled:
         common.pprint("Disabled hypervisor.Leaving...", color='red')
         os._exit(1)
     args.func(args)

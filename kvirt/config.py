@@ -27,7 +27,7 @@ class Kconfig:
                 _type = 'vbox'
             else:
                 _type = 'kvm'
-            ini = {'default': {'client': 'local'}, 'local': {'pool': 'default', 'type': _type}}
+            self.ini = {'default': {'client': 'local'}, 'local': {'pool': 'default', 'type': _type}}
             common.pprint("Using local hypervisor as no kcli.yml was found...", color='green')
         else:
             with open(inifile, 'r') as entries:
