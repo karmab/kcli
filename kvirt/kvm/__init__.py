@@ -1425,7 +1425,7 @@ class Kvirt(Kbase):
     def ssh(self, name, local=None, remote=None, tunnel=False, insecure=False):
         user, ip = self._ssh_credentials(name)
         if ip == '':
-            return
+            return None
         else:
             sshcommand = "%s@%s" % (user, ip)
             if self.host not in ['localhost', '127.0.0.1'] and tunnel:
@@ -1438,7 +1438,7 @@ class Kvirt(Kbase):
                 sshcommand = "ssh -o LogLevel=quiet -o 'UserKnownHostsFile=/dev/null' -o 'StrictHostKeyChecking=no' %s" % sshcommand
             else:
                 sshcommand = "ssh %s" % sshcommand
-            os.system(sshcommand)
+            return sshcommand
 
     def scp(self, name, source=None, destination=None, tunnel=False, download=False, recursive=False):
         user, ip = self._ssh_credentials(name)

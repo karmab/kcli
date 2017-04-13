@@ -852,7 +852,7 @@ class Kbox(Kbase):
     def ssh(self, name, local=None, remote=None, tunnel=False, insecure=False):
         user, port = self._ssh_credentials(name)
         if port == '':
-            return
+            return None
         else:
             sshcommand = "-p %s %s@127.0.0.1" % (port, user)
             if local is not None:
@@ -863,12 +863,13 @@ class Kbox(Kbase):
                 sshcommand = "ssh -o LogLevel=quiet -o 'UserKnownHostsFile=/dev/null' -o 'StrictHostKeyChecking=no' %s" % sshcommand
             else:
                 sshcommand = "ssh %s" % sshcommand
-            os.system(sshcommand)
+            return sshcommand
 
     def scp(self, name, source=None, destination=None, tunnel=False, download=False, recursive=False):
         user, port = self._ssh_credentials(name)
         if port == '':
             print("No ip found. Cannot scp...")
+            return None
         else:
             scpcommand = 'scp -P %s' % port
             if recursive:
@@ -877,7 +878,7 @@ class Kbox(Kbase):
                 scpcommand = "%s %s@127.0.0.1:%s %s" % (scpcommand, user, source, destination)
             else:
                 scpcommand = "%s %s %s@127.0.0.1:%s" % (scpcommand, source, user, destination)
-            os.system(scpcommand)
+            return scpcommand
 
     def create_pool(self, name, poolpath, pooltype='dir', user='qemu'):
         pools = self.list_pools()

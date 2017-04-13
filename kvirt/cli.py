@@ -496,25 +496,33 @@ def ssh(args):
     k = config.k
     tunnel = config.tunnel
     insecure = config.insecure
-    k.ssh(name, local=l, remote=r, tunnel=tunnel, insecure=insecure)
+    sshcommand = k.ssh(name, local=l, remote=r, tunnel=tunnel, insecure=insecure)
+    if sshcommand is not None:
+        os.system(sshcommand)
+    else:
+        common.pprint("Couldnt ssh to %s" % name, color='red')
 
 
 def scp(args):
     """Scp into vm"""
     recursive = args.recursive
-    source = args.source
-    destination = args.destination
+    source = args.source[0]
+    destination = args.destination[0]
     global config
     k = config.k
     tunnel = config.tunnel
     if len(source.split(':')) == 2:
         name = source.split(':')[0]
         source = source.split(':')[1]
-        k.scp(name, source=source, destination=destination, tunnel=tunnel, download=True, recursive=recursive)
+        scpcommand = k.scp(name, source=source, destination=destination, tunnel=tunnel, download=True, recursive=recursive)
     elif len(destination.split(':')) == 2:
         name = destination.split(':')[0]
         destination = destination.split(':')[1]
-        k.scp(name, source=source, destination=destination, tunnel=tunnel, download=False, recursive=recursive)
+        scpcommand = k.scp(name, source=source, destination=destination, tunnel=tunnel, download=False, recursive=recursive)
+    if scpcommand is not None:
+        os.system(scpcommand)
+    else:
+        common.pprint("Couldnt run scp", color='red')
 
 
 def network(args):
