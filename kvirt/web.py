@@ -120,6 +120,29 @@ def vmaction():
         return jsonify(failure)
 
 
+@app.route("/vmsnapshot", methods=['POST'])
+def vmsnapshot():
+    """
+    snapshot vm
+    """
+    config = Kconfig()
+    k = config.k
+    if 'name' in request.form:
+        snapshot = request.form['snapshot']
+        name = request.form['name']
+        result = k.snapshot(snapshot, name, revert=False, delete=False)
+        print(result)
+        response = jsonify(result)
+        print(response)
+        response.status_code = 200
+        return response
+    else:
+        failure = {'result': 'failure', 'reason': "Invalid Data"}
+        response = jsonify(failure)
+        response.status_code = 400
+        return jsonify(failure)
+
+
 @app.route("/planaction", methods=['POST'])
 def planaction():
     """

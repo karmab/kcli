@@ -47,10 +47,10 @@ function vmdelete(vm){
         data: data,
         success: function(data) {
             $("#wheel").hide();
-            if (data == '0') {
+            if (data.result == 'success') {
                 $('.top-right').notify({message: { text: "Vm "+vm+" Deleted!!!" }, type: 'success'}).show();
             } else {
-                $('.top-right').notify({message: { text: "VM "+vm+" Failed to Delete" }, type: 'danger'}).show();
+                $('.top-right').notify({message: { text: "VM "+vm+" Failed to Delete because "+data.reason }, type: 'danger'}).show();
             };
         }
     });
@@ -71,10 +71,32 @@ function vmcreate(name, profile){
         data: data,
         success: function(data) {
             $("#wheel").hide();
-            if (data == '0') {
+            if (data.result == 'success') {
                 $('.top-right').notify({message: { text: "Vm "+name+" Created!!!" }, type: 'success'}).show();
             } else {
-                $('.top-right').notify({message: { text: "VM "+name+" Failed to Create" }, type: 'danger'}).show();
+                $('.top-right').notify({message: { text: "VM "+name+" Failed to Create Because "+data.reason }, type: 'danger'}).show();
+            };
+        }
+    });
+}
+
+function vmsnapshot(name){
+  var snapshot = prompt("Enter snapshot name");
+  if (snapshot == null) {
+     return ;
+  }
+  $("#wheel").show();
+  data = {'name': name, 'snapshot': snapshot};
+  $.ajax({
+       type: "POST",
+        url: '/vmsnapshot',
+        data: data,
+        success: function(data) {
+            $("#wheel").hide();
+            if (data.result == 'success') {
+                $('.top-right').notify({message: { text: "Snapshot "+snapshot+" Created!!!" }, type: 'success'}).show();
+            } else {
+                $('.top-right').notify({message: { text: "Snapshot "+snapshot+" Not created because "+data.reason }, type: 'danger'}).show();
             };
         }
     });

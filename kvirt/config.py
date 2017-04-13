@@ -196,9 +196,8 @@ class Kconfig:
                 cmds = cmds + reportcmd
         ips = [ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8]
         result = k.create(name=name, plan=plan, profile=profilename, cpumodel=cpumodel, cpuflags=cpuflags, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns), reservehost=bool(reservehost), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=bool(nested), tunnel=tunnel, files=files)
-        common.handle_response(result, name)
         if result['result'] != 'success':
-            return 1
+            return result
         ansible = profile.get('ansible')
         if ansible is not None:
             for element in ansible:
@@ -233,7 +232,7 @@ class Kconfig:
                     f.write("[ssh_connection]\nretries=10\n")
                 print("Running: %s -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
                 os.system("%s -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
-        return 0
+        return {'result': 'success'}
 
     def list_plans(self):
         k = self.k

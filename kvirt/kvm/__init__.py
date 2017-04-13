@@ -650,7 +650,7 @@ class Kvirt(Kbase):
             root = ET.fromstring(xml)
         except:
             print("VM %s not found" % name)
-            return 1
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
         state = 'down'
         autostart = starts[vm.autostart()]
         memory = root.getiterator('memory')[0]
@@ -777,11 +777,11 @@ class Kvirt(Kbase):
             vm = conn.lookupByName(name)
         except:
             common.pprint("vm %s not found" % name, color='red')
-            return 1
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
         if vm.snapshotListNames():
             if not force:
                 print("vm %s has snapshots" % name)
-                return 1
+                return {'result': 'failure', 'reason': "VM %s has snapshots" % name}
             else:
                 for snapshot in vm.snapshotListNames():
                     print("Deleting snapshot %s" % snapshot)
@@ -851,7 +851,7 @@ class Kvirt(Kbase):
             if found:
                 print("Deleting hosts entry. sudo password might be asked")
                 os.system("sudo sed -i '/%s/d' /etc/hosts" % hostentry)
-        return 0
+        return {'result': 'success'}
 
     def _xmldisk(self, diskpath, diskdev, diskbus='virtio', diskformat='qcow2', shareable=False):
         if shareable:
@@ -1018,7 +1018,7 @@ class Kvirt(Kbase):
             return 0
         except:
             print("Entry allready found for %s" % name)
-            return 1
+            return {'result': 'failure', 'reason': "Entry allready found found for %s" % name}
 
     def reserve_host(self, name, nets, domain):
         net = nets[0]
@@ -1039,7 +1039,7 @@ class Kvirt(Kbase):
                 else:
                     break
         if ip is None:
-            print("Couldn't assign HOST")
+            print("Couldn't assign Host")
             return
         hosts = "%s %s %s.%s" % (ip, name, name, netname)
         if domain is not None:
@@ -1078,6 +1078,7 @@ class Kvirt(Kbase):
         root = ET.fromstring(xml)
         if not vm:
             print("VM %s not found" % name)
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
         if vm.isActive() == 1:
             print("Machine up. Change will only appear upon next reboot")
         metadata = root.find('metadata')
@@ -1108,6 +1109,7 @@ class Kvirt(Kbase):
         kmeta.text = metavalue
         newxml = ET.tostring(root)
         conn.defineXML(newxml)
+        return {'result': 'success'}
 
     def update_memory(self, name, memory):
         conn = self.conn
@@ -1118,13 +1120,14 @@ class Kvirt(Kbase):
             root = ET.fromstring(xml)
         except:
             print("VM %s not found" % name)
-            return
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
         memorynode = root.getiterator('memory')[0]
         memorynode.text = memory
         currentmemory = root.getiterator('currentMemory')[0]
         currentmemory.text = memory
         newxml = ET.tostring(root)
         conn.defineXML(newxml)
+        return {'result': 'success'}
 
     def update_cpu(self, name, numcpus):
         conn = self.conn
@@ -1134,11 +1137,12 @@ class Kvirt(Kbase):
             root = ET.fromstring(xml)
         except:
             print("VM %s not found" % name)
-            return
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
         cpunode = root.getiterator('vcpu')[0]
         cpunode.text = numcpus
         newxml = ET.tostring(root)
         conn.defineXML(newxml)
+        return {'result': 'success'}
 
     def update_start(self, name, start=True):
         conn = self.conn
@@ -1191,72 +1195,13 @@ class Kvirt(Kbase):
         pool.createXML(volxml, 0)
         return diskpath
 
-#    def add_disk(self, name, size, pool=None, thin=True, template=None, shareable=False):
-#        conn = self.conn
-#        diskformat = 'qcow2'
-#        diskbus = 'virtio'
-#        if size < 1:
-#            print("Incorrect size.Leaving...")
-#            return
-#        if not thin:
-#            diskformat = 'raw'
-#        try:
-#            vm = conn.lookupByName(name)
-#            xml = vm.XMLDesc(0)
-#            root = ET.fromstring(xml)
-#        except:
-#            print("VM %s not found" % name)
-#            return
-#        currentdisk = 0
-#        for element in root.getiterator('disk'):
-#            disktype = element.get('device')
-#            if disktype == 'cdrom':
-#                continue
-#            currentdisk = currentdisk + 1
-#        diskindex = currentdisk + 1
-#        diskdev = "vd%s" % string.ascii_lowercase[currentdisk]
-#        if pool is not None:
-#            pool = conn.storagePoolLookupByName(pool)
-#            poolxml = pool.XMLDesc(0)
-#            poolroot = ET.fromstring(poolxml)
-#            pooltype = poolroot.getiterator('pool')[0].get('type')
-#            for element in poolroot.getiterator('path'):
-#                poolpath = element.text
-#                break
-#        else:
-#            print("Pool not found. Leaving....")
-#            return
-#        if template is not None:
-#            volumes = {}
-#            for p in conn.listStoragePools():
-#                poo = conn.storagePoolLookupByName(p)
-#                for vol in poo.listAllVolumes():
-#                    volumes[vol.name()] = vol.path()
-#            if template not in volumes and template not in volumes.values():
-#                print("Invalid template %s.Leaving..." % template)
-#            if template in volumes:
-#                template = volumes[template]
-#        pool.refresh(0)
-#        storagename = "%s_%d.img" % (name, diskindex)
-#        diskpath = "%s/%s" % (poolpath, storagename)
-#        volxml = self._xmlvolume(path=diskpath, size=size, pooltype=pooltype,
-#                                 diskformat=diskformat, backing=template)
-#        if pooltype == 'logical':
-#            diskformat = 'raw'
-#        diskxml = self._xmldisk(diskpath=diskpath, diskdev=diskdev, diskbus=diskbus, diskformat=diskformat, shareable=shareable)
-#        pool.createXML(volxml, 0)
-#        vm.attachDevice(diskxml)
-#        vm = conn.lookupByName(name)
-#        vmxml = vm.XMLDesc(0)
-#        conn.defineXML(vmxml)
-
     def add_disk(self, name, size, pool=None, thin=True, template=None, shareable=False, existing=None):
         conn = self.conn
         diskformat = 'qcow2'
         diskbus = 'virtio'
         if size < 1:
             print("Incorrect size.Leaving...")
-            return
+            return {'result': 'failure', 'reason': "Incorrect size"}
         if not thin:
             diskformat = 'raw'
         try:
@@ -1265,7 +1210,7 @@ class Kvirt(Kbase):
             root = ET.fromstring(xml)
         except:
             print("VM %s not found" % name)
-            return
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
         currentdisk = 0
         for element in root.getiterator('disk'):
             disktype = element.get('device')
@@ -1284,6 +1229,7 @@ class Kvirt(Kbase):
         vm = conn.lookupByName(name)
         vmxml = vm.XMLDesc(0)
         conn.defineXML(vmxml)
+        return {'result': 'success'}
 
     def delete_disk(self, name, diskname):
         conn = self.conn
@@ -1293,7 +1239,7 @@ class Kvirt(Kbase):
             root = ET.fromstring(xml)
         except:
             print("VM %s not found" % name)
-            return 1
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
         for element in root.getiterator('disk'):
             disktype = element.get('device')
             diskdev = element.find('target').get('dev')
@@ -1310,8 +1256,9 @@ class Kvirt(Kbase):
                 vm = conn.lookupByName(name)
                 vmxml = vm.XMLDesc(0)
                 conn.defineXML(vmxml)
-                return
+                return {'result': 'success'}
         print("Disk %s not found in %s" % (diskname, name))
+        return {'result': 'failure', 'reason': "Disk %s not found in %s" % (diskname, name)}
 
     def list_disks(self):
         volumes = {}
@@ -1332,7 +1279,7 @@ class Kvirt(Kbase):
             vm = conn.lookupByName(name)
         except:
             print("VM %s not found" % name)
-            return
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
         if network not in networks:
             print("Network %s not found" % network)
             return
@@ -1362,7 +1309,7 @@ class Kvirt(Kbase):
             root = ET.fromstring(xml)
         except:
             print("VM %s not found" % name)
-            return 1
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
         for element in root.getiterator('interface'):
             device = "eth%s" % nicnumber
             if device == interface:
@@ -1387,6 +1334,7 @@ class Kvirt(Kbase):
         vm = conn.lookupByName(name)
         vmxml = vm.XMLDesc(0)
         conn.defineXML(vmxml)
+        return {'result': 'success'}
 
     def _ssh_credentials(self, name):
         ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety']
@@ -1507,12 +1455,13 @@ class Kvirt(Kbase):
                          </pool>""" % (name, poolpath, name, name)
         else:
             print("Invalid pool type %s.Leaving..." % pooltype)
-            return
+            return {'result': 'failure', 'reason': "Invalid pool type %s" % pooltype}
         pool = conn.storagePoolDefineXML(poolxml, 0)
         pool.setAutostart(True)
         if pooltype == 'logical':
             pool.build()
         pool.create()
+        return {'result': 'success'}
 
     def add_image(self, image, pool, short=None):
         poolname = pool
@@ -1544,7 +1493,6 @@ class Kvirt(Kbase):
             cmd = 'ssh -p %s %s@%s "wget -P %s %s"' % (self.port, self.user, self.host, poolpath, image)
         os.system(cmd)
         pool.refresh()
-        # self._uploadimage(shortimage, pool=pool, suffix='')
         return {'result': 'success'}
 
     def create_network(self, name, cidr, dhcp=True, nat=True):
@@ -1658,13 +1606,14 @@ class Kvirt(Kbase):
             pool = conn.storagePoolLookupByName(name)
         except:
             print("Pool %s not found. Leaving..." % name)
-            return
+            return {'result': 'failure', 'reason': "Pool %s not found" % name}
         if full:
             for vol in pool.listAllVolumes():
                 vol.delete(0)
         if pool.isActive():
             pool.destroy()
         pool.undefine()
+        return {'result': 'success'}
 
     def bootstrap(self, pool=None, poolpath=None, pooltype='dir', nets={}, image=None):
         conn = self.conn
@@ -1716,7 +1665,7 @@ class Kvirt(Kbase):
             vm = conn.lookupByName(name)
         except:
             print("VM %s not found" % name)
-            return
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
         xml = vm.XMLDesc(0)
         root = ET.fromstring(xml)
         for element in root.getiterator('interface'):

@@ -58,11 +58,13 @@
                     <span class="caret"></span>
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
-                        <li onclick="vmstart('{{ vm[0] }}');"><span class="glyphicon glyphicon-play green" data-toggle="tooltip" title="Start Vm"></span></li>
+                        <li onclick="vmstart('{{ vm[0] }}');"><span class="glyphicon glyphicon-play green" data-toggle="tooltip" title="Start Vm"></span> Start</li>
                         <li class="divider"></li>
-                        <li onclick="vmstop('{{ vm[0] }}');"><span class="glyphicon glyphicon-stop" data-toggle="tooltip" title="Stop Vm"></span></li>
+                        <li onclick="vmstop('{{ vm[0] }}');"><span class="glyphicon glyphicon-stop" data-toggle="tooltip" title="Stop Vm"></span> Stop</li>
                         <li class="divider"></li>
-                        <li onclick="vmdelete('{{ vm[0] }}');"><span class="glyphicon glyphicon-trash red" data-toggle="tooltip" title="Delete Vm"></span></li>
+                        <li onclick="vmdelete('{{ vm[0] }}');"><span class="glyphicon glyphicon-trash red" data-toggle="tooltip" title="Delete Vm"></span> Delete</li>
+                        <li class="divider"></li>
+                        <li onclick="vmsnapshot('{{ vm[0] }}');"><span class="glyphicon glyphicon-cd blue" data-toggle="tooltip" title="Snapshot Vm"></span> Snapshot</li>
                     </ul></div>
                 </td>
             </tr>

@@ -74,10 +74,14 @@ def delete(args):
         common.pprint("Deleted container %s..." % name, color='red')
         dockerutils.delete_container(k, name)
     else:
-        code = k.delete(name, force=force)
-        if code == 0:
+        result = k.delete(name, force=force)
+        if result['result'] == 'success':
             common.pprint("Deleted vm %s..." % name, color='red')
-        os._exit(code)
+            os._exit(0)
+        else:
+            reason = result['reason']
+            common.pprint("Could not delete vm %s because %s" % (name, reason), color='red')
+            os._exit(1)
 
 
 def info(args):
@@ -358,8 +362,9 @@ def vm(args):
     if profile is None:
         common.pprint("Missing profile", color='red')
         os._exit(1)
-    code = config.create_vm(name, profile, ip1=ip1, ip2=ip2, ip3=ip3, ip4=ip4, ip5=ip5, ip6=ip6, ip7=ip7, ip8=ip8)
-    os._exit(code)
+    result = config.create_vm(name, profile, ip1=ip1, ip2=ip2, ip3=ip3, ip4=ip4, ip5=ip5, ip6=ip6, ip7=ip7, ip8=ip8)
+    code = common.handle_response(result, name, element='', action='created')
+    return code
 
 
 def clone(args):

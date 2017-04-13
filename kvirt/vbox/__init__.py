@@ -518,7 +518,7 @@ class Kbox(Kbase):
             vm = conn.find_machine(name)
         except:
             print("vm %s not found" % name)
-            return 1
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
         for n in range(7):
             nic = vm.get_network_adapter(n)
             enabled = nic.enabled
@@ -533,7 +533,7 @@ class Kbox(Kbase):
                 if rule:
                     nat_network.remove_port_forward_rule(False, "ssh_%s" % name)
         vm.remove(True)
-        return 0
+        return {'result': 'success'}
 
     def clone(self, old, new, full=False, start=False):
         conn = self.conn
@@ -583,13 +583,14 @@ class Kbox(Kbase):
             vm = conn.find_machine(name)
         except:
             print("VM %s not found" % name)
-            return
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
         session = Session()
         vm.lock_machine(session, library.LockType.write)
         machine = session.machine
         machine.set_extra_data(metatype, metavalue)
         machine.save_settings()
         session.unlock_machine()
+        return {'result': 'success'}
 
     def update_memory(self, name, memory):
         conn = self.conn
@@ -598,13 +599,14 @@ class Kbox(Kbase):
             vm = conn.find_machine(name)
         except:
             print("VM %s not found" % name)
-            return
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
         session = Session()
         vm.lock_machine(session, library.LockType.write)
         machine = session.machine
         machine.memory_size = memory
         machine.save_settings()
         session.unlock_machine()
+        return {'result': 'success'}
 
     def update_cpu(self, name, numcpus):
         conn = self.conn
@@ -612,9 +614,10 @@ class Kbox(Kbase):
             vm = conn.find_machine(name)
         except:
             print("VM %s not found" % name)
-            return
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
         vm.cpu_count = numcpus
         vm.save_settings()
+        return {'result': 'success'}
 
     def update_start(self, name, start=True):
         conn = self.conn
@@ -640,7 +643,7 @@ class Kbox(Kbase):
         # diskformat = 'qcow2'
         if size < 1:
             print("Incorrect size.Leaving...")
-            return
+            return {'result': 'failure', 'reason': "Incorrect size"}
         size = int(size) * 1024 * 1024 * 1024
         # if not thin:
         #     diskformat = 'raw'
@@ -650,7 +653,7 @@ class Kbox(Kbase):
                 poolpath = pool[0]
             else:
                 print("Pool not found. Leaving....")
-                return
+                return {'result': 'failure', 'reason': "Pool %s not found" % pool}
         diskpath = "%s/%s.vdi" % (poolpath, name)
         disk = conn.create_medium('VDI', diskpath, library.AccessMode.read_write, library.DeviceType.hard_disk)
         if template is not None:
@@ -671,14 +674,14 @@ class Kbox(Kbase):
         # diskformat = 'qcow2'
         if size < 1:
             print("Incorrect size.Leaving...")
-            return
+            return {'result': 'failure', 'reason': "Incorrect size"}
         # if not thin:
         #     diskformat = 'raw'
         try:
             vm = conn.find_machine(name)
         except:
             print("VM %s not found" % name)
-            return
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
         disks = []
         for index, dev in enumerate(string.lowercase[:10]):
             try:
@@ -703,6 +706,7 @@ class Kbox(Kbase):
         machine.attach_device("SATA", index, 0, library.DeviceType.hard_disk, disk)
         machine.save_settings()
         session.unlock_machine()
+        return {'result': 'success'}
 
     def delete_disk(self, name, diskname):
         conn = self.conn
@@ -710,10 +714,10 @@ class Kbox(Kbase):
             vm = conn.find_machine(name)
         except:
             print("VM %s not found" % name)
-            return
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
         if status[str(vm.state)] == "up":
             print("VM %s up. Leaving" % name)
-            return
+            return {'result': 'failure', 'reason': "VM %s is up" % name}
         for index in range(10):
             try:
                 disk = vm.get_medium('SATA', index, 0)
@@ -727,8 +731,9 @@ class Kbox(Kbase):
                 machine.save_settings()
                 session.unlock_machine()
                 disk.delete_storage()
-                return
+                return {'result': 'success'}
         print("Disk %s not found in %s" % (diskname, name))
+        return {'result': 'failure', 'reason': "Disk %s not found in %s" % (diskname, name)}
 
     def list_disks(self):
         volumes = {}
@@ -764,16 +769,16 @@ class Kbox(Kbase):
         networks = self.list_networks()
         if network not in networks:
             print("Network %s not found" % network)
-            return
+            return {'result': 'failure', 'reason': "Network %s not found" % network}
         networktype = networks[network]['type']
         try:
             vm = conn.find_machine(name)
         except:
             print("VM %s not found" % name)
-            return
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
         if self.status(name) == 'up':
             print("VM %s must be down" % name)
-            return
+            return {'result': 'failure', 'reason': "VM %s must be down" % name}
         session = Session()
         # try:
         #     vm.unlock_machine()
@@ -795,6 +800,7 @@ class Kbox(Kbase):
                 break
         machine.save_settings()
         session.unlock_machine()
+        return {'result': 'success'}
 
     def delete_nic(self, name, interface):
         conn = self.conn
@@ -802,10 +808,10 @@ class Kbox(Kbase):
             vm = conn.find_machine(name)
         except:
             print("VM %s not found" % name)
-            return
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
         if self.status(name) == 'up':
             print("VM %s must be down" % name)
-            return
+            return {'result': 'failure', 'reason': "VM %s nust be down" % name}
         session = Session()
         vm.lock_machine(session, library.LockType.write)
         machine = session.machine
@@ -814,6 +820,7 @@ class Kbox(Kbase):
         nic.enabled = False
         machine.save_settings()
         session.unlock_machine()
+        return {'result': 'success'}
 
     def _ssh_credentials(self, name):
         ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety']
@@ -823,6 +830,7 @@ class Kbox(Kbase):
             vm = conn.find_machine(name)
         except:
             print("VM %s not found" % name)
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
             return '', ''
         if str(vm.state) == 0:
             print("Machine down. Cannot ssh...")
@@ -1003,7 +1011,7 @@ class Kbox(Kbase):
             vm = conn.find_machine(name)
         except:
             print("VM %s not found" % name)
-            return 1
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
         for n in range(7):
             nic = vm.get_network_adapter(n)
             enabled = nic.enabled
