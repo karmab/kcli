@@ -170,7 +170,8 @@ def list(args):
         clis = []
         for cli in sorted(config.clients):
             clientconfig = Kconfig(client=cli)
-            clis.append(clientconfig)
+            if clientconfig.k is not None:
+                clis.append(clientconfig)
     else:
         k = config.k
     if pools:
@@ -955,6 +956,9 @@ def cli():
     vm_parser.set_defaults(func=vm)
     args = parser.parse_args()
     config = Kconfig(client=args.client, debug=args.debug)
+    if config.k is None:
+        common.pprint("Disabled hypervisor.Leaving...", color='red')
+        os._exit(1)
     args.func(args)
 
 if __name__ == '__main__':

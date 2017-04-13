@@ -95,17 +95,21 @@ class Kconfig:
         self.insecure = bool(options.get('insecure', self.default['insecure']))
         self.reporturl = options.get('reporturl', self.default['reportdir'])
         self.reportdir = options.get('reportdir', self.default['reportdir'])
+        self.enabled = options.get('enabled', True)
         self.type = options.get('type', 'kvm')
-        if self.type == 'vbox':
-            k = Kbox()
+        if not self.enabled:
+            k = None
         else:
-            if self.host is None:
-                common.pprint("Problem parsing your configuration file", color='red')
+            if self.type == 'vbox':
+                k = Kbox()
+            else:
+                if self.host is None:
+                    common.pprint("Problem parsing your configuration file", color='red')
+                    os._exit(1)
+                k = Kvirt(host=self.host, port=self.port, user=self.user, protocol=self.protocol, url=self.url, debug=debug)
+            if k.conn is None:
+                common.pprint("Couldnt connect to specify hypervisor %s. Leaving..." % self.host, color='red')
                 os._exit(1)
-            k = Kvirt(host=self.host, port=self.port, user=self.user, protocol=self.protocol, url=self.url, debug=debug)
-        if k.conn is None:
-            common.pprint("Couldnt connect to specify hypervisor %s. Leaving..." % self.host, color='red')
-            os._exit(1)
         self.k = k
 
     def create_vm(self, name, profile, ip1=None, ip2=None, ip3=None, ip4=None, ip5=None, ip6=None, ip7=None, ip8=None):
