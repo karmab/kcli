@@ -120,6 +120,35 @@ def vmaction():
         return jsonify(failure)
 
 
+@app.route("/hostaction", methods=['POST'])
+def hostaction():
+    """
+    enable/disable/default host
+    """
+    config = Kconfig()
+    if 'name' in request.form:
+        name = request.form['name']
+        action = request.form['action']
+        if action == 'enable':
+            result = config.handle_host(enable=name)
+        elif action == 'disable':
+            result = config.handle_host(disable=name)
+        elif action == 'switch':
+            result = config.handle_host(switch=name)
+        else:
+            result = "Nothing to do"
+        print(result)
+        response = jsonify(result)
+        print(response)
+        response.status_code = 200
+        return response
+    else:
+        failure = {'result': 'failure', 'reason': "Invalid Data"}
+        response = jsonify(failure)
+        response.status_code = 400
+        return jsonify(failure)
+
+
 @app.route("/vmsnapshot", methods=['POST'])
 def vmsnapshot():
     """
@@ -235,6 +264,23 @@ def pools():
         poolpath = k.get_pool_path(pool)
         pools.append([pool, poolpath])
     return render_template('pools.html', title='Pools', pools=pools)
+
+
+@app.route('/hosts')
+def hosts():
+    """
+    retrieves all hosts
+    """
+    config = Kconfig()
+    clients = []
+    for client in sorted(config.clients):
+        enabled = config.ini[client].get('enabled', True)
+        if client == config.client:
+            clients.append([client, enabled, 'X'])
+        else:
+            clients.append([client, enabled, ''])
+    print clients
+    return render_template('hosts.html', title='Hosts', clients=clients)
 
 
 @app.route('/plans')

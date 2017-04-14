@@ -7,7 +7,7 @@ from shutil import copyfile
 import argparse
 import common
 import dockerutils
-import fileinput
+# import fileinput
 import os
 import yaml
 from kvirt.kvm import Kvirt
@@ -105,84 +105,90 @@ def host(args):
     k = config.k
     if report:
         k.report()
-    elif download:
-        if pool is None:
-            common.pprint("Missing pool.Leaving...", color='red')
+    else:
+        result = config.handle_host(pool=pool, template=template, switch=switch, download=download, enable=enable, disable=disable)
+        if result['result'] == 'success':
+            os._exit(0)
+        else:
             os._exit(1)
-        if template is None:
-            common.pprint("Missing template.Leaving...", color='red')
-            os._exit(1)
-        common.pprint("Grabbing template %s..." % template, color='green')
-        template = TEMPLATES[template]
-        shortname = os.path.basename(template)
-        result = k.add_image(template, pool)
-        code = common.handle_response(result, shortname, element='Template ', action='Added')
-        os._exit(code)
-    elif switch:
-        if switch not in config.clients:
-            common.pprint("Client %s not found in config.Leaving...." % switch, color='green')
-            os._exit(1)
-        elif not config.enabled:
-            common.pprint("Client %s is disabled.Leaving...." % switch, color='green')
-            os._exit(1)
-        common.pprint("Switching to client %s..." % switch, color='green')
-        inifile = "%s/kcli.yml" % os.environ.get('HOME')
-        if os.path.exists(inifile):
-            for line in fileinput.input(inifile, inplace=True):
-                if 'client' in line:
-                    print(" client: %s" % switch)
-                else:
-                    print(line.rstrip())
-        return
-    elif enable:
-        client = enable
-        if client not in config.clients:
-            common.pprint("Client %s not found in config.Leaving...." % client, color='green')
-            os._exit(1)
-        common.pprint("Enabling client %s..." % client, color='green')
-        inifile = "%s/kcli.yml" % os.environ.get('HOME')
-        if os.path.exists(inifile):
-            clientreached = False
-            for line in fileinput.input(inifile, inplace=True):
-                if line.startswith("%s:" % client):
-                    clientreached = True
-                    print(line.rstrip())
-                    continue
-                if clientreached and 'enabled' not in config.ini[client]:
-                    print(" enabled: true")
-                    clientreached = False
-                    print(line.rstrip())
-                    continue
-                elif clientreached and line.startswith(' enabled:'):
-                    print(" enabled: true")
-                    clientreached = False
-                else:
-                    print(line.rstrip())
-        return
-    elif disable:
-        client = disable
-        if client not in config.clients:
-            common.pprint("Client %s not found in config.Leaving...." % client, color='green')
-            os._exit(1)
-        common.pprint("Disabling client %s..." % client, color='green')
-        inifile = "%s/kcli.yml" % os.environ.get('HOME')
-        if os.path.exists(inifile):
-            clientreached = False
-            for line in fileinput.input(inifile, inplace=True):
-                if line.startswith("%s:" % client):
-                    clientreached = True
-                    print(line.rstrip())
-                    continue
-                if clientreached and 'enabled' not in config.ini[client]:
-                    print(" enabled: false")
-                    clientreached = False
-                    print(line.rstrip())
-                    continue
-                elif clientreached and line.startswith(' enabled:'):
-                    print(" enabled: false")
-                    clientreached = False
-                else:
-                    print(line.rstrip())
+    # elif download:
+    #    if pool is None:
+    #        common.pprint("Missing pool.Leaving...", color='red')
+    #        os._exit(1)
+    #    if template is None:
+    #        common.pprint("Missing template.Leaving...", color='red')
+    #        os._exit(1)
+    #    common.pprint("Grabbing template %s..." % template, color='green')
+    #    template = TEMPLATES[template]
+    #    shortname = os.path.basename(template)
+    #    result = k.add_image(template, pool)
+    #    code = common.handle_response(result, shortname, element='Template ', action='Added')
+    #    os._exit(code)
+    # elif switch:
+    #    if switch not in config.clients:
+    #        common.pprint("Client %s not found in config.Leaving...." % switch, color='green')
+    #        os._exit(1)
+    #    elif not config.enabled:
+    #        common.pprint("Client %s is disabled.Leaving...." % switch, color='green')
+    #        os._exit(1)
+    #    common.pprint("Switching to client %s..." % switch, color='green')
+    #    inifile = "%s/kcli.yml" % os.environ.get('HOME')
+    #    if os.path.exists(inifile):
+    #        for line in fileinput.input(inifile, inplace=True):
+    #            if 'client' in line:
+    #                print(" client: %s" % switch)
+    #            else:
+    #                print(line.rstrip())
+    #    return
+    # elif enable:
+    #    client = enable
+    #    if client not in config.clients:
+    #        common.pprint("Client %s not found in config.Leaving...." % client, color='green')
+    #        os._exit(1)
+    #    common.pprint("Enabling client %s..." % client, color='green')
+    #    inifile = "%s/kcli.yml" % os.environ.get('HOME')
+    #    if os.path.exists(inifile):
+    #        clientreached = False
+    #        for line in fileinput.input(inifile, inplace=True):
+    #            if line.startswith("%s:" % client):
+    #                clientreached = True
+    #                print(line.rstrip())
+    #                continue
+    #            if clientreached and 'enabled' not in config.ini[client]:
+    #                print(" enabled: true")
+    #                clientreached = False
+    #                print(line.rstrip())
+    #                continue
+    #            elif clientreached and line.startswith(' enabled:'):
+    #                print(" enabled: true")
+    #                clientreached = False
+    #            else:
+    #                print(line.rstrip())
+    #    return
+    # elif disable:
+    #    client = disable
+    #    if client not in config.clients:
+    #        common.pprint("Client %s not found in config.Leaving...." % client, color='green')
+    #        os._exit(1)
+    #    common.pprint("Disabling client %s..." % client, color='green')
+    #    inifile = "%s/kcli.yml" % os.environ.get('HOME')
+    #    if os.path.exists(inifile):
+    #        clientreached = False
+    #        for line in fileinput.input(inifile, inplace=True):
+    #            if line.startswith("%s:" % client):
+    #                clientreached = True
+    #                print(line.rstrip())
+    #                continue
+    #            if clientreached and 'enabled' not in config.ini[client]:
+    #                print(" enabled: false")
+    #                clientreached = False
+    #                print(line.rstrip())
+    #                continue
+    #            elif clientreached and line.startswith(' enabled:'):
+    #                print(" enabled: false")
+    #                clientreached = False
+    #            else:
+    #                print(line.rstrip())
 
 
 def list(args):

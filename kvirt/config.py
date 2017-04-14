@@ -4,9 +4,10 @@
 Kvirt config class
 """
 
-from defaults import NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, RESERVEHOST, START, NESTED, TUNNEL, REPORTURL, REPORTDIR, REPORT, REPORTALL, INSECURE
+from defaults import NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, RESERVEHOST, START, NESTED, TUNNEL, REPORTURL, REPORTDIR, REPORT, REPORTALL, INSECURE, TEMPLATES
 import ansibleutils
 import dockerutils
+import fileinput
 import nameutils
 from kvirt import common
 from kvm import Kvirt
@@ -695,4 +696,91 @@ class Kconfig:
                         vms.append(name)
                 ansibleutils.make_inventory(k, plan, vms, tunnel=self.tunnel)
                 return
+        return {'result': 'success'}
+
+    def handle_host(self, pool='default', template=None, switch=None, download=False, enable=None, disable=None):
+        k = self.k
+        if download:
+            if pool is None:
+                common.pprint("Missing pool.Leaving...", color='red')
+                return {'result': 'failure', 'reason': "Missing pool"}
+            if template is None:
+                common.pprint("Missing template.Leaving...", color='red')
+                return {'result': 'failure', 'reason': "Missing template"}
+            common.pprint("Grabbing template %s..." % template, color='green')
+            template = TEMPLATES[template]
+            shortname = os.path.basename(template)
+            result = k.add_image(template, pool)
+            code = common.handle_response(result, shortname, element='Template ', action='Added')
+            os._exit(code)
+            return {'result': 'success'}
+        elif switch:
+            if switch not in self.clients:
+                common.pprint("Client %s not found in config.Leaving...." % switch, color='red')
+                return {'result': 'failure', 'reason': "Client %s not found in config" % switch}
+            enabled = self.ini[switch].get('enabled', True)
+            if not enabled:
+                common.pprint("Client %s is disabled.Leaving...." % switch, color='red')
+                return {'result': 'failure', 'reason': "Client %s is disabled" % switch}
+            common.pprint("Switching to client %s..." % switch, color='green')
+            inifile = "%s/kcli.yml" % os.environ.get('HOME')
+            if os.path.exists(inifile):
+                for line in fileinput.input(inifile, inplace=True):
+                    if 'client' in line:
+                        print(" client: %s" % switch)
+                    else:
+                        print(line.rstrip())
+            return {'result': 'success'}
+        elif enable:
+            client = enable
+            if client not in self.clients:
+                common.pprint("Client %s not found in config.Leaving...." % client, color='green')
+                return {'result': 'failure', 'reason': "Client %s not found in config" % client}
+            common.pprint("Enabling client %s..." % client, color='green')
+            inifile = "%s/kcli.yml" % os.environ.get('HOME')
+            if os.path.exists(inifile):
+                clientreached = False
+                for line in fileinput.input(inifile, inplace=True):
+                    if line.startswith("%s:" % client):
+                        clientreached = True
+                        print(line.rstrip())
+                        continue
+                    if clientreached and 'enabled' not in self.ini[client]:
+                        print(" enabled: true")
+                        clientreached = False
+                        print(line.rstrip())
+                        continue
+                    elif clientreached and line.startswith(' enabled:'):
+                        print(" enabled: true")
+                        clientreached = False
+                    else:
+                        print(line.rstrip())
+            return {'result': 'success'}
+        elif disable:
+            client = disable
+            if client not in self.clients:
+                common.pprint("Client %s not found in config.Leaving...." % client, color='red')
+                return {'result': 'failure', 'reason': "Client %s not found in config" % client}
+            elif self.ini['default']['client'] == client:
+                common.pprint("Client %s currently default.Leaving...." % client, color='red')
+                return {'result': 'failure', 'reason': "Client %s currently default" % client}
+            common.pprint("Disabling client %s..." % client, color='green')
+            inifile = "%s/kcli.yml" % os.environ.get('HOME')
+            if os.path.exists(inifile):
+                clientreached = False
+                for line in fileinput.input(inifile, inplace=True):
+                    if line.startswith("%s:" % client):
+                        clientreached = True
+                        print(line.rstrip())
+                        continue
+                    if clientreached and 'enabled' not in self.ini[client]:
+                        print(" enabled: false")
+                        clientreached = False
+                        print(line.rstrip())
+                        continue
+                    elif clientreached and line.startswith(' enabled:'):
+                        print(" enabled: false")
+                        clientreached = False
+                    else:
+                        print(line.rstrip())
         return {'result': 'success'}
