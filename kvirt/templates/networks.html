@@ -17,14 +17,14 @@
             </tr>
         </thead>
         <tbody>
-            {% for key, value in networks.iteritems() %}
+            {% for network, value in networks.iteritems() %}
             <tr>
-                <td>{{ key }}</td>
+                <td>{{ network }}</td>
                 <td>{{ value.type }}</td>
                 <td>{{ value.cidr }}</td>
                 <td>{{ value.dhcp }}</td>
                 <td>{{ value.mode }}</td>
-                <td onclick="networkdelete('{{ key }}');"><span class="glyphicon glyphicon-trash"></span> Delete</td>
+                <td onclick="networkdelete('{{ network }}');"><span class="glyphicon glyphicon-trash"></span> Delete</td>
             </tr>
             {% endfor %} 
         </tbody>
@@ -33,20 +33,6 @@
 <script>
 $(document).ready(function() {
 $('#networks').dataTable();
-//$('#vms').dataTable({
-//   'columnDefs': [
-//      {
-//         'targets': 0,
-//         'checkboxes': {
-//            'selectRow': true
-//         }
-//      }
-//   ],
-//   'select': {
-//      'style': 'multi'
-//   },
-//   'order': [[1, 'asc']]
-//});
 });
 </script>
 {% endblock %}

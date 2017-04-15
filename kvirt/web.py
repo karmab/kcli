@@ -18,8 +18,7 @@ debug = config['DEBUG'] if 'DEBUG' in config.keys() else True
 port = int(config['PORT']) if 'PORT'in config.keys() else 9000
 
 
-class TABLE(object):
-    pass
+# VMS
 
 
 @app.route("/")
@@ -53,6 +52,9 @@ def vmcreate():
     return render_template('vmcreate.html', title='CreateVm', profiles=profiles)
 
 
+# CONTAINERS
+
+
 @app.route('/containercreate')
 def containercreate():
     """
@@ -61,6 +63,9 @@ def containercreate():
     config = Kconfig()
     profiles = config.list_containerprofiles()
     return render_template('containercreate.html', title='CreateContainer', profiles=profiles)
+
+
+# POOLS
 
 
 @app.route('/poolcreate')
@@ -101,13 +106,49 @@ def poolaction():
         response.status_code = 400
         return jsonify(failure)
 
+# NETWORKS
+
 
 @app.route('/networkcreate')
 def networkcreate():
     """
-    create network
+    network form
     """
     return render_template('networkcreate.html', title='CreateNetwork')
+
+
+@app.route("/networkaction", methods=['POST'])
+def networkaction():
+    """
+    create/delete network
+    """
+    config = Kconfig()
+    k = config.k
+    if 'network' in request.form:
+        network = request.form['network']
+        action = request.form['action']
+        if action == 'create':
+            cidr = request.form['cidr']
+            dhcp = request.form['dhcp']
+            isolated = request.form['isolated']
+            nat = not isolated
+            result = k.create_network(name=network, cidr=cidr, dhcp=dhcp, nat=nat)
+        elif action == 'delete':
+            result = k.delete_network(name=network)
+        else:
+            result = "Nothing to do"
+        response = jsonify(result)
+        print(response)
+        response.status_code = 200
+        return response
+    else:
+        failure = {'result': 'failure', 'reason': "Invalid Data"}
+        response = jsonify(failure)
+        response.status_code = 400
+        return jsonify(failure)
+
+
+# PLANS
 
 
 @app.route('/plancreate')
@@ -150,6 +191,8 @@ def vmaction():
         response.status_code = 400
         return jsonify(failure)
 
+
+# HOSTS
 
 @app.route("/hostaction", methods=['POST'])
 def hostaction():
@@ -364,7 +407,7 @@ def vmprofiles():
 @app.route('/containerprofiles')
 def containerprofiles():
     """
-    retrieves vm profiles
+    retrieves container profiles
     """
     config = Kconfig()
     profiles = config.list_containerprofiles()
@@ -376,9 +419,4 @@ def run():
 
 
 if __name__ == '__main__':
-    # global k
-    # config = Kconfig()
-    # k = config.k
-    # with patch.object(getpass, "getuser", return_value='default'):
-    # app.run(host='0.0.0.0', port=port, debug=debug)
     run()

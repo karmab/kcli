@@ -3,7 +3,7 @@
 
 <div id="wheel"></div>
 <div class='notifications top-right'></div>
-<form id="createpoolform">
+<form id="createpool">
     <div class="form-group">
         <label for="inputName">Pool</label>
         <input required="true" class="form-control" id="pool" placeholder="Enter Pool Name">
@@ -19,7 +19,7 @@
         <option value="logical">LVM</option>
         </select>
     </div>
-    <button type="submit" id="createpoolbutton" class="btn btn-primary" onclick="poolcreate();">Create</button>
+    <button type="submit" class="btn btn-primary" onclick="poolcreate();">Create</button>
 </form>
 
 {% endblock %}
