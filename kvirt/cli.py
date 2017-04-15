@@ -216,12 +216,12 @@ def list(args):
     if pools:
         pools = k.list_pools()
         if short:
+            poolstable = PrettyTable(["Pool"])
             for pool in sorted(pools):
-                poolstable = PrettyTable(["Pool"])
                 poolstable.add_row([pool])
         else:
+            poolstable = PrettyTable(["Pool", "Path"])
             for pool in sorted(pools):
-                poolstable = PrettyTable(["Pool", "Path"])
                 poolpath = k.get_pool_path(pool)
                 poolstable.add_row([pool, poolpath])
         poolstable.align["Pool"] = "l"

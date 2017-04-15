@@ -6,22 +6,8 @@ body {
     background-size: 100% auto;
 }
 
-.dropdown .dropdown-menu .button { 
-    font: 100% verdana, arial, sans-serif;
-    margin: 50px;
-}
-
-.table th {
-    font-size: 120%;
-}
-
 .table table, .table th, .table td {
     text-align: center;
-}
-
-.table td a {
-    width: 100%;
-    font-weight: bold;
 }
 
 .table tbody>tr>td.vert-align{

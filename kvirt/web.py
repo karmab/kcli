@@ -66,9 +66,40 @@ def containercreate():
 @app.route('/poolcreate')
 def poolcreate():
     """
-    create pool
+    pool form
     """
     return render_template('poolcreate.html', title='CreatePool')
+
+
+@app.route("/poolaction", methods=['POST'])
+def poolaction():
+    """
+    create/delete pool
+    """
+    config = Kconfig()
+    k = config.k
+    if 'pool' in request.form:
+        pool = request.form['pool']
+        action = request.form['action']
+        if action == 'create':
+            path = request.form['path']
+            pooltype = request.form['type']
+            print pool, path, pooltype
+            result = k.create_pool(name=pool, poolpath=path, pooltype=pooltype)
+            print(result)
+        elif action == 'delete':
+            result = k.delete_pool(name=pool)
+        else:
+            result = "Nothing to do"
+        response = jsonify(result)
+        print(response)
+        response.status_code = 200
+        return response
+    else:
+        failure = {'result': 'failure', 'reason': "Invalid Data"}
+        response = jsonify(failure)
+        response.status_code = 400
+        return jsonify(failure)
 
 
 @app.route('/networkcreate')

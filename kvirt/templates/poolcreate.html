@@ -6,24 +6,20 @@
 <form id="createpoolform">
     <div class="form-group">
         <label for="inputName">Pool</label>
-        <input required="true" class="form-control" id="name" placeholder="Enter Pool Name">
+        <input required="true" class="form-control" id="pool" placeholder="Enter Pool Name">
     </div>
     <div class="form-group">
         <label for="inputName">Path</label>
         <input required="true" class="form-control" id="path" placeholder="Enter Pool Path">
     </div>
-    <button type="submit" id="createpoolbutton" class="btn btn-primary">Create</button>
+    <div class="form-group">
+        <label for="inputName">Type</label>
+        <select class="form-control" id="type">
+        <option value="dir" selected >Directory</option>
+        <option value="logical">LVM</option>
+        </select>
+    </div>
+    <button type="submit" id="createpoolbutton" class="btn btn-primary" onclick="poolcreate();">Create</button>
 </form>
 
-<script>
-$(document).ready(function() {
-//$("#createpoolbutton").click(function() {
-$("#createpoolform").submit(function() {
-var name = $("#name").val();
-var path = $("#path").val();
-poolcreate(name, path);
-return ;
-});
-});
-</script>
 {% endblock %}
