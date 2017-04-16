@@ -437,9 +437,7 @@ class Kvirt(Kbase):
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % base}
         if listing:
-            for snapshot in vm.snapshotListNames():
-                print(snapshot)
-            return {'result': 'success'}
+            return vm.snapshotListNames()
         if revert and name not in vm.snapshotListNames():
             return {'result': 'failure', 'reason': "Snapshot %s doesn't exist" % name}
         if delete and name not in vm.snapshotListNames():

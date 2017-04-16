@@ -64,7 +64,10 @@
                         <li class="divider"></li>
                         <li onclick="vmdelete('{{ vm[0] }}');"><span class="glyphicon glyphicon-trash red" data-toggle="tooltip" title="Delete Vm"></span> Delete</li>
                         <li class="divider"></li>
-                        <li onclick="vmsnapshot('{{ vm[0] }}');"><span class="glyphicon glyphicon-cd blue" data-toggle="tooltip" title="Snapshot Vm"></span> Snapshot</li>
+                        <li class="dropdown-header">Snapshot actions</li>
+                        <li onclick="snapshotcreate('{{ vm[0] }}');"><span class="glyphicon glyphicon-cd blue" data-toggle="tooltip" title="Snapshot Vm"></span> Create</li>
+                        <li onclick="snapshotdelete('{{ vm[0] }}');"><span class="glyphicon glyphicon-trash blue" data-toggle="tooltip" title="Delete Snapshot"></span> Delete</li>
+                        <li onclick="snapshotrevert('{{ vm[0] }}');"><span class="glyphicon glyphicon-repeat blue" data-toggle="tooltip" title="Revert Snapshot"></span> Revert</li>
                     </ul></div>
                 </td>
             </tr>

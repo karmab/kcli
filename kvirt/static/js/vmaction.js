@@ -79,25 +79,3 @@ function vmcreate(name, profile){
         }
     });
 }
-
-function vmsnapshot(name){
-  var snapshot = prompt("Enter snapshot name");
-  if (snapshot == null) {
-     return ;
-  }
-  $("#wheel").show();
-  data = {'name': name, 'snapshot': snapshot};
-  $.ajax({
-       type: "POST",
-        url: '/vmsnapshot',
-        data: data,
-        success: function(data) {
-            $("#wheel").hide();
-            if (data.result == 'success') {
-                $('.top-right').notify({message: { text: "Snapshot "+snapshot+" Created!!!" }, type: 'success'}).show();
-            } else {
-                $('.top-right').notify({message: { text: "Snapshot "+snapshot+" Not created because "+data.reason }, type: 'danger'}).show();
-            };
-        }
-    });
-}

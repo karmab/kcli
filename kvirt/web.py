@@ -38,6 +38,10 @@ def vms():
                 vm[6] = 'Running'
             else:
                 vm[6] = 'OK'
+        # sshcommand = k.ssh(name, tunnel=config.tunnel, insecure=config.insecure)
+        # if sshcommand is None:
+        #     sshcommand = ''
+        # vm.append(sshcommand)
         vms.append(vm)
     return render_template('vms.html', title='Home', vms=vms)
 
@@ -129,9 +133,10 @@ def networkaction():
         action = request.form['action']
         if action == 'create':
             cidr = request.form['cidr']
-            dhcp = request.form['dhcp']
-            isolated = request.form['isolated']
+            dhcp = bool(request.form['dhcp'])
+            isolated = bool(request.form['isolated'])
             nat = not isolated
+            print(network, cidr, dhcp, nat)
             result = k.create_network(name=network, cidr=cidr, dhcp=dhcp, nat=nat)
         elif action == 'delete':
             result = k.delete_network(name=network)
@@ -223,17 +228,28 @@ def hostaction():
         return jsonify(failure)
 
 
-@app.route("/vmsnapshot", methods=['POST'])
-def vmsnapshot():
+@app.route("/snapshotaction", methods=['POST'])
+def snapshotaction():
     """
-    snapshot vm
+    create/delete/revert snapshot
     """
     config = Kconfig()
     k = config.k
     if 'name' in request.form:
-        snapshot = request.form['snapshot']
         name = request.form['name']
-        result = k.snapshot(snapshot, name, revert=False, delete=False)
+        action = request.form['action']
+        if action == 'list':
+            result = k.snapshot(None, name, listing=True)
+        elif action == 'create':
+            snapshot = request.form['snapshot']
+            result = k.snapshot(snapshot, name)
+        elif action == 'delete':
+            snapshot = request.form['snapshot']
+            result = k.snapshot(snapshot, name, delete=True)
+        elif action == 'revert':
+            snapshot = request.form['snapshot']
+            name = request.form['name']
+            result = k.snapshot(snapshot, name, revert=True)
         print(result)
         response = jsonify(result)
         print(response)

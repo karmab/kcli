@@ -772,11 +772,13 @@ def snapshot(args):
         common.pprint("Deleting snapshot of %s named %s..." % (name, snapshot), color='green')
     elif listing:
         common.pprint("Listing snapshots of %s..." % (name), color='green')
-        k.snapshot(snapshot, name, listing=True)
-        return 0
+        snapshots = k.snapshot(snapshot, name, listing=True)
+        for snapshot in snapshots:
+            print(snapshot)
+        return
     elif snapshot is None:
         common.pprint("Missing snapshot name", color='red')
-        return 1
+        return {'result': 'success'}
     else:
         common.pprint("Creating snapshot of %s named %s..." % (name, snapshot), color='green')
     result = k.snapshot(snapshot, name, revert=revert, delete=delete)
