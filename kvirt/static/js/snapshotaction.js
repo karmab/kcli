@@ -28,7 +28,7 @@ function snapshotdelete(name){
         data: data,
         success: function(snapshots) {
             if (snapshots.length == 0) {
-                $('.top-right').notify({message: { text: "No snapshots found" }, type: 'success'}).show();
+                $('.top-right').notify({message: { text: "No snapshots found for "+name }, type: 'danger'}).show();
                 return
             } else {
                 var snapshot = prompt("Choose snapshots between the following ones:\n"+snapshots);
@@ -63,7 +63,7 @@ function snapshotrevert(name){
         data: data,
         success: function(snapshots) {
             if (snapshots.length == 0) {
-                $('.top-right').notify({message: { text: "No snapshots found" }, type: 'danger'}).show();
+                $('.top-right').notify({message: { text: "No snapshots found for "+name }, type: 'danger'}).show();
                 return
             } else {
                 var snapshot = prompt("Choose snapshots between the following ones:\n"+snapshots);
