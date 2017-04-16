@@ -1,0 +1,36 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div id="wheel"></div>
+<div class='notifications top-right'></div>
+<form id="createtemplateform">
+    <div class="form-group">
+    <label for="profile">Select Template:</label>
+    <select class="form-control" id="template">
+      {% for template in templates %}
+      <option>{{ template }}</option>
+      {% endfor %}
+    </select>
+    </div>
+    <div class="form-group">
+    <label for="pool">Select Pool:</label>
+    <select class="form-control" id="pool">
+      {% for pool in pools %}
+      <option>{{ pool }}</option>
+      {% endfor %}
+    </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Create</button>
+</form>
+
+<script>
+$(document).ready(function() {
+$("#createtemplateform").submit(function() {
+var template = $("#template").val();
+var pool = $("#pool").val();
+templatecreate(template, pool);
+return ;
+});
+});
+</script>
+{% endblock %}

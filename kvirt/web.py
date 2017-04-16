@@ -4,6 +4,7 @@
 # from mock import patch
 from flask import Flask, render_template, request, jsonify
 from config import Kconfig
+from defaults import TEMPLATES
 import dockerutils
 import os
 
@@ -55,6 +56,15 @@ def vmcreate():
     profiles = config.list_profiles()
     return render_template('vmcreate.html', title='CreateVm', profiles=profiles)
 
+
+@app.route('/vmprofiles')
+def vmprofiles():
+    """
+    retrieves vm profiles
+    """
+    config = Kconfig()
+    profiles = config.list_profiles()
+    return render_template('vmprofiles.html', title='VmProfiles', profiles=profiles)
 
 # CONTAINERS
 
@@ -410,14 +420,67 @@ def containeraction():
         return jsonify(failure)
 
 
-@app.route('/vmprofiles')
-def vmprofiles():
+@app.route('/templates')
+def templates():
     """
-    retrieves vm profiles
+    retrieves templates
     """
     config = Kconfig()
-    profiles = config.list_profiles()
-    return render_template('vmprofiles.html', title='VMProfiles', profiles=profiles)
+    k = config.k
+    templates = k.volumes()
+    print templates
+    return render_template('templates.html', title='Templates', templates=templates)
+
+
+@app.route('/templatecreate')
+def templatecreate():
+    """
+    create template
+    """
+    config = Kconfig()
+    k = config.k
+    pools = k.list_pools()
+    return render_template('templatecreate.html', title='CreateTemplate', pools=pools, templates=TEMPLATES)
+
+
+@app.route("/templateaction", methods=['POST'])
+def templateaction():
+    """
+    create/delete template
+    """
+    config = Kconfig()
+    if 'pool' in request.form:
+        pool = request.form['pool']
+        action = request.form['action']
+        # if action == 'delete':
+        #    result = k.delete(name)
+        if action == 'create' and 'pool' in request.form and 'template' in request.form:
+            pool = request.form['pool']
+            template = request.form['template']
+            result = config.handle_host(pool=pool, template=template, download=True)
+        else:
+            result = "Nothing to do"
+        print(result)
+        response = jsonify(result)
+        print(response)
+        response.status_code = 200
+        return response
+    else:
+        failure = {'result': 'failure', 'reason': "Invalid Data"}
+        response = jsonify(failure)
+        response.status_code = 400
+        return response
+
+
+@app.route('/isos')
+def isos():
+    """
+    retrieves isos
+    """
+    config = Kconfig()
+    k = config.k
+    isos = k.volumes(iso=True)
+    return render_template('isos.html', title='Isos', isos=isos)
 
 
 @app.route('/containerprofiles')

@@ -125,8 +125,9 @@ class Kconfig:
         if profile not in vmprofiles:
             common.pprint("profile %s not found. Trying to use the profile as template and default values..." % profile, color='blue')
             result = k.create(name=name, memory=1024, template=profile)
-            code = common.handle_response(result, name)
-            return code
+            # code = common.handle_response(result, name)
+            # return result
+            return result
         profilename = profile
         profile = vmprofiles[profile]
         template = profile.get('template')
@@ -711,8 +712,9 @@ class Kconfig:
             template = TEMPLATES[template]
             shortname = os.path.basename(template)
             result = k.add_image(template, pool)
-            code = common.handle_response(result, shortname, element='Template ', action='Added')
-            os._exit(code)
+            common.handle_response(result, shortname, element='Template ', action='Added')
+            # code = common.handle_response(result, shortname, element='Template ', action='Added')
+            # os._exit(code)
             return {'result': 'success'}
         elif switch:
             if switch not in self.clients:

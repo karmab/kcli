@@ -19,45 +19,48 @@
                 <a data-toggle="dropdown" class="dropdown-toggle" href="#">Vms <b class="caret"></b></a>
                 <ul role="menu" class="dropdown-menu">
                     <li><a href="{{ url_for('vmcreate') }}">Create</a></li>
+                    <li><a href="{{ url_for('vmprofiles') }}">Profiles</a></li>
                     <li><a href="{{ url_for('vms') }}">List</a></li>
-                </ul>
-            </li>
-            <li class="dropdown">
-                <a data-toggle="dropdown" class="dropdown-toggle" href="#">Containers <b class="caret"></b></a>
-                <ul role="menu" class="dropdown-menu">
-                    <li><a href="{{ url_for('containercreate') }}">Create</a></li>
-                    <li><a href="{{ url_for('containers') }}">List</a></li>
-                </ul>
-            </li>
-            <li class="dropdown">
-                <a data-toggle="dropdown" class="dropdown-toggle" href="#">Profiles <b class="caret"></b></a>
-                <ul role="menu" class="dropdown-menu">
-                    <li><a href="{{ url_for('vmprofiles') }}">Vms</a></li>
-                    <li><a href="{{ url_for('containerprofiles') }}">Container</a></li>
-                </ul>
-            </li>
-            <li class="dropdown">
-                <a data-toggle="dropdown" class="dropdown-toggle" href="#">Networks <b class="caret"></b></a>
-                <ul role="menu" class="dropdown-menu">
-                    <li><a href="{{ url_for('networkcreate') }}">Create</a></li>
-                    <li><a href="{{ url_for('networks') }}">List</a></li>
                 </ul>
             </li>
             <li class="dropdown">
                 <a data-toggle="dropdown" class="dropdown-toggle" href="#">Pools <b class="caret"></b></a>
                 <ul role="menu" class="dropdown-menu">
-                    <li><a href="{{ url_for('poolcreate') }}">Create</a></li>
-                    <li><a href="{{ url_for('pools') }}">List</a></li>
+                    <li><a href="{{ url_for('poolcreate') }}">Create Pool</a></li>
+                    <li><a href="{{ url_for('pools') }}">List Pools</a></li>
+                </ul>
+            </li>
+            <li class="dropdown">
+                <a data-toggle="dropdown" class="dropdown-toggle" href="#">Networks <b class="caret"></b></a>
+                <ul role="menu" class="dropdown-menu">
+                    <li><a href="{{ url_for('networkcreate') }}">Create Network</a></li>
+                    <li><a href="{{ url_for('networks') }}">List Networks</a></li>
                 </ul>
             </li>
             <li class="dropdown">
                 <a data-toggle="dropdown" class="dropdown-toggle" href="#">Plans <b class="caret"></b></a>
                 <ul role="menu" class="dropdown-menu">
-                    <li><a href="{{ url_for('plancreate') }}">Create</a></li>
-                    <li><a href="{{ url_for('plans') }}">List</a></li>
+                    <li><a href="{{ url_for('plancreate') }}">Create Plan</a></li>
+                    <li><a href="{{ url_for('plans') }}">List Plans</a></li>
                 </ul>
             </li>
-            <li><a href="{{ url_for('hosts') }}">Hosts</a></li>
+            <li class="dropdown">
+                <a data-toggle="dropdown" class="dropdown-toggle" href="#">Containers <b class="caret"></b></a>
+                <ul role="menu" class="dropdown-menu">
+                    <li><a href="{{ url_for('containercreate') }}">Create Container</a></li>
+                    <li><a href="{{ url_for('containerprofiles') }}">Profiles</a></li>
+                    <li><a href="{{ url_for('containers') }}">List Containers</a></li>
+                </ul>
+            </li>
+            <li class="dropdown">
+                <a data-toggle="dropdown" class="dropdown-toggle" href="#">Host <b class="caret"></b></a>
+                <ul role="menu" class="dropdown-menu">
+                    <li><a href="{{ url_for('hosts') }}">List Hosts</a></li>
+                    <li><a href="{{ url_for('templatecreate') }}">Download Template</a></li>
+                    <li><a href="{{ url_for('templates') }}">List Templates</a></li>
+                    <li><a href="{{ url_for('isos') }}">List Isos</a></li>
+                </ul>
+            </li>
         </ul>
         <ul class="nav navbar-nav navbar-right">
             <li><a href="https://github.com/karmab/kcli">Documentation</a></li>
