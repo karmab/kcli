@@ -6,6 +6,7 @@ from flask import Flask, render_template, request, jsonify
 from config import Kconfig
 from defaults import TEMPLATES
 import dockerutils
+import nameutils
 import os
 
 app = Flask(__name__)
@@ -343,9 +344,20 @@ def planaction():
             result = config.plan(plan, stop=True)
         elif action == 'delete':
             result = config.plan(plan, delete=True)
-        # elif action == 'create' and 'profile' in request.form:
-        #    profile = request.form['profile']
-        #     result = config.create_plan(name, profile)
+        elif action == 'create':
+            url = request.form['url']
+            planfile = request.form['planfile']
+            deploy = request.form['deploy']
+            if deploy == 'on':
+                deploy = True
+            else:
+                deploy = False
+            if plan == '':
+                plan = nameutils.get_random_name()
+            # path = request.form['path']
+            result = config.plan(plan, get=url, path=plan, inputfile=planfile)
+            if deploy:
+                result = config.plan(plan, inputfile="%s/%s" % (plan, planfile))
         else:
             result = "Nothing to do"
         print(result)

@@ -414,6 +414,7 @@ class Kconfig:
             inputfile = 'kcli_plan.yml'
             common.pprint("using default input file kcli_plan.yml", color='green')
         inputfile = os.path.expanduser(inputfile)
+        basedir = os.path.dirname(inputfile)
         if not os.path.exists(inputfile):
             common.pprint("No input file found nor default kcli_plan.yml.Leaving....", color='red')
             os._exit(1)
@@ -515,7 +516,7 @@ class Kconfig:
                         profilename = profile['profile']
                     else:
                         customprofile = {}
-                        profilename = plan
+                        profilename = ''
                     pool = next((e for e in [profile.get('pool'), customprofile.get('pool'), default['pool']] if e is not None))
                     template = next((e for e in [profile.get('template'), customprofile.get('template')] if e is not None), None)
                     cpumodel = next((e for e in [profile.get('cpumodel'), customprofile.get('cpumodel'), default['cpumodel']] if e is not None))
@@ -550,7 +551,10 @@ class Kconfig:
                     if scripts is not None:
                         scriptcmds = []
                         for script in scripts:
+                            if basedir != '':
+                                script = "%s/%s" % (basedir, script)
                             script = os.path.expanduser(script)
+                            print script
                             if not os.path.exists(script):
                                 common.pprint("Script %s not found. Ignoring this vm..." % script, color='red')
                                 missingscript = True

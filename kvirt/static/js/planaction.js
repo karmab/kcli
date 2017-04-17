@@ -56,24 +56,20 @@ function plandelete(plan){
     });
 }
 
-//function plancreate(profile){
-//  var name = prompt("Enter plan name");
-//  if (name == null) {
-//    return ;
-//  }
-//  $("#wheel").show();
-//  data = {'name': name, 'action': 'create', 'profile': profile};
-//  $.ajax({
-//       type: "POST",
-//        url: '/planaction',
-//        data: data,
-//        success: function(data) {
-//            $("#wheel").hide();
-//            if (data == '0') {
-//                $('.top-right').notify({message: { text: "Plan "+name+" Created!!!" }, type: 'success'}).show();
-//            } else {
-//                $('.top-right').notify({message: { text: "VM "+name+" Failed to Create" }, type: 'danger'}).show();
-//            };
-//        }
-//    });
-//}
+function plancreate(name, url, planfile, deploy){
+  $("#wheel").show();
+  data = {'action': 'create', 'name': name, 'url': url, 'planfile': planfile, 'deploy': deploy};
+  $.ajax({
+       type: "POST",
+        url: '/planaction',
+        data: data,
+        success: function(data) {
+            $("#wheel").hide();
+            if (data.result == 'success') {
+                $('.top-right').notify({message: { text: "Plan "+name+" Created!!!" }, type: 'success'}).show();
+            } else {
+                $('.top-right').notify({message: { text: "Plan "+name+" Failed to Create because "+data.reason }, type: 'danger'}).show();
+            };
+        }
+    });
+}
