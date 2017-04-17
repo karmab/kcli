@@ -44,7 +44,7 @@ def vms():
         #     sshcommand = ''
         # vm.append(sshcommand)
         vms.append(vm)
-    return render_template('vms.html', title='Home', vms=vms)
+    return render_template('vms.html', title='Home', vms=vms, client=config.client)
 
 
 @app.route('/vmcreate')
@@ -54,7 +54,7 @@ def vmcreate():
     """
     config = Kconfig()
     profiles = config.list_profiles()
-    return render_template('vmcreate.html', title='CreateVm', profiles=profiles)
+    return render_template('vmcreate.html', title='CreateVm', profiles=profiles, client=config.client)
 
 
 @app.route('/vmprofiles')
@@ -64,7 +64,7 @@ def vmprofiles():
     """
     config = Kconfig()
     profiles = config.list_profiles()
-    return render_template('vmprofiles.html', title='VmProfiles', profiles=profiles)
+    return render_template('vmprofiles.html', title='VmProfiles', profiles=profiles, client=config.client)
 
 
 @app.route("/diskaction", methods=['POST'])
@@ -132,7 +132,7 @@ def containercreate():
     """
     config = Kconfig()
     profiles = config.list_containerprofiles()
-    return render_template('containercreate.html', title='CreateContainer', profiles=profiles)
+    return render_template('containercreate.html', title='CreateContainer', profiles=profiles, client=config.client)
 
 
 # POOLS
@@ -143,7 +143,7 @@ def poolcreate():
     """
     pool form
     """
-    return render_template('poolcreate.html', title='CreatePool')
+    return render_template('poolcreate.html', title='CreatePool', client=config.client)
 
 
 @app.route("/poolaction", methods=['POST'])
@@ -183,7 +183,7 @@ def networkcreate():
     """
     network form
     """
-    return render_template('networkcreate.html', title='CreateNetwork')
+    return render_template('networkcreate.html', title='CreateNetwork', client=config.client)
 
 
 @app.route("/networkaction", methods=['POST'])
@@ -226,7 +226,8 @@ def plancreate():
     """
     create plan
     """
-    return render_template('plancreate.html', title='CreateNetwork')
+    config = Kconfig()
+    return render_template('plancreate.html', title='CreateNetwork', client=config.client)
 
 
 @app.route("/vmaction", methods=['POST'])
@@ -281,9 +282,7 @@ def hostaction():
             result = config.handle_host(switch=name)
         else:
             result = "Nothing to do"
-        print(result)
         response = jsonify(result)
-        print(response)
         response.status_code = 200
         return response
     else:
@@ -393,7 +392,7 @@ def containers():
     config = Kconfig()
     k = config.k
     containers = dockerutils.list_containers(k)
-    return render_template('containers.html', title='Containers', containers=containers)
+    return render_template('containers.html', title='Containers', containers=containers, client=config.client)
 
 
 @app.route('/networks')
@@ -404,7 +403,7 @@ def networks():
     config = Kconfig()
     k = config.k
     networks = k.list_networks()
-    return render_template('networks.html', title='Networks', networks=networks)
+    return render_template('networks.html', title='Networks', networks=networks, client=config.client)
 
 
 @app.route('/pools')
@@ -418,7 +417,7 @@ def pools():
     for pool in k.list_pools():
         poolpath = k.get_pool_path(pool)
         pools.append([pool, poolpath])
-    return render_template('pools.html', title='Pools', pools=pools)
+    return render_template('pools.html', title='Pools', pools=pools, client=config.client)
 
 
 @app.route('/hosts')
@@ -435,7 +434,7 @@ def hosts():
         else:
             clients.append([client, enabled, ''])
     print clients
-    return render_template('hosts.html', title='Hosts', clients=clients)
+    return render_template('hosts.html', title='Hosts', clients=clients, client=config.client)
 
 
 @app.route('/plans')
@@ -444,7 +443,7 @@ def plans():
     retrieves all plans
     """
     config = Kconfig()
-    return render_template('plans.html', title='Plans', plans=config.list_plans())
+    return render_template('plans.html', title='Plans', plans=config.list_plans(), client=config.client)
 
 
 @app.route("/containeraction", methods=['POST'])
@@ -484,7 +483,7 @@ def templates():
     k = config.k
     templates = k.volumes()
     print templates
-    return render_template('templates.html', title='Templates', templates=templates)
+    return render_template('templates.html', title='Templates', templates=templates, client=config.client)
 
 
 @app.route('/templatecreate')
@@ -495,7 +494,7 @@ def templatecreate():
     config = Kconfig()
     k = config.k
     pools = k.list_pools()
-    return render_template('templatecreate.html', title='CreateTemplate', pools=pools, templates=TEMPLATES)
+    return render_template('templatecreate.html', title='CreateTemplate', pools=pools, templates=TEMPLATES, client=config.client)
 
 
 @app.route("/templateaction", methods=['POST'])
@@ -535,7 +534,7 @@ def isos():
     config = Kconfig()
     k = config.k
     isos = k.volumes(iso=True)
-    return render_template('isos.html', title='Isos', isos=isos)
+    return render_template('isos.html', title='Isos', isos=isos, client=config.client)
 
 
 @app.route('/containerprofiles')
@@ -545,7 +544,7 @@ def containerprofiles():
     """
     config = Kconfig()
     profiles = config.list_containerprofiles()
-    return render_template('containerprofiles.html', title='ContainerProfiles', profiles=profiles)
+    return render_template('containerprofiles.html', title='ContainerProfiles', profiles=profiles, client=config.client)
 
 
 def run():

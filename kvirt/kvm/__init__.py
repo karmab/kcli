@@ -1330,7 +1330,8 @@ class Kvirt(Kbase):
                     %s
                     <model type='virtio'/>
                     </interface>""" % (networktype, mac, source)
-        print(nicxml)
+        if self.debug:
+            print(nicxml)
         vm.detachDevice(nicxml)
         vm = conn.lookupByName(name)
         vmxml = vm.XMLDesc(0)

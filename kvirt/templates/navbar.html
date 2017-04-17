@@ -55,15 +55,16 @@
             <li class="dropdown">
                 <a data-toggle="dropdown" class="dropdown-toggle" href="#">Host <b class="caret"></b></a>
                 <ul role="menu" class="dropdown-menu">
-                    <li><a href="{{ url_for('hosts') }}">List Hosts</a></li>
-                    <li><a href="{{ url_for('templatecreate') }}">Download Template</a></li>
-                    <li><a href="{{ url_for('templates') }}">List Templates</a></li>
-                    <li><a href="{{ url_for('isos') }}">List Isos</a></li>
+                    <li ><a href="{{ url_for('hosts') }}">List Hosts</a></li>
+                    <li ><a href="{{ url_for('templatecreate') }}">Download Template</a></li>
+                    <li ><a href="{{ url_for('templates') }}">List Templates</a></li>
+                    <li ><a href="{{ url_for('isos') }}">List Isos</a></li>
                 </ul>
             </li>
         </ul>
         <ul class="nav navbar-nav navbar-right">
             <li><a href="https://github.com/karmab/kcli">Documentation</a></li>
         </ul>
+        <p class="navbar-text navbar-right">Current Client: {{ client }}</p>
     </div>
 </nav>

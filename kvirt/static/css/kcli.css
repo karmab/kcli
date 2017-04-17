@@ -29,3 +29,8 @@ body {
 .left {
         text-align: left;
 }
+
+.btn .form-control .dropdown-menu {
+    font-size: 17px;
+}
+
