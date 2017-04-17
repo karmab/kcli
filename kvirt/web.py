@@ -143,6 +143,7 @@ def poolcreate():
     """
     pool form
     """
+    config = Kconfig()
     return render_template('poolcreate.html', title='CreatePool', client=config.client)
 
 
@@ -183,6 +184,7 @@ def networkcreate():
     """
     network form
     """
+    config = Kconfig()
     return render_template('networkcreate.html', title='CreateNetwork', client=config.client)
 
 

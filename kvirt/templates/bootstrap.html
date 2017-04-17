@@ -1,0 +1,53 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div id="wheel"></div>
+<div class='notifications top-right'></div>
+<form id="bootstrapform">
+    <div class="form-group">
+        <label for="inputName">Name</label>
+        <input required="true" type="name" class="form-control" id="name" placeholder="Client Name" value='localhost'>
+        <label for="inputName">Url</label>
+        <input type="name" class="form-control" id="url" placeholder="Ip">
+        <label for="inputName">IP/Hostname</label>
+        <input type="name" class="form-control" id="host" placeholder="Client Name" value="localhost">
+        <label for="inputName">Protocol</label>
+        <input type="name" class="form-control" id="protocol" placeholder="Protocol" value="ssh">
+        <label for="inputName">Port</label>
+        <input type="name" class="form-control" id="port" placeholder="port">
+        <label for="inputName">User</label>
+        <input type="name" class="form-control" id="user" placeholder="user" value="root">
+        <label for="inputName">Pool</label>
+        <input type="name" class="form-control" id="pool" placeholder="pool" value="default">
+        <label for="inputName">PoolPath</label>
+        <input type="name" class="form-control" id="poolpath" placeholder="poolpath" value="/var/lib/libvirt/images">
+        <label for="inputName">DiskSize</label>
+        <input type="name" class="form-control" id="size" placeholder="size" value="10">
+        <label for="inputName">Network</label>
+        <input type="name" class="form-control" id="net" placeholder="net" value="default">
+        <label for="inputName">Cidr</label>
+        <input type="name" class="form-control" id="cidr" placeholder="cidr" value="192.168.122.0/24">
+    </div>
+    <div class="checkbox">
+        <label><input id="poolcreate" type="checkbox" class="form-check-input" checked >Create Pool</label>
+    </div>
+    <div class="checkbox">
+        <label><input id="templatecreate" type="checkbox" class="form-check-input" checked >Download Centos Image</label>
+    </div>
+    <div class="checkbox">
+        <label><input id="cloudinit" type="checkbox" class="form-check-input" checked >Enable Cloud Init</label>
+    </div>
+    <button type="submit" id="bootstrapbutton" class="btn btn-primary">Create</button>
+</form>
+
+<script>
+$(document).ready(function() {
+$("#bootstrapform").submit(function() {
+var name = $("#name").val();
+var profile = $("#profile").val();
+bootstrap(name, profile);
+return ;
+});
+});
+</script>
+{% endblock %}
