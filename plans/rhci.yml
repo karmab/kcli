@@ -1,0 +1,80 @@
+default:
+ type: network
+ cidr: 192.168.122.0/24
+ dhcp: true
+
+osp:
+ template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+ memory: 6144
+ numcpus: 2
+ disks:
+  - size: 40
+ nets: 
+  - default
+ pool: default
+ scripts: 
+  - ~/register.sh
+  - openstack/subscription.sh
+  - openstack/install.sh
+  - openstack/provision.sh
+
+rhv:
+ template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+ memory: 8192
+ numcpus: 2
+ nets:
+  - default
+ disks:
+  -size: 60
+ pool: default
+ scripts: 
+  - ~/register.sh
+  - ovirt/nfs.sh
+  - ovirt/subscription.sh
+  - ovirt/install.sh
+  - ovirt/provision.sh
+
+cloudforms:
+ template: cfme-rhos-5.6.1.2-1.x86_64.qcow2
+ memory: 6144
+ numcpus: 2
+ nets:
+  - default
+ disks:
+  - size: 45
+  - size: 10
+ pool: default
+ scripts: 
+  - manageiq/install.sh
+
+ose:
+ template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+ numcpus: 2
+ memory: 2048
+ nets: 
+  - default
+ disks:
+  - size: 10
+  - size: 20
+ pool: default
+ scripts: 
+  - ~/register.sh
+  - openshift/subscription.sh
+  - openshift/install.sh
+  - openshift/downstream.sh
+
+satellite:
+ template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+ memory: 4096
+ numcpus: 2
+ nets: 
+  - default
+ disks:
+  - size: 40
+ pool: default
+ scripts: 
+  - ~/register.sh
+  - foreman/subscription.sh
+  - foreman/install.sh
+  - foreman/downstream.sh
+  - foreman/hammer.sh

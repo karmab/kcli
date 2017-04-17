@@ -1,0 +1,12 @@
+cloudforms:
+ template: cfme-rhos-5.6.1.2-1.x86_64.qcow2
+ memory: 6144
+ numcpus: 2
+ nets:
+  - default
+ disks:
+  - size: 45
+  - size: 10
+ pool: default
+ scripts: 
+  - install.sh

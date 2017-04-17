@@ -1,0 +1,15 @@
+kilo:
+ template: rhel.qcow2
+ memory: 6144
+ numcpus: 2
+ disks: 
+  - size: 10
+  - size: 40
+ nets:
+ - default
+ pool: default
+ scripts: 
+  - ~/register.sh
+  - subscription_kilo.sh
+  - install.sh
+  - provision.sh

@@ -1,0 +1,15 @@
+rhv:
+ template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+ memory: 8192
+ numcpus: 2
+ nets:
+  - default
+ disks:
+  - size: 60
+ pool: default
+ scripts: 
+  - ~/register.sh
+  - nfs.sh
+  - subscription.sh
+  - install.sh
+  - provision.sh

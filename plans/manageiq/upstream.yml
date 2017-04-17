@@ -1,0 +1,12 @@
+manageiq:
+ template: manageiq-openstack-darga-3.qc2
+ memory: 6144
+ numcpus: 2
+ nets:
+ - default
+ disks:
+  - size: 45
+  - size: 10 
+ pool: default
+ scripts: 
+  - install.sh
