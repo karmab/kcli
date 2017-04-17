@@ -88,7 +88,8 @@ def info(args):
     name = args.name
     global config
     k = config.k
-    code = k.info(name)
+    result = k.info(name)
+    code = common.handle_response(result, name, quiet=True)
     os._exit(code)
 
 
@@ -517,9 +518,10 @@ def plan(args):
     delete = args.delete
     delay = args.delay
     global config
-    result = config.plan(plan, ansible=ansible, get=get, path=path, autostart=autostart, container=container, noautostart=noautostart, inputfile=inputfile, start=start, stop=stop, delete=delete, delay=delay)
-    code = common.handle_response(result, plan, element='', action='created')
-    return code
+    config.plan(plan, ansible=ansible, get=get, path=path, autostart=autostart, container=container, noautostart=noautostart, inputfile=inputfile, start=start, stop=stop, delete=delete, delay=delay)
+    # result = config.plan(plan, ansible=ansible, get=get, path=path, autostart=autostart, container=container, noautostart=noautostart, inputfile=inputfile, start=start, stop=stop, delete=delete, delay=delay)
+    # code = common.handle_response(result, plan, element='', action='created')
+    return 0
 
 
 def ssh(args):

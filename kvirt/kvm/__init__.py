@@ -649,7 +649,7 @@ class Kvirt(Kbase):
                 print(xml)
             root = ET.fromstring(xml)
         except:
-            print("VM %s not found" % name)
+            common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         state = 'down'
         autostart = starts[vm.autostart()]
@@ -725,7 +725,7 @@ class Kvirt(Kbase):
             else:
                 current = False
             print("snapshot: %s current: %s" % (snapshot, current))
-        return 0
+        return {'result': 'success'}
 
     def ip(self, name):
         leases = {}
@@ -1278,11 +1278,11 @@ class Kvirt(Kbase):
         try:
             vm = conn.lookupByName(name)
         except:
-            print("VM %s not found" % name)
+            common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if network not in networks:
-            print("Network %s not found" % network)
-            return
+            common.pprint("Network %s not found" % network, color='red')
+            return {'result': 'failure', 'reason': "Network %s not found" % network}
         else:
             networktype = networks[network]
             source = "<source %s='%s'/>" % (networktype, network)
@@ -1294,6 +1294,7 @@ class Kvirt(Kbase):
         vm = conn.lookupByName(name)
         vmxml = vm.XMLDesc(0)
         conn.defineXML(vmxml)
+        return {'result': 'success'}
 
     def delete_nic(self, name, interface):
         conn = self.conn
@@ -1308,7 +1309,7 @@ class Kvirt(Kbase):
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
         except:
-            print("VM %s not found" % name)
+            common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         for element in root.getiterator('interface'):
             device = "eth%s" % nicnumber

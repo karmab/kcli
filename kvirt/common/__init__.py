@@ -209,13 +209,15 @@ def pprint(text, color=None):
         print(text)
 
 
-def handle_response(result, name, element='', action='deployed'):
+def handle_response(result, name, quiet=False, element='', action='deployed'):
     if result['result'] == 'success':
-        pprint("%s%s %s!" % (element, name, action), color='green')
+        if not quiet:
+            pprint("%s%s %s!" % (element, name, action), color='green')
         return 0
     else:
-        reason = result['reason']
-        pprint("%s%s not %s because %s" % (element, name, action, reason), color='red')
+        if not quiet:
+            reason = result['reason']
+            pprint("%s%s not %s because %s" % (element, name, action, reason), color='red')
         return 1
 
 

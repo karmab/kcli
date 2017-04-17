@@ -63,6 +63,16 @@
                         <li onclick="vmstop('{{ vm[0] }}');"><span class="glyphicon glyphicon-stop" data-toggle="tooltip" title="Stop Vm"></span> Stop</li>
                         <li class="divider"></li>
                         <li onclick="vmdelete('{{ vm[0] }}');"><span class="glyphicon glyphicon-trash red" data-toggle="tooltip" title="Delete Vm"></span> Delete</li>
+                        <!--
+                        <li class="divider"></li>
+                        <li class="dropdown-header">Disk actions</li>
+                        <li onclick="diskadd('{{ vm[0] }}');"><span class="glyphicon glyphicon-plus" data-toggle="tooltip" title="Add Disk"></span> Disk Add</li>
+                        <li onclick="diskdelete('{{ vm[0] }}');"><span class="glyphicon glyphicon-minus" data-toggle="tooltip" title="Delete Disk"></span> Disk Delete</li>
+                        <li class="divider"></li>
+                        <li class="dropdown-header">Nic actions</li>
+                        <li onclick="nicadd('{{ vm[0] }}');"><span class="glyphicon glyphicon-plus" data-toggle="tooltip" title="Delte Add"></span> Nic Add</li>
+                        <li onclick="nicdelete('{{ vm[0] }}');"><span class="glyphicon glyphicon-minus" data-toggle="tooltip" title="Delete Nic"></span> Nic Delete</li>
+                        !-->
                         <li class="divider"></li>
                         <li class="dropdown-header">Snapshot actions</li>
                         <li onclick="snapshotcreate('{{ vm[0] }}');"><span class="glyphicon glyphicon-cd blue" data-toggle="tooltip" title="Snapshot Vm"></span> Create</li>

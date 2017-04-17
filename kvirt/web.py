@@ -66,6 +66,62 @@ def vmprofiles():
     profiles = config.list_profiles()
     return render_template('vmprofiles.html', title='VmProfiles', profiles=profiles)
 
+
+@app.route("/diskaction", methods=['POST'])
+def diskaction():
+    """
+    add/delete disk to vm
+    """
+    config = Kconfig()
+    k = config.k
+    if 'action' in request.form:
+        action = request.form['action']
+        if action == 'add':
+            name = request.form['name']
+            size = int(request.form['size'])
+            pool = request.form['pool']
+            result = k.add_disk(name, size, pool)
+        elif action == 'delete':
+            name = request.form['name']
+            diskname = request.form['disk']
+            result = k.delete_disk(name, diskname)
+        response = jsonify(result)
+        print(response)
+        response.status_code = 200
+    else:
+        failure = {'result': 'failure', 'reason': "Invalid Data"}
+        response = jsonify(failure)
+        response.status_code = 400
+    return response
+
+
+@app.route("/nicaction", methods=['POST'])
+def nicaction():
+    """
+    add/delete nic to vm
+    """
+    config = Kconfig()
+    k = config.k
+    if 'action' in request.form:
+        action = request.form['action']
+        if action == 'add':
+            name = request.form['name']
+            network = request.form['network']
+            result = k.add_nic(name, network)
+        elif action == 'delete':
+            name = request.form['name']
+            nicname = request.form['nic']
+            result = k.delete_nic(name, nicname)
+        response = jsonify(result)
+        print(response)
+        response.status_code = 200
+    else:
+        failure = {'result': 'failure', 'reason': "Invalid Data"}
+        response = jsonify(failure)
+        response.status_code = 400
+    return response
+
+
 # CONTAINERS
 
 
@@ -113,12 +169,11 @@ def poolaction():
         response = jsonify(result)
         print(response)
         response.status_code = 200
-        return response
     else:
         failure = {'result': 'failure', 'reason': "Invalid Data"}
         response = jsonify(failure)
         response.status_code = 400
-        return jsonify(failure)
+    return response
 
 # NETWORKS
 
