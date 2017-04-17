@@ -1,8 +1,28 @@
 # Changelog
 
+## 6.0 (2017-04-17)
+
+- web version to use with kweb
+- cloudinit reports in the UI at the end and during provisioning
+- custom reportdir for the UI reports
+- plan of plans ( so a single file can reference several plans located at different urls)
+- kcli snapshot with create/delete/revert/list
+- enable/disable hypervisors
+- unified configuration class 
+- common base class for all providers to serve as a base to additional providers
+- manageiq/cloudforms plans working
+- common ansible dynamic inventory
+- enhance list profiles
+- insecure option for quiet ssh connections
+- report paths with list --pools to please @rsevilla87
+- short option for listing profiles or networks
+- switch from click to argparse
+
+IMPORTANT: as part of the refactorization, metadata about the vms are stored differently. So you re advised to run kcli list prior to upgrade so you can
+use this information afterwards to run *kcli update --template* or *kcli update --plan*
+
 ## 5.24 (2017-04-04)
 
-- kcli snapshot
 - Cleaner options
 - Removed -l from every section in favor of kcli list
 - *--force* option to delete vm when it has existing snapshots

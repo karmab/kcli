@@ -4,8 +4,6 @@
 Base Kvirt serving as interface for the virtualisation providers
 """
 
-__version__ = '5.24'
-
 
 class Kbase(object):
     def __init__(self):

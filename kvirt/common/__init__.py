@@ -48,7 +48,9 @@ def fetch(url, path, syms=None):
         download(url, path)
         return
     elif 'api.github.com' not in url:
-        url = url.replace('github.com/', 'api.github.com/repos/').replace('tree/master', 'contents')
+        # url = url.replace('github.com/', 'api.github.com/repos/').replace('tree/master', 'contents')
+        url = url.replace('github.com/', 'api.github.com/repos/').replace('tree/master', '')
+        url = url.replace('blob/master', '')
     if 'contents' not in url:
         tempurl = url.replace('https://api.github.com/repos/', '')
         user = tempurl.split('/')[0]

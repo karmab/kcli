@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from config import Kconfig
+from config import __version__
 from defaults import TEMPLATES
 from prettytable import PrettyTable
 from shutil import copyfile
@@ -11,8 +12,6 @@ import dockerutils
 import os
 import yaml
 from kvirt.kvm import Kvirt
-
-__version__ = '5.24'
 
 
 def start(args):

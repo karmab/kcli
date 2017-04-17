@@ -347,6 +347,9 @@ def planaction():
         elif action == 'create':
             url = request.form['url']
             planfile = request.form['planfile']
+            if url.endswith('.yml'):
+                planfile = os.path.basename(url)
+                url = os.path.dirname(url)
             deploy = request.form['deploy']
             if deploy == 'on':
                 deploy = True

@@ -17,7 +17,7 @@ from time import sleep
 import webbrowser
 import yaml
 
-__version__ = '5.24'
+__version__ = '6.0'
 
 
 class Kconfig:
@@ -33,17 +33,17 @@ class Kconfig:
         else:
             with open(inifile, 'r') as entries:
                 try:
-                    ini = yaml.load(entries)
+                    self.ini = yaml.load(entries)
                 except:
                     self.host = None
                     return
-            if 'default' not in ini or 'client' not in ini['default']:
+            if 'default' not in self.ini or 'client' not in self.ini['default']:
                 common.pprint("Missing default section in config file. Leaving...", color='red')
                 self.host = None
                 return
-        self.clients = [e for e in ini if e != 'default']
+        self.clients = [e for e in self.ini if e != 'default']
         defaults = {}
-        default = ini['default']
+        default = self.ini['default']
         defaults['nets'] = default.get('nets', NETS)
         defaults['pool'] = default.get('pool', POOL)
         defaults['cpumodel'] = default.get('cpumodel', CPUMODEL)
@@ -68,7 +68,6 @@ class Kconfig:
         defaults['report'] = bool(default.get('report', REPORT))
         defaults['reportall'] = bool(default.get('reportall', REPORTALL))
         self.default = defaults
-        self.ini = ini
         profilefile = default.get('profiles', "%s/kcli_profiles.yml" % os.environ.get('HOME'))
         profilefile = os.path.expanduser(profilefile)
         if not os.path.exists(profilefile):
@@ -516,7 +515,7 @@ class Kconfig:
                         profilename = profile['profile']
                     else:
                         customprofile = {}
-                        profilename = ''
+                        profilename = 'kvirt'
                     pool = next((e for e in [profile.get('pool'), customprofile.get('pool'), default['pool']] if e is not None))
                     template = next((e for e in [profile.get('template'), customprofile.get('template')] if e is not None), None)
                     cpumodel = next((e for e in [profile.get('cpumodel'), customprofile.get('cpumodel'), default['cpumodel']] if e is not None))

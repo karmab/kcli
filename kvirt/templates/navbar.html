@@ -24,6 +24,13 @@
                 </ul>
             </li>
             <li class="dropdown">
+                <a data-toggle="dropdown" class="dropdown-toggle" href="#">Plans <b class="caret"></b></a>
+                <ul role="menu" class="dropdown-menu">
+                    <li><a href="{{ url_for('plancreate') }}">Create Plan</a></li>
+                    <li><a href="{{ url_for('plans') }}">List Plans</a></li>
+                </ul>
+            </li>
+            <li class="dropdown">
                 <a data-toggle="dropdown" class="dropdown-toggle" href="#">Pools <b class="caret"></b></a>
                 <ul role="menu" class="dropdown-menu">
                     <li><a href="{{ url_for('poolcreate') }}">Create Pool</a></li>
@@ -35,13 +42,6 @@
                 <ul role="menu" class="dropdown-menu">
                     <li><a href="{{ url_for('networkcreate') }}">Create Network</a></li>
                     <li><a href="{{ url_for('networks') }}">List Networks</a></li>
-                </ul>
-            </li>
-            <li class="dropdown">
-                <a data-toggle="dropdown" class="dropdown-toggle" href="#">Plans <b class="caret"></b></a>
-                <ul role="menu" class="dropdown-menu">
-                    <li><a href="{{ url_for('plancreate') }}">Create Plan</a></li>
-                    <li><a href="{{ url_for('plans') }}">List Plans</a></li>
                 </ul>
             </li>
             <li class="dropdown">
