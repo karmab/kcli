@@ -552,7 +552,6 @@ class Kconfig:
                             if basedir != '':
                                 script = "%s/%s" % (basedir, script)
                             script = os.path.expanduser(script)
-                            print script
                             if not os.path.exists(script):
                                 common.pprint("Script %s not found. Ignoring this vm..." % script, color='red')
                                 missingscript = True

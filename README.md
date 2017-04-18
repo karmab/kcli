@@ -530,6 +530,8 @@ Basic testing can be run with pytest. If using a remote hypervisor, you ll want 
 
 ## TODO
 
+- Plans metadata
+- Shared profiles
 - Scaling Plan
 - Plan View (Vagrant Style)
 - Multiple Hypervisors in kcli list/ Random hypervisor vm creation
