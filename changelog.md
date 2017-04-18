@@ -1,5 +1,9 @@
 # Changelog
 
+## 6.1 (2017-04-18)
+
+- fix kcli host --switch/enable/update ( and in the UI) within container
+
 ## 6.0 (2017-04-17)
 
 - web version to use with kweb
