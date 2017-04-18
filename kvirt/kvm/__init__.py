@@ -580,6 +580,9 @@ class Kvirt(Kbase):
                 e = element.find('{kvirt}report')
                 if e is not None:
                     report = e.text
+                e = element.find('{kvirt}ip')
+                if e is not None:
+                    ip = e.text
             vms.append([name, state, ip, template, plan, profile, report])
         return vms
 
@@ -666,19 +669,27 @@ class Kvirt(Kbase):
         print("name: %s" % name)
         print("status: %s" % state)
         print("autostart: %s" % autostart)
-        description = root.getiterator('description')
-        if description:
-            description = description[0].text
-        else:
-            description = ''
-        title = None
-        for entry in root.getiterator('entry'):
-            attributes = entry.attrib
-            if attributes['name'] == 'product':
-                title = entry.text
-        print("description: %s" % description)
-        if title is not None:
-            print("profile: %s" % title)
+        plan, profile, template = None, None, None
+        for element in root.getiterator('{kvirt}info'):
+            e = element.find('{kvirt}plan')
+            if e is not None:
+                plan = e.text
+            e = element.find('{kvirt}profile')
+            if e is not None:
+                profile = e.text
+            e = element.find('{kvirt}template')
+            if e is not None:
+                template = e.text
+            e = element.find('{kvirt}report')
+            e = element.find('{kvirt}ip')
+            if e is not None:
+                ip = e.text
+        if template is not None:
+            print("template: %s" % template)
+        if plan is not None:
+            print("plan: %s" % plan)
+        if profile is not None:
+            print("profile: %s" % profile)
         print("cpus: %s" % numcpus)
         print("memory: %sMB" % memory)
         nicnumber = 0
@@ -698,12 +709,8 @@ class Kvirt(Kbase):
                     # ips.append(leases[mac])
                     print("ip: %s" % leases[mac])
             nicnumber = nicnumber + 1
-        for entry in root.getiterator('entry'):
-            attributes = entry.attrib
-            if attributes['name'] == 'version':
-                ip = entry.text
-                print("ip: %s" % ip)
-                break
+        if ip is not None:
+            print("fixed ip: %s" % ip)
         for element in root.getiterator('disk'):
             disktype = element.get('device')
             if disktype == 'cdrom':
