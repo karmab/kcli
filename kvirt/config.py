@@ -16,7 +16,7 @@ from time import sleep
 import webbrowser
 import yaml
 
-__version__ = '6.1'
+__version__ = '6.2'
 
 
 class Kconfig:
@@ -753,12 +753,12 @@ class Kconfig:
                         newini += line
                         continue
                     if clientreached and 'enabled' not in self.ini[client]:
-                        newini += " enabled: true"
+                        newini += " enabled: true\n"
                         clientreached = False
                         newini += line
                         continue
                     elif clientreached and line.startswith(' enabled:'):
-                        newini += " enabled: true"
+                        newini += " enabled: true\n"
                         clientreached = False
                     else:
                         newini += line
