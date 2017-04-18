@@ -98,6 +98,13 @@ As a bonus, you can alias kcli and run kcli as if it is installed locally instea
 alias kcli = "docker run --rm -v ~/kcli.yml:/root/kcli.yml -v ~/kcli_profiles.yml:/root/kcli_profiles.yml -v ~/.ssh:/root/.ssh karmab/kcli"
 ```
 
+For web access, you can use this line instead:
+
+```Shell
+ali
+as kweb = "docker run --rm -p 9000:9000  -v ~/kcli.yml:/root/kcli.yml -v ~/kcli_profiles.yml:/root/kcli_profiles.yml -v ~/.ssh:/root/.ssh --entrypoint=/usr/bin/kweb karmab/kcli"
+```
+
 ## Configuration
 
 If you only want to use your local libvirt daemon, no configuration is needed.

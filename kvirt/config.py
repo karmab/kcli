@@ -7,7 +7,6 @@ Kvirt config class
 from defaults import NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, RESERVEHOST, START, NESTED, TUNNEL, REPORTURL, REPORTDIR, REPORT, REPORTALL, INSECURE, TEMPLATES
 import ansibleutils
 import dockerutils
-import fileinput
 import nameutils
 from kvirt import common
 from kvm import Kvirt
@@ -730,11 +729,13 @@ class Kconfig:
             common.pprint("Switching to client %s..." % switch, color='green')
             inifile = "%s/kcli.yml" % os.environ.get('HOME')
             if os.path.exists(inifile):
-                for line in fileinput.input(inifile, inplace=True):
+                newini = ''
+                for line in open(inifile).readlines():
                     if 'client' in line:
-                        print(" client: %s" % switch)
+                        newini += " client: %s\n" % switch
                     else:
-                        print(line.rstrip())
+                        newini += line
+                open(inifile, 'w').write(newini)
             return {'result': 'success'}
         elif enable:
             client = enable
@@ -744,22 +745,24 @@ class Kconfig:
             common.pprint("Enabling client %s..." % client, color='green')
             inifile = "%s/kcli.yml" % os.environ.get('HOME')
             if os.path.exists(inifile):
+                newini = ''
                 clientreached = False
-                for line in fileinput.input(inifile, inplace=True):
+                for line in open(inifile).readlines():
                     if line.startswith("%s:" % client):
                         clientreached = True
-                        print(line.rstrip())
+                        newini += line
                         continue
                     if clientreached and 'enabled' not in self.ini[client]:
-                        print(" enabled: true")
+                        newini += " enabled: true"
                         clientreached = False
-                        print(line.rstrip())
+                        newini += line
                         continue
                     elif clientreached and line.startswith(' enabled:'):
-                        print(" enabled: true")
+                        newini += " enabled: true"
                         clientreached = False
                     else:
-                        print(line.rstrip())
+                        newini += line
+                open(inifile, 'w').write(newini)
             return {'result': 'success'}
         elif disable:
             client = disable
@@ -772,20 +775,22 @@ class Kconfig:
             common.pprint("Disabling client %s..." % client, color='green')
             inifile = "%s/kcli.yml" % os.environ.get('HOME')
             if os.path.exists(inifile):
+                newini = ''
                 clientreached = False
-                for line in fileinput.input(inifile, inplace=True):
+                for line in open(inifile).readlines():
                     if line.startswith("%s:" % client):
                         clientreached = True
-                        print(line.rstrip())
+                        newini += line
                         continue
                     if clientreached and 'enabled' not in self.ini[client]:
-                        print(" enabled: false")
+                        newini += " enabled: false"
                         clientreached = False
-                        print(line.rstrip())
+                        newini += line
                         continue
                     elif clientreached and line.startswith(' enabled:'):
-                        print(" enabled: false")
+                        newini += " enabled: false"
                         clientreached = False
                     else:
-                        print(line.rstrip())
+                        newini += line
+                open(inifile, 'w').write(newini)
         return {'result': 'success'}
