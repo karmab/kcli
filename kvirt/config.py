@@ -4,7 +4,7 @@
 Kvirt config class
 """
 
-from defaults import NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, RESERVEHOST, START, NESTED, TUNNEL, REPORTURL, REPORTDIR, REPORT, REPORTALL, INSECURE, TEMPLATES
+from defaults import NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, RESERVEHOST, START, NESTED, TUNNEL, REPORTURL, REPORTDIR, REPORT, REPORTALL, INSECURE, TEMPLATES, KEYS, CMDS, DNS, DOMAIN, SCRIPTS, FILES, ISO, NETMASKS, GATEWAY, SHAREDKEY, TEMPLATE
 import ansibleutils
 import dockerutils
 import nameutils
@@ -16,7 +16,7 @@ from time import sleep
 import webbrowser
 import yaml
 
-__version__ = '6.4'
+__version__ = '6.5'
 
 
 class Kconfig:
@@ -45,6 +45,7 @@ class Kconfig:
         default = self.ini['default']
         defaults['nets'] = default.get('nets', NETS)
         defaults['pool'] = default.get('pool', POOL)
+        defaults['template'] = default.get('template', TEMPLATE)
         defaults['cpumodel'] = default.get('cpumodel', CPUMODEL)
         defaults['numcpus'] = int(default.get('numcpus', NUMCPUS))
         defaults['memory'] = int(default.get('memory', MEMORY))
@@ -60,12 +61,22 @@ class Kconfig:
         defaults['reservehost'] = bool(default.get('reservehost', RESERVEHOST))
         defaults['nested'] = bool(default.get('nested', NESTED))
         defaults['start'] = bool(default.get('start', START))
-        defaults['tunnel'] = default.get('tunnel', TUNNEL)
-        defaults['insecure'] = default.get('insecure', INSECURE)
+        defaults['tunnel'] = bool(default.get('tunnel', TUNNEL))
+        defaults['insecure'] = bool(default.get('insecure', INSECURE))
         defaults['reporturl'] = default.get('reporturl', REPORTURL)
         defaults['reportdir'] = default.get('reportdir', REPORTDIR)
         defaults['report'] = bool(default.get('report', REPORT))
         defaults['reportall'] = bool(default.get('reportall', REPORTALL))
+        defaults['keys'] = default.get('keys', KEYS)
+        defaults['cmds'] = default.get('cmds', CMDS)
+        defaults['dns'] = default.get('dns', DNS)
+        defaults['domain'] = default.get('file', DOMAIN)
+        defaults['scripts'] = default.get('script', SCRIPTS)
+        defaults['files'] = default.get('files', FILES)
+        defaults['iso'] = default.get('iso', ISO)
+        defaults['netmasks'] = default.get('netmasks', NETMASKS)
+        defaults['gateway'] = default.get('gateway', GATEWAY)
+        defaults['sharedkey'] = default.get('sharedkey', SHAREDKEY)
         self.default = defaults
         profilefile = default.get('profiles', "%s/kcli_profiles.yml" % os.environ.get('HOME'))
         profilefile = os.path.expanduser(profilefile)
@@ -89,13 +100,44 @@ class Kconfig:
         self.port = options.get('port', 22)
         self.user = options.get('user', 'root')
         self.protocol = options.get('protocol', 'ssh')
+        self.type = options.get('type', 'kvm')
         self.url = options.get('url', None)
+        self.pool = options.get('pool', self.default['pool'])
+        self.template = options.get('template', self.default['template'])
         self.tunnel = bool(options.get('tunnel', self.default['tunnel']))
         self.insecure = bool(options.get('insecure', self.default['insecure']))
+        self.report = options.get('report', self.default['report'])
         self.reporturl = options.get('reporturl', self.default['reportdir'])
         self.reportdir = options.get('reportdir', self.default['reportdir'])
+        self.reportall = options.get('reportall', self.default['reportall'])
         self.enabled = options.get('enabled', True)
-        self.type = options.get('type', 'kvm')
+        self.nets = options.get('nets', self.default['nets'])
+        self.cpumodel = options.get('cpumodel', self.default['cpumodel'])
+        self.cpuflags = options.get('cpuflags', [])
+        self.numcpus = options.get('numcpus', self.default['numcpus'])
+        self.memory = options.get('memory', self.default['memory'])
+        self.disks = options.get('disks', self.default['disks'])
+        self.disksize = options.get('disksize', self.default['disksize'])
+        self.diskinterface = options.get('diskinterface', self.default['diskinterface'])
+        self.diskthin = options.get('diskthin', self.default['diskthin'])
+        self.guestid = options.get('guestid', self.default['guestid'])
+        self.vnc = options.get('vnc', self.default['vnc'])
+        self.cloudinit = options.get('cloudinit', self.default['cloudinit'])
+        self.reserveip = options.get('reserveip', self.default['reserveip'])
+        self.reservedns = options.get('reservedns', self.default['reservedns'])
+        self.reservehost = options.get('reservehost', self.default['reservehost'])
+        self.nested = options.get('nested', self.default['nested'])
+        self.start = options.get('start', self.default['start'])
+        self.iso = options.get('iso', self.default['iso'])
+        self.keys = options.get('keys', self.default['keys'])
+        self.cmds = options.get('cmds', self.default['cmds'])
+        self.netmasks = options.get('netmasks', self.default['netmasks'])
+        self.gateway = options.get('gateway', self.default['gateway'])
+        self.sharedkey = options.get('sharedkey', self.default['sharedkey'])
+        self.dns = options.get('dns', self.default['dns'])
+        self.domain = options.get('domain', self.default['domain'])
+        self.scripts = options.get('scripts', self.default['scripts'])
+        self.files = options.get('files', self.default['files'])
         if not self.enabled:
             k = None
         else:
@@ -117,7 +159,6 @@ class Kconfig:
         if profile is None:
             common.pprint("Missing profile", color='red')
             os._exit(1)
-        default = self.default
         vmprofiles = {k: v for k, v in self.profiles.iteritems() if 'type' not in v or v['type'] == 'vm'}
         common.pprint("Deploying vm %s from profile %s..." % (name, profile), color='green')
         if profile not in vmprofiles:
@@ -128,38 +169,38 @@ class Kconfig:
             return result
         profilename = profile
         profile = vmprofiles[profile]
-        template = profile.get('template')
+        template = profile.get('template', self.template)
         plan = 'kvirt'
-        nets = profile.get('nets', default['nets'])
-        cpumodel = profile.get('cpumodel', default['cpumodel'])
-        cpuflags = profile.get('cpuflags', [])
-        numcpus = profile.get('numcpus', default['numcpus'])
-        memory = profile.get('memory', default['memory'])
-        pool = profile.get('pool', default['pool'])
-        disks = profile.get('disks', default['disks'])
-        disksize = profile.get('disksize', default['disksize'])
-        diskinterface = profile.get('diskinterface', default['diskinterface'])
-        diskthin = profile.get('diskthin', default['diskthin'])
-        guestid = profile.get('guestid', default['guestid'])
-        iso = profile.get('iso')
-        vnc = profile.get('vnc', default['vnc'])
-        cloudinit = profile.get('cloudinit', default['cloudinit'])
-        reserveip = profile.get('reserveip', default['reserveip'])
-        reservedns = profile.get('reservedns', default['reservedns'])
-        reservehost = profile.get('reservehost', default['reservehost'])
-        nested = profile.get('nested', default['nested'])
-        start = profile.get('start', default['start'])
-        report = profile.get('report', default['report'])
-        reportall = profile.get('reportall', default['reportall'])
-        keys = profile.get('keys', None)
-        cmds = profile.get('cmds', None)
-        netmasks = profile.get('netmasks')
-        gateway = profile.get('gateway')
-        dns = profile.get('dns')
-        domain = profile.get('domain')
-        scripts = profile.get('scripts')
-        files = profile.get('files', [])
-        if scripts is not None:
+        nets = profile.get('nets', self.nets)
+        cpumodel = profile.get('cpumodel', self.cpumodel)
+        cpuflags = profile.get('cpuflags', self.cpuflags)
+        numcpus = profile.get('numcpus', self.numcpus)
+        memory = profile.get('memory', self.memory)
+        pool = profile.get('pool', self.pool)
+        disks = profile.get('disks', self.disks)
+        disksize = profile.get('disksize', self.disksize)
+        diskinterface = profile.get('diskinterface', self.diskinterface)
+        diskthin = profile.get('diskthin', self.diskthin)
+        guestid = profile.get('guestid', self.guestid)
+        iso = profile.get('iso', self.iso)
+        vnc = profile.get('vnc', self.vnc)
+        cloudinit = profile.get('cloudinit', self.cloudinit)
+        reserveip = profile.get('reserveip', self.reserveip)
+        reservedns = profile.get('reservedns', self.reservedns)
+        reservehost = profile.get('reservehost', self.reservehost)
+        nested = profile.get('nested', self.nested)
+        start = profile.get('start', self.start)
+        report = profile.get('report', self.report)
+        reportall = profile.get('reportall', self.reportall)
+        keys = profile.get('keys', self.keys)
+        cmds = profile.get('cmds', self.cmds)
+        netmasks = profile.get('netmasks', self.netmasks)
+        gateway = profile.get('gateway', self.gateway)
+        dns = profile.get('dns', self.dns)
+        domain = profile.get('domain', self.domain)
+        scripts = profile.get('scripts', self.scripts)
+        files = profile.get('files', self.files)
+        if scripts:
             scriptcmds = []
             for script in scripts:
                 script = os.path.expanduser(script)
@@ -171,14 +212,14 @@ class Kconfig:
                     if scriptlines:
                         scriptcmds.extend(scriptlines)
             if scriptcmds:
-                if cmds is None:
+                if not cmds:
                     cmds = scriptcmds
                 else:
                     cmds = cmds + scriptcmds
         if reportall:
             reportcmd = 'curl -s -X POST -d "name=%s&status=Running&report=`cat /var/log/cloud-init.log`" %s/report >/dev/null' % (name, self.reporturl)
             finishcmd = 'curl -s -X POST -d "name=%s&status=OK&report=`cat /var/log/cloud-init.log`" %s/report >/dev/null' % (name, self.reporturl)
-            if cmds is None:
+            if not cmds:
                 cmds = [finishcmd]
             else:
                 results = []
@@ -190,7 +231,7 @@ class Kconfig:
                 cmds = results
         elif report:
             reportcmd = ['curl -s -X POST -d "name=%s&status=OK&report=`cat /var/log/cloud-init.log`" %s/report /dev/null' % (name, self.reporturl)]
-            if cmds is None:
+            if not cmds:
                 cmds = reportcmd
             else:
                 cmds = cmds + reportcmd
@@ -416,7 +457,6 @@ class Kconfig:
         if not os.path.exists(inputfile):
             common.pprint("No input file found nor default kcli_plan.yml.Leaving....", color='red')
             os._exit(1)
-        default = self.default
         with open(inputfile, 'r') as entries:
             entries = yaml.load(entries)
             vmentries = [entry for entry in entries if 'type' not in entries[entry] or entries[entry]['type'] == 'vm']
@@ -491,7 +531,7 @@ class Kconfig:
                         continue
                     else:
                         templateprofile = entries[template]
-                        pool = templateprofile.get('pool', default['pool'])
+                        pool = templateprofile.get('pool', self.pool)
                         url = templateprofile.get('url')
                         if url is None:
                             common.pprint("Template %s skipped as url is missing!" % template, color='blue')
@@ -515,38 +555,38 @@ class Kconfig:
                     else:
                         customprofile = {}
                         profilename = 'kvirt'
-                    pool = next((e for e in [profile.get('pool'), customprofile.get('pool'), default['pool']] if e is not None))
-                    template = next((e for e in [profile.get('template'), customprofile.get('template')] if e is not None), None)
-                    cpumodel = next((e for e in [profile.get('cpumodel'), customprofile.get('cpumodel'), default['cpumodel']] if e is not None))
+                    pool = next((e for e in [profile.get('pool'), customprofile.get('pool'), self.pool] if e is not None))
+                    template = next((e for e in [profile.get('template'), customprofile.get('template'), self.template] if e is not None))
+                    cpumodel = next((e for e in [profile.get('cpumodel'), customprofile.get('cpumodel'), self.cpumodel] if e is not None))
                     cpuflags = next((e for e in [profile.get('cpuflags'), customprofile.get('cpuflags'), []] if e is not None))
-                    numcpus = next((e for e in [profile.get('numcpus'), customprofile.get('numcpus'), default['numcpus']] if e is not None))
-                    memory = next((e for e in [profile.get('memory'), customprofile.get('memory'), default['memory']] if e is not None))
-                    disks = next((e for e in [profile.get('disks'), customprofile.get('disks'), default['disks']] if e is not None))
-                    disksize = next((e for e in [profile.get('disksize'), customprofile.get('disksize'), default['disksize']] if e is not None))
-                    diskinterface = next((e for e in [profile.get('diskinterface'), customprofile.get('diskinterface'), default['diskinterface']] if e is not None))
-                    diskthin = next((e for e in [profile.get('diskthin'), customprofile.get('diskthin'), default['diskthin']] if e is not None))
-                    guestid = next((e for e in [profile.get('guestid'), customprofile.get('guestid'), default['guestid']] if e is not None))
-                    vnc = next((e for e in [profile.get('vnc'), customprofile.get('vnc'), default['vnc']] if e is not None))
-                    cloudinit = next((e for e in [profile.get('cloudinit'), customprofile.get('cloudinit'), default['cloudinit']] if e is not None))
-                    reserveip = next((e for e in [profile.get('reserveip'), customprofile.get('reserveip'), default['reserveip']] if e is not None))
-                    reservedns = next((e for e in [profile.get('reservedns'), customprofile.get('reservedns'), default['reservedns']] if e is not None))
-                    reservehost = next((e for e in [profile.get('reservehost'), customprofile.get('reservehost'), default['reservehost']] if e is not None))
-                    report = next((e for e in [profile.get('report'), customprofile.get('report'), default['report']] if e is not None))
-                    nested = next((e for e in [profile.get('nested'), customprofile.get('nested'), default['nested']] if e is not None))
-                    start = next((e for e in [profile.get('start'), customprofile.get('start'), default['start']] if e is not None))
-                    nets = next((e for e in [profile.get('nets'), customprofile.get('nets'), default['nets']] if e is not None))
-                    iso = next((e for e in [profile.get('iso'), customprofile.get('iso')] if e is not None), None)
-                    keys = next((e for e in [profile.get('keys'), customprofile.get('keys')] if e is not None), None)
-                    cmds = next((e for e in [profile.get('cmds'), customprofile.get('cmds')] if e is not None), None)
-                    netmasks = next((e for e in [profile.get('netmasks'), customprofile.get('netmasks')] if e is not None), None)
-                    gateway = next((e for e in [profile.get('gateway'), customprofile.get('gateway')] if e is not None), None)
-                    dns = next((e for e in [profile.get('dns'), customprofile.get('dns')] if e is not None), None)
-                    domain = next((e for e in [profile.get('domain'), customprofile.get('domain')] if e is not None), None)
+                    numcpus = next((e for e in [profile.get('numcpus'), customprofile.get('numcpus'), self.numcpus] if e is not None))
+                    memory = next((e for e in [profile.get('memory'), customprofile.get('memory'), self.memory] if e is not None))
+                    disks = next((e for e in [profile.get('disks'), customprofile.get('disks'), self.disks] if e is not None))
+                    disksize = next((e for e in [profile.get('disksize'), customprofile.get('disksize'), self.disksize] if e is not None))
+                    diskinterface = next((e for e in [profile.get('diskinterface'), customprofile.get('diskinterface'), self.diskinterface] if e is not None))
+                    diskthin = next((e for e in [profile.get('diskthin'), customprofile.get('diskthin'), self.diskthin] if e is not None))
+                    guestid = next((e for e in [profile.get('guestid'), customprofile.get('guestid'), self.guestid] if e is not None))
+                    vnc = next((e for e in [profile.get('vnc'), customprofile.get('vnc'), self.vnc] if e is not None))
+                    cloudinit = next((e for e in [profile.get('cloudinit'), customprofile.get('cloudinit'), self.cloudinit] if e is not None))
+                    reserveip = next((e for e in [profile.get('reserveip'), customprofile.get('reserveip'), self.reserveip] if e is not None))
+                    reservedns = next((e for e in [profile.get('reservedns'), customprofile.get('reservedns'), self.reservedns] if e is not None))
+                    reservehost = next((e for e in [profile.get('reservehost'), customprofile.get('reservehost'), self.reservehost] if e is not None))
+                    report = next((e for e in [profile.get('report'), customprofile.get('report'), self.report] if e is not None))
+                    nested = next((e for e in [profile.get('nested'), customprofile.get('nested'), self.nested] if e is not None))
+                    start = next((e for e in [profile.get('start'), customprofile.get('start'), self.start] if e is not None))
+                    nets = next((e for e in [profile.get('nets'), customprofile.get('nets'), self.nets] if e is not None))
+                    iso = next((e for e in [profile.get('iso'), customprofile.get('iso'), self.iso] if e is not None))
+                    keys = next((e for e in [profile.get('keys'), customprofile.get('keys'), self.keys] if e is not None))
+                    cmds = next((e for e in [profile.get('cmds'), customprofile.get('cmds'), self.cmds] if e is not None))
+                    netmasks = next((e for e in [profile.get('netmasks'), customprofile.get('netmasks'), self.netmasks] if e is not None))
+                    gateway = next((e for e in [profile.get('gateway'), customprofile.get('gateway'), self.gateway] if e is not None))
+                    dns = next((e for e in [profile.get('dns'), customprofile.get('dns'), self.dns] if e is not None))
+                    domain = next((e for e in [profile.get('domain'), customprofile.get('domain'), self.domain] if e is not None))
                     ips = profile.get('ips')
-                    sharedkey = bool(profile.get('sharedkey', False))
-                    scripts = next((e for e in [profile.get('scripts'), customprofile.get('scripts')] if e is not None), None)
+                    sharedkey = next((e for e in [profile.get('sharedkey'), customprofile.get('sharedkey'), self.sharedkey] if e is not None))
+                    scripts = next((e for e in [profile.get('scripts'), customprofile.get('scripts'), self.scripts] if e is not None))
                     missingscript = False
-                    if scripts is not None:
+                    if scripts:
                         scriptcmds = []
                         for script in scripts:
                             if basedir != '':
@@ -560,7 +600,7 @@ class Kconfig:
                                 if scriptlines:
                                     scriptcmds.extend(scriptlines)
                         if scriptcmds:
-                            if cmds is None:
+                            if not cmds:
                                 cmds = scriptcmds
                             else:
                                 cmds = cmds + scriptcmds
@@ -568,7 +608,7 @@ class Kconfig:
                         continue
                     if report:
                         reportcmd = ['curl -X POST -d "name=%s&status=OK&report=`cat /var/log/cloud-init.log`" %s/report' % (name, self.reporturl)]
-                        if cmds is None:
+                        if not cmds:
                             cmds = reportcmd
                         else:
                             cmds = cmds + reportcmd
@@ -701,8 +741,8 @@ class Kconfig:
         return {'result': 'success'}
 
     def handle_host(self, pool='default', template=None, switch=None, download=False, enable=None, disable=None):
-        k = self.k
         if download:
+            k = self.k
             if pool is None:
                 common.pprint("Missing pool.Leaving...", color='red')
                 return {'result': 'failure', 'reason': "Missing pool"}

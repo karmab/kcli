@@ -748,6 +748,10 @@ class Kvirt(Kbase):
             root = ET.fromstring(xml)
         except:
             return None
+        for element in root.getiterator('{kvirt}info'):
+            e = element.find('{kvirt}ip')
+            if e is not None:
+                return e.text
         nic = root.getiterator('interface')[0]
         mac = nic.find('mac').get('address')
         if vm.isActive() and mac in leases:
