@@ -1,14 +1,13 @@
 #!/usr/bin/env python
 
-from config import Kconfig
-from config import __version__
-from defaults import TEMPLATES
+from kvirt.config import Kconfig
+from kvirt.config import __version__
+from kvirt.defaults import TEMPLATES
 from prettytable import PrettyTable
 from shutil import copyfile
 import argparse
-import common
-import dockerutils
-# import fileinput
+from kvirt import common
+from kvirt import dockerutils
 import os
 import yaml
 from kvirt.kvm import Kvirt

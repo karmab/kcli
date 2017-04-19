@@ -1,12 +1,10 @@
 #!/usr/bin/python
 
-# import getpass
-# from mock import patch
 from flask import Flask, render_template, request, jsonify
-from config import Kconfig
-from defaults import TEMPLATES
-import dockerutils
-import nameutils
+from kvirt.config import Kconfig
+from kvirt.defaults import TEMPLATES
+from kvirt import dockerutils
+from kvirt import nameutils
 import os
 
 app = Flask(__name__)
