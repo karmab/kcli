@@ -27,7 +27,9 @@ TEMPLATES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATES
              'gentoo': 'http://gentoo.osuosl.org/experimental/amd64/openstack/gentoo-openstack-amd64-default-20170122.qcow2',
              'opensuse': 'http://download.opensuse.org/pub/opensuse/repositories/Cloud:/Images:/Leap_42.3/images/openSUSE-Leap-42.3-OpenStack.x86_64.qcow2',
              'ubuntu1404': 'https://cloud-images.ubuntu.com/trusty/current/trusty-server-cloudimg-amd64-disk1.img',
-             'ubuntu1604': 'https://cloud-images.ubuntu.com/xenial/current/xenial-server-cloudimg-amd64-disk1.img'}
+             'ubuntu1604': 'https://cloud-images.ubuntu.com/xenial/current/xenial-server-cloudimg-amd64-disk1.img',
+             'ubuntu1610': 'https://cloud-images.ubuntu.com/yakkety/current/yakkety-server-cloudimg-amd64-disk1.img',
+             'ubuntu1704': 'https://cloud-images.ubuntu.com/zesty/current/zesty-server-cloudimg-amd64.img'}
 REPORT = False
 REPORTALL = False
 REPORTURL = "http://127.0.0.1:9000"

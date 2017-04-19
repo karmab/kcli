@@ -163,10 +163,7 @@ class Kconfig:
         common.pprint("Deploying vm %s from profile %s..." % (name, profile), color='green')
         if profile not in vmprofiles:
             common.pprint("profile %s not found. Trying to use the profile as template and default values..." % profile, color='blue')
-            result = k.create(name=name, memory=1024, template=profile)
-            # code = common.handle_response(result, name)
-            # return result
-            return result
+            vmprofiles[profile] = {'template': profile}
         profilename = profile
         profile = vmprofiles[profile]
         template = profile.get('template', self.template)
