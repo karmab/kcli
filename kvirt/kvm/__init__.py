@@ -642,9 +642,9 @@ class Kvirt(Kbase):
         conn = self.conn
         for network in conn.listAllNetworks():
             for lease in network.DHCPLeases():
-                ip = lease['ipaddr']
+                dhcpip = lease['ipaddr']
                 mac = lease['mac']
-                leases[mac] = ip
+                leases[mac] = dhcpip
         try:
             vm = conn.lookupByName(name)
             xml = vm.XMLDesc(0)
@@ -669,7 +669,7 @@ class Kvirt(Kbase):
         print("name: %s" % name)
         print("status: %s" % state)
         print("autostart: %s" % autostart)
-        plan, profile, template = None, None, None
+        plan, profile, template, ip = None, None, None, None
         for element in root.getiterator('{kvirt}info'):
             e = element.find('{kvirt}plan')
             if e is not None:
