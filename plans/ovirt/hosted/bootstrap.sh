@@ -1,5 +1,5 @@
 yum -y install rhevm-appliance screen ovirt-hosted-engine-setup ovirt-engine-cli
-sleep 30
+sed -i /requiretty/d /etc/sudoers
 hosted-engine --deploy --config-append=/root/answers.conf
 hostnode="rhvnode1.default"
 nfsnode="rhvnfs.default"
