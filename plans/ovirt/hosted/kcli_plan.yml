@@ -1,0 +1,76 @@
+rhvnfs:
+ template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+ memory: 2048
+ numcpus: 2
+ nets:
+  - default
+ disks:
+  - size: 100
+ pool: default
+ domain: default
+ reservedns: true
+ scripts: 
+  - ~/register.sh
+  - nfs.sh
+
+rhvnode1:
+ template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+ memory: 8192
+ cpumodel: host-model
+ cpuflags:
+  - name: arat
+    enable: false
+  - name: clflushopt
+    enable: false
+ numcpus: 2
+ nets:
+  - default
+ disks:
+  - size: 60
+ pool: default
+ domain: default
+ reservedns: true
+ files:
+  - path: /root/answers.conf
+    origin: answers.conf
+  - path: /root/.ovirtshellrc
+    origin: ovirtshellrc
+  - path: /root/rhvnode2.py
+    origin: rhvnode2.py
+ scripts: 
+  - ~/register.sh
+  - requisites.sh
+  - bootstrap.sh
+
+rhvnode2:
+ template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+ memory: 8192
+ cpumodel: host-model
+ cpuflags:
+  - name: arat
+    enable: false
+  - name: clflushopt
+    enable: false
+ numcpus: 2
+ nets:
+  - default
+ disks:
+  - size: 60
+ pool: default
+ domain: default
+ reservedns: true
+ scripts: 
+  - ~/register.sh
+  - requisites.sh
+
+rhvengine:
+ disks: []
+ reservedns: true
+ reservehost: true
+ start: false
+ nets:
+  - name: default
+    ip: 192.168.122.230
+    mask: 255.255.255.0
+    gateway: 192.168.122.1
+    dns: 192.168.122.1

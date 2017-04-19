@@ -787,11 +787,11 @@ class Kvirt(Kbase):
         try:
             vm = conn.lookupByName(name)
         except:
-            common.pprint("vm %s not found" % name, color='red')
+            # common.pprint("vm %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if vm.snapshotListNames():
             if not force:
-                print("vm %s has snapshots" % name)
+                # print("vm %s has snapshots" % name)
                 return {'result': 'failure', 'reason': "VM %s has snapshots" % name}
             else:
                 for snapshot in vm.snapshotListNames():

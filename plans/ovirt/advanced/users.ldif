@@ -1,0 +1,21 @@
+dn: uid=jim,ou=users,dc=karmalabs,dc=com
+objectclass: inetOrgPerson
+objectclass: person
+objectClass: uidObject
+givenName: Jim
+sn: User
+mail: jim@karmalabs.com
+uid: jim
+userPassword: jim
+cn: Jim WhiteHurst
+
+dn: uid=paul,ou=users,dc=karmalabs,dc=com
+objectclass: inetOrgPerson
+objectclass: person
+objectClass: uidObject
+givenName: paul
+sn: User
+mail: paul@karmalabs.com
+uid: paul
+userPassword: paul
+cn: Paul Cormier
