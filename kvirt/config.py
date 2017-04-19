@@ -16,7 +16,7 @@ from time import sleep
 import webbrowser
 import yaml
 
-__version__ = '6.5'
+__version__ = '6.6'
 
 
 class Kconfig:
@@ -556,7 +556,7 @@ class Kconfig:
                         customprofile = {}
                         profilename = 'kvirt'
                     pool = next((e for e in [profile.get('pool'), customprofile.get('pool'), self.pool] if e is not None))
-                    template = next((e for e in [profile.get('template'), customprofile.get('template'), self.template] if e is not None))
+                    template = next((e for e in [profile.get('template'), customprofile.get('template')] if e is not None), self.template)
                     cpumodel = next((e for e in [profile.get('cpumodel'), customprofile.get('cpumodel'), self.cpumodel] if e is not None))
                     cpuflags = next((e for e in [profile.get('cpuflags'), customprofile.get('cpuflags'), []] if e is not None))
                     numcpus = next((e for e in [profile.get('numcpus'), customprofile.get('numcpus'), self.numcpus] if e is not None))
@@ -575,13 +575,13 @@ class Kconfig:
                     nested = next((e for e in [profile.get('nested'), customprofile.get('nested'), self.nested] if e is not None))
                     start = next((e for e in [profile.get('start'), customprofile.get('start'), self.start] if e is not None))
                     nets = next((e for e in [profile.get('nets'), customprofile.get('nets'), self.nets] if e is not None))
-                    iso = next((e for e in [profile.get('iso'), customprofile.get('iso'), self.iso] if e is not None))
+                    iso = next((e for e in [profile.get('iso'), customprofile.get('iso')] if e is not None), self.iso)
                     keys = next((e for e in [profile.get('keys'), customprofile.get('keys'), self.keys] if e is not None))
                     cmds = next((e for e in [profile.get('cmds'), customprofile.get('cmds'), self.cmds] if e is not None))
                     netmasks = next((e for e in [profile.get('netmasks'), customprofile.get('netmasks'), self.netmasks] if e is not None))
-                    gateway = next((e for e in [profile.get('gateway'), customprofile.get('gateway'), self.gateway] if e is not None))
-                    dns = next((e for e in [profile.get('dns'), customprofile.get('dns'), self.dns] if e is not None))
-                    domain = next((e for e in [profile.get('domain'), customprofile.get('domain'), self.domain] if e is not None))
+                    gateway = next((e for e in [profile.get('gateway'), customprofile.get('gateway')] if e is not None), self.gateway)
+                    dns = next((e for e in [profile.get('dns'), customprofile.get('dns')] if e is not None), self.dns)
+                    domain = next((e for e in [profile.get('domain'), customprofile.get('domain')] if e is not None), self.domain)
                     ips = profile.get('ips')
                     sharedkey = next((e for e in [profile.get('sharedkey'), customprofile.get('sharedkey'), self.sharedkey] if e is not None))
                     scripts = next((e for e in [profile.get('scripts'), customprofile.get('scripts'), self.scripts] if e is not None))
