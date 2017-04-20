@@ -1,5 +1,15 @@
 # Changelog
 
+## 7.0 (2017-04-20)
+
+- ovirt hosted plans
+- use default/hypervisor values when deploying from unknown template
+- yakkety and zesty support
+- fix to report fixed_ip only when it s really fixed
+- allow all parameters to be overriden at client/hypervisor level
+- fix inline editing of kcli.yml in docker
+- allow to execute a command on a template after it's downloaded
+
 ## 6.1 (2017-04-18)
 
 - fix kcli host --switch/enable/update ( and in the UI) within container

@@ -4,6 +4,7 @@
 interact with a local/remote libvirt daemon
 """
 
+from distutils.spawn import find_executable
 import os
 import time
 from virtualbox import VirtualBox, library, Session
@@ -907,7 +908,7 @@ class Kbox(Kbase):
                 f.write("\n- name: %s\n" % pool['name'])
                 f.write("  path: %s" % pool['path'])
 
-    def add_image(self, image, pool):
+    def add_image(self, image, pool, cmd=None):
         if pool is not None:
             pool = [p['path'] for p in self._pool_info() if p['name'] == pool]
             if pool:
@@ -915,7 +916,10 @@ class Kbox(Kbase):
             else:
                 print("Pool not found. Leaving....")
                 return
-        cmd = 'wget -P %s %s' % (poolpath, image)
+        wgetcmd = 'wget -P %s %s' % (poolpath, image)
+        os.system(wgetcmd)
+        if cmd is not None and find_executable('virt-customize') is not None:
+            cmd = "virt-customize -a %s/%s %s" % (poolpath, image, cmd)
         os.system(cmd)
         return {'result': 'success'}
 

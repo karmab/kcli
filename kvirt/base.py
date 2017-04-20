@@ -140,7 +140,7 @@ class Kbase(object):
         print("not implemented")
         return
 
-    def add_image(self, image, pool, short=None):
+    def add_image(self, image, pool, short=None, cmd=None):
         print("not implemented")
         return
 

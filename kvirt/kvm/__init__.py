@@ -1479,7 +1479,7 @@ class Kvirt(Kbase):
         pool.create()
         return {'result': 'success'}
 
-    def add_image(self, image, pool, short=None):
+    def add_image(self, image, pool, short=None, cmd=None):
         poolname = pool
         if short is not None:
             shortimage = short
@@ -1504,10 +1504,16 @@ class Kvirt(Kbase):
         if shortimage in volumes:
             return {'result': 'failure', 'reason': "Template %s already exists in pool %s" % (shortimage, poolname)}
         if self.host == 'localhost' or self.host == '127.0.0.1':
-            cmd = 'wget -P %s %s' % (poolpath, image)
+            wgetcmd = 'wget -P %s %s' % (poolpath, image)
         elif self.protocol == 'ssh':
-            cmd = 'ssh -p %s %s@%s "wget -P %s %s"' % (self.port, self.user, self.host, poolpath, image)
-        os.system(cmd)
+            wgetcmd = 'ssh -p %s %s@%s "wget -P %s %s"' % (self.port, self.user, self.host, poolpath, image)
+        os.system(wgetcmd)
+        if cmd is not None and find_executable('virt-customize') is not None:
+            if self.host == 'localhost' or self.host == '127.0.0.1':
+                cmd = "virt-customize -a %s/%s %s" % (poolpath, image, cmd)
+            elif self.protocol == 'ssh':
+                cmd = 'ssh -p %s %s@%s "virt-customize -a %s/%s %s"' % (self.port, self.user, self.host, poolpath, image, cmd)
+            os.system(cmd)
         pool.refresh()
         return {'result': 'success'}
 

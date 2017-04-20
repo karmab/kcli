@@ -16,7 +16,7 @@ from time import sleep
 import webbrowser
 import yaml
 
-__version__ = '6.8'
+__version__ = '7.0'
 
 
 class Kconfig:
@@ -530,14 +530,15 @@ class Kconfig:
                         templateprofile = entries[template]
                         pool = templateprofile.get('pool', self.pool)
                         url = templateprofile.get('url')
+                        cmd = templateprofile.get('cmd')
                         if url is None:
                             common.pprint("Template %s skipped as url is missing!" % template, color='blue')
                             continue
-                        if not url.endswith('qcow2') and not url.endswith('img'):
+                        if not url.endswith('qcow2') and not url.endswith('img') and not url.endswith('qc2'):
                             common.pprint("Opening url %s for you to download %s" % (url, template), color='blue')
                             webbrowser.open(url, new=2, autoraise=True)
                             continue
-                        result = k.add_image(url, pool, short=template)
+                        result = k.add_image(url, pool, short=template, cmd=cmd)
                         common.handle_response(result, template, element='Template ', action='Added')
             if vmentries:
                 common.pprint("Deploying Vms...", color='green')

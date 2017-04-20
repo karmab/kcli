@@ -1,6 +1,7 @@
 manageiq-openstack-euwe-2.qc2:
  type: template
  url: http://releases.manageiq.org/manageiq-openstack-euwe-2.qc2
+ cmd: rm -f /etc/cloud/cloud.cfg.d/30_miq_datasources.cfg
 
 manageiq:
  template: manageiq-openstack-euwe-2.qc2
