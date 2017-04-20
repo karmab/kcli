@@ -16,6 +16,8 @@ import re
 import string
 import time
 import xml.etree.ElementTree as ET
+from StringIO import StringIO
+from PIL import Image
 
 
 KB = 1024 * 1024
@@ -1718,3 +1720,23 @@ class Kvirt(Kbase):
         else:
             poolpath = root.getiterator('device')[0].get('path')
         return poolpath
+
+    def _writer(self, stream, data, buf):
+        buf.write(data)
+
+    def screenshot(self, name):
+        conn = self.conn
+        try:
+            vm = conn.lookupByName(name)
+        except:
+            print("VM %s not found" % name)
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        stream = conn.newStream()
+        if vm.isActive():
+            vm.screenshot(stream, 0)
+            buf = StringIO()
+            stream.recvAll(self._writer, buf)
+            stream.finish()
+            buf.seek(0)
+            image = Image.open(buf)
+            image.save("%s.png" % name)

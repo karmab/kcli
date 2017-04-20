@@ -84,9 +84,12 @@ def delete(args):
 
 def info(args):
     name = args.name
+    screenshot = args.screenshot
     global config
     k = config.k
     result = k.info(name)
+    if screenshot:
+        k.screenshot(name)
     code = common.handle_response(result, name, quiet=True)
     os._exit(code)
 
@@ -786,6 +789,7 @@ def cli():
 
     info_info = 'Info vm'
     info_parser = subparsers.add_parser('info', description=info_info, help=info_info)
+    info_parser.add_argument('-s', '--screenshot', action='store_true', help='Take screenshot')
     info_parser.add_argument('name', help='VMNAME')
     info_parser.set_defaults(func=info)
 

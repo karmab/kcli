@@ -304,7 +304,7 @@ class Kbox(Kbase):
             print("Network:%s Type:internal" % (network))
         for network in conn.nat_networks:
             print("Network:%s Type:routed" % (network.network_name))
-        return
+        return {'result': 'success'}
         # print("Network:%s Type:routed Cidr:%s Dhcp:%s" % (networkname, cidr, dhcp))
 
     def status(self, name):
@@ -367,8 +367,8 @@ class Kbox(Kbase):
         try:
             vm = conn.find_machine(name)
         except:
-            print "VM %s not found" % name
-            return
+            common.pprint("VM %s not found" % name, color='red')
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
         if self.status(name) == 'down':
             vm.launch_vm_process(None, 'gui', '')
         else:
@@ -379,11 +379,11 @@ class Kbox(Kbase):
         try:
             vm = conn.find_machine(name)
         except:
-            print "VM %s not found" % name
-            return
+            common.pprint("VM %s not found" % name, color='red')
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
         if not str(vm.state):
-            print("VM down")
-            return
+            common.pprint("VM down", color='red')
+            return {'result': 'failure', 'reason': "VM %s down" % name}
         else:
             serial = vm.get_serial_port(0)
             if not serial.enabled:
@@ -398,8 +398,8 @@ class Kbox(Kbase):
         try:
             vm = conn.find_machine(name)
         except:
-            print("VM %s not found" % name)
-            return 1
+            common.pprint("VM %s not found" % name, color='red')
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
         state = 'down'
         hostports = []
         autostart = starts[vm.autostart_enabled]
@@ -478,7 +478,7 @@ class Kbox(Kbase):
             for hostport in hostports:
                 print("ssh port: %s" % (hostport))
                 break
-        return 0
+        return {'result': 'success'}
 
     def ip(self, name):
         vm = [vm for vm in self.list() if vm[0] == name]
@@ -519,7 +519,7 @@ class Kbox(Kbase):
         try:
             vm = conn.find_machine(name)
         except:
-            print("vm %s not found" % name)
+            common.pprint("vm %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         for n in range(7):
             nic = vm.get_network_adapter(n)
@@ -584,7 +584,7 @@ class Kbox(Kbase):
         try:
             vm = conn.find_machine(name)
         except:
-            print("VM %s not found" % name)
+            common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         session = Session()
         vm.lock_machine(session, library.LockType.write)
@@ -596,11 +596,11 @@ class Kbox(Kbase):
 
     def update_memory(self, name, memory):
         conn = self.conn
-        memory = str(int(memory) * 1024)
+        memory = int(memory)
         try:
             vm = conn.find_machine(name)
         except:
-            print("VM %s not found" % name)
+            common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         session = Session()
         vm.lock_machine(session, library.LockType.write)
@@ -615,7 +615,7 @@ class Kbox(Kbase):
         try:
             vm = conn.find_machine(name)
         except:
-            print("VM %s not found" % name)
+            common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         vm.cpu_count = numcpus
         vm.save_settings()
@@ -626,7 +626,7 @@ class Kbox(Kbase):
         try:
             vm = conn.find_machine(name)
         except:
-            print("VM %s not found" % name)
+            common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if start:
             vm.autostart_enabled = True
@@ -682,7 +682,7 @@ class Kbox(Kbase):
         try:
             vm = conn.find_machine(name)
         except:
-            print("VM %s not found" % name)
+            common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         disks = []
         for index, dev in enumerate(string.lowercase[:10]):
@@ -715,7 +715,7 @@ class Kbox(Kbase):
         try:
             vm = conn.find_machine(name)
         except:
-            print("VM %s not found" % name)
+            common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if status[str(vm.state)] == "up":
             print("VM %s up. Leaving" % name)
@@ -776,16 +776,12 @@ class Kbox(Kbase):
         try:
             vm = conn.find_machine(name)
         except:
-            print("VM %s not found" % name)
+            common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if self.status(name) == 'up':
             print("VM %s must be down" % name)
             return {'result': 'failure', 'reason': "VM %s must be down" % name}
         session = Session()
-        # try:
-        #     vm.unlock_machine()
-        # except:
-        #     pass
         vm.lock_machine(session, library.LockType.write)
         machine = session.machine
         for n in range(7):
@@ -809,7 +805,7 @@ class Kbox(Kbase):
         try:
             vm = conn.find_machine(name)
         except:
-            print("VM %s not found" % name)
+            common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if self.status(name) == 'up':
             print("VM %s must be down" % name)
@@ -831,8 +827,7 @@ class Kbox(Kbase):
         try:
             vm = conn.find_machine(name)
         except:
-            print("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            common.pprint("VM %s not found" % name, color='red')
             return '', ''
         if str(vm.state) == 0:
             print("Machine down. Cannot ssh...")
@@ -900,7 +895,7 @@ class Kbox(Kbase):
                 os.makedirs(poolpath)
             except OSError:
                 print("Couldn't create directory %s.Leaving..." % poolpath)
-                return 1
+                return
         poolfile = "%s/.vbox.yml" % os.environ.get('HOME')
         if not os.path.exists(poolfile):
             poolinfo = [{'name': name, 'path': poolpath}]
@@ -1012,7 +1007,7 @@ class Kbox(Kbase):
         try:
             vm = conn.find_machine(name)
         except:
-            print("VM %s not found" % name)
+            common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         for n in range(7):
             nic = vm.get_network_adapter(n)
@@ -1057,3 +1052,23 @@ class Kbox(Kbase):
         path = [p['path'] for p in self._pool_info() if p['name'] == pool]
         if path:
             return path[0]
+
+    def screenshot(self, name):
+        conn = self.conn
+        try:
+            vm = conn.find_machine(name)
+        except:
+            common.pprint("VM %s not found" % name, color='red')
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        # if self.status(name) != 'up':
+        #    print("VM %s must be up" % name)
+        #    return {'result': 'failure', 'reason': "VM %s nust be down" % name}
+        session = Session()
+        vm.lock_machine(session, library.LockType.write)
+        return
+        h, w, _, _, _, _ = session.console.display.get_screen_resolution(0)
+        png = session.console.display.take_screen_shot_to_array(0, h, w, library.BitmapFormat.png)
+        with open('%s.png' % name, 'wb') as f:
+            f.write(png)
+        session.unlock_machine()
+        return {'result': 'success'}

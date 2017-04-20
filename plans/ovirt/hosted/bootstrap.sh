@@ -8,4 +8,5 @@ ovirt-shell -E "add storagedomain --name vms --host-name $hostnode --type data -
 ovirt-shell -E "add storagedomain --name vms --parent-datacenter-name Default"
 ovirt-shell -E "add storagedomain --name isos --host-name $hostnode --type iso --storage-type nfs --storage-address $nfsnode --storage-path /isos"
 ovirt-shell -E "add storagedomain --name isos --parent-datacenter-name Default"
+sleep 300
 python /root/rhvnode2.py

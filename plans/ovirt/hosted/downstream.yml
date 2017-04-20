@@ -39,7 +39,7 @@ rhvnode1:
     origin: rhvnode2.py
  scripts: 
   - ~/register.sh
-  - requisites.sh
+  - requisites_downstream.sh
   - bootstrap.sh
 
 rhvnode2:
@@ -61,7 +61,7 @@ rhvnode2:
  reservedns: true
  scripts: 
   - ~/register.sh
-  - requisites.sh
+  - requisites_downstream.sh
 
 rhvengine:
  disks: []
