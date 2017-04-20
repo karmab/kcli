@@ -8,7 +8,7 @@ if os.path.exists('README.rst'):
 
 setup(
     name='kcli',
-    version='7.0',
+    version='7.1',
     include_package_data=True,
     packages=find_packages(),
     zip_safe=False,
@@ -24,6 +24,7 @@ setup(
         'flask',
         'iptools',
         'netaddr',
+        'pillow',
         'PyYAML',
         'prettytable',
         'pyvbox',

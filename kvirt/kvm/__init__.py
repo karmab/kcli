@@ -56,6 +56,7 @@ class Kvirt(Kbase):
             else:
                 url = "qemu:///system"
         try:
+            print(url)
             self.conn = libvirtopen(url)
             self.debug = debug
         except Exception:
