@@ -81,7 +81,7 @@ def fetch(url, path, syms=None):
             fetch("%s/%s" % (url, filename), "%s/%s" % (path, filename), syms=syms)
 
 
-def cloudinit(name, keys=None, cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[]):
+def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[]):
     default_gateway = gateway
     with open('/tmp/meta-data', 'w') as metadatafile:
         if domain is not None:
@@ -131,11 +131,11 @@ def cloudinit(name, keys=None, cmds=[], nets=[], gateway=None, dns=None, domain=
         userdata.write('#cloud-config\nhostname: %s\n' % name)
         if domain is not None:
             userdata.write("fqdn: %s.%s\n" % (name, domain))
-        if keys is not None or os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME']) or os.path.exists("%s/.ssh/id_dsa.pub" % os.environ['HOME']):
+        if not keys or os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME']) or os.path.exists("%s/.ssh/id_dsa.pub" % os.environ['HOME']):
             userdata.write("ssh_authorized_keys:\n")
         else:
             print("neither id_rsa.pub or id_dsa public keys found in your .ssh directory, you might have trouble accessing the vm")
-        if keys is not None:
+        if keys:
             for key in keys:
                 userdata.write("- %s\n" % key)
         if os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME']):
