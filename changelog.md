@@ -1,6 +1,6 @@
 # Changelog
 
-## 7.3 (2017-04-20)
+## 7.4 (2017-04-20)
 
 - ovirt hosted plans
 - use default/hypervisor values when deploying from unknown template
