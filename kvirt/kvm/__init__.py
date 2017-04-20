@@ -4,6 +4,7 @@
 interact with a local/remote libvirt daemon
 """
 
+from distutils.spawn import find_executable
 from kvirt import defaults
 from iptools import IpRange
 # from jinja2 import Environment
@@ -1739,4 +1740,8 @@ class Kvirt(Kbase):
             stream.finish()
             buf.seek(0)
             image = Image.open(buf)
-            image.save("%s.png" % name)
+            image.save("/tmp/%s.png" % name)
+        imagecmd = 'open'
+        if find_executable('xdg-open') is not None:
+            imagecmd = 'xdg-open'
+        os.system("%s /tmp/%s.png" % (imagecmd, name))
