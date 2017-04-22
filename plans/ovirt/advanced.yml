@@ -12,9 +12,9 @@ rhvengine:
  scripts: 
   - ~/register.sh
   - nfs.sh
-  - subscription_engine.sh
-  - engine.sh
-  - provision.sh
+  - advanced/subscription_engine.sh
+  - advanced/engine.sh
+  - advanced/provision.sh
 
 rhvnode1:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
@@ -35,8 +35,8 @@ rhvnode1:
  reservedns: true
  scripts: 
   - ~/register.sh
-  - subscription_node.sh
-  - node.sh
+  - advanced/subscription_node.sh
+  - advanced/node.sh
 
 rhvnode2:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
@@ -57,5 +57,5 @@ rhvnode2:
  reservedns: true
  scripts: 
   - ~/register.sh
-  - subscription_node.sh
-  - node.sh
+  - advanced/subscription_node.sh
+  - advanced/node.sh
