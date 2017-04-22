@@ -129,6 +129,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 #    metadatafile.write("  dns-search %s\n" % domain)
     with open('/tmp/user-data', 'w') as userdata:
         userdata.write('#cloud-config\nhostname: %s\n' % name)
+        userdata.write("ssh_pwauth: True\ndisable_root: false\n")
         if domain is not None:
             userdata.write("fqdn: %s.%s\n" % (name, domain))
         if keys or os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME']) or os.path.exists("%s/.ssh/id_dsa.pub" % os.environ['HOME']):
