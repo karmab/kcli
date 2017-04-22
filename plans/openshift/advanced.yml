@@ -1,4 +1,4 @@
-example.com:
+karmalabs.com:
  type: network
  cidr: 192.168.99.0/24
  dhcp: True
@@ -8,9 +8,9 @@ lb:
  numcpus: 2
  memory: 1024
  reservedns: True
- dns: example.com
+ dns: karmalabs.com
  nets:
-  - example.com
+  - karmalabs.com
  disks:
   - size: 10
  pool: default
@@ -18,12 +18,12 @@ lb:
  scripts: 
   - ~/register.sh
   - subscription.sh
-  - install1.sh
+  - advanced/install1.sh
  files:
   - path: /root/hosts
-    origin: hosts
+    origin: advanced/hosts
   - path: /root/install.sh
-    origin: install2.sh
+    origin: advanced/install2.sh
     mode: 700
 
 master1:
@@ -32,9 +32,9 @@ master1:
  memory: 6144
  reservedns: true
  sharedkey: true
- dns: example.com
+ dns: karmalabs.com
  nets:
-  - example.com
+  - karmalabs.com
  disks:
   - size: 10
   - size: 30
@@ -42,7 +42,7 @@ master1:
  scripts: 
   - ~/register.sh
   - subscription.sh
-  - pre.sh
+  - advanced/pre.sh
 
 master2:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
@@ -50,9 +50,9 @@ master2:
  memory: 6144
  reservedns: true
  sharedkey: true
- dns: example.com
+ dns: karmalabs.com
  nets:
-  - example.com
+  - karmalabs.com
  disks:
   - size: 10
   - size: 30
@@ -60,7 +60,7 @@ master2:
  scripts: 
   - ~/register.sh
   - subscription.sh
-  - pre.sh
+  - advanced/pre.sh
 
 master3:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
@@ -68,9 +68,9 @@ master3:
  memory: 6144
  reservedns: true
  sharedkey: true
- dns: example.com
+ dns: karmalabs.com
  nets:
-  - example.com
+  - karmalabs.com
  disks:
   - size: 10
   - size: 30
@@ -78,7 +78,7 @@ master3:
  scripts: 
   - ~/register.sh
   - subscription.sh
-  - pre.sh
+  - advanced/pre.sh
 
 node0:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
@@ -86,9 +86,9 @@ node0:
  memory: 4906
  reservedns: true
  sharedkey: true
- dns: example.com
+ dns: karmalabs.com
  nets:
-  - example.com
+  - karmalabs.com
  disks:
   - size: 10
   - size: 30
@@ -96,7 +96,7 @@ node0:
  scripts: 
   - ~/register.sh
   - subscription.sh
-  - pre.sh
+  - advanced/pre.sh
 
 node1:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
@@ -104,9 +104,9 @@ node1:
  memory: 4906
  reservedns: true
  sharedkey: true
- dns: example.com
+ dns: karmalabs.com
  nets:
-  - example.com
+  - karmalabs.com
  disks:
   - size: 10
   - size: 30
@@ -114,7 +114,7 @@ node1:
  scripts: 
   - ~/register.sh
   - subscription.sh
-  - pre.sh
+  - advanced/pre.sh
 
 node2:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
@@ -122,9 +122,9 @@ node2:
  memory: 4096
  reservedns: true
  sharedkey: true
- dns: example.com
+ dns: karmalabs.com
  nets:
-  - example.com
+  - karmalabs.com
  disks:
   - size: 10
   - size: 30
@@ -132,4 +132,4 @@ node2:
  scripts: 
   - ~/register.sh
   - subscription.sh
-  - pre.sh
+  - advanced/pre.sh
