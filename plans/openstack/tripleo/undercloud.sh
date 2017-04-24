@@ -9,7 +9,7 @@ wget -P /root http://cbs.centos.org/kojifiles/packages/openvswitch/2.5.0/22.git2
 yum -y localinstall /root/openvswitch-2.5.0-22.git20160727.el7.x86_64.rpm
 openstack undercloud install
 mv /root/openvswitch-2.5.0-22.git20160727.el7.x86_64.rpm /var/www/html/o.rpm
-restoreconf -Frv /var/www/html
+restorecon -Frv /var/www/html
 mkdir images
 wget https://raw.githubusercontent.com/karmab/kcli/master/plans/openstack/tripleo/templates.tar.gz
 tar zxvf templates.tar.gz
