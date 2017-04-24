@@ -4,7 +4,8 @@ TYPE="advanced"
 ssh-keyscan -H 192.168.101.1 >> ~/.ssh/known_hosts
 ssh-keygen -N '' -t rsa -f /home/stack/.ssh/id_rsa
 ssh-copy-id -i ~/.ssh/id_rsa.pub root@192.168.101.1
-wget -P / root http://cbs.centos.org/kojifiles/packages/openvswitch/2.5.0/22.git20160727.el7/x86_64/openvswitch-2.5.0-22.git20160727.el7.x86_64.rpm
+yum -y install openvswitch
+wget -P /root http://cbs.centos.org/kojifiles/packages/openvswitch/2.5.0/22.git20160727.el7/x86_64/openvswitch-2.5.0-22.git20160727.el7.x86_64.rpm
 yum -y localinstall /root/openvswitch-2.5.0-22.git20160727.el7.x86_64.rpm
 openstack undercloud install
 mv /root/openvswitch-2.5.0-22.git20160727.el7.x86_64.rpm /var/www/html/o.rpm
