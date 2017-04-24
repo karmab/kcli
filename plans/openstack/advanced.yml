@@ -1,4 +1,4 @@
-libertycont:
+ospcontroller:
  template: rhel-guest-image-7.3-35.x86_64.qcow2
  memory: 6144
  numcpus: 2
@@ -11,11 +11,11 @@ libertycont:
  reservedns: true
  scripts: 
   - ~/register.sh
-  - subscription_liberty.sh
+  - subscription_newton.sh
   - advanced/install.sh
   - provision.sh
 
-libertycomp01:
+ospcompute01:
  template: rhel-guest-image-7.3-35.x86_64.qcow2
  memory: 6144
  numcpus: 2
@@ -28,9 +28,9 @@ libertycomp01:
  reservedns: true
  scripts: 
   - ~/register.sh
-  - subscription_liberty.sh
+  - subscription_newton.sh
 
-libertycomp02:
+ospcompute02:
  template: rhel-guest-image-7.3-35.x86_64.qcow2
  memory: 6144
  numcpus: 2
@@ -43,9 +43,9 @@ libertycomp02:
  reservedns: true
  scripts: 
   - ~/register.sh
-  - subscription_liberty.sh
+  - subscription_newton.sh
 
-libertycomp03:
+ospcompute03:
  template: rhel-guest-image-7.3-35.x86_64.qcow2
  memory: 6144
  numcpus: 2
@@ -58,4 +58,4 @@ libertycomp03:
  reservedns: true
  scripts: 
   - ~/register.sh
-  - subscription_liberty.sh
+  - subscription_newton.sh

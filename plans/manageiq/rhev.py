@@ -7,7 +7,7 @@ user = "admin"
 password = "unix1234"
 rhevuser = "admin@internal"
 rhevpassword = "unix1234"
-rhevhost = "engine.default"
+rhevhost = "rhvengine.default"
 headers = {'content-type': 'application/json', 'Accept': 'application/json'}
 postdata = {
     "type": "ManageIQ::Providers::Redhat::InfraManager",

@@ -909,6 +909,7 @@ class Kbox(Kbase):
                 f.write("  path: %s" % pool['path'])
 
     def add_image(self, image, pool, cmd=None):
+        shortimage = os.path.basename(image).split('?')[0]
         if pool is not None:
             pool = [p['path'] for p in self._pool_info() if p['name'] == pool]
             if pool:
@@ -916,7 +917,7 @@ class Kbox(Kbase):
             else:
                 print("Pool not found. Leaving....")
                 return
-        wgetcmd = 'wget -P %s %s' % (poolpath, image)
+        wgetcmd = 'wget -O %s -P %s %s' % (shortimage, poolpath, image)
         os.system(wgetcmd)
         if cmd is not None and find_executable('virt-customize') is not None:
             cmd = "virt-customize -a %s/%s %s" % (poolpath, image, cmd)

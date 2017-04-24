@@ -26,6 +26,8 @@ TEMPLATES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATES
              'fedora25': 'https://download.fedoraproject.org/pub/fedora/linux/releases/25/CloudImages/x86_64/images/Fedora-Cloud-Base-25-1.3.x86_64.qcow2',
              'gentoo': 'http://gentoo.osuosl.org/experimental/amd64/openstack/gentoo-openstack-amd64-default-20170122.qcow2',
              'opensuse': 'http://download.opensuse.org/pub/opensuse/repositories/Cloud:/Images:/Leap_42.3/images/openSUSE-Leap-42.3-OpenStack.x86_64.qcow2',
+             'rhel72': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.2/x86_64/product-software',
+             'rhel73': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.3/x86_64/product-software',
              'ubuntu1404': 'https://cloud-images.ubuntu.com/trusty/current/trusty-server-cloudimg-amd64-disk1.img',
              'ubuntu1604': 'https://cloud-images.ubuntu.com/xenial/current/xenial-server-cloudimg-amd64-disk1.img',
              'ubuntu1610': 'https://cloud-images.ubuntu.com/yakkety/current/yakkety-server-cloudimg-amd64-disk1.img',

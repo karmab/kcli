@@ -1,5 +1,12 @@
 # Changelog
 
+## 7.5 (2017-04-23)
+
+- automatically enable root access with the same public keys
+- reorganization of the advanced plans to ease their utilization from the UI
+- advanced packstack with plan with multiple compute nodes
+- take screenshot of vm
+
 ## 7.4 (2017-04-20)
 
 - ovirt hosted plans

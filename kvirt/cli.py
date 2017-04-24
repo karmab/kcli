@@ -783,7 +783,7 @@ def cli():
     host_parser.add_argument('-s', '--switch', help='Switch To indicated client', metavar='CLIENT')
     host_parser.add_argument('-r', '--report', help='Report Host Information', action='store_true')
     host_parser.add_argument('-p', '--pool', default='default', help='Pool to use when downloading', metavar='POOL')
-    host_parser.add_argument('--template', choices=('arch', 'centos6', 'centos7', 'cirros', 'debian8', 'fedora24', 'fedora25', 'gentoo', 'opensuse', 'ubuntu1404', 'ubuntu1604', 'ubuntu1610', 'ubuntu1704'), help='Template/Image to download')
+    host_parser.add_argument('--template', choices=('arch', 'centos6', 'centos7', 'cirros', 'debian8', 'fedora24', 'fedora25', 'gentoo', 'opensuse', 'rhel72', 'rhel73', 'ubuntu1404', 'ubuntu1604', 'ubuntu1610', 'ubuntu1704'), help='Template/Image to download')
     host_parser.add_argument('--download', help='Download Template/Image', action='store_true')
     host_parser.set_defaults(func=host)
 

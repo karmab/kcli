@@ -16,7 +16,7 @@ from time import sleep
 import webbrowser
 import yaml
 
-__version__ = '7.4'
+__version__ = '7.5'
 
 
 class Kconfig:
@@ -535,10 +535,13 @@ class Kconfig:
                             common.pprint("Template %s skipped as url is missing!" % template, color='blue')
                             continue
                         if not url.endswith('qcow2') and not url.endswith('img') and not url.endswith('qc2'):
-                            common.pprint("Opening url %s for you to download %s" % (url, template), color='blue')
+                            common.pprint("Opening url %s for you to grab complete url for %s" % (url, template), color='blue')
                             webbrowser.open(url, new=2, autoraise=True)
-                            continue
-                        result = k.add_image(url, pool, short=template, cmd=cmd)
+                            url = raw_input("Copy Url:\n")
+                            if url.strip() == '':
+                                common.pprint("Template %s skipped as url is empty!" % template, color='blue')
+                                continue
+                        result = k.add_image(url, pool, cmd=cmd)
                         common.handle_response(result, template, element='Template ', action='Added')
             if vmentries:
                 common.pprint("Deploying Vms...", color='green')
@@ -748,10 +751,18 @@ class Kconfig:
                 common.pprint("Missing template.Leaving...", color='red')
                 return {'result': 'failure', 'reason': "Missing template"}
             common.pprint("Grabbing template %s..." % template, color='green')
-            template = TEMPLATES[template]
-            shortname = os.path.basename(template)
-            result = k.add_image(template, pool)
-            common.handle_response(result, shortname, element='Template ', action='Added')
+            url = TEMPLATES[template]
+            template = os.path.basename(template)
+            if not url.endswith('qcow2') and not url.endswith('img') and not url.endswith('qc2'):
+                common.pprint("Opening url %s for you to grab complete url for %s" % (url, template), color='blue')
+                webbrowser.open(url, new=2, autoraise=True)
+                url = raw_input("Copy Url:\n")
+                if url.strip() == '':
+                    common.pprint("Missing proper url.Leaving...", color='red')
+                    return {'result': 'failure', 'reason': "Missing template"}
+            result = k.add_image(url, pool, cmd=None)
+            # result = k.add_image(template, pool)
+            common.handle_response(result, template, element='Template ', action='Added')
             # code = common.handle_response(result, shortname, element='Template ', action='Added')
             # os._exit(code)
             return {'result': 'success'}

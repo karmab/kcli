@@ -5,4 +5,3 @@ sleep 60
 /var/www/miq/vmdb/bin/rails r /root/password.rb
 python /root/openstack.py
 python /root/rhev.py
-python /root/openshift.py
