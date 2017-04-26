@@ -1402,6 +1402,8 @@ class Kvirt(Kbase):
                 sshcommand = "ssh -o LogLevel=quiet -o 'UserKnownHostsFile=/dev/null' -o 'StrictHostKeyChecking=no' %s" % sshcommand
             else:
                 sshcommand = "ssh %s" % sshcommand
+            if self.debug:
+                print(sshcommand)
             return sshcommand
 
     def scp(self, name, source=None, destination=None, tunnel=False, download=False, recursive=False):
