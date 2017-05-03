@@ -38,8 +38,8 @@
                 {% set report = 'glyphicon glyphicon-ok-circle green' %}
             {% elif vm[6] == 'Running' %}
                 {% set report = 'glyphicon glyphicon-minus-sign blue' %}
-            {% else %}
-                {% set report = 'glyphicon glyphicon-question-sign' %}
+            {#% else %}
+                {% set report = 'glyphicon glyphicon-question-sign' %#}
                 {% endif %}
                 <tr>
                 <td><img src="{{ url_for('static', filename='images/'+ logo) }}"/></td>
