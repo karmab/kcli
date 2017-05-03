@@ -1,6 +1,6 @@
-function templatecreate(template, pool){
+function templatecreate(template, pool, url){
   $("#wheel").show();
-  data = {'template': template, 'action': 'create', 'pool': pool};
+  data = {'template': template, 'action': 'create', 'pool': pool, 'url': url};
   $.ajax({
        type: "POST",
         url: '/templateaction',
@@ -14,4 +14,12 @@ function templatecreate(template, pool){
             };
         }
     });
+}
+
+function templateurl(){
+    template = $( "#template option:selected" ).text();
+    url = $( "#template option:selected" ).attr("url");
+    if (~template.indexOf("rhel")) {
+    window.open(url, "_blank");
+    }
 }

@@ -521,12 +521,13 @@ def templateaction():
     if 'pool' in request.form:
         pool = request.form['pool']
         action = request.form['action']
-        # if action == 'delete':
-        #    result = k.delete(name)
         if action == 'create' and 'pool' in request.form and 'template' in request.form:
             pool = request.form['pool']
             template = request.form['template']
-            result = config.handle_host(pool=pool, template=template, download=True)
+            url = request.form['url']
+            if url == '':
+                url = None
+            result = config.handle_host(pool=pool, template=template, download=True, url=url)
         else:
             result = "Nothing to do"
         print(result)

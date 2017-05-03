@@ -12,6 +12,7 @@ from kvirt import common
 from kvirt.kvm import Kvirt
 from kvirt.vbox import Kbox
 import os
+import sys
 from time import sleep
 import webbrowser
 import yaml
@@ -741,7 +742,7 @@ class Kconfig:
                 return
         return {'result': 'success'}
 
-    def handle_host(self, pool='default', template=None, switch=None, download=False, enable=None, disable=None):
+    def handle_host(self, pool='default', template=None, switch=None, download=False, enable=None, disable=None, url=None):
         if download:
             k = self.k
             if pool is None:
@@ -751,15 +752,18 @@ class Kconfig:
                 common.pprint("Missing template.Leaving...", color='red')
                 return {'result': 'failure', 'reason': "Missing template"}
             common.pprint("Grabbing template %s..." % template, color='green')
-            url = TEMPLATES[template]
-            template = os.path.basename(template)
-            if not url.endswith('qcow2') and not url.endswith('img') and not url.endswith('qc2'):
-                common.pprint("Opening url %s for you to grab complete url for %s" % (url, template), color='blue')
-                webbrowser.open(url, new=2, autoraise=True)
-                url = raw_input("Copy Url:\n")
-                if url.strip() == '':
-                    common.pprint("Missing proper url.Leaving...", color='red')
-                    return {'result': 'failure', 'reason': "Missing template"}
+            if url is None:
+                url = TEMPLATES[template]
+                template = os.path.basename(template)
+                if not url.endswith('qcow2') and not url.endswith('img') and not url.endswith('qc2'):
+                    if 'web' in sys.argv[0]:
+                        return {'result': 'failure', 'reason': "Missing url"}
+                    common.pprint("Opening url %s for you to grab complete url for %s" % (url, template), color='blue')
+                    webbrowser.open(url, new=2, autoraise=True)
+                    url = raw_input("Copy Url:\n")
+                    if url.strip() == '':
+                        common.pprint("Missing proper url.Leaving...", color='red')
+                        return {'result': 'failure', 'reason': "Missing template"}
             result = k.add_image(url, pool, cmd=None)
             # result = k.add_image(template, pool)
             common.handle_response(result, template, element='Template ', action='Added')

@@ -6,9 +6,9 @@
 <form id="createtemplateform">
     <div class="form-group">
     <label for="profile">Select Template:</label>
-    <select class="form-control" id="template">
+    <select class="form-control" id="template" onchange="templateurl();">
       {% for template in templates %}
-      <option>{{ template }}</option>
+      <option url="{{ templates[template] }}">{{ template }}</option>
       {% endfor %}
     </select>
     </div>
@@ -19,6 +19,10 @@
       <option>{{ pool }}</option>
       {% endfor %}
     </select>
+</div>
+    <div class="form-group">
+    <label for="inputName">Url</label>
+    <input type="text" class="form-control" id="url" placeholder="Url">
     </div>
     <button type="submit" class="btn btn-primary">Create</button>
 </form>
@@ -28,7 +32,8 @@ $(document).ready(function() {
 $("#createtemplateform").submit(function() {
 var template = $("#template").val();
 var pool = $("#pool").val();
-templatecreate(template, pool);
+var url = $("#url").val();
+templatecreate(template, pool, url);
 return ;
 });
 });
