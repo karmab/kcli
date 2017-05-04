@@ -1,5 +1,10 @@
 # Changelog
 
+## 7.6 (2017-05-04)
+
+- cli and web support for downloadind rhel and cloudforms images ( asking the concrete cdn url)
+- tripleo typo fixes
+
 ## 7.5 (2017-04-23)
 
 - automatically enable root access with the same public keys
