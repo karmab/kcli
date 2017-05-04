@@ -7,6 +7,8 @@ function templatecreate(template, pool, url){
         data: data,
         success: function(data) {
             $("#wheel").hide();
+            $("#urllabel").hide();
+            $("#url").hide();
             if (data.result == 'success') {
                 $('.top-right').notify({message: { text: "Template "+template+" Created!!!" }, type: 'success'}).show();
             } else {
@@ -18,8 +20,10 @@ function templatecreate(template, pool, url){
 
 function templateurl(){
     template = $( "#template option:selected" ).text();
-    url = $( "#template option:selected" ).attr("url");
     if (~template.indexOf("rhel")) {
+    $("#url").show();
+    $("#urllabel").show();
+    url = $( "#template option:selected" ).attr("url");
     window.open(url, "_blank");
     }
 }
