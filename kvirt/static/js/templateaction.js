@@ -1,6 +1,6 @@
-function templatecreate(template, pool, url){
+function templatecreate(template, pool, url, cmd){
   $("#wheel").show();
-  data = {'template': template, 'action': 'create', 'pool': pool, 'url': url};
+  data = {'template': template, 'action': 'create', 'pool': pool, 'url': url, 'cmd': cmd};
   $.ajax({
        type: "POST",
         url: '/templateaction',

@@ -525,9 +525,12 @@ def templateaction():
             pool = request.form['pool']
             template = request.form['template']
             url = request.form['url']
+            cmd = request.form['cmd']
             if url == '':
                 url = None
-            result = config.handle_host(pool=pool, template=template, download=True, url=url)
+            if cmd == '':
+                cmd = None
+            result = config.handle_host(pool=pool, template=template, download=True, url=url, cmd=cmd)
         else:
             result = "Nothing to do"
         print(result)

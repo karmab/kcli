@@ -24,6 +24,10 @@
     <label for="inputName" id="urllabel" hidden >Url</label>
     <input type="text" class="form-control" id="url" placeholder="Url"/>
     </div>
+    <div class="form-group">
+    <label for="inputName" id="cmd" >Cmd to launch on the image</label>
+    <input type="text" class="form-control" id="cmd" placeholder="Cmd"/>
+    </div>
     <button type="submit" class="btn btn-primary">Create</button>
 </form>
 
@@ -33,7 +37,8 @@ $("#createtemplateform").submit(function() {
 var template = $("#template").val();
 var pool = $("#pool").val();
 var url = $("#url").val();
-templatecreate(template, pool, url);
+var cm = $("#cmd").val();
+templatecreate(template, pool, url, cmd);
 return ;
 });
 });

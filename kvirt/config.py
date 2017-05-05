@@ -742,7 +742,7 @@ class Kconfig:
                 return
         return {'result': 'success'}
 
-    def handle_host(self, pool='default', template=None, switch=None, download=False, enable=None, disable=None, url=None):
+    def handle_host(self, pool='default', template=None, switch=None, download=False, enable=None, disable=None, url=None, cmd=None):
         if download:
             k = self.k
             if pool is None:
@@ -764,8 +764,7 @@ class Kconfig:
                     if url.strip() == '':
                         common.pprint("Missing proper url.Leaving...", color='red')
                         return {'result': 'failure', 'reason': "Missing template"}
-            result = k.add_image(url, pool, cmd=None)
-            # result = k.add_image(template, pool)
+            result = k.add_image(url, pool, cmd=cmd)
             common.handle_response(result, template, element='Template ', action='Added')
             # code = common.handle_response(result, shortname, element='Template ', action='Added')
             # os._exit(code)

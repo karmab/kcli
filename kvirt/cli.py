@@ -103,12 +103,14 @@ def host(args):
     pool = args.pool
     template = args.template
     download = args.download
+    download = args.download
+    cmd = args.cmd
     global config
     k = config.k
     if report:
         k.report()
     else:
-        result = config.handle_host(pool=pool, template=template, switch=switch, download=download, enable=enable, disable=disable)
+        result = config.handle_host(pool=pool, template=template, switch=switch, download=download, enable=enable, disable=disable, cmd=cmd)
         if result['result'] == 'success':
             os._exit(0)
         else:
@@ -778,6 +780,7 @@ def cli():
 
     host_info = 'List and Handle host'
     host_parser = subparsers.add_parser('host', description=host_info, help=host_info)
+    host_parser.add_argument('-c', '--cmd', help='Extra command to launch after downloading template', metavar='CMD')
     host_parser.add_argument('-d', '--disable', help='Disable indicated client', metavar='CLIENT')
     host_parser.add_argument('-e', '--enable', help='Enable indicated client', metavar='CLIENT')
     host_parser.add_argument('-s', '--switch', help='Switch To indicated client', metavar='CLIENT')
