@@ -497,7 +497,6 @@ def templates():
     config = Kconfig()
     k = config.k
     templates = k.volumes()
-    print templates
     return render_template('templates.html', title='Templates', templates=templates, client=config.client)
 
 
@@ -509,7 +508,7 @@ def templatecreate():
     config = Kconfig()
     k = config.k
     pools = k.list_pools()
-    return render_template('templatecreate.html', title='CreateTemplate', pools=pools, templates=TEMPLATES, client=config.client)
+    return render_template('templatecreate.html', title='CreateTemplate', pools=pools, templates=sorted(TEMPLATES), client=config.client)
 
 
 @app.route("/templateaction", methods=['POST'])

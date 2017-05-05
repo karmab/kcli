@@ -1,8 +1,9 @@
 # Changelog
 
-## 7.6 (2017-05-04)
+## 7.7 (2017-05-05)
 
-- cli and web support for downloadind rhel and cloudforms images ( asking the concrete cdn url)
+- cli and web support for downloading rhel and cloudforms images ( asking the concrete cdn url)
+- cli and web support for running a given command after downloading an image
 - tripleo typo fixes
 
 ## 7.5 (2017-04-23)

@@ -213,13 +213,13 @@ def list(args):
     elif templates:
         templatestable = PrettyTable(["Template"])
         templatestable.align["Template"] = "l"
-        for template in sorted(k.volumes()):
+        for template in k.volumes():
                 templatestable.add_row([template])
         print(templatestable)
     elif isos:
         isostable = PrettyTable(["Iso"])
         isostable.align["Iso"] = "l"
-        for iso in sorted(k.volumes(iso=True)):
+        for iso in k.volumes(iso=True):
                 isostable.add_row([iso])
         print(isostable)
     elif disks:

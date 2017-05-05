@@ -781,9 +781,9 @@ class Kvirt(Kbase):
                 elif volume.endswith('qcow2') or volume.endswith('qc2') or volume in default_templates:
                     templates.append("%s/%s" % (storagepath, volume))
         if iso:
-            return isos
+            return sorted(isos, key=lambda s: s.lower())
         else:
-            return templates
+            return sorted(templates, key=lambda s: s.lower())
 
     def delete(self, name, force=False):
         conn = self.conn
