@@ -606,10 +606,12 @@ class Kvirt(Kbase):
                     host = self.host
                 protocol = attributes['type']
                 port = attributes['port']
+                localport = port
                 if tunnel:
-                    consolecommand = "ssh -f -p %s -L %s:127.0.0.1:%s %s@%s sleep 10" % (self.port, port, port, self.user, self.host)
+                    localport = common.get_free_port()
+                    consolecommand = "ssh -f -p %s -L %s:127.0.0.1:%s %s@%s sleep 10" % (self.port, localport, port, self.user, self.host)
                     os.popen(consolecommand)
-                url = "%s://%s:%s" % (protocol, host, port)
+                url = "%s://%s:%s" % (protocol, host, localport)
                 os.popen("remote-viewer %s &" % url)
 
     def serialconsole(self, name):

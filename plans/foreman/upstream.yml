@@ -1,7 +1,9 @@
 foreman:
  template: CentOS-7-x86_64-GenericCloud.qcow2
- memory: 4096
+ memory: 6144
  numcpus: 2
+ reservedns: true
+ domain: default
  nets:
   - default
  disks:
@@ -9,6 +11,5 @@ foreman:
  pool: default
  scripts: 
   - repo.sh
-  - install.sh
   - upstream.sh
   - hammer.sh
