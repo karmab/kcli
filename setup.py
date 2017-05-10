@@ -19,8 +19,8 @@ setup(
     author_email='karimboumedhel@gmail.com',
     license='GPL',
     install_requires=[
-        'libvirt-python>=2.0',
-        'docker',
+        'libvirt-python>=2.0.0',
+        'docker>=2.0',
         'flask',
         'iptools',
         'netaddr',
