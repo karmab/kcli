@@ -19,7 +19,7 @@ setup(
     author_email='karimboumedhel@gmail.com',
     license='GPL',
     install_requires=[
-        'libvirt-python>=2.0.0',
+        'libvirt-python>=2.0;platform_system=="Linux"',
         'docker',
         'flask',
         'iptools',
@@ -27,9 +27,7 @@ setup(
         'pillow',
         'PyYAML',
         'prettytable',
-    ],
-    extra_requires=[
-        'pyvbox',
+        'pyvbox;platform_system=="Darwin"',
     ],
     entry_points='''
         [console_scripts]
