@@ -10,14 +10,17 @@ from kvirt import dockerutils
 from kvirt import nameutils
 from kvirt import common
 from kvirt.kvm import Kvirt
-from kvirt.vbox import Kbox
+try:
+    from kvirt.vbox import Kbox
+except:
+    pass
 import os
 import sys
 from time import sleep
 import webbrowser
 import yaml
 
-__version__ = '7.9'
+__version__ = '7.10'
 
 
 class Kconfig:

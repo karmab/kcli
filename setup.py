@@ -8,7 +8,7 @@ if os.path.exists('README.rst'):
 
 setup(
     name='kcli',
-    version='7.9',
+    version='7.10',
     include_package_data=True,
     packages=find_packages(),
     zip_safe=False,
@@ -19,7 +19,7 @@ setup(
     author_email='karimboumedhel@gmail.com',
     license='GPL',
     install_requires=[
-        'libvirt-python>=2.2.0',
+        'libvirt-python>=2.0.0',
         'docker',
         'flask',
         'iptools',
@@ -27,6 +27,8 @@ setup(
         'pillow',
         'PyYAML',
         'prettytable',
+    ],
+    extra_requires=[
         'pyvbox',
     ],
     entry_points='''
