@@ -188,7 +188,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 if isinstance(content, str):
                     content = content.split('\n')
                 for line in content:
-                    userdata.write("     %s\n" % line.strip())
+                    userdata.write("     %s\n" % line.rstrip())
     isocmd = 'mkisofs'
     if find_executable('genisoimage') is not None:
         isocmd = 'genisoimage'
