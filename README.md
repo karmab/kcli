@@ -32,6 +32,14 @@ It started because I switched from ovirt and needed a tool similar to [ovirt.py]
 
 ## Installation
 
+0. If using centos or fedora, you can use this [repo](http://people.redhat.com/kboumedh/kcli/kcli.repo)
+
+```bash
+yum -y install kcli
+```
+
+## Dev installation
+
 1. Install requirements. you will also need to grab *genisoimage* (or *mkisofs* on OSX) for cloudinit isos to get generated
 Console access is based on remote-viewer
 For instance if using a RHEL based distribution:

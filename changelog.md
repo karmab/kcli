@@ -1,5 +1,12 @@
 # Changelog
 
+## 7.12 (2017-05-10)
+
+- rpm spec and binary for fedora25
+- fix identation in write_files
+- fix satellite downstream plan
+- fixing the used port when running vms locally and pointing to a remote host
+
 ## 7.7 (2017-05-05)
 
 - cli and web support for downloading rhel and cloudforms images ( asking the concrete cdn url)

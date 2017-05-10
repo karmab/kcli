@@ -41,8 +41,6 @@ class Kbox(Kbase):
             self.conn = None
 
     def close(self):
-        conn = self.conn
-        conn.close()
         self.conn = None
 
     def guestinstall(self, template):

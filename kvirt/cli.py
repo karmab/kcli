@@ -922,6 +922,8 @@ def cli():
         common.pprint("Disabled hypervisor.Leaving...", color='red')
         os._exit(1)
     args.func(args)
+    config.k.close()
+
 
 if __name__ == '__main__':
     cli()
