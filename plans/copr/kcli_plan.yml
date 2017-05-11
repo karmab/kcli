@@ -1,0 +1,20 @@
+coprbuilder:
+ template: Fedora-Cloud-Base-25-1.3.x86_64.qcow2
+ numcpus: 2
+ memory: 4096
+ nets:
+  - default
+ files:
+  - path: /root/copr
+    origin: ~/copr
+  - path: /root/package.spec
+    origin: ~/kcli.spec
+  - path: /root/upload.sh
+    mode: 700
+    content:  |
+       version="7.13-1"
+       copr-cli build kcli /root/rpmbuild/SRPMS/kcli-$version.src.rpm
+  - path: /root/copr.sh
+    origin: copr.sh
+ cmds:
+  - sh /root/copr.sh
