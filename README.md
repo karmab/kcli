@@ -33,7 +33,7 @@ It started because I switched from ovirt and needed a tool similar to [ovirt.py]
 
 ## Installation
 
-0. If using centos or fedora, you can use this:
+If using fedora, you can use this:
 
 ```bash
 dnf -y copr enable karmab/kcli ; dnf -y install kcli
