@@ -6,7 +6,7 @@
 
 Name:           kcli
 Version:        7.12
-Release:        4
+Release:        5
 Url:            http://github.com/karmab/kcli
 Summary:        Libvirt/VirtualBox wrapper on steroids
 License:        ASL 2.0
@@ -14,7 +14,7 @@ Group:          Development/Languages/Python
 Source:         https://files.pythonhosted.org/packages/source/k/kcli/kcli-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildRequires:  python2-devel
-Requires:       python2 python-iptools libvirt-python genisoimage nmap-ncat python-prettytable python-pillow PyYAML python-flask python-netaddr python2-docker
+Requires:       python2 python-iptools libvirt-python genisoimage nmap-ncat python-prettytable python-pillow PyYAML python-flask python-netaddr python2-docker wget
 
 %description
 Kcli is meant to interact with a local/remote libvirt daemon and

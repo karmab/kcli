@@ -39,6 +39,12 @@ If using fedora, you can use this:
 dnf -y copr enable karmab/kcli ; dnf -y install kcli
 ```
 
+If not running as root, you'll also have to do the following
+```bash
+sudo usermod -aG libvirt YOUR_USER
+sudo kcli pool -p /var/lib/libvirt/images default
+```
+
 ## Dev installation
 
 1. Install requirements. you will also need to grab *genisoimage* (or *mkisofs* on OSX) for cloudinit isos to get generated
