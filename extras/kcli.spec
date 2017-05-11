@@ -6,14 +6,14 @@
 
 Name:           kcli
 Version:        7.13
-Release:        1
+Release:        2
 Url:            http://github.com/karmab/kcli
 Summary:        Libvirt/VirtualBox wrapper on steroids
 License:        ASL 2.0
 Group:          Development/Languages/Python
 Source:         https://files.pythonhosted.org/packages/source/k/kcli/kcli-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
-BuildRequires:  python2-devel
+BuildRequires:  python2-devel rubygem-ronn gzip
 Requires:       python2 python-iptools libvirt-python genisoimage nmap-ncat python-prettytable python-pillow PyYAML python-flask python-netaddr python2-docker wget
 
 %description
@@ -35,14 +35,30 @@ python setup.py build
 
 %install
 python setup.py install --prefix=%{_prefix} --root=%{buildroot}
+mkdir -p %{buildroot}/%{_docdir}/kcli
+mkdir -p %{buildroot}/%{_mandir}/man1
+cp *md %{buildroot}/%{_docdir}/kcli
+cp *rst %{buildroot}/%{_docdir}/kcli
+cp -r extras %{buildroot}/%{_docdir}/kcli
+cp -r plans %{buildroot}/%{_docdir}/kcli
+cp -r samples %{buildroot}/%{_docdir}/kcli
+LANG=en_US.UTF-8 ronn -r README.md
+mv README kcli.1
+gzip kcli.1
+cp kcli.1.gz %{buildroot}/%{_mandir}/man1
+
 
 %clean
 rm -rf %{buildroot}
 
 %files
 %defattr(-,root,root,-)
+%doc %{_docdir}/kcli
+%{_mandir}/man1/kcli.1.gz
 %{python_sitelib}/*
 %attr(0755,root,root) %{_bindir}/kcli
 %attr(0755,root,root) %{_bindir}/kweb
 
 %changelog
+* Thu May 11 2017 Karim Boumedhel <karimboumedhel@gmail.com> 7.13-2
+- Doc, Sample, Plan and inventory files included

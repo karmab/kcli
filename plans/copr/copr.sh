@@ -9,6 +9,6 @@ export SHORT=${SOURCE##*/}
 mkdir -p /root/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
 mv /root/$SHORT /root/rpmbuild/SOURCES
 export HOME=/root
-rpmbuild -ba /root/package.spec
+rpmbuild -bs /root/package.spec
 sed -i "s/version=.*/version=$VERSION-$RELEASE/" /root/upload.sh
 sh /root/upload.sh

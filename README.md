@@ -45,6 +45,23 @@ If not running as root, you'll also have to do the following
 sudo usermod -aG qemu,libvirt YOUR_USER
 ```
 
+If you dont have kvm installed, you can also use the following command to get you going 
+
+```bash
+yum -y install libvirt libvirt-daemon-driver-qemu qemu-kvm 
+sudo usermod -aG qemu,libvirt YOUR_USER
+sudo kcli pool -p /var/lib/libvirt/images default
+sudo chmod g+rw /var/lib/libvirt/images
+```
+
+For interaction with local docker, you might also need the following
+
+```bash
+sudo groupadd docker
+sudo usermod -aG docker YOUR_USER
+sudo systemctl restart docker
+```
+
 ## Dev installation
 
 1. Install requirements. you will also need to grab *genisoimage* (or *mkisofs* on OSX) for cloudinit isos to get generated
