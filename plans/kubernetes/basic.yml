@@ -20,6 +20,7 @@ kumaster:
  scripts: 
   - pre.sh
   - master.sh
+  - app.sh
 
 kunode1:
  template: CentOS-7-x86_64-GenericCloud.qcow2
