@@ -32,10 +32,10 @@ It started because I switched from ovirt and needed a tool similar to [ovirt.py]
 
 ## Installation
 
-0. If using centos or fedora, you can use this [repo](http://people.redhat.com/kboumedh/kcli/kcli.repo)
+0. If using centos or fedora, you can use this:
 
 ```bash
-yum -y install kcli
+dnf -y copr enable karmab/kcli ; dnf -y install kcli
 ```
 
 ## Dev installation
