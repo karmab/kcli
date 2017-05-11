@@ -10,16 +10,12 @@
     </div>
     <div class="form-group">
         <label for="inputName">Url</label>
-        <input class="form-control" id="url" placeholder="Enter Url">
+        <input class="form-control" id="planurl" placeholder="Enter Url">
     </div>
     <div class="form-group">
         <label for="inputName">Plan File</label>
         <input class="form-control" id="planfile" value="kcli_plan.yml" placeholder="Planfile">
     </div>
-    <!--div class="form-group">
-        <label for="inputName">Local File</label>
-        <input type="file" class="form-control-file" id="path" placeholder="Enter Path">
-    </div!-->
     <div class="checkbox">
         <label><input id="deploy" type="checkbox" class="form-check-input" checked >Deploy</label>
     </div>
@@ -31,11 +27,9 @@
 $(document).ready(function() {
 $("#createplanform").submit(function() {
 var name = $("#name").val();
-var url = $("#url").val();
+var url = $("#planurl").val();
 var planfile = $("#planfile").val();
-//var path = $("#path").val();
 var deploy = $("#deploy").val();
-//plancreate(name, url, planfile, path);
 plancreate(name, url, planfile, deploy);
 return ;
 });

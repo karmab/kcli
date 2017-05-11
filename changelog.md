@@ -1,5 +1,12 @@
 # Changelog
 
+## 7.13 (2017-05-11)
+
+- copr repo indication
+- fix hidden url in plancreate and web
+- lighter rpm
+- kubernetes simple plan
+
 ## 7.12 (2017-05-10)
 
 - rpm spec and binary for fedora25
