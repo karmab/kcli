@@ -1,5 +1,12 @@
 # Changelog
 
+## 7.14 (2017-05-12)
+
+- fix docker api bugs when creating container
+- homogeneous container commands ( ie only use kcli container for creating container and nothing else)
+- sample app in kubernetes plan
+- kcli list --images to check container images
+
 ## 7.13 (2017-05-11)
 
 - copr repo indication

@@ -49,10 +49,14 @@ def console(args):
     """Vnc/Spice/Serial/Container console"""
     name = args.name
     serial = args.serial
+    container = args.container
     global config
     k = config.k
     tunnel = config.tunnel
-    if serial:
+    if container:
+        dockerutils.console_container(k, name)
+        return
+    elif serial:
         k.serialconsole(name)
     else:
         k.console(name=name, tunnel=tunnel)
@@ -69,12 +73,12 @@ def delete(args):
     if not yes:
         common.confirm("Are you sure?")
     if container:
-        common.pprint("Deleted container %s..." % name, color='red')
+        common.pprint("container %s deleted" % name, color='red')
         dockerutils.delete_container(k, name)
     else:
         result = k.delete(name, force=force)
         if result['result'] == 'success':
-            common.pprint("Deleted vm %s..." % name, color='red')
+            common.pprint("vm %s deleted" % name, color='red')
             os._exit(0)
         else:
             reason = result['reason']
@@ -127,6 +131,7 @@ def list(args):
     pools = args.pools
     networks = args.networks
     containers = args.containers
+    images = args.images
     plans = args.plans
     filters = args.filters
     short = args.short
@@ -243,6 +248,12 @@ def list(args):
             else:
                 containers.add_row(container)
         print(containers)
+    elif images:
+        common.pprint("Listing images...", color='green')
+        images = PrettyTable(["Name"])
+        for image in dockerutils.list_images(k):
+            images.add_row([image])
+        print(images)
     elif plans:
         vms = {}
         plans = PrettyTable(["Name", "Vms"])
@@ -279,7 +290,7 @@ def list(args):
 
 
 def vm(args):
-    """Create/Delete/Start/Stop/List vms"""
+    """Create vms"""
     name = args.name
     profile = args.profile
     ip1 = args.ip1
@@ -642,25 +653,11 @@ def bootstrap(args):
 
 
 def container(args):
-    """Create/Delete/List containers"""
+    """Create container"""
     name = args.name
     profile = args.profile
-    start = args.start
-    stop = args.stop
-    console = args.console
     global config
     k = config.k
-    if start:
-        common.pprint("Started container %s..." % name, color='green')
-        dockerutils.start_container(k, name)
-        return
-    if stop:
-        common.pprint("Stopped container %s..." % name, color='green')
-        dockerutils.stop_container(k, name)
-        return
-    if console:
-        dockerutils.console_container(k, name)
-        return
     if profile is None:
         common.pprint("Missing profile", color='red')
         os._exit(1)
@@ -668,7 +665,6 @@ def container(args):
     if profile not in containerprofiles:
         common.pprint("profile %s not found. Trying to use the profile as image and default values..." % profile, color='blue')
         dockerutils.create_container(k, name, profile)
-        return
     else:
         common.pprint("Deploying vm %s from profile %s..." % (name, profile), color='green')
         profile = containerprofiles[profile]
@@ -681,7 +677,8 @@ def container(args):
         environment = profile.get('environment', None)
         volumes = next((e for e in [profile.get('volumes'), profile.get('disks')] if e is not None), None)
         dockerutils.create_container(k, name, image, nets=None, cmd=cmd, ports=ports, volumes=volumes, environment=environment)
-        return
+    common.pprint("container %s created" % (name), color='green')
+    return
 
 
 def snapshot(args):
@@ -748,15 +745,13 @@ def cli():
     console_info = 'Vnc/Spice/Serial/Container console'
     console_parser = subparsers.add_parser('console', description=console_info, help=console_info)
     console_parser.add_argument('-s', '--serial', action='store_true')
+    console_parser.add_argument('--container', action='store_true')
     console_parser.add_argument('name', metavar='VMNAME')
     console_parser.set_defaults(func=console)
 
-    container_info = 'Handle containers'
+    container_info = 'Create container'
     container_parser = subparsers.add_parser('container', description=container_info, help=container_info)
     container_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
-    container_parser.add_argument('-s', '--start', help='Start Container', action='store_true')
-    container_parser.add_argument('-w', '--stop', help='Stop Container', action='store_true')
-    container_parser.add_argument('-c', '--console', help='Console of the Container', action='store_true')
     container_parser.add_argument('name', metavar='NAME')
     container_parser.set_defaults(func=container)
 
@@ -806,6 +801,7 @@ def cli():
     list_parser.add_argument('-P', '--pools', action='store_true')
     list_parser.add_argument('-n', '--networks', action='store_true')
     list_parser.add_argument('--containers', action='store_true')
+    list_parser.add_argument('--images', action='store_true')
     list_parser.add_argument('--short', action='store_true')
     list_parser.add_argument('--plans', action='store_true')
     list_parser.add_argument('-f', '--filters', choices=('up', 'down'))
@@ -903,7 +899,7 @@ def cli():
     update_parser.add_argument('name', metavar='VMNAME')
     update_parser.set_defaults(func=update)
 
-    vm_info = 'Create/Delete/Start/Stop vm'
+    vm_info = 'Create vm'
     vm_parser = subparsers.add_parser('vm', description=vm_info, help=vm_info)
     vm_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
     vm_parser.add_argument('-1', '--ip1', help='Optional Ip to assign to eth0. Netmask and gateway will be retrieved from profile', metavar='IP1')

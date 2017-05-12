@@ -54,14 +54,11 @@ def create_container(self, name, image, nets=None, cmd=None, ports=[], volumes=[
                         finalenv[key] = value
                     else:
                         continue
-
         d = docker.DockerClient(base_url=base_url, version='1.22')
-        # d.containers.run(image, name=name, command=cmd, networks=nets, detach=True, ports=ports)
-        d.containers.run(image, name=name, command=cmd, detach=True, ports=ports, volumes=finalvolumes, stdin_open=True, tty=True, labels=labels, environment=finalenv)
+        if ':' not in image:
+            image = '%s:latest' % image
+        d.containers.run(image, name=name, command=cmd, detach=True, ports=ports, volumes=finalvolumes, stdin_open=True, tty=True, labels=labels, environment=finalenv, stdout=True)
     else:
-        # netinfo = ''
-        # for net in nets:
-        #    netinfo = "%s --net=%s" % (netinfo, net)
         portinfo = ''
         if ports is not None:
             for port in ports:
@@ -169,14 +166,8 @@ def stop_container(self, name):
 
 def console_container(self, name):
     if self.host == '127.0.0.1':
-        # base_url = 'unix://var/run/docker.sock'
         dockercommand = "docker attach %s" % name
         os.system(dockercommand)
-        # d = docker.DockerClient(base_url=base_url)
-        # containers = [container.id for container in d.containers.list() if container.name == name]
-        # if containers:
-        #    for container in containers:
-        #        container.attach()
     else:
         dockercommand = "docker attach %s" % name
         command = "ssh -t -p %s %s@%s %s" % (self.port, self.user, self.host, dockercommand)
@@ -189,7 +180,6 @@ def list_containers(self):
     if self.host == '127.0.0.1':
         base_url = 'unix://var/run/docker.sock'
         d = docker.DockerClient(base_url=base_url, version='1.22')
-        # containers = [container.name for container in d.containers.list()]
         for container in d.containers.list(all=True):
             name = container.name
             state = container.status
@@ -226,22 +216,15 @@ def list_containers(self):
             containers.append([name, state, source, plan, command, portinfo])
     else:
         containers = []
-        # dockercommand = "docker ps --format '{{.Names}}'"
         dockercommand = "docker ps -a --format \"'{{.Names}}?{{.Status}}?{{.Image}}?{{.Command}}?{{.Ports}}?{{.Label \\\"plan\\\"}}'\""
         command = "ssh -p %s %s@%s %s" % (self.port, self.user, self.host, dockercommand)
         results = os.popen(command).readlines()
         for container in results:
-            #    containers.append(container.strip())
             name, state, source, command, ports, plan = container.split('?')
             if state.startswith('Up'):
                 state = 'up'
             else:
                 state = 'down'
-            # labels = {i.split('=')[0]: i.split('=')[1] for i in labels.split(',')}
-            # if 'plan' in labels:
-            #    plan = labels['plan']
-            # else:
-            #     plan = ''
             command = command.strip().replace('"', '')
             containers.append([name, state, source, plan, command, ports])
     return containers
@@ -263,3 +246,18 @@ def exists_container(self, name):
             if containername == name:
                 return True
     return False
+
+
+def list_images(self):
+    if self.host == '127.0.0.1':
+        base_url = 'unix://var/run/docker.sock'
+        d = docker.DockerClient(base_url=base_url, version='1.22')
+        images = []
+        for i in d.images.list():
+            for tag in i.tags:
+                images.append(tag)
+    else:
+        dockercommand = "docker images --format '{{.Repository}}:{{.Tag}}'"
+        command = "ssh -p %s %s@%s %s" % (self.port, self.user, self.host, dockercommand)
+        images = [image.strip() for image in os.popen(command).readlines()]
+    return sorted(images)
