@@ -58,7 +58,7 @@ class Kvirt(Kbase):
         try:
             self.conn = libvirtopen(url)
             self.debug = debug
-        except Exception:
+        except libvirtError:
             self.conn = None
         self.host = host
         self.user = user
@@ -96,7 +96,7 @@ class Kvirt(Kbase):
             for stor in sorted(storage.listVolumes()):
                 if stor == name:
                     return True
-        except:
+        except libvirtError:
             return False
 
     def create(self, name, virttype='kvm', profile='kvirt', plan='kvirt', cpumodel='Westmere', cpuflags=[], numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[]):
@@ -410,10 +410,6 @@ class Kvirt(Kbase):
         status = {0: 'down', 1: 'up'}
         try:
             vm = conn.lookupByName(name)
-        except libvirtError:
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
-
-        try:
             if status[vm.isActive()] == "up":
                 return {'result': 'success'}
             else:
@@ -432,7 +428,7 @@ class Kvirt(Kbase):
             else:
                 vm.destroy()
                 return {'result': 'success'}
-        except:
+        except libvirtError:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
 
     def snapshot(self, name, base, revert=False, delete=False, listing=False):
@@ -477,7 +473,10 @@ class Kvirt(Kbase):
     def restart(self, name):
         conn = self.conn
         status = {0: 'down', 1: 'up'}
-        vm = conn.lookupByName(name)
+        try:
+            vm = conn.lookupByName(name)
+        except libvirtError as e:
+            return {'result': 'failure', 'reason': str(e)}
         if status[vm.isActive()] == "down":
             return {'result': 'success'}
         else:
@@ -659,9 +658,9 @@ class Kvirt(Kbase):
             if self.debug:
                 print(xml)
             root = ET.fromstring(xml)
-        except:
+        except libvirtError as e:
             common.pprint("VM %s not found" % name, color='red')
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            return {'result': 'failure', 'reason': str(e)}
         state = 'down'
         autostart = starts[vm.autostart()]
         memory = root.getiterator('memory')[0]
@@ -794,9 +793,9 @@ class Kvirt(Kbase):
         conn = self.conn
         try:
             vm = conn.lookupByName(name)
-        except:
+        except libvirtError as e:
             # common.pprint("vm %s not found" % name, color='red')
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            return {'result': 'failure', 'reason': str(e)}
         if vm.snapshotListNames():
             if not force:
                 # print("vm %s has snapshots" % name)
@@ -1035,9 +1034,9 @@ class Kvirt(Kbase):
         try:
             network.update(4, 10, 0, dnsentry, 1)
             return 0
-        except:
+        except libvirtError as e:
             print("Entry allready found for %s" % name)
-            return {'result': 'failure', 'reason': "Entry allready found found for %s" % name}
+            return {'result': 'failure', 'reason': str(e)}
 
     def reserve_host(self, name, nets, domain):
         net = nets[0]
@@ -1137,9 +1136,9 @@ class Kvirt(Kbase):
             vm = conn.lookupByName(name)
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
-        except:
+        except libvirtError as e:
             print("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            return {'result': 'failure', 'reason': str(e)}
         memorynode = root.getiterator('memory')[0]
         memorynode.text = memory
         currentmemory = root.getiterator('currentMemory')[0]
@@ -1154,9 +1153,9 @@ class Kvirt(Kbase):
             vm = conn.lookupByName(name)
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
-        except:
+        except libvirtError as e:
             print("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            return {'result': 'failure', 'reason': str(e)}
         cpunode = root.getiterator('vcpu')[0]
         cpunode.text = numcpus
         newxml = ET.tostring(root)
@@ -1167,9 +1166,9 @@ class Kvirt(Kbase):
         conn = self.conn
         try:
             vm = conn.lookupByName(name)
-        except:
+        except libvirtError as e:
             print("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            return {'result': 'failure', 'reason': str(e)}
         if start:
             vm.setAutostart(1)
         else:
@@ -1227,9 +1226,9 @@ class Kvirt(Kbase):
             vm = conn.lookupByName(name)
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
-        except:
+        except libvirtError as e:
             print("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            return {'result': 'failure', 'reason': str(e)}
         currentdisk = 0
         for element in root.getiterator('disk'):
             disktype = element.get('device')
@@ -1256,9 +1255,9 @@ class Kvirt(Kbase):
             vm = conn.lookupByName(name)
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
-        except:
+        except libvirtError as e:
             print("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            return {'result': 'failure', 'reason': str(e)}
         for element in root.getiterator('disk'):
             disktype = element.get('device')
             diskdev = element.find('target').get('dev')
@@ -1296,9 +1295,9 @@ class Kvirt(Kbase):
             networks[net.name()] = 'network'
         try:
             vm = conn.lookupByName(name)
-        except:
+        except libvirtError as e:
             common.pprint("VM %s not found" % name, color='red')
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            return {'result': 'failure', 'reason': str(e)}
         if network not in networks:
             common.pprint("Network %s not found" % network, color='red')
             return {'result': 'failure', 'reason': "Network %s not found" % network}
@@ -1327,9 +1326,9 @@ class Kvirt(Kbase):
             vm = conn.lookupByName(name)
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
-        except:
+        except libvirtError as e:
             common.pprint("VM %s not found" % name, color='red')
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            return {'result': 'failure', 'reason': str(e)}
         for element in root.getiterator('interface'):
             device = "eth%s" % nicnumber
             if device == interface:
@@ -1495,8 +1494,8 @@ class Kvirt(Kbase):
             pool = conn.storagePoolLookupByName(pool)
             for vol in pool.listAllVolumes():
                 volumes.append(vol.name())
-        except:
-            return {'result': 'failure', 'reason': "Pool %s not found" % poolname}
+        except libvirtError as e:
+            return {'result': 'failure', 'reason': str(e)}
         poolxml = pool.XMLDesc(0)
         root = ET.fromstring(poolxml)
         pooltype = root.getiterator('pool')[0].get('type')
@@ -1563,8 +1562,8 @@ class Kvirt(Kbase):
         conn = self.conn
         try:
             network = conn.networkLookupByName(name)
-        except:
-            return {'result': 'failure', 'reason': "Network %s not found" % name}
+        except libvirtError as e:
+            return {'result': 'failure', 'reason': str(e)}
         machines = self.network_ports(name)
         if machines:
             machines = ','.join(machines)
@@ -1630,9 +1629,9 @@ class Kvirt(Kbase):
         conn = self.conn
         try:
             pool = conn.storagePoolLookupByName(name)
-        except:
+        except libvirtError as e:
             print("Pool %s not found. Leaving..." % name)
-            return {'result': 'failure', 'reason': "Pool %s not found" % name}
+            return {'result': 'failure', 'reason': str(e)}
         if full:
             for vol in pool.listAllVolumes():
                 vol.delete(0)
@@ -1689,9 +1688,9 @@ class Kvirt(Kbase):
         networks = []
         try:
             vm = conn.lookupByName(name)
-        except:
+        except libvirtError as e:
             print("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            return {'result': 'failure', 'reason': str(e)}
         xml = vm.XMLDesc(0)
         root = ET.fromstring(xml)
         for element in root.getiterator('interface'):
@@ -1739,9 +1738,9 @@ class Kvirt(Kbase):
         conn = self.conn
         try:
             vm = conn.lookupByName(name)
-        except:
+        except libvirtError as e:
             print("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            return {'result': 'failure', 'reason': str(e)}
         stream = conn.newStream()
         if vm.isActive():
             vm.screenshot(stream, 0)
