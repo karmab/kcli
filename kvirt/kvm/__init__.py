@@ -11,7 +11,7 @@ from iptools import IpRange
 from kvirt import common
 from kvirt.base import Kbase
 from netaddr import IPAddress, IPNetwork
-from libvirt import open as libvirtopen, registerErrorHandler
+from libvirt import open as libvirtopen, registerErrorHandler, libvirtError
 import os
 import re
 import string
@@ -410,14 +410,17 @@ class Kvirt(Kbase):
         status = {0: 'down', 1: 'up'}
         try:
             vm = conn.lookupByName(name)
-            vm = conn.lookupByName(name)
+        except libvirtError:
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+
+        try:
             if status[vm.isActive()] == "up":
                 return {'result': 'success'}
             else:
                 vm.create()
                 return {'result': 'success'}
-        except:
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        except libvirtError as e:
+            return {'result': 'failure', 'reason': str(e)}
 
     def stop(self, name):
         conn = self.conn
