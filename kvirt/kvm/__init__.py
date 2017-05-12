@@ -1058,9 +1058,14 @@ class Kvirt(Kbase):
             print("Couldn't assign Host")
             return
         hosts = "%s %s %s.%s" % (ip, name, name, netname)
-        if domain is not None:
+        if domain is not None and domain != netname:
             hosts = "%s %s.%s" % (hosts, name, domain)
         hosts = '"%s # KVIRT"' % hosts
+        oldentry = "%s %s.* # KVIRT" % (ip, name)
+        for line in open('/etc/hosts'):
+            if re.findall(oldentry, line):
+                common.pprint("Old entry found.Leaving...", color='blue')
+                return
         hostscmd = "sudo sh -c 'echo %s >>/etc/hosts'" % hosts
         print("Creating hosts entry. sudo password might be asked")
         os.popen(hostscmd)
@@ -1687,8 +1692,8 @@ class Kvirt(Kbase):
         try:
             vm = conn.lookupByName(name)
         except:
-            print("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            common.pprint("VM %s not found" % name, color='red')
+            return networks
         xml = vm.XMLDesc(0)
         root = ET.fromstring(xml)
         for element in root.getiterator('interface'):

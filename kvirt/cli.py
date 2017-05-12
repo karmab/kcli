@@ -361,6 +361,8 @@ def update(args):
     elif host:
         common.pprint("Creating Host entry for vm %s..." % (name), color='green')
         nets = k.vm_ports(name)
+        if not nets:
+            return
         if domain is None:
             domain = nets[0]
         k.reserve_host(name, nets, domain)
@@ -369,8 +371,7 @@ def update(args):
         nets = k.vm_ports(name)
         if domain is None:
             domain = nets[0]
-        code = k.reserve_dns(name, nets, domain)
-        os._exit(code)
+        k.reserve_dns(name, nets, domain)
 
 
 def disk(args):
