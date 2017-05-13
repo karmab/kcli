@@ -1,7 +1,7 @@
 export ADMIN_PASSWORD="unix1234"
 echo `hostname -I` `hostname -s` >> /etc/hosts
 yum update -y
-yum install -y openstack-packstack wget vim screen
+yum install -y openstack-packstack wget vim screen bind-utils
 ssh-keyscan -H `hostname -I` >> ~/.ssh/known_hosts
 ssh-keyscan -H ospcontroller >> ~/.ssh/known_hosts
 ssh-keyscan -H ospcompute01 >> ~/.ssh/known_hosts
