@@ -6,7 +6,10 @@ dist
 build
 eggs
 *pyc
+*.key
+*.key.pub
 *retry
+prout.yml
 .DS_Store
 .cache/
 kvirt/static/reports/*

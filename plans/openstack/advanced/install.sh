@@ -3,10 +3,10 @@ echo `hostname -I` `hostname -s` >> /etc/hosts
 yum update -y
 yum install -y openstack-packstack wget vim screen
 ssh-keyscan -H `hostname -I` >> ~/.ssh/known_hosts
-ssh-keyscan -H libertycont >> ~/.ssh/known_hosts
-ssh-keyscan -H libertycomp01 >> ~/.ssh/known_hosts
-ssh-keyscan -H libertycomp02 >> ~/.ssh/known_hosts
-ssh-keyscan -H libertycomp03 >> ~/.ssh/known_hosts
+ssh-keyscan -H ospcontroller >> ~/.ssh/known_hosts
+ssh-keyscan -H ospcompute01 >> ~/.ssh/known_hosts
+ssh-keyscan -H ospcompute02 >> ~/.ssh/known_hosts
+ssh-keyscan -H ospcompute03 >> ~/.ssh/known_hosts
 HOME=/root packstack --gen-answer-file=/root/answers.txt --ssh-public-key=/root/.ssh/id_rsa.pub
 sed -i "s/CONFIG_SWIFT_INSTALL=y/CONFIG_SWIFT_INSTALL=n/" /root/answers.txt
 sed -i "s/CONFIG_HEAT_INSTALL=n/CONFIG_HEAT_INSTALL=y/" /root/answers.txt
@@ -18,6 +18,6 @@ sed -i "s/CONFIG_NEUTRON_OVS_BRIDGE_MAPPINGS=.*/CONFIG_NEUTRON_OVS_BRIDGE_MAPPIN
 sed -i "s/CONFIG_NEUTRON_OVS_BRIDGE_IFACES=/CONFIG_NEUTRON_OVS_BRIDGE_IFACES=br-ex:eth0/" /root/answers.txt
 sed -i "s/CONFIG_DEBUG_MODE=n/CONFIG_DEBUG_MODE=y/" /root/answers.txt
 sed -i "s/CONFIG_NEUTRON_L3_EXT_BRIDGE=.*/CONFIG_NEUTRON_L3_EXT_BRIDGE=provider/" /root/answers.txt
-sed -i "s/CONFIG_COMPUTE_HOSTS=.*/CONFIG_COMPUTE_HOSTS=libertycomp01,libertycomp02,libertycomp03/" /root/answers.txt
+sed -i "s/CONFIG_COMPUTE_HOSTS=.*/CONFIG_COMPUTE_HOSTS=ospcompute01,ospcompute02,ospcompute03/" /root/answers.txt
 
 HOME=/root packstack --answer-file=/root/answers.txt

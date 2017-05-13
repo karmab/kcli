@@ -21,6 +21,8 @@ kumaster:
   - pre.sh
   - master.sh
   - app.sh
+  - heapster.sh
+  - dashboard.sh
 
 kunode1:
  template: CentOS-7-x86_64-GenericCloud.qcow2
