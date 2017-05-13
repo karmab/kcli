@@ -18,6 +18,8 @@ sed -i "s/CONFIG_NEUTRON_OVS_BRIDGE_MAPPINGS=.*/CONFIG_NEUTRON_OVS_BRIDGE_MAPPIN
 sed -i "s/CONFIG_NEUTRON_OVS_BRIDGE_IFACES=/CONFIG_NEUTRON_OVS_BRIDGE_IFACES=br-ex:eth0/" /root/answers.txt
 sed -i "s/CONFIG_DEBUG_MODE=n/CONFIG_DEBUG_MODE=y/" /root/answers.txt
 sed -i "s/CONFIG_NEUTRON_L3_EXT_BRIDGE=.*/CONFIG_NEUTRON_L3_EXT_BRIDGE=provider/" /root/answers.txt
-sed -i "s/CONFIG_COMPUTE_HOSTS=.*/CONFIG_COMPUTE_HOSTS=ospcompute01,ospcompute02,ospcompute03/" /root/answers.txt
-
+export comp01=`dig +short ospcompute01.localdomain`
+export comp02=`dig +short ospcompute02.localdomain`
+export comp03=`dig +short ospcompute03.localdomain`
+sed -i "s/CONFIG_COMPUTE_HOSTS=.*/CONFIG_COMPUTE_HOSTS=$comp01,$comp02,$comp03/" /root/answers.txt
 HOME=/root packstack --answer-file=/root/answers.txt

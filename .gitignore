@@ -2,6 +2,7 @@ build/
 *.egg
 *.eggs
 *.egg-info
+*.pyc
 dist
 build
 eggs

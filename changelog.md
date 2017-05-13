@@ -1,5 +1,11 @@
 # Changelog
 
+## 7.15 (2017-05-13)
+
+- fix in advanced plan of openstack
+- correctly inject public keys along with private when using sharedkeys ( and injecting files) 
+- remove all .pyc files in order to generate deb package using
+
 ## 7.14 (2017-05-12)
 
 - fix docker api bugs when creating container

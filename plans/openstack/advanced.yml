@@ -6,9 +6,11 @@ ospcontroller:
   - size: 50
  nets:
  - default
+ domain: localdomain
  pool: default
  sharedkey: true
  reservedns: true
+ domain: default
  scripts: 
   - ~/register.sh
   - subscription_newton.sh
@@ -23,6 +25,7 @@ ospcompute01:
   - size: 50
  nets:
  - default
+ domain: localdomain
  pool: default
  sharedkey: true
  reservedns: true
@@ -38,6 +41,7 @@ ospcompute02:
   - size: 50
  nets:
  - default
+ domain: localdomain
  pool: default
  sharedkey: true
  reservedns: true
@@ -53,6 +57,7 @@ ospcompute03:
   - size: 50
  nets:
  - default
+ domain: localdomain
  pool: default
  sharedkey: true
  reservedns: true
