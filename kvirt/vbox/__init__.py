@@ -853,8 +853,10 @@ class Kbox(Kbase):
         #    print("No port found. Cannot ssh...")
         return user, port
 
-    def ssh(self, name, local=None, remote=None, tunnel=False, insecure=False):
-        user, port = self._ssh_credentials(name)
+    def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False):
+        u, port = self._ssh_credentials(name)
+        if user is None:
+            user = u
         if port == '':
             return None
         else:
@@ -869,8 +871,10 @@ class Kbox(Kbase):
                 sshcommand = "ssh %s" % sshcommand
             return sshcommand
 
-    def scp(self, name, source=None, destination=None, tunnel=False, download=False, recursive=False):
-        user, port = self._ssh_credentials(name)
+    def scp(self, name, user=None, source=None, destination=None, tunnel=False, download=False, recursive=False):
+        u, port = self._ssh_credentials(name)
+        if user is None:
+            user = u
         if port == '':
             print("No ip found. Cannot scp...")
             return None

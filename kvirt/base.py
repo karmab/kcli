@@ -128,11 +128,11 @@ class Kbase(object):
         print("not implemented")
         return
 
-    def ssh(self, name, local=None, remote=None, tunnel=False, insecure=False):
+    def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False):
         print("not implemented")
         return
 
-    def scp(self, name, source=None, destination=None, tunnel=False, download=False, recursive=False):
+    def scp(self, name, user=None, source=None, destination=None, tunnel=False, download=False, recursive=False):
         print("not implemented")
         return
 

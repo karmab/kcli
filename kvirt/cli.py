@@ -472,7 +472,12 @@ def ssh(args):
     k = config.k
     tunnel = config.tunnel
     insecure = config.insecure
-    sshcommand = k.ssh(name, local=l, remote=r, tunnel=tunnel, insecure=insecure)
+    if '@' in name and len(name.split('@')) == 2:
+        user = name.split('@')[0]
+        name = name.split('@')[1]
+    else:
+        user = None
+    sshcommand = k.ssh(name, user=user, local=l, remote=r, tunnel=tunnel, insecure=insecure)
     if sshcommand is not None:
         os.system(sshcommand)
     else:
@@ -490,11 +495,17 @@ def scp(args):
     if len(source.split(':')) == 2:
         name = source.split(':')[0]
         source = source.split(':')[1]
-        scpcommand = k.scp(name, source=source, destination=destination, tunnel=tunnel, download=True, recursive=recursive)
+        download = True
     elif len(destination.split(':')) == 2:
         name = destination.split(':')[0]
         destination = destination.split(':')[1]
-        scpcommand = k.scp(name, source=source, destination=destination, tunnel=tunnel, download=False, recursive=recursive)
+        download = False
+    if '@' in name and len(name.split('@')) == 2:
+        user = name.split('@')[0]
+        name = name.split('@')[1]
+    else:
+        user = None
+    scpcommand = k.scp(name, user=user, source=source, destination=destination, tunnel=tunnel, download=download, recursive=recursive)
     if scpcommand is not None:
         os.system(scpcommand)
     else:
@@ -546,11 +557,11 @@ def bootstrap(args):
         poolpath = '/var/lib/libvirt/images'
     # disks = [{'size': 10}]
     if host == '127.0.0.1':
-        ini = {'default': {'client': 'local'}, 'local': {'pool': pool, 'nets': ['default']}}
+        ini = {'default': {'client': 'local', 'cloudinit': True, 'tunnel': False, 'reservehost': False, 'insecure': True}, 'local': {'pool': pool, 'nets': ['default']}}
     else:
         if name is None:
             name = host
-        ini = {'default': {'client': name}}
+        ini = {'default': {'client': name, 'cloudinit': True, 'tunnel': True, 'reservehost': False, 'insecure': True}}
         ini[name] = {'host': host, 'pool': pool, 'nets': ['default']}
         if protocol is not None:
             ini[name]['protocol'] = protocol

@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.17 (2017-05-14)
+
+- allow using user@ in kcli ssh and scp
+
 ## 7.16 (2017-05-14)
 
 - dedicated advanced openstack plan with live migration and rally 

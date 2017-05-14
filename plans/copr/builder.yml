@@ -1,4 +1,4 @@
-coprbuilder:
+builder:
  template: Fedora-Cloud-Base-25-1.3.x86_64.qcow2
  numcpus: 2
  memory: 4096
