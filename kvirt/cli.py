@@ -847,7 +847,7 @@ def cli():
     vm_parser.add_argument('-6', '--ip6', help='Optional Ip to assign to eth5. Netmask and gateway will be retrieved from profile', metavar='IP6')
     vm_parser.add_argument('-7', '--ip7', help='Optional Ip to assign to eth6. Netmask and gateway will be retrieved from profile', metavar='IP7')
     vm_parser.add_argument('-8', '--ip8', help='Optional Ip to assign to eth8. Netmask and gateway will be retrieved from profile', metavar='IP8')
-    vm_parser.add_argument('name', metavar='VMNAME')
+    vm_parser.add_argument('name', metavar='VMNAME', nargs='?')
     vm_parser.set_defaults(func=vm)
     args = parser.parse_args()
     if args.func.func_name != 'bootstrap':

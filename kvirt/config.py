@@ -158,6 +158,8 @@ class Kconfig:
         self.k = k
 
     def create_vm(self, name, profile, ip1=None, ip2=None, ip3=None, ip4=None, ip5=None, ip6=None, ip7=None, ip8=None):
+        if name is None:
+            name = nameutils.get_random_name()
         k = self.k
         tunnel = self.tunnel
         if profile is None:
