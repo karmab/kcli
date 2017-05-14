@@ -1,5 +1,13 @@
 # Changelog
 
+## 7.16 (2017-05-14)
+
+- dedicated advanced openstack plan with live migration and rally 
+- simplify bootstrap command so it only creates the config file
+- move kcli host --download --template to good old kcli download
+- move kcli host --report to good old kcli report
+- properly enable nested for amd procesors
+
 ## 7.15 (2017-05-13)
 
 - fix in advanced plan of openstack

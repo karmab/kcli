@@ -164,10 +164,6 @@ class Kbase(object):
         print("not implemented")
         return
 
-    def bootstrap(self, pool=None, poolpath=None, pooltype='dir', nets={}, image=None):
-        print("not implemented")
-        return
-
     def network_ports(self, name):
         print("not implemented")
         return

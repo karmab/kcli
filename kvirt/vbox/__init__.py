@@ -994,16 +994,6 @@ class Kbox(Kbase):
                         f.write("- name: %s\n" % pool['name'])
                         f.write("  path: %s" % pool['path'])
 
-    def bootstrap(self, pool=None, poolpath=None, pooltype='dir', nets={}, image=None):
-        poolfile = "%s/.vbox.yml" % os.environ.get('HOME')
-        if os.path.exists(poolfile):
-            return
-        poolinfo = [{'name': pool, 'path': poolpath}]
-        with open(poolfile, 'w') as f:
-            for pool in poolinfo:
-                f.write("\n- name: %s\n" % pool['name'])
-                f.write("  path: %s" % pool['path'])
-
     def vm_ports(self, name):
         conn = self.conn
         networks = []

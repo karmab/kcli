@@ -189,7 +189,7 @@ kcli network -c 192.168.122.0/24 --dhcp default
 Download a fedora template:
 
 ```Shell
-kcli host --download -t fedora
+kcli download fedora
 ```
 
 Otherwise you will have to declare your settings in ~/kcli.yml. For instance,
@@ -226,27 +226,13 @@ Note that most of the parameters are actually optional, and can be overridden in
 If you want to generate a basic settings file, you can use the following command:
 
 ```Shell
-kcli bootstrap -f
-```
-
-You can also go through a specific wizard
-
-```Shell
 kcli bootstrap
 ```
-
 And for advanced bootstrapping, you can specify a target name, host, a pool with a path, and have centos cloud image downloaded
 
 ```Shell
-kcli bootstrap -a -n twix -H 192.168.0.6 --pool vms --poolpath /home/vms -t
+kcli bootstrap -n twix -H 192.168.0.6 --pool vms --poolpath /home/vms
 ```
-
-Or even use an existing disk for LVM based images (note that the disk will be made into an LVM physical volume, so it should be empty):
-
-```Shell
-kcli bootstrap -a -n twix -H 192.168.0.6 --pool vms --poolpath /dev/vdb --pooltype lvm
-```
-
 
 ## Specific parameters for a hypervisor
 
@@ -302,7 +288,7 @@ The [samples directory](https://github.com/karmab/kcli/tree/master/samples) cont
 ## How to use the client 
 
 - Get info on your kvm setup
- - `kcli host --report`
+ - `kcli report`
 - Switch active client to bumblefoot
   - `kcli host --switch bumblefoot`
 - List vms, along with their private IP (and plan if applicable)

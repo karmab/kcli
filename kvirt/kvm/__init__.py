@@ -309,7 +309,12 @@ class Kvirt(Kbase):
             cpuxml = """<cpu mode='custom' match='exact'>
                         <model fallback='allow'>%s</model>""" % cpumodel
         if nested and virttype == 'kvm':
-            cpuxml = """%s<feature policy='require' name='vmx'/>""" % cpuxml
+            capabilities = self.conn.getCapabilities()
+            if 'vmx' in capabilities:
+                nestedfeature = 'vmx'
+            else:
+                nestedfeature = 'svm'
+            cpuxml = """%s<feature policy='require' name='%s'/>""" % (cpuxml, nestedfeature)
         if cpuflags:
             for flag in cpuflags:
                 if isinstance(flag, str):
@@ -1642,33 +1647,6 @@ class Kvirt(Kbase):
             pool.destroy()
         pool.undefine()
         return {'result': 'success'}
-
-    def bootstrap(self, pool=None, poolpath=None, pooltype='dir', nets={}, image=None):
-        conn = self.conn
-        volumes = {}
-        try:
-            poolname = pool
-            pool = conn.storagePoolLookupByName(pool)
-            for vol in pool.listAllVolumes():
-                volumes[vol.name()] = {'object': vol}
-        except:
-            if poolpath is not None:
-                print("Pool %s not found...Creating it" % pool)
-                self.create_pool(name=pool, poolpath=poolpath, pooltype=pooltype)
-        if image is not None and os.path.basename(image) not in volumes:
-            self.add_image(image, poolname)
-        networks = []
-        for net in conn.listNetworks():
-            networks.append(net)
-        for net in nets:
-            if net not in networks:
-                print("Network %s not found...Creating it" % net)
-                cidr = nets[net].get('cidr')
-                dhcp = bool(nets[net].get('dchp', True))
-                result = self.create_network(name=net, cidr=cidr, dhcp=dhcp)
-                if result['result'] != 'success':
-                    reason = result['reason']
-                    print("Couldnt create Network %s because %s" % (net, reason))
 
     def network_ports(self, name):
         conn = self.conn

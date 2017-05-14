@@ -2,7 +2,6 @@
 
 from kvirt.config import Kconfig
 from kvirt.config import __version__
-from kvirt.defaults import TEMPLATES
 from prettytable import PrettyTable
 from shutil import copyfile
 import argparse
@@ -10,7 +9,6 @@ from kvirt import common
 from kvirt import dockerutils
 import os
 import yaml
-from kvirt.kvm import Kvirt
 
 
 def start(args):
@@ -86,7 +84,21 @@ def delete(args):
             os._exit(1)
 
 
+def download(args):
+    """Download Template"""
+    pool = args.pool
+    template = args.template
+    cmd = args.cmd
+    global config
+    result = config.handle_host(pool=pool, template=template, download=True, cmd=cmd)
+    if result['result'] == 'success':
+        os._exit(0)
+    else:
+        os._exit(1)
+
+
 def info(args):
+    """Get info on vm"""
     name = args.name
     screenshot = args.screenshot
     global config
@@ -103,22 +115,12 @@ def host(args):
     switch = args.switch
     enable = args.enable
     disable = args.disable
-    report = args.report
-    pool = args.pool
-    template = args.template
-    download = args.download
-    download = args.download
-    cmd = args.cmd
     global config
-    k = config.k
-    if report:
-        k.report()
+    result = config.handle_host(switch=switch, enable=enable, disable=disable)
+    if result['result'] == 'success':
+        os._exit(0)
     else:
-        result = config.handle_host(pool=pool, template=template, switch=switch, download=download, enable=enable, disable=disable, cmd=cmd)
-        if result['result'] == 'success':
-            os._exit(0)
-        else:
-            os._exit(1)
+        os._exit(1)
 
 
 def list(args):
@@ -525,9 +527,7 @@ def network(args):
 
 
 def bootstrap(args):
-    """Handle hypervisor, reporting or bootstrapping by creating config file and optionally pools and network"""
-    genfile = args.genfile
-    auto = args.auto
+    """Generate basic config file"""
     name = args.name
     host = args.host
     port = args.port
@@ -536,115 +536,30 @@ def bootstrap(args):
     url = args.url
     pool = args.pool
     poolpath = args.poolpath
-    template = args.template
     common.pprint("Bootstrapping env", color='green')
-    if genfile or auto:
-        if host is None and url is None:
-            url = 'qemu:///system'
-            host = '127.0.0.1'
-        if pool is None:
-            pool = 'default'
-        if poolpath is None:
-            poolpath = '/var/lib/libvirt/images'
-        if '/dev' in poolpath:
-            pooltype = 'logical'
-        else:
-            pooltype = 'dir'
-        if template:
-            template = TEMPLATES['centos']
-        else:
-            template = None
-        nets = {'default': {'cidr': '192.168.122.0/24'}}
-        # disks = [{'size': 10}]
-        if host == '127.0.0.1':
-            ini = {'default': {'client': 'local'}, 'local': {'pool': pool, 'nets': ['default']}}
-        else:
-            if name is None:
-                name = host
-            ini = {'default': {'client': name}}
-            ini[name] = {'host': host, 'pool': pool, 'nets': ['default']}
-            if protocol is not None:
-                ini[name]['protocol'] = protocol
-            if user is not None:
-                ini[name]['user'] = user
-            if port is not None:
-                ini[name]['port'] = port
-            if url is not None:
-                ini[name]['url'] = url
+    if host is None and url is None:
+        url = 'qemu:///system'
+        host = '127.0.0.1'
+    if pool is None:
+        pool = 'default'
+    if poolpath is None:
+        poolpath = '/var/lib/libvirt/images'
+    # disks = [{'size': 10}]
+    if host == '127.0.0.1':
+        ini = {'default': {'client': 'local'}, 'local': {'pool': pool, 'nets': ['default']}}
     else:
-        ini = {'default': {}}
-        default = ini['default']
-        common.pprint("We will configure kcli together !", color='blue')
         if name is None:
-            name = raw_input("Enter your default client name[local]: ") or 'local'
-        if pool is None:
-            pool = raw_input("Enter your default pool[default]: ") or 'default'
-        default['pool'] = pool
-        size = raw_input("Enter your client first disk size[10]: ") or '10'
-        default['disks'] = [{'size': size}]
-        net = raw_input("Enter your client first network[default]: ") or 'default'
-        default['nets'] = [net]
-        cloudinit = raw_input("Use cloudinit[True]: ") or 'True'
-        default['cloudinit'] = cloudinit
-        diskthin = raw_input("Use thin disks[True]: ") or 'True'
-        default['diskthin'] = diskthin
-        ini['default']['client'] = name
-        ini[name] = {}
-        client = ini[name]
-        if host is None:
-            host = raw_input("Enter your client hostname/ip[localhost]: ") or 'localhost'
-        client['host'] = host
-        if url is None:
-            url = raw_input("Enter your client url: ") or None
-            if url is not None:
-                client['url'] = url
-            else:
-                if protocol is None:
-                    protocol = raw_input("Enter your client protocol[ssh]: ") or 'ssh'
-                client['protocol'] = protocol
-                if port is None:
-                    port = raw_input("Enter your client port: ") or None
-                    if port is not None:
-                        client['port'] = port
-                user = raw_input("Enter your client user[root]: ") or 'root'
-                client['user'] = user
-        pool = raw_input("Enter your client pool[%s]: " % default['pool']) or default['pool']
-        client['pool'] = pool
-        poolcreate = raw_input("Create pool if not there[Y]: ") or 'Y'
-        if poolcreate == 'Y':
-            poolpath = raw_input("Enter yourpool path[/var/lib/libvirt/images]: ") or '/var/lib/libvirt/images'
-        else:
-            poolpath = None
-        if poolpath is None:
-            pooltype = None
-        elif '/dev' in poolpath:
-            pooltype = 'logical'
-        else:
-            pooltype = 'dir'
-        client['pool'] = pool
-        templatecreate = raw_input("Download centos7 image for you?[N]: ") or 'N'
-        if templatecreate == 'Y':
-            template = TEMPLATES['centos']
-        else:
-            template = None
-        size = raw_input("Enter your client first disk size[%s]: " % default['disks'][0]['size']) or default['disks'][0]['size']
-        client['disks'] = [{'size': size}]
-        net = raw_input("Enter your client first network[%s]: " % default['nets'][0]) or default['nets'][0]
-        client['nets'] = [net]
-        nets = {}
-        netcreate = raw_input("Create net if not there[Y]: ") or 'Y'
-        if netcreate == 'Y':
-            cidr = raw_input("Enter cidr [192.168.122.0/24]: ") or '192.168.122.0/24'
-            nets[net] = {'cidr': cidr, 'dhcp': True}
-        cloudinit = raw_input("Use cloudinit for this client[%s]: " % default['cloudinit']) or default['cloudinit']
-        client['cloudinit'] = cloudinit
-        diskthin = raw_input("Use thin disks for this client[%s]: " % default['diskthin']) or default['diskthin']
-        client['diskthin'] = diskthin
-    k = Kvirt(host=host, port=port, user=user, protocol=protocol, url=url)
-    if k.conn is None:
-        common.pprint("Couldnt connect to specify hypervisor %s. Leaving..." % host, color='red')
-        os._exit(1)
-    k.bootstrap(pool=pool, poolpath=poolpath, pooltype=pooltype, nets=nets, image=template)
+            name = host
+        ini = {'default': {'client': name}}
+        ini[name] = {'host': host, 'pool': pool, 'nets': ['default']}
+        if protocol is not None:
+            ini[name]['protocol'] = protocol
+        if user is not None:
+            ini[name]['user'] = user
+        if port is not None:
+            ini[name]['port'] = port
+        if url is not None:
+            ini[name]['url'] = url
     path = os.path.expanduser('~/kcli.yml')
     if os.path.exists(path):
         copyfile(path, "%s.bck" % path)
@@ -711,6 +626,13 @@ def snapshot(args):
     return code
 
 
+def report(args):
+    """Report info about host"""
+    global config
+    k = config.k
+    k.report()
+
+
 def cli():
     global config
     parser = argparse.ArgumentParser(description='Libvirt/VirtualBox wrapper on steroids. Check out https://github.com/karmab/kcli!')
@@ -720,10 +642,8 @@ def cli():
 
     subparsers = parser.add_subparsers(metavar='')
 
-    bootstrap_info = 'Handle hypervisor, reporting or bootstrapping...'
+    bootstrap_info = 'Generate basic config file'
     bootstrap_parser = subparsers.add_parser('bootstrap', help=bootstrap_info, description=bootstrap_info)
-    bootstrap_parser.add_argument('-f', '--genfile', action='store_true')
-    bootstrap_parser.add_argument('-a', '--auto', action='store_true', help="Don't ask for anything")
     bootstrap_parser.add_argument('-n', '--name', help='Name to use', metavar='CLIENT')
     bootstrap_parser.add_argument('-H', '--host', help='Host to use', metavar='HOST')
     bootstrap_parser.add_argument('-p', '--port', help='Port to use', metavar='PORT')
@@ -732,7 +652,6 @@ def cli():
     bootstrap_parser.add_argument('-U', '--url', help='URL to use', metavar='URL')
     bootstrap_parser.add_argument('--pool', help='Pool to use', metavar='POOL')
     bootstrap_parser.add_argument('--poolpath', help='Pool Path to use', metavar='POOLPATH')
-    bootstrap_parser.add_argument('-t', '--template', action='store_true', help="Grab Centos Cloud Image")
     bootstrap_parser.set_defaults(func=bootstrap)
 
     clone_info = 'Clone existing vm'
@@ -774,16 +693,18 @@ def cli():
     disk_parser.add_argument('name')
     disk_parser.set_defaults(func=disk)
 
+    download_info = 'Download template'
+    download_parser = subparsers.add_parser('download', description=download_info, help=download_info)
+    download_parser.add_argument('-c', '--cmd', help='Extra command to launch after downloading', metavar='CMD')
+    download_parser.add_argument('-p', '--pool', default='default', help='Pool to use', metavar='POOL')
+    download_parser.add_argument('template', choices=('arch', 'centos6', 'centos7', 'cirros', 'debian8', 'fedora24', 'fedora25', 'gentoo', 'opensuse', 'rhel72', 'rhel73', 'ubuntu1404', 'ubuntu1604', 'ubuntu1610', 'ubuntu1704'), help='Template/Image to download')
+    download_parser.set_defaults(func=download)
+
     host_info = 'List and Handle host'
     host_parser = subparsers.add_parser('host', description=host_info, help=host_info)
-    host_parser.add_argument('-c', '--cmd', help='Extra command to launch after downloading template', metavar='CMD')
     host_parser.add_argument('-d', '--disable', help='Disable indicated client', metavar='CLIENT')
     host_parser.add_argument('-e', '--enable', help='Enable indicated client', metavar='CLIENT')
     host_parser.add_argument('-s', '--switch', help='Switch To indicated client', metavar='CLIENT')
-    host_parser.add_argument('-r', '--report', help='Report Host Information', action='store_true')
-    host_parser.add_argument('-p', '--pool', default='default', help='Pool to use when downloading', metavar='POOL')
-    host_parser.add_argument('--template', choices=('arch', 'centos6', 'centos7', 'cirros', 'debian8', 'fedora24', 'fedora25', 'gentoo', 'opensuse', 'rhel72', 'rhel73', 'ubuntu1404', 'ubuntu1604', 'ubuntu1610', 'ubuntu1704'), help='Template/Image to download')
-    host_parser.add_argument('--download', help='Download Template/Image', action='store_true')
     host_parser.set_defaults(func=host)
 
     info_info = 'Info vm'
@@ -850,6 +771,10 @@ def cli():
     pool_parser.add_argument('pool')
     pool_parser.set_defaults(func=pool)
 
+    report_info = 'Report Info about Host'
+    report_parser = subparsers.add_parser('report', description=report_info, help=report_info)
+    report_parser.set_defaults(func=report)
+
     scp_info = 'Scp into vm'
     scp_parser = subparsers.add_parser('scp', description=scp_info, help=scp_info)
     scp_parser.add_argument('-r', '--recursive', help='Recursive', action='store_true')
@@ -914,12 +839,15 @@ def cli():
     vm_parser.add_argument('name', metavar='VMNAME')
     vm_parser.set_defaults(func=vm)
     args = parser.parse_args()
-    config = Kconfig(client=args.client, debug=args.debug)
-    if args.client != 'all' and not config.enabled:
-        common.pprint("Disabled hypervisor.Leaving...", color='red')
-        os._exit(1)
-    args.func(args)
-    config.k.close()
+    if args.func.func_name != 'bootstrap':
+        config = Kconfig(client=args.client, debug=args.debug)
+        if args.client != 'all' and not config.enabled:
+            common.pprint("Disabled hypervisor.Leaving...", color='red')
+            os._exit(1)
+        args.func(args)
+        config.k.close()
+    else:
+        args.func(args)
 
 
 if __name__ == '__main__':

@@ -5,3 +5,4 @@ apt-get install libjpeg-dev
 apt-get install python-pip
 apt-get install pkg-config
 apt-get install libvirt-dev
+apt-get install python-pip
