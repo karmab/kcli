@@ -1398,7 +1398,7 @@ class Kvirt(Kbase):
             print("No ip found. Cannot ssh...")
         return user, ip
 
-    def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False):
+    def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None):
         u, ip = self._ssh_credentials(name)
         if user is None:
             user = u
@@ -1406,8 +1406,10 @@ class Kvirt(Kbase):
             return None
         else:
             sshcommand = "%s@%s" % (user, ip)
+            if cmd:
+                sshcommand = "%s %s" % (sshcommand, cmd)
             if self.host not in ['localhost', '127.0.0.1'] and tunnel:
-                sshcommand = "-o ProxyCommand='ssh -p %s -W %%h:%%p %s@%s' %s" % (self.port, self.user, self.host, sshcommand)
+                sshcommand = "-o ProxyCommand='ssh -qp %s -W %%h:%%p %s@%s' %s" % (self.port, self.user, self.host, sshcommand)
             if local is not None:
                 sshcommand = "-L %s %s" % (local, sshcommand)
             if remote is not None:

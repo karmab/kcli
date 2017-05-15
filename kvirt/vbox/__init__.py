@@ -853,7 +853,7 @@ class Kbox(Kbase):
         #    print("No port found. Cannot ssh...")
         return user, port
 
-    def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False):
+    def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None):
         u, port = self._ssh_credentials(name)
         if user is None:
             user = u
@@ -861,6 +861,8 @@ class Kbox(Kbase):
             return None
         else:
             sshcommand = "-p %s %s@127.0.0.1" % (port, user)
+            if cmd:
+                sshcommand = "%s %s" % (sshcommand, cmd)
             if local is not None:
                 sshcommand = "-L %s %s" % (local, sshcommand)
             if remote is not None:

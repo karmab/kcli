@@ -6,6 +6,7 @@ from prettytable import PrettyTable
 from shutil import copyfile
 import argparse
 from kvirt import common
+from kvirt import nameutils
 from kvirt import dockerutils
 import os
 import yaml
@@ -304,6 +305,8 @@ def vm(args):
     ip7 = args.ip7
     ip8 = args.ip8
     global config
+    if name is None:
+        name = nameutils.get_random_name()
     if profile is None:
         common.pprint("Missing profile", color='red')
         os._exit(1)
@@ -457,6 +460,8 @@ def plan(args):
     delete = args.delete
     delay = args.delay
     global config
+    if plan is None:
+        plan = nameutils.get_random_name()
     config.plan(plan, ansible=ansible, get=get, path=path, autostart=autostart, container=container, noautostart=noautostart, inputfile=inputfile, start=start, stop=stop, delete=delete, delay=delay)
     # result = config.plan(plan, ansible=ansible, get=get, path=path, autostart=autostart, container=container, noautostart=noautostart, inputfile=inputfile, start=start, stop=stop, delete=delete, delay=delay)
     # code = common.handle_response(result, plan, element='', action='created')
@@ -466,18 +471,24 @@ def plan(args):
 def ssh(args):
     """Ssh into vm"""
     name = args.name
+    name
     l = args.L
     r = args.R
     global config
     k = config.k
     tunnel = config.tunnel
     insecure = config.insecure
+    if len(name) > 1:
+        cmd = ' '.join(name[1:])
+    else:
+        cmd = None
+    name = name[0]
     if '@' in name and len(name.split('@')) == 2:
         user = name.split('@')[0]
         name = name.split('@')[1]
     else:
         user = None
-    sshcommand = k.ssh(name, user=user, local=l, remote=r, tunnel=tunnel, insecure=insecure)
+    sshcommand = k.ssh(name, user=user, local=l, remote=r, tunnel=tunnel, insecure=insecure, cmd=cmd)
     if sshcommand is not None:
         os.system(sshcommand)
     else:
@@ -806,7 +817,7 @@ def cli():
     ssh_parser = subparsers.add_parser('ssh', description=ssh_info, help=ssh_info)
     ssh_parser.add_argument('-L', help='Local Forwarding', metavar='LOCAL')
     ssh_parser.add_argument('-R', help='Remote Forwarding', metavar='REMOTE')
-    ssh_parser.add_argument('name', metavar='VMNAME')
+    ssh_parser.add_argument('name', metavar='VMNAME', nargs='+')
     ssh_parser.set_defaults(func=ssh)
 
     start_info = 'Start vm/container'
