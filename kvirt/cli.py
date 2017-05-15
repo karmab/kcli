@@ -511,6 +511,9 @@ def scp(args):
         name = destination.split(':')[0]
         destination = destination.split(':')[1]
         download = False
+    else:
+        common.pprint("Couldnt run scp", color='red')
+        return
     if '@' in name and len(name.split('@')) == 2:
         user = name.split('@')[0]
         name = name.split('@')[1]
