@@ -49,3 +49,4 @@ ISO = None
 GATEWAY = None
 NETMASKS = []
 SHAREDKEY = False
+ENABLEROOT = True

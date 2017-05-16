@@ -4,7 +4,7 @@
 Kvirt config class
 """
 
-from kvirt.defaults import NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, RESERVEHOST, START, NESTED, TUNNEL, REPORTURL, REPORTDIR, REPORT, REPORTALL, INSECURE, TEMPLATES, KEYS, CMDS, DNS, DOMAIN, SCRIPTS, FILES, ISO, NETMASKS, GATEWAY, SHAREDKEY, TEMPLATE
+from kvirt.defaults import NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, RESERVEHOST, START, NESTED, TUNNEL, REPORTURL, REPORTDIR, REPORT, REPORTALL, INSECURE, TEMPLATES, KEYS, CMDS, DNS, DOMAIN, SCRIPTS, FILES, ISO, NETMASKS, GATEWAY, SHAREDKEY, TEMPLATE, ENABLEROOT
 from kvirt import ansibleutils
 from kvirt import dockerutils
 from kvirt import nameutils
@@ -81,6 +81,7 @@ class Kconfig:
         defaults['netmasks'] = default.get('netmasks', NETMASKS)
         defaults['gateway'] = default.get('gateway', GATEWAY)
         defaults['sharedkey'] = default.get('sharedkey', SHAREDKEY)
+        defaults['enableroot'] = default.get('enableroot', ENABLEROOT)
         self.default = defaults
         profilefile = default.get('profiles', "%s/kcli_profiles.yml" % os.environ.get('HOME'))
         profilefile = os.path.expanduser(profilefile)
@@ -138,6 +139,7 @@ class Kconfig:
         self.netmasks = options.get('netmasks', self.default['netmasks'])
         self.gateway = options.get('gateway', self.default['gateway'])
         self.sharedkey = options.get('sharedkey', self.default['sharedkey'])
+        self.enableroot = options.get('enableroot', self.default['enableroot'])
         self.dns = options.get('dns', self.default['dns'])
         self.domain = options.get('domain', self.default['domain'])
         self.scripts = options.get('scripts', self.default['scripts'])
@@ -203,6 +205,7 @@ class Kconfig:
         domain = profile.get('domain', self.domain)
         scripts = profile.get('scripts', self.scripts)
         files = profile.get('files', self.files)
+        enableroot = profile.get('enableroot', self.enableroot)
         if scripts:
             scriptcmds = []
             for script in scripts:
@@ -239,7 +242,7 @@ class Kconfig:
             else:
                 cmds = cmds + reportcmd
         ips = [ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8]
-        result = k.create(name=name, plan=plan, profile=profilename, cpumodel=cpumodel, cpuflags=cpuflags, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns), reservehost=bool(reservehost), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=bool(nested), tunnel=tunnel, files=files)
+        result = k.create(name=name, plan=plan, profile=profilename, cpumodel=cpumodel, cpuflags=cpuflags, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns), reservehost=bool(reservehost), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=bool(nested), tunnel=tunnel, files=files, enableroot=enableroot)
         if result['result'] != 'success':
             return result
         ansible = profile.get('ansible')
@@ -591,6 +594,7 @@ class Kconfig:
                     domain = next((e for e in [profile.get('domain'), customprofile.get('domain')] if e is not None), self.domain)
                     ips = profile.get('ips')
                     sharedkey = next((e for e in [profile.get('sharedkey'), customprofile.get('sharedkey'), self.sharedkey] if e is not None))
+                    enableroot = next((e for e in [profile.get('enableroot'), customprofile.get('enableroot'), self.enableroot] if e is not None))
                     scripts = next((e for e in [profile.get('scripts'), customprofile.get('scripts'), self.scripts] if e is not None))
                     missingscript = False
                     if scripts:
@@ -634,7 +638,7 @@ class Kconfig:
                             files.append({'path': '/root/.ssh/id_rsa.pub', 'content': publickey})
                         else:
                             files = [{'path': '/root/.ssh/id_rsa', 'content': privatekey}, {'path': '/root/.ssh/id_rsa.pub', 'content': publickey}]
-                    result = k.create(name=name, plan=plan, profile=profilename, cpumodel=cpumodel, cpuflags=cpuflags, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns), reservehost=bool(reservehost), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=nested, tunnel=tunnel, files=files)
+                    result = k.create(name=name, plan=plan, profile=profilename, cpumodel=cpumodel, cpuflags=cpuflags, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns), reservehost=bool(reservehost), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=nested, tunnel=tunnel, files=files, enableroot=enableroot)
                     common.handle_response(result, name)
                     if result['result'] == 'success':
                         newvms.append(name)

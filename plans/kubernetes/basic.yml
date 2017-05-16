@@ -4,7 +4,7 @@ kumaster:
  memory: 4906
  reservedns: true
  sharedkey: true
- dns: karmalabs.com
+ domain: karmalabs.com
  nets:
   - default
  disks:
@@ -30,7 +30,7 @@ kunode1:
  memory: 4906
  reservedns: true
  sharedkey: true
- dns: karmalabs.com
+ domain: karmalabs.com
  nets:
   - default
  disks:
@@ -48,7 +48,7 @@ kunode2:
  memory: 4096
  reservedns: true
  sharedkey: true
- dns: karmalabs.com
+ domain: karmalabs.com
  nets:
   - default
  disks:

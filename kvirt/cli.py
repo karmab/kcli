@@ -569,13 +569,12 @@ def bootstrap(args):
         pool = 'default'
     if poolpath is None:
         poolpath = '/var/lib/libvirt/images'
-    # disks = [{'size': 10}]
     if host == '127.0.0.1':
-        ini = {'default': {'client': 'local', 'cloudinit': True, 'tunnel': False, 'reservehost': False, 'insecure': True}, 'local': {'pool': pool, 'nets': ['default']}}
+        ini = {'default': {'client': 'local', 'cloudinit': True, 'tunnel': False, 'reservehost': False, 'insecure': True, 'enableroot': True, 'reserveip': False, 'reservedns': False, 'reservehost': False, 'nested': True, 'start': True}, 'local': {'pool': pool, 'nets': ['default']}}
     else:
         if name is None:
             name = host
-        ini = {'default': {'client': name, 'cloudinit': True, 'tunnel': True, 'reservehost': False, 'insecure': True}}
+        ini = {'default': {'client': name, 'cloudinit': True, 'tunnel': True, 'reservehost': False, 'insecure': True, 'enableroot': True, 'reserveip': False, 'reservedns': False, 'reservehost': False, 'nested': True, 'start': True}}
         ini[name] = {'host': host, 'pool': pool, 'nets': ['default']}
         if protocol is not None:
             ini[name]['protocol'] = protocol
