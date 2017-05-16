@@ -4,7 +4,7 @@
 Kvirt config class
 """
 
-from kvirt.defaults import NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, RESERVEHOST, START, NESTED, TUNNEL, REPORTURL, REPORTDIR, REPORT, REPORTALL, INSECURE, TEMPLATES, KEYS, CMDS, DNS, DOMAIN, SCRIPTS, FILES, ISO, NETMASKS, GATEWAY, SHAREDKEY, TEMPLATE, ENABLEROOT
+from kvirt.defaults import NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, RESERVEHOST, START, NESTED, TUNNEL, REPORTURL, REPORTDIR, REPORT, REPORTALL, INSECURE, TEMPLATES, TEMPLATESCOMMANDS, KEYS, CMDS, DNS, DOMAIN, SCRIPTS, FILES, ISO, NETMASKS, GATEWAY, SHAREDKEY, TEMPLATE, ENABLEROOT
 from kvirt import ansibleutils
 from kvirt import dockerutils
 from kvirt import nameutils
@@ -20,7 +20,7 @@ from time import sleep
 import webbrowser
 import yaml
 
-__version__ = '7.17'
+__version__ = '7.18'
 
 
 class Kconfig:
@@ -774,6 +774,8 @@ class Kconfig:
                     if url.strip() == '':
                         common.pprint("Missing proper url.Leaving...", color='red')
                         return {'result': 'failure', 'reason': "Missing template"}
+            if cmd is None and template in TEMPLATESCOMMANDS:
+                cmd = TEMPLATESCOMMANDS[template]
             result = k.add_image(url, pool, cmd=cmd)
             common.handle_response(result, template, element='Template ', action='Added')
             # code = common.handle_response(result, shortname, element='Template ', action='Added')

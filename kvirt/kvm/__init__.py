@@ -17,8 +17,6 @@ import re
 import string
 import time
 import xml.etree.ElementTree as ET
-from StringIO import StringIO
-from PIL import Image
 
 
 KB = 1024 * 1024
@@ -1525,13 +1523,15 @@ class Kvirt(Kbase):
         elif self.protocol == 'ssh':
             wgetcmd = 'ssh -p %s %s@%s "wget -O %s/%s %s"' % (self.port, self.user, self.host, poolpath, shortimage, image)
         os.system(wgetcmd)
-        if cmd is not None and find_executable('virt-customize') is not None:
-            if self.host == 'localhost' or self.host == '127.0.0.1':
-                cmd = "virt-customize -a %s/%s %s" % (poolpath, shortimage, cmd)
-            elif self.protocol == 'ssh':
-                cmd = 'ssh -p %s %s@%s "virt-customize -a %s/%s %s"' % (self.port, self.user, self.host, poolpath, shortimage, cmd)
-            os.system(cmd)
         pool.refresh()
+        if cmd is not None:
+            if self.host == 'localhost' or self.host == '127.0.0.1':
+                if find_executable('virt-customize') is not None:
+                    cmd = "virt-customize -a %s/%s --run-command '%s'" % (poolpath, shortimage, cmd)
+                    os.system(cmd)
+            elif self.protocol == 'ssh':
+                cmd = 'ssh -p %s %s@%s "virt-customize -a %s/%s --run-command \'%s\'"' % (self.port, self.user, self.host, poolpath, shortimage, cmd)
+                os.system(cmd)
         return {'result': 'success'}
 
     def create_network(self, name, cidr, dhcp=True, nat=True):
@@ -1717,27 +1717,3 @@ class Kvirt(Kbase):
         else:
             poolpath = root.getiterator('device')[0].get('path')
         return poolpath
-
-    def _writer(self, stream, data, buf):
-        buf.write(data)
-
-    def screenshot(self, name):
-        conn = self.conn
-        try:
-            vm = conn.lookupByName(name)
-        except:
-            print("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
-        stream = conn.newStream()
-        if vm.isActive():
-            vm.screenshot(stream, 0)
-            buf = StringIO()
-            stream.recvAll(self._writer, buf)
-            stream.finish()
-            buf.seek(0)
-            image = Image.open(buf)
-            image.save("/tmp/%s.png" % name)
-        imagecmd = 'open'
-        if find_executable('xdg-open') is not None:
-            imagecmd = 'xdg-open'
-        os.system("%s /tmp/%s.png" % (imagecmd, name))

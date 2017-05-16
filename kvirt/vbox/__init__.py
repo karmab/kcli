@@ -1051,23 +1051,3 @@ class Kbox(Kbase):
         path = [p['path'] for p in self._pool_info() if p['name'] == pool]
         if path:
             return path[0]
-
-    def screenshot(self, name):
-        conn = self.conn
-        try:
-            vm = conn.find_machine(name)
-        except:
-            common.pprint("VM %s not found" % name, color='red')
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
-        # if self.status(name) != 'up':
-        #    print("VM %s must be up" % name)
-        #    return {'result': 'failure', 'reason': "VM %s nust be down" % name}
-        session = Session()
-        vm.lock_machine(session, library.LockType.write)
-        return
-        h, w, _, _, _, _ = session.console.display.get_screen_resolution(0)
-        png = session.console.display.take_screen_shot_to_array(0, h, w, library.BitmapFormat.png)
-        with open('%s.png' % name, 'wb') as f:
-            f.write(png)
-        session.unlock_machine()
-        return {'result': 'success'}

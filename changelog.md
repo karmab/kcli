@@ -1,5 +1,16 @@
 # Changelog
 
+## 7.18 (2017-05-16)
+
+- debian package
+- enableroot through config
+- visible default options when bootstrapping
+- exit when : is not specified in kcli scp
+- fix on kcli scp
+- pass commands with kcli ssh
+- quiet exit for kcli ssh when proxied
+- allow random names when deploying vm
+
 ## 7.17 (2017-05-14)
 
 - allow using user@ in kcli ssh and scp

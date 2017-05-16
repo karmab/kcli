@@ -175,7 +175,3 @@ class Kbase(object):
     def get_pool_path(self, pool):
         print("not implemented")
         return
-
-    def screenshot(self, name):
-        print("not implemented")
-        return

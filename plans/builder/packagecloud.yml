@@ -1,0 +1,14 @@
+packagecloudbuilder:
+ template: xenial-server-cloudimg-amd64-disk1.img
+ numcpus: 2
+ memory: 4096
+ nets:
+  - default
+ files:
+  - path: /root/.packagecloud
+    origin: ~/packagecloud
+  - path: /root/packagecloud.sh
+    mode: 700
+    origin: packagecloud.sh
+ cmds:
+  - sh /root/packagecloud.sh

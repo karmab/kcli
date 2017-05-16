@@ -25,33 +25,19 @@ It started because I switched from ovirt and needed a tool similar to [ovirt.py]
 - Easily share private keys between your vms
 - Inject all configuration with cloudinit
 - Use the default cloud images
-- Have an UI to do it too!
+- Have a web UI to do it too!
 
 ## Demo!
 
 [![asciicast](https://asciinema.org/a/3p0cn60p0c0j9wd3hzyrs4m0f.png)](https://asciinema.org/a/3p0cn60p0c0j9wd3hzyrs4m0f?autoplay=1)
 
-## Installation
+## Requisites
 
-If using fedora, you can use this:
-
-```bash
-dnf -y copr enable karmab/kcli ; dnf -y install kcli
-```
-
-If not running as root, you'll also have to do the following
-
-```bash
-sudo usermod -aG qemu,libvirt YOUR_USER
-```
-
-If you dont have kvm installed, you can also use the following command to get you going 
+If you dont have kvm installed on the target host, you can also use the following command to get you going ( not needed for ubuntu as it's done when installing kcli package)
 
 ```bash
 yum -y install libvirt libvirt-daemon-driver-qemu qemu-kvm 
 sudo usermod -aG qemu,libvirt YOUR_USER
-sudo kcli pool -p /var/lib/libvirt/images default
-sudo chmod g+rw /var/lib/libvirt/images
 ```
 
 For interaction with local docker, you might also need the following
@@ -62,111 +48,49 @@ sudo usermod -aG docker YOUR_USER
 sudo systemctl restart docker
 ```
 
-## Dev installation
-
-1. Install requirements. you will also need to grab *genisoimage* (or *mkisofs* on OSX) for cloudinit isos to get generated
-Console access is based on remote-viewer
-For instance if using a RHEL based distribution:
+For ubuntu, you will also need the following hack:
 
 ```bash
-yum -y install gcc libvirt-devel python-devel genisoimage qemu-kvm nmap-ncat python-pip libguestfs-tools
+export PYTHONPATH=/usr/lib/python2.7/site-packages
 ```
 
-On Fedora, you' will need an additional package 
+If not running as root, you'll also have to add your user to those groups
 
-```Shell
-yum -y install redhat-rpm-config
+```bash
+sudo usermod -aG qemu,libvirt YOUR_USER
 ```
 
-If using a Debian based distribution:
+for *macosx*, you'll want to check the docker installation section ( if planning to go against a remote kvm host ) or the dev section for virtualbox
 
-```Shell
-apt-get -y install python-pip pkg-config libvirt-dev genisoimage qemu-kvm netcat libvirt-bin python-dev libyaml-dev
+## Installation
+
+If using *fedora*, you can use this:
+
+```bash
+dnf -y copr enable karmab/kcli ; dnf -y install kcli
 ```
 
-If you want to use virtualbox, you ll need the following too:
+If using *ubuntu*, you can use this:
 
-```Shell
-curl -O http://download.virtualbox.org/virtualbox/5.1.14/VirtualBoxSDK-5.1.14-112924.zip
-unzip VirtualBoxSDK-5.1.14-112924.zip
-cd sdk/installer
-VBOX_INSTALL_PATH=/usr/lib/virtualbox python vboxapisetup.py install
+```bash
+echo deb [trusted=yes] https://packagecloud.io/karmalabs/kcli/ubuntu/ zesty main > /etc/apt/sources.list.d/kcli.list ; apt-get update ; apt-get -y install kcli-all
 ```
 
-If you want to use virtualbox on macosx, you will also need :
+## [Dev installation](dev.md)
 
-```Shell
-brew install qemu
-```
-
-2. Install kcli from pypi
-
-```Shell
-pip install kcli
-```
-
-To deploy from templates, grab images at [openstack](http://docs.openstack.org/image-guide/obtain-images.html)
-
-## I use docker, I'm cool
-
-Pull the latest image:
-
-```Shell
-docker pull karmab/kcli
-```
-
-If running locally, launch it with:
-
-```Shell
-docker run --rm -v /var/run/libvirt:/var/run/libvirt -v ~/.ssh:/root/.ssh karmab/kcli
-```
-
-If using a remote libvirt hypervisor, launch it with a local kcli.yml file pointing to this hypervisor and providing your ssh keys too
-
-```Shell
-docker run --rm -v ~/kcli.yml:/root/kcli.yml -v ~/.ssh:/root/.ssh karmab/kcli
-```
-
-In both cases, you can also provide a kcli_profiles.yml (and you could also use a dedicated plan directory)
-
-```Shell
-docker run --rm -v /var/run/libvirt:/var/run/libvirt -v ~/kcli_profiles.yml:/root/kcli_profiles.yml  -v ~/.ssh:/root/.ssh karmab/kcli
-```
-
-```Shell
-docker run --rm -v ~/kcli.yml:/root/kcli.yml -v ~/kcli_profiles.yml:/root/kcli_profiles.yml -v ~/.ssh:/root/.ssh karmab/kcli
-```
-
-The entrypoint is defined as kcli, so you can type commands directly as:
-
-```Shell
-docker run --rm -v ~/kcli.yml:/root/kcli.yml -v ~/kcli_profiles.yml:/root/kcli_profiles.yml -v ~/.ssh:/root/.ssh karmab/kcli list
-```
-
-As a bonus, you can alias kcli and run kcli as if it is installed locally instead a Docker container:
-
-```Shell
-alias kcli = "docker run --rm -v ~/kcli.yml:/root/kcli.yml -v ~/kcli_profiles.yml:/root/kcli_profiles.yml -v ~/.ssh:/root/.ssh karmab/kcli"
-```
-
-If you need a shell access to the container, use the following:
-
-```Shell
-alias kcli = "docker run --rm -v ~/kcli.yml:/root/kcli.yml -v ~/kcli_profiles.yml:/root/kcli_profiles.yml -v ~/.ssh:/root/.ssh --entrypoint=/bin/bash karmab/kcli"
-```
-
-Note that the container cant be used for virtualbox ( i tried hard but there's no way that will work...)
-
-For the web access, you can use
-
-```Shell
-alias kweb = "docker run --rm -v ~/kcli.yml:/root/kcli.yml -v ~/kcli_profiles.yml:/root/kcli_profiles.yml -v ~/.ssh:/root/.ssh --entrypoint=/usr/bin/kweb karmab/web"
-```
+## [I want to use docker, I'm cool](docker.md)
 
 ## Configuration
 
+If you are starting from a completely clean kvm host, you might have to create default pool . You can do it with kcli actually 
+
+```bash
+sudo kcli pool -p /var/lib/libvirt/images default
+sudo chmod g+rw /var/lib/libvirt/images
+```
+
 If you only want to use your local libvirt or virtualbox daemon, *no configuration* is needed.
-On most distributions, default network and storage pool allready exist.
+On most distributions, default network and storage pool already exist.
 
 You can add an additional storage pool with:
 
@@ -174,25 +98,24 @@ You can add an additional storage pool with:
 kcli pool  -p /var/lib/libvirt/images default
 ```
 
-Or, for an LVM pool
+You can also create a default network
 
 ```Shell
-kcli pool -f -t logical -p /dev/sda ssd
+kcli network  -c 192.168.122.0/24 default
 ```
 
-Define additional networks with:
+If you want to generate a settings file ( for tweaking or to add remote hosts), you can use the following command:
 
 ```Shell
-kcli network -c 192.168.122.0/24 --dhcp default
+kcli bootstrap
 ```
-
-Download a fedora template:
+And for advanced bootstrapping, you can specify a target name, host, a pool with a path, and have centos cloud image downloaded
 
 ```Shell
-kcli download fedora
+kcli bootstrap -n twix -H 192.168.0.6 --pool vms --poolpath /home/vms
 ```
 
-Otherwise you will have to declare your settings in ~/kcli.yml. For instance,
+You can also edit directly ~/kcli.yml. For instance,
 
 ```YAML
 default:
@@ -218,74 +141,57 @@ bumblefoot:
 ```
 
 Replace with your own client in default section and indicate host and protocol in the corresponding client section.
+
 Note that most of the parameters are actually optional, and can be overridden in the default, host or profile section (or in a plan file)
 
+## Ready to go 
 
-## Bootstrap
-
-If you want to generate a basic settings file, you can use the following command:
-
-```Shell
-kcli bootstrap
-```
-And for advanced bootstrapping, you can specify a target name, host, a pool with a path, and have centos cloud image downloaded
+Templates aim to typically be the source for your vms, using the existing cloud images from the different distributions. 
+*kcli download* can be used to download a specific cloud image. for instance, centos7:
 
 ```Shell
-kcli bootstrap -n twix -H 192.168.0.6 --pool vms --poolpath /home/vms
+kcli download centos7
 ```
 
-## Specific parameters for a hypervisor
+at this point, you can actually deploy vms directly from the template, using default settings for the vm:
 
-- *host* Defaults to 127.0.0.1
-- *port*
-- *user* Defaults to root
-- *protocol* Defaults to ssh
-- *url* can be used to specify an exotic qemu url
-- *tunnel* Defaults to False. Setting it to true will make kcli use tunnels for console and for ssh access. You want that if you only open ssh port to your hypervisor!
+```Shell
+kcli vm -p CentOS-7-x86_64-GenericCloud.qcow2 vm1
+```
+
+by default, your public key will be injected (using cloudinit) to the vm!
+
+you can then access the vm using *kcli ssh*
+
+Note also that kcli uses the default ssh_user according to the different [cloud images](http://docs.openstack.org/image-guide/obtain-images.html).
+To guess it, kcli checks the template name. So for example, your centos image must contain the term "centos" in the file name,
+otherwise the default user "root" will be used.
+
+## Cloudinit stuff
+
+If cloudinit is enabled (it is by default), a custom iso is generated on the fly for your vm (using mkisofs) and uploaded to your kvm instance (using the libvirt API, not using ssh commands).
+
+The iso handles static networking configuration, hostname setting, injecting ssh keys and running specific commands and entire scripts, and copying entire files
+
+Also note that if you use cloudinit but dont specify ssh keys to inject, the default *~/.ssh/id_rsa.pub* will be used, if present.
 
 
 ## Profiles configuration
 
-You can use the file *~/kcli_profiles.yml* to specify profiles (number of CPUS, memory, size of disk, network,....) to use when deploying a vm.
-To use a different profiles file, you can use the key profiles in the default section of *~/kcli.yml* and put desired path
+Profiles are meant to help creating single vm with preconfigured settings (number of CPUS, memory, size of disk, network,whether to use a template,...)
 
-The [samples directory](https://github.com/karmab/kcli/tree/master/samples) contains examples to get you started
+You use the file *~/kcli_profiles.yml* to declare your profiles.
 
-## Available parameters for hypervisor/profile/plan files
+Once created, you can use the following for instance to create a vm named myvm from profile centos7
 
-- *cpumodel* Defaults to Westmere
-- *cpuflags* (optional). You can specify a list of strings with features to enable or use dict entries with *name* of the feature and *enable* either set to True or False. Note that the value for vmx is ignored, as it s handled by the nested flag
-- *numcpus* Defaults to 2
-- *memory* Defaults to 512M
-- *guestid* Defaults to guestrhel764
-- *pool* Defaults to default
-- *template* Should point to your base cloud image(optional). You can either specify short name or complete path. Note that if you omit the full path and your image lives in several pools, the one from last (alphabetical) pool will be used.
-- *disksize* Defaults to 10GB
-- *diskinterface* Defaults to virtio. You can set it to ide if using legacy operating systems
-- *diskthin* Defaults to True
-- *disks* Array of disks to define. For each of them, you can specify pool, size, thin (as boolean), interface (either ide or virtio) and a wwn.If you omit parameters, default values will be used from config or profile file (You can actually let the entire entry blank or just indicate a size number directly)
-- *iso* (optional)
-- *nets* (optional)
-- *gateway* (optional)
-- *dns* (optional) Dns servers
-- *domain* (optional) Dns search domain
-- *start* Defaults to true
-- *vnc* Defaults to false (use spice instead)
-- *cloudinit* Defaults to true
-- *reserveip* Defaults to false
-- *reservedns* Defaults to false
-- *reservehost* Defaults to false
-- *keys* (optional). Array of ssh public keys to inject to th vm
-- *cmds* (optional). Array of commands to run
-- *profile* name of one of your profile. Only checked in plan file
-- *scripts* array of paths of custom script to inject with cloudinit. Note that it will override cmds part. You can either specify full paths or relative to where you're running kcli. Only checked in profile or plan file
-- *nested* Defaults to True
-- *sharedkey* Defaults to False. Set it to true so that a private/public key gets shared between all the nodes of your plan. Additionally, root access will be allowed
-- *files* (optional)- Array of files to inject to the vm. For ecach of the them , you can specify path, owner ( root by default) , permissions (600 by default ) and either origin or content to gather content data directly or from specified origin
-- *insecure* (optional) Handles all the ssh option details so you dont get any warnings about man in the middle
+```Shell
+kcli vm -p centos7 myvm
+```
+
+The [samples directory](https://github.com/karmab/kcli/tree/master/samples) contains more examples to get you started
 
 
-## How to use the client 
+## Basic use
 
 - Get info on your kvm setup
  - `kcli report`
@@ -351,37 +257,6 @@ You can also use the following to list all you vms :
 `kcli -C all list`  
 
 
-## Templates
-
-Templates aim to be the source for your vms, using the existing cloud ones from the different distribution. 
-
-Templates should be in the same storage pool as the vm, in order to benefit from the Copy-on-Write mechanism.
-
-For a regular file-backed storage pool, download the image you want, and put it in the backing store directory.
-
-For an LVM-backed storage pool, convert the image to raw format, and upload it to the pool. Assuming a volume group with name `vms`, do:
-
-```Shell
-TEMPLATE=xenial-server-cloudimg-amd64-disk1.img
-qemu-img convert -f qcow2 -O raw $TEMPLATE ${TEMPLATE}.raw
-TSIZE=`ls -l ${TEMPLATE}.raw | tr -s ' ' | cut -d' ' -f5`
-virsh vol-create-as vms $TEMPLATE $TSIZE
-virsh vol-upload --pool vms $TEMPLATE ${TEMPLATE}.raw
-```
-
-Note that disks based on a LVM template always have the same size as the template disk! The code above creates a template-disk that is only just big enough to match the size of the (raw) template. You may want to grow this disk to a reasonable size before creating vm's that use it! Alternatively, you can set the TSIZE parameter above to a static value, rather than using the size of the image.
-
-Note also that kcli uses the default ssh_user according to the different [cloud images](http://docs.openstack.org/image-guide/obtain-images.html).
-To guess it, kcli checks the template name. So for example, your centos image MUST contain the term "centos" in the file name,
-otherwise the default user "root" will be used. 
-
-## Cloudinit stuff
-
-If cloudinit is enabled (it is by default), a custom iso is generated on the fly for your vm (using mkisofs) and uploaded to your kvm instance (using the libvirt API, not using ssh commands, pretty cool, huh?).
-The iso handles static networking configuration, hostname setting, injecting ssh keys and running specific commands and entire scripts, and copying entire files
-
-Also note that if you use cloudinit but dont specify ssh keys to inject, the default *~/.ssh/id_rsa.pub* will be used, if present.
-
 ## Using plans
 
 You can also define plan files in yaml with a list of profiles, vms, disks, and networks and vms to deploy (look at the sample) and deploy it with kcli plan.
@@ -407,7 +282,7 @@ mynet:
 ```
 You can also use the boolean keyword dhcp (mostly to disable it) and isolated . Note that when not specified, dhcp and nat will be enabled
 
-### template
+### template
 ```YAML
 CentOS-7-x86_64-GenericCloud.qcow2:
  type: template
@@ -661,11 +536,6 @@ Note that when leveraging ansible this way, an inventory file will be generated 
 
 Basic testing can be run with pytest. If using a remote hypervisor, you ll want to set the *KVIRT_HOST* and *KVIRT_USER* environment variables so that it points to your host with the corresponding user.
 
-## Issues found with cloud images
-
-- Note that you need to install python-simplejson (actually bringing python2.7) to allow ansible to work on Ubuntu
-- Debian/Archlinux images are missing the NoCloud datasource for cloud-init. Edit them with guestfish to make them work with cloud-init.
-
 
 ## ABOUT VIRTUALBOX SUPPORT
 
@@ -674,6 +544,48 @@ While the tool should pretty much work the same on this hypervisor, there are so
 - it's impossible to connect using ip, so port forwarding is used instead
 - with NATnetworks ( not NAT!), guest addons are needed to gather ip of the vm so they are automatically installed for you. It implies an automatic reboot at the end of provisioning....
 - when you specify an unknown network, NAT is used instead. The reason behind is to be able to seamlessly use simple existing plans which make use of the default network ( as found on libvirt)
+
+## Specific parameters for a hypervisor
+
+- *host* Defaults to 127.0.0.1
+- *port*
+- *user* Defaults to root
+- *protocol* Defaults to ssh
+- *url* can be used to specify an exotic qemu url
+- *tunnel* Defaults to False. Setting it to true will make kcli use tunnels for console and for ssh access. You want that if you only open ssh port to your hypervisor!
+
+## Available parameters for hypervisor/profile/plan files
+
+- *cpumodel* Defaults to Westmere
+- *cpuflags* (optional). You can specify a list of strings with features to enable or use dict entries with *name* of the feature and *enable* either set to True or False. Note that the value for vmx is ignored, as it s handled by the nested flag
+- *numcpus* Defaults to 2
+- *memory* Defaults to 512M
+- *guestid* Defaults to guestrhel764
+- *pool* Defaults to default
+- *template* Should point to your base cloud image(optional). You can either specify short name or complete path. Note that if you omit the full path and your image lives in several pools, the one from last (alphabetical) pool will be used.
+- *disksize* Defaults to 10GB
+- *diskinterface* Defaults to virtio. You can set it to ide if using legacy operating systems
+- *diskthin* Defaults to True
+- *disks* Array of disks to define. For each of them, you can specify pool, size, thin (as boolean), interface (either ide or virtio) and a wwn.If you omit parameters, default values will be used from config or profile file (You can actually let the entire entry blank or just indicate a size number directly)
+- *iso* (optional)
+- *nets* (optional)
+- *gateway* (optional)
+- *dns* (optional) Dns servers
+- *domain* (optional) Dns search domain
+- *start* Defaults to true
+- *vnc* Defaults to false (use spice instead)
+- *cloudinit* Defaults to true
+- *reserveip* Defaults to false
+- *reservedns* Defaults to false
+- *reservehost* Defaults to false
+- *keys* (optional). Array of ssh public keys to inject to th vm
+- *cmds* (optional). Array of commands to run
+- *profile* name of one of your profile. Only checked in plan file
+- *scripts* array of paths of custom script to inject with cloudinit. Note that it will override cmds part. You can either specify full paths or relative to where you're running kcli. Only checked in profile or plan file
+- *nested* Defaults to True
+- *sharedkey* Defaults to False. Set it to true so that a private/public key gets shared between all the nodes of your plan. Additionally, root access will be allowed
+- *files* (optional)- Array of files to inject to the vm. For ecach of the them , you can specify path, owner ( root by default) , permissions (600 by default ) and either origin or content to gather content data directly or from specified origin
+- *insecure* (optional) Handles all the ssh option details so you dont get any warnings about man in the middle
 
 ## TODO
 
@@ -689,7 +601,6 @@ While the tool should pretty much work the same on this hypervisor, there are so
 See [contributors on GitHub](https://github.com/karmab/kcli/graphs/contributors)
 
 ## Copyright
-
 
 Copyright 2017 Karim Boumedhel
 
