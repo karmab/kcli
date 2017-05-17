@@ -595,6 +595,8 @@ def container(args):
     profile = args.profile
     global config
     k = config.k
+    if name is None:
+        name = nameutils.get_random_name()
     if profile is None:
         common.pprint("Missing profile", color='red')
         os._exit(1)
@@ -693,7 +695,7 @@ def cli():
     container_info = 'Create container'
     container_parser = subparsers.add_parser('container', description=container_info, help=container_info)
     container_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
-    container_parser.add_argument('name', metavar='NAME')
+    container_parser.add_argument('name', metavar='NAME', nargs='?')
     container_parser.set_defaults(func=container)
 
     delete_info = 'Delete vm/container'
