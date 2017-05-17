@@ -456,9 +456,12 @@ def plan(args):
     stop = args.stop
     delete = args.delete
     delay = args.delay
+    yes = args.yes
     global config
     if plan is None:
         plan = nameutils.get_random_name()
+    if delete and not yes:
+        common.confirm("Are you sure?")
     config.plan(plan, ansible=ansible, get=get, path=path, autostart=autostart, container=container, noautostart=noautostart, inputfile=inputfile, start=start, stop=stop, delete=delete, delay=delay)
     # result = config.plan(plan, ansible=ansible, get=get, path=path, autostart=autostart, container=container, noautostart=noautostart, inputfile=inputfile, start=start, stop=stop, delete=delete, delay=delay)
     # code = common.handle_response(result, plan, element='', action='created')
@@ -700,7 +703,7 @@ def cli():
 
     delete_info = 'Delete vm/container'
     delete_parser = subparsers.add_parser('delete', description=delete_info, help=delete_info)
-    delete_parser.add_argument('--yes', action='store_true', help='Dont ask for confirmation')
+    delete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     delete_parser.add_argument('--container', action='store_true')
     delete_parser.add_argument('--force', action='store_true', help='Remove snapshots if needed')
     delete_parser.add_argument('name', metavar='VMNAME')
@@ -735,7 +738,7 @@ def cli():
     info_parser.add_argument('name', help='VMNAME')
     info_parser.set_defaults(func=info)
 
-    list_info = 'List clients, profiles, templates, isos,...'
+    list_info = 'List hosts, profiles, templates, isos,...'
     list_parser = subparsers.add_parser('list', description=list_info, help=list_info)
     list_parser.add_argument('-H', '--hosts', action='store_true')
     list_parser.add_argument('-p', '--profiles', action='store_true')
@@ -781,6 +784,7 @@ def cli():
     plan_parser.add_argument('-w', '--stop', action='store_true')
     plan_parser.add_argument('-d', '--delete', action='store_true')
     plan_parser.add_argument('-t', '--delay', default=0, help="Delay between each vm's creation", metavar='DELAY')
+    plan_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     plan_parser.add_argument('plan', metavar='PLAN', nargs='?')
     plan_parser.set_defaults(func=plan)
 
