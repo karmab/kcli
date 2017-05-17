@@ -1,6 +1,7 @@
 
-version="7.17-1"
-build="00551720"
+version="7.18-1"
+build="00552731"
+apt-get update
 apt-get -y install wget ruby alien
 gem install package_cloud
 #wget -P /root ftp://rpmfind.net/linux/fedora-secondary/development/rawhide/Everything/i386/os/Packages/p/python-iptools-0.6.1-10.fc26.noarch.rpm

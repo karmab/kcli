@@ -60,6 +60,8 @@ If not running as root, you'll also have to add your user to those groups
 sudo usermod -aG qemu,libvirt YOUR_USER
 ```
 
+for *centos*, check [centos](centos.md)
+
 for *macosx*, you'll want to check the docker installation section ( if planning to go against a remote kvm host ) or the dev section for virtualbox
 
 ## Installation
@@ -70,7 +72,7 @@ If using *fedora*, you can use this:
 dnf -y copr enable karmab/kcli ; dnf -y install kcli
 ```
 
-If using *ubuntu*, you can use this:
+If using a debian based distribution, you can use this( example is for ubuntu zesty):
 
 ```bash
 echo deb [trusted=yes] https://packagecloud.io/karmalabs/kcli/ubuntu/ zesty main > /etc/apt/sources.list.d/kcli.list ; apt-get update ; apt-get -y install kcli-all
