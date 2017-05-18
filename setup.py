@@ -17,7 +17,7 @@ setup(
     url='http://github.com/karmab/kcli',
     author='Karim Boumedhel',
     author_email='karimboumedhel@gmail.com',
-    license='GPL',
+    license='ASL',
     install_requires=[
         'libvirt-python>=2.0.0',
         'docker>=2.0',
