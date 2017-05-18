@@ -10,6 +10,6 @@ osp:
  pool: default
  scripts: 
   - ~/register.sh
-  - subscription_newton.sh
+  - subscription.sh
   - install.sh
   - provision.sh

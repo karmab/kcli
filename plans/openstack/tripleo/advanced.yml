@@ -33,7 +33,7 @@ undercloud:
   - echo nameserver 192.168.101.1 >> /etc/resolv.conf
  scripts: 
   - ~/register.sh
-  - newton.sh
+  - ocata.sh
   - undercloud_pre.sh
  nested: False
 
