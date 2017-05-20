@@ -2,6 +2,7 @@
 
 from kvirt.config import Kconfig
 from kvirt.config import __version__
+from kvirt.defaults import TEMPLATES
 from prettytable import PrettyTable
 from shutil import copyfile
 import argparse
@@ -723,7 +724,8 @@ def cli():
     download_parser = subparsers.add_parser('download', description=download_info, help=download_info)
     download_parser.add_argument('-c', '--cmd', help='Extra command to launch after downloading', metavar='CMD')
     download_parser.add_argument('-p', '--pool', default='default', help='Pool to use', metavar='POOL')
-    download_parser.add_argument('template', choices=('arch', 'centos6', 'centos7', 'cirros', 'debian8', 'fedora24', 'fedora25', 'gentoo', 'opensuse', 'rhel72', 'rhel73', 'ubuntu1404', 'ubuntu1604', 'ubuntu1610', 'ubuntu1704'), help='Template/Image to download')
+    # download_parser.add_argument('template', choices=('arch', 'atomic', 'centos6', 'centos7', 'centos7atomic''cirros', 'debian8', 'fedora24', 'fedora25', 'gentoo', 'opensuse', 'rhel72', 'rhel73', 'ubuntu1404', 'ubuntu1604', 'ubuntu1610', 'ubuntu1704'), help='Template/Image to download')
+    download_parser.add_argument('template', choices=sorted(TEMPLATES.keys()), help='Template/Image to download')
     download_parser.set_defaults(func=download)
 
     host_info = 'List and Handle host'
