@@ -99,7 +99,7 @@ class Kvirt(Kbase):
 
     def create(self, name, virttype='kvm', profile='kvirt', plan='kvirt', cpumodel='Westmere', cpuflags=[], numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[], enableroot=True):
         if self.exists(name):
-            return {'result': 'failure', 'reason': "VM %s allready exists" % name}
+            return {'result': 'failure', 'reason': "VM %s already exists" % name}
         default_diskinterface = diskinterface
         default_diskthin = diskthin
         default_disksize = disksize
@@ -453,7 +453,7 @@ class Kvirt(Kbase):
             snap.delete()
             return {'result': 'success'}
         if not revert and name in vm.snapshotListNames():
-            return {'result': 'failure', 'reason': "Snapshot %s allready exists" % name}
+            return {'result': 'failure', 'reason': "Snapshot %s already exists" % name}
         if revert:
             snap = vm.snapshotLookupByName(name)
             vm.revertToSnapshot(snap)
@@ -1036,8 +1036,8 @@ class Kvirt(Kbase):
             network.update(4, 10, 0, dnsentry, 1)
             return 0
         except:
-            print("Entry allready found for %s" % name)
-            return {'result': 'failure', 'reason': "Entry allready found found for %s" % name}
+            print("Entry already found for %s" % name)
+            return {'result': 'failure', 'reason': "Entry already found found for %s" % name}
 
     def reserve_host(self, name, nets, domain):
         net = nets[0]
