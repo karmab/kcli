@@ -87,7 +87,7 @@ class Kbox(Kbase):
 
     def create(self, name, virttype='vbox', profile='kvirt', plan='kvirt', cpumodel='', cpuflags=[], numcpus=2, memory=512, guestid='Linux_64', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[], enableroot=True):
         if self.exists(name):
-            return {'result': 'failure', 'reason': "VM %s allready exists" % name}
+            return {'result': 'failure', 'reason': "VM %s already exists" % name}
         guestid = 'Linux_64'
         default_diskinterface = diskinterface
         default_diskthin = diskthin
@@ -371,7 +371,7 @@ class Kbox(Kbase):
         if self.status(name) == 'down':
             vm.launch_vm_process(None, 'gui', '')
         else:
-            print "VM %s allready running in headless mode.Use kcli console -s instead" % name
+            print "VM %s already running in headless mode.Use kcli console -s instead" % name
 
     def serialconsole(self, name):
         conn = self.conn
