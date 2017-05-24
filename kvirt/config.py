@@ -162,7 +162,7 @@ class Kconfig:
                 os._exit(1)
         self.k = k
 
-    def create_vm(self, name, profile, ip1=None, ip2=None, ip3=None, ip4=None, ip5=None, ip6=None, ip7=None, ip8=None):
+    def create_vm(self, name, profile, ip1=None, ip2=None, ip3=None, ip4=None):
         if name is None:
             name = nameutils.get_random_name()
         k = self.k
@@ -244,7 +244,7 @@ class Kconfig:
                 cmds = reportcmd
             else:
                 cmds = cmds + reportcmd
-        ips = [ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8]
+        ips = [ip1, ip2, ip3, ip4]
         result = k.create(name=name, plan=plan, profile=profilename, cpumodel=cpumodel, cpuflags=cpuflags, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns), reservehost=bool(reservehost), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=bool(nested), tunnel=tunnel, files=files, enableroot=enableroot)
         if result['result'] != 'success':
             return result

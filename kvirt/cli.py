@@ -298,17 +298,13 @@ def vm(args):
     ip2 = args.ip2
     ip3 = args.ip3
     ip4 = args.ip4
-    ip5 = args.ip5
-    ip6 = args.ip6
-    ip7 = args.ip7
-    ip8 = args.ip8
     global config
     if name is None:
         name = nameutils.get_random_name()
     if profile is None:
         common.pprint("Missing profile", color='red')
         os._exit(1)
-    result = config.create_vm(name, profile, ip1=ip1, ip2=ip2, ip3=ip3, ip4=ip4, ip5=ip5, ip6=ip6, ip7=ip7, ip8=ip8)
+    result = config.create_vm(name, profile, ip1=ip1, ip2=ip2, ip3=ip3, ip4=ip4)
     code = common.handle_response(result, name, element='', action='created')
     return code
 
@@ -876,10 +872,6 @@ def cli():
     vm_parser.add_argument('-2', '--ip2', help='Optional Ip to assign to eth1. Netmask and gateway will be retrieved from profile', metavar='IP2')
     vm_parser.add_argument('-3', '--ip3', help='Optional Ip to assign to eth2. Netmask and gateway will be retrieved from profile', metavar='IP3')
     vm_parser.add_argument('-4', '--ip4', help='Optional Ip to assign to eth3. Netmask and gateway will be retrieved from profile', metavar='IP4')
-    vm_parser.add_argument('-5', '--ip5', help='Optional Ip to assign to eth4. Netmask and gateway will be retrieved from profile', metavar='IP5')
-    vm_parser.add_argument('-6', '--ip6', help='Optional Ip to assign to eth5. Netmask and gateway will be retrieved from profile', metavar='IP6')
-    vm_parser.add_argument('-7', '--ip7', help='Optional Ip to assign to eth6. Netmask and gateway will be retrieved from profile', metavar='IP7')
-    vm_parser.add_argument('-8', '--ip8', help='Optional Ip to assign to eth8. Netmask and gateway will be retrieved from profile', metavar='IP8')
     vm_parser.add_argument('name', metavar='VMNAME', nargs='?')
     vm_parser.set_defaults(func=vm)
     args = parser.parse_args()
