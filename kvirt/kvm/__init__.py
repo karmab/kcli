@@ -569,7 +569,8 @@ class Kvirt(Kbase):
                     if mac in leases:
                         ips.append(leases[mac])
                 if ips:
-                    ip = ips[-1]
+                    # ip = ips[-1]
+                    ip = ips[0]
                 else:
                     ip = ''
             plan, profile, template, report = '', '', '', ''
@@ -790,7 +791,7 @@ class Kvirt(Kbase):
         else:
             return sorted(templates, key=lambda s: s.lower())
 
-    def delete(self, name, force=False):
+    def delete(self, name, snapshots=False):
         conn = self.conn
         try:
             vm = conn.lookupByName(name)
@@ -798,7 +799,7 @@ class Kvirt(Kbase):
             # common.pprint("vm %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if vm.snapshotListNames():
-            if not force:
+            if not snapshots:
                 # print("vm %s has snapshots" % name)
                 return {'result': 'failure', 'reason': "VM %s has snapshots" % name}
             else:

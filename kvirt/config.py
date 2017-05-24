@@ -755,7 +755,7 @@ class Kconfig:
                 return
         return {'result': 'success'}
 
-    def handle_host(self, pool='default', template=None, switch=None, download=False, enable=None, disable=None, url=None, cmd=None):
+    def handle_host(self, pool='default', template=None, switch=None, download=False, enable=False, disable=False, url=None, cmd=None):
         if download:
             k = self.k
             if pool is None:

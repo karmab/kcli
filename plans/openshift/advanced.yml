@@ -1,6 +1,6 @@
 karmalabs.com:
  type: network
- cidr: 192.168.99.0/24
+ cidr: 192.168.105.0/24
  dhcp: True
 
 lb:
@@ -8,6 +8,7 @@ lb:
  numcpus: 2
  memory: 1024
  reservedns: True
+ domain: karmalabs.com
  dns: karmalabs.com
  nets:
   - karmalabs.com
@@ -32,6 +33,7 @@ master1:
  memory: 6144
  reservedns: true
  sharedkey: true
+ domain: karmalabs.com
  dns: karmalabs.com
  nets:
   - karmalabs.com
@@ -50,6 +52,7 @@ master2:
  memory: 6144
  reservedns: true
  sharedkey: true
+ domain: karmalabs.com
  dns: karmalabs.com
  nets:
   - karmalabs.com
@@ -68,6 +71,7 @@ master3:
  memory: 6144
  reservedns: true
  sharedkey: true
+ domain: karmalabs.com
  dns: karmalabs.com
  nets:
   - karmalabs.com
@@ -86,6 +90,7 @@ node0:
  memory: 4906
  reservedns: true
  sharedkey: true
+ domain: karmalabs.com
  dns: karmalabs.com
  nets:
   - karmalabs.com
@@ -105,6 +110,7 @@ node1:
  reservedns: true
  sharedkey: true
  dns: karmalabs.com
+ domain: karmalabs.com
  nets:
   - karmalabs.com
  disks:
@@ -123,6 +129,7 @@ node2:
  reservedns: true
  sharedkey: true
  dns: karmalabs.com
+ domain: karmalabs.com
  nets:
   - karmalabs.com
  disks:

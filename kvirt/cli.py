@@ -66,7 +66,7 @@ def delete(args):
     """Delete vm/container"""
     name = args.name
     container = args.container
-    force = args.force
+    snapshots = args.snapshots
     yes = args.yes
     global config
     k = config.k
@@ -76,7 +76,7 @@ def delete(args):
         common.pprint("container %s deleted" % name, color='red')
         dockerutils.delete_container(k, name)
     else:
-        result = k.delete(name, force=force)
+        result = k.delete(name, snapshots=snapshots)
         if result['result'] == 'success':
             common.pprint("vm %s deleted" % name, color='red')
             os._exit(0)
@@ -660,6 +660,17 @@ def report(args):
     k.report()
 
 
+def switch(args):
+    """Handle host"""
+    host = args.host
+    global config
+    result = config.handle_host(switch=host)
+    if result['result'] == 'success':
+        os._exit(0)
+    else:
+        os._exit(1)
+
+
 def cli():
     global config
     parser = argparse.ArgumentParser(description='Libvirt/VirtualBox wrapper on steroids. Check out https://github.com/karmab/kcli!')
@@ -706,7 +717,7 @@ def cli():
     delete_parser = subparsers.add_parser('delete', description=delete_info, help=delete_info)
     delete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     delete_parser.add_argument('--container', action='store_true')
-    delete_parser.add_argument('--force', action='store_true', help='Remove snapshots if needed')
+    delete_parser.add_argument('--snapshots', action='store_true', help='Remove snapshots if needed')
     delete_parser.add_argument('name', metavar='VMNAME')
     delete_parser.set_defaults(func=delete)
 
@@ -837,6 +848,11 @@ def cli():
     stop_parser.add_argument('-c', '--container', action='store_true')
     stop_parser.add_argument('name', metavar='VMNAME')
     stop_parser.set_defaults(func=stop)
+
+    switch_info = 'Switch host'
+    switch_parser = subparsers.add_parser('switch', description=switch_info, help=switch_info)
+    switch_parser.add_argument('host', help='HOST')
+    switch_parser.set_defaults(func=switch)
 
     update_info = 'Update ip, memory or numcpus'
     update_parser = subparsers.add_parser('update', description=update_info, help=update_info)

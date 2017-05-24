@@ -76,7 +76,7 @@ class Kbase(object):
         print("not implemented")
         return
 
-    def delete(self, name, force=False):
+    def delete(self, name, snapshots=False):
         print("not implemented")
         return
 

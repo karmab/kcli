@@ -1,1 +1,1 @@
-subscription-manager repos --enable=rhel-7-server-extras-rpms --enable=rhel-7-server-ose-3.4-rpms
+subscription-manager repos --enable=rhel-7-server-extras-rpms --enable=rhel-7-server-ose-3.5-rpms

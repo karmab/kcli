@@ -18,10 +18,7 @@ su - stack -c "wget -P advanced https://raw.githubusercontent.com/karmab/kcli/ma
 su - stack -c "wget -P advanced https://raw.githubusercontent.com/karmab/kcli/master/plans/openstack/tripleo/advanced/deploy.sh"
 systemctl stop NetworkManager
 systemctl disable NetworkManager
-yum -y update
-yum -y install openvswitch
-wget -P /root http://cbs.centos.org/kojifiles/packages/openvswitch/2.5.0/22.git20160727.el7/x86_64/openvswitch-2.5.0-22.git20160727.el7.x86_64.rpm
-yum -y localinstall /root/openvswitch-2.5.0-22.git20160727.el7.x86_64.rpm
+#yum -y update
 sed -i /requiretty/d /etc/sudoers
 #su - stack -c "openstack undercloud install"
-reboot
+#reboot

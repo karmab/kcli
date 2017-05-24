@@ -513,7 +513,7 @@ class Kbox(Kbase):
         else:
             return templates
 
-    def delete(self, name, force=False):
+    def delete(self, name, snapshots=False):
         conn = self.conn
         try:
             vm = conn.find_machine(name)
