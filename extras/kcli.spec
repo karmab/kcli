@@ -5,8 +5,8 @@
 #
 
 Name:           kcli
-Version:        7.18
-Release:        2
+Version:        7.19
+Release:        1
 Url:            http://github.com/karmab/kcli
 Summary:        Libvirt/VirtualBox wrapper on steroids
 License:        ASL 2.0
@@ -60,5 +60,7 @@ rm -rf %{buildroot}
 %attr(0755,root,root) %{_bindir}/kweb
 
 %changelog
+* Wed May 24 2017 Karim Boumedhel <karimboumedhel@gmail.com> 7.18-1
+- Fix dynamic inventory
 * Thu May 11 2017 Karim Boumedhel <karimboumedhel@gmail.com> 7.13-2
 - Doc, Sample, Plan and inventory files included

@@ -1,5 +1,12 @@
 # Changelog
 
+## 7.19 (2017-05-24)
+
+- minor cleaning
+- fix inventory when running locally
+- use --snapshots instead of --force when deleting vm with snapshots
+- atomic image download
+
 ## 7.18 (2017-05-16)
 
 - debian package
