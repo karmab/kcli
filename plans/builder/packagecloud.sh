@@ -1,5 +1,5 @@
 
-version="7.18-1"
+version="7.19-1"
 build="00552731"
 apt-get update
 apt-get -y install wget ruby alien
