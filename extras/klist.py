@@ -21,7 +21,7 @@ class KcliInventory(object):
     def __init__(self):
         self.inventory = {}
         self.read_cli_args()
-        config = Kconfig()
+        config = Kconfig(quiet=True)
         self.host = config.host
         self.port = config.port
         self.user = config.user

@@ -24,7 +24,7 @@ __version__ = '7.18'
 
 
 class Kconfig:
-    def __init__(self, client=None, debug=False):
+    def __init__(self, client=None, debug=False, quiet=False):
         inifile = "%s/kcli.yml" % os.environ.get('HOME')
         if not os.path.exists(inifile):
             if os.path.exists('/Users'):
@@ -32,7 +32,8 @@ class Kconfig:
             else:
                 _type = 'kvm'
             self.ini = {'default': {'client': 'local'}, 'local': {'pool': 'default', 'type': _type}}
-            common.pprint("Using local hypervisor as no kcli.yml was found...", color='green')
+            if not quiet:
+                common.pprint("Using local hypervisor as no kcli.yml was found...", color='green')
         else:
             with open(inifile, 'r') as entries:
                 try:
