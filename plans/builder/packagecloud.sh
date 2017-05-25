@@ -1,6 +1,6 @@
 
 version="7.19-1"
-build="00552731"
+build="556369"
 apt-get update
 apt-get -y install wget ruby alien
 gem install package_cloud
@@ -10,7 +10,7 @@ gem install package_cloud
 wget -P /root https://copr-be.cloud.fedoraproject.org/results/karmab/kcli/fedora-25-x86_64/$build-kcli/kcli-$version.x86_64.rpm
 cd /root
 alien -d *rpm
-package_cloud push karmalabs/kcli/ubuntu/zesty /root/*deb
-package_cloud push karmalabs/kcli/ubuntu/xenial /root/*deb
-package_cloud push karmalabs/kcli/ubuntu/yakkety /root/*deb
-package_cloud push karmalabs/kcli/debian/jessie /root/*deb
+package_cloud push karmab/kcli/ubuntu/zesty /root/*deb
+package_cloud push karmab/kcli/ubuntu/xenial /root/*deb
+package_cloud push karmab/kcli/ubuntu/yakkety /root/*deb
+package_cloud push karmab/kcli/debian/jessie /root/*deb
