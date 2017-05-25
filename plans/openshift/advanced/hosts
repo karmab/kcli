@@ -24,8 +24,8 @@ openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 
 # or to one or all of the masters defined in the inventory if no load
 # balancer is present.
 openshift_master_cluster_method=native
-openshift_master_cluster_hostname=lb.karmalabs.com
-openshift_master_cluster_public_hostname=lb.karmalabs.com
+openshift_master_cluster_hostname=lb.karmalabs.local
+openshift_master_cluster_public_hostname=lb.karmalabs.local
 openshift_router_selector="region=infra"
 openshift_registry_selector="region=infra"
 os_sdn_network_plugin_name='redhat/openshift-ovs-multitenant'
@@ -41,29 +41,29 @@ openshift_node_kubelet_args={'pods-per-core': ['10'], 'max-pods': ['250'], 'imag
 openshift_clock_enabled=true
 
 openshift_hosted_metrics_deploy=false
-openshift_master_default_subdomain=apps.karmalabs.com
+openshift_master_default_subdomain=apps.karmalabs.local
 
 
 # host group for masters
 [masters]
-master1.karmalabs.com
-master2.karmalabs.com
-master3.karmalabs.com
+master1.karmalabs.local
+master2.karmalabs.local
+master3.karmalabs.local
 
 
 # host group for etcd
 [etcd]
-master1.karmalabs.com
-master2.karmalabs.com
-master3.karmalabs.com
+master1.karmalabs.local
+master2.karmalabs.local
+master3.karmalabs.local
 
 # Specify load balancer host
 [lb]
-lb.karmalabs.com
+lb.karmalabs.local
 
 # host group for nodes, includes region info
 [nodes]
-master[1:3].karmalabs.com openshift_node_labels="{'region': 'master', 'zone': 'default'}"
-node0.karmalabs.com openshift_node_labels="{'region': 'infra', 'zone': 'default'}"
-node1.karmalabs.com openshift_node_labels="{'region': 'primary', 'zone': 'east'}"
-node2.karmalabs.com openshift_node_labels="{'region': 'primary', 'zone': 'west'}"
+master[1:3].karmalabs.local openshift_node_labels="{'region': 'master', 'zone': 'default'}"
+node0.karmalabs.local openshift_node_labels="{'region': 'infra', 'zone': 'default'}"
+node1.karmalabs.local openshift_node_labels="{'region': 'primary', 'zone': 'east'}"
+node2.karmalabs.local openshift_node_labels="{'region': 'primary', 'zone': 'west'}"

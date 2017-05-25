@@ -1,6 +1,6 @@
 
 version="7.19-1"
-build="556369"
+build="00556369"
 apt-get update
 apt-get -y install wget ruby alien
 gem install package_cloud

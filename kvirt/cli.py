@@ -636,8 +636,12 @@ def snapshot(args):
     elif listing:
         common.pprint("Listing snapshots of %s..." % (name), color='green')
         snapshots = k.snapshot(snapshot, name, listing=True)
-        for snapshot in snapshots:
-            print(snapshot)
+        if isinstance(snapshots, dict):
+            common.pprint("Vm %s not found" % (name), color='red')
+            return
+        else:
+            for snapshot in snapshots:
+                print(snapshot)
         return
     elif snapshot is None:
         common.pprint("Missing snapshot name", color='red')

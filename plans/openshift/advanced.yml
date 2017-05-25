@@ -1,4 +1,4 @@
-karmalabs.com:
+karmalabs.local:
  type: network
  cidr: 192.168.105.0/24
  dhcp: True
@@ -8,10 +8,10 @@ lb:
  numcpus: 2
  memory: 1024
  reservedns: True
- domain: karmalabs.com
- dns: karmalabs.com
+ domain: karmalabs.local
+ dns: karmalabs.local
  nets:
-  - karmalabs.com
+  - karmalabs.local
  disks:
   - size: 10
  pool: default
@@ -24,7 +24,7 @@ lb:
   - path: /root/hosts
     origin: advanced/hosts
   - path: /root/install.sh
-    origin: advanced/install2.sh
+    origin: advanced/install1.sh
     mode: 700
 
 master1:
@@ -33,10 +33,10 @@ master1:
  memory: 6144
  reservedns: true
  sharedkey: true
- domain: karmalabs.com
- dns: karmalabs.com
+ domain: karmalabs.local
+ dns: karmalabs.local
  nets:
-  - karmalabs.com
+  - karmalabs.local
  disks:
   - size: 10
   - size: 30
@@ -52,10 +52,10 @@ master2:
  memory: 6144
  reservedns: true
  sharedkey: true
- domain: karmalabs.com
- dns: karmalabs.com
+ domain: karmalabs.local
+ dns: karmalabs.local
  nets:
-  - karmalabs.com
+  - karmalabs.local
  disks:
   - size: 10
   - size: 30
@@ -71,10 +71,10 @@ master3:
  memory: 6144
  reservedns: true
  sharedkey: true
- domain: karmalabs.com
- dns: karmalabs.com
+ domain: karmalabs.local
+ dns: karmalabs.local
  nets:
-  - karmalabs.com
+  - karmalabs.local
  disks:
   - size: 10
   - size: 30
@@ -90,10 +90,10 @@ node0:
  memory: 4906
  reservedns: true
  sharedkey: true
- domain: karmalabs.com
- dns: karmalabs.com
+ domain: karmalabs.local
+ dns: karmalabs.local
  nets:
-  - karmalabs.com
+  - karmalabs.local
  disks:
   - size: 10
   - size: 30
@@ -109,10 +109,10 @@ node1:
  memory: 4906
  reservedns: true
  sharedkey: true
- dns: karmalabs.com
- domain: karmalabs.com
+ dns: karmalabs.local
+ domain: karmalabs.local
  nets:
-  - karmalabs.com
+  - karmalabs.local
  disks:
   - size: 10
   - size: 30
@@ -128,10 +128,10 @@ node2:
  memory: 4096
  reservedns: true
  sharedkey: true
- dns: karmalabs.com
- domain: karmalabs.com
+ dns: karmalabs.local
+ domain: karmalabs.local
  nets:
-  - karmalabs.com
+  - karmalabs.local
  disks:
   - size: 10
   - size: 30
