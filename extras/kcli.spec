@@ -5,7 +5,7 @@
 #
 
 Name:           kcli
-Version:        7.19
+Version:        7.20
 Release:        1
 Url:            http://github.com/karmab/kcli
 Summary:        Libvirt/VirtualBox wrapper on steroids

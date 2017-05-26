@@ -117,7 +117,7 @@ And for advanced bootstrapping, you can specify a target name, host, a pool with
 kcli bootstrap -n twix -H 192.168.0.6 --pool vms --poolpath /home/vms
 ```
 
-You can also edit directly ~/.kcli/kcli.yml. For instance,
+You can also edit directly ~/.kcli/config.yml. For instance,
 
 ```YAML
 default:
@@ -182,7 +182,7 @@ Also note that if you use cloudinit but dont specify ssh keys to inject, the def
 
 Profiles are meant to help creating single vm with preconfigured settings (number of CPUS, memory, size of disk, network,whether to use a template,...)
 
-You use the file *~/kcli_profiles.yml* to declare your profiles.
+You use the file *~/.kcli/profiles.yml* to declare your profiles.
 
 Once created, you can use the following for instance to create a vm named myvm from profile centos7
 

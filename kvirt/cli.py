@@ -581,7 +581,7 @@ def bootstrap(args):
             ini[name]['port'] = port
         if url is not None:
             ini[name]['url'] = url
-    path = os.path.expanduser('~/.kcli/kcli.yml')
+    path = os.path.expanduser('~/.kcli/config.yml')
     if os.path.exists(path):
         copyfile(path, "%s.bck" % path)
     if not os.path.exists('~/.kcli'):

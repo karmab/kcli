@@ -1,5 +1,11 @@
 # Changelog
 
+## 7.20 (2017-05-26)
+
+- move config and profile to ~/.kcli
+- fix listing of snapshots when vm not found
+- fixes in openshift advanced plan
+
 ## 7.19 (2017-05-24)
 
 - minor cleaning
