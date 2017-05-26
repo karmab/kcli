@@ -25,7 +25,7 @@ __version__ = '7.19'
 
 class Kconfig:
     def __init__(self, client=None, debug=False, quiet=False):
-        inifile = "%s/kcli.yml" % os.environ.get('HOME')
+        inifile = "%s/.kcli/kcli.yml" % os.environ.get('HOME')
         if not os.path.exists(inifile):
             if os.path.exists('/Users'):
                 _type = 'vbox'
@@ -33,13 +33,13 @@ class Kconfig:
                 _type = 'kvm'
             self.ini = {'default': {'client': 'local'}, 'local': {'pool': 'default', 'type': _type}}
             if not quiet:
-                common.pprint("Using local hypervisor as no kcli.yml was found...", color='green')
+                common.pprint("Using local hypervisor as no .kcli/kcli.yml was found...", color='green')
         else:
             with open(inifile, 'r') as entries:
                 try:
                     self.ini = yaml.load(entries)
                 except yaml.scanner.ScannerError:
-                    common.pprint("Couldnt properly parse kcli.yml. Leaving...", color='red')
+                    common.pprint("Couldnt properly parse .kcli/kcli.yml. Leaving...", color='red')
                     sys.exit(1)
                 except:
                     self.host = None
@@ -794,7 +794,7 @@ class Kconfig:
                 common.pprint("Client %s is disabled.Leaving...." % switch, color='red')
                 return {'result': 'failure', 'reason': "Client %s is disabled" % switch}
             common.pprint("Switching to client %s..." % switch, color='green')
-            inifile = "%s/kcli.yml" % os.environ.get('HOME')
+            inifile = "%s/.kcli/kcli.yml" % os.environ.get('HOME')
             if os.path.exists(inifile):
                 newini = ''
                 for line in open(inifile).readlines():
@@ -810,7 +810,7 @@ class Kconfig:
                 common.pprint("Client %s not found in config.Leaving...." % client, color='green')
                 return {'result': 'failure', 'reason': "Client %s not found in config" % client}
             common.pprint("Enabling client %s..." % client, color='green')
-            inifile = "%s/kcli.yml" % os.environ.get('HOME')
+            inifile = "%s/.kcli/kcli.yml" % os.environ.get('HOME')
             if os.path.exists(inifile):
                 newini = ''
                 clientreached = False
@@ -840,7 +840,7 @@ class Kconfig:
                 common.pprint("Client %s currently default.Leaving...." % client, color='red')
                 return {'result': 'failure', 'reason': "Client %s currently default" % client}
             common.pprint("Disabling client %s..." % client, color='green')
-            inifile = "%s/kcli.yml" % os.environ.get('HOME')
+            inifile = "%s/.kcli/kcli.yml" % os.environ.get('HOME')
             if os.path.exists(inifile):
                 newini = ''
                 clientreached = False
