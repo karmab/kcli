@@ -1,4 +1,4 @@
-packagecloudbuilder:
+packagecloud:
  template: xenial-server-cloudimg-amd64-disk1.img
  numcpus: 2
  memory: 4096
