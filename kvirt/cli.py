@@ -887,7 +887,8 @@ def cli():
             common.pprint("Disabled hypervisor.Leaving...", color='red')
             os._exit(1)
         args.func(args)
-        config.k.close()
+        if args.client != 'all':
+            config.k.close()
     else:
         args.func(args)
 
