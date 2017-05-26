@@ -83,10 +83,10 @@ If running locally, launch it with:
 
     docker run --rm -v /var/run/libvirt:/var/run/libvirt -v ~/.ssh:/root/.ssh karmab/kcli
 
-If using a remote hypervisor, launch it with a local kcli.yml file
+If using a remote hypervisor, launch it with a local .kcli/kcli.yml file
 pointing to this hypervisor and providing your ssh keys too
 
-``docker run --rm -v ~/kcli.yml:/root/kcli.yml -v ~/.ssh:/root/.ssh karmab/kcli``
+``docker run --rm -v ~/.kcli/kcli.yml:/root/.kcli/kcli.yml -v ~/.ssh:/root/.ssh karmab/kcli``
 
 In both cases, you can also provide a kcli\_profiles.yml (and you could
 also use a dedicated plan directory)
@@ -97,20 +97,20 @@ also use a dedicated plan directory)
 
 .. code:: shell
 
-    docker run --rm -v ~/kcli.yml:/root/kcli.yml -v ~/kcli_profiles.yml:/root/kcli_profiles.yml -v ~/.ssh:/root/.ssh karmab/kcli
+    docker run --rm -v ~/.kcli/kcli.yml:/root/.kcli/kcli.yml -v ~/kcli_profiles.yml:/root/kcli_profiles.yml -v ~/.ssh:/root/.ssh karmab/kcli
 
 The entrypoint is defined as kcli, so you can type commands directly as:
 
 .. code:: shell
 
-    docker run --rm -v ~/kcli.yml:/root/kcli.yml -v ~/kcli_profiles.yml:/root/kcli_profiles.yml -v ~/.ssh:/root/.ssh karmab/kcli list
+    docker run --rm -v ~/.kcli/kcli.yml:/root/.kcli/kcli.yml -v ~/kcli_profiles.yml:/root/kcli_profiles.yml -v ~/.ssh:/root/.ssh karmab/kcli list
 
 As a bonus, you can alias kcli and run kcli as if it is installed
 locally instead a Docker container:
 
 .. code:: shell
 
-    alias kcli = "docker run --rm -v ~/kcli.yml:/root/kcli.yml -v ~/kcli_profiles.yml:/root/kcli_profiles.yml -v ~/.ssh:/root/.ssh karmab/kcli"
+    alias kcli = "docker run --rm -v ~/.kcli/kcli.yml:/root/.kcli/kcli.yml -v ~/kcli_profiles.yml:/root/kcli_profiles.yml -v ~/.ssh:/root/.ssh karmab/kcli"
 
 Configuration
 -------------
@@ -118,7 +118,7 @@ Configuration
 If you only want to use your local libvirt daemon, no configuration is
 needed.
 
-Otherwise you will have to declare your settings in ~/kcli.yml. For
+Otherwise you will have to declare your settings in ~/.kcli/kcli.yml. For
 instance,
 
 .. code:: yaml
@@ -260,7 +260,7 @@ You can use the file *~/kcli\_profiles.yml* to specify profiles (number
 of CPUS, memory, size of disk, network,....) to use when deploying a vm.
 
 To use a different profiles file, you can use the key profiles in the
-default section of *~/kcli.yml* and put desired path
+default section of *~/.kcli/kcli.yml* and put desired path
 
 The `samples
 directory <https://github.com/karmab/kcli/tree/master/samples>`__

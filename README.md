@@ -117,7 +117,7 @@ And for advanced bootstrapping, you can specify a target name, host, a pool with
 kcli bootstrap -n twix -H 192.168.0.6 --pool vms --poolpath /home/vms
 ```
 
-You can also edit directly ~/kcli.yml. For instance,
+You can also edit directly ~/.kcli/kcli.yml. For instance,
 
 ```YAML
 default:
