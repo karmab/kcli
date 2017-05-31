@@ -2,19 +2,23 @@
 
 from distutils.spawn import find_executable
 import socket
-import urllib2
 import json
 import os
+
+try:
+    from urllib.request import urlopen
+except ImportError:
+    from urllib2 import urlopen
 
 
 def symlinks(user, repo):
     mappings = []
     url1 = 'https://api.github.com/repos/%s/%s/git/refs/heads/master' % (user, repo)
-    r = urllib2.urlopen(url1)
+    r = urlopen(url1)
     base = json.load(r)
     sha = base['object']['sha']
     url2 = 'https://api.github.com/repos/%s/%s/git/trees/%s?recursive=1' % (user, repo, sha)
-    r = urllib2.urlopen(url2)
+    r = urlopen(url2)
     try:
         base = json.load(r)
     except:
@@ -28,14 +32,14 @@ def symlinks(user, repo):
 def download(url, path):
     filename = os.path.basename(url)
     print("Fetching %s" % filename)
-    url = urllib2.urlopen(url)
+    url = urlopen(url)
     with open("%s/%s" % (path, filename), 'wb') as output:
         output.write(url.read())
 
 
 def makelink(url, path):
     filename = os.path.basename(url)
-    url = urllib2.urlopen(url)
+    url = urlopen(url)
     target = url.read()
     print("Creating symlink for %s pointing to %s" % (filename, target))
     os.symlink(target, "%s/%s" % (path, filename))
@@ -59,7 +63,7 @@ def fetch(url, path, syms=None):
         url = url.replace("%s/%s" % (user, repo), "%s/%s/contents" % (user, repo))
     if not os.path.exists(path):
         os.mkdir(path)
-    r = urllib2.urlopen(url)
+    r = urlopen(url)
     try:
         base = json.load(r)
     except:
@@ -227,8 +231,8 @@ def handle_response(result, name, quiet=False, element='', action='deployed'):
 
 def confirm(message):
     message = "%s [y/N]: " % message
-    input = raw_input(message)
-    if input.lower() != 'y':
+    inp = input(message)
+    if inp.lower() != 'y':
         pprint("Leaving...", color='red')
         os._exit(1)
     return

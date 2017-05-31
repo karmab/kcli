@@ -4,6 +4,8 @@
 ansible dynamic inventory script for use with kcli and libvirt
 '''
 
+from __future__ import print_function
+
 from kvirt.config import Kconfig
 from kvirt.kvm import Kvirt
 from kvirt.vbox import Kbox
@@ -45,7 +47,7 @@ class KcliInventory(object):
         # If no groups or vars are present, return an empty inventory.
         else:
             self.inventory = empty()
-        print json.dumps(self.inventory)
+        print(json.dumps(self.inventory))
 
     # Read the command line args passed to the script.
     def read_cli_args(self):

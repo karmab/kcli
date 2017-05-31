@@ -117,7 +117,7 @@ class Kvirt(Kbase):
                         <kvirt:template>%s</kvirt:template>""" % (metadata, template)
         default_poolxml = default_storagepool.XMLDesc(0)
         root = ET.fromstring(default_poolxml)
-        default_pooltype = root.getiterator('pool')[0].get('type')
+        default_pooltype = next(root.getiterator('pool')).get('type')
         default_poolpath = None
         for element in root.getiterator('path'):
             default_poolpath = element.text
@@ -172,7 +172,7 @@ class Kvirt(Kbase):
                     return {'result': 'failure', 'reason': "Pool %s not found" % diskpool}
                 diskpoolxml = storagediskpool.XMLDesc(0)
                 root = ET.fromstring(diskpoolxml)
-                diskpooltype = root.getiterator('pool')[0].get('type')
+                diskpooltype = next(root.getiterator('pool')).get('type')
                 diskpoolpath = None
                 for element in root.getiterator('path'):
                     diskpoolpath = element.text
@@ -761,7 +761,7 @@ class Kvirt(Kbase):
             e = element.find('{kvirt}ip')
             if e is not None:
                 return e.text
-        nic = root.getiterator('interface')[0]
+        nic = next(root.getiterator('interface'))
         mac = nic.find('mac').get('address')
         if vm.isActive() and mac in leases:
             return leases[mac]
@@ -1091,7 +1091,7 @@ class Kvirt(Kbase):
         imagevolume = conn.storageVolLookupByPath(imagepath)
         stream = conn.newStream(0)
         imagevolume.upload(stream, 0, 0)
-        with open("%s/%s" % (origin, name)) as ori:
+        with open("%s/%s" % (origin, name), 'rb') as ori:
             stream.sendAll(self.handler, ori)
             stream.finish()
 

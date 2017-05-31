@@ -171,7 +171,7 @@ class Kconfig:
         if profile is None:
             common.pprint("Missing profile", color='red')
             os._exit(1)
-        vmprofiles = {k: v for k, v in self.profiles.iteritems() if 'type' not in v or v['type'] == 'vm'}
+        vmprofiles = {k: v for k, v in self.profiles.items() if 'type' not in v or v['type'] == 'vm'}
         common.pprint("Deploying vm %s from profile %s..." % (name, profile), color='green')
         if profile not in vmprofiles:
             common.pprint("profile %s not found. Trying to use the profile as template and default values..." % profile, color='blue')

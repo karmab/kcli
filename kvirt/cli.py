@@ -881,16 +881,19 @@ def cli():
     vm_parser.add_argument('name', metavar='VMNAME', nargs='?')
     vm_parser.set_defaults(func=vm)
     args = parser.parse_args()
-    if args.func.func_name != 'bootstrap':
-        config = Kconfig(client=args.client, debug=args.debug)
-        if args.client != 'all' and not config.enabled:
-            common.pprint("Disabled hypervisor.Leaving...", color='red')
-            os._exit(1)
-        args.func(args)
-        if args.client != 'all':
-            config.k.close()
+    if hasattr(args, 'func'):
+        if args.func.__name__ != 'bootstrap':
+            config = Kconfig(client=args.client, debug=args.debug)
+            if args.client != 'all' and not config.enabled:
+                common.pprint("Disabled hypervisor.Leaving...", color='red')
+                os._exit(1)
+            args.func(args)
+            if args.client != 'all':
+                config.k.close()
+        else:
+            args.func(args)
     else:
-        args.func(args)
+        parser.print_usage()
 
 
 if __name__ == '__main__':
