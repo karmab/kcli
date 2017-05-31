@@ -178,13 +178,17 @@ def list(args):
             for network in sorted(networks):
                 networkstable.add_row([network])
         else:
-            networkstable = PrettyTable(["Network", "Type", "Cidr", "Dhcp", "Mode"])
+            networkstable = PrettyTable(["Network", "Type", "Cidr", "Dhcp", "Domain", "Mode"])
             for network in sorted(networks):
                 networktype = networks[network]['type']
                 cidr = networks[network]['cidr']
                 dhcp = networks[network]['dhcp']
                 mode = networks[network]['mode']
-                networkstable.add_row([network, networktype, cidr, dhcp, mode])
+                try:
+                    domain = networks[network]['domain']
+                except:
+                    domain = 'N/A'
+                networkstable.add_row([network, networktype, cidr, dhcp, domain, mode])
         networkstable.align["Network"] = "l"
         print(networkstable)
         return
@@ -530,6 +534,7 @@ def network(args):
     isolated = args.isolated
     cidr = args.cidr
     nodhcp = args.nodhcp
+    domain = args.domain
     global config
     k = config.k
     if name is None:
@@ -544,7 +549,7 @@ def network(args):
         else:
             nat = True
         dhcp = not nodhcp
-        result = k.create_network(name=name, cidr=cidr, dhcp=dhcp, nat=nat)
+        result = k.create_network(name=name, cidr=cidr, dhcp=dhcp, nat=nat, domain=domain)
         common.handle_response(result, name, element='Network ')
 
 
@@ -775,6 +780,7 @@ def cli():
     network_parser.add_argument('-i', '--isolated', action='store_true', help='Isolated Network')
     network_parser.add_argument('-c', '--cidr', help='Cidr of the net', metavar='CIDR')
     network_parser.add_argument('--nodhcp', action='store_true', help='Disable dhcp on the net')
+    network_parser.add_argument('--domain', help='DNS domain. Defaults to network name (only KVM support)')
     network_parser.add_argument('name', metavar='NETWORK')
     network_parser.set_defaults(func=network)
 
