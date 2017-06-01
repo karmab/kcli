@@ -1535,7 +1535,7 @@ class Kvirt(Kbase):
                 os.system(cmd)
         return {'result': 'success'}
 
-    def create_network(self, name, cidr, dhcp=True, nat=True):
+    def create_network(self, name, cidr, dhcp=True, nat=True, domain=''):
         conn = self.conn
         networks = self.list_networks()
         cidrs = [network['cidr'] for network in networks.values()]
@@ -1561,13 +1561,17 @@ class Kvirt(Kbase):
             natxml = "<forward mode='nat'><nat><port start='1024' end='65535'/></nat></forward>"
         else:
             natxml = ''
+        if domain:
+            domainxml = "<domain name='%s'/>" % domain
+        else:
+            domainxml = "<domain name='%s'/>" % name
         networkxml = """<network><name>%s</name>
                     %s
-                    <domain name='%s'/>
+                    %s
                     <ip address='%s' netmask='%s'>
                     %s
                     </ip>
-                    </network>""" % (name, natxml, name, gateway, netmask, dhcpxml)
+                    </network>""" % (name, natxml, domainxml, gateway, netmask, dhcpxml)
         new_net = conn.networkDefineXML(networkxml)
         new_net.setAutostart(True)
         new_net.create()
@@ -1615,13 +1619,19 @@ class Kvirt(Kbase):
                 dhcp = True
             else:
                 dhcp = False
+            domain = root.getiterator('domain')
+            if domain:
+                attributes = domain[0].attrib
+                domainname = attributes.get('name')
+            else:
+                domainname = networkname
             forward = root.getiterator('forward')
             if forward:
                 attributes = forward[0].attrib
                 mode = attributes.get('mode')
             else:
                 mode = 'isolated'
-            networks[networkname] = {'cidr': cidr, 'dhcp': dhcp, 'type': 'routed', 'mode': mode}
+            networks[networkname] = {'cidr': cidr, 'dhcp': dhcp, 'domain': domainname, 'type': 'routed', 'mode': mode}
         for interface in conn.listAllInterfaces():
             interfacename = interface.name()
             if interfacename == 'lo':
