@@ -1535,7 +1535,7 @@ class Kvirt(Kbase):
                 os.system(cmd)
         return {'result': 'success'}
 
-    def create_network(self, name, cidr, dhcp=True, nat=True, domain=''):
+    def create_network(self, name, cidr, dhcp=True, nat=True, domain=None):
         conn = self.conn
         networks = self.list_networks()
         cidrs = [network['cidr'] for network in networks.values()]
@@ -1561,7 +1561,7 @@ class Kvirt(Kbase):
             natxml = "<forward mode='nat'><nat><port start='1024' end='65535'/></nat></forward>"
         else:
             natxml = ''
-        if domain:
+        if domain is not None:
             domainxml = "<domain name='%s'/>" % domain
         else:
             domainxml = "<domain name='%s'/>" % name

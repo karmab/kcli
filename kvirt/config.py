@@ -516,7 +516,7 @@ class Kconfig:
                         common.pprint("Missing Cidr for network %s. Not creating it..." % net, color='blue')
                         continue
                     dhcp = netprofile.get('dhcp', True)
-                    domain = netprofile.get('domain', '')
+                    domain = netprofile.get('domain')
                     result = k.create_network(name=net, cidr=cidr, dhcp=dhcp, nat=nat, domain=domain)
                     common.handle_response(result, net, element='Network ')
             if poolentries:

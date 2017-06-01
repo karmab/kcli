@@ -184,9 +184,9 @@ def list(args):
                 cidr = networks[network]['cidr']
                 dhcp = networks[network]['dhcp']
                 mode = networks[network]['mode']
-                try:
+                if 'domain' in networks[network]:
                     domain = networks[network]['domain']
-                except:
+                else:
                     domain = 'N/A'
                 networkstable.add_row([network, networktype, cidr, dhcp, domain, mode])
         networkstable.align["Network"] = "l"
@@ -780,7 +780,7 @@ def cli():
     network_parser.add_argument('-i', '--isolated', action='store_true', help='Isolated Network')
     network_parser.add_argument('-c', '--cidr', help='Cidr of the net', metavar='CIDR')
     network_parser.add_argument('--nodhcp', action='store_true', help='Disable dhcp on the net')
-    network_parser.add_argument('--domain', help='DNS domain. Defaults to network name (only KVM support)')
+    network_parser.add_argument('--domain', help='DNS domain. Defaults to network name')
     network_parser.add_argument('name', metavar='NETWORK')
     network_parser.set_defaults(func=network)
 
