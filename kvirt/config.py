@@ -393,6 +393,8 @@ class Kconfig:
                         dockerutils.delete_container(k, name)
                         common.pprint("Container %s deleted!" % name, color='green')
                         found = True
+            # for network in k.list_networks():
+            #    if 'plan' in network and network['plan'] == plan:
             for network in networks:
                 k.delete_network(network)
                 common.pprint("Unused network %s deleted!" % network, color='green')
@@ -517,7 +519,7 @@ class Kconfig:
                         continue
                     dhcp = netprofile.get('dhcp', True)
                     domain = netprofile.get('domain')
-                    result = k.create_network(name=net, cidr=cidr, dhcp=dhcp, nat=nat, domain=domain)
+                    result = k.create_network(name=net, cidr=cidr, dhcp=dhcp, nat=nat, domain=domain, plan=plan)
                     common.handle_response(result, net, element='Network ')
             if poolentries:
                 common.pprint("Deploying Pool...", color='green')

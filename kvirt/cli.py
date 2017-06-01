@@ -178,6 +178,7 @@ def list(args):
             for network in sorted(networks):
                 networkstable.add_row([network])
         else:
+            # networkstable = PrettyTable(["Network", "Type", "Cidr", "Dhcp", "Domain", "Mode", "Plan"])
             networkstable = PrettyTable(["Network", "Type", "Cidr", "Dhcp", "Domain", "Mode"])
             for network in sorted(networks):
                 networktype = networks[network]['type']
@@ -188,6 +189,11 @@ def list(args):
                     domain = networks[network]['domain']
                 else:
                     domain = 'N/A'
+                # if 'plan' in networks[network]:
+                #    plan = networks[network]['plan']
+                # else:
+                #     plan = 'N/A'
+                # networkstable.add_row([network, networktype, cidr, dhcp, domain, mode, plan])
                 networkstable.add_row([network, networktype, cidr, dhcp, domain, mode])
         networkstable.align["Network"] = "l"
         print(networkstable)
@@ -269,7 +275,7 @@ def list(args):
         print(plans)
     else:
         if config.client == 'all':
-            vms = PrettyTable(["Name", "Host", "Status", "Ips", "Source", "Description/Plan", "Profile", "Report"])
+            vms = PrettyTable(["Name", "Host", "Status", "Ips", "Source", "Plan", "Profile", "Report"])
             for cli in sorted(clis, key=lambda x: x.client):
                 for vm in sorted(cli.k.list()):
                     vm.insert(1, cli.client)

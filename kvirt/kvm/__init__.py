@@ -1535,7 +1535,7 @@ class Kvirt(Kbase):
                 os.system(cmd)
         return {'result': 'success'}
 
-    def create_network(self, name, cidr, dhcp=True, nat=True, domain=None):
+    def create_network(self, name, cidr, dhcp=True, nat=True, domain=None, plan='kvirt'):
         conn = self.conn
         networks = self.list_networks()
         cidrs = [network['cidr'] for network in networks.values()]
@@ -1565,13 +1565,19 @@ class Kvirt(Kbase):
             domainxml = "<domain name='%s'/>" % domain
         else:
             domainxml = "<domain name='%s'/>" % name
+        metadata = """<metadata>
+        <kvirt:info xmlns:kvirt="kvirt">
+                    <kvirt:plan>%s</kvirt:plan>
+                    </kvirt:info>
+                    </metadata>""" % (plan)
         networkxml = """<network><name>%s</name>
+                    %s
                     %s
                     %s
                     <ip address='%s' netmask='%s'>
                     %s
                     </ip>
-                    </network>""" % (name, natxml, domainxml, gateway, netmask, dhcpxml)
+                    </network>""" % (name, metadata, natxml, domainxml, gateway, netmask, dhcpxml)
         new_net = conn.networkDefineXML(networkxml)
         new_net.setAutostart(True)
         new_net.create()
@@ -1632,6 +1638,12 @@ class Kvirt(Kbase):
             else:
                 mode = 'isolated'
             networks[networkname] = {'cidr': cidr, 'dhcp': dhcp, 'domain': domainname, 'type': 'routed', 'mode': mode}
+            plan = 'N/A'
+            for element in root.getiterator('{kvirt}info'):
+                e = element.find('{kvirt}plan')
+                if e is not None:
+                    plan = e.text
+            networks[networkname]['plan'] = plan
         for interface in conn.listAllInterfaces():
             interfacename = interface.name()
             if interfacename == 'lo':
@@ -1648,6 +1660,12 @@ class Kvirt(Kbase):
             else:
                 cidr = 'N/A'
             networks[interfacename] = {'cidr': cidr, 'dhcp': 'N/A', 'type': 'bridged', 'mode': 'N/A'}
+            plan = 'N/A'
+            for element in root.getiterator('{kvirt}info'):
+                e = element.find('{kvirt}plan')
+                if e is not None:
+                    plan = e.text
+            networks[interfacename]['plan'] = plan
         return networks
 
     def delete_pool(self, name, full=False):

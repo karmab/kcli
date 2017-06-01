@@ -144,7 +144,7 @@ class Kbase(object):
         print("not implemented")
         return
 
-    def create_network(self, name, cidr, dhcp=True, nat=True, domain=None):
+    def create_network(self, name, cidr, dhcp=True, nat=True, domain=None, plan='kvirt'):
         print("not implemented")
         return
 
