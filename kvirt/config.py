@@ -39,7 +39,7 @@ class Kconfig:
                 try:
                     self.ini = yaml.load(entries)
                 except yaml.scanner.ScannerError:
-                    common.pprint("Couldnt properly parse .kcli/config.yml. Leaving...", color='red')
+                    common.pprint("Couldn't properly parse .kcli/config.yml. Leaving...", color='red')
                     sys.exit(1)
                 except:
                     self.host = None
@@ -159,7 +159,7 @@ class Kconfig:
                     os._exit(1)
                 k = Kvirt(host=self.host, port=self.port, user=self.user, protocol=self.protocol, url=self.url, debug=debug)
             if k.conn is None:
-                common.pprint("Couldnt connect to specify hypervisor %s. Leaving..." % self.host, color='red')
+                common.pprint("Couldn't connect to specify hypervisor %s. Leaving..." % self.host, color='red')
                 os._exit(1)
         self.k = k
 

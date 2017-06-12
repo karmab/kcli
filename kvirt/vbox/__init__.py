@@ -659,6 +659,7 @@ class Kbox(Kbase):
         disk = conn.create_medium('VDI', diskpath, library.AccessMode.read_write, library.DeviceType.hard_disk)
         if template is not None:
             volumes = self.volumes()
+            print volumes
             if template not in volumes and template not in volumes.values():
                 print("Invalid template %s.Leaving..." % template)
                 return

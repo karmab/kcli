@@ -9,7 +9,6 @@
 
 This script is meant to interact with a local/remote libvirt daemon and to easily deploy from templates (optionally using cloudinit).
 It will also report IPS for any vm connected to a dhcp-enabled libvirt network and generally for every vm deployed from this client.
-There is additional support for VirtualBox
 
 It started because I switched from ovirt and needed a tool similar to [ovirt.py](https://github.com/karmab/ovirt)
 
@@ -18,7 +17,6 @@ It started because I switched from ovirt and needed a tool similar to [ovirt.py]
 ##  Wouldnt it be great to:
 
 - Interact with libvirt without XML
-- Interact The same way with virtualbox
 - Declare all your objects(vm, containers, networks, ansible,...) in a single yaml file!
 - Easily grab and share those files from github
 - Easily Test all Redhat Infrastructure products, and their upstream counterpart
