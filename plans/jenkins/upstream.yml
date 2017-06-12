@@ -1,0 +1,17 @@
+jenkins:
+ template: CentOS-7-x86_64-GenericCloud.qcow2
+ memory: 8192
+ numcpus: 2
+ nets:
+  - default
+ disks:
+  - size: 40
+ pool: default
+ reservedns: true
+ cmds: 
+  - yum -y install wget
+  - wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat/jenkins.repo
+  - rpm --import https://pkg.jenkins.io/redhat/jenkins.io.key
+  - yum -y install java jenkins
+  - systemctl enable jenkins
+  - systemctl start jenkins
