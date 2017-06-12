@@ -1567,9 +1567,9 @@ class Kvirt(Kbase):
             domainxml = "<domain name='%s'/>" % name
         metadata = """<metadata>
         <kvirt:info xmlns:kvirt="kvirt">
-                    <kvirt:plan>%s</kvirt:plan>
-                    </kvirt:info>
-                    </metadata>""" % (plan)
+        <kvirt:plan>%s</kvirt:plan>
+        </kvirt:info>
+        </metadata>""" % (plan)
         networkxml = """<network><name>%s</name>
                     %s
                     %s
