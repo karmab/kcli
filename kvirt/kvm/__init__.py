@@ -1523,7 +1523,9 @@ class Kvirt(Kbase):
             wgetcmd = 'wget -O %s/%s %s' % (poolpath, shortimage, image)
         elif self.protocol == 'ssh':
             wgetcmd = 'ssh -p %s %s@%s "wget -O %s/%s %s"' % (self.port, self.user, self.host, poolpath, shortimage, image)
-        os.system(wgetcmd)
+        code = os.system(wgetcmd)
+        if code != 0:
+            return {'result': 'failure', 'reason': "Unable to download indicated template"}
         pool.refresh()
         if cmd is not None:
             if self.host == 'localhost' or self.host == '127.0.0.1':
