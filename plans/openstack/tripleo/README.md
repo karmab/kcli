@@ -14,14 +14,16 @@ note we explicitly dont want to used nested cos it s causing some issues on :
  important to have the provisioning network without nat
 also on the hypervisor 
 
-`sysctl -w net.ipv4.conf.all.rp_filter = 0`
-`sysct  -w net.ipv4.conf.default.rp_filter = 0`
-`sysctl -p /etc/sysctl.conf`
+```
+echo net.ipv4.conf.all.rp_filter=0 >> /etc/sysctl.d/99-sysctl.conf
+echo net.ipv4.conf.default.rp_filter=0 >> /etc/sysctl.d/99-sysctl.conf
+sysctl -p /etc/sysctl.conf
+```
 
 you can check it with 
 
 `cat /proc/sys/net/ipv4/conf/all/rp_filter`
-`cat > /proc/sys/net/ipv4/conf/default/rp_filter`
+`cat /proc/sys/net/ipv4/conf/default/rp_filter`
 
 openstack undercloud install cant be launched from cloudinit , as a tty is required (for sudo).
 

@@ -406,7 +406,7 @@ def disk(args):
     if pool is None:
         common.pprint("Missing pool. Leaving...", color='red')
         os._exit(1)
-    common.pprint("Adding disk %s to %s..." % (diskname, name), color='green')
+    common.pprint("Adding disk to %s..." % (name), color='green')
     k.add_disk(name=name, size=size, pool=pool, template=template)
 
 
