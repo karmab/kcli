@@ -25,6 +25,7 @@ TEMPLATES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATES
              'cirros': 'https://download.cirros-cloud.net/0.3.5/cirros-0.3.5-x86_64-disk.img',
              'cloudforms': 'https://access.redhat.com/downloads/content/167/ver=/cf-me---4.2/4.2/x86_64/product-software',
              'debian8': 'https://cdimage.debian.org/cdimage/openstack/current-8/debian-8-openstack-amd64.qcow2',
+             'debian9': 'http://cdimage.debian.org/cdimage/openstack/current/debian-9.0.0-openstack-arm64.qcow2',
              'fedora24': 'https://download.fedoraproject.org/pub/fedora/linux/releases/24/CloudImages/x86_64/images/Fedora-Cloud-Base-24-1.2.x86_64.qcow2',
              'fedora25': 'https://download.fedoraproject.org/pub/fedora/linux/releases/25/CloudImages/x86_64/images/Fedora-Cloud-Base-25-1.3.x86_64.qcow2',
              'gentoo': 'http://gentoo.osuosl.org/experimental/amd64/openstack/gentoo-openstack-amd64-default-20170221.qcow2',
