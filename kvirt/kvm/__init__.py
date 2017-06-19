@@ -996,6 +996,7 @@ class Kvirt(Kbase):
             if not IPAddress(ip) in netip:
                 continue
             network.update(4, 4, 0, '<host mac="%s" name="%s" ip="%s" />' % (mac, name, ip), 1)
+            # network.update(4, 4, 0, '<host mac="%s" name="%s" ip="%s" />' % (mac, name, ip), 2)
 
     def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False):
         conn = self.conn
@@ -1051,6 +1052,7 @@ class Kvirt(Kbase):
                     network.update(2, 10, 0, oldentry, 1)
         try:
             network.update(4, 10, 0, dnsentry, 1)
+            # network.update(4, 10, 0, dnsentry, 2)
             return 0
         except:
             print("Entry already found for %s" % name)

@@ -85,13 +85,6 @@ rhvnode3:
   - requisites_downstream.sh
 
 rhvengine:
- disks: []
- reservedns: true
- reservehost: true
- start: false
- nets:
-  - name: default
-    ip: 192.168.122.230
-    mask: 255.255.255.0
-    gateway: 192.168.122.1
-    dns: 192.168.122.1
+ type: dns
+ net: default
+ ip: 192.168.122.230
