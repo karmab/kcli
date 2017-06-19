@@ -480,6 +480,7 @@ class Kconfig:
             templateentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'template']
             poolentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'pool']
             planentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'plan']
+            dnsentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'dns']
             for p in profileentries:
                 vmprofiles[p] = entries[p]
             if planentries:
@@ -559,6 +560,22 @@ class Kconfig:
                                 continue
                         result = k.add_image(url, pool, cmd=cmd)
                         common.handle_response(result, template, element='Template ', action='Added')
+            if dnsentries:
+                common.pprint("Deploying Dns Entry...", color='green')
+                for dnsentry in dnsentries:
+                    dnsprofile = entries[dnsentry]
+                    dnsdomain = dnsprofile.get('domain')
+                    dnsnet = dnsprofile.get('net')
+                    dnsdomain = dnsprofile.get('domain', dnsnet)
+                    dnsip = dnsprofile.get('ip')
+                    dnsalias = dnsprofile.get('alias', [])
+                    if dnsip is None:
+                        common.pprint("Missing ip. Skipping!", color='blue')
+                        return
+                    if dnsnet is None:
+                        common.pprint("Missing net. Skipping!", color='blue')
+                        return
+                    k.reserve_dns(name=dnsentry, nets=[dnsnet], domain=dnsdomain, ip=dnsip, alias=dnsalias, force=True)
             if vmentries:
                 common.pprint("Deploying Vms...", color='green')
                 for name in vmentries:

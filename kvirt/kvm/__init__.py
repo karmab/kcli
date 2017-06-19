@@ -997,25 +997,26 @@ class Kvirt(Kbase):
                 continue
             network.update(4, 4, 0, '<host mac="%s" name="%s" ip="%s" />' % (mac, name, ip), 1)
 
-    def reserve_dns(self, name, nets, domain):
+    def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False):
         conn = self.conn
         net = nets[0]
-        ip = None
         if isinstance(net, dict):
-            ip = net.get('ip')
             network = net.get('name')
         else:
             network = net
         if ip is None:
-            counter = 0
-            while counter != 80:
-                ip = self.ip(name)
-                if ip is None:
-                    time.sleep(5)
-                    print("Waiting 5 seconds to grab ip and create DNS record...")
-                    counter += 10
-                else:
-                    break
+            if isinstance(net, dict):
+                ip = net.get('ip')
+            if ip is None:
+                counter = 0
+                while counter != 80:
+                    ip = self.ip(name)
+                    if ip is None:
+                        time.sleep(5)
+                        print("Waiting 5 seconds to grab ip and create DNS record...")
+                        counter += 10
+                    else:
+                        break
         if ip is None:
             print("Couldn't assign DNS")
             return
@@ -1029,10 +1030,25 @@ class Kvirt(Kbase):
             base.append(dns)
             newxml = ET.tostring(root)
             conn.networkDefineXML(newxml)
+        dnsentry = '<host ip="%s"><hostname>%s</hostname>' % (ip, name)
         if domain is not None:
-            dnsentry = '<host ip="%s"><hostname>%s</hostname><hostname>%s.%s</hostname></host>' % (ip, name, name, domain)
-        else:
-            dnsentry = '<host ip="%s"><hostname>%s</hostname></host>' % (ip, name)
+            dnsentry = '%s<hostname>%s.%s</hostname>' % (dnsentry, name, domain)
+        for entry in alias:
+            dnsentry = "%s<hostname>%s</hostname>" % (dnsentry, entry)
+        dnsentry = "%s</host>" % dnsentry
+        if force:
+            for host in root.getiterator('host'):
+                iphost = host.get('ip')
+                if iphost == ip:
+                    existing = []
+                    for hostname in host.getiterator('hostname'):
+                        existing.append(hostname.text)
+                    if name in existing:
+                        print("Entry already found for %s" % name)
+                        return {'result': 'failure', 'reason': "Entry already found found for %s" % name}
+                    oldentry = '<host ip="%s"></host>' % (iphost)
+                    print("Removing old dns entry for ip %s" % ip)
+                    network.update(2, 10, 0, oldentry, 1)
         try:
             network.update(4, 10, 0, dnsentry, 1)
             return 0
