@@ -269,6 +269,7 @@ The following type can be used within a plan:
 - profile
 - ansible
 - container
+- dns
 - plan ( so you can compose plans from several url)
 - vm ( this is the type used when none is specified )
 
@@ -357,6 +358,15 @@ ovirt:
   url: github.com/karmab/kcli/plans/ovirt
   file: upstream.yml
   run: true
+```
+
+### dns
+
+```YAML
+yyy:
+ type: dns
+ net: default
+ ip: 192.168.1.35
 ```
 
 ### vms

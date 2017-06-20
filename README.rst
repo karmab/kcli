@@ -11,8 +11,7 @@ kcli repository
 This script is meant to interact with a local/remote libvirt daemon and
 to easily deploy from templates (optionally using cloudinit). It will
 also report IPS for any vm connected to a dhcp-enabled libvirt network
-and generally for every vm deployed from this client. There is
-additional support for VirtualBox
+and generally for every vm deployed from this client.
 
 It started because I switched from ovirt and needed a tool similar to
 `ovirt.py <https://github.com/karmab/ovirt>`__
@@ -24,7 +23,6 @@ Wouldnt it be great to:
 -----------------------
 
 -  Interact with libvirt without XML
--  Interact The same way with virtualbox
 -  Declare all your objects(vm, containers, networks, ansible,...) in a
    single yaml file!
 -  Easily grab and share those files from github
@@ -224,7 +222,7 @@ Profiles are meant to help creating single vm with preconfigured
 settings (number of CPUS, memory, size of disk, network,whether to use a
 template,...)
 
-You use the file *~/kcli\_profiles.yml* to declare your profiles.
+You use the file *~/.kcli/profiles.yml* to declare your profiles.
 
 Once created, you can use the following for instance to create a vm
 named myvm from profile centos7
@@ -325,6 +323,7 @@ with kcli plan. The following type can be used within a plan:
 -  profile
 -  ansible
 -  container
+-  dns
 -  plan ( so you can compose plans from several url)
 -  vm ( this is the type used when none is specified )
 
@@ -442,6 +441,16 @@ plan's plan ( Also known as inception style)
       file: upstream.yml
       run: true
 
+dns
+~~~
+
+.. code:: yaml
+
+    yyy:
+     type: dns
+     net: default
+     ip: 192.168.1.35
+
 vms
 ~~~
 
@@ -540,9 +549,9 @@ keys
        mask: 255.255.255.0
        gateway: 192.168.0.1
 
-Within a net section, you can use name, nic, IP, mac, mask and gateway
-as keys. Note that up to 8 IPS can also be provided on command line when
-creating a single vm (with the flag -1, -2, -3,-4,...)
+Within a net section, you can use name, nic, IP, mac, mask, gateway and
+alias as keys. Note that up to 8 IPS can also be provided on command
+line when creating a single vm (with the flag -1, -2, -3,-4,...)
 
 IP, DNS and HOST Reservations
 -----------------------------
