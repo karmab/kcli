@@ -232,6 +232,7 @@ class Kvirt(Kbase):
                     %s
                     </disk>""" % (disksxml, diskformat, diskpath, backingxml, diskdev, diskbus, diskwwn)
         netxml = ''
+        alias = []
         for index, net in enumerate(nets):
             macxml = ''
             if isinstance(net, str):
@@ -249,6 +250,8 @@ class Kvirt(Kbase):
                     macxml = "<mac address='%s'/>" % mac
                 if index == 0 and ip is not None:
                     metadata = """%s<kvirt:ip >%s</kvirt:ip>""" % (metadata, ip)
+                if reservedns and index == 0 and 'alias' in nets[index] and isinstance(nets[index]['alias'], list):
+                    alias = nets[index]['alias']
             if netname in bridges:
                 sourcenet = 'bridge'
             elif netname in networks:
@@ -403,7 +406,7 @@ class Kvirt(Kbase):
         if start:
             vm.create()
         if reservedns:
-            self.reserve_dns(name, nets, domain)
+            self.reserve_dns(name, nets=nets, domain=domain, alias=alias)
         if reservehost:
             self.reserve_host(name, nets, domain)
         return {'result': 'success'}

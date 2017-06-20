@@ -31,6 +31,7 @@ TEMPLATES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATES
              'gentoo': 'http://gentoo.osuosl.org/experimental/amd64/openstack/gentoo-openstack-amd64-default-20170221.qcow2',
              'manageiq': 'http://releases.manageiq.org/manageiq-openstack-euwe-3.qc2',
              'opensuse': 'http://download.opensuse.org/pub/opensuse/repositories/Cloud:/Images:/Leap_42.3/images/openSUSE-Leap-42.3-OpenStack.x86_64.qcow2',
+             'rhel66': 'https://access.redhat.com/downloads/content/69/ver=/rhel---6/6.6/x86_64/product-software',
              'rhel72': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.2/x86_64/product-software',
              'rhel73': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.3/x86_64/product-software',
              'ubuntu1404': 'https://cloud-images.ubuntu.com/trusty/current/trusty-server-cloudimg-amd64-disk1.img',

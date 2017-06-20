@@ -435,7 +435,7 @@ nets:
    gateway: 192.168.0.1
 ```
 
-Within a net section, you can use name, nic, IP, mac, mask and gateway as keys.
+Within a net section, you can use name, nic, IP, mac, mask, gateway and alias as keys.
 Note that up to 8 IPS can also be provided on command line when creating a single vm (with the flag -1, -2, -3,-4,...)
 
 ## IP, DNS and HOST Reservations
