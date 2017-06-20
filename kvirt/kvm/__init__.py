@@ -1460,6 +1460,8 @@ class Kvirt(Kbase):
                 scpcommand = "%s %s %s@%s:%s %s" % (scpcommand, arguments, user, ip, source, destination)
             else:
                 scpcommand = "%s %s %s %s@%s:%s" % (scpcommand, arguments, source, user, ip, destination)
+            if self.debug:
+                print(scpcommand)
             return scpcommand
 
     def create_pool(self, name, poolpath, pooltype='dir', user='qemu'):
