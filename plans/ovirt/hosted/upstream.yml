@@ -12,7 +12,7 @@ rhvnfs:
  scripts: 
   - nfs.sh
 
-rhvnode1:
+rhvnode01:
  template: CentOS-7-x86_64-GenericCloud.qcow2
  memory: 8192
  cpumodel: host-model
@@ -34,13 +34,13 @@ rhvnode1:
     origin: answers.conf
   - path: /root/.ovirtshellrc
     origin: ovirtshellrc
-  - path: /root/rhvnode2.py
-    origin: rhvnode2.py
+  - path: /root/rhvnode02.py
+    origin: rhvnode02.py
  scripts: 
   - requisites_upstream.sh
   - bootstrap.sh
 
-rhvnode2:
+rhvnode02:
  template: CentOS-7-x86_64-GenericCloud.qcow2
  memory: 8192
  cpumodel: host-model

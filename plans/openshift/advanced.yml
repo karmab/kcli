@@ -27,7 +27,7 @@ lb:
     origin: advanced/install1.sh
     mode: 700
 
-master1:
+master01:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
  numcpus: 2
  memory: 6144
@@ -46,7 +46,7 @@ master1:
   - subscription.sh
   - advanced/pre.sh
 
-master2:
+master02:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
  numcpus: 2
  memory: 6144
@@ -65,7 +65,7 @@ master2:
   - subscription.sh
   - advanced/pre.sh
 
-master3:
+master03:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
  numcpus: 2
  memory: 6144
@@ -84,7 +84,7 @@ master3:
   - subscription.sh
   - advanced/pre.sh
 
-node0:
+node01:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
  numcpus: 2
  memory: 4906
@@ -103,7 +103,7 @@ node0:
   - subscription.sh
   - advanced/pre.sh
 
-node1:
+node02:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
  numcpus: 2
  memory: 4906
@@ -122,7 +122,7 @@ node1:
   - subscription.sh
   - advanced/pre.sh
 
-node2:
+node03:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
  numcpus: 2
  memory: 4096

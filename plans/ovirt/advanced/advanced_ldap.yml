@@ -16,7 +16,7 @@ rhvengine:
   - engine.sh
   - provision.sh
 
-rhvnode1:
+rhvnode01:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
  memory: 8192
  numcpus: 2
@@ -32,7 +32,7 @@ rhvnode1:
   - subscription_node.sh
   - node.sh
 
-rhvnode2:
+rhvnode02:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
  memory: 8192
  numcpus: 2

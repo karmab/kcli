@@ -13,7 +13,7 @@ rhvnfs:
   - ~/register.sh
   - nfs.sh
 
-rhvnode1:
+rhvnode01:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
  memory: 8192
  cpumodel: host-model
@@ -35,14 +35,14 @@ rhvnode1:
     origin: answers.conf
   - path: /root/.ovirtshellrc
     origin: ovirtshellrc
-  - path: /root/rhvnode2.py
-    origin: rhvnode2.py
+  - path: /root/rhvnode02.py
+    origin: rhvnode02.py
  scripts: 
   - ~/register.sh
   - requisites_downstream.sh
   - bootstrap.sh
 
-rhvnode2:
+rhvnode02:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
  memory: 8192
  cpumodel: host-model

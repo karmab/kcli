@@ -6,7 +6,10 @@ ansible dynamic inventory script for use with kcli and libvirt
 
 from kvirt.config import Kconfig
 from kvirt.kvm import Kvirt
-from kvirt.vbox import Kbox
+try:
+    from kvirt.vbox import Kbox
+except:
+    pass
 import json
 import os
 import argparse

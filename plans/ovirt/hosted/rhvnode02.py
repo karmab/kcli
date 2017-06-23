@@ -6,7 +6,7 @@ user = "admin@internal"
 password = "unix1234"
 engine = "rhvengine.default"
 headers = {'content-type': 'application/xml', 'Accept': 'application/xml'}
-hostname = "rhvnode2.default"
+hostname = "rhvnode02.default"
 hostpassword = "unix1234"
 
 data = """<host>
