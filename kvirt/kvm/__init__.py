@@ -270,7 +270,7 @@ class Kvirt(Kbase):
                     </metadata>""" % (metadata, plan)
         if iso is None:
             if cloudinit:
-                iso = "%s/%s.iso" % (default_poolpath, name)
+                iso = "%s/%s.ISO" % (default_poolpath, name)
             else:
                 iso = ''
         else:
@@ -819,7 +819,7 @@ class Kvirt(Kbase):
             source = element.find('source')
             if source is not None:
                 imagefile = element.find('source').get('file')
-                if imagefile.endswith("%s.iso" % name) or "%s_" % name in imagefile:
+                if imagefile.endswith("%s.ISO" % name) or "%s_" % name in imagefile:
                     disks.append(imagefile)
                 else:
                     continue
@@ -1098,7 +1098,7 @@ class Kvirt(Kbase):
     def handler(self, stream, data, file_):
         return file_.read(data)
 
-    def _uploadimage(self, name, pool='default', origin='/tmp', suffix='.iso'):
+    def _uploadimage(self, name, pool='default', origin='/tmp', suffix='.ISO'):
         name = "%s%s" % (name, suffix)
         conn = self.conn
         poolxml = pool.XMLDesc(0)

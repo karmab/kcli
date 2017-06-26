@@ -163,10 +163,10 @@ class Kbox(Kbase):
                     cmds = guestcmds + cmds
                 cmds = cmds + ['reboot']
             common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain, reserveip=reserveip, files=files, enableroot=enableroot)
-            medium = conn.create_medium('RAW', '/tmp/%s.iso' % name, library.AccessMode.read_only, library.DeviceType.dvd)
+            medium = conn.create_medium('RAW', '/tmp/%s.ISO' % name, library.AccessMode.read_only, library.DeviceType.dvd)
             progress = medium.create_base_storage(368, [library.MediumVariant.fixed])
             progress.wait_for_completion()
-            dvd = conn.open_medium('/tmp/%s.iso' % name, library.DeviceType.dvd, library.AccessMode.read_only, False)
+            dvd = conn.open_medium('/tmp/%s.ISO' % name, library.DeviceType.dvd, library.AccessMode.read_only, False)
             machine.attach_device("IDE", 0, 0, library.DeviceType.dvd, dvd)
         for index, disk in enumerate(disks):
             if disk is None:
