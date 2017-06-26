@@ -563,6 +563,7 @@ While the tool should pretty much work the same on this hypervisor, there are so
 - *protocol* Defaults to ssh
 - *url* can be used to specify an exotic qemu url
 - *tunnel* Defaults to False. Setting it to true will make kcli use tunnels for console and for ssh access. You want that if you only open ssh port to your hypervisor!
+- *planview* Defaults to False. Setting it to true will make kcli use the value specified in *~/.kcli/plan* as default plan upon starting and stopping plan. Additionally, vms not belonging to the set plan wont show up when listing
 
 ## Available parameters for hypervisor/profile/plan files
 

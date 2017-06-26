@@ -288,8 +288,10 @@ def list(args):
             print(vms)
             return
         else:
-            vms = PrettyTable(["Name", "Status", "Ips", "Source", "Description/Plan", "Profile", "Report"])
+            vms = PrettyTable(["Name", "Status", "Ips", "Source", "Plan", "Profile", "Report"])
             for vm in sorted(k.list()):
+                if config.planview and vm[4] != config.currentplan:
+                    continue
                 if filters:
                     status = vm[1]
                     if status == filters:
@@ -343,12 +345,17 @@ def update(args):
     dns = args.dns
     host = args.host
     domain = args.domain
+    cloudinit = args.cloudinit
     template = args.template
     global config
     k = config.k
     if ip1 is not None:
         common.pprint("Updating ip of vm %s to %s..." % (name, ip1), color='green')
         k.update_metadata(name, 'ip', ip1)
+    elif cloudinit:
+        common.pprint("Removing cloudinit information of vm %s" % (name), color='green')
+        k.remove_cloudinit(name)
+        return
     elif plan is not None:
         common.pprint("Updating plan of vm %s to %s..." % (name, plan), color='green')
         k.update_metadata(name, 'plan', plan)
@@ -463,15 +470,24 @@ def plan(args):
     stop = args.stop
     delete = args.delete
     delay = args.delay
+    use = args.use
     yes = args.yes
     global config
+    if use is not None:
+        rootdir = os.path.expanduser('~/.kcli')
+        if not os.path.exists(rootdir):
+            os.makedirs(rootdir)
+        with open('%s/plan' % rootdir, 'w') as p:
+            p.write('%s\n' % use)
+        return
     if plan is None:
-        plan = nameutils.get_random_name()
+        if config.planview:
+            plan = config.currentplan
+        else:
+            plan = nameutils.get_random_name()
     if delete and not yes:
         common.confirm("Are you sure?")
     config.plan(plan, ansible=ansible, get=get, path=path, autostart=autostart, container=container, noautostart=noautostart, inputfile=inputfile, start=start, stop=stop, delete=delete, delay=delay)
-    # result = config.plan(plan, ansible=ansible, get=get, path=path, autostart=autostart, container=container, noautostart=noautostart, inputfile=inputfile, start=start, stop=stop, delete=delete, delay=delay)
-    # code = common.handle_response(result, plan, element='', action='created')
     return 0
 
 
@@ -593,9 +609,10 @@ def bootstrap(args):
         if url is not None:
             ini[name]['url'] = url
     path = os.path.expanduser('~/.kcli/config.yml')
+    rootdir = os.path.expanduser('~/.kcli')
     if os.path.exists(path):
         copyfile(path, "%s.bck" % path)
-    if not os.path.exists('~/.kcli'):
+    if not os.path.exists(rootdir):
         os.makedirs('~/.kcli')
     with open(path, 'w') as conf_file:
         yaml.safe_dump(ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True)
@@ -810,6 +827,7 @@ def cli():
     plan_parser.add_argument('-w', '--stop', action='store_true')
     plan_parser.add_argument('-d', '--delete', action='store_true')
     plan_parser.add_argument('-t', '--delay', default=0, help="Delay between each vm's creation", metavar='DELAY')
+    plan_parser.add_argument('-u', '--use', nargs='?', const='kvirt', help='Plan to set as current. Defaults to kvirt', metavar='USE')
     plan_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     plan_parser.add_argument('plan', metavar='PLAN', nargs='?')
     plan_parser.set_defaults(func=plan)
@@ -879,6 +897,7 @@ def cli():
     update_parser.add_argument('--host', action='store_true', help='Update Host entry for the vm')
     update_parser.add_argument('-d', '--domain', help='Domain', metavar='DOMAIN')
     update_parser.add_argument('-t', '--template', help='Template to set', metavar='TEMPLATE')
+    update_parser.add_argument('--cloudinit', action='store_true', help='Remove Cloudinit Information from vm')
     update_parser.add_argument('name', metavar='VMNAME')
     update_parser.set_defaults(func=update)
 

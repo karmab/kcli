@@ -57,3 +57,4 @@ GATEWAY = None
 NETMASKS = []
 SHAREDKEY = False
 ENABLEROOT = True
+PLANVIEW = False

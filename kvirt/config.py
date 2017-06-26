@@ -4,7 +4,7 @@
 Kvirt config class
 """
 
-from kvirt.defaults import NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, RESERVEHOST, START, NESTED, TUNNEL, REPORTURL, REPORTDIR, REPORT, REPORTALL, INSECURE, TEMPLATES, TEMPLATESCOMMANDS, KEYS, CMDS, DNS, DOMAIN, SCRIPTS, FILES, ISO, NETMASKS, GATEWAY, SHAREDKEY, TEMPLATE, ENABLEROOT
+from kvirt.defaults import NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, RESERVEHOST, START, NESTED, TUNNEL, REPORTURL, REPORTDIR, REPORT, REPORTALL, INSECURE, TEMPLATES, TEMPLATESCOMMANDS, KEYS, CMDS, DNS, DOMAIN, SCRIPTS, FILES, ISO, NETMASKS, GATEWAY, SHAREDKEY, TEMPLATE, ENABLEROOT, PLANVIEW
 from kvirt import ansibleutils
 from kvirt import dockerutils
 from kvirt import nameutils
@@ -86,6 +86,12 @@ class Kconfig:
         defaults['gateway'] = default.get('gateway', GATEWAY)
         defaults['sharedkey'] = default.get('sharedkey', SHAREDKEY)
         defaults['enableroot'] = default.get('enableroot', ENABLEROOT)
+        defaults['planview'] = default.get('planview', PLANVIEW)
+        currentplanfile = "%s/.kcli/plan" % os.environ.get('HOME')
+        if os.path.exists(currentplanfile):
+            self.currentplan = open(currentplanfile).read().strip()
+        else:
+            self.currentplan = 'kvirt'
         self.default = defaults
         profilefile = default.get('profiles', "%s/.kcli/profiles.yml" % os.environ.get('HOME'))
         profilefile = os.path.expanduser(profilefile)
@@ -144,6 +150,7 @@ class Kconfig:
         self.gateway = options.get('gateway', self.default['gateway'])
         self.sharedkey = options.get('sharedkey', self.default['sharedkey'])
         self.enableroot = options.get('enableroot', self.default['enableroot'])
+        self.planview = options.get('planview', self.default['planview'])
         self.dns = options.get('dns', self.default['dns'])
         self.domain = options.get('domain', self.default['domain'])
         self.scripts = options.get('scripts', self.default['scripts'])

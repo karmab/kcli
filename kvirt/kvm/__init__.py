@@ -1190,6 +1190,28 @@ class Kvirt(Kbase):
         conn.defineXML(newxml)
         return {'result': 'success'}
 
+    def remove_cloudinit(self, name):
+        conn = self.conn
+        try:
+            vm = conn.lookupByName(name)
+            xml = vm.XMLDesc(0)
+            root = ET.fromstring(xml)
+        except:
+            print("VM %s not found" % name)
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        for element in root.getiterator('disk'):
+            disktype = element.get('device')
+            if disktype == 'cdrom':
+                source = element.find('source')
+                path = source.get('file')
+                if source is None:
+                    break
+                volume = conn.storageVolLookupByPath(path)
+                volume.delete(0)
+                element.remove(source)
+        newxml = ET.tostring(root)
+        conn.defineXML(newxml)
+
     def update_start(self, name, start=True):
         conn = self.conn
         try:
