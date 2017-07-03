@@ -19,12 +19,11 @@ lb:
  scripts: 
   - ~/register.sh
   - subscription.sh
-  - advanced/install1.sh
  files:
   - path: /root/hosts
     origin: advanced/hosts
   - path: /root/install.sh
-    origin: advanced/install2.sh
+    origin: advanced/install.sh
     mode: 700
 
 master01:
