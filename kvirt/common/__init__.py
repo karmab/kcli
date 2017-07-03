@@ -102,8 +102,11 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                     nicname = net.get('nic', "eth%d" % index)
                     ip = net.get('ip')
                     netmask = net.get('mask')
+                    noconf = net.get('noconf')
                 metadata += "  auto %s\n" % nicname
-                if ip is not None and netmask is not None and not reserveip:
+                if noconf is not None:
+                    metadata += "  iface %s inet manual\n" % nicname
+                elif ip is not None and netmask is not None and not reserveip:
                     metadata += "  iface %s inet static\n" % nicname
                     metadata += "  address %s\n" % ip
                     metadata += "  netmask %s\n" % netmask

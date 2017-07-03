@@ -446,6 +446,9 @@ nets:
 ```
 
 Within a net section, you can use name, nic, IP, mac, mask, gateway and alias as keys.
+
+You can also use  *noconf: true* to only add the nic with no configuration done in the vm
+
 Note that up to 8 IPS can also be provided on command line when creating a single vm (with the flag -1, -2, -3,-4,...)
 
 ## IP, DNS and HOST Reservations
