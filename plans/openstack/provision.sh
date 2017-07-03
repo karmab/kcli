@@ -21,8 +21,8 @@ OLD_PASSWORD=`grep PASSWORD /root/keystonerc_admin | cut -f2 -d'='`
 openstack user password set  --original-password $OLD_PASSWORD --password $ADMIN_PASSWORD || openstack user set --password $ADMIN_PASSWORD admin || keystone password-update --new-password $ADMIN_PASSWORD
 sed -i "s/OS_PASSWORD=.*/OS_PASSWORD=$ADMIN_PASSWORD/" ~/keystonerc_admin
 source ~/keystonerc_testk
-wget http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
-glance image-create --name "cirros" --disk-format qcow2 --container-format bare --file cirros-0.3.4-x86_64-disk.img
+curl http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img > /tmp/c.img
+glance image-create --name "cirros" --disk-format qcow2 --container-format bare --file /tmp/c.img
 tail -1 /root/.ssh/authorized_keys > ~/testk.pub
 nova keypair-add --pub-key ~/testk.pub testk
 neutron net-create private

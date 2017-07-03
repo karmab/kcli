@@ -1,27 +1,41 @@
 centos:
  template: CentOS-7-x86_64-GenericCloud.qcow2
  numcpus: 2
+ disks:
+  - size: 10
+ reservedns: true
+ nets:
+  - name: default
+ cmds:
+  - echo unix1234 | passwd --stdin root
+
+rhel:
+ template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+ numcpus: 2
+ nets:
+  - default
+ disks:
+  - size: 10
+ cmds:
+  - echo unix1234 | passwd --stdin root
+ scripts: 
+  - ~/register.sh
+
+debian:
+ template: debian-8-openstack-amd64.qcow2
+ numcpus: 1
  memory: 1024
- nets: 
+ nets:
   - default
  pool: default
  cmds: 
-  - echo magico | passwd --stdin root
-  - yum -y install nmap
+  - echo unix1234 | passwd --stdin root
 
-centos27:
- template: CentOS-7-x86_64-GenericCloud.qcow2
- numcpus: 2
- nets: 
-  - name: localnet
-    mask: 255.255.255.0
-    gateway: 192.168.0.254
-  - private
- pool: default
- disks:
-  - size: 10
-  - size: 2
-    thin: false
- keys:
-  - ssh-rsa XXX
-  - ssh-rsa YYY
+ubuntu:
+ template: xenial-server-cloudimg-amd64-disk1.img
+ numcpus: 1
+ memory: 2048
+ nets:
+  - default
+ cmds: 
+  - echo unix1234 | passwd --stdin root

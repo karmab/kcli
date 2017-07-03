@@ -24,7 +24,7 @@ lb:
   - path: /root/hosts
     origin: advanced/hosts
   - path: /root/install.sh
-    origin: advanced/install1.sh
+    origin: advanced/install2.sh
     mode: 700
 
 master01:
