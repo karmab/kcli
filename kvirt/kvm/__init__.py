@@ -416,27 +416,26 @@ class Kvirt(Kbase):
         status = {0: 'down', 1: 'up'}
         try:
             vm = conn.lookupByName(name)
-            vm = conn.lookupByName(name)
-            if status[vm.isActive()] == "up":
-                return {'result': 'success'}
-            else:
-                vm.create()
-                return {'result': 'success'}
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
+        if status[vm.isActive()] == "up":
+            return {'result': 'success'}
+        else:
+            vm.create()
+            return {'result': 'success'}
 
     def stop(self, name):
         conn = self.conn
         status = {0: 'down', 1: 'up'}
         try:
             vm = conn.lookupByName(name)
-            if status[vm.isActive()] == "down":
-                return {'result': 'success'}
-            else:
-                vm.destroy()
-                return {'result': 'success'}
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
+        if status[vm.isActive()] == "down":
+            return {'result': 'success'}
+        else:
+            vm.destroy()
+            return {'result': 'success'}
 
     def snapshot(self, name, base, revert=False, delete=False, listing=False):
         conn = self.conn
@@ -480,7 +479,10 @@ class Kvirt(Kbase):
     def restart(self, name):
         conn = self.conn
         status = {0: 'down', 1: 'up'}
-        vm = conn.lookupByName(name)
+        try:
+            vm = conn.lookupByName(name)
+        except:
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
         if status[vm.isActive()] == "down":
             return {'result': 'success'}
         else:
@@ -572,7 +574,6 @@ class Kvirt(Kbase):
                     if mac in leases:
                         ips.append(leases[mac])
                 if ips:
-                    # ip = ips[-1]
                     ip = ips[0]
                 else:
                     ip = ''

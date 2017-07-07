@@ -20,10 +20,10 @@ def start(args):
     global config
     k = config.k
     if container:
-        common.pprint("Started container %s..." % name, color='green')
+        common.pprint("Starting container %s..." % name, color='green')
         dockerutils.start_container(k, name)
     else:
-        common.pprint("Started vm %s..." % name, color='green')
+        common.pprint("Starting vm %s..." % name, color='green')
         result = k.start(name)
         code = common.handle_response(result, name, element='', action='started')
         os._exit(code)
@@ -36,10 +36,10 @@ def stop(args):
     global config
     k = config.k
     if container:
-        common.pprint("Stopped container %s..." % name, color='green')
+        common.pprint("Stopping container %s..." % name, color='green')
         dockerutils.stop_container(k, name)
     else:
-        common.pprint("Stopped vm %s..." % name, color='green')
+        common.pprint("Stopping vm %s..." % name, color='green')
         result = k.stop(name)
         code = common.handle_response(result, name, element='', action='stopped')
         os._exit(code)
@@ -73,7 +73,7 @@ def delete(args):
     if not yes:
         common.confirm("Are you sure?")
     if container:
-        common.pprint("container %s deleted" % name, color='red')
+        common.pprint("Deleting container %s" % name, color='red')
         dockerutils.delete_container(k, name)
     else:
         result = k.delete(name, snapshots=snapshots)
@@ -535,7 +535,7 @@ def scp(args):
         destination = destination.split(':')[1]
         download = False
     else:
-        common.pprint("Couldnt run scp", color='red')
+        common.pprint("Couldn't run scp", color='red')
         return
     if '@' in name and len(name.split('@')) == 2:
         user = name.split('@')[0]
@@ -546,7 +546,7 @@ def scp(args):
     if scpcommand is not None:
         os.system(scpcommand)
     else:
-        common.pprint("Couldnt run scp", color='red')
+        common.pprint("Couldn't run scp", color='red')
 
 
 def network(args):

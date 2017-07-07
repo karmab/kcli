@@ -11,7 +11,7 @@ sed -i "s/OS_TENANT_NAME=admin/OS_TENANT_NAME=testk/" ~/keystonerc_testk
 sed -i "s/OS_PROJECT_NAME=admin/OS_PROJECT_NAME=testk/" ~/keystonerc_testk
 sed -i "s/keystone_admin/keystone_testk/" ~/keystonerc_testk
 source ~/keystonerc_admin
-nova flavor-list | grep -q m1.tiny || openstack flavor create --public m1.tiny --id auto --ram 256 --disk 0 --vcpus 1 --rxtx-factor 1
+nova flavor-list | grep -q m1.tiny || nova flavor-create --is-public true m1.tiny auto 256 0 1 || openstack flavor create --public m1.tiny --id auto --ram 256 --disk 0 --vcpus 1 --rxtx-factor 1
 openstack project create testk
 openstack user create  --project testk --password testk testk
 openstack role add --user=testk --project=testk admin

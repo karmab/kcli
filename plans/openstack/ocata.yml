@@ -1,6 +1,6 @@
-osp:
+ocata:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
- memory: 6144
+ memory: 8096
  numcpus: 2
  disks: 
   - size: 10
@@ -8,6 +8,12 @@ osp:
  nets:
  - default
  pool: default
+ cpumodel: host-model
+ cpuflags:
+  - name: arat
+    enable: false
+  - name: clflushopt
+    enable: false
  scripts: 
   - ~/register.sh
   - subscription.sh
