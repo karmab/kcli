@@ -494,6 +494,7 @@ class Kvirt(Kbase):
         hostname = conn.getHostname()
         cpus = conn.getCPUMap()[0]
         memory = conn.getInfo()[1]
+        print dir(conn)
         print("Host:%s Cpu:%s Memory:%sMB\n" % (hostname, cpus, memory))
         for pool in conn.listStoragePools():
             poolname = pool
