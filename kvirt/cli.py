@@ -524,7 +524,6 @@ def ssh(args):
         name = name.split('@')[1]
     else:
         user = None
-    print cmd
     sshcommand = k.ssh(name, user=user, local=l, remote=r, tunnel=tunnel, insecure=insecure, cmd=cmd)
     if sshcommand is not None:
         os.system(sshcommand)
