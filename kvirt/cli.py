@@ -15,34 +15,42 @@ import yaml
 
 def start(args):
     """Start vm/container"""
-    name = args.name
+    names = args.names
     container = args.container
     global config
     k = config.k
     if container:
-        common.pprint("Starting container %s..." % name, color='green')
-        dockerutils.start_container(k, name)
+        for name in names:
+            common.pprint("Starting container %s..." % name, color='green')
+            dockerutils.start_container(k, name)
     else:
-        common.pprint("Starting vm %s..." % name, color='green')
-        result = k.start(name)
-        code = common.handle_response(result, name, element='', action='started')
-        os._exit(code)
+        codes = []
+        for name in names:
+            common.pprint("Starting vm %s..." % name, color='green')
+            result = k.start(name)
+            code = common.handle_response(result, name, element='', action='started')
+            codes.append(code)
+        os._exit(1 if 1 in codes else 0)
 
 
 def stop(args):
     """Stop vm/container"""
-    name = args.name
+    names = args.names
     container = args.container
     global config
     k = config.k
     if container:
-        common.pprint("Stopping container %s..." % name, color='green')
-        dockerutils.stop_container(k, name)
+        for name in names:
+            common.pprint("Starting container %s..." % name, color='green')
+            dockerutils.stop_container(k, name)
     else:
-        common.pprint("Stopping vm %s..." % name, color='green')
-        result = k.stop(name)
-        code = common.handle_response(result, name, element='', action='stopped')
-        os._exit(code)
+        codes = []
+        for name in names:
+            common.pprint("Starting vm %s..." % name, color='green')
+            result = k.stop(name)
+            code = common.handle_response(result, name, element='', action='stopped')
+            codes.append(code)
+        os._exit(1 if 1 in codes else 0)
 
 
 def console(args):
@@ -64,7 +72,7 @@ def console(args):
 
 def delete(args):
     """Delete vm/container"""
-    name = args.name
+    names = args.names
     container = args.container
     snapshots = args.snapshots
     yes = args.yes
@@ -73,17 +81,21 @@ def delete(args):
     if not yes:
         common.confirm("Are you sure?")
     if container:
-        common.pprint("Deleting container %s" % name, color='red')
-        dockerutils.delete_container(k, name)
+        for name in names:
+            common.pprint("Deleting container %s" % name, color='red')
+            dockerutils.delete_container(k, name)
     else:
-        result = k.delete(name, snapshots=snapshots)
-        if result['result'] == 'success':
-            common.pprint("vm %s deleted" % name, color='red')
-            os._exit(0)
-        else:
-            reason = result['reason']
-            common.pprint("Could not delete vm %s because %s" % (name, reason), color='red')
-            os._exit(1)
+        codes = []
+        for name in names:
+            result = k.delete(name, snapshots=snapshots)
+            if result['result'] == 'success':
+                common.pprint("vm %s deleted" % name, color='red')
+                codes.append(0)
+            else:
+                reason = result['reason']
+                common.pprint("Could not delete vm %s because %s" % (name, reason), color='red')
+                codes.append(1)
+        os._exit(1 if 1 in codes else 0)
 
 
 def download(args):
@@ -494,7 +506,6 @@ def plan(args):
 def ssh(args):
     """Ssh into vm"""
     name = args.name
-    name
     l = args.L
     r = args.R
     global config
@@ -511,6 +522,7 @@ def ssh(args):
         name = name.split('@')[1]
     else:
         user = None
+    print cmd
     sshcommand = k.ssh(name, user=user, local=l, remote=r, tunnel=tunnel, insecure=insecure, cmd=cmd)
     if sshcommand is not None:
         os.system(sshcommand)
@@ -749,7 +761,7 @@ def cli():
     delete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     delete_parser.add_argument('--container', action='store_true')
     delete_parser.add_argument('--snapshots', action='store_true', help='Remove snapshots if needed')
-    delete_parser.add_argument('name', metavar='VMNAME')
+    delete_parser.add_argument('names', metavar='VMNAMES', nargs='+')
     delete_parser.set_defaults(func=delete)
 
     disk_info = 'Add/Delete disk of vm'
@@ -873,13 +885,13 @@ def cli():
     start_info = 'Start vm/container'
     start_parser = subparsers.add_parser('start', description=start_info, help=start_info)
     start_parser.add_argument('-c', '--container', action='store_true')
-    start_parser.add_argument('name')
+    start_parser.add_argument('names', metavar='VMNAMES', nargs='+')
     start_parser.set_defaults(func=start)
 
     stop_info = 'Stop vm/container'
     stop_parser = subparsers.add_parser('stop', description=stop_info, help=stop_info)
     stop_parser.add_argument('-c', '--container', action='store_true')
-    stop_parser.add_argument('name', metavar='VMNAME')
+    stop_parser.add_argument('names', metavar='VMNAMES', nargs='+')
     stop_parser.set_defaults(func=stop)
 
     switch_info = 'Switch host'
