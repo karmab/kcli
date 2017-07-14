@@ -478,12 +478,14 @@ def plan(args):
     noautostart = args.noautostart
     container = args.container
     inputfile = args.inputfile
+    topologyfile = args.topologyfile
     start = args.start
     stop = args.stop
     delete = args.delete
     delay = args.delay
     use = args.use
     yes = args.yes
+    scale = args.scale
     global config
     if use is not None:
         rootdir = os.path.expanduser('~/.kcli')
@@ -499,7 +501,7 @@ def plan(args):
             plan = nameutils.get_random_name()
     if delete and not yes:
         common.confirm("Are you sure?")
-    config.plan(plan, ansible=ansible, get=get, path=path, autostart=autostart, container=container, noautostart=noautostart, inputfile=inputfile, start=start, stop=stop, delete=delete, delay=delay)
+    config.plan(plan, ansible=ansible, get=get, path=path, autostart=autostart, container=container, noautostart=noautostart, inputfile=inputfile, start=start, stop=stop, delete=delete, delay=delay, topologyfile=topologyfile, scale=scale)
     return 0
 
 
@@ -831,6 +833,7 @@ def cli():
     plan_info = 'Create/Delete/Stop/Start vms from plan file'
     plan_parser = subparsers.add_parser('plan', description=plan_info, help=plan_info)
     plan_parser.add_argument('-A', '--ansible', help='Generate ansible inventory', action='store_true')
+    plan_parser.add_argument('-d', '--delete', action='store_true')
     plan_parser.add_argument('-g', '--get', help='Download specific plan(s). Use --path for specific directory', metavar='URL')
     plan_parser.add_argument('-p', '--path', default='plans', help='Path where to download plans. Defaults to plan', metavar='PATH')
     plan_parser.add_argument('-a', '--autostart', action='store_true', help='Set all vms from plan to autostart')
@@ -839,10 +842,11 @@ def cli():
     plan_parser.add_argument('-f', '--inputfile', help='Input file')
     plan_parser.add_argument('-s', '--start', action='store_true', help='start all vms from plan')
     plan_parser.add_argument('-w', '--stop', action='store_true')
-    plan_parser.add_argument('-d', '--delete', action='store_true')
-    plan_parser.add_argument('-t', '--delay', default=0, help="Delay between each vm's creation", metavar='DELAY')
+    plan_parser.add_argument('--scale', help='Scale plan using provided parameters')
+    plan_parser.add_argument('-t', '--topologyfile', help='Topology file')
     plan_parser.add_argument('-u', '--use', nargs='?', const='kvirt', help='Plan to set as current. Defaults to kvirt', metavar='USE')
     plan_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    plan_parser.add_argument('--delay', default=0, help="Delay between each vm's creation", metavar='DELAY')
     plan_parser.add_argument('plan', metavar='PLAN', nargs='?')
     plan_parser.set_defaults(func=plan)
 

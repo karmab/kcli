@@ -364,7 +364,7 @@ class Kconfig:
                     results.append([profile, image, nets, ports, volumes, cmd])
         return results
 
-    def plan(self, plan, ansible=False, get=None, path='plans', autostart=False, container=False, noautostart=False, inputfile=None, start=False, stop=False, delete=False, delay=0, force=True):
+    def plan(self, plan, ansible=False, get=None, path='plans', autostart=False, container=False, noautostart=False, inputfile=None, start=False, stop=False, delete=False, delay=0, force=True, topologyfile=None, scale=None):
         """Create/Delete/Stop/Start vms from plan file"""
         k = self.k
         newvms = []
@@ -585,6 +585,35 @@ class Kconfig:
                         return
                     k.reserve_dns(name=dnsentry, nets=[dnsnet], domain=dnsdomain, ip=dnsip, alias=dnsalias, force=True)
             if vmentries:
+                topentries = {}
+                if scale is not None:
+                    common.pprint("Applying scale", color='green')
+                    scale = scale.split(',')
+                    for s in scale:
+                        s = s.split('=')
+                        if len(s) == 2 and s[1].isdigit():
+                            topentries[s[0]] = s[1]
+                elif topologyfile is not None:
+                    common.pprint("Processing Topology File %s..." % topologyfile, color='green')
+                    topologyfile = os.path.expanduser(topologyfile)
+                    if not os.path.exists(topologyfile):
+                        common.pprint("Topology file %s not found.Ignoring...." % topologyfile, color='blue')
+                    else:
+                        with open(topologyfile, 'r') as topentries:
+                            topentries = yaml.load(topentries)
+                if topentries:
+                    for entry in topentries:
+                        if isinstance(topentries[entry], str) and not topentries[entry].isdigit():
+                            continue
+                        elif not isinstance(topentries[entry], int):
+                            continue
+                        number = int(topentries[entry])
+                        if entry in [n[:-2] for n in vmentries]:
+                            for i in range(1, number + 1):
+                                newentry = "%s%0.2d" % (entry, i)
+                                if newentry not in vmentries:
+                                    entries[newentry] = entries["%s01" % entry]
+                                    vmentries.append(newentry)
                 common.pprint("Deploying Vms...", color='green')
                 for name in vmentries:
                     profile = entries[name]
