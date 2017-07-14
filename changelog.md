@@ -1,5 +1,20 @@
 # Changelog
 
+## 8.0 (2017-07-14)
+
+- topology feature allowing to indicate with a file how many of a given vm type are to be deployed in a plan. Also allows to scale plan directly from command line
+- start/stop/delete several vms at once
+- add optional --domain parameter for networks to use custom dns domains
+- dns alias
+- debian9 template
+- minimal jenkins plan
+- temporarily (?) remove virtualbox indications as requirements are broken
+- allow to remove cloudinit iso
+- allow noconf for nics
+- rename cloudinit generated isos to .ISO so they dont appear when listing isos
+- updated openshift upstream plan to 3.6
+- indicate pxe server for network
+
 ## 7.20 (2017-05-26)
 
 - move config and profile to ~/.kcli

@@ -5,7 +5,7 @@
 #
 
 Name:           kcli
-Version:        7.20
+Version:        8.0
 Release:        1
 Url:            http://github.com/karmab/kcli
 Summary:        Libvirt/VirtualBox wrapper on steroids
@@ -60,6 +60,8 @@ rm -rf %{buildroot}
 %attr(0755,root,root) %{_bindir}/kweb
 
 %changelog
+* Fri Jul 14 2017 Karim Boumedhel <karimboumedhel@gmail.com> 8.0
+- 8.0 Release
 * Wed May 24 2017 Karim Boumedhel <karimboumedhel@gmail.com> 7.18-1
 - Fix dynamic inventory
 * Thu May 11 2017 Karim Boumedhel <karimboumedhel@gmail.com> 7.13-2

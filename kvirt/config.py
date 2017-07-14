@@ -20,7 +20,7 @@ from time import sleep
 import webbrowser
 import yaml
 
-__version__ = '7.20'
+__version__ = '8.0'
 
 
 class Kconfig:
