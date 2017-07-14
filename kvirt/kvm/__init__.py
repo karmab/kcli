@@ -1584,7 +1584,7 @@ class Kvirt(Kbase):
                 os.system(cmd)
         return {'result': 'success'}
 
-    def create_network(self, name, cidr, dhcp=True, nat=True, domain=None, plan='kvirt'):
+    def create_network(self, name, cidr, dhcp=True, nat=True, domain=None, plan='kvirt', pxe=None):
         conn = self.conn
         networks = self.list_networks()
         cidrs = [network['cidr'] for network in networks.values()]
@@ -1602,8 +1602,11 @@ class Kvirt(Kbase):
             start = range[2]
             end = range[-2]
             dhcpxml = """<dhcp>
-                    <range start='%s' end='%s'/>
-                    </dhcp>""" % (start, end)
+                    <range start='%s' end='%s'/>""" % (start, end)
+            if pxe is not None:
+                dhcpxml = """%s
+                          <bootp file='pxelinux.0' server='%s'/>""" % (dhcpxml, pxe)
+            dhcpxml = "%s</dhcp>" % dhcpxml
         else:
             dhcpxml = ''
         if nat:

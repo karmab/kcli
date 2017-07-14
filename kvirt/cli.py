@@ -557,6 +557,7 @@ def network(args):
     cidr = args.cidr
     nodhcp = args.nodhcp
     domain = args.domain
+    pxe = args.pxe
     global config
     k = config.k
     if name is None:
@@ -571,7 +572,7 @@ def network(args):
         else:
             nat = True
         dhcp = not nodhcp
-        result = k.create_network(name=name, cidr=cidr, dhcp=dhcp, nat=nat, domain=domain)
+        result = k.create_network(name=name, cidr=cidr, dhcp=dhcp, nat=nat, domain=domain, pxe=pxe)
         common.handle_response(result, name, element='Network ')
 
 
@@ -803,6 +804,7 @@ def cli():
     network_parser.add_argument('-c', '--cidr', help='Cidr of the net', metavar='CIDR')
     network_parser.add_argument('--nodhcp', action='store_true', help='Disable dhcp on the net')
     network_parser.add_argument('--domain', help='DNS domain. Defaults to network name')
+    network_parser.add_argument('-p', '--pxe', help='Ip of a Pxe Server', metavar='PXE')
     network_parser.add_argument('name', metavar='NETWORK')
     network_parser.set_defaults(func=network)
 

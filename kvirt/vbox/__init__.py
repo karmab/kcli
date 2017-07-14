@@ -929,7 +929,7 @@ class Kbox(Kbase):
         os.system(cmd)
         return {'result': 'success'}
 
-    def create_network(self, name, cidr, dhcp=True, nat=True, domain=None, plan='kvirt'):
+    def create_network(self, name, cidr, dhcp=True, nat=True, domain=None, plan='kvirt', pxe=None):
         conn = self.conn
         network = conn.create_nat_network(name)
         network.network = cidr

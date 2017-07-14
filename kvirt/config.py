@@ -527,7 +527,8 @@ class Kconfig:
                         continue
                     dhcp = netprofile.get('dhcp', True)
                     domain = netprofile.get('domain')
-                    result = k.create_network(name=net, cidr=cidr, dhcp=dhcp, nat=nat, domain=domain, plan=plan)
+                    pxe = netprofile.get('pxe')
+                    result = k.create_network(name=net, cidr=cidr, dhcp=dhcp, nat=nat, domain=domain, plan=plan, pxe=pxe)
                     common.handle_response(result, net, element='Network ')
             if poolentries:
                 common.pprint("Deploying Pool...", color='green')
