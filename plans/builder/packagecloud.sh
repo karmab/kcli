@@ -1,6 +1,6 @@
 
-version="7.20-1"
-build="00557098"
+version="8.1-1"
+build="00579463"
 apt-get update
 apt-get -y install wget ruby alien
 gem install package_cloud
@@ -14,3 +14,4 @@ package_cloud push karmab/kcli/ubuntu/zesty /root/*deb
 package_cloud push karmab/kcli/ubuntu/xenial /root/*deb
 package_cloud push karmab/kcli/ubuntu/yakkety /root/*deb
 package_cloud push karmab/kcli/debian/jessie /root/*deb
+package_cloud push karmab/kcli/debian/stretch /root/*deb
