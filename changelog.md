@@ -1,8 +1,8 @@
 # Changelog
 
-## 8.1 (2017-07-14)
+## 8.2 (2017-07-14)
 
-- stupid print when running kcli ssh
+- stupid print when running kcli ssh and proper cast
 
 # 8.0 (2017-07-14)
 

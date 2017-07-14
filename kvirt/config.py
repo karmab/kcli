@@ -20,7 +20,7 @@ from time import sleep
 import webbrowser
 import yaml
 
-__version__ = '8.1'
+__version__ = '8.2'
 
 
 class Kconfig:
@@ -592,7 +592,7 @@ class Kconfig:
                     for s in scale:
                         s = s.split('=')
                         if len(s) == 2 and s[1].isdigit():
-                            topentries[s[0]] = s[1]
+                            topentries[s[0]] = int(s[1])
                 elif topologyfile is not None:
                     common.pprint("Processing Topology File %s..." % topologyfile, color='green')
                     topologyfile = os.path.expanduser(topologyfile)

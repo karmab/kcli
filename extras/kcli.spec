@@ -5,7 +5,7 @@
 #
 
 Name:           kcli
-Version:        8.1
+Version:        8.2
 Release:        1
 Url:            http://github.com/karmab/kcli
 Summary:        Libvirt/VirtualBox wrapper on steroids
@@ -60,7 +60,7 @@ rm -rf %{buildroot}
 %attr(0755,root,root) %{_bindir}/kweb
 
 %changelog
-* Fri Jul 14 2017 Karim Boumedhel <karimboumedhel@gmail.com> 8.1
+* Fri Jul 14 2017 Karim Boumedhel <karimboumedhel@gmail.com> 8.2
 - Remove kcli ssh print
 * Wed May 24 2017 Karim Boumedhel <karimboumedhel@gmail.com> 7.18-1
 * Fri Jul 14 2017 Karim Boumedhel <karimboumedhel@gmail.com> 8.0
