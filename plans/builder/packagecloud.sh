@@ -1,8 +1,9 @@
 
-version="8.1-1"
-build="00579463"
+version="8.2-1"
+build="00579471"
 apt-get update
 apt-get -y install wget ruby alien
+export HOME=/root
 gem install package_cloud
 #wget -P /root ftp://rpmfind.net/linux/fedora-secondary/development/rawhide/Everything/i386/os/Packages/p/python-iptools-0.6.1-10.fc26.noarch.rpm
 #wget -P /root ftp://195.220.108.108/linux/fedora/linux/development/rawhide/Everything/armhfp/os/Packages/p/python2-docker-pycreds-0.2.1-4.fc26.noarch.rpm

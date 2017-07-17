@@ -391,7 +391,7 @@ class Kbox(Kbase):
             serialport = serial.path
             os.system("nc 127.0.0.1 %s" % serialport)
 
-    def info(self, name):
+    def info(self, name, output='plain'):
         starts = {False: 'no', True: 'yes'}
         conn = self.conn
         try:

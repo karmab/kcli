@@ -113,12 +113,16 @@ def download(args):
 
 def info(args):
     """Get info on vm"""
-    name = args.name
+    names = args.names
+    output = args.output
     global config
     k = config.k
-    result = k.info(name)
-    code = common.handle_response(result, name, quiet=True)
-    os._exit(code)
+    codes = []
+    for name in names:
+        result = k.info(name, output=output)
+        code = common.handle_response(result, name, quiet=True)
+        codes.append(code)
+    os._exit(1 if 1 in codes else 0)
 
 
 def host(args):
@@ -789,9 +793,10 @@ def cli():
     host_parser.add_argument('-s', '--switch', help='Switch To indicated client', metavar='CLIENT')
     host_parser.set_defaults(func=host)
 
-    info_info = 'Info vm'
+    info_info = 'Info vms'
     info_parser = subparsers.add_parser('info', description=info_info, help=info_info)
-    info_parser.add_argument('name', help='VMNAME')
+    info_parser.add_argument('-o', '--output', choices=['plain', 'yaml'], help='Format of the output')
+    info_parser.add_argument('names', help='VMNAMES', nargs='+')
     info_parser.set_defaults(func=info)
 
     list_info = 'List hosts, profiles, templates, isos,...'
@@ -885,13 +890,13 @@ def cli():
     ssh_parser.add_argument('name', metavar='VMNAME', nargs='+')
     ssh_parser.set_defaults(func=ssh)
 
-    start_info = 'Start vm/container'
+    start_info = 'Start vms/containers'
     start_parser = subparsers.add_parser('start', description=start_info, help=start_info)
     start_parser.add_argument('-c', '--container', action='store_true')
     start_parser.add_argument('names', metavar='VMNAMES', nargs='+')
     start_parser.set_defaults(func=start)
 
-    stop_info = 'Stop vm/container'
+    stop_info = 'Stop vms/containers'
     stop_parser = subparsers.add_parser('stop', description=stop_info, help=stop_info)
     stop_parser.add_argument('-c', '--container', action='store_true')
     stop_parser.add_argument('names', metavar='VMNAMES', nargs='+')

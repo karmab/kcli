@@ -64,7 +64,7 @@ class Kbase(object):
         print("not implemented")
         return
 
-    def info(self, name):
+    def info(self, name, output='plain'):
         print("not implemented")
         return
 
