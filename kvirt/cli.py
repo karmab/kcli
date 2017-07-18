@@ -631,7 +631,7 @@ def bootstrap(args):
     if os.path.exists(path):
         copyfile(path, "%s.bck" % path)
     if not os.path.exists(rootdir):
-        os.makedirs('~/.kcli')
+        os.makedirs(rootdir)
     with open(path, 'w') as conf_file:
         yaml.safe_dump(ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     common.pprint("Environment bootstrapped!", color='green')
