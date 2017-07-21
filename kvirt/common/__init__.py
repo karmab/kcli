@@ -101,7 +101,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 elif isinstance(net, dict):
                     nicname = net.get('nic', "eth%d" % index)
                     ip = net.get('ip')
-                    netmask = net.get('mask')
+                    netmask = next((e for e in [net.get('mask'), net.get('netmask')] if e is not None), None)
                     noconf = net.get('noconf')
                 metadata += "  auto %s\n" % nicname
                 if noconf is not None:
