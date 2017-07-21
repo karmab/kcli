@@ -363,9 +363,23 @@ def update(args):
     domain = args.domain
     cloudinit = args.cloudinit
     template = args.template
+    net = args.network
     global config
     k = config.k
-    if ip1 is not None:
+    if dns:
+        common.pprint("Creating Dns entry for %s..." % (name), color='green')
+        if net is not None:
+            nets = [net]
+        else:
+            nets = k.vm_ports(name)
+        if nets and domain is None:
+            domain = nets[0]
+        if not nets:
+            return
+        else:
+            common.pprint("Updating ip of vm %s to %s..." % (name, ip1), color='green')
+            k.reserve_dns(name=name, nets=nets, domain=domain, ip=ip1)
+    elif ip1 is not None:
         common.pprint("Updating ip of vm %s to %s..." % (name, ip1), color='green')
         k.update_metadata(name, 'ip', ip1)
     elif cloudinit:
@@ -398,12 +412,6 @@ def update(args):
         if domain is None:
             domain = nets[0]
         k.reserve_host(name, nets, domain)
-    elif dns:
-        common.pprint("Creating Dns entry for vm %s..." % (name), color='green')
-        nets = k.vm_ports(name)
-        if domain is None:
-            domain = nets[0]
-        k.reserve_dns(name, nets, domain)
 
 
 def disk(args):
@@ -910,6 +918,7 @@ def cli():
     update_info = 'Update ip, memory or numcpus'
     update_parser = subparsers.add_parser('update', description=update_info, help=update_info)
     update_parser.add_argument('-1', '--ip1', help='Ip to set', metavar='IP1')
+    update_parser.add_argument('--network', '--net', help='Network to update', metavar='NETWORK')
     update_parser.add_argument('-m', '--memory', help='Memory to set', metavar='MEMORY')
     update_parser.add_argument('-c', '--numcpus', help='Number of cpus to set', metavar='NUMCPUS')
     update_parser.add_argument('-p', '--plan', help='Plan Name to set', metavar='PLAN')
