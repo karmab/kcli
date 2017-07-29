@@ -209,16 +209,16 @@ class Kconfig:
         report = profile.get('report', self.report)
         reportall = profile.get('reportall', self.reportall)
         keys = profile.get('keys', self.keys)
-        cmds = profile.get('cmds', self.cmds)
+        cmds = [c for c in self.cmds + profile.get('cmds')]
         netmasks = profile.get('netmasks', self.netmasks)
         gateway = profile.get('gateway', self.gateway)
         dns = profile.get('dns', self.dns)
         domain = profile.get('domain', self.domain)
-        scripts = profile.get('scripts', self.scripts)
+        scripts = [c for c in self.scripts + profile.get('scripts')]
         files = profile.get('files', self.files)
         enableroot = profile.get('enableroot', self.enableroot)
+        scriptcmds = []
         if scripts:
-            scriptcmds = []
             for script in scripts:
                 script = os.path.expanduser(script)
                 if not os.path.exists(script):
@@ -228,11 +228,7 @@ class Kconfig:
                     scriptlines = [line.strip() for line in open(script).readlines() if line != '\n']
                     if scriptlines:
                         scriptcmds.extend(scriptlines)
-            if scriptcmds:
-                if not cmds:
-                    cmds = scriptcmds
-                else:
-                    cmds = cmds + scriptcmds
+        cmds = cmds + scriptcmds
         if reportall:
             reportcmd = 'curl -s -X POST -d "name=%s&status=Running&report=`cat /var/log/cloud-init.log`" %s/report >/dev/null' % (name, self.reporturl)
             finishcmd = 'curl -s -X POST -d "name=%s&status=OK&report=`cat /var/log/cloud-init.log`" %s/report >/dev/null' % (name, self.reporturl)
@@ -248,10 +244,7 @@ class Kconfig:
                 cmds = results
         elif report:
             reportcmd = ['curl -s -X POST -d "name=%s&status=OK&report=`cat /var/log/cloud-init.log`" %s/report /dev/null' % (name, self.reporturl)]
-            if not cmds:
-                cmds = reportcmd
-            else:
-                cmds = cmds + reportcmd
+            cmds = cmds + reportcmd
         ips = [ip1, ip2, ip3, ip4]
         result = k.create(name=name, plan=plan, profile=profilename, cpumodel=cpumodel, cpuflags=cpuflags, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns), reservehost=bool(reservehost), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=bool(nested), tunnel=tunnel, files=files, enableroot=enableroot)
         if result['result'] != 'success':
@@ -648,7 +641,8 @@ class Kconfig:
                     nets = next((e for e in [profile.get('nets'), customprofile.get('nets'), self.nets] if e is not None))
                     iso = next((e for e in [profile.get('iso'), customprofile.get('iso')] if e is not None), self.iso)
                     keys = next((e for e in [profile.get('keys'), customprofile.get('keys'), self.keys] if e is not None))
-                    cmds = next((e for e in [profile.get('cmds'), customprofile.get('cmds'), self.cmds] if e is not None))
+                    # cmds = next((e for e in [profile.get('cmds'), customprofile.get('cmds'), self.cmds] if e is not None))
+                    cmds = self.cmds + customprofile.get('cmds', []) + profile.get('cmds', [])
                     netmasks = next((e for e in [profile.get('netmasks'), customprofile.get('netmasks'), self.netmasks] if e is not None))
                     gateway = next((e for e in [profile.get('gateway'), customprofile.get('gateway')] if e is not None), self.gateway)
                     dns = next((e for e in [profile.get('dns'), customprofile.get('dns')] if e is not None), self.dns)
@@ -656,7 +650,8 @@ class Kconfig:
                     ips = profile.get('ips')
                     sharedkey = next((e for e in [profile.get('sharedkey'), customprofile.get('sharedkey'), self.sharedkey] if e is not None))
                     enableroot = next((e for e in [profile.get('enableroot'), customprofile.get('enableroot'), self.enableroot] if e is not None))
-                    scripts = next((e for e in [profile.get('scripts'), customprofile.get('scripts'), self.scripts] if e is not None))
+                    # scripts = next((e for e in [profile.get('scripts'), customprofile.get('scripts'), self.scripts] if e is not None))
+                    scripts = self.scripts + customprofile.get('scripts', []) + profile.get('scripts', [])
                     missingscript = False
                     if scripts:
                         scriptcmds = []
@@ -672,10 +667,7 @@ class Kconfig:
                                 if scriptlines:
                                     scriptcmds.extend(scriptlines)
                         if scriptcmds:
-                            if not cmds:
-                                cmds = scriptcmds
-                            else:
-                                cmds = cmds + scriptcmds
+                            cmds = cmds + scriptcmds
                     if missingscript:
                         continue
                     if report:

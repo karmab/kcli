@@ -27,9 +27,9 @@ setup(
         'PyYAML',
         'prettytable',
     ],
-    extra_requires=[
-        'pyvbox',
-    ],
+    extras_require={
+        'vitualbox': ['pyvbox'],
+    },
     entry_points='''
         [console_scripts]
         kcli=kvirt.cli:cli

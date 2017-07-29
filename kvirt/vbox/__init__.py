@@ -37,7 +37,8 @@ class Kbox(Kbase):
     def __init__(self):
         try:
             self.conn = VirtualBox()
-        except Exception:
+        except Exception as e:
+            print(e)
             self.conn = None
 
     def close(self):
