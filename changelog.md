@@ -1,5 +1,14 @@
 # Changelog
 
+## 8.3 (2017-08-21)
+
+- concatenate scripts and commands at all level (host or default)
+- dont handle duplicate scripts and commands
+- report info of vms as yaml
+- dns entries 
+- use netmask keyword instead of mask
+- fix bootstrap bug
+
 ## 8.2 (2017-07-14)
 
 - stupid print when running kcli ssh and proper cast
