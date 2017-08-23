@@ -1,4 +1,4 @@
-yum -y install rhevm-appliance screen ovirt-hosted-engine-setup ovirt-engine-cli
+yum -y install rhevm-appliance screen ovirt-hosted-engine-setup ovirt-engine-cli ovirt-engine-appliance
 sed -i /requiretty/d /etc/sudoers
 hosted-engine --deploy --config-append=/root/answers.conf
 sleep 300

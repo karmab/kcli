@@ -98,6 +98,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                     nicname = "eth%d" % index
                     ip = None
                     netmask = None
+                    noconf = None
                 elif isinstance(net, dict):
                     nicname = net.get('nic', "eth%d" % index)
                     ip = net.get('ip')

@@ -20,7 +20,7 @@ from time import sleep
 import webbrowser
 import yaml
 
-__version__ = '8.3'
+__version__ = '8.4'
 
 
 class Kconfig:
@@ -209,12 +209,12 @@ class Kconfig:
         report = profile.get('report', self.report)
         reportall = profile.get('reportall', self.reportall)
         keys = profile.get('keys', self.keys)
-        cmds = list(set(self.cmds + profile.get('cmds')))
+        cmds = list(set(self.cmds + profile.get('cmds', [])))
         netmasks = profile.get('netmasks', self.netmasks)
         gateway = profile.get('gateway', self.gateway)
         dns = profile.get('dns', self.dns)
         domain = profile.get('domain', self.domain)
-        scripts = list(set(self.scripts + profile.get('scripts')))
+        scripts = list(set(self.scripts + profile.get('scripts', [])))
         files = profile.get('files', self.files)
         enableroot = profile.get('enableroot', self.enableroot)
         scriptcmds = []
