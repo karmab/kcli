@@ -41,12 +41,12 @@ def stop(args):
     k = config.k
     if container:
         for name in names:
-            common.pprint("Starting container %s..." % name, color='green')
+            common.pprint("Stopping container %s..." % name, color='green')
             dockerutils.stop_container(k, name)
     else:
         codes = []
         for name in names:
-            common.pprint("Starting vm %s..." % name, color='green')
+            common.pprint("Stopping vm %s..." % name, color='green')
             result = k.stop(name)
             code = common.handle_response(result, name, element='', action='stopped')
             codes.append(code)
