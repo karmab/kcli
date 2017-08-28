@@ -283,6 +283,11 @@ class Kconfig:
                     f.write("[ssh_connection]\nretries=10\n")
                 print("Running: %s -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
                 os.system("%s -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
+        configdir = "%s/.kcli/" % os.environ.get('HOME')
+        if not os.path.exists(configdir):
+            os.mkdir(configdir)
+        with open("%s&vm" % configdir, 'w') as v:
+            v.write(name)
         return {'result': 'success'}
 
     def list_plans(self):

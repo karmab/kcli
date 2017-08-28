@@ -522,6 +522,14 @@ def plan(args):
 def ssh(args):
     """Ssh into vm"""
     name = args.name
+    lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
+    if not name:
+        if os.path.exists(lastvm):
+            name = [open(lastvm).read().strip()]
+            common.pprint("Using %s as vm" % name[0], color='green')
+        else:
+            common.pprint("Missing Vm's name", color='red')
+            return
     l = args.L
     r = args.R
     global config
@@ -897,7 +905,8 @@ def cli():
     ssh_parser = subparsers.add_parser('ssh', description=ssh_info, help=ssh_info)
     ssh_parser.add_argument('-L', help='Local Forwarding', metavar='LOCAL')
     ssh_parser.add_argument('-R', help='Remote Forwarding', metavar='REMOTE')
-    ssh_parser.add_argument('name', metavar='VMNAME', nargs='+')
+    # ssh_parser.add_argument('name', metavar='VMNAME', nargs='+')
+    ssh_parser.add_argument('name', metavar='VMNAME', nargs='*')
     ssh_parser.set_defaults(func=ssh)
 
     start_info = 'Start vms/containers'
