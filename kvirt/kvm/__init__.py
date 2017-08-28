@@ -1534,7 +1534,7 @@ class Kvirt(Kbase):
                         return 1
             elif self.protocol == 'ssh':
                 cmd1 = 'ssh -p %s %s@%s "test -d %s || mkdir %s"' % (self.port, self.user, self.host, poolpath, poolpath)
-                cmd2 = 'ssh -t %s@%s "sudo chown %s %s"' % (self.user, self.host, user, poolpath)
+                cmd2 = 'ssh -p %s -t %s@%s "sudo chown %s %s"' % (self.port, self.user, self.host, user, poolpath)
                 return1 = os.system(cmd1)
                 if return1 > 0:
                     print("Couldn't create directory %s.Leaving..." % poolpath)

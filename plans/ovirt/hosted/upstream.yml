@@ -25,7 +25,7 @@ rhvnode01:
  nets:
   - default
  disks:
-  - size: 60
+  - size: 70
  pool: default
  domain: default
  reservedns: true
@@ -53,7 +53,7 @@ rhvnode02:
  nets:
   - default
  disks:
-  - size: 60
+  - size: 70
  pool: default
  domain: default
  reservedns: true

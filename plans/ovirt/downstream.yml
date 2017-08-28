@@ -8,6 +8,8 @@ rhv:
     enable: false
   - name: clflushopt
     enable: false
+  - name: vme
+    enable: true
  nets:
   - default
  disks:
