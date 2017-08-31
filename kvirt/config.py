@@ -700,6 +700,12 @@ class Kconfig:
                     common.handle_response(result, name)
                     if result['result'] == 'success':
                         newvms.append(name)
+                        if len(newvms) == 1:
+                            configdir = "%s/.kcli/" % os.environ.get('HOME')
+                            if not os.path.exists(configdir):
+                                os.mkdir(configdir)
+                            with open("%s&vm" % configdir, 'w') as v:
+                                v.write(name)
                     ansible = next((e for e in [profile.get('ansible'), customprofile.get('ansible')] if e is not None), None)
                     if ansible is not None:
                         for element in ansible:
