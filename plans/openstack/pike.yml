@@ -17,5 +17,5 @@ pike:
  scripts: 
   - ~/register.sh
   - subscription.sh
-  - install.sh
+  - install_with_ovn.sh
   - provision.sh

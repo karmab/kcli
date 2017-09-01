@@ -704,7 +704,7 @@ class Kconfig:
                             configdir = "%s/.kcli/" % os.environ.get('HOME')
                             if not os.path.exists(configdir):
                                 os.mkdir(configdir)
-                            with open("%s&vm" % configdir, 'w') as v:
+                            with open("%s/vm" % configdir, 'w') as v:
                                 v.write(name)
                     ansible = next((e for e in [profile.get('ansible'), customprofile.get('ansible')] if e is not None), None)
                     if ansible is not None:
