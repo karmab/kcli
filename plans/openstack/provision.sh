@@ -37,6 +37,4 @@ neutron security-group-rule-create --direction ingress --protocol tcp --port_ran
 neutron security-group-rule-create --protocol icmp --direction ingress  --remote-ip-prefix 0.0.0.0/0 testk
 nova boot --flavor m1.tiny --security-groups testk --key-name testk --image cirros --nic net-id=`neutron net-show private -c id -f value` testk
 sleep 8
-#nova floating-ip-associate testk $EXTERNAL_FLOATING
-nova floating-ip-associate testk $(neutron  floatingip-list -f value -c floating_ip_address  | head -1)
-
+ip=$(neutron  floatingip-list -f value -c floating_ip_address  | head -1) ; nova floating-ip-associate testk $ip || openstack server add floating ip testk $ip
