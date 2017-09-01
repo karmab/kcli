@@ -1,16 +1,1 @@
-rdo:
- template: CentOS-7-x86_64-GenericCloud.qcow2
- memory: 8192
- numcpus: 2
- disks:
-  - size: 10
-  - size: 40
- nets:
-  - default
- pool: default
- cmds:
-  - echo unix1234 | passwd --stdin root
- scripts: 
-  - repo.sh
-  - install.sh
-  - provision.sh
+pike.yml
