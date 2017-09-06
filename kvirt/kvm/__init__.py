@@ -155,6 +155,7 @@ class Kvirt(Kbase):
                 diskpooltype = default_pooltype
                 diskpoolpath = default_poolpath
                 diskwwn = None
+                disktemplate = None
             elif isinstance(disk, int):
                 disksize = disk
                 diskthin = default_diskthin
@@ -163,12 +164,14 @@ class Kvirt(Kbase):
                 diskpooltype = default_pooltype
                 diskpoolpath = default_poolpath
                 diskwwn = None
+                disktemplate = None
             elif isinstance(disk, dict):
                 disksize = disk.get('size', default_disksize)
                 diskthin = disk.get('thin', default_diskthin)
                 diskinterface = disk.get('interface', default_diskinterface)
                 diskpool = disk.get('pool', default_pool)
                 diskwwn = disk.get('wwn')
+                disktemplate = disk.get('template')
                 try:
                     storagediskpool = conn.storagePoolLookupByName(diskpool)
                 except:
@@ -192,16 +195,18 @@ class Kvirt(Kbase):
             storagename = "%s_%d.img" % (name, index + 1)
             diskpath = "%s/%s" % (diskpoolpath, storagename)
             if template is not None and index == 0:
+                disktemplate = template
+            if disktemplate is not None:
                 try:
                     default_storagepool.refresh(0)
-                    if '/' in template:
-                        backingvolume = volumespaths[template]['object']
+                    if '/' in disktemplate:
+                        backingvolume = volumespaths[disktemplate]['object']
                     else:
-                        backingvolume = volumes[template]['object']
+                        backingvolume = volumes[disktemplate]['object']
                     backingxml = backingvolume.XMLDesc(0)
                     root = ET.fromstring(backingxml)
                 except:
-                    return {'result': 'failure', 'reason': "Invalid template %s" % template}
+                    return {'result': 'failure', 'reason': "Invalid template %s" % disktemplate}
                 backing = backingvolume.path()
                 if '/dev' in backing and diskpooltype == 'dir':
                     return {'result': 'failure', 'reason': "lvm template can not be used with a dir pool.Leaving..."}
