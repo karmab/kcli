@@ -154,6 +154,7 @@ class Kvirt(Kbase):
                 diskpool = default_pool
                 diskpooltype = default_pooltype
                 diskpoolpath = default_poolpath
+                diskwwn = None
             elif isinstance(disk, int):
                 disksize = disk
                 diskthin = default_diskthin
@@ -161,6 +162,7 @@ class Kvirt(Kbase):
                 diskpool = default_pool
                 diskpooltype = default_pooltype
                 diskpoolpath = default_poolpath
+                diskwwn = None
             elif isinstance(disk, dict):
                 disksize = disk.get('size', default_disksize)
                 diskthin = disk.get('thin', default_diskthin)
