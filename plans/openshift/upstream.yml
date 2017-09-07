@@ -10,5 +10,5 @@ origin:
   - size: 60
  pool: default
  scripts: 
-  - install.sh
+  - requirements.sh
   - upstream.sh
