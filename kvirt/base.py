@@ -100,6 +100,10 @@ class Kbase(object):
         print("not implemented")
         return
 
+    def update_information(self, name, information):
+        print("not implemented")
+        return
+
     def create_disk(self, name, size, pool=None, thin=True, template=None):
         print("not implemented")
         return

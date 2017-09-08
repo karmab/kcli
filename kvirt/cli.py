@@ -365,6 +365,7 @@ def update(args):
     cloudinit = args.cloudinit
     template = args.template
     net = args.network
+    information = args.information
     global config
     k = config.k
     if dns:
@@ -405,6 +406,9 @@ def update(args):
     elif noautostart:
         common.pprint("Removing autostart for vm %s..." % (name), color='green')
         k.update_start(name, start=False)
+    elif information:
+        common.pprint("Setting information for vm %s..." % (name), color='green')
+        k.update_information(name, information)
     elif host:
         common.pprint("Creating Host entry for vm %s..." % (name), color='green')
         nets = k.vm_ports(name)
@@ -929,6 +933,7 @@ def cli():
     update_info = 'Update ip, memory or numcpus'
     update_parser = subparsers.add_parser('update', description=update_info, help=update_info)
     update_parser.add_argument('-1', '--ip1', help='Ip to set', metavar='IP1')
+    update_parser.add_argument('-i', '--information', '--info', help='Information to set', metavar='INFORMATION')
     update_parser.add_argument('--network', '--net', help='Network to update', metavar='NETWORK')
     update_parser.add_argument('-m', '--memory', help='Memory to set', metavar='MEMORY')
     update_parser.add_argument('-c', '--numcpus', help='Number of cpus to set', metavar='NUMCPUS')

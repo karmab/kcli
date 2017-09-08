@@ -685,6 +685,11 @@ class Kvirt(Kbase):
             memory = int(memory)
         numcpus = root.getiterator('vcpu')[0]
         numcpus = numcpus.text
+        description = root.getiterator('description')
+        if description:
+            description = description[0].text
+        else:
+            description = ''
         if vm.isActive():
             state = 'up'
         if output == 'yaml':
@@ -694,6 +699,7 @@ class Kvirt(Kbase):
         else:
             print("name: %s" % name)
             print("status: %s" % state)
+            print("description: %s" % description)
             print("autostart: %s" % autostart)
         plan, profile, template, ip = None, None, None, None
         for element in root.getiterator('{kvirt}info'):
@@ -1192,6 +1198,22 @@ class Kvirt(Kbase):
             kmeta = ET.Element("kvirt:%s" % metatype)
             kroot.append(kmeta)
         kmeta.text = metavalue
+        newxml = ET.tostring(root)
+        conn.defineXML(newxml)
+        return {'result': 'success'}
+
+    def update_information(self, name, information):
+        conn = self.conn
+        vm = conn.lookupByName(name)
+        xml = vm.XMLDesc(0)
+        root = ET.fromstring(xml)
+        description = root.find('description')
+        if not description:
+            description = ET.Element("description")
+            description.text = information
+            root.append(description)
+        else:
+            description.text = information
         newxml = ET.tostring(root)
         conn.defineXML(newxml)
         return {'result': 'success'}

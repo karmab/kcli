@@ -594,6 +594,9 @@ class Kbox(Kbase):
         session.unlock_machine()
         return {'result': 'success'}
 
+    def update_information(self, name, information):
+        self.update_metadata(name, 'information', information)
+
     def update_memory(self, name, memory):
         conn = self.conn
         memory = int(memory)
