@@ -1,0 +1,71 @@
+karmalabs.local:
+ type: network
+ cidr: 172.25.250.0/24
+ dhcp: True
+
+master:
+ template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+ numcpus: 2
+ memory: 6144
+ reservedns: true
+ reservehost: true
+ sharedkey: true
+ domain: karmalabs.local
+ dns: karmalabs.local
+ nets:
+  - karmalabs.local
+ disks:
+  - size: 10
+  - size: 30
+ pool: default
+ files:
+  - path: /root/hosts
+    origin: simple/hosts
+  - path: /root/installer.cfg.yml
+    origin: simple/installer.cfg.yml
+    mode: 700
+
+ scripts: 
+  - ~/register.sh
+  - subscription.sh
+  - advanced/pre.sh
+
+node01:
+ template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+ numcpus: 2
+ memory: 4906
+ reservedns: true
+ sharedkey: true
+ domain: karmalabs.local
+ dns: karmalabs.local
+ nets:
+  - karmalabs.local
+ disks:
+  - size: 10
+  - size: 30
+ pool: default
+ scripts: 
+  - ~/register.sh
+  - subscription.sh
+  - advanced/pre.sh
+  - pull.sh
+
+node02:
+ template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+ numcpus: 2
+ memory: 4906
+ reservedns: true
+ sharedkey: true
+ dns: karmalabs.local
+ domain: karmalabs.local
+ nets:
+  - karmalabs.local
+ disks:
+  - size: 10
+  - size: 30
+ pool: default
+ scripts: 
+  - ~/register.sh
+  - subscription.sh
+  - advanced/pre.sh
+  - pull.sh

@@ -1,0 +1,26 @@
+[OSEv3:children]
+nodes
+masters
+nfs
+etcd
+
+[OSEv3:vars]
+deployment_subtype=registry
+openshift_master_cluster_public_hostname=None
+openshift_master_default_subdomain=karmalabs.local
+ansible_ssh_user=root
+openshift_master_cluster_hostname=None
+openshift_override_hostname_check=true
+deployment_type=openshift-enterprise
+
+[nodes]
+MYIP  openshift_public_ip=MYIP openshift_ip=MYIP openshift_public_hostname=MYIP openshift_hostname=MYIP openshift_node_labels="{'region': 'infra'}" openshift_schedulable=True
+
+[masters]
+MYIP  openshift_public_ip=MYIP openshift_ip=MYIP openshift_public_hostname=MYIP openshift_hostname=MYIP
+
+[nfs]
+MYIP  openshift_public_ip=MYIP openshift_ip=MYIP openshift_public_hostname=MYIP openshift_hostname=MYIP
+
+[etcd]
+MYIP  openshift_public_ip=MYIP openshift_ip=MYIP openshift_public_hostname=MYIP openshift_hostname=MYIP

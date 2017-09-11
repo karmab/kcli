@@ -53,6 +53,28 @@ def stop(args):
         os._exit(1 if 1 in codes else 0)
 
 
+def restart(args):
+    """Restart vm/container"""
+    names = args.names
+    container = args.container
+    global config
+    k = config.k
+    if container:
+        for name in names:
+            common.pprint("Restarting container %s..." % name, color='green')
+            dockerutils.stop_container(k, name)
+            dockerutils.start_container(k, name)
+    else:
+        codes = []
+        for name in names:
+            common.pprint("Restart vm %s..." % name, color='green')
+            result = k.stop(name)
+            result = k.start(name)
+            code = common.handle_response(result, name, element='', action='restarted')
+            codes.append(code)
+        os._exit(1 if 1 in codes else 0)
+
+
 def console(args):
     """Vnc/Spice/Serial/Container console"""
     name = args.name
@@ -924,6 +946,12 @@ def cli():
     stop_parser.add_argument('-c', '--container', action='store_true')
     stop_parser.add_argument('names', metavar='VMNAMES', nargs='+')
     stop_parser.set_defaults(func=stop)
+
+    restart_info = 'Restart vms/containers'
+    restart_parser = subparsers.add_parser('restart', description=restart_info, help=stop_info)
+    restart_parser.add_argument('-c', '--container', action='store_true')
+    restart_parser.add_argument('names', metavar='VMNAMES', nargs='+')
+    restart_parser.set_defaults(func=restart)
 
     switch_info = 'Switch host'
     switch_parser = subparsers.add_parser('switch', description=switch_info, help=switch_info)

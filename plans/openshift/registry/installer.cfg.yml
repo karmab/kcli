@@ -1,0 +1,32 @@
+ansible_callback_facts_yaml: /root/.config/openshift/.ansible/callback_facts.yaml
+ansible_inventory_path: /root/.config/openshift/hosts
+ansible_log_path: /tmp/ansible.log
+deployment:
+  ansible_ssh_user: root
+  hosts:
+  - connect_to: MYIP
+    hostname: MYIP
+    ip: MYIP
+    node_labels: '{''region'': ''infra''}'
+    public_hostname: MYIP
+    public_ip: MYIP
+    roles:
+    - master
+    - etcd
+    - node
+    - storage
+  master_routingconfig_subdomain: karmalabs.local
+  openshift_master_cluster_hostname: None
+  openshift_master_cluster_public_hostname: None
+  proxy_exclude_hosts: ''
+  proxy_http: ''
+  proxy_https: ''
+  roles:
+    etcd: {}
+    master: {}
+    node: {}
+    storage: {}
+variant: openshift-enterprise
+variant_subtype: registry
+variant_version: '3.5'
+version: v2
