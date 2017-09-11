@@ -67,9 +67,8 @@ def restart(args):
     else:
         codes = []
         for name in names:
-            common.pprint("Restart vm %s..." % name, color='green')
-            result = k.stop(name)
-            result = k.start(name)
+            common.pprint("Restarting vm %s..." % name, color='green')
+            result = k.restart(name)
             code = common.handle_response(result, name, element='', action='restarted')
             codes.append(code)
         os._exit(1 if 1 in codes else 0)
