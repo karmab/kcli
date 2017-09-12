@@ -7,3 +7,5 @@ wget -O /root/oc.tar.gz https://github.com/openshift/origin/releases/download/v3
 cd /root ; tar zxvf oc.tar.gz
 mv /root/openshift-origin-client-tools-*/oc /usr/bin
 rm -rf  /root/openshift*
+curl -L https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl
+chmod +x /usr/local/bin/kubectl

@@ -499,10 +499,28 @@ class Kvirt(Kbase):
 
     def report(self):
         conn = self.conn
+        status = {0: 'down', 1: 'up'}
         hostname = conn.getHostname()
         cpus = conn.getCPUMap()[0]
         memory = conn.getInfo()[1]
         print("Host:%s Cpu:%s Memory:%sMB\n" % (hostname, cpus, memory))
+        totalvms = 0
+        totalmemory = 0
+        for vm in conn.listAllDomains(0):
+            if status[vm.isActive()] == "down":
+                continue
+            totalvms += 1
+            xml = vm.XMLDesc(0)
+            root = ET.fromstring(xml)
+            memory = root.getiterator('memory')[0]
+            unit = memory.attrib['unit']
+            memory = memory.text
+            if unit == 'KiB':
+                memory = float(memory) / 1024
+                memory = int(memory)
+            totalmemory += memory
+        print("Vms Running : %s\n" % (totalvms))
+        print("Memory Used : %sMB\n" % (totalmemory))
         for pool in conn.listStoragePools():
             poolname = pool
             pool = conn.storagePoolLookupByName(pool)
