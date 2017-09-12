@@ -668,7 +668,6 @@ class Kvirt(Kbase):
                 leases[mac] = dhcpip
         try:
             vm = conn.lookupByName(name)
-            print dir(vm)
             xml = vm.XMLDesc(0)
             if self.debug:
                 print(xml)
