@@ -502,10 +502,10 @@ class Kvirt(Kbase):
         status = {0: 'down', 1: 'up'}
         hostname = conn.getHostname()
         cpus = conn.getCPUMap()[0]
-        memory = conn.getInfo()[1]
-        print("Host:%s Cpu:%s Memory:%sMB\n" % (hostname, cpus, memory))
+        totalmemory = conn.getInfo()[1]
+        print("Host:%s Cpu:%s\n" % (hostname, cpus))
         totalvms = 0
-        totalmemory = 0
+        usedmemory = 0
         for vm in conn.listAllDomains(0):
             if status[vm.isActive()] == "down":
                 continue
@@ -518,9 +518,9 @@ class Kvirt(Kbase):
             if unit == 'KiB':
                 memory = float(memory) / 1024
                 memory = int(memory)
-            totalmemory += memory
+            usedmemory += memory
         print("Vms Running : %s\n" % (totalvms))
-        print("Memory Used : %sMB\n" % (totalmemory))
+        print("Memory Used : %sMB of %sMB\n" % (usedmemory, totalmemory))
         for pool in conn.listStoragePools():
             poolname = pool
             pool = conn.storagePoolLookupByName(pool)
