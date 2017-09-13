@@ -39,8 +39,8 @@ TEMPLATES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATES
              'ubuntu1404': 'https://cloud-images.ubuntu.com/trusty/current/trusty-server-cloudimg-amd64-disk1.img',
              'ubuntu1604': 'https://cloud-images.ubuntu.com/xenial/current/xenial-server-cloudimg-amd64-disk1.img',
              'ubuntu1610': 'https://cloud-images.ubuntu.com/yakkety/current/yakkety-server-cloudimg-amd64-disk1.img',
-             'ubuntu1704': 'https://cloud-images.ubuntu.com/zesty/current/zesty-server-cloudimg-amd64.img'
-             'ubuntu1710': 'https://cloud-images.ubuntu.com/artful/current/artful-server-cloudimg-amd64.img',}
+             'ubuntu1704': 'https://cloud-images.ubuntu.com/zesty/current/zesty-server-cloudimg-amd64.img',
+             'ubuntu1710': 'https://cloud-images.ubuntu.com/artful/current/artful-server-cloudimg-amd64.img'}
 TEMPLATESCOMMANDS = {'cloudforms': 'rm -f /etc/cloud/cloud.cfg.d/30_miq_datasources.cfg',
                      'debian8': 'echo datasource_list: [NoCloud, ConfigDrive, Openstack, Ec2] > /etc/cloud/cloud.cfg.d/90_dpkg.cfg',
                      'manageiq': 'rm -f /etc/cloud/cloud.cfg.d/30_miq_datasources.cfg'}
