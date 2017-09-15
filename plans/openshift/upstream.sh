@@ -1,3 +1,4 @@
+sed -i '/OPTIONS=.*/c\OPTIONS="--selinux-enabled --insecure-registry 172.30.0.0/16"' /etc/sysconfig/docker
 systemctl start docker --ignore-dependencies
 export IP=`ip a l  eth0 | grep 'inet ' | cut -d' ' -f6 | awk -F'/' '{ print $1}'`
 oc cluster up --public-hostname $IP.xip.io --routing-suffix $IP.xip.io
