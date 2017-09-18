@@ -13,3 +13,4 @@ istio21:
   - requirements.sh
   - upstream.sh
   - istio21.sh
+  - istio.sh
