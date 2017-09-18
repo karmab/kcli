@@ -1,3 +1,4 @@
+sed -i /requiretty/d /etc/sudoers
 export KUBECONFIG=/root/.kube/config
 git clone https://github.com/istio/istio.git /root/istio
 cd /root/istio
@@ -31,6 +32,9 @@ curl -LO https://github.com/istio/istio/releases/download/$version/istio-$versio
 tar zxvf istio-$version-linux.tar.gz
 sudo mv istio-$version/bin/istioctl /usr/bin
 sudo chmod u+x /usr/bin/istioctl
+cd /root/istio
 source istio.VERSION
 oc apply -f <(istioctl kube-inject --hub $PILOT_HUB --tag $PILOT_TAG -f samples/apps/bookinfo/bookinfo.yaml -n $project)
 oc expose svc productpage
+oc create-project istio-config-default
+oc create -f https://raw.githubusercontent.com/istio/istio/master/samples/apps/bookinfo/rules/mixer-rule-standard-metrics.yaml
