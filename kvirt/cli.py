@@ -537,7 +537,7 @@ def plan(args):
             plan = config.currentplan
         else:
             plan = nameutils.get_random_name()
-            common.pprint("Using %s as name of the vm" % plan, color='green')
+            common.pprint("Using %s as name of the plan" % plan, color='green')
     if delete and not yes:
         common.confirm("Are you sure?")
     config.plan(plan, ansible=ansible, get=get, path=path, autostart=autostart, container=container, noautostart=noautostart, inputfile=inputfile, start=start, stop=stop, delete=delete, delay=delay, topologyfile=topologyfile, scale=scale)
