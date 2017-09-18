@@ -1,5 +1,5 @@
 export KUBECONFIG=/root/.kube/config
-git clone https://github.com/istio/istio.git /root
+git clone https://github.com/istio/istio.git /root/istio
 cd /root/istio
 git checkout $checkout
 oc login -u system:admin
