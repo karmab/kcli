@@ -362,7 +362,7 @@ class Kconfig:
                     results.append([profile, image, nets, ports, volumes, cmd])
         return results
 
-    def plan(self, plan, ansible=False, get=None, path='plans', autostart=False, container=False, noautostart=False, inputfile=None, start=False, stop=False, delete=False, delay=0, force=True, topologyfile=None, scale=None):
+    def plan(self, plan, ansible=False, get=None, path=None, autostart=False, container=False, noautostart=False, inputfile=None, start=False, stop=False, delete=False, delay=0, force=True, topologyfile=None, scale=None):
         """Create/Delete/Stop/Start vms from plan file"""
         k = self.k
         newvms = []
@@ -371,6 +371,8 @@ class Kconfig:
         tunnel = self.tunnel
         if plan is None:
             plan = nameutils.get_random_name()
+        if path is None:
+            path = plan
         if delete:
             networks = []
             if plan == '':
