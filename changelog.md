@@ -1,5 +1,17 @@
 # Changelog
 
+## 8.6 (2017-09-20)
+
+- kcli ssh without specifying vm s name
+- Use -p as input file in kcli vm -p when it ends with .yml
+- create single vm from plan file (using it as a profile)
+- running vms and used memory in kcli report
+- additional random names like federer and soukron
+- istio sample plans
+- F5 sample plan
+- pike support
+- minishift plan
+
 ## 8.3 (2017-08-21)
 
 - concatenate scripts and commands at all level (host or default)
