@@ -352,6 +352,9 @@ def vm(args):
     if name is None:
         name = nameutils.get_random_name()
         common.pprint("Using %s as name of the vm" % name, color='green')
+    if profile is not None and profile.endswith('.yml'):
+        inputfile = profile
+        profile = None
     if inputfile is not None:
         if not os.path.exists(inputfile):
             common.pprint("Missing profile file", color='red')
