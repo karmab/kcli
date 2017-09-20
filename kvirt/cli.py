@@ -343,6 +343,7 @@ def vm(args):
     """Create vms"""
     name = args.name
     profile = args.profile
+    inputfile = args.inputfile
     ip1 = args.ip1
     ip2 = args.ip2
     ip3 = args.ip3
@@ -351,9 +352,19 @@ def vm(args):
     if name is None:
         name = nameutils.get_random_name()
         common.pprint("Using %s as name of the vm" % name, color='green')
+    if inputfile is not None:
+        if not os.path.exists(inputfile):
+            common.pprint("Missing profile file", color='red')
+            os._exit(1)
+        else:
+            with open(inputfile, 'r') as entries:
+                config.profiles = yaml.load(entries)
     if profile is None:
-        common.pprint("Missing profile", color='red')
-        os._exit(1)
+        if len(config.profiles) == 1:
+            profile = config.profiles.keys()[0]
+        else:
+            common.pprint("Missing profile", color='red')
+            os._exit(1)
     result = config.create_vm(name, profile, ip1=ip1, ip2=ip2, ip3=ip3, ip4=ip4)
     code = common.handle_response(result, name, element='', action='created')
     return code
@@ -978,6 +989,7 @@ def cli():
     vm_info = 'Create vm'
     vm_parser = subparsers.add_parser('vm', description=vm_info, help=vm_info)
     vm_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
+    vm_parser.add_argument('-f', '--inputfile', help='File to load profiles from', metavar='INPUTFILE')
     vm_parser.add_argument('-1', '--ip1', help='Optional Ip to assign to eth0. Netmask and gateway will be retrieved from profile', metavar='IP1')
     vm_parser.add_argument('-2', '--ip2', help='Optional Ip to assign to eth1. Netmask and gateway will be retrieved from profile', metavar='IP2')
     vm_parser.add_argument('-3', '--ip3', help='Optional Ip to assign to eth2. Netmask and gateway will be retrieved from profile', metavar='IP3')
