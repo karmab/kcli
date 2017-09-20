@@ -1,6 +1,6 @@
 # Changelog
 
-## 8.6 (2017-09-20)
+## 8.7 (2017-09-20)
 
 - kcli ssh without specifying vm s name
 - Use -p as input file in kcli vm -p when it ends with .yml
