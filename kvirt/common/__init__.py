@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from distutils.spawn import find_executable
+import fileinput
 import socket
 import urllib2
 import json
@@ -232,7 +233,21 @@ def handle_response(result, name, quiet=False, element='', action='deployed'):
 def confirm(message):
     message = "%s [y/N]: " % message
     input = raw_input(message)
-    if input.lower() != 'y':
+    if input.lower() not in ['y', 'yes']:
         pprint("Leaving...", color='red')
         os._exit(1)
     return
+
+
+def lastvm(name, delete=False):
+    configdir = "%s/.kcli/" % os.environ.get('HOME')
+    if not os.path.exists(configdir):
+        os.mkdir(configdir)
+    if delete:
+        os.system("sed -i '/%s/d' %s/vm" % (name, configdir))
+        return
+    firstline = True
+    for line in fileinput.input("%s/vm" % configdir, inplace=True):
+        line = "%s\n%s" % (name, line) if firstline else line
+        firstline = False
+        print(line)

@@ -17,6 +17,14 @@ def start(args):
     """Start vm/container"""
     names = args.names
     container = args.container
+    lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
+    if not names:
+        if os.path.exists(lastvm):
+            names = [open(lastvm).readlines()[0].strip()]
+            common.pprint("Using %s as vm" % names[0], color='green')
+        else:
+            common.pprint("Missing Vm's name", color='red')
+            return
     global config
     k = config.k
     if container:
@@ -37,6 +45,14 @@ def stop(args):
     """Stop vm/container"""
     names = args.names
     container = args.container
+    lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
+    if not names:
+        if os.path.exists(lastvm):
+            names = [open(lastvm).readlines()[0].strip()]
+            common.pprint("Using %s as vm" % names[0], color='green')
+        else:
+            common.pprint("Missing Vm's name", color='red')
+            return
     global config
     k = config.k
     if container:
@@ -57,6 +73,14 @@ def restart(args):
     """Restart vm/container"""
     names = args.names
     container = args.container
+    lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
+    if not names:
+        if os.path.exists(lastvm):
+            names = [open(lastvm).readlines()[0].strip()]
+            common.pprint("Using %s as vm" % names[0], color='green')
+        else:
+            common.pprint("Missing Vm's name", color='red')
+            return
     global config
     k = config.k
     if container:
@@ -79,6 +103,14 @@ def console(args):
     name = args.name
     serial = args.serial
     container = args.container
+    lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
+    if not name:
+        if os.path.exists(lastvm):
+            name = [open(lastvm).readlines()[0].strip()]
+            common.pprint("Using %s as vm" % name[0], color='green')
+        else:
+            common.pprint("Missing Vm's name", color='red')
+            return
     global config
     k = config.k
     tunnel = config.tunnel
@@ -97,6 +129,14 @@ def delete(args):
     container = args.container
     snapshots = args.snapshots
     yes = args.yes
+    lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
+    if not names:
+        if os.path.exists(lastvm):
+            names = [open(lastvm).readlines()[0].strip()]
+            common.pprint("Using %s as vm" % names[0], color='green')
+        else:
+            common.pprint("Missing Vm's name", color='red')
+            return
     global config
     k = config.k
     if not yes:
@@ -112,6 +152,7 @@ def delete(args):
             if result['result'] == 'success':
                 common.pprint("vm %s deleted" % name, color='red')
                 codes.append(0)
+                common.lastvm(name, delete=True)
             else:
                 reason = result['reason']
                 common.pprint("Could not delete vm %s because %s" % (name, reason), color='red')
@@ -136,6 +177,14 @@ def info(args):
     """Get info on vm"""
     names = args.names
     output = args.output
+    lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
+    if not names:
+        if os.path.exists(lastvm):
+            names = [open(lastvm).readlines()[0].strip()]
+            common.pprint("Using %s as vm" % names[0], color='green')
+        else:
+            common.pprint("Missing Vm's name", color='red')
+            return
     global config
     k = config.k
     codes = []
@@ -564,7 +613,7 @@ def ssh(args):
     lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
     if not name:
         if os.path.exists(lastvm):
-            name = [open(lastvm).read().strip()]
+            name = [open(lastvm).readlines()[0].strip()]
             common.pprint("Using %s as vm" % name[0], color='green')
         else:
             common.pprint("Missing Vm's name", color='red')
@@ -823,7 +872,7 @@ def cli():
     delete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     delete_parser.add_argument('--container', action='store_true')
     delete_parser.add_argument('--snapshots', action='store_true', help='Remove snapshots if needed')
-    delete_parser.add_argument('names', metavar='VMNAMES', nargs='+')
+    delete_parser.add_argument('names', metavar='VMNAMES', nargs='*')
     delete_parser.set_defaults(func=delete)
 
     disk_info = 'Add/Delete disk of vm'
@@ -853,7 +902,7 @@ def cli():
     info_info = 'Info vms'
     info_parser = subparsers.add_parser('info', description=info_info, help=info_info)
     info_parser.add_argument('-o', '--output', choices=['plain', 'yaml'], help='Format of the output')
-    info_parser.add_argument('names', help='VMNAMES', nargs='+')
+    info_parser.add_argument('names', help='VMNAMES', nargs='*')
     info_parser.set_defaults(func=info)
 
     list_info = 'List hosts, profiles, templates, isos,...'
@@ -944,26 +993,25 @@ def cli():
     ssh_parser = subparsers.add_parser('ssh', description=ssh_info, help=ssh_info)
     ssh_parser.add_argument('-L', help='Local Forwarding', metavar='LOCAL')
     ssh_parser.add_argument('-R', help='Remote Forwarding', metavar='REMOTE')
-    # ssh_parser.add_argument('name', metavar='VMNAME', nargs='+')
     ssh_parser.add_argument('name', metavar='VMNAME', nargs='*')
     ssh_parser.set_defaults(func=ssh)
 
     start_info = 'Start vms/containers'
     start_parser = subparsers.add_parser('start', description=start_info, help=start_info)
     start_parser.add_argument('-c', '--container', action='store_true')
-    start_parser.add_argument('names', metavar='VMNAMES', nargs='+')
+    start_parser.add_argument('names', metavar='VMNAMES', nargs='*')
     start_parser.set_defaults(func=start)
 
     stop_info = 'Stop vms/containers'
     stop_parser = subparsers.add_parser('stop', description=stop_info, help=stop_info)
     stop_parser.add_argument('-c', '--container', action='store_true')
-    stop_parser.add_argument('names', metavar='VMNAMES', nargs='+')
+    stop_parser.add_argument('names', metavar='VMNAMES', nargs='*')
     stop_parser.set_defaults(func=stop)
 
     restart_info = 'Restart vms/containers'
     restart_parser = subparsers.add_parser('restart', description=restart_info, help=stop_info)
     restart_parser.add_argument('-c', '--container', action='store_true')
-    restart_parser.add_argument('names', metavar='VMNAMES', nargs='+')
+    restart_parser.add_argument('names', metavar='VMNAMES', nargs='*')
     restart_parser.set_defaults(func=restart)
 
     switch_info = 'Switch host'

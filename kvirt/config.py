@@ -283,11 +283,7 @@ class Kconfig:
                     f.write("[ssh_connection]\nretries=10\n")
                 print("Running: %s -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
                 os.system("%s -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
-        configdir = "%s/.kcli/" % os.environ.get('HOME')
-        if not os.path.exists(configdir):
-            os.mkdir(configdir)
-        with open("%s/vm" % configdir, 'w') as v:
-            v.write(name)
+        common.lastvm(name)
         return {'result': 'success'}
 
     def list_plans(self):
@@ -702,12 +698,7 @@ class Kconfig:
                     common.handle_response(result, name)
                     if result['result'] == 'success':
                         newvms.append(name)
-                        if len(newvms) == 1:
-                            configdir = "%s/.kcli/" % os.environ.get('HOME')
-                            if not os.path.exists(configdir):
-                                os.mkdir(configdir)
-                            with open("%s/vm" % configdir, 'w') as v:
-                                v.write(name)
+                        common.lastvm(name)
                     ansible = next((e for e in [profile.get('ansible'), customprofile.get('ansible')] if e is not None), None)
                     if ansible is not None:
                         for element in ansible:
