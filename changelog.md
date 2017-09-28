@@ -1,5 +1,10 @@
 # Changelog
 
+## 8.8 (2017-09-20)
+
+- allow most commands to make use of last created vm, when no one is provided
+- track all created vms in reverse order in .kcli/vm
+
 ## 8.7 (2017-09-20)
 
 - kcli ssh without specifying vm s name
