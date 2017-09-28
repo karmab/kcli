@@ -7,7 +7,7 @@
 
 ![Screenshot](kcli.jpg)
 
-This script is meant to interact with a local/remote libvirt daemon and to easily deploy from templates (optionally using cloudinit).
+This tool is meant to interact with a local/remote libvirt daemon and to easily deploy from templates (optionally using cloudinit).
 It will also report IPS for any vm connected to a dhcp-enabled libvirt network and generally for every vm deployed from this client.
 
 It started because I switched from ovirt and needed a tool similar to [ovirt.py](https://github.com/karmab/ovirt)
