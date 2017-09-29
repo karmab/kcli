@@ -249,5 +249,5 @@ def lastvm(name, delete=False):
     firstline = True
     for line in fileinput.input("%s/vm" % configdir, inplace=True):
         line = "%s\n%s" % (name, line) if firstline else line
+        print line,
         firstline = False
-        print(line)

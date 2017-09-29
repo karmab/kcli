@@ -1,6 +1,10 @@
 # Changelog
 
-## 8.8 (2017-09-20)
+## 8.9 (2017-09-29)
+
+- fix deletion issue with .kcli/vm
+
+## 8.8 (2017-09-28)
 
 - allow most commands to make use of last created vm, when no one is provided
 - track all created vms in reverse order in .kcli/vm
