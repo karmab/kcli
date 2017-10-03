@@ -20,7 +20,7 @@ from time import sleep
 import webbrowser
 import yaml
 
-__version__ = '8.9'
+__version__ = '8.10'
 
 
 class Kconfig:
@@ -491,7 +491,7 @@ class Kconfig:
                 for planentry in planentries:
                     details = entries[planentry]
                     url = details.get('url')
-                    path = details.get('path', plan)
+                    path = details.get('path', planentry)
                     inputfile = details.get('file', 'kcli_plan.yml')
                     run = details.get('run', False)
                     if url is None:
@@ -500,14 +500,14 @@ class Kconfig:
                     else:
                         common.pprint("Grabbing Plan %s!" % planentry, color='green')
                         path = "%s/%s" % (path, planentry)
-                        if not os.path.exists(plan):
-                            os.mkdir(plan)
-                        common.fetch(url, path)
+                        if not os.path.exists(planentry):
+                            os.mkdir(planentry)
+                            common.fetch(url, path)
                         if run:
                             os.chdir(path)
                             common.pprint("Running kcli plan -f %s %s" % (inputfile, plan), color='green')
                             self.plan(plan, ansible=False, get=None, path=path, autostart=False, container=False, noautostart=False, inputfile=inputfile, start=False, stop=False, delete=False, delay=delay)
-                            os.chdir('../..')
+                            os.chdir('..')
                 return {'result': 'success'}
             if networkentries:
                 common.pprint("Deploying Networks...", color='green')

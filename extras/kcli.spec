@@ -5,7 +5,7 @@
 #
 
 Name:           kcli
-Version:        8.9
+Version:        8.10
 Release:        1
 Url:            http://github.com/karmab/kcli
 Summary:        Libvirt/VirtualBox wrapper on steroids

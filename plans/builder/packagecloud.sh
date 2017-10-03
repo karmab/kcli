@@ -1,5 +1,5 @@
 
-version="8.8-1"
+version="8.10-1"
 build="00608959"
 apt-get update
 apt-get -y install wget ruby alien
