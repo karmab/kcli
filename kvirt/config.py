@@ -20,7 +20,7 @@ from time import sleep
 import webbrowser
 import yaml
 
-__version__ = '8.10'
+__version__ = '8.11'
 
 
 class Kconfig:
@@ -499,7 +499,6 @@ class Kconfig:
                         continue
                     else:
                         common.pprint("Grabbing Plan %s!" % planentry, color='green')
-                        path = "%s/%s" % (path, planentry)
                         if not os.path.exists(planentry):
                             os.mkdir(planentry)
                             common.fetch(url, path)

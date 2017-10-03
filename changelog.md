@@ -1,6 +1,6 @@
 # Changelog
 
-## 8.10 (2017-10-03)
+## 8.11 (2017-10-03)
 
 - improved workflow for plan of plans, as per @dittolive good feedback
 
