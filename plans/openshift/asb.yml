@@ -9,6 +9,6 @@ asb:
   - size: 60
  pool: default
  scripts: 
+  - requirements.sh
   - ~/dockerhub.sh
-  - requirements36.sh
   - asb.sh

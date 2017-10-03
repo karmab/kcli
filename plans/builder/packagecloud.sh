@@ -1,6 +1,6 @@
 
-version="8.10-1"
-build="00613039"
+version="8.11-1"
+build="00613048"
 apt-get update
 apt-get -y install wget ruby alien
 export HOME=/root
