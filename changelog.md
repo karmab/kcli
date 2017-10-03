@@ -1,5 +1,9 @@
 # Changelog
 
+## 8.10 (2017-10-03)
+
+- improved workflow for plan of plans, as per @dittolive good feedback
+
 ## 8.9 (2017-09-29)
 
 - fix deletion issue with .kcli/vm
