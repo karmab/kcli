@@ -251,3 +251,11 @@ def lastvm(name, delete=False):
         line = "%s\n%s" % (name, line) if firstline else line
         print line,
         firstline = False
+
+
+def remove_duplicates(oldlist):
+    newlist = []
+    for item in oldlist:
+        if item not in newlist:
+            newlist.append(item)
+    return newlist

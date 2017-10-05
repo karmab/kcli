@@ -10,7 +10,5 @@ mv oc-linux-64bit/oc /usr/bin
 chmod u+x /usr/bin/oc
 wget https://raw.githubusercontent.com/openshift/ansible-service-broker/master/scripts/run_latest_build.sh
 chmod +x run_latest_build.sh
-export ORIGIN_VERSION="latest"
 export PUBLIC_IP=`ip a l  eth0 | grep 'inet ' | cut -d' ' -f6 | awk -F'/' '{ print $1}'`
-export BROKER_KIND=ServiceBroker
 sh run_latest_build.sh
