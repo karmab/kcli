@@ -1,5 +1,5 @@
 yum -y install atomic-openshift-clients docker atomic-openshift
-sed -i "s@# INSECURE_REGISTRY=.*@INSECURE_REGISTRY='--insecure-registry 172.30.0.0/16'@" /etc/sysconfig/docker
+sed -i '/OPTIONS=.*/c\OPTIONS="--selinux-enabled --insecure-registry 172.30.0.0/16"' /etc/sysconfig/docker
 systemctl enable docker
 systemctl enable rhel-push-plugin
 systemctl start rhel-push-plugin
