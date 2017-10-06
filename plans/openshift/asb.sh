@@ -1,4 +1,6 @@
 sed -i '/OPTIONS=.*/c\OPTIONS="--selinux-enabled --insecure-registry 172.30.0.0/16"' /etc/sysconfig/docker
+groupadd docker
+usermod -aG docker fedora
 systemctl start docker --ignore-dependencies
 sleep 20
 dnf -y install dnf-plugins-core

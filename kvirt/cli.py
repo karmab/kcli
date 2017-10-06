@@ -106,8 +106,8 @@ def console(args):
     lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
     if not name:
         if os.path.exists(lastvm):
-            name = [open(lastvm).readlines()[0].strip()]
-            common.pprint("Using %s as vm" % name[0], color='green')
+            name = open(lastvm).readlines()[0].strip()
+            common.pprint("Using %s as vm" % name, color='green')
         else:
             common.pprint("Missing Vm's name", color='red')
             return
@@ -858,7 +858,7 @@ def cli():
     console_parser = subparsers.add_parser('console', description=console_info, help=console_info)
     console_parser.add_argument('-s', '--serial', action='store_true')
     console_parser.add_argument('--container', action='store_true')
-    console_parser.add_argument('name', metavar='VMNAME')
+    console_parser.add_argument('name', metavar='VMNAME', nargs='?')
     console_parser.set_defaults(func=console)
 
     container_info = 'Create container'

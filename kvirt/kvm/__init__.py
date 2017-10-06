@@ -276,12 +276,16 @@ class Kvirt(Kbase):
                     <kvirt:plan>%s</kvirt:plan>
                     </kvirt:info>
                     </metadata>""" % (metadata, plan)
-        if iso is None:
-            if cloudinit:
-                iso = "%s/%s.ISO" % (default_poolpath, name)
-            else:
-                iso = ''
-        else:
+        isoxml = ''
+        if cloudinit:
+            cloudinitiso = "%s/%s.ISO" % (default_poolpath, name)
+            isoxml = """<disk type='file' device='cdrom'>
+                      <driver name='qemu' type='raw'/>
+                      <source file='%s'/>
+                      <target dev='hdc' bus='ide'/>
+                      <readonly/>
+                    </disk>""" % (cloudinitiso)
+        if iso is not None:
             try:
                 if os.path.isabs(iso):
                     shortiso = os.path.basename(iso)
@@ -289,16 +293,14 @@ class Kvirt(Kbase):
                     shortiso = iso
                 isovolume = volumes[shortiso]['object']
                 iso = isovolume.path()
-                # iso = "%s/%s" % (default_poolpath, iso)
-                # iso = "%s/%s" % (isopath, iso)
             except:
                 return {'result': 'failure', 'reason': "Invalid iso %s" % iso}
-        isoxml = """<disk type='file' device='cdrom'>
+            isoxml = """%s<disk type='file' device='cdrom'>
                       <driver name='qemu' type='raw'/>
                       <source file='%s'/>
-                      <target dev='hdc' bus='ide'/>
+                      <target dev='hdd' bus='ide'/>
                       <readonly/>
-                    </disk>""" % (iso)
+                    </disk>""" % (isoxml, iso)
         if tunnel:
             listen = '127.0.0.1'
         else:
