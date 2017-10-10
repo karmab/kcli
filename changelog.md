@@ -1,5 +1,13 @@
 # Changelog
 
+## 8.12 (2017-10-06)
+
+- allow to have both cloudinit and an additional iso
+- remove soukron from random names
+- fix bad ordering of commands when using vm -p
+- ansible service broker plan
+
+
 ## 8.11 (2017-10-03)
 
 - improved workflow for plan of plans, as per @dittolive good feedback
