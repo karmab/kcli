@@ -1,6 +1,6 @@
 
 version="8.12-1"
-build="00613048"
+build="00618088"
 apt-get update
 apt-get -y install wget ruby alien
 export HOME=/root
@@ -16,3 +16,4 @@ package_cloud push karmab/kcli/ubuntu/xenial /root/*deb
 package_cloud push karmab/kcli/ubuntu/yakkety /root/*deb
 package_cloud push karmab/kcli/debian/jessie /root/*deb
 package_cloud push karmab/kcli/debian/stretch /root/*deb
+halt

@@ -38,7 +38,7 @@
 
 - stupid print when running kcli ssh and proper cast
 
-# 8.0 (2017-07-14)
+## 8.0 (2017-07-14)
 
 - topology feature allowing to indicate with a file how many of a given vm type are to be deployed in a plan. Also allows to scale plan directly from command line
 - start/stop/delete several vms at once
@@ -305,8 +305,3 @@ Initial public release
 - Plans
 - Ansible Inventory
 - Support for scripts in the profile
-
-
-
-
-
