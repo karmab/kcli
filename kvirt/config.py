@@ -44,10 +44,14 @@ class Kconfig:
                 except:
                     self.host = None
                     return
-            if 'default' not in self.ini or 'client' not in self.ini['default']:
+            if 'default' not in self.ini:
                 common.pprint("Missing default section in config file. Leaving...", color='red')
                 self.host = None
                 return
+            if 'client' not in self.ini['default']:
+                common.pprint("Using local hypervisor as no client was specified...", color='green')
+                self.ini['default']['client'] = 'local'
+                self.ini['local'] = {}
         self.clients = [e for e in self.ini if e != 'default']
         defaults = {}
         default = self.ini['default']
