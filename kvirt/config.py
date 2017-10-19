@@ -485,15 +485,15 @@ class Kconfig:
                     sys.exit(1)
         else:
             product = products[0]
-            plan = name
+            plan = nameutils.get_random_name()
             url = product['url']
             inputfile = product['file']
             repo = product['repo']
-            if not os.path.exists(repo):
-                self.plan(plan, get=url, path=repo, inputfile=inputfile)
-            os.chdir(repo)
+            group = product['group']
+            if not os.path.exists(group):
+                self.plan(plan, get=url, path=group, inputfile=inputfile)
+            os.chdir(group)
             common.pprint("Running kcli plan -f %s %s" % (inputfile, plan), color='green')
-            # self.plan(plan, get=None, path=path, inputfile=inputfile)
             self.plan(plan, inputfile=inputfile)
             os.chdir('..')
 
@@ -601,7 +601,8 @@ class Kconfig:
             return {'result': 'success'}
         if get is not None:
             common.pprint("Retrieving specified plan from %s to %s" % (get, path), color='green')
-            common.fetch(get, path)
+            if not os.path.exists(path):
+                common.fetch(get, path)
             return {'result': 'success'}
         if inputfile is None:
             inputfile = 'kcli_plan.yml'
