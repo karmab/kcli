@@ -483,8 +483,8 @@ class Kconfig:
         else:
             product = products[0]
             plan = name
-            get = product['get']
-            inputfile = product['inputfile']
+            get = product['url']
+            inputfile = product['file']
             repo = product['repo']
             self.plan(plan, get=get, path=repo, inputfile=inputfile)
 
