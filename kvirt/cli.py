@@ -370,15 +370,16 @@ def list(args):
             repos.add_row([repo, url])
         print(repos)
     elif products:
-        products = PrettyTable(["Repo", "Product", "Description", "Numvms"])
+        products = PrettyTable(["Repo", "Group", "Product", "Description", "Numvms"])
         products.align["Repo"] = "l"
         productsinfo = config.list_products()
-        for product in sorted(productsinfo, key=lambda x: (x['repo'], x['name'])):
+        for product in sorted(productsinfo, key=lambda x: (x['repo'], x['group'], x['name'])):
             name = product['name']
             repo = product['repo']
-            description = product['description']
-            numvms = product['numvms']
-            products.add_row([repo, name, description, numvms])
+            description = product.get('description', 'N/A')
+            numvms = product.get('numvms', 'N/A')
+            group = product.get('group', 'N/A')
+            products.add_row([repo, group, name, description, numvms])
         print(products)
     else:
         if config.client == 'all':
@@ -645,6 +646,7 @@ def repo(args):
         else:
             common.pprint("Updating repo %s..." % (repo), color='green')
             config.update_repo(repo)
+        return
     if repo is None:
         common.pprint("Missing repo. Leaving...", color='red')
         os._exit(1)

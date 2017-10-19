@@ -393,6 +393,8 @@ class Kconfig:
                             repoproducts = yaml.load(entries)
                             for repoproduct in repoproducts:
                                 repoproduct['repo'] = repo
+                                if 'group' not in repoproduct:
+                                    repoproduct['group'] = 'N/A'
                                 products.append(repoproduct)
                         except yaml.scanner.ScannerError:
                             common.pprint("Couldn't properly parse .kcli/repo. Leaving...", color='red')
