@@ -64,7 +64,11 @@ def fetch(url, path, syms=None):
         url = url.replace("%s/%s" % (user, repo), "%s/%s/contents" % (user, repo))
     if not os.path.exists(path):
         os.mkdir(path)
-    r = urllib2.urlopen(url)
+    try:
+        r = urllib2.urlopen(url)
+    except urllib2.HTTPError:
+        print("Invalid url.Leaving...")
+        os._exit(1)
     try:
         base = json.load(r)
     except:

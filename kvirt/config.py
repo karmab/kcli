@@ -15,6 +15,7 @@ try:
 except:
     pass
 import os
+import shutil
 import sys
 from time import sleep
 import webbrowser
@@ -465,7 +466,7 @@ class Kconfig:
                 entry = "%s: %s" % (repo, url)
                 open(reposfile, 'w').write(entry)
             if os.path.isdir(repodir):
-                os.rmdir(repodir)
+                shutil.rmtree(repodir)
             return {'result': 'success'}
 
     def create_product(self, name, repo=None):

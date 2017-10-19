@@ -1,0 +1,14 @@
+asb36:
+ template: Fedora-Cloud-Base-26-1.5.x86_64.qcow2
+ numcpus: 2
+ memory: 10240
+ nets:
+  - default
+ disks:
+  - size: 10
+  - size: 60
+ pool: default
+ scripts: 
+  - requirements36.sh
+  - ~/dockerhub.sh
+  - asb36.sh

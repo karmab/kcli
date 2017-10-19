@@ -633,8 +633,26 @@ def repo(args):
     repo = args.repo
     delete = args.delete
     url = args.url
+    update = args.update
     global config
+    if update:
+        if repo is None:
+            common.pprint("Updating all repos...", color='blue')
+            repos = config.list_repos()
+            for repo in repos:
+                common.pprint("Updating repo %s..." % (repo), color='green')
+                config.update_repo(repo)
+        else:
+            common.pprint("Updating repo %s..." % (repo), color='green')
+            config.update_repo(repo)
+    if repo is None:
+        common.pprint("Missing repo. Leaving...", color='red')
+        os._exit(1)
     if delete:
+        common.pprint("Deleting repo %s..." % (repo), color='green')
+        config.delete_repo(repo)
+        return
+    if update:
         common.pprint("Deleting repo %s..." % (repo), color='green')
         config.delete_repo(repo)
         return
