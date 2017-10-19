@@ -468,6 +468,26 @@ class Kconfig:
                 os.rmdir(repodir)
             return {'result': 'success'}
 
+    def create_product(self, name, repo=None):
+        """Create product"""
+        if repo is not None:
+            products = [product for product in self.list_products() if product['name'] == name and product['repo'] == repo]
+        else:
+            products = [product for product in self.list_products() if product['name'] == name]
+        if len(products) == 0:
+                    common.pprint("Product not found. Leaving...", color='red')
+                    sys.exit(1)
+        elif len(products) > 1:
+                    common.pprint("Product found in several repos. Specify one...", color='red')
+                    sys.exit(1)
+        else:
+            product = products[0]
+            plan = name
+            get = product['get']
+            inputfile = product['inputfile']
+            repo = product['repo']
+            self.plan(plan, get=get, path=repo, inputfile=inputfile)
+
     def plan(self, plan, ansible=False, get=None, path=None, autostart=False, container=False, noautostart=False, inputfile=None, start=False, stop=False, delete=False, delay=0, force=True, topologyfile=None, scale=None):
         """Create/Delete/Stop/Start vms from plan file"""
         k = self.k
