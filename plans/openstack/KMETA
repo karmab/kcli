@@ -1,47 +1,47 @@
 - name: pike
-  url: github.com/karmab/plans/openstack
+  url: github.com/karmab/kcli/plans/openstack
   file: upstream.yml
   description: Upstream Pike based on Packstack
   numvms: 1
   
 - name: ocata
-  url: github.com/karmab/plans/openstack
+  url: github.com/karmab/kcli/plans/openstack
   file: ocata.yml
   description: Downstream Ocata based on Packstack
   numvms: 1
   
 - name: newton
-  url: github.com/karmab/plans/openstack
+  url: github.com/karmab/kcli/plans/openstack
   file: newton.yml
   description: Downstream Newton based on Packstack
   numvms: 1
   
 - name: mitaka
-  url: github.com/karmab/plans/openstack
+  url: github.com/karmab/kcli/plans/openstack
   file: mitaka.yml
   description: Downstream Mitaka based on Packstack
   numvms: 1
   
 - name: liberty
-  url: github.com/karmab/plans/openstack
+  url: github.com/karmab/kcli/plans/openstack
   file: liberty.yml
   description: Downstream Liberty based on Packstack
   numvms: 1
   
 - name: kilo
-  url: github.com/karmab/plans/openstack
+  url: github.com/karmab/kcli/plans/openstack
   file: kilo.yml
   description: Downstream Kilo based on Packstack
   numvms: 1
   
 - name: advanced
-  url: github.com/karmab/plans/openstack
+  url: github.com/karmab/kcli/plans/openstack
   file: advanced.yml
   description: Downstream  Newton based on Packstack with one controller and three compute
   numvms: 4
   
 - name: advanced_live
-  url: github.com/karmab/plans/openstack
+  url: github.com/karmab/kcli/plans/openstack
   file: advanced_live.yml
   description: Downstream  Newton based on Packstack with one controller and three compute and with Live Migration Based on NFS
   numvms: 4

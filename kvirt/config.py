@@ -483,10 +483,16 @@ class Kconfig:
         else:
             product = products[0]
             plan = name
-            get = product['url']
+            url = product['url']
             inputfile = product['file']
             repo = product['repo']
-            self.plan(plan, get=get, path=repo, inputfile=inputfile)
+            if not os.path.exists(repo):
+                self.plan(plan, get=url, path=repo, inputfile=inputfile)
+            os.chdir(repo)
+            common.pprint("Running kcli plan -f %s %s" % (inputfile, plan), color='green')
+            # self.plan(plan, get=None, path=path, inputfile=inputfile)
+            self.plan(plan, inputfile=inputfile)
+            os.chdir('..')
 
     def plan(self, plan, ansible=False, get=None, path=None, autostart=False, container=False, noautostart=False, inputfile=None, start=False, stop=False, delete=False, delay=0, force=True, topologyfile=None, scale=None):
         """Create/Delete/Stop/Start vms from plan file"""

@@ -6,12 +6,17 @@ import socket
 import urllib2
 import json
 import os
+import sys
 
 
 def symlinks(user, repo):
     mappings = []
     url1 = 'https://api.github.com/repos/%s/%s/git/refs/heads/master' % (user, repo)
-    r = urllib2.urlopen(url1)
+    try:
+        r = urllib2.urlopen(url1)
+    except urllib2.HTTPError:
+        print("Invalid url %s.Leaving..." % url1)
+        sys.exit(1)
     base = json.load(r)
     sha = base['object']['sha']
     url2 = 'https://api.github.com/repos/%s/%s/git/trees/%s?recursive=1' % (user, repo, sha)
@@ -78,7 +83,6 @@ def fetch(url, path, syms=None):
         if filepath in syms:
             makelink(download_url, path)
         elif filetype == 'file':
-            print "here i am"
             download(download_url, path)
         elif filetype == 'dir':
             fetch("%s/%s" % (url, filename), "%s/%s" % (path, filename), syms=syms)
