@@ -217,6 +217,7 @@ def list(args):
     disks = args.disks
     pools = args.pools
     repos = args.repos
+    products = args.products
     networks = args.networks
     containers = args.containers
     images = args.images
@@ -368,6 +369,17 @@ def list(args):
             url = reposinfo[repo]
             repos.add_row([repo, url])
         print(repos)
+    elif products:
+        products = PrettyTable(["Repo", "Product", "Description", "Numvms"])
+        products.align["Repo"] = "l"
+        productsinfo = config.list_products()
+        for product in sorted(productsinfo, key=lambda x: (x['repo'], x['name'])):
+            name = product['name']
+            repo = product['repo']
+            description = product['description']
+            numvms = product['numvms']
+            products.add_row([repo, name, description, numvms])
+        print(products)
     else:
         if config.client == 'all':
             vms = PrettyTable(["Name", "Host", "Status", "Ips", "Source", "Plan", "Profile", "Report"])
@@ -956,6 +968,7 @@ def cli():
     list_parser.add_argument('--short', action='store_true')
     list_parser.add_argument('--plans', action='store_true')
     list_parser.add_argument('--repos', action='store_true')
+    list_parser.add_argument('--products', action='store_true')
     list_parser.add_argument('-f', '--filters', choices=('up', 'down'))
     list_parser.set_defaults(func=list)
 

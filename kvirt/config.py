@@ -375,6 +375,29 @@ class Kconfig:
                     sys.exit(1)
             return repos
 
+    def list_products(self):
+        basedir = "%s/.kcli" % os.environ.get('HOME')
+        if not os.path.exists(basedir):
+            return []
+        else:
+            products = []
+            repodirs = [d.replace('repo_', '') for d in os.listdir(basedir) if os.path.isdir("%s/%s" % (basedir, d)) and d.startswith('repo_')]
+            for repo in repodirs:
+                repometa = "%s/repo_%s/KMETA" % (basedir, repo)
+                if not os.path.exists(repometa):
+                    continue
+                else:
+                    with open(repometa, 'r') as entries:
+                        try:
+                            repoproducts = yaml.load(entries)
+                            for repoproduct in repoproducts:
+                                repoproduct['repo'] = repo
+                                products.append(repoproduct)
+                        except yaml.scanner.ScannerError:
+                            common.pprint("Couldn't properly parse .kcli/repo. Leaving...", color='red')
+                            continue
+            return products
+
     def create_repo(self, name, url):
         reposfile = "%s/.kcli/repos.yml" % os.environ.get('HOME')
         if not os.path.exists(reposfile):
@@ -396,10 +419,31 @@ class Kconfig:
                 url = repos[repo]
                 entry = "%s: %s" % (repo, url)
                 open(reposfile, 'w').write(entry)
-            return {'result': 'success'}
+        self.update_repo(name)
+        return {'result': 'success'}
+
+    def update_repo(self, name):
+        reposfile = "%s/.kcli/repos.yml" % os.environ.get('HOME')
+        repodir = "%s/.kcli/repo_%s" % (os.environ.get('HOME'), name)
+        if not os.path.exists(reposfile):
+            common.pprint("Empty .kcli/repos.yml. Leaving...", color='red')
+            sys.exit(1)
+        else:
+            with open(reposfile, 'r') as entries:
+                try:
+                    repos = yaml.load(entries)
+                except yaml.scanner.ScannerError:
+                    common.pprint("Couldn't properly parse .kcli/repos.yml. Leaving...", color='red')
+                    sys.exit(1)
+            if name not in repos:
+                common.pprint("Entry for name allready there. Leaving...", color='red')
+                sys.exit(1)
+        url = "%s/KMETA" % repos[name]
+        common.fetch(url, repodir)
 
     def delete_repo(self, name):
         reposfile = "%s/.kcli/repos.yml" % os.environ.get('HOME')
+        repodir = "%s/.kcli/repo_%s" % (os.environ.get('HOME'), name)
         if not os.path.exists(reposfile):
             common.pprint("Repo %s not found. Leaving..." % name, color='blue')
             return {'result': 'success'}
@@ -420,6 +464,8 @@ class Kconfig:
                 url = repos[repo]
                 entry = "%s: %s" % (repo, url)
                 open(reposfile, 'w').write(entry)
+            if os.path.isdir(repodir):
+                os.rmdir(repodir)
             return {'result': 'success'}
 
     def plan(self, plan, ansible=False, get=None, path=None, autostart=False, container=False, noautostart=False, inputfile=None, start=False, stop=False, delete=False, delay=0, force=True, topologyfile=None, scale=None):

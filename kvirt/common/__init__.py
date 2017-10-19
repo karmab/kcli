@@ -49,7 +49,6 @@ def fetch(url, path, syms=None):
         download(url, path)
         return
     elif 'api.github.com' not in url:
-        # url = url.replace('github.com/', 'api.github.com/repos/').replace('tree/master', 'contents')
         url = url.replace('github.com/', 'api.github.com/repos/').replace('tree/master', '')
         url = url.replace('blob/master', '')
     if 'contents' not in url:
@@ -66,6 +65,8 @@ def fetch(url, path, syms=None):
     except:
         print("Invalid url.Leaving...")
         os._exit(1)
+    if not isinstance(base, list):
+        base = [base]
     for b in base:
         if 'name' not in b or 'type' not in b or 'download_url' not in b:
             print("Invalid url.Leaving...")
@@ -77,6 +78,7 @@ def fetch(url, path, syms=None):
         if filepath in syms:
             makelink(download_url, path)
         elif filetype == 'file':
+            print "here i am"
             download(download_url, path)
         elif filetype == 'dir':
             fetch("%s/%s" % (url, filename), "%s/%s" % (path, filename), syms=syms)
