@@ -634,6 +634,16 @@ def repo(args):
     return 0
 
 
+def product(args):
+    """Create product"""
+    repo = args.repo
+    product = args.product
+    global config
+    common.pprint("Creating product %s..." % (product), color='green')
+    config.create_product(product, repo)
+    return 0
+
+
 def ssh(args):
     """Ssh into vm"""
     name = args.name
@@ -997,22 +1007,18 @@ def cli():
     pool_parser.add_argument('pool')
     pool_parser.set_defaults(func=pool)
 
-#    product_info = 'Deploy Product'
-#    product_parser = subparsers.add_parser('product', description=product_info, help=product_info)
-#    product_parser.add_argument('-d', '--delete', action='store_true')
-#    product_parser.add_argument('-i', '--isolated', action='store_true', help='Isolated Product')
-#    product_parser.add_argument('-c', '--cidr', help='Cidr of the net', metavar='CIDR')
-#    product_parser.add_argument('--nodhcp', action='store_true', help='Disable dhcp on the net')
-#    product_parser.add_argument('--domain', help='DNS domain. Defaults to product name')
-#    product_parser.add_argument('-p', '--pxe', help='Ip of a Pxe Server', metavar='PXE')
-#    product_parser.add_argument('name', metavar='NETWORK')
-#    product_parser.set_defaults(func=product)
+    product_info = 'Deploy Product'
+    product_parser = subparsers.add_parser('product', description=product_info, help=product_info)
+    product_parser.add_argument('-i', '--info', action='store_true', help='Info on a given product')
+    product_parser.add_argument('-r', '--repo', help='Repo to use', metavar='REPO')
+    product_parser.add_argument('product', metavar='PRODUCT')
+    product_parser.set_defaults(func=product)
 
     repo_info = 'Create/Delete repos'
-    repo_parser = subparsers.add_parser('product', description=repo_info, help=repo_info)
     repo_parser = subparsers.add_parser('repo', description=repo_info, help=repo_info)
     repo_parser.add_argument('-d', '--delete', action='store_true')
     repo_parser.add_argument('-u', '--url', help='URL of the repo', metavar='URL')
+    repo_parser.add_argument('-U', '--update', action='store_true', help='Update metadata of the repo')
     repo_parser.add_argument('repo')
     repo_parser.set_defaults(func=repo)
 
