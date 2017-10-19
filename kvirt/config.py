@@ -362,6 +362,66 @@ class Kconfig:
                     results.append([profile, image, nets, ports, volumes, cmd])
         return results
 
+    def list_repos(self):
+        reposfile = "%s/.kcli/repos.yml" % os.environ.get('HOME')
+        if not os.path.exists(reposfile):
+            return {}
+        else:
+            with open(reposfile, 'r') as entries:
+                try:
+                    repos = yaml.load(entries)
+                except yaml.scanner.ScannerError:
+                    common.pprint("Couldn't properly parse .kcli/repos.yml. Leaving...", color='red')
+                    sys.exit(1)
+            return repos
+
+    def create_repo(self, name, url):
+        reposfile = "%s/.kcli/repos.yml" % os.environ.get('HOME')
+        if not os.path.exists(reposfile):
+            entry = "%s: %s" % (name, url)
+            open(reposfile, 'w').write(entry)
+        else:
+            with open(reposfile, 'r') as entries:
+                try:
+                    repos = yaml.load(entries)
+                except yaml.scanner.ScannerError:
+                    common.pprint("Couldn't properly parse .kcli/repos.yml. Leaving...", color='red')
+                    sys.exit(1)
+            if name in repos:
+                if repos[name] == url:
+                    common.pprint("Entry for name allready there. Leaving...", color='blue')
+                    return {'result': 'success'}
+            repos[name] = url
+            for repo in sorted(repos):
+                url = repos[repo]
+                entry = "%s: %s" % (repo, url)
+                open(reposfile, 'w').write(entry)
+            return {'result': 'success'}
+
+    def delete_repo(self, name):
+        reposfile = "%s/.kcli/repos.yml" % os.environ.get('HOME')
+        if not os.path.exists(reposfile):
+            common.pprint("Repo %s not found. Leaving..." % name, color='blue')
+            return {'result': 'success'}
+        else:
+            with open(reposfile, 'r') as entries:
+                try:
+                    repos = yaml.load(entries)
+                except yaml.scanner.ScannerError:
+                    common.pprint("Couldn't properly parse .kcli/repos.yml. Leaving...", color='red')
+                    sys.exit(1)
+            if name in repos:
+                del repos[name]
+            else:
+                common.pprint("Repo %s not found. Leaving..." % name, color='blue')
+            if not repos:
+                os.remove(reposfile)
+            for repo in sorted(repos):
+                url = repos[repo]
+                entry = "%s: %s" % (repo, url)
+                open(reposfile, 'w').write(entry)
+            return {'result': 'success'}
+
     def plan(self, plan, ansible=False, get=None, path=None, autostart=False, container=False, noautostart=False, inputfile=None, start=False, stop=False, delete=False, delay=0, force=True, topologyfile=None, scale=None):
         """Create/Delete/Stop/Start vms from plan file"""
         k = self.k

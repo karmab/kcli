@@ -216,6 +216,7 @@ def list(args):
     isos = args.isos
     disks = args.disks
     pools = args.pools
+    repos = args.repos
     networks = args.networks
     containers = args.containers
     images = args.images
@@ -359,6 +360,14 @@ def list(args):
             planvms = plan[1]
             plans.add_row([planname, planvms])
         print(plans)
+    elif repos:
+        repos = PrettyTable(["Repo", "Url"])
+        repos.align["Repo"] = "l"
+        reposinfo = config.list_repos()
+        for repo in sorted(reposinfo):
+            url = reposinfo[repo]
+            repos.add_row([repo, url])
+        print(repos)
     else:
         if config.client == 'all':
             vms = PrettyTable(["Name", "Host", "Status", "Ips", "Source", "Plan", "Profile", "Report"])
@@ -604,6 +613,24 @@ def plan(args):
     if delete and not yes:
         common.confirm("Are you sure?")
     config.plan(plan, ansible=ansible, get=get, path=path, autostart=autostart, container=container, noautostart=noautostart, inputfile=inputfile, start=start, stop=stop, delete=delete, delay=delay, topologyfile=topologyfile, scale=scale)
+    return 0
+
+
+def repo(args):
+    """Create/Delete repo"""
+    repo = args.repo
+    delete = args.delete
+    url = args.url
+    global config
+    if delete:
+        common.pprint("Deleting repo %s..." % (repo), color='green')
+        config.delete_repo(repo)
+        return
+    if url is None:
+        common.pprint("Missing url. Leaving...", color='red')
+        os._exit(1)
+    common.pprint("Adding repo %s..." % (repo), color='green')
+    config.create_repo(repo, url)
     return 0
 
 
@@ -918,6 +945,7 @@ def cli():
     list_parser.add_argument('--images', action='store_true')
     list_parser.add_argument('--short', action='store_true')
     list_parser.add_argument('--plans', action='store_true')
+    list_parser.add_argument('--repos', action='store_true')
     list_parser.add_argument('-f', '--filters', choices=('up', 'down'))
     list_parser.set_defaults(func=list)
 
@@ -968,6 +996,25 @@ def cli():
     pool_parser.add_argument('-p', '--path', help='Path of the pool', metavar='PATH')
     pool_parser.add_argument('pool')
     pool_parser.set_defaults(func=pool)
+
+#    product_info = 'Deploy Product'
+#    product_parser = subparsers.add_parser('product', description=product_info, help=product_info)
+#    product_parser.add_argument('-d', '--delete', action='store_true')
+#    product_parser.add_argument('-i', '--isolated', action='store_true', help='Isolated Product')
+#    product_parser.add_argument('-c', '--cidr', help='Cidr of the net', metavar='CIDR')
+#    product_parser.add_argument('--nodhcp', action='store_true', help='Disable dhcp on the net')
+#    product_parser.add_argument('--domain', help='DNS domain. Defaults to product name')
+#    product_parser.add_argument('-p', '--pxe', help='Ip of a Pxe Server', metavar='PXE')
+#    product_parser.add_argument('name', metavar='NETWORK')
+#    product_parser.set_defaults(func=product)
+
+    repo_info = 'Create/Delete repos'
+    repo_parser = subparsers.add_parser('product', description=repo_info, help=repo_info)
+    repo_parser = subparsers.add_parser('repo', description=repo_info, help=repo_info)
+    repo_parser.add_argument('-d', '--delete', action='store_true')
+    repo_parser.add_argument('-u', '--url', help='URL of the repo', metavar='URL')
+    repo_parser.add_argument('repo')
+    repo_parser.set_defaults(func=repo)
 
     report_info = 'Report Info about Host'
     report_parser = subparsers.add_parser('report', description=report_info, help=report_info)
