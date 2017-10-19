@@ -14,3 +14,5 @@ wget https://raw.githubusercontent.com/openshift/ansible-service-broker/master/s
 chmod +x run_latest_build.sh
 export PUBLIC_IP=`ip a l  eth0 | grep 'inet ' | cut -d' ' -f6 | awk -F'/' '{ print $1}'`
 sh run_latest_build.sh
+docker exec origin oadm policy add-cluster-role-to-user cluster-admin admin --config=/var/lib/origin/openshift.local.config/master/admin.kubeconfig
+docker exec origin oadm policy add-cluster-role-to-user cluster-admin developer --config=/var/lib/origin/openshift.local.config/master/admin.kubeconfig

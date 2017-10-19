@@ -1,0 +1,47 @@
+name: pike
+get: github.com/karmab/plans/openstack
+inputfile: upstream.yml
+description: Upstream Pike based on Packstack
+numvms: 1
+
+name: ocata
+get: github.com/karmab/plans/openstack
+inputfile: ocata.yml
+description: Downstream Ocata based on Packstack
+numvms: 1
+
+name: newton
+get: github.com/karmab/plans/openstack
+inputfile: newton.yml
+description: Downstream Newton based on Packstack
+numvms: 1
+
+name: mitaka
+get: github.com/karmab/plans/openstack
+inputfile: mitaka.yml
+description: Downstream Mitaka based on Packstack
+numvms: 1
+
+name: liberty
+get: github.com/karmab/plans/openstack
+inputfile: liberty.yml
+description: Downstream Liberty based on Packstack
+numvms: 1
+
+name: kilo
+get: github.com/karmab/plans/openstack
+inputfile: kilo.yml
+description: Downstream Kilo based on Packstack
+numvms: 1
+
+name: advanced
+get: github.com/karmab/plans/openstack
+inputfile: advanced.yml
+description: Downstream  Newton based on Packstack with one controller and three compute
+numvms: 4
+
+name: advanced_live
+get: github.com/karmab/plans/openstack
+inputfile: advanced_live.yml
+description: Downstream  Newton based on Packstack with one controller and three compute and with Live Migration Based on NFS
+numvms: 4
