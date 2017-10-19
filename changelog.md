@@ -1,5 +1,12 @@
 # Changelog
 
+## 9.0 (2017-10-20)
+
+- products and repo support to leverage plans and make them easier to use
+- helm plan
+- fission plan
+- allow minimal syntax in config.yml to specify default values but implicitly using the local hypervisor
+
 ## 8.12 (2017-10-06)
 
 - allow to have both cloudinit and an additional iso

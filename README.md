@@ -545,6 +545,44 @@ myplay:
 
 Note that when leveraging ansible this way, an inventory file will be generated on the fly for you and let in */tmp/$PLAN.inv* 
 
+## Using products
+
+If plans seem to complex, you can make use of the products feature which leverages them
+
+### Repos
+
+You first add a repo containing a KMETA file with yaml info about products you want to expose
+
+```
+kcli repo -u github.com/karmab/kcli/plans karmab
+```
+
+You can also update later a given repo, to refresh its KMETA file ( or all the repos, if not specifying any)
+
+```
+kcli repo --update REPO_NAME
+```
+
+You can delete a given repo with
+
+```
+kcli repo -d REPO_NAME
+```
+
+### Product
+
+Once you have added some repos, you can list available products, and get its description
+
+```
+kcli list --products 
+```
+
+And deploy any product 
+
+```
+kcli product YOUR_PRODUCT
+```
+
 ## Testing
 
 Basic testing can be run with pytest. If using a remote hypervisor, you ll want to set the *KVIRT_HOST* and *KVIRT_USER* environment variables so that it points to your host with the corresponding user.
@@ -603,11 +641,10 @@ While the tool should pretty much work the same on this hypervisor, there are so
 
 ## TODO
 
+- Add products and repo to kweb
 - Read The docs
 - Check on memory and disk space when creating vm
-- Scaling Plan
 - Random hypervisor vm creation
-- Plan View (Vagrant Style)
 - validation of ips, netmasks, macs,...  within plan file
 
 ## Contributors
