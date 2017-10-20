@@ -8,9 +8,9 @@ function vmstart(vm){
         success: function(data) {
             $("#wheel").hide();
             if (data.result == 'success') {
-                $('.top-right').notify({message: { text: "Vm "+vm+" Started!!!" }, type: 'success'}).show(); 
+                $('.top-right').notify({message: { text: "Vm "+vm+" started!!!" }, type: 'success'}).show(); 
             } else {
-                $('.top-right').notify({message: { text: "VM "+vm+" Failed to Start" }, type: 'danger'}).show(); 
+                $('.top-right').notify({message: { text: "VM "+vm+" not started" }, type: 'danger'}).show(); 
             };
 		}
 	});
@@ -26,9 +26,9 @@ function vmstop(vm){
         success: function(data) {
             $("#wheel").hide();
             if (data.result == 'success') {
-                $('.top-right').notify({message: { text: "Vm "+vm+" Stopped!!!" }, type: 'success'}).show(); 
+                $('.top-right').notify({message: { text: "Vm "+vm+" stopped!!!" }, type: 'success'}).show(); 
             } else {
-                $('.top-right').notify({message: { text: "VM "+vm+" Failed to Stop" }, type: 'danger'}).show(); 
+                $('.top-right').notify({message: { text: "VM "+vm+" not stopped" }, type: 'danger'}).show(); 
             };
 		}
 	});
@@ -48,9 +48,9 @@ function vmdelete(vm){
         success: function(data) {
             $("#wheel").hide();
             if (data.result == 'success') {
-                $('.top-right').notify({message: { text: "Vm "+vm+" Deleted!!!" }, type: 'success'}).show();
+                $('.top-right').notify({message: { text: "Vm "+vm+" deleted!!!" }, type: 'success'}).show();
             } else {
-                $('.top-right').notify({message: { text: "VM "+vm+" Failed to Delete because "+data.reason }, type: 'danger'}).show();
+                $('.top-right').notify({message: { text: "VM "+vm+" not deleted because "+data.reason }, type: 'danger'}).show();
             };
         }
     });
@@ -72,9 +72,9 @@ function vmcreate(name, profile){
         success: function(data) {
             $("#wheel").hide();
             if (data.result == 'success') {
-                $('.top-right').notify({message: { text: "Vm "+name+" Created!!!" }, type: 'success'}).show();
+                $('.top-right').notify({message: { text: "Vm "+name+" created!!!" }, type: 'success'}).show();
             } else {
-                $('.top-right').notify({message: { text: "VM "+name+" Failed to Create Because "+data.reason }, type: 'danger'}).show();
+                $('.top-right').notify({message: { text: "VM "+name+" not created because "+data.reason }, type: 'danger'}).show();
             };
         }
     });

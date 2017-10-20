@@ -11,9 +11,9 @@ function poolcreate(){
         success: function(data) {
             $("#wheel").hide();
             if (data.result == 'success') {
-                $('.top-right').notify({message: { text: "Pool "+pool+" Created!!!" }, type: 'success'}).show();
+                $('.top-right').notify({message: { text: "Pool "+pool+" created!!!" }, type: 'success'}).show();
             } else {
-                $('.top-right').notify({message: { text: "Pool "+pool+" Failed to Create Because "+data.reason }, type: 'danger'}).show();
+                $('.top-right').notify({message: { text: "Pool "+pool+" not created because "+data.reason }, type: 'danger'}).show();
             };
         }
     });
@@ -29,9 +29,9 @@ function pooldelete(pool){
         success: function(data) {
             $("#wheel").hide();
             if (data.result == 'success') {
-                $('.top-right').notify({message: { text: "Pool "+pool+" Deleted!!!" }, type: 'success'}).show();
+                $('.top-right').notify({message: { text: "Pool "+pool+" deleted!!!" }, type: 'success'}).show();
             } else {
-                $('.top-right').notify({message: { text: "Pool "+pool+" Deleted to Create Because "+data.reason }, type: 'danger'}).show();
+                $('.top-right').notify({message: { text: "Pool "+pool+" not created because "+data.reason }, type: 'danger'}).show();
             };
         }
     });

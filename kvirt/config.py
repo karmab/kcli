@@ -451,6 +451,7 @@ class Kconfig:
         elif 'KMETA' not in url:
             url = "%s/KMETA" % url
         common.fetch(url, repodir)
+        return {'result': 'success'}
 
     def delete_repo(self, name):
         reposfile = "%s/.kcli/repos.yml" % os.environ.get('HOME')
@@ -515,6 +516,7 @@ class Kconfig:
             common.pprint("Product can be deleted with: kcli plan -d %s" % (plan), color='green')
             if clean and should_clean:
                 shutil.rmtree(group)
+        return {'result': 'success', 'plan': plan}
 
     def plan(self, plan, ansible=False, get=None, path=None, autostart=False, container=False, noautostart=False, inputfile=None, start=False, stop=False, delete=False, delay=0, force=True, topologyfile=None, scale=None):
         """Create/Delete/Stop/Start vms from plan file"""

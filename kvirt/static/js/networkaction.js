@@ -12,9 +12,9 @@ function networkcreate(){
         success: function(data) {
             $("#wheel").hide();
             if (data.result == 'success') {
-                $('.top-right').notify({message: { text: "Network "+network+" Created!!!" }, type: 'success'}).show();
+                $('.top-right').notify({message: { text: "Network "+network+" created!!!" }, type: 'success'}).show();
             } else {
-                $('.top-right').notify({message: { text: "Network "+network+" Failed to Create Because "+data.reason }, type: 'danger'}).show();
+                $('.top-right').notify({message: { text: "Network "+network+" not created because "+data.reason }, type: 'danger'}).show();
             };
         }
     });
@@ -32,7 +32,7 @@ function networkdelete(network){
             if (data.result == 'success') {
                 $('.top-right').notify({message: { text: "Network "+network+" Deleted!!!" }, type: 'success'}).show();
             } else {
-                $('.top-right').notify({message: { text: "Network "+network+" Deleted to Create Because "+data.reason }, type: 'danger'}).show();
+                $('.top-right').notify({message: { text: "Network "+network+" not deleted :because "+data.reason }, type: 'danger'}).show();
             };
         }
     });

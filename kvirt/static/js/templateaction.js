@@ -10,9 +10,9 @@ function templatecreate(template, pool, url, cmd){
             $("#urllabel").hide();
             $("#url").hide();
             if (data.result == 'success') {
-                $('.top-right').notify({message: { text: "Template "+template+" Created!!!" }, type: 'success'}).show();
+                $('.top-right').notify({message: { text: "Template "+template+" created!!!" }, type: 'success'}).show();
             } else {
-                $('.top-right').notify({message: { text: "Template "+template+" Failed to Create Because "+data.reason }, type: 'danger'}).show();
+                $('.top-right').notify({message: { text: "Template "+template+" not created because "+data.reason }, type: 'danger'}).show();
             };
         }
     });

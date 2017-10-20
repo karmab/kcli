@@ -12,9 +12,9 @@ function snapshotcreate(name){
         success: function(data) {
             $("#wheel").hide();
             if (data.result == 'success') {
-                $('.top-right').notify({message: { text: "Snapshot "+snapshot+" Created!!!" }, type: 'success'}).show();
+                $('.top-right').notify({message: { text: "Snapshot "+snapshot+" created!!!" }, type: 'success'}).show();
             } else {
-                $('.top-right').notify({message: { text: "Snapshot "+snapshot+" Not created because "+data.reason }, type: 'danger'}).show();
+                $('.top-right').notify({message: { text: "Snapshot "+snapshot+" not created because "+data.reason }, type: 'danger'}).show();
             };
         }
     });
@@ -44,9 +44,9 @@ function snapshotdelete(name){
                       success: function(data) {
                           $("#wheel").hide();
                           if (data.result == 'success') {
-                              $('.top-right').notify({message: { text: "Snapshot "+snapshot+" Deleted!!!" }, type: 'success'}).show();
+                              $('.top-right').notify({message: { text: "Snapshot "+snapshot+" deleted!!!" }, type: 'success'}).show();
                           } else {
-                              $('.top-right').notify({message: { text: "Snapshot "+snapshot+" Not deleted because "+data.reason }, type: 'danger'}).show();
+                              $('.top-right').notify({message: { text: "Snapshot "+snapshot+" not deleted because "+data.reason }, type: 'danger'}).show();
                           };
                       }
                   });

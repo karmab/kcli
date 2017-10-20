@@ -175,6 +175,40 @@ def poolaction():
         response.status_code = 400
     return response
 
+
+# REPOS
+
+@app.route("/repoaction", methods=['POST'])
+def repoaction():
+    """
+    create/delete repo
+    """
+    config = Kconfig()
+    k = config.k
+    if 'repo' in request.form:
+        repo = request.form['repo']
+        action = request.form['action']
+        if action == 'create':
+            url = request.form['url']
+            print repo, url
+            result = k.create_repo(repo, url)
+            print(result)
+        elif action == 'update':
+            result = k.update_repo(repo)
+            print(result)
+        elif action == 'delete':
+            result = k.delete_repo(repo)
+        else:
+            result = "Nothing to do"
+        response = jsonify(result)
+        print(response)
+        response.status_code = 200
+    else:
+        failure = {'result': 'failure', 'reason': "Invalid Data"}
+        response = jsonify(failure)
+        response.status_code = 400
+    return response
+
 # NETWORKS
 
 
@@ -433,6 +467,78 @@ def pools():
         poolpath = k.get_pool_path(pool)
         pools.append([pool, poolpath])
     return render_template('pools.html', title='Pools', pools=pools, client=config.client)
+
+
+@app.route('/repos')
+def repos():
+    """
+    retrieves all repos
+    """
+    config = Kconfig()
+    k = config.k
+    repos = []
+    repoinfo = k.list_repos()
+    for repo in repoinfo:
+        url = repoinfo[repo]
+        repos.append([repo, url])
+    return render_template('repos.html', title='Repos', repos=repos, client=config.client)
+
+# PRODUCTS
+
+
+@app.route('/products')
+def products():
+    """
+    retrieves all products
+    """
+    config = Kconfig()
+    k = config.k
+    products = []
+    productsinfo = k.list_products()
+    for product in products:
+        repo = productsinfo['repo']
+        group = productsinfo['group']
+        name = productsinfo['name']
+        description = productsinfo['description']
+        numvms = productsinfo['numvms']
+        products.append([repo, group, name, description, numvms])
+    return render_template('products.html', title='Products', products=products, client=config.client)
+
+
+@app.route('/productcreate')
+def productcreate():
+    """
+    product form
+    """
+    config = Kconfig()
+    return render_template('productcreate.html', title='CreateProduct', client=config.client)
+
+
+@app.route("/productcreate", methods=['POST'])
+def productaction():
+    """
+    create product
+    """
+    config = Kconfig()
+    if 'product' in request.form:
+        product = request.form['product']
+        action = request.form['action']
+        if action == 'create' and 'plan' in request.form:
+            plan = request.form['plan']
+            if plan == '':
+                plan = None
+            result = config.createproduct(product, plan=plan, clean=True)
+        else:
+            result = "Nothing to do"
+        print(result)
+        response = jsonify(result)
+        print(response)
+        response.status_code = 200
+        return response
+    else:
+        failure = {'result': 'failure', 'reason': "Invalid Data"}
+        response = jsonify(failure)
+        response.status_code = 400
 
 
 @app.route('/hosts')

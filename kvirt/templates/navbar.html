@@ -24,6 +24,20 @@
                 </ul>
             </li>
             <li class="dropdown">
+                <a data-toggle="dropdown" class="dropdown-toggle" href="#">Repos <b class="caret"></b></a>
+                <ul role="menu" class="dropdown-menu">
+                    <li><a href="{{ url_for('repocreate') }}">Create Repo</a></li>
+                    <li><a href="{{ url_for('repos') }}">List Repos</a></li>
+                </ul>
+            </li>
+            <li class="dropdown">
+                <a data-toggle="dropdown" class="dropdown-toggle" href="#">Products <b class="caret"></b></a>
+                <ul role="menu" class="dropdown-menu">
+                    <li><a href="{{ url_for('productcreate') }}">Create Product</a></li>
+                    <li><a href="{{ url_for('products') }}">List Product</a></li>
+                </ul>
+            </li>
+            <li class="dropdown">
                 <a data-toggle="dropdown" class="dropdown-toggle" href="#">Plans <b class="caret"></b></a>
                 <ul role="menu" class="dropdown-menu">
                     <li><a href="{{ url_for('plancreate') }}">Create Plan</a></li>

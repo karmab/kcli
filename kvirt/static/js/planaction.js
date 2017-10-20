@@ -26,9 +26,9 @@ function planstop(plan){
         success: function(data) {
             $("#wheel").hide();
             if (data.result == 'success') {
-                $('.top-right').notify({message: { text: "Plan "+plan+" Stopped!!!" }, type: 'success'}).show(); 
+                $('.top-right').notify({message: { text: "Plan "+plan+" stopped!!!" }, type: 'success'}).show(); 
             } else {
-                $('.top-right').notify({message: { text: "VM "+plan+" Failed to Stop" }, type: 'danger'}).show(); 
+                $('.top-right').notify({message: { text: "VM "+plan+" not stopped" }, type: 'danger'}).show(); 
             };
 		}
 	});
@@ -48,9 +48,9 @@ function plandelete(plan){
         success: function(data) {
             $("#wheel").hide();
             if (data.result == 'success') {
-                $('.top-right').notify({message: { text: "Plan "+plan+" Deleted!!!" }, type: 'success'}).show();
+                $('.top-right').notify({message: { text: "Plan "+plan+" deleted!!!" }, type: 'success'}).show();
             } else {
-                $('.top-right').notify({message: { text: "VM "+plan+" Failed to Delete because of"+ data.reason }, type: 'danger'}).show();
+                $('.top-right').notify({message: { text: "VM "+plan+" not deleted because "+ data.reason }, type: 'danger'}).show();
             };
         }
     });
@@ -66,7 +66,7 @@ function plancreate(name, url, planfile, deploy){
         success: function(data) {
             $("#wheel").hide();
             if (data.result == 'success') {
-                $('.top-right').notify({message: { text: "Plan "+name+" Created!!!" }, type: 'success'}).show();
+                $('.top-right').notify({message: { text: "Plan "+name+" created!!!" }, type: 'success'}).show();
             } else {
                 $('.top-right').notify({message: { text: "Plan "+name+" Failed to Create because "+data.reason }, type: 'danger'}).show();
             };
