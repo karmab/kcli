@@ -670,9 +670,10 @@ def product(args):
     """Create product"""
     repo = args.repo
     product = args.product
+    clean = args.clean
     global config
     common.pprint("Creating product %s..." % (product), color='green')
-    config.create_product(product, repo)
+    config.create_product(product, repo, clean=clean)
     return 0
 
 
@@ -1043,6 +1044,7 @@ def cli():
     product_info = 'Deploy Product'
     product_parser = subparsers.add_parser('product', description=product_info, help=product_info)
     product_parser.add_argument('-r', '--repo', help='Repo to use, if deploying a product present in several repos', metavar='REPO')
+    product_parser.add_argument('-c', '--clean', action='store_true', help='Clean generated directory, after deployment')
     product_parser.add_argument('product', metavar='PRODUCT')
     product_parser.set_defaults(func=product)
 

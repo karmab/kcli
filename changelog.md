@@ -1,5 +1,9 @@
 # Changelog
 
+## 9.2 (2017-10-20)
+
+- added clean parameter to kcli product to remove downloaded plan
+
 ## 9.1 (2017-10-20)
 
 - improved repo handling
@@ -19,7 +23,6 @@
 - remove soukron from random names
 - fix bad ordering of commands when using vm -p
 - ansible service broker plan
-
 
 ## 8.11 (2017-10-03)
 
@@ -181,9 +184,7 @@
 - report paths with list --pools to please @rsevilla87
 - short option for listing profiles or networks
 - switch from click to argparse
-
-IMPORTANT: as part of the refactorization, metadata about the vms are stored differently. So you re advised to run kcli list prior to upgrade so you can
-use this information afterwards to run *kcli update --template* or *kcli update --plan*
+- IMPORTANT: as part of the refactorization, metadata about the vms are stored differently. So you re advised to run kcli list prior to upgrade so you can use this information afterwards to run *kcli update --template* or *kcli update --plan*
 
 ## 5.24 (2017-04-04)
 
@@ -213,7 +214,6 @@ use this information afterwards to run *kcli update --template* or *kcli update 
 - Bootstrapping fixes
 - Fix for serial console in local
 
-
 ## 5.0 (2017-02-07)
 
 - Support for kcli plan --get so plans and directory plans can be shared
@@ -229,7 +229,6 @@ use this information afterwards to run *kcli update --template* or *kcli update 
 - Move kcli create to kcli vm in particular
 - Created a kcli container command and applied some container fix when running locally with the API
 - Put plan as label for containers
-
 
 ## 3.00 (2016-12-30)
 
@@ -251,7 +250,6 @@ use this information afterwards to run *kcli update --template* or *kcli update 
 - Report volumes in pool with name from default templates as such ( that it, as templates...)
 - Stupid handle_response fix for start/stop
 - Stupid profile fix
-
 
 ## 2.0 (2016-10-16)
 
@@ -275,7 +273,6 @@ use this information afterwards to run *kcli update --template* or *kcli update 
 - Refactored the ip code to use dhcp leases instead of buggy InterfaceAddress
 - Detect whether to use genisoimage or mkisofs
 - Stupid array disk bug
-
 
 ## 1.0.29 (2016-10-08)
 
@@ -304,7 +301,6 @@ use this information afterwards to run *kcli update --template* or *kcli update 
 - Better parsing for ubuntu based templates
 - Fix memory update calculation
 
-
 ## 1.0 release (2016-09-12)
 
 - Disk3 and disk4 feature
@@ -317,8 +313,7 @@ use this information afterwards to run *kcli update --template* or *kcli update 
 
 ## 0.99.6 (2016-09-11)
 
-Initial public release
-
+- Initial public release
 - Basic info and console
 - Cloning
 - Report ips

@@ -21,7 +21,7 @@ from time import sleep
 import webbrowser
 import yaml
 
-__version__ = '9.1'
+__version__ = '9.2'
 
 
 class Kconfig:
@@ -480,7 +480,7 @@ class Kconfig:
                 shutil.rmtree(repodir)
             return {'result': 'success'}
 
-    def create_product(self, name, repo=None):
+    def create_product(self, name, repo=None, clean=False):
         """Create product"""
         if repo is not None:
             products = [product for product in self.list_products() if product['name'] == name and product['repo'] == repo]
@@ -506,12 +506,15 @@ class Kconfig:
             if password is not None:
                 print("Note that this product uses password: %s" % password)
             if not os.path.exists(group):
+                should_clean = True
                 self.plan(plan, get=url, path=group, inputfile=inputfile)
             os.chdir(group)
             common.pprint("Running: kcli plan -f %s %s" % (inputfile, plan), color='green')
             self.plan(plan, inputfile=inputfile)
             os.chdir('..')
             common.pprint("Product can be deleted with: kcli plan -d %s" % (plan), color='green')
+            if clean and should_clean:
+                shutil.rmtree(group)
 
     def plan(self, plan, ansible=False, get=None, path=None, autostart=False, container=False, noautostart=False, inputfile=None, start=False, stop=False, delete=False, delay=0, force=True, topologyfile=None, scale=None):
         """Create/Delete/Stop/Start vms from plan file"""
