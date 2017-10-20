@@ -418,11 +418,14 @@ class Kconfig:
                 if repos[name] == url:
                     common.pprint("Entry for name allready there. Leaving...", color='blue')
                     return {'result': 'success'}
+                else:
+                    common.pprint("Updating url for repo %s" % name, color='green')
             repos[name] = url
-            for repo in sorted(repos):
-                url = repos[repo]
-                entry = "%s: %s" % (repo, url)
-                open(reposfile, 'w').write(entry)
+            with open(reposfile, 'w') as reposfile:
+                for repo in sorted(repos):
+                    url = repos[repo]
+                    entry = "%s: %s\n" % (repo, url)
+                    reposfile.write(entry)
         return {'result': 'success'}
 
     def update_repo(self, name, url=None):
@@ -466,10 +469,11 @@ class Kconfig:
                 common.pprint("Repo %s not found. Leaving..." % name, color='blue')
             if not repos:
                 os.remove(reposfile)
-            for repo in sorted(repos):
-                url = repos[repo]
-                entry = "%s: %s" % (repo, url)
-                open(reposfile, 'w').write(entry)
+            with open(reposfile, 'w') as reposfile:
+                for repo in sorted(repos):
+                    url = repos[repo]
+                    entry = "%s: %s\n" % (repo, url)
+                    reposfile.write(entry)
             if os.path.isdir(repodir):
                 shutil.rmtree(repodir)
             return {'result': 'success'}
