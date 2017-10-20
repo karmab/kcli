@@ -4,6 +4,7 @@
   file: copr.yml
   description: Build kcli rpm
   numvms: 1
+  template: Fedora-Cloud-Base-26-1.5.x86_64.qcow2
   
 - name: packagecloud
   group: builder
@@ -11,3 +12,4 @@
   file: packagecloud.yml
   description: Build kcli deb
   numvms: 1
+  template: xenial-server-cloudimg-amd64-disk1.img

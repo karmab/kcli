@@ -1,0 +1,15 @@
+- name: basic
+  group: kubernetes
+  url: github.com/karmab/kcli/plans/kubernetes
+  file: basic.yml
+  description: Latest kubernetes
+  numvms: 3
+  image: CentOS-7-x86_64-GenericCloud.qcow2
+
+- name: minikube
+  group: kubernetes
+  url: github.com/karmab/kcli/plans/kubernetes
+  file: minikube.yml
+  description: Minikube 1.7.0
+  numvms: 1
+  image: Fedora-Cloud-Base-26-1.5.x86_64.qcow2

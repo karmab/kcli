@@ -26,7 +26,6 @@ undercloud:
     mask: 255.255.255.0
  pool: default
  cmds:
-  - echo unix1234 | passwd --stdin root
   - echo undercloud.localdomain > /etc/hostname
   - echo 192.168.101.10 undercloud.localdomain undercloud >> /etc/hosts
   - echo GATEWAY=192.168.101.1 >> /etc/sysconfig/network

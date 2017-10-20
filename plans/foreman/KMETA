@@ -1,0 +1,17 @@
+- name: foreman
+  group: foreman
+  url: github.com/karmab/kcli/plans/foreman
+  file: upstream.yml
+  description: Upstream Foreman 1.12
+  numvms: 1
+  password: unix1234
+  template: CentOS-7-x86_64-GenericCloud.qcow2
+
+- name: satellite
+  group: foreman
+  url: github.com/karmab/kcli/plans/foreman
+  file: downstream.yml
+  description: Downstream Foreman 6.2
+  numvms: 1
+  password: unix1234
+  template: rhel-guest-image-7.3-35.x86_64.qcow2
