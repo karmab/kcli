@@ -640,7 +640,7 @@ While the tool should pretty much work the same on this hypervisor, there are so
 
 ## TODO
 
-- Add products and repo to kweb
+- Dynamically load elements in the web interface after action (and eliminate the refresh button)
 - Read The docs
 - Check on memory and disk space when creating vm
 - Random hypervisor vm creation

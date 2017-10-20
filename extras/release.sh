@@ -37,7 +37,6 @@ fi
 
 # GRAB CHANGELOG
 CHANGELOG=`sed -n "/## $VERSION.*/,/## $OLDVERSION.*/p" changelog.md | grep -v "## $OLDVERSION"`
-echo -n $CHANGELOG
 
 # SET NEW VERSIONS
 sed -i s"/    version.*/    version='$VERSION',/" setup.py

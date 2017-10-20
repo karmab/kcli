@@ -1,7 +1,7 @@
 function repocreate(){
   $("#wheel").show();
   var repo = $("#repo").val();
-  var url = $("#url").val();
+  var url = $("#URL").val();
   data = {'repo': repo, 'url': url, 'action': 'create'};
   $.ajax({
        type: "POST",

@@ -184,20 +184,25 @@ def repoaction():
     create/delete repo
     """
     config = Kconfig()
-    k = config.k
+    print "PROUT"
     if 'repo' in request.form:
         repo = request.form['repo']
         action = request.form['action']
         if action == 'create':
             url = request.form['url']
             print repo, url
-            result = k.create_repo(repo, url)
-            print(result)
+            if url == '':
+                failure = {'result': 'failure', 'reason': "Invalid Data"}
+                response = jsonify(failure)
+                response.status_code = 400
+            else:
+                result = config.create_repo(repo, url)
+                print(result)
         elif action == 'update':
-            result = k.update_repo(repo)
+            result = config.update_repo(repo)
             print(result)
         elif action == 'delete':
-            result = k.delete_repo(repo)
+            result = config.delete_repo(repo)
         else:
             result = "Nothing to do"
         response = jsonify(result)
@@ -469,19 +474,29 @@ def pools():
     return render_template('pools.html', title='Pools', pools=pools, client=config.client)
 
 
+# REPOS
+
 @app.route('/repos')
 def repos():
     """
     retrieves all repos
     """
     config = Kconfig()
-    k = config.k
     repos = []
-    repoinfo = k.list_repos()
+    repoinfo = config.list_repos()
     for repo in repoinfo:
         url = repoinfo[repo]
         repos.append([repo, url])
     return render_template('repos.html', title='Repos', repos=repos, client=config.client)
+
+
+@app.route('/repocreate')
+def repocreate():
+    """
+    repo form
+    """
+    config = Kconfig()
+    return render_template('repocreate.html', title='CreateRepo', client=config.client)
 
 # PRODUCTS
 
@@ -492,15 +507,13 @@ def products():
     retrieves all products
     """
     config = Kconfig()
-    k = config.k
     products = []
-    productsinfo = k.list_products()
-    for product in products:
-        repo = productsinfo['repo']
-        group = productsinfo['group']
-        name = productsinfo['name']
-        description = productsinfo['description']
-        numvms = productsinfo['numvms']
+    for product in config.list_products():
+        repo = product['repo']
+        group = product['group']
+        name = product['name']
+        description = product['description']
+        numvms = product['numvms']
         products.append([repo, group, name, description, numvms])
     return render_template('products.html', title='Products', products=products, client=config.client)
 
@@ -527,7 +540,7 @@ def productaction():
             plan = request.form['plan']
             if plan == '':
                 plan = None
-            result = config.createproduct(product, plan=plan, clean=True)
+            result = config.create_product(product, plan=plan, clean=True)
         else:
             result = "Nothing to do"
         print(result)

@@ -1,5 +1,10 @@
 # Changelog
 
+## 9.3 (2017-10-21)
+
+- support for repo and products in the web version
+- allow to specify a plan name when deploying a product
+
 ## 9.2 (2017-10-20)
 
 - added clean parameter to kcli product to remove downloaded plan
