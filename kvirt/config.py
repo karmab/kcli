@@ -480,7 +480,7 @@ class Kconfig:
                 shutil.rmtree(repodir)
             return {'result': 'success'}
 
-    def create_product(self, name, repo=None, clean=False):
+    def create_product(self, name, repo=None, plan=None, clean=False):
         """Create product"""
         if repo is not None:
             products = [product for product in self.list_products() if product['name'] == name and product['repo'] == repo]
@@ -494,7 +494,7 @@ class Kconfig:
                     sys.exit(1)
         else:
             product = products[0]
-            plan = nameutils.get_random_name()
+            plan = nameutils.get_random_name() if plan is None else plan
             url = product['url']
             inputfile = product['file']
             repo = product['repo']

@@ -21,3 +21,4 @@ alien -d *rpm
 /usr/local/bin/package_cloud push karmab/kcli/ubuntu/yakkety /root/*deb
 /usr/local/bin/package_cloud push karmab/kcli/debian/jessie /root/*deb
 /usr/local/bin/package_cloud push karmab/kcli/debian/stretch /root/*deb
+poweroff
