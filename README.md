@@ -550,7 +550,7 @@ If plans seem to complex, you can make use of the products feature which leverag
 
 ### Repos
 
-You first add a repo containing a KMETA file with yaml info about products you want to expose
+You first add a repo containing a KMETA file with yaml info about products you want to expose. For instance, mine
 
 ```
 kcli repo -u github.com/karmab/kcli/plans karmab
@@ -576,7 +576,7 @@ Once you have added some repos, you can list available products, and get their d
 kcli list --products 
 ```
 
-And deploy any product 
+And deploy any product . Note deletion is currently handled by deleting the corresponding plan
 
 ```
 kcli product YOUR_PRODUCT

@@ -220,7 +220,7 @@ def get_free_port():
 
 
 def pprint(text, color=None):
-    colors = {'blue': '34', 'red': '31', 'green': '32', 'yellow': '33', 'white': '37'}
+    colors = {'blue': '34', 'red': '31', 'green': '32', 'yellow': '33', 'pink': '35', 'white': '37'}
     if color is not None and color in colors:
         color = colors[color]
         print('\033[1;%sm%s\033[0;0m' % (color, text))

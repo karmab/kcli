@@ -5,7 +5,7 @@
   description: Upstream ovirt 4.2 all in one with nfs. Note this seems to have issues after some changes so needs testing
   numvms: 1
   password: unix1234
-  image: CentOS-7-x86_64-GenericCloud.qcow2
+  template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: ovirt35
   group: ovirt
@@ -14,7 +14,7 @@
   description: Upstream ovirt 3.5 all in one with nfs
   numvms: 1
   password: unix1234
-  image: CentOS-7-x86_64-GenericCloud.qcow2
+  template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: ovirt36
   group: ovirt
@@ -23,7 +23,7 @@
   description: Upstream ovirt 2.6 all in one with nfs
   numvms: 1
   password: unix1234
-  image: CentOS-7-x86_64-GenericCloud.qcow2
+  template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: rhv
   group: ovirt
@@ -32,7 +32,7 @@
   description: Downstream rhv 4.0 all in one with nfs
   numvms: 1
   password: unix1234
-  image: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
 
 - name: rhev35
   group: ovirt
@@ -41,7 +41,7 @@
   description: Downstream rhev 3.5 all in one with nfs
   numvms: 1
   password: unix1234
-  image: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
 
 - name: rhev36
   group: ovirt
@@ -50,7 +50,7 @@
   description: Downstream rhev 3.5 all in one with nfs
   numvms: 1
   password: unix1234
-  image: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
 
 - name: advanced
   group: ovirt
@@ -59,7 +59,7 @@
   description: Downstream rhev 4.0 with one engine with nfs and two nodes
   numvms: 3
   password: unix1234
-  image: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
 
 - name: advanced_ldap
   group: ovirt
@@ -68,7 +68,7 @@
   description: Downstream rhev 4.0 with one engine with nfs and two nodes and an ldap container
   numvms: 3
   password: unix1234
-  image: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
 
 - name: ovirt_hosted
   group: ovirt
@@ -77,7 +77,7 @@
   description: Upstream Ovirt 4.0 Hosted Engine 4.0 with two nodes and an NFS server
   numvms: 3
   password: unix1234
-  image: CentOS-7-x86_64-GenericCloud.qcow2
+  template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: rhev_hosted
   group: ovirt
@@ -86,4 +86,4 @@
   description: Downstream Rhev 4.0 Hosted Engine 4.0 with two nodes and an NFS server
   numvms: 3
   password: unix1234
-  image: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2

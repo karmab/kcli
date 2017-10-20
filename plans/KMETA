@@ -1,3 +1,11 @@
+- name: copr
+  group: builder
+  url: github.com/karmab/kcli/plans/builder
+  file: copr.yml
+  description: Build kcli rpm ( Only usefull for me)
+  numvms: 1
+  template: Fedora-Cloud-Base-26-1.5.x86_64.qcow2
+
 - name: foreman
   group: foreman
   url: github.com/karmab/kcli/plans/foreman
@@ -23,7 +31,7 @@
   description: Upstream Ipa 1.12
   numvms: 1
   password: unix1234
-  image: CentOS-7-x86_64-GenericCloud.qcow2
+  template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: ipa
   group: ipa
@@ -32,7 +40,7 @@
   description: Upstream Ipa 1.12
   numvms: 1
   password: unix1234
-  image: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
 
 - name: jenkins
   group: jenkins
@@ -48,7 +56,7 @@
   file: basic.yml
   description: Latest kubernetes
   numvms: 3
-  image: CentOS-7-x86_64-GenericCloud.qcow2
+  template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: minikube
   group: kubernetes
@@ -56,7 +64,7 @@
   file: minikube.yml
   description: Minikube 1.7.0
   numvms: 1
-  image: Fedora-Cloud-Base-26-1.5.x86_64.qcow2
+  template: Fedora-Cloud-Base-26-1.5.x86_64.qcow2
 
 - name: manageiq
   group: manageiq
@@ -65,7 +73,7 @@
   description: Upstream manageiq euwe
   numvms: 1
   password: unix1234
-  image: manageiq-openstack-euwe-2.qc2
+  template: manageiq-openstack-euwe-2.qc2
 
 - name: cloudforms
   group: manageiq
@@ -74,7 +82,7 @@
   description:  Downstream manageiq cfme-rhos-5.7.1.3-1
   numvms: 1
   password: unix1234
-  image: cfme-rhos-5.7.1.3-1.x86_64.qcow2
+  template: cfme-rhos-5.7.1.3-1.x86_64.qcow2
 
 - name: cloudforms_advanced
   group: manageiq
@@ -83,7 +91,7 @@
   description:  Downstream manageiq cfme-rhos-5.7.1.3-1 with additional provider scripts
   numvms: 1
   password: unix1234
-  image: cfme-rhos-5.7.1.3-1.x86_64.qcow2
+  template: cfme-rhos-5.7.1.3-1.x86_64.qcow2
 
 - name: origin
   group: openshift
@@ -91,7 +99,7 @@
   file: upstream.yml
   description: Upstream Openshift 3.7.0-alpha.1 based on oc cluster up
   numvms: 1
-  image: CentOS-7-x86_64-GenericCloud.qcow2
+  template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: origin35
   group: openshift
@@ -99,7 +107,7 @@
   file: upstream35.yml
   description: Upstream Openshift 3.5 based on oc cluster up
   numvms: 1
-  image: CentOS-7-x86_64-GenericCloud.qcow2
+  template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: origin36
   group: openshift
@@ -107,7 +115,7 @@
   file: upstream36.yml
   description: Upstream Openshift 3.6 based on oc cluster up
   numvms: 1
-  image: CentOS-7-x86_64-GenericCloud.qcow2
+  template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: ocp
   group: openshift
@@ -115,7 +123,7 @@
   file: downstream.yml
   description: Downstream Openshift 3.6 based on oc cluster up
   numvms: 1
-  image: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
 
 - name: simple
   group: openshift
@@ -123,7 +131,7 @@
   file: downstream.yml
   description: Downstream Openshift 3.6 (1masters+2nodes) preparing to run the ansible installer from master
   numvms: 3
-  image: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
 
 - name: advanced
   group: openshift
@@ -131,7 +139,7 @@
   file: advanced.yml
   description: Downstream Openshift 3.6 (1lb+3masters+3nodes) preparing to run the ansible installer from lb
   numvms: 7
-  image: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
 
 - name: fission
   group: openshift
@@ -139,7 +147,7 @@
   file: fission.yml
   description: Fission based on oc cluster up. Note fission wont work as per a current bug in openshift
   numvms: 1
-  image: CentOS-7-x86_64-GenericCloud.qcow2
+  template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: helm
   group: openshift
@@ -147,7 +155,7 @@
   file: helm.yml
   description: Helm based on oc cluster up
   numvms: 1
-  image: CentOS-7-x86_64-GenericCloud.qcow2
+  template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: monocular
   group: openshift
@@ -155,7 +163,7 @@
   file: monocular.yml
   description: Monocular based on oc cluster up (and helm)
   numvms: 1
-  image: CentOS-7-x86_64-GenericCloud.qcow2
+  template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: istio21
   group: openshift
@@ -163,7 +171,7 @@
   file: istio21.yml
   description: Istio 0.2.1 based on oc cluster up ( with addons and bookinfo app)
   numvms: 1
-  image: CentOS-7-x86_64-GenericCloud.qcow2
+  template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: istio22
   group: openshift
@@ -171,7 +179,7 @@
   file: istio22.yml
   description: Istio 0.2.2 based on oc cluster up ( with addons and bookinfo app)
   numvms: 1
-  image: CentOS-7-x86_64-GenericCloud.qcow2
+  template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: asb
   group: openshift
@@ -290,7 +298,7 @@
   description: Upstream ovirt 4.2 all in one with nfs. Note this seems to have issues after some changes so needs testing
   numvms: 1
   password: unix1234
-  image: CentOS-7-x86_64-GenericCloud.qcow2
+  template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: ovirt35
   group: ovirt
@@ -299,7 +307,7 @@
   description: Upstream ovirt 3.5 all in one with nfs
   numvms: 1
   password: unix1234
-  image: CentOS-7-x86_64-GenericCloud.qcow2
+  template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: ovirt36
   group: ovirt
@@ -308,7 +316,7 @@
   description: Upstream ovirt 2.6 all in one with nfs
   numvms: 1
   password: unix1234
-  image: CentOS-7-x86_64-GenericCloud.qcow2
+  template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: rhv
   group: ovirt
@@ -317,7 +325,7 @@
   description: Downstream rhv 4.0 all in one with nfs
   numvms: 1
   password: unix1234
-  image: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
 
 - name: rhev35
   group: ovirt
@@ -326,7 +334,7 @@
   description: Downstream rhev 3.5 all in one with nfs
   numvms: 1
   password: unix1234
-  image: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
 
 - name: rhev36
   group: ovirt
@@ -335,7 +343,7 @@
   description: Downstream rhev 3.5 all in one with nfs
   numvms: 1
   password: unix1234
-  image: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
 
 - name: advanced
   group: ovirt
@@ -344,7 +352,7 @@
   description: Downstream rhev 4.0 with one engine with nfs and two nodes
   numvms: 3
   password: unix1234
-  image: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
 
 - name: advanced_ldap
   group: ovirt
@@ -353,7 +361,7 @@
   description: Downstream rhev 4.0 with one engine with nfs and two nodes and an ldap container
   numvms: 3
   password: unix1234
-  image: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
 
 - name: ovirt_hosted
   group: ovirt
@@ -362,7 +370,7 @@
   description: Upstream Ovirt 4.0 Hosted Engine 4.0 with two nodes and an NFS server
   numvms: 3
   password: unix1234
-  image: CentOS-7-x86_64-GenericCloud.qcow2
+  template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: rhev_hosted
   group: ovirt
@@ -371,7 +379,7 @@
   description: Downstream Rhev 4.0 Hosted Engine 4.0 with two nodes and an NFS server
   numvms: 3
   password: unix1234
-  image: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
 
 - name: tower
   group: tower
@@ -380,5 +388,5 @@
   description:  Downstream tower 3.0.3
   numvms: 1
   password: unix1234
-  image: rhel-guest-image-7.3-35.x86_64.qcow2
+  template: rhel-guest-image-7.3-35.x86_64.qcow2
 

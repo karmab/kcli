@@ -21,7 +21,7 @@ from time import sleep
 import webbrowser
 import yaml
 
-__version__ = '9.0'
+__version__ = '9.1'
 
 
 class Kconfig:
@@ -365,8 +365,8 @@ class Kconfig:
 
     def list_repos(self):
         reposfile = "%s/.kcli/repos.yml" % os.environ.get('HOME')
-        if not os.path.exists(reposfile):
-            return {}
+        if not os.path.exists(reposfile) or os.path.getsize(reposfile) == 0:
+            repos = {}
         else:
             with open(reposfile, 'r') as entries:
                 try:
@@ -374,7 +374,7 @@ class Kconfig:
                 except yaml.scanner.ScannerError:
                     common.pprint("Couldn't properly parse .kcli/repos.yml. Leaving...", color='red')
                     sys.exit(1)
-            return repos
+        return repos
 
     def list_products(self):
         basedir = "%s/.kcli" % os.environ.get('HOME')
@@ -406,7 +406,7 @@ class Kconfig:
     def create_repo(self, name, url):
         self.update_repo(name, url=url)
         reposfile = "%s/.kcli/repos.yml" % os.environ.get('HOME')
-        if not os.path.exists(reposfile):
+        if not os.path.exists(reposfile) or os.path.getsize(reposfile) == 0:
             entry = "%s: %s" % (name, url)
             open(reposfile, 'w').write(entry)
         else:
@@ -434,7 +434,7 @@ class Kconfig:
         reposfile = "%s/.kcli/repos.yml" % os.environ.get('HOME')
         repodir = "%s/.kcli/repo_%s" % (os.environ.get('HOME'), name)
         if url is None:
-            if not os.path.exists(reposfile):
+            if not os.path.exists(reposfile) or os.path.getsize(reposfile) == 0:
                 common.pprint("Empty .kcli/repos.yml. Leaving...", color='red')
                 sys.exit(1)
             else:
@@ -499,12 +499,19 @@ class Kconfig:
             inputfile = product['file']
             repo = product['repo']
             group = product['group']
+            template = product.get('template')
+            password = product.get('password')
+            if template is not None:
+                print("Note that this product uses template: %s" % template)
+            if password is not None:
+                print("Note that this product uses password: %s" % password)
             if not os.path.exists(group):
                 self.plan(plan, get=url, path=group, inputfile=inputfile)
             os.chdir(group)
-            common.pprint("Running kcli plan -f %s %s" % (inputfile, plan), color='green')
+            common.pprint("Running: kcli plan -f %s %s" % (inputfile, plan), color='green')
             self.plan(plan, inputfile=inputfile)
             os.chdir('..')
+            common.pprint("Product can be deleted with: kcli plan -d %s" % (plan), color='green')
 
     def plan(self, plan, ansible=False, get=None, path=None, autostart=False, container=False, noautostart=False, inputfile=None, start=False, stop=False, delete=False, delay=0, force=True, topologyfile=None, scale=None):
         """Create/Delete/Stop/Start vms from plan file"""

@@ -1,5 +1,11 @@
 # Changelog
 
+## 9.1 (2017-10-20)
+
+- improved repo handling
+- full KMETA list from my github repo
+- merged copr and packagecloud plans ( only usefull for me, as this is what i use to build rpm and deb)
+
 ## 9.0 (2017-10-20)
 
 - products and repo support to leverage plans and make them easier to use

@@ -4,7 +4,7 @@
   file: upstream.yml
   description: Upstream Openshift 3.7.0-alpha.1 based on oc cluster up
   numvms: 1
-  image: CentOS-7-x86_64-GenericCloud.qcow2
+  template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: origin35
   group: openshift
@@ -12,7 +12,7 @@
   file: upstream35.yml
   description: Upstream Openshift 3.5 based on oc cluster up
   numvms: 1
-  image: CentOS-7-x86_64-GenericCloud.qcow2
+  template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: origin36
   group: openshift
@@ -20,7 +20,7 @@
   file: upstream36.yml
   description: Upstream Openshift 3.6 based on oc cluster up
   numvms: 1
-  image: CentOS-7-x86_64-GenericCloud.qcow2
+  template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: ocp
   group: openshift
@@ -28,7 +28,7 @@
   file: downstream.yml
   description: Downstream Openshift 3.6 based on oc cluster up
   numvms: 1
-  image: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
 
 - name: simple
   group: openshift
@@ -36,7 +36,7 @@
   file: downstream.yml
   description: Downstream Openshift 3.6 (1masters+2nodes) preparing to run the ansible installer from master
   numvms: 3
-  image: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
 
 - name: advanced
   group: openshift
@@ -44,7 +44,7 @@
   file: advanced.yml
   description: Downstream Openshift 3.6 (1lb+3masters+3nodes) preparing to run the ansible installer from lb
   numvms: 7
-  image: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
 
 - name: fission
   group: openshift
@@ -52,7 +52,7 @@
   file: fission.yml
   description: Fission based on oc cluster up. Note fission wont work as per a current bug in openshift
   numvms: 1
-  image: CentOS-7-x86_64-GenericCloud.qcow2
+  template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: helm
   group: openshift
@@ -60,7 +60,7 @@
   file: helm.yml
   description: Helm based on oc cluster up
   numvms: 1
-  image: CentOS-7-x86_64-GenericCloud.qcow2
+  template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: monocular
   group: openshift
@@ -68,7 +68,7 @@
   file: monocular.yml
   description: Monocular based on oc cluster up (and helm)
   numvms: 1
-  image: CentOS-7-x86_64-GenericCloud.qcow2
+  template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: istio21
   group: openshift
@@ -76,7 +76,7 @@
   file: istio21.yml
   description: Istio 0.2.1 based on oc cluster up ( with addons and bookinfo app)
   numvms: 1
-  image: CentOS-7-x86_64-GenericCloud.qcow2
+  template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: istio22
   group: openshift
@@ -84,7 +84,7 @@
   file: istio22.yml
   description: Istio 0.2.2 based on oc cluster up ( with addons and bookinfo app)
   numvms: 1
-  image: CentOS-7-x86_64-GenericCloud.qcow2
+  template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: asb
   group: openshift
