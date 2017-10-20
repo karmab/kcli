@@ -542,7 +542,6 @@ myplay:
  playbook: prout.yml
 ```
 
-
 Note that when leveraging ansible this way, an inventory file will be generated on the fly for you and let in */tmp/$PLAN.inv* 
 
 ## Using products
@@ -571,7 +570,7 @@ kcli repo -d REPO_NAME
 
 ### Product
 
-Once you have added some repos, you can list available products, and get its description
+Once you have added some repos, you can list available products, and get their description
 
 ```
 kcli list --products 

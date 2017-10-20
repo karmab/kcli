@@ -1,0 +1,13 @@
+- name: copr
+  group: builder
+  url: github.com/karmab/kcli/plans/builder
+  file: copr.yml
+  description: Build kcli rpm
+  numvms: 1
+  
+- name: packagecloud
+  group: builder
+  url: github.com/karmab/kcli/plans/builder
+  file: packagecloud.yml
+  description: Build kcli deb
+  numvms: 1

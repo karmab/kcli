@@ -53,4 +53,3 @@
   file: advanced_live.yml
   description: Downstream  Newton based on Packstack with one controller and three compute and with Live Migration Based on NFS
   numvms: 4
-

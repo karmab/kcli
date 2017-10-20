@@ -402,6 +402,7 @@ class Kconfig:
             return products
 
     def create_repo(self, name, url):
+        self.update_repo(name, url=url)
         reposfile = "%s/.kcli/repos.yml" % os.environ.get('HOME')
         if not os.path.exists(reposfile):
             entry = "%s: %s" % (name, url)
@@ -422,26 +423,28 @@ class Kconfig:
                 url = repos[repo]
                 entry = "%s: %s" % (repo, url)
                 open(reposfile, 'w').write(entry)
-        self.update_repo(name)
         return {'result': 'success'}
 
-    def update_repo(self, name):
+    def update_repo(self, name, url=None):
         reposfile = "%s/.kcli/repos.yml" % os.environ.get('HOME')
         repodir = "%s/.kcli/repo_%s" % (os.environ.get('HOME'), name)
-        if not os.path.exists(reposfile):
-            common.pprint("Empty .kcli/repos.yml. Leaving...", color='red')
-            sys.exit(1)
-        else:
-            with open(reposfile, 'r') as entries:
-                try:
-                    repos = yaml.load(entries)
-                except yaml.scanner.ScannerError:
-                    common.pprint("Couldn't properly parse .kcli/repos.yml. Leaving...", color='red')
-                    sys.exit(1)
-            if name not in repos:
-                common.pprint("Entry for name allready there. Leaving...", color='red')
+        if url is None:
+            if not os.path.exists(reposfile):
+                common.pprint("Empty .kcli/repos.yml. Leaving...", color='red')
                 sys.exit(1)
-        url = "%s/KMETA" % repos[name]
+            else:
+                with open(reposfile, 'r') as entries:
+                    try:
+                        repos = yaml.load(entries)
+                    except yaml.scanner.ScannerError:
+                        common.pprint("Couldn't properly parse .kcli/repos.yml. Leaving...", color='red')
+                        sys.exit(1)
+                if name not in repos:
+                    common.pprint("Entry for name allready there. Leaving...", color='red')
+                    sys.exit(1)
+            url = "%s/KMETA" % repos[name]
+        elif 'KMETA' not in url:
+            url = "%s/KMETA" % url
         common.fetch(url, repodir)
 
     def delete_repo(self, name):

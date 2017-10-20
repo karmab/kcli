@@ -67,18 +67,18 @@ def fetch(url, path, syms=None):
     try:
         r = urllib2.urlopen(url)
     except urllib2.HTTPError:
-        print("Invalid url.Leaving...")
+        print("Invalid url %s.Leaving..." % url)
         os._exit(1)
     try:
         base = json.load(r)
     except:
-        print("Invalid url.Leaving...")
+        print("Couldnt load json data from url %s.Leaving..." % url)
         os._exit(1)
     if not isinstance(base, list):
         base = [base]
     for b in base:
         if 'name' not in b or 'type' not in b or 'download_url' not in b:
-            print("Invalid url.Leaving...")
+            print("Missing data in url %s.Leaving..." % url)
             os._exit(1)
         filename = b['name']
         filetype = b['type']
