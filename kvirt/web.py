@@ -184,7 +184,6 @@ def repoaction():
     create/delete repo
     """
     config = Kconfig()
-    print "PROUT"
     if 'repo' in request.form:
         repo = request.form['repo']
         action = request.form['action']
