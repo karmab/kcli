@@ -52,7 +52,7 @@ python setup.py sdist upload
 
 # GENERATE RELEASE
 # API_JSON=$(printf '{"tag_name": "v%s","target_commitish": "master","name": "v%s","body": "%s","draft": false,"prerelease": false}' $VERSION $VERSION $CHANGELOG)
-API_JSON=$(printf '{"tag_name": "v%s","target_commitish": "master","name": "v%s","body": "Release of version %s","draft": false,"prerelease": false}' $VERSION $VERSION $CHANGELOG)
+API_JSON=$(printf '{"tag_name": "v%s","target_commitish": "master","name": "v%s","body": "Release of version %s","draft": false,"prerelease": false}' $VERSION $VERSION $VERSION)
 curl --data "$API_JSON" https://api.github.com/repos/$USER/$REPOSITORY/releases?access_token=$RELEASETOKEN
 
 # GENERATE RPM/DEB
@@ -61,6 +61,6 @@ kcli product -c copr
 
 echo "This is the changelog:"
 echo 
-echo $CHANGELOG
+echo -n $CHANGELOG
 
 echo https://github.com/karmab/kcli/releases/edit/v$VERSION

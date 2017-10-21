@@ -181,6 +181,14 @@
   numvms: 1
   template: CentOS-7-x86_64-GenericCloud.qcow2
 
+- name: istio
+  group: openshift
+  url: github.com/karmab/kcli/plans/openshift
+  file: istio.yml
+  description: Istio Latest Stable based on oc cluster up ( with addons and bookinfo app)
+  numvms: 1
+  template: CentOS-7-x86_64-GenericCloud.qcow2
+
 - name: asb
   group: openshift
   url: github.com/karmab/kcli/plans/openshift
