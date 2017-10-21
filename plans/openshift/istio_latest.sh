@@ -5,6 +5,7 @@ cd /root
 curl -L https://git.io/getLatestIstio | sh -
 ISTIO=`ls | grep istio`
 export PATH="$PATH:~/$ISTIO/bin"
+echo export PATH="$PATH:~/$ISTIO/bin" >> /root/.bashrc
 cd $ISTIO
 oc login -u system:admin
 oc new-project $project
@@ -33,7 +34,8 @@ oc expose svc servicegraph
 oc expose svc grafana
 oc expose svc zipkin
 sleep 90
-oc apply -f <(istioctl kube-inject -f samples/bookinfo/kube/bookinfo.yaml)
+istioctl kube-inject -f samples/bookinfo/kube/bookinfo.yaml | oc apply -f -
 oc expose svc productpage
 oc new-project istio-config-default
 oc create -f https://raw.githubusercontent.com/istio/istio/master/samples/apps/bookinfo/rules/mixer-rule-standard-metrics.yaml
+oc project istio-system
