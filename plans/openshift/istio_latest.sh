@@ -6,7 +6,6 @@ curl -L https://git.io/getLatestIstio | sh -
 ISTIO=`ls | grep istio`
 export PATH="$PATH:~/$ISTIO/bin"
 cd $ISTIO
-git checkout $checkout
 oc login -u system:admin
 oc new-project $project
 oc adm policy add-scc-to-user anyuid -z default
@@ -25,14 +24,16 @@ oc adm policy add-scc-to-user privileged -z istio-pilot-service-account
 oc create -f install/kubernetes/istio-rbac-beta.yaml
 oc create -f install/kubernetes/istio.yaml
 oc expose svc istio-ingress
-sleep 60
+sleep 90
 oc apply -f install/kubernetes/addons/prometheus.yaml
 oc apply -f install/kubernetes/addons/grafana.yaml
 oc apply -f install/kubernetes/addons/servicegraph.yaml
+oc create -f install/kubernetes/addons/zipkin.yaml
 oc expose svc servicegraph
 oc expose svc grafana
-sleep 60
-oc apply -f <(istioctl kube-inject -f samples/apps/bookinfo/bookinfo.yaml -n $project)
+oc expose svc zipkin
+sleep 90
+oc apply -f <(istioctl kube-inject -f samples/bookinfo/kube/bookinfo.yaml)
 oc expose svc productpage
 oc new-project istio-config-default
 oc create -f https://raw.githubusercontent.com/istio/istio/master/samples/apps/bookinfo/rules/mixer-rule-standard-metrics.yaml
