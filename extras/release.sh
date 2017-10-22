@@ -29,14 +29,11 @@ if [ "$VERSION" == "" ] ; then
     exit 1
 fi
 
-grep -qF $VERSION changelog.md
+ls changelog/$VERSION.md
 if [ "$?" != "0" ] ; then
-    echo "Missing changelog for Version $VERSION. Leaving..."
+    echo "Missing changelog file for Version $VERSION. Leaving..."
     exit 1
 fi
-
-# GRAB CHANGELOG
-CHANGELOG=`sed -n "/## $VERSION.*/,/## $OLDVERSION.*/p" changelog.md | grep -v "## $OLDVERSION"`
 
 # SET NEW VERSIONS
 sed -i s"/    version.*/    version='$VERSION',/" setup.py
@@ -51,16 +48,9 @@ git push
 python setup.py sdist upload
 
 # GENERATE RELEASE
-# API_JSON=$(printf '{"tag_name": "v%s","target_commitish": "master","name": "v%s","body": "%s","draft": false,"prerelease": false}' $VERSION $VERSION $CHANGELOG)
-API_JSON=$(printf '{"tag_name": "v%s","target_commitish": "master","name": "v%s","body": "Release of version %s","draft": false,"prerelease": false}' $VERSION $VERSION $VERSION)
+API_JSON=$(printf '{"tag_name": "v%s","target_commitish": "master","name": "v%s","body": "[release notes](https://github.com/karmab/kcli/blob/master/changelog/%s.md)","draft": false,"prerelease": false}' $VERSION $VERSION $VERSION)
 curl --data "$API_JSON" https://api.github.com/repos/$USER/$REPOSITORY/releases?access_token=$RELEASETOKEN
 
 # GENERATE RPM/DEB
 kcli delete --yes copr
 kcli product -c copr
-
-echo "This is the changelog:"
-echo 
-echo -n $CHANGELOG
-
-echo https://github.com/karmab/kcli/releases/edit/v$VERSION
