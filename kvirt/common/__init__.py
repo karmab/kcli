@@ -251,13 +251,21 @@ def confirm(message):
 
 def lastvm(name, delete=False):
     configdir = "%s/.kcli/" % os.environ.get('HOME')
+    vmfile = "%s/vm" % configdir
     if not os.path.exists(configdir):
         os.mkdir(configdir)
     if delete:
-        os.system("sed -i '/%s/d' %s/vm" % (name, configdir))
+        if not os.path.exists(vmfile):
+            return
+        else:
+            os.system("sed -i '/%s/d' %s/vm" % (name, configdir))
+        return
+    if not os.path.exists(vmfile) or os.stat(vmfile).st_size == 0:
+        with open(vmfile, 'w') as f:
+            f.write(name)
         return
     firstline = True
-    for line in fileinput.input("%s/vm" % configdir, inplace=True):
+    for line in fileinput.input(vmfile, inplace=True):
         line = "%s\n%s" % (name, line) if firstline else line
         print line,
         firstline = False

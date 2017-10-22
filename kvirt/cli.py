@@ -19,7 +19,7 @@ def start(args):
     container = args.container
     lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
     if not names:
-        if os.path.exists(lastvm):
+        if os.path.exists(lastvm) and os.stat(lastvm).st_size > 0:
             names = [open(lastvm).readlines()[0].strip()]
             common.pprint("Using %s as vm" % names[0], color='green')
         else:
@@ -47,7 +47,7 @@ def stop(args):
     container = args.container
     lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
     if not names:
-        if os.path.exists(lastvm):
+        if os.path.exists(lastvm) and os.stat(lastvm).st_size > 0:
             names = [open(lastvm).readlines()[0].strip()]
             common.pprint("Using %s as vm" % names[0], color='green')
         else:
@@ -75,7 +75,7 @@ def restart(args):
     container = args.container
     lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
     if not names:
-        if os.path.exists(lastvm):
+        if os.path.exists(lastvm) and os.stat(lastvm).st_size > 0:
             names = [open(lastvm).readlines()[0].strip()]
             common.pprint("Using %s as vm" % names[0], color='green')
         else:
@@ -105,7 +105,7 @@ def console(args):
     container = args.container
     lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
     if not name:
-        if os.path.exists(lastvm):
+        if os.path.exists(lastvm) and os.stat(lastvm).st_size > 0:
             name = open(lastvm).readlines()[0].strip()
             common.pprint("Using %s as vm" % name, color='green')
         else:
@@ -131,7 +131,7 @@ def delete(args):
     yes = args.yes
     lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
     if not names:
-        if os.path.exists(lastvm):
+        if os.path.exists(lastvm) and os.stat(lastvm).st_size > 0:
             names = [open(lastvm).readlines()[0].strip()]
             common.pprint("Using %s as vm" % names[0], color='green')
         else:
@@ -179,7 +179,7 @@ def info(args):
     output = args.output
     lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
     if not names:
-        if os.path.exists(lastvm):
+        if os.path.exists(lastvm) and os.stat(lastvm).st_size > 0:
             names = [open(lastvm).readlines()[0].strip()]
             common.pprint("Using %s as vm" % names[0], color='green')
         else:
@@ -683,7 +683,7 @@ def ssh(args):
     name = args.name
     lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
     if not name:
-        if os.path.exists(lastvm):
+        if os.path.exists(lastvm) and os.stat(lastvm).st_size > 0:
             name = [open(lastvm).readlines()[0].strip()]
             common.pprint("Using %s as vm" % name[0], color='green')
         else:
