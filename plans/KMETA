@@ -303,7 +303,7 @@
   group: ovirt
   url: github.com/karmab/kcli/plans/ovirt
   file: upstream.yml
-  description: Upstream ovirt 4.2 all in one with nfs. Note this seems to have issues after some changes so needs testing
+  description: Upstream ovirt 4.1 all in one with nfs
   numvms: 1
   password: unix1234
   template: CentOS-7-x86_64-GenericCloud.qcow2

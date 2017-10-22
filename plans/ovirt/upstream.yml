@@ -2,6 +2,7 @@ ovirt:
  template: CentOS-7-x86_64-GenericCloud.qcow2
  memory: 8192
  numcpus: 2
+ reservedns: true
  cpumodel: host-model
  cpuflags:
   - name: arat
