@@ -4,17 +4,18 @@
 # Usage release.sh ($NEW_VERSION)
 # It does the following
 # ask new version if not specified on command line
-# check if there's a changelog
-# change version in relevant files(setup.py, kvirt/config.py and extra/kcli.spec)
+# check if there's a changelog for this version in the wiki
+# change version in relevant files(wiki home, setup.py, kvirt/config.py and extra/kcli.spec)
 # commit and push code
 # generate python package
 # generate release without the changelog :( and using RELEASETOKEN env variable
 # launch build of rpm and deb packages (using kcli product)
 # displays the changelog so it can be added manually
 
-cd $HOME/CODE/git/KARIM/kcli
+BASEDIR="$HOME/CODE/git/KARIM"
 USER="karmab"
 REPOSITORY="kcli"
+REPOSITORYWIKI="$REPOSITORY.wiki"
 OLDVERSION=`grep Version ~/kcli.spec | awk -F':' '{print $2}' | xargs`
 
 if [ "$#" != "1" ] ; then
@@ -29,12 +30,20 @@ if [ "$VERSION" == "" ] ; then
     exit 1
 fi
 
-ls changelog/$VERSION.md
+cd $BASEDIR/$REPOSITORYWIKI
+ls $VERSION.md
 if [ "$?" != "0" ] ; then
-    echo "Missing changelog file for Version $VERSION. Leaving..."
+    echo "Missing changelog file in wiki for version $VERSION. Leaving..."
     exit 1
 fi
 
+# SET NEW VERSION
+sed -i s"@tags/v.*@tags/$VERSION@" home.md
+git commit -am "$VERSION RELEASE"
+git push
+
+
+cd $BASEDIR/$REPOSITORY
 # SET NEW VERSIONS
 sed -i s"/    version.*/    version='$VERSION',/" setup.py
 sed -i "s/Version:.*/Version:        $VERSION/"  ~/kcli.spec
