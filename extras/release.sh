@@ -31,7 +31,7 @@ if [ "$VERSION" == "" ] ; then
 fi
 
 cd $BASEDIR/$REPOSITORYWIKI
-ls $VERSION.md
+ls v$VERSION.md
 if [ "$?" != "0" ] ; then
     echo "Missing changelog file in wiki for version $VERSION. Leaving..."
     exit 1
