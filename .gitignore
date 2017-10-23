@@ -10,6 +10,7 @@ eggs
 *.key
 *.key.pub
 *retry
+*wiki
 prout.yml
 .DS_Store
 .cache/

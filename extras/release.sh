@@ -15,7 +15,6 @@
 BASEDIR="$HOME/CODE/git/KARIM"
 USER="karmab"
 REPOSITORY="kcli"
-REPOSITORYWIKI="$REPOSITORY.wiki"
 OLDVERSION=`grep Version ~/kcli.spec | awk -F':' '{print $2}' | xargs`
 
 if [ "$#" != "1" ] ; then
@@ -30,8 +29,8 @@ if [ "$VERSION" == "" ] ; then
     exit 1
 fi
 
-cd $BASEDIR/$REPOSITORYWIKI
-ls v$VERSION.md
+cd $BASEDIR/$REPOSITORY
+ls $REPOSITORY.wiki/v$VERSION.md
 if [ "$?" != "0" ] ; then
     echo "Missing changelog file in wiki for version $VERSION. Leaving..."
     exit 1
