@@ -1,0 +1,36 @@
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Status</th>
+                <th>Image</th>
+                <th>Plan</th>
+                <th>Command</th>
+                <th>Ports</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for container in containers %}
+            <tr>
+                <td>{{ container[0] }}</td>
+                <td>{{ container[1] }}</td>
+                <td>{{ container[2] }}</td>
+                <td>{{ container[3] }}</td>
+                <td>{{ container[4] }}</td>
+                <td>{{ container[5] }}</td>
+                <td>
+                    <div class="dropdown">
+                        <button class="btn btn-default dropdown-toggle" type="button" id="actions" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true"><font size="1">Actions</font>
+                    <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                        <li onclick="containerstart('{{ container[0] }}');"><span class="glyphicon glyphicon-play"></span> Start</li>
+                        <li class="divider"></li>
+                        <li onclick="containerstop('{{ container[0] }}');"><span class="glyphicon glyphicon-stop"></span> Stop</li>
+                        <li class="divider"></li>
+                        <li onclick="containerdelete('{{ container[0] }}');"><span class="glyphicon glyphicon-trash"></span> Delete</li>
+                    </ul></div>
+                </td>
+            </tr>
+            {% endfor %} 
+        </tbody>

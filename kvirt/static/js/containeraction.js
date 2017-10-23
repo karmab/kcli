@@ -9,6 +9,7 @@ function containerstart(container){
             $("#wheel").hide();
             if (data.result == 'success') {
                 $('.top-right').notify({message: { text: "Container "+container+" Started!!!" }, type: 'success'}).show(); 
+                containerstable();
             } else {
                 $('.top-right').notify({message: { text: "Container "+container+" Failed to Start" }, type: 'danger'}).show(); 
             };
@@ -27,6 +28,7 @@ function containerstop(container){
             $("#wheel").hide();
             if (data.result == 'success') {
                 $('.top-right').notify({message: { text: "Container "+container+" Stopped!!!" }, type: 'success'}).show(); 
+                containerstable();
             } else {
                 $('.top-right').notify({message: { text: "Container "+container+" Failed to Stop" }, type: 'danger'}).show(); 
             };
@@ -45,6 +47,7 @@ function containerdelete(container){
             $("#wheel").hide();
             if (data.result == 'success') {
                 $('.top-right').notify({message: { text: "Container "+container+" Deleted!!!" }, type: 'success'}).show();
+                containerstable();
             } else {
                 $('.top-right').notify({message: { text: "Container "+container+" Failed to Delete because "+data.reason }, type: 'danger'}).show();
             };

@@ -1,0 +1,26 @@
+        <thead>
+            <tr>
+                <th>Profile</th>
+                <th>Image</th>
+                <th>Nets</th>
+                <th>Ports</th>
+                <th>Volumes</th>
+                <th>Cmds</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody
+            {% for profile in profiles %}
+            <tr>
+                <td>{{ profile[0] }}</td>
+                <td>{{ profile[1] }}</td>
+                <td>{{ profile[2] }}</td>
+                <td>{{ profile[3] }}</td>
+                <td>{{ profile[4] }}</td>
+                <td>{{ profile[5] }}</td>
+                <td>
+                    <button type="button" class="btn btn-default" id="create" onclick="containercreate('', '{{ profile[0] }}');"><span data-toggle="tooltip" title="Create Vm from Profile" class="glyphicon glyphicon-shopping-cart"></span></button><p>
+                </td>
+            </tr>
+            {% endfor %} 
+        </tbody>

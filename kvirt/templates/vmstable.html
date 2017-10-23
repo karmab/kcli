@@ -1,0 +1,65 @@
+        <thead>
+            <tr>
+                <th>Type</th>
+                <th>Name</th>
+                <th>Status</th>
+                <th>Ips</th>
+                <th>Source</th>
+                <th>Description/Plan</th>
+                <th>Profile</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for vm in vms %}
+            {% if vm[3].startswith('rhel') or vm[3].startswith('cfme')%}
+                {% set logo = 'Redhat.png' %}
+            {% elif vm[3].startswith('CentOS') %}
+                {% set logo = 'Centos.png' %}
+            {% elif vm[3].startswith('fedora') %}
+                {% set logo = 'Fedora.png' %}
+            {% elif vm[3].startswith('debian') %}
+                {% set logo = 'Debian.png' %}
+            {% elif vm[3].startswith('utopic') or vm[3].startswith('vivid') or vm[3].startswith('wily') or vm[3].startswith('xenial') or vm[3].startswith('yakkety') %}
+                {% set logo = 'Ubuntu.png' %}
+            {% else %}
+                {% set logo = 'Tux.png' %}
+                {% endif %}
+            {% if vm[6] == 'OK' %}
+                {% set report = 'glyphicon glyphicon-ok-circle green' %}
+            {% elif vm[6] == 'Running' %}
+                {% set report = 'glyphicon glyphicon-minus-sign blue' %}
+                {% endif %}
+                <tr>
+                <td><img src="{{ url_for('static', filename='images/'+ logo) }}"/></td>
+                {% if vm[6] == 'OK' or vm[6] == 'Running' %}
+                <td align="left"><a href="{{ url_for('static', filename='reports/'+ vm[0] + '.txt') }}"><span class="{{ report }}" data-toggle="tooltip" title="Consult Report"></span> {{ vm[0] }}</a></td>
+                {% else %}
+                <td align="left"><span class="{{ report }}"></span> {{ vm[0] }}</td>
+                {% endif %}
+                <td>{{ vm[1] }}</td>
+                <td>{{ vm[2] }}</td>
+                <td>{{ vm[3] }}</td>
+                <td>{{ vm[4] }}</td>
+                <td>{{ vm[5] }}</td>
+                <td>
+                    <div class="dropdown">
+                        <button class="btn btn-default dropdown-toggle" type="button" id="actions" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true"><font size="1">Actions</font>
+                    <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                        <li onclick="vmstart('{{ vm[0] }}');"><span class="glyphicon glyphicon-play green" data-toggle="tooltip" title="Start Vm"></span> Start</li>
+                        <li class="divider"></li>
+                        <li onclick="vmstop('{{ vm[0] }}');"><span class="glyphicon glyphicon-stop" data-toggle="tooltip" title="Stop Vm"></span> Stop</li>
+                        <li class="divider"></li>
+                        <li onclick="vmdelete('{{ vm[0] }}');"><span class="glyphicon glyphicon-trash red" data-toggle="tooltip" title="Delete Vm"></span> Delete</li>
+                        <li class="divider"></li>
+                        <li class="dropdown-header">Snapshot actions</li>
+                        <li onclick="snapshotcreate('{{ vm[0] }}');"><span class="glyphicon glyphicon-cd blue" data-toggle="tooltip" title="Snapshot Vm"></span> Create</li>
+                        <li onclick="snapshotdelete('{{ vm[0] }}');"><span class="glyphicon glyphicon-trash blue" data-toggle="tooltip" title="Delete Snapshot"></span> Delete</li>
+                        <li onclick="snapshotrevert('{{ vm[0] }}');"><span class="glyphicon glyphicon-repeat blue" data-toggle="tooltip" title="Revert Snapshot"></span> Revert</li>
+                    </ul></div>
+                </td>
+            </tr>
+            {% endfor %} 
+        </tbody>

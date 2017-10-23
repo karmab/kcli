@@ -3,56 +3,10 @@
 
 <div id="wheel"></div>
 <div class='notifications top-right'></div>
-<!--input type="checkbox" id="refresh" >Refresh !-->
 <button type="button" class="btn btn-default" id="refresh" onclick="window.location.reload()" ><span data-toggle="tooltip" title="Refresh Plans" class="glyphicon glyphicon-refresh"></span></button><p>
-<table id="plans" class="table table-striped table-bordered" cellspacing="0" width="100%">
-        <thead>
-            <tr>
-                <th>Plan</th>
-                <th>Vms</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for plan in plans %}
-            <tr>
-                <td>{{ plan[0] }}</td>
-                <td>{{ plan[1] }}</td>
-                <td>
-                    <div class="dropdown">
-                        <button class="btn btn-default dropdown-toggle" type="button" id="actions" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true"><font size="1">Actions</font>
-                    <span class="caret"></span>
-                    </button>
-                    <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
-                        <li onclick="planstart('{{ plan[0] }}');"><span class="glyphicon glyphicon-play green" data-toggle="tooltip" title="Start Plan"></span> Start</li>
-                        <li class="divider"></li>
-                        <li onclick="planstop('{{ plan[0] }}');"><span class="glyphicon glyphicon-stop" data-toggle="tooltip" title="Stop Plan"></span> Stop</li>
-                        <li class="divider"></li>
-                        <li onclick="plandelete('{{ plan[0] }}');"><span class="glyphicon glyphicon-trash red" data-toggle="tooltip" title="Delete Plan"></span> Delete</li>
-                    </ul></div>
-                </td>
-            </tr>
-            {% endfor %} 
-        </tbody>
-</table>
+<table id="plans" class="table table-striped table-bordered" cellspacing="0" width="100%"/>
 
 <script>
-$(document).ready(function() {
-$('#plans').dataTable();
-//$('#vms').dataTable({
-//   'columnDefs': [
-//      {
-//         'targets': 0,
-//         'checkboxes': {
-//            'selectRow': true
-//         }
-//      }
-//   ],
-//   'select': {
-//      'style': 'multi'
-//   },
-//   'order': [[1, 'asc']]
-//});
-});
+$(document).ready(planstable);
 </script>
 {% endblock %}

@@ -3,44 +3,10 @@
 
 <div id="wheel"></div>
 <div class='notifications top-right'></div>
-<!--input type="checkbox" id="refresh" >Refresh !-->
 <button type="button" class="btn btn-default" id="refresh" onclick="window.location.reload()" ><span data-toggle="tooltip" title="Refresh Templates" class="glyphicon glyphicon-refresh"></span></button><p>
-<table id="templates" class="table table-striped table-bordered" cellspacing="0" width="100%">
-        <thead>
-            <tr>
-                <th>Template</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for template in templates %}
-            <tr>
-                <td>{{ template }}</td>
-                <td>
-                    <button type="button" class="btn btn-default" id="create" onclick="vmcreate('', '{{ template }}');"><span data-toggle="tooltip" title="Create Vm from Template" class="glyphicon glyphicon-shopping-cart"></span></button><p>
-                </td>
-            </tr>
-            {% endfor %} 
-        </tbody>
-</table>
+<table id="templates" class="table table-striped table-bordered" cellspacing="0" width="100%"/>
 
 <script>
-$(document).ready(function() {
-$('#templates').dataTable();
-//$('#vms').dataTable({
-//   'columnDefs': [
-//      {
-//         'targets': 0,
-//         'checkboxes': {
-//            'selectRow': true
-//         }
-//      }
-//   ],
-//   'select': {
-//      'style': 'multi'
-//   },
-//   'order': [[1, 'asc']]
-//});
-});
+$(document).ready(templatestable);
 </script>
 {% endblock %}

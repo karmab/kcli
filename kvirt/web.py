@@ -21,11 +21,10 @@ port = int(config['PORT']) if 'PORT'in config.keys() else 9000
 # VMS
 
 
-@app.route("/")
-@app.route('/vms')
-def vms():
+@app.route('/vmstable')
+def vmstable():
     """
-    retrieves all vms
+    retrieves all vms in table
     """
     config = Kconfig()
     k = config.k
@@ -38,12 +37,15 @@ def vms():
                 vm[6] = 'Running'
             else:
                 vm[6] = 'OK'
-        # sshcommand = k.ssh(name, tunnel=config.tunnel, insecure=config.insecure)
-        # if sshcommand is None:
-        #     sshcommand = ''
-        # vm.append(sshcommand)
         vms.append(vm)
-    return render_template('vms.html', title='Home', vms=vms, client=config.client)
+    return render_template('vmstable.html', vms=vms)
+
+
+@app.route("/")
+@app.route('/vms')
+def vms():
+    config = Kconfig()
+    return render_template('vms.html', title='Home', client=config.client)
 
 
 @app.route('/vmcreate')
@@ -56,14 +58,20 @@ def vmcreate():
     return render_template('vmcreate.html', title='CreateVm', profiles=profiles, client=config.client)
 
 
-@app.route('/vmprofiles')
-def vmprofiles():
+@app.route('/vmprofilestable')
+def vmprofilestable():
     """
-    retrieves vm profiles
+    retrieves vm profiles in table
     """
     config = Kconfig()
     profiles = config.list_profiles()
-    return render_template('vmprofiles.html', title='VmProfiles', profiles=profiles, client=config.client)
+    return render_template('vmprofilestable.html', profiles=profiles)
+
+
+@app.route('/vmprofiles')
+def vmprofiles():
+    config = Kconfig()
+    return render_template('vmprofiles.html', title='VmProfiles', client=config.client)
 
 
 @app.route("/diskaction", methods=['POST'])
@@ -437,15 +445,35 @@ def report():
     return 'OK'
 
 
+@app.route('/containerstable')
+def containerstable():
+    """
+    retrieves all containers in table
+    """
+    config = Kconfig()
+    k = config.k
+    containers = dockerutils.list_containers(k)
+    return render_template('containerstable.html', containers=containers)
+
+
 @app.route('/containers')
 def containers():
     """
     retrieves all containers
     """
     config = Kconfig()
+    return render_template('containers.html', title='Containers', client=config.client)
+
+
+@app.route('/networkstable')
+def networkstable():
+    """
+    retrieves all networks in table
+    """
+    config = Kconfig()
     k = config.k
-    containers = dockerutils.list_containers(k)
-    return render_template('containers.html', title='Containers', containers=containers, client=config.client)
+    networks = k.list_networks()
+    return render_template('networkstable.html', networks=networks)
 
 
 @app.route('/networks')
@@ -454,9 +482,21 @@ def networks():
     retrieves all networks
     """
     config = Kconfig()
+    return render_template('networks.html', title='Networks', client=config.client)
+
+
+@app.route('/poolstable')
+def poolstable():
+    """
+    retrieves all pools in table
+    """
+    config = Kconfig()
     k = config.k
-    networks = k.list_networks()
-    return render_template('networks.html', title='Networks', networks=networks, client=config.client)
+    pools = []
+    for pool in k.list_pools():
+        poolpath = k.get_pool_path(pool)
+        pools.append([pool, poolpath])
+    return render_template('poolstable.html', pools=pools)
 
 
 @app.route('/pools')
@@ -465,20 +505,15 @@ def pools():
     retrieves all pools
     """
     config = Kconfig()
-    k = config.k
-    pools = []
-    for pool in k.list_pools():
-        poolpath = k.get_pool_path(pool)
-        pools.append([pool, poolpath])
-    return render_template('pools.html', title='Pools', pools=pools, client=config.client)
+    return render_template('pools.html', title='Pools', client=config.client)
 
 
 # REPOS
 
-@app.route('/repos')
-def repos():
+@app.route('/repostable')
+def repostable():
     """
-    retrieves all repos
+    retrieves all repos in table
     """
     config = Kconfig()
     repos = []
@@ -486,7 +521,13 @@ def repos():
     for repo in repoinfo:
         url = repoinfo[repo]
         repos.append([repo, url])
-    return render_template('repos.html', title='Repos', repos=repos, client=config.client)
+    return render_template('repostable.html', repos=repos)
+
+
+@app.route('/repos')
+def repos():
+    config = Kconfig()
+    return render_template('repos.html', title='Repos', client=config.client)
 
 
 @app.route('/repocreate')
@@ -500,10 +541,10 @@ def repocreate():
 # PRODUCTS
 
 
-@app.route('/products')
-def products():
+@app.route('/productstable')
+def productstable():
     """
-    retrieves all products
+    retrieves all products in table
     """
     config = Kconfig()
     products = []
@@ -514,7 +555,13 @@ def products():
         description = product['description']
         numvms = product['numvms']
         products.append([repo, group, name, description, numvms])
-    return render_template('products.html', title='Products', products=products, client=config.client)
+    return render_template('productstable.html', products=products)
+
+
+@app.route('/products')
+def products():
+    config = Kconfig()
+    return render_template('products.html', title='Products', client=config.client)
 
 
 @app.route('/productcreate')
@@ -553,10 +600,10 @@ def productaction():
         response.status_code = 400
 
 
-@app.route('/hosts')
-def hosts():
+@app.route('/hoststable')
+def hoststable():
     """
-    retrieves all hosts
+    retrieves all hosts in table
     """
     config = Kconfig()
     clients = []
@@ -567,16 +614,31 @@ def hosts():
         else:
             clients.append([client, enabled, ''])
     print clients
-    return render_template('hosts.html', title='Hosts', clients=clients, client=config.client)
+    return render_template('hoststable.html', clients=clients)
+
+
+@app.route('/hosts')
+def hosts():
+    """
+    retrieves all hosts
+    """
+    config = Kconfig()
+    return render_template('hosts.html', title='Hosts', client=config.client)
+
+
+@app.route('/planstable')
+def planstable():
+    """
+    retrieves all plans in table
+    """
+    config = Kconfig()
+    return render_template('planstable.html', plans=config.list_plans())
 
 
 @app.route('/plans')
 def plans():
-    """
-    retrieves all plans
-    """
     config = Kconfig()
-    return render_template('plans.html', title='Plans', plans=config.list_plans(), client=config.client)
+    return render_template('plans.html', title='Plans', client=config.client)
 
 
 @app.route("/containeraction", methods=['POST'])
@@ -607,15 +669,21 @@ def containeraction():
         return jsonify(failure)
 
 
-@app.route('/templates')
-def templates():
+@app.route('/templatestable')
+def templatestable():
     """
-    retrieves templates
+    retrieves templates in table
     """
     config = Kconfig()
     k = config.k
     templates = k.volumes()
-    return render_template('templates.html', title='Templates', templates=templates, client=config.client)
+    return render_template('templatestable.html', templates=templates)
+
+
+@app.route('/templates')
+def templates():
+    config = Kconfig()
+    return render_template('templates.html', title='Templates', client=config.client)
 
 
 @app.route('/templatecreate')
@@ -662,25 +730,40 @@ def templateaction():
         return response
 
 
-@app.route('/isos')
-def isos():
+@app.route('/isostable')
+def isostable():
     """
-    retrieves isos
+    retrieves isos in table
     """
     config = Kconfig()
     k = config.k
     isos = k.volumes(iso=True)
-    return render_template('isos.html', title='Isos', isos=isos, client=config.client)
+    return render_template('isostable.html', isos=isos)
+
+
+@app.route('/isos')
+def isos():
+    config = Kconfig()
+    return render_template('isos.html', title='Isos', client=config.client)
+
+
+@app.route('/containerprofilestable')
+def containerprofilestable():
+    """
+    retrieves container profiles in table
+    """
+    config = Kconfig()
+    profiles = config.list_containerprofiles()
+    return render_template('containerprofilestable.html', profiles=profiles)
 
 
 @app.route('/containerprofiles')
 def containerprofiles():
     """
-    retrieves container profiles
+    retrieves all containerprofiles
     """
     config = Kconfig()
-    profiles = config.list_containerprofiles()
-    return render_template('containerprofiles.html', title='ContainerProfiles', profiles=profiles, client=config.client)
+    return render_template('containerprofiles.html', title='ContainerProfiles', client=config.client)
 
 
 def run():

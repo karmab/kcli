@@ -3,40 +3,10 @@
 
 <div id="wheel"></div>
 <div class='notifications top-right'></div>
-<!--input type="checkbox" id="refresh" >Refresh !-->
 <button type="button" class="btn btn-default" id="refresh" onclick="window.location.reload()" ><span data-toggle="tooltip" title="Refresh Isos" class="glyphicon glyphicon-refresh"></span></button><p>
-<table id="isos" class="table table-striped table-bordered" cellspacing="0" width="100%">
-        <thead>
-            <tr>
-                <th>Isos</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for iso in isos %}
-            <tr>
-                <td>{{ iso }}</td>
-            </tr>
-            {% endfor %} 
-        </tbody>
-</table>
+<table id="isos" class="table table-striped table-bordered" cellspacing="0" width="100%"/>
 
 <script>
-$(document).ready(function() {
-$('#isos').dataTable();
-//$('#vms').dataTable({
-//   'columnDefs': [
-//      {
-//         'targets': 0,
-//         'checkboxes': {
-//            'selectRow': true
-//         }
-//      }
-//   ],
-//   'select': {
-//      'style': 'multi'
-//   },
-//   'order': [[1, 'asc']]
-//});
-});
+$(document).ready(isostable);
 </script>
 {% endblock %}

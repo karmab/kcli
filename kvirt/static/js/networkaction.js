@@ -31,6 +31,7 @@ function networkdelete(network){
             $("#wheel").hide();
             if (data.result == 'success') {
                 $('.top-right').notify({message: { text: "Network "+network+" Deleted!!!" }, type: 'success'}).show();
+                networkstable();
             } else {
                 $('.top-right').notify({message: { text: "Network "+network+" not deleted :because "+data.reason }, type: 'danger'}).show();
             };

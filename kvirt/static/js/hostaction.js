@@ -9,6 +9,7 @@ function hostaction(client, action){
             $("#wheel").hide();
             if (data.result == 'success') {
                 $('.top-right').notify({message: { text: "Action "+action+" succeeded!!!" }, type: 'success'}).show(); 
+                hoststable();
             } else {
                 $('.top-right').notify({message: { text: "Action "+action+" Failed because of "+data.reason }, type: 'danger'}).show(); 
             };

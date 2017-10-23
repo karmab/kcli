@@ -1,0 +1,16 @@
+        <thead>
+            <tr>
+                <th>Pool</th>
+                <th>Path</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pool in pools %}
+            <tr>
+                <td>{{ pool[0] }}</td>
+                <td>{{ pool[1] }}</td>
+                <td onclick="pooldelete('{{ pool[0] }}');"><span class="glyphicon glyphicon-trash"></span> Delete</td>
+            </tr>
+            {% endfor %} 
+        </tbody>

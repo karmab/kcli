@@ -30,6 +30,7 @@ function pooldelete(pool){
             $("#wheel").hide();
             if (data.result == 'success') {
                 $('.top-right').notify({message: { text: "Pool "+pool+" deleted!!!" }, type: 'success'}).show();
+                poolstable();
             } else {
                 $('.top-right').notify({message: { text: "Pool "+pool+" not created because "+data.reason }, type: 'danger'}).show();
             };

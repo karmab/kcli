@@ -9,6 +9,7 @@ function vmstart(vm){
             $("#wheel").hide();
             if (data.result == 'success') {
                 $('.top-right').notify({message: { text: "Vm "+vm+" started!!!" }, type: 'success'}).show(); 
+                vmstable();
             } else {
                 $('.top-right').notify({message: { text: "VM "+vm+" not started" }, type: 'danger'}).show(); 
             };
@@ -27,6 +28,7 @@ function vmstop(vm){
             $("#wheel").hide();
             if (data.result == 'success') {
                 $('.top-right').notify({message: { text: "Vm "+vm+" stopped!!!" }, type: 'success'}).show(); 
+                vmstable();
             } else {
                 $('.top-right').notify({message: { text: "VM "+vm+" not stopped" }, type: 'danger'}).show(); 
             };
@@ -49,6 +51,7 @@ function vmdelete(vm){
             $("#wheel").hide();
             if (data.result == 'success') {
                 $('.top-right').notify({message: { text: "Vm "+vm+" deleted!!!" }, type: 'success'}).show();
+                vmstable();
             } else {
                 $('.top-right').notify({message: { text: "VM "+vm+" not deleted because "+data.reason }, type: 'danger'}).show();
             };

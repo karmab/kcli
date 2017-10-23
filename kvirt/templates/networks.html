@@ -5,34 +5,9 @@
 <div class='notifications top-right'></div>
 <!--input type="checkbox" id="refresh" >Refresh !-->
 <button type="button" class="btn btn-default" id="refresh" onclick="window.location.reload()" ><span data-toggle="tooltip" title="Refresh Networks" class="glyphicon glyphicon-refresh"></span></button><p>
-<table id="networks" class="table table-striped table-bordered" cellspacing="0" width="100%">
-        <thead>
-            <tr>
-                <th>Network</th>
-                <th>Type</th>
-                <th>Cidr</th>
-                <th>Dhcp</th>
-                <th>Mode</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for network, value in networks.iteritems() %}
-            <tr>
-                <td>{{ network }}</td>
-                <td>{{ value.type }}</td>
-                <td>{{ value.cidr }}</td>
-                <td>{{ value.dhcp }}</td>
-                <td>{{ value.mode }}</td>
-                <td onclick="networkdelete('{{ network }}');"><span class="glyphicon glyphicon-trash"></span> Delete</td>
-            </tr>
-            {% endfor %} 
-        </tbody>
-</table>
+<table id="networks" class="table table-striped table-bordered" cellspacing="0" width="100%"/>
 
 <script>
-$(document).ready(function() {
-$('#networks').dataTable();
-});
+$(document).ready(networkstable);
 </script>
 {% endblock %}

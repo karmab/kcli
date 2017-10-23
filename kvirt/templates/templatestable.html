@@ -1,0 +1,16 @@
+        <thead>
+            <tr>
+                <th>Template</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for template in templates %}
+            <tr>
+                <td>{{ template }}</td>
+                <td>
+                    <button type="button" class="btn btn-default" id="create" onclick="vmcreate('', '{{ template }}');"><span data-toggle="tooltip" title="Create Vm from Template" class="glyphicon glyphicon-shopping-cart"></span></button><p>
+                </td>
+            </tr>
+            {% endfor %} 
+        </tbody>

@@ -1,0 +1,26 @@
+        <thead>
+            <tr>
+                <th>Repo</th>
+                <th>Url</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for repo in repos %}
+            <tr>
+                <td>{{ repo[0] }}</td>
+                <td>{{ repo[1] }}</td>
+               <td>
+                    <div class="dropdown">
+                        <button class="btn btn-default dropdown-toggle" type="button" id="actions" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true"><font size="1">Actions</font>
+                    <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                		<li onclick="repodelete('{{ repo[0] }}');"><span class="glyphicon glyphicon-trash"></span> Delete</li>
+                        <li class="divider"></li>
+                		<li onclick="repoupdate('{{ repo[0] }}');"><span class="glyphicon glyphicon-cd blue"></span> Update</li>
+                    </ul></div>
+                </td>
+            </tr>
+            {% endfor %} 
+        </tbody>

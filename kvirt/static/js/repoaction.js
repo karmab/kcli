@@ -11,6 +11,7 @@ function repocreate(){
             $("#wheel").hide();
             if (data.result == 'success') {
                 $('.top-right').notify({message: { text: "Repo "+repo+" created!!!" }, type: 'success'}).show();
+                repostable();
             } else {
                 $('.top-right').notify({message: { text: "Repo "+repo+" not created Because "+data.reason }, type: 'danger'}).show();
             };
@@ -29,6 +30,7 @@ function repodelete(repo){
             $("#wheel").hide();
             if (data.result == 'success') {
                 $('.top-right').notify({message: { text: "Repo "+repo+" deleted!!!" }, type: 'success'}).show();
+                repostable();
             } else {
                 $('.top-right').notify({message: { text: "Repo "+repo+" not deleted Because "+data.reason }, type: 'danger'}).show();
             };

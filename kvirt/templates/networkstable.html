@@ -1,0 +1,22 @@
+        <thead>
+            <tr>
+                <th>Network</th>
+                <th>Type</th>
+                <th>Cidr</th>
+                <th>Dhcp</th>
+                <th>Mode</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for network, value in networks.iteritems() %}
+            <tr>
+                <td>{{ network }}</td>
+                <td>{{ value.type }}</td>
+                <td>{{ value.cidr }}</td>
+                <td>{{ value.dhcp }}</td>
+                <td>{{ value.mode }}</td>
+                <td onclick="networkdelete('{{ network }}');"><span class="glyphicon glyphicon-trash"></span> Delete</td>
+            </tr>
+            {% endfor %} 
+        </tbody>

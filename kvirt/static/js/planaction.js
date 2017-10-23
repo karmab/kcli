@@ -8,7 +8,7 @@ function planstart(plan){
         success: function(data) {
             $("#wheel").hide();
             if (data.result == 'success') {
-                $('.top-right').notify({message: { text: "Plan "+plan+" Started!!!" }, type: 'success'}).show(); 
+                $('.top-right').notify({message: { text: "Plan "+plan+" Started!!!" }, type: 'success'}).show();
             } else {
                 $('.top-right').notify({message: { text: "VM "+plan+" Failed to Start" }, type: 'danger'}).show(); 
             };
@@ -49,6 +49,7 @@ function plandelete(plan){
             $("#wheel").hide();
             if (data.result == 'success') {
                 $('.top-right').notify({message: { text: "Plan "+plan+" deleted!!!" }, type: 'success'}).show();
+                planstable();
             } else {
                 $('.top-right').notify({message: { text: "VM "+plan+" not deleted because "+ data.reason }, type: 'danger'}).show();
             };

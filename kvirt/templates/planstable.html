@@ -1,0 +1,28 @@
+        <thead>
+            <tr>
+                <th>Plan</th>
+                <th>Vms</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for plan in plans %}
+            <tr>
+                <td>{{ plan[0] }}</td>
+                <td>{{ plan[1] }}</td>
+                <td>
+                    <div class="dropdown">
+                        <button class="btn btn-default dropdown-toggle" type="button" id="actions" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true"><font size="1">Actions</font>
+                    <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                        <li onclick="planstart('{{ plan[0] }}');"><span class="glyphicon glyphicon-play green" data-toggle="tooltip" title="Start Plan"></span> Start</li>
+                        <li class="divider"></li>
+                        <li onclick="planstop('{{ plan[0] }}');"><span class="glyphicon glyphicon-stop" data-toggle="tooltip" title="Stop Plan"></span> Stop</li>
+                        <li class="divider"></li>
+                        <li onclick="plandelete('{{ plan[0] }}');"><span class="glyphicon glyphicon-trash red" data-toggle="tooltip" title="Delete Plan"></span> Delete</li>
+                    </ul></div>
+                </td>
+            </tr>
+            {% endfor %} 
+        </tbody>
