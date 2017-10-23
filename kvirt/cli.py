@@ -224,6 +224,7 @@ def list(args):
     plans = args.plans
     filters = args.filters
     short = args.short
+    group = args.group
     global config
     if config.client == 'all':
         clis = []
@@ -372,7 +373,7 @@ def list(args):
     elif products:
         products = PrettyTable(["Repo", "Group", "Product", "Description", "Numvms"])
         products.align["Repo"] = "l"
-        productsinfo = config.list_products()
+        productsinfo = config.list_products(group=group)
         for product in sorted(productsinfo, key=lambda x: (x['repo'], x['group'], x['name'])):
             name = product['name']
             repo = product['repo']
@@ -991,6 +992,7 @@ def cli():
     list_parser.add_argument('--plans', action='store_true')
     list_parser.add_argument('--repos', action='store_true')
     list_parser.add_argument('--products', action='store_true')
+    list_parser.add_argument('-g', '--group', help='Only Display products of the indicated group', metavar='GROUP')
     list_parser.add_argument('-f', '--filters', choices=('up', 'down'))
     list_parser.set_defaults(func=list)
 

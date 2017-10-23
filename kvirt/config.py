@@ -376,7 +376,7 @@ class Kconfig:
                     sys.exit(1)
         return repos
 
-    def list_products(self):
+    def list_products(self, group=None):
         configdir = "%s/.kcli" % os.environ.get('HOME')
         if not os.path.exists(configdir):
             return []
@@ -401,6 +401,8 @@ class Kconfig:
                         except yaml.scanner.ScannerError:
                             common.pprint("Couldn't properly parse .kcli/repo. Leaving...", color='red')
                             continue
+            if group is not None:
+                products = [product for product in products if 'group' in product and product['group'] == group]
             return products
 
     def create_repo(self, name, url):
