@@ -377,14 +377,14 @@ class Kconfig:
         return repos
 
     def list_products(self):
-        basedir = "%s/.kcli" % os.environ.get('HOME')
-        if not os.path.exists(basedir):
+        configdir = "%s/.kcli" % os.environ.get('HOME')
+        if not os.path.exists(configdir):
             return []
         else:
             products = []
-            repodirs = [d.replace('repo_', '') for d in os.listdir(basedir) if os.path.isdir("%s/%s" % (basedir, d)) and d.startswith('repo_')]
+            repodirs = [d.replace('repo_', '') for d in os.listdir(configdir) if os.path.isdir("%s/%s" % (configdir, d)) and d.startswith('repo_')]
             for repo in repodirs:
-                repometa = "%s/repo_%s/KMETA" % (basedir, repo)
+                repometa = "%s/repo_%s/KMETA" % (configdir, repo)
                 if not os.path.exists(repometa):
                     continue
                 else:
@@ -819,9 +819,10 @@ class Kconfig:
                     if scripts:
                         scriptcmds = []
                         for script in scripts:
-                            if basedir != '':
+                            if '~' in script:
+                                script = os.path.expanduser(script)
+                            elif basedir != '':
                                 script = "%s/%s" % (basedir, script)
-                            script = os.path.expanduser(script)
                             if not os.path.exists(script):
                                 common.pprint("Script %s not found. Ignoring this vm..." % script, color='red')
                                 missingscript = True
