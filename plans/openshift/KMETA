@@ -30,13 +30,22 @@
   numvms: 1
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
 
-- name: simple
+- name: ocp_1master+2nodes
   group: openshift
-  url: github.com/karmab/kcli/plans/openshift
+  url: github.com/karmab/kcli/plans/openshift/1master+2nodes
   file: downstream.yml
-  description: Downstream Openshift 3.6 (1masters+2nodes) preparing to run the ansible installer from master
+  description: Downstream Openshift 3.6 (1masters+2nodes)
   numvms: 3
-  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  template: rhel-guest-image-7.3-35.x86_64.qcow2
+
+
+- name: origin_1master+2nodes
+  group: openshift
+  url: github.com/karmab/kcli/plans/openshift/1master+2nodes
+  file: upstream.yml
+  description: Upstream Openshift 3.6 (1masters+2nodes)
+  numvms: 3
+  template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: advanced
   group: openshift

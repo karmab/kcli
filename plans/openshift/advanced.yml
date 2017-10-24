@@ -25,6 +25,8 @@ lb:
   - path: /root/install.sh
     origin: advanced/install.sh
     mode: 700
+ scripts: 
+  - advanced/install.sh
 
 master01:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
@@ -86,7 +88,7 @@ master03:
 node01:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
  numcpus: 2
- memory: 4906
+ memory: 4096
  reservedns: true
  sharedkey: true
  domain: karmalabs.local
@@ -105,7 +107,7 @@ node01:
 node02:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
  numcpus: 2
- memory: 4906
+ memory: 4096
  reservedns: true
  sharedkey: true
  dns: karmalabs.local
