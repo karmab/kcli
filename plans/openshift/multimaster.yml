@@ -21,12 +21,12 @@ lb:
   - subscription.sh
  files:
   - path: /root/hosts
-    origin: advanced/hosts
+    origin: multimaster/hosts
   - path: /root/install.sh
-    origin: advanced/install.sh
+    origin: multimaster/install.sh
     mode: 700
  scripts: 
-  - advanced/install.sh
+  - multimaster/install.sh
 
 master01:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
@@ -45,7 +45,7 @@ master01:
  scripts: 
   - ~/register.sh
   - subscription.sh
-  - advanced/pre.sh
+  - multimaster/pre.sh
 
 master02:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
@@ -64,7 +64,7 @@ master02:
  scripts: 
   - ~/register.sh
   - subscription.sh
-  - advanced/pre.sh
+  - multimaster/pre.sh
 
 master03:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
@@ -83,7 +83,7 @@ master03:
  scripts: 
   - ~/register.sh
   - subscription.sh
-  - advanced/pre.sh
+  - multimaster/pre.sh
 
 node01:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
@@ -102,7 +102,7 @@ node01:
  scripts: 
   - ~/register.sh
   - subscription.sh
-  - advanced/pre.sh
+  - multimaster/pre.sh
 
 node02:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
@@ -121,7 +121,7 @@ node02:
  scripts: 
   - ~/register.sh
   - subscription.sh
-  - advanced/pre.sh
+  - multimaster/pre.sh
 
 node03:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
@@ -140,4 +140,4 @@ node03:
  scripts: 
   - ~/register.sh
   - subscription.sh
-  - advanced/pre.sh
+  - multimaster/pre.sh

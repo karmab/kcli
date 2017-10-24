@@ -142,11 +142,11 @@
   numvms: 3
   template: CentOS-7-x86_64-GenericCloud.qcow2
 
-- name: advanced
+- name: multimaster
   group: openshift
   url: github.com/karmab/kcli/plans/openshift
-  file: advanced.yml
-  description: Downstream Openshift 3.6 (1lb+3masters+3nodes) preparing to run the ansible installer from lb
+  file: multimaster.yml
+  description: Downstream Openshift 3.6 (1lb+3masters+3nodes)
   numvms: 7
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
 
