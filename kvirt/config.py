@@ -4,6 +4,7 @@
 Kvirt config class
 """
 
+from jinja2 import Template
 from kvirt.defaults import NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, RESERVEHOST, START, NESTED, TUNNEL, REPORTURL, REPORTDIR, REPORT, REPORTALL, INSECURE, TEMPLATES, TEMPLATESCOMMANDS, KEYS, CMDS, DNS, DOMAIN, SCRIPTS, FILES, ISO, NETMASKS, GATEWAY, SHAREDKEY, TEMPLATE, ENABLEROOT, PLANVIEW
 from kvirt import ansibleutils
 from kvirt import dockerutils
@@ -175,9 +176,11 @@ class Kconfig:
                 os._exit(1)
         self.k = k
 
-    def create_vm(self, name, profile, ip1=None, ip2=None, ip3=None, ip4=None):
+    def create_vm(self, name, profile, ip1=None, ip2=None, ip3=None, ip4=None, overrides=None):
         if name is None:
             name = nameutils.get_random_name()
+        if overrides is not None:
+            overrides = {x.split('=')[0]: x.split('=')[1] for x in overrides.split(',') if len(x.split('=')) == 2}
         k = self.k
         tunnel = self.tunnel
         if profile is None:
@@ -230,7 +233,11 @@ class Kconfig:
                     common.pprint("Script %s not found.Ignoring..." % script, color='red')
                     os._exit(1)
                 else:
-                    scriptlines = [line.strip() for line in open(script).readlines() if line != '\n']
+                    if overrides:
+                        scriptlines = [Template(line.strip()).render(overrides) for line in open(script).readlines() if line != '\n']
+                    else:
+                        # scriptlines = [line.strip() for line in open(script).readlines() if line != '\n']
+                        scriptlines = [Template(line.strip()).render() for line in open(script).readlines() if line != '\n']
                     if scriptlines:
                         scriptcmds.extend(scriptlines)
         cmds = cmds + scriptcmds
@@ -483,7 +490,7 @@ class Kconfig:
                 shutil.rmtree(repodir)
             return {'result': 'success'}
 
-    def create_product(self, name, repo=None, plan=None, clean=False):
+    def create_product(self, name, repo=None, plan=None, clean=False, overrides=None):
         """Create product"""
         if repo is not None:
             products = [product for product in self.list_products() if product['name'] == name and product['repo'] == repo]
@@ -513,14 +520,14 @@ class Kconfig:
                 self.plan(plan, get=url, path=group, inputfile=inputfile)
             os.chdir(group)
             common.pprint("Running: kcli plan -f %s %s" % (inputfile, plan), color='green')
-            self.plan(plan, inputfile=inputfile)
+            self.plan(plan, inputfile=inputfile, overrides=overrides)
             os.chdir('..')
             common.pprint("Product can be deleted with: kcli plan -d %s" % (plan), color='green')
             if clean and should_clean:
                 shutil.rmtree(group)
         return {'result': 'success', 'plan': plan}
 
-    def plan(self, plan, ansible=False, get=None, path=None, autostart=False, container=False, noautostart=False, inputfile=None, start=False, stop=False, delete=False, delay=0, force=True, topologyfile=None, scale=None):
+    def plan(self, plan, ansible=False, get=None, path=None, autostart=False, container=False, noautostart=False, inputfile=None, start=False, stop=False, delete=False, delay=0, force=True, topologyfile=None, scale=None, overrides=None):
         """Create/Delete/Stop/Start vms from plan file"""
         k = self.k
         newvms = []
@@ -743,6 +750,8 @@ class Kconfig:
                         return
                     k.reserve_dns(name=dnsentry, nets=[dnsnet], domain=dnsdomain, ip=dnsip, alias=dnsalias, force=True)
             if vmentries:
+                if overrides is not None:
+                    overrides = {x.split('=')[0]: x.split('=')[1] for x in overrides.split(',') if len(x.split('=')) == 2}
                 topentries = {}
                 if scale is not None:
                     common.pprint("Applying scale", color='green')
@@ -829,7 +838,11 @@ class Kconfig:
                                 common.pprint("Script %s not found. Ignoring this vm..." % script, color='red')
                                 missingscript = True
                             else:
-                                scriptlines = [line.strip() for line in open(script).readlines() if line != '\n']
+                                if overrides:
+                                    scriptlines = [Template(line.strip()).render(overrides) for line in open(script).readlines() if line != '\n']
+                                else:
+                                    scriptlines = [Template(line.strip()).render() for line in open(script).readlines() if line != '\n']
+                                    # scriptlines = [line.strip() for line in open(script).readlines() if line != '\n']
                                 if scriptlines:
                                     scriptcmds.extend(scriptlines)
                         if scriptcmds:

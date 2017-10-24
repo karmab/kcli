@@ -1,0 +1,9 @@
+vm3:
+  memory: 512
+  numcpus: 2
+  nets: 
+   - default
+  pool: default
+  template: CentOS-7-x86_64-GenericCloud.qcow2
+  scripts:
+    - vm3.sh

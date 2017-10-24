@@ -420,6 +420,7 @@ def vm(args):
     ip2 = args.ip2
     ip3 = args.ip3
     ip4 = args.ip4
+    overrides = args.set
     global config
     if name is None:
         name = nameutils.get_random_name()
@@ -440,7 +441,7 @@ def vm(args):
         else:
             common.pprint("Missing profile", color='red')
             os._exit(1)
-    result = config.create_vm(name, profile, ip1=ip1, ip2=ip2, ip3=ip3, ip4=ip4)
+    result = config.create_vm(name, profile, ip1=ip1, ip2=ip2, ip3=ip3, ip4=ip4, overrides=overrides)
     code = common.handle_response(result, name, element='', action='created')
     return code
 
@@ -610,6 +611,7 @@ def plan(args):
     use = args.use
     yes = args.yes
     scale = args.scale
+    overrides = args.set
     global config
     if use is not None:
         rootdir = os.path.expanduser('~/.kcli')
@@ -626,7 +628,7 @@ def plan(args):
             common.pprint("Using %s as name of the plan" % plan, color='green')
     if delete and not yes:
         common.confirm("Are you sure?")
-    config.plan(plan, ansible=ansible, get=get, path=path, autostart=autostart, container=container, noautostart=noautostart, inputfile=inputfile, start=start, stop=stop, delete=delete, delay=delay, topologyfile=topologyfile, scale=scale)
+    config.plan(plan, ansible=ansible, get=get, path=path, autostart=autostart, container=container, noautostart=noautostart, inputfile=inputfile, start=start, stop=stop, delete=delete, delay=delay, topologyfile=topologyfile, scale=scale, overrides=overrides)
     return 0
 
 
@@ -673,9 +675,10 @@ def product(args):
     product = args.product
     clean = args.clean
     plan = args.plan
+    overrides = args.set
     global config
     common.pprint("Creating product %s..." % (product), color='green')
-    config.create_product(product, repo, plan=plan, clean=clean)
+    config.create_product(product, repo, plan=plan, clean=clean, overrides=overrides)
     return 0
 
 
@@ -1032,6 +1035,7 @@ def cli():
     plan_parser.add_argument('-u', '--use', nargs='?', const='kvirt', help='Plan to set as current. Defaults to kvirt', metavar='USE')
     plan_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     plan_parser.add_argument('--delay', default=0, help="Delay between each vm's creation", metavar='DELAY')
+    plan_parser.add_argument('--set', help='Define parameters for rendering within scripts', metavar='SET')
     plan_parser.add_argument('plan', metavar='PLAN', nargs='?')
     plan_parser.set_defaults(func=plan)
 
@@ -1049,6 +1053,7 @@ def cli():
     product_parser.add_argument('-r', '--repo', help='Repo to use, if deploying a product present in several repos', metavar='REPO')
     product_parser.add_argument('-p', '--plan', help='Plan to use as a name during deeployment', metavar='PLAN')
     product_parser.add_argument('-c', '--clean', action='store_true', help='Clean generated directory, after deployment')
+    product_parser.add_argument('--set', help='Define parameters for rendering within scripts', metavar='SET')
     product_parser.add_argument('product', metavar='PRODUCT')
     product_parser.set_defaults(func=product)
 
@@ -1136,6 +1141,7 @@ def cli():
     vm_parser.add_argument('-2', '--ip2', help='Optional Ip to assign to eth1. Netmask and gateway will be retrieved from profile', metavar='IP2')
     vm_parser.add_argument('-3', '--ip3', help='Optional Ip to assign to eth2. Netmask and gateway will be retrieved from profile', metavar='IP3')
     vm_parser.add_argument('-4', '--ip4', help='Optional Ip to assign to eth3. Netmask and gateway will be retrieved from profile', metavar='IP4')
+    vm_parser.add_argument('--set', help='Define parameters for rendering within scripts', metavar='SET')
     vm_parser.add_argument('name', metavar='VMNAME', nargs='?')
     vm_parser.set_defaults(func=vm)
     args = parser.parse_args()
