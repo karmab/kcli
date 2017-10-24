@@ -573,7 +573,7 @@ def productcreate():
     return render_template('productcreate.html', title='CreateProduct', client=config.client)
 
 
-@app.route("/productcreate", methods=['POST'])
+@app.route("/productaction", methods=['POST'])
 def productaction():
     """
     create product

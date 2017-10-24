@@ -3,6 +3,7 @@ rhv:
  memory: 8192
  numcpus: 2
  cpumodel: host-model
+ reservehost: true
  cpuflags:
   - name: arat
     enable: false

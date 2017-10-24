@@ -3,6 +3,7 @@ ovirt:
  memory: 8192
  numcpus: 2
  reservedns: true
+ reservehost: true
  cpumodel: host-model
  cpuflags:
   - name: arat
