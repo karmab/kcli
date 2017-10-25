@@ -31,9 +31,10 @@ def symlinks(user, repo):
     return mappings
 
 
-def download(url, path):
+def download(url, path, debug=False):
     filename = os.path.basename(url)
-    print("Fetching %s" % filename)
+    if debug:
+        print("Fetching %s" % filename)
     url = urllib2.urlopen(url)
     with open("%s/%s" % (path, filename), 'wb') as output:
         output.write(url.read())
