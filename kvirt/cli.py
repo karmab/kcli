@@ -420,7 +420,7 @@ def vm(args):
     ip2 = args.ip2
     ip3 = args.ip3
     ip4 = args.ip4
-    overrides = args.set
+    overrides = args.param
     global config
     if name is None:
         name = nameutils.get_random_name()
@@ -611,7 +611,7 @@ def plan(args):
     use = args.use
     yes = args.yes
     scale = args.scale
-    overrides = args.set
+    overrides = args.param
     global config
     if use is not None:
         rootdir = os.path.expanduser('~/.kcli')
@@ -673,12 +673,17 @@ def product(args):
     """Create product"""
     repo = args.repo
     product = args.product
-    clean = args.clean
+    keep = args.keep
     plan = args.plan
-    overrides = args.set
+    overrides = args.param
+    info = args.info
     global config
-    common.pprint("Creating product %s..." % (product), color='green')
-    config.create_product(product, repo, plan=plan, clean=clean, overrides=overrides)
+    if info:
+        common.pprint("Providing information on product %s..." % (product), color='green')
+        config.info_product(product, repo)
+    else:
+        common.pprint("Creating product %s..." % (product), color='green')
+        config.create_product(product, repo, plan=plan, keep=keep, overrides=overrides)
     return 0
 
 
@@ -1035,7 +1040,7 @@ def cli():
     plan_parser.add_argument('-u', '--use', nargs='?', const='kvirt', help='Plan to set as current. Defaults to kvirt', metavar='USE')
     plan_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     plan_parser.add_argument('--delay', default=0, help="Delay between each vm's creation", metavar='DELAY')
-    plan_parser.add_argument('--set', help='Define parameters for rendering within scripts', metavar='SET')
+    plan_parser.add_argument('-P', '--param', action='append', help='Define parameter for rendering within scripts. Can be repeated', metavar='PARAM')
     plan_parser.add_argument('plan', metavar='PLAN', nargs='?')
     plan_parser.set_defaults(func=plan)
 
@@ -1050,10 +1055,11 @@ def cli():
 
     product_info = 'Deploy Product'
     product_parser = subparsers.add_parser('product', description=product_info, help=product_info)
+    product_parser.add_argument('-i', '--info', action='store_true', help='Provide information on the given product')
+    product_parser.add_argument('-k', '--keep', action='store_true', help='Keep generated directory after deployment')
+    product_parser.add_argument('-p', '--plan', help='Plan to use as a name during deployment', metavar='PLAN')
+    product_parser.add_argument('-P', '--param', action='append', help='Define parameter for rendering within scripts. Can be repeated several times', metavar='PARAM')
     product_parser.add_argument('-r', '--repo', help='Repo to use, if deploying a product present in several repos', metavar='REPO')
-    product_parser.add_argument('-p', '--plan', help='Plan to use as a name during deeployment', metavar='PLAN')
-    product_parser.add_argument('-c', '--clean', action='store_true', help='Clean generated directory, after deployment')
-    product_parser.add_argument('--set', help='Define parameters for rendering within scripts', metavar='SET')
     product_parser.add_argument('product', metavar='PRODUCT')
     product_parser.set_defaults(func=product)
 
@@ -1141,7 +1147,7 @@ def cli():
     vm_parser.add_argument('-2', '--ip2', help='Optional Ip to assign to eth1. Netmask and gateway will be retrieved from profile', metavar='IP2')
     vm_parser.add_argument('-3', '--ip3', help='Optional Ip to assign to eth2. Netmask and gateway will be retrieved from profile', metavar='IP3')
     vm_parser.add_argument('-4', '--ip4', help='Optional Ip to assign to eth3. Netmask and gateway will be retrieved from profile', metavar='IP4')
-    vm_parser.add_argument('--set', help='Define parameters for rendering within scripts', metavar='SET')
+    vm_parser.add_argument('-P', '--param', action='append', help='Define parameter for rendering within scripts. Can be repeated', metavar='PARAM')
     vm_parser.add_argument('name', metavar='VMNAME', nargs='?')
     vm_parser.set_defaults(func=vm)
     args = parser.parse_args()

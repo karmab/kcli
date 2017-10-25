@@ -176,11 +176,11 @@ class Kconfig:
                 os._exit(1)
         self.k = k
 
-    def create_vm(self, name, profile, ip1=None, ip2=None, ip3=None, ip4=None, overrides=None):
+    def create_vm(self, name, profile, ip1=None, ip2=None, ip3=None, ip4=None, overrides=[]):
         if name is None:
             name = nameutils.get_random_name()
-        if overrides is not None:
-            overrides = {x.split('=')[0]: x.split('=')[1] for x in overrides.split(',') if len(x.split('=')) == 2}
+        if overrides:
+            overrides = {x.split('=')[0]: x.split('=')[1] for x in overrides if len(x.split('=')) == 2}
         k = self.k
         tunnel = self.tunnel
         if profile is None:
@@ -490,7 +490,32 @@ class Kconfig:
                 shutil.rmtree(repodir)
             return {'result': 'success'}
 
-    def create_product(self, name, repo=None, plan=None, clean=False, overrides=None):
+    def info_product(self, name, repo=None):
+        """Info product"""
+        if repo is not None:
+            products = [product for product in self.list_products() if product['name'] == name and product['repo'] == repo]
+        else:
+            products = [product for product in self.list_products() if product['name'] == name]
+        if len(products) == 0:
+                    common.pprint("Product not found. Leaving...", color='red')
+                    sys.exit(1)
+        elif len(products) > 1:
+                    common.pprint("Product found in several repos. Specify one...", color='red')
+                    sys.exit(1)
+        else:
+            product = products[0]
+            repo = product['repo']
+            group = product['group']
+            template = product.get('template')
+            password = product.get('password')
+            if group is not None:
+                print("group: %s" % group)
+            if template is not None:
+                print("template: %s" % template)
+            if password is not None:
+                print("password: %s" % password)
+
+    def create_product(self, name, repo=None, plan=None, keep=False, overrides=None):
         """Create product"""
         if repo is not None:
             products = [product for product in self.list_products() if product['name'] == name and product['repo'] == repo]
@@ -518,12 +543,14 @@ class Kconfig:
             if not os.path.exists(group):
                 should_clean = True
                 self.plan(plan, get=url, path=group, inputfile=inputfile)
+            else:
+                common.pprint("Using existing directory %s" % group, color='green')
             os.chdir(group)
             common.pprint("Running: kcli plan -f %s %s" % (inputfile, plan), color='green')
             self.plan(plan, inputfile=inputfile, overrides=overrides)
             os.chdir('..')
             common.pprint("Product can be deleted with: kcli plan -d %s" % (plan), color='green')
-            if clean and should_clean:
+            if not keep and should_clean:
                 shutil.rmtree(group)
         return {'result': 'success', 'plan': plan}
 
@@ -750,8 +777,8 @@ class Kconfig:
                         return
                     k.reserve_dns(name=dnsentry, nets=[dnsnet], domain=dnsdomain, ip=dnsip, alias=dnsalias, force=True)
             if vmentries:
-                if overrides is not None:
-                    overrides = {x.split('=')[0]: x.split('=')[1] for x in overrides.split(',') if len(x.split('=')) == 2}
+                if overrides:
+                    overrides = {x.split('=')[0]: x.split('=')[1] for x in overrides if len(x.split('=')) == 2}
                 topentries = {}
                 if scale is not None:
                     common.pprint("Applying scale", color='green')

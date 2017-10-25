@@ -16,9 +16,6 @@ lb:
   - size: 10
  pool: default
  sharedkey: true
- scripts: 
-  - ~/register.sh
-  - subscription.sh
  files:
   - path: /root/hosts
     origin: multimaster/hosts
@@ -26,6 +23,8 @@ lb:
     origin: multimaster/install.sh
     mode: 700
  scripts: 
+  - ~/register.sh
+  - subscription.sh
   - multimaster/install.sh
 
 master01:
