@@ -12,6 +12,7 @@ lb
 ansible_ssh_user=cloud-user
 deployment_type=openshift-enterprise
 ansible_become=True
+openshift_disable_check=disk_availability,docker_storage,memory_availability
 
 # Uncomment the following to enable htpasswd authentication; defaults to
 # DenyAllPasswordIdentityProvider.
@@ -63,7 +64,8 @@ lb.karmalabs.local
 
 # host group for nodes, includes region info
 [nodes]
-master0[1:3].karmalabs.local openshift_node_labels="{'region': 'master', 'zone': 'default'}"
+master01.karmalabs.local openshift_node_labels="{'region': 'master', 'zone': 'default'}"
+master02.karmalabs.local openshift_node_labels="{'region': 'master', 'zone': 'default'}"
+master03.karmalabs.local openshift_node_labels="{'region': 'master', 'zone': 'default'}"
 node01.karmalabs.local openshift_node_labels="{'region': 'infra', 'zone': 'default'}"
 node02.karmalabs.local openshift_node_labels="{'region': 'primary', 'zone': 'east'}"
-node03.karmalabs.local openshift_node_labels="{'region': 'primary', 'zone': 'west'}"

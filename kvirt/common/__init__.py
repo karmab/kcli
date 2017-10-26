@@ -40,11 +40,12 @@ def download(url, path, debug=False):
         output.write(url.read())
 
 
-def makelink(url, path):
+def makelink(url, path, debug=False):
     filename = os.path.basename(url)
     url = urllib2.urlopen(url)
     target = url.read()
-    print("Creating symlink for %s pointing to %s" % (filename, target))
+    if debug:
+        print("Creating symlink for %s pointing to %s" % (filename, target))
     os.symlink(target, "%s/%s" % (path, filename))
 
 

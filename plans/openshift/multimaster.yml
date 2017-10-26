@@ -30,7 +30,7 @@ lb:
 master01:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
  numcpus: 2
- memory: 6144
+ memory: 8192
  reservedns: true
  sharedkey: true
  domain: karmalabs.local
@@ -49,7 +49,7 @@ master01:
 master02:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
  numcpus: 2
- memory: 6144
+ memory: 8192
  reservedns: true
  sharedkey: true
  domain: karmalabs.local
@@ -68,7 +68,7 @@ master02:
 master03:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
  numcpus: 2
- memory: 6144
+ memory: 8192
  reservedns: true
  sharedkey: true
  domain: karmalabs.local
@@ -104,25 +104,6 @@ node01:
   - multimaster/pre.sh
 
 node02:
- template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
- numcpus: 2
- memory: 4096
- reservedns: true
- sharedkey: true
- dns: karmalabs.local
- domain: karmalabs.local
- nets:
-  - karmalabs.local
- disks:
-  - size: 10
-  - size: 30
- pool: default
- scripts: 
-  - ~/register.sh
-  - subscription.sh
-  - multimaster/pre.sh
-
-node03:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
  numcpus: 2
  memory: 4096
