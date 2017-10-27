@@ -65,7 +65,13 @@ def fetch(url, path, syms=None):
         syms = symlinks(user, repo)
         url = url.replace("%s/%s" % (user, repo), "%s/%s/contents" % (user, repo))
     if not os.path.exists(path):
-        os.mkdir(path)
+        try:
+            os.makedirs(path)
+        except OSError as exc:  # Python >2.5
+            if exc.errno == errno.EEXIST and os.path.isdir(path):
+                pass
+            else:
+                raise
     try:
         r = urllib2.urlopen(url)
     except urllib2.HTTPError:
