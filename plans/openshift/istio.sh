@@ -35,5 +35,5 @@ sudo chmod u+x /usr/bin/istioctl
 . istio.VERSION
 istioctl kube-inject --hub $PILOT_HUB --tag $PILOT_TAG -f samples/apps/bookinfo/bookinfo.yaml -n $project | oc apply -f -
 oc expose svc productpage
-oc new-project istio-config-default
-oc create -f https://raw.githubusercontent.com/istio/istio/master/samples/apps/bookinfo/rules/mixer-rule-standard-metrics.yaml
+# oc new-project istio-config-default
+# oc create -f https://raw.githubusercontent.com/istio/istio/master/samples/apps/bookinfo/rules/mixer-rule-standard-metrics.yaml

@@ -8,6 +8,10 @@ istio:
   - size: 10
   - size: 60
  pool: default
+ files:
+  - path: /root/istiobookgen.sh
+    origin: istiobookgen.sh
+    mode: 700
  scripts: 
   - requirements.sh
   - upstream.sh
