@@ -99,6 +99,7 @@
   file: upstream.yml
   description: Upstream Openshift 3.7.0-alpha.1 based on oc cluster up
   numvms: 1
+  memory: 6144
   template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: origin32
@@ -107,6 +108,7 @@
   file: upstream32.yml
   description: Upstream Openshift 3.2 based on oc cluster up
   numvms: 1
+  memory: 6144
   template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: origin33
@@ -115,6 +117,7 @@
   file: upstream33.yml
   description: Upstream Openshift 3.3 based on oc cluster up
   numvms: 1
+  memory: 6144
   template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: origin33
@@ -123,6 +126,7 @@
   file: upstream33.yml
   description: Upstream Openshift 3.3 based on oc cluster up
   numvms: 1
+  memory: 6144
   template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: origin34
@@ -131,6 +135,7 @@
   file: upstream34.yml
   description: Upstream Openshift 3.4 based on oc cluster up
   numvms: 1
+  memory: 6144
   template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: origin35
@@ -139,6 +144,7 @@
   file: upstream35.yml
   description: Upstream Openshift 3.5 based on oc cluster up
   numvms: 1
+  memory: 6144
   template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: origin36
@@ -147,6 +153,7 @@
   file: upstream36.yml
   description: Upstream Openshift 3.6 based on oc cluster up
   numvms: 1
+  memory: 6144
   template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: ocp
@@ -155,6 +162,7 @@
   file: downstream.yml
   description: Downstream Openshift 3.6 based on oc cluster up
   numvms: 1
+  memory: 6144
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
 
 - name: ocp_1master+2nodes
@@ -188,6 +196,7 @@
   file: fission.yml
   description: Fission based on oc cluster up. Note fission wont work as per a current bug in openshift
   numvms: 1
+  memory: 6144
   template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: helm
@@ -196,6 +205,7 @@
   file: helm.yml
   description: Helm based on oc cluster up
   numvms: 1
+  memory: 6144
   template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: monocular
@@ -204,6 +214,7 @@
   file: monocular.yml
   description: Monocular based on oc cluster up (and helm)
   numvms: 1
+  memory: 6144
   template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: istio21
@@ -212,6 +223,7 @@
   file: istio21.yml
   description: Istio 0.2.1 based on oc cluster up ( with addons and bookinfo app)
   numvms: 1
+  memory: 6144
   template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: istio22
@@ -220,6 +232,7 @@
   file: istio22.yml
   description: Istio 0.2.2 based on oc cluster up ( with addons and bookinfo app)
   numvms: 1
+  memory: 6144
   template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: istio
@@ -228,6 +241,7 @@
   file: istio.yml
   description: Istio Latest Stable based on oc cluster up ( with addons and bookinfo app)
   numvms: 1
+  memory: 6144
   template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: asb
@@ -236,6 +250,8 @@
   file: asb.yml
   description: Ansible Service Broker ( based on oc cluster up latest)
   numvms: 1
+  memory: 6144
+  template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: asb36
   group: openshift
@@ -243,6 +259,8 @@
   file: asb36.yml
   description: Ansible Service Broker ( based on oc cluster up from 3.6)
   numvms: 1
+  memory: 6144
+  template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: pike
   group: openstack

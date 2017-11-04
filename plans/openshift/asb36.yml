@@ -1,7 +1,7 @@
 asb36:
  template: Fedora-Cloud-Base-26-1.5.x86_64.qcow2
  numcpus: 2
- memory: 10240
+ memory: 6144
  nets:
   - default
  disks:

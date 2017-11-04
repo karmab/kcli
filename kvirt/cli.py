@@ -371,7 +371,7 @@ def list(args):
             repos.add_row([repo, url])
         print(repos)
     elif products:
-        products = PrettyTable(["Repo", "Group", "Product", "Description", "Numvms"])
+        products = PrettyTable(["Repo", "Group", "Product", "Description", "Numvms", "Memory"])
         products.align["Repo"] = "l"
         productsinfo = config.list_products(group=group)
         for product in sorted(productsinfo, key=lambda x: (x['repo'], x['group'], x['name'])):
@@ -379,8 +379,9 @@ def list(args):
             repo = product['repo']
             description = product.get('description', 'N/A')
             numvms = product.get('numvms', 'N/A')
+            memory = product.get('memory', 'N/A')
             group = product.get('group', 'N/A')
-            products.add_row([repo, group, name, description, numvms])
+            products.add_row([repo, group, name, description, numvms, memory])
         print(products)
     else:
         if config.client == 'all':
