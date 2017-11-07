@@ -274,6 +274,15 @@
   memory: 6144
   template: CentOS-7-x86_64-GenericCloud.qcow2
 
+- name: minishift
+  group: openshift
+  url: github.com/karmab/kcli/plans/openshift
+  file: minishift.yml
+  description: minishift 1.8.0 (bringing up a secondary vm)
+  numvms: 2
+  memory: 7168
+  template: CentOS-7-x86_64-GenericCloud.qcow2
+
 - name: pike
   group: openstack
   url: github.com/karmab/kcli/plans/openstack

@@ -5,7 +5,7 @@ Kvirt config class
 """
 
 from jinja2 import Template
-from kvirt.defaults import NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, RESERVEHOST, START, NESTED, TUNNEL, REPORTURL, REPORTDIR, REPORT, REPORTALL, INSECURE, TEMPLATES, TEMPLATESCOMMANDS, KEYS, CMDS, DNS, DOMAIN, SCRIPTS, FILES, ISO, NETMASKS, GATEWAY, SHAREDKEY, TEMPLATE, ENABLEROOT, PLANVIEW
+from kvirt.defaults import NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, RESERVEHOST, START, NESTED, TUNNEL, REPORTURL, REPORTDIR, REPORT, REPORTALL, INSECURE, TEMPLATES, TEMPLATESCOMMANDS, KEYS, CMDS, DNS, DOMAIN, SCRIPTS, FILES, ISO, NETMASKS, GATEWAY, SHAREDKEY, TEMPLATE, ENABLEROOT, PLANVIEW, PRIVATEKEY
 from kvirt import ansibleutils
 from kvirt import dockerutils
 from kvirt import nameutils
@@ -93,6 +93,7 @@ class Kconfig:
         defaults['sharedkey'] = default.get('sharedkey', SHAREDKEY)
         defaults['enableroot'] = default.get('enableroot', ENABLEROOT)
         defaults['planview'] = default.get('planview', PLANVIEW)
+        defaults['privatekey'] = default.get('privatekey', PRIVATEKEY)
         currentplanfile = "%s/.kcli/plan" % os.environ.get('HOME')
         if os.path.exists(currentplanfile):
             self.currentplan = open(currentplanfile).read().strip()
@@ -161,6 +162,7 @@ class Kconfig:
         self.domain = options.get('domain', self.default['domain'])
         self.scripts = options.get('scripts', self.default['scripts'])
         self.files = options.get('files', self.default['files'])
+        self.privatekey = options.get('privatekey', self.default['privatekey'])
         if not self.enabled:
             k = None
         else:
@@ -225,6 +227,7 @@ class Kconfig:
         scripts = common.remove_duplicates(self.scripts + profile.get('scripts', []))
         files = profile.get('files', self.files)
         enableroot = profile.get('enableroot', self.enableroot)
+        privatekey = profile.get('privatekey', self.privatekey)
         scriptcmds = []
         if scripts:
             for script in scripts:
@@ -258,6 +261,18 @@ class Kconfig:
             reportcmd = ['curl -s -X POST -d "name=%s&status=OK&report=`cat /var/log/cloud-init.log`" %s/report /dev/null' % (name, self.reporturl)]
             cmds = cmds + reportcmd
         ips = [ip1, ip2, ip3, ip4]
+        if privatekey:
+            privatekeyfile = None
+            if os.path.exists("%s/.ssh/id_rsa" % os.environ['HOME']):
+                privatekeyfile = "%s/.ssh/id_rsa" % os.environ['HOME']
+            elif os.path.exists("%s/.ssh/id_rsa" % os.environ['HOME']):
+                privatekeyfile = "%s/.ssh/id_dsa" % os.environ['HOME']
+            if privatekeyfile is not None:
+                privatekey = open(privatekeyfile).read().strip()
+                if files:
+                    files.append({'path': '/root/.ssh/id_rsa', 'content': privatekey})
+                else:
+                    files = [{'path': '/root/.ssh/id_rsa', 'content': privatekey}]
         result = k.create(name=name, plan=plan, profile=profilename, cpumodel=cpumodel, cpuflags=cpuflags, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns), reservehost=bool(reservehost), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=bool(nested), tunnel=tunnel, files=files, enableroot=enableroot)
         if result['result'] != 'success':
             return result
@@ -851,7 +866,7 @@ class Kconfig:
                     ips = profile.get('ips')
                     sharedkey = next((e for e in [profile.get('sharedkey'), customprofile.get('sharedkey'), self.sharedkey] if e is not None))
                     enableroot = next((e for e in [profile.get('enableroot'), customprofile.get('enableroot'), self.enableroot] if e is not None))
-                    # scripts = next((e for e in [profile.get('scripts'), customprofile.get('scripts'), self.scripts] if e is not None))
+                    privatekey = next((e for e in [profile.get('privatekey'), customprofile.get('privatekey'), self.privatekey] if e is not None))
                     scripts = self.scripts + customprofile.get('scripts', []) + profile.get('scripts', [])
                     missingscript = False
                     if scripts:
@@ -897,6 +912,18 @@ class Kconfig:
                             files.append({'path': '/root/.ssh/id_rsa.pub', 'content': publickey})
                         else:
                             files = [{'path': '/root/.ssh/id_rsa', 'content': privatekey}, {'path': '/root/.ssh/id_rsa.pub', 'content': publickey}]
+                    elif privatekey:
+                        privatekeyfile = None
+                        if os.path.exists("%s/.ssh/id_rsa" % os.environ['HOME']):
+                            privatekeyfile = "%s/.ssh/id_rsa" % os.environ['HOME']
+                        elif os.path.exists("%s/.ssh/id_rsa" % os.environ['HOME']):
+                            privatekeyfile = "%s/.ssh/id_dsa" % os.environ['HOME']
+                        if privatekeyfile is not None:
+                            privatekey = open(privatekeyfile).read().strip()
+                        if files:
+                            files.append({'path': '/root/.ssh/id_rsa', 'content': privatekey})
+                        else:
+                            files = [{'path': '/root/.ssh/id_rsa', 'content': privatekey}]
                     result = k.create(name=name, plan=plan, profile=profilename, cpumodel=cpumodel, cpuflags=cpuflags, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns), reservehost=bool(reservehost), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=nested, tunnel=tunnel, files=files, enableroot=enableroot)
                     common.handle_response(result, name)
                     if result['result'] == 'success':
