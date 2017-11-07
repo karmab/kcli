@@ -10,8 +10,19 @@
   group: foreman
   url: github.com/karmab/kcli/plans/foreman
   file: upstream.yml
+  description: Upstream Foreman 1.15
+  numvms: 1
+  memory: 6144
+  password: unix1234
+  template: CentOS-7-x86_64-GenericCloud.qcow2
+
+- name: foreman
+  group: foreman
+  url: github.com/karmab/kcli/plans/foreman
+  file: upstream12.yml
   description: Upstream Foreman 1.12
   numvms: 1
+  memory: 6144
   password: unix1234
   template: CentOS-7-x86_64-GenericCloud.qcow2
 
@@ -19,6 +30,7 @@
   group: foreman
   url: github.com/karmab/kcli/plans/foreman
   file: downstream.yml
+  memory: 8192
   description: Downstream Foreman 6.2
   numvms: 1
   password: unix1234

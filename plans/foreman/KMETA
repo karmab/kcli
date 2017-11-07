@@ -2,7 +2,7 @@
   group: foreman
   url: github.com/karmab/kcli/plans/foreman
   file: upstream.yml
-  description: Upstream Foreman 1.12
+  description: Upstream Foreman 1.15
   numvms: 1
   memory: 6144
   password: unix1234
