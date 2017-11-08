@@ -640,6 +640,7 @@ While the tool should pretty much work the same on this hypervisor, there are so
 
 ## TODO
 
+- find a better rule when deleting disks of a vm (along with it)
 - not render .j2 scripts
 - Read The docs
 - Check on memory and disk space when creating vm
