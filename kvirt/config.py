@@ -551,6 +551,7 @@ class Kconfig:
             group = product['group']
             template = product.get('template')
             password = product.get('password')
+            should_clean = False
             if template is not None:
                 print("Note that this product uses template: %s" % template)
             if password is not None:
