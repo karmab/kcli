@@ -18,7 +18,6 @@ su - stack -c "wget -P advanced https://raw.githubusercontent.com/karmab/kcli/ma
 su - stack -c "wget -P advanced https://raw.githubusercontent.com/karmab/kcli/master/plans/openstack/tripleo/advanced/deploy.sh"
 systemctl stop NetworkManager
 systemctl disable NetworkManager
-#yum -y update
+yum -y update
 sed -i /requiretty/d /etc/sudoers
-#su - stack -c "openstack undercloud install"
-#reboot
+su - stack -c "openstack undercloud install"

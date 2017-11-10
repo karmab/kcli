@@ -40,8 +40,9 @@ class Kconfig:
             with open(inifile, 'r') as entries:
                 try:
                     self.ini = yaml.load(entries)
-                except yaml.scanner.ScannerError:
-                    common.pprint("Couldn't properly parse .kcli/config.yml. Leaving...", color='red')
+                except yaml.scanner.ScannerError as err:
+                    common.pprint("Couldn't parse yaml in .kcli/config.yml. Leaving...", color='red')
+                    common.pprint(err, color='red')
                     sys.exit(1)
                 except:
                     self.host = None
