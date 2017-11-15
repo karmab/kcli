@@ -16,6 +16,16 @@
   password: unix1234
   template: CentOS-7-x86_64-GenericCloud.qcow2
 
+- name: katello
+  group: foreman
+  url: github.com/karmab/kcli/plans/foreman
+  file: katello.yml
+  description: Upstream Foreman 1.15 with Katello
+  numvms: 1
+  memory: 8192
+  password: unix1234
+  template: CentOS-7-x86_64-GenericCloud.qcow2
+
 - name: foreman
   group: foreman
   url: github.com/karmab/kcli/plans/foreman
