@@ -10,6 +10,5 @@ foreman:
   - size: 40
  pool: default
  scripts: 
-  - repo.sh
   - upstream112.sh
   - hammer.sh
