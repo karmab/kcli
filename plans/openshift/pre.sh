@@ -9,4 +9,4 @@ docker-storage-setup
 systemctl start docker
 yum -y install NetworkManager
 systemctl enable NetworkManager
-ystemctl start  NetworkManager
+systemctl start  NetworkManager
