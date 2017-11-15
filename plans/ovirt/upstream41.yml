@@ -1,0 +1,22 @@
+ovirt:
+ template: CentOS-7-x86_64-GenericCloud.qcow2
+ memory: 8192
+ numcpus: 2
+ reservedns: true
+ reservehost: true
+ cpumodel: host-model
+ cpuflags:
+  - name: arat
+    enable: false
+  - name: clflushopt
+    enable: false
+ nets:
+  - default
+ disks:
+  - size: 60
+ pool: default
+ scripts: 
+  - repo41.sh
+  - nfs.sh
+  - install.sh
+  - provision.sh
