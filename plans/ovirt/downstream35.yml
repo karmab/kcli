@@ -13,3 +13,8 @@ rhev35:
   - subscription35.sh
   - install.sh
   - provision.sh
+ files:
+  - path: /root/answers.txt
+    origin: answers.txt
+  - path: /root/.ovirtshellrc
+    origin: ovirtshellrc

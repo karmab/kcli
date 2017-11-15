@@ -62,3 +62,6 @@ OVESETUP_ENGINE_CONFIG/fqdn=str:0000
 OVESETUP_CONFIG/imageioProxyConfig=bool:True
 OVESETUP_VMCONSOLE_PROXY_CONFIG/vmconsoleProxyConfig=bool:True
 OVESETUP_CONFIG/websocketProxyConfig=bool:True
+OVESETUP_OVN/ovirtProviderOvn=bool:True
+OVESETUP_OVN/ovirtProviderOvnUser=str:admin@internal
+OVESETUP_OVN/ovirtProviderOvnPassword=str:unix1234

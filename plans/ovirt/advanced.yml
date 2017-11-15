@@ -59,3 +59,8 @@ rhvnode02:
   - ~/register.sh
   - advanced/subscription_node.sh
   - advanced/node.sh
+ files:
+  - path: /root/answers.txt
+    origin: answers.txt
+  - path: /root/.ovirtshellrc
+    origin: ovirtshellrc
