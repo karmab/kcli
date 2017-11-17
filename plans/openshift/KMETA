@@ -171,6 +171,15 @@
   group: openshift
   url: github.com/karmab/kcli/plans/openshift
   file: minishift.yml
+  description: minishift 1.8.0 with openshift 3.8.0-alpha.0 (bringing up a secondary vm)
+  numvms: 2
+  memory: 7168
+  template: CentOS-7-x86_64-GenericCloud.qcow2
+
+- name: minishift37
+  group: openshift
+  url: github.com/karmab/kcli/plans/openshift
+  file: minishift37.yml
   description: minishift 1.8.0 with openshift 3.7.0-rc0 (bringing up a secondary vm)
   numvms: 2
   memory: 7168
