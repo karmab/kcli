@@ -12,11 +12,12 @@ curl -L https://github.com/docker/machine/releases/download/v$DOCKER_MACHINE_VER
 chmod u+x /usr/bin/docker-machine
 curl -L https://github.com/karmab/docker-machine-kvm-patched/raw/master/docker-machine-driver-kvm-centos7 > /usr/bin/docker-machine-driver-kvm
 chmod u+x /usr/bin/docker-machine-driver-kvm
-#ssh-keyscan -H $REMOTE_HOST >> ~/.ssh/known_hosts
-#export KVM_CONNECTION_URL=qemu+ssh://root@$REMOTE_HOST/system
-#echo export KVM_CONNECTION_URL=qemu+ssh://root@$REMOTE_HOST/system >>/root/.bashrc
-#export HOME=/root
-#cd /root
-#minishift config set warn-check-kvm-driver true
-#minishift start --memory 6144 --disk-size 20000
+ssh-keyscan -H $REMOTE_HOST >> ~/.ssh/known_hosts
+export KVM_CONNECTION_URL=qemu+ssh://root@$REMOTE_HOST/system
+echo export KVM_CONNECTION_URL=qemu+ssh://root@$REMOTE_HOST/system >>/root/.bashrc
+export HOME=/root
+cd /root
+minishift config set warn-check-kvm-driver true
+sh /root/minishift_no_config.sh
+minishift start --memory 6144 --disk-size 20000 --openshift-version v3.7.0-rc.0
 ##docker-machine create -d kvm --kvm-connection-url qemu+ssh://root@192.168.122.1/system minishify-docker

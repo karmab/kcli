@@ -10,7 +10,7 @@ minishiftX:
   - size: 60
  pool: default
  scripts: 
-  - minishift_demo.sh
+  - minishift36.sh
  files:
   - path: /root/minishift_no_config.sh
     origin: minishift_no_config.sh
