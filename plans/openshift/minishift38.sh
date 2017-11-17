@@ -19,5 +19,5 @@ export HOME=/root
 cd /root
 minishift config set warn-check-kvm-driver true
 sh /root/minishift_no_config.sh
-minishift start --memory 6144 --disk-size 20000 --openshift-version v3.6.1
+minishift start --memory 6144 --disk-size 20000 --openshift-version v3.8.0-alpha.0
 ##docker-machine create -d kvm --kvm-connection-url qemu+ssh://root@192.168.122.1/system minishify-docker
