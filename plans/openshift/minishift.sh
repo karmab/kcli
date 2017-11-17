@@ -1,1 +1,1 @@
-minishift38.sh
+minishift37.sh
