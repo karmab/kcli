@@ -108,11 +108,17 @@ class Kconfig:
         else:
             with open(profilefile, 'r') as entries:
                 self.profiles = yaml.load(entries)
+        self.extraclients = {}
+        extraclients = []
         if client == 'all':
-            self.client = 'all'
-            return
+            clis = [cli for cli in self.clients if self.ini[cli].get('enabled', True)]
+            self.client = clis[0]
+            extraclients = clis[1:]
         elif client is None:
             self.client = self.ini['default']['client']
+        elif ',' in client:
+            self.client = client.split(',')[0]
+            extraclients = client.split(',')[1:]
         else:
             self.client = client
         if self.client not in self.ini:
@@ -177,6 +183,26 @@ class Kconfig:
             if k.conn is None:
                 common.pprint("Couldn't connect to specify hypervisor %s. Leaving..." % self.host, color='red')
                 os._exit(1)
+            for extraclient in extraclients:
+                if extraclient not in self.ini:
+                    common.pprint("Missing section for client %s in config file. Leaving..." % extraclient, color='red')
+                    os._exit(1)
+                options = self.ini[extraclient]
+                if 'host' not in options and 'url' not in options:
+                    common.pprint("Missing connection information for client %s in config file. Leaving..." % extraclient, color='red')
+                    os._exit(1)
+                host = options.get('host')
+                port = options.get('port', 22)
+                user = options.get('user', 'root')
+                protocol = options.get('protocol', 'ssh')
+                url = options.get('url', None)
+                e = Kvirt(host=host, port=port, user=user, protocol=protocol, url=url, debug=debug)
+                self.extraclients[extraclient] = e
+                if e.conn is None:
+                    common.pprint("Couldn't connect to specify hypervisor %s. Leaving..." % extraclient, color='red')
+                    os._exit(1)
+            if extraclients:
+                self.extraclients[self.client] = k
         self.k = k
 
     def create_vm(self, name, profile, ip1=None, ip2=None, ip3=None, ip4=None, overrides=[]):

@@ -54,19 +54,24 @@ def stop(args):
             common.pprint("Missing Vm's name", color='red')
             return
     global config
-    k = config.k
-    if container:
-        for name in names:
-            common.pprint("Stopping container %s..." % name, color='green')
-            dockerutils.stop_container(k, name)
+    if config.extraclients:
+        ks = config.extraclients
     else:
-        codes = []
-        for name in names:
-            common.pprint("Stopping vm %s..." % name, color='green')
-            result = k.stop(name)
-            code = common.handle_response(result, name, element='', action='stopped')
-            codes.append(code)
-        os._exit(1 if 1 in codes else 0)
+        ks = {config.client: config.k}
+    codes = []
+    for cli in ks:
+        k = ks[cli]
+        if container:
+            for name in names:
+                common.pprint("Stopping container %s in %s..." % (name, cli), color='green')
+                dockerutils.stop_container(k, name)
+        else:
+            for name in names:
+                common.pprint("Stopping vm %s in %s..." % (name, cli), color='green')
+                result = k.stop(name)
+                code = common.handle_response(result, name, element='', action='stopped')
+                codes.append(code)
+    os._exit(1 if 1 in codes else 0)
 
 
 def restart(args):
@@ -226,13 +231,7 @@ def list(args):
     short = args.short
     group = args.group
     global config
-    if config.client == 'all':
-        clis = []
-        for cli in sorted(config.clients):
-            clientconfig = Kconfig(client=cli)
-            if clientconfig.k is not None:
-                clis.append(clientconfig)
-    else:
+    if config.client != 'all':
         k = config.k
     if pools:
         pools = k.list_pools()
@@ -384,11 +383,11 @@ def list(args):
             products.add_row([repo, group, name, description, numvms, memory])
         print(products)
     else:
-        if config.client == 'all':
+        if config.extraclients:
             vms = PrettyTable(["Name", "Host", "Status", "Ips", "Source", "Plan", "Profile", "Report"])
-            for cli in sorted(clis, key=lambda x: x.client):
-                for vm in sorted(cli.k.list()):
-                    vm.insert(1, cli.client)
+            for cli in sorted(config.extraclients):
+                for vm in sorted(config.extraclients[cli].list()):
+                    vm.insert(1, cli)
                     if filters:
                         status = vm[2]
                         if status == filters:
@@ -396,7 +395,6 @@ def list(args):
                     else:
                         vms.add_row(vm)
             print(vms)
-            return
         else:
             vms = PrettyTable(["Name", "Status", "Ips", "Source", "Plan", "Profile", "Report"])
             for vm in sorted(k.list()):

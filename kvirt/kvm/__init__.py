@@ -295,7 +295,7 @@ class Kvirt(Kbase):
                     </disk>""" % iso
         if cloudinit:
             cloudinitiso = "%s/%s.ISO" % (default_poolpath, name)
-            isoxml = """<disk type='file' device='cdrom'>
+            isoxml = """%s<disk type='file' device='cdrom'>
                       <driver name='qemu' type='raw'/>
                       <source file='%s'/>
                       <target dev='hdd' bus='ide'/>
