@@ -9,6 +9,7 @@ import argparse
 from kvirt import common
 from kvirt import nameutils
 from kvirt import dockerutils
+import json
 import os
 import yaml
 
@@ -178,6 +179,31 @@ def download(args):
         os._exit(1)
 
 
+def ip(args):
+    names = args.names
+    lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
+    if not names:
+        if os.path.exists(lastvm) and os.stat(lastvm).st_size > 0:
+            names = [open(lastvm).readlines()[0].strip()]
+            common.pprint("Using %s as vm" % names[0], color='green')
+        else:
+            common.pprint("Missing Vm's name", color='red')
+            return
+    global config
+    k = config.k
+    codes = []
+    res = {}
+    for name in names:
+        result = k.ip(name)
+        res[name] = result
+
+        #TODO: Handle errors here, need to change how k.ip works to integrate this
+        code = common.handle_response({'result': 'success'}, name, quiet=True)
+        codes.append(code)
+    print json.dumps(res)
+    os._exit(1 if 1 in codes else 0)
+
+    
 def info(args):
     """Get info on vm"""
     names = args.names
@@ -685,7 +711,6 @@ def product(args):
         config.create_product(product, repo, plan=plan, keep=keep, overrides=overrides)
     return 0
 
-
 def ssh(args):
     """Ssh into vm"""
     name = args.name
@@ -977,6 +1002,11 @@ def cli():
     host_parser.add_argument('-e', '--enable', help='Enable indicated client', metavar='CLIENT')
     host_parser.add_argument('-s', '--switch', help='Switch To indicated client', metavar='CLIENT')
     host_parser.set_defaults(func=host)
+
+    ip_info = 'Get IP Address of vms'
+    ip_parser = subparsers.add_parser('ip', description=ip_info, help=ip_info)
+    ip_parser.add_argument('names', help='VMNAMES', nargs='*')
+    ip_parser.set_defaults(func=ip)
 
     info_info = 'Info vms'
     info_parser = subparsers.add_parser('info', description=info_info, help=info_info)
