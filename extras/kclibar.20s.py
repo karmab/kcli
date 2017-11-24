@@ -17,7 +17,7 @@ except:
     warning = warning.encode('utf-8')
     print("%s\n" % warning)
     print("---\n")
-    print("Kcli could not be found in paths. Is it installed?")
+    print("Kcli could not be found in your path. Is it installed?")
     sys.exit(1)
 
 config = Kconfig(quiet=True)
@@ -25,9 +25,11 @@ k = config.k
 vms = k.list()
 running = [vm[0] for vm in vms if vm[1] == 'up']
 off = [vm[0] for vm in vms if vm[1] == 'down']
-for vm in running:
+print("Kcli %s/%s Running" % (len(running), len(vms)))
+print('---')
+for vm in sorted(running):
     print("%s| color=green" % vm)
     # print("%s| color=green bash=kcli param1=ssh param2=%s" % (vm, vm))
 print('---')
-for vm in off:
+for vm in sorted(off):
     print(vm)
