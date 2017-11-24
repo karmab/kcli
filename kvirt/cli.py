@@ -197,13 +197,13 @@ def ip(args):
         result = k.ip(name)
         res[name] = result
 
-        #TODO: Handle errors here, need to change how k.ip works to integrate this
+        # TODO: Handle errors here, need to change how k.ip works to integrate this
         code = common.handle_response({'result': 'success'}, name, quiet=True)
         codes.append(code)
     print json.dumps(res)
     os._exit(1 if 1 in codes else 0)
 
-    
+
 def info(args):
     """Get info on vm"""
     names = args.names
@@ -710,6 +710,7 @@ def product(args):
         common.pprint("Creating product %s..." % (product), color='green')
         config.create_product(product, repo, plan=plan, keep=keep, overrides=overrides)
     return 0
+
 
 def ssh(args):
     """Ssh into vm"""
