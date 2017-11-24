@@ -19,6 +19,7 @@ minikube:
   - curl -L https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl
   - chmod +x /usr/local/bin/kubectl
   - echo "source <(kubectl completion bash)" >> ~/.bashrc
-  - curl -L https://storage.googleapis.com/minikube/releases/v0.20.0/minikube-linux-amd64 -o usr/local/bin/minikube
-  - chmod +x /usr/local/bin/minikube
-  - minikube start --vm-driver=none --kubernetes-version v1.7.0
+  - curl -L https://storage.googleapis.com/minikube/releases/v0.23.0/minikube-linux-amd64 -o /usr/local/sbin/minikube
+  - chmod +x /usr/local/sbin/minikube
+#  - minikube start --vm-driver=none --kubernetes-version v1.7.0
+  - minikube start --vm-driver=none
