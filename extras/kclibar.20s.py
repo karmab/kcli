@@ -33,3 +33,4 @@ for vm in sorted(running):
 print('---')
 for vm in sorted(off):
     print(vm)
+    # print("%s| terminal=false refresh=true bash=kcli param1=start param2=%s" % (vm, vm))
