@@ -783,9 +783,9 @@ class Kvirt(Kbase):
         if output == 'yaml':
             print yaml.dump(yamlinfo, default_flow_style=False, indent=2, allow_unicode=True, encoding=None).replace("'", '')[:-1]
         else:
-            for key in ['name', 'status', 'description', 'autostart', 'template', 'plan', 'profile', 'cpus', 'memory', 'nets', 'ip', 'disks', 'snapshots']:
-                if fields is not None and key not in fields:
-                    continue
+            if fields is None:
+                fields = ['name', 'status', 'description', 'autostart', 'template', 'plan', 'profile', 'cpus', 'memory', 'nets', 'ip', 'disks', 'snapshots']
+            for key in fields:
                 if key not in yamlinfo:
                     continue
                 else:
