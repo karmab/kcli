@@ -676,7 +676,7 @@ class Kvirt(Kbase):
                             serialcommand = "ssh -p %s %s@%s nc 127.0.0.1 %s" % (self.port, self.user, self.host, serialport)
                         os.system(serialcommand)
 
-    def info(self, name, output='plain', fields=None):
+    def info(self, name, output='plain', fields=None, values=False):
         if fields is not None:
             fields = fields.split(',')
         leases = {}
@@ -713,7 +713,7 @@ class Kvirt(Kbase):
             description = ''
         if vm.isActive():
             state = 'up'
-        yamlinfo = {'name': name, 'autostart': autostart, 'nets': [], 'disks': [], 'state': state}
+        yamlinfo = {'name': name, 'autostart': autostart, 'nets': [], 'disks': [], 'snapshots': [], 'state': state}
         plan, profile, template, ip = None, None, None, None
         for element in root.getiterator('{kvirt}info'):
             e = element.find('{kvirt}plan')
@@ -743,27 +743,18 @@ class Kvirt(Kbase):
             device = "eth%s" % nicnumber
             mac = element.find('mac').get('address')
             if networktype == 'bridge':
-                bridge = element.find('source').get('bridge')
-                if output == 'yaml':
-                    yamlinfo['nets'].append(bridge)
-                else:
-                    print("net interfaces: %s mac: %s net: %s type: bridge" % (device, mac, bridge))
+                network = element.find('source').get('bridge')
+                network_type = 'bridge'
             else:
                 network = element.find('source').get('network')
-                if output == 'yaml':
-                    yamlinfo['nets'].append(network)
-                else:
-                    print("net interfaces:%s mac: %s net: %s type: routed" % (device, mac, network))
-                network = conn.networkLookupByName(network)
+                network_type = 'routed'
+            yamlinfo['nets'].append({'device': device, 'mac': mac, 'net': network, 'type': network_type})
             if vm.isActive():
                 if mac in leases:
-                    if output == 'yaml':
-                        yamlinfo['ip'] = leases[mac]
-                    else:
-                        print("ip: %s" % leases[mac])
+                    yamlinfo['ip'] = leases[mac]
             nicnumber = nicnumber + 1
-        if ip is not None and output != 'yaml':
-            print("fixed ip: %s" % ip)
+        if ip is not None:
+            yamlinfo['ip'] = ip
         for element in root.getiterator('disk'):
             disktype = element.get('device')
             if disktype == 'cdrom':
@@ -774,10 +765,7 @@ class Kvirt(Kbase):
             path = element.find('source').get('file')
             volume = conn.storageVolLookupByPath(path)
             disksize = int(float(volume.info()[1]) / 1024 / 1024 / 1024)
-            if output == 'yaml':
-                yamlinfo['disks'].append({'size': disksize})
-            else:
-                print("diskname: %s disksize: %sGB diskformat: %s type: %s path: %s" % (device, disksize, diskformat, drivertype, path))
+            yamlinfo['disks'].append({'device': device, 'size': disksize, 'format': diskformat, 'type': drivertype, 'path': path})
         if vm.hasCurrentSnapshot():
             currentsnapshot = vm.snapshotCurrent().getName()
         else:
@@ -787,8 +775,7 @@ class Kvirt(Kbase):
                 current = True
             else:
                 current = False
-            if output != 'yaml':
-                print("snapshot: %s current: %s" % (snapshot, current))
+            yamlinfo['snapshots'].append({'snapshot': snapshot, current: current})
         if fields is not None:
             for key in list(yamlinfo):
                 if key not in fields:
@@ -796,15 +783,39 @@ class Kvirt(Kbase):
         if output == 'yaml':
             print yaml.dump(yamlinfo, default_flow_style=False, indent=2, allow_unicode=True, encoding=None).replace("'", '')[:-1]
         else:
-            for key in ['name', 'status', 'description', 'autostart', 'template', 'plan', 'profile', 'cpus', 'memory']:
+            for key in ['name', 'status', 'description', 'autostart', 'template', 'plan', 'profile', 'cpus', 'memory', 'nets', 'ip', 'disks', 'snapshots']:
                 if fields is not None and key not in fields:
                     continue
                 if key not in yamlinfo:
                     continue
                 else:
                     value = yamlinfo[key]
-                    print("%s: %s" % (key, value))
-            return {'result': 'success'}
+                    if key == 'nets':
+                        for net in value:
+                            device = net['device']
+                            mac = net['mac']
+                            network = net['net']
+                            network_type = net['type']
+                            print("net interfaces:%s mac: %s net: %s type: %s" % (device, mac, network, network_type))
+                    elif key == 'disks':
+                        for disk in value:
+                            device = disk['device']
+                            disksize = disk['size']
+                            diskformat = disk['format']
+                            drivertype = disk['type']
+                            path = disk['path']
+                            print("diskname: %s disksize: %sGB diskformat: %s type: %s path: %s" % (device, disksize, diskformat, drivertype, path))
+                    elif key == 'snapshots':
+                        for snap in value:
+                            snapshot = snap['snapshot']
+                            current = snap['current']
+                            print("snapshot: %s current: %s" % (snapshot, current))
+                    else:
+                        if values:
+                            print(value)
+                        else:
+                            print("%s: %s" % (key, value))
+        return {'result': 'success'}
 
     def ip(self, name):
         leases = {}
