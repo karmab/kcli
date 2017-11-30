@@ -132,7 +132,7 @@ class Kbase(object):
         print("not implemented")
         return
 
-    def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False):
+    def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, X=False):
         print("not implemented")
         return
 

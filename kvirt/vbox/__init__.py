@@ -858,7 +858,7 @@ class Kbox(Kbase):
         #    print("No port found. Cannot ssh...")
         return user, port
 
-    def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None):
+    def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False):
         u, port = self._ssh_credentials(name)
         if user is None:
             user = u
