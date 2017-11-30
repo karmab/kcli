@@ -182,6 +182,7 @@ def info(args):
     """Get info on vm"""
     names = args.names
     output = args.output
+    fields = args.fields
     lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
     if not names:
         if os.path.exists(lastvm) and os.stat(lastvm).st_size > 0:
@@ -194,7 +195,7 @@ def info(args):
     k = config.k
     codes = []
     for name in names:
-        result = k.info(name, output=output)
+        result = k.info(name, output=output, fields=fields)
         code = common.handle_response(result, name, quiet=True)
         codes.append(code)
     os._exit(1 if 1 in codes else 0)
@@ -980,6 +981,7 @@ def cli():
 
     info_info = 'Info vms'
     info_parser = subparsers.add_parser('info', description=info_info, help=info_info)
+    info_parser.add_argument('-f', '--fields', help='Display Corresponding list of fields, separated by a comma', metavar='FIELDS')
     info_parser.add_argument('-o', '--output', choices=['plain', 'yaml'], help='Format of the output')
     info_parser.add_argument('names', help='VMNAMES', nargs='*')
     info_parser.set_defaults(func=info)

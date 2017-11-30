@@ -676,8 +676,9 @@ class Kvirt(Kbase):
                             serialcommand = "ssh -p %s %s@%s nc 127.0.0.1 %s" % (self.port, self.user, self.host, serialport)
                         os.system(serialcommand)
 
-    def info(self, name, output='plain'):
-        # ips = []
+    def info(self, name, output='plain', fields=None):
+        if fields is not None:
+            fields = fields.split(',')
         leases = {}
         starts = {0: 'no', 1: 'yes'}
         conn = self.conn
@@ -712,15 +713,7 @@ class Kvirt(Kbase):
             description = ''
         if vm.isActive():
             state = 'up'
-        if output == 'yaml':
-            yamlinfo = {}
-        if output == 'yaml':
-            yamlinfo[name] = {'autostart': autostart, 'nets': [], 'disks': []}
-        else:
-            print("name: %s" % name)
-            print("status: %s" % state)
-            print("description: %s" % description)
-            print("autostart: %s" % autostart)
+        yamlinfo = {'name': name, 'autostart': autostart, 'nets': [], 'disks': [], 'state': state}
         plan, profile, template, ip = None, None, None, None
         for element in root.getiterator('{kvirt}info'):
             e = element.find('{kvirt}plan')
@@ -737,26 +730,13 @@ class Kvirt(Kbase):
             if e is not None:
                 ip = e.text
         if template is not None:
-            if output == 'yaml':
-                yamlinfo[name]['template'] = template
-            else:
-                print("template: %s" % template)
+            yamlinfo['template'] = template
         if plan is not None:
-            if output == 'yaml':
-                pass
-            else:
-                print("plan: %s" % plan)
+            yamlinfo['plan'] = plan
         if profile is not None:
-            if output == 'yaml':
-                yamlinfo[name]['profile'] = profile
-            else:
-                print("profile: %s" % profile)
-        if output == 'yaml' and profile is None:
-                yamlinfo[name]['numcpus'] = numcpus
-                yamlinfo[name]['memory'] = memory
-        elif output != 'yaml':
-            print("cpus: %s" % numcpus)
-            print("memory: %sMB" % memory)
+            yamlinfo['profile'] = profile
+        yamlinfo['cpus'] = numcpus
+        yamlinfo['memory'] = memory
         nicnumber = 0
         for element in root.getiterator('interface'):
             networktype = element.get('type')
@@ -765,19 +745,21 @@ class Kvirt(Kbase):
             if networktype == 'bridge':
                 bridge = element.find('source').get('bridge')
                 if output == 'yaml':
-                    yamlinfo[name]['nets'].append(bridge)
+                    yamlinfo['nets'].append(bridge)
                 else:
                     print("net interfaces: %s mac: %s net: %s type: bridge" % (device, mac, bridge))
             else:
                 network = element.find('source').get('network')
                 if output == 'yaml':
-                    yamlinfo[name]['nets'].append(network)
+                    yamlinfo['nets'].append(network)
                 else:
                     print("net interfaces:%s mac: %s net: %s type: routed" % (device, mac, network))
                 network = conn.networkLookupByName(network)
             if vm.isActive():
                 if mac in leases:
-                    if not yaml:
+                    if output == 'yaml':
+                        yamlinfo['ip'] = leases[mac]
+                    else:
                         print("ip: %s" % leases[mac])
             nicnumber = nicnumber + 1
         if ip is not None and output != 'yaml':
@@ -793,7 +775,7 @@ class Kvirt(Kbase):
             volume = conn.storageVolLookupByPath(path)
             disksize = int(float(volume.info()[1]) / 1024 / 1024 / 1024)
             if output == 'yaml':
-                yamlinfo[name]['disks'].append({'size': disksize})
+                yamlinfo['disks'].append({'size': disksize})
             else:
                 print("diskname: %s disksize: %sGB diskformat: %s type: %s path: %s" % (device, disksize, diskformat, drivertype, path))
         if vm.hasCurrentSnapshot():
@@ -807,9 +789,22 @@ class Kvirt(Kbase):
                 current = False
             if output != 'yaml':
                 print("snapshot: %s current: %s" % (snapshot, current))
+        if fields is not None:
+            for key in list(yamlinfo):
+                if key not in fields:
+                    del yamlinfo[key]
         if output == 'yaml':
             print yaml.dump(yamlinfo, default_flow_style=False, indent=2, allow_unicode=True, encoding=None).replace("'", '')[:-1]
-        return {'result': 'success'}
+        else:
+            for key in ['name', 'status', 'description', 'autostart', 'template', 'plan', 'profile', 'cpus', 'memory']:
+                if fields is not None and key not in fields:
+                    continue
+                if key not in yamlinfo:
+                    continue
+                else:
+                    value = yamlinfo[key]
+                    print("%s: %s" % (key, value))
+            return {'result': 'success'}
 
     def ip(self, name):
         leases = {}

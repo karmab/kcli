@@ -21,3 +21,7 @@ minishift config set warn-check-kvm-driver true
 sh /root/minishift_no_config.sh
 minishift start --memory 6144 --disk-size 20000 --openshift-version v3.7.0-rc.0
 ##docker-machine create -d kvm --kvm-connection-url qemu+ssh://root@192.168.122.1/system minishify-docker
+#eval $(minishift oc-env)
+#oc login -u system:admin
+#oc adm policy add-cluster-role-to-user cluster-admin admin
+#oc adm policy add-cluster-role-to-user cluster-admin developer
