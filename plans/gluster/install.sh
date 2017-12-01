@@ -15,7 +15,6 @@ firewall-offline-cmd --add-service=samba
 firewall-offline-cmd --runtime-to-permanent
 systemctl start firewalld 
 systemctl enable firewalld 
-#gluster peer probe glusterb.example.com
 pvcreate /dev/vdb
 pvcreate /dev/vdc
 vgcreate /dev/vg_bricks /dev/vdb /dev/vdc
