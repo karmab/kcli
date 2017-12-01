@@ -2,7 +2,7 @@
   group: openshift
   url: github.com/karmab/kcli/plans/openshift
   file: upstream.yml
-  description: Upstream Openshift 3.7.0-rc.0 based on oc cluster up
+  description: Upstream Openshift 3.7.0 based on oc cluster up
   numvms: 1
   memory: 6144
   template: CentOS-7-x86_64-GenericCloud.qcow2
