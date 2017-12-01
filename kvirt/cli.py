@@ -10,6 +10,7 @@ from kvirt import common
 from kvirt import nameutils
 from kvirt import dockerutils
 import os
+import random
 import yaml
 
 
@@ -443,7 +444,7 @@ def vm(args):
             common.pprint("Missing profile", color='red')
             os._exit(1)
     result = config.create_vm(name, profile, ip1=ip1, ip2=ip2, ip3=ip3, ip4=ip4, overrides=overrides)
-    code = common.handle_response(result, name, element='', action='created')
+    code = common.handle_response(result, name, element='', action='created', client=config.client)
     return code
 
 
@@ -1156,6 +1157,9 @@ def cli():
     vm_parser.add_argument('name', metavar='VMNAME', nargs='?')
     vm_parser.set_defaults(func=vm)
     args = parser.parse_args()
+    if args.func.func_name == 'vm' and ',' in args.client:
+            args.client = random.choice(args.client.split(','))
+            common.pprint("Selecting %s for creation" % args.client, color='green')
     if args.func.func_name != 'bootstrap':
         config = Kconfig(client=args.client, debug=args.debug)
         if args.client != 'all' and not config.enabled:

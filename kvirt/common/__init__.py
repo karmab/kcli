@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from distutils.spawn import find_executable
+import errno
 import fileinput
 import socket
 import urllib2
@@ -236,10 +237,13 @@ def pprint(text, color=None):
         print(text)
 
 
-def handle_response(result, name, quiet=False, element='', action='deployed'):
+def handle_response(result, name, quiet=False, element='', action='deployed', client=None):
     if result['result'] == 'success':
         if not quiet:
-            pprint("%s%s %s!" % (element, name, action), color='green')
+            response = "%s%s %s" % (element, name, action)
+            if client is not None:
+                response += " on %s" % client
+            pprint(response, color='green')
         return 0
     else:
         if not quiet:
