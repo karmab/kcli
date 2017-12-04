@@ -1260,7 +1260,20 @@ class Kvirt(Kbase):
         conn.defineXML(newxml)
         return {'result': 'success'}
 
-    def update_cpu(self, name, numcpus):
+    def update_iso(self, name, iso):
+        isos = self.volumes(iso=True)
+        isofound = False
+        for i in isos:
+            if i == iso:
+                isofound = True
+                break
+            elif i.endswith(iso):
+                iso = i
+                isofound = True
+                break
+        if not isofound:
+            print("Iso %s not found.Leaving..." % iso)
+            return {'result': 'failure', 'reason': "Iso %s not found" % iso}
         conn = self.conn
         try:
             vm = conn.lookupByName(name)
@@ -1269,8 +1282,13 @@ class Kvirt(Kbase):
         except:
             print("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        cpunode = root.getiterator('vcpu')[0]
-        cpunode.text = numcpus
+        for element in root.getiterator('disk'):
+            disktype = element.get('device')
+            if disktype != 'cdrom':
+                continue
+            source = element.find('source')
+            source.set('file', iso)
+            break
         newxml = ET.tostring(root)
         conn.defineXML(newxml)
         return {'result': 'success'}

@@ -476,6 +476,7 @@ def update(args):
     template = args.template
     net = args.network
     information = args.information
+    iso = args.iso
     global config
     k = config.k
     if dns:
@@ -519,6 +520,10 @@ def update(args):
     elif information:
         common.pprint("Setting information for vm %s..." % (name), color='green')
         k.update_information(name, information)
+    elif iso:
+        common.pprint("Switching iso for vm %s to %s..." % (name, iso), color='green')
+        common.pprint("Note it will only be effective upon next start", color='green')
+        k.update_iso(name, iso)
     elif host:
         common.pprint("Creating Host entry for vm %s..." % (name), color='green')
         nets = k.vm_ports(name)
@@ -1141,6 +1146,7 @@ def cli():
     update_parser.add_argument('--host', action='store_true', help='Update Host entry for the vm')
     update_parser.add_argument('-d', '--domain', help='Domain', metavar='DOMAIN')
     update_parser.add_argument('-t', '--template', help='Template to set', metavar='TEMPLATE')
+    update_parser.add_argument('--iso', help='Iso to set', metavar='ISO')
     update_parser.add_argument('--cloudinit', action='store_true', help='Remove Cloudinit Information from vm')
     update_parser.add_argument('name', metavar='VMNAME')
     update_parser.set_defaults(func=update)

@@ -104,6 +104,10 @@ class Kbase(object):
         print("not implemented")
         return
 
+    def update_iso(self, name, iso):
+        print("not implemented")
+        return
+
     def create_disk(self, name, size, pool=None, thin=True, template=None):
         print("not implemented")
         return
