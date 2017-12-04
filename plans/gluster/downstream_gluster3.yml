@@ -1,0 +1,38 @@
+glustera:
+ template: rhel-server-7.4-x86_64-kvm.qcow2
+ memory: 8144
+ numcpus: 4
+ disks: 
+  - size: 30
+  - size: 30
+  - size: 30
+ nets:
+ - default
+ pool: vms
+ domain: example.com
+ reservedns: true
+ sharedkey: true
+ scripts: 
+  - ~/register.sh
+  - subscription_gluster3.sh
+  - install.sh
+  - provision.sh
+
+glusterb:
+ template: rhel-server-7.4-x86_64-kvm.qcow2
+ memory: 8144
+ numcpus: 4
+ disks:
+  - size: 30
+  - size: 30
+  - size: 30
+ nets:
+ - default
+ pool: vms
+ domain: example.com
+ reservedns: true
+ sharedkey: true
+ scripts:
+  - ~/register.sh
+  - subscription_gluster3.sh
+  - install.sh
