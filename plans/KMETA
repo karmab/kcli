@@ -46,6 +46,15 @@
   password: unix1234
   template: rhel-guest-image-7.3-35.x86_64.qcow2
 
+- name: rh_gluster3
+  group: gluster
+  url: github.com/karmab/kcli/plans/gluster
+  file: downstream_gluster3.yml
+  description: Downstream Gluster 3 with NFS/Cifs Enabled on volume testkvol
+  numvms: 2
+  password: unix1234
+  template: rhel-server-7.4-x86_64-kvm.qcow2
+
 - name: freeipa
   group: ipa
   url: github.com/karmab/kcli/plans/ipa
