@@ -1157,7 +1157,7 @@ def cli():
     vm_parser.add_argument('name', metavar='VMNAME', nargs='?')
     vm_parser.set_defaults(func=vm)
     args = parser.parse_args()
-    if args.func.func_name == 'vm' and ',' in args.client:
+    if args.func.func_name == 'vm' and args.client is not None and ',' in args.client:
             args.client = random.choice(args.client.split(','))
             common.pprint("Selecting %s for creation" % args.client, color='green')
     if args.func.func_name != 'bootstrap':
