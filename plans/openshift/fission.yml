@@ -8,6 +8,11 @@ fission:
   - size: 10
   - size: 60
  pool: default
+ files:
+  - path: /root/hello.py
+    origin: hello.py
+  - path: /etc/profile.d/fission.sh
+    origin: fission_profile.sh
  scripts: 
   - requirements.sh
   - upstream.sh
