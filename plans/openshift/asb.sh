@@ -4,7 +4,7 @@ usermod -aG docker fedora
 systemctl start docker --ignore-dependencies
 sleep 20
 dnf -y install dnf-plugins-core
-dnf -y copr enable @ansible-service-broker/ansible-service-broker
+dnf -y copr enable @ansible-service-broker/ansible-service-broker-latest
 dnf -y install apb
 #wget https://s3.amazonaws.com/catasb/linux/amd64/oc
 #mv oc /usr/bin
