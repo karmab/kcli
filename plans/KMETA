@@ -421,8 +421,10 @@
   file: upstream.yml
   description: Upstream ovirt 4.2 all in one with nfs
   numvms: 1
-  password: unix1234
   template: CentOS-7-x86_64-GenericCloud.qcow2
+  parameters:
+   password: unix1234
+
 
 - name: ovirt41
   group: ovirt

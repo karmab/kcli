@@ -544,6 +544,7 @@ class Kconfig:
                     sys.exit(1)
         else:
             product = products[0]
+            print(product)
             repo = product['repo']
             group = product['group']
             template = product.get('template')
