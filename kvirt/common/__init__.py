@@ -8,6 +8,7 @@ import urllib2
 import json
 import os
 import sys
+import yaml
 
 
 def symlinks(user, repo):
@@ -289,3 +290,20 @@ def remove_duplicates(oldlist):
         if item not in newlist:
             newlist.append(item)
     return newlist
+
+
+def get_overrides(paramfile=None, param=[]):
+    if paramfile is not None and os.path.exists(os.path.expanduser(paramfile)):
+        with open(os.path.expanduser(paramfile)) as f:
+            try:
+                overrides = yaml.load(f)
+            except:
+                print("prout")
+                pprint("Couldnt parse your parameters file %s. Not using it" % paramfile, color='blue')
+                overrides = {}
+    elif param is not None:
+        overrides = {x.split('=')[0]: x.split('=')[1] for x in param if len(x.split('=')) == 2}
+    else:
+        overrides = {}
+    print(overrides)
+    return overrides

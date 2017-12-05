@@ -205,11 +205,9 @@ class Kconfig:
                 self.extraclients[self.client] = k
         self.k = k
 
-    def create_vm(self, name, profile, ip1=None, ip2=None, ip3=None, ip4=None, overrides=[]):
+    def create_vm(self, name, profile, ip1=None, ip2=None, ip3=None, ip4=None, overrides={}):
         if name is None:
             name = nameutils.get_random_name()
-        if overrides:
-            overrides = {x.split('=')[0]: x.split('=')[1] for x in overrides if len(x.split('=')) == 2}
         k = self.k
         tunnel = self.tunnel
         if profile is None:
@@ -557,7 +555,7 @@ class Kconfig:
             if password is not None:
                 print("password: %s" % password)
 
-    def create_product(self, name, repo=None, plan=None, keep=False, overrides=None):
+    def create_product(self, name, repo=None, plan=None, keep=False, overrides={}):
         """Create product"""
         if repo is not None:
             products = [product for product in self.list_products() if product['name'] == name and product['repo'] == repo]
@@ -597,7 +595,7 @@ class Kconfig:
                 shutil.rmtree(group)
         return {'result': 'success', 'plan': plan}
 
-    def plan(self, plan, ansible=False, get=None, path=None, autostart=False, container=False, noautostart=False, inputfile=None, start=False, stop=False, delete=False, delay=0, force=True, topologyfile=None, scale=None, overrides=None):
+    def plan(self, plan, ansible=False, get=None, path=None, autostart=False, container=False, noautostart=False, inputfile=None, start=False, stop=False, delete=False, delay=0, force=True, topologyfile=None, scale=None, overrides={}):
         """Create/Delete/Stop/Start vms from plan file"""
         k = self.k
         newvms = []
@@ -820,8 +818,6 @@ class Kconfig:
                         return
                     k.reserve_dns(name=dnsentry, nets=[dnsnet], domain=dnsdomain, ip=dnsip, alias=dnsalias, force=True)
             if vmentries:
-                if overrides:
-                    overrides = {x.split('=')[0]: x.split('=')[1] for x in overrides if len(x.split('=')) == 2}
                 topentries = {}
                 if scale is not None:
                     common.pprint("Applying scale", color='green')

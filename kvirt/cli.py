@@ -417,25 +417,25 @@ def vm(args):
     """Create vms"""
     name = args.name
     profile = args.profile
-    inputfile = args.inputfile
+    profilefile = args.profilefile
     ip1 = args.ip1
     ip2 = args.ip2
     ip3 = args.ip3
     ip4 = args.ip4
-    overrides = args.param
+    overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
     global config
     if name is None:
         name = nameutils.get_random_name()
         common.pprint("Using %s as name of the vm" % name, color='green')
     if profile is not None and profile.endswith('.yml'):
-        inputfile = profile
+        profilefile = profile
         profile = None
-    if inputfile is not None:
-        if not os.path.exists(inputfile):
+    if profilefile is not None:
+        if not os.path.exists(profilefile):
             common.pprint("Missing profile file", color='red')
             os._exit(1)
         else:
-            with open(inputfile, 'r') as entries:
+            with open(profilefile, 'r') as entries:
                 config.profiles = yaml.load(entries)
     if profile is None:
         if len(config.profiles) == 1:
@@ -618,7 +618,7 @@ def plan(args):
     use = args.use
     yes = args.yes
     scale = args.scale
-    overrides = args.param
+    overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
     global config
     if use is not None:
         rootdir = os.path.expanduser('~/.kcli')
@@ -1042,7 +1042,7 @@ def cli():
     plan_parser.add_argument('-a', '--autostart', action='store_true', help='Set all vms from plan to autostart')
     plan_parser.add_argument('-c', '--container', action='store_true', help='Handle container')
     plan_parser.add_argument('-n', '--noautostart', action='store_true', help='Prevent all vms from plan to autostart')
-    plan_parser.add_argument('-f', '--inputfile', help='Input file')
+    plan_parser.add_argument('-f', '--inputfile', help='Input Plan file')
     plan_parser.add_argument('-s', '--start', action='store_true', help='start all vms from plan')
     plan_parser.add_argument('-w', '--stop', action='store_true')
     plan_parser.add_argument('--scale', help='Scale plan using provided parameters')
@@ -1051,6 +1051,7 @@ def cli():
     plan_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     plan_parser.add_argument('--delay', default=0, help="Delay between each vm's creation", metavar='DELAY')
     plan_parser.add_argument('-P', '--param', action='append', help='Define parameter for rendering within scripts. Can be repeated', metavar='PARAM')
+    plan_parser.add_argument('--paramfile', help='Input file', metavar='PARAMFILE')
     plan_parser.add_argument('plan', metavar='PLAN', nargs='?')
     plan_parser.set_defaults(func=plan)
 
@@ -1154,12 +1155,13 @@ def cli():
     vm_info = 'Create vm'
     vm_parser = subparsers.add_parser('vm', description=vm_info, help=vm_info)
     vm_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
-    vm_parser.add_argument('-f', '--inputfile', help='File to load profiles from', metavar='INPUTFILE')
+    vm_parser.add_argument('--profilefile', help='File to load profiles from', metavar='PROFILEFILE')
     vm_parser.add_argument('-1', '--ip1', help='Optional Ip to assign to eth0. Netmask and gateway will be retrieved from profile', metavar='IP1')
     vm_parser.add_argument('-2', '--ip2', help='Optional Ip to assign to eth1. Netmask and gateway will be retrieved from profile', metavar='IP2')
     vm_parser.add_argument('-3', '--ip3', help='Optional Ip to assign to eth2. Netmask and gateway will be retrieved from profile', metavar='IP3')
     vm_parser.add_argument('-4', '--ip4', help='Optional Ip to assign to eth3. Netmask and gateway will be retrieved from profile', metavar='IP4')
     vm_parser.add_argument('-P', '--param', action='append', help='Define parameter for rendering within scripts. Can be repeated', metavar='PARAM')
+    vm_parser.add_argument('--paramfile', help='Get parameters for rendering within scripts from a file.Takes precedence over individual parameters', metavar='PARAMFILE')
     vm_parser.add_argument('name', metavar='VMNAME', nargs='?')
     vm_parser.set_defaults(func=vm)
     args = parser.parse_args()
