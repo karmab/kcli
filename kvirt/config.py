@@ -261,11 +261,7 @@ class Kconfig:
                     common.pprint("Script %s not found.Ignoring..." % script, color='red')
                     os._exit(1)
                 else:
-                    if overrides:
-                        scriptlines = [Template(line.strip()).render(overrides) for line in open(script).readlines() if line != '\n']
-                    else:
-                        # scriptlines = [line.strip() for line in open(script).readlines() if line != '\n']
-                        scriptlines = [Template(line.strip()).render() for line in open(script).readlines() if line != '\n']
+                    scriptlines = [Template(line.strip()).render() for line in open(script).readlines() if line != '\n']
                     if scriptlines:
                         scriptcmds.extend(scriptlines)
         cmds = cmds + scriptcmds
@@ -298,7 +294,7 @@ class Kconfig:
                     files.append({'path': '/root/.ssh/id_rsa', 'content': privatekey})
                 else:
                     files = [{'path': '/root/.ssh/id_rsa', 'content': privatekey}]
-        result = k.create(name=name, plan=plan, profile=profilename, cpumodel=cpumodel, cpuflags=cpuflags, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns), reservehost=bool(reservehost), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=bool(nested), tunnel=tunnel, files=files, enableroot=enableroot)
+        result = k.create(name=name, plan=plan, profile=profilename, cpumodel=cpumodel, cpuflags=cpuflags, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns), reservehost=bool(reservehost), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=bool(nested), tunnel=tunnel, files=files, enableroot=enableroot, overrides=overrides)
         if result['result'] != 'success':
             return result
         ansible = profile.get('ansible')
@@ -544,17 +540,18 @@ class Kconfig:
                     sys.exit(1)
         else:
             product = products[0]
-            print(product)
             repo = product['repo']
             group = product['group']
             template = product.get('template')
-            password = product.get('password')
+            parameters = product.get('parameters')
             if group is not None:
                 print("group: %s" % group)
             if template is not None:
                 print("template: %s" % template)
-            if password is not None:
-                print("password: %s" % password)
+            if parameters is not None:
+                print("Available parameters:")
+                for parameter in parameters:
+                    print("%s: %s" % (parameter, parameters[parameter]))
 
     def create_product(self, name, repo=None, plan=None, keep=False, overrides={}):
         """Create product"""
@@ -576,12 +573,14 @@ class Kconfig:
             repo = product['repo']
             group = product['group']
             template = product.get('template')
-            password = product.get('password')
+            parameters = product.get('parameters')
             should_clean = False
             if template is not None:
                 print("Note that this product uses template: %s" % template)
-            if password is not None:
-                print("Note that this product uses password: %s" % password)
+            if parameters is not None:
+                for parameter in parameters:
+                    if parameter in overrides:
+                        print("Using %s: %s" % (parameter, overrides[parameter]))
             if not os.path.exists(group):
                 should_clean = True
                 self.plan(plan, get=url, path=group, inputfile=inputfile)
@@ -905,11 +904,7 @@ class Kconfig:
                                 common.pprint("Script %s not found. Ignoring this vm..." % script, color='red')
                                 missingscript = True
                             else:
-                                if overrides:
-                                    scriptlines = [Template(line.strip()).render(overrides) for line in open(script).readlines() if line != '\n']
-                                else:
-                                    scriptlines = [Template(line.strip()).render() for line in open(script).readlines() if line != '\n']
-                                    # scriptlines = [line.strip() for line in open(script).readlines() if line != '\n']
+                                scriptlines = [Template(line.strip()).render() for line in open(script).readlines() if line != '\n']
                                 if scriptlines:
                                     scriptcmds.extend(scriptlines)
                         if scriptcmds:

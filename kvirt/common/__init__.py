@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from jinja2 import Template
 from distutils.spawn import find_executable
 import errno
 import fileinput
@@ -102,7 +103,7 @@ def fetch(url, path, syms=None):
             fetch("%s/%s" % (url, filename), "%s/%s" % (path, filename), syms=syms)
 
 
-def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[], enableroot=True):
+def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[], enableroot=True, overrides={}):
     default_gateway = gateway
     with open('/tmp/meta-data', 'w') as metadatafile:
         if domain is not None:
@@ -148,10 +149,6 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             if metadata:
                 metadatafile.write("network-interfaces: |\n")
                 metadatafile.write(metadata)
-                # if dns is not None:
-                #    metadatafile.write("  dns-nameservers %s\n" % dns)
-                # if domain is not None:
-                #    metadatafile.write("  dns-search %s\n" % domain)
     with open('/tmp/user-data', 'w') as userdata:
         userdata.write('#cloud-config\nhostname: %s\n' % name)
         if enableroot:
@@ -181,7 +178,12 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                     if cmd.startswith('#'):
                         continue
                     else:
-                        userdata.write("- %s\n" % cmd)
+                        # if overrides:
+                        #     newcmd = Template(cmd).render(overrides)
+                        # else:
+                        #    newcmd = cmd
+                        newcmd = Template(cmd).render(overrides)
+                        userdata.write("- %s\n" % newcmd)
         if files:
             userdata.write('ssh_pwauth: True\n')
             userdata.write('disable_root: false\n')
@@ -196,12 +198,10 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                     if not os.path.exists(origin):
                         print("Skipping file %s as not found" % origin)
                         continue
-                    # if origin.endswith('j2'):
-                    #    origin = open(origin, 'r').read()
-                    #    content = Environment().from_string(origin).render(name=name, gateway=gateway, dns=dns, domain=domain)
-                    # else:
-                    #    content = open(origin, 'r').readlines()
-                    content = open(origin, 'r').readlines()
+                    if overrides:
+                        content = [Template(line).render(overrides) for line in open(origin, 'r').readlines()]
+                    else:
+                        content = open(origin, 'r').readlines()
                 elif content is None:
                     continue
                 path = fil.get('path')
@@ -305,5 +305,4 @@ def get_overrides(paramfile=None, param=[]):
         overrides = {x.split('=')[0]: x.split('=')[1] for x in param if len(x.split('=')) == 2}
     else:
         overrides = {}
-    print(overrides)
     return overrides
