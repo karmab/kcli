@@ -546,7 +546,7 @@ Note that when leveraging ansible this way, an inventory file will be generated 
 
 ## Using products
 
-If plans seem to complex, you can make use of the products feature which leverages them
+If plans seem too  complex, you can make use of the products feature which leverages them
 
 ### Repos
 
@@ -574,6 +574,12 @@ Once you have added some repos, you can list available products, and get their d
 
 ```
 kcli list --products 
+```
+
+You can also get direct information on the product (memory and cpu used, number of vms deployed and all parameters that can be overriden)
+
+```
+kcli product --info YOUR_PRODUCT 
 ```
 
 And deploy any product . Note deletion is currently handled by deleting the corresponding plan
@@ -637,6 +643,32 @@ While the tool should pretty much work the same on this hypervisor, there are so
 - *sharedkey* Defaults to False. Set it to true so that a private/public key gets shared between all the nodes of your plan. Additionally, root access will be allowed
 - *files* (optional)- Array of files to inject to the vm. For ecach of the them , you can specify path, owner ( root by default) , permissions (600 by default ) and either origin or content to gather content data directly or from specified origin
 - *insecure* (optional) Handles all the ssh option details so you dont get any warnings about man in the middle
+- *host* (optional) Allows you to create the vm on a specific host, provided you used kcli -C host1,host2,... and specify the wanted hypervisor ( or use kcli -C all ). Note that this field is not used for other types like network, so expect to use this in relatively simple plans only
+
+## Overriding parameters
+
+Note that you can override parameters in
+- commands
+- scripts
+- files
+- plan files
+- profiles
+
+For that , you can pass in kcli vm or kcli plan the following parameters:
+- -P x=1 -P y=2 and so on 
+- --paramfile - In this case, you provide a yaml file ( and as such can provide more complex structures )
+
+The indicated objects are then rendered using jinja. For instance in a profile
+Note we use the delimiters '[[' and ']]' instead of the commonly used '{{' and '}}' so that this rendering doesnt get in the way
+when  providing j2 files for instance
+
+```
+centos:
+ template: CentOS-7-x86_64-GenericCloud.qcow2
+ cmds:
+  - echo x=[[ x ]] y=[[ y ]] >> /tmp/cocorico.txt
+  - echo [[ password | default('unix1234') ]] | passwd --stdin root
+```
 
 ## TODO
 

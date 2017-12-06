@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-from jinja2 import Template
-# from jinja2 import Environment
+# from jinja2 import Template
+from jinja2 import Environment
 from distutils.spawn import find_executable
 import errno
 import fileinput
@@ -179,8 +179,8 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                     if cmd.startswith('#'):
                         continue
                     else:
-                        newcmd = Template(cmd).render(overrides)
-                        # newcmd = Environment(variable_start_string='[[', variable_end_string=']]').from_string(cmd).render(overrides)
+                        # newcmd = Template(cmd).render(overrides)
+                        newcmd = Environment(variable_start_string='[[', variable_end_string=']]').from_string(cmd).render(overrides)
                         userdata.write("- %s\n" % newcmd)
         if files:
             userdata.write('ssh_pwauth: True\n')
@@ -197,8 +197,8 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                         print("Skipping file %s as not found" % origin)
                         continue
                     if overrides:
-                        content = [Template(line).render(overrides) for line in open(origin, 'r').readlines()]
-                        # content = [Environment(variable_start_string='[[', variable_end_string=']]').from_string(line).render(overrides) for line in open(origin, 'r').readlines()]
+                        # content = [Template(line).render(overrides) for line in open(origin, 'r').readlines()]
+                        content = [Environment(variable_start_string='[[', variable_end_string=']]').from_string(line).render(overrides) for line in open(origin, 'r').readlines()]
                     else:
                         content = open(origin, 'r').readlines()
                 elif content is None:
