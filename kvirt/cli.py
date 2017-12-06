@@ -156,7 +156,7 @@ def delete(args):
         for name in names:
             result = k.delete(name, snapshots=snapshots)
             if result['result'] == 'success':
-                common.pprint("vm %s deleted" % name, color='red')
+                common.pprint("vm %s deleted on %s" % (name, config.client), color='red')
                 codes.append(0)
                 common.lastvm(name, delete=True)
             else:

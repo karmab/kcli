@@ -117,8 +117,13 @@ class Kconfig:
         elif client is None:
             self.client = self.ini['default']['client']
         elif ',' in client:
-            self.client = client.split(',')[0]
-            extraclients = client.split(',')[1:]
+            defaultclient = self.ini['default']['client']
+            if defaultclient in client.split(','):
+                self.client = defaultclient
+                extraclients = [entry for entry in client.split(',') if entry != defaultclient]
+            else:
+                self.client = client.split(',')[0]
+                extraclients = client.split(',')[1:]
         else:
             self.client = client
         if self.client not in self.ini:
@@ -850,7 +855,15 @@ class Kconfig:
                 common.pprint("Deploying Vms...", color='green')
                 for name in vmentries:
                     profile = entries[name]
-                    if k.exists(name):
+                    host = profile.get('host')
+                    if host is None:
+                        z = k
+                    elif host in self.extraclients:
+                        z = self.extraclients[host]
+                    else:
+                        common.pprint("Host %s not found. Using Default one" % host, color='blue')
+                        z = k
+                    if z.exists(name):
                         common.pprint("VM %s skipped!" % name, color='blue')
                         continue
                     if 'profile' in profile and profile['profile'] in vmprofiles:
@@ -944,7 +957,7 @@ class Kconfig:
                             files.append({'path': '/root/.ssh/id_rsa', 'content': privatekey})
                         else:
                             files = [{'path': '/root/.ssh/id_rsa', 'content': privatekey}]
-                    result = k.create(name=name, plan=plan, profile=profilename, cpumodel=cpumodel, cpuflags=cpuflags, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns), reservehost=bool(reservehost), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=nested, tunnel=tunnel, files=files, enableroot=enableroot)
+                    result = z.create(name=name, plan=plan, profile=profilename, cpumodel=cpumodel, cpuflags=cpuflags, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns), reservehost=bool(reservehost), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=nested, tunnel=tunnel, files=files, enableroot=enableroot)
                     common.handle_response(result, name)
                     if result['result'] == 'success':
                         newvms.append(name)
@@ -961,7 +974,7 @@ class Kconfig:
                                 verbose = element['verbose']
                             else:
                                 verbose = False
-                            ansibleutils.play(k, name, playbook=playbook, variables=variables, verbose=verbose)
+                            ansibleutils.play(z, name, playbook=playbook, variables=variables, verbose=verbose)
                     if delay > 0:
                         sleep(delay)
             if diskentries:
