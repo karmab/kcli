@@ -4,7 +4,7 @@
 Kvirt config class
 """
 
-from jinja2 import Template
+from jinja2 import Environment, FileSystemLoader
 from kvirt.defaults import NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, RESERVEHOST, START, NESTED, TUNNEL, REPORTURL, REPORTDIR, REPORT, REPORTALL, INSECURE, TEMPLATES, TEMPLATESCOMMANDS, KEYS, CMDS, DNS, DOMAIN, SCRIPTS, FILES, ISO, NETMASKS, GATEWAY, SHAREDKEY, TEMPLATE, ENABLEROOT, PLANVIEW, PRIVATEKEY
 from kvirt import ansibleutils
 from kvirt import dockerutils
@@ -333,7 +333,8 @@ class Kconfig:
                     common.pprint("Script %s not found.Ignoring..." % script, color='red')
                     os._exit(1)
                 else:
-                    scriptlines = [Template(line.strip()).render() for line in open(script).readlines() if line != '\n']
+                    # scriptlines = [Template(line.strip()).render() for line in open(script).readlines() if line != '\n']
+                    scriptlines = [Environment(variable_start_string='[[', variable_end_string=']]').from_string(line.strip()).render(overrides) for line in open(script).readlines() if line != '\n']
                     if scriptlines:
                         scriptcmds.extend(scriptlines)
         cmds = cmds + scriptcmds
@@ -804,11 +805,23 @@ class Kconfig:
             common.pprint("using default input file kcli_plan.yml", color='green')
         inputfile = os.path.expanduser(inputfile)
         basedir = os.path.dirname(inputfile)
+        env = Environment(variable_start_string='[[', variable_end_string=']]', loader=FileSystemLoader(basedir))
+        template = env.get_template(inputfile)
         if not os.path.exists(inputfile):
             common.pprint("No input file found nor default kcli_plan.yml.Leaving....", color='red')
             os._exit(1)
         with open(inputfile, 'r') as entries:
+            initialentries = template.render()
+            initialentries = yaml.load(initialentries)
+            parameters = initialentries.get('parameters')
+            if parameters is not None:
+                for parameter in parameters:
+                    if parameter not in overrides:
+                        overrides[parameter] = parameters[parameter]
+            entries = template.render(overrides)
             entries = yaml.load(entries)
+            if parameters is not None:
+                del entries['parameters']
             vmentries = [entry for entry in entries if 'type' not in entries[entry] or entries[entry]['type'] == 'vm']
             diskentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'disk']
             networkentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'network']
@@ -1075,7 +1088,8 @@ class Kconfig:
                                 common.pprint("Script %s not found. Ignoring this vm..." % script, color='red')
                                 missingscript = True
                             else:
-                                scriptlines = [Template(line.strip()).render() for line in open(script).readlines() if line != '\n']
+                                # scriptlines = [Template(line.strip()).render() for line in open(script).readlines() if line != '\n']
+                                scriptlines = [Environment(variable_start_string='[[', variable_end_string=']]').from_string(line.strip()).render(overrides) for line in open(script).readlines() if line != '\n']
                                 if scriptlines:
                                     scriptcmds.extend(scriptlines)
                         if scriptcmds:
