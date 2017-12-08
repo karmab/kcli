@@ -671,6 +671,34 @@ centos:
   - echo [[ password | default('unix1234') ]] | passwd --stdin root
 ```
 
+You can make the previous example cleaner by using the special key parameters in your plans and define there variables
+
+```
+parameters:
+ password: unix1234
+ x: coucou
+ y: toi
+centos:
+ template: CentOS-7-x86_64-GenericCloud.qcow2
+ cmds:
+  - echo x=[[ x ]] y=[[ y ]] >> /tmp/cocorico.txt
+  - echo [[ password  ]] | passwd --stdin root
+```
+
+Finally note that you can also use advanced jinja constructs like conditionals and so on. For instance:
+
+```
+parameters:
+  net1: default
+vm4:
+  template: CentOS-7-x86_64-GenericCloud.qcow2
+  nets:
+    - [[ net1 ]]
+{% if net2 is defined %}
+    - [[ net2 ]]
+{% endif %}
+```
+
 ## TODO
 
 - ability to share profiles
