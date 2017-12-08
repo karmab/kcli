@@ -334,7 +334,7 @@ class Kconfig:
                     os._exit(1)
                 else:
                     # scriptlines = [Template(line.strip()).render() for line in open(script).readlines() if line != '\n']
-                    scriptlines = [Environment(variable_start_string='[[', variable_end_string=']]').from_string(line.strip()).render(overrides) for line in open(script).readlines() if line != '\n']
+                    scriptlines = [Environment(block_start_string='[%', block_end_string='%]', variable_start_string='[[', variable_end_string=']]').from_string(line.strip()).render(overrides) for line in open(script).readlines() if line != '\n']
                     if scriptlines:
                         scriptcmds.extend(scriptlines)
         cmds = cmds + scriptcmds
@@ -805,7 +805,7 @@ class Kconfig:
             common.pprint("using default input file kcli_plan.yml", color='green')
         inputfile = os.path.expanduser(inputfile)
         basedir = os.path.dirname(inputfile)
-        env = Environment(variable_start_string='[[', variable_end_string=']]', loader=FileSystemLoader(basedir))
+        env = Environment(block_start_string='[%', block_end_string='%]', variable_start_string='[[', variable_end_string=']]', loader=FileSystemLoader(basedir))
         template = env.get_template(inputfile)
         if not os.path.exists(inputfile):
             common.pprint("No input file found nor default kcli_plan.yml.Leaving....", color='red')
@@ -1089,7 +1089,7 @@ class Kconfig:
                                 missingscript = True
                             else:
                                 # scriptlines = [Template(line.strip()).render() for line in open(script).readlines() if line != '\n']
-                                scriptlines = [Environment(variable_start_string='[[', variable_end_string=']]').from_string(line.strip()).render(overrides) for line in open(script).readlines() if line != '\n']
+                                scriptlines = [Environment(block_start_string='[%', block_end_string='%]', variable_start_string='[[', variable_end_string=']]').from_string(line.strip()).render(overrides) for line in open(script).readlines() if line != '\n']
                                 if scriptlines:
                                     scriptcmds.extend(scriptlines)
                         if scriptcmds:

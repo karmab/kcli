@@ -4,6 +4,6 @@ vm4:
   template: CentOS-7-x86_64-GenericCloud.qcow2
   nets:
     - [[ net1 ]]
-{% if net2 is defined %}
+[% if net2 is defined %]
     - [[ net2 ]]
-{% endif %}
+[% endif %]
