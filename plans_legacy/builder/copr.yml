@@ -1,0 +1,17 @@
+copr:
+ template: Fedora-Cloud-Base-26-1.5.x86_64.qcow2
+ numcpus: 2
+ memory: 6144
+ nets:
+  - default
+ files:
+  - path: /root/copr
+    origin: ~/copr
+  - path: /root/package.spec
+    origin: ~/kcli.spec
+  - path: /root/copr.sh
+    origin: copr.sh
+  - path: /root/.packagecloud
+    origin: ~/packagecloud
+ cmds:
+  - sh /root/copr.sh

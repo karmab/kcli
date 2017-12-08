@@ -1,0 +1,4 @@
+dn: ou=users,dc=karmalabs,dc=com
+ou: users
+objectClass: top
+objectclass: organizationalunit

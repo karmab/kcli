@@ -1,0 +1,66 @@
+rhvengine:
+ template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+ memory: 8192
+ numcpus: 2
+ nets:
+  - default
+ disks:
+  - size: 60
+ pool: default
+ domain: default
+ reservedns: true
+ scripts: 
+  - ~/register.sh
+  - nfs.sh
+  - advanced/subscription_engine.sh
+  - advanced/engine.sh
+  - advanced/provision.sh
+
+rhvnode01:
+ template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+ memory: 8192
+ cpumodel: host-model
+ cpuflags:
+  - name: arat
+    enable: false
+  - name: clflushopt
+    enable: false
+ numcpus: 2
+ nets:
+  - default
+ disks:
+  - size: 60
+ pool: default
+ domain: default
+ reservedns: true
+ scripts: 
+  - ~/register.sh
+  - advanced/subscription_node.sh
+  - advanced/node.sh
+
+rhvnode02:
+ template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+ memory: 8192
+ cpumodel: host-model
+ cpuflags:
+  - name: arat
+    enable: false
+  - name: clflushopt
+    enable: false
+ numcpus: 2
+ nets:
+  - default
+ disks:
+  - size: 60
+ pool: default
+ domain: default
+ reservedns: true
+ scripts: 
+  - ~/register.sh
+  - advanced/subscription_node.sh
+  - advanced/node.sh
+ files:
+  - path: /root/answers.txt
+    origin: answers.txt
+  - path: /root/.ovirtshellrc
+    origin: ovirtshellrc

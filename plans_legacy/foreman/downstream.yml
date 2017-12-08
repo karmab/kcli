@@ -1,0 +1,16 @@
+satellite:
+ template: rhel-guest-image-7.3-35.x86_64.qcow2
+ memory: 8192
+ numcpus: 2
+ reservedns: true
+ domain: default
+ nets: 
+  - default
+ disks:
+  - size: 40
+ pool: default
+ scripts: 
+  - ~/register.sh
+  - subscription.sh
+  - downstream.sh
+  - hammer.sh

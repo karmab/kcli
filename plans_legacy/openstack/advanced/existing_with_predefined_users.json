@@ -1,0 +1,32 @@
+{
+    "type": "ExistingCloud",
+    "creds": {
+        "openstack": {
+            "auth_url": "$OS_AUTH_URL",
+            "region_name": "RegionOne",
+            "endpoint_type": "public",
+            "admin": {
+                "username": "testk",
+                "password": "testk",
+                "tenant_name": "testk"
+            },
+            "users": [
+                {
+                    "username": "test1",
+                    "password": "unix1234",
+                    "tenant_name": "rally_project"
+                },
+                {
+                    "username": "test3",
+                    "password": "unix1234",
+                    "tenant_name": "rally_project"
+                },
+                {
+                    "username": "test2",
+                    "password": "unix1234",
+                    "tenant_name": "rally_project"
+                }
+            ]
+        }
+    }
+}

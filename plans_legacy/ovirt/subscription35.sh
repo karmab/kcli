@@ -1,0 +1,1 @@
+subscription-manager repos --enable=rhel-6-server-rpms --enable=rhel-6-server-supplementary-rpms --enable=rhel-6-server-rhevm-3.5-rpms --enable=jb-eap-6-for-rhel-6-server-rpms --enable=rhel-6-server-rhev-mgmt-agent-rpms

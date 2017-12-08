@@ -1,0 +1,9 @@
+f5:
+ template: BIGIP-13.0.0.0.0.1645.qcow2
+ memory: 8144
+ disks:
+  - size: 40
+  - size: 1
+    template: BIGIP-13.0.0.0.0.1645.DATASTOR.LTM.qcow2
+ nets:
+  - default

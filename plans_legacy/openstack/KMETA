@@ -1,0 +1,95 @@
+- name: pike
+  group: openstack
+  url: github.com/karmab/kcli/plans/openstack
+  file: upstream.yml
+  description: Upstream pike based on packstack
+  numvms: 1
+  password: unix1234
+  template: CentOS-7-x86_64-GenericCloud.qcow2
+
+- name: ocata
+  group: openstack
+  url: github.com/karmab/kcli/plans/openstack
+  file: ocata.yml
+  description: Downstream ocata based on packstack
+  numvms: 1
+  password: unix1234
+  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  
+- name: newton
+  group: openstack
+  url: github.com/karmab/kcli/plans/openstack
+  file: newton.yml
+  description: Downstream newton based on packstack
+  numvms: 1
+  password: unix1234
+  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  
+- name: mitaka
+  group: openstack
+  url: github.com/karmab/kcli/plans/openstack
+  file: mitaka.yml
+  description: Downstream mitaka based on packstack
+  numvms: 1
+  password: unix1234
+  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  
+- name: liberty
+  group: openstack
+  url: github.com/karmab/kcli/plans/openstack
+  file: liberty.yml
+  description: Downstream liberty based on packstack
+  numvms: 1
+  password: unix1234
+  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  
+- name: kilo
+  group: openstack
+  url: github.com/karmab/kcli/plans/openstack
+  file: kilo.yml
+  description: Downstream kilo based on packstack
+  numvms: 1
+  password: unix1234
+  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  
+- name: advanced
+  group: openstack
+  url: github.com/karmab/kcli/plans/openstack
+  file: advanced.yml
+  description: Downstream newton based on packstack with one controller and three compute
+  numvms: 4
+  password: unix1234
+  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  
+- name: advanced_live
+  group: openstack
+  url: github.com/karmab/kcli/plans/openstack
+  file: advanced_live.yml
+  description: Downstream newton based on packstack with one controller and three compute and with Live Migration Based on NFS
+  numvms: 4
+  password: unix1234
+  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+
+- name: tripleo
+  group: openstack
+  url: github.com/karmab/kcli/plans/openstack/tripleo
+  file: tripleo.yml
+  description: Downstream newton based on tripleo (1undercloud+1controllers+1compute)
+  numvms: 3
+  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+
+- name: advancedtripleo
+  group: openstack
+  url: github.com/karmab/kcli/plans/openstack/tripleo
+  file: advanced.yml
+  description: Downstream newton based on tripleo (1undercloud+3controllers+1compute)
+  numvms: 5
+  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+
+- name: advancedtripleoceph
+  group: openstack
+  url: github.com/karmab/kcli/plans/openstack/tripleo
+  file: advancedceph.yml
+  description: Downstream newton based on tripleo (1undercloud+3controllers+1compute+3ceph)
+  numvms: 8
+  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2

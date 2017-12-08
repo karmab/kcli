@@ -1,0 +1,17 @@
+- name: freeipa
+  group: ipa
+  url: github.com/karmab/kcli/plans/ipa
+  file: upstream.yml
+  description: Upstream Ipa 1.12
+  numvms: 1
+  password: unix1234
+  template: CentOS-7-x86_64-GenericCloud.qcow2
+
+- name: ipa
+  group: ipa
+  url: github.com/karmab/kcli/plans/ipa
+  file: downstream.yml
+  description: Upstream Ipa 1.12
+  numvms: 1
+  password: unix1234
+  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2

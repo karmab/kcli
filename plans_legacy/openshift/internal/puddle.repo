@@ -1,0 +1,6 @@
+[ose]
+name=AtomicOpenShift-3.7-Puddle
+baseurl=http://download.lab.bos.redhat.com/rcm-guest/puddles/RHAOS/AtomicOpenShift/3.7/latest/x86_64/os
+#baseurl=http://download.lab.bos.redhat.com/rcm-guest/puddles/RHAOS/AtomicOpenShift/3.7/building/x86_64/os
+gpgcheck=0
+enabled=1

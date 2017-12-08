@@ -1,0 +1,20 @@
+cloudforms:
+ template: cfme-rhos-5.7.1.3-1.x86_64.qcow2
+ memory: 6144
+ numcpus: 2
+ nets:
+  - default
+ disks:
+  - size: 50
+ pool: default
+ scripts: 
+  - downstream.sh
+ files:
+  - path: /root/password.rb
+    origin: password.rb
+  - path: /root/openstack.py
+    origin: openstack.py
+  - path: /root/rhev.py
+    origin: rhev.py
+  - path: /root/openshift.py
+    origin: rhev.py

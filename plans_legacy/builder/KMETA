@@ -1,0 +1,7 @@
+- name: copr
+  group: builder
+  url: github.com/karmab/kcli/plans/builder
+  file: copr.yml
+  description: Build kcli rpm ( Only usefull for me)
+  numvms: 1
+  template: Fedora-Cloud-Base-26-1.5.x86_64.qcow2

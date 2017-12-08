@@ -1,0 +1,61 @@
+kumaster:
+ template: CentOS-7-x86_64-GenericCloud.qcow2
+ numcpus: 2
+ memory: 4096
+ reservedns: true
+ sharedkey: true
+ domain: karmalabs.com
+ nets:
+  - default
+ disks:
+  - size: 50
+ pool: default
+ files:
+  - path: /etc/yum.repos.d/kubernetes.repo
+    origin: kubernetes.repo
+  - path: /root/kube-flannel.yml
+    origin: kube-flannel.yml
+  - path: /root/kube-flannel-rbac.yml
+    origin: kube-flannel-rbac.yml
+ scripts: 
+  - pre.sh
+  - master.sh
+  - app.sh
+  - heapster.sh
+  - dashboard.sh
+
+kunode01:
+ template: CentOS-7-x86_64-GenericCloud.qcow2
+ numcpus: 2
+ memory: 4096
+ reservedns: true
+ sharedkey: true
+ domain: karmalabs.com
+ nets:
+  - default
+ disks:
+  - size: 50
+ pool: default
+ files:
+  - path: /etc/yum.repos.d/kubernetes.repo
+    origin: kubernetes.repo
+ scripts: 
+  - pre.sh
+
+kunode02:
+ template: CentOS-7-x86_64-GenericCloud.qcow2
+ numcpus: 2
+ memory: 4096
+ reservedns: true
+ sharedkey: true
+ domain: karmalabs.com
+ nets:
+  - default
+ disks:
+  - size: 50
+ pool: default
+ files:
+  - path: /etc/yum.repos.d/kubernetes.repo
+    origin: kubernetes.repo
+ scripts: 
+  - pre.sh

@@ -1,0 +1,8 @@
+- name: tower
+  group: tower
+  url: github.com/karmab/kcli/plans/tower
+  file: downstream.yml
+  description:  Downstream tower 3.0.3
+  numvms: 1
+  password: unix1234
+  template: rhel-guest-image-7.3-35.x86_64.qcow2

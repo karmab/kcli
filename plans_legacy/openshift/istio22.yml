@@ -1,0 +1,15 @@
+istio22:
+ template: CentOS-7-x86_64-GenericCloud.qcow2
+ numcpus: 2
+ memory: 6144
+ nets:
+  - default
+ disks:
+  - size: 10
+  - size: 60
+ pool: default
+ scripts: 
+  - requirements.sh
+  - upstream.sh
+  - istio22.sh
+  - istio.sh

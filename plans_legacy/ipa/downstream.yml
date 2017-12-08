@@ -1,0 +1,12 @@
+ipa:
+ template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+ memory: 8192
+ numcpus: 2
+ nets:
+  - default
+ disks:
+  - size: 40
+ pool: default
+ reservedns: true
+ scripts: 
+  - install.sh
