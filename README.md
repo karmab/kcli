@@ -644,6 +644,7 @@ While the tool should pretty much work the same on this hypervisor, there are so
 - *files* (optional)- Array of files to inject to the vm. For ecach of the them , you can specify path, owner ( root by default) , permissions (600 by default ) and either origin or content to gather content data directly or from specified origin
 - *insecure* (optional) Handles all the ssh option details so you dont get any warnings about man in the middle
 - *host* (optional) Allows you to create the vm on a specific host, provided you used kcli -C host1,host2,... and specify the wanted hypervisor ( or use kcli -C all ). Note that this field is not used for other types like network, so expect to use this in relatively simple plans only
+- *base* (optional) Allows you to point to a parent profile so that values are taken from parent when not found in the current profile. Note that scripts and commands are rather concatenated between default, father and children ( so you have a happy family...)
 
 ## Overriding parameters
 
