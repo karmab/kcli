@@ -233,6 +233,7 @@ def list(args):
     filters = args.filters
     short = args.short
     group = args.group
+    repo = args.repo
     global config
     if config.client != 'all':
         k = config.k
@@ -375,7 +376,7 @@ def list(args):
     elif products:
         products = PrettyTable(["Repo", "Group", "Product", "Description", "Numvms", "Memory"])
         products.align["Repo"] = "l"
-        productsinfo = config.list_products(group=group)
+        productsinfo = config.list_products(group=group, repo=repo)
         for product in sorted(productsinfo, key=lambda x: (x['repo'], x['group'], x['name'])):
             name = product['name']
             repo = product['repo']
@@ -1011,6 +1012,7 @@ def cli():
     list_parser.add_argument('--repos', action='store_true')
     list_parser.add_argument('--products', action='store_true')
     list_parser.add_argument('-g', '--group', help='Only Display products of the indicated group', metavar='GROUP')
+    list_parser.add_argument('-r', '--repo', help='Only Display products of the indicated repository', metavar='REPO')
     list_parser.add_argument('-f', '--filters', choices=('up', 'down'))
     list_parser.set_defaults(func=list)
 

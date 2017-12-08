@@ -424,15 +424,15 @@ class Kconfig:
                     sys.exit(1)
         return repos
 
-    def list_products(self, group=None):
+    def list_products(self, group=None, repo=None):
         configdir = "%s/.kcli" % os.environ.get('HOME')
         if not os.path.exists(configdir):
             return []
         else:
             products = []
             repodirs = [d.replace('repo_', '') for d in os.listdir(configdir) if os.path.isdir("%s/%s" % (configdir, d)) and d.startswith('repo_')]
-            for repo in repodirs:
-                repometa = "%s/repo_%s/KMETA" % (configdir, repo)
+            for rep in repodirs:
+                repometa = "%s/repo_%s/KMETA" % (configdir, rep)
                 if not os.path.exists(repometa):
                     continue
                 else:
@@ -440,7 +440,7 @@ class Kconfig:
                         try:
                             repoproducts = yaml.load(entries)
                             for repoproduct in repoproducts:
-                                repoproduct['repo'] = repo
+                                repoproduct['repo'] = rep
                                 if 'group' not in repoproduct:
                                     repoproduct['group'] = 'notavailable'
                                 if 'file' not in repoproduct:
@@ -449,6 +449,8 @@ class Kconfig:
                         except yaml.scanner.ScannerError:
                             common.pprint("Couldn't properly parse .kcli/repo. Leaving...", color='red')
                             continue
+            if repo is not None:
+                products = [product for product in products if 'repo' in product and product['repo'] == repo]
             if group is not None:
                 products = [product for product in products if 'group' in product and product['group'] == group]
             return products
