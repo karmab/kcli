@@ -225,39 +225,106 @@ class Kconfig:
             vmprofiles[profile] = {'template': profile}
         profilename = profile
         profile = vmprofiles[profile]
-        template = profile.get('template', self.template)
+        if 'base' in profile:
+            father = vmprofiles[profile['base']]
+            default_numcpus = father.get('numcpus', self.numcpus)
+            default_memory = father.get('memory', self.memory)
+            default_pool = father.get('pool', self.pool)
+            default_disks = father.get('disks', self.disks)
+            default_nets = father.get('nets', self.nets)
+            default_template = father.get('template', self.template)
+            default_cloudinit = father.get('cloudinit', self.cloudinit)
+            default_nested = father.get('nested', self.nested)
+            default_reservedns = father.get('reservedns', self.reservedns)
+            default_reservehost = father.get('reservehost', self.reservehost)
+            default_cpumodel = father.get('cpumodel', self.cpumodel)
+            default_cpuflags = father.get('cpuflags', self.cpuflags)
+            default_disksize = father.get('disksize', self.disksize)
+            default_diskinterface = father.get('diskinterface', self.diskinterface)
+            default_diskthin = father.get('diskthin', self.diskthin)
+            default_guestid = father.get('guestid', self.guestid)
+            default_iso = father.get('iso', self.iso)
+            default_vnc = father.get('vnc', self.vnc)
+            default_reserveip = father.get('reserveip', self.reserveip)
+            default_start = father.get('start', self.start)
+            default_report = father.get('report', self.report)
+            default_reportall = father.get('reportall', self.reportall)
+            default_keys = father.get('keys', self.keys)
+            default_netmasks = father.get('netmasks', self.netmasks)
+            default_gateway = father.get('gateway', self.gateway)
+            default_dns = father.get('dns', self.dns)
+            default_domain = father.get('domain', self.domain)
+            default_files = father.get('files', self.files)
+            default_enableroot = father.get('enableroot', self.enableroot)
+            default_privatekey = father.get('privatekey', self.privatekey)
+            default_cmds = common.remove_duplicates(self.cmds + father.get('cmds', []))
+            default_scripts = common.remove_duplicates(self.scripts + father.get('scripts', []))
+        else:
+            default_numcpus = self.numcpus
+            default_memory = self.memory
+            default_pool = self.pool
+            default_disks = self.disks
+            default_nets = self.nets
+            default_template = self.template
+            default_cloudinit = self.cloudinit
+            default_nested = self.nested
+            default_reservedns = self.reservedns
+            default_reservehost = self.reservehost
+            default_cpumodel = self.cpumodel
+            default_cpuflags = self.cpuflags
+            default_disksize = self.disksize
+            default_diskinterface = self.diskinterface
+            default_diskthin = self.diskthin
+            default_guestid = self.guestid
+            default_iso = self.iso
+            default_vnc = self.vnc
+            default_reserveip = self.reserveip
+            default_start = self.start
+            default_report = self.report
+            default_reportall = self.reportall
+            default_keys = self.keys
+            default_netmasks = self.netmasks
+            default_gateway = self.gateway
+            default_dns = self.dns
+            default_domain = self.domain
+            default_files = self.files
+            default_enableroot = self.enableroot
+            default_privatekey = self.privatekey
+            default_cmds = self.cmds
+            default_scripts = self.scripts
+        template = profile.get('template', default_template)
         plan = 'kvirt'
-        nets = profile.get('nets', self.nets)
-        cpumodel = profile.get('cpumodel', self.cpumodel)
-        cpuflags = profile.get('cpuflags', self.cpuflags)
-        numcpus = profile.get('numcpus', self.numcpus)
-        memory = profile.get('memory', self.memory)
-        pool = profile.get('pool', self.pool)
-        disks = profile.get('disks', self.disks)
-        disksize = profile.get('disksize', self.disksize)
-        diskinterface = profile.get('diskinterface', self.diskinterface)
-        diskthin = profile.get('diskthin', self.diskthin)
-        guestid = profile.get('guestid', self.guestid)
-        iso = profile.get('iso', self.iso)
-        vnc = profile.get('vnc', self.vnc)
-        cloudinit = profile.get('cloudinit', self.cloudinit)
-        reserveip = profile.get('reserveip', self.reserveip)
-        reservedns = profile.get('reservedns', self.reservedns)
-        reservehost = profile.get('reservehost', self.reservehost)
-        nested = profile.get('nested', self.nested)
-        start = profile.get('start', self.start)
-        report = profile.get('report', self.report)
-        reportall = profile.get('reportall', self.reportall)
-        keys = profile.get('keys', self.keys)
-        cmds = common.remove_duplicates(self.cmds + profile.get('cmds', []))
-        netmasks = profile.get('netmasks', self.netmasks)
-        gateway = profile.get('gateway', self.gateway)
-        dns = profile.get('dns', self.dns)
-        domain = profile.get('domain', self.domain)
-        scripts = common.remove_duplicates(self.scripts + profile.get('scripts', []))
-        files = profile.get('files', self.files)
-        enableroot = profile.get('enableroot', self.enableroot)
-        privatekey = profile.get('privatekey', self.privatekey)
+        nets = profile.get('nets', default_nets)
+        cpumodel = profile.get('cpumodel', default_cpumodel)
+        cpuflags = profile.get('cpuflags', default_cpuflags)
+        numcpus = profile.get('numcpus', default_numcpus)
+        memory = profile.get('memory', default_memory)
+        pool = profile.get('pool', default_pool)
+        disks = profile.get('disks', default_disks)
+        disksize = profile.get('disksize', default_disksize)
+        diskinterface = profile.get('diskinterface', default_diskinterface)
+        diskthin = profile.get('diskthin', default_diskthin)
+        guestid = profile.get('guestid', default_guestid)
+        iso = profile.get('iso', default_iso)
+        vnc = profile.get('vnc', default_vnc)
+        cloudinit = profile.get('cloudinit', default_cloudinit)
+        reserveip = profile.get('reserveip', default_reserveip)
+        reservedns = profile.get('reservedns', default_reservedns)
+        reservehost = profile.get('reservehost', default_reservehost)
+        nested = profile.get('nested', default_nested)
+        start = profile.get('start', default_start)
+        report = profile.get('report', default_report)
+        reportall = profile.get('reportall', default_reportall)
+        keys = profile.get('keys', default_keys)
+        cmds = common.remove_duplicates(default_cmds + profile.get('cmds', []))
+        netmasks = profile.get('netmasks', default_netmasks)
+        gateway = profile.get('gateway', default_gateway)
+        dns = profile.get('dns', default_dns)
+        domain = profile.get('domain', default_domain)
+        scripts = common.remove_duplicates(default_scripts + profile.get('scripts', []))
+        files = profile.get('files', default_files)
+        enableroot = profile.get('enableroot', default_enableroot)
+        privatekey = profile.get('privatekey', default_privatekey)
         scriptcmds = []
         if scripts:
             for script in scripts:
@@ -359,16 +426,39 @@ class Kconfig:
         default_disksize = '10'
         default = self.default
         results = []
-        for profile in sorted(self.profiles):
+        for profile in [p for p in self.profiles if 'base' not in self.profiles[p]] + [p for p in self.profiles if 'base' in self.profiles[p]]:
                 info = self.profiles[profile]
+                if 'base' in info:
+                    father = self.profiles[info['base']]
+                    default_numcpus = father.get('numcpus', default['numcpus'])
+                    default_memory = father.get('memory', default['memory'])
+                    default_pool = father.get('pool', default['pool'])
+                    default_disks = father.get('disks', default['disks'])
+                    default_nets = father.get('nets', default['nets'])
+                    default_template = father.get('template', '')
+                    default_cloudinit = father.get('cloudinit', default['cloudinit'])
+                    default_nested = father.get('nested', default['nested'])
+                    default_reservedns = father.get('reservedns', default['reservedns'])
+                    default_reservehost = father.get('reservehost', default['reservehost'])
+                else:
+                    default_numcpus = default['numcpus']
+                    default_memory = default['memory']
+                    default_pool = default['pool']
+                    default_disks = default['disks']
+                    default_nets = default['nets']
+                    default_template = ''
+                    default_cloudinit = default['cloudinit']
+                    default_nested = default['nested']
+                    default_reservedns = default['reservedns']
+                    default_reservehost = default['reservehost']
                 profiletype = info.get('type', '')
                 if profiletype == 'container':
                     continue
-                numcpus = info.get('numcpus', default['pool'])
-                memory = info.get('memory', default['memory'])
-                pool = info.get('pool', default['pool'])
+                numcpus = info.get('numcpus', default_numcpus)
+                memory = info.get('memory', default_memory)
+                pool = info.get('pool', default_pool)
                 diskinfo = []
-                disks = info.get('disks', default['disks'])
+                disks = info.get('disks', default_disks)
                 for disk in disks:
                     if disk is None:
                         size = default_disksize
@@ -379,7 +469,7 @@ class Kconfig:
                     diskinfo.append(size)
                 diskinfo = ','.join(diskinfo)
                 netinfo = []
-                nets = info.get('nets', default['nets'])
+                nets = info.get('nets', default_nets)
                 for net in nets:
                     if isinstance(net, str):
                         netname = net
@@ -387,13 +477,13 @@ class Kconfig:
                         netname = net['name']
                     netinfo.append(netname)
                 netinfo = ','.join(netinfo)
-                template = info.get('template', '')
-                cloudinit = info.get('cloudinit', default['cloudinit'])
-                nested = info.get('nested', default['nested'])
-                reservedns = info.get('reservedns', default['reservedns'])
-                reservehost = info.get('reservehost', default['reservehost'])
+                template = info.get('template', default_template)
+                cloudinit = info.get('cloudinit', default_cloudinit)
+                nested = info.get('nested', default_nested)
+                reservedns = info.get('reservedns', default_reservedns)
+                reservehost = info.get('reservehost', default_reservehost)
                 results.append([profile, numcpus, memory, pool, diskinfo, template, netinfo, cloudinit, nested, reservedns, reservehost])
-        return results
+        return sorted(results, key=lambda x: x[0])
 
     def list_containerprofiles(self):
         results = []
