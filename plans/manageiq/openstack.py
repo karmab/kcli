@@ -4,10 +4,10 @@ import json
 import requests
 
 user = "admin"
-password = "unix1234"
+password = "[[ password ]]"
 openstackuser = "admin"
-openstackpassword = "unix1234"
-openstackhost = "openstack.default"
+openstackpassword = "[[ openstack_password ]]"
+openstackhost = "[[ openstack_host ]]"
 headers = {'content-type': 'application/json', 'Accept': 'application/json'}
 postdata = {
     "type": "ManageIQ::Providers::Openstack::CloudManager",

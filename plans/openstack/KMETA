@@ -4,8 +4,12 @@
   file: upstream.yml
   description: Upstream pike based on packstack
   numvms: 1
-  password: unix1234
   template: CentOS-7-x86_64-GenericCloud.qcow2
+  parameters:
+   user: testk
+   password: testk
+   project: testk
+   admin_password: unix1234
 
 - name: ocata
   group: openstack
@@ -13,8 +17,12 @@
   file: ocata.yml
   description: Downstream ocata based on packstack
   numvms: 1
-  password: unix1234
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  parameters:
+   user: testk
+   password: testk
+   project: testk
+   admin_password: unix1234
   
 - name: newton
   group: openstack
@@ -22,8 +30,12 @@
   file: newton.yml
   description: Downstream newton based on packstack
   numvms: 1
-  password: unix1234
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  parameters:
+   user: testk
+   password: testk
+   project: testk
+   admin_password: unix1234
   
 - name: mitaka
   group: openstack
@@ -31,8 +43,12 @@
   file: mitaka.yml
   description: Downstream mitaka based on packstack
   numvms: 1
-  password: unix1234
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  parameters:
+   user: testk
+   password: testk
+   project: testk
+   admin_password: unix1234
   
 - name: liberty
   group: openstack
@@ -40,8 +56,12 @@
   file: liberty.yml
   description: Downstream liberty based on packstack
   numvms: 1
-  password: unix1234
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  parameters:
+   user: testk
+   password: testk
+   project: testk
+   admin_password: unix1234
   
 - name: kilo
   group: openstack
@@ -49,8 +69,12 @@
   file: kilo.yml
   description: Downstream kilo based on packstack
   numvms: 1
-  password: unix1234
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  parameters:
+   user: testk
+   password: testk
+   project: testk
+   admin_password: unix1234
   
 - name: advanced
   group: openstack
@@ -58,8 +82,12 @@
   file: advanced.yml
   description: Downstream newton based on packstack with one controller and three compute
   numvms: 4
-  password: unix1234
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  parameters:
+   user: testk
+   password: testk
+   project: testk
+   admin_password: unix1234
   
 - name: advanced_live
   group: openstack
@@ -67,8 +95,12 @@
   file: advanced_live.yml
   description: Downstream newton based on packstack with one controller and three compute and with Live Migration Based on NFS
   numvms: 4
-  password: unix1234
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  parameters:
+   user: testk
+   password: testk
+   project: testk
+   admin_password: unix1234
 
 - name: tripleo
   group: openstack
@@ -77,6 +109,8 @@
   description: Downstream newton based on tripleo (1undercloud+1controllers+1compute)
   numvms: 3
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  parameters:
+   admin_password: unix1234
 
 - name: advancedtripleo
   group: openstack
@@ -85,6 +119,8 @@
   description: Downstream newton based on tripleo (1undercloud+3controllers+1compute)
   numvms: 5
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  parameters:
+   admin_password: unix1234
 
 - name: advancedtripleoceph
   group: openstack
@@ -93,3 +129,5 @@
   description: Downstream newton based on tripleo (1undercloud+3controllers+1compute+3ceph)
   numvms: 8
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  parameters:
+   admin_password: unix1234

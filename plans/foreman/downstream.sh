@@ -1,6 +1,6 @@
-export ORG="Karmalabs"
-export LOCATION="Madrid"
-export PASSWORD="unix1234"
+export ORG="[[ organization ]]"
+export LOCATION="[[ location ]]"
+export PASSWORD="[[ password ]]"
 echo `hostname -I` `hostname -s`.default `hostname -s` >> /etc/hosts
 echo `hostname -s`.default > /etc/hostname
 # yum -y update

@@ -648,8 +648,8 @@ class Kconfig:
                 print("template: %s" % template)
             if parameters is not None:
                 print("Available parameters:")
-                for parameter in parameters:
-                    print("%s: %s" % (parameter, parameters[parameter]))
+                for parameter in sorted(parameters):
+                    print(" %s: %s" % (parameter, parameters[parameter]))
 
     def create_product(self, name, repo=None, plan=None, keep=False, overrides={}):
         """Create product"""

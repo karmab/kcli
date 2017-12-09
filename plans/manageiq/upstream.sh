@@ -1,4 +1,4 @@
-echo unix1234 | passwd --stdin root
+echo [[ password ]] | passwd --stdin root
 hostnamectl set-hostname manageiq
 source /etc/profile.d/evm.sh
 systemctl start evmserverd.service

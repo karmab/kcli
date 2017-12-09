@@ -4,10 +4,10 @@ import json
 import requests
 
 user = "admin"
-password = "unix1234"
+password = "[[ password ]]"
 rhevuser = "admin@internal"
-rhevpassword = "unix1234"
-rhevhost = "rhvengine.default"
+rhevpassword = "[[ rhev_password ]]"
+rhevhost = "[[ rhev_host ]]"
 headers = {'content-type': 'application/json', 'Accept': 'application/json'}
 postdata = {
     "type": "ManageIQ::Providers::Redhat::InfraManager",

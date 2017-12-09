@@ -77,6 +77,8 @@
   description: Downstream Openshift 3.6 (1masters+2nodes)
   numvms: 3
   template: rhel-guest-image-7.3-35.x86_64.qcow2
+  parameters:
+   domain: karmalabs.local
 
 - name: origin_1master+2nodes
   group: openshift
@@ -85,6 +87,8 @@
   description: Upstream Openshift 3.6 (1masters+2nodes)
   numvms: 3
   template: CentOS-7-x86_64-GenericCloud.qcow2
+  parameters:
+   domain: karmalabs.local
 
 - name: multimaster
   group: openshift
@@ -93,6 +97,8 @@
   description: Downstream Openshift 3.6 (1lb+3masters+3nodes)
   numvms: 7
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  parameters:
+   domain: karmalabs.local
 
 - name: fission
   group: openshift

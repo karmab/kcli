@@ -1,3 +1,9 @@
+parameters:
+ user: testk
+ password: testk
+ project: testk
+ admin_password: unix1234
+
 pike:
  template: CentOS-7-x86_64-GenericCloud.qcow2
  memory: 8096

@@ -13,17 +13,17 @@
             "users": [
                 {
                     "username": "test1",
-                    "password": "unix1234",
+                    "password": "[[ password ]]",
                     "tenant_name": "rally_project"
                 },
                 {
                     "username": "test3",
-                    "password": "unix1234",
+                    "password": "[[ password ]]",
                     "tenant_name": "rally_project"
                 },
                 {
                     "username": "test2",
-                    "password": "unix1234",
+                    "password": "[[ password ]]",
                     "tenant_name": "rally_project"
                 }
             ]

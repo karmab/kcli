@@ -1,3 +1,6 @@
+parameters:
+ password: unix1234
+
 rhvnfs:
  template: CentOS-7-x86_64-GenericCloud.qcow2
  memory: 2048

@@ -1,4 +1,7 @@
-karmalabs.local:
+parameters:
+ domain: [[ domain ]]
+
+[[ domain ]]:
  type: network
  cidr: 172.25.250.0/24
  dhcp: True
@@ -10,10 +13,10 @@ master:
  reservedns: true
  reservehost: true
  sharedkey: true
- domain: karmalabs.local
- dns: karmalabs.local
+ domain: [[ domain ]]
+ dns: [[ domain ]]
  nets:
-  - karmalabs.local
+  - [[ domain ]]
  disks:
   - size: 10
   - size: 30
@@ -34,10 +37,10 @@ node01:
  memory: 4096
  reservedns: true
  sharedkey: true
- domain: karmalabs.local
- dns: karmalabs.local
+ domain: [[ domain ]]
+ dns: [[ domain ]]
  nets:
-  - karmalabs.local
+  - [[ domain ]]
  disks:
   - size: 10
   - size: 30
@@ -54,10 +57,10 @@ node02:
  memory: 4096
  reservedns: true
  sharedkey: true
- dns: karmalabs.local
- domain: karmalabs.local
+ dns: [[ domain ]]
+ domain: [[ domain ]]
  nets:
-  - karmalabs.local
+  - [[ domain ]]
  disks:
   - size: 10
   - size: 30

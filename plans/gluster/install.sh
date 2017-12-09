@@ -34,8 +34,8 @@ semanage fcontext -a -t glusterd_brick_t /bricks/brick-$(hostname -s)-1/brick
 semanage fcontext -a -t glusterd_brick_t /bricks/brick-$(hostname -s)-2/brick
 restorecon -Rv /bricks/brick-$(hostname -s)-1/brick
 restorecon -Rv /bricks/brick-$(hostname -s)-2/brick
-useradd -s /sbin/nologin testk
-(echo testk; echo testk) | smbpasswd -a -s testk
+useradd -s /sbin/nologin [[ user ]]
+(echo [[ user ]]; echo [[ password ]]) | smbpasswd -a -s [[ user ]]
 sed -i '/type mgmt/a option rpc-auth-allow-insecure on'  /etc/glusterfs/glusterd.vol
 systemctl restart glusterd.service
 sleep 5

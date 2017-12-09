@@ -1,3 +1,6 @@
+parameters:
+ password: unix1234
+
 rhev35:
  template: rhel-guest-image-6.6-20141222.0.x86_64.qcow2
  memory: 8192

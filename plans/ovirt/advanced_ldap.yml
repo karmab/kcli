@@ -1,3 +1,9 @@
+parameters:
+ password: unix1234
+ ldap_password: unix1234
+ ldap_domain: karmalabs.com 
+ ldap_organization: Karmalabs
+
 rhvengine:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
  memory: 8192
@@ -52,8 +58,8 @@ rhvldap:
  type: container
  image: nickstenning/slapd
  environment:
-  - LDAP_DOMAIN: karmalabs.com 
-  - LDAP_ORGANIZATION: Karmalabs
-  - LDAP_ROOTPASS: unix1234
+  - LDAP_DOMAIN: [[ ldap_domain ]]
+  - LDAP_ORGANIZATION: [[ ldap_organization ]]
+  - LDAP_ROOTPASS: [[ ldap_password ]]
  ports:
   - 389

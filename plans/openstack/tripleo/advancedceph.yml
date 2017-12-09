@@ -1,3 +1,6 @@
+parameters:
+ admin_password: unix1234
+
 tripleoprovisioning:
  type: network
  cidr: 10.0.0.0/24
@@ -26,7 +29,7 @@ undercloud:
     mask: 255.255.255.0
  pool: default
  cmds:
-  - echo unix1234 | passwd --stdin root
+  - echo [[ admin_password ]] | passwd --stdin root
   - echo undercloud.osp.poc > /etc/hostname
   - echo 192.168.101.10 undercloud.localdomain undercloud >> /etc/hosts
   - echo GATEWAY=192.168.101.1 >> /etc/sysconfig/network

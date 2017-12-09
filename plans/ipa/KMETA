@@ -4,8 +4,10 @@
   file: upstream.yml
   description: Upstream Ipa 1.12
   numvms: 1
-  password: unix1234
   template: CentOS-7-x86_64-GenericCloud.qcow2
+  parameters:
+   password: unix1234
+   domain: ux.local
 
 - name: ipa
   group: ipa
@@ -13,5 +15,7 @@
   file: downstream.yml
   description: Upstream Ipa 1.12
   numvms: 1
-  password: unix1234
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  parameters:
+   password: unix1234
+   domain: ux.local

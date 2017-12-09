@@ -1,3 +1,7 @@
+parameters:
+  password: unix1234
+  domain: ux.local
+
 ipa:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
  memory: 8192

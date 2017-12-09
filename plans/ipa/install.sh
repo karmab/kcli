@@ -1,6 +1,6 @@
-export PASSWORD="unix1234"
-export DOMAIN="ux.local"
-export REALM="UX.LOCAL"
+export PASSWORD="[[ password ]]"
+export DOMAIN="[[ domain ]]"
+export REALM="[[ domain | upper ]]"
 echo `hostname -I` `hostname -s`.$DOMAIN `hostname -s` >> /etc/hosts
 echo `hostname -s`.$DOMAIN > /etc/hostname
 yum -y install freeipa-server bind bind-dyndb-ldap ipa-server-dns epel-release

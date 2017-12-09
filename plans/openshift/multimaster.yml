@@ -1,4 +1,7 @@
-karmalabs.local:
+parameters:
+ domain: [[ domain ]]
+
+[[ domain ]]:
  type: network
  cidr: 192.168.105.0/24
  dhcp: True
@@ -8,10 +11,10 @@ lb:
  numcpus: 2
  memory: 1024
  reservedns: True
- domain: karmalabs.local
- dns: karmalabs.local
+ domain: [[ domain ]]
+ dns: [[ domain ]]
  nets:
-  - karmalabs.local
+  - [[ domain ]]
  disks:
   - size: 10
  pool: default
@@ -33,10 +36,10 @@ master01:
  memory: 8192
  reservedns: true
  sharedkey: true
- domain: karmalabs.local
- dns: karmalabs.local
+ domain: [[ domain ]]
+ dns: [[ domain ]]
  nets:
-  - karmalabs.local
+  - [[ domain ]]
  disks:
   - size: 10
   - size: 30
@@ -52,10 +55,10 @@ master02:
  memory: 8192
  reservedns: true
  sharedkey: true
- domain: karmalabs.local
- dns: karmalabs.local
+ domain: [[ domain ]]
+ dns: [[ domain ]]
  nets:
-  - karmalabs.local
+  - [[ domain ]]
  disks:
   - size: 10
   - size: 30
@@ -71,10 +74,10 @@ master03:
  memory: 8192
  reservedns: true
  sharedkey: true
- domain: karmalabs.local
- dns: karmalabs.local
+ domain: [[ domain ]]
+ dns: [[ domain ]]
  nets:
-  - karmalabs.local
+  - [[ domain ]]
  disks:
   - size: 10
   - size: 30
@@ -90,10 +93,10 @@ node01:
  memory: 4096
  reservedns: true
  sharedkey: true
- domain: karmalabs.local
- dns: karmalabs.local
+ domain: [[ domain ]]
+ dns: [[ domain ]]
  nets:
-  - karmalabs.local
+  - [[ domain ]]
  disks:
   - size: 10
   - size: 30
@@ -109,10 +112,10 @@ node02:
  memory: 4096
  reservedns: true
  sharedkey: true
- dns: karmalabs.local
- domain: karmalabs.local
+ dns: [[ domain ]]
+ domain: [[ domain ]]
  nets:
-  - karmalabs.local
+  - [[ domain ]]
  disks:
   - size: 10
   - size: 30

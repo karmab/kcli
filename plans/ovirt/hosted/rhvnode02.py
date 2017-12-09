@@ -3,11 +3,11 @@
 import requests
 
 user = "admin@internal"
-password = "unix1234"
+password = "[[ password ]]"
 engine = "rhvengine.default"
 headers = {'content-type': 'application/xml', 'Accept': 'application/xml'}
 hostname = "rhvnode02.default"
-hostpassword = "unix1234"
+hostpassword = "[[ password ]]"
 
 data = """<host>
   <name>%s</name>

@@ -1,3 +1,6 @@
+parameters:
+ password: unix1234
+
 manageiq-openstack-euwe-2.qc2:
  type: template
  url: http://releases.manageiq.org/manageiq-openstack-euwe-2.qc2

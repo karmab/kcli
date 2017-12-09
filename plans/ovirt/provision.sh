@@ -1,5 +1,5 @@
 export HYPERVISOR_IP=`hostname -I`
-export PASSWORD="unix1234"
+export PASSWORD="[[ password ]]"
 sed -i "s/username =.*/username = admin@internal/" /root/.ovirtshellrc
 sed -i "s/password =.*/password = $PASSWORD/" /root/.ovirtshellrc
 sed -i "s/insecure = False/insecure = True/" /root/.ovirtshellrc

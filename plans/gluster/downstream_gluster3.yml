@@ -1,3 +1,8 @@
+parameters:
+ user: testk
+ password: testk
+ volume: testkvol
+
 glustera:
  template: rhel-server-7.4-x86_64-kvm.qcow2
  memory: 8144

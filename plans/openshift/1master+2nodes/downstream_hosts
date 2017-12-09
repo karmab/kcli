@@ -24,8 +24,8 @@ openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 
 # or to one or all of the masters defined in the inventory if no load
 # balancer is present.
 openshift_master_cluster_method=native
-openshift_master_cluster_hostname=master.karmalabs.local
-openshift_master_cluster_public_hostname=master.karmalabs.local
+openshift_master_cluster_hostname=master.[[ domain ]]
+openshift_master_cluster_public_hostname=master.[[ domain ]]
 openshift_router_selector="region=master"
 openshift_registry_selector="region=master"
 os_sdn_network_plugin_name='redhat/openshift-ovs-multitenant'
@@ -41,19 +41,19 @@ openshift_node_kubelet_args={'pods-per-core': ['10'], 'max-pods': ['250'], 'imag
 openshift_clock_enabled=true
 
 openshift_hosted_metrics_deploy=false
-openshift_master_default_subdomain=apps.karmalabs.local
+openshift_master_default_subdomain=apps.[[ domain ]]
 
 # host group for masters
 [masters]
-master.karmalabs.local
+master.[[ domain ]]
 
 
 # host group for etcd
 [etcd]
-master.karmalabs.local
+master.[[ domain ]]
 
 # host group for nodes, includes region info
 [nodes]
-master.karmalabs.local openshift_node_labels="{'region': 'master', 'zone': 'default'}" openshift_schedulable=true
-node01.karmalabs.local openshift_node_labels="{'region': 'infra', 'zone': 'default'}"
-node02.karmalabs.local openshift_node_labels="{'region': 'primary', 'zone': 'east'}"
+master.[[ domain ]] openshift_node_labels="{'region': 'master', 'zone': 'default'}" openshift_schedulable=true
+node01.[[ domain ]] openshift_node_labels="{'region': 'infra', 'zone': 'default'}"
+node02.[[ domain ]] openshift_node_labels="{'region': 'primary', 'zone': 'east'}"
