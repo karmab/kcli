@@ -6,6 +6,9 @@
   numvms: 1
   memory: 6144
   template: CentOS-7-x86_64-GenericCloud.qcow2
+  parameters:
+   template: CentOS-7-x86_64-GenericCloud.qcow2
+   memory: 6144
 
 - name: origin37
   group: openshift
