@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-# from jinja2 import Template
 from jinja2 import Environment
 from distutils.spawn import find_executable
 import errno
@@ -179,7 +178,6 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                     if cmd.startswith('#'):
                         continue
                     else:
-                        # newcmd = Template(cmd).render(overrides)
                         newcmd = Environment(block_start_string='[%', block_end_string='%]', variable_start_string='[[', variable_end_string=']]').from_string(cmd).render(overrides)
                         userdata.write("- %s\n" % newcmd)
         if files:
@@ -197,7 +195,6 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                         print("Skipping file %s as not found" % origin)
                         continue
                     if overrides:
-                        # content = [Template(line).render(overrides) for line in open(origin, 'r').readlines()]
                         content = [Environment(block_start_string='[%', block_end_string='%]', variable_start_string='[[', variable_end_string=']]').from_string(line).render(overrides) for line in open(origin, 'r').readlines()]
                     else:
                         content = open(origin, 'r').readlines()
