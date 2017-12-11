@@ -2,7 +2,6 @@ sed -i '/OPTIONS=.*/c\OPTIONS="--selinux-enabled --insecure-registry 172.30.0.0/
 systemctl start docker --ignore-dependencies
 [% if 'Fedora' in template %]
 sleep 120
-rm -rf /usr/share/rhel/secrets
 [% endif %]
 export IP=`ip a l  eth0 | grep 'inet ' | cut -d' ' -f6 | awk -F'/' '{ print $1}'`
 oc cluster up --public-hostname $IP.xip.io --routing-suffix $IP.xip.io

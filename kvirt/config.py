@@ -333,8 +333,11 @@ class Kconfig:
                     common.pprint("Script %s not found.Ignoring..." % script, color='red')
                     os._exit(1)
                 else:
-                    # scriptlines = [Template(line.strip()).render() for line in open(script).readlines() if line != '\n']
-                    scriptlines = [Environment(block_start_string='[%', block_end_string='%]', variable_start_string='[[', variable_end_string=']]').from_string(line.strip()).render(overrides) for line in open(script).readlines() if line != '\n']
+                    basedir = os.path.dirname(script) if os.path.dirname(script) != '' else '.'
+                    env = Environment(block_start_string='[%', block_end_string='%]', variable_start_string='[[', variable_end_string=']]', loader=FileSystemLoader(basedir))
+                    templ = env.get_template(script)
+                    scriptentries = templ.render(overrides)
+                    scriptlines = [line.strip() for line in scriptentries.split('\n') if line.strip() != '']
                     if scriptlines:
                         scriptcmds.extend(scriptlines)
         cmds = cmds + scriptcmds
@@ -806,19 +809,19 @@ class Kconfig:
         inputfile = os.path.expanduser(inputfile)
         basedir = os.path.dirname(inputfile)
         env = Environment(block_start_string='[%', block_end_string='%]', variable_start_string='[[', variable_end_string=']]', loader=FileSystemLoader(basedir))
-        template = env.get_template(inputfile)
+        templ = env.get_template(inputfile)
         if not os.path.exists(inputfile):
             common.pprint("No input file found nor default kcli_plan.yml.Leaving....", color='red')
             os._exit(1)
         with open(inputfile, 'r') as entries:
-            initialentries = template.render()
+            initialentries = templ.render()
             initialentries = yaml.load(initialentries)
             parameters = initialentries.get('parameters')
             if parameters is not None:
                 for parameter in parameters:
                     if parameter not in overrides:
                         overrides[parameter] = parameters[parameter]
-            entries = template.render(overrides)
+            entries = templ.render(overrides)
             entries = yaml.load(entries)
             if parameters is not None:
                 del entries['parameters']
@@ -1094,8 +1097,11 @@ class Kconfig:
                                 common.pprint("Script %s not found. Ignoring this vm..." % script, color='red')
                                 missingscript = True
                             else:
-                                # scriptlines = [Template(line.strip()).render() for line in open(script).readlines() if line != '\n']
-                                scriptlines = [Environment(block_start_string='[%', block_end_string='%]', variable_start_string='[[', variable_end_string=']]').from_string(line.strip()).render(overrides) for line in open(script).readlines() if line != '\n']
+                                basedir = os.path.dirname(script) if os.path.dirname(script) != '' else '.'
+                                env = Environment(block_start_string='[%', block_end_string='%]', variable_start_string='[[', variable_end_string=']]', loader=FileSystemLoader(basedir))
+                                templ = env.get_template(script)
+                                scriptentries = templ.render(overrides)
+                                scriptlines = [line.strip() for line in scriptentries.split('\n') if line.strip() != '']
                                 if scriptlines:
                                     scriptcmds.extend(scriptlines)
                         if scriptcmds:
