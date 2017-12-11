@@ -649,9 +649,10 @@ class Kconfig:
             if group is not None:
                 print("group: %s" % group)
             if numvms is not None:
-                print("numvms: %s" % numvms)
-                if numvms == '1':
-                    print("Vm name can be overriden directly")
+                numvmsinfo = "numvms: %s" % numvms
+                if numvms == 1:
+                    numvmsinfo += " (Vm name can be overriden)"
+                print(numvmsinfo)
             if template is not None:
                 print("template: %s" % template)
             if parameters is not None:
