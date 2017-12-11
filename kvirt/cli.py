@@ -683,7 +683,7 @@ def product(args):
     product = args.product
     keep = args.keep
     plan = args.plan
-    overrides = args.param
+    overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
     info = args.info
     global config
     if info:
@@ -1072,6 +1072,7 @@ def cli():
     product_parser.add_argument('-k', '--keep', action='store_true', help='Keep generated directory after deployment')
     product_parser.add_argument('-p', '--plan', help='Plan to use as a name during deployment', metavar='PLAN')
     product_parser.add_argument('-P', '--param', action='append', help='Define parameter for rendering within scripts. Can be repeated several times', metavar='PARAM')
+    product_parser.add_argument('--paramfile', help='Input file', metavar='PARAMFILE')
     product_parser.add_argument('-r', '--repo', help='Repo to use, if deploying a product present in several repos', metavar='REPO')
     product_parser.add_argument('product', metavar='PRODUCT')
     product_parser.set_defaults(func=product)
