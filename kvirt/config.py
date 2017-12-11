@@ -964,7 +964,7 @@ class Kconfig:
                 for name in vmentries:
                     if len(vmentries) == 1 and 'name' in overrides:
                         newname = overrides['name']
-                        common.pprint("Using Override %s as name" % newname, color='blue')
+                        common.pprint("Override name: %s" % newname, color='blue')
                         profile = entries[name]
                         name = newname
                     else:
