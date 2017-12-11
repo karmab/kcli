@@ -959,7 +959,13 @@ class Kconfig:
                                     vmentries.append(newentry)
                 common.pprint("Deploying Vms...", color='green')
                 for name in vmentries:
-                    profile = entries[name]
+                    if len(vmentries) == 1 and 'name' in overrides:
+                        newname = overrides['name']
+                        common.pprint("Using Override %s as name" % newname, color='blue')
+                        profile = entries[name]
+                        name = newname
+                    else:
+                        profile = entries[name]
                     host = profile.get('host')
                     if host is None:
                         z = k
