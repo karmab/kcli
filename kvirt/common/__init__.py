@@ -202,7 +202,8 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                     continue
                 path = fil.get('path')
                 owner = fil.get('owner', 'root')
-                permissions = fil.get('permissions', '0600')
+                mode = fil.get('mode', '0600')
+                permissions = fil.get('permissions', mode)
                 userdata.write("- owner: %s:%s\n" % (owner, owner))
                 userdata.write("  path: %s\n" % path)
                 userdata.write("  permissions: '%s'\n" % (permissions))
