@@ -24,8 +24,8 @@ openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 
 # or to one or all of the masters defined in the inventory if no load
 # balancer is present.
 openshift_master_cluster_method=native
-openshift_master_cluster_hostname=allinone.karmalabs.local
-openshift_master_cluster_public_hostname=allinone.karmalabs.local
+openshift_master_cluster_hostname=allinone.default
+openshift_master_cluster_public_hostname=allinone.default
 openshift_router_selector="region=allinone"
 openshift_registry_selector="region=allinone"
 os_sdn_network_plugin_name='redhat/openshift-ovs-multitenant'
@@ -41,17 +41,17 @@ openshift_node_kubelet_args={'pods-per-core': ['10'], 'max-pods': ['250'], 'imag
 openshift_clock_enabled=true
 
 openshift_hosted_metrics_deploy=false
-openshift_master_default_subdomain=apps.karmalabs.local
+openshift_master_default_subdomain=apps.default
 
 # host group for masters
 [masters]
-allinone.karmalabs.local
+allinone.default
 
 
 # host group for etcd
 [etcd]
-allinone.karmalabs.local
+allinone.default
 
 # host group for nodes, includes region info
 [nodes]
-allinone.karmalabs.local openshift_node_labels="{'region': 'allinone', 'zone': 'default'}" openshift_schedulable=true
+allinone.default openshift_node_labels="{'region': 'allinone', 'zone': 'default'}" openshift_schedulable=true
