@@ -762,14 +762,14 @@ class Kconfig:
                 k.delete_network(network)
                 common.pprint("Unused network %s deleted!" % network, color='green')
                 found = True
+            for keyfile in glob.glob("%s.key*" % plan):
+                common.pprint("file %s from %s deleted!" % (keyfile, plan), color='green')
+                os.remove(keyfile)
             if found:
                 common.pprint("Plan %s deleted!" % plan, color='green')
             else:
                 common.pprint("Nothing to do for plan %s" % plan, color='red')
                 os._exit(1)
-            for keyfile in glob.glob("%s.key*" % plan):
-                common.pprint("file %s from %s deleted!" % (keyfile, plan), color='green')
-                os.remove(keyfile)
             return {'result': 'success'}
         if autostart:
             common.pprint("Set vms from plan %s to autostart" % (plan), color='green')
