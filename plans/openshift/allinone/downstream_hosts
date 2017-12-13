@@ -24,10 +24,10 @@ openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 
 # or to one or all of the masters defined in the inventory if no load
 # balancer is present.
 openshift_master_cluster_method=native
-openshift_master_cluster_hostname=allinone.default
-openshift_master_cluster_public_hostname=allinone.default
-openshift_router_selector="region=allinone"
-openshift_registry_selector="region=allinone"
+openshift_master_cluster_hostname=[[ name ]].default
+openshift_master_cluster_public_hostname=[[ name ]].default
+openshift_router_selector="region=[[ name ]]"
+openshift_registry_selector="region=[[ name ]]"
 os_sdn_network_plugin_name='redhat/openshift-ovs-multitenant'
 #openshift_hosted_router_replicas="1"
 
@@ -45,13 +45,13 @@ openshift_master_default_subdomain=apps.default
 
 # host group for masters
 [masters]
-allinone.default
+[[ name ]].default
 
 
 # host group for etcd
 [etcd]
-allinone.default
+[[ name ]].default
 
 # host group for nodes, includes region info
 [nodes]
-allinone.default openshift_node_labels="{'region': 'allinone', 'zone': 'default'}" openshift_schedulable=true
+[[ name ]].default openshift_node_labels="{'region': '[[ name ]]', 'zone': 'default'}" openshift_schedulable=true

@@ -201,3 +201,15 @@
   numvms: 2
   memory: 7168
   template: CentOS-7-x86_64-GenericCloud.qcow2
+
+- name: allinone
+  group: openshift
+  url: github.com/karmab/kcli/plans/openshift/allinone
+  file: downstream.yml
+  description: Downstream Openshift 3.7 allinone. Sadly ansible needs to be relaunched manually
+  numvms: 1
+  memory: 8192
+  template: rhel-guest-image-7.3-35.x86_64.qcow2
+  parameters:
+   name: allinone
+   memory: 8192

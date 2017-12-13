@@ -1,7 +1,11 @@
-allinone:
+parameters:
+ name: allinone
+ memory: 8192
+
+[[ name ]]:
  template: rhel-guest-image-7.3-35.x86_64.qcow2
  numcpus: 2
- memory: 8192
+ memory: [[ memory ]] 
  reservedns: true
  sharedkey: true
  domain: default
