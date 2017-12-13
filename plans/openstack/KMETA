@@ -80,14 +80,15 @@
   group: openstack
   url: github.com/karmab/kcli/plans/openstack
   file: advanced.yml
-  description: Downstream newton based on packstack with one controller and three compute
-  numvms: 4
+  description: Downstream newton based on packstack with one controller and arbitrary compute nodes (2 by default)
+  numvms: 3
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
   parameters:
    user: testk
    password: testk
    project: testk
    admin_password: unix1234
+   number_computes: 2
   
 - name: advanced_live
   group: openstack

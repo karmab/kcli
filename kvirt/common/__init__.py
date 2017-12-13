@@ -303,3 +303,20 @@ def get_overrides(paramfile=None, param=[]):
     else:
         overrides = {}
     return overrides
+
+
+def get_parameters(inputfile):
+    parameters = ""
+    found = False
+    for line in open(inputfile).readlines():
+        if found and not line.startswith(' '):
+            break
+        elif found:
+            parameters += line
+        elif line != 'parameters:\n' and not found:
+            continue
+        else:
+            parameters += line
+            found = True
+    results = parameters if parameters != '' else None
+    return results

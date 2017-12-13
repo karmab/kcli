@@ -3,6 +3,7 @@ parameters:
  password: testk
  project: testk
  admin_password: unix1234
+ computes: 2
 
 ospcontroller:
  template: rhel-guest-image-7.3-35.x86_64.qcow2
@@ -23,7 +24,8 @@ ospcontroller:
   - advanced/install.sh
   - provision.sh
 
-ospcompute01:
+[% for number in range(1,computes+1) %]
+ospcompute0[[ number ]]:
  template: rhel-guest-image-7.3-35.x86_64.qcow2
  memory: 6144
  numcpus: 2
@@ -38,35 +40,4 @@ ospcompute01:
  scripts: 
   - ~/register.sh
   - subscription_newton.sh
-
-ospcompute02:
- template: rhel-guest-image-7.3-35.x86_64.qcow2
- memory: 6144
- numcpus: 2
- disks: 
-  - size: 50
- nets:
- - default
- domain: localdomain
- pool: default
- sharedkey: true
- reservedns: true
- scripts: 
-  - ~/register.sh
-  - subscription_newton.sh
-
-ospcompute03:
- template: rhel-guest-image-7.3-35.x86_64.qcow2
- memory: 6144
- numcpus: 2
- disks: 
-  - size: 50
- nets:
- - default
- domain: localdomain
- pool: default
- sharedkey: true
- reservedns: true
- scripts: 
-  - ~/register.sh
-  - subscription_newton.sh
+[% endfor %]

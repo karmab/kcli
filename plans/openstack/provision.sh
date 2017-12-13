@@ -8,7 +8,7 @@ cp ~/keystonerc_admin ~/keystonerc_[[ user ]]
 sed -i "s/OS_USERNAME=admin/OS_USERNAME=[[ user ]]/" ~/keystonerc_[[ user ]]
 sed -i "s/OS_PASSWORD=.*/OS_PASSWORD=[[ password ]]/" ~/keystonerc_[[ user ]]
 sed -i "s/OS_TENANT_NAME=admin/OS_TENANT_NAME=[[ project ]]/" ~/keystonerc_[[ user ]]
-sed -i "s/OS_PROJECT_NAME=admin/OS_PROJECT_NAME=[[ project/" ~/keystonerc_[[ user ]]
+sed -i "s/OS_PROJECT_NAME=admin/OS_PROJECT_NAME=[[ project ]]/" ~/keystonerc_[[ user ]]
 sed -i "s/keystone_admin/keystone_[[ user ]]/" ~/keystonerc_[[ user ]]
 source ~/keystonerc_admin
 nova flavor-list | grep -q m1.tiny || nova flavor-create --is-public true m1.tiny auto 256 0 1 || openstack flavor create --public m1.tiny --id auto --ram 256 --disk 0 --vcpus 1 --rxtx-factor 1

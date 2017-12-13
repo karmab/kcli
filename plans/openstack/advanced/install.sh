@@ -4,9 +4,9 @@ yum update -y
 yum install -y openstack-packstack wget vim screen bind-utils
 ssh-keyscan -H `hostname -I` >> ~/.ssh/known_hosts
 ssh-keyscan -H ospcontroller >> ~/.ssh/known_hosts
-ssh-keyscan -H ospcompute01 >> ~/.ssh/known_hosts
-ssh-keyscan -H ospcompute02 >> ~/.ssh/known_hosts
-ssh-keyscan -H ospcompute03 >> ~/.ssh/known_hosts
+[% for number in range(1,computes+1) %]
+ssh-keyscan -H ospcompute0[[ number ]] >> ~/.ssh/known_hosts
+[% endfor %]
 HOME=/root packstack --gen-answer-file=/root/answers.txt --ssh-public-key=/root/.ssh/id_rsa.pub
 sed -i "s/CONFIG_SWIFT_INSTALL=y/CONFIG_SWIFT_INSTALL=n/" /root/answers.txt
 sed -i "s/CONFIG_HEAT_INSTALL=n/CONFIG_HEAT_INSTALL=y/" /root/answers.txt
@@ -18,8 +18,11 @@ sed -i "s/CONFIG_NEUTRON_OVS_BRIDGE_MAPPINGS=.*/CONFIG_NEUTRON_OVS_BRIDGE_MAPPIN
 sed -i "s/CONFIG_NEUTRON_OVS_BRIDGE_IFACES=/CONFIG_NEUTRON_OVS_BRIDGE_IFACES=br-ex:eth0/" /root/answers.txt
 sed -i "s/CONFIG_DEBUG_MODE=n/CONFIG_DEBUG_MODE=y/" /root/answers.txt
 sed -i "s/CONFIG_NEUTRON_L3_EXT_BRIDGE=.*/CONFIG_NEUTRON_L3_EXT_BRIDGE=provider/" /root/answers.txt
-export comp01=`dig +short ospcompute01.localdomain`
-export comp02=`dig +short ospcompute02.localdomain`
-export comp03=`dig +short ospcompute03.localdomain`
-sed -i "s/CONFIG_COMPUTE_HOSTS=.*/CONFIG_COMPUTE_HOSTS=$comp01,$comp02,$comp03/" /root/answers.txt
+compute_hosts=""
+[% for number in range(1,computes+1) %]
+export comp[[ number ]]=`dig +short ospcompute0[[ number ]].localdomain`
+compute_hosts="$compute_hosts,$comp[[ number ]]"
+[% endfor %]
+compute_hosts=`echo $compute_hosts | sed 's/^,//'`
+sed -i "s/CONFIG_COMPUTE_HOSTS=.*/CONFIG_COMPUTE_HOSTS=$compute_hosts/" /root/answers.txt
 HOME=/root packstack --answer-file=/root/answers.txt

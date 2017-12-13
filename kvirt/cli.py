@@ -619,8 +619,13 @@ def plan(args):
     use = args.use
     yes = args.yes
     scale = args.scale
+    info = args.info
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
     global config
+    if info:
+        common.pprint("Providing information on parameters of plan %s..." % (inputfile), color='green')
+        config.info_plan(inputfile)
+        os._exit(0)
     if use is not None:
         rootdir = os.path.expanduser('~/.kcli')
         if not os.path.exists(rootdir):
@@ -1040,6 +1045,7 @@ def cli():
     plan_parser.add_argument('-A', '--ansible', help='Generate ansible inventory', action='store_true')
     plan_parser.add_argument('-d', '--delete', action='store_true')
     plan_parser.add_argument('-g', '--get', help='Download specific plan(s). Use --path for specific directory', metavar='URL')
+    plan_parser.add_argument('-i', '--info', action='store_true', help='Provide information on the given product')
     plan_parser.add_argument('-p', '--path', help='Path where to download plans. Defaults to plan', metavar='PATH')
     plan_parser.add_argument('-a', '--autostart', action='store_true', help='Set all vms from plan to autostart')
     plan_parser.add_argument('-c', '--container', action='store_true', help='Handle container')

@@ -335,7 +335,8 @@ class Kconfig:
                 else:
                     basedir = os.path.dirname(script) if os.path.dirname(script) != '' else '.'
                     env = Environment(block_start_string='[%', block_end_string='%]', variable_start_string='[[', variable_end_string=']]', loader=FileSystemLoader(basedir))
-                    templ = env.get_template(script)
+                    # templ = env.get_template(script)
+                    templ = env.get_template(os.path.basename(script))
                     scriptentries = templ.render(overrides)
                     scriptlines = [line.strip() for line in scriptentries.split('\n') if line.strip() != '']
                     if scriptlines:
@@ -627,6 +628,20 @@ class Kconfig:
                 shutil.rmtree(repodir)
             return {'result': 'success'}
 
+    def info_plan(self, inputfile):
+        inputfile = os.path.expanduser(inputfile)
+        if not os.path.exists(inputfile):
+            common.pprint("No input file found nor default kcli_plan.yml.Leaving....", color='red')
+            os._exit(1)
+        parameters = common.get_parameters(inputfile)
+        if parameters is not None:
+            parameters = yaml.load(parameters)['parameters']
+            for parameter in parameters:
+                print("%s: %s" % (parameter, parameters[parameter]))
+        else:
+            common.pprint("No parameters found. Leaving...", color='blue')
+        return {'result': 'success'}
+
     def info_product(self, name, repo=None):
         """Info product"""
         if repo is not None:
@@ -818,17 +833,18 @@ class Kconfig:
             os._exit(1)
         basedir = os.path.dirname(inputfile)
         env = Environment(block_start_string='[%', block_end_string='%]', variable_start_string='[[', variable_end_string=']]', loader=FileSystemLoader(basedir))
-        templ = env.get_template(inputfile)
+        # templ = env.get_template(inputfile)
+        templ = env.get_template(os.path.basename(inputfile))
+        parameters = common.get_parameters(inputfile)
+        if parameters is not None:
+            parameters = yaml.load(parameters)['parameters']
+            for parameter in parameters:
+                if parameter not in overrides:
+                    overrides[parameter] = parameters[parameter]
         with open(inputfile, 'r') as entries:
-            initialentries = templ.render()
-            initialentries = yaml.load(initialentries)
-            parameters = initialentries.get('parameters')
-            if parameters is not None:
-                for parameter in parameters:
-                    if parameter not in overrides:
-                        overrides[parameter] = parameters[parameter]
             entries = templ.render(overrides)
             entries = yaml.load(entries)
+            parameters = entries.get('parameters')
             if parameters is not None:
                 del entries['parameters']
             vmentries = [entry for entry in entries if 'type' not in entries[entry] or entries[entry]['type'] == 'vm']
@@ -1097,15 +1113,15 @@ class Kconfig:
                         for script in scripts:
                             if '~' in script:
                                 script = os.path.expanduser(script)
-                            elif basedir != '':
-                                script = "%s/%s" % (basedir, script)
+                            basedir = os.path.dirname(script) if os.path.dirname(script) != '' else '.'
+                            # elif basedir != '':
+                            #    script = "%s/%s" % (basedir, script)
                             if not os.path.exists(script):
                                 common.pprint("Script %s not found. Ignoring this vm..." % script, color='red')
                                 missingscript = True
                             else:
-                                basedir = os.path.dirname(script) if os.path.dirname(script) != '' else '.'
                                 env = Environment(block_start_string='[%', block_end_string='%]', variable_start_string='[[', variable_end_string=']]', loader=FileSystemLoader(basedir))
-                                templ = env.get_template(script)
+                                templ = env.get_template(os.path.basename(script))
                                 scriptentries = templ.render(overrides)
                                 scriptlines = [line.strip() for line in scriptentries.split('\n') if line.strip() != '']
                                 if scriptlines:
