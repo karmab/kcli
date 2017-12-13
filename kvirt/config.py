@@ -813,12 +813,12 @@ class Kconfig:
             inputfile = 'kcli_plan.yml'
             common.pprint("using default input file kcli_plan.yml", color='green')
         inputfile = os.path.expanduser(inputfile)
-        basedir = os.path.dirname(inputfile)
-        env = Environment(block_start_string='[%', block_end_string='%]', variable_start_string='[[', variable_end_string=']]', loader=FileSystemLoader(basedir))
-        templ = env.get_template(inputfile)
         if not os.path.exists(inputfile):
             common.pprint("No input file found nor default kcli_plan.yml.Leaving....", color='red')
             os._exit(1)
+        basedir = os.path.dirname(inputfile)
+        env = Environment(block_start_string='[%', block_end_string='%]', variable_start_string='[[', variable_end_string=']]', loader=FileSystemLoader(basedir))
+        templ = env.get_template(inputfile)
         with open(inputfile, 'r') as entries:
             initialentries = templ.render()
             initialentries = yaml.load(initialentries)
