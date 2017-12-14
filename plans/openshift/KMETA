@@ -112,15 +112,6 @@
   parameters:
    domain: karmalabs.local
 
-- name: fission
-  group: openshift
-  url: github.com/karmab/kcli/plans/openshift
-  file: fission.yml
-  description: Fission 0.4.0 based on oc cluster up
-  numvms: 1
-  memory: 6144
-  template: CentOS-7-x86_64-GenericCloud.qcow2
-
 - name: helm
   group: openshift
   url: github.com/karmab/kcli/plans/openshift
@@ -237,6 +228,15 @@
   url: github.com/karmab/kcli/plans/openshift
   file: fission.yml
   description: Upstream Fission 0.4.0 all in one
+  numvms: 1
+  memory: 8192
+  template: CentOS-7-x86_64-GenericCloud.qcow2
+
+- name: openwhisk
+  group: openshift
+  url: github.com/karmab/kcli/plans/openshift
+  file: openwhisk.yml
+  description: Latest Openwhisk based on oc cluster up
   numvms: 1
   memory: 8192
   template: CentOS-7-x86_64-GenericCloud.qcow2

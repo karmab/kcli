@@ -1,0 +1,17 @@
+fission:
+ template: CentOS-7-x86_64-GenericCloud.qcow2
+ numcpus: 2
+ memory: 8192
+ nets:
+  - default
+ disks:
+  - size: 10
+  - size: 60
+ pool: default
+ files:
+  - path: /root/openwhisk_secret.sh
+    origin: openwhisk_secret.sh
+ scripts: 
+  - requirements.sh
+  - upstream.sh
+  - openwhisk.sh
