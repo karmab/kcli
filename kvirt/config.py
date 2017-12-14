@@ -1288,7 +1288,7 @@ class Kconfig:
             if pool is None:
                 common.pprint("Missing pool.Leaving...", color='red')
                 return {'result': 'failure', 'reason': "Missing pool"}
-            if template is None:
+            if url is None and template == '':
                 common.pprint("Missing template.Leaving...", color='red')
                 return {'result': 'failure', 'reason': "Missing template"}
             common.pprint("Grabbing template %s..." % template, color='green')
@@ -1304,7 +1304,7 @@ class Kconfig:
                     if url.strip() == '':
                         common.pprint("Missing proper url.Leaving...", color='red')
                         return {'result': 'failure', 'reason': "Missing template"}
-            if cmd is None and template in TEMPLATESCOMMANDS:
+            if cmd is None and template != '' and template in TEMPLATESCOMMANDS:
                 cmd = TEMPLATESCOMMANDS[template]
             result = k.add_image(url, pool, cmd=cmd)
             common.handle_response(result, template, element='Template ', action='Added')

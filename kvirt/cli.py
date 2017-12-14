@@ -171,8 +171,9 @@ def download(args):
     pool = args.pool
     template = args.template
     cmd = args.cmd
+    url = args.url
     global config
-    result = config.handle_host(pool=pool, template=template, download=True, cmd=cmd)
+    result = config.handle_host(pool=pool, template=template, download=True, cmd=cmd, url=url)
     if result['result'] == 'success':
         os._exit(0)
     else:
@@ -983,7 +984,9 @@ def cli():
     download_parser = subparsers.add_parser('download', description=download_info, help=download_info)
     download_parser.add_argument('-c', '--cmd', help='Extra command to launch after downloading', metavar='CMD')
     download_parser.add_argument('-p', '--pool', default='default', help='Pool to use', metavar='POOL')
-    download_parser.add_argument('template', choices=sorted(TEMPLATES.keys()), help='Template/Image to download')
+    download_parser.add_argument('-u', '--url', help='Url to use', metavar='URL')
+    # download_parser.add_argument('template', choices=sorted(TEMPLATES.keys()), help='Template/Image to download').
+    download_parser.add_argument('template', choices=sorted(TEMPLATES.keys()), default='', help='Template/Image to download', nargs='*')
     download_parser.set_defaults(func=download)
 
     host_info = 'List and Handle host'

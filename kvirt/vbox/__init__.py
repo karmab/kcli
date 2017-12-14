@@ -926,8 +926,9 @@ class Kbox(Kbase):
             else:
                 print("Pool not found. Leaving....")
                 return
-        wgetcmd = 'wget -O %s -P %s %s' % (shortimage, poolpath, image)
-        os.system(wgetcmd)
+        # downloadcmd = 'wget -O %s -P %s %s' % (shortimage, poolpath, image)
+        downloadcmd = 'curl -Lo %s -f %s/%s' % (shortimage, poolpath, image)
+        os.system(downloadcmd)
         if cmd is not None and find_executable('virt-customize') is not None:
             cmd = "virt-customize -a %s/%s %s" % (poolpath, image, cmd)
         os.system(cmd)

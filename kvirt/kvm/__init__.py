@@ -840,7 +840,7 @@ class Kvirt(Kbase):
     def volumes(self, iso=False):
         isos = []
         templates = []
-        default_templates = [os.path.basename(t) for t in defaults.TEMPLATES.values()]
+        default_templates = [os.path.basename(t) for t in defaults.TEMPLATES.values() if t is not None]
         conn = self.conn
         for storage in conn.listStoragePools():
             storage = conn.storagePoolLookupByName(storage)
@@ -1665,10 +1665,12 @@ class Kvirt(Kbase):
         if shortimage in volumes:
             return {'result': 'failure', 'reason': "Template %s already exists in pool %s" % (shortimage, poolname)}
         if self.host == 'localhost' or self.host == '127.0.0.1':
-            wgetcmd = 'wget -O %s/%s %s' % (poolpath, shortimage, image)
+            # downloadcmd = 'wget -O %s/%s %s' % (poolpath, shortimage, image)
+            downloadcmd = 'curl -Lo %s/%s -f %s' % (poolpath, shortimage, image)
         elif self.protocol == 'ssh':
-            wgetcmd = 'ssh -p %s %s@%s "wget -O %s/%s %s"' % (self.port, self.user, self.host, poolpath, shortimage, image)
-        code = os.system(wgetcmd)
+            # downloadcmd = 'ssh -p %s %s@%s "wget -O %s/%s %s"' % (self.port, self.user, self.host, poolpath, shortimage, image)
+            downloadcmd = 'ssh -p %s %s@%s "curl -Lo %s/%s -f %s"' % (self.port, self.user, self.host, poolpath, shortimage, image)
+        code = os.system(downloadcmd)
         if code != 0:
             return {'result': 'failure', 'reason': "Unable to download indicated template"}
         pool.refresh()
