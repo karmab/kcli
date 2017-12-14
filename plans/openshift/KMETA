@@ -68,6 +68,15 @@
   group: openshift
   url: github.com/karmab/kcli/plans/openshift
   file: downstream.yml
+  description: Downstream Openshift 3.7 based on oc cluster up
+  numvms: 1
+  memory: 6144
+  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+
+- name: ocp36
+  group: openshift
+  url: github.com/karmab/kcli/plans/openshift
+  file: downstream36.yml
   description: Downstream Openshift 3.6 based on oc cluster up
   numvms: 1
   memory: 6144
