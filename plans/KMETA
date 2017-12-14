@@ -379,10 +379,22 @@
    name: allinone
    memory: 8192
 
-- name: pike
+- name: upstream_queen
   group: openstack
   url: github.com/karmab/kcli/plans/openstack
-  file: upstream.yml
+  file: upstream_queen.yml
+  description: Upstream queen based on packstack
+  numvms: 1
+  template: CentOS-7-x86_64-GenericCloud.qcow2
+  parameters:
+   user: testk
+   password: testk
+   project: testk
+
+- name: upstream_pike
+  group: openstack
+  url: github.com/karmab/kcli/plans/openstack
+  file: upstream_pike.yml
   description: Upstream pike based on packstack
   numvms: 1
   template: CentOS-7-x86_64-GenericCloud.qcow2
@@ -392,10 +404,62 @@
    project: testk
    admin_password: unix1234
 
-- name: ocata
+- name: upstream_ocata
   group: openstack
   url: github.com/karmab/kcli/plans/openstack
-  file: ocata.yml
+  file: upstream_ocata.yml
+  description: Upstream ocata based on packstack
+  numvms: 1
+  template: CentOS-7-x86_64-GenericCloud.qcow2
+  parameters:
+   user: testk
+   password: testk
+   project: testk
+   admin_password: unix1234
+
+- name: upstream_newton
+  group: openstack
+  url: github.com/karmab/kcli/plans/openstack
+  file: upstream_newton.yml
+  description: Upstream pike based on packstack
+  numvms: 1
+  template: CentOS-7-x86_64-GenericCloud.qcow2
+  parameters:
+   user: testk
+   password: testk
+   project: testk
+   admin_password: unix1234
+
+- name: upstream_mitaka
+  group: openstack
+  url: github.com/karmab/kcli/plans/openstack
+  file: upstream_mitaka.yml
+  description: Upstream mitaka based on packstack
+  numvms: 1
+  template: CentOS-7-x86_64-GenericCloud.qcow2
+  parameters:
+   user: testk
+   password: testk
+   project: testk
+   admin_password: unix1234
+
+- name: downstream_pike
+  group: openstack
+  url: github.com/karmab/kcli/plans/openstack
+  file: downstream_pike.yml
+  description: Downstream pike based on packstack
+  numvms: 1
+  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  parameters:
+   user: testk
+   password: testk
+   project: testk
+   admin_password: unix1234
+
+- name: downstream_ocata
+  group: openstack
+  url: github.com/karmab/kcli/plans/openstack
+  file: downstream_ocata.yml
   description: Downstream ocata based on packstack
   numvms: 1
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
@@ -405,10 +469,10 @@
    project: testk
    admin_password: unix1234
   
-- name: newton
+- name: downstream_newton
   group: openstack
   url: github.com/karmab/kcli/plans/openstack
-  file: newton.yml
+  file: downstream_newton.yml
   description: Downstream newton based on packstack
   numvms: 1
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
@@ -418,10 +482,10 @@
    project: testk
    admin_password: unix1234
   
-- name: mitaka
+- name: downstream_mitaka
   group: openstack
   url: github.com/karmab/kcli/plans/openstack
-  file: mitaka.yml
+  file: downstream_mitaka.yml
   description: Downstream mitaka based on packstack
   numvms: 1
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
@@ -431,10 +495,10 @@
    project: testk
    admin_password: unix1234
   
-- name: liberty
+- name: downstream_liberty
   group: openstack
   url: github.com/karmab/kcli/plans/openstack
-  file: liberty.yml
+  file: downstream_liberty.yml
   description: Downstream liberty based on packstack
   numvms: 1
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
@@ -444,10 +508,10 @@
    project: testk
    admin_password: unix1234
   
-- name: kilo
+- name: downstream_kilo
   group: openstack
   url: github.com/karmab/kcli/plans/openstack
-  file: kilo.yml
+  file: downstream_kilo.yml
   description: Downstream kilo based on packstack
   numvms: 1
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2

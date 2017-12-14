@@ -1,1 +1,0 @@
-subscription_ocata.sh
