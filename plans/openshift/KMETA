@@ -222,3 +222,21 @@
   parameters:
    name: allinone
    memory: 8192
+
+- name: kubevirt
+  group: openshift
+  url: github.com/karmab/kcli/plans/openshift
+  file: kubevirt.yml
+  description: Upstream Kubevirt 0.1.0 all in one
+  numvms: 1
+  memory: 8192
+  template: CentOS-7-x86_64-GenericCloud.qcow2
+
+- name: fission
+  group: openshift
+  url: github.com/karmab/kcli/plans/openshift
+  file: fission.yml
+  description: Upstream Fission 0.4.0 all in one
+  numvms: 1
+  memory: 8192
+  template: CentOS-7-x86_64-GenericCloud.qcow2

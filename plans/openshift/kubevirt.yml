@@ -1,15 +1,19 @@
-kubevirt2:
+kubevirt:
  template: CentOS-7-x86_64-GenericCloud.qcow2
  numcpus: 2
- memory: 6144
- reservedns: true
- domain: default
+ memory: 8192
  nets:
   - default
  disks:
   - size: 10
   - size: 60
  pool: default
+ files:
+  - path: /root/vm.yaml
+    origin: vm.yaml
+  - path: /root/iscsi-demo-target.yaml
+    origin: iscsi-demo-target.yaml
  scripts: 
   - requirements.sh
+  - upstream.sh
   - kubevirt.sh

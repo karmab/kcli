@@ -1,0 +1,26 @@
+parameters:
+ user: testk
+ password: testk
+ project: testk
+ admin_password: unix1234
+
+newton:
+ template: CentOS-7-x86_64-GenericCloud.qcow2
+ memory: 8096
+ numcpus: 2
+ disks: 
+  - size: 10
+  - size: 40
+ nets:
+ - default
+ pool: default
+ cpumodel: host-model
+ cpuflags:
+  - name: arat
+    enable: false
+  - name: clflushopt
+    enable: false
+ scripts: 
+  - repo_newton.sh
+  - install.sh
+  - provision.sh
