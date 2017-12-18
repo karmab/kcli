@@ -15,6 +15,7 @@
 BASEDIR="$HOME/CODE/git/KARIM"
 USER="karmab"
 REPOSITORY="kcli"
+REPOSITORYWIKI="${REPOSITORY}.wiki"
 OLDVERSION=`grep Version ~/kcli.spec | awk -F':' '{print $2}' | xargs`
 
 if [ "$#" != "1" ] ; then
@@ -30,6 +31,7 @@ if [ "$VERSION" == "" ] ; then
 fi
 
 cd $BASEDIR/$REPOSITORYWIKI
+echo $BASEDIR/$REPOSITORYWIKI/v$VERSION.md
 ls v$VERSION.md
 if [ "$?" != "0" ] ; then
     echo "Missing changelog file in wiki for version $VERSION. Leaving..."
@@ -61,4 +63,4 @@ curl --data "$API_JSON" https://api.github.com/repos/$USER/$REPOSITORY/releases?
 
 # GENERATE RPM/DEB
 kcli delete --yes copr
-kcli product -c copr
+kcli product copr

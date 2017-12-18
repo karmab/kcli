@@ -23,7 +23,7 @@ from time import sleep
 import webbrowser
 import yaml
 
-__version__ = '9.5'
+__version__ = '10.0'
 
 
 class Kconfig:
@@ -845,6 +845,7 @@ class Kconfig:
             for parameter in parameters:
                 if parameter not in overrides:
                     overrides[parameter] = parameters[parameter]
+                print("Using parameter %s: %s" % (parameter, overrides[parameter]))
         with open(inputfile, 'r') as entries:
             entries = templ.render(overrides)
             entries = yaml.load(entries)
@@ -1171,7 +1172,7 @@ class Kconfig:
                             files.append({'path': '/root/.ssh/id_rsa', 'content': privatekey})
                         else:
                             files = [{'path': '/root/.ssh/id_rsa', 'content': privatekey}]
-                    result = z.create(name=name, plan=plan, profile=profilename, cpumodel=cpumodel, cpuflags=cpuflags, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns), reservehost=bool(reservehost), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=nested, tunnel=tunnel, files=files, enableroot=enableroot)
+                    result = z.create(name=name, plan=plan, profile=profilename, cpumodel=cpumodel, cpuflags=cpuflags, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns), reservehost=bool(reservehost), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=nested, tunnel=tunnel, files=files, enableroot=enableroot, overrides=overrides)
                     common.handle_response(result, name)
                     if result['result'] == 'success':
                         newvms.append(name)
