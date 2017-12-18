@@ -1,3 +1,6 @@
+parameters:
+  password: prout12345  
+
 plan1:
   type: plan
   url: github.com/karmab/kcli/samples/plan_of_plans

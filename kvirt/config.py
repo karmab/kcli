@@ -703,7 +703,7 @@ class Kconfig:
             if parameters is not None:
                 for parameter in parameters:
                     if parameter in overrides:
-                        print("Using %s: %s" % (parameter, overrides[parameter]))
+                        print("Using parameter %s: %s" % (parameter, overrides[parameter]))
             if not os.path.exists(group):
                 should_clean = True
                 self.plan(plan, get=url, path=group, inputfile=inputfile)
@@ -721,6 +721,7 @@ class Kconfig:
     def plan(self, plan, ansible=False, get=None, path=None, autostart=False, container=False, noautostart=False, inputfile=None, start=False, stop=False, delete=False, delay=0, force=True, topologyfile=None, scale=None, overrides={}):
         """Create/Delete/Stop/Start vms from plan file"""
         k = self.k
+        no_overrides = not overrides
         newvms = []
         vmprofiles = {key: value for key, value in self.profiles.iteritems() if 'type' not in value or value['type'] == 'vm'}
         containerprofiles = {key: value for key, value in self.profiles.iteritems() if 'type' in value and value['type'] == 'container'}
@@ -880,6 +881,10 @@ class Kconfig:
                             common.fetch(url, path)
                         if run:
                             os.chdir(path)
+                            if no_overrides and parameters:
+                                common.pprint("Using parameters from master plan in child ones", color='blue')
+                                for override in overrides:
+                                    print("Using parameter %s: %s" % (override, overrides[override]))
                             common.pprint("Running kcli plan -f %s %s" % (inputfile, plan), color='green')
                             self.plan(plan, ansible=False, get=None, path=path, autostart=False, container=False, noautostart=False, inputfile=inputfile, start=False, stop=False, delete=False, delay=delay, overrides=overrides)
                             os.chdir('..')
@@ -989,7 +994,7 @@ class Kconfig:
                 for name in vmentries:
                     if len(vmentries) == 1 and 'name' in overrides:
                         newname = overrides['name']
-                        common.pprint("Override name: %s" % newname, color='blue')
+                        common.pprint("Using parameter name: %s" % newname, color='blue')
                         profile = entries[name]
                         name = newname
                     else:
