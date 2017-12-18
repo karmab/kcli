@@ -837,7 +837,6 @@ class Kconfig:
             os._exit(1)
         basedir = os.path.dirname(inputfile)
         env = Environment(block_start_string='[%', block_end_string='%]', variable_start_string='[[', variable_end_string=']]', loader=FileSystemLoader(basedir))
-        # templ = env.get_template(inputfile)
         templ = env.get_template(os.path.basename(inputfile))
         parameters = common.get_parameters(inputfile)
         if parameters is not None:
@@ -882,7 +881,7 @@ class Kconfig:
                         if run:
                             os.chdir(path)
                             common.pprint("Running kcli plan -f %s %s" % (inputfile, plan), color='green')
-                            self.plan(plan, ansible=False, get=None, path=path, autostart=False, container=False, noautostart=False, inputfile=inputfile, start=False, stop=False, delete=False, delay=delay)
+                            self.plan(plan, ansible=False, get=None, path=path, autostart=False, container=False, noautostart=False, inputfile=inputfile, start=False, stop=False, delete=False, delay=delay, overrides=overrides)
                             os.chdir('..')
                 return {'result': 'success'}
             if networkentries:
