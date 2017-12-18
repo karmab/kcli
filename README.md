@@ -12,7 +12,7 @@ It will also report IPS for any vm connected to a dhcp-enabled libvirt network a
 
 It started because I switched from ovirt and needed a tool similar to [ovirt.py](https://github.com/karmab/ovirt)
 
-## [ChangeLog](https://github.com/karmab/kcli/changelog)
+## [ChangeLog](https://github.com/karmab/kcli/changelog/home.md)
 
 ##  Wouldnt it be great to:
 
