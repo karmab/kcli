@@ -103,6 +103,8 @@ class Kbox(Kbase):
         vm.memory_size = memory
         vm.description = plan
         vm.set_extra_data('profile', profile)
+        creationdate = time.strftime("%d-%m-%Y %H:%M", time.gmtime())
+        vm.set_extra_data('creationdate', creationdate)
         serial = vm.get_serial_port(0)
         serial.server = True
         serial.enabled = True

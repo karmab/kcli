@@ -110,9 +110,11 @@ class Kvirt(Kbase):
             default_storagepool = conn.storagePoolLookupByName(default_pool)
         except:
             return {'result': 'failure', 'reason': "Pool %s not found" % default_pool}
+        creationdate = time.strftime("%d-%m-%Y %H:%M", time.gmtime())
         metadata = """<metadata>
         <kvirt:info xmlns:kvirt="kvirt">
-        <kvirt:profile>%s</kvirt:profile>""" % profile
+        <kvirt:creationdate>%s</kvirt:creationdate>
+        <kvirt:profile>%s</kvirt:profile>""" % (creationdate, profile)
         if template:
             metadata = """%s
                         <kvirt:template>%s</kvirt:template>""" % (metadata, template)
@@ -709,7 +711,7 @@ class Kvirt(Kbase):
         if vm.isActive():
             state = 'up'
         yamlinfo = {'name': name, 'autostart': autostart, 'nets': [], 'disks': [], 'snapshots': [], 'state': state}
-        plan, profile, template, ip = None, None, None, None
+        plan, profile, template, ip, creationdate = None, None, None, None, None
         for element in root.getiterator('{kvirt}info'):
             e = element.find('{kvirt}plan')
             if e is not None:
@@ -724,12 +726,17 @@ class Kvirt(Kbase):
             e = element.find('{kvirt}ip')
             if e is not None:
                 ip = e.text
+            e = element.find('{kvirt}creationdate')
+            if e is not None:
+                creationdate = e.text
         if template is not None:
             yamlinfo['template'] = template
         if plan is not None:
             yamlinfo['plan'] = plan
         if profile is not None:
             yamlinfo['profile'] = profile
+        if creationdate is not None:
+            yamlinfo['creationdate'] = creationdate
         yamlinfo['cpus'] = numcpus
         yamlinfo['memory'] = memory
         nicnumber = 0
@@ -779,7 +786,7 @@ class Kvirt(Kbase):
             print yaml.dump(yamlinfo, default_flow_style=False, indent=2, allow_unicode=True, encoding=None).replace("'", '')[:-1]
         else:
             if fields is None:
-                fields = ['name', 'status', 'description', 'autostart', 'template', 'plan', 'profile', 'cpus', 'memory', 'nets', 'ip', 'disks', 'snapshots']
+                fields = ['name', 'creationdate', 'status', 'description', 'autostart', 'template', 'plan', 'profile', 'cpus', 'memory', 'nets', 'ip', 'disks', 'snapshots']
             for key in fields:
                 if key not in yamlinfo:
                     continue
