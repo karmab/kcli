@@ -738,17 +738,23 @@ class Kconfig:
             if not force:
                 common.confirm('Are you sure about deleting plan %s' % plan)
             found = False
-            for vm in sorted(k.list()):
-                name = vm[0]
-                description = vm[4]
-                if description == plan:
-                    vmnetworks = k.vm_ports(name)
-                    for network in vmnetworks:
-                        if network != 'default' and network not in networks:
-                            networks.append(network)
-                    k.delete(name)
-                    common.pprint("VM %s deleted!" % name, color='green')
-                    found = True
+            if not self.extraclients:
+                deleteclients = {self.client: k}
+            else:
+                deleteclients = self.extraclients
+            for hypervisor in deleteclients:
+                c = deleteclients[hypervisor]
+                for vm in sorted(c.list()):
+                    name = vm[0]
+                    description = vm[4]
+                    if description == plan:
+                        vmnetworks = c.vm_ports(name)
+                        for network in vmnetworks:
+                            if network != 'default' and network not in networks:
+                                networks.append(network)
+                        c.delete(name)
+                        common.pprint("VM %s deleted on %s!" % (name, hypervisor), color='green')
+                        found = True
             if container:
                 for cont in sorted(dockerutils.list_containers(k)):
                     name = cont[0]
