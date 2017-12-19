@@ -1293,32 +1293,33 @@ class Kconfig:
                 return
         return {'result': 'success'}
 
-    def handle_host(self, pool='default', template=None, switch=None, download=False, enable=False, disable=False, url=None, cmd=None):
+    def handle_host(self, pool='default', templates=[], switch=None, download=False, enable=False, disable=False, url=None, cmd=None):
         if download:
             k = self.k
             if pool is None:
                 common.pprint("Missing pool.Leaving...", color='red')
                 return {'result': 'failure', 'reason': "Missing pool"}
-            if url is None and template == '':
-                common.pprint("Missing template.Leaving...", color='red')
+            if url is None and not templates:
+                common.pprint("Missing template or url.Leaving...", color='red')
                 return {'result': 'failure', 'reason': "Missing template"}
-            common.pprint("Grabbing template %s..." % template, color='green')
-            if url is None:
-                url = TEMPLATES[template]
-                template = os.path.basename(template)
-                if not url.endswith('qcow2') and not url.endswith('img') and not url.endswith('qc2'):
-                    if 'web' in sys.argv[0]:
-                        return {'result': 'failure', 'reason': "Missing url"}
-                    common.pprint("Opening url %s for you to grab complete url for %s" % (url, template), color='blue')
-                    webbrowser.open(url, new=2, autoraise=True)
-                    url = raw_input("Copy Url:\n")
-                    if url.strip() == '':
-                        common.pprint("Missing proper url.Leaving...", color='red')
-                        return {'result': 'failure', 'reason': "Missing template"}
-            if cmd is None and template != '' and template in TEMPLATESCOMMANDS:
-                cmd = TEMPLATESCOMMANDS[template]
-            result = k.add_image(url, pool, cmd=cmd)
-            common.handle_response(result, template, element='Template ', action='Added')
+            for template in templates:
+                common.pprint("Grabbing template %s..." % template, color='green')
+                if url is None:
+                    url = TEMPLATES[template]
+                    template = os.path.basename(template)
+                    if not url.endswith('qcow2') and not url.endswith('img') and not url.endswith('qc2'):
+                        if 'web' in sys.argv[0]:
+                            return {'result': 'failure', 'reason': "Missing url"}
+                        common.pprint("Opening url %s for you to grab complete url for %s" % (url, template), color='blue')
+                        webbrowser.open(url, new=2, autoraise=True)
+                        url = raw_input("Copy Url:\n")
+                        if url.strip() == '':
+                            common.pprint("Missing proper url.Leaving...", color='red')
+                            return {'result': 'failure', 'reason': "Missing template"}
+                if cmd is None and template != '' and template in TEMPLATESCOMMANDS:
+                    cmd = TEMPLATESCOMMANDS[template]
+                result = k.add_image(url, pool, cmd=cmd)
+                common.handle_response(result, template, element='Template ', action='Added')
             # code = common.handle_response(result, shortname, element='Template ', action='Added')
             # os._exit(code)
             return {'result': 'success'}
