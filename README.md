@@ -27,7 +27,7 @@ It started because I switched from ovirt and needed a tool similar to [ovirt.py]
 
 ## Demo!
 
-[![asciicast](https://asciinema.org/a/3p0cn60p0c0j9wd3hzyrs4m0f.png)](https://asciinema.org/a/3p0cn60p0c0j9wd3hzyrs4m0f?autoplay=1)
+[![asciicast](https://asciinema.org/a/153423.png)](https://asciinema.org/a/153423?autoplay=1)
 
 ## Requisites
 
