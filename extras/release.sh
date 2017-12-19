@@ -43,7 +43,6 @@ sed -i s"@tags/.*@tags/$VERSION@" home.md
 git commit -am "$VERSION RELEASE"
 git push
 
-
 cd $BASEDIR/$REPOSITORY
 # SET NEW VERSIONS
 sed -i s"/    version.*/    version='$VERSION',/" setup.py
@@ -58,7 +57,7 @@ git push
 python setup.py sdist upload
 
 # GENERATE RELEASE
-API_JSON=$(printf '{"tag_name": "v%s","target_commitish": "master","name": "v%s","body": "[release notes](https://github.com/karmab/kcli/wiki)","draft": false,"prerelease": false}' $VERSION $VERSION $VERSION)
+API_JSON=$(printf '{"tag_name": "v%s","target_commitish": "master","name": "v%s","body": "[release notes](https://github.com/karmab/kcli/wiki)","draft": false,"prerelease": false}' $VERSION $VERSION)
 curl --data "$API_JSON" https://api.github.com/repos/$USER/$REPOSITORY/releases?access_token=$RELEASETOKEN
 
 # GENERATE RPM/DEB

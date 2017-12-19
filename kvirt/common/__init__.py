@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from jinja2 import Environment
+from jinja2 import Environment, FileSystemLoader
 from distutils.spawn import find_executable
 import errno
 import fileinput
@@ -195,7 +195,11 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                         print("Skipping file %s as not found" % origin)
                         continue
                     if overrides:
-                        content = [Environment(block_start_string='[%', block_end_string='%]', variable_start_string='[[', variable_end_string=']]').from_string(line).render(overrides) for line in open(origin, 'r').readlines()]
+                        basedir = os.path.dirname(origin) if os.path.dirname(origin) != '' else '.'
+                        env = Environment(block_start_string='[%', block_end_string='%]', variable_start_string='[[', variable_end_string=']]', loader=FileSystemLoader(basedir))
+                        templ = env.get_template(os.path.basename(origin))
+                        fileentries = templ.render(overrides)
+                        content = [line.strip() for line in fileentries.split('\n') if line.strip() != '']
                     else:
                         content = open(origin, 'r').readlines()
                 elif content is None:

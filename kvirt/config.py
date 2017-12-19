@@ -23,7 +23,7 @@ from time import sleep
 import webbrowser
 import yaml
 
-__version__ = '10.2'
+__version__ = '10.3'
 
 
 class Kconfig:
@@ -336,7 +336,6 @@ class Kconfig:
                 else:
                     basedir = os.path.dirname(script) if os.path.dirname(script) != '' else '.'
                     env = Environment(block_start_string='[%', block_end_string='%]', variable_start_string='[[', variable_end_string=']]', loader=FileSystemLoader(basedir))
-                    # templ = env.get_template(script)
                     templ = env.get_template(os.path.basename(script))
                     scriptentries = templ.render(overrides)
                     scriptlines = [line.strip() for line in scriptentries.split('\n') if line.strip() != '']
