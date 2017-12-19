@@ -31,15 +31,15 @@ if [ "$VERSION" == "" ] ; then
 fi
 
 cd $BASEDIR/$REPOSITORYWIKI
-echo $BASEDIR/$REPOSITORYWIKI/v$VERSION.md
-ls v$VERSION.md
+echo $BASEDIR/$REPOSITORYWIKI/$VERSION.md
+ls $VERSION.md
 if [ "$?" != "0" ] ; then
     echo "Missing changelog file in wiki for version $VERSION. Leaving..."
     exit 1
 fi
 
 # SET NEW VERSION
-sed -i s"@tags/v.*@tags/$VERSION@" home.md
+sed -i s"@tags/.*@tags/$VERSION@" home.md
 git commit -am "$VERSION RELEASE"
 git push
 
@@ -58,7 +58,7 @@ git push
 python setup.py sdist upload
 
 # GENERATE RELEASE
-API_JSON=$(printf '{"tag_name": "v%s","target_commitish": "master","name": "v%s","body": "[release notes](https://github.com/karmab/kcli/blob/master/changelog/%s.md)","draft": false,"prerelease": false}' $VERSION $VERSION $VERSION)
+API_JSON=$(printf '{"tag_name": "v%s","target_commitish": "master","name": "v%s","body": "[release notes](https://github.com/karmab/kcli/wiki)","draft": false,"prerelease": false}' $VERSION $VERSION $VERSION)
 curl --data "$API_JSON" https://api.github.com/repos/$USER/$REPOSITORY/releases?access_token=$RELEASETOKEN
 
 # GENERATE RPM/DEB
