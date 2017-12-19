@@ -1,3 +1,8 @@
+parameters:
+    user: karmab
+    package: kcli
+    debian: true
+
 copr:
  template: Fedora-Cloud-Base-26-1.5.x86_64.qcow2
  numcpus: 2
@@ -8,10 +13,12 @@ copr:
   - path: /root/copr
     origin: ~/copr
   - path: /root/package.spec
-    origin: ~/kcli.spec
+    origin: ~/[[ package ]].spec
   - path: /root/copr.sh
     origin: copr.sh
+[% if debian %]
   - path: /root/.packagecloud
     origin: ~/packagecloud
+[% endif %]
  cmds:
   - sh /root/copr.sh
