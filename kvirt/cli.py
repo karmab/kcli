@@ -1062,7 +1062,7 @@ def cli():
     plan_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     plan_parser.add_argument('--delay', default=0, help="Delay between each vm's creation", metavar='DELAY')
     plan_parser.add_argument('-P', '--param', action='append', help='Define parameter for rendering within scripts. Can be repeated', metavar='PARAM')
-    plan_parser.add_argument('--paramfile', help='Input file', metavar='PARAMFILE')
+    plan_parser.add_argument('--paramfile', help='Param file', metavar='PARAMFILE')
     plan_parser.add_argument('plan', metavar='PLAN', nargs='?')
     plan_parser.set_defaults(func=plan)
 
