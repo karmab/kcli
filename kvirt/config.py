@@ -660,6 +660,7 @@ class Kconfig:
             group = product['group']
             numvms = product.get('numvms')
             template = product.get('template')
+            comments = product.get('comments')
             parameters = product.get('parameters')
             if group is not None:
                 print("group: %s" % group)
@@ -670,6 +671,8 @@ class Kconfig:
                 print(numvmsinfo)
             if template is not None:
                 print("template: %s" % template)
+            if comments is not None:
+                print("Comments : %s" % comments)
             if parameters is not None:
                 print("Available parameters:")
                 for parameter in sorted(parameters):
