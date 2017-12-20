@@ -1,1 +1,1 @@
-yum -y install http://plain.resources.ovirt.org/pub/yum-repo/ovirt-release42-pre.rpm
+yum -y install http://plain.resources.ovirt.org/pub/yum-repo/ovirt-release42.rpm
