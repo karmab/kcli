@@ -3,7 +3,7 @@ oc new-project fission
 export TILLER_NAMESPACE=helm
 sleep 240
 oc adm policy add-cluster-role-to-user cluster-admin -z fission-svc
-helm install --namespace fission https://github.com/fission/fission/releases/download/$FISSION_VERSION/fission-core-$FISSION_VERSION.tgz
+helm install --namespace fission https://github.com/fission/fission/releases/download/$FISSION_VERSION/fission-[[ version ]]-$FISSION_VERSION.tgz
 curl -Lo fission https://github.com/fission/fission/releases/download/$FISSION_VERSION/fission-cli-linux && chmod +x fission && mv fission /usr/bin/
 oc expose svc controller
 oc expose svc router
