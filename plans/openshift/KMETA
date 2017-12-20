@@ -231,6 +231,8 @@
   numvms: 1
   memory: 8192
   template: CentOS-7-x86_64-GenericCloud.qcow2
+  parameters:
+   version: core
 
 - name: openwhisk
   group: openshift
