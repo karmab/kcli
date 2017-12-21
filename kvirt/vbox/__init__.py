@@ -530,7 +530,11 @@ class Kbox(Kbase):
                 continue
             if str(nic.attachment_type) == 'NAT':
                 natengine = nic.nat_engine
-                natengine.remove_redirect('ssh_%s' % name)
+                for redirect in natengine.redirects:
+                    if redirect.startswith('ssh_'):
+                        natengine.remove_redirect('ssh_%s' % name)
+                        break
+                # natengine.remove_redirect('ssh_%s' % name)
             if str(nic.attachment_type) == 'NATNetwork':
                 nat_network = [n for n in conn.nat_networks if n.network_name == nic.nat_network][0]
                 rule = [rule for rule in nat_network.port_forward_rules4 if rule.split(':')[0] == "ssh_%s" % name]
@@ -665,7 +669,6 @@ class Kbox(Kbase):
         disk = conn.create_medium('VDI', diskpath, library.AccessMode.read_write, library.DeviceType.hard_disk)
         if template is not None:
             volumes = self.volumes()
-            print volumes
             if template not in volumes and template not in volumes.values():
                 print("Invalid template %s.Leaving..." % template)
                 return
@@ -928,11 +931,11 @@ class Kbox(Kbase):
             else:
                 print("Pool not found. Leaving....")
                 return
-        downloadcmd = 'curl -Lo %s -f %s/%s' % (shortimage, poolpath, image)
+        downloadcmd = 'curl -Lo %s/%s -f %s' % (poolpath, shortimage, image)
         os.system(downloadcmd)
         if cmd is not None and find_executable('virt-customize') is not None:
             cmd = "virt-customize -a %s/%s %s" % (poolpath, image, cmd)
-        os.system(cmd)
+            os.system(cmd)
         return {'result': 'success'}
 
     def create_network(self, name, cidr, dhcp=True, nat=True, domain=None, plan='kvirt', pxe=None):

@@ -9,6 +9,7 @@
 
 This tool is meant to interact with a local/remote libvirt daemon and to easily deploy from templates (optionally using cloudinit).
 It will also report IPS for any vm connected to a dhcp-enabled libvirt network and generally for every vm deployed from this client.
+There is also support for virtualbox
 
 It started because I switched from ovirt and needed a tool similar to [ovirt.py](https://github.com/karmab/ovirt)
 
@@ -24,6 +25,7 @@ It started because I switched from ovirt and needed a tool similar to [ovirt.py]
 - Inject all configuration with cloudinit
 - Use the default cloud images
 - Have a web UI to do it too!
+- Do all of this in virtualbox
 
 ## Demo!
 
@@ -79,6 +81,8 @@ echo deb [trusted=yes] https://packagecloud.io/karmab/kcli/ubuntu/ zesty main > 
 ## [Dev installation](dev.md)
 
 ## [I want to use docker, I'm cool](docker.md)
+
+## [I want to use virtualbox, I'm not cool](VBOX.md)
 
 ## Configuration
 
@@ -701,12 +705,10 @@ vm4:
 
 ## TODO
 
-- ability to share profiles
+- store hypervisor in lastvm so that action are associated to the pair (host+lastvm)
 - find a better rule when deleting disks of a vm (along with it)
-- not render .j2 scripts
 - Read The docs
 - Check on memory and disk space when creating vm
-- Random hypervisor vm creation
 - validation of ips, netmasks, macs,...  within plan file
 
 ## Contributors
