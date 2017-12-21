@@ -1,3 +1,7 @@
+parameters:
+  docker_disk_size: 60
+  deploy_book_info: false
+
 istio:
  template: CentOS-7-x86_64-GenericCloud.qcow2
  numcpus: 2
@@ -6,7 +10,7 @@ istio:
   - default
  disks:
   - size: 10
-  - size: 60
+  - size: [[ docker_disk_size ]]
  pool: default
  files:
   - path: /root/bookgen.sh

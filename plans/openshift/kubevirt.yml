@@ -1,3 +1,6 @@
+parameters:
+   docker_disk_size: 60
+
 kubevirt:
  template: CentOS-7-x86_64-GenericCloud.qcow2
  numcpus: 2
@@ -6,7 +9,7 @@ kubevirt:
   - default
  disks:
   - size: 10
-  - size: 60
+  - size: [[ docker_disk_size ]] 
  pool: default
  files:
   - path: /root/vm.yaml

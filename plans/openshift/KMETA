@@ -9,6 +9,7 @@
   parameters:
    template: CentOS-7-x86_64-GenericCloud.qcow2
    memory: 6144
+   docker_disk_size: 60
 
 - name: origin37
   group: openshift
@@ -120,6 +121,8 @@
   numvms: 1
   memory: 6144
   template: CentOS-7-x86_64-GenericCloud.qcow2
+  parameters:
+   docker_disk_size: 60
 
 - name: monocular
   group: openshift
@@ -152,10 +155,13 @@
   group: openshift
   url: github.com/karmab/kcli/plans/openshift
   file: istio.yml
-  description: Istio Latest Stable based on oc cluster up ( with addons and bookinfo app)
+  description: Istio Latest Stable based on oc cluster up ( with addons and optional bookinfo app)
   numvms: 1
   memory: 6144
   template: CentOS-7-x86_64-GenericCloud.qcow2
+  parameters:
+    docker_disk_size: 60
+    deploy_book_info: true
 
 - name: asb
   group: openshift
@@ -165,6 +171,8 @@
   numvms: 1
   memory: 6144
   template: CentOS-7-x86_64-GenericCloud.qcow2
+  parameters:
+   docker_disk_size: 60
 
 - name: asb36
   group: openshift
@@ -222,6 +230,8 @@
   numvms: 1
   memory: 8192
   template: CentOS-7-x86_64-GenericCloud.qcow2
+  parameters:
+   docker_disk_size: 60
 
 - name: fission
   group: openshift
@@ -234,6 +244,7 @@
   comments: Either set version to core or all
   parameters:
    version: core
+   docker_disk_size: 60
 
 - name: openwhisk
   group: openshift

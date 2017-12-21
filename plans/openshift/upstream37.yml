@@ -1,6 +1,7 @@
 parameters:
  template: CentOS-7-x86_64-GenericCloud.qcow2
  memory: 6144
+ docker_disk_size: 60
 origin:
  template: [[ template ]]
  numcpus: 2
@@ -9,7 +10,7 @@ origin:
   - default
  disks:
   - size: 10
-  - size: 60
+  - size: [[ docker_disk_size ]]
  pool: default
  scripts: 
   - requirements.sh
