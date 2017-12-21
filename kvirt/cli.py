@@ -691,10 +691,26 @@ def product(args):
     plan = args.plan
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
     info = args.info
+    search = args.search
     global config
     if info:
         common.pprint("Providing information on product %s..." % (product), color='green')
         config.info_product(product, repo)
+    elif search:
+        products = PrettyTable(["Repo", "Group", "Product", "Description", "Numvms", "Memory"])
+        products.align["Repo"] = "l"
+        productsinfo = config.list_products(repo=repo)
+        for prod in sorted(productsinfo, key=lambda x: (x['repo'], x['group'], x['name'])):
+            name = prod['name']
+            repo = prod['repo']
+            description = prod.get('description', 'N/A')
+            if product.lower() not in name.lower() and product.lower() not in description.lower():
+                continue
+            numvms = prod.get('numvms', 'N/A')
+            memory = prod.get('memory', 'N/A')
+            group = prod.get('group', 'N/A')
+            products.add_row([repo, group, name, description, numvms, memory])
+        print(products)
     else:
         common.pprint("Creating product %s..." % (product), color='green')
         config.create_product(product, repo, plan=plan, keep=keep, overrides=overrides)
@@ -1083,6 +1099,7 @@ def cli():
     product_parser.add_argument('-P', '--param', action='append', help='Define parameter for rendering within scripts. Can be repeated several times', metavar='PARAM')
     product_parser.add_argument('--paramfile', help='Input file', metavar='PARAMFILE')
     product_parser.add_argument('-r', '--repo', help='Repo to use, if deploying a product present in several repos', metavar='REPO')
+    product_parser.add_argument('-s', '--search', action='store_true', help='Display matching products')
     product_parser.add_argument('product', metavar='PRODUCT')
     product_parser.set_defaults(func=product)
 
