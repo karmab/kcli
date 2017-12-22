@@ -22,7 +22,7 @@ oc adm policy add-scc-to-user anyuid -z istio-egress-service-account
 oc adm policy add-scc-to-user privileged -z istio-egress-service-account
 oc adm policy add-scc-to-user anyuid -z istio-pilot-service-account
 oc adm policy add-scc-to-user privileged -z istio-pilot-service-account
-oc create -f install/kubernetes/istio-rbac-beta.yaml
+#oc create -f install/kubernetes/istio-rbac-beta.yaml
 oc create -f install/kubernetes/istio.yaml
 oc expose svc istio-ingress
 sleep 90
