@@ -196,7 +196,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                     if not os.path.exists(origin):
                         print("Skipping file %s as not found" % origin)
                         continue
-                    binary = True if '.' in origin and len(origin.split('.')) == 2 and origin.split('.')[1].lower() in binary_types else False
+                    binary = True if '.' in origin and len(origin.split('.')) == 2 and origin.split('.')[-1].lower() in binary_types else False
                     if binary:
                         with open(origin, "rb") as f:
                             content = f.read().encode("base64")
