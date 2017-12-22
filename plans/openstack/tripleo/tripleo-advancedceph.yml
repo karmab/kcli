@@ -18,7 +18,7 @@ undercloud:
  numcpus: 2
  disks:
   - size: 50
- nets: 
+ nets:
   - name: tripleopublic
     ip: 192.168.101.10
     mask: 255.255.255.0
@@ -34,10 +34,25 @@ undercloud:
   - echo 192.168.101.10 undercloud.localdomain undercloud >> /etc/hosts
   - echo GATEWAY=192.168.101.1 >> /etc/sysconfig/network
   - echo nameserver 192.168.101.1 >> /etc/resolv.conf
- scripts: 
+ scripts:
   - ~/register.sh
-  - ocata.sh
-  - undercloud_pre.sh
+  - common/newton.sh
+  - common/undercloud_pre.sh
+ files:
+   - path: /root/stack/clean.sh
+     origin: common/clean.sh
+   - path: /root/stack/undercloud.conf
+     origin: common/undercloud.conf
+   - path: /root/stack/undercloud.sh
+     origin: common/undercloud.sh
+   - path: /root/stack/instackenv.sh
+     origin: advancedceph/instackenv.sh
+   - path: /root/stack/assignprofiles.sh
+     origin: advancedceph/assignprofiles.sh
+   - path: /root/stack/deploy.sh
+     origin: advancedceph/deploy.sh
+   - path: /root/stack/templates.tar.gz
+     origin: advancedceph/templates.tar.gz
  nested: False
 
 tricontroller01:

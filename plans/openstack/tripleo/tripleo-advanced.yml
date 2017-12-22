@@ -1,0 +1,118 @@
+parameters:
+ user: testk
+ password: testk
+ project: testk
+ admin_password: unix1234
+
+tripleoprovisioning:
+ type: network
+ cidr: 10.0.0.0/24
+ dhcp: False
+ nat: False
+
+tripleopublic:
+ type: network
+ cidr: 192.168.101.0/24
+ dhcp: False
+
+undercloud:
+ template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+ memory: 8192
+ numcpus: 2
+ disks:
+  - size: 50
+ nets:
+  - name: tripleopublic
+    ip: 192.168.101.10
+    mask: 255.255.255.0
+    gateway: 192.168.101.1
+    dns: 192.168.101.1
+  - name: tripleoprovisioning
+    ip: 10.0.0.10
+    mask: 255.255.255.0
+ pool: default
+ cmds:
+  - echo undercloud.localdomain > /etc/hostname
+  - echo 192.168.101.10 undercloud.localdomain undercloud >> /etc/hosts
+  - echo GATEWAY=192.168.101.1 >> /etc/sysconfig/network
+  - echo nameserver 192.168.101.1 >> /etc/resolv.conf
+ scripts:
+  - ~/register.sh
+  - common/newton.sh
+  - common/undercloud_pre.sh
+ files:
+   - path: /root/stack/clean.sh
+     origin: common/clean.sh
+   - path: /root/stack/undercloud.conf
+     origin: common/undercloud.conf
+   - path: /root/stack/undercloud.sh
+     origin: common/undercloud.sh
+   - path: /root/stack/instackenv.sh
+     origin: advanced/instackenv.sh
+   - path: /root/stack/assignprofiles.sh
+     origin: advanced/assignprofiles.sh
+   - path: /root/stack/deploy.sh
+     origin: advanced/deploy.sh
+   - path: /root/stack/templates.tar.gz
+     origin: advanced/templates.tar.gz
+ nested: False
+
+tricontroller01:
+ cloudinit: False
+ memory: 6144
+ numcpus: 2
+ disks:
+  - size: 50
+ nets:
+  - name: tripleoprovisioning
+    mac: aa:bb:cc:dd:ee:01
+  - name: tripleopublic
+  - name: tripleopublic
+ pool: default
+ start: False
+ nested: False
+
+tricontroller02:
+ cloudinit: False
+ memory: 6144
+ numcpus: 2
+ disks:
+  - size: 50
+ nets:
+  - name: tripleoprovisioning
+    mac: aa:bb:cc:dd:ee:02
+  - name: tripleopublic
+  - name: tripleopublic
+ pool: default
+ start: False
+ nested: False
+
+tricontroller03:
+ cloudinit: False
+ memory: 6144
+ numcpus: 2
+ disks:
+  - size: 50
+ nets:
+  - name: tripleoprovisioning
+    mac: aa:bb:cc:dd:ee:03
+  - name: tripleopublic
+  - name: tripleopublic
+ pool: default
+ start: False
+ nested: False
+
+tricompute01:
+ cloudinit: False
+ memory: 4096
+ numcpus: 2
+ disks:
+  - size: 50
+ nets:
+  - name: tripleoprovisioning
+    mac: aa:bb:cc:dd:ee:04
+  - name: tripleopublic
+  - name: tripleopublic
+ pool: default
+ start: False
+ nested: False
