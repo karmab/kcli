@@ -11,6 +11,8 @@ import os
 import sys
 import yaml
 
+binary_types = ['bz2', 'deb', 'jpg', 'gz', 'jpeg', 'iso', 'png', 'rpm', 'tgz', 'zip']
+
 
 def symlinks(user, repo):
     mappings = []
@@ -194,7 +196,11 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                     if not os.path.exists(origin):
                         print("Skipping file %s as not found" % origin)
                         continue
-                    if overrides:
+                    binary = True if '.' in origin and len(origin.split('.')) == 2 and origin.split('.')[1].lower() in binary_types else False
+                    if binary:
+                        with open(origin, "rb") as f:
+                            content = f.read().encode("base64")
+                    elif overrides:
                         basedir = os.path.dirname(origin) if os.path.dirname(origin) != '' else '.'
                         env = Environment(block_start_string='[%', block_end_string='%]', variable_start_string='[[', variable_end_string=']]', loader=FileSystemLoader(basedir))
                         templ = env.get_template(os.path.basename(origin))
@@ -211,7 +217,10 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 userdata.write("- owner: %s:%s\n" % (owner, owner))
                 userdata.write("  path: %s\n" % path)
                 userdata.write("  permissions: '%s'\n" % (permissions))
-                userdata.write("  content: | \n")
+                if binary:
+                    userdata.write("  content: !!binary | \n")
+                else:
+                    userdata.write("  content: | \n")
                 if isinstance(content, str):
                     content = content.split('\n')
                 for line in content:
