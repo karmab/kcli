@@ -10,7 +10,7 @@ jq . << EOF > ~/instackenv.json
     {
       "node": "tricontroller01",
       "pm_addr": "192.168.101.1",
-      "pm_password": "$(cat ~/.ssh/id_rsa)",
+      "pm_password": "$(cat ~/.ssh/id_rsa_libvirt)",
       "pm_type": "pxe_ssh",
       "mac": [
         "aa:bb:cc:dd:ee:01"
@@ -24,7 +24,7 @@ jq . << EOF > ~/instackenv.json
     {
       "node": "tricontroller02",
       "pm_addr": "192.168.101.1",
-      "pm_password": "$(cat ~/.ssh/id_rsa)",
+      "pm_password": "$(cat ~/.ssh/id_rsa_libvirt)",
       "pm_type": "pxe_ssh",
       "mac": [
         "aa:bb:cc:dd:ee:02"
@@ -38,7 +38,7 @@ jq . << EOF > ~/instackenv.json
     {
       "node": "tricontroller03",
       "pm_addr": "192.168.101.1",
-      "pm_password": "$(cat ~/.ssh/id_rsa)",
+      "pm_password": "$(cat ~/.ssh/id_rsa_libvirt)",
       "pm_type": "pxe_ssh",
       "mac": [
         "aa:bb:cc:dd:ee:03"
@@ -52,7 +52,7 @@ jq . << EOF > ~/instackenv.json
     {
       "node": "tricompute01",
       "pm_addr": "192.168.101.1",
-      "pm_password": "$(cat ~/.ssh/id_rsa)",
+      "pm_password": "$(cat ~/.ssh/id_rsa_libvirt)",
       "pm_type": "pxe_ssh",
       "mac": [
         "aa:bb:cc:dd:ee:04"
