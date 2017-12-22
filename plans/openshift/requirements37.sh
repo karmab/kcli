@@ -10,5 +10,5 @@ mv /root/openshift-origin-client-tools-*/oc /usr/bin
 rm -rf  /root/openshift*
 #export ORIGIN_VERSION="v3.7.0-rc.0"
 export ORIGIN_VERSION="v3.7.0"
-curl -L https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl
-chmod +x /usr/local/bin/kubectl
+curl -L https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl -o /usr/bin/kubectl
+chmod +x /usr/bin/kubectl
