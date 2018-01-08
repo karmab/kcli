@@ -15,3 +15,4 @@ wget https://github.com/kubevirt/kubevirt/releases/download/$VERSION/virtctl-$VE
 mv virtctl-$VERSION-linux-amd64 /usr/bin/virtctl
 chmod u+x /usr/bin/virtctl
 oc create -f /root/iscsi-demo-target.yaml
+oc project default
