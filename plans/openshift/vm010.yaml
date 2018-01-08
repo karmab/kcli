@@ -3,6 +3,7 @@ kind: VirtualMachine
 metadata:
   name: testvm
 spec:
+  terminationGracePeriodSeconds: 0
   domain:
     devices:
       graphics:
@@ -14,7 +15,7 @@ spec:
       video:
       - type: qxl
       disks:
-      - type: PersistentVolumeClaim
+      - type: network
         snapshot: external
         device: disk
         driver:
@@ -22,7 +23,11 @@ spec:
           type: raw
           cache: none
         source:
-          name: disk-alpine
+          host:
+            name: iscsi-demo-target.kube-system
+            port: "3260"
+          protocol: iscsi
+          name: iqn.2017-01.io.kubevirt:sn.42/2
         target:
           dev: vda
       consoles:
