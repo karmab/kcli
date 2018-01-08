@@ -39,7 +39,8 @@ if [ "$?" != "0" ] ; then
 fi
 
 # SET NEW VERSION
-sed -i s"@tags/.*@tags/$VERSION@" home.md
+#sed -i s"@tags/.*@tags/$VERSION@" home.md
+sed -i s"@wiki.*@wiki/$VERSION)@" home.md
 git commit -am "$VERSION RELEASE"
 git push
 

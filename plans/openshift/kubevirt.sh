@@ -1,4 +1,4 @@
-VERSION="v0.1.0"
+VERSION="v[[ version ]]"
 yum -y install xorg-x11-xauth remote-viewer
 sed -i "s/SELINUX=enforcing/SELINUX=permissive/" /etc/selinux/config
 setenforce 0

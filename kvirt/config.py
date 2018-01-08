@@ -708,7 +708,7 @@ class Kconfig:
                         print("Using parameter %s: %s" % (parameter, overrides[parameter]))
             if not os.path.exists(group):
                 should_clean = True
-                self.plan(plan, get=url, path=group, inputfile=inputfile)
+                self.plan(plan, get=url, path=group, inputfile=inputfile, overrides=overrides)
             else:
                 common.pprint("Using existing directory %s" % group, color='green')
             os.chdir(group)
