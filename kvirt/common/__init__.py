@@ -205,7 +205,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                         env = Environment(block_start_string='[%', block_end_string='%]', variable_start_string='[[', variable_end_string=']]', loader=FileSystemLoader(basedir))
                         templ = env.get_template(os.path.basename(origin))
                         fileentries = templ.render(overrides)
-                        content = [line.strip() for line in fileentries.split('\n') if line.strip() != '']
+                        content = [line.rstrip() for line in fileentries.split('\n') if line.rstrip() != '']
                     else:
                         content = open(origin, 'r').readlines()
                 elif content is None:
