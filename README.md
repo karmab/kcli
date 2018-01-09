@@ -80,6 +80,8 @@ echo deb [trusted=yes] https://packagecloud.io/karmab/kcli/ubuntu/ zesty main > 
 
 ## [Centos installation](centos.md)
 
+## [Debian/Ubuntu installation](debian.md)
+
 ## [I want to use docker, I'm cool](docker.md)
 
 ## [I want to use virtualbox, I'm not cool](VBOX.md)
