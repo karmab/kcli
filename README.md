@@ -60,8 +60,6 @@ If not running as root, you'll also have to add your user to those groups
 sudo usermod -aG qemu,libvirt YOUR_USER
 ```
 
-for *centos*, check [here](centos.md)
-
 for *macosx*, you'll want to check the docker installation section ( if planning to go against a remote kvm host ) or the dev section for virtualbox
 
 ## Installation
@@ -79,6 +77,8 @@ echo deb [trusted=yes] https://packagecloud.io/karmab/kcli/ubuntu/ zesty main > 
 ```
 
 ## [Dev installation](dev.md)
+
+## [Centos installation](centos.md)
 
 ## [I want to use docker, I'm cool](docker.md)
 

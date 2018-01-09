@@ -1,6 +1,6 @@
 ```bash
 yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-yum -y install ftp://rpmfind.net/linux/fedora/linux/development/rawhide/Everything/armhfp/os/Packages/p/python2-six-1.10.0-8.fc26.noarch.rpm
+yum -y install http://dl.fedoraproject.org/pub/fedora-secondary/releases/26/Everything/i386/os/Packages/p/python2-six-1.10.0-8.fc26.noarch.rpm
 yum -y install ftp://fr2.rpmfind.net/linux/fedora-secondary/releases/25/Everything/s390x/os/Packages/p/python2-docker-pycreds-0.2.1-2.fc25.noarch.rpm
 
 cat > /etc/yum.repos.d/kcli.repo <<EOF
