@@ -5,13 +5,13 @@
   description: Upstream Openshift based on oc cluster up
   numvms: 1
   memory: 6144
-  comments: version can also be set to to older ones
+  comments: openshift_version can also be set to to an older one
   template: CentOS-7-x86_64-GenericCloud.qcow2
   parameters:
    memory: 6144
    docker_disk_size: 60
    initializer: false
-   version: 3.7
+   openshift_version: 3.7
 
 - name: ocp
   group: openshift
@@ -22,7 +22,7 @@
   memory: 6144
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
   parameters:
-   version: 3.7
+   openshift_version: 3.7
 
 - name: ocp_1master+2nodes
   group: openshift
@@ -65,7 +65,7 @@
   parameters:
    docker_disk_size: 60
    initializer: false
-   version: 3.7
+   openshift_version: 3.7
    helm_version: 2.6.0
 
 - name: monocular
@@ -79,7 +79,7 @@
   parameters:
    docker_disk_size: 60
    initializer: false
-   version: 3.7
+   openshift_version: 3.7
    helm_version: 2.6.0
 
 - name: istio
@@ -94,7 +94,7 @@
     docker_disk_size: 60
     deploy_book_info: true
     initializer: false
-    version: 3.7
+    openshift_version: 3.7
 
 - name: asb
   group: openshift
@@ -107,7 +107,7 @@
   parameters:
    docker_disk_size: 60
    initializer: false
-   version: 3.7
+   openshift_version: 3.7
 
 - name: minishift
   group: openshift
@@ -149,7 +149,7 @@
    docker_disk_size: 60
    kubevirt_version: 0.1.0
    initializer: false
-   version: 3.7
+   openshift_version: 3.7
 
 - name: fission
   group: openshift
@@ -164,7 +164,7 @@
    fission_type: core
    fission_version: 0.4.0
    docker_disk_size: 60
-   version: 3.7
+   openshift_version: 3.7
 
 - name: openwhisk
   group: openshift
@@ -177,4 +177,4 @@
   parameters:
    docker_disk_size: 60
    initializer: false
-   version: 3.7
+   openshift_version: 3.7

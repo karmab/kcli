@@ -1,1 +1,17 @@
-downstream37.yml
+parameters:
+ openshift_version: 3.7
+
+ocp:
+ template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+ numcpus: 2
+ memory: 2048
+ nets:
+  - default
+ disks:
+  - size: 10
+  - size: 20
+ pool: default
+ scripts: 
+  - ~/register.sh
+  - subscription.sh
+  - downstream.sh

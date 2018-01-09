@@ -1,7 +1,7 @@
 parameters:
   docker_disk_size: 60
   initializer: false
-  version: 3.7
+  openshift_version: 3.7
   helm_version: 2.6.0
 
 helm:
