@@ -162,14 +162,17 @@
   group: openshift
   url: github.com/karmab/kcli/plans/openshift
   file: upstream.yml
-  description: Upstream Openshift 3.7.0 based on oc cluster up
+  description: Upstream Openshift based on oc cluster up
   numvms: 1
   memory: 6144
+  comments: version can also be set to to older ones
   template: CentOS-7-x86_64-GenericCloud.qcow2
   parameters:
    template: CentOS-7-x86_64-GenericCloud.qcow2
    memory: 6144
    docker_disk_size: 60
+   initializer: false
+   version: 3.7
 
 - name: origin37
   group: openshift
