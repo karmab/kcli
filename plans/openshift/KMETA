@@ -151,6 +151,7 @@
    fission_version: 0.4.0
    docker_disk_size: 60
    openshift_version: 3.7
+   helm_version: 2.6.0
 
 - name: openwhisk
   group: openshift
