@@ -155,13 +155,14 @@
   group: openshift
   url: github.com/karmab/kcli/plans/openshift
   file: fission.yml
-  description: Upstream Fission 0.4.0 all in one
+  description: Upstream Fission all in one
   numvms: 1
   memory: 8192
   template: CentOS-7-x86_64-GenericCloud.qcow2
-  comments: Either set version to core or all
+  comments: Either set type to core or all
   parameters:
-   fission_version: core
+   fission_type: core
+   fission_version: 0.4.0
    docker_disk_size: 60
    version: 3.7
 
