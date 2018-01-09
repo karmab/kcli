@@ -8,65 +8,10 @@
   comments: version can also be set to to older ones
   template: CentOS-7-x86_64-GenericCloud.qcow2
   parameters:
-   template: CentOS-7-x86_64-GenericCloud.qcow2
    memory: 6144
    docker_disk_size: 60
    initializer: false
    version: 3.7
-
-- name: origin37
-  group: openshift
-  url: github.com/karmab/kcli/plans/openshift
-  file: upstream37.yml
-  description: Upstream Openshift 3.7 based on oc cluster up
-  numvms: 1
-  memory: 6144
-  template: CentOS-7-x86_64-GenericCloud.qcow2
-
-- name: origin36
-  group: openshift
-  url: github.com/karmab/kcli/plans/openshift
-  file: upstream36.yml
-  description: Upstream Openshift 3.6 based on oc cluster up
-  numvms: 1
-  memory: 6144
-  template: CentOS-7-x86_64-GenericCloud.qcow2
-
-- name: origin35
-  group: openshift
-  url: github.com/karmab/kcli/plans/openshift
-  file: upstream35.yml
-  description: Upstream Openshift 3.5 based on oc cluster up
-  numvms: 1
-  memory: 6144
-  template: CentOS-7-x86_64-GenericCloud.qcow2
-
-- name: origin34
-  group: openshift
-  url: github.com/karmab/kcli/plans/openshift
-  file: upstream34.yml
-  description: Upstream Openshift 3.4 based on oc cluster up
-  numvms: 1
-  memory: 6144
-  template: CentOS-7-x86_64-GenericCloud.qcow2
-
-- name: origin33
-  group: openshift
-  url: github.com/karmab/kcli/plans/openshift
-  file: upstream33.yml
-  description: Upstream Openshift 3.3 based on oc cluster up
-  numvms: 1
-  memory: 6144
-  template: CentOS-7-x86_64-GenericCloud.qcow2
-
-- name: origin32
-  group: openshift
-  url: github.com/karmab/kcli/plans/openshift
-  file: upstream32.yml
-  description: Upstream Openshift 3.2 based on oc cluster up
-  numvms: 1
-  memory: 6144
-  template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: ocp
   group: openshift
@@ -76,15 +21,8 @@
   numvms: 1
   memory: 6144
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
-
-- name: ocp36
-  group: openshift
-  url: github.com/karmab/kcli/plans/openshift
-  file: downstream36.yml
-  description: Downstream Openshift 3.6 based on oc cluster up
-  numvms: 1
-  memory: 6144
-  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  parameters:
+   version: 3.7
 
 - name: ocp_1master+2nodes
   group: openshift
@@ -126,6 +64,9 @@
   template: CentOS-7-x86_64-GenericCloud.qcow2
   parameters:
    docker_disk_size: 60
+   initializer: false
+   version: 3.7
+   helm_version: 2.6.0
 
 - name: monocular
   group: openshift
@@ -135,24 +76,11 @@
   numvms: 1
   memory: 6144
   template: CentOS-7-x86_64-GenericCloud.qcow2
-
-- name: istio21
-  group: openshift
-  url: github.com/karmab/kcli/plans/openshift
-  file: istio21.yml
-  description: Istio 0.2.1 based on oc cluster up ( with addons and bookinfo app)
-  numvms: 1
-  memory: 6144
-  template: CentOS-7-x86_64-GenericCloud.qcow2
-
-- name: istio22
-  group: openshift
-  url: github.com/karmab/kcli/plans/openshift
-  file: istio22.yml
-  description: Istio 0.2.2 based on oc cluster up ( with addons and bookinfo app)
-  numvms: 1
-  memory: 6144
-  template: CentOS-7-x86_64-GenericCloud.qcow2
+  parameters:
+   docker_disk_size: 60
+   initializer: false
+   version: 3.7
+   helm_version: 2.6.0
 
 - name: istio
   group: openshift
@@ -165,26 +93,21 @@
   parameters:
     docker_disk_size: 60
     deploy_book_info: true
+    initializer: false
+    version: 3.7
 
 - name: asb
   group: openshift
   url: github.com/karmab/kcli/plans/openshift
   file: asb.yml
-  description: Ansible Service Broker ( based on oc cluster up latest)
+  description: Ansible Service Broker ( based on oc cluster up )
   numvms: 1
   memory: 6144
   template: CentOS-7-x86_64-GenericCloud.qcow2
   parameters:
    docker_disk_size: 60
-
-- name: asb36
-  group: openshift
-  url: github.com/karmab/kcli/plans/openshift
-  file: asb36.yml
-  description: Ansible Service Broker ( based on oc cluster up from 3.6)
-  numvms: 1
-  memory: 6144
-  template: CentOS-7-x86_64-GenericCloud.qcow2
+   initializer: false
+   version: 3.7
 
 - name: minishift
   group: openshift
@@ -213,18 +136,6 @@
   memory: 7168
   template: CentOS-7-x86_64-GenericCloud.qcow2
 
-- name: allinone
-  group: openshift
-  url: github.com/karmab/kcli/plans/openshift/allinone
-  file: downstream.yml
-  description: Downstream Openshift 3.7 allinone. Sadly ansible needs to be relaunched manually
-  numvms: 1
-  memory: 8192
-  template: rhel-guest-image-7.3-35.x86_64.qcow2
-  parameters:
-   name: allinone
-   memory: 8192
-
 - name: kubevirt
   group: openshift
   url: github.com/karmab/kcli/plans/openshift
@@ -236,7 +147,9 @@
   comments: version has to be superior or equal to 0.1.0
   parameters:
    docker_disk_size: 60
-   version: 0.1.0
+   kubevirt_version: 0.1.0
+   initializer: false
+   version: 3.7
 
 - name: fission
   group: openshift
@@ -248,8 +161,9 @@
   template: CentOS-7-x86_64-GenericCloud.qcow2
   comments: Either set version to core or all
   parameters:
-   version: core
+   fission_version: core
    docker_disk_size: 60
+   version: 3.7
 
 - name: openwhisk
   group: openshift
@@ -259,3 +173,7 @@
   numvms: 1
   memory: 8192
   template: CentOS-7-x86_64-GenericCloud.qcow2
+  parameters:
+   docker_disk_size: 60
+   initializer: false
+   version: 3.7

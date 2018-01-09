@@ -13,7 +13,6 @@ dnf -y install apb
 #mv oc-linux-64bit/oc /usr/bin
 #chmod u+x /usr/bin/oc
 wget https://raw.githubusercontent.com/openshift/ansible-service-broker/master/scripts/run_latest_build.sh
-#export ORIGIN_VERSION="v3.7.0-rc.0"
 export ORIGIN_VERSION="v3.7.0"
 rm -rf /usr/share/rhel/secrets
 chmod +x run_latest_build.sh

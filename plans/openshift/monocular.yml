@@ -1,12 +1,20 @@
-helm:
- template: CentOS-7-x86_64-GenericCloud.qcow2
+parameters:
+  template: CentOS-7-x86_64-GenericCloud.qcow2
+  memory: 6144
+  docker_disk_size: 60
+  initializer: false
+  version: 3.7
+  helm_version: 2.6.0
+
+monocular:
+ template: [[ template ]]
  numcpus: 2
- memory: 6144
+ memory: [[ memory ]]
  nets:
   - default
  disks:
   - size: 10
-  - size: 60
+  - size: [[ docker_disk_size ]]
  pool: default
  scripts: 
   - requirements.sh

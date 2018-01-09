@@ -1,5 +1,5 @@
 parameters:
- version: core
+ fission_version: core
  docker_disk_size: 60
 fission:
  template: CentOS-7-x86_64-GenericCloud.qcow2

@@ -1,4 +1,11 @@
-fission:
+parameters:
+  template: CentOS-7-x86_64-GenericCloud.qcow2
+  memory: 6144
+  docker_disk_size: 60
+  initializer: false
+  version: 3.7
+
+openwhisk:
  template: CentOS-7-x86_64-GenericCloud.qcow2
  numcpus: 2
  memory: 8192

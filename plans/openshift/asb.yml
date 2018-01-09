@@ -1,5 +1,7 @@
 parameters:
  docker_disk_size: 60
+ initializer: false
+ version: 3.7
 
 asb:
  template: Fedora-Cloud-Base-26-1.5.x86_64.qcow2
