@@ -86,7 +86,7 @@
   group: openshift
   url: github.com/karmab/kcli/plans/openshift
   file: istio.yml
-  description: Istio Latest Stable based on oc cluster up ( with addons and optional bookinfo app)
+  description: Istio Latest Stable based on oc cluster up with addons and optional bookinfo app
   numvms: 1
   memory: 6144
   template: CentOS-7-x86_64-GenericCloud.qcow2
@@ -100,7 +100,7 @@
   group: openshift
   url: github.com/karmab/kcli/plans/openshift
   file: asb.yml
-  description: Ansible Service Broker ( based on oc cluster up )
+  description: Ansible Service Broker based on oc cluster up
   numvms: 1
   memory: 6144
   template: CentOS-7-x86_64-GenericCloud.qcow2
@@ -113,7 +113,7 @@
   group: openshift
   url: github.com/karmab/kcli/plans/openshift
   file: minishift.yml
-  description: minshift (bringing up a secondary vm)
+  description: minshift bringing up a secondary vm
   comment: openshift_version can also be set to 3.6.1/3.7.0-rc.0
   numvms: 2
   memory: 7168
