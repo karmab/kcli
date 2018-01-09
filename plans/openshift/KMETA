@@ -93,7 +93,7 @@
   parameters:
     docker_disk_size: 60
     deploy_book_info: true
-    initializer: false
+    initializer: true
     openshift_version: 3.7
 
 - name: asb
