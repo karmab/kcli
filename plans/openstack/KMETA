@@ -2,7 +2,7 @@
   group: openstack
   url: github.com/karmab/kcli/plans/openstack
   file: upstream.yml
-  description: Upstream openstack based on packstack
+  description: Upstream packstack
   numvms: 1
   template: CentOS-7-x86_64-GenericCloud.qcow2
   comments: Version can be set to queen,pike,ocata,newton,liberty
@@ -17,7 +17,7 @@
   group: openstack
   url: github.com/karmab/kcli/plans/openstack
   file: downstream.yml
-  description: Downstream openstack based on packstack
+  description: Downstream packstack
   numvms: 1
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
   comments: Version can be set to queen,pike,ocata,newton,liberty, kilo
@@ -32,55 +32,47 @@
   group: openstack
   url: github.com/karmab/kcli/plans/openstack
   file: advanced.yml
-  description: Downstream newton based on packstack with one controller and arbitrary compute nodes (2 by default)
+  description: Downstream packstack with one controller and arbitrary compute nodes (2 by default)
   numvms: 3
-  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  template: rhel-guest-image-7.3-35.x86_64.qcow2
   parameters:
    user: testk
    password: testk
    project: testk
    admin_password: unix1234
    number_computes: 2
+   version: queen
+   livemigration: false
   
-- name: advanced_live
-  group: openstack
-  url: github.com/karmab/kcli/plans/openstack
-  file: advanced_live.yml
-  description: Downstream newton based on packstack with one controller and three compute and with Live Migration Based on NFS
-  numvms: 4
-  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
-  parameters:
-   user: testk
-   password: testk
-   project: testk
-   admin_password: unix1234
-
 - name: tripleo
   group: openstack
   url: github.com/karmab/kcli/plans/openstack/tripleo
   file: tripleo.yml
-  description: Downstream newton based on tripleo (1undercloud+1controllers+1compute)
+  description: Downstream tripleo (1undercloud+1controllers+1compute)
   numvms: 3
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
   parameters:
    admin_password: unix1234
+   version: queen
 
 - name: advancedtripleo
   group: openstack
   url: github.com/karmab/kcli/plans/openstack/tripleo
   file: advanced.yml
-  description: Downstream newton based on tripleo (1undercloud+3controllers+1compute)
+  description: Downstream tripleo (1undercloud+3controllers+1compute)
   numvms: 5
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
   parameters:
    admin_password: unix1234
+   version: queen
 
 - name: advancedtripleoceph
   group: openstack
   url: github.com/karmab/kcli/plans/openstack/tripleo
   file: advancedceph.yml
-  description: Downstream newton based on tripleo (1undercloud+3controllers+1compute+3ceph)
+  description: Downstream tripleo (1undercloud+3controllers+1compute+3ceph)
   numvms: 8
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
   parameters:
    admin_password: unix1234
+   version: queen

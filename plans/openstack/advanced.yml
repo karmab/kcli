@@ -4,6 +4,8 @@ parameters:
  project: testk
  admin_password: unix1234
  computes: 2
+ version: queen
+ livemigration: false
 
 ospcontroller:
  template: rhel-guest-image-7.3-35.x86_64.qcow2
@@ -20,9 +22,13 @@ ospcontroller:
  domain: default
  scripts: 
   - ~/register.sh
-  - subscription_newton.sh
+  - subscription.sh
   - advanced/install.sh
   - provision.sh
+[% if livemigration %]
+  - advanced/nfs_livemigration.sh
+  - advanced/rally.sh
+[% endif %]
 
 [% for number in range(1,computes+1) %]
 ospcompute0[[ number ]]:
@@ -39,5 +45,5 @@ ospcompute0[[ number ]]:
  reservedns: true
  scripts: 
   - ~/register.sh
-  - subscription_newton.sh
+  - subscription.sh
 [% endfor %]
