@@ -18,6 +18,8 @@ istio:
   - path: /root/bookgen.sh
     origin: bookgen.sh
     mode: 700
+  - path: /root/initializer.txt
+    origin: initializer.txt
  scripts: 
   - requirements.sh
   - upstream.sh

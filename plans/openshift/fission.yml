@@ -22,6 +22,8 @@ fission:
     origin: hello.js
   - path: /etc/profile.d/fission.sh
     origin: fission_profile.sh
+  - path: /root/initializer.txt
+    origin: initializer.txt
  scripts: 
   - requirements.sh
   - upstream.sh

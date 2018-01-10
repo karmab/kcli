@@ -35,9 +35,10 @@ oc expose svc grafana
 oc expose svc zipkin
 sleep 90
 [% if deploy_book_info is defined and deploy_book_info %]
+oc new-project bookinfo
 istioctl kube-inject -f samples/bookinfo/kube/bookinfo.yaml | oc apply -f -
 oc expose svc productpage
 oc new-project istio-config-default
 [% endif %]
-oc create -f https://raw.githubusercontent.com/istio/istio/master/samples/apps/bookinfo/rules/mixer-rule-standard-metrics.yaml
+oc create -f https://raw.githubusercontent.com/istio/istio/master/samples/bookinfo/kube/mixer-rule-additional-telemetry.yaml
 oc project istio-system

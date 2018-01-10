@@ -18,6 +18,8 @@ openwhisk:
  files:
   - path: /root/openwhisk_secret.sh
     origin: openwhisk_secret.sh
+  - path: /root/initializer.txt
+    origin: initializer.txt
  scripts: 
   - requirements.sh
   - upstream.sh

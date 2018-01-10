@@ -92,7 +92,7 @@
   template: CentOS-7-x86_64-GenericCloud.qcow2
   parameters:
     docker_disk_size: 60
-    deploy_book_info: true
+    deploy_book_info: false
     initializer: true
     openshift_version: 3.7
 

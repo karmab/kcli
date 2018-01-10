@@ -15,11 +15,9 @@ origin:
   - size: 10
   - size: [[ docker_disk_size ]]
  pool: default
-[% if initializer %]
  files:
   - path: /root/initializer.txt
     origin: initializer.txt
-[% endif %]
  scripts: 
   - requirements.sh
   - upstream.sh
