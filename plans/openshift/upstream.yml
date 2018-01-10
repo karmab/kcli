@@ -4,6 +4,7 @@ parameters:
   docker_disk_size: 60
   initializer: false
   openshift_version: 3.7
+  metrics: false
 
 origin:
  template: [[ template ]]
