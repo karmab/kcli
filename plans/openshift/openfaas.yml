@@ -1,0 +1,27 @@
+parameters:
+ docker_disk_size: 60
+ openshift_version: 3.7
+
+openfaas:
+ template: CentOS-7-x86_64-GenericCloud.qcow2
+ numcpus: 2
+ memory: 6144
+ nets:
+  - default
+ disks:
+  - size: 10
+  - size: [[ docker_disk_size ]]
+ pool: default
+ files:
+  - path: /root/hello.py
+    origin: openfaas_hello.py
+  - path: /root/hello.js
+    origin: openfaas_hello.js
+  - path: /etc/profile.d/openfaas.sh
+    origin: openfaas_profile.sh
+  - path: /root/initializer.txt
+    origin: initializer.txt
+ scripts: 
+  - requirements.sh
+  - upstream.sh
+  - openfaas.sh
