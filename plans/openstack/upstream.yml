@@ -4,6 +4,7 @@ parameters:
  password: testk
  project: testk
  admin_password: unix1234
+ ovn: false
 
 [[ version ]]:
  template: CentOS-7-x86_64-GenericCloud.qcow2

@@ -12,6 +12,7 @@
    password: testk
    project: testk
    admin_password: unix1234
+   ovn: false
 
 - name: downstream
   group: openstack
