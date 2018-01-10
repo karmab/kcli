@@ -5,7 +5,7 @@
   description: Upstream Openshift based on oc cluster up
   numvms: 1
   memory: 6144
-  comments: openshift_version can also be set to to an older one
+  comments: openshift_version can also be set to to an older one and openshift_tag defined to use a specific tag
   template: CentOS-7-x86_64-GenericCloud.qcow2
   parameters:
    memory: 6144
