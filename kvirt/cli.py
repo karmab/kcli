@@ -1194,6 +1194,9 @@ def cli():
     vm_parser.add_argument('--paramfile', help='Get parameters for rendering within scripts from a file.Takes precedence over individual parameters', metavar='PARAMFILE')
     vm_parser.add_argument('name', metavar='VMNAME', nargs='?')
     vm_parser.set_defaults(func=vm)
+    if len(sys.argv) == 1:
+        parser.print_help()
+        os._exit(0)
     args = parser.parse_args()
     if args.func.func_name == 'vm' and args.client is not None and ',' in args.client:
             args.client = random.choice(args.client.split(','))
