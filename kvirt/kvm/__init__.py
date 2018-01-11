@@ -208,7 +208,12 @@ class Kvirt(Kbase):
                     backingxml = backingvolume.XMLDesc(0)
                     root = ET.fromstring(backingxml)
                 except:
-                    return {'result': 'failure', 'reason': "Invalid template %s" % disktemplate}
+                    shortname = [t for t in defaults.TEMPLATES if defaults.TEMPLATES[t] == disktemplate]
+                    if shortname:
+                        msg = "you don't have template %s. Use kcli download %s" % (disktemplate, shortname[0])
+                    else:
+                        msg = "you don't have template %s" % disktemplate
+                    return {'result': 'failure', 'reason': msg}
                 backing = backingvolume.path()
                 if '/dev' in backing and diskpooltype == 'dir':
                     return {'result': 'failure', 'reason': "lvm template can not be used with a dir pool.Leaving..."}

@@ -670,7 +670,7 @@ class Kbox(Kbase):
         if template is not None:
             volumes = self.volumes()
             if template not in volumes and template not in volumes.values():
-                print("Invalid template %s.Leaving..." % template)
+                print("you don't have template %s.Leaving..." % template)
                 return
             templatepath = "%s/%s" % (poolpath, template)
             if template in volumes:

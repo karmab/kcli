@@ -709,11 +709,12 @@ class Kconfig:
                 for parameter in parameters:
                     if parameter in overrides:
                         print("Using parameter %s: %s" % (parameter, overrides[parameter]))
+            common.pprint("Gathering all from group %s" % group, color='green')
             if not os.path.exists(group):
                 should_clean = True
                 self.plan(plan, get=url, path=group, inputfile=inputfile, overrides=overrides)
             else:
-                common.pprint("Using existing directory %s" % group, color='green')
+                common.pprint("Using existing directory %s. Make sure it contains kcli content" % group, color='green')
             os.chdir(group)
             common.pprint("Running: kcli plan -f %s %s" % (inputfile, plan), color='green')
             self.plan(plan, inputfile=inputfile, overrides=overrides)
