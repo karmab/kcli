@@ -658,10 +658,13 @@ class Kconfig:
             product = products[0]
             repo = product['repo']
             group = product['group']
+            description = product.get('description')
             numvms = product.get('numvms')
             template = product.get('template')
             comments = product.get('comments')
             parameters = product.get('parameters')
+            if description is not None:
+                print("description: %s" % description)
             if group is not None:
                 print("group: %s" % group)
             if numvms is not None:
