@@ -207,11 +207,10 @@ def info(args):
 
 def host(args):
     """Handle host"""
-    switch = args.switch
     enable = args.enable
     disable = args.disable
     global config
-    result = config.handle_host(switch=switch, enable=enable, disable=disable)
+    result = config.handle_host(enable=enable, disable=disable)
     if result['result'] == 'success':
         os._exit(0)
     else:
@@ -1012,7 +1011,6 @@ def cli():
     host_parser = subparsers.add_parser('host', description=host_info, help=host_info)
     host_parser.add_argument('-d', '--disable', help='Disable indicated client', metavar='CLIENT')
     host_parser.add_argument('-e', '--enable', help='Enable indicated client', metavar='CLIENT')
-    host_parser.add_argument('-s', '--switch', help='Switch To indicated client', metavar='CLIENT')
     host_parser.set_defaults(func=host)
 
     info_info = 'Info vms'
