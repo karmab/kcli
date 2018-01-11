@@ -162,7 +162,7 @@
   numvms: 1
   memory: 8192
   template: CentOS-7-x86_64-GenericCloud.qcow2
-  comments: OPENFAAS_URL variable is configured for interaction
+  comments: OPENFAAS_URL OPENFAAS_UI are variables set to the function processor and ui respectively. two functions hellopy and hellojs can be called at $OPENFAAS_URL/function/hellopy and $OPENFAAS_URL/function/hellojs
   parameters:
    docker_disk_size: 60
    openshift_version: 3.7
