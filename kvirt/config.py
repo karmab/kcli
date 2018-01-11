@@ -1343,7 +1343,7 @@ class Kconfig:
                 newini = ''
                 for line in open(inifile).readlines():
                     if 'client' in line:
-                        newini += " client: %s\n" % switch
+                        newini += "  client: %s\n" % switch
                     else:
                         newini += line
                 open(inifile, 'w').write(newini)

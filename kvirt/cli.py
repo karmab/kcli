@@ -11,6 +11,7 @@ from kvirt import nameutils
 from kvirt import dockerutils
 import os
 import random
+import sys
 import yaml
 
 
@@ -830,6 +831,8 @@ def bootstrap(args):
         poolpath = '/var/lib/libvirt/images'
     if host == '127.0.0.1':
         ini = {'default': {'client': 'local', 'cloudinit': True, 'tunnel': False, 'reservehost': False, 'insecure': True, 'enableroot': True, 'reserveip': False, 'reservedns': False, 'reservehost': False, 'nested': True, 'start': True}, 'local': {'pool': pool, 'nets': ['default']}}
+        if not sys.platform.startswith('linux'):
+            ini['local']['type'] = 'vbox'
     else:
         if name is None:
             name = host
