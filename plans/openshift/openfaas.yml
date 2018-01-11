@@ -13,6 +13,9 @@ openfaas:
   - size: [[ docker_disk_size ]]
  pool: default
  files:
+  - path: /root/test.sh
+    origin: openfaas_test.sh
+    mode: 700
   - path: /root/hello.py
     origin: openfaas_hello.py
   - path: /root/hello.js

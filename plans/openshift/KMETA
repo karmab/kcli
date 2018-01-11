@@ -142,7 +142,7 @@
   group: openshift
   url: github.com/karmab/kcli/plans/openshift
   file: fission.yml
-  description: Upstream Fission all in one
+  description: Fission all in one
   numvms: 1
   memory: 8192
   template: CentOS-7-x86_64-GenericCloud.qcow2
@@ -153,6 +153,19 @@
    docker_disk_size: 60
    openshift_version: 3.7
    helm_version: 2.6.0
+
+- name: openfaas
+  group: openshift
+  url: github.com/karmab/kcli/plans/openshift
+  file: openfaas.yml
+  description: Openfaas all in one
+  numvms: 1
+  memory: 8192
+  template: CentOS-7-x86_64-GenericCloud.qcow2
+  comments: OPENFAAS_URL variable is configured for interaction
+  parameters:
+   docker_disk_size: 60
+   openshift_version: 3.7
 
 - name: openwhisk
   group: openshift
