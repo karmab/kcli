@@ -228,6 +228,7 @@
    initializer: false
    openshift_version: 3.7
    helm_version: 2.6.0
+   metrics: false
 
 - name: monocular
   group: openshift
@@ -242,6 +243,7 @@
    initializer: false
    openshift_version: 3.7
    helm_version: 2.6.0
+   metrics: false
 
 - name: istio
   group: openshift
@@ -252,10 +254,11 @@
   memory: 6144
   template: CentOS-7-x86_64-GenericCloud.qcow2
   parameters:
-    docker_disk_size: 60
-    deploy_book_info: false
-    initializer: true
-    openshift_version: 3.7
+   docker_disk_size: 60
+   deploy_book_info: false
+   initializer: true
+   openshift_version: 3.7
+   metrics: false
 
 - name: asb
   group: openshift
@@ -297,6 +300,7 @@
    kubevirt_version: 0.1.0
    initializer: false
    openshift_version: 3.7
+   metrics: false
 
 - name: fission
   group: openshift
@@ -313,6 +317,7 @@
    docker_disk_size: 60
    openshift_version: 3.7
    helm_version: 2.6.0
+   metrics: false
 
 - name: openfaas
   group: openshift
@@ -326,6 +331,7 @@
   parameters:
    docker_disk_size: 60
    openshift_version: 3.7
+   metrics: false
 
 - name: openwhisk
   group: openshift
@@ -339,6 +345,7 @@
    docker_disk_size: 60
    initializer: false
    openshift_version: 3.7
+   metrics: false
 
 - name: upstream
   group: openstack
