@@ -3,6 +3,7 @@ parameters:
   initializer: false
   openshift_version: 3.7
   helm_version: 2.6.0
+  metrics: false
 
 helm:
  template: CentOS-7-x86_64-GenericCloud.qcow2

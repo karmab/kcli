@@ -3,6 +3,7 @@ parameters:
   deploy_book_info: false
   initializer: true
   openshift_version: 3.7
+  metrics: false
 
 istio:
  template: CentOS-7-x86_64-GenericCloud.qcow2

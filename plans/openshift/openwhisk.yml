@@ -4,6 +4,7 @@ parameters:
   docker_disk_size: 60
   initializer: false
   openshift_version: 3.7
+  metrics: false
 
 openwhisk:
  template: CentOS-7-x86_64-GenericCloud.qcow2

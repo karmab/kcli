@@ -5,6 +5,7 @@ parameters:
   initializer: false
   openshift_version: 3.7
   helm_version: 2.6.0
+  metrics: false
 
 monocular:
  template: [[ template ]]

@@ -4,6 +4,7 @@ parameters:
  docker_disk_size: 60
  openshift_version: 3.7
  helm_version: 2.6.0
+ metrics: false
 
 fission:
  template: CentOS-7-x86_64-GenericCloud.qcow2

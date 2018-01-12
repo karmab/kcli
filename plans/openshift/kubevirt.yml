@@ -3,6 +3,7 @@ parameters:
    kubevirt_version: 0.1.0
    initializer: false
    openshift_version: 3.7
+   metrics: false
 
 kubevirt:
  template: CentOS-7-x86_64-GenericCloud.qcow2
