@@ -17,3 +17,4 @@ oc adm policy add-cluster-role-to-user cluster-admin developer --config=/var/lib
 grep -q Initializers /var/lib/origin/openshift.local.config/master/master-config.yaml || sed  -i "/GenericAdmissionWebhook/i\ \ \ \ `cat /root/initializer.txt`" /var/lib/origin/openshift.local.config/master/master-config.yaml
 docker restart origin
 [% endif %]
+docker update --restart=always origin
