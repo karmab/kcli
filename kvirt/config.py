@@ -1197,6 +1197,8 @@ class Kconfig:
                             playbook = element['playbook']
                             if 'variables' in element:
                                 variables = element['variables']
+                            else:
+                                variables = None
                             if 'verbose' in element:
                                 verbose = element['verbose']
                             else:
