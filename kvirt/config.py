@@ -1007,6 +1007,7 @@ class Kconfig:
                                     entries[newentry] = entries["%s01" % entry]
                                     vmentries.append(newentry)
                 common.pprint("Deploying Vms...", color='green')
+                vmcounter = 0
                 for name in vmentries:
                     if len(vmentries) == 1 and 'name' in overrides:
                         newname = overrides['name']
@@ -1162,6 +1163,7 @@ class Kconfig:
                             cmds = cmds + reportcmd
                     files = next((e for e in [profile.get('files'), customprofile.get('files')] if e is not None), [])
                     if sharedkey:
+                        vmcounter += 1
                         if not os.path.exists("%s.key" % plan) or not os.path.exists("%s.key.pub" % plan):
                             os.popen("ssh-keygen -t rsa -N '' -f %s.key" % plan)
                         publickey = open("%s.key.pub" % plan).read().strip()
@@ -1175,8 +1177,9 @@ class Kconfig:
                             files.append({'path': '/root/.ssh/id_rsa.pub', 'content': publickey})
                         else:
                             files = [{'path': '/root/.ssh/id_rsa', 'content': privatekey}, {'path': '/root/.ssh/id_rsa.pub', 'content': publickey}]
-                        os.remove("%s.key.pub" % plan)
-                        os.remove("%s.key" % plan)
+                        if vmcounter >= len(vmentries):
+                            os.remove("%s.key.pub" % plan)
+                            os.remove("%s.key" % plan)
                     elif privatekey:
                         privatekeyfile = None
                         if os.path.exists("%s/.ssh/id_rsa" % os.environ['HOME']):
