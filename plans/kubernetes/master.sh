@@ -8,10 +8,11 @@ kubectl create -f /root/kube-flannel-rbac.yml
 kubectl apply -f /root/kube-flannel.yml
 #export TOKEN=`kubeadm token list  | tail -1 | cut -f1 -d' '`
 #export CMD="kubeadm join --token $TOKEN kumaster:6443"
-export CMD="kubeadm token create --print-join-command"
+export CMD=`kubeadm token create --print-join-command`
 echo $CMD > /root/join.sh
-sleep 80
+sleep 160
 [% for number in range(1,nodes+1) %]
 ssh-keyscan -H kunode0[[ number ]] >> ~/.ssh/known_hosts
-ssh root@kunode0[[ number ]] $CMD
+scp /etc/kubernetes/admin.conf root@kunode0[[ number ]]:/etc/kubernetes/
+ssh root@kunode0[[ number ]] $CMD > kunode0[[ number ]].log
 [% endfor %]

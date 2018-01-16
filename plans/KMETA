@@ -288,7 +288,7 @@
   template: CentOS-7-x86_64-GenericCloud.qcow2
   parameters:
    minishift_version: 1.8.0
-   openshift_version: 3.8.0-alpha.0
+   openshift_version: 3.7.0
 
 - name: kubevirt
   group: openshift
