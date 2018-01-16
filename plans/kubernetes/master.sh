@@ -9,8 +9,8 @@ kubectl apply -f /root/kube-flannel.yml
 export TOKEN=`kubeadm token list  | tail -1 | cut -f1 -d' '`
 export CMD="kubeadm join --token $TOKEN kumaster:6443"
 echo $CMD > /root/join.sh
-sleep 60
+sleep 80
 [% for number in range(1,nodes+1) %]
-ssh-keyscan -H kunode[[ number ]] >> ~/.ssh/known_hosts
-ssh root@kunode[[ number ]] $CMD
+ssh-keyscan -H kunode0[[ number ]] >> ~/.ssh/known_hosts
+ssh root@kunode0[[ number ]] $CMD
 [% endfor %]
