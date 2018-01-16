@@ -11,7 +11,7 @@ export CMD="kubeadm join --token $TOKEN kumaster:6443"
 echo $CMD > /root/join.sh
 sleep 60
 [% for number in range(1,nodes+1) %]
-[% set node = kunode[[ "%.2d"|format(number) ]] %]
+[% set node = "kunode"[[ "%.2d"|format(number) ]] %]
 ssh-keyscan -H [[ node ]] >> ~/.ssh/known_hosts
 ssh root@kunode[[ node ]] $CMD
 [% endfor %]

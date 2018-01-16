@@ -2,9 +2,13 @@
   group: kubernetes
   url: github.com/karmab/kcli/plans/kubernetes
   file: basic.yml
-  description: Latest kubernetes
+  description: Latest kubernetes with single master and multiple nodes
   numvms: 3
   template: CentOS-7-x86_64-GenericCloud.qcow2
+  parameters:
+   nodes: 3
+   domain: karmalabs.com
+   template: CentOS-7-x86_64-GenericCloud.qcow2
 
 - name: minikube
   group: kubernetes
