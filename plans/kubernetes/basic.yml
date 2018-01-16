@@ -30,7 +30,7 @@ kumaster:
   - dashboard.sh
 
 [% for number in range(1,nodes+1) %]
-kunode[[ "%.2d"|format(number) ]]:
+kunode0[[ number ]]:
  template: [[ template ]]
  numcpus: 2
  memory: 4096
