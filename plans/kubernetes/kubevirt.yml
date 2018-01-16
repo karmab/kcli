@@ -1,0 +1,60 @@
+parameters:
+ nodes: 3
+ domain: karmalabs.com
+ template: CentOS-7-x86_64-GenericCloud.qcow2
+ deploy_app: false
+ kubevirt_version: 0.2.0
+
+kumaster:
+ template: [[ template ]]
+ numcpus: 2
+ memory: 4096
+ reservedns: true
+ sharedkey: true
+ domain: [[ domain ]]
+ nets:
+  - default
+ disks:
+  - size: 50
+ pool: default
+ files:
+  - path: /etc/yum.repos.d/kubernetes.repo
+    origin: kubernetes.repo
+  - path: /root/kube-flannel.yml
+    origin: kube-flannel.yml
+  - path: /root/kube-flannel-rbac.yml
+    origin: kube-flannel-rbac.yml
+  - path: /root/vm.yaml
+    origin: vm.yaml
+  - path: /root/iscsi-demo-target.yaml
+    origin: iscsi-demo-target.yaml
+
+ scripts: 
+  - pre.sh
+  - master.sh
+[% if deploy_app %]
+  - app.sh
+[% endif %]
+  - heapster.sh
+  - dashboard.sh
+  - kubevirt.sh
+
+[% for number in range(1,nodes+1) %]
+kunode0[[ number ]]:
+ template: [[ template ]]
+ numcpus: 2
+ memory: 4096
+ reservedns: true
+ sharedkey: true
+ domain: [[ domain ]]
+ nets:
+  - default
+ disks:
+  - size: 50
+ pool: default
+ files:
+  - path: /etc/yum.repos.d/kubernetes.repo
+    origin: kubernetes.repo
+ scripts: 
+  - pre.sh
+[% endfor %]
