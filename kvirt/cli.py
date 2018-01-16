@@ -58,6 +58,7 @@ def stop(args):
     global config
     if config.extraclients:
         ks = config.extraclients
+        ks.update({config.client: config.k})
     else:
         ks = {config.client: config.k}
     codes = []
@@ -209,8 +210,9 @@ def host(args):
     """Handle host"""
     enable = args.enable
     disable = args.disable
+    sync = args.sync
     global config
-    result = config.handle_host(enable=enable, disable=disable)
+    result = config.handle_host(enable=enable, disable=disable, sync=sync)
     if result['result'] == 'success':
         os._exit(0)
     else:
@@ -389,9 +391,11 @@ def list(args):
         print(products)
     else:
         if config.extraclients:
+            allclients = config.extraclients.copy()
+            allclients.update({config.client: config.k})
             vms = PrettyTable(["Name", "Host", "Status", "Ips", "Source", "Plan", "Profile", "Report"])
-            for cli in sorted(config.extraclients):
-                for vm in sorted(config.extraclients[cli].list()):
+            for cli in sorted(allclients):
+                for vm in sorted(allclients[cli].list()):
                     vm.insert(1, cli)
                     if filters:
                         status = vm[2]
@@ -1011,6 +1015,7 @@ def cli():
     host_parser = subparsers.add_parser('host', description=host_info, help=host_info)
     host_parser.add_argument('-d', '--disable', help='Disable indicated client', metavar='CLIENT')
     host_parser.add_argument('-e', '--enable', help='Enable indicated client', metavar='CLIENT')
+    host_parser.add_argument('-s', '--sync', action='store_true', help='sync templates between first host and other ones of the specified list')
     host_parser.set_defaults(func=host)
 
     info_info = 'Info vms'

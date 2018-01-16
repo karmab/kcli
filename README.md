@@ -712,6 +712,8 @@ vm4:
 - Read The docs
 - Check on memory and disk space when creating vm
 - validation of ips, netmasks, macs,...  within plan file
+- start/delete in multiple hypervisors 
+- implement rhel template sync logic
 
 ## Contributors
 

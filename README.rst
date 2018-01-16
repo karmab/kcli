@@ -8,16 +8,17 @@ kcli repository
 
    Screenshot
 
-This script is meant to interact with a local/remote libvirt daemon and
-to easily deploy from templates (optionally using cloudinit). It will
-also report IPS for any vm connected to a dhcp-enabled libvirt network
-and generally for every vm deployed from this client.
+This tool is meant to interact with a local/remote libvirt daemon and to
+easily deploy from templates (optionally using cloudinit). It will also
+report IPS for any vm connected to a dhcp-enabled libvirt network and
+generally for every vm deployed from this client. There is also support
+for virtualbox
 
 It started because I switched from ovirt and needed a tool similar to
 `ovirt.py <https://github.com/karmab/ovirt>`__
 
-`ChangeLog <changelog.md>`__
-----------------------------
+`ChangeLog <https://github.com/karmab/kcli/wiki>`__
+---------------------------------------------------
 
 Wouldnt it be great to:
 -----------------------
@@ -32,6 +33,7 @@ Wouldnt it be great to:
 -  Inject all configuration with cloudinit
 -  Use the default cloud images
 -  Have a web UI to do it too!
+-  Do all of this in virtualbox
 
 Demo!
 -----
@@ -71,8 +73,6 @@ groups
 
     sudo usermod -aG qemu,libvirt YOUR_USER
 
-for *centos*, check `here <centos.md>`__
-
 for *macosx*, you'll want to check the docker installation section ( if
 planning to go against a remote kvm host ) or the dev section for
 virtualbox
@@ -91,13 +91,22 @@ ubuntu zesty):
 
 .. code:: bash
 
-    echo deb [trusted=yes] https://packagecloud.io/karmalabs/kcli/ubuntu/ zesty main > /etc/apt/sources.list.d/kcli.list ; apt-get update ; apt-get -y install kcli-all
+    echo deb [trusted=yes] https://packagecloud.io/karmab/kcli/ubuntu/ zesty main > /etc/apt/sources.list.d/kcli.list ; apt-get update ; apt-get -y install kcli-all
 
 `Dev installation <dev.md>`__
 -----------------------------
 
+`Centos installation <centos.md>`__
+-----------------------------------
+
+`Debian/Ubuntu installation <debian.md>`__
+------------------------------------------
+
 `I want to use docker, I'm cool <docker.md>`__
 ----------------------------------------------
+
+`I want to use virtualbox, I'm not cool <VBOX.md>`__
+----------------------------------------------------
 
 Configuration
 -------------
@@ -550,8 +559,13 @@ keys
        gateway: 192.168.0.1
 
 Within a net section, you can use name, nic, IP, mac, mask, gateway and
-alias as keys. Note that up to 8 IPS can also be provided on command
-line when creating a single vm (with the flag -1, -2, -3,-4,...)
+alias as keys.
+
+You can also use *noconf: true* to only add the nic with no
+configuration done in the vm
+
+Note that up to 8 IPS can also be provided on command line when creating
+a single vm (with the flag -1, -2, -3,-4,...)
 
 IP, DNS and HOST Reservations
 -----------------------------
@@ -683,6 +697,59 @@ host\_vars and groups\_vars directory for this purpose
 Note that when leveraging ansible this way, an inventory file will be
 generated on the fly for you and let in */tmp/$PLAN.inv*
 
+Using products
+--------------
+
+If plans seem too complex, you can make use of the products feature
+which leverages them
+
+Repos
+~~~~~
+
+You first add a repo containing a KMETA file with yaml info about
+products you want to expose. For instance, mine
+
+::
+
+    kcli repo -u github.com/karmab/kcli/plans karmab
+
+You can also update later a given repo, to refresh its KMETA file ( or
+all the repos, if not specifying any)
+
+::
+
+    kcli repo --update REPO_NAME
+
+You can delete a given repo with
+
+::
+
+    kcli repo -d REPO_NAME
+
+Product
+~~~~~~~
+
+Once you have added some repos, you can list available products, and get
+their description
+
+::
+
+    kcli list --products 
+
+You can also get direct information on the product (memory and cpu used,
+number of vms deployed and all parameters that can be overriden)
+
+::
+
+    kcli product --info YOUR_PRODUCT 
+
+And deploy any product . Note deletion is currently handled by deleting
+the corresponding plan
+
+::
+
+    kcli product YOUR_PRODUCT
+
 Testing
 -------
 
@@ -716,6 +783,10 @@ Specific parameters for a hypervisor
 -  *tunnel* Defaults to False. Setting it to true will make kcli use
    tunnels for console and for ssh access. You want that if you only
    open ssh port to your hypervisor!
+-  *planview* Defaults to False. Setting it to true will make kcli use
+   the value specified in *~/.kcli/plan* as default plan upon starting
+   and stopping plan. Additionally, vms not belonging to the set plan
+   wont show up when listing
 
 Available parameters for hypervisor/profile/plan files
 ------------------------------------------------------
@@ -770,16 +841,80 @@ Available parameters for hypervisor/profile/plan files
    content data directly or from specified origin
 -  *insecure* (optional) Handles all the ssh option details so you dont
    get any warnings about man in the middle
+-  *host* (optional) Allows you to create the vm on a specific host,
+   provided you used kcli -C host1,host2,... and specify the wanted
+   hypervisor ( or use kcli -C all ). Note that this field is not used
+   for other types like network, so expect to use this in relatively
+   simple plans only
+-  *base* (optional) Allows you to point to a parent profile so that
+   values are taken from parent when not found in the current profile.
+   Note that scripts and commands are rather concatenated between
+   default, father and children ( so you have a happy family...)
+
+Overriding parameters
+---------------------
+
+Note that you can override parameters in - commands - scripts - files -
+plan files - profiles
+
+For that , you can pass in kcli vm or kcli plan the following
+parameters: - -P x=1 -P y=2 and so on - --paramfile - In this case, you
+provide a yaml file ( and as such can provide more complex structures )
+
+The indicated objects are then rendered using jinja. For instance in a
+profile Note we use the delimiters '[[' and ']]' instead of the commonly
+used '{{' and '}}' so that this rendering doesnt get in the way when
+providing j2 files for instance
+
+::
+
+    centos:
+     template: CentOS-7-x86_64-GenericCloud.qcow2
+     cmds:
+      - echo x=[[ x ]] y=[[ y ]] >> /tmp/cocorico.txt
+      - echo [[ password | default('unix1234') ]] | passwd --stdin root
+
+You can make the previous example cleaner by using the special key
+parameters in your plans and define there variables
+
+::
+
+    parameters:
+     password: unix1234
+     x: coucou
+     y: toi
+    centos:
+     template: CentOS-7-x86_64-GenericCloud.qcow2
+     cmds:
+      - echo x=[[ x ]] y=[[ y ]] >> /tmp/cocorico.txt
+      - echo [[ password  ]] | passwd --stdin root
+
+Finally note that you can also use advanced jinja constructs like
+conditionals and so on. For instance:
+
+::
+
+    parameters:
+      net1: default
+    vm4:
+      template: CentOS-7-x86_64-GenericCloud.qcow2
+      nets:
+        - [[ net1 ]]
+    {% if net2 is defined %}
+        - [[ net2 ]]
+    {% endif %}
 
 TODO
 ----
 
+-  store hypervisor in lastvm so that action are associated to the pair
+   (host+lastvm)
+-  find a better rule when deleting disks of a vm (along with it)
 -  Read The docs
 -  Check on memory and disk space when creating vm
--  Scaling Plan
--  Random hypervisor vm creation
--  Plan View (Vagrant Style)
 -  validation of ips, netmasks, macs,... within plan file
+-  start/delete in multiple hypervisors
+-  implement rhel template sync logic
 
 Contributors
 ------------
@@ -823,5 +958,5 @@ karmab
    :target: https://copr.fedorainfracloud.org/coprs/karmab/kcli/package/kcli
 .. |image3| image:: https://images.microbadger.com/badges/image/karmab/kcli.svg
    :target: https://microbadger.com/images/karmab/kcli
-.. |asciicast| image:: https://asciinema.org/a/3p0cn60p0c0j9wd3hzyrs4m0f.png
-   :target: https://asciinema.org/a/3p0cn60p0c0j9wd3hzyrs4m0f?autoplay=1
+.. |asciicast| image:: https://asciinema.org/a/153423.png
+   :target: https://asciinema.org/a/153423?autoplay=1

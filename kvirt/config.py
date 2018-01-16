@@ -118,13 +118,15 @@ class Kconfig:
         elif client is None:
             self.client = self.ini['default']['client']
         elif ',' in client:
-            defaultclient = self.ini['default']['client']
-            if defaultclient in client.split(','):
-                self.client = defaultclient
-                extraclients = [entry for entry in client.split(',') if entry != defaultclient]
-            else:
-                self.client = client.split(',')[0]
-                extraclients = client.split(',')[1:]
+            # defaultclient = self.ini['default']['client']
+            # if defaultclient in client.split(','):
+            #     self.client = defaultclient
+            #     extraclients = [entry for entry in client.split(',') if entry != defaultclient]
+            # else:
+            #     self.client = client.split(',')[0]
+            #     extraclients = client.split(',')[1:]
+            self.client = client.split(',')[0]
+            extraclients = client.split(',')[1:]
         else:
             self.client = client
         if self.client not in self.ini:
@@ -207,8 +209,8 @@ class Kconfig:
                 if e.conn is None:
                     common.pprint("Couldn't connect to specify hypervisor %s. Leaving..." % extraclient, color='red')
                     os._exit(1)
-            if extraclients:
-                self.extraclients[self.client] = k
+            # if extraclients:
+            #    self.extraclients[self.client] = k
         self.k = k
 
     def create_vm(self, name, profile, ip1=None, ip2=None, ip3=None, ip4=None, overrides={}):
@@ -748,6 +750,7 @@ class Kconfig:
                 deleteclients = {self.client: k}
             else:
                 deleteclients = self.extraclients
+                deleteclients.update({self.client: k})
             for hypervisor in deleteclients:
                 c = deleteclients[hypervisor]
                 for vm in sorted(c.list()):
@@ -1301,7 +1304,7 @@ class Kconfig:
                 return
         return {'result': 'success'}
 
-    def handle_host(self, pool='default', templates=[], switch=None, download=False, enable=False, disable=False, url=None, cmd=None):
+    def handle_host(self, pool='default', templates=[], switch=None, download=False, enable=False, disable=False, url=None, cmd=None, sync=False):
         if download:
             k = self.k
             if pool is None:
@@ -1316,6 +1319,7 @@ class Kconfig:
                     url = TEMPLATES[template]
                     template = os.path.basename(template)
                     if not url.endswith('qcow2') and not url.endswith('img') and not url.endswith('qc2'):
+                        common.pprint("Ignoring %s in sync mode. Use kcli download on the host in this case" % (template), color='blue')
                         if 'web' in sys.argv[0]:
                             return {'result': 'failure', 'reason': "Missing url"}
                         common.pprint("Opening url %s for you to grab complete url for %s" % (url, template), color='blue')
@@ -1324,12 +1328,12 @@ class Kconfig:
                         if url.strip() == '':
                             common.pprint("Missing proper url.Leaving...", color='red')
                             return {'result': 'failure', 'reason': "Missing template"}
+                        continue
                 if cmd is None and template != '' and template in TEMPLATESCOMMANDS:
                     cmd = TEMPLATESCOMMANDS[template]
+                print(url)
                 result = k.add_image(url, pool, cmd=cmd)
                 common.handle_response(result, template, element='Template ', action='Added')
-            # code = common.handle_response(result, shortname, element='Template ', action='Added')
-            # os._exit(code)
             return {'result': 'success'}
         elif switch:
             if switch not in self.clients:
@@ -1406,4 +1410,40 @@ class Kconfig:
                     else:
                         newini += line
                 open(inifile, 'w').write(newini)
+        elif sync:
+            k = self.k
+            if not self.extraclients:
+                common.pprint("Nothing to do. Leaving...", color='blue')
+                return {'result': 'success'}
+            for cli in self.extraclients:
+                dest = self.extraclients[cli]
+                common.pprint("syncing client templates from %s to %s" % (self.client, cli), color='green')
+                common.pprint("Note rhel templates are currently not synced", color='green')
+            for vol in k.volumes():
+                template = os.path.basename(vol)
+                if template in [os.path.basename(v) for v in dest.volumes()]:
+                    common.pprint("Ignoring %s as it's already there" % (template), color='blue')
+                    continue
+                url = None
+                for n in TEMPLATES.values():
+                    if n is None:
+                        continue
+                    elif n.split('/')[-1] == template:
+                        url = n
+                if url is None:
+                        return {'result': 'failure', 'reason': "template not in default list"}
+                if not url.endswith('qcow2') and not url.endswith('img') and not url.endswith('qc2'):
+                    if 'web' in sys.argv[0]:
+                        return {'result': 'failure', 'reason': "Missing url"}
+                    common.pprint("Opening url %s for you to grab complete url for %s" % (url, vol), color='blue')
+                    webbrowser.open(url, new=2, autoraise=True)
+                    url = raw_input("Copy Url:\n")
+                    if url.strip() == '':
+                        common.pprint("Missing proper url.Leaving...", color='red')
+                        return {'result': 'failure', 'reason': "Missing template"}
+                cmd = None
+                if vol in TEMPLATESCOMMANDS:
+                    cmd = TEMPLATESCOMMANDS[template]
+                common.pprint("Grabbing template %s..." % template, color='green')
+                dest.add_image(url, pool, cmd=cmd)
         return {'result': 'success'}
