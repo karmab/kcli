@@ -1172,6 +1172,8 @@ class Kconfig:
                             files.append({'path': '/root/.ssh/id_rsa.pub', 'content': publickey})
                         else:
                             files = [{'path': '/root/.ssh/id_rsa', 'content': privatekey}, {'path': '/root/.ssh/id_rsa.pub', 'content': publickey}]
+                        os.remove("%s.key.pub" % plan)
+                        os.remove("%s.key" % plan)
                     elif privatekey:
                         privatekeyfile = None
                         if os.path.exists("%s/.ssh/id_rsa" % os.environ['HOME']):
