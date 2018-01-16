@@ -2,6 +2,7 @@ parameters:
  nodes: 3
  domain: karmalabs.com
  template: CentOS-7-x86_64-GenericCloud.qcow2
+ deploy_app: false
 
 kumaster:
  template: [[ template ]]
@@ -25,7 +26,9 @@ kumaster:
  scripts: 
   - pre.sh
   - master.sh
+[% if deploy_app %]
   - app.sh
+[% endif %]
   - heapster.sh
   - dashboard.sh
 

@@ -9,6 +9,7 @@
    nodes: 3
    domain: karmalabs.com
    template: CentOS-7-x86_64-GenericCloud.qcow2
+   deploy_app: false
 
 - name: minikube
   group: kubernetes
@@ -17,3 +18,17 @@
   description: Minikube 1.7.0
   numvms: 1
   template: Fedora-Cloud-Base-26-1.5.x86_64.qcow2
+
+- name: kubevirt
+  group: kubernetes
+  url: github.com/karmab/kcli/plans/kubernetes
+  file: kubevirt.yml
+  description: Latest kubernetes and kubevirt with single master and multiple nodes
+  numvms: 3
+  template: CentOS-7-x86_64-GenericCloud.qcow2
+  parameters:
+   nodes: 3
+   domain: karmalabs.com
+   template: CentOS-7-x86_64-GenericCloud.qcow2
+   deploy_app: false
+   kubevirt_version: 0.2.0
