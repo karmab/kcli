@@ -308,11 +308,18 @@ def get_overrides(paramfile=None, param=[]):
             try:
                 overrides = yaml.load(f)
             except:
-                print("prout")
                 pprint("Couldnt parse your parameters file %s. Not using it" % paramfile, color='blue')
                 overrides = {}
     elif param is not None:
-        overrides = {x.split('=')[0]: x.split('=')[1] for x in param if len(x.split('=')) == 2}
+        overrides = {}
+        for x in param:
+            if len(x.split('=')) != 2:
+                continue
+            else:
+                key, value = x.split('=')
+                if value.isdigit():
+                    value = int(value)
+                overrides[key] = value
     else:
         overrides = {}
     return overrides

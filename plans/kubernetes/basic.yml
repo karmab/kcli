@@ -32,8 +32,9 @@ kumaster:
   - heapster.sh
   - dashboard.sh
 
-[% for number in range(1,nodes+1) %]
-kunode0[[ number ]]:
+[% if nodes > 0 %]
+[% for number in range(0, nodes) %]
+kunode0[[ number + 1 ]]:
  template: [[ template ]]
  numcpus: 2
  memory: 4096
@@ -51,3 +52,4 @@ kunode0[[ number ]]:
  scripts: 
   - pre.sh
 [% endfor %]
+[% endif %]

@@ -11,8 +11,10 @@ kubectl apply -f /root/kube-flannel.yml
 export CMD=`kubeadm token create --print-join-command`
 echo $CMD > /root/join.sh
 sleep 160
-[% for number in range(1,nodes+1) %]
-ssh-keyscan -H kunode0[[ number ]] >> ~/.ssh/known_hosts
-scp /etc/kubernetes/admin.conf root@kunode0[[ number ]]:/etc/kubernetes/
-ssh root@kunode0[[ number ]] $CMD > kunode0[[ number ]].log
+[% if nodes > 0 %]
+[% for number in range(0,nodes) %]
+ssh-keyscan -H kunode0[[ number +1 ]] >> ~/.ssh/known_hosts
+scp /etc/kubernetes/admin.conf root@kunode0[[ number + 1 ]]:/etc/kubernetes/
+ssh root@kunode0[[ number +1 ]] $CMD > kunode0[[ number +1 ]].log
 [% endfor %]
+[% endif %]
