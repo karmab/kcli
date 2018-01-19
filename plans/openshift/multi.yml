@@ -33,8 +33,8 @@ lb:
   - size: 10
  pool: default
  sharedkey: true
- scripts:
 [% if not upstream %]
+ scripts:
   - ~/register.sh
   - subscription.sh
 [% endif %]
