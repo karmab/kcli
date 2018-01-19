@@ -1,9 +1,10 @@
 parameters:
- domain: [[ domain ]]
+ domain: karmalabs.local
+ cidr: 192.168.105.0/24
 
 [[ domain ]]:
  type: network
- cidr: 192.168.105.0/24
+ cidr: [[ cidr ]]
  dhcp: True
 
 lb:

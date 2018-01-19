@@ -1,4 +1,7 @@
 yum -y install wget git net-tools bind-utils iptables-services bridge-utils bash-completion atomic-openshift-utils atomic-openshift-excluder atomic-openshift-docker-excluder docker
+yum -y install NetworkManager 
+systemctl enable NetworkManager
+systemctl start NetworkManager
 atomic-openshift-excluder unexclude
 atomic-openshift-docker-excluder unexclude
 systemctl enable docker

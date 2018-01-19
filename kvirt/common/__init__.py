@@ -162,7 +162,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
         else:
             print("neither id_rsa.pub or id_dsa public keys found in your .ssh directory, you might have trouble accessing the vm")
         if keys:
-            for key in keys:
+            for key in list(set(keys)):
                 userdata.write("- %s\n" % key)
         if os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME']):
             publickeyfile = "%s/.ssh/id_rsa.pub" % os.environ['HOME']
@@ -183,6 +183,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                         newcmd = Environment(block_start_string='[%', block_end_string='%]', variable_start_string='[[', variable_end_string=']]').from_string(cmd).render(overrides)
                         userdata.write("- %s\n" % newcmd)
         if files:
+            binary = False
             userdata.write('ssh_pwauth: True\n')
             userdata.write('disable_root: false\n')
             userdata.write("write_files:\n")
@@ -319,6 +320,8 @@ def get_overrides(paramfile=None, param=[]):
                 key, value = x.split('=')
                 if value.isdigit():
                     value = int(value)
+                elif value.lower() in ['true', 'false']:
+                    value = bool(value)
                 overrides[key] = value
     else:
         overrides = {}

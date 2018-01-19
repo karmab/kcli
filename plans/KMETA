@@ -234,6 +234,27 @@
   parameters:
    domain: karmalabs.local
 
+- name: multi
+  group: openshift
+  url: github.com/karmab/kcli/plans/openshift
+  file: multi.yml
+  description: Downstream Openshift with arbitrary number of nodes
+  comments: an extra lb node is created when there are more than 1 master. The first node is also tagged as infra to host router and docker registry
+  numvms: 7
+  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+  parameters:
+    template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+    domain: karmalabs.local
+    docker_disk_size: 30
+    masters: 3
+    master_memory: 8192
+    nodes: 3
+    node_memory: 4096
+    cidr: 192.168.105.0/24
+    deploy: true
+    user: developer
+    password: developer
+
 - name: helm
   group: openshift
   url: github.com/karmab/kcli/plans/openshift
