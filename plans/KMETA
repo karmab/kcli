@@ -254,6 +254,8 @@
     deploy: true
     user: developer
     password: developer
+    openshift_version: 3.7
+    upstream: false
 
 - name: helm
   group: openshift
