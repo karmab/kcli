@@ -29,16 +29,16 @@ sed -i "s/openshift_master_default_subdomain=.*/openshift_master_default_subdoma
 [% if deploy %]
 ansible-playbook -i /root/hosts $PLAYBOOKS/openshift-ansible/playbooks/byo/config.yml
 [% for master in range(0, masters) %]
-  ssh master0[[ master + 1 ]].[[ domain ]] "htpasswd -b /etc/origin/master/htpasswd [[ user ]] [[ password ]]"
+ssh master0[[ master + 1 ]].[[ domain ]] "htpasswd -b /etc/origin/master/htpasswd [[ user ]] [[ password ]]"
 [% endfor %]
 [% else %]
- echo ansible-playbook -i /root/hosts /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml >> /root/install2.sh
+echo ansible-playbook -i /root/hosts /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml >> /root/install2.sh
 [% for master in range(0, masters) %]
- echo ssh master0[[ master + 1 ]].[[ domain ]] "htpasswd -b /etc/origin/master/htpasswd [[ user ]] [[ password ]]" >> /root/install2.sh
+echo ssh master0[[ master + 1 ]].[[ domain ]] "htpasswd -b /etc/origin/master/htpasswd [[ user ]] [[ password ]]" >> /root/install2.sh
 [% endfor %]
 [% if nfs %]
 for i in `seq -f "%03g" 1 20` ; do
-    sed "s/001/$i" nfs.yml  | oc create -f -
+sed "s/001/$i/" /root/nfs.yml | oc create -f -
 done
 [% endif %]
 [% endif %]

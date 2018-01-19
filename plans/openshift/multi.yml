@@ -85,6 +85,11 @@ master0[[ master + 1 ]]:
   - path: /root/install.sh
     origin: multi/install.sh
     mode: 700
+[% if nfs %] 
+  - path: /root/nfs.yml
+    origin: multi/nfs.yml
+    mode: 700
+[% endif %]
 [% endif %]
  scripts: 
 [% if not upstream %]
