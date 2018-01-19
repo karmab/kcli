@@ -22,7 +22,7 @@ ssh-keyscan -H master0[[ master + 1 ]].[[ domain ]] >> ~/.ssh/known_hosts
 [% for node in range(0, nodes) %]
 ssh-keyscan -H node0[[ node + 1 ]].[[ domain ]] >> ~/.ssh/known_hosts
 [% endfor %]
-export IP=`ip a l  eth0 | grep 'inet ' | cut -d' ' -f6 | awk -F'/' '{ print $1}'`
+export IP=`dig +short node01.[[ domain ]]`
 sed -i "s/#log_path/log_path/" /etc/ansible/ansible.cfg
 sed -i "s/openshift_master_default_subdomain=.*/openshift_master_default_subdomain=$IP.xip.io/" /root/hosts
 
@@ -31,6 +31,11 @@ ansible-playbook -i /root/hosts $PLAYBOOKS/openshift-ansible/playbooks/byo/confi
 [% for master in range(0, masters) %]
 ssh master0[[ master + 1 ]].[[ domain ]] "htpasswd -b /etc/origin/master/htpasswd [[ user ]] [[ password ]]"
 [% endfor %]
+[% if nfs %]
+for i in `seq -f "%03g" 1 20` ; do
+sed "s/001/$i/" /root/nfs.yml | oc create -f -
+done
+[% endif %]
 [% else %]
 echo ansible-playbook -i /root/hosts /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml >> /root/install2.sh
 [% for master in range(0, masters) %]
@@ -38,7 +43,7 @@ echo ssh master0[[ master + 1 ]].[[ domain ]] "htpasswd -b /etc/origin/master/ht
 [% endfor %]
 [% if nfs %]
 for i in `seq -f "%03g" 1 20` ; do
-sed "s/001/$i/" /root/nfs.yml | oc create -f -
+echo sed "s/001/$i/" /root/nfs.yml | oc create -f - >> /root/install2.sh
 done
 [% endif %]
 [% endif %]
