@@ -320,8 +320,10 @@ def get_overrides(paramfile=None, param=[]):
                 key, value = x.split('=')
                 if value.isdigit():
                     value = int(value)
-                elif value.lower() in ['true', 'false']:
-                    value = bool(value)
+                elif value.lower() == 'true':
+                    value = True
+                elif value.lower() == 'false':
+                    value = False
                 overrides[key] = value
     else:
         overrides = {}
