@@ -25,7 +25,6 @@ ssh-keyscan -H node0[[ node + 1 ]].[[ domain ]] >> ~/.ssh/known_hosts
 export IP=`dig +short node01.[[ domain ]]`
 sed -i "s/#log_path/log_path/" /etc/ansible/ansible.cfg
 sed -i "s/openshift_master_default_subdomain=.*/openshift_master_default_subdomain=$IP.xip.io/" /root/hosts
-
 [% if deploy %]
 ansible-playbook -i /root/hosts $PLAYBOOKS/openshift-ansible/playbooks/byo/config.yml
 [% for master in range(0, masters) %]
