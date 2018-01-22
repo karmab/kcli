@@ -15,6 +15,7 @@ try:
     from kvirt.vbox import Kbox
 except:
     pass
+from distutils.spawn import find_executable
 import glob
 import os
 import shutil
@@ -311,6 +312,9 @@ class Kconfig:
         iso = profile.get('iso', default_iso)
         vnc = profile.get('vnc', default_vnc)
         cloudinit = profile.get('cloudinit', default_cloudinit)
+        if cloudinit and find_executable('mkisofs') is None and find_executable('genisoimage') is None:
+            common.pprint("mkisofs/genisoimage not found. One of them is needed for cloudinit.Leaving...", 'red')
+            os._exit(1)
         reserveip = profile.get('reserveip', default_reserveip)
         reservedns = profile.get('reservedns', default_reservedns)
         reservehost = profile.get('reservehost', default_reservehost)
@@ -1113,6 +1117,9 @@ class Kconfig:
                     guestid = next((e for e in [profile.get('guestid'), customprofile.get('guestid'), default_guestid] if e is not None))
                     vnc = next((e for e in [profile.get('vnc'), customprofile.get('vnc'), default_vnc] if e is not None))
                     cloudinit = next((e for e in [profile.get('cloudinit'), customprofile.get('cloudinit'), default_cloudinit] if e is not None))
+                    if cloudinit and find_executable('mkisofs') is None and find_executable('genisoimage') is None:
+                        common.pprint("mkisofs/genisoimage not found. One of them is needed for cloudinit.Leaving...", 'red')
+                        os._exit(1)
                     reserveip = next((e for e in [profile.get('reserveip'), customprofile.get('reserveip'), default_reserveip] if e is not None))
                     reservedns = next((e for e in [profile.get('reservedns'), customprofile.get('reservedns'), default_reservedns] if e is not None))
                     reservehost = next((e for e in [profile.get('reservehost'), customprofile.get('reservehost'), default_reservehost] if e is not None))
