@@ -606,6 +606,14 @@ class Kconfig:
         common.fetch(url, repodir)
         return {'result': 'success'}
 
+    def download_repo(self, name):
+        repodir = "%s/.kcli/repo_%s" % (os.environ.get('HOME'), name)
+        products = [(i['name'], i['group'], i['url']) for i in self.list_products(repo=name)]
+        os.chdir(repodir)
+        for (product, group, url) in products:
+            common.pprint("Downloading product %s in directory %s" % (product, group), color='green')
+            common.fetch(url, group)
+
     def delete_repo(self, name):
         reposfile = "%s/.kcli/repos.yml" % os.environ.get('HOME')
         repodir = "%s/.kcli/repo_%s" % (os.environ.get('HOME'), name)
@@ -687,7 +695,7 @@ class Kconfig:
                 for parameter in sorted(parameters):
                     print(" %s: %s" % (parameter, parameters[parameter]))
 
-    def create_product(self, name, repo=None, plan=None, keep=False, overrides={}):
+    def create_product(self, name, repo=None, plan=None, refresh=False, overrides={}):
         """Create product"""
         if repo is not None:
             products = [product for product in self.list_products() if product['name'] == name and product['repo'] == repo]
@@ -705,10 +713,10 @@ class Kconfig:
             url = product['url']
             inputfile = product['file']
             repo = product['repo']
+            repodir = "%s/.kcli/repo_%s" % (os.environ.get('HOME'), repo)
             group = product['group']
             template = product.get('template')
             parameters = product.get('parameters')
-            should_clean = False
             if template is not None:
                 print("Note that this product uses template: %s" % template)
             if parameters is not None:
@@ -716,18 +724,21 @@ class Kconfig:
                     if parameter in overrides:
                         print("Using parameter %s: %s" % (parameter, overrides[parameter]))
             common.pprint("Gathering all from group %s" % group, color='green')
-            if not os.path.exists(group):
-                should_clean = True
-                self.plan(plan, get=url, path=group, inputfile=inputfile, overrides=overrides)
+            if os.path.exists(group):
+                common.pprint("Using current directory %s. Make sure it contains kcli content" % group, color='green')
+                productdir = group
+            elif os.path.exists("%s/%s" % (repodir, group)) and not refresh:
+                common.pprint("Using cached directory %s/%s" % (repodir, group), color='green')
+                productdir = "%s/%s" % (repodir, group)
             else:
-                common.pprint("Using existing directory %s. Make sure it contains kcli content" % group, color='green')
-            os.chdir(group)
+                # path = "%s%s" % (group, group)
+                productdir = "%s/%s" % (repodir, group)
+                self.plan(plan, get=url, path=productdir, inputfile=inputfile, overrides=overrides)
+            os.chdir(productdir)
             common.pprint("Running: kcli plan -f %s %s" % (inputfile, plan), color='green')
             self.plan(plan, inputfile=inputfile, overrides=overrides)
             os.chdir('..')
             common.pprint("Product can be deleted with: kcli plan -d %s" % (plan), color='green')
-            if not keep and should_clean:
-                shutil.rmtree(group)
         return {'result': 'success', 'plan': plan}
 
     def plan(self, plan, ansible=False, get=None, path=None, autostart=False, container=False, noautostart=False, inputfile=None, start=False, stop=False, delete=False, delay=0, force=True, topologyfile=None, scale=None, overrides={}):

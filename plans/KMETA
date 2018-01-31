@@ -309,7 +309,7 @@
   description: Ansible Service Broker based on oc cluster up
   numvms: 1
   memory: 6144
-  template: CentOS-7-x86_64-GenericCloud.qcow2
+  template: Fedora-Cloud-Base-27-1.6.x86_64.qcow2
   parameters:
    docker_disk_size: 60
    initializer: false

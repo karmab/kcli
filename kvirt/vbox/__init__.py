@@ -669,12 +669,11 @@ class Kbox(Kbase):
         disk = conn.create_medium('VDI', diskpath, library.AccessMode.read_write, library.DeviceType.hard_disk)
         if template is not None:
             volumes = self.volumes()
-            if template not in volumes and template not in volumes.values():
+            if template not in volumes:
                 print("you don't have template %s.Leaving..." % template)
                 return
             templatepath = "%s/%s" % (poolpath, template)
-            if template in volumes:
-                self._convert_qcow2(templatepath, diskpath)
+            self._convert_qcow2(templatepath, diskpath)
         else:
             progress = disk.create_base_storage(size, [library.MediumVariant.fixed])
             progress.wait_for_completion()

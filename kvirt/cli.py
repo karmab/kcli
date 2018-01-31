@@ -656,6 +656,7 @@ def repo(args):
     delete = args.delete
     url = args.url
     update = args.update
+    download = args.download
     global config
     if update:
         if repo is None:
@@ -679,6 +680,10 @@ def repo(args):
         common.pprint("Deleting repo %s..." % (repo), color='green')
         config.delete_repo(repo)
         return
+    if download:
+        common.pprint("Downloading repo %s..." % (repo), color='green')
+        config.download_repo(repo)
+        return
     if url is None:
         common.pprint("Missing url. Leaving...", color='red')
         os._exit(1)
@@ -691,7 +696,7 @@ def product(args):
     """Create product"""
     repo = args.repo
     product = args.product
-    keep = args.keep
+    refresh = args.refresh
     plan = args.plan
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
     info = args.info
@@ -717,7 +722,7 @@ def product(args):
         print(products)
     else:
         common.pprint("Creating product %s..." % (product), color='green')
-        config.create_product(product, repo, plan=plan, keep=keep, overrides=overrides)
+        config.create_product(product, repo, plan=plan, refresh=refresh, overrides=overrides)
     return 0
 
 
@@ -1100,7 +1105,7 @@ def cli():
     product_info = 'Deploy Product'
     product_parser = subparsers.add_parser('product', description=product_info, help=product_info)
     product_parser.add_argument('-i', '--info', action='store_true', help='Provide information on the given product')
-    product_parser.add_argument('-k', '--keep', action='store_true', help='Keep generated directory after deployment')
+    product_parser.add_argument('-R', '--refresh', action='store_true', help='Grab latest version of the plans')
     product_parser.add_argument('-p', '--plan', help='Plan to use as a name during deployment', metavar='PLAN')
     product_parser.add_argument('-P', '--param', action='append', help='Define parameter for rendering within scripts. Can be repeated several times', metavar='PARAM')
     product_parser.add_argument('--paramfile', help='Input file', metavar='PARAMFILE')
@@ -1114,6 +1119,7 @@ def cli():
     repo_parser.add_argument('-d', '--delete', action='store_true')
     repo_parser.add_argument('-u', '--url', help='URL of the repo', metavar='URL')
     repo_parser.add_argument('-U', '--update', action='store_true', help='Update metadata of the repo')
+    repo_parser.add_argument('-D', '--download', action='store_true', help='Download all content of the repo')
     repo_parser.add_argument('repo')
     repo_parser.set_defaults(func=repo)
 

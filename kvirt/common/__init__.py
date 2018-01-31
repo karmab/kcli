@@ -19,8 +19,8 @@ def symlinks(user, repo):
     url1 = 'https://api.github.com/repos/%s/%s/git/refs/heads/master' % (user, repo)
     try:
         r = urllib2.urlopen(url1)
-    except urllib2.HTTPError:
-        print("Invalid url %s.Leaving..." % url1)
+    except urllib2.HTTPError as e:
+        print("Couldn't access url %s, got %s.Leaving..." % (url1, e))
         sys.exit(1)
     base = json.load(r)
     sha = base['object']['sha']
