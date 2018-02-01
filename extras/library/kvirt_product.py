@@ -47,12 +47,14 @@ def main():
         },
         "name": {"required": True, "type": "str"},
         "product": {"required": True, "type": "str"},
+        "repo": {"required": False, "type": "str"},
         "parameters": {"required": False, "type": "dict"},
     }
     module = AnsibleModule(argument_spec=argument_spec)
     config = Kconfig(quiet=True)
     name = module.params['name']
     product = module.params['product']
+    repo = module.params['repo']
     plans = [p[0] for p in config.list_plans()]
     exists = True if name in plans else False
     state = module.params['state']
@@ -63,7 +65,7 @@ def main():
             meta = {'result': 'skipped'}
         else:
             overrides = module.params['parameters'] if module.params['parameters'] is not None else {}
-            meta = config.create_product(product, repo=None, plan=name, overrides=overrides)
+            meta = config.create_product(product, repo=repo, plan=name, overrides=overrides)
             changed = True
             skipped = False
     else:

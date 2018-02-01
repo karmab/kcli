@@ -256,6 +256,7 @@
     password: developer
     openshift_version: 3.7
     upstream: false
+    nfs: false
 
 - name: helm
   group: openshift
