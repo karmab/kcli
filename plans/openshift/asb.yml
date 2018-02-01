@@ -17,6 +17,10 @@ asb:
  files:
   - path: /root/initializer.txt
     origin: initializer.txt
+ [% if org is defined %]
+  - path: /root/deploy-ansible-service-broker.template.yaml
+    origin: deploy-ansible-service-broker.template.yaml
+ [% endif %]
  scripts: 
   - requirements.sh
   - ~/dockerhub.sh

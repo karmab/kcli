@@ -730,8 +730,11 @@ class Kconfig:
             elif os.path.exists("%s/%s" % (repodir, group)) and not latest:
                 common.pprint("Using cached directory %s/%s" % (repodir, group), color='green')
                 productdir = "%s/%s" % (repodir, group)
+            elif os.path.exists("%s/%s" % (repodir, group)) and latest:
+                productdir = "%s/%s" % (repodir, group)
+                shutil.rmtree(productdir)
+                self.plan(plan, get=url, path=productdir, inputfile=inputfile, overrides=overrides)
             else:
-                # path = "%s%s" % (group, group)
                 productdir = "%s/%s" % (repodir, group)
                 self.plan(plan, get=url, path=productdir, inputfile=inputfile, overrides=overrides)
             os.chdir(productdir)
