@@ -696,7 +696,7 @@ def product(args):
     """Create product"""
     repo = args.repo
     product = args.product
-    refresh = args.refresh
+    latest = args.latest
     plan = args.plan
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
     info = args.info
@@ -722,7 +722,7 @@ def product(args):
         print(products)
     else:
         common.pprint("Creating product %s..." % (product), color='green')
-        config.create_product(product, repo, plan=plan, refresh=refresh, overrides=overrides)
+        config.create_product(product, repo, plan=plan, latest=latest, overrides=overrides)
     return 0
 
 
@@ -1105,7 +1105,7 @@ def cli():
     product_info = 'Deploy Product'
     product_parser = subparsers.add_parser('product', description=product_info, help=product_info)
     product_parser.add_argument('-i', '--info', action='store_true', help='Provide information on the given product')
-    product_parser.add_argument('-R', '--refresh', action='store_true', help='Grab latest version of the plans')
+    product_parser.add_argument('-l', '--latest', action='store_true', help='Grab latest version of the plans')
     product_parser.add_argument('-p', '--plan', help='Plan to use as a name during deployment', metavar='PLAN')
     product_parser.add_argument('-P', '--param', action='append', help='Define parameter for rendering within scripts. Can be repeated several times', metavar='PARAM')
     product_parser.add_argument('--paramfile', help='Input file', metavar='PARAMFILE')

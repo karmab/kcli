@@ -695,7 +695,7 @@ class Kconfig:
                 for parameter in sorted(parameters):
                     print(" %s: %s" % (parameter, parameters[parameter]))
 
-    def create_product(self, name, repo=None, plan=None, refresh=False, overrides={}):
+    def create_product(self, name, repo=None, plan=None, latest=False, overrides={}):
         """Create product"""
         if repo is not None:
             products = [product for product in self.list_products() if product['name'] == name and product['repo'] == repo]
@@ -727,7 +727,7 @@ class Kconfig:
             if os.path.exists(group):
                 common.pprint("Using current directory %s. Make sure it contains kcli content" % group, color='green')
                 productdir = group
-            elif os.path.exists("%s/%s" % (repodir, group)) and not refresh:
+            elif os.path.exists("%s/%s" % (repodir, group)) and not latest:
                 common.pprint("Using cached directory %s/%s" % (repodir, group), color='green')
                 productdir = "%s/%s" % (repodir, group)
             else:
