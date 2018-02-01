@@ -1,12 +1,12 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 from ansible.module_utils.basic import AnsibleModule
 from kvirt.config import Kconfig
 
 
 DOCUMENTATION = '''
-module: kvirt_vm
-short_description: Handles libvirt vms using kcli
+module: kvirt_product
+short_description: Deploy a product using kcli
 description:
     - Longer description of the module
     - You might include instructions
@@ -18,16 +18,24 @@ requirements:
     - kcli python package you can grab from pypi'''
 
 EXAMPLES = '''
-- name: Create a vm
-  kvirt_vm:
-    name: prout
-    profile: centos
+- name: Deploy origin
+  kvirt_product:
+    name: my_origin
+    product: origin
 
-- name: Delete that vm
-  kvirt_vm:
+- name: Delete that product
+  kvirt_product:
     name: prout
     state: absent
-  register: result
+
+- name: Deploy fission with additional parameters
+  kvirt_product:
+    name: fission
+    product: fission
+    parameters:
+     fission_type: all
+     docker_disk_size: 10
+    state: absent
 '''
 
 
@@ -39,13 +47,15 @@ def main():
             "type": 'str'
         },
         "name": {"required": True, "type": "str"},
-        "profile": {"required": True, "type": "str"},
+        "product": {"required": True, "type": "str"},
+        "parameters": {"required": False, "type": "dict"},
     }
     module = AnsibleModule(argument_spec=argument_spec)
     config = Kconfig(quiet=True)
-    k = config.k
     name = module.params['name']
-    exists = k.exists(name)
+    product = module.params['product']
+    plans = [p[0] for p in config.list_plans()]
+    exists = True if name in plans else False
     state = module.params['state']
     if state == 'present':
         if exists:
@@ -53,13 +63,13 @@ def main():
             skipped = True
             meta = {'result': 'skipped'}
         else:
-            profile = module.params['profile']
-            meta = config.create_vm(name, profile)
+            overrides = module.params['parameters'] if 'parameters' in module.params else {}
+            meta = config.create_product(product, repo=None, plan=name, overrides=overrides)
             changed = True
             skipped = False
     else:
         if exists:
-            meta = k.delete(name)
+            meta = config.plan(name, delete=True)
             changed = True
             skipped = False
         else:
