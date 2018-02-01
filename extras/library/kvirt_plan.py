@@ -5,8 +5,8 @@ from kvirt.config import Kconfig
 
 
 DOCUMENTATION = '''
-module: kvirt_product
-short_description: Deploy a product using kcli
+module: kvirt_plan
+short_description: Deploy a plan using kcli
 description:
     - Longer description of the module
     - You might include instructions
@@ -19,22 +19,15 @@ requirements:
 
 EXAMPLES = '''
 - name: Deploy origin
-  kvirt_product:
-    name: my_origin
+  kvirt_plan:
+    name: my_plan
     product: origin
 
-- name: Delete that product
-  kvirt_product:
-    name: my_origin
+- name: Delete that plan
+  kvirt_plan:
+    name: my_plan
     state: absent
 
-- name: Deploy fission with additional parameters
-  kvirt_product:
-    name: fission
-    product: fission
-    parameters:
-     fission_type: all
-     docker_disk_size: 10
 '''
 
 
@@ -46,13 +39,13 @@ def main():
             "type": 'str'
         },
         "name": {"required": True, "type": "str"},
-        "product": {"required": True, "type": "str"},
+        "src": {"required": True, "type": "str"},
         "parameters": {"required": False, "type": "dict"},
     }
     module = AnsibleModule(argument_spec=argument_spec)
     config = Kconfig(quiet=True)
     name = module.params['name']
-    product = module.params['product']
+    src = module.params['src']
     plans = [p[0] for p in config.list_plans()]
     exists = True if name in plans else False
     state = module.params['state']
@@ -63,7 +56,7 @@ def main():
             meta = {'result': 'skipped'}
         else:
             overrides = module.params['parameters'] if module.params['parameters'] is not None else {}
-            meta = config.create_product(product, repo=None, plan=name, overrides=overrides)
+            meta = config.plan(name, inputfile=src, overrides=overrides)
             changed = True
             skipped = False
     else:
