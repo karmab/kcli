@@ -8,5 +8,4 @@ git clone https://github.com/projectodd/incubator-openwhisk-deploy-kube.git
 cd incubator-openwhisk-deploy-kube
 git fetch origin
 git checkout remotes/origin/simplify-deployment-openshift
-cd resources
-oc create -f openshift/ -f k8s/
+oc create -f openshift/ -f kubernetes
