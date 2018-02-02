@@ -9,3 +9,4 @@ cd incubator-openwhisk-deploy-kube
 git fetch origin
 git checkout remotes/origin/simplify-deployment-openshift
 oc create -f openshift/ -f kubernetes
+oc volume deployment/couchdb --add --overwrite --claim-name=couchdb-claim --claim-size=100Mi --name=couchdb-data
