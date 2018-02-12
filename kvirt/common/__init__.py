@@ -123,11 +123,13 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                     ip = None
                     netmask = None
                     noconf = None
+                    vips = []
                 elif isinstance(net, dict):
                     nicname = net.get('nic', "eth%d" % index)
                     ip = net.get('ip')
                     netmask = next((e for e in [net.get('mask'), net.get('netmask')] if e is not None), None)
                     noconf = net.get('noconf')
+                    vips = net.get('vips')
                 metadata += "  auto %s\n" % nicname
                 if noconf is not None:
                     metadata += "  iface %s inet manual\n" % nicname
@@ -146,6 +148,9 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                     domain = net.get('domain')
                     if domain is not None:
                         metadatafile.write("  dns-search %s\n" % domain)
+                    if isinstance(vips, list) and vips:
+                        for index, vip in enumerate(vips):
+                            metadata += "  auto %s:%s\n  iface %s:%s inet static\n  address %s\n  netmask %s\n" % (nicname, index, nicname, index, vip, netmask)
                 else:
                     metadata += "  iface %s inet dhcp\n" % nicname
             if metadata:
