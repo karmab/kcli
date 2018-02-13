@@ -721,8 +721,11 @@ class Kconfig:
                 print("Note that this product uses template: %s" % template)
             if parameters is not None:
                 for parameter in parameters:
-                    if parameter in overrides:
-                        print("Using parameter %s: %s" % (parameter, overrides[parameter]))
+                    applied_parameter = overrides[parameter] if parameter in overrides else parameters[parameter]
+                    print("Using parameter %s: %s" % (parameter, applied_parameter))
+            extraparameters = list(set(overrides) - set(parameters)) if parameters is not None else overrides
+            for parameter in extraparameters:
+                print("Using parameter %s: %s" % (parameter, overrides[parameter]))
             common.pprint("Gathering all from group %s" % group, color='green')
             if os.path.exists(group):
                 common.pprint("Using current directory %s. Make sure it contains kcli content" % group, color='green')
@@ -878,7 +881,6 @@ class Kconfig:
             for parameter in parameters:
                 if parameter not in overrides:
                     overrides[parameter] = parameters[parameter]
-                print("Using parameter %s: %s" % (parameter, overrides[parameter]))
         with open(inputfile, 'r') as entries:
             entries = templ.render(overrides)
             entries = yaml.load(entries)
@@ -1029,7 +1031,6 @@ class Kconfig:
                 for name in vmentries:
                     if len(vmentries) == 1 and 'name' in overrides:
                         newname = overrides['name']
-                        common.pprint("Using parameter name: %s" % newname, color='blue')
                         profile = entries[name]
                         name = newname
                     else:
