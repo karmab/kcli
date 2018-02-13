@@ -5,6 +5,7 @@
                   '3.5' : 'v1.5.1/openshift-origin-client-tools-v1.5.1-7b451fc',
                   '3.6' : 'v3.6.1/openshift-origin-client-tools-v3.6.1-008f2d5',
                   '3.7' : 'v3.7.0/openshift-origin-client-tools-v3.7.0-7ed6862',
+                  '3.9' : 'v3.9.0-alpha.3/openshift-origin-client-tools-v3.9.0-alpha.3-78ddc10',
                }
 -%]
 yum -y install wget docker git

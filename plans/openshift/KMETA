@@ -11,7 +11,7 @@
    memory: 6144
    docker_disk_size: 60
    initializer: false
-   openshift_version: 3.7
+   openshift_version: 3.9
    metrics: false
 
 - name: ocp
