@@ -105,7 +105,7 @@
   numvms: 1
   template: CentOS-7-x86_64-GenericCloud.qcow2
 
-- name: basic
+- name: kubernetes
   group: kubernetes
   url: github.com/karmab/kcli/plans/kubernetes
   file: basic.yml
@@ -190,7 +190,7 @@
    memory: 6144
    docker_disk_size: 60
    initializer: false
-   openshift_version: 3.7
+   openshift_version: 3.9
    metrics: false
 
 - name: ocp

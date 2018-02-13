@@ -1,4 +1,4 @@
-- name: basic
+- name: kubernetes
   group: kubernetes
   url: github.com/karmab/kcli/plans/kubernetes
   file: basic.yml
