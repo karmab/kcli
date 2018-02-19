@@ -7,7 +7,6 @@ interact with a local/remote libvirt daemon
 from distutils.spawn import find_executable
 from kvirt import defaults
 from iptools import IpRange
-# from jinja2 import Environment
 from kvirt import common
 from kvirt.base import Kbase
 from netaddr import IPAddress, IPNetwork
@@ -1018,19 +1017,20 @@ class Kvirt(Kbase):
             if firstdisk or full:
                 source = disk.find('source')
                 oldpath = source.get('file')
-                backingstore = disk.find('backingStore')
-                backing = None
-                for b in backingstore.getiterator():
-                    backingstoresource = b.find('source')
-                    if backingstoresource is not None:
-                        backing = backingstoresource.get('file')
-                newpath = oldpath.replace(old, new)
-                source.set('file', newpath)
-                oldvolume = conn.storageVolLookupByPath(oldpath)
+                oldvolume = self.conn.storageVolLookupByPath(oldpath)
+                pool = oldvolume.storagePoolLookupByVolume()
                 oldinfo = oldvolume.info()
                 oldvolumesize = (float(oldinfo[1]) / 1024 / 1024 / 1024)
-                newvolumexml = self._xmlvolume(newpath, oldvolumesize, backing)
-                pool = oldvolume.storagePoolLookupByVolume()
+                oldvolumexml = oldvolume.XMLDesc(0)
+                backing = None
+                voltree = ET.fromstring(oldvolumexml)
+                for b in voltree.getiterator('backingStore'):
+                    backingstoresource = b.find('path')
+                    if backingstoresource is not None:
+                        backing = backingstoresource.text
+                newpath = oldpath.replace(old, new)
+                source.set('file', newpath)
+                newvolumexml = self._xmlvolume(newpath, oldvolumesize, backing=backing)
                 pool.createXMLFrom(newvolumexml, oldvolume, 0)
                 firstdisk = False
             else:
@@ -1443,6 +1443,8 @@ class Kvirt(Kbase):
         for p in self.conn.listStoragePools():
             poo = self.conn.storagePoolLookupByName(p)
             for volume in poo.listAllVolumes():
+                if volume.name().endswith('.ISO'):
+                    continue
                 volumes[volume.name()] = {'pool': poo.name(), 'path': volume.path()}
         return volumes
 
