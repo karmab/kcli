@@ -93,19 +93,19 @@ ubuntu zesty):
 
     echo deb [trusted=yes] https://packagecloud.io/karmab/kcli/ubuntu/ zesty main > /etc/apt/sources.list.d/kcli.list ; apt-get update ; apt-get -y install kcli-all
 
-`Dev installation <dev.md>`__
+`Dev installation <dev>`__
 -----------------------------
 
-`Centos installation <centos.md>`__
+`Centos installation <centos>`__
 -----------------------------------
 
-`Debian/Ubuntu installation <debian.md>`__
+`Debian/Ubuntu installation <debian>`__
 ------------------------------------------
 
-`I want to use docker, I'm cool <docker.md>`__
+`I want to use docker, I'm cool <docker>`__
 ----------------------------------------------
 
-`I want to use virtualbox, I'm not cool <VBOX.md>`__
+`I want to use virtualbox, I'm not cool <VBOX>`__
 ----------------------------------------------------
 
 Configuration
@@ -419,9 +419,19 @@ ansible
      type: ansible
      verbose: false
      playbook: prout.yml
+     groups:
+       nodes:
+       - node1
+       - node2
+       masters:
+       - master1
+       - master2
+       - master3
 
 Note that an inventory will be created for you in /tmp and that
-*group\_vars* and *host\_vars* directory are taken into account.
+*group\_vars* and *host\_vars* directory are taken into account. You can
+optionally define your own groups, as in this example The playbooks are
+launched in alphabetical order
 
 container
 ~~~~~~~~~
@@ -504,7 +514,7 @@ deleted if no other vm are using them. You can prevent this by using the
 keep (-k) flag.
 
 For an advanced use of plans along with scripts, you can check the
-`plans <plans/README.md>`__ page to deploy all upstream projects
+`plans <plans/README>`__ page to deploy all upstream projects
 associated with Red Hat Cloud Infrastructure products (or downstream
 versions too).
 
