@@ -340,8 +340,19 @@ myplay:
  type: ansible
  verbose: false
  playbook: prout.yml
+ groups:
+   nodes:
+   - node1
+   - node2
+   masters:
+   - master1
+   - master2
+   - master3
 ```
+
 Note that an inventory will be created for you in /tmp and that *group_vars* and *host_vars* directory are taken into account.
+You can optionally define your own groups, as in this example
+The playbooks are launched in alphabetical order
 
 ### container
 ```YAML
