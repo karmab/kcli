@@ -392,7 +392,6 @@ class Kconfig:
                     verbose = element['verbose']
                 else:
                     verbose = False
-                # k.play(name, playbook=playbook, variables=variables, verbose=verbose)
                 with open("/tmp/%s.inv" % name, "w") as f:
                     inventory = ansibleutils.inventory(k, name)
                     if inventory is not None:
@@ -1219,9 +1218,9 @@ class Kconfig:
                     if result['result'] == 'success':
                         newvms.append(name)
                         common.lastvm(name)
-                    ansible = next((e for e in [profile.get('ansible'), customprofile.get('ansible')] if e is not None), None)
-                    if ansible is not None:
-                        for element in ansible:
+                    _ansible = next((e for e in [profile.get('ansible'), customprofile.get('ansible')] if e is not None), None)
+                    if _ansible is not None:
+                        for element in _ansible:
                             if 'playbook' not in element:
                                 continue
                             playbook = element['playbook']
@@ -1285,19 +1284,23 @@ class Kconfig:
                 if not newvms:
                     common.pprint("Ansible skipped as no new vm within playbook provisioned", color='blue')
                     return
-                for item, entry in enumerate(ansibleentries):
-                    ansible = entries[ansibleentries[item]]
-                    if 'playbook' not in ansible:
+                for entry in sorted(ansibleentries):
+                    _ansible = entries[entry]
+                    if 'playbook' not in _ansible:
                         common.pprint("Missing Playbook for ansible.Ignoring...", color='red')
                         os._exit(1)
-                    playbook = ansible['playbook']
-                    if 'verbose' in ansible:
-                        verbose = ansible['verbose']
+                    playbook = _ansible['playbook']
+                    if 'verbose' in _ansible:
+                        verbose = _ansible['verbose']
                     else:
                         verbose = False
+                    if 'groups' in _ansible:
+                        groups = _ansible['groups']
+                    else:
+                        groups = {}
                     vms = []
-                    if 'vms' in ansible:
-                        vms = ansible['vms']
+                    if 'vms' in _ansible:
+                        vms = _ansible['vms']
                         for vm in vms:
                             if vm not in newvms:
                                 vms.remove(vm)
@@ -1306,7 +1309,7 @@ class Kconfig:
                     if not vms:
                         common.pprint("Ansible skipped as no new vm within playbook provisioned", color='blue')
                         return
-                    ansibleutils.make_inventory(k, plan, newvms, tunnel=self.tunnel)
+                    ansibleutils.make_inventory(k, plan, newvms, tunnel=self.tunnel, groups=groups)
                     ansiblecommand = "ansible-playbook"
                     if verbose:
                         ansiblecommand = "%s -vvv" % ansiblecommand

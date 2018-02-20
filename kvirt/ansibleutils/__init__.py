@@ -54,19 +54,33 @@ def inventory(self, name):
     login = self._ssh_credentials(name)[0]
     if ip is not None:
         if '.' in ip:
-            return "%s ansible_host=%s ansible_user=%s" % (name, ip, login)
+            return "%s ansible_host=%s ansible_ssh_host=%s ansible_user=%s" % (name, ip, ip, login)
         else:
             return "%s ansible_host=127.0.0.1 ansible_user=%s ansible_port=%s" % (name, login, ip)
     else:
         return None
 
 
-def make_inventory(k, plan, vms, tunnel=True):
+def make_inventory(k, plan, vms, tunnel=True, groups={}):
     with open("/tmp/%s.inv" % plan, "w") as f:
-        f.write("[%s]\n" % plan)
-        for name in vms:
-            inv = inventory(k, name)
-            if inv is not None:
-                f.write("%s\n" % inv)
-        if tunnel:
-            f.write("[%s:vars]\n" % plan)
+        if groups:
+            f.write("[%s:children]\n" % plan)
+            for group in groups:
+                f.write("%s\n" % group)
+            for group in groups:
+                nodes = groups[group]
+                f.write("[%s]\n" % group)
+                for name in nodes:
+                    inv = inventory(k, name)
+                    if inv is not None:
+                        f.write("%s\n" % inv)
+            if tunnel:
+                f.write("[%s:vars]\n" % plan)
+        else:
+            f.write("[%s]\n" % plan)
+            for name in vms:
+                inv = inventory(k, name)
+                if inv is not None:
+                    f.write("%s\n" % inv)
+            if tunnel:
+                f.write("[%s:vars]\n" % plan)
