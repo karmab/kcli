@@ -1,8 +1,8 @@
 parameters:
    docker_disk_size: 60
-   kubevirt_version: 0.1.0
+   kubevirt_version: v0.3.0-alpha.3
    initializer: false
-   openshift_version: 3.7
+   openshift_version: 3.9
    metrics: false
 
 kubevirt:
@@ -16,10 +16,8 @@ kubevirt:
   - size: [[ docker_disk_size ]] 
  pool: default
  files:
-  - path: /root/vm.yaml
-    origin: vm.yaml
-  - path: /root/vm010.yaml
-    origin: vm010.yaml
+  - path: /root/vm.yml
+    origin: vm.yml
   - path: /root/iscsi-demo-target.yaml
     origin: iscsi-demo-target.yaml
  scripts: 

@@ -1,0 +1,18 @@
+metadata:
+  name: testvm-ephemeral
+apiVersion: kubevirt.io/v1alpha1
+kind: VirtualMachine
+spec:
+  domain:
+    resources:
+      requests:
+        memory: 64M
+    devices:
+      disks:
+      - name: registrydisk
+        volumeName: registryvolume
+        disk: {}
+  volumes:
+    - name: registryvolume
+      registryDisk:
+        image: kubevirt/alpine-registry-disk-demo:latest

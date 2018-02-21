@@ -1,4 +1,12 @@
 apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kubevirt-iscsi
+  namespace: kube-system
+  labels:
+    kubevirt.io: ""
+---
+apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: disk-custom
@@ -131,5 +139,5 @@ spec:
             path: /
       nodeSelector:
         kubernetes.io/hostname: localhost
-      serviceAccount: kubevirt-infra
-      serviceAccountName: kubevirt-infra
+      serviceAccount: kubevirt-iscsi
+      serviceAccountName: kubevirt-iscsi
