@@ -24,11 +24,11 @@
   url: github.com/karmab/kcli/plans/kubernetes
   file: kubevirt.yml
   description: Latest kubernetes and kubevirt with single master and multiple nodes
-  numvms: 3
+  numvms: 2
   template: CentOS-7-x86_64-GenericCloud.qcow2
   parameters:
-   nodes: 3
+   nodes: 1
    domain: karmalabs.com
    template: CentOS-7-x86_64-GenericCloud.qcow2
    deploy_app: false
-   kubevirt_version: 0.2.0
+   kubevirt_version: v0.3.0-alpha.3

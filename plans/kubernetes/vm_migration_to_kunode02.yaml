@@ -1,9 +1,0 @@
-apiVersion: kubevirt.io/v1alpha1
-kind: Migration
-metadata:
-  name: testvm-migration2
-spec:
-  selector:
-    name: testvm
-  nodeSelector:
-    kubernetes.io/hostname: kunode02
