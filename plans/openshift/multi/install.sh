@@ -8,7 +8,9 @@ export PLAYBOOKS=/root
 cd /root
 git clone https://github.com/openshift/openshift-ansible
 cd openshift-ansible
+[% if '.' in openshift_version %] 
 git checkout remotes/origin/release-[[ openshift_version ]]
+[% endif  %]
 [% else  %]
 yum -y install ansible openshift-ansible-playbooks
 export PLAYBOOKS=/usr/share/ansible
