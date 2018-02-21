@@ -54,7 +54,7 @@ def inventory(self, name):
     login = self._ssh_credentials(name)[0]
     if ip is not None:
         if '.' in ip:
-            return "%s ansible_host=%s ansible_ssh_host=%s ansible_user=%s" % (name, ip, ip, login)
+            return "%s ansible_host=%s ansible_user=%s" % (name, ip, login)
         else:
             return "%s ansible_host=127.0.0.1 ansible_user=%s ansible_port=%s" % (name, login, ip)
     else:
