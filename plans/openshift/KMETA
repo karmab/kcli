@@ -94,11 +94,11 @@
    openshift_version: 3.7
    metrics: false
 
-- name: asb
+- name: ansibleservicebroker
   group: openshift
   url: github.com/karmab/kcli/plans/openshift
-  file: asb.yml
-  description: Ansible Service Broker based on oc cluster up
+  file: ansibleservicebroker.yml
+  description: Ansible Service Broker based on run_latest_build.sh script
   comments: you can define the org parameter to use an additional apb org from docker hub
   numvms: 1
   memory: 6144
@@ -106,7 +106,7 @@
   parameters:
    docker_disk_size: 60
    initializer: false
-   openshift_version: 3.7
+   openshift_version: latest
 
 - name: minishift
   group: openshift

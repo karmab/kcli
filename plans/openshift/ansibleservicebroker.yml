@@ -1,7 +1,7 @@
 parameters:
  docker_disk_size: 60
  initializer: false
- openshift_version: 3.7
+ openshift_version: latest
  template: Fedora-Cloud-Base-27-1.6.x86_64.qcow2
 
 asb:
@@ -24,4 +24,4 @@ asb:
  scripts: 
   - requirements.sh
   - ~/dockerhub.sh
-  - asb.sh
+  - ansibleservicebroker.sh

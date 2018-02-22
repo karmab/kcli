@@ -6,14 +6,16 @@ sleep 20
 dnf -y install dnf-plugins-core libselinux-python
 dnf -y copr enable @ansible-service-broker/ansible-service-broker-latest
 dnf -y install apb
-#wget https://s3.amazonaws.com/catasb/linux/amd64/oc
-#mv oc /usr/bin
-#wget https://apb-oc.s3.amazonaws.com/apb-oc/oc-linux-64bit.tar.gz
-#tar zxvf oc-linux-64bit.tar.gz
-#mv oc-linux-64bit/oc /usr/bin
-#chmod u+x /usr/bin/oc
 wget https://raw.githubusercontent.com/openshift/ansible-service-broker/master/scripts/run_latest_build.sh
+[% if '.' in openshift_version %] 
 export ORIGIN_VERSION="v[[ openshift_version ]]"
+[% else %]
+export ORIGIN_VERSION="[[ openshift_version ]]"
+wget https://apb-oc.s3.amazonaws.com/apb-oc/oc-linux-64bit.tar.gz
+tar zxvf oc-linux-64bit.tar.gz
+mv oc-linux-64bit/oc /usr/bin
+chmod u+x /usr/bin/oc
+[% endif %]
 rm -rf /usr/share/rhel/secrets
 [% if org is defined %]
 export TEMPLATE_URL=file:///root/deploy-ansible-service-broker.template.yaml
