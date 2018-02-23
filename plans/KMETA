@@ -209,7 +209,7 @@
   url: github.com/karmab/kcli/plans/openshift
   file: multi.yml
   description: Openshift with arbitrary number of nodes
-  comments: an extra lb node is created when there are more than 1 master. The first node is also tagged as infra to host router and docker registry
+  comments: an extra lb node is created when there are more than 1 master. The first node is also tagged as infra to host router and docker registry. You can create a dedicated nfs node with nfs parameter or have the master do that for you with nfs_master
   numvms: 7
   template: CentOS-7-x86_64-GenericCloud.qcow2
   parameters:
@@ -227,6 +227,7 @@
     openshift_version: 3.7
     upstream: false
     nfs: false
+    nfs_master: false
 
 - name: helm
   group: openshift

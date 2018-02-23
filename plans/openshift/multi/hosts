@@ -41,7 +41,17 @@ openshift_master_cluster_public_hostname=[[ lb ]].[[ domain ]]
 openshift_router_selector="region=infra"
 openshift_registry_selector="region=infra"
 os_sdn_network_plugin_name='redhat/openshift-ovs-multitenant'
-#openshift_hosted_router_replicas="1a
+#openshift_hosted_router_replicas="1"
+ansible_service_broker_registry_whitelist=['.*-apb$']
+[% if nfs_master %]
+openshift_hosted_etcd_storage_kind=nfs
+openshift_hosted_etcd_storage_nfs_options="*(rw,root_squash,sync,no_wdelay)"
+openshift_hosted_etcd_storage_nfs_directory=/opt/etcd-vol
+openshift_hosted_etcd_storage_volume_name=etcd-vol
+openshift_hosted_etcd_storage_access_modes=["ReadWriteOnce"]
+openshift_hosted_etcd_storage_volume_size=1G
+openshift_hosted_etcd_storage_labels={'storage': 'etcd'}
+[% endif %]
 
 # apply updated node defaults
 openshift_node_kubelet_args={'pods-per-core': ['10'], 'max-pods': ['250'], 'image-gc-high-threshold': ['90'], 'image-gc-low-threshold': ['80']}
@@ -54,6 +64,11 @@ openshift_clock_enabled=true
 
 openshift_hosted_metrics_deploy=false
 openshift_master_default_subdomain=apps.[[ domain ]]
+
+[% if nfs_master %]
+[nfs]
+master01.[[ domain ]]
+[% endif %]
 
 
 # host group for masters

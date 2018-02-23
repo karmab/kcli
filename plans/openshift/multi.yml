@@ -13,6 +13,7 @@ parameters:
  openshift_version: 3.7
  upstream: false
  nfs: false
+ nfs_master: false
 
 [[ domain ]]:
  type: network

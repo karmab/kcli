@@ -8,7 +8,9 @@ export PLAYBOOKS=/root
 cd /root
 git clone https://github.com/openshift/openshift-ansible
 cd openshift-ansible
+PLAYBOOK_FILE="deploy_cluster.yml"
 [% if '.' in openshift_version %] 
+PLAYBOOK_FILE="byo/config.yml"
 git checkout remotes/origin/release-[[ openshift_version ]]
 [% endif  %]
 [% else  %]
@@ -28,7 +30,8 @@ export IP=`dig +short node01.[[ domain ]]`
 sed -i "s/#log_path/log_path/" /etc/ansible/ansible.cfg
 sed -i "s/openshift_master_default_subdomain=.*/openshift_master_default_subdomain=$IP.xip.io/" /root/hosts
 [% if deploy %]
-ansible-playbook -i /root/hosts $PLAYBOOKS/openshift-ansible/playbooks/byo/config.yml
+#ansible-playbook -i /root/hosts $PLAYBOOKS/openshift-ansible/playbooks/byo/config.yml
+ansible-playbook -i /root/hosts $PLAYBOOKS/openshift-ansible/playbooks/$PLAYBOOK_FILE
 [% for master in range(0, masters) %]
 ssh master0[[ master + 1 ]].[[ domain ]] "htpasswd -b /etc/origin/master/htpasswd [[ user ]] [[ password ]]"
 [% endfor %]
