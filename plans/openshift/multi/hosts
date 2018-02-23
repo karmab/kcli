@@ -24,6 +24,9 @@ deployment_type=openshift-enterprise
 [% endif %]
 ansible_become=True
 openshift_disable_check=disk_availability,docker_storage,memory_availability
+[% if '.' not in openshift_version %]
+containerized=true
+[% endif %]
 
 # Uncomment the following to enable htpasswd authentication; defaults to
 # DenyAllPasswordIdentityProvider.

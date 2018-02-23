@@ -274,10 +274,10 @@
    openshift_version: 3.7
    metrics: false
 
-- name: ansibleservicebroker
+- name: asb
   group: openshift
   url: github.com/karmab/kcli/plans/openshift
-  file: ansibleservicebroker.yml
+  file: asb.yml
   description: Ansible Service Broker based on run_latest_build.sh script
   comments: you can define the org parameter to use an additional apb org from docker hub
   numvms: 1

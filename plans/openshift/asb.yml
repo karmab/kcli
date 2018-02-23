@@ -24,4 +24,4 @@ asb:
  scripts: 
   - requirements.sh
   - ~/dockerhub.sh
-  - ansibleservicebroker.sh
+  - asb.sh
