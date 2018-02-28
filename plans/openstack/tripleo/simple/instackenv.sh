@@ -8,7 +8,7 @@ jq . << EOF > ~/instackenv.json
   "arch": "x86_64",
   "nodes": [
     {
-      "node": "tricontroller01",
+      "name": "tricontroller01",
       "pm_addr": "192.168.101.1",
       "pm_password": "$(cat ~/.ssh/id_rsa_libvirt)",
       "pm_type": "pxe_ssh",
@@ -22,7 +22,7 @@ jq . << EOF > ~/instackenv.json
       "pm_user": "$USER"
     },
     {
-      "node": "tricompute01",
+      "name": "tricompute01",
       "pm_addr": "192.168.101.1",
       "pm_password": "$(cat ~/.ssh/id_rsa_libvirt)",
       "pm_type": "pxe_ssh",
