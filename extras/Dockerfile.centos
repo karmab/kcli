@@ -1,6 +1,14 @@
 FROM centos:7
 MAINTAINER Karim Boumedhel <karimboumedhel@gmail.com>
 
+LABEL name="karmab/kcli" \
+      maintainer="karimboumedhel@gmail.com" \
+      vendor="Karmalabs" \
+      version="10.6" \
+      release="1" \
+      summary="Libvirt/VirtualBox wrapper on steroids" \
+      description="Libvirt/VirtualBox wrapper on steroids"
+
 EXPOSE 9000
 
 # Group the package installation

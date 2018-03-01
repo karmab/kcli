@@ -112,8 +112,8 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             localhostname = "%s.%s" % (name, domain)
         else:
             localhostname = name
-        metadatafile.write('instance-id: XXX\nlocal-hostname: %s\n' % localhostname)
-        metadata = ''
+        metadata = {"instance-id": localhostname, "local-hostname": localhostname}
+        netdata = ''
         if nets:
             for index, net in enumerate(nets):
                 if isinstance(net, str):
@@ -130,32 +130,32 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                     netmask = next((e for e in [net.get('mask'), net.get('netmask')] if e is not None), None)
                     noconf = net.get('noconf')
                     vips = net.get('vips')
-                metadata += "  auto %s\n" % nicname
+                netdata += "  auto %s\n" % nicname
                 if noconf is not None:
-                    metadata += "  iface %s inet manual\n" % nicname
+                    netdata += "  iface %s inet manual\n" % nicname
                 elif ip is not None and netmask is not None and not reserveip:
-                    metadata += "  iface %s inet static\n" % nicname
-                    metadata += "  address %s\n" % ip
-                    metadata += "  netmask %s\n" % netmask
+                    netdata += "  iface %s inet static\n" % nicname
+                    netdata += "  address %s\n" % ip
+                    netdata += "  netmask %s\n" % netmask
                     gateway = net.get('gateway')
                     if index == 0 and default_gateway is not None:
-                        metadata += "  gateway %s\n" % default_gateway
+                        netdata += "  gateway %s\n" % default_gateway
                     elif gateway is not None:
-                        metadata += "  gateway %s\n" % gateway
+                        netdata += "  gateway %s\n" % gateway
                     dns = net.get('dns')
                     if dns is not None:
-                        metadata += "  dns-nameservers %s\n" % dns
+                        netdata += "  dns-nameservers %s\n" % dns
                     domain = net.get('domain')
                     if domain is not None:
-                        metadatafile.write("  dns-search %s\n" % domain)
+                        netdata += "  dns-search %s\n" % domain
                     if isinstance(vips, list) and vips:
                         for index, vip in enumerate(vips):
-                            metadata += "  auto %s:%s\n  iface %s:%s inet static\n  address %s\n  netmask %s\n" % (nicname, index, nicname, index, vip, netmask)
+                            netdata += "  auto %s:%s\n  iface %s:%s inet static\n  address %s\n  netmask %s\n" % (nicname, index, nicname, index, vip, netmask)
                 else:
-                    metadata += "  iface %s inet dhcp\n" % nicname
-            if metadata:
-                metadatafile.write("network-interfaces: |\n")
-                metadatafile.write(metadata)
+                    netdata += "  iface %s inet dhcp\n" % nicname
+            if netdata:
+                metadata["network-interfaces"] = netdata
+            metadatafile.write(json.dumps(metadata))
     with open('/tmp/user-data', 'w') as userdata:
         userdata.write('#cloud-config\nhostname: %s\n' % name)
         if enableroot:

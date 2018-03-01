@@ -22,7 +22,7 @@ TEMPLATES = {'': None, 'arch': 'https://linuximages.de/openstack/arch/arch-opens
              'centos6': 'https://cloud.centos.org/centos/6/images/CentOS-6-x86_64-GenericCloud.qcow2',
              'centos7': 'https://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2',
              'centos7atomic': 'http://cloud.centos.org/centos/7/atomic/images/CentOS-Atomic-Host-7-GenericCloud.qcow2',
-             'cirros': 'https://download.cirros-cloud.net/0.3.5/cirros-0.3.5-x86_64-disk.img',
+             'cirros': 'http://download.cirros-cloud.net/0.4.0/cirros-0.4.0-x86_64-disk.img',
              'cloudforms42': 'https://access.redhat.com/downloads/content/167/ver=/cf-me---4.2/4.2/x86_64/product-software',
              'cloudforms45': 'https://access.redhat.com/downloads/content/167/ver=/cf-me---4.5/4.5/x86_64/product-software',
              'debian8': 'https://cdimage.debian.org/cdimage/openstack/current-8/debian-8-openstack-amd64.qcow2',
