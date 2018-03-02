@@ -10,12 +10,18 @@ Note that the plugin:
 
 ## requisites 
 
-if using *macosx*, note that the virtualbox sdk is only compatible with system python ( so use /usr/bin/python when installing kcli so it uses this interpreter, and not the one from brew)
+Note that if using *macosx*, note that the virtualbox sdk is only compatible with system python ( so use /usr/bin/python when installing kcli so it uses this interpreter, and not the one from brew).
 
-### install pyvbox
+### install requirements 
 
 ```
-pip install pyvbox
+pip install libvirt-python pyvbox
+```
+
+### install kcli
+
+```
+pip install kcli
 ```
 
 ### download sdk and install it
@@ -25,10 +31,10 @@ export VBOX_INSTALL_PATH=/usr/lib/virtualbox
 sudo -E python vboxapisetup.py install
 ```
 
-then in your *.kcki/config.yml*, you will need a client section defining your virtualbox
+then in your *.kcli/config.yml*, you will need a client section defining your virtualbox
 
 ```
-localhost:
+local:
  type: vbox
 
 ```

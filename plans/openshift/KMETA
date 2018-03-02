@@ -182,3 +182,5 @@
    initializer: false
    openshift_version: 3.7
    metrics: false
+   persistent: true
+   large: false

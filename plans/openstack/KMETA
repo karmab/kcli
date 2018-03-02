@@ -5,9 +5,9 @@
   description: Upstream packstack
   numvms: 1
   template: CentOS-7-x86_64-GenericCloud.qcow2
-  comments: Version can be set to queen,pike,ocata,newton,liberty
+  comments: Version can be set to queens,pike,ocata,newton,liberty
   parameters:
-   version: queen
+   version: queens
    user: testk
    password: testk
    project: testk

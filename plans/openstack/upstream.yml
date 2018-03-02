@@ -1,5 +1,5 @@
 parameters:
- version: queen
+ version: queens
  user: testk
  password: testk
  project: testk

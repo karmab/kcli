@@ -1,10 +1,12 @@
 parameters:
   template: CentOS-7-x86_64-GenericCloud.qcow2
-  memory: 6144
+  memory: 10144
   docker_disk_size: 60
   initializer: false
   openshift_version: 3.7
   metrics: false
+  persistent: true
+  large: false
 
 openwhisk:
  template: CentOS-7-x86_64-GenericCloud.qcow2
@@ -21,6 +23,8 @@ openwhisk:
     origin: openwhisk_secret.sh
   - path: /root/initializer.txt
     origin: initializer.txt
+  - path: /root/larger.env
+    origin: larger.env
  scripts: 
   - requirements.sh
   - upstream.sh
