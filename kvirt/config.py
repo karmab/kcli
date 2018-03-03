@@ -15,6 +15,10 @@ try:
     from kvirt.vbox import Kbox
 except:
     pass
+try:
+    from kvirt.kubevirt import Kubevirt
+except:
+    pass
 from distutils.spawn import find_executable
 import glob
 import os
@@ -184,6 +188,10 @@ class Kconfig:
         else:
             if self.type == 'vbox':
                 k = Kbox()
+            elif self.type == 'kubevirt':
+                context = options.get('context')
+                pvctemplate = options.get('pvctemplate', False)
+                k = Kubevirt(context=context, pvctemplate=pvctemplate, host=self.host, port=self.port, user=self.user, debug=debug)
             else:
                 if self.host is None:
                     common.pprint("Problem parsing your configuration file", color='red')
@@ -1361,7 +1369,6 @@ class Kconfig:
                         continue
                 if cmd is None and template != '' and template in TEMPLATESCOMMANDS:
                     cmd = TEMPLATESCOMMANDS[template]
-                print(url)
                 result = k.add_image(url, pool, cmd=cmd)
                 common.handle_response(result, template, element='Template ', action='Added')
             return {'result': 'success'}
