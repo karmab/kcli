@@ -1,3 +1,7 @@
+parameters:
+ version: latest
+ driver: kvm2
+
 minikube:
  template: Fedora-Cloud-Base-26-1.5.x86_64.qcow2
  numcpus: 2
@@ -16,10 +20,15 @@ minikube:
   - echo -e "DEVS=/dev/vdb\nVG=dockervg" > /etc/sysconfig/docker-storage-setup
   - docker-storage-setup
   - systemctl start docker
-  - curl -L https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl
-  - chmod +x /usr/local/bin/kubectl
+  - curl -L https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl -o /usr/bin/kubectl
+  - chmod +x /usr/bin/kubectl
   - echo "source <(kubectl completion bash)" >> ~/.bashrc
-  - curl -L https://storage.googleapis.com/minikube/releases/v0.23.0/minikube-linux-amd64 -o /usr/local/sbin/minikube
-  - chmod +x /usr/local/sbin/minikube
-#  - minikube start --vm-driver=none --kubernetes-version v1.7.0
-  - minikube start --vm-driver=none
+  - curl -Lo /usr/bin/minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+  - chmod +x /usr/bin/minikube
+[% if driver == 'none' %]
+  - minikube start --vm-driver none --extra-config=kubelet.CgroupDriver=systemd
+[% else %]
+  - yum -y install libvirt-daemon-kvm qemu-kvm
+  - curl -LO https://storage.googleapis.com/minikube/releases/latest/docker-machine-driver-kvm2 && chmod +x docker-machine-driver-kvm2 && sudo mv docker-machine-driver-kvm2 /usr/bin/
+  - minikube start --vm-driver kvm2
+[% endif %]
