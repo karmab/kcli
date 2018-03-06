@@ -1,0 +1,15 @@
+parameters:
+ admin_password: BIGsecret2018@
+
+sqlserver:
+ template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+ memory: 8096
+ numcpus: 2
+ disks: 
+  - size: 40
+ nets:
+ - default
+ pool: default
+ scripts: 
+  - ~/register.sh
+  - install.sh
