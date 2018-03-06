@@ -16,7 +16,6 @@ import re
 import string
 import time
 import xml.etree.ElementTree as ET
-import yaml
 
 
 KB = 1024 * 1024
@@ -39,6 +38,8 @@ guestwindows200864 = "windows_2008x64"
 
 def libvirt_callback(ignore, err):
     return
+
+
 registerErrorHandler(f=libvirt_callback, ctx=None)
 
 
@@ -697,7 +698,7 @@ class Kvirt(Kbase):
         except:
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        state = 'down'
+        status = 'down'
         autostart = starts[vm.autostart()]
         memory = root.getiterator('memory')[0]
         unit = memory.attrib['unit']
@@ -713,8 +714,8 @@ class Kvirt(Kbase):
         else:
             description = ''
         if vm.isActive():
-            state = 'up'
-        yamlinfo = {'name': name, 'autostart': autostart, 'nets': [], 'disks': [], 'snapshots': [], 'state': state}
+            status = 'up'
+        yamlinfo = {'name': name, 'autostart': autostart, 'nets': [], 'disks': [], 'snapshots': [], 'status': status}
         plan, profile, template, ip, creationdate = None, None, None, None, None
         for element in root.getiterator('{kvirt}info'):
             e = element.find('{kvirt}plan')
@@ -782,45 +783,7 @@ class Kvirt(Kbase):
             else:
                 current = False
             yamlinfo['snapshots'].append({'snapshot': snapshot, current: current})
-        if fields is not None:
-            for key in list(yamlinfo):
-                if key not in fields:
-                    del yamlinfo[key]
-        if output == 'yaml':
-            print yaml.dump(yamlinfo, default_flow_style=False, indent=2, allow_unicode=True, encoding=None).replace("'", '')[:-1]
-        else:
-            if fields is None:
-                fields = ['name', 'creationdate', 'status', 'description', 'autostart', 'template', 'plan', 'profile', 'cpus', 'memory', 'nets', 'ip', 'disks', 'snapshots']
-            for key in fields:
-                if key not in yamlinfo:
-                    continue
-                else:
-                    value = yamlinfo[key]
-                    if key == 'nets':
-                        for net in value:
-                            device = net['device']
-                            mac = net['mac']
-                            network = net['net']
-                            network_type = net['type']
-                            print("net interfaces:%s mac: %s net: %s type: %s" % (device, mac, network, network_type))
-                    elif key == 'disks':
-                        for disk in value:
-                            device = disk['device']
-                            disksize = disk['size']
-                            diskformat = disk['format']
-                            drivertype = disk['type']
-                            path = disk['path']
-                            print("diskname: %s disksize: %sGB diskformat: %s type: %s path: %s" % (device, disksize, diskformat, drivertype, path))
-                    elif key == 'snapshots':
-                        for snap in value:
-                            snapshot = snap['snapshot']
-                            current = snap['current']
-                            print("snapshot: %s current: %s" % (snapshot, current))
-                    else:
-                        if values:
-                            print(value)
-                        else:
-                            print("%s: %s" % (key, value))
+        common.print_info(yamlinfo, output=output, fields=fields, values=values)
         return {'result': 'success'}
 
     def ip(self, name):
@@ -1373,12 +1336,12 @@ class Kvirt(Kbase):
         pool.createXML(volxml, 0)
         return diskpath
 
-    def add_disk(self, name, size, pool=None, thin=True, template=None, shareable=False, existing=None):
+    def add_disk(self, name, size=1, pool=None, thin=True, template=None, shareable=False, existing=None):
         conn = self.conn
         diskformat = 'qcow2'
         diskbus = 'virtio'
         if size < 1:
-            print("Incorrect size.Leaving...")
+            common.pprint("Incorrect size.Leaving...", color='red')
             return {'result': 'failure', 'reason': "Incorrect size"}
         if not thin:
             diskformat = 'raw'

@@ -23,6 +23,7 @@ setup(
         'docker>=2.0',
         'flask',
         'iptools',
+        'kubernetes',
         'netaddr',
         'PyYAML',
         'prettytable',

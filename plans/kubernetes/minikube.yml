@@ -13,6 +13,9 @@ minikube:
   - size: 10
   - size: 30
  pool: default
+ files:
+  - path: /root/network.yml
+    origin: network.yml
  cmds: 
   - yum -y install docker bash-completion
   - systemctl enable docker
@@ -28,7 +31,11 @@ minikube:
 [% if driver == 'none' %]
   - minikube start --vm-driver none --extra-config=kubelet.CgroupDriver=systemd
 [% else %]
-  - yum -y install libvirt-daemon-kvm qemu-kvm
+  - yum -y install libvirt-daemon-kvm qemu-kvm libvirt-client
+  - systemctl start libvirtd
+  - systemctl enable libvirtd
   - curl -LO https://storage.googleapis.com/minikube/releases/latest/docker-machine-driver-kvm2 && chmod +x docker-machine-driver-kvm2 && sudo mv docker-machine-driver-kvm2 /usr/bin/
+  - virsh net-define /root/network.yml
+  - virsh net-start default
   - minikube start --vm-driver kvm2
 [% endif %]

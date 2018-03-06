@@ -105,7 +105,7 @@ def fetch(url, path, syms=None):
             fetch("%s/%s" % (url, filename), "%s/%s" % (path, filename), syms=syms)
 
 
-def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[], enableroot=True, overrides={}):
+def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[], enableroot=True, overrides={}, iso=True):
     default_gateway = gateway
     with open('/tmp/meta-data', 'w') as metadatafile:
         if domain is not None:
@@ -231,10 +231,11 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                     content = content.split('\n')
                 for line in content:
                     userdata.write("     %s\n" % line.rstrip())
-    isocmd = 'mkisofs'
-    if find_executable('genisoimage') is not None:
-        isocmd = 'genisoimage'
-    os.system("%s --quiet -o /tmp/%s.ISO --volid cidata --joliet --rock /tmp/user-data /tmp/meta-data" % (isocmd, name))
+    if iso:
+        isocmd = 'mkisofs'
+        if find_executable('genisoimage') is not None:
+            isocmd = 'genisoimage'
+        os.system("%s --quiet -o /tmp/%s.ISO --volid cidata --joliet --rock /tmp/user-data /tmp/meta-data" % (isocmd, name))
 
 
 def get_free_port():
@@ -350,3 +351,89 @@ def get_parameters(inputfile):
             found = True
     results = parameters if parameters != '' else None
     return results
+
+
+def print_info(yamlinfo, output='plain', fields=None, values=False):
+        if fields is not None:
+            for key in list(yamlinfo):
+                if key not in fields:
+                    del yamlinfo[key]
+        if output == 'yaml':
+            print yaml.dump(yamlinfo, default_flow_style=False, indent=2, allow_unicode=True, encoding=None).replace("'", '')[:-1]
+        else:
+            if fields is None:
+                fields = ['name', 'creationdate', 'host', 'status', 'description', 'autostart', 'template', 'plan', 'profile', 'cpus', 'memory', 'nets', 'ip', 'disks', 'snapshots']
+            for key in fields:
+                if key not in yamlinfo:
+                    continue
+                else:
+                    value = yamlinfo[key]
+                    if key == 'nets':
+                        for net in value:
+                            device = net['device']
+                            mac = net['mac']
+                            network = net['net']
+                            network_type = net['type']
+                            print("net interfaces:%s mac: %s net: %s type: %s" % (device, mac, network, network_type))
+                    elif key == 'disks':
+                        for disk in value:
+                            device = disk['device']
+                            disksize = disk['size']
+                            diskformat = disk['format']
+                            drivertype = disk['type']
+                            path = disk['path']
+                            print("diskname: %s disksize: %sGB diskformat: %s type: %s path: %s" % (device, disksize, diskformat, drivertype, path))
+                    elif key == 'snapshots':
+                        for snap in value:
+                            snapshot = snap['snapshot']
+                            current = snap['current']
+                            print("snapshot: %s current: %s" % (snapshot, current))
+                    else:
+                        if values:
+                            print(value)
+                        else:
+                            print("%s: %s" % (key, value))
+
+
+def ssh(name, ip='', host=None, port=22, hostuser=None, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, debug=False):
+        if ip == '':
+            return None
+        else:
+            sshcommand = "%s@%s" % (user, ip)
+            if X:
+                sshcommand = "-X %s" % (sshcommand)
+            if cmd:
+                sshcommand = "%s %s" % (sshcommand, cmd)
+            if host not in ['localhost', '127.0.0.1'] and tunnel:
+                sshcommand = "-o ProxyCommand='ssh -qp %s -W %%h:%%p %s@%s' %s" % (port, hostuser, host, sshcommand)
+            if local is not None:
+                sshcommand = "-L %s %s" % (local, sshcommand)
+            if remote is not None:
+                sshcommand = "-R %s %s" % (remote, sshcommand)
+            if insecure:
+                sshcommand = "ssh -o LogLevel=quiet -o 'UserKnownHostsFile=/dev/null' -o 'StrictHostKeyChecking=no' %s" % sshcommand
+            else:
+                sshcommand = "ssh %s" % sshcommand
+            if debug:
+                print(sshcommand)
+            return sshcommand
+
+
+def scp(name, ip='', host=None, port=22, hostuser=None, user=None, source=None, destination=None, recursive=None, tunnel=False, debug=False, download=False):
+        if ip == '':
+            print("No ip found. Cannot scp...")
+        else:
+            if host not in ['localhost', '127.0.0.1'] and tunnel:
+                arguments = "-o ProxyCommand='ssh -qp %s -W %%h:%%p %s@%s'" % (port, hostuser, host)
+            else:
+                arguments = ''
+            scpcommand = 'scp'
+            if recursive:
+                scpcommand = "%s -r" % scpcommand
+            if download:
+                scpcommand = "%s %s %s@%s:%s %s" % (scpcommand, arguments, user, ip, source, destination)
+            else:
+                scpcommand = "%s %s %s %s@%s:%s" % (scpcommand, arguments, source, user, ip, destination)
+            if debug:
+                print(scpcommand)
+            return scpcommand
