@@ -80,7 +80,7 @@ class Kubevirt(object):
         namespace = self.namespace
         pvc = core.list_namespaced_persistent_volume_claim(namespace)
         templates = {p.metadata.annotations['kcli/template']: p.metadata.name for p in pvc.items if 'kcli/template' in p.metadata.annotations}
-        vm = {'kind': 'VirtualMachine', 'spec': {'terminationGracePeriodSeconds': 0, 'domain': {'resources': {'requests': {'memory': "%sM" % memory}}, 'devices': {'disks': []}}, 'volumes': []}, 'apiVersion': 'kubevirt.io/v1alpha1', 'metadata': {'namespace': namespace, 'name': name, 'kcli/plan': plan, 'kcli/profile': profile}}
+        vm = {'kind': 'VirtualMachine', 'spec': {'terminationGracePeriodSeconds': 0, 'domain': {'resources': {'requests': {'memory': "%sM" % memory}}, 'devices': {'disks': []}}, 'volumes': []}, 'apiVersion': 'kubevirt.io/v1alpha1', 'metadata': {'namespace': namespace, 'name': name, 'annotations': {'kcli/plan': plan, 'kcli/profile': profile}}}
         pvcs = []
         for index, disk in enumerate(disks):
             diskname = "disk%s" % index
@@ -172,12 +172,13 @@ class Kubevirt(object):
         vms = []
         for vm in crds.list_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines')["items"]:
             metadata = vm.get("metadata")
+            annotations = metadata.get("annotations")
             name = metadata["name"]
             status = vm['status']
             state = status['phase']
             source = 'N/A'
-            profile = metadata.get('kcli/profile', 'N/A')
-            plan = metadata.get('kcli/plan', 'N/A')
+            profile = annotations.get('kcli/profile', 'N/A')
+            plan = annotations.get('kcli/plan', 'N/A')
             report = 'N/A'
             ip = 'N/A'
             if 'interfaces' in status:
@@ -217,6 +218,7 @@ class Kubevirt(object):
         if self.debug:
             pretty_print(vm)
         metadata = vm.get("metadata")
+        annotations = metadata.get("annotations")
         spec = vm.get("spec")
         volumes = spec["volumes"]
         name = metadata["name"]
@@ -226,8 +228,8 @@ class Kubevirt(object):
         memory = vm['spec']['domain']['resources']['requests']['memory']
         state = status['phase']
         # source = 'N/A'
-        profile = metadata.get('kcli/profile')
-        plan = metadata.get('kcli/plan')
+        profile = annotations.get('kcli/profile')
+        plan = annotations.get('kcli/plan')
         # report = 'N/A'
         ip = None
         host = status['nodeName'] if 'nodeName' in status else None
@@ -333,7 +335,7 @@ class Kubevirt(object):
         except:
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        vm["metadata"]["kcli/%s" % metatype] = metavalue
+        vm["metadata"]["annotations"]["kcli/%s" % metatype] = metavalue
         crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
         return
 
