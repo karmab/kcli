@@ -17,7 +17,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 DOMAIN = "kubevirt.io"
 VERSION = 'v1alpha1'
-REGISTRYDISKS = ['alpine', 'cirros', 'fedora-cloud']
+REGISTRYDISKS = ['kubevirt/alpine-registry-disk-demo', 'kubevirt/cirros-registry-disk-demo', 'kubevirt/fedora-cloud-registry-disk-demo']
 
 
 def pretty_print(o):
@@ -71,6 +71,7 @@ class Kubevirt(object):
         return
 
     def create(self, name, virttype='kvm', profile='', plan='kvirt', cpumodel='Westmere', cpuflags=[], numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[], enableroot=True, alias=[], overrides={}):
+        print(template)
         # default_diskinterface = diskinterface
         # default_diskthin = diskthin
         default_disksize = disksize
@@ -78,8 +79,9 @@ class Kubevirt(object):
         crds = self.crds
         core = self.core
         namespace = self.namespace
-        pvc = core.list_namespaced_persistent_volume_claim(namespace)
-        templates = {p.metadata.annotations['kcli/template']: p.metadata.name for p in pvc.items if 'kcli/template' in p.metadata.annotations}
+        if self.pvctemplate:
+            pvc = core.list_namespaced_persistent_volume_claim(namespace)
+            templates = {p.metadata.annotations['kcli/template']: p.metadata.name for p in pvc.items if 'kcli/template' in p.metadata.annotations}
         vm = {'kind': 'VirtualMachine', 'spec': {'terminationGracePeriodSeconds': 0, 'domain': {'resources': {'requests': {'memory': "%sM" % memory}}, 'devices': {'disks': []}}, 'volumes': []}, 'apiVersion': 'kubevirt.io/v1alpha1', 'metadata': {'namespace': namespace, 'name': name, 'annotations': {'kcli/plan': plan, 'kcli/profile': profile}}}
         pvcs = []
         for index, disk in enumerate(disks):
@@ -128,7 +130,6 @@ class Kubevirt(object):
         try:
             for pvc in pvcs:
                 core.create_namespaced_persistent_volume_claim(namespace, pvc)
-            if pvc:
                 common.pprint("Waiting 15 seconds for pvc to be bound")
                 time.sleep(15)
             crds.create_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', vm)
@@ -265,6 +266,7 @@ class Kubevirt(object):
                 size = '0'
             else:
                 _type = 'other'
+                size = '0'
             disk = {'device': d['name'], 'size': size, 'format': bus, 'type': _type, 'path': volumename}
             disks.append(disk)
         yamlinfo['disks'] = disks

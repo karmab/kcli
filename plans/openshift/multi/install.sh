@@ -8,7 +8,7 @@ export PLAYBOOKS=/root
 cd /root
 git clone https://github.com/openshift/openshift-ansible
 cd openshift-ansible
-git checkout [[ openshift_version ]]
+git checkout release-[[ openshift_version ]]
 PLAYBOOK_FILE="deploy_cluster.yml"
 [% if openshift_version in ['3.2', '3.3', '3.4', '3.5', '3.7'] %] 
 PLAYBOOK_FILE="byo/config.yml"
