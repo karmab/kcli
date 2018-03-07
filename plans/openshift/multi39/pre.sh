@@ -1,4 +1,4 @@
-yum -y install wget git net-tools bind-utils iptables-services bridge-utils bash-completion atomic-openshift-utils atomic-openshift-excluder atomic-openshift-docker-excluder docker
+yum -y install wget git net-tools bind-utils iptables-services bridge-utils bash-completion atomic-openshift-utils atomic-openshift-excluder atomic-openshift-docker-excluder docker python-ipaddress
 yum -y install NetworkManager 
 systemctl enable NetworkManager
 systemctl start NetworkManager
@@ -10,3 +10,6 @@ sed -i "s@# INSECURE_REGISTRY=.*@INSECURE_REGISTRY='--insecure-registry 172.30.0
 echo -e "DEVS=/dev/vdb\nVG=dockervg" > /etc/sysconfig/docker-storage-setup
 docker-storage-setup
 yum -y update
+[% if upstream %]
+yum -y install centos-release-openshift-origin
+[% endif %]

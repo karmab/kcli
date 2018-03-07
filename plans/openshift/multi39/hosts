@@ -23,10 +23,12 @@ ansible_ssh_user=cloud-user
 deployment_type=openshift-enterprise
 [% endif %]
 ansible_become=True
-openshift_disable_check=disk_availability,docker_storage,memory_availability,docker_image_availability
+openshift_disable_check=disk_availability,docker_storage,memory_availability,package_availability,docker_image_availability
 enable_excluders=false
 containerized=true
 openshift_image_tag=[[ openshift_image_tag ]]
+openshift_repos_enable_testing=True
+
 
 # Uncomment the following to enable htpasswd authentication; defaults to
 # DenyAllPasswordIdentityProvider.

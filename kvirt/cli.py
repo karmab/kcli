@@ -433,6 +433,8 @@ def vm(args):
     global config
     if name is None:
         name = nameutils.get_random_name()
+        if config.type == 'kubevirt':
+            name = name.replace('_', '-')
         common.pprint("Using %s as name of the vm" % name, color='green')
     if profile is not None and profile.endswith('.yml'):
         profilefile = profile
@@ -874,6 +876,8 @@ def container(args):
     k = config.k
     if name is None:
         name = nameutils.get_random_name()
+        if config.type == 'kubevirt':
+            name = name.replace('_', '-')
     if profile is None:
         common.pprint("Missing profile", color='red')
         os._exit(1)

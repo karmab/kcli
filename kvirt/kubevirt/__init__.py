@@ -70,7 +70,8 @@ class Kubevirt(object):
         print("not implemented")
         return
 
-    def create(self, name, virttype='kvm', profile='', plan='kvirt', cpumodel='Westmere', cpuflags=[], numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[], enableroot=True, alias=[], overrides={}):
+    def create(self, name, virttype='kvm', profile='', plan='kvirt', cpumodel='Westmere', cpuflags=[], numcpus=2, memory=512, guestid='guestrhel764', pool=None, template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[], enableroot=True, alias=[], overrides={}):
+        print(pool)
         # default_diskinterface = diskinterface
         # default_diskthin = diskthin
         default_disksize = disksize
@@ -110,6 +111,8 @@ class Kubevirt(object):
             newdisk = {'volumeName': volname, 'disk': {'dev': 'vd%s' % letter}, 'name': diskname}
             vm['spec']['domain']['devices']['disks'].append(newdisk)
             vm['spec']['volumes'].append(myvolume)
+            if not self.pvctemplate and index == 0:
+                continue
             pvc = {'kind': 'PersistentVolumeClaim', 'spec': {'storageClassName': diskpool, 'accessModes': ['ReadWriteOnce'], 'resources': {'requests': {'storage': '%sGi' % disksize}}}, 'apiVersion': 'v1', 'metadata': {'name': volname}}
             if template is not None and index == 0 and self.pvctemplate:
                 pvc['metadata']['annotations'] = {'k8s.io/CloneRequest': templates[template]}
@@ -129,8 +132,9 @@ class Kubevirt(object):
         try:
             for pvc in pvcs:
                 core.create_namespaced_persistent_volume_claim(namespace, pvc)
-                common.pprint("Waiting 15 seconds for pvc to be bound")
-                time.sleep(15)
+                if self.pvctemplate and index == 0:
+                    common.pprint("Waiting 15 seconds for pvc to be bound")
+                    time.sleep(15)
             crds.create_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', vm)
         except Exception as err:
             return {'result': 'failure', 'reason': err}
