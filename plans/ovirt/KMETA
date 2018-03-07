@@ -7,86 +7,62 @@
   template: CentOS-7-x86_64-GenericCloud.qcow2
   parameters:
    password: unix1234
+   version: 4.2
 
-- name: ovirt41
+- name: ovirt3
   group: ovirt
   url: github.com/karmab/kcli/plans/ovirt
-  file: upstream41.yml
-  description: Upstream ovirt 4.1 all in one with nfs
+  file: upstream3.yml
+  description: Upstream ovirt 3.X all in one with nfs
   numvms: 1
   template: CentOS-7-x86_64-GenericCloud.qcow2
   parameters:
     password: unix1234
-
-- name: ovirt35
-  group: ovirt
-  url: github.com/karmab/kcli/plans/ovirt
-  file: upstream35.yml
-  description: Upstream ovirt 3.5 all in one with nfs
-  numvms: 1
-  template: CentOS-7-x86_64-GenericCloud.qcow2
-  parameters:
-    password: unix1234
-
-- name: ovirt36
-  group: ovirt
-  url: github.com/karmab/kcli/plans/ovirt
-  file: ovirt36.yml
-  description: Upstream ovirt 2.6 all in one with nfs
-  numvms: 1
-  template: CentOS-7-x86_64-GenericCloud.qcow2
-  parameters:
-    password: unix1234
+   version: 3.6
 
 - name: rhv
   group: ovirt
   url: github.com/karmab/kcli/plans/ovirt
   file: downstream.yml
-  description: Downstream rhv 4.0 all in one with nfs
+  description: Downstream rhv all in one with nfs
   numvms: 1
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
   parameters:
     password: unix1234
+    version: 4.2
 
-- name: rhev35
+- name: rhev3
   group: ovirt
   url: github.com/karmab/kcli/plans/ovirt
   file: rhev35.yml
-  description: Downstream rhev 3.5 all in one with nfs
+  description: Downstream rhev 3 all in one with nfs
   numvms: 1
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
   parameters:
     password: unix1234
-
-- name: rhev36
-  group: ovirt
-  url: github.com/karmab/kcli/plans/ovirt
-  file: rhev36.yml
-  description: Downstream rhev 3.5 all in one with nfs
-  numvms: 1
-  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
-  parameters:
-    password: unix1234
+    version: 3.6
 
 - name: advanced
   group: ovirt
   url: github.com/karmab/kcli/plans/ovirt
   file: advanced.yml
-  description: Downstream rhev 4.0 with one engine with nfs and two nodes
+  description: Downstream rhev with one engine with nfs and two nodes
   numvms: 3
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
   parameters:
     password: unix1234
+    version: 4.2
 
 - name: advanced_ldap
   group: ovirt
   url: github.com/karmab/kcli/plans/ovirt
   file: advanced_ldap.yml
-  description: Downstream rhev 4.0 with one engine with nfs and two nodes and an ldap container
+  description: Downstream rhev with one engine with nfs and two nodes and an ldap container
   numvms: 3
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
   parameters:
     password: unix1234
+    version: 4.2
     ldap_password: unix1234
     ldap_domain: karmalabs.com
     ldap_organization: Karmalabs
@@ -95,18 +71,20 @@
   group: ovirt
   url: github.com/karmab/kcli/plans/ovirt/hosted
   file: downstream.yml
-  description: Upstream Ovirt 4.0 Hosted Engine 4.0 with two nodes and an NFS server
+  description: Upstream Ovirt Hosted Engine with two nodes and an NFS server
   numvms: 3
   template: CentOS-7-x86_64-GenericCloud.qcow2
   parameters:
     password: unix1234
+    version: 4.2
 
 - name: rhev_hosted
   group: ovirt
   url: github.com/karmab/kcli/plans/ovirt/hosted
   file: downstream.yml
-  description: Downstream Rhev 4.0 Hosted Engine 4.0 with two nodes and an NFS server
+  description: Downstream Rhev Hosted Engine with two nodes and an NFS server
   numvms: 3
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
   parameters:
     password: unix1234
+    version: 4.2

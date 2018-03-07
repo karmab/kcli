@@ -1,12 +1,11 @@
 parameters:
  password: unix1234
+ parameters: 3.6
 
 ovirt:
  template: CentOS-7-x86_64-GenericCloud.qcow2
  memory: 8192
  numcpus: 2
- reservedns: true
- reservehost: true
  cpumodel: host-model
  cpuflags:
   - name: arat
@@ -21,7 +20,7 @@ ovirt:
  scripts: 
   - repo.sh
   - nfs.sh
-  - install.sh
+  - install3.sh
   - provision.sh
  files:
   - path: /root/answers.txt

@@ -24,7 +24,7 @@ deployment_type=openshift-enterprise
 [% endif %]
 ansible_become=True
 openshift_disable_check=disk_availability,docker_storage,memory_availability
-[% if '.' not in openshift_version %]
+[% if '.' not in openshift_version or openshift_version == '3.9'%]
 containerized=true
 [% endif %]
 
