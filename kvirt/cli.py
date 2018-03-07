@@ -255,14 +255,15 @@ def list(args):
         print(poolstable)
         return
     if hosts:
-        clientstable = PrettyTable(["Host", "Enabled", "Current"])
+        clientstable = PrettyTable(["Host", "Type", "Enabled", "Current"])
         clientstable.align["Host"] = "l"
         for client in sorted(config.clients):
             enabled = config.ini[client].get('enabled', True)
+            _type = config.ini[client].get('type', 'kvm')
             if client == config.client:
-                clientstable.add_row([client, enabled, 'X'])
+                clientstable.add_row([client, _type, enabled, 'X'])
             else:
-                clientstable.add_row([client, enabled, ''])
+                clientstable.add_row([client, _type, enabled, ''])
         print(clientstable)
         return
     if networks:

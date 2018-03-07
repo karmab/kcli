@@ -609,10 +609,11 @@ def hoststable():
     clients = []
     for client in sorted(config.clients):
         enabled = config.ini[client].get('enabled', True)
+        _type = config.ini[client].get('type', 'kvm')
         if client == config.client:
-            clients.append([client, enabled, 'X'])
+            clients.append([client, _type, enabled, 'X'])
         else:
-            clients.append([client, enabled, ''])
+            clients.append([client, _type, enabled, ''])
     print clients
     return render_template('hoststable.html', clients=clients)
 
