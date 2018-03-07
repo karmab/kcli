@@ -122,7 +122,7 @@
   group: kubernetes
   url: github.com/karmab/kcli/plans/kubernetes
   file: minikube.yml
-  description: Minikube 1.7.0
+  description: Minikube latest
   numvms: 1
   template: Fedora-Cloud-Base-26-1.5.x86_64.qcow2
   comments: driver can either be none or kvm2
@@ -229,9 +229,34 @@
     user: developer
     password: developer
     openshift_version: 3.7
-    upstream: false
+    upstream: true
     nfs: false
     nfs_master: false
+
+- name: multi39
+  group: openshift
+  url: github.com/karmab/kcli/plans/openshift
+  file: multi39.yml
+  description: Openshift 3.9 with arbitrary number of nodes
+  comments: This plan uses specific tag. an extra lb node is created when there are more than 1 master. The first node is also tagged as infra to host router and docker registry. You can create a dedicated nfs node with nfs parameter or have the master do that for you with nfs_master
+  numvms: 7
+  template: CentOS-7-x86_64-GenericCloud.qcow2
+  parameters:
+    template: CentOS-7-x86_64-GenericCloud.qcow2
+    domain: karmalabs.local
+    docker_disk_size: 30
+    masters: 3
+    master_memory: 8192
+    nodes: 3
+    node_memory: 4096
+    cidr: 192.168.105.0/24
+    deploy: true
+    user: developer
+    password: developer
+    upstream: true
+    nfs: false
+    openshift_version: openshift-ansible-3.9.0-0.42.0
+    openshift_image_tag: v3.9.0-alpha.4
 
 - name: helm
   group: openshift
@@ -457,86 +482,62 @@
   template: CentOS-7-x86_64-GenericCloud.qcow2
   parameters:
    password: unix1234
+   version: 4.2
 
-- name: ovirt41
+- name: ovirt3
   group: ovirt
   url: github.com/karmab/kcli/plans/ovirt
-  file: upstream41.yml
-  description: Upstream ovirt 4.1 all in one with nfs
+  file: upstream3.yml
+  description: Upstream ovirt 3.X all in one with nfs
   numvms: 1
   template: CentOS-7-x86_64-GenericCloud.qcow2
   parameters:
     password: unix1234
-
-- name: ovirt35
-  group: ovirt
-  url: github.com/karmab/kcli/plans/ovirt
-  file: upstream35.yml
-  description: Upstream ovirt 3.5 all in one with nfs
-  numvms: 1
-  template: CentOS-7-x86_64-GenericCloud.qcow2
-  parameters:
-    password: unix1234
-
-- name: ovirt36
-  group: ovirt
-  url: github.com/karmab/kcli/plans/ovirt
-  file: ovirt36.yml
-  description: Upstream ovirt 2.6 all in one with nfs
-  numvms: 1
-  template: CentOS-7-x86_64-GenericCloud.qcow2
-  parameters:
-    password: unix1234
+   version: 3.6
 
 - name: rhv
   group: ovirt
   url: github.com/karmab/kcli/plans/ovirt
   file: downstream.yml
-  description: Downstream rhv 4.0 all in one with nfs
+  description: Downstream rhv all in one with nfs
   numvms: 1
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
   parameters:
     password: unix1234
+    version: 4.2
 
-- name: rhev35
+- name: rhev3
   group: ovirt
   url: github.com/karmab/kcli/plans/ovirt
   file: rhev35.yml
-  description: Downstream rhev 3.5 all in one with nfs
+  description: Downstream rhev 3 all in one with nfs
   numvms: 1
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
   parameters:
     password: unix1234
-
-- name: rhev36
-  group: ovirt
-  url: github.com/karmab/kcli/plans/ovirt
-  file: rhev36.yml
-  description: Downstream rhev 3.5 all in one with nfs
-  numvms: 1
-  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
-  parameters:
-    password: unix1234
+    version: 3.6
 
 - name: advanced
   group: ovirt
   url: github.com/karmab/kcli/plans/ovirt
   file: advanced.yml
-  description: Downstream rhev 4.0 with one engine with nfs and two nodes
+  description: Downstream rhev with one engine with nfs and two nodes
   numvms: 3
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
   parameters:
     password: unix1234
+    version: 4.2
 
 - name: advanced_ldap
   group: ovirt
   url: github.com/karmab/kcli/plans/ovirt
   file: advanced_ldap.yml
-  description: Downstream rhev 4.0 with one engine with nfs and two nodes and an ldap container
+  description: Downstream rhev with one engine with nfs and two nodes and an ldap container
   numvms: 3
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
   parameters:
     password: unix1234
+    version: 4.2
     ldap_password: unix1234
     ldap_domain: karmalabs.com
     ldap_organization: Karmalabs
@@ -545,21 +546,23 @@
   group: ovirt
   url: github.com/karmab/kcli/plans/ovirt/hosted
   file: downstream.yml
-  description: Upstream Ovirt 4.0 Hosted Engine 4.0 with two nodes and an NFS server
+  description: Upstream Ovirt Hosted Engine with two nodes and an NFS server
   numvms: 3
   template: CentOS-7-x86_64-GenericCloud.qcow2
   parameters:
     password: unix1234
+    version: 4.2
 
 - name: rhev_hosted
   group: ovirt
   url: github.com/karmab/kcli/plans/ovirt/hosted
   file: downstream.yml
-  description: Downstream Rhev 4.0 Hosted Engine 4.0 with two nodes and an NFS server
+  description: Downstream Rhev Hosted Engine with two nodes and an NFS server
   numvms: 3
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
   parameters:
     password: unix1234
+    version: 4.2
 
 - name: tower
   group: tower

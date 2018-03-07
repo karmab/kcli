@@ -50,6 +50,31 @@
     nfs: false
     nfs_master: false
 
+- name: multi39
+  group: openshift
+  url: github.com/karmab/kcli/plans/openshift
+  file: multi39.yml
+  description: Openshift 3.9 with arbitrary number of nodes
+  comments: This plan uses specific tag. an extra lb node is created when there are more than 1 master. The first node is also tagged as infra to host router and docker registry. You can create a dedicated nfs node with nfs parameter or have the master do that for you with nfs_master
+  numvms: 7
+  template: CentOS-7-x86_64-GenericCloud.qcow2
+  parameters:
+    template: CentOS-7-x86_64-GenericCloud.qcow2
+    domain: karmalabs.local
+    docker_disk_size: 30
+    masters: 3
+    master_memory: 8192
+    nodes: 3
+    node_memory: 4096
+    cidr: 192.168.105.0/24
+    deploy: true
+    user: developer
+    password: developer
+    upstream: true
+    nfs: false
+    openshift_version: openshift-ansible-3.9.0-0.42.0
+    openshift_image_tag: v3.9.0-alpha.4
+
 - name: helm
   group: openshift
   url: github.com/karmab/kcli/plans/openshift
