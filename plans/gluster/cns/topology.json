@@ -1,0 +1,59 @@
+{                                                                                                                                                                                                           
+    "clusters": [
+        {
+            "nodes": [
+                {
+                    "devices": [
+                        "/dev/vdb",
+  			            "/dev/vdc"
+                    ],
+                    "node": {
+                        "hostnames": {
+                            "manage": [
+                                "gluster01"
+                            ],
+                            "storage": [
+                                "gluster01"
+                            ]
+                        },
+                        "zone": 1
+                    }
+                },
+                {
+                    "devices": [
+                        "/dev/vdb",
+  			            "/dev/vdc"
+                    ],
+                    "node": {
+                        "hostnames": {
+                            "manage": [
+                                "gluster02"
+                            ],
+                            "storage": [
+                                "gluster02"
+                            ]
+                        },
+                        "zone": 1
+                    }
+                },
+                {
+                    "devices": [
+                        "/dev/vdb",
+  			            "/dev/vdc"
+                    ],
+                    "node": {
+                        "hostnames": {
+                            "manage": [
+                                "gluster03"
+                            ],
+                            "storage": [
+                                "gluster03"
+                            ]
+                        },
+                        "zone": 2
+                    }
+                }
+            ]
+        }
+    ]
+}

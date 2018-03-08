@@ -90,6 +90,21 @@
    memory: 8144
    template: CentOS-7-x86_64-GenericCloud.qcow2
 
+- name: heketi
+  group: gluster
+  url: github.com/karmab/kcli/plans/gluster
+  file: upstream.yml
+  description: Upstream Gluster Handled with Heketi
+  comments: heketi runs on the first node
+  numvms: 3
+  template: CentOS-7-x86_64-GenericCloud.qcow2
+  parameters:
+   user: testk
+   password: testk
+   volume: testkvol
+   memory: 8144
+   template: CentOS-7-x86_64-GenericCloud.qcow2
+
 - name: freeipa
   group: ipa
   url: github.com/karmab/kcli/plans/ipa

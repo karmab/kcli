@@ -1,0 +1,61 @@
+parameters:
+ template: CentOS-7-x86_64-GenericCloud.qcow2
+ memory: 8144
+ user_password: user
+ admin_password: admin
+
+gluster01:
+ template: [[ template ]]
+ memory: [[ memory ]]
+ numcpus: 4
+ disks: 
+  - size: 30
+  - size: 30
+  - size: 30
+ nets:
+ - default
+ reservedns: true
+ sharedkey: true
+ files:
+  - path: /root/topology.json
+    origin: topology.json
+    mode: 700
+  - path: /root/heketi.json
+    origin: heketi.json
+    mode: 700
+ scripts: 
+  - repo.sh
+  - requisites.sh
+  - heketi.sh
+
+gluster02:
+ template: [[ template ]]
+ memory: [[ memory ]]
+ numcpus: 4
+ disks:
+  - size: 30
+  - size: 30
+  - size: 30
+ nets:
+ - default
+ reservedns: true
+ sharedkey: true
+ scripts:
+  - repo.sh
+  - requisites.sh
+
+gluster03:
+ template: [[ template ]]
+ memory: [[ memory ]]
+ numcpus: 4
+ disks:
+  - size: 30
+  - size: 30
+  - size: 30
+ nets:
+ - default
+ reservedns: true
+ sharedkey: true
+ scripts:
+  - repo.sh
+  - requisites.sh
