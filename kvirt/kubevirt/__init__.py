@@ -78,7 +78,6 @@ class Kubevirt(object):
         return
 
     def create(self, name, virttype='kvm', profile='', plan='kvirt', cpumodel='Westmere', cpuflags=[], numcpus=2, memory=512, guestid='guestrhel764', pool=None, template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[], enableroot=True, alias=[], overrides={}):
-        print(pool)
         # default_diskinterface = diskinterface
         # default_diskthin = diskthin
         default_disksize = disksize
@@ -92,6 +91,7 @@ class Kubevirt(object):
         vm = {'kind': 'VirtualMachine', 'spec': {'terminationGracePeriodSeconds': 0, 'domain': {'resources': {'requests': {'memory': "%sM" % memory}}, 'devices': {'disks': []}}, 'volumes': []}, 'apiVersion': 'kubevirt.io/v1alpha1', 'metadata': {'namespace': namespace, 'name': name, 'annotations': {'kcli/plan': plan, 'kcli/profile': profile, 'kcli/template': template}}}
         pvcs = []
         for index, disk in enumerate(disks):
+            existingpvc = False
             diskname = "disk%s" % index
             volname = "%s-vol%s" % (name, index)
             letter = chr(index + ord('a'))
@@ -104,6 +104,9 @@ class Kubevirt(object):
             elif isinstance(disk, dict):
                 disksize = disk.get('size', default_disksize)
                 diskpool = disk.get('pool', default_pool)
+                if 'name' in disk:
+                    volname = disk['name']
+                    existingpvc = True
                 # diskthin = disk.get('thin', default_diskthin)
                 # diskinterface = disk.get('interface', default_diskinterface)
             # myvolume = {'volumeName': volname, 'registryDisk': {'image': template}, 'name': volname}
@@ -119,6 +122,8 @@ class Kubevirt(object):
             vm['spec']['domain']['devices']['disks'].append(newdisk)
             vm['spec']['volumes'].append(myvolume)
             if not self.pvctemplate and index == 0:
+                continue
+            if existingpvc:
                 continue
             pvc = {'kind': 'PersistentVolumeClaim', 'spec': {'storageClassName': diskpool, 'accessModes': ['ReadWriteOnce'], 'resources': {'requests': {'storage': '%sGi' % disksize}}}, 'apiVersion': 'v1', 'metadata': {'name': volname}}
             if template is not None and index == 0 and self.pvctemplate:
