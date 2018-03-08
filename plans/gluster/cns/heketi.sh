@@ -15,3 +15,4 @@ sed -i "s/gluster02/$IP2/" /root/topology.json
 sed -i "s/gluster03/$IP3/" /root/topology.json
 export HEKETI_CLI_SERVER=http://127.0.0.1:8080
 heketi-cli topology load --json=/root/topology.json
+echo export HEKETI_CLI_SERVER=http://127.0.0.1:8080 >/etc/profile.d/heketi.sh

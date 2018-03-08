@@ -630,7 +630,11 @@ class Kvirt(Kbase):
 
     def console(self, name, tunnel=False):
         conn = self.conn
-        vm = conn.lookupByName(name)
+        try:
+            vm = conn.lookupByName(name)
+        except:
+            common.pprint("VM %s not found" % name, color='red')
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
         if not vm.isActive():
             print("VM down")
             return
@@ -655,7 +659,11 @@ class Kvirt(Kbase):
 
     def serialconsole(self, name):
         conn = self.conn
-        vm = conn.lookupByName(name)
+        try:
+            vm = conn.lookupByName(name)
+        except:
+            common.pprint("VM %s not found" % name, color='red')
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
         if not vm.isActive():
             print("VM down")
             return
