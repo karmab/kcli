@@ -2,10 +2,16 @@ parameters:
  user: testk
  password: testk
  volume: testkvol
+ template: rhel-server-7.4-x86_64-kvm.qcow2
+ domain: example.com
+ memory: 8144
+ template: rhel-server-7.4-x86_64-kvm.qcow2
+ domain: example.com
+
 
 glustera:
- template: rhel-server-7.4-x86_64-kvm.qcow2
- memory: 8144
+ template: [[ template ]]
+ memory: [[ memory ]]
  numcpus: 4
  disks: 
   - size: 30
@@ -13,19 +19,18 @@ glustera:
   - size: 30
  nets:
  - default
- pool: vms
- domain: example.com
+ domain: [[ domain ]]
  reservedns: true
  sharedkey: true
  scripts: 
   - ~/register.sh
-  - subscription_gluster3.sh
+  - subscription.sh
   - install.sh
   - provision.sh
 
 glusterb:
- template: rhel-server-7.4-x86_64-kvm.qcow2
- memory: 8144
+ template: [[ template ]]
+ memory: [[ memory ]]
  numcpus: 4
  disks:
   - size: 30
@@ -33,11 +38,10 @@ glusterb:
   - size: 30
  nets:
  - default
- pool: vms
- domain: example.com
+ domain: [[ domain ]]
  reservedns: true
  sharedkey: true
  scripts:
   - ~/register.sh
-  - subscription_gluster3.sh
+  - subscription.sh
   - install.sh

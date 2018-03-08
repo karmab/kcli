@@ -1,12 +1,14 @@
-- name: rh_gluster3
+- name: gluster
   group: gluster
   url: github.com/karmab/kcli/plans/gluster
-  file: downstream_gluster3.yml
-  description: Downstream Gluster 3 with NFS/Cifs Enabled on volume testkvol
+  file: downstream.yml
+  description: Downstream Gluster with NFS/Cifs Enabled on volume testkvol
   numvms: 2
   template: rhel-server-7.4-x86_64-kvm.qcow2
   parameters:
    user: testk
    password: testk
    volume: testkvol
-
+   memory: 8144
+   template: rhel-server-7.4-x86_64-kvm.qcow2
+   domain: example.com

@@ -69,7 +69,8 @@ class Kvirt(Kbase):
 
     def close(self):
         conn = self.conn
-        conn.close()
+        if conn is not None:
+            conn.close()
         self.conn = None
 
     def exists(self, name):

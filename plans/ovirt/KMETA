@@ -18,7 +18,7 @@
   template: CentOS-7-x86_64-GenericCloud.qcow2
   parameters:
     password: unix1234
-   version: 3.6
+    version: 3.6
 
 - name: rhv
   group: ovirt

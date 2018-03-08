@@ -1,5 +1,5 @@
 sleep 40
-gluster peer probe glusterb.example.com
+gluster peer probe glusterb.[[ domain ]]
 sleep 15
 gluster volume create [[ volume ]] replica 2 \
 glustera:/bricks/brick-glustera-1/brick \

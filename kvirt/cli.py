@@ -1223,7 +1223,7 @@ def cli():
             common.pprint("Disabled hypervisor.Leaving...", color='red')
             os._exit(1)
         args.func(args)
-        if args.client != 'all':
+        if args.client != 'all' and config.k is not None:
             config.k.close()
     else:
         args.func(args)

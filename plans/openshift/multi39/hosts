@@ -43,8 +43,8 @@ openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 
 openshift_master_cluster_method=native
 openshift_master_cluster_hostname=[[ lb ]].[[ domain ]]
 openshift_master_cluster_public_hostname=[[ lb ]].[[ domain ]]
-openshift_router_selector="region=master"
-openshift_registry_selector="region=master"
+openshift_router_selector="region=infra"
+openshift_registry_selector="region=infra"
 os_sdn_network_plugin_name='redhat/openshift-ovs-multitenant'
 #openshift_hosted_router_replicas="1"
 ansible_service_broker_registry_whitelist=['.*-apb$']
@@ -101,5 +101,9 @@ lb.[[ domain ]]
 master0[[ master +1 ]].[[ domain ]] openshift_node_labels="{'region': 'master', 'zone': 'default'}"
 [% endfor %]
 [% for node in range(0, nodes) %]
+[% if node == 0 %]
+node0[[ node +1 ]].[[ domain ]] openshift_node_labels="{'region': 'infra', 'zone': 'default'}"
+[% else %]
 node0[[ node +1 ]].[[ domain ]] openshift_node_labels="{'region': 'primary', 'zone': 'east'}"
+[% endif %]
 [% endfor %]
