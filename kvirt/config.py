@@ -198,7 +198,7 @@ class Kconfig:
                     os._exit(1)
                 k = Kvirt(host=self.host, port=self.port, user=self.user, protocol=self.protocol, url=self.url, debug=debug)
             if k.conn is None:
-                common.pprint("Couldn't connect to specify hypervisor %s. Leaving..." % self.host, color='red')
+                common.pprint("Couldn't connect to client %s. Leaving..." % self.client, color='red')
                 os._exit(1)
             for extraclient in extraclients:
                 if extraclient not in self.ini:
