@@ -43,7 +43,7 @@ class Kubevirt(object):
         self.crds = client.CustomObjectsApi()
         extensions = client.ApiextensionsV1beta1Api()
         current_crds = [x for x in extensions.list_custom_resource_definition().to_dict()['items'] if x['spec']['names']['kind'].lower() == 'virtualmachine']
-        if 'virtualmachine' not in current_crds:
+        if not current_crds:
             common.pprint("Kubevirt not installed", color='red')
             self.conn = None
             self.host = context
@@ -521,7 +521,7 @@ class Kubevirt(object):
 
     def list_pools(self):
         storageapi = client.StorageV1Api()
-        pools = storageapi.list_storage_class().items
+        pools = [x.metadata.name for x in storageapi.list_storage_class().items]
         return pools
 
     def list_networks(self):
@@ -541,4 +541,6 @@ class Kubevirt(object):
         return
 
     def get_pool_path(self, pool):
-        return pool
+        storageapi = client.StorageV1Api()
+        storageclass = storageapi.read_storage_class(pool)
+        return storageclass.provisioner

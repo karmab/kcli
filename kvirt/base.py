@@ -221,6 +221,7 @@ class Kbase(object):
         print("not implemented")
         return
 
+# returns the path of the pool, if it makes sense. used by kcli list --pools
     def get_pool_path(self, pool):
         print("not implemented")
         return
