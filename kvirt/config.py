@@ -49,7 +49,7 @@ class Kconfig:
                 except yaml.scanner.ScannerError as err:
                     common.pprint("Couldn't parse yaml in .kcli/config.yml. Leaving...", color='red')
                     common.pprint(err, color='red')
-                    sys.exit(1)
+                    os._exit(1)
                 except:
                     self.host = None
                     return
@@ -529,7 +529,7 @@ class Kconfig:
                     repos = yaml.load(entries)
                 except yaml.scanner.ScannerError:
                     common.pprint("Couldn't properly parse .kcli/repos.yml. Leaving...", color='red')
-                    sys.exit(1)
+                    os._exit(1)
         return repos
 
     def list_products(self, group=None, repo=None):
@@ -575,7 +575,7 @@ class Kconfig:
                     repos = yaml.load(entries)
                 except yaml.scanner.ScannerError:
                     common.pprint("Couldn't properly parse .kcli/repos.yml. Leaving...", color='red')
-                    sys.exit(1)
+                    os._exit(1)
             if name in repos:
                 if repos[name] == url:
                     common.pprint("Entry for name allready there. Leaving...", color='blue')
@@ -596,17 +596,17 @@ class Kconfig:
         if url is None:
             if not os.path.exists(reposfile) or os.path.getsize(reposfile) == 0:
                 common.pprint("Empty .kcli/repos.yml. Leaving...", color='red')
-                sys.exit(1)
+                os._exit(1)
             else:
                 with open(reposfile, 'r') as entries:
                     try:
                         repos = yaml.load(entries)
                     except yaml.scanner.ScannerError:
                         common.pprint("Couldn't properly parse .kcli/repos.yml. Leaving...", color='red')
-                        sys.exit(1)
+                        os._exit(1)
                 if name not in repos:
                     common.pprint("Entry for name allready there. Leaving...", color='red')
-                    sys.exit(1)
+                    os._exit(1)
             url = "%s/KMETA" % repos[name]
         elif 'KMETA' not in url:
             url = "%s/KMETA" % url
@@ -633,7 +633,7 @@ class Kconfig:
                     repos = yaml.load(entries)
                 except yaml.scanner.ScannerError:
                     common.pprint("Couldn't properly parse .kcli/repos.yml. Leaving...", color='red')
-                    sys.exit(1)
+                    os._exit(1)
             if name in repos:
                 del repos[name]
             else:
@@ -671,10 +671,10 @@ class Kconfig:
             products = [product for product in self.list_products() if product['name'] == name]
         if len(products) == 0:
                     common.pprint("Product not found. Leaving...", color='red')
-                    sys.exit(1)
+                    os._exit(1)
         elif len(products) > 1:
                     common.pprint("Product found in several repos. Specify one...", color='red')
-                    sys.exit(1)
+                    os._exit(1)
         else:
             product = products[0]
             repo = product['repo']
@@ -710,10 +710,10 @@ class Kconfig:
             products = [product for product in self.list_products() if product['name'] == name]
         if len(products) == 0:
                     common.pprint("Product not found. Leaving...", color='red')
-                    sys.exit(1)
+                    os._exit(1)
         elif len(products) > 1:
                     common.pprint("Product found in several repos. Specify one...", color='red')
-                    sys.exit(1)
+                    os._exit(1)
         else:
             product = products[0]
             plan = nameutils.get_random_name() if plan is None else plan

@@ -8,7 +8,6 @@ import socket
 import urllib2
 import json
 import os
-import sys
 import yaml
 
 binary_types = ['bz2', 'deb', 'jpg', 'gz', 'jpeg', 'iso', 'png', 'rpm', 'tgz', 'zip']
@@ -21,7 +20,7 @@ def symlinks(user, repo):
         r = urllib2.urlopen(url1)
     except urllib2.HTTPError as e:
         print("Couldn't access url %s, got %s.Leaving..." % (url1, e))
-        sys.exit(1)
+        os._exit(1)
     base = json.load(r)
     sha = base['object']['sha']
     url2 = 'https://api.github.com/repos/%s/%s/git/trees/%s?recursive=1' % (user, repo, sha)
