@@ -1,4 +1,4 @@
-- name: gluster
+- name: rhgs
   group: gluster
   url: github.com/karmab/kcli/plans/gluster
   file: downstream.yml
@@ -11,4 +11,17 @@
    volume: testkvol
    memory: 8144
    template: rhel-server-7.4-x86_64-kvm.qcow2
-   domain: example.com
+
+- name: gluster
+  group: gluster
+  url: github.com/karmab/kcli/plans/gluster
+  file: upstream.yml
+  description: Upstream Gluster with NFS/Cifs Enabled on volume testkvol
+  numvms: 2
+  template: CentOS-7-x86_64-GenericCloud.qcow2
+  parameters:
+   user: testk
+   password: testk
+   volume: testkvol
+   memory: 8144
+   template: CentOS-7-x86_64-GenericCloud.qcow2

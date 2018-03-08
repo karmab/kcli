@@ -2,7 +2,7 @@ parameters:
  user: testk
  password: testk
  volume: testkvol
- template: rhel-server-7.4-x86_64-kvm.qcow2
+ template: CentOS-7-x86_64-GenericCloud.qcow2
  memory: 8144
 
 gluster01:
@@ -18,8 +18,7 @@ gluster01:
  reservedns: true
  sharedkey: true
  scripts: 
-  - ~/register.sh
-  - subscription.sh
+  - repo.sh
   - install.sh
   - provision.sh
 
@@ -36,6 +35,5 @@ gluster02:
  reservedns: true
  sharedkey: true
  scripts:
-  - ~/register.sh
-  - subscription.sh
+  - repo.sh
   - install.sh
