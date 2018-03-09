@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
 from kvirt.config import Kconfig
+from kvirt.baseconfig import Kbaseconfig
 from kvirt.config import __version__
 from kvirt.defaults import TEMPLATES
 from prettytable import PrettyTable
-from shutil import copyfile
 import argparse
 from kvirt import common
 from kvirt import nameutils
@@ -27,7 +27,7 @@ def start(args):
         else:
             common.pprint("Missing Vm's name", color='red')
             return
-    global config
+    config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
     if container:
         for name in names:
@@ -55,7 +55,7 @@ def stop(args):
         else:
             common.pprint("Missing Vm's name", color='red')
             return
-    global config
+    config = Kconfig(client=args.client, debug=args.debug)
     if config.extraclients:
         ks = config.extraclients
         ks.update({config.client: config.k})
@@ -89,7 +89,7 @@ def restart(args):
         else:
             common.pprint("Missing Vm's name", color='red')
             return
-    global config
+    config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
     if container:
         for name in names:
@@ -119,7 +119,7 @@ def console(args):
         else:
             common.pprint("Missing Vm's name", color='red')
             return
-    global config
+    config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
     tunnel = config.tunnel
     if container:
@@ -145,7 +145,7 @@ def delete(args):
         else:
             common.pprint("Missing Vm's name", color='red')
             return
-    global config
+    config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
     if not yes:
         common.confirm("Are you sure?")
@@ -174,7 +174,7 @@ def download(args):
     templates = args.templates
     cmd = args.cmd
     url = args.url
-    global config
+    config = Kconfig(client=args.client, debug=args.debug)
     result = config.handle_host(pool=pool, templates=templates, download=True, cmd=cmd, url=url)
     if result['result'] == 'success':
         os._exit(0)
@@ -196,7 +196,7 @@ def info(args):
         else:
             common.pprint("Missing Vm's name", color='red')
             return
-    global config
+    config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
     codes = []
     for name in names:
@@ -211,8 +211,15 @@ def host(args):
     enable = args.enable
     disable = args.disable
     sync = args.sync
-    global config
-    result = config.handle_host(enable=enable, disable=disable, sync=sync)
+    if enable:
+        baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+        result = baseconfig.enable_host(enable)
+    elif disable:
+        baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+        result = baseconfig.switch_host(disable)
+    else:
+        config = Kconfig(client=args.client, debug=args.debug)
+        result = config.handle_host(enable=enable, disable=disable, sync=sync)
     if result['result'] == 'success':
         os._exit(0)
     else:
@@ -237,7 +244,20 @@ def list(args):
     short = args.short
     group = args.group
     repo = args.repo
-    global config
+    if hosts:
+        clientstable = PrettyTable(["Host", "Type", "Enabled", "Current"])
+        clientstable.align["Host"] = "l"
+        baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+        for client in sorted(baseconfig.clients):
+            enabled = baseconfig.ini[client].get('enabled', True)
+            _type = baseconfig.ini[client].get('type', 'kvm')
+            if client == baseconfig.client:
+                clientstable.add_row([client, _type, enabled, 'X'])
+            else:
+                clientstable.add_row([client, _type, enabled, ''])
+        print(clientstable)
+        return
+    config = Kconfig(client=args.client, debug=args.debug)
     if config.client != 'all':
         k = config.k
     if pools:
@@ -253,18 +273,6 @@ def list(args):
                 poolstable.add_row([pool, poolpath])
         poolstable.align["Pool"] = "l"
         print(poolstable)
-        return
-    if hosts:
-        clientstable = PrettyTable(["Host", "Type", "Enabled", "Current"])
-        clientstable.align["Host"] = "l"
-        for client in sorted(config.clients):
-            enabled = config.ini[client].get('enabled', True)
-            _type = config.ini[client].get('type', 'kvm')
-            if client == config.client:
-                clientstable.add_row([client, _type, enabled, 'X'])
-            else:
-                clientstable.add_row([client, _type, enabled, ''])
-        print(clientstable)
         return
     if networks:
         networks = k.list_networks()
@@ -430,7 +438,7 @@ def vm(args):
     ip3 = args.ip3
     ip4 = args.ip4
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
-    global config
+    config = Kconfig(client=args.client, debug=args.debug)
     if name is None:
         name = nameutils.get_random_name()
         if config.type == 'kubevirt':
@@ -464,7 +472,7 @@ def clone(args):
     full = args.full
     start = args.start
     common.pprint("Cloning vm %s from vm %s..." % (name, base), color='green')
-    global config
+    config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
     k.clone(base, name, full=full, start=start)
 
@@ -486,7 +494,7 @@ def update(args):
     net = args.network
     information = args.information
     iso = args.iso
-    global config
+    config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
     if dns:
         common.pprint("Creating Dns entry for %s..." % (name), color='green')
@@ -551,7 +559,7 @@ def disk(args):
     diskname = args.diskname
     template = args.template
     pool = args.pool
-    global config
+    config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
     if delete:
         if diskname is None:
@@ -576,7 +584,7 @@ def nic(args):
     delete = args.delete
     interface = args.interface
     network = args.network
-    global config
+    config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
     if delete:
         common.pprint("Deleting nic from %s..." % (name), color='green')
@@ -596,7 +604,7 @@ def pool(args):
     full = args.delete
     pooltype = args.pooltype
     path = args.path
-    global config
+    config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
     if delete:
         common.pprint("Deleting pool %s..." % (pool), color='green')
@@ -629,7 +637,7 @@ def plan(args):
     scale = args.scale
     info = args.info
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
-    global config
+    config = Kconfig(client=args.client, debug=args.debug)
     if info:
         common.pprint("Providing information on parameters of plan %s..." % (inputfile), color='green')
         config.info_plan(inputfile)
@@ -660,7 +668,7 @@ def repo(args):
     url = args.url
     update = args.update
     download = args.download
-    global config
+    config = Kconfig(client=args.client, debug=args.debug)
     if update:
         if repo is None:
             common.pprint("Updating all repos...", color='blue')
@@ -704,7 +712,7 @@ def product(args):
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
     info = args.info
     search = args.search
-    global config
+    config = Kconfig(client=args.client, debug=args.debug)
     if info:
         common.pprint("Providing information on product %s..." % (product), color='green')
         config.info_product(product, repo)
@@ -743,7 +751,7 @@ def ssh(args):
     l = args.L
     r = args.R
     X = args.X
-    global config
+    config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
     tunnel = config.tunnel
     insecure = config.insecure
@@ -769,7 +777,7 @@ def scp(args):
     recursive = args.recursive
     source = args.source[0]
     destination = args.destination[0]
-    global config
+    config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
     tunnel = config.tunnel
     if len(source.split(':')) == 2:
@@ -804,7 +812,7 @@ def network(args):
     nodhcp = args.nodhcp
     domain = args.domain
     pxe = args.pxe
-    global config
+    config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
     if name is None:
         common.pprint("Missing Network", color='red')
@@ -832,47 +840,15 @@ def bootstrap(args):
     url = args.url
     pool = args.pool
     poolpath = args.poolpath
-    common.pprint("Bootstrapping env", color='green')
-    if host is None and url is None:
-        url = 'qemu:///system'
-        host = '127.0.0.1'
-    if pool is None:
-        pool = 'default'
-    if poolpath is None:
-        poolpath = '/var/lib/libvirt/images'
-    if host == '127.0.0.1':
-        ini = {'default': {'client': 'local', 'cloudinit': True, 'tunnel': False, 'reservehost': False, 'insecure': True, 'enableroot': True, 'reserveip': False, 'reservedns': False, 'reservehost': False, 'nested': True, 'start': True}, 'local': {'pool': pool, 'nets': ['default']}}
-        if not sys.platform.startswith('linux'):
-            ini['local']['type'] = 'vbox'
-    else:
-        if name is None:
-            name = host
-        ini = {'default': {'client': name, 'cloudinit': True, 'tunnel': True, 'reservehost': False, 'insecure': True, 'enableroot': True, 'reserveip': False, 'reservedns': False, 'reservehost': False, 'nested': True, 'start': True}}
-        ini[name] = {'host': host, 'pool': pool, 'nets': ['default']}
-        if protocol is not None:
-            ini[name]['protocol'] = protocol
-        if user is not None:
-            ini[name]['user'] = user
-        if port is not None:
-            ini[name]['port'] = port
-        if url is not None:
-            ini[name]['url'] = url
-    path = os.path.expanduser('~/.kcli/config.yml')
-    rootdir = os.path.expanduser('~/.kcli')
-    if os.path.exists(path):
-        copyfile(path, "%s.bck" % path)
-    if not os.path.exists(rootdir):
-        os.makedirs(rootdir)
-    with open(path, 'w') as conf_file:
-        yaml.safe_dump(ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True)
-    common.pprint("Environment bootstrapped!", color='green')
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    baseconfig.bootstrap(name, host, port, user, protocol, url, pool, poolpath)
 
 
 def container(args):
     """Create container"""
     name = args.name
     profile = args.profile
-    global config
+    config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
     if name is None:
         name = nameutils.get_random_name()
@@ -908,7 +884,7 @@ def snapshot(args):
     revert = args.revert
     delete = args.delete
     listing = args.listing
-    global config
+    config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
     if revert:
         common.pprint("Reverting snapshot of %s named %s..." % (name, snapshot), color='green')
@@ -936,7 +912,7 @@ def snapshot(args):
 
 def report(args):
     """Report info about host"""
-    global config
+    config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
     k.report()
 
@@ -944,8 +920,8 @@ def report(args):
 def switch(args):
     """Handle host"""
     host = args.host
-    global config
-    result = config.handle_host(switch=host)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    result = baseconfig.switch_host(host)
     if result['result'] == 'success':
         os._exit(0)
     else:
@@ -953,7 +929,6 @@ def switch(args):
 
 
 def cli():
-    global config
     parser = argparse.ArgumentParser(description='Libvirt/VirtualBox wrapper on steroids. Check out https://github.com/karmab/kcli!')
     parser.add_argument('-C', '--client')
     parser.add_argument('-d', '--debug', action='store_true')
@@ -1217,16 +1192,11 @@ def cli():
     if args.func.func_name == 'vm' and args.client is not None and ',' in args.client:
             args.client = random.choice(args.client.split(','))
             common.pprint("Selecting %s for creation" % args.client, color='green')
-    if args.func.func_name != 'bootstrap':
-        config = Kconfig(client=args.client, debug=args.debug)
-        if args.client != 'all' and not config.enabled:
-            common.pprint("Disabled hypervisor.Leaving...", color='red')
-            os._exit(1)
-        args.func(args)
-        if args.client != 'all' and config.k is not None:
-            config.k.close()
-    else:
-        args.func(args)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    if args.client != 'all' and not baseconfig.enabled:
+        common.pprint("Disabled hypervisor.Leaving...", color='red')
+        os._exit(1)
+    args.func(args)
 
 
 if __name__ == '__main__':

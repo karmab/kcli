@@ -275,6 +275,7 @@ class Kubevirt(object):
                 bus = d['disk']['bus']
             volumename = d['volumeName']
             volumeinfo = [volume for volume in volumes if volume['name'] == volumename][0]
+            size = '0'
             if 'persistentVolumeClaim' in volumeinfo:
                 pvcname = volumeinfo['persistentVolumeClaim']['claimName']
                 _type = 'pvc'
@@ -282,10 +283,10 @@ class Kubevirt(object):
                 size = pvc.spec.resources.requests['storage'].replace('Gi', '')
             elif 'cloudInitNoCloud' in volumeinfo:
                 _type = 'cloudinit'
-                size = '0'
+            elif 'registryDisk' in volumeinfo:
+                _type = 'registrydisk'
             else:
                 _type = 'other'
-                size = '0'
             disk = {'device': d['name'], 'size': size, 'format': bus, 'type': _type, 'path': volumename}
             disks.append(disk)
         yamlinfo['disks'] = disks
