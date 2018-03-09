@@ -224,13 +224,25 @@ class Kubevirt(object):
         return vms
 
     def console(self, name, tunnel=False):
+        crds = self.crds
         namespace = self.namespace
+        try:
+            crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
+        except:
+            common.pprint("VM %s not found" % name, color='red')
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
         serialcommand = "ssh -Xtp %s %s@%s virtctl vnc --kubeconfig=.kube/config %s -n %s" % (self.port, self.user, self.host, name, namespace)
         os.system(serialcommand)
         return
 
     def serialconsole(self, name):
+        crds = self.crds
         namespace = self.namespace
+        try:
+            crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
+        except:
+            common.pprint("VM %s not found" % name, color='red')
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
         serialcommand = "ssh -tp %s %s@%s virtctl console --kubeconfig=.kube/config %s -n %s" % (self.port, self.user, self.host, name, namespace)
         os.system(serialcommand)
         return
