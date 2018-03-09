@@ -43,7 +43,8 @@ class Kconfig(Kbaseconfig):
             elif self.type == 'kubevirt':
                 context = self.options.get('context')
                 pvctemplate = self.options.get('pvctemplate', False)
-                k = Kubevirt(context=context, pvctemplate=pvctemplate, host=self.host, port=self.port, user=self.user, debug=debug)
+                usecloning = self.options.get('usecloning', False)
+                k = Kubevirt(context=context, pvctemplate=pvctemplate, usecloning=usecloning, host=self.host, port=self.port, user=self.user, debug=debug)
                 self.host = k.host
             else:
                 if self.host is None:

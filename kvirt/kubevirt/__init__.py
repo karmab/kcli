@@ -6,6 +6,7 @@ Kubevirt class
 
 from kubernetes import client, config
 from kvirt import common
+from kvirt import defaults
 from kvirt.defaults import TEMPLATES
 import base64
 import datetime
@@ -25,11 +26,12 @@ def pretty_print(o):
 
 
 class Kubevirt(object):
-    def __init__(self, context=None, pvctemplate=False, host='127.0.0.1', port=22, user='root', debug=False):
+    def __init__(self, context=None, pvctemplate=False, usecloning=False, host='127.0.0.1', port=22, user='root', debug=False):
         self.host = host
         self.port = port
         self.user = user
         self.pvctemplate = pvctemplate
+        self.usecloning = usecloning
         self.conn = 'OK'
         contexts, current = config.list_kube_config_contexts()
         if context is not None:
@@ -126,15 +128,13 @@ class Kubevirt(object):
             if existingpvc:
                 continue
             pvc = {'kind': 'PersistentVolumeClaim', 'spec': {'storageClassName': diskpool, 'accessModes': ['ReadWriteOnce'], 'resources': {'requests': {'storage': '%sGi' % disksize}}}, 'apiVersion': 'v1', 'metadata': {'name': volname}}
-            if template is not None and index == 0 and self.pvctemplate:
+            if template is not None and index == 0 and self.pvctemplate and self.usecloning:
                 pvc['metadata']['annotations'] = {'k8s.io/CloneRequest': templates[template]}
             pvcs.append(pvc)
         if cloudinit:
             common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain, reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides, iso=False)
             cloudinitdata = open('/tmp/user-data', 'r').read()
             cloudinitdisk = {'volumeName': 'cloudinitvolume', 'cdrom': {'readOnly': True}, 'name': 'cloudinitdisk'}
-            # letter = chr(index + 1 + ord('a'))
-            # cloudinitdisk = {'volumeName': 'cloudinitvolume', 'disk': {'dev': 'vd%s' % letter}, 'name': 'cloudinitdisk'}
             vm['spec']['domain']['devices']['disks'].append(cloudinitdisk)
             cloudinitencoded = base64.b64encode(cloudinitdata)
             cloudinitvolume = {'cloudInitNoCloud': {'userDataBase64': cloudinitencoded}, 'name': 'cloudinitvolume'}
@@ -143,10 +143,17 @@ class Kubevirt(object):
             pretty_print(vm)
         try:
             for pvc in pvcs:
-                core.create_namespaced_persistent_volume_claim(namespace, pvc)
                 if self.pvctemplate and index == 0:
-                    common.pprint("Waiting 15 seconds for pvc to be bound")
-                    time.sleep(15)
+                    if self.usecloning:
+                        core.create_namespaced_persistent_volume_claim(namespace, pvc)
+                        common.pprint("Waiting 15 seconds for pvc to be bound")
+                        time.sleep(15)
+                        continue
+                    elif template:
+                        volname = "%s-vol0" % (name)
+                        self.add_image(template, pool, name=volname)
+                        continue
+                core.create_namespaced_persistent_volume_claim(namespace, pvc)
             crds.create_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', vm)
         except Exception as err:
             return {'result': 'failure', 'reason': err}
@@ -318,9 +325,13 @@ class Kubevirt(object):
         if iso:
             return []
         elif self.pvctemplate:
-            pvc = core.list_namespaced_persistent_volume_claim(namespace)
-            templates = [p.metadata.annotations['kcli/template'] for p in pvc.items if 'kcli/template' in p.metadata.annotations]
-            return sorted(templates)
+            if self.usecloning:
+                pvc = core.list_namespaced_persistent_volume_claim(namespace)
+                templates = [p.metadata.annotations['kcli/template'] for p in pvc.items if 'kcli/template' in p.metadata.annotations]
+                return sorted(templates)
+            else:
+                default_templates = [os.path.basename(t) for t in defaults.TEMPLATES.values() if t is not None]
+                return default_templates
         else:
             return REGISTRYDISKS
 
@@ -342,7 +353,7 @@ class Kubevirt(object):
         for p in sorted(pvcs):
             pvcname = p.metadata.name
             print("Deleting pvc %s" % pvcname)
-            core.delete_namespaced_persistent_volume_claim(pvcname, namespace, p)
+            core.delete_namespaced_persistent_volume_claim(pvcname, namespace)
         return {'result': 'success'}
 
     def clone(self, old, new, full=False, start=False):
@@ -415,11 +426,10 @@ class Kubevirt(object):
         core = self.core
         namespace = self.namespace
         try:
-            pvc = core.read_namespaced_persistent_volume_claim(diskname, namespace, exact=True)
+            core.delete_namespaced_persistent_volume_claim(diskname, namespace, client.V1DeleteOptions())
         except:
             common.pprint("Disk %s not found" % diskname, color='red')
             return 1
-        core.delete_namespaced_persistent_volume_claim(diskname, namespace, pvc)
         return
 
     def list_disks(self):
@@ -490,18 +500,21 @@ class Kubevirt(object):
         return
 
     def add_image(self, image, pool, short=None, cmd=None, name=None, size=1):
+        timeout = 300
         big = ['debian9']
         core = self.core
         namespace = self.namespace
         shortimage = os.path.basename(image).split('?')[0]
         volname = [k for k in TEMPLATES if TEMPLATES[k] == image][0]
-        size = 3 if volname in big else 1
+        volname = name if name is not None else volname
+        size = 3 if volname in big else size
         now = datetime.datetime.now().strftime("%Y%M%d%H%M")
+        podname = '%s-%s-importer' % (now, volname)
         pvc = {'kind': 'PersistentVolumeClaim', 'spec': {'storageClassName': pool, 'accessModes': ['ReadWriteOnce'], 'resources': {'requests': {'storage': '%sGi' % size}}}, 'apiVersion': 'v1', 'metadata': {'name': volname, 'annotations': {'kcli/template': shortimage}}}
-        pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'OnFailure', 'containers': [{'image': 'kubevirtci/disk-importer', 'volumeMounts': [{'mountPath': '/storage', 'name': 'ceph-storage'}], 'name': 'importer', 'env': [{'name': 'CURL_OPTS', 'value': '-L'}, {'name': 'INSTALL_TO', 'value': '/storage/disk.img'}, {'name': 'URL', 'value': image}]}], 'volumes': [{'name': 'ceph-storage', 'persistentVolumeClaim': {'claimName': volname}}]}, 'apiVersion': 'v1', 'metadata': {'name': '%s-%s-importer' % (now, volname)}}
+        pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'OnFailure', 'containers': [{'image': 'kubevirtci/disk-importer', 'volumeMounts': [{'mountPath': '/storage', 'name': 'ceph-storage'}], 'name': 'importer', 'env': [{'name': 'CURL_OPTS', 'value': '-L'}, {'name': 'INSTALL_TO', 'value': '/storage/disk.img'}, {'name': 'URL', 'value': image}]}], 'volumes': [{'name': 'ceph-storage', 'persistentVolumeClaim': {'claimName': volname}}]}, 'apiVersion': 'v1', 'metadata': {'name': podname}}
         try:
             core.read_namespaced_persistent_volume_claim(volname, namespace)
-            # core.delete_namespaced_persistent_volume_claim(volname, namespace, oldpvc)
+            # core.delete_namespaced_persistent_volume_claim(volname, namespace, client.V1DeleteOptions())
             common.pprint("Using exiting pvc")
         except:
             core.create_namespaced_persistent_volume_claim(namespace, pvc)
@@ -510,11 +523,20 @@ class Kubevirt(object):
         # try:
         #     common.pprint("Deleting old disk importer pod")
         #    oldpod = core.read_namespaced_pod('%s-importer' % volname, namespace)
-        #     core.delete_namespaced_pod('%s-importer' % volname, namespace, oldpod)
+        #     core.delete_namespaced_pod('%s-importer' % volname, namespace)
         # except Exception:
         #    pass
         core.create_namespaced_pod(namespace, pod)
-        common.pprint("Wait for %s-%s-importer pod to complete" % (now, volname))
+        podruntime = 0
+        podstatus = 'Running'
+        while podstatus != 'Succeeded':
+            if podruntime >= timeout:
+                return {'result': 'failure', 'reason': 'timeout while importing image'}
+            pod = core.read_namespaced_pod(podname, namespace)
+            podstatus = pod.status.phase
+            time.sleep(5)
+            common.pprint("Wait for %s-%s-importer pod to complete" % (now, volname))
+            podruntime += 5
         return {'result': 'success'}
 
     def create_network(self, name, cidr, dhcp=True, nat=True, domain=None, plan='kvirt', pxe=None):
