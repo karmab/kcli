@@ -26,6 +26,10 @@ def pretty_print(o):
 
 class Kubevirt(object):
     def __init__(self, context=None, pvctemplate=False, host='127.0.0.1', port=22, user='root', debug=False):
+        self.host = host
+        self.port = port
+        self.user = user
+        self.pvctemplate = pvctemplate
         self.conn = 'OK'
         contexts, current = config.list_kube_config_contexts()
         if context is not None:
@@ -51,11 +55,7 @@ class Kubevirt(object):
         self.core = client.CoreV1Api()
         self.debug = debug
         if host == '127.0.0.1' and len(contextname.split('/')) == 3 and len(contextname.split('/')[1].split(':')) == 2:
-            host = contextname.split('/')[1].split(':')[0].replace('-', '.')
-        self.host = host
-        self.port = port
-        self.user = user
-        self.pvctemplate = pvctemplate
+            self.host = contextname.split('/')[1].split(':')[0].replace('-', '.')
         return
 
     def close(self):

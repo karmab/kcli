@@ -1,15 +1,6 @@
 #!/usr/bin/python
 
-'''
-ansible dynamic inventory script for use with kcli and libvirt
-'''
-
 from kvirt.config import Kconfig
-from kvirt.kvm import Kvirt
-try:
-    from kvirt.vbox import Kbox
-except:
-    pass
 import json
 import os
 import argparse
@@ -28,13 +19,9 @@ class KcliInventory(object):
         self.host = config.host
         self.port = config.port
         self.user = config.user
-        protocol = config.protocol
         self.tunnel = config.tunnel
+        self.k = config.k
         self.type = config.type
-        if self.type == 'vbox':
-            self.k = Kbox()
-        else:
-            self.k = Kvirt(host=self.host, port=self.port, user=self.user, protocol=protocol)
         if self.k.conn is None:
             os._exit(1)
 
@@ -77,7 +64,7 @@ class KcliInventory(object):
             else:
                 metadata[description]["hosts"].append(name)
             hostvalues[name] = {'status': status}
-            if tunnel and self.type == 'kvm':
+            if tunnel and self.type in ['kvm', 'kubevirt']:
                 hostvalues[name]['ansible_ssh_common_args'] = "-o ProxyCommand='ssh -p %s -W %%h:%%p %s@%s'" % (self.port, self.user, self.host)
             if ip != '':
                 if self.type == 'vbox':
@@ -102,5 +89,5 @@ class KcliInventory(object):
                     hostvalues[name]['ansible_user'] = 'arch'
         return metadata
 
-# Get the inventory.
+
 KcliInventory()

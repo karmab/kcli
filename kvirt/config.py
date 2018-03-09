@@ -44,6 +44,7 @@ class Kconfig(Kbaseconfig):
                 context = self.options.get('context')
                 pvctemplate = self.options.get('pvctemplate', False)
                 k = Kubevirt(context=context, pvctemplate=pvctemplate, host=self.host, port=self.port, user=self.user, debug=debug)
+                self.host = k.host
             else:
                 if self.host is None:
                     common.pprint("Problem parsing your configuration file", color='red')
