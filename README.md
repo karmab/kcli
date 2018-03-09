@@ -718,9 +718,10 @@ vm4:
 
 ## TODO
 
+- Read The docs
+- expose possible parameters when deploying product via web
 - store hypervisor in lastvm so that action are associated to the pair (host+lastvm)
 - find a better rule when deleting disks of a vm (along with it)
-- Read The docs
 - Check on memory and disk space when creating vm
 - validation of ips, netmasks, macs,...  within plan file
 - start/delete in multiple hypervisors 

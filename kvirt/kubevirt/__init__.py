@@ -489,7 +489,7 @@ class Kubevirt(object):
         print("not implemented")
         return
 
-    def add_image(self, image, pool, short=None, cmd=None):
+    def add_image(self, image, pool, short=None, cmd=None, name=None, size=1):
         big = ['debian9']
         core = self.core
         namespace = self.namespace

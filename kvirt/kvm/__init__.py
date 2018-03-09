@@ -1629,7 +1629,7 @@ class Kvirt(Kbase):
         pool.create()
         return {'result': 'success'}
 
-    def add_image(self, image, pool, cmd=None):
+    def add_image(self, image, pool, cmd=None, name=None, size=1):
         poolname = pool
         shortimage = os.path.basename(image).split('?')[0]
         conn = self.conn

@@ -921,7 +921,7 @@ class Kbox(Kbase):
                 f.write("\n- name: %s\n" % pool['name'])
                 f.write("  path: %s" % pool['path'])
 
-    def add_image(self, image, pool, cmd=None):
+    def add_image(self, image, pool, cmd=None, name=None, size=1):
         shortimage = os.path.basename(image).split('?')[0]
         if pool is not None:
             pool = [p['path'] for p in self._pool_info() if p['name'] == pool]

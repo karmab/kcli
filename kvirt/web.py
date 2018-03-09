@@ -2,6 +2,7 @@
 
 from flask import Flask, render_template, request, jsonify
 from kvirt.config import Kconfig
+from kvirt.baseconfig import Kbaseconfig
 from kvirt.defaults import TEMPLATES
 from kvirt import dockerutils
 from kvirt import nameutils
@@ -317,16 +318,16 @@ def hostaction():
     """
     enable/disable/default host
     """
-    config = Kconfig()
+    baseconfig = Kbaseconfig()
     if 'name' in request.form:
         name = request.form['name']
         action = request.form['action']
         if action == 'enable':
-            result = config.handle_host(enable=name)
+            result = baseconfig.enable_host(name)
         elif action == 'disable':
-            result = config.handle_host(disable=name)
+            result = baseconfig.disable_host(name)
         elif action == 'switch':
-            result = config.handle_host(switch=name)
+            result = baseconfig.switch_host(name)
         else:
             result = "Nothing to do"
         response = jsonify(result)
@@ -586,7 +587,7 @@ def productaction():
             plan = request.form['plan']
             if plan == '':
                 plan = None
-            result = config.create_product(product, plan=plan, clean=True)
+            result = config.create_product(product, plan=plan)
         else:
             result = "Nothing to do"
         print(result)
@@ -605,16 +606,15 @@ def hoststable():
     """
     retrieves all hosts in table
     """
-    config = Kconfig()
+    baseconfig = Kbaseconfig()
     clients = []
-    for client in sorted(config.clients):
-        enabled = config.ini[client].get('enabled', True)
-        _type = config.ini[client].get('type', 'kvm')
-        if client == config.client:
+    for client in sorted(baseconfig.clients):
+        enabled = baseconfig.ini[client].get('enabled', True)
+        _type = baseconfig.ini[client].get('type', 'kvm')
+        if client == baseconfig.client:
             clients.append([client, _type, enabled, 'X'])
         else:
             clients.append([client, _type, enabled, ''])
-    print clients
     return render_template('hoststable.html', clients=clients)
 
 

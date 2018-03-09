@@ -12,15 +12,27 @@
         </thead>
         <tbody>
             {% for vm in vms %}
-            {% if vm[3].startswith('rhel') or vm[3].startswith('cfme')%}
+            {% if 'rhel' in vm[3].lower()%}
                 {% set logo = 'Redhat.png' %}
-            {% elif vm[3].startswith('CentOS') %}
+            {% elif 'cfme' in vm[3].lower() %}
                 {% set logo = 'Centos.png' %}
-            {% elif vm[3].startswith('fedora') %}
+            {% elif 'centos' in vm[3].lower() %}
+                {% set logo = 'Centos.png' %}
+            {% elif 'fedora' in vm[3].lower() %}
                 {% set logo = 'Fedora.png' %}
             {% elif vm[3].startswith('debian') %}
                 {% set logo = 'Debian.png' %}
-            {% elif vm[3].startswith('utopic') or vm[3].startswith('vivid') or vm[3].startswith('wily') or vm[3].startswith('xenial') or vm[3].startswith('yakkety') %}
+            {% elif vm[3].startswith('utopic') %}
+                {% set logo = 'Ubuntu.png' %}
+            {% elif vm[3].startswith('vivid') %}
+                {% set logo = 'Ubuntu.png' %}
+            {% elif vm[3].startswith('wily') %}
+                {% set logo = 'Ubuntu.png' %}
+            {% elif vm[3].startswith('xenial') %}
+                {% set logo = 'Ubuntu.png' %}
+            {% elif vm[3].startswith('yakkety') %}
+                {% set logo = 'Ubuntu.png' %}
+            {% elif vm[3].startswith('zesty') %}
                 {% set logo = 'Ubuntu.png' %}
             {% else %}
                 {% set logo = 'Tux.png' %}
