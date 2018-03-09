@@ -6,7 +6,6 @@ Kubevirt class
 
 from kubernetes import client, config
 from kvirt import common
-from kvirt import defaults
 from kvirt.defaults import TEMPLATES
 import base64
 import datetime
@@ -325,13 +324,9 @@ class Kubevirt(object):
         if iso:
             return []
         elif self.pvctemplate:
-            if self.usecloning:
-                pvc = core.list_namespaced_persistent_volume_claim(namespace)
-                templates = [p.metadata.annotations['kcli/template'] for p in pvc.items if 'kcli/template' in p.metadata.annotations]
-                return sorted(templates)
-            else:
-                default_templates = [os.path.basename(t) for t in defaults.TEMPLATES.values() if t is not None]
-                return default_templates
+            pvc = core.list_namespaced_persistent_volume_claim(namespace)
+            templates = [p.metadata.annotations['kcli/template'] for p in pvc.items if 'kcli/template' in p.metadata.annotations]
+            return sorted(templates)
         else:
             return REGISTRYDISKS
 
@@ -437,6 +432,7 @@ class Kubevirt(object):
         namespace = self.namespace
         core = self.core
         pvc = core.list_namespaced_persistent_volume_claim(namespace)
+        print(pvc)
         for p in pvc.items:
             metadata = p.metadata
             annotations = p.metadata.annotations
@@ -506,7 +502,7 @@ class Kubevirt(object):
         namespace = self.namespace
         shortimage = os.path.basename(image).split('?')[0]
         volname = [k for k in TEMPLATES if TEMPLATES[k] == image][0]
-        volname = name if name is not None else volname
+        volname = name.replace('_', '') if name is not None else volname
         size = 3 if volname in big else size
         now = datetime.datetime.now().strftime("%Y%M%d%H%M")
         podname = '%s-%s-importer' % (now, volname)

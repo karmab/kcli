@@ -1206,9 +1206,9 @@ class Kconfig(Kbaseconfig):
                 common.pprint("Missing template or url.Leaving...", color='red')
                 return {'result': 'failure', 'reason': "Missing template"}
             for template in templates:
-                common.pprint("Grabbing template %s..." % template, color='green')
                 if url is None:
                     url = TEMPLATES[template]
+                    shortname = os.path.basename(url)
                     template = os.path.basename(template)
                     if not url.endswith('qcow2') and not url.endswith('img') and not url.endswith('qc2'):
                         common.pprint("Ignoring %s in sync mode. Use kcli download on the host in this case" % (template), color='blue')
@@ -1223,8 +1223,9 @@ class Kconfig(Kbaseconfig):
                         continue
                 if cmd is None and template != '' and template in TEMPLATESCOMMANDS:
                     cmd = TEMPLATESCOMMANDS[template]
-                result = k.add_image(url, pool, cmd=cmd)
-                common.handle_response(result, template, element='Template ', action='Added')
+                common.pprint("Grabbing template %s..." % shortname, color='green')
+                result = k.add_image(url, pool, cmd=cmd, name=shortname)
+                common.handle_response(result, shortname, element='Template ', action='Added')
             return {'result': 'success'}
         elif switch:
             if switch not in self.clients:
