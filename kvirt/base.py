@@ -13,7 +13,7 @@ Base Kvirt serving as interface for the virtualisation providers
 # return {'result': 'failure', 'reason': "VM %s not found" % name}
 
 
-# your base class __init__ needs to define the conn attribute and set it to None when backend cant be reached
+# your base class __init__ needs to define the conn attribute and set it to None when backend cannot be reached
 # it should also set debug from the debug variable passed in kcli client
 class Kbase(object):
     def __init__(self, host='127.0.0.1', port=None, user='root', debug=False):

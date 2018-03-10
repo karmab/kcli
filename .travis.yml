@@ -3,37 +3,23 @@ notifications:
   email:
     recipients:
       - karimboumedhel@gmail.com
-os: osx
-#sudo: required
-#dist: trusty
-#addons:
-#  apt:
-#    packages:
-#    - python-pip
-#    - pkg-config
-#    - libvirt-dev
-#    - python-dev
-#    - genisoimage
-#    - qemu-kvm
-#    - telnet
-#    - libvirt-bin
-env:
-- KVIRT_LIBVIRT_USER=libvirtd KVIRT_PATH=/x KVIRT_TYPE=qemu
+sudo: required
 
 python:
 - 2.7
+
 before_install:
-#- sudo usermod -aG libvirtd $USER
-- sudo chmod 777 /var/run/libvirt/libvirt-sock
 - pip install pep8
 - pip install misspellings
-- sudo mkdir /x
-- sudo chmod 777 /x
-
-install:
-- pip install .
+- docker build -t karmab/kcli -f extras/Dockerfile.travis .
 
 script:
 - find . -name \*.py -exec pep8 --ignore=E501,E402 {} +
 - find . -name '*.py' | misspellings -f -
-# -  py.test -vv
+- docker run -it --rm karmab/kcli 
+- docker build -t karmab/kcli -f extras/Dockerfile.travis .
+
+script:
+- find . -name \*.py -exec pep8 --ignore=E501,E402 {} +
+- find . -name '*.py' | misspellings -f -
+- docker run -it --rm karmab/kcli 

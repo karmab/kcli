@@ -432,7 +432,7 @@ class Kconfig(Kbaseconfig):
                     os._exit(1)
             if name in repos:
                 if repos[name] == url:
-                    common.pprint("Entry for name allready there. Leaving...", color='blue')
+                    common.pprint("Entry for name already there. Leaving...", color='blue')
                     return {'result': 'success'}
                 else:
                     common.pprint("Updating url for repo %s" % name, color='green')
@@ -459,7 +459,7 @@ class Kconfig(Kbaseconfig):
                         common.pprint("Couldn't properly parse .kcli/repos.yml. Leaving...", color='red')
                         os._exit(1)
                 if name not in repos:
-                    common.pprint("Entry for name allready there. Leaving...", color='red')
+                    common.pprint("Entry for name already there. Leaving...", color='red')
                     os._exit(1)
             url = "%s/KMETA" % repos[name]
         elif 'KMETA' not in url:
