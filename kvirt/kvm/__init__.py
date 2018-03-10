@@ -652,7 +652,7 @@ class Kvirt(Kbase):
                 localport = port
                 if tunnel:
                     localport = common.get_free_port()
-                    consolecommand = "ssh -f -p %s -L %s:127.0.0.1:%s %s@%s sleep 10" % (self.port, localport, port, self.user, self.host)
+                    consolecommand = "ssh -o LogLevel=QUIET -f -p %s -L %s:127.0.0.1:%s %s@%s sleep 10" % (self.port, localport, port, self.user, self.host)
                     os.popen(consolecommand)
                 url = "%s://%s:%s" % (protocol, host, localport)
                 os.popen("remote-viewer %s &" % url)
@@ -684,7 +684,7 @@ class Kvirt(Kbase):
                             print("Remote serial Console requires using ssh . Leaving...")
                             return
                         else:
-                            serialcommand = "ssh -p %s %s@%s nc 127.0.0.1 %s" % (self.port, self.user, self.host, serialport)
+                            serialcommand = "ssh -o LogLevel=QUIET -p %s %s@%s nc 127.0.0.1 %s" % (self.port, self.user, self.host, serialport)
                         os.system(serialcommand)
 
     def info(self, name, output='plain', fields=None, values=False):

@@ -231,7 +231,7 @@ class Kubevirt(object):
         except:
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        serialcommand = "ssh -Xtp %s %s@%s virtctl vnc --kubeconfig=.kube/config %s -n %s" % (self.port, self.user, self.host, name, namespace)
+        serialcommand = "ssh -o LogLevel=QUIET -Xtp %s %s@%s virtctl vnc --kubeconfig=.kube/config %s -n %s" % (self.port, self.user, self.host, name, namespace)
         os.system(serialcommand)
         return
 
@@ -243,7 +243,7 @@ class Kubevirt(object):
         except:
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        serialcommand = "ssh -tp %s %s@%s virtctl console --kubeconfig=.kube/config %s -n %s" % (self.port, self.user, self.host, name, namespace)
+        serialcommand = "ssh -o LogLevel=QUIET -tp %s %s@%s virtctl console --kubeconfig=.kube/config %s -n %s" % (self.port, self.user, self.host, name, namespace)
         os.system(serialcommand)
         return
 
@@ -524,7 +524,7 @@ class Kubevirt(object):
         if name is None:
             volname = [k for k in TEMPLATES if TEMPLATES[k] == image][0]
         else:
-            volname = name.replace('_', '-').replace('.', '-')
+            volname = name.replace('_', '-').replace('.', '-').lower()
         size = 3 if volname in big else size
         now = datetime.datetime.now().strftime("%Y%M%d%H%M")
         podname = '%s-%s-importer' % (now, volname)
@@ -541,14 +541,17 @@ class Kubevirt(object):
         core.create_namespaced_pod(namespace, pod)
         completed = self.pod_completed(podname, namespace)
         if not completed:
-            return {'result': 'failure', 'reason': 'timeout waiting for pvc to get bound'}
+            common.pprint("Issue with pod %s. Leaving it for debugging purposes" % podname, color='red')
+            return {'result': 'failure', 'reason': 'timeout waiting for importer pod to complete'}
+        else:
+            core.delete_namespaced_pod(podname, namespace, client.V1DeleteOptions())
         return {'result': 'success'}
 
     def copy_image(self, pool, ori, dest, size=1):
         big = ['debian9']
         core = self.core
         namespace = self.namespace
-        ori = ori.replace('_', '-').replace('.', '-')
+        ori = ori.replace('_', '-').replace('.', '-').lower()
         size = 3 if dest in big else size
         now = datetime.datetime.now().strftime("%Y%M%d%H%M")
         podname = '%s-%s-copy' % (now, dest)
@@ -565,7 +568,10 @@ class Kubevirt(object):
         core.create_namespaced_pod(namespace, pod)
         completed = self.pod_completed(podname, namespace)
         if not completed:
+            common.pprint("Using with pod %s. Leaving it for debugging purposes" % podname, color='red')
             return {'result': 'failure', 'reason': 'timeout waiting for copy to finish'}
+        else:
+            core.delete_namespaced_pod(podname, namespace, client.V1DeleteOptions())
         return {'result': 'success'}
 
     def create_network(self, name, cidr, dhcp=True, nat=True, domain=None, plan='kvirt', pxe=None):
@@ -641,5 +647,8 @@ class Kubevirt(object):
         core.create_namespaced_pod(namespace, pod)
         completed = self.pod_completed(podname, namespace)
         if not completed:
+            common.pprint("Using with pod %s. Leaving it for debugging purposes" % podname, color='red')
             return {'result': 'failure', 'reason': 'timeout waiting for preparation of disk to finish'}
+        else:
+            core.delete_namespaced_pod(podname, namespace, client.V1DeleteOptions())
         return {'result': 'success'}
