@@ -632,7 +632,7 @@ class Kubevirt(object):
         podruntime = 0
         podstatus = ''
         while podstatus != 'Succeeded':
-            if podruntime >= podtimeout:
+            if podruntime >= podtimeout or podstatus == 'Error':
                 return False
             pod = core.read_namespaced_pod(podname, namespace)
             podstatus = pod.status.phase
