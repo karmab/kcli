@@ -82,6 +82,10 @@ class Kubevirt(object):
         return
 
     def create(self, name, virttype='kvm', profile='', plan='kvirt', cpumodel='Westmere', cpuflags=[], numcpus=2, memory=512, guestid='guestrhel764', pool=None, template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[], enableroot=True, alias=[], overrides={}):
+        if self.exists(name):
+            return {'result': 'failure', 'reason': "VM %s already exists" % name}
+        if template is not None and template not in self.volumes():
+            return {'result': 'failure', 'reason': "you don't have template %s" % template}
         default_disksize = disksize
         default_pool = pool
         crds = self.crds
@@ -112,10 +116,10 @@ class Kubevirt(object):
                     existingpvc = True
             myvolume = {'volumeName': volname, 'name': volname}
             if template is not None and index == 0:
-                if self.pvctemplate:
-                    myvolume['persistentVolumeClaim'] = {'claimName': volname}
-                else:
+                if not self.pvctemplate or template in REGISTRYDISKS:
                     myvolume['registryDisk'] = {'image': template}
+                else:
+                    myvolume['persistentVolumeClaim'] = {'claimName': volname}
             if index > 0 or template is None:
                 myvolume['persistentVolumeClaim'] = {'claimName': volname}
             newdisk = {'volumeName': volname, 'disk': {'dev': 'vd%s' % letter}, 'name': diskname}
@@ -646,7 +650,8 @@ class Kubevirt(object):
         namespace = self.namespace
         now = datetime.datetime.now().strftime("%Y%M%d%H%M")
         podname = '%s-%s-prepare' % (now, name)
-        pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'OnFailure', 'containers': [{'image': 'alpine', 'volumeMounts': [{'mountPath': '/storage1', 'name': 'storage1'}], 'name': 'prepare', 'command': ['truncate'], 'args': ['-s', '%s' % size, '/storage1/disk.img']}], 'volumes': [{'name': 'storage1', 'persistentVolumeClaim': {'claimName': name}}]}, 'apiVersion': 'v1', 'metadata': {'name': podname}}
+        # pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'OnFailure', 'containers': [{'image': 'alpine', 'volumeMounts': [{'mountPath': '/storage1', 'name': 'storage1'}], 'name': 'prepare', 'command': ['truncate'], 'args': ['-s', '%s' % size, '/storage1/disk.img']}], 'volumes': [{'name': 'storage1', 'persistentVolumeClaim': {'claimName': name}}]}, 'apiVersion': 'v1', 'metadata': {'name': podname}}
+        pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'OnFailure', 'containers': [{'image': 'karmab/qemu-alpine', 'volumeMounts': [{'mountPath': '/storage1', 'name': 'storage1'}], 'name': 'prepare', 'command': ['qemu-img'], 'args': ['create', '-f', 'raw', '/storage1/disk.img', '%s' % size]}], 'volumes': [{'name': 'storage1', 'persistentVolumeClaim': {'claimName': name}}]}, 'apiVersion': 'v1', 'metadata': {'name': podname}}
         core.create_namespaced_pod(namespace, pod)
         completed = self.pod_completed(podname, namespace)
         if not completed:

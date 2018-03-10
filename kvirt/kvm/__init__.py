@@ -102,6 +102,8 @@ class Kvirt(Kbase):
     def create(self, name, virttype='kvm', profile='kvirt', plan='kvirt', cpumodel='Westmere', cpuflags=[], numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[], enableroot=True, overrides={}):
         if self.exists(name):
             return {'result': 'failure', 'reason': "VM %s already exists" % name}
+        if template is not None and template not in self.volumes():
+            return {'result': 'failure', 'reason': "you don't have template %s" % template}
         default_diskinterface = diskinterface
         default_diskthin = diskthin
         default_disksize = disksize
