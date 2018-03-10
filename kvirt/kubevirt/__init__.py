@@ -84,7 +84,7 @@ class Kubevirt(object):
     def create(self, name, virttype='kvm', profile='', plan='kvirt', cpumodel='Westmere', cpuflags=[], numcpus=2, memory=512, guestid='guestrhel764', pool=None, template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[], enableroot=True, alias=[], overrides={}):
         if self.exists(name):
             return {'result': 'failure', 'reason': "VM %s already exists" % name}
-        if template is not None and template not in self.volumes():
+        if template is not None and template not in self.volumes() and template not in REGISTRYDISKS:
             return {'result': 'failure', 'reason': "you don't have template %s" % template}
         default_disksize = disksize
         default_pool = pool
@@ -126,6 +126,8 @@ class Kubevirt(object):
             vm['spec']['domain']['devices']['disks'].append(newdisk)
             vm['spec']['volumes'].append(myvolume)
             if not self.pvctemplate and index == 0:
+                continue
+            if self.pvctemplate and index == 0 and template in REGISTRYDISKS:
                 continue
             if existingpvc:
                 continue
@@ -651,7 +653,7 @@ class Kubevirt(object):
         now = datetime.datetime.now().strftime("%Y%M%d%H%M")
         podname = '%s-%s-prepare' % (now, name)
         # pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'OnFailure', 'containers': [{'image': 'alpine', 'volumeMounts': [{'mountPath': '/storage1', 'name': 'storage1'}], 'name': 'prepare', 'command': ['truncate'], 'args': ['-s', '%s' % size, '/storage1/disk.img']}], 'volumes': [{'name': 'storage1', 'persistentVolumeClaim': {'claimName': name}}]}, 'apiVersion': 'v1', 'metadata': {'name': podname}}
-        pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'OnFailure', 'containers': [{'image': 'karmab/qemu-alpine', 'volumeMounts': [{'mountPath': '/storage1', 'name': 'storage1'}], 'name': 'prepare', 'command': ['qemu-img'], 'args': ['create', '-f', 'raw', '/storage1/disk.img', '%s' % size]}], 'volumes': [{'name': 'storage1', 'persistentVolumeClaim': {'claimName': name}}]}, 'apiVersion': 'v1', 'metadata': {'name': podname}}
+        pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'OnFailure', 'containers': [{'image': 'karmab/qemu-alpine', 'volumeMounts': [{'mountPath': '/storage1', 'name': 'storage1'}], 'name': 'prepare', 'command': ['qemu-img'], 'args': ['create', '-f', 'raw', '/storage1/disk.img', '%sG' % size]}], 'volumes': [{'name': 'storage1', 'persistentVolumeClaim': {'claimName': name}}]}, 'apiVersion': 'v1', 'metadata': {'name': podname}}
         core.create_namespaced_pod(namespace, pod)
         completed = self.pod_completed(podname, namespace)
         if not completed:
