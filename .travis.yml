@@ -3,19 +3,20 @@ notifications:
   email:
     recipients:
       - karimboumedhel@gmail.com
-sudo: required
-dist: trusty
-addons:
-  apt:
-    packages:
-    - python-pip
-    - pkg-config
-    - libvirt-dev
-    - python-dev
-    - genisoimage
-    - qemu-kvm
-    - telnet
-    - libvirt-bin
+os: osx
+#sudo: required
+#dist: trusty
+#addons:
+#  apt:
+#    packages:
+#    - python-pip
+#    - pkg-config
+#    - libvirt-dev
+#    - python-dev
+#    - genisoimage
+#    - qemu-kvm
+#    - telnet
+#    - libvirt-bin
 env:
 - KVIRT_LIBVIRT_USER=libvirtd KVIRT_PATH=/x KVIRT_TYPE=qemu
 
