@@ -58,16 +58,18 @@ class Kconfig(Kbaseconfig):
                 if extraclient not in self.ini:
                     common.pprint("Missing section for client %s in config file. Leaving..." % extraclient, color='red')
                     os._exit(1)
-                options = self.ini[extraclient]
-                if 'host' not in options and 'url' not in options:
-                    common.pprint("Missing connection information for client %s in config file. Leaving..." % extraclient, color='red')
-                    os._exit(1)
-                host = options.get('host')
-                port = options.get('port', 22)
-                user = options.get('user', 'root')
-                protocol = options.get('protocol', 'ssh')
-                url = options.get('url', None)
-                e = Kvirt(host=host, port=port, user=user, protocol=protocol, url=url, debug=debug)
+                # options = self.ini[extraclient]
+                # if 'host' not in options and 'url' not in options:
+                #    common.pprint("Missing connection information for client %s in config file. Leaving..." % extraclient, color='red')
+                #    os._exit(1)
+                # host = options.get('host')
+                # port = options.get('port', 22)
+                # user = options.get('user', 'root')
+                # protocol = options.get('protocol', 'ssh')
+                # url = options.get('url', None)
+                # e = Kvirt(host=host, port=port, user=user, protocol=protocol, url=url, debug=debug)
+                c = Kconfig(client=extraclient)
+                e = c.k
                 self.extraclients[extraclient] = e
                 if e.conn is None:
                     common.pprint("Couldn't connect to specify hypervisor %s. Leaving..." % extraclient, color='red')
