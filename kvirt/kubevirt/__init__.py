@@ -44,7 +44,10 @@ class Kubevirt(object):
             context = current
             contextname = current['name']
         config.load_kube_config(context=contextname)
-        self.namespace = context['context']['namespace']
+        if 'namespace' in context['context']:
+            self.namespace = context['context']['namespace']
+        else:
+            self.namespace = 'default'
         self.crds = client.CustomObjectsApi()
         extensions = client.ApiextensionsV1beta1Api()
         current_crds = [x for x in extensions.list_custom_resource_definition().to_dict()['items'] if x['spec']['names']['kind'].lower() == 'virtualmachine']
