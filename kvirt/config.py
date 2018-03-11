@@ -519,17 +519,23 @@ class Kconfig(Kbaseconfig):
             common.pprint("No parameters found. Leaving...", color='blue')
         return {'result': 'success'}
 
-    def info_product(self, name, repo=None):
+    def info_product(self, name, repo=None, group=None):
         """Info product"""
-        if repo is not None:
+        if repo is not None and group is not None:
+            products = [product for product in self.list_products() if product['name'] == name and product['repo'] == repo and product['group'] == group]
+        elif repo is not None:
             products = [product for product in self.list_products() if product['name'] == name and product['repo'] == repo]
+            notsearched = 'group'
+        if group is not None:
+            products = [product for product in self.list_products() if product['name'] == name and product['group'] == group]
+            notsearched = 'repo'
         else:
             products = [product for product in self.list_products() if product['name'] == name]
         if len(products) == 0:
                     common.pprint("Product not found. Leaving...", color='red')
                     os._exit(1)
         elif len(products) > 1:
-                    common.pprint("Product found in several repos. Specify one...", color='red')
+                    common.pprint("Product found in several %ss. Specify one..." % notsearched, color='red')
                     os._exit(1)
         else:
             product = products[0]
@@ -558,17 +564,23 @@ class Kconfig(Kbaseconfig):
                 for parameter in sorted(parameters):
                     print(" %s: %s" % (parameter, parameters[parameter]))
 
-    def create_product(self, name, repo=None, plan=None, latest=False, overrides={}):
+    def create_product(self, name, repo=None, group=None, plan=None, latest=False, overrides={}):
         """Create product"""
-        if repo is not None:
+        if repo is not None and group is not None:
+            products = [product for product in self.list_products() if product['name'] == name and product['repo'] == repo and product['group'] == group]
+        elif repo is not None:
             products = [product for product in self.list_products() if product['name'] == name and product['repo'] == repo]
+            notsearched = 'group'
+        if group is not None:
+            products = [product for product in self.list_products() if product['name'] == name and product['group'] == group]
+            notsearched = 'repo'
         else:
             products = [product for product in self.list_products() if product['name'] == name]
         if len(products) == 0:
                     common.pprint("Product not found. Leaving...", color='red')
                     os._exit(1)
         elif len(products) > 1:
-                    common.pprint("Product found in several repos. Specify one...", color='red')
+                    common.pprint("Product found in several %s. Specify one..." % notsearched, color='red')
                     os._exit(1)
         else:
             product = products[0]

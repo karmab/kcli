@@ -709,13 +709,14 @@ def product(args):
     product = args.product
     latest = args.latest
     plan = args.plan
+    group = args.group
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
     info = args.info
     search = args.search
     config = Kconfig(client=args.client, debug=args.debug)
     if info:
         common.pprint("Providing information on product %s..." % (product), color='green')
-        config.info_product(product, repo)
+        config.info_product(product, repo, group)
     elif search:
         products = PrettyTable(["Repo", "Group", "Product", "Description", "Numvms", "Memory"])
         products.align["Repo"] = "l"
@@ -723,8 +724,11 @@ def product(args):
         for prod in sorted(productsinfo, key=lambda x: (x['repo'], x['group'], x['name'])):
             name = prod['name']
             repo = prod['repo']
+            prodgroup = prod['group']
             description = prod.get('description', 'N/A')
             if product.lower() not in name.lower() and product.lower() not in description.lower():
+                continue
+            if group is not None and prodgroup != group:
                 continue
             numvms = prod.get('numvms', 'N/A')
             memory = prod.get('memory', 'N/A')
@@ -733,7 +737,7 @@ def product(args):
         print(products)
     else:
         common.pprint("Creating product %s..." % (product), color='green')
-        config.create_product(product, repo, plan=plan, latest=latest, overrides=overrides)
+        config.create_product(product, repo=repo, group=group, plan=plan, latest=latest, overrides=overrides)
     return 0
 
 
@@ -1084,6 +1088,7 @@ def cli():
 
     product_info = 'Deploy Product'
     product_parser = subparsers.add_parser('product', description=product_info, help=product_info)
+    product_parser.add_argument('-g', '--group', help='Group to use as a name during deployment', metavar='GROUP')
     product_parser.add_argument('-i', '--info', action='store_true', help='Provide information on the given product')
     product_parser.add_argument('-l', '--latest', action='store_true', help='Grab latest version of the plans')
     product_parser.add_argument('-p', '--plan', help='Plan to use as a name during deployment', metavar='PLAN')

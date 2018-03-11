@@ -158,7 +158,7 @@
   comments: version has to be superior or equal to 0.1.0
   parameters:
    docker_disk_size: 60
-   kubevirt_version: v0.3.0-alpha.3
+   kubevirt_version: v0.3.0
    initializer: false
    openshift_version: 3.9
    metrics: false
