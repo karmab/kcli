@@ -25,11 +25,10 @@ def pretty_print(o):
 
 
 class Kubevirt(object):
-    def __init__(self, context=None, pvctemplate=False, usecloning=False, host='127.0.0.1', port=22, user='root', debug=False):
+    def __init__(self, context=None, usecloning=False, host='127.0.0.1', port=22, user='root', debug=False):
         self.host = host
         self.port = port
         self.user = user
-        self.pvctemplate = pvctemplate
         self.usecloning = usecloning
         self.conn = 'OK'
         contexts, current = config.list_kube_config_contexts()
@@ -91,9 +90,8 @@ class Kubevirt(object):
         crds = self.crds
         core = self.core
         namespace = self.namespace
-        if self.pvctemplate:
-            pvc = core.list_namespaced_persistent_volume_claim(namespace)
-            templates = {p.metadata.annotations['kcli/template']: p.metadata.name for p in pvc.items if 'kcli/template' in p.metadata.annotations}
+        allpvc = core.list_namespaced_persistent_volume_claim(namespace)
+        templates = {p.metadata.annotations['kcli/template']: p.metadata.name for p in allpvc.items if p.metadata.annotations is not None and 'kcli/template' in p.metadata.annotations}
         vm = {'kind': 'VirtualMachine', 'spec': {'terminationGracePeriodSeconds': 0, 'domain': {'resources': {'requests': {'memory': "%sM" % memory}}, 'devices': {'disks': []}}, 'volumes': []}, 'apiVersion': 'kubevirt.io/v1alpha1', 'metadata': {'namespace': namespace, 'name': name, 'annotations': {'kcli/plan': plan, 'kcli/profile': profile, 'kcli/template': template}}}
         pvcs = []
         sizes = []
@@ -116,7 +114,7 @@ class Kubevirt(object):
                     existingpvc = True
             myvolume = {'volumeName': volname, 'name': volname}
             if template is not None and index == 0:
-                if not self.pvctemplate or template in REGISTRYDISKS:
+                if template in REGISTRYDISKS:
                     myvolume['registryDisk'] = {'image': template}
                 else:
                     myvolume['persistentVolumeClaim'] = {'claimName': volname}
@@ -125,14 +123,13 @@ class Kubevirt(object):
             newdisk = {'volumeName': volname, 'disk': {'dev': 'vd%s' % letter}, 'name': diskname}
             vm['spec']['domain']['devices']['disks'].append(newdisk)
             vm['spec']['volumes'].append(myvolume)
-            if not self.pvctemplate and index == 0:
-                continue
-            if self.pvctemplate and index == 0 and template in REGISTRYDISKS:
+            if index == 0 and template in REGISTRYDISKS:
                 continue
             if existingpvc:
                 continue
+            diskpool = self.check_pool(pool)
             pvc = {'kind': 'PersistentVolumeClaim', 'spec': {'storageClassName': diskpool, 'accessModes': ['ReadWriteOnce'], 'resources': {'requests': {'storage': '%sGi' % disksize}}}, 'apiVersion': 'v1', 'metadata': {'name': volname}}
-            if template is not None and index == 0 and self.pvctemplate and self.usecloning:
+            if template is not None and index == 0 and template not in REGISTRYDISKS and self.usecloning:
                 pvc['metadata']['annotations'] = {'k8s.io/CloneRequest': templates[template]}
             pvcs.append(pvc)
             sizes.append(disksize)
@@ -150,16 +147,17 @@ class Kubevirt(object):
         for pvc in pvcs:
             pvcname = pvc['metadata']['name']
             pvcsize = pvc['spec']['resources']['requests']['storage'].replace('Gi', '')
-            if self.pvctemplate and index == 0:
+            if template not in REGISTRYDISKS and index == 0:
                 if self.usecloning:
+                    # NOTE: we should also check that cloning finished in this case
                     core.create_namespaced_persistent_volume_claim(namespace, pvc)
                     bound = self.pvc_bound(pvcname, namespace)
                     if not bound:
                         return {'result': 'failure', 'reason': 'timeout waiting for pvc %s to get bound' % pvcname}
                     continue
-                elif template:
+                else:
                     volname = "%s-vol0" % (name)
-                    copy = self.copy_image(pool, template, volname)
+                    copy = self.copy_image(diskpool, template, volname)
                     if copy['result'] == 'failure':
                         reason = copy['reason']
                         return {'result': 'failure', 'reason': reason}
@@ -354,14 +352,12 @@ class Kubevirt(object):
         namespace = self.namespace
         if iso:
             return []
-        elif self.pvctemplate:
-            pvc = core.list_namespaced_persistent_volume_claim(namespace)
-            templates = [p.metadata.annotations['kcli/template'] for p in pvc.items if 'kcli/template' in p.metadata.annotations]
+        pvc = core.list_namespaced_persistent_volume_claim(namespace)
+        templates = [p.metadata.annotations['kcli/template'] for p in pvc.items if p.metadata.annotations is not None and 'kcli/template' in p.metadata.annotations]
+        if templates:
             return sorted(templates)
         else:
             return REGISTRYDISKS
-
-        return
 
     def delete(self, name, snapshots=False):
         crds = self.crds
@@ -431,7 +427,7 @@ class Kubevirt(object):
         core = self.core
         namespace = self.namespace
         pvc = core.list_namespaced_persistent_volume_claim(namespace)
-        templates = {p.metadata.annotations['kcli/template']: p.metadata.name for p in pvc.items if 'kcli/template' in p.metadata.annotations}
+        templates = {p.metadata.annotations['kcli/template']: p.metadata.name for p in pvc.items if p.metadata.annotations is not None and 'kcli/template' in p.metadata.annotations}
         try:
             pvc = core.read_namespaced_persistent_volume(name, namespace)
             common.pprint("Disk %s already there" % name, color='red')
@@ -528,6 +524,7 @@ class Kubevirt(object):
     def add_image(self, image, pool, short=None, cmd=None, name=None, size=1):
         big = ['debian9']
         core = self.core
+        pool = self.check_pool(pool)
         namespace = self.namespace
         shortimage = os.path.basename(image).split('?')[0]
         if name is None:
@@ -663,3 +660,13 @@ class Kubevirt(object):
         else:
             core.delete_namespaced_pod(podname, namespace, client.V1DeleteOptions())
         return {'result': 'success'}
+
+    def check_pool(self, pool):
+        storage = client.StorageV1Api()
+        storageclasses = storage.list_storage_class().items
+        if storageclasses:
+            storageclasses = [s.spec.storage_class_name for s in storageclasses]
+            if pool in storageclasses:
+                return pool
+        common.pprint("Pool %s not found. Using None" % pool, color='blue')
+        return None
