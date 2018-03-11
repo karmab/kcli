@@ -653,7 +653,8 @@ class Kubevirt(object):
         now = datetime.datetime.now().strftime("%Y%M%d%H%M")
         podname = '%s-%s-prepare' % (now, name)
         # pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'OnFailure', 'containers': [{'image': 'alpine', 'volumeMounts': [{'mountPath': '/storage1', 'name': 'storage1'}], 'name': 'prepare', 'command': ['truncate'], 'args': ['-s', '%s' % size, '/storage1/disk.img']}], 'volumes': [{'name': 'storage1', 'persistentVolumeClaim': {'claimName': name}}]}, 'apiVersion': 'v1', 'metadata': {'name': podname}}
-        pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'OnFailure', 'containers': [{'image': 'karmab/qemu-alpine', 'volumeMounts': [{'mountPath': '/storage1', 'name': 'storage1'}], 'name': 'prepare', 'command': ['qemu-img'], 'args': ['create', '-f', 'raw', '/storage1/disk.img', '%sG' % size]}], 'volumes': [{'name': 'storage1', 'persistentVolumeClaim': {'claimName': name}}]}, 'apiVersion': 'v1', 'metadata': {'name': podname}}
+        # pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'OnFailure', 'containers': [{'image': 'karmab/qemu-alpine', 'volumeMounts': [{'mountPath': '/storage1', 'name': 'storage1'}], 'name': 'prepare', 'command': ['qemu-img'], 'args': ['create', '-f', 'raw', '/storage1/disk.img', '%sG' % size]}], 'volumes': [{'name': 'storage1', 'persistentVolumeClaim': {'claimName': name}}]}, 'apiVersion': 'v1', 'metadata': {'name': podname}}
+        pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'OnFailure', 'containers': [{'image': 'alpine', 'volumeMounts': [{'mountPath': '/storage1', 'name': 'storage1'}], 'name': 'prepare', 'command': ['fallocate'], 'args': ['-l', '%sG' % size, '/storage1/disk.img']}], 'volumes': [{'name': 'storage1', 'persistentVolumeClaim': {'claimName': name}}]}, 'apiVersion': 'v1', 'metadata': {'name': podname}}
         core.create_namespaced_pod(namespace, pod)
         completed = self.pod_completed(podname, namespace)
         if not completed:
