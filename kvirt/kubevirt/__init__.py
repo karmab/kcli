@@ -9,6 +9,7 @@ from kvirt import common
 from kvirt.defaults import TEMPLATES
 import base64
 import datetime
+from distutils.spawn import find_executable
 import os
 import time
 import yaml
@@ -238,7 +239,11 @@ class Kubevirt(object):
         except:
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        serialcommand = "ssh -o LogLevel=QUIET -Xtp %s %s@%s virtctl vnc --kubeconfig=.kube/config %s -n %s" % (self.port, self.user, self.host, name, namespace)
+        if find_executable('virtctl') is not None:
+            serialcommand = "virtctl vnc --kubeconfig=~/.kube/config %s -n %s" % (name, namespace)
+        else:
+            common.pprint("Tunneling virtctl through remote host. Make sure virtctl is installed there", color='blue')
+            serialcommand = "ssh -o LogLevel=QUIET -Xtp %s %s@%s virtctl vnc --kubeconfig=.kube/config %s -n %s" % (self.port, self.user, self.host, name, namespace)
         os.system(serialcommand)
         return
 
@@ -250,7 +255,11 @@ class Kubevirt(object):
         except:
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        serialcommand = "ssh -o LogLevel=QUIET -tp %s %s@%s virtctl console --kubeconfig=.kube/config %s -n %s" % (self.port, self.user, self.host, name, namespace)
+        if find_executable('virtctl') is not None:
+            serialcommand = "virtctl console --kubeconfig=~/.kube/config %s -n %s" % (name, namespace)
+        else:
+            common.pprint("Tunneling virtctl through remote host. Make sure virtctl is installed there", color='blue')
+            serialcommand = "ssh -o LogLevel=QUIET -tp %s %s@%s virtctl console --kubeconfig=.kube/config %s -n %s" % (self.port, self.user, self.host, name, namespace)
         os.system(serialcommand)
         return
 
@@ -665,7 +674,7 @@ class Kubevirt(object):
         storage = client.StorageV1Api()
         storageclasses = storage.list_storage_class().items
         if storageclasses:
-            storageclasses = [s.spec.storage_class_name for s in storageclasses]
+            storageclasses = [s.metadata.name for s in storageclasses]
             if pool in storageclasses:
                 return pool
         common.pprint("Pool %s not found. Using None" % pool, color='blue')
