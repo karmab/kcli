@@ -215,7 +215,9 @@ class Kubevirt(object):
             annotations = metadata.get("annotations")
             name = metadata["name"]
             status = vm['status']
-            state = status['phase']
+            state = 'N/A'
+            if 'phase' in status:
+                state = status['phase']
             source = 'N/A'
             profile = annotations.get('kcli/profile', 'N/A')
             plan = annotations.get('kcli/plan', 'N/A')
@@ -287,7 +289,9 @@ class Kubevirt(object):
         creationdate = metadata["creationTimestamp"]
         status = vm['status']
         memory = vm['spec']['domain']['resources']['requests']['memory']
-        state = status['phase']
+        state = 'N/A'
+        if 'phase' in status:
+            state = status['phase']
         # source = 'N/A'
         profile = annotations.get('kcli/profile')
         plan = annotations.get('kcli/plan')

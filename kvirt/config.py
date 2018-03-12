@@ -569,17 +569,19 @@ class Kconfig(Kbaseconfig):
             products = [product for product in self.list_products() if product['name'] == name and product['repo'] == repo and product['group'] == group]
         elif repo is not None:
             products = [product for product in self.list_products() if product['name'] == name and product['repo'] == repo]
-            notsearched = 'group'
         if group is not None:
             products = [product for product in self.list_products() if product['name'] == name and product['group'] == group]
-            notsearched = 'repo'
         else:
             products = [product for product in self.list_products() if product['name'] == name]
         if len(products) == 0:
                     common.pprint("Product not found. Leaving...", color='red')
                     os._exit(1)
         elif len(products) > 1:
-                    common.pprint("Product found in several %s. Specify one..." % notsearched, color='red')
+                    common.pprint("Product found in several repos or groups. Specify one...", color='red')
+                    for product in products:
+                        group = product['group']
+                        repo = product['repo']
+                        print("repo:%s\tgroup:%s" % (repo, group))
                     os._exit(1)
         else:
             product = products[0]
