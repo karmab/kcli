@@ -244,7 +244,7 @@ class Kubevirt(object):
         if find_executable('virtctl') is not None:
             serialcommand = "virtctl vnc --kubeconfig=~/.kube/config %s -n %s" % (name, namespace)
         else:
-            common.pprint("Tunneling virtctl through remote host. Make sure virtctl is installed there", color='blue')
+            common.pprint("Tunneling virtctl through remote host %s. Make sure virtctl is installed there" % self.host, color='blue')
             serialcommand = "ssh -o LogLevel=QUIET -Xtp %s %s@%s virtctl vnc --kubeconfig=.kube/config %s -n %s" % (self.port, self.user, self.host, name, namespace)
         os.system(serialcommand)
         return
