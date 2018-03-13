@@ -237,6 +237,7 @@
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
   parameters:
    openshift_version: 3.7
+   metrics: false
 
 - name: multi
   group: openshift
