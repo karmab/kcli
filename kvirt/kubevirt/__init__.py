@@ -494,11 +494,20 @@ class Kubevirt(object):
         return
 
     def _ssh_credentials(self, name):
-        template = ''
+        crds = self.crds
+        namespace = self.namespace
+        try:
+            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
+        except:
+            common.pprint("VM %s not found" % name, color='red')
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        metadata = vm.get("metadata")
+        annotations = metadata.get("annotations")
+        template = annotations.get('kcli/template')
         ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety']
         user = 'root'
         ip = self.ip(name)
-        if template != '':
+        if template is not None:
             if 'centos' in template.lower():
                 user = 'centos'
             elif 'cirros' in template.lower():
