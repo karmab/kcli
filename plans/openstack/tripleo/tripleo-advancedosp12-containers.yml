@@ -67,7 +67,7 @@ under12:
   - osp12-ceph-telemetry/undercloud/undercloud_pre.sh
  files:
    - path: /root/stack/templates.tar.gz
-     origin: osp12-ceph-telemetry/templates.tgz
+     origin: osp12-ceph-telemetry/kcli/templates.tgz
 
  nested: False
 
