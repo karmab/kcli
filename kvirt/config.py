@@ -23,6 +23,7 @@ except:
 from distutils.spawn import find_executable
 import glob
 import os
+import re
 import shutil
 import sys
 from time import sleep
@@ -1226,6 +1227,9 @@ class Kconfig(Kbaseconfig):
                     shortname = os.path.basename(url)
                     template = os.path.basename(template)
                     if not url.endswith('qcow2') and not url.endswith('img') and not url.endswith('qc2'):
+                        search = re.search(r".*/(.*)\?.*", url)
+                        if search is not None:
+                            shortname = search.group(1)
                         common.pprint("Ignoring %s in sync mode. Use kcli download on the host in this case" % (template), color='blue')
                         if 'web' in sys.argv[0]:
                             return {'result': 'failure', 'reason': "Missing url"}
