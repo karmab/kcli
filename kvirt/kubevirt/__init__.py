@@ -242,11 +242,14 @@ class Kubevirt(object):
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if find_executable('virtctl') is not None:
-            serialcommand = "virtctl vnc --kubeconfig=~/.kube/config %s -n %s" % (name, namespace)
+            home = os.path.expanduser('~')
+            command = "virtctl vnc --kubeconfig=%s/.kube/config %s -n %s" % (home, name, namespace)
         else:
             common.pprint("Tunneling virtctl through remote host %s. Make sure virtctl is installed there" % self.host, color='blue')
-            serialcommand = "ssh -o LogLevel=QUIET -Xtp %s %s@%s virtctl vnc --kubeconfig=.kube/config %s -n %s" % (self.port, self.user, self.host, name, namespace)
-        os.system(serialcommand)
+            command = "ssh -o LogLevel=QUIET -Xtp %s %s@%s virtctl vnc --kubeconfig=.kube/config %s -n %s" % (self.port, self.user, self.host, name, namespace)
+        if self.debug:
+            print(command)
+        os.system(command)
         return
 
     def serialconsole(self, name):
@@ -258,11 +261,14 @@ class Kubevirt(object):
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if find_executable('virtctl') is not None:
-            serialcommand = "virtctl console --kubeconfig=~/.kube/config %s -n %s" % (name, namespace)
+            home = os.path.expanduser('~')
+            command = "virtctl console --kubeconfig=%s/.kube/config %s -n %s" % (home, name, namespace)
         else:
             common.pprint("Tunneling virtctl through remote host. Make sure virtctl is installed there", color='blue')
-            serialcommand = "ssh -o LogLevel=QUIET -tp %s %s@%s virtctl console --kubeconfig=.kube/config %s -n %s" % (self.port, self.user, self.host, name, namespace)
-        os.system(serialcommand)
+            command = "ssh -o LogLevel=QUIET -tp %s %s@%s virtctl console --kubeconfig=.kube/config %s -n %s" % (self.port, self.user, self.host, name, namespace)
+        if self.debug:
+            print(command)
+        os.system(command)
         return
 
     def info(self, name, output='plain', fields=None, values=False):
