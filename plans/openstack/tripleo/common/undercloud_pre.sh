@@ -12,9 +12,6 @@ systemctl restart network
 yum -y -q update
 sed -i /requiretty/d /etc/sudoers
 su - stack -c "ls"
-cd /home/stack/ || exit
-tar -zxvf templates.tar.gz
-mv /home/stack/osp12-ceph-telemetry /home/stack/templates
-chown -R stack:stack /home/stack/templates
-cp -p templates/undercloud/* .
+cp -R /root/stack/* /home/stack/
+chown -R stack:stack /home/stack/*
 su - stack -c "openstack undercloud install"
