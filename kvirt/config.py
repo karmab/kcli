@@ -1235,7 +1235,6 @@ class Kconfig(Kbaseconfig):
                         if url.strip() == '':
                             common.pprint("Missing proper url.Leaving...", color='red')
                             return {'result': 'failure', 'reason': "Missing template"}
-                        continue
                 if cmd is None and template != '' and template in TEMPLATESCOMMANDS:
                     cmd = TEMPLATESCOMMANDS[template]
                 common.pprint("Grabbing template %s..." % shortname, color='green')

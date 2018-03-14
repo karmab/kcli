@@ -582,9 +582,10 @@ class Kubevirt(object):
         namespace = self.namespace
         ori = ori.replace('_', '-').replace('.', '-').lower()
         size = 3 if dest in big else size
+        size = 1024 * int(size) + 48
         now = datetime.datetime.now().strftime("%Y%M%d%H%M")
         podname = '%s-%s-copy' % (now, dest)
-        pvc = {'kind': 'PersistentVolumeClaim', 'spec': {'storageClassName': pool, 'accessModes': ['ReadWriteOnce'], 'resources': {'requests': {'storage': '%sGi' % size}}}, 'apiVersion': 'v1', 'metadata': {'name': dest}}
+        pvc = {'kind': 'PersistentVolumeClaim', 'spec': {'storageClassName': pool, 'accessModes': ['ReadWriteOnce'], 'resources': {'requests': {'storage': '%sMi' % size}}}, 'apiVersion': 'v1', 'metadata': {'name': dest}}
         pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'OnFailure', 'containers': [{'image': 'alpine', 'volumeMounts': [{'mountPath': '/storage1', 'name': 'storage1'}, {'mountPath': '/storage2', 'name': 'storage2'}], 'name': 'copy', 'command': ['cp'], 'args': ['/storage1/disk.img', '/storage2']}], 'volumes': [{'name': 'storage1', 'persistentVolumeClaim': {'claimName': ori}}, {'name': 'storage2', 'persistentVolumeClaim': {'claimName': dest}}]}, 'apiVersion': 'v1', 'metadata': {'name': podname}}
         try:
             core.read_namespaced_persistent_volume_claim(dest, namespace)
