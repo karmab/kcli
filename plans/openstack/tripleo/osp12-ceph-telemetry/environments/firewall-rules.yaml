@@ -1,0 +1,15 @@
+parameter_defaults:
+  ControllerExtraConfig:
+    tripleo.pacemaker.firewall_rules:
+          '130 pacemaker tcp':
+            proto: 'tcp'
+            dport:
+              - 2224
+              - 3121
+              - 21064
+              - 1229
+          '131 pacemaker udp':
+            proto: 'udp'
+            dport: 
+              - 5405
+              - 1229

@@ -1,0 +1,2 @@
+resource_registry:
+  OS::TripleO::NodeUserData: /home/stack/templates/firstboot/firstboot.yaml

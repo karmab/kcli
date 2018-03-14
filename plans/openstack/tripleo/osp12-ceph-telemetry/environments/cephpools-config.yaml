@@ -1,0 +1,18 @@
+  parameter_defaults:
+    CephPools:
+      vms:
+        pg_num: 4096
+        pgp_num: 4096
+      volumes:
+        pg_num: 64
+        pgp_num: 64
+      backups:
+#        size: 2
+        pg_num: 64
+        pgp_num: 64
+      images:
+        pg_num: 2048
+        pgp_num: 2048
+      metrics:
+        pg_num: 2048
+        pgp_num: 2048
