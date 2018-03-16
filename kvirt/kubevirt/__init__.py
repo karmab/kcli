@@ -212,6 +212,7 @@ class Kubevirt(object):
         vms = []
         for vm in crds.list_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines')["items"]:
             metadata = vm.get("metadata")
+            labels = metadata.get("labels")
             annotations = metadata.get("annotations")
             name = metadata["name"]
             status = vm['status']
@@ -223,6 +224,8 @@ class Kubevirt(object):
             plan = annotations.get('kcli/plan', 'N/A')
             source = annotations.get('kcli/template')
             report = 'N/A'
+            if labels is not None and 'kubevirt-ovm' in labels:
+                report = labels['kubevirt-ovm']
             ip = 'N/A'
             if 'interfaces' in status:
                 interfaces = vm['status']['interfaces']
