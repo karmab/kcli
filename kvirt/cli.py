@@ -1164,7 +1164,7 @@ def cli():
     update_parser.add_argument('-i', '--information', '--info', help='Information to set', metavar='INFORMATION')
     update_parser.add_argument('--network', '--net', help='Network to update', metavar='NETWORK')
     update_parser.add_argument('-m', '--memory', help='Memory to set', metavar='MEMORY')
-    update_parser.add_argument('-c', '--numcpus', help='Number of cpus to set', metavar='NUMCPUS')
+    update_parser.add_argument('-c', '--numcpus', type=int, help='Number of cpus to set', metavar='NUMCPUS')
     update_parser.add_argument('-p', '--plan', help='Plan Name to set', metavar='PLAN')
     update_parser.add_argument('-a', '--autostart', action='store_true', help='Set VM to autostart')
     update_parser.add_argument('-n', '--noautostart', action='store_true', help='Prevent VM from autostart')

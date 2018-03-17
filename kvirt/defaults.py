@@ -66,3 +66,4 @@ SHAREDKEY = False
 ENABLEROOT = True
 PLANVIEW = False
 PRIVATEKEY = False
+TAGS = {}

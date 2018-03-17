@@ -4,7 +4,7 @@
 Kvirt config class
 """
 
-from kvirt.defaults import NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, RESERVEHOST, START, NESTED, TUNNEL, REPORTURL, REPORTDIR, REPORT, REPORTALL, INSECURE, KEYS, CMDS, DNS, DOMAIN, SCRIPTS, FILES, ISO, NETMASKS, GATEWAY, SHAREDKEY, TEMPLATE, ENABLEROOT, PLANVIEW, PRIVATEKEY
+from kvirt.defaults import NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, RESERVEHOST, START, NESTED, TUNNEL, REPORTURL, REPORTDIR, REPORT, REPORTALL, INSECURE, KEYS, CMDS, DNS, DOMAIN, SCRIPTS, FILES, ISO, NETMASKS, GATEWAY, SHAREDKEY, TEMPLATE, ENABLEROOT, PLANVIEW, PRIVATEKEY, TAGS
 from kvirt import common
 import os
 from shutil import copyfile
@@ -82,6 +82,7 @@ class Kbaseconfig:
         defaults['enableroot'] = default.get('enableroot', ENABLEROOT)
         defaults['planview'] = default.get('planview', PLANVIEW)
         defaults['privatekey'] = default.get('privatekey', PRIVATEKEY)
+        defaults['tags'] = default.get('tags', TAGS)
         currentplanfile = "%s/.kcli/plan" % os.environ.get('HOME')
         if os.path.exists(currentplanfile):
             self.currentplan = open(currentplanfile).read().strip()
@@ -158,6 +159,7 @@ class Kbaseconfig:
         self.scripts = options.get('scripts', self.default['scripts'])
         self.files = options.get('files', self.default['files'])
         self.privatekey = options.get('privatekey', self.default['privatekey'])
+        self.tags = options.get('tags', self.default['tags'])
 
     def switch_host(self, client):
         if client not in self.clients:

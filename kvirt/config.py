@@ -58,24 +58,12 @@ class Kconfig(Kbaseconfig):
                 if extraclient not in self.ini:
                     common.pprint("Missing section for client %s in config file. Leaving..." % extraclient, color='red')
                     os._exit(1)
-                # options = self.ini[extraclient]
-                # if 'host' not in options and 'url' not in options:
-                #    common.pprint("Missing connection information for client %s in config file. Leaving..." % extraclient, color='red')
-                #    os._exit(1)
-                # host = options.get('host')
-                # port = options.get('port', 22)
-                # user = options.get('user', 'root')
-                # protocol = options.get('protocol', 'ssh')
-                # url = options.get('url', None)
-                # e = Kvirt(host=host, port=port, user=user, protocol=protocol, url=url, debug=debug)
                 c = Kconfig(client=extraclient)
                 e = c.k
                 self.extraclients[extraclient] = e
                 if e.conn is None:
                     common.pprint("Couldn't connect to specify hypervisor %s. Leaving..." % extraclient, color='red')
                     os._exit(1)
-            # if extraclients:
-            #    self.extraclients[self.client] = k
         self.k = k
 
     def create_vm(self, name, profile, ip1=None, ip2=None, ip3=None, ip4=None, overrides={}):
@@ -125,6 +113,7 @@ class Kconfig(Kbaseconfig):
             default_files = father.get('files', self.files)
             default_enableroot = father.get('enableroot', self.enableroot)
             default_privatekey = father.get('privatekey', self.privatekey)
+            default_tags = father.get('tags', self.tags)
             default_cmds = common.remove_duplicates(self.cmds + father.get('cmds', []))
             default_scripts = common.remove_duplicates(self.scripts + father.get('scripts', []))
         else:
@@ -157,6 +146,7 @@ class Kconfig(Kbaseconfig):
             default_domain = self.domain
             default_files = self.files
             default_enableroot = self.enableroot
+            default_tags = self.tags
             default_privatekey = self.privatekey
             default_cmds = self.cmds
             default_scripts = self.scripts
@@ -195,6 +185,9 @@ class Kconfig(Kbaseconfig):
         scripts = common.remove_duplicates(default_scripts + profile.get('scripts', []))
         files = profile.get('files', default_files)
         enableroot = profile.get('enableroot', default_enableroot)
+        tags = profile.get('tags', default_tags)
+        tags = default_tags.copy()
+        tags.update(profile.get('tags', {}))
         privatekey = profile.get('privatekey', default_privatekey)
         scriptcmds = []
         if scripts:
@@ -241,7 +234,7 @@ class Kconfig(Kbaseconfig):
                     files.append({'path': '/root/.ssh/id_rsa', 'content': privatekey})
                 else:
                     files = [{'path': '/root/.ssh/id_rsa', 'content': privatekey}]
-        result = k.create(name=name, plan=plan, profile=profilename, cpumodel=cpumodel, cpuflags=cpuflags, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns), reservehost=bool(reservehost), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=bool(nested), tunnel=tunnel, files=files, enableroot=enableroot, overrides=overrides)
+        result = k.create(name=name, plan=plan, profile=profilename, cpumodel=cpumodel, cpuflags=cpuflags, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns), reservehost=bool(reservehost), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=bool(nested), tunnel=tunnel, files=files, enableroot=enableroot, overrides=overrides, tags=tags)
         if result['result'] != 'success':
             return result
         ansible = profile.get('ansible')
@@ -960,6 +953,7 @@ class Kconfig(Kbaseconfig):
                         default_domain = father.get('domain', self.domain)
                         # default_files = father.get('files', self.files)
                         default_enableroot = father.get('enableroot', self.enableroot)
+                        default_tags = father.get('tags', self.tags)
                         default_privatekey = father.get('privatekey', self.privatekey)
                         default_cmds = common.remove_duplicates(self.cmds + father.get('cmds', []))
                         default_scripts = common.remove_duplicates(self.scripts + father.get('scripts', []))
@@ -993,6 +987,7 @@ class Kconfig(Kbaseconfig):
                         default_domain = self.domain
                         # default_files = self.files
                         default_enableroot = self.enableroot
+                        default_tags = self.tags
                         default_privatekey = self.privatekey
                         default_cmds = self.cmds
                         default_scripts = self.scripts
@@ -1029,6 +1024,9 @@ class Kconfig(Kbaseconfig):
                     ips = profile.get('ips')
                     sharedkey = next((e for e in [profile.get('sharedkey'), customprofile.get('sharedkey'), self.sharedkey] if e is not None))
                     enableroot = next((e for e in [profile.get('enableroot'), customprofile.get('enableroot'), default_enableroot] if e is not None))
+                    tags = default_tags.copy()
+                    tags.update(profile.get('tags', {}))
+                    tags.update(customprofile.get('tags', {}))
                     privatekey = next((e for e in [profile.get('privatekey'), customprofile.get('privatekey'), default_privatekey] if e is not None))
                     scripts = default_scripts + customprofile.get('scripts', []) + profile.get('scripts', [])
                     missingscript = False
@@ -1091,7 +1089,7 @@ class Kconfig(Kbaseconfig):
                             files.append({'path': '/root/.ssh/id_rsa', 'content': privatekey})
                         else:
                             files = [{'path': '/root/.ssh/id_rsa', 'content': privatekey}]
-                    result = z.create(name=name, plan=plan, profile=profilename, cpumodel=cpumodel, cpuflags=cpuflags, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns), reservehost=bool(reservehost), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=nested, tunnel=tunnel, files=files, enableroot=enableroot, overrides=overrides)
+                    result = z.create(name=name, plan=plan, profile=profilename, cpumodel=cpumodel, cpuflags=cpuflags, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns), reservehost=bool(reservehost), start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=nested, tunnel=tunnel, files=files, enableroot=enableroot, overrides=overrides, tags=tags)
                     common.handle_response(result, name)
                     if result['result'] == 'success':
                         newvms.append(name)
