@@ -572,9 +572,12 @@ disks:
 
 Within a disk section, you can use the word size, thin and format as keys
 
-- *diskthin* Value used when not specified in the disk entry. Defaults to true
-- *diskinterface* Value used when not specified in the disk entry. Defaults to virtio. Could also be ide, if vm lacks virtio drivers
-- *nets* Array of networks. Defaults to ['default']. You can mix simple strings pointing to the name of your network and more complex information provided as hash. For instance:
+- *thin* Value used when not specified in the disk entry. Defaults to true
+- *interface* Value used when not specified in the disk entry. Defaults to virtio. Could also be ide, if vm lacks virtio drivers
+
+## Network parameters
+
+You can mix simple strings pointing to the name of your network and more complex information provided as hash. For instance:
 
 ```YAML
 nets:
@@ -590,7 +593,7 @@ Within a net section, you can use name, nic, IP, mac, mask, gateway and alias as
 
 You can also use  *noconf: true* to only add the nic with no configuration done in the vm
 
-Note that up to 8 IPS can also be provided on command line when creating a single vm (with the flag -1, -2, -3,-4,...)
+Note that up to 4 IPS can also be provided on command line when creating a single vm (with the flag -1, -2, -3,-4,...)
 
 ## ip, dns and host Reservations
 

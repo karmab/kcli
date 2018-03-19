@@ -251,6 +251,7 @@ class Kvirt(Kbase):
         alias = []
         for index, net in enumerate(nets):
             macxml = ''
+            nettype = 'virtio'
             if isinstance(net, str):
                 netname = net
             elif isinstance(net, dict) and 'name' in net:
@@ -264,6 +265,8 @@ class Kvirt(Kbase):
                 if 'mac' in nets[index]:
                     mac = nets[index]['mac']
                     macxml = "<mac address='%s'/>" % mac
+                if 'type' in nets[index]:
+                    nettype = nets[index]['type']
                 if index == 0 and ip is not None:
                     metadata = """%s<kvirt:ip >%s</kvirt:ip>""" % (metadata, ip)
                 if reservedns and index == 0 and 'alias' in nets[index] and isinstance(nets[index]['alias'], list):
@@ -278,8 +281,8 @@ class Kvirt(Kbase):
                      <interface type='%s'>
                      %s
                      <source %s='%s'/>
-                     <model type='virtio'/>
-                     </interface>""" % (netxml, sourcenet, macxml, sourcenet, netname)
+                     <model type='%s'/>
+                     </interface>""" % (netxml, sourcenet, macxml, sourcenet, netname, nettype)
         metadata = """%s
                     <kvirt:plan>%s</kvirt:plan>
                     </kvirt:info>
