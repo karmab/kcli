@@ -14,7 +14,7 @@ Group:          Development/Languages/Python
 Source:         https://files.pythonhosted.org/packages/source/k/kcli/kcli-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildRequires:  python2-devel rubygem-ronn gzip
-Requires:       python2 python-iptools libvirt-python genisoimage nmap-ncat python-prettytable PyYAML python-flask python-netaddr python2-docker
+Requires:       python2 python-iptools libvirt-python genisoimage nmap-ncat python-prettytable PyYAML python-flask python-netaddr python2-docker python2-kubernetes
 
 %description
 Kcli is meant to interact with a local/remote libvirt daemon and
@@ -31,6 +31,7 @@ and generally for every vm deployed from this client.
 sed -i.bak '/pyvbox/d' setup.py
 sed -i.bak '/docker/d' setup.py
 sed -i.bak '/libvirt/d' setup.py
+sed -i.bak '/kubernetes/d' setup.py
 python setup.py build
 
 %install

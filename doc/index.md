@@ -274,6 +274,36 @@ Replace with your own client in default section and indicate host and protocol i
 
 Note that most of the parameters are actually optional, and can be overridden in the default, host or profile section (or in a plan file)
 
+
+# Kubevirt
+
+for kubevirt, you will need to define one ( or several !) sections with the type kubevirt in your *~/.kcli/config.yml*
+
+authentication is handled by your local ~/.kubeconfig, which means that by default, kcli will try to connect to your current kubernetes/openshift context. For instance,
+
+```
+kubevirt:
+ type: kubevirt
+ enabled: true
+ pool: glusterfs-storage
+ tags:
+   region: master
+```
+
+You can use additional parameters for the kubevirt section:
+
+- context: the context to use . You can use the following command to list the context at your disposal
+```
+kubectl config view -o jsonpath='{.contexts[*].name}'
+```
+- pool: your default storageclass. can also be set as blank, if no storage class should try to bind pvcs
+- host: the node to use for tunneling to reach ssh (and consoles). If running on openshift, this is evaluated from your current context
+- tags: additional tags to put to all created vms in their *nodeSelector*. Can be further indicated at profile or plan level in which case values are combined. This provides an easy way to force vms to run on specific nodes, by matching labels.
+
+*virtctl* is a hard requirement for consoles. If present on your local machine, this will be used. otherwise, it s expected that the host node has it installed.
+
+Also, note that the kubevirt plugin uses *offlinevirtualmachines* instead of virtualmachines.
+
 # Basic Usage
 
 Templates aim to typically be the source for your vms, using the existing cloud images from the different distributions. 

@@ -96,7 +96,7 @@ class Kubevirt(object):
         allpvc = core.list_namespaced_persistent_volume_claim(namespace)
         templates = {p.metadata.annotations['kcli/template']: p.metadata.name for p in allpvc.items if p.metadata.annotations is not None and 'kcli/template' in p.metadata.annotations}
         vm = {'kind': 'OfflineVirtualMachine', 'spec': {'running': start, 'template': {'metadata': {'labels': {'kubevirt.io/provider': 'kcli'}}, 'spec': {'domain': {'resources': {'requests': {'memory': '%sM' % memory}}, 'cpu': {'cores': numcpus}, 'devices': {'disks': []}}, 'volumes': []}}}, 'apiVersion': 'kubevirt.io/v1alpha1', 'metadata': {'name': name, 'namespace': namespace, 'annotations': {'kcli/plan': plan, 'kcli/profile': profile, 'kcli/template': template}}}
-        # vm['spec']['template']['spec']['machine'] = {'type': cpumodel}
+        vm['spec']['template']['spec']['domain']['machine'] = {'type': cpumodel}
         features = {}
         for flag in cpuflags:
             if isinstance(flag, str):
