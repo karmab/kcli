@@ -44,7 +44,7 @@ cp -r extras %{buildroot}/%{_docdir}/kcli
 cp -r plans %{buildroot}/%{_docdir}/kcli
 cp -r samples %{buildroot}/%{_docdir}/kcli
 LANG=en_US.UTF-8 ronn -r README.md
-mv index kcli.1
+mv README kcli.1
 gzip kcli.1
 cp kcli.1.gz %{buildroot}/%{_mandir}/man1
 
@@ -60,7 +60,7 @@ rm -rf %{buildroot}
 %attr(0755,root,root) %{_bindir}/kweb
 
 %changelog
-* Tue Mar 21 2018 Karim Boumedhel <karimboumedhel@gmail.com> 11.0
+* Tue Mar 20 2018 Karim Boumedhel <karimboumedhel@gmail.com> 11.0
 - 11.0 Release
 * Fri Jul 14 2017 Karim Boumedhel <karimboumedhel@gmail.com> 8.2
 - Remove kcli ssh print
