@@ -5,7 +5,7 @@
 #
 
 Name:           kcli
-Version:        9.1
+Version:        11.0
 Release:        1
 Url:            http://github.com/karmab/kcli
 Summary:        Libvirt/VirtualBox wrapper on steroids
@@ -38,16 +38,15 @@ python setup.py build
 python setup.py install --prefix=%{_prefix} --root=%{buildroot}
 mkdir -p %{buildroot}/%{_docdir}/kcli
 mkdir -p %{buildroot}/%{_mandir}/man1
-cp *md %{buildroot}/%{_docdir}/kcli
-cp *rst %{buildroot}/%{_docdir}/kcli
+#cp doc/*md %{buildroot}/%{_docdir}/kcli
+#cp doc/*rst %{buildroot}/%{_docdir}/kcli
 cp -r extras %{buildroot}/%{_docdir}/kcli
 cp -r plans %{buildroot}/%{_docdir}/kcli
 cp -r samples %{buildroot}/%{_docdir}/kcli
 LANG=en_US.UTF-8 ronn -r README.md
-mv README kcli.1
+mv index kcli.1
 gzip kcli.1
 cp kcli.1.gz %{buildroot}/%{_mandir}/man1
-
 
 %clean
 rm -rf %{buildroot}
@@ -61,6 +60,8 @@ rm -rf %{buildroot}
 %attr(0755,root,root) %{_bindir}/kweb
 
 %changelog
+* Tue Mar 21 2018 Karim Boumedhel <karimboumedhel@gmail.com> 11.0
+- 11.0 Release
 * Fri Jul 14 2017 Karim Boumedhel <karimboumedhel@gmail.com> 8.2
 - Remove kcli ssh print
 * Wed May 24 2017 Karim Boumedhel <karimboumedhel@gmail.com> 7.18-1

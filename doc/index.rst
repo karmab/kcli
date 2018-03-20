@@ -46,10 +46,8 @@ for *macosx*, you’ll want to check the docker installation section ( if
 planning to go against a remote kvm host ) or the dev section for
 virtualbox
 
-.. _installation-1:
-
-Installation
-------------
+Recomended install method
+-------------------------
 
 If using *fedora*, you can use this:
 
@@ -64,8 +62,8 @@ ubuntu zesty):
 
     echo deb [trusted=yes] https://packagecloud.io/karmab/kcli/ubuntu/ zesty main > /etc/apt/sources.list.d/kcli.list ; apt-get update ; apt-get -y install kcli-all
 
-I want to use docker, I’m cool
-------------------------------
+Using docker
+------------
 
 Pull the latest image:
 
@@ -176,8 +174,8 @@ Debian/Ubuntu installation
     ln -s /usr/lib/python2.7/dist-packages/ /usr/lib/python2.7/site-packages
     apt-get install kcli python2.7 python-setuptools python-prettytable python-yaml python-netaddr python-iptools python-flask python2-docker python-requests python-websocket python2-docker-pycreds python-libvirt
 
-I want to use virtualbox, I’m not cool
---------------------------------------
+VirtualBox
+----------
 
 plugin for virtualbox tries to replicate most of the functionality so
 that experience is transparent to the end user. Note that the plugin:
@@ -190,28 +188,28 @@ that experience is transparent to the end user. Note that the plugin:
 .. _requisites-1:
 
 requisites
-~~~~~~~~~~
+^^^^^^^^^^
 
 Note that if using *macosx*, note that the virtualbox sdk is only
 compatible with system python ( so use /usr/bin/python when installing
 kcli so it uses this interpreter, and not the one from brew).
 
 install requirements
-~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^
 
 ::
 
     pip install libvirt-python pyvbox
 
 install kcli
-~~~~~~~~~~~~
+^^^^^^^^^^^^
 
 ::
 
     pip install kcli
 
 download sdk and install it
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ::
 
@@ -227,7 +225,7 @@ your virtualbox
      type: vbox
 
 known issues
-~~~~~~~~~~~~
+^^^^^^^^^^^^
 
 there’s little control made on the available space when creating disks
 from profiles, plans or products.
@@ -311,6 +309,50 @@ protocol in the corresponding client section.
 
 Note that most of the parameters are actually optional, and can be
 overridden in the default, host or profile section (or in a plan file)
+
+Kubevirt
+========
+
+for kubevirt, you will need to define one ( or several !) sections with
+the type kubevirt in your *~/.kcli/config.yml*
+
+authentication is handled by your local ~/.kubeconfig, which means that
+by default, kcli will try to connect to your current
+kubernetes/openshift context. For instance,
+
+::
+
+    kubevirt:
+     type: kubevirt
+     enabled: true
+     pool: glusterfs-storage
+     tags:
+       region: master
+
+You can use additional parameters for the kubevirt section:
+
+-  context: the context to use . You can use the following command to
+   list the context at your disposal
+
+::
+
+    kubectl config view -o jsonpath='{.contexts[*].name}'
+
+-  pool: your default storageclass. can also be set as blank, if no
+   storage class should try to bind pvcs
+-  host: the node to use for tunneling to reach ssh (and consoles). If
+   running on openshift, this is evaluated from your current context
+-  tags: additional tags to put to all created vms in their
+   *nodeSelector*. Can be further indicated at profile or plan level in
+   which case values are combined. This provides an easy way to force
+   vms to run on specific nodes, by matching labels.
+
+*virtctl* is a hard requirement for consoles. If present on your local
+machine, this will be used. otherwise, it s expected that the host node
+has it installed.
+
+Also, note that the kubevirt plugin uses *offlinevirtualmachines*
+instead of virtualmachines.
 
 Basic Usage
 ===========
@@ -700,13 +742,16 @@ You can add disk this way in your profile or plan files
 Within a disk section, you can use the word size, thin and format as
 keys
 
--  *diskthin* Value used when not specified in the disk entry. Defaults
-   to true
--  *diskinterface* Value used when not specified in the disk entry.
-   Defaults to virtio. Could also be ide, if vm lacks virtio drivers
--  *nets* Array of networks. Defaults to [‘default’]. You can mix simple
-   strings pointing to the name of your network and more complex
-   information provided as hash. For instance:
+-  *thin* Value used when not specified in the disk entry. Defaults to
+   true
+-  *interface* Value used when not specified in the disk entry. Defaults
+   to virtio. Could also be ide, if vm lacks virtio drivers
+
+Network parameters
+------------------
+
+You can mix simple strings pointing to the name of your network and more
+complex information provided as hash. For instance:
 
 .. code:: yaml
 
@@ -724,10 +769,10 @@ alias as keys.
 You can also use *noconf: true* to only add the nic with no
 configuration done in the vm
 
-Note that up to 8 IPS can also be provided on command line when creating
+Note that up to 4 IPS can also be provided on command line when creating
 a single vm (with the flag -1, -2, -3,-4,…)
 
-IP, DNS and HOST Reservations
+ip, dns and host Reservations
 -----------------------------
 
 If you set *reserveip* to True, a reservation will be made if the
@@ -916,7 +961,7 @@ Basic testing can be run with pytest. If using a remote hypervisor, you
 ll want to set the *KVIRT_HOST* and *KVIRT_USER* environment variables
 so that it points to your host with the corresponding user.
 
-ABOUT VIRTUALBOX SUPPORT
+about virtualbox support
 ------------------------
 
 While the tool should pretty much work the same on this hypervisor,
