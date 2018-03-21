@@ -207,8 +207,7 @@ class Kubevirt(object):
             vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines', name)
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        r = 'Running' if 'Running' in vm['spec'] else 'running'
-        vm['spec'][r] = True
+        vm['spec']['running'] = True
         crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "offlinevirtualmachines", name, vm)
         return {'result': 'success'}
 
@@ -219,7 +218,7 @@ class Kubevirt(object):
             vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines', name)
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        vm["spec"]['Running'] = False
+        vm["spec"]['running'] = False
         crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "offlinevirtualmachines", name, vm)
         return {'result': 'success'}
 
@@ -342,8 +341,7 @@ class Kubevirt(object):
             pretty_print(vm)
         metadata = vm.get("metadata")
         annotations = metadata.get("annotations")
-        t = 'Template' if 'Template' in vm['spec'] else 'template'
-        spectemplate = vm['spec'].get(t)
+        spectemplate = vm['spec'].get('template')
         volumes = spectemplate['spec']['volumes']
         name = metadata["name"]
         # creationdate = metadata["creationTimestamp"].strftime("%d-%m-%Y %H:%M")
@@ -466,8 +464,7 @@ class Kubevirt(object):
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         crds.delete_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines', name, client.V1DeleteOptions())
-        t = 'Template' if 'Template' in vm['spec'] else 'template'
-        volumes = [d['volumeName'] for d in vm['spec'][t]['spec']['domain']['devices']['disks'] if d['volumeName'] != 'cloudinitdisk']
+        volumes = [d['volumeName'] for d in vm['spec']['template']['spec']['domain']['devices']['disks'] if d['volumeName'] != 'cloudinitdisk']
         pvcs = [pvc for pvc in core.list_namespaced_persistent_volume_claim(namespace).items if pvc.metadata.name in volumes]
         for p in sorted(pvcs):
             pvcname = p.metadata.name
