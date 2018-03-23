@@ -168,7 +168,6 @@ class Kubevirt(object):
             vm['spec']['template']['spec']['volumes'].append(cloudinitvolume)
         if self.debug:
             pretty_print(vm)
-        # try:
         for pvc in pvcs:
             pvcname = pvc['metadata']['name']
             pvcsize = pvc['spec']['resources']['requests']['storage'].replace('Gi', '')
@@ -244,8 +243,8 @@ class Kubevirt(object):
         allvms = crds.list_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines')["items"]
         vms = [vm for vm in allvms if 'labels' in vm.get("metadata") and 'kubevirt-ovm' in vm["metadata"]['labels'] and vm["metadata"]['labels']['kubevirt-ovm'] == name]
         if vms:
-            return 'Running'
-        return 'Down'
+            return 'up'
+        return 'down'
 
     def list(self):
         crds = self.crds
@@ -253,15 +252,10 @@ class Kubevirt(object):
         vms = []
         for vm in crds.list_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines')["items"]:
             metadata = vm.get("metadata")
+            spec = vm.get("spec")
             annotations = metadata.get("annotations")
+            running = spec.get("running")
             name = metadata["name"]
-            state = 'Down'
-            if 'status' in vm and 'conditions' in vm['status']:
-                conditions = vm['status']['conditions']
-                if conditions is not None:
-                    for condition in conditions:
-                        if 'type' in condition and condition['type'] == 'Running':
-                            state = 'Running'
             profile, plan, source = 'N/A', 'N/A', 'N/A'
             if annotations is not None:
                 profile = annotations['kcli/profile'] if 'kcli/profile' in annotations else 'N/A'
@@ -269,20 +263,22 @@ class Kubevirt(object):
                 source = annotations['kcli/template'] if 'kcli/template' in annotations else 'N/A'
             report = 'N/A'
             ip = 'N/A'
-            if state == 'Running':
+            if running:
                 try:
                     runvm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
                 except:
-                    common.pprint("VM %s not found" % name, color='red')
-                    return {'result': 'failure', 'reason': "VM %s not found" % name}
+                    common.pprint("underlying VM %s not found" % name, color='red')
+                    return {'result': 'failure', 'reason': "underlying VM %s not found" % name}
                 status = runvm.get('status')
-                state = status['phase']
+                state = status['phase'].replace('Running', 'up')
                 if 'interfaces' in status:
                     interfaces = runvm['status']['interfaces']
                     for interface in interfaces:
                         if 'ipAddress' in interface:
                             ip = interface['ipAddress']
                             break
+            else:
+                state = 'down'
             vms.append([name, state, ip, source, plan, profile, report])
         return vms
 
@@ -340,19 +336,14 @@ class Kubevirt(object):
         if self.debug:
             pretty_print(vm)
         metadata = vm.get("metadata")
+        spec = vm.get("spec")
+        running = spec.get("running")
         annotations = metadata.get("annotations")
         spectemplate = vm['spec'].get('template')
         volumes = spectemplate['spec']['volumes']
         name = metadata["name"]
         # creationdate = metadata["creationTimestamp"].strftime("%d-%m-%Y %H:%M")
         creationdate = metadata["creationTimestamp"]
-        state = 'Down'
-        if 'status' in vm and 'conditions' in vm['status']:
-            conditions = vm['status']['conditions']
-            if conditions is not None:
-                for condition in conditions:
-                    if 'type' in condition and condition['type'] == 'Running':
-                        state = 'Running'
         profile, plan, template = 'N/A', 'N/A', 'N/A'
         if annotations is not None:
             profile = annotations['kcli/profile'] if 'kcli/profile' in annotations else 'N/A'
@@ -360,13 +351,14 @@ class Kubevirt(object):
             template = annotations['kcli/template'] if 'kcli/template' in annotations else 'N/A'
         ip = None
         host = None
-        if state == 'Running':
+        if running:
             try:
                 runvm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
             except:
-                common.pprint("VM %s not found" % name, color='red')
-                return {'result': 'failure', 'reason': "VM %s not found" % name}
+                common.pprint("underlying VM %s not found" % name, color='red')
+                return {'result': 'failure', 'reason': "underlying VM %s not found" % name}
             status = runvm.get('status')
+            state = status.get('phase').replace('Running', 'up')
             host = status['nodeName'] if 'nodeName' in status else None
             if 'interfaces' in status:
                 interfaces = runvm['status']['interfaces']
@@ -374,6 +366,8 @@ class Kubevirt(object):
                     if 'ipAddress' in interface:
                         ip = interface['ipAddress']
                         break
+        else:
+            state = 'down'
         yamlinfo = {'name': name, 'nets': [], 'disks': [], 'state': state, 'creationdate': creationdate, 'host': host, 'status': state}
         if 'cpu' in spectemplate['spec']['domain']:
             numcpus = spectemplate['spec']['domain']['cpu']['cores']
@@ -710,16 +704,19 @@ class Kubevirt(object):
         return {'result': 'success'}
 
     def copy_image(self, pool, ori, dest, size=1):
-        big = ['debian9']
+        sizes = {'debian': 2, 'centos': 8, 'fedora': 4, 'rhel': 10, 'trusty': 2.2, 'xenial': 2.2, 'yakkety': 2.2, 'zesty': 2.2, 'artful': 2.2}
         core = self.core
         namespace = self.namespace
         ori = ori.replace('_', '-').replace('.', '-').lower()
-        size = 3 if dest in big else size
-        size = 1024 * int(size) + 48
+        for key in sizes:
+            if key in ori and ori.endswith('qcow2'):
+                size = sizes[key]
+                break
+        size = 1024 * int(size) + 100
         now = datetime.datetime.now().strftime("%Y%M%d%H%M")
         podname = '%s-%s-copy' % (now, dest)
         pvc = {'kind': 'PersistentVolumeClaim', 'spec': {'storageClassName': pool, 'accessModes': ['ReadWriteOnce'], 'resources': {'requests': {'storage': '%sMi' % size}}}, 'apiVersion': 'v1', 'metadata': {'name': dest}}
-        pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'OnFailure', 'containers': [{'image': 'alpine', 'volumeMounts': [{'mountPath': '/storage1', 'name': 'storage1'}, {'mountPath': '/storage2', 'name': 'storage2'}], 'name': 'copy', 'command': ['cp'], 'args': ['/storage1/disk.img', '/storage2']}], 'volumes': [{'name': 'storage1', 'persistentVolumeClaim': {'claimName': ori}}, {'name': 'storage2', 'persistentVolumeClaim': {'claimName': dest}}]}, 'apiVersion': 'v1', 'metadata': {'name': podname}}
+        pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'Never', 'containers': [{'image': 'alpine', 'volumeMounts': [{'mountPath': '/storage1', 'name': 'storage1'}, {'mountPath': '/storage2', 'name': 'storage2'}], 'name': 'copy', 'command': ['cp'], 'args': ['/storage1/disk.img', '/storage2']}], 'volumes': [{'name': 'storage1', 'persistentVolumeClaim': {'claimName': ori}}, {'name': 'storage2', 'persistentVolumeClaim': {'claimName': dest}}]}, 'apiVersion': 'v1', 'metadata': {'name': podname}}
         try:
             core.read_namespaced_persistent_volume_claim(dest, namespace)
             common.pprint("Using existing pvc")
@@ -773,7 +770,7 @@ class Kubevirt(object):
 
     def pvc_bound(self, volname, namespace):
         core = self.core
-        pvctimeout = 20
+        pvctimeout = 40
         pvcruntime = 0
         pvcstatus = ''
         while pvcstatus != 'Bound':
@@ -792,7 +789,7 @@ class Kubevirt(object):
         podruntime = 0
         podstatus = ''
         while podstatus != 'Succeeded':
-            if podruntime >= podtimeout or podstatus == 'Error':
+            if podruntime >= podtimeout or podstatus == 'Error' or podstatus == 'Failed':
                 return False
             pod = core.read_namespaced_pod(podname, namespace)
             podstatus = pod.status.phase
