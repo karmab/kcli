@@ -1225,10 +1225,6 @@ class Kconfig(Kbaseconfig):
                     shortname = os.path.basename(url)
                     template = os.path.basename(template)
                     if not url.endswith('qcow2') and not url.endswith('img') and not url.endswith('qc2'):
-                        search = re.search(r".*/(.*)\?.*", url)
-                        if search is not None:
-                            shortname = search.group(1)
-                        common.pprint("Ignoring %s in sync mode. Use kcli download on the host in this case" % (template), color='blue')
                         if 'web' in sys.argv[0]:
                             return {'result': 'failure', 'reason': "Missing url"}
                         common.pprint("Opening url %s for you to grab complete url for %s" % (url, template), color='blue')
@@ -1237,6 +1233,9 @@ class Kconfig(Kbaseconfig):
                         if url.strip() == '':
                             common.pprint("Missing proper url.Leaving...", color='red')
                             return {'result': 'failure', 'reason': "Missing template"}
+                        search = re.search(r".*/(.*)\?.*", url)
+                        if search is not None:
+                            shortname = search.group(1)
                 if cmd is None and template != '' and template in TEMPLATESCOMMANDS:
                     cmd = TEMPLATESCOMMANDS[template]
                 common.pprint("Grabbing template %s..." % shortname, color='green')

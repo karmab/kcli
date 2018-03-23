@@ -270,6 +270,8 @@ class Kubevirt(object):
                     common.pprint("underlying VM %s not found" % name, color='red')
                     return {'result': 'failure', 'reason': "underlying VM %s not found" % name}
                 status = runvm.get('status')
+                if status is None:
+                    break
                 state = status['phase'].replace('Running', 'up')
                 if 'interfaces' in status:
                     interfaces = runvm['status']['interfaces']
@@ -672,7 +674,7 @@ class Kubevirt(object):
         return
 
     def add_image(self, image, pool, short=None, cmd=None, name=None, size=1):
-        big = ['debian9']
+        sizes = {'debian': 2, 'centos': 8, 'fedora': 4, 'rhel': 10, 'trusty': 2.2, 'xenial': 2.2, 'yakkety': 2.2, 'zesty': 2.2, 'artful': 2.2}
         core = self.core
         pool = self.check_pool(pool)
         namespace = self.namespace
@@ -681,11 +683,14 @@ class Kubevirt(object):
             volname = [k for k in TEMPLATES if TEMPLATES[k] == image][0]
         else:
             volname = name.replace('_', '-').replace('.', '-').lower()
-        size = 3 if volname in big else size
+        for key in sizes:
+            if key in shortimage and shortimage.endswith('qcow2'):
+                size = sizes[key]
+                break
         now = datetime.datetime.now().strftime("%Y%M%d%H%M")
         podname = '%s-%s-importer' % (now, volname)
         pvc = {'kind': 'PersistentVolumeClaim', 'spec': {'storageClassName': pool, 'accessModes': ['ReadWriteOnce'], 'resources': {'requests': {'storage': '%sGi' % size}}}, 'apiVersion': 'v1', 'metadata': {'name': volname, 'annotations': {'kcli/template': shortimage}}}
-        pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'OnFailure', 'containers': [{'image': 'kubevirtci/disk-importer', 'volumeMounts': [{'mountPath': '/storage', 'name': 'storage1'}], 'name': 'importer', 'env': [{'name': 'CURL_OPTS', 'value': '-L'}, {'name': 'INSTALL_TO', 'value': '/storage/disk.img'}, {'name': 'URL', 'value': image}]}], 'volumes': [{'name': 'storage1', 'persistentVolumeClaim': {'claimName': volname}}]}, 'apiVersion': 'v1', 'metadata': {'name': podname}}
+        pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'Never', 'containers': [{'image': 'kubevirtci/disk-importer', 'volumeMounts': [{'mountPath': '/storage', 'name': 'storage1'}], 'name': 'importer', 'env': [{'name': 'CURL_OPTS', 'value': '-L'}, {'name': 'INSTALL_TO', 'value': '/storage/disk.img'}, {'name': 'URL', 'value': image}]}], 'volumes': [{'name': 'storage1', 'persistentVolumeClaim': {'claimName': volname}}]}, 'apiVersion': 'v1', 'metadata': {'name': podname}}
         try:
             core.read_namespaced_persistent_volume_claim(volname, namespace)
             common.pprint("Using existing pvc")
@@ -785,7 +790,7 @@ class Kubevirt(object):
 
     def pod_completed(self, podname, namespace):
         core = self.core
-        podtimeout = 300
+        podtimeout = 600
         podruntime = 0
         podstatus = ''
         while podstatus != 'Succeeded':
