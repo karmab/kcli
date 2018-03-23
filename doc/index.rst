@@ -1,5 +1,8 @@
 |Build Status| |Pypi| |Copr| |image3|
 
+About
+=====
+
 This tool is meant to interact with a local/remote libvirt daemon and to
 easily deploy from templates (optionally using cloudinit). It will also
 report IPS for any vm connected to a dhcp-enabled libvirt network and
@@ -1112,10 +1115,10 @@ conditionals and so on. For instance:
     {% endif %}
 
 Changelog
----------
+=========
 
 2017-03-20
-~~~~~~~~~~
+----------
 
 |asciicast|
 
@@ -1133,7 +1136,7 @@ Changelog
 -  support multiple clients at once of different type, for instance kcli
    -C host1,host2 list
 -  fix download when url is None ( for @valadas )
--  Add download links for RHEL atomic host ### 2017-02-12
+-  Add download links for RHEL atomic host ## 2017-02-12
 
 |asciicast|
 
@@ -1153,7 +1156,7 @@ Changelog
 -  remove kcli host –switch so we just use kcli switch
 -  display help when no arguments are passed
 -  remove pub and priv keys when using sharedkey as they are only useful
-   on the vms ### 2017-12-22
+   on the vms ## 2017-12-22
 
 |asciicast|
 
@@ -1165,7 +1168,7 @@ Changelog
 -  allow additional comments as metadata for products
 -  parameter to set version of fission plan to core or full
 -  update ovirt plan to 4.2
--  basic helper renderer for scripts and plans (kcli_renderer.py) ###
+-  basic helper renderer for scripts and plans (kcli_renderer.py) ##
    2017-12-18
 
 |asciicast|
@@ -1230,13 +1233,13 @@ Either update (recommended) or use the following alternative repository
 .. _section-1:
 
 2017-10-23
-~~~~~~~~~~
+----------
 
 -  better dynamic support in web
 -  properly expand scripts when not running plan from current directory
-   ### 2017-10-23
+   ## 2017-10-23
 
--  fix stupid issues with lastvm when file doesnt exist ### 2017-10-21
+-  fix stupid issues with lastvm when file doesnt exist ## 2017-10-21
 
 -  products and repo support to leverage plans and make them easier to
    use
@@ -1248,15 +1251,15 @@ Either update (recommended) or use the following alternative repository
 -  allow to specify a plan name when deploying a product
 -  full KMETA list from my github repo
 -  merged copr and packagecloud plans ( only useful for me, as this is
-   what i use to build rpm and deb) ### 2017-10-20
+   what i use to build rpm and deb) ## 2017-10-20
 
--  added clean parameter to kcli product to remove downloaded plan ###
+-  added clean parameter to kcli product to remove downloaded plan ##
    2017-10-20
 
 -  improved repo handling
 -  full KMETA list from my github repo
 -  merged copr and packagecloud plans ( only usefull for me, as this is
-   what i use to build rpm and deb) ### 2017-10-20
+   what i use to build rpm and deb) ## 2017-10-20
 
 -  products and repo support to leverage plans and make them easier to
    use
@@ -1269,7 +1272,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-2:
 
 8.12 (2017-10-06)
-~~~~~~~~~~~~~~~~~
+-----------------
 
 -  allow to have both cloudinit and an additional iso
 -  remove soukron from random names
@@ -1279,21 +1282,21 @@ Either update (recommended) or use the following alternative repository
 .. _section-3:
 
 8.11 (2017-10-03)
-~~~~~~~~~~~~~~~~~
+-----------------
 
 -  improved workflow for plan of plans, as per @dittolive good feedback
 
 .. _section-4:
 
 8.9 (2017-09-29)
-~~~~~~~~~~~~~~~~
+----------------
 
 -  fix deletion issue with .kcli/vm
 
 .. _section-5:
 
 8.8 (2017-09-28)
-~~~~~~~~~~~~~~~~
+----------------
 
 -  allow most commands to make use of last created vm, when no one is
    provided
@@ -1302,7 +1305,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-6:
 
 8.7 (2017-09-20)
-~~~~~~~~~~~~~~~~
+----------------
 
 -  kcli ssh without specifying vm s name
 -  Use -p as input file in kcli vm -p when it ends with .yml
@@ -1317,7 +1320,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-7:
 
 8.3 (2017-08-21)
-~~~~~~~~~~~~~~~~
+----------------
 
 -  concatenate scripts and commands at all level (host or default)
 -  dont handle duplicate scripts and commands
@@ -1329,14 +1332,14 @@ Either update (recommended) or use the following alternative repository
 .. _section-8:
 
 8.2 (2017-07-14)
-~~~~~~~~~~~~~~~~
+----------------
 
 -  stupid print when running kcli ssh and proper cast
 
 .. _section-9:
 
 8.0 (2017-07-14)
-~~~~~~~~~~~~~~~~
+----------------
 
 -  topology feature allowing to indicate with a file how many of a given
    vm type are to be deployed in a plan. Also allows to scale plan
@@ -1358,7 +1361,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-10:
 
 7.20 (2017-05-26)
-~~~~~~~~~~~~~~~~~
+-----------------
 
 -  move config and profile to ~/.kcli
 -  fix listing of snapshots when vm not found
@@ -1367,7 +1370,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-11:
 
 7.19 (2017-05-24)
-~~~~~~~~~~~~~~~~~
+-----------------
 
 -  minor cleaning
 -  fix inventory when running locally
@@ -1377,7 +1380,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-12:
 
 7.18 (2017-05-16)
-~~~~~~~~~~~~~~~~~
+-----------------
 
 -  debian package
 -  enableroot through config
@@ -1391,14 +1394,14 @@ Either update (recommended) or use the following alternative repository
 .. _section-13:
 
 7.17 (2017-05-14)
-~~~~~~~~~~~~~~~~~
+-----------------
 
 -  allow using user@ in kcli ssh and scp
 
 .. _section-14:
 
 7.16 (2017-05-14)
-~~~~~~~~~~~~~~~~~
+-----------------
 
 -  dedicated advanced openstack plan with live migration and rally
 -  simplify bootstrap command so it only creates the config file
@@ -1409,7 +1412,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-15:
 
 7.15 (2017-05-13)
-~~~~~~~~~~~~~~~~~
+-----------------
 
 -  fix in advanced plan of openstack
 -  correctly inject public keys along with private when using sharedkeys
@@ -1419,7 +1422,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-16:
 
 7.14 (2017-05-12)
-~~~~~~~~~~~~~~~~~
+-----------------
 
 -  fix docker api bugs when creating container
 -  homogeneous container commands ( ie only use kcli container for
@@ -1430,7 +1433,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-17:
 
 7.13 (2017-05-11)
-~~~~~~~~~~~~~~~~~
+-----------------
 
 -  copr repo indication
 -  fix hidden url in plancreate and web
@@ -1440,7 +1443,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-18:
 
 7.12 (2017-05-10)
-~~~~~~~~~~~~~~~~~
+-----------------
 
 -  rpm spec and binary for fedora25
 -  fix identation in write_files
@@ -1451,7 +1454,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-19:
 
 7.7 (2017-05-05)
-~~~~~~~~~~~~~~~~
+----------------
 
 -  cli and web support for downloading rhel and cloudforms images (
    asking the concrete cdn url)
@@ -1462,7 +1465,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-20:
 
 7.5 (2017-04-23)
-~~~~~~~~~~~~~~~~
+----------------
 
 -  automatically enable root access with the same public keys
 -  reorganization of the advanced plans to ease their utilization from
@@ -1473,7 +1476,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-21:
 
 7.4 (2017-04-20)
-~~~~~~~~~~~~~~~~
+----------------
 
 -  ovirt hosted plans
 -  use default/hypervisor values when deploying from unknown template
@@ -1486,14 +1489,14 @@ Either update (recommended) or use the following alternative repository
 .. _section-22:
 
 6.1 (2017-04-18)
-~~~~~~~~~~~~~~~~
+----------------
 
 -  fix kcli host –switch/enable/update ( and in the UI) within container
 
 .. _section-23:
 
 6.0 (2017-04-17)
-~~~~~~~~~~~~~~~~
+----------------
 
 -  web version to use with kweb
 -  cloudinit reports in the UI at the end and during provisioning
@@ -1520,7 +1523,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-24:
 
 5.24 (2017-04-04)
-~~~~~~~~~~~~~~~~~
+-----------------
 
 -  Cleaner options
 -  Removed -l from every section in favor of kcli list
@@ -1529,7 +1532,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-25:
 
 5.21 (2017-03-31)
-~~~~~~~~~~~~~~~~~
+-----------------
 
 -  Create pools in the plans
 -  Download templates in the plans
@@ -1539,7 +1542,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-26:
 
 5.20 (2017-03-27)
-~~~~~~~~~~~~~~~~~
+-----------------
 
 -  Virtualbox support
 -  /etc/hosts support
@@ -1557,7 +1560,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-27:
 
 5.0 (2017-02-07)
-~~~~~~~~~~~~~~~~
+----------------
 
 -  Support for kcli plan –get so plans and directory plans can be shared
 -  Proxy commands for ssh access and tunnels for consoles
@@ -1569,7 +1572,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-28:
 
 4.2 (2017-01-20)
-~~~~~~~~~~~~~~~~
+----------------
 
 -  Refactored most stuff to ease commands
 -  Move kcli create to kcli vm in particular
@@ -1580,7 +1583,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-29:
 
 3.00 (2016-12-30)
-~~~~~~~~~~~~~~~~~
+-----------------
 
 -  Docker support
 -  Deployment of kcli as a container
@@ -1594,7 +1597,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-30:
 
 2.11 (2016-10-20)
-~~~~~~~~~~~~~~~~~
+-----------------
 
 -  Shared disks support in plan files
 -  Only download centos upon bootstrapping and provide download option
@@ -1610,7 +1613,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-31:
 
 2.0 (2016-10-16)
-~~~~~~~~~~~~~~~~
+----------------
 
 -  Ability to create networks within plan file, and treating them first
    in those cases
@@ -1620,7 +1623,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-32:
 
 1.0.52 (2016-10-16)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 -  Locate correct image when full path is specified
 -  Skip existing vms when deploying a plan
@@ -1644,7 +1647,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-33:
 
 1.0.29 (2016-10-08)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 -  Add/delete network
 -  Fix for update_memory
@@ -1652,7 +1655,7 @@ Either update (recommended) or use the following alternative repository
 -  Thanks *efenex* for your suggestion/contribution
 
 1.0.25 release (2016-09-29)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------
 
 -  Uci/rhci support, providing plans for RedHat upstream and dowsntream
    infrastructure projects
@@ -1670,7 +1673,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-34:
 
 1.0.8 (2016-09-20)
-~~~~~~~~~~~~~~~~~~
+------------------
 
 -  Static dns and search domain support
 -  Kcli ssh
@@ -1678,7 +1681,7 @@ Either update (recommended) or use the following alternative repository
 -  Fix memory update calculation
 
 1.0 release (2016-09-12)
-~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------
 
 -  Disk3 and disk4 feature
 -  Store profile in libvirt
@@ -1692,7 +1695,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-35:
 
 0.99.6 (2016-09-11)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 -  Initial public release
 -  Basic info and console
@@ -1709,7 +1712,7 @@ Either update (recommended) or use the following alternative repository
    kboumedh@beyonder ~/C/g/K/k/changelog (master)> ls changelog.md
    v8.11.md v8.12.md v9.0.md v9.1.md v9.2.md v9.3.md kboumedh@beyonder
    ~/C/g/K/k/changelog (master)> vi changelog.md kboumedh@beyonder
-   ~/C/g/K/k/changelog (master)> cat changelog.md ### 8.9 (2017-09-29)
+   ~/C/g/K/k/changelog (master)> cat changelog.md ## 8.9 (2017-09-29)
 
 -  fix deletion issue with .kcli/vm IMPORTANT: Starting from now, each
    version will have their own page, accessible from this same directory
@@ -1718,7 +1721,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-36:
 
 8.8 (2017-09-28)
-~~~~~~~~~~~~~~~~
+----------------
 
 -  allow most commands to make use of last created vm, when no one is
    provided
@@ -1727,7 +1730,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-37:
 
 8.7 (2017-09-20)
-~~~~~~~~~~~~~~~~
+----------------
 
 -  kcli ssh without specifying vm s name
 -  Use -p as input file in kcli vm -p when it ends with .yml
@@ -1742,7 +1745,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-38:
 
 8.3 (2017-08-21)
-~~~~~~~~~~~~~~~~
+----------------
 
 -  concatenate scripts and commands at all level (host or default)
 -  dont handle duplicate scripts and commands
@@ -1754,14 +1757,14 @@ Either update (recommended) or use the following alternative repository
 .. _section-39:
 
 8.2 (2017-07-14)
-~~~~~~~~~~~~~~~~
+----------------
 
 -  stupid print when running kcli ssh and proper cast
 
 .. _section-40:
 
 8.0 (2017-07-14)
-~~~~~~~~~~~~~~~~
+----------------
 
 -  topology feature allowing to indicate with a file how many of a given
    vm type are to be deployed in a plan. Also allows to scale plan
@@ -1783,7 +1786,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-41:
 
 7.20 (2017-05-26)
-~~~~~~~~~~~~~~~~~
+-----------------
 
 -  move config and profile to ~/.kcli
 -  fix listing of snapshots when vm not found
@@ -1792,7 +1795,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-42:
 
 7.19 (2017-05-24)
-~~~~~~~~~~~~~~~~~
+-----------------
 
 -  minor cleaning
 -  fix inventory when running locally
@@ -1802,7 +1805,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-43:
 
 7.18 (2017-05-16)
-~~~~~~~~~~~~~~~~~
+-----------------
 
 -  debian package
 -  enableroot through config
@@ -1816,14 +1819,14 @@ Either update (recommended) or use the following alternative repository
 .. _section-44:
 
 7.17 (2017-05-14)
-~~~~~~~~~~~~~~~~~
+-----------------
 
 -  allow using user@ in kcli ssh and scp
 
 .. _section-45:
 
 7.16 (2017-05-14)
-~~~~~~~~~~~~~~~~~
+-----------------
 
 -  dedicated advanced openstack plan with live migration and rally
 -  simplify bootstrap command so it only creates the config file
@@ -1834,7 +1837,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-46:
 
 7.15 (2017-05-13)
-~~~~~~~~~~~~~~~~~
+-----------------
 
 -  fix in advanced plan of openstack
 -  correctly inject public keys along with private when using sharedkeys
@@ -1844,7 +1847,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-47:
 
 7.14 (2017-05-12)
-~~~~~~~~~~~~~~~~~
+-----------------
 
 -  fix docker api bugs when creating container
 -  homogeneous container commands ( ie only use kcli container for
@@ -1855,7 +1858,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-48:
 
 7.13 (2017-05-11)
-~~~~~~~~~~~~~~~~~
+-----------------
 
 -  copr repo indication
 -  fix hidden url in plancreate and web
@@ -1865,7 +1868,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-49:
 
 7.12 (2017-05-10)
-~~~~~~~~~~~~~~~~~
+-----------------
 
 -  rpm spec and binary for fedora25
 -  fix identation in write_files
@@ -1876,7 +1879,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-50:
 
 7.7 (2017-05-05)
-~~~~~~~~~~~~~~~~
+----------------
 
 -  cli and web support for downloading rhel and cloudforms images (
    asking the concrete cdn url)
@@ -1887,7 +1890,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-51:
 
 7.5 (2017-04-23)
-~~~~~~~~~~~~~~~~
+----------------
 
 -  automatically enable root access with the same public keys
 -  reorganization of the advanced plans to ease their utilization from
@@ -1898,7 +1901,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-52:
 
 7.4 (2017-04-20)
-~~~~~~~~~~~~~~~~
+----------------
 
 -  ovirt hosted plans
 -  use default/hypervisor values when deploying from unknown template
@@ -1911,14 +1914,14 @@ Either update (recommended) or use the following alternative repository
 .. _section-53:
 
 6.1 (2017-04-18)
-~~~~~~~~~~~~~~~~
+----------------
 
 -  fix kcli host –switch/enable/update ( and in the UI) within container
 
 .. _section-54:
 
 6.0 (2017-04-17)
-~~~~~~~~~~~~~~~~
+----------------
 
 -  web version to use with kweb
 -  cloudinit reports in the UI at the end and during provisioning
@@ -1945,7 +1948,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-55:
 
 5.24 (2017-04-04)
-~~~~~~~~~~~~~~~~~
+-----------------
 
 -  Cleaner options
 -  Removed -l from every section in favor of kcli list
@@ -1954,7 +1957,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-56:
 
 5.21 (2017-03-31)
-~~~~~~~~~~~~~~~~~
+-----------------
 
 -  Create pools in the plans
 -  Download templates in the plans
@@ -1964,7 +1967,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-57:
 
 5.20 (2017-03-27)
-~~~~~~~~~~~~~~~~~
+-----------------
 
 -  Virtualbox support
 -  /etc/hosts support
@@ -1982,7 +1985,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-58:
 
 5.0 (2017-02-07)
-~~~~~~~~~~~~~~~~
+----------------
 
 -  Support for kcli plan –get so plans and directory plans can be shared
 -  Proxy commands for ssh access and tunnels for consoles
@@ -1994,7 +1997,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-59:
 
 4.2 (2017-01-20)
-~~~~~~~~~~~~~~~~
+----------------
 
 -  Refactored most stuff to ease commands
 -  Move kcli create to kcli vm in particular
@@ -2005,7 +2008,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-60:
 
 3.00 (2016-12-30)
-~~~~~~~~~~~~~~~~~
+-----------------
 
 -  Docker support
 -  Deployment of kcli as a container
@@ -2019,7 +2022,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-61:
 
 2.11 (2016-10-20)
-~~~~~~~~~~~~~~~~~
+-----------------
 
 -  Shared disks support in plan files
 -  Only download centos upon bootstrapping and provide download option
@@ -2035,7 +2038,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-62:
 
 2.0 (2016-10-16)
-~~~~~~~~~~~~~~~~
+----------------
 
 -  Ability to create networks within plan file, and treating them first
    in those cases
@@ -2045,7 +2048,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-63:
 
 1.0.52 (2016-10-16)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 -  Locate correct image when full path is specified
 -  Skip existing vms when deploying a plan
@@ -2069,7 +2072,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-64:
 
 1.0.29 (2016-10-08)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 -  Add/delete network
 -  Fix for update_memory
@@ -2079,7 +2082,7 @@ Either update (recommended) or use the following alternative repository
 .. _release-2016-09-29-1:
 
 1.0.25 release (2016-09-29)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------
 
 -  Uci/rhci support, providing plans for RedHat upstream and dowsntream
    infrastructure projects
@@ -2097,7 +2100,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-65:
 
 1.0.8 (2016-09-20)
-~~~~~~~~~~~~~~~~~~
+------------------
 
 -  Static dns and search domain support
 -  Kcli ssh
@@ -2107,7 +2110,7 @@ Either update (recommended) or use the following alternative repository
 .. _release-2016-09-12-1:
 
 1.0 release (2016-09-12)
-~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------
 
 -  Disk3 and disk4 feature
 -  Store profile in libvirt
@@ -2121,7 +2124,7 @@ Either update (recommended) or use the following alternative repository
 .. _section-66:
 
 0.99.6 (2016-09-11)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 -  Initial public release
 -  Basic info and console
