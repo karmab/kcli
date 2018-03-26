@@ -263,24 +263,22 @@ class Kubevirt(object):
                 source = annotations['kcli/template'] if 'kcli/template' in annotations else 'N/A'
             report = 'N/A'
             ip = 'N/A'
+            state = 'down'
             if running:
                 try:
                     runvm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
                 except:
                     common.pprint("underlying VM %s not found" % name, color='red')
-                    return {'result': 'failure', 'reason': "underlying VM %s not found" % name}
+                    runvm = {}
                 status = runvm.get('status')
-                if status is None:
-                    break
-                state = status['phase'].replace('Running', 'up')
-                if 'interfaces' in status:
-                    interfaces = runvm['status']['interfaces']
-                    for interface in interfaces:
-                        if 'ipAddress' in interface:
-                            ip = interface['ipAddress']
-                            break
-            else:
-                state = 'down'
+                if status is not None:
+                    state = status['phase'].replace('Running', 'up')
+                    if 'interfaces' in status:
+                        interfaces = runvm['status']['interfaces']
+                        for interface in interfaces:
+                            if 'ipAddress' in interface:
+                                ip = interface['ipAddress']
+                                break
             vms.append([name, state, ip, source, plan, profile, report])
         return vms
 
