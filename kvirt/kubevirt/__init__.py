@@ -449,15 +449,19 @@ class Kubevirt(object):
         crds = self.crds
         core = self.core
         namespace = self.namespace
+        crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines', name)
         try:
             crds.delete_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name, client.V1DeleteOptions())
         except:
             pass
         try:
             vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines', name)
+        except Exception as e:
+            return {'result': 'failure', 'reason': e}
+        try:
+            crds.delete_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines', name, client.V1DeleteOptions())
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        crds.delete_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines', name, client.V1DeleteOptions())
         volumes = [d['volumeName'] for d in vm['spec']['template']['spec']['domain']['devices']['disks'] if d['volumeName'] != 'cloudinitdisk']
         pvcs = [pvc for pvc in core.list_namespaced_persistent_volume_claim(namespace).items if pvc.metadata.name in volumes]
         for p in sorted(pvcs):
