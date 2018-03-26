@@ -271,7 +271,7 @@ class Kubevirt(object):
                     common.pprint("underlying VM %s not found" % name, color='red')
                     runvm = {}
                 status = runvm.get('status')
-                if status is not None:
+                if status:
                     state = status['phase'].replace('Running', 'up')
                     if 'interfaces' in status:
                         interfaces = runvm['status']['interfaces']
@@ -358,14 +358,15 @@ class Kubevirt(object):
                 common.pprint("underlying VM %s not found" % name, color='red')
                 return {'result': 'failure', 'reason': "underlying VM %s not found" % name}
             status = runvm.get('status')
-            state = status.get('phase').replace('Running', 'up')
-            host = status['nodeName'] if 'nodeName' in status else None
-            if 'interfaces' in status:
-                interfaces = runvm['status']['interfaces']
-                for interface in interfaces:
-                    if 'ipAddress' in interface:
-                        ip = interface['ipAddress']
-                        break
+            if status:
+                state = status.get('phase').replace('Running', 'up')
+                host = status['nodeName'] if 'nodeName' in status else None
+                if 'interfaces' in status:
+                    interfaces = runvm['status']['interfaces']
+                    for interface in interfaces:
+                        if 'ipAddress' in interface:
+                            ip = interface['ipAddress']
+                            break
         else:
             state = 'down'
         yamlinfo = {'name': name, 'nets': [], 'disks': [], 'state': state, 'creationdate': creationdate, 'host': host, 'status': state}
@@ -402,7 +403,7 @@ class Kubevirt(object):
                     common.pprint("pvc %s not found. That can't be good" % pvcname, color='red')
                     size = 'N/A'
             elif 'cloudInitNoCloud' in volumeinfo:
-                _type = 'cloudinit'
+                continue
             elif 'registryDisk' in volumeinfo:
                 _type = 'registrydisk'
             else:

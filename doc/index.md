@@ -85,7 +85,7 @@ docker run -it --rm -v ~/.kcli:/root/.kcli -v ~/.ssh:/root/.ssh karmab/kcli list
 As a bonus, you can alias kcli and run kcli as if it is installed locally instead a Docker container:
 
 ```Shell
-alias kcli = "docker run -it --rm -v ~/.kcli:/root/.kcli -v ~/.ssh:/root/.ssh karmab/kcli"
+alias kcli='docker run -it --rm -v ~/.kcli:/root/.kcli -v ~/.ssh:/root/.ssh karmab/kcli'
 ```
 
 If you need a shell access to the container, use the following:

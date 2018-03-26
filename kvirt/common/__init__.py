@@ -196,6 +196,10 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                     continue
                 origin = fil.get('origin')
                 content = fil.get('content')
+                path = fil.get('path')
+                owner = fil.get('owner', 'root')
+                mode = fil.get('mode', '0600')
+                permissions = fil.get('permissions', mode)
                 if origin is not None:
                     origin = os.path.expanduser(origin)
                     if not os.path.exists(origin):
@@ -211,14 +215,17 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                         templ = env.get_template(os.path.basename(origin))
                         fileentries = templ.render(overrides)
                         content = [line.rstrip() for line in fileentries.split('\n') if line.rstrip() != '']
+                        with open("/tmp/%s" % path, 'w') as f:
+                            for line in fileentries.split('\n'):
+                                if line.rstrip() != '':
+                                    continue
+                                else:
+                                    content.append(line.rstrip())
+                                    f.write("%s\n" % line.rstrip())
                     else:
                         content = open(origin, 'r').readlines()
                 elif content is None:
                     continue
-                path = fil.get('path')
-                owner = fil.get('owner', 'root')
-                mode = fil.get('mode', '0600')
-                permissions = fil.get('permissions', mode)
                 userdata.write("- owner: %s:%s\n" % (owner, owner))
                 userdata.write("  path: %s\n" % path)
                 userdata.write("  permissions: '%s'\n" % (permissions))
