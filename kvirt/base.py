@@ -172,7 +172,7 @@ class Kbase(object):
 # should return a sshcommand string
 # u, ip = self._ssh_credentials(name)
 # sshcommand = common.ssh(name, ip=ip, host=self.host, port=self.port, hostuser=self.user, user=u, local=local, remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, debug=self.debug)
-    def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False):
+    def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, D=None):
         print("not implemented")
         return
 

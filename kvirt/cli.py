@@ -754,6 +754,7 @@ def ssh(args):
             return
     l = args.L
     r = args.R
+    D = args.D
     X = args.X
     config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
@@ -769,7 +770,7 @@ def ssh(args):
         name = name.split('@')[1]
     else:
         user = None
-    sshcommand = k.ssh(name, user=user, local=l, remote=r, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X)
+    sshcommand = k.ssh(name, user=user, local=l, remote=r, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, D=D)
     if sshcommand is not None:
         os.system(sshcommand)
     else:
@@ -1129,6 +1130,7 @@ def cli():
 
     ssh_info = 'Ssh into vm'
     ssh_parser = subparsers.add_parser('ssh', description=ssh_info, help=ssh_info)
+    ssh_parser.add_argument('-D', help='Dynamic Forwarding', metavar='LOCAL')
     ssh_parser.add_argument('-L', help='Local Forwarding', metavar='LOCAL')
     ssh_parser.add_argument('-R', help='Remote Forwarding', metavar='REMOTE')
     ssh_parser.add_argument('-X', action='store_true', help='Enable X11 Forwarding')

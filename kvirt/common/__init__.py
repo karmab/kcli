@@ -394,11 +394,13 @@ def print_info(yamlinfo, output='plain', fields=None, values=False):
                             print("%s: %s" % (key, value))
 
 
-def ssh(name, ip='', host=None, port=22, hostuser=None, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, debug=False):
+def ssh(name, ip='', host=None, port=22, hostuser=None, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, debug=False, D=None):
         if ip == '':
             return None
         else:
             sshcommand = "%s@%s" % (user, ip)
+            if D:
+                sshcommand = "-D %s %s" % (D, sshcommand)
             if X:
                 sshcommand = "-X %s" % (sshcommand)
             if cmd:

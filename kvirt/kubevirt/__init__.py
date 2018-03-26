@@ -655,12 +655,12 @@ class Kubevirt(object):
                 user = 'arch'
         return (user, ip)
 
-    def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False):
+    def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, D=None):
         u, ip = self._ssh_credentials(name)
         if user is None:
             user = u
         tunnel = True
-        sshcommand = common.ssh(name, ip=ip, host=self.host, port=self.port, hostuser=self.user, user=user, local=local, remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, debug=self.debug)
+        sshcommand = common.ssh(name, ip=ip, host=self.host, port=self.port, hostuser=self.user, user=user, local=local, remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, debug=self.debug, D=D)
         return sshcommand
 
     def scp(self, name, user=None, source=None, destination=None, tunnel=False, download=False, recursive=False):
