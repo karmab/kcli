@@ -18,13 +18,11 @@ class Kbaseconfig:
         if not os.path.exists(inifile):
             if os.path.exists('/Users'):
                 _type = 'vbox'
-            elif not os.path.exists('/var/run/libvirt'):
+            elif not os.path.exists('/sbin/libvirtd'):
                 _type = 'kubevirt'
             else:
                 _type = 'kvm'
             self.ini = {'default': {'client': 'local'}, 'local': {'pool': 'default', 'type': _type}}
-            if not quiet:
-                common.pprint("Using local hypervisor as no .kcli/config.yml was found...", color='green')
         else:
             with open(inifile, 'r') as entries:
                 try:

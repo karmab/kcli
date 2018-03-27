@@ -45,6 +45,8 @@ class Kubevirt(object):
             context = current
             contextname = current['name']
         config.load_kube_config(context=contextname)
+        configuration = client.Configuration()
+        configuration.assert_hostname = False
         if 'namespace' in context['context']:
             self.namespace = context['context']['namespace']
         else:
