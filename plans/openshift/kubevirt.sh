@@ -12,3 +12,4 @@ wget https://github.com/kubevirt/kubevirt/releases/download/$VERSION/virtctl-$VE
 mv virtctl-$VERSION-linux-amd64 /usr/bin/virtctl
 chmod u+x /usr/bin/virtctl
 oc project default
+echo alias kcli=\'docker run -it --rm -v ~/.kube:/root/.kube -v ~/.ssh:/root/.ssh karmab/kcli\' >> /root/.bashrc

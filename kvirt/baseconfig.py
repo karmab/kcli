@@ -18,7 +18,7 @@ class Kbaseconfig:
         if not os.path.exists(inifile):
             if os.path.exists('/Users'):
                 _type = 'vbox'
-            elif not os.path.exists('/sbin/libvirtd'):
+            elif not os.path.exists('/var/run/libvirt/libvirt-sock'):
                 _type = 'kubevirt'
             else:
                 _type = 'kvm'
