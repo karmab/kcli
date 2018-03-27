@@ -217,7 +217,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                         content = [line.rstrip() for line in fileentries.split('\n') if line.rstrip() != '']
                         with open("/tmp/%s" % os.path.basename(path), 'w') as f:
                             for line in fileentries.split('\n'):
-                                if line.rstrip() != '':
+                                if line.rstrip() == '':
                                     continue
                                 else:
                                     content.append(line.rstrip())
