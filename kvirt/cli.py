@@ -282,7 +282,6 @@ def list(args):
             for network in sorted(networks):
                 networkstable.add_row([network])
         else:
-            # networkstable = PrettyTable(["Network", "Type", "Cidr", "Dhcp", "Domain", "Mode", "Plan"])
             networkstable = PrettyTable(["Network", "Type", "Cidr", "Dhcp", "Domain", "Mode"])
             for network in sorted(networks):
                 networktype = networks[network]['type']
