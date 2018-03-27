@@ -877,6 +877,12 @@ vm4:
 
 # Changelog
 
+## 2017-03-27
+
+- fix paths for rhel downloads
+- defaults to kubevirt when libvirt socket not found
+- dynamic forwarding for kcli ssh
+
 ## 2017-03-20
 
 [![asciicast](https://asciinema.org/a/169350.png)](https://asciinema.org/a/169350?autoplay=1)
