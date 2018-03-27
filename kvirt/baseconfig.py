@@ -18,6 +18,8 @@ class Kbaseconfig:
         if not os.path.exists(inifile):
             if os.path.exists('/Users'):
                 _type = 'vbox'
+            elif not os.path.exists('/var/run/libvirt'):
+                _type = 'kubevirt'
             else:
                 _type = 'kvm'
             self.ini = {'default': {'client': 'local'}, 'local': {'pool': 'default', 'type': _type}}
