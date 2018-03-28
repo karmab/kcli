@@ -30,7 +30,7 @@ from time import sleep
 import webbrowser
 import yaml
 
-__version__ = '11.6'
+__version__ = '11.7'
 
 
 class Kconfig(Kbaseconfig):
