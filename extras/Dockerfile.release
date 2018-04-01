@@ -13,10 +13,10 @@ EXPOSE 9000
 
 # Group the package installation
 RUN yum -y install epel-release && \
-    yum -y install gcc git libvirt-devel python-devel genisoimage qemu-kvm nmap-ncat python-pip openssh-clients
+    yum -y install gcc libvirt-devel python-devel genisoimage qemu-kvm nmap-ncat python-pip openssh-clients
 
 # Group the pip installation
-RUN pip install --no-cache-dir git+https://github.com/karmab/kcli.git docker kubernetes
+RUN pip install --no-cache-dir kcli docker kubernetes
 
 VOLUME ["/var/run/libvirt", "/root/.ssh", "/root"]
 
