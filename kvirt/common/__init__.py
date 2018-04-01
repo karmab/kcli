@@ -220,7 +220,6 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                                 if line.rstrip() == '':
                                     continue
                                 else:
-                                    content.append(line.rstrip())
                                     f.write("%s\n" % line.rstrip())
                     else:
                         content = open(origin, 'r').readlines()
