@@ -1,49 +1,46 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Base Kvirt serving as interface for the virtualisation providers
+Fake class
 """
-
-# general notes
-# most functions should either return
-# return {'result': 'success'}
-# or
-# return {'result': 'failure', 'reason': reason}
-# for instance
-# return {'result': 'failure', 'reason': "VM %s not found" % name}
+from kvirt import common
+from kvirt.defaults import TEMPLATES
+from kvirt.nameutils import get_random_name, random_ip, right
+import os
+import random
 
 
 # your base class __init__ needs to define the conn attribute and set it to None when backend cannot be reached
 # it should also set debug from the debug variable passed in kcli client
-class Kbase(object):
+class Kfake(object):
     def __init__(self, host='127.0.0.1', port=None, user='root', debug=False):
+        self.conn = 'fake'
+        templates = [os.path.basename(t) for t in TEMPLATES.values() if t is not None and (t.endswith('qcow2') or t.endswith('img'))]
+        rheltemplates = ['rhel-guest-image-7.2-20160302.0.x86_64.qcow2', 'rhel-guest-image-7.3-35.x86_64.qcow2', 'rhel-server-7.4-x86_64-kvm.qcow2']
+        self.templates = templates + rheltemplates
         return
 
-# should cleanly close your connection, if needed
     def close(self):
-        print("not implemented")
         return
 
     def exists(self, name):
-        return
+        return random.choice([True, False])
 
     def net_exists(self, name):
-        print("not implemented")
-        return
+        return random.choice([True, False])
 
     def disk_exists(self, pool, name):
-        print("not implemented")
+        return random.choice([True, False])
 
     def create(self, name, virttype='kvm', profile='', plan='kvirt', cpumodel='Westmere', cpuflags=[], numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[], enableroot=True, alias=[], overrides={}, tags={}):
-        print("not implemented")
+        if cloudinit:
+            common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain, reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides, iso=False)
         return {'result': 'success'}
 
     def start(self, name):
-        print("not implemented")
         return {'result': 'success'}
 
     def stop(self, name):
-        print("not implemented")
         return {'result': 'success'}
 
     def snapshot(self, name, base, revert=False, delete=False, listing=False):
@@ -51,7 +48,6 @@ class Kbase(object):
         return
 
     def restart(self, name):
-        print("not implemented")
         return {'result': 'success'}
 
     def report(self):
@@ -59,13 +55,25 @@ class Kbase(object):
         return
 
     def status(self, name):
-        print("not implemented")
-        return
+        return random.choice(['up', 'down'])
 
 # should return a list of name, state, ip, source, plan, profile, report
     def list(self):
-        print("not implemented")
-        return
+        vms = []
+        number = random.randint(1, 10)
+        for i in range(number):
+            name = random.choice(right)
+            state = self.status(name)
+            if state == 'up':
+                ip = random_ip()
+            else:
+                ip = ''
+            source = random.choice(self.templates + [''])
+            plan = get_random_name()
+            profile = 'kvirt'
+            report = ''
+            vms.append([name, state, ip, source, plan, profile, report])
+        return vms
 
     def console(self, name, tunnel=False):
         print("not implemented")
@@ -93,7 +101,43 @@ class Kbase(object):
 # snapshots list of {'snapshot': snapshot, current: current}
 # fields should be split with fields.split(',')
     def info(self, name, output='plain', fields=None, values=False):
-        print("not implemented")
+        cpus = random.choice([1, 2, 4, 8])
+        memory = random.choice([512, 1024, 2048, 4096, 8192])
+        state = self.status(name)
+        if state == 'up':
+            ip = random_ip()
+        else:
+            ip = None
+        template = random.choice(self.templates + [''])
+        plan = get_random_name()
+        profile = 'kvirt'
+        yamlinfo = {'name': name, 'template': template, 'plan': plan, 'profile': profile, 'status': state, 'cpus': cpus, 'memory': memory}
+        if ip is not None:
+            yamlinfo['ip'] = ip
+        disks, nets = [], []
+        numnets = random.randint(1, 2)
+        numdisks = random.randint(1, 3)
+        for net in range(numnets):
+            device = "eth%s" % net
+            network = random.choice(right)
+            network_type = 'routed'
+            macs = []
+            for i in range(6):
+                element = random.choice('0123456789abcdef') + random.choice('0123456789abcdef')
+                macs.append(element)
+            mac = ':'.join(macs)
+            nets.append({'device': device, 'mac': mac, 'net': network, 'type': network_type})
+        for disk in range(numdisks):
+            letter = chr(disk + ord('a'))
+            device = 'vd%s' % letter
+            disksize = random.choice([10, 20, 30, 40, 50])
+            diskformat = 'file'
+            drivertype = 'qcow2'
+            path = '/var/lib/libvirt/images/%s_%s.img' % (name, disk)
+            disks.append({'device': device, 'size': disksize, 'format': diskformat, 'type': drivertype, 'path': path})
+        yamlinfo['nets'] = nets
+        yamlinfo['disks'] = disks
+        common.print_info(yamlinfo, output=output, fields=fields, values=values)
         return {'result': 'success'}
 
 # should return ip string
@@ -103,7 +147,10 @@ class Kbase(object):
 
 # should return a list of available templates, or isos ( if iso is set to True
     def volumes(self, iso=False):
-        print("not implemented")
+        if iso:
+            return []
+        else:
+            return sorted(self.templates)
         return
 
     def delete(self, name, snapshots=False):
@@ -194,11 +241,11 @@ class Kbase(object):
 
     def create_network(self, name, cidr, dhcp=True, nat=True, domain=None, plan='kvirt', pxe=None):
         print("not implemented")
-        return
+        return {'result': 'success'}
 
     def delete_network(self, name=None):
         print("not implemented")
-        return
+        return {'result': 'success'}
 
 # should return a dict of pool strings
     def list_pools(self):
@@ -206,8 +253,16 @@ class Kbase(object):
         return
 
     def list_networks(self):
-        print("not implemented")
-        return {}
+        networks = {}
+        number = random.randint(1, 6)
+        for i in range(number):
+            network = random.choice(right)
+            cidr = '192.168.122.0/24'.replace('122', str(random.randint(1, 254)))
+            dhcp = random.choice([True, False])
+            domainname = network
+            mode = random.choice(['isolated', 'nat'])
+            networks[network] = {'cidr': cidr, 'dhcp': dhcp, 'domain': domainname, 'type': 'routed', 'mode': mode}
+        return networks
 
     def delete_pool(self, name, full=False):
         print("not implemented")

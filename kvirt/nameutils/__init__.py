@@ -15,5 +15,11 @@ def get_random_name(sep='_'):
         name = '%s%s%s' % (r.choice(left), sep, r.choice(right))
         return name
 
+
+def random_ip():
+    ip = ".".join(map(str, (random.randint(0, 255) for _ in range(4))))
+    return ip
+
+
 if __name__ == '__main__':
     print get_random_name()

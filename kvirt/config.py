@@ -11,6 +11,7 @@ from kvirt import dockerutils
 from kvirt import nameutils
 from kvirt import common
 from kvirt.baseconfig import Kbaseconfig
+from kvirt.fake import Kfake
 from kvirt.kvm import Kvirt
 try:
     from kvirt.vbox import Kbox
@@ -39,7 +40,9 @@ class Kconfig(Kbaseconfig):
         if not self.enabled:
             k = None
         else:
-            if self.type == 'vbox':
+            if self.type == 'fake':
+                k = Kfake()
+            elif self.type == 'vbox':
                 k = Kbox()
             elif self.type == 'kubevirt':
                 context = self.options.get('context')
