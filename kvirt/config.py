@@ -613,10 +613,10 @@ class Kconfig(Kbaseconfig):
             else:
                 productdir = "%s/%s" % (repodir, group)
                 self.plan(plan, get=url, path=productdir, inputfile=inputfile, overrides=overrides)
-            os.chdir(productdir)
-            common.pprint("Running: kcli plan -f %s %s" % (inputfile, plan), color='green')
-            self.plan(plan, inputfile=inputfile, overrides=overrides)
-            os.chdir('..')
+            # os.chdir(productdir)
+            # common.pprint("Running: kcli plan -f %s %s" % (inputfile, plan), color='green')
+            # self.plan(plan, inputfile=inputfile, overrides=overrides)
+            # os.chdir('..')
             common.pprint("Product can be deleted with: kcli plan -d %s" % (plan), color='green')
         return {'result': 'success', 'plan': plan}
 
@@ -737,7 +737,8 @@ class Kconfig(Kbaseconfig):
             common.pprint("Retrieving specified plan from %s to %s" % (get, path), color='green')
             if not os.path.exists(path):
                 common.fetch(get, path)
-            return {'result': 'success'}
+            os.chdir(path)
+            # return {'result': 'success'}
         if inputfile is None:
             inputfile = 'kcli_plan.yml'
             common.pprint("using default input file kcli_plan.yml", color='green')
