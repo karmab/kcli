@@ -14,6 +14,7 @@ import yaml
 
 class Kbaseconfig:
     def __init__(self, client=None, debug=False, quiet=False):
+        client = 'local'
         inifile = "%s/.kcli/config.yml" % os.environ.get('HOME')
         if not os.path.exists(inifile):
             if os.path.exists('/Users'):
@@ -22,9 +23,11 @@ class Kbaseconfig:
                 _type = 'kvm'
             elif os.path.exists(os.path.expanduser('~/.kube')):
                 _type = 'kubevirt'
+                client = 'kubevirt'
             else:
                 _type = 'fake'
-            self.ini = {'default': {'client': 'local'}, 'local': {'pool': 'default', 'type': _type}}
+                client = 'fake'
+            self.ini = {'default': {'client': client}, client: {'pool': 'default', 'type': _type}}
         else:
             with open(inifile, 'r') as entries:
                 try:
