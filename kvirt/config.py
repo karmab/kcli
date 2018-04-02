@@ -757,6 +757,9 @@ class Kconfig(Kbaseconfig):
                     overrides[parameter] = parameters[parameter]
         with open(inputfile, 'r') as entries:
             entries = templ.render(overrides)
+            if self.type == 'fake':
+                with open("/tmp/%s.yml" % plan, 'w') as renderedplan:
+                    renderedplan.write(entries)
             entries = yaml.load(entries)
             parameters = entries.get('parameters')
             if parameters is not None:

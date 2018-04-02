@@ -14,9 +14,9 @@ import yaml
 
 class Kbaseconfig:
     def __init__(self, client=None, debug=False, quiet=False):
-        client = 'local'
         inifile = "%s/.kcli/config.yml" % os.environ.get('HOME')
         if not os.path.exists(inifile):
+            client = 'local'
             if os.path.exists('/Users'):
                 _type = 'vbox'
             elif os.path.exists('/var/run/libvirt/libvirt-sock'):

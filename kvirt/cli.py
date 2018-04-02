@@ -1058,7 +1058,7 @@ def cli():
     plan_parser.add_argument('-A', '--ansible', help='Generate ansible inventory', action='store_true')
     plan_parser.add_argument('-d', '--delete', action='store_true')
     plan_parser.add_argument('-g', '--get', help='Download specific plan(s). Use --path for specific directory', metavar='URL')
-    plan_parser.add_argument('-i', '--info', action='store_true', help='Provide information on the given product')
+    plan_parser.add_argument('-i', '--info', action='store_true', help='Provide information on the given plan')
     plan_parser.add_argument('-p', '--path', help='Path where to download plans. Defaults to plan', metavar='PATH')
     plan_parser.add_argument('-a', '--autostart', action='store_true', help='Set all vms from plan to autostart')
     plan_parser.add_argument('-c', '--container', action='store_true', help='Handle container')
