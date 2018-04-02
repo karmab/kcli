@@ -637,8 +637,7 @@ def plan(args):
     info = args.info
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
     config = Kconfig(client=args.client, debug=args.debug)
-    if info:
-        common.pprint("Providing information on parameters of plan %s..." % (inputfile), color='green')
+    if info and get is None:
         config.info_plan(inputfile)
         os._exit(0)
     if use is not None:
@@ -656,7 +655,7 @@ def plan(args):
             common.pprint("Using %s as name of the plan" % plan, color='green')
     if delete and not yes:
         common.confirm("Are you sure?")
-    config.plan(plan, ansible=ansible, get=get, path=path, autostart=autostart, container=container, noautostart=noautostart, inputfile=inputfile, start=start, stop=stop, delete=delete, delay=delay, topologyfile=topologyfile, scale=scale, overrides=overrides)
+    config.plan(plan, ansible=ansible, get=get, path=path, autostart=autostart, container=container, noautostart=noautostart, inputfile=inputfile, start=start, stop=stop, delete=delete, delay=delay, topologyfile=topologyfile, scale=scale, overrides=overrides, info=info)
     return 0
 
 

@@ -502,6 +502,7 @@ class Kconfig(Kbaseconfig):
             return {'result': 'success'}
 
     def info_plan(self, inputfile):
+        common.pprint("Providing information on parameters of plan %s..." % inputfile, color='green')
         inputfile = os.path.expanduser(inputfile)
         if not os.path.exists(inputfile):
             common.pprint("No input file found nor default kcli_plan.yml.Leaving....", color='red')
@@ -620,7 +621,7 @@ class Kconfig(Kbaseconfig):
             common.pprint("Product can be deleted with: kcli plan -d %s" % (plan), color='green')
         return {'result': 'success', 'plan': plan}
 
-    def plan(self, plan, ansible=False, get=None, path=None, autostart=False, container=False, noautostart=False, inputfile=None, start=False, stop=False, delete=False, delay=0, force=True, topologyfile=None, scale=None, overrides={}):
+    def plan(self, plan, ansible=False, get=None, path=None, autostart=False, container=False, noautostart=False, inputfile=None, start=False, stop=False, delete=False, delay=0, force=True, topologyfile=None, scale=None, overrides={}, info=False):
         """Create/Delete/Stop/Start vms from plan file"""
         k = self.k
         no_overrides = not overrides
@@ -746,6 +747,9 @@ class Kconfig(Kbaseconfig):
         if not os.path.exists(inputfile):
             common.pprint("No input file found nor default kcli_plan.yml.Leaving....", color='red')
             os._exit(1)
+        if info:
+            self.info_plan(inputfile)
+            return {'result': 'success'}
         basedir = os.path.dirname(inputfile)
         env = Environment(block_start_string='[%', block_end_string='%]', variable_start_string='[[', variable_end_string=']]', loader=FileSystemLoader(basedir))
         templ = env.get_template(os.path.basename(inputfile))
