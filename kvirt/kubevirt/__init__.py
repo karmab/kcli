@@ -204,6 +204,7 @@ class Kubevirt(object):
     def start(self, name):
         crds = self.crds
         namespace = self.namespace
+        common.pprint("Using current namespace %s" % namespace, color='green')
         try:
             vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines', name)
         except:
@@ -215,6 +216,7 @@ class Kubevirt(object):
     def stop(self, name):
         crds = self.crds
         namespace = self.namespace
+        common.pprint("Using current namespace %s" % namespace, color='green')
         try:
             vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines', name)
         except:
@@ -250,10 +252,10 @@ class Kubevirt(object):
 
     def list(self):
         crds = self.crds
-        namespace = self.namespace
         vms = []
-        for vm in crds.list_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines')["items"]:
+        for vm in crds.list_cluster_custom_object(DOMAIN, VERSION, 'offlinevirtualmachines')["items"]:
             metadata = vm.get("metadata")
+            namespace = metadata.get("namespace")
             spec = vm.get("spec")
             annotations = metadata.get("annotations")
             running = spec.get("running")
@@ -263,7 +265,6 @@ class Kubevirt(object):
                 profile = annotations['kcli/profile'] if 'kcli/profile' in annotations else 'N/A'
                 plan = annotations['kcli/plan'] if 'kcli/plan' in annotations else 'N/A'
                 source = annotations['kcli/template'] if 'kcli/template' in annotations else 'N/A'
-            report = 'N/A'
             ip = 'N/A'
             state = 'down'
             if running:
@@ -281,8 +282,8 @@ class Kubevirt(object):
                             if 'ipAddress' in interface:
                                 ip = interface['ipAddress']
                                 break
-            vms.append([name, state, ip, source, plan, profile, report])
-        return vms
+            vms.append([name, state, ip, source, plan, profile, namespace])
+        return sorted(vms, key=lambda x: (x[6], x[0]))
 
     def console(self, name, tunnel=False):
         crds = self.crds
@@ -452,6 +453,7 @@ class Kubevirt(object):
         crds = self.crds
         core = self.core
         namespace = self.namespace
+        common.pprint("Using current namespace %s" % namespace, color='green')
         crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines', name)
         try:
             crds.delete_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name, client.V1DeleteOptions())

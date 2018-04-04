@@ -629,7 +629,7 @@ class Kvirt(Kbase):
                 if e is not None:
                     ip = e.text
             vms.append([name, state, ip, template, plan, profile, report])
-        return vms
+        return sorted(vms)
 
     def console(self, name, tunnel=False):
         conn = self.conn

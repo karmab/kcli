@@ -362,7 +362,7 @@ class Kbox(Kbase):
                                 nat_network.add_port_forward_rule(False, rulename, library.NATProtocol.tcp, '', int(hostport), guestip, 22)
                                 port = hostport
             vms.append([name, state, port, source, description, profile, report])
-        return vms
+        return sorted(vms)
 
     def console(self, name, tunnel=False):
         conn = self.conn

@@ -398,12 +398,13 @@ def list(args):
             products.add_row([repo, group, name, description, numvms, memory])
         print(products)
     else:
+        customcolumn = 'Namespace' if config.type == 'kubevirt' else 'Report'
         if config.extraclients:
             allclients = config.extraclients.copy()
             allclients.update({config.client: config.k})
-            vms = PrettyTable(["Name", "Host", "Status", "Ips", "Source", "Plan", "Profile", "Report"])
+            vms = PrettyTable(["Name", "Host", "Status", "Ips", "Source", "Plan", "Profile", customcolumn])
             for cli in sorted(allclients):
-                for vm in sorted(allclients[cli].list()):
+                for vm in allclients[cli].list():
                     vm.insert(1, cli)
                     if filters:
                         status = vm[2]
@@ -413,8 +414,8 @@ def list(args):
                         vms.add_row(vm)
             print(vms)
         else:
-            vms = PrettyTable(["Name", "Status", "Ips", "Source", "Plan", "Profile", "Report"])
-            for vm in sorted(k.list()):
+            vms = PrettyTable(["Name", "Status", "Ips", "Source", "Plan", "Profile", customcolumn])
+            for vm in k.list():
                 if config.planview and vm[4] != config.currentplan:
                     continue
                 if filters:
@@ -932,7 +933,7 @@ def switch(args):
 
 
 def cli():
-    parser = argparse.ArgumentParser(description='Libvirt/VirtualBox wrapper on steroids. Check out https://github.com/karmab/kcli!')
+    parser = argparse.ArgumentParser(description='Libvirt/VirtualBox/Kubevirt wrapper on steroids. Check out https://github.com/karmab/kcli!')
     parser.add_argument('-C', '--client')
     parser.add_argument('-d', '--debug', action='store_true')
     parser.add_argument('--version', action='version', version=__version__)

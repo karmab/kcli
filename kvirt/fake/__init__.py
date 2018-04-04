@@ -73,7 +73,7 @@ class Kfake(object):
             profile = 'kvirt'
             report = ''
             vms.append([name, state, ip, source, plan, profile, report])
-        return vms
+        return sorted(vms)
 
     def console(self, name, tunnel=False):
         print("not implemented")

@@ -62,7 +62,7 @@ class Kbase(object):
         print("not implemented")
         return
 
-# should return a list of name, state, ip, source, plan, profile, report
+# should return a sorted list of name, state, ip, source, plan, profile, report
     def list(self):
         print("not implemented")
         return
