@@ -23,5 +23,7 @@ asb:
  [% endif %]
  scripts: 
   - requirements.sh
+ [% if org is defined %]
   - ~/dockerhub.sh
+ [% endif %]
   - asb.sh
