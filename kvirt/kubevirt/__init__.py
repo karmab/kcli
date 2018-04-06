@@ -252,8 +252,9 @@ class Kubevirt(object):
 
     def list(self):
         crds = self.crds
+        namespace = self.namespace
         vms = []
-        for vm in crds.list_cluster_custom_object(DOMAIN, VERSION, 'offlinevirtualmachines')["items"]:
+        for vm in crds.list_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines')["items"]:
             metadata = vm.get("metadata")
             namespace = metadata.get("namespace")
             spec = vm.get("spec")

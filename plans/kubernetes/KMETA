@@ -23,7 +23,7 @@
    version: latest
    driver: kvm2
 
-- name: kubevirt
+- name: kubevirt_kubernetes
   group: kubernetes
   url: github.com/karmab/kcli/plans/kubernetes
   file: kubevirt.yml
