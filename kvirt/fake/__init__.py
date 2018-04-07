@@ -15,8 +15,10 @@ import random
 class Kfake(object):
     def __init__(self, host='127.0.0.1', port=None, user='root', debug=False):
         self.conn = 'fake'
-        templates = [os.path.basename(t) for t in TEMPLATES.values() if t is not None and (t.endswith('qcow2') or t.endswith('img'))]
-        rheltemplates = ['rhel-guest-image-7.2-20160302.0.x86_64.qcow2', 'rhel-guest-image-7.3-35.x86_64.qcow2', 'rhel-server-7.4-x86_64-kvm.qcow2']
+        templates = [os.path.basename(t) for t in TEMPLATES.values() if t is not None and (t.endswith('qcow2') or
+                                                                                           t.endswith('img'))]
+        rheltemplates = ['rhel-guest-image-7.2-20160302.0.x86_64.qcow2', 'rhel-guest-image-7.3-35.x86_64.qcow2',
+                         'rhel-server-7.4-x86_64-kvm.qcow2']
         self.templates = templates + rheltemplates
         return
 
@@ -32,9 +34,15 @@ class Kfake(object):
     def disk_exists(self, pool, name):
         return False
 
-    def create(self, name, virttype='kvm', profile='', plan='kvirt', cpumodel='Westmere', cpuflags=[], numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[], enableroot=True, alias=[], overrides={}, tags={}):
+    def create(self, name, virttype='kvm', profile='', plan='kvirt', cpumodel='Westmere', cpuflags=[], numcpus=2,
+               memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{'size': 10}], disksize=10,
+               diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True,
+               reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[], ips=None,
+               netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[],
+               enableroot=True, alias=[], overrides={}, tags={}):
         if cloudinit:
-            common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain, reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides, iso=False)
+            common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
+                             reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides, iso=False)
         return {'result': 'success'}
 
     def start(self, name):
@@ -111,7 +119,8 @@ class Kfake(object):
         template = random.choice(self.templates + [''])
         plan = get_random_name()
         profile = 'kvirt'
-        yamlinfo = {'name': name, 'template': template, 'plan': plan, 'profile': profile, 'status': state, 'cpus': cpus, 'memory': memory}
+        yamlinfo = {'name': name, 'template': template, 'plan': plan, 'profile': profile, 'status': state, 'cpus': cpus,
+                    'memory': memory}
         if ip is not None:
             yamlinfo['ip'] = ip
         disks, nets = [], []
@@ -218,7 +227,8 @@ class Kfake(object):
 # should leverage if possible
 # should return a sshcommand string
 # u, ip = self._ssh_credentials(name)
-# sshcommand = common.ssh(name, ip=ip, host=self.host, port=self.port, hostuser=self.user, user=u, local=local, remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, debug=self.debug)
+# sshcommand = common.ssh(name, ip=ip, host=self.host, port=self.port, hostuser=self.user, user=u, local=local,
+# remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, debug=self.debug)
     def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, D=None):
         print("not implemented")
         return
@@ -226,7 +236,8 @@ class Kfake(object):
 # should leverage if possible
 # should return a scpcommand string
 # u, ip = self._ssh_credentials(name)
-# scpcommand = common.scp(name, ip='', host=self.host, port=self.port, hostuser=self.user, user=user, source=source, destination=destination, recursive=recursive, tunnel=tunnel, deb    ug=self.debug, download=False)
+# scpcommand = common.scp(name, ip='', host=self.host, port=self.port, hostuser=self.user, user=user, source=source,
+# destination=destination, recursive=recursive, tunnel=tunnel, debug=self.debug, download=False)
     def scp(self, name, user=None, source=None, destination=None, tunnel=False, download=False, recursive=False):
         print("not implemented")
         return

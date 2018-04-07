@@ -695,7 +695,8 @@ def templatecreate():
     config = Kconfig()
     k = config.k
     pools = k.list_pools()
-    return render_template('templatecreate.html', title='CreateTemplate', pools=pools, templates=sorted(TEMPLATES), client=config.client)
+    return render_template('templatecreate.html', title='CreateTemplate', pools=pools, templates=sorted(TEMPLATES),
+                           client=config.client)
 
 
 @app.route("/templateaction", methods=['POST'])

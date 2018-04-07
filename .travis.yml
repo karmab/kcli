@@ -14,7 +14,7 @@ before_install:
 - docker build -t karmab/kcli -f extras/Dockerfile.travis .
 
 script:
-- find . -name \*.py -exec pep8 --ignore=E501,E402 {} +
+- find . -name \*.py -exec pep8 --ignore=E402 --max-line-length=120 {} +
 - find . -name '*.py' | misspellings -f -
 - docker run -it --rm karmab/kcli 
 - docker build -t karmab/kcli -f extras/Dockerfile.travis .

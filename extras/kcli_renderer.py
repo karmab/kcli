@@ -32,7 +32,8 @@ def render(args):
             print("Using parameter %s: %s" % (parameter, overrides[parameter]))
         os._exit(0)
     basedir = os.path.dirname(inputfile) if os.path.dirname(inputfile) != '' else '.'
-    env = Environment(block_start_string='[%', block_end_string='%]', variable_start_string='[[', variable_end_string=']]', loader=FileSystemLoader(basedir))
+    env = Environment(block_start_string='[%', block_end_string='%]', variable_start_string='[[', variable_end_string=''
+                      ']]', loader=FileSystemLoader(basedir))
     templ = env.get_template(os.path.basename(inputfile))
     fileentries = templ.render(overrides)
     parametersfound = -1
@@ -51,11 +52,13 @@ def cli():
     parser = argparse.ArgumentParser(description='Render scripts manually using kcli helpers')
     parser.add_argument('-i', '--info', help='Only report parameters used in the file', action='store_true')
     parser.add_argument('-f', '--inputfile', help='Input Plan file', required=True)
-    parser.add_argument('-P', '--param', action='append', help='Define parameter for rendering within scripts. Can be repeated', metavar='PARAM')
+    parser.add_argument('-P', '--param', action='append', help='Define parameter for rendering within scripts. '
+                        'Can be repeated', metavar='PARAM')
     parser.add_argument('--paramfile', help='Param file', metavar='PARAMFILE')
     parser.add_argument('--version', action='version', version=__version__)
     args = parser.parse_args()
     render(args)
+
 
 if __name__ == '__main__':
     cli()

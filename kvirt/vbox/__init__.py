@@ -48,7 +48,8 @@ class Kbox(Kbase):
         ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety']
         template = template.lower()
         version = self.conn.version
-        commands = ['curl -O http://download.virtualbox.org/virtualbox/%s/VBoxGuestAdditions_%s.iso' % (version, version)]
+        commands = ['curl -O http://download.virtualbox.org/virtualbox/%s/VBoxGuestAdditions_%s.iso' % (version,
+                                                                                                        version)]
         commands.append('mount -o loop VBoxGuestAdditions_5.1.14.iso /mnt')
         if 'centos' in template or 'rhel' in template or 'fedora' in template:
             commands.append('yum -y install gcc make kernel-devel-`uname -r`')
@@ -86,7 +87,12 @@ class Kbox(Kbase):
         else:
             return True
 
-    def create(self, name, virttype='vbox', profile='kvirt', plan='kvirt', cpumodel='', cpuflags=[], numcpus=2, memory=512, guestid='Linux_64', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[], enableroot=True, alias=[], overrides={}, tags={}):
+    def create(self, name, virttype='vbox', profile='kvirt', plan='kvirt', cpumodel='', cpuflags=[], numcpus=2,
+               memory=512, guestid='Linux_64', pool='default', template=None, disks=[{'size': 10}], disksize=10,
+               diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True,
+               reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[], ips=None,
+               netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[],
+               enableroot=True, alias=[], overrides={}, tags={}):
         if self.exists(name):
             return {'result': 'failure', 'reason': "VM %s already exists" % name}
         guestid = 'Linux_64'
@@ -139,7 +145,8 @@ class Kbox(Kbase):
                 if index == 0:
                     natengine = nic.nat_engine
                     nat_network = [n for n in conn.nat_networks if n.network_name == network][0]
-                    nat_network.add_port_forward_rule(False, 'ssh_%s' % name, library.NATProtocol.tcp, '', common.get_free_port(), '', 22)
+                    nat_network.add_port_forward_rule(False, 'ssh_%s' % name, library.NATProtocol.tcp, '',
+                                                      common.get_free_port(), '', 22)
             else:
                 nic.attachment_type = library.NetworkAttachmentType.nat
                 if index == 0:
@@ -165,8 +172,10 @@ class Kbox(Kbase):
                 else:
                     cmds = guestcmds + cmds
                 cmds = cmds + ['reboot']
-            common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain, reserveip=reserveip, files=files, enableroot=enableroot)
-            medium = conn.create_medium('RAW', '/tmp/%s.ISO' % name, library.AccessMode.read_only, library.DeviceType.dvd)
+            common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
+                             reserveip=reserveip, files=files, enableroot=enableroot)
+            medium = conn.create_medium('RAW', '/tmp/%s.ISO' % name, library.AccessMode.read_only,
+                                        library.DeviceType.dvd)
             progress = medium.create_base_storage(368, [library.MediumVariant.fixed])
             progress.wait_for_completion()
             dvd = conn.open_medium('/tmp/%s.ISO' % name, library.DeviceType.dvd, library.AccessMode.read_only, False)
@@ -295,7 +304,8 @@ class Kbox(Kbase):
             # used = "%.2f" % (float(s[2]) / 1024 / 1024 / 1024)
             # available = "%.2f" % (float(s[3]) / 1024 / 1024 / 1024)
             # Type,Status, Total space in Gb, Available space in Gb
-            # print("Storage:%s Type:%s Path:%s Used space:%sGB Available space:%sGB" % (poolname, pooltype, poolpath, used, available))
+            # print("Storage:%s Type:%s Path:%s Used space:%sGB Available space:%sGB" % (poolname, pooltype, poolpath,
+            # used, available))
             print("Storage:%s Type:%s Path:%s" % (poolname, pooltype, poolpath))
         print
         dhcp = {}
@@ -359,7 +369,8 @@ class Kbox(Kbase):
                                 pass
                             else:
                                 nat_network.remove_port_forward_rule(False, rulename)
-                                nat_network.add_port_forward_rule(False, rulename, library.NATProtocol.tcp, '', int(hostport), guestip, 22)
+                                nat_network.add_port_forward_rule(False, rulename, library.NATProtocol.tcp, '',
+                                                                  int(hostport), guestip, 22)
                                 port = hostport
             vms.append([name, state, port, source, description, profile, report])
         return sorted(vms)
@@ -474,7 +485,8 @@ class Kbox(Kbase):
             disksize = disk.size / 1024 / 1024 / 1024
             drivertype = os.path.splitext(disk.name)[1].replace('.', '')
             diskformat = 'file'
-            print("diskname: %s disksize: %sGB diskformat: %s type: %s path: %s" % (device, disksize, diskformat, drivertype, path))
+            print("diskname: %s disksize: %sGB diskformat: %s type: %s path: %s" % (device, disksize, diskformat,
+                                                                                    drivertype, path))
             if ip != '':
                 print("ip: %s" % (ip))
             for hostport in hostports:
@@ -877,7 +889,8 @@ class Kbox(Kbase):
             if remote is not None:
                 sshcommand = "-R %s %s" % (remote, sshcommand)
             if insecure:
-                sshcommand = "ssh -o LogLevel=quiet -o 'UserKnownHostsFile=/dev/null' -o 'StrictHostKeyChecking=no' %s" % sshcommand
+                sshcommand = "ssh -o LogLevel=quiet -o 'UserKnownHostsFile=/dev/null' -o 'StrictHostKeyChecking=no' %s"\
+                    % sshcommand
             else:
                 sshcommand = "ssh %s" % sshcommand
             return sshcommand

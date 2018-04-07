@@ -57,7 +57,8 @@ def create_container(self, name, image, nets=None, cmd=None, ports=[], volumes=[
         d = docker.DockerClient(base_url=base_url, version='1.22')
         if ':' not in image:
             image = '%s:latest' % image
-        d.containers.run(image, name=name, command=cmd, detach=True, ports=ports, volumes=finalvolumes, stdin_open=True, tty=True, labels=labels, environment=finalenv, stdout=True)
+        d.containers.run(image, name=name, command=cmd, detach=True, ports=ports, volumes=finalvolumes,
+                         stdin_open=True, tty=True, labels=labels, environment=finalenv, stdout=True)
     else:
         portinfo = ''
         if ports is not None:
@@ -111,7 +112,8 @@ def create_container(self, name, image, nets=None, cmd=None, ports=[], volumes=[
                     else:
                         continue
                 envinfo = "%s -e %s=%s" % (envinfo, key, value)
-        dockercommand = "docker run -it %s %s %s --name %s -l %s -d %s" % (volumeinfo, envinfo, portinfo, name, label, image)
+        dockercommand = "docker run -it %s %s %s --name %s -l %s -d %s" % (volumeinfo, envinfo, portinfo, name, label,
+                                                                           image)
         if cmd is not None:
             dockercommand = "%s %s" % (dockercommand, cmd)
         command = "ssh -p %s %s@%s %s" % (self.port, self.user, self.host, dockercommand)
@@ -216,7 +218,8 @@ def list_containers(self):
             containers.append([name, state, source, plan, command, portinfo])
     else:
         containers = []
-        dockercommand = "docker ps -a --format \"'{{.Names}}?{{.Status}}?{{.Image}}?{{.Command}}?{{.Ports}}?{{.Label \\\"plan\\\"}}'\""
+        dockercommand = "docker ps -a --format \"'{{.Names}}?{{.Status}}?{{.Image}}?{{.Command}}?{{.Ports}}?{{.Label "
+        "\\\"plan\\\"}}'\""
         command = "ssh -p %s %s@%s %s" % (self.port, self.user, self.host, dockercommand)
         results = os.popen(command).readlines()
         for container in results:

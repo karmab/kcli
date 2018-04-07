@@ -348,7 +348,10 @@ def list(args):
                     profilename = profile[0]
                     profilestable.add_row([profilename])
             else:
-                profilestable = PrettyTable(["Profile", "Numcpus", "Memory", "Pool", "Disks", "Template", "Nets", "Cloudinit", "Nested", "Reservedns", "Reservehost"])
+                profilestable = PrettyTable(["Profile", "Numcpus", "Memory",
+                                             "Pool", "Disks", "Template",
+                                             "Nets", "Cloudinit", "Nested",
+                                             "Reservedns", "Reservehost"])
                 for profile in sorted(profiles):
                         profilestable.add_row(profile)
             profilestable.align["Profile"] = "l"
@@ -661,7 +664,11 @@ def plan(args):
             common.pprint("Using %s as name of the plan" % plan, color='green')
     if delete and not yes:
         common.confirm("Are you sure?")
-    config.plan(plan, ansible=ansible, get=get, path=path, autostart=autostart, container=container, noautostart=noautostart, inputfile=inputfile, start=start, stop=stop, delete=delete, delay=delay, topologyfile=topologyfile, scale=scale, overrides=overrides, info=info)
+    config.plan(plan, ansible=ansible, get=get, path=path, autostart=autostart,
+                container=container, noautostart=noautostart, inputfile=inputfile,
+                start=start, stop=stop, delete=delete, delay=delay,
+                topologyfile=topologyfile, scale=scale,
+                overrides=overrides, info=info)
     return 0
 
 
@@ -807,7 +814,8 @@ def scp(args):
         name = name.split('@')[1]
     else:
         user = None
-    scpcommand = k.scp(name, user=user, source=source, destination=destination, tunnel=tunnel, download=download, recursive=recursive)
+    scpcommand = k.scp(name, user=user, source=source, destination=destination,
+                       tunnel=tunnel, download=download, recursive=recursive)
     if scpcommand is not None:
         os.system(scpcommand)
     else:
@@ -870,7 +878,8 @@ def container(args):
         os._exit(1)
     containerprofiles = {k: v for k, v in config.profiles.iteritems() if 'type' in v and v['type'] == 'container'}
     if profile not in containerprofiles:
-        common.pprint("profile %s not found. Trying to use the profile as image and default values..." % profile, color='blue')
+        common.pprint("profile %s not found. Trying to use the profile as image"
+                      "and default values..." % profile, color='blue')
         dockerutils.create_container(k, name, profile)
     else:
         common.pprint("Deploying vm %s from profile %s..." % (name, profile), color='green')
@@ -883,7 +892,9 @@ def container(args):
         ports = profile.get('ports', None)
         environment = profile.get('environment', None)
         volumes = next((e for e in [profile.get('volumes'), profile.get('disks')] if e is not None), None)
-        dockerutils.create_container(k, name, image, nets=None, cmd=cmd, ports=ports, volumes=volumes, environment=environment)
+        dockerutils.create_container(k, name, image, nets=None, cmd=cmd,
+                                     ports=ports, volumes=volumes,
+                                     environment=environment)
     common.pprint("container %s created" % (name), color='green')
     return
 
@@ -940,7 +951,9 @@ def switch(args):
 
 
 def cli():
-    parser = argparse.ArgumentParser(description='Libvirt/VirtualBox/Kubevirt wrapper on steroids. Check out https://github.com/karmab/kcli!')
+    parser = argparse.ArgumentParser(description='Libvirt/VirtualBox/Kubevirt'
+                                     'wrapper on steroids. Check out '
+                                     'https://github.com/karmab/kcli!')
     parser.add_argument('-C', '--client')
     parser.add_argument('-d', '--debug', action='store_true')
     parser.add_argument('--version', action='version', version=__version__)
@@ -1001,21 +1014,29 @@ def cli():
     download_info = 'Download template'
     download_parser = subparsers.add_parser('download', description=download_info, help=download_info)
     download_parser.add_argument('-c', '--cmd', help='Extra command to launch after downloading', metavar='CMD')
-    download_parser.add_argument('-p', '--pool', default='default', help='Pool to use. Defaults to default', metavar='POOL')
+    download_parser.add_argument('-p', '--pool', default='default',
+                                 help='Pool to use. Defaults to default',
+                                 metavar='POOL')
     download_parser.add_argument('-u', '--url', help='Url to use', metavar='URL')
-    download_parser.add_argument('templates', choices=sorted(TEMPLATES.keys()), default='', help='Template/Image to download', nargs='*')
+    download_parser.add_argument('templates', choices=sorted(TEMPLATES.keys()),
+                                 default='', help='Template/Image to download',
+                                 nargs='*')
     download_parser.set_defaults(func=download)
 
     host_info = 'List and Handle host'
     host_parser = subparsers.add_parser('host', description=host_info, help=host_info)
     host_parser.add_argument('-d', '--disable', help='Disable indicated client', metavar='CLIENT')
     host_parser.add_argument('-e', '--enable', help='Enable indicated client', metavar='CLIENT')
-    host_parser.add_argument('-s', '--sync', action='store_true', help='sync templates between first host and other ones of the specified list')
+    host_parser.add_argument('-s', '--sync', action='store_true',
+                             help='sync templates between first host and other'
+                             'ones of the specified list')
     host_parser.set_defaults(func=host)
 
     info_info = 'Info vms'
     info_parser = subparsers.add_parser('info', description=info_info, help=info_info)
-    info_parser.add_argument('-f', '--fields', help='Display Corresponding list of fields, separated by a comma', metavar='FIELDS')
+    info_parser.add_argument('-f', '--fields',
+                             help='Display Corresponding list of fields,'
+                             'separated by a comma', metavar='FIELDS')
     info_parser.add_argument('-o', '--output', choices=['plain', 'yaml'], help='Format of the output')
     info_parser.add_argument('-v', '--values', action='store_true', help='Only report values')
     info_parser.add_argument('names', help='VMNAMES', nargs='*')
@@ -1064,7 +1085,8 @@ def cli():
     plan_parser = subparsers.add_parser('plan', description=plan_info, help=plan_info)
     plan_parser.add_argument('-A', '--ansible', help='Generate ansible inventory', action='store_true')
     plan_parser.add_argument('-d', '--delete', action='store_true')
-    plan_parser.add_argument('-g', '--get', help='Download specific plan(s). Use --path for specific directory', metavar='URL')
+    plan_parser.add_argument('-g', '--get', help='Download specific plan(s).'
+                             ' Use --path for specific directory', metavar='URL')
     plan_parser.add_argument('-i', '--info', action='store_true', help='Provide information on the given plan')
     plan_parser.add_argument('-p', '--path', help='Path where to download plans. Defaults to plan', metavar='PATH')
     plan_parser.add_argument('-a', '--autostart', action='store_true', help='Set all vms from plan to autostart')
@@ -1075,10 +1097,14 @@ def cli():
     plan_parser.add_argument('-w', '--stop', action='store_true')
     plan_parser.add_argument('--scale', help='Scale plan using provided parameters')
     plan_parser.add_argument('-t', '--topologyfile', help='Topology file')
-    plan_parser.add_argument('-u', '--use', nargs='?', const='kvirt', help='Plan to set as current. Defaults to kvirt', metavar='USE')
+    plan_parser.add_argument('-u', '--use', nargs='?', const='kvirt',
+                             help='Plan to set as current. Defaults to kvirt',
+                             metavar='USE')
     plan_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     plan_parser.add_argument('--delay', default=0, help="Delay between each vm's creation", metavar='DELAY')
-    plan_parser.add_argument('-P', '--param', action='append', help='Define parameter for rendering within scripts. Can be repeated', metavar='PARAM')
+    plan_parser.add_argument('-P', '--param', action='append',
+                             help='Define parameter for rendering within'
+                             ' scripts. Can be repeated', metavar='PARAM')
     plan_parser.add_argument('--paramfile', help='Param file', metavar='PARAMFILE')
     plan_parser.add_argument('plan', metavar='PLAN', nargs='?')
     plan_parser.set_defaults(func=plan)
@@ -1097,11 +1123,18 @@ def cli():
     product_parser.add_argument('-g', '--group', help='Group to use as a name during deployment', metavar='GROUP')
     product_parser.add_argument('-i', '--info', action='store_true', help='Provide information on the given product')
     product_parser.add_argument('-l', '--latest', action='store_true', help='Grab latest version of the plans')
-    product_parser.add_argument('-p', '--plan', help='Plan to use as a name during deployment', metavar='PLAN')
-    product_parser.add_argument('-P', '--param', action='append', help='Define parameter for rendering within scripts. Can be repeated several times', metavar='PARAM')
+    product_parser.add_argument('-p', '--plan', help='Plan to use as a name '
+                                'during deployment', metavar='PLAN')
+    product_parser.add_argument('-P', '--param', action='append',
+                                help='Define parameter for rendering within '
+                                'scripts. Can be repeated several times',
+                                metavar='PARAM')
     product_parser.add_argument('--paramfile', help='Input file', metavar='PARAMFILE')
-    product_parser.add_argument('-r', '--repo', help='Repo to use, if deploying a product present in several repos', metavar='REPO')
-    product_parser.add_argument('-s', '--search', action='store_true', help='Display matching products')
+    product_parser.add_argument('-r', '--repo', help='Repo to use, '
+                                'if deploying a product present in several '
+                                'repos', metavar='REPO')
+    product_parser.add_argument('-s', '--search', action='store_true',
+                                help='Display matching products')
     product_parser.add_argument('product', metavar='PRODUCT')
     product_parser.set_defaults(func=product)
 
@@ -1127,7 +1160,9 @@ def cli():
 
     snapshot_info = 'Create/Delete/Revert snapshot'
     snapshot_parser = subparsers.add_parser('snapshot', description=snapshot_info, help=snapshot_info)
-    snapshot_parser.add_argument('-n', '--name', help='Use vm name for creation/revert/delete', required=True, metavar='VMNAME')
+    snapshot_parser.add_argument('-n', '--name', help='Use vm name for creation'
+                                 '/revert/delete', required=True,
+                                 metavar='VMNAME')
     snapshot_parser.add_argument('-r', '--revert', help='Revert to indicated snapshot', action='store_true')
     snapshot_parser.add_argument('-d', '--delete', help='Delete indicated snapshot', action='store_true')
     snapshot_parser.add_argument('-l', '--listing', help='List snapshots', action='store_true')
@@ -1189,12 +1224,24 @@ def cli():
     vm_parser = subparsers.add_parser('vm', description=vm_info, help=vm_info)
     vm_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
     vm_parser.add_argument('--profilefile', help='File to load profiles from', metavar='PROFILEFILE')
-    vm_parser.add_argument('-1', '--ip1', help='Optional Ip to assign to eth0. Netmask and gateway will be retrieved from profile', metavar='IP1')
-    vm_parser.add_argument('-2', '--ip2', help='Optional Ip to assign to eth1. Netmask and gateway will be retrieved from profile', metavar='IP2')
-    vm_parser.add_argument('-3', '--ip3', help='Optional Ip to assign to eth2. Netmask and gateway will be retrieved from profile', metavar='IP3')
-    vm_parser.add_argument('-4', '--ip4', help='Optional Ip to assign to eth3. Netmask and gateway will be retrieved from profile', metavar='IP4')
-    vm_parser.add_argument('-P', '--param', action='append', help='Define parameter for rendering within scripts. Can be repeated', metavar='PARAM')
-    vm_parser.add_argument('--paramfile', help='Get parameters for rendering within scripts from a file.Takes precedence over individual parameters', metavar='PARAMFILE')
+    vm_parser.add_argument('-1', '--ip1', help='Optional Ip to assign to eth0. '
+                           'Netmask and gateway will be retrieved from profile',
+                           metavar='IP1')
+    vm_parser.add_argument('-2', '--ip2', help='Optional Ip to assign to eth1. '
+                           'Netmask and gateway will be retrieved from profile',
+                           metavar='IP2')
+    vm_parser.add_argument('-3', '--ip3', help='Optional Ip to assign to eth2. '
+                           'Netmask and gateway will be retrieved from profile',
+                           metavar='IP3')
+    vm_parser.add_argument('-4', '--ip4', help='Optional Ip to assign to eth3. '
+                           'Netmask and gateway will be retrieved from profile',
+                           metavar='IP4')
+    vm_parser.add_argument('-P', '--param', action='append',
+                           help='Define parameter for rendering within scripts.'
+                           'Can be repeated', metavar='PARAM')
+    vm_parser.add_argument('--paramfile', help='Get parameters for rendering'
+                           'within scripts from a file.Takes precedence over'
+                           'individual parameters', metavar='PARAMFILE')
     vm_parser.add_argument('name', metavar='VMNAME', nargs='?')
     vm_parser.set_defaults(func=vm)
     if len(sys.argv) == 1:

@@ -34,7 +34,12 @@ class Kbase(object):
     def disk_exists(self, pool, name):
         print("not implemented")
 
-    def create(self, name, virttype='kvm', profile='', plan='kvirt', cpumodel='Westmere', cpuflags=[], numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[], enableroot=True, alias=[], overrides={}, tags={}):
+    def create(self, name, virttype='kvm', profile='', plan='kvirt', cpumodel='Westmere', cpuflags=[], numcpus=2,
+               memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{'size': 10}], disksize=10,
+               diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True,
+               reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[],
+               ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[],
+               enableroot=True, alias=[], overrides={}, tags={}):
         print("not implemented")
         return {'result': 'success'}
 
@@ -171,7 +176,8 @@ class Kbase(object):
 # should leverage if possible
 # should return a sshcommand string
 # u, ip = self._ssh_credentials(name)
-# sshcommand = common.ssh(name, ip=ip, host=self.host, port=self.port, hostuser=self.user, user=u, local=local, remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, debug=self.debug)
+# sshcommand = common.ssh(name, ip=ip, host=self.host, port=self.port, hostuser=self.user, user=u, local=local,
+# remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, debug=self.debug)
     def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, D=None):
         print("not implemented")
         return
@@ -179,7 +185,8 @@ class Kbase(object):
 # should leverage if possible
 # should return a scpcommand string
 # u, ip = self._ssh_credentials(name)
-# scpcommand = common.scp(name, ip='', host=self.host, port=self.port, hostuser=self.user, user=user, source=source, destination=destination, recursive=recursive, tunnel=tunnel, deb    ug=self.debug, download=False)
+# scpcommand = common.scp(name, ip='', host=self.host, port=self.port, hostuser=self.user, user=user,
+# source=source, destination=destination, recursive=recursive, tunnel=tunnel, deb    ug=self.debug, download=False)
     def scp(self, name, user=None, source=None, destination=None, tunnel=False, download=False, recursive=False):
         print("not implemented")
         return

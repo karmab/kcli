@@ -99,7 +99,12 @@ class Kvirt(Kbase):
         except:
             return False
 
-    def create(self, name, virttype='kvm', profile='kvirt', plan='kvirt', cpumodel='host-model', cpuflags=[], numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[], enableroot=True, overrides={}, tags={}):
+    def create(self, name, virttype='kvm', profile='kvirt', plan='kvirt', cpumodel='host-model', cpuflags=[],
+               numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None,
+               disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None,
+               vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None,
+               cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
+               files=[], enableroot=True, overrides={}, tags={}):
         if self.exists(name):
             return {'result': 'failure', 'reason': "VM %s already exists" % name}
         default_diskinterface = diskinterface
@@ -228,7 +233,8 @@ class Kvirt(Kbase):
             else:
                 backing = None
                 backingxml = '<backingStore/>'
-            volxml = self._xmlvolume(path=diskpath, size=disksize, pooltype=diskpooltype, backing=backing, diskformat=diskformat)
+            volxml = self._xmlvolume(path=diskpath, size=disksize, pooltype=diskpooltype, backing=backing,
+                                     diskformat=diskformat)
             if diskpool in volsxml:
                 volsxml[diskpool].append(volxml)
             else:
@@ -397,7 +403,8 @@ class Kvirt(Kbase):
                     %s
                   </devices>
                     %s
-                    </domain>""" % (virttype, name, metadata, memory, numcpus, machine, disksxml, netxml, isoxml, displayxml, serialxml, cpuxml)
+                    </domain>""" % (virttype, name, metadata, memory, numcpus, machine, disksxml, netxml, isoxml,
+                                    displayxml, serialxml, cpuxml)
         if self.debug:
             print(vmxml)
         conn.defineXML(vmxml)
@@ -409,7 +416,8 @@ class Kvirt(Kbase):
             for volxml in volsxml[pool]:
                 storagepool.createXML(volxml, 0)
         if cloudinit:
-            common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain, reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides)
+            common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
+                             reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides)
             self._uploadimage(name, pool=default_storagepool)
         if reserveip:
             xml = vm.XMLDesc(0)
@@ -545,7 +553,8 @@ class Kvirt(Kbase):
             # Type,Status, Total space in Gb, Available space in Gb
             used = float(used)
             available = float(available)
-            print("Storage:%s Type:%s Path:%s Used space:%sGB Available space:%sGB" % (poolname, pooltype, poolpath, used, available))
+            print("Storage:%s Type:%s Path:%s Used space:%sGB Available space:%sGB" % (poolname, pooltype, poolpath,
+                                                                                       used, available))
         print
         for interface in conn.listAllInterfaces():
             interfacename = interface.name()
@@ -655,7 +664,11 @@ class Kvirt(Kbase):
                 localport = port
                 if tunnel:
                     localport = common.get_free_port()
-                    consolecommand = "ssh -o LogLevel=QUIET -f -p %s -L %s:127.0.0.1:%s %s@%s sleep 10" % (self.port, localport, port, self.user, self.host)
+                    consolecommand = "ssh -o LogLevel=QUIET -f -p %s -L %s:127.0.0.1:%s %s@%s sleep 10" % (self.port,
+                                                                                                           localport,
+                                                                                                           port,
+                                                                                                           self.user,
+                                                                                                           self.host)
                     os.popen(consolecommand)
                 url = "%s://%s:%s" % (protocol, host, localport)
                 os.popen("remote-viewer %s &" % url)
@@ -687,7 +700,9 @@ class Kvirt(Kbase):
                             print("Remote serial Console requires using ssh . Leaving...")
                             return
                         else:
-                            serialcommand = "ssh -o LogLevel=QUIET -p %s %s@%s nc 127.0.0.1 %s" % (self.port, self.user, self.host, serialport)
+                            serialcommand = "ssh -o LogLevel=QUIET -p %s %s@%s nc 127.0.0.1 %s" % (self.port, self.user,
+                                                                                                   self.host,
+                                                                                                   serialport)
                         os.system(serialcommand)
 
     def info(self, name, output='plain', fields=None, values=False):
@@ -784,7 +799,8 @@ class Kvirt(Kbase):
             path = element.find('source').get('file')
             volume = conn.storageVolLookupByPath(path)
             disksize = int(float(volume.info()[1]) / 1024 / 1024 / 1024)
-            yamlinfo['disks'].append({'device': device, 'size': disksize, 'format': diskformat, 'type': drivertype, 'path': path})
+            yamlinfo['disks'].append({'device': device, 'size': disksize, 'format': diskformat, 'type': drivertype,
+                                      'path': path})
         if vm.hasCurrentSnapshot():
             currentsnapshot = vm.snapshotCurrent().getName()
         else:
@@ -1377,7 +1393,8 @@ class Kvirt(Kbase):
             diskpath = self.create_disk(name=storagename, size=size, pool=pool, thin=thin, template=template)
         else:
             diskpath = existing
-        diskxml = self._xmldisk(diskpath=diskpath, diskdev=diskdev, diskbus=diskbus, diskformat=diskformat, shareable=shareable)
+        diskxml = self._xmldisk(diskpath=diskpath, diskdev=diskdev, diskbus=diskbus, diskformat=diskformat,
+                                shareable=shareable)
         vm.attachDevice(diskxml)
         vm = conn.lookupByName(name)
         vmxml = vm.XMLDesc(0)
@@ -1542,13 +1559,15 @@ class Kvirt(Kbase):
             if cmd:
                 sshcommand = "%s %s" % (sshcommand, cmd)
             if self.host not in ['localhost', '127.0.0.1'] and tunnel:
-                sshcommand = "-o ProxyCommand='ssh -qp %s -W %%h:%%p %s@%s' %s" % (self.port, self.user, self.host, sshcommand)
+                sshcommand = "-o ProxyCommand='ssh -qp %s -W %%h:%%p %s@%s' %s" % (self.port, self.user, self.host,
+                                                                                   sshcommand)
             if local is not None:
                 sshcommand = "-L %s %s" % (local, sshcommand)
             if remote is not None:
                 sshcommand = "-R %s %s" % (remote, sshcommand)
             if insecure:
-                sshcommand = "ssh -o LogLevel=quiet -o 'UserKnownHostsFile=/dev/null' -o 'StrictHostKeyChecking=no' %s" % sshcommand
+                sshcommand = "ssh -o LogLevel=quiet -o 'UserKnownHostsFile=/dev/null' -o 'StrictHostKeyChecking=no' %s"\
+                    % sshcommand
             else:
                 sshcommand = "ssh %s" % sshcommand
             if self.debug:
@@ -1592,7 +1611,8 @@ class Kvirt(Kbase):
                         print("Couldn't create directory %s.Leaving..." % poolpath)
                         return 1
             elif self.protocol == 'ssh':
-                cmd1 = 'ssh -p %s %s@%s "test -d %s || mkdir %s"' % (self.port, self.user, self.host, poolpath, poolpath)
+                cmd1 = 'ssh -p %s %s@%s "test -d %s || mkdir %s"' % (self.port, self.user, self.host, poolpath,
+                                                                     poolpath)
                 cmd2 = 'ssh -p %s -t %s@%s "sudo chown %s %s"' % (self.port, self.user, self.host, user, poolpath)
                 return1 = os.system(cmd1)
                 if return1 > 0:
@@ -1658,7 +1678,8 @@ class Kvirt(Kbase):
         if self.host == 'localhost' or self.host == '127.0.0.1':
             downloadcmd = 'curl -Lo %s/%s -f %s' % (poolpath, shortimage, image)
         elif self.protocol == 'ssh':
-            downloadcmd = 'ssh -p %s %s@%s "curl -Lo %s/%s -f %s"' % (self.port, self.user, self.host, poolpath, shortimage, image)
+            downloadcmd = 'ssh -p %s %s@%s "curl -Lo %s/%s -f %s"' % (self.port, self.user, self.host, poolpath,
+                                                                      shortimage, image)
         code = os.system(downloadcmd)
         if code != 0:
             return {'result': 'failure', 'reason': "Unable to download indicated template"}
@@ -1669,7 +1690,9 @@ class Kvirt(Kbase):
                     cmd = "virt-customize -a %s/%s --run-command '%s'" % (poolpath, shortimage, cmd)
                     os.system(cmd)
             elif self.protocol == 'ssh':
-                cmd = 'ssh -p %s %s@%s "virt-customize -a %s/%s --run-command \'%s\'"' % (self.port, self.user, self.host, poolpath, shortimage, cmd)
+                cmd = 'ssh -p %s %s@%s "virt-customize -a %s/%s --run-command \'%s\'"' % (self.port, self.user,
+                                                                                          self.host, poolpath,
+                                                                                          shortimage, cmd)
                 os.system(cmd)
         return {'result': 'success'}
 

@@ -104,7 +104,8 @@ def fetch(url, path, syms=None):
             fetch("%s/%s" % (url, filename), "%s/%s" % (path, filename), syms=syms)
 
 
-def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[], enableroot=True, overrides={}, iso=True):
+def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[],
+              enableroot=True, overrides={}, iso=True):
     default_gateway = gateway
     with open('/tmp/meta-data', 'w') as metadatafile:
         if domain is not None:
@@ -149,7 +150,8 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                         netdata += "  dns-search %s\n" % domain
                     if isinstance(vips, list) and vips:
                         for index, vip in enumerate(vips):
-                            netdata += "  auto %s:%s\n  iface %s:%s inet static\n  address %s\n  netmask %s\n" % (nicname, index, nicname, index, vip, netmask)
+                            netdata += "  auto %s:%s\n  iface %s:%s inet static\n  address %s\n  netmask %s\n"\
+                                % (nicname, index, nicname, index, vip, netmask)
                 else:
                     netdata += "  iface %s inet dhcp\n" % nicname
             if netdata:
@@ -161,10 +163,12 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             userdata.write("ssh_pwauth: True\ndisable_root: false\n")
         if domain is not None:
             userdata.write("fqdn: %s.%s\n" % (name, domain))
-        if keys or os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME']) or os.path.exists("%s/.ssh/id_dsa.pub" % os.environ['HOME']):
+        if keys or os.path.exists("%s/.ssh/id_rsa.pub"
+                                  % os.environ['HOME']) or os.path.exists("%s/.ssh/id_dsa.pub" % os.environ['HOME']):
             userdata.write("ssh_authorized_keys:\n")
         else:
-            print("neither id_rsa.pub or id_dsa public keys found in your .ssh directory, you might have trouble accessing the vm")
+            print("neither id_rsa.pub or id_dsa public keys found in your .ssh directory, you might have trouble "
+                  "accessing the vm")
         if keys:
             for key in list(set(keys)):
                 userdata.write("- %s\n" % key)
@@ -185,7 +189,9 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                         if cmd.startswith('#'):
                             continue
                         else:
-                            newcmd = Environment(block_start_string='[%', block_end_string='%]', variable_start_string='[[', variable_end_string=']]').from_string(cmd).render(overrides)
+                            newcmd = Environment(block_start_string='[%', block_end_string='%]',
+                                                 variable_start_string='[[',
+                                                 variable_end_string=']]').from_string(cmd).render(overrides)
                             userdata.write("- %s\n" % newcmd)
                             f.write("%s\n" % newcmd)
         if files:
@@ -213,7 +219,9 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                             content = f.read().encode("base64")
                     elif overrides:
                         basedir = os.path.dirname(origin) if os.path.dirname(origin) != '' else '.'
-                        env = Environment(block_start_string='[%', block_end_string='%]', variable_start_string='[[', variable_end_string=']]', loader=FileSystemLoader(basedir))
+                        env = Environment(block_start_string='[%', block_end_string='%]',
+                                          variable_start_string='[[', variable_end_string=']]',
+                                          loader=FileSystemLoader(basedir))
                         templ = env.get_template(os.path.basename(origin))
                         fileentries = templ.render(overrides)
                         content = [line.rstrip() for line in fileentries.split('\n') if line.rstrip() != '']
@@ -242,7 +250,8 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
         isocmd = 'mkisofs'
         if find_executable('genisoimage') is not None:
             isocmd = 'genisoimage'
-        os.system("%s --quiet -o /tmp/%s.ISO --volid cidata --joliet --rock /tmp/user-data /tmp/meta-data" % (isocmd, name))
+        os.system("%s --quiet -o /tmp/%s.ISO --volid cidata --joliet --rock /tmp/user-data /tmp/meta-data" % (isocmd,
+                                                                                                              name))
 
 
 def get_free_port():
@@ -366,10 +375,12 @@ def print_info(yamlinfo, output='plain', fields=None, values=False):
                 if key not in fields:
                     del yamlinfo[key]
         if output == 'yaml':
-            print yaml.dump(yamlinfo, default_flow_style=False, indent=2, allow_unicode=True, encoding=None).replace("'", '')[:-1]
+            print yaml.dump(yamlinfo, default_flow_style=False, indent=2, allow_unicode=True,
+                            encoding=None).replace("'", '')[:-1]
         else:
             if fields is None:
-                fields = ['name', 'creationdate', 'host', 'status', 'description', 'autostart', 'template', 'plan', 'profile', 'cpus', 'memory', 'nets', 'ip', 'disks', 'snapshots']
+                fields = ['name', 'creationdate', 'host', 'status', 'description', 'autostart', 'template', 'plan',
+                          'profile', 'cpus', 'memory', 'nets', 'ip', 'disks', 'snapshots']
             for key in fields:
                 if key not in yamlinfo:
                     continue
@@ -389,7 +400,9 @@ def print_info(yamlinfo, output='plain', fields=None, values=False):
                             diskformat = disk['format']
                             drivertype = disk['type']
                             path = disk['path']
-                            print("diskname: %s disksize: %sGB diskformat: %s type: %s path: %s" % (device, disksize, diskformat, drivertype, path))
+                            print("diskname: %s disksize: %sGB diskformat: %s type: %s path: %s" % (device, disksize,
+                                                                                                    diskformat,
+                                                                                                    drivertype, path))
                     elif key == 'snapshots':
                         for snap in value:
                             snapshot = snap['snapshot']
@@ -402,7 +415,8 @@ def print_info(yamlinfo, output='plain', fields=None, values=False):
                             print("%s: %s" % (key, value))
 
 
-def ssh(name, ip='', host=None, port=22, hostuser=None, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, debug=False, D=None):
+def ssh(name, ip='', host=None, port=22, hostuser=None, user=None, local=None, remote=None, tunnel=False,
+        insecure=False, cmd=None, X=False, debug=False, D=None):
         if ip == '':
             return None
         else:
@@ -420,7 +434,8 @@ def ssh(name, ip='', host=None, port=22, hostuser=None, user=None, local=None, r
             if remote is not None:
                 sshcommand = "-R %s %s" % (remote, sshcommand)
             if insecure:
-                sshcommand = "ssh -o LogLevel=quiet -o 'UserKnownHostsFile=/dev/null' -o 'StrictHostKeyChecking=no' %s" % sshcommand
+                sshcommand = "ssh -o LogLevel=quiet -o 'UserKnownHostsFile=/dev/null' -o 'StrictHostKeyChecking=no' %s"\
+                    % sshcommand
             else:
                 sshcommand = "ssh %s" % sshcommand
             if debug:
@@ -428,7 +443,8 @@ def ssh(name, ip='', host=None, port=22, hostuser=None, user=None, local=None, r
             return sshcommand
 
 
-def scp(name, ip='', host=None, port=22, hostuser=None, user=None, source=None, destination=None, recursive=None, tunnel=False, debug=False, download=False):
+def scp(name, ip='', host=None, port=22, hostuser=None, user=None, source=None, destination=None, recursive=None,
+        tunnel=False, debug=False, download=False):
         if ip == '':
             print("No ip found. Cannot scp...")
         else:

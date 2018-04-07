@@ -4,7 +4,10 @@
 Kvirt config class
 """
 
-from kvirt.defaults import NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID, VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, RESERVEHOST, START, NESTED, TUNNEL, REPORTURL, REPORTDIR, REPORT, REPORTALL, INSECURE, KEYS, CMDS, DNS, DOMAIN, SCRIPTS, FILES, ISO, NETMASKS, GATEWAY, SHAREDKEY, TEMPLATE, ENABLEROOT, PLANVIEW, PRIVATEKEY, TAGS
+from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID,
+                            VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, RESERVEHOST, START, NESTED, TUNNEL, REPORTURL,
+                            REPORTDIR, REPORT, REPORTALL, INSECURE, KEYS, CMDS, DNS, DOMAIN, SCRIPTS, FILES, ISO,
+                            NETMASKS, GATEWAY, SHAREDKEY, TEMPLATE, ENABLEROOT, PLANVIEW, PRIVATEKEY, TAGS)
 from kvirt import common
 import os
 from shutil import copyfile, rmtree
@@ -253,13 +256,18 @@ class Kbaseconfig:
         if poolpath is None:
             poolpath = '/var/lib/libvirt/images'
         if host == '127.0.0.1':
-            ini = {'default': {'client': 'local', 'cloudinit': True, 'tunnel': False, 'reservehost': False, 'insecure': True, 'enableroot': True, 'reserveip': False, 'reservedns': False, 'reservehost': False, 'nested': True, 'start': True}, 'local': {'pool': pool, 'nets': ['default']}}
+            ini = {'default': {'client': 'local', 'cloudinit': True, 'tunnel': False, 'reservehost': False,
+                               'insecure': True, 'enableroot': True, 'reserveip': False, 'reservedns': False,
+                               'reservehost': False, 'nested': True, 'start': True},
+                   'local': {'pool': pool, 'nets': ['default']}}
             if not sys.platform.startswith('linux'):
                 ini['local']['type'] = 'vbox'
         else:
             if name is None:
                 name = host
-            ini = {'default': {'client': name, 'cloudinit': True, 'tunnel': True, 'reservehost': False, 'insecure': True, 'enableroot': True, 'reserveip': False, 'reservedns': False, 'reservehost': False, 'nested': True, 'start': True}}
+            ini = {'default': {'client': name, 'cloudinit': True, 'tunnel': True, 'reservehost': False,
+                               'insecure': True, 'enableroot': True, 'reserveip': False, 'reservedns': False,
+                               'reservehost': False, 'nested': True, 'start': True}}
             ini[name] = {'host': host, 'pool': pool, 'nets': ['default']}
             if protocol is not None:
                 ini[name]['protocol'] = protocol
@@ -298,7 +306,8 @@ class Kbaseconfig:
             return []
         else:
             products = []
-            repodirs = [d.replace('repo_', '') for d in os.listdir(configdir) if os.path.isdir("%s/%s" % (configdir, d)) and d.startswith('repo_')]
+            repodirs = [d.replace('repo_', '') for d in os.listdir(configdir)
+                        if os.path.isdir("%s/%s" % (configdir, d)) and d.startswith('repo_')]
             for rep in repodirs:
                 repometa = "%s/repo_%s/KMETA" % (configdir, rep)
                 if not os.path.exists(repometa):
@@ -427,11 +436,14 @@ class Kbaseconfig:
     def info_product(self, name, repo=None, group=None):
         """Info product"""
         if repo is not None and group is not None:
-            products = [product for product in self.list_products() if product['name'] == name and product['repo'] == repo and product['group'] == group]
+            products = [product for product in self.list_products()
+                        if product['name'] == name and product['repo'] == repo and product['group'] == group]
         elif repo is not None:
-            products = [product for product in self.list_products() if product['name'] == name and product['repo'] == repo]
+            products = [product for product in self.list_products()
+                        if product['name'] == name and product['repo'] == repo]
         if group is not None:
-            products = [product for product in self.list_products() if product['name'] == name and product['group'] == group]
+            products = [product for product in self.list_products()
+                        if product['name'] == name and product['group'] == group]
         else:
             products = [product for product in self.list_products() if product['name'] == name]
         if len(products) == 0:
