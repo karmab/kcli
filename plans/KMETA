@@ -160,7 +160,7 @@
    version: latest
    driver: kvm2
 
-- name: kubevirt
+- name: kubevirt_kubernetes
   group: kubernetes
   url: github.com/karmab/kcli/plans/kubernetes
   file: kubevirt.yml
@@ -172,7 +172,7 @@
    domain: karmalabs.com
    template: CentOS-7-x86_64-GenericCloud.qcow2
    deploy_app: false
-   kubevirt_version: v0.3.0
+   kubevirt_version: v0.4.0
 
 - name: manageiq
   group: manageiq
@@ -372,7 +372,7 @@
   comments: version has to be superior or equal to 0.1.0
   parameters:
    docker_disk_size: 60
-   kubevirt_version: v0.3.0
+   kubevirt_version: v0.4.0
    initializer: false
    openshift_version: 3.9
    metrics: false
