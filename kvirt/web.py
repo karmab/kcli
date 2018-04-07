@@ -547,9 +547,9 @@ def productstable():
     """
     retrieves all products in table
     """
-    config = Kconfig()
+    baseconfig = Kbaseconfig()
     products = []
-    for product in config.list_products():
+    for product in baseconfig.list_products():
         repo = product['repo']
         group = product['group']
         name = product['name']
@@ -561,8 +561,8 @@ def productstable():
 
 @app.route('/products')
 def products():
-    config = Kconfig()
-    return render_template('products.html', title='Products', client=config.client)
+    baseconfig = Kbaseconfig()
+    return render_template('products.html', title='Products', client=baseconfig.client)
 
 
 @app.route('/productcreate')

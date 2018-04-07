@@ -257,6 +257,31 @@ def list(args):
                 clientstable.add_row([client, _type, enabled, ''])
         print(clientstable)
         return
+    if repos:
+        baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+        repos = PrettyTable(["Repo", "Url"])
+        repos.align["Repo"] = "l"
+        reposinfo = baseconfig.list_repos()
+        for repo in sorted(reposinfo):
+            url = reposinfo[repo]
+            repos.add_row([repo, url])
+        print(repos)
+        return
+    elif products:
+        baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+        products = PrettyTable(["Repo", "Group", "Product", "Description", "Numvms", "Memory"])
+        products.align["Repo"] = "l"
+        productsinfo = baseconfig.list_products(group=group, repo=repo)
+        for product in sorted(productsinfo, key=lambda x: (x['repo'], x['group'], x['name'])):
+            name = product['name']
+            repo = product['repo']
+            description = product.get('description', 'N/A')
+            numvms = product.get('numvms', 'N/A')
+            memory = product.get('memory', 'N/A')
+            group = product.get('group', 'N/A')
+            products.add_row([repo, group, name, description, numvms, memory])
+        print(products)
+        return
     config = Kconfig(client=args.client, debug=args.debug)
     if config.client != 'all':
         k = config.k
@@ -376,27 +401,6 @@ def list(args):
             planvms = plan[1]
             plans.add_row([planname, planvms])
         print(plans)
-    elif repos:
-        repos = PrettyTable(["Repo", "Url"])
-        repos.align["Repo"] = "l"
-        reposinfo = config.list_repos()
-        for repo in sorted(reposinfo):
-            url = reposinfo[repo]
-            repos.add_row([repo, url])
-        print(repos)
-    elif products:
-        products = PrettyTable(["Repo", "Group", "Product", "Description", "Numvms", "Memory"])
-        products.align["Repo"] = "l"
-        productsinfo = config.list_products(group=group, repo=repo)
-        for product in sorted(productsinfo, key=lambda x: (x['repo'], x['group'], x['name'])):
-            name = product['name']
-            repo = product['repo']
-            description = product.get('description', 'N/A')
-            numvms = product.get('numvms', 'N/A')
-            memory = product.get('memory', 'N/A')
-            group = product.get('group', 'N/A')
-            products.add_row([repo, group, name, description, numvms, memory])
-        print(products)
     else:
         customcolumn = 'Namespace' if config.type == 'kubevirt' else 'Report'
         if config.extraclients:
@@ -637,10 +641,11 @@ def plan(args):
     scale = args.scale
     info = args.info
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
-    config = Kconfig(client=args.client, debug=args.debug)
     if info and get is None:
-        config.info_plan(inputfile)
+        baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+        baseconfig.info_plan(inputfile)
         os._exit(0)
+    config = Kconfig(client=args.client, debug=args.debug)
     if use is not None:
         rootdir = os.path.expanduser('~/.kcli')
         if not os.path.exists(rootdir):
@@ -667,38 +672,38 @@ def repo(args):
     url = args.url
     update = args.update
     download = args.download
-    config = Kconfig(client=args.client, debug=args.debug)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     if update:
         if repo is None:
             common.pprint("Updating all repos...", color='blue')
-            repos = config.list_repos()
+            repos = baseconfig.list_repos()
             for repo in repos:
                 common.pprint("Updating repo %s..." % (repo), color='green')
-                config.update_repo(repo)
+                baseconfig.update_repo(repo)
         else:
             common.pprint("Updating repo %s..." % (repo), color='green')
-            config.update_repo(repo)
+            baseconfig.update_repo(repo)
         return
     if repo is None:
         common.pprint("Missing repo. Leaving...", color='red')
         os._exit(1)
     if delete:
         common.pprint("Deleting repo %s..." % (repo), color='green')
-        config.delete_repo(repo)
+        baseconfig.delete_repo(repo)
         return
     if update:
         common.pprint("Deleting repo %s..." % (repo), color='green')
-        config.delete_repo(repo)
+        baseconfig.delete_repo(repo)
         return
     if download:
         common.pprint("Downloading repo %s..." % (repo), color='green')
-        config.download_repo(repo)
+        baseconfig.download_repo(repo)
         return
     if url is None:
         common.pprint("Missing url. Leaving...", color='red')
         os._exit(1)
     common.pprint("Adding repo %s..." % (repo), color='green')
-    config.create_repo(repo, url)
+    baseconfig.create_repo(repo, url)
     return 0
 
 
@@ -712,14 +717,15 @@ def product(args):
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
     info = args.info
     search = args.search
-    config = Kconfig(client=args.client, debug=args.debug)
     if info:
+        baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
         common.pprint("Providing information on product %s..." % (product), color='green')
-        config.info_product(product, repo, group)
+        baseconfig.info_product(product, repo, group)
     elif search:
+        baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
         products = PrettyTable(["Repo", "Group", "Product", "Description", "Numvms", "Memory"])
         products.align["Repo"] = "l"
-        productsinfo = config.list_products(repo=repo)
+        productsinfo = baseconfig.list_products(repo=repo)
         for prod in sorted(productsinfo, key=lambda x: (x['repo'], x['group'], x['name'])):
             name = prod['name']
             repo = prod['repo']
@@ -735,6 +741,7 @@ def product(args):
             products.add_row([repo, group, name, description, numvms, memory])
         print(products)
     else:
+        config = Kconfig(client=args.client, debug=args.debug)
         common.pprint("Creating product %s..." % (product), color='green')
         config.create_product(product, repo=repo, group=group, plan=plan, latest=latest, overrides=overrides)
     return 0
