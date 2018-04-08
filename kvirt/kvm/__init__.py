@@ -328,8 +328,6 @@ class Kvirt(Kbase):
                         <listen type='address' address='%s'/>
                         </graphics>
                         <memballoon model='virtio'/>""" % (display, listen, listen)
-        # if cpumodel == '':
-        #     cpuxml = ""
         if cpumodel == 'host-model':
             cpuxml = """<cpu mode='host-model'>
                         <model fallback='allow'/>"""

@@ -1,7 +1,7 @@
 NETS = ['default']
 POOL = 'default'
 TEMPLATE = None
-CPUMODEL = 'Westmere'
+CPUMODEL = 'host-model'
 NUMCPUS = 2
 MEMORY = 512
 DISKINTERFACE = 'virtio'
