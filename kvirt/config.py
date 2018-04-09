@@ -435,9 +435,11 @@ class Kconfig(Kbaseconfig):
             if os.path.exists(group):
                 common.pprint("Using current directory %s. Make sure it contains kcli content" % group, color='green')
                 productdir = group
+                self.plan(plan, path=productdir, inputfile=inputfile, overrides=overrides)
             elif os.path.exists("%s/%s" % (repodir, group)) and not latest:
                 common.pprint("Using cached directory %s/%s" % (repodir, group), color='green')
                 productdir = "%s/%s" % (repodir, group)
+                self.plan(plan, path=productdir, inputfile=inputfile, overrides=overrides)
             elif os.path.exists("%s/%s" % (repodir, group)) and latest:
                 productdir = "%s/%s" % (repodir, group)
                 shutil.rmtree(productdir)
@@ -578,6 +580,8 @@ class Kconfig(Kbaseconfig):
         if inputfile is None:
             inputfile = 'kcli_plan.yml'
             common.pprint("using default input file kcli_plan.yml", color='green')
+        if path is not None:
+            os.chdir(path)
         inputfile = os.path.expanduser(inputfile)
         if not os.path.exists(inputfile):
             common.pprint("No input file found nor default kcli_plan.yml.Leaving....", color='red')
