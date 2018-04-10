@@ -47,21 +47,21 @@ class Kubevirt(object):
             context = current
             contextname = current['name']
         config.load_kube_config(context=contextname)
-        configuration = client.Configuration()
-        configuration.assert_hostname = False
+        # configuration = client.Configuration()
+        # configuration.assert_hostname = False
         if 'namespace' in context['context']:
             self.namespace = context['context']['namespace']
         else:
             self.namespace = 'default'
         self.crds = client.CustomObjectsApi()
-        extensions = client.ApiextensionsV1beta1Api()
-        current_crds = [x for x in extensions.list_custom_resource_definition().to_dict()['items']
-                        if x['spec']['names']['kind'].lower() == 'offlinevirtualmachine']
-        if not current_crds:
-            common.pprint("Kubevirt not installed", color='red')
-            self.conn = None
-            self.host = context
-            return
+        # extensions = client.ApiextensionsV1beta1Api()
+        # current_crds = [x for x in extensions.list_custom_resource_definition().to_dict()['items']
+        #                if x['spec']['names']['kind'].lower() == 'offlinevirtualmachine']
+        # if not current_crds:
+        #    common.pprint("Kubevirt not installed", color='red')
+        #    self.conn = None
+        #    self.host = context
+        #    return
         self.core = client.CoreV1Api()
         self.debug = debug
         if host == '127.0.0.1' and len(contextname.split('/')) == 3 and len(contextname.split('/')[1].split(':')) == 2:
