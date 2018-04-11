@@ -26,7 +26,7 @@ setup(
         'kubernetes',
         'netaddr',
         'PyYAML',
-        'prettytable',
+        'prettytable'
     ],
     extras_require={
         'vitualbox': ['pyvbox'],

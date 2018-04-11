@@ -9,9 +9,11 @@ import argparse
 from kvirt import common
 from kvirt import nameutils
 from kvirt import dockerutils
+import json
 import os
 import random
 import sys
+import urllib2
 import yaml
 
 
@@ -950,13 +952,22 @@ def switch(args):
         os._exit(1)
 
 
+def version(args):
+    """Show product version"""
+    common.pprint("Current version: %s" % __version__)
+    try:
+        f = urllib2.urlopen('https://pypi.python.org/pypi/kcli/json', timeout=3)
+        common.pprint("Latest PyPI published version: %s" % json.load(f)['info']['version'])
+    except Exception as e:
+        pass
+
+
 def cli():
     parser = argparse.ArgumentParser(description='Libvirt/VirtualBox/Kubevirt'
                                      'wrapper on steroids. Check out '
                                      'https://github.com/karmab/kcli!')
     parser.add_argument('-C', '--client')
     parser.add_argument('-d', '--debug', action='store_true')
-    parser.add_argument('--version', action='version', version=__version__)
 
     subparsers = parser.add_subparsers(metavar='')
 
@@ -1219,6 +1230,10 @@ def cli():
     update_parser.add_argument('--cloudinit', action='store_true', help='Remove Cloudinit Information from vm')
     update_parser.add_argument('name', metavar='VMNAME')
     update_parser.set_defaults(func=update)
+
+    version_info = 'Show program\'s version number and exit'
+    version_parser = subparsers.add_parser('version', description=version_info, help=version_info)
+    version_parser.set_defaults(func=version)
 
     vm_info = 'Create vm'
     vm_parser = subparsers.add_parser('vm', description=vm_info, help=vm_info)
