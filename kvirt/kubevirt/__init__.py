@@ -64,8 +64,8 @@ class Kubevirt(object):
         #    return
         self.core = client.CoreV1Api()
         self.debug = debug
-        if host == '127.0.0.1' and len(contextname.split('/')) == 3 and len(contextname.split('/')[1].split(':')) == 2:
-            self.host = contextname.split('/')[1].split(':')[0].replace('-', '.')
+        hosts = [node.metadata.name for node in self.core.list_node().items]
+        self.host = hosts[0]
         return
 
     def close(self):
@@ -710,7 +710,7 @@ class Kubevirt(object):
         u, ip = self._ssh_credentials(name)
         if user is None:
             user = u
-        tunnel = True
+        tunnel = True if 'TUNNEL' in os.environ and os.environ('TUNNEL').lower() == 'true' else False
         sshcommand = common.ssh(name, ip=ip, host=self.host, port=self.port, hostuser=self.user, user=user, local=local,
                                 remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, debug=self.debug, D=D)
         return sshcommand
@@ -719,7 +719,7 @@ class Kubevirt(object):
         u, ip = self._ssh_credentials(name)
         if user is None:
             user = u
-        tunnel = True
+        tunnel = True if 'TUNNEL' in os.environ and os.environ('TUNNEL').lower() == 'true' else False
         scpcommand = common.scp(name, ip=ip, host=self.host, port=self.port, hostuser=self.user, user=user,
                                 source=source, destination=destination, recursive=recursive, tunnel=tunnel,
                                 debug=self.debug, download=download)
