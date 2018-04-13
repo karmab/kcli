@@ -183,7 +183,7 @@ class Kbaseconfig:
             newini = ''
             for line in open(inifile).readlines():
                 if 'client' in line:
-                    newini += " client: %s\n" % client
+                    newini += "  client: %s\n" % client
                 else:
                     newini += line
             open(inifile, 'w').write(newini)
