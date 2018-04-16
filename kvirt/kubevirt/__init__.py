@@ -64,7 +64,11 @@ class Kubevirt(object):
         #    return
         self.core = client.CoreV1Api()
         self.debug = debug
-        hosts = [node.metadata.name for node in self.core.list_node().items]
+        try:
+            hosts = [node.metadata.name for node in self.core.list_node().items]
+        except client.rest.ApiException as e:
+            common.pprint("Couldn't connect, got %s" % (e.reason), color='red')
+            os._exit(1)
         self.host = hosts[0]
         return
 

@@ -174,6 +174,7 @@ class Kbaseconfig:
             common.pprint("Client %s not found in config.Leaving...." % client, color='red')
             return {'result': 'failure', 'reason': "Client %s not found in config" % client}
         enabled = self.ini[client].get('enabled', True)
+        oldclient = self.ini['default']['client']
         if not enabled:
             common.pprint("Client %s is disabled.Leaving...." % client, color='red')
             return {'result': 'failure', 'reason': "Client %s is disabled" % client}
@@ -183,7 +184,7 @@ class Kbaseconfig:
             newini = ''
             for line in open(inifile).readlines():
                 if 'client' in line:
-                    newini += "  client: %s\n" % client
+                    newini += line.replace(oldclient, client)
                 else:
                     newini += line
             open(inifile, 'w').write(newini)

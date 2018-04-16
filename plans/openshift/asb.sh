@@ -11,10 +11,10 @@ wget https://raw.githubusercontent.com/openshift/ansible-service-broker/master/s
 export ORIGIN_VERSION="v[[ openshift_version ]]"
 [% else %]
 export ORIGIN_VERSION="[[ openshift_version ]]"
-wget https://apb-oc.s3.amazonaws.com/apb-oc/oc-linux-64bit.tar.gz
-tar zxvf oc-linux-64bit.tar.gz
-mv oc-linux-64bit/oc /usr/bin
-chmod u+x /usr/bin/oc
+#wget https://apb-oc.s3.amazonaws.com/apb-oc/oc-linux-64bit.tar.gz
+#tar zxvf oc-linux-64bit.tar.gz
+#mv oc-linux-64bit/oc /usr/bin
+#chmod u+x /usr/bin/oc
 [% endif %]
 rm -rf /usr/share/rhel/secrets
 [% if org is defined %]
