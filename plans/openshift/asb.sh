@@ -7,10 +7,10 @@ dnf -y install dnf-plugins-core libselinux-python
 dnf -y copr enable @ansible-service-broker/ansible-service-broker-latest
 dnf -y install apb
 wget https://raw.githubusercontent.com/openshift/ansible-service-broker/master/scripts/run_latest_build.sh
-[% if '.' in [[ openshift_version | string ]] %] 
-export ORIGIN_VERSION="v[[ openshift_version ]]"
-[% else %]
+[% if [[ openshift_version | string ]] == 'latest' %] 
 export ORIGIN_VERSION="[[ openshift_version ]]"
+[% else %]
+export ORIGIN_VERSION="v[[ openshift_version ]]"
 [% endif %]
 rm -rf /usr/share/rhel/secrets
 [% if org is defined %]
