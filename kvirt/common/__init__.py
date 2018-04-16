@@ -224,11 +224,12 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                                           loader=FileSystemLoader(basedir))
                         templ = env.get_template(os.path.basename(origin))
                         fileentries = templ.render(overrides)
-                        content = [line.rstrip() for line in fileentries.split('\n') if line.rstrip() != '']
+                        # content = [line.rstrip() for line in fileentries.split('\n') if line.rstrip() != '']
+                        content = [line.rstrip() for line in fileentries.split('\n')]
                         with open("/tmp/%s" % os.path.basename(path), 'w') as f:
                             for line in fileentries.split('\n'):
                                 if line.rstrip() == '':
-                                    continue
+                                    f.write("\n")
                                 else:
                                     f.write("%s\n" % line.rstrip())
                     else:
