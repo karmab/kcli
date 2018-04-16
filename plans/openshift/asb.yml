@@ -1,7 +1,7 @@
 parameters:
  docker_disk_size: 60
  initializer: false
- openshift_version: 3.9.22
+ openshift_version: 3.9
  template: Fedora-Cloud-Base-27-1.6.x86_64.qcow2
 
 asb:
