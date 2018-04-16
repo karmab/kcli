@@ -468,8 +468,8 @@ class Kconfig(Kbaseconfig):
         tunnel = self.tunnel
         if plan is None:
             plan = nameutils.get_random_name()
-        if path is None:
-            path = plan
+        # if path is None:
+        #    path = plan
         if delete:
             networks = []
             if plan == '':
