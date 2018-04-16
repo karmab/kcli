@@ -2,7 +2,6 @@ parameters:
  openshift_version: 3.7
  template: rhel-server-7.4-x86_64-kvm.qcow2
  memory: 2048
- metrics: false
 
 ocp:
  template: [[ template ]]

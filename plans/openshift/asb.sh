@@ -8,7 +8,7 @@ dnf -y copr enable @ansible-service-broker/ansible-service-broker-latest
 dnf -y install apb
 wget https://raw.githubusercontent.com/openshift/ansible-service-broker/master/scripts/run_latest_build.sh
 [% if '.' in openshift_version %] 
-export ORIGIN_VERSION="v[[ openshift_version ]]"
+export ORIGIN_VERSION="v[[ openshift_version[:-3] ]]"
 [% else %]
 export ORIGIN_VERSION="[[ openshift_version ]]"
 #wget https://apb-oc.s3.amazonaws.com/apb-oc/oc-linux-64bit.tar.gz

@@ -3,7 +3,6 @@ parameters:
    kubevirt_version: v0.4.0
    initializer: false
    openshift_version: 3.9
-   metrics: false
    memory: 8192
 
 kubevirt:

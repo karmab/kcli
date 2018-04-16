@@ -12,7 +12,6 @@
    docker_disk_size: 60
    initializer: false
    openshift_version: 3.9
-   metrics: false
 
 - name: ocp
   group: openshift
@@ -24,7 +23,6 @@
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
   parameters:
    openshift_version: 3.7
-   metrics: false
 
 - name: multi
   group: openshift
@@ -89,7 +87,6 @@
    initializer: false
    openshift_version: 3.7
    helm_version: 2.6.0
-   metrics: false
 
 - name: monocular
   group: openshift
@@ -104,7 +101,6 @@
    initializer: false
    openshift_version: 3.7
    helm_version: 2.6.0
-   metrics: false
 
 - name: istio
   group: openshift
@@ -119,7 +115,6 @@
    deploy_book_info: false
    initializer: true
    openshift_version: 3.7
-   metrics: false
 
 - name: asb
   group: openshift
@@ -162,7 +157,6 @@
    kubevirt_version: v0.4.0
    initializer: false
    openshift_version: 3.9
-   metrics: false
 
 - name: fission
   group: openshift
@@ -179,7 +173,6 @@
    docker_disk_size: 60
    openshift_version: 3.7
    helm_version: 2.6.0
-   metrics: false
 
 - name: openfaas
   group: openshift
@@ -193,7 +186,6 @@
   parameters:
    docker_disk_size: 60
    openshift_version: 3.7
-   metrics: false
 
 - name: openwhisk
   group: openshift
@@ -207,6 +199,5 @@
    docker_disk_size: 60
    initializer: false
    openshift_version: 3.7
-   metrics: false
    persistent: true
    large: false
