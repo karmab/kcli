@@ -6,10 +6,9 @@ sleep 120
 export IP=`ip a l  eth0 | grep 'inet ' | cut -d' ' -f6 | awk -F'/' '{ print $1}'`
 oc cluster up --public-hostname $IP.xip.io --routing-suffix $IP.xip.io
 oc login -u system:admin
-oc adm policy add-cluster-role-to-user cluster-admin admin
-oc adm policy add-cluster-role-to-user cluster-admin developer
 [% if initializer %]
 grep -q Initializers /var/lib/origin/openshift.local.config/master/master-config.yaml || sed  -i "/GenericAdmissionWebhook/i\ \ \ \ `cat /root/initializer.txt`" /var/lib/origin/openshift.local.config/master/master-config.yaml
 docker restart origin
 [% endif %]
 docker update --restart=always origin
+oc adm policy add-cluster-role-to-user cluster-admin developer

@@ -491,10 +491,10 @@ class Kvirt(Kbase):
           %s
           <disks>
             <disk name='vda' snapshot='internal'/>
-            <disk name='hdc' snapshot='no'/>
           </disks>
           %s
           </domainsnapshot>""" % (name, memoryxml, vmxml)
+        # <disk name='hdc' snapshot='no'/>
         vm.snapshotCreateXML(snapxml)
         return {'result': 'success'}
 
