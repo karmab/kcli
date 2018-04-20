@@ -952,7 +952,7 @@ def switch(args):
         os._exit(1)
 
 
-def version(args):
+def version():
     """Show product version"""
     common.pprint("Current version: %s" % __version__)
     try:
@@ -960,6 +960,7 @@ def version(args):
         common.pprint("Latest PyPI published version: %s" % json.load(f)['info']['version'])
     except Exception as e:
         pass
+    os._exit(0)
 
 
 def cli():
@@ -968,6 +969,7 @@ def cli():
                                      'https://github.com/karmab/kcli!')
     parser.add_argument('-C', '--client')
     parser.add_argument('-d', '--debug', action='store_true')
+    parser.add_argument('--version', action='version', version=__version__)
 
     subparsers = parser.add_subparsers(metavar='')
 
@@ -1231,10 +1233,6 @@ def cli():
     update_parser.add_argument('name', metavar='VMNAME')
     update_parser.set_defaults(func=update)
 
-    version_info = 'Show program\'s version number and exit'
-    version_parser = subparsers.add_parser('version', description=version_info, help=version_info)
-    version_parser.set_defaults(func=version)
-
     vm_info = 'Create vm'
     vm_parser = subparsers.add_parser('vm', description=vm_info, help=vm_info)
     vm_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
@@ -1259,17 +1257,24 @@ def cli():
                            'individual parameters', metavar='PARAMFILE')
     vm_parser.add_argument('name', metavar='VMNAME', nargs='?')
     vm_parser.set_defaults(func=vm)
+
     if len(sys.argv) == 1:
-        parser.print_help()
-        os._exit(0)
+        sys.argv.append('--help')
+    if sys.argv[1] == '--version':
+        version()
+
     args = parser.parse_args()
+
     if args.func.func_name == 'vm' and args.client is not None and ',' in args.client:
             args.client = random.choice(args.client.split(','))
             common.pprint("Selecting %s for creation" % args.client, color='green')
+
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+
     if args.client != 'all' and not baseconfig.enabled:
         common.pprint("Disabled hypervisor.Leaving...", color='red')
         os._exit(1)
+
     args.func(args)
 
 
