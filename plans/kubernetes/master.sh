@@ -18,3 +18,7 @@ scp /etc/kubernetes/admin.conf root@kunode0[[ number + 1 ]]:/etc/kubernetes/
 ssh root@kunode0[[ number +1 ]] $CMD > kunode0[[ number +1 ]].log
 [% endfor %]
 [% endif %]
+mkdir -p /root/.kube
+cp -i /etc/kubernetes/admin.conf /root/.kube/config
+chown root:root /root/.kube/config
+
