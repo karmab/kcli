@@ -21,4 +21,7 @@ ssh root@kunode0[[ number +1 ]] $CMD > kunode0[[ number +1 ]].log
 mkdir -p /root/.kube
 cp -i /etc/kubernetes/admin.conf /root/.kube/config
 chown root:root /root/.kube/config
-
+[% if skydive %]
+kubectl create ns skydive
+kubectl create -n skydive -f https://raw.githubusercontent.com/skydive-project/skydive/master/contrib/kubernetes/skydive.yaml
+[% endif %]

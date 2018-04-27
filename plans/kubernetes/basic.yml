@@ -3,6 +3,8 @@ parameters:
  domain: karmalabs.com
  template: CentOS-7-x86_64-GenericCloud.qcow2
  deploy_app: false
+ skydive: false
+ dashboard: true
 
 kumaster:
  template: [[ template ]]
@@ -30,7 +32,12 @@ kumaster:
   - app.sh
 [% endif %]
   - heapster.sh
+[% if dashboard %]
   - dashboard.sh
+[% endif %]
+[% if skydive %]
+  - skydive.sh
+[% endif %]
 
 [% if nodes > 0 %]
 [% for number in range(0, nodes) %]
