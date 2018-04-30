@@ -1,0 +1,36 @@
+heat_template_version: 2014-10-16
+
+description: >
+  Post Configuration
+
+parameters:
+  servers:
+    type: json
+  username:
+    type: string
+  passwd:
+    type: string
+  storageid:
+    type: string
+
+resources:
+  ExtraConfig:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      inputs:
+        - name: USERNAME
+        - name: PASSWD
+        - name: STORAGEID
+      config: {get_file: /home/stack/templates/postconfig/postconfig.sh}
+
+  ExtraDeployments:
+    type: OS::Heat::SoftwareDeployments
+    properties:
+      servers:  {get_param: servers}
+      config: {get_resource: ExtraConfig}
+      actions: ['CREATE','UPDATE']
+      input_values:
+        USERNAME: {get_param: username}
+        PASSWD: {get_param: passwd}
+        STORAGEID: {get_param: storageid}

@@ -1,0 +1,107 @@
+heat_template_version: 2016-04-08
+
+description: >
+  Configure os-net-config mappings for specific nodes
+  Your environment file needs to look like:
+    parameter_defaults:
+      NetConfigDataLookup:
+        node1:
+          nic1: "00:c8:7c:e6:f0:2e"
+        node2:
+          nic1: "00:18:7d:99:0c:b6"
+        node3:
+          dmiString: 'system-uuid'
+          id: 'A8C85861-1B16-4803-8689-AFC62984F8F6'
+          nic1: em3
+        # Dell PowerEdge
+        nodegroup1:
+          dmiString: "system-product-name"
+          id: "PowerEdge R630"
+          nic1: em3
+          nic2: em1
+          nic3: em2
+        # Cisco UCS B200-M4"
+        nodegroup2:
+          dmiString: "system-product-name"
+          id: "UCSB-B200-M4"
+          nic1: enp7s0
+          nic2: enp6s0
+
+  This will result in the first node* entry where either:
+       a) a mac matches a local device
+    or b) a DMI String matches the specified id
+  being written as a mapping file for os-net-config in
+  /etc/os-net-config/mapping.yaml
+
+parameters:
+  # Note this requires a liberty heat or newer in the undercloud due to
+  # the 2015-10-15 (which is required to enable str_replace serializing
+  # the json parameter to json, another approch with a string parameter
+  # will be required for older heat versions)
+  NetConfigDataLookup:
+    type: json
+    default: {}
+    description: per-node configuration map
+
+resources:
+  userdata:
+    type: OS::Heat::MultipartMime
+    properties:
+      parts:
+      - config: {get_resource: OsNetConfigMappings}
+
+  OsNetConfigMappings:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: ungrouped
+      config:
+        str_replace:
+          template: |
+            #!/bin/sh
+            eth_addr=$(cat /sys/class/net/*/address | tr '\n' ',')
+            mkdir -p /etc/os-net-config
+
+            # Create an os-net-config mapping file, note this defaults to
+            # /etc/os-net-config/mapping.yaml, so we use that name despite
+            # rendering the result as json
+            echo '$node_lookup' | python -c "
+            import json
+            import sys
+            import copy
+            from subprocess import PIPE, Popen
+            import yaml
+
+            def write_mapping_file(interface_mapping):
+              with open('/etc/os-net-config/mapping.yaml', 'w') as f:
+                yaml.safe_dump(interface_mapping, f,  default_flow_style=False)
+
+            input = sys.stdin.readline() or '{}'
+            data = json.loads(input)
+            for node in data:
+              interface_mapping = {'interface_mapping':
+                                      copy.deepcopy(data[node])}
+              if 'dmiString' in interface_mapping['interface_mapping']:
+                del interface_mapping['interface_mapping']['dmiString']
+              if 'id' in interface_mapping['interface_mapping']:
+                del interface_mapping['interface_mapping']['id']
+              # Match on mac addresses first
+              if any(x in '$eth_addr'.split(',') for x in data[node].values()):
+                write_mapping_file(interface_mapping)
+                break
+              # If data contain dmiString and id keys, try to match node(group)
+              if 'dmiString' in data[node] and 'id' in data[node]:
+                ps = Popen([ 'dmidecode',
+                             '--string', data[node].get('dmiString') ],
+                             stdout=PIPE)
+                out, err = ps.communicate()
+                if data[node].get('id') == out.rstrip():
+                  write_mapping_file(interface_mapping)
+                  break
+            "
+          params:
+            $node_lookup: {get_param: NetConfigDataLookup}
+
+outputs:
+  OS::stack_id:
+    value: {get_resource: userdata}
+
