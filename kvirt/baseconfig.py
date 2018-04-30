@@ -479,3 +479,5 @@ class Kbaseconfig:
                 print("Available parameters:")
                 for parameter in sorted(parameters):
                     print(" %s: %s" % (parameter, parameters[parameter]))
+            info = {'product': product, 'comments': comments, 'description': description, 'parameters': parameters}
+            return info

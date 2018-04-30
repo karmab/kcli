@@ -1,7 +1,12 @@
-function productcreate(product){
-  var plan = prompt("Enter plan name or leave blank to autogenerate one");
+function productcreate(){
   $("#wheel").show();
-  data = {'plan': plan, 'action': 'create', 'product': product};
+  var product = $("#product").val();
+  var plan = $("#plan").val();
+  var parameters = { };
+  $.each($('createproduct').serializeArray(), function() {
+    parameters[this.name] = this.value;
+  });
+  data = {'action': 'create', 'product': product, 'plan': plan, 'parameters': parameters};
   $.ajax({
        type: "POST",
         url: '/productaction',
@@ -10,9 +15,9 @@ function productcreate(product){
             $("#wheel").hide();
             if (data.result == 'success') {
                 plan = data.plan
-                $('.top-right').notify({message: { text: "Plan "+plan+" created!!!" }, type: 'success'}).show();
+                $('.top-right').notify({message: { text: "Product "+plan+" created!!!" }, type: 'success'}).show();
             } else {
-                $('.top-right').notify({message: { text: "Plan "+plan+" not created because "+data.reason }, type: 'danger'}).show();
+                $('.top-right').notify({message: { text: "Product "+plan+" not created because "+data.reason }, type: 'danger'}).show();
             };
         }
     });

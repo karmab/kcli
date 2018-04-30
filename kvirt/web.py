@@ -565,13 +565,18 @@ def products():
     return render_template('products.html', title='Products', client=baseconfig.client)
 
 
-@app.route('/productcreate')
-def productcreate():
+@app.route('/productcreate/<prod>')
+def productcreate(prod):
     """
     product form
     """
-    config = Kconfig()
-    return render_template('productcreate.html', title='CreateProduct', client=config.client)
+    config = Kbaseconfig()
+    info = config.info_product(prod)
+    parameters = info['parameters']
+    description = info['description']
+    comments = info['comments']
+    return render_template('productcreate.html', title='CreateProduct', client=config.client, product=prod,
+                           parameters=parameters, description=description, comments=comments)
 
 
 @app.route("/productaction", methods=['POST'])
@@ -585,14 +590,14 @@ def productaction():
         action = request.form['action']
         if action == 'create' and 'plan' in request.form:
             plan = request.form['plan']
+            parameters = request.form['parameters']
             if plan == '':
                 plan = None
-            result = config.create_product(product, plan=plan)
+            result = config.create_product(product, plan=plan, parameters=parameters)
         else:
             result = "Nothing to do"
         print(result)
         response = jsonify(result)
-        print(response)
         response.status_code = 200
         return response
     else:

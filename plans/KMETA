@@ -14,7 +14,7 @@
   group: foreman
   url: github.com/karmab/kcli/plans/foreman
   file: upstream.yml
-  description: Upstream Foreman 1.15
+  description: Upstream Foreman
   numvms: 1
   memory: 6144
   template: CentOS-7-x86_64-GenericCloud.qcow2
@@ -22,12 +22,13 @@
     password: unix1234
     organization: Karmalabs
     location: Madrid
+    version: 1.17
 
 - name: katello
   group: foreman
   url: github.com/karmab/kcli/plans/foreman
   file: katello.yml
-  description: Upstream Foreman 1.15 with Katello
+  description: Upstream Foreman with Katello
   numvms: 1
   memory: 8192
   template: CentOS-7-x86_64-GenericCloud.qcow2
@@ -35,32 +36,22 @@
     password: unix1234
     organization: Karmalabs
     location: Madrid
-
-- name: foreman
-  group: foreman
-  url: github.com/karmab/kcli/plans/foreman
-  file: upstream12.yml
-  description: Upstream Foreman 1.12
-  numvms: 1
-  memory: 6144
-  template: CentOS-7-x86_64-GenericCloud.qcow2
-  parameters:
-    password: unix1234
-    organization: Karmalabs
-    location: Madrid
+    foreman_version: 1.17
+    katello_version: 3.5
 
 - name: satellite
   group: foreman
   url: github.com/karmab/kcli/plans/foreman
   file: downstream.yml
   memory: 8192
-  description: Downstream Foreman 6.2
+  description: Downstream Satellite
   numvms: 1
-  template: rhel-guest-image-7.3-35.x86_64.qcow2
+  template: rhel-server-7.4-x86_64-kvm.qcow2
   parameters:
     password: unix1234
     organization: Karmalabs
     location: Madrid
+    version: 6.3
 
 - name: rhgs
   group: gluster
