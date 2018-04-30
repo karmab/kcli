@@ -1253,7 +1253,7 @@ def cli():
             common.pprint("Selecting %s for creation" % args.client, color='green')
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     if args.client != 'all' and not baseconfig.enabled:
-        common.pprint("Disabled hypervisor.Leaving...", color='red')
+        common.pprint("Disabled hypervisor %s.Leaving..." % args.client, color='red')
         os._exit(1)
     args.func(args)
 
