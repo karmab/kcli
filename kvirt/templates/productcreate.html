@@ -18,12 +18,12 @@
     </div>
     <div class="form-group">
         <label for="inputName">Plan</label>
-        <input required="false" class="form-control" id="plan" placeholder="Enter Plan Name or leave empty for auto generation">
+        <input class="form-control" id="plan" placeholder="Enter Plan Name or leave empty for auto generation">
     </div>
     {% for parameter in parameters %}
     <div class="form-group">
         <label for="inputName">{{ parameter }}</label>
-        <input required="true" class="form-control" id="path" placeholder="{{ parameter }}" value="{{ parameters[parameter] }}">
+        <input required="true" class="form-control" name="{{ parameter }}" id="{{ parameter }}" value="{{ parameters[parameter] }}">
     </div>
     {% endfor %}
     <button type="submit" class="btn btn-primary" onclick="productcreate();">Create</button>

@@ -2,8 +2,8 @@ function productcreate(){
   $("#wheel").show();
   var product = $("#product").val();
   var plan = $("#plan").val();
-  var parameters = { };
-  $.each($('createproduct').serializeArray(), function() {
+  var parameters = {};
+  $.each($('#createproduct').serializeArray(), function() {
     parameters[this.name] = this.value;
   });
   data = {'action': 'create', 'product': product, 'plan': plan, 'parameters': parameters};

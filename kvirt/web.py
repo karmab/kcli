@@ -571,7 +571,7 @@ def productcreate(prod):
     product form
     """
     config = Kbaseconfig()
-    info = config.info_product(prod)
+    info = config.info_product(prod, verbose=False)
     parameters = info['parameters']
     description = info['description']
     comments = info['comments']
@@ -590,10 +590,16 @@ def productaction():
         action = request.form['action']
         if action == 'create' and 'plan' in request.form:
             plan = request.form['plan']
-            parameters = request.form['parameters']
+            parameters = {}
+            for p in request.form:
+                if p.startswith('parameters'):
+                    value = request.form[p]
+                    key = p.replace('parameters[', '').replace(']', '')
+                    parameters[key] = value
+            print(parameters)
             if plan == '':
                 plan = None
-            result = config.create_product(product, plan=plan, parameters=parameters)
+            result = config.create_product(product, plan=plan, overrides=parameters)
         else:
             result = "Nothing to do"
         print(result)

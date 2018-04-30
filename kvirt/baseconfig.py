@@ -434,7 +434,7 @@ class Kbaseconfig:
             common.pprint("No parameters found. Leaving...", color='blue')
         return {'result': 'success'}
 
-    def info_product(self, name, repo=None, group=None):
+    def info_product(self, name, repo=None, group=None, verbose=True):
         """Info product"""
         if repo is not None and group is not None:
             products = [product for product in self.list_products()
@@ -462,6 +462,8 @@ class Kbaseconfig:
             template = product.get('template')
             comments = product.get('comments')
             parameters = product.get('parameters')
+            if not verbose:
+                return {'product': product, 'comments': comments, 'description': description, 'parameters': parameters}
             if description is not None:
                 print("description: %s" % description)
             if group is not None:
@@ -479,5 +481,3 @@ class Kbaseconfig:
                 print("Available parameters:")
                 for parameter in sorted(parameters):
                     print(" %s: %s" % (parameter, parameters[parameter]))
-            info = {'product': product, 'comments': comments, 'description': description, 'parameters': parameters}
-            return info
