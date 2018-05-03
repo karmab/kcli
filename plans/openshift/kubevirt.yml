@@ -9,6 +9,7 @@ kubevirt:
  template: CentOS-7-x86_64-GenericCloud.qcow2
  numcpus: 2
  memory: [[ memory ]]
+ reservedns: true
  nets:
   - default
  disks:
