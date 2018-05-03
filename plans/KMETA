@@ -358,7 +358,7 @@
   comments: version has to be superior or equal to 0.1.0
   parameters:
    docker_disk_size: 60
-   kubevirt_version: v0.4.0
+   kubevirt_version: v0.4.1
    initializer: false
    openshift_version: 3.9
 
@@ -485,6 +485,18 @@
   parameters:
    admin_password: unix1234
    version: queen
+
+- name: advancedtripleosp12
+  group: openstack
+  url: github.com/karmab/kcli/plans/openstack/tripleo
+  file: tripleo-advancedosp12-containers.yml
+  description: Downstream tripleo using containers (1undercloud+3controllers+2compute+3ceph+2Telemetry)
+  numvms: 11
+  template: rhel-server-7.4-x86_64-kvm.qcow2
+  parameters:
+   admin_password: unix1234
+   version: pike
+
 
 - name: ovirt
   group: ovirt
