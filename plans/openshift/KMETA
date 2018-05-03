@@ -149,11 +149,11 @@
   file: kubevirt.yml
   description: Upstream Kubevirt all in one
   numvms: 1
-  memory: 8192
+  memory: 10240
   template: CentOS-7-x86_64-GenericCloud.qcow2
   comments: version has to be superior or equal to 0.1.0
   parameters:
-   docker_disk_size: 60
+   docker_disk_size: 40
    kubevirt_version: v0.4.1
    initializer: false
    openshift_version: 3.9

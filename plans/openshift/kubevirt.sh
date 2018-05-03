@@ -13,3 +13,4 @@ chmod u+x /usr/bin/virtctl
 oc project default
 docker pull karmab/kcli
 echo alias kcli=\'docker run -it --rm -v ~/.kube:/root/.kube:Z -v ~/.ssh:/root/.ssh:Z  -v ~/.kcli:/root/.kcli:Z karmab/kcli\' >> /root/.bashrc
+ssh-keygen -t rsa -N '' -f /root/.ssh/id_rsa

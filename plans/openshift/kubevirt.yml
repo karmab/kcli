@@ -1,9 +1,9 @@
 parameters:
-   docker_disk_size: 60
+   docker_disk_size: 40
    kubevirt_version: v0.4.1
    initializer: false
    openshift_version: 3.9
-   memory: 8192
+   memory: 10240
 
 kubevirt:
  template: CentOS-7-x86_64-GenericCloud.qcow2
@@ -12,7 +12,7 @@ kubevirt:
  nets:
   - default
  disks:
-  - size: 10
+  - size: 60
   - size: [[ docker_disk_size ]] 
  pool: default
  files:
