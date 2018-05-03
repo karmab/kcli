@@ -18,8 +18,6 @@ kubevirt:
  files:
   - path: /root/vm.yml
     origin: vm.yml
-  - path: /root/iscsi-demo-target.yaml
-    origin: iscsi-demo-target.yaml
  scripts: 
   - requirements.sh
   - upstream.sh

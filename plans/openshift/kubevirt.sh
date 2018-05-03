@@ -6,7 +6,6 @@ oc project kube-system
 wget https://github.com/kubevirt/kubevirt/releases/download/$VERSION/kubevirt.yaml
 oc adm policy add-scc-to-user privileged -z kubevirt-privileged
 oc adm policy add-scc-to-user privileged -z kubevirt-controller
-oc adm policy add-scc-to-user hostmount-anyuid -z kubevirt-iscsi
 oc create -f kubevirt.yaml
 wget https://github.com/kubevirt/kubevirt/releases/download/$VERSION/virtctl-$VERSION-linux-amd64
 mv virtctl-$VERSION-linux-amd64 /usr/bin/virtctl
