@@ -120,9 +120,11 @@ class Kubevirt(object):
                                                                                          'cpu': {'cores': numcpus},
                                                                                          'devices': {'disks': []}},
                                                                               'volumes': []}}}, 'apiVersion':
-              'kubevirt.io/v1alpha1', 'metadata': {'name': name, 'namespace': namespace, 'annotations':
-                                                   {'kcli/plan': plan, 'kcli/profile': profile,
-                                                    'kcli/template': template}}}
+              'kubevirt.io/v1alpha1', 'metadata': {'name': name, 'namespace': namespace, 'labels':
+                                                   {'kubevirt.io/os': 'linux'}, 'annotations': {'kcli/plan': plan,
+                                                                                                'kcli/profile': profile,
+                                                                                                'kcli/template':
+                                                                                                template}}}
         vm['spec']['template']['spec']['domain']['machine'] = {'type': 'q35'}
         features = {}
         for flag in cpuflags:
