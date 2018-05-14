@@ -328,16 +328,12 @@ class Kubevirt(object):
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if find_executable('virtctl') is not None:
-            home = os.path.expanduser('~')
-            command = "virtctl vnc --kubeconfig=%s/.kube/config %s -n %s" % (home, name, namespace)
+            command = "virtctl vnc %s -n %s" % (name, namespace)
         else:
             common.pprint("Tunneling virtctl through remote host %s. Make sure virtctl is installed there" % self.host,
                           color='blue')
-            command = "ssh -o LogLevel=QUIET -Xtp %s %s@%s virtctl vnc --kubeconfig=.kube/config %s -n %s" % (self.port,
-                                                                                                              self.user,
-                                                                                                              self.host,
-                                                                                                              name,
-                                                                                                              namespace)
+            command = "ssh -o LogLevel=QUIET -Xtp %s %s@%s virtctl vnc -n %s" % (self.port, self.user, self.host, name,
+                                                                                 namespace)
         if self.debug:
             print(command)
         os.system(command)
