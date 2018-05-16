@@ -16,7 +16,7 @@ RUN yum -y install epel-release && \
     yum -y install gcc git libvirt-devel python-devel genisoimage qemu-kvm nmap-ncat python-pip openssh-clients
 
 # Group the pip installation
-RUN pip install --no-cache-dir ipaddress
+RUN pip install -U --no-cache-dir ipaddress
 RUN pip install --no-cache-dir git+https://github.com/karmab/kcli.git docker kubernetes
 
 VOLUME ["/var/run/libvirt", "/root/.ssh", "/root"]

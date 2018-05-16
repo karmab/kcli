@@ -5,6 +5,7 @@ parameters:
  deploy_app: false
  skydive: false
  dashboard: true
+ nfs: false
 
 kumaster:
  template: [[ template ]]
@@ -25,6 +26,12 @@ kumaster:
     origin: kube-flannel.yml
   - path: /root/kube-flannel-rbac.yml
     origin: kube-flannel-rbac.yml
+[% if nfs %]
+  - path: /root/nfs.yml
+    origin: nfs.yml
+  - path: /root/nfs.sh
+    origin: nfs.sh
+[% endif %]
  scripts: 
   - pre.sh
   - master.sh

@@ -3,7 +3,8 @@ parameters:
  domain: karmalabs.com
  template: CentOS-7-x86_64-GenericCloud.qcow2
  deploy_app: false
- kubevirt_version: v0.4.1
+ kubevirt_version: v0.5.1-alpha.1
+ nfs: false
 
 kumaster:
  template: [[ template ]]
@@ -26,7 +27,12 @@ kumaster:
     origin: kube-flannel-rbac.yml
   - path: /root/vm.yml
     origin: vm.yml
-
+[% if nfs %]
+  - path: /root/nfs.yml
+    origin: nfs.yml
+  - path: /root/nfs.sh
+    origin: nfs.sh
+[% endif %]
  scripts: 
   - pre.sh
   - master.sh
