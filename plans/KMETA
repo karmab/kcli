@@ -232,26 +232,30 @@
   group: openshift
   url: github.com/karmab/kcli/plans/openshift
   file: multi.yml
-  description: Openshift with arbitrary number of nodes
-  comments: an extra lb node is created when there are more than 1 master. The first node is also tagged as infra to host router and docker registry. You can create a dedicated nfs node with nfs parameter or have the master do that for you with nfs_master
-  numvms: 7
-  template: CentOS-7-x86_64-GenericCloud.qcow2
+  description: Downstream ocp with arbitrary number of nodes
+  comments: router and registry run on the master node(s), as do gluster components
+  numvms: 4
+  template: rhel-server-7.4-x86_64-kvm.qcow2
   parameters:
-    template: CentOS-7-x86_64-GenericCloud.qcow2
+    template: rhel-server-7.4-x86_64-kvm.qcow2
     domain: karmalabs.local
-    docker_disk_size: 30
-    masters: 3
-    master_memory: 8192
-    nodes: 3
+    base_disk_size: 60
+    cns_disk_size: 100
+    cns_disk_device: vdb
+    master_memory: 8144
     node_memory: 4096
-    cidr: 192.168.105.0/24
-    deploy: true
+    masters: 1
+    nodes: 3
+    cidr: 192.168.96.0/24
     user: developer
     password: developer
-    openshift_version: 3.7
-    upstream: true
+    deploy: false
+    metrics: true
+    cns: true
+    asb: true
     nfs: false
-    nfs_master: false
+    org: ansibleplaybookbundle
+    version: 3.9
 
 - name: multi39
   group: openshift
