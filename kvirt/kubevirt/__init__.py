@@ -195,7 +195,8 @@ class Kubevirt(object):
                              reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides,
                              iso=False)
             cloudinitdata = open('/tmp/user-data', 'r').read()
-            cloudinitdisk = {'volumeName': 'cloudinitvolume', 'cdrom': {'readOnly': True}, 'name': 'cloudinitdisk'}
+            cloudinitdisk = {'volumeName': 'cloudinitvolume', 'cdrom': {'readOnly': True, 'bus': 'sata'},
+                             'name': 'cloudinitdisk'}
             vm['spec']['template']['spec']['domain']['devices']['disks'].append(cloudinitdisk)
             cloudinitencoded = base64.b64encode(cloudinitdata)
             cloudinitvolume = {'cloudInitNoCloud': {'userDataBase64': cloudinitencoded}, 'name': 'cloudinitvolume'}
