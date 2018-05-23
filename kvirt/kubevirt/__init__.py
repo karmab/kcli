@@ -7,7 +7,6 @@ Kubevirt class
 from kubernetes import client, config
 from kvirt import common
 from kvirt.defaults import TEMPLATES
-import base64
 import datetime
 from distutils.spawn import find_executable
 import os
@@ -24,7 +23,8 @@ REGISTRYDISKS = ['kubevirt/alpine-registry-disk-demo', 'kubevirt/cirros-registry
 
 def pretty_print(o):
     print yaml.dump(o, default_flow_style=False, indent=2, allow_unicode=True,
-                    encoding='utf-8').replace('!!python/unicode ', '').replace("'", '')
+                    encoding='utf-8').replace('!!python/unicode ', '').replace("'", '').replace('\n\n', '\n')\
+        .replace('#cloud-config', '|\n            #cloud-config')
 
 
 class Kubevirt(object):
@@ -194,12 +194,12 @@ class Kubevirt(object):
             common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
                              reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides,
                              iso=False)
-            cloudinitdata = open('/tmp/user-data', 'r').read()
+            cloudinitdata = open('/tmp/user-data', 'r').read().strip()
+            print cloudinitdata
             cloudinitdisk = {'volumeName': 'cloudinitvolume', 'cdrom': {'readOnly': True, 'bus': 'sata'},
                              'name': 'cloudinitdisk'}
             vm['spec']['template']['spec']['domain']['devices']['disks'].append(cloudinitdisk)
-            cloudinitencoded = base64.b64encode(cloudinitdata)
-            cloudinitvolume = {'cloudInitNoCloud': {'userDataBase64': cloudinitencoded}, 'name': 'cloudinitvolume'}
+            cloudinitvolume = {'cloudInitNoCloud': {'userData': cloudinitdata}, 'name': 'cloudinitvolume'}
             vm['spec']['template']['spec']['volumes'].append(cloudinitvolume)
         if self.debug:
             pretty_print(vm)
@@ -329,6 +329,7 @@ class Kubevirt(object):
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if find_executable('virtctl') is not None:
+            common.pprint("Using local virtctl")
             command = "virtctl vnc %s -n %s" % (name, namespace)
         else:
             common.pprint("Tunneling virtctl through remote host %s. Make sure virtctl is installed there" % self.host,
@@ -349,6 +350,7 @@ class Kubevirt(object):
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if find_executable('virtctl') is not None:
+            common.pprint("Using local virtctl")
             home = os.path.expanduser('~')
             command = "virtctl console --kubeconfig=%s/.kube/config %s -n %s" % (home, name, namespace)
         else:
