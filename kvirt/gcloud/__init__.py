@@ -73,45 +73,49 @@ class Kgcloud(object):
         body = {'name': name, 'machineType': machine_type}
         body['disks'] = []
         for index, disk in enumerate(disks):
-            newdisk = {'boot': True, 'autoDelete': True}
+            newdisk = {'boot': False, 'autoDelete': True}
             if index == 0 and template is not None:
                 template = self.__evaluate_template(template)
                 templateproject = self.__get_project(template)
                 image_response = conn.images().getFromFamily(project=templateproject, family=template).execute()
                 src = image_response['selfLink']
                 newdisk['initializeParams'] = {'sourceImage': src}
+                newdisk['boot'] = True
             else:
-                # break
                 if isinstance(disk, int):
                     disksize = disk
                 elif isinstance(disk, dict):
                     disksize = disk.get('size', '10')
-                devicename = 'persistent-disk-%s' % index
                 diskname = "%s-disk%s" % (name, index)
-                diskpath = "zones/%s/disks/%s-disk%s" % (zone, name, index)
-                info = {'diskSizeGb': disksize, 'sourceDisk': 'zones/%s/diskTypes/pd-standard' % zone, 'name': diskname}
+                diskpath = '/compute/v1/projects/%s/zones/%s/disks/%s' % (project, zone, diskname)
+                info = {'sizeGb': disksize, 'sourceDisk': 'zones/%s/diskTypes/pd-standard' % zone, 'name': diskname}
                 conn.disks().insert(zone=zone, project=project, body=info).execute()
                 timeout = 0
                 while True:
                     if timeout > 60:
-                        return {'result': 'failure', 'reason': 'timeout waiting for new disk to be ready'}
+                        return {'result': 'failure', 'reason': 'timeout waiting for disk %s to be ready' % diskname}
                     newstatus = conn.disks().get(zone=zone, project=project, disk=diskname).execute()
                     if newstatus['status'] == 'READY':
                         break
                     else:
                         timeout += 5
                         time.sleep(5)
-                        common.pprint("Waiting for disk to be ready", color='green')
-                newdisk = {'boot': False, 'autoDelete': True, 'source': diskpath, 'deviceName': devicename}
+                        common.pprint("Waiting for disk %s to be ready" % diskname, color='green')
+                newdisk['source'] = diskpath
             body['disks'].append(newdisk)
         body['networkInterfaces'] = []
+        foundnets = []
         for net in nets:
             if isinstance(net, str):
                 netname = net
             elif isinstance(net, dict) and 'name' in net:
                 netname = net['name']
+            if netname in foundnets:
+                continue
+            else:
+                foundnets.append(netname)
             newnet = {'network': 'global/networks/%s' % netname}
-            if net == 'default':
+            if netname == 'default':
                 newnet['accessConfigs'] = [{'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}]
             body['networkInterfaces'].append(newnet)
         body['serviceAccounts'] = [{'email': 'default',
@@ -211,11 +215,12 @@ class Kgcloud(object):
             plan = ''
             profile = ''
             report = 'N/A'
-            for data in vm['metadata']['items']:
-                if data['key'] == 'plan':
-                    plan = data['value']
-                if data['key'] == 'profile':
-                    profile = data['value']
+            if 'items' in vm['metadata']:
+                for data in vm['metadata']['items']:
+                    if data['key'] == 'plan':
+                        plan = data['value']
+                    if data['key'] == 'profile':
+                        profile = data['value']
             vms.append([name, state, ip, source, plan, profile, report])
         return vms
 
@@ -270,17 +275,18 @@ class Kgcloud(object):
             diskname = os.path.basename(disk['source'])
             diskformat = disk['interface']
             drivertype = disk['type']
-            path = os.path.basename(disk['licenses'][0]) if 'licences' in disk else ''
+            path = os.path.basename(disk['source'])
             diskinfo = conn.disks().get(zone=zone, project=project, disk=diskname).execute()
             disksize = diskinfo['sizeGb']
             disks.append({'device': devname, 'size': disksize, 'format': diskformat, 'type': drivertype, 'path': path})
         if disks:
             yamlinfo['disks'] = disks
-        for data in vm['metadata']['items']:
-            if data['key'] == 'plan':
-                yamlinfo['plan'] = data['value']
-            if data['key'] == 'profile':
-                yamlinfo['profile'] = data['value']
+        if 'items' in vm['metadata']:
+            for data in vm['metadata']['items']:
+                if data['key'] == 'plan':
+                    yamlinfo['plan'] = data['value']
+                if data['key'] == 'profile':
+                    yamlinfo['profile'] = data['value']
         common.print_info(yamlinfo, output=output, fields=fields, values=values)
         return {'result': 'success'}
 
@@ -356,8 +362,8 @@ class Kgcloud(object):
         return
 
     def add_disk(self, name, size, pool=None, thin=True, template=None, shareable=False, existing=None):
-        if int(size) < 500:
-            common.pprint("Note that default size will be 500Gb", color='blue')
+        # if int(size) < 500:
+        #    common.pprint("Note that default size will be 500Gb", color='blue')
         conn = self.conn
         project = self.project
         zone = self.zone
@@ -367,7 +373,7 @@ class Kgcloud(object):
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         numdisks = len(vm['disks']) + 1
         diskname = "%s-disk%s" % (name, numdisks)
-        body = {'diskSizeGb': size, 'sourceDisk': 'zones/%s/diskTypes/pd-standard' % zone, 'name': diskname}
+        body = {'sizeGb': size, 'sourceDisk': 'zones/%s/diskTypes/pd-standard' % zone, 'name': diskname}
         conn.disks().insert(zone=zone, project=project, body=body).execute()
         timeout = 0
         while True:
@@ -397,6 +403,8 @@ class Kgcloud(object):
         alldisks = conn.disks().list(zone=zone, project=project).execute()
         if 'items' in alldisks:
             for disk in alldisks['items']:
+                if self.debug:
+                    print(disk)
                 diskname = disk['name']
                 pool = os.path.basename(disk['type'])
                 disks[diskname] = {'pool': pool, 'path': zone}
@@ -440,19 +448,18 @@ class Kgcloud(object):
     def create_network(self, name, cidr, dhcp=True, nat=True, domain=None, plan='kvirt', pxe=None):
         conn = self.conn
         project = self.project
-        zone = self.zone
-        body = {'name': name}
-        conn.networks().create(project=project, zone=zone, body=body).execute()
-        return
+        body = {'name': name, 'IPv4Range': cidr}
+        conn.networks().insert(project=project, body=body).execute()
+        return {'result': 'success'}
 
     def delete_network(self, name=None):
         conn = self.conn
         project = self.project
-        action = conn.networks().delete(project=project, network=name).execute()
-        if action is None:
-            return {'result': 'failure', 'reason': "Network %s not found" % name}
-        else:
+        try:
+            conn.networks().delete(project=project, network=name).execute()
             return {'result': 'success'}
+        except:
+            return {'result': 'failure', 'reason': "Network %s not found" % name}
 
 # should return a dict of pool strings
     def list_pools(self):
@@ -465,8 +472,10 @@ class Kgcloud(object):
         nets = conn.networks().list(project=project).execute()
         networks = {}
         for net in nets['items']:
+            if self.debug:
+                print(net)
             networkname = net['name']
-            cidr = ''
+            cidr = net['IPv4Range'] if 'IPv4Range' in net else ''
             dhcp = True
             domainname = ''
             mode = ''
