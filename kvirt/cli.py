@@ -448,7 +448,7 @@ def vm(args):
     config = Kconfig(client=args.client, debug=args.debug)
     if name is None:
         name = nameutils.get_random_name()
-        if config.type == 'kubevirt':
+        if config.type in ['gcloud', 'kubevirt']:
             name = name.replace('_', '-')
         common.pprint("Using %s as name of the vm" % name, color='green')
     if profile is not None and profile.endswith('.yml'):

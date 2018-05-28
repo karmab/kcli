@@ -11,16 +11,6 @@ from kvirt import dockerutils
 from kvirt import nameutils
 from kvirt import common
 from kvirt.baseconfig import Kbaseconfig
-from kvirt.fake import Kfake
-from kvirt.kvm import Kvirt
-try:
-    from kvirt.vbox import Kbox
-except:
-    pass
-try:
-    from kvirt.kubevirt import Kubevirt
-except:
-    pass
 from distutils.spawn import find_executable
 import glob
 import os
@@ -41,19 +31,31 @@ class Kconfig(Kbaseconfig):
             k = None
         else:
             if self.type == 'fake':
+                from kvirt.fake import Kfake
                 k = Kfake()
             elif self.type == 'vbox':
+                from kvirt.vbox import Kbox
                 k = Kbox()
             elif self.type == 'kubevirt':
                 context = self.options.get('context')
                 usecloning = self.options.get('usecloning', False)
+                from kvirt.kubevirt import Kubevirt
                 k = Kubevirt(context=context, usecloning=usecloning, host=self.host, port=self.port, user=self.user,
                              debug=debug)
                 self.host = k.host
+            elif self.type == 'gcloud':
+                project = self.options.get('project')
+                if project is None:
+                    common.pprint("Missing project in the configuration. Leaving", color='red')
+                    os._exit(1)
+                zone = self.options.get('zone', 'europe-west1-b')
+                from kvirt.gcloud import Kgcloud
+                k = Kgcloud(host=self.host, port=self.port, user=self.user, zone=zone, project=project, debug=debug)
             else:
                 if self.host is None:
                     common.pprint("Problem parsing your configuration file", color='red')
                     os._exit(1)
+                from kvirt.kvm import Kvirt
                 k = Kvirt(host=self.host, port=self.port, user=self.user, protocol=self.protocol, url=self.url,
                           debug=debug)
             if k.conn is None:

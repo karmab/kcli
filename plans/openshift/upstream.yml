@@ -3,7 +3,7 @@ parameters:
   memory: 6144
   docker_disk_size: 60
   initializer: false
-  openshift_version: 3.9.22
+  openshift_version: 3.9
 
 origin:
  template: [[ template ]]
