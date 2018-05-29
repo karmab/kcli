@@ -152,9 +152,10 @@ class Kgcloud(object):
                                       loader=FileSystemLoader(basedir))
                     templ = env.get_template(os.path.basename(origin))
                     newfile = templ.render(overrides)
+                    startup_script += "echo '%s' > %s\n" % (newfile, path)
                 else:
                     newfile = open(origin, 'r').read()
-                    startup_script += 'echo """%s""" > %s\n' % (newfile, path)
+                    startup_script += "echo '%s' > %s\n" % (newfile, path)
             elif content is None:
                 continue
         if cmds:
@@ -166,7 +167,6 @@ class Kgcloud(object):
                                          variable_start_string='[[',
                                          variable_end_string=']]').from_string(cmd).render(overrides)
                 startup_script += '%s\n' % newcmd
-            # startup_script += '\n'.join(cmds)
             newval = {'key': 'startup-script', 'value': startup_script}
             body['metadata']['items'].append(newval)
         if not os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME'])\
