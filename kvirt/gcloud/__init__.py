@@ -4,11 +4,14 @@
  Interacts with google compute engine
 """
 
+from jinja2 import Environment, FileSystemLoader
 from kvirt import common
 from dateutil import parser as dateparser
 import googleapiclient.discovery
 import os
 import time
+
+binary_types = ['bz2', 'deb', 'jpg', 'gz', 'jpeg', 'iso', 'png', 'rpm', 'tgz', 'zip']
 
 
 # your base class __init__ needs to define the conn attribute and set it to None when backend cannot be reached
@@ -62,7 +65,7 @@ class Kgcloud(object):
         region = self.region
         if numcpus != 1 and numcpus % 2 != 0:
             return {'result': 'failure', 'reason': "Number of cpus is not even"}
-        if memory % 1024 != 0:
+        if memory != 512 and memory % 1024 != 0:
             return {'result': 'failure', 'reason': "Memory is not multiple of 1024"}
         if numcpus > 1 and memory < 2048:
             common.pprint("Rounding memory to 2048Mb as more than one cpu is used", color='blue')
@@ -126,8 +129,44 @@ class Kgcloud(object):
                                     'scopes': ['https://www.googleapis.com/auth/devstorage.read_write',
                                                'https://www.googleapis.com/auth/logging.write']}]
         body['metadata'] = {'items': []}
+        startup_script = ''
+        for fil in files:
+            if not isinstance(fil, dict):
+                continue
+            origin = fil.get('origin')
+            path = fil.get('path')
+            content = fil.get('content')
+            if origin is not None:
+                origin = os.path.expanduser(origin)
+                if not os.path.exists(origin):
+                    print("Skipping file %s as not found" % origin)
+                    continue
+                    binary = True if '.' in origin and origin.split('.')[-1].lower() in binary_types else False
+                    if binary:
+                        with open(origin, "rb") as f:
+                            content = f.read().encode("base64")
+                    elif overrides:
+                        basedir = os.path.dirname(origin) if os.path.dirname(origin) != '' else '.'
+                        env = Environment(block_start_string='[%', block_end_string='%]',
+                                          variable_start_string='[[', variable_end_string=']]',
+                                          loader=FileSystemLoader(basedir))
+                        templ = env.get_template(os.path.basename(origin))
+                        newfile = templ.render(overrides)
+                    else:
+                        newfile = open(origin, 'r').read()
+                    startup_script += 'echo """%s""" > %s\n' % (newfile, path)
+                elif content is None:
+                    continue
         if cmds:
-            startup_script = '\n'.join(cmds)
+            for cmd in cmds:
+                if cmd.startswith('#'):
+                    continue
+                else:
+                    newcmd = Environment(block_start_string='[%', block_end_string='%]',
+                                         variable_start_string='[[',
+                                         variable_end_string=']]').from_string(cmd).render(overrides)
+                startup_script += '%s\n' % newcmd
+            # startup_script += '\n'.join(cmds)
             newval = {'key': 'startup-script', 'value': startup_script}
             body['metadata']['items'].append(newval)
         if not os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME'])\
@@ -454,14 +493,16 @@ class Kgcloud(object):
         project = self.project
         region = self.region
         body = {'name': name, "autoCreateSubnetworks": False}
+        # body = {'name': name, "autoCreateSubnetworks": True}
         conn.networks().insert(project=project, body=body).execute()
         timeout = 0
-        subnetbody = {'name': name, "ipCidrRange": cidr, "network": "projects/%s/global/networks/%s" % (project, name),
-                      'region': "projects/%s/regions/%s" % (project, region)}
         while True:
             if timeout > 60:
                 return {'result': 'failure', 'reason': 'timeout waiting for network to be ready'}
             try:
+                subnetbody = {'name': name, "ipCidrRange": cidr,
+                              "network": "projects/%s/global/networks/%s" % (project, name),
+                              'region': "projects/%s/regions/%s" % (project, region)}
                 conn.subnetworks().insert(project=project, subnet=subnetbody).execute()
                 allowed = {"IPProtocol": "tcp", "ports": ["22"]}
                 firewallbody = {'name': 'allow-ssh-%s' % name, 'network': 'global/networks/%s' % name,
@@ -480,6 +521,7 @@ class Kgcloud(object):
         region = self.region
         try:
             network = conn.networks().get(project=project, network=name).execute()
+            # conn.networks().get(project=project, network=name).execute()
         except:
             return {'result': 'failure', 'reason': "Network %s not found" % name}
         if 'subnetworks' in network:
