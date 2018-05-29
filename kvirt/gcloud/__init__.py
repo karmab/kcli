@@ -141,22 +141,22 @@ class Kgcloud(object):
                 if not os.path.exists(origin):
                     print("Skipping file %s as not found" % origin)
                     continue
-                    binary = True if '.' in origin and origin.split('.')[-1].lower() in binary_types else False
-                    if binary:
-                        with open(origin, "rb") as f:
-                            content = f.read().encode("base64")
-                    elif overrides:
-                        basedir = os.path.dirname(origin) if os.path.dirname(origin) != '' else '.'
-                        env = Environment(block_start_string='[%', block_end_string='%]',
-                                          variable_start_string='[[', variable_end_string=']]',
-                                          loader=FileSystemLoader(basedir))
-                        templ = env.get_template(os.path.basename(origin))
-                        newfile = templ.render(overrides)
-                    else:
-                        newfile = open(origin, 'r').read()
+                binary = True if '.' in origin and origin.split('.')[-1].lower() in binary_types else False
+                if binary:
+                    with open(origin, "rb") as f:
+                        content = f.read().encode("base64")
+                elif overrides:
+                    basedir = os.path.dirname(origin) if os.path.dirname(origin) != '' else '.'
+                    env = Environment(block_start_string='[%', block_end_string='%]',
+                                      variable_start_string='[[', variable_end_string=']]',
+                                      loader=FileSystemLoader(basedir))
+                    templ = env.get_template(os.path.basename(origin))
+                    newfile = templ.render(overrides)
+                else:
+                    newfile = open(origin, 'r').read()
                     startup_script += 'echo """%s""" > %s\n' % (newfile, path)
-                elif content is None:
-                    continue
+            elif content is None:
+                continue
         if cmds:
             for cmd in cmds:
                 if cmd.startswith('#'):
