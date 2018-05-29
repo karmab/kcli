@@ -59,6 +59,7 @@ class Kgcloud(object):
         conn = self.conn
         project = self.project
         zone = self.zone
+        region = self.region
         if numcpus != 1 and numcpus % 2 != 0:
             return {'result': 'failure', 'reason': "Number of cpus is not even"}
         if memory % 1024 != 0:
@@ -118,6 +119,8 @@ class Kgcloud(object):
             newnet = {'network': 'global/networks/%s' % netname}
             if netname == 'default':
                 newnet['accessConfigs'] = [{'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}]
+            else:
+                newnet['subnetwork'] = 'projects/%s/regions/%s/subnetworks/%s' % (project, region, netname)
             body['networkInterfaces'].append(newnet)
         body['serviceAccounts'] = [{'email': 'default',
                                     'scopes': ['https://www.googleapis.com/auth/devstorage.read_write',
