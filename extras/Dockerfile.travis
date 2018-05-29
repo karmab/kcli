@@ -17,7 +17,7 @@ RUN yum -y install epel-release && \
 
 # Group the pip installation
 RUN pip install -U --no-cache-dir ipaddress
-RUN pip install --no-cache-dir git+git://github.com/karmab/kcli.git docker kubernetes
+RUN pip install --no-cache-dir git+git://github.com/karmab/kcli.git docker kubernetes google-api-python-client google-auth-httplib2
 
 VOLUME ["/var/run/libvirt", "/root/.ssh", "/root"]
 
