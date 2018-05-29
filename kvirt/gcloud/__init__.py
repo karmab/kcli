@@ -15,7 +15,7 @@ import time
 # it should also set debug from the debug variable passed in kcli client
 class Kgcloud(object):
     def __init__(self, host='127.0.0.1', port=None, user='root', debug=False,
-                 project="kubevirt-button", zone="europe-west1-b"):
+                 project="kubevirt-button", zone="europe-west1-b", region='europe-west1'):
         if 'GOOGLE_APPLICATION_CREDENTIALS' not in os.environ:
             common.pprint("set GOOGLE_APPLICATION_CREDENTIALS variable.Leaving...", color='red')
             self.conn = None
@@ -23,6 +23,7 @@ class Kgcloud(object):
             self.conn = googleapiclient.discovery.build('compute', 'v1')
         self.project = project
         self.zone = zone
+        self.region = region
         self.user = user
         self.host = host
         self.port = port
@@ -448,18 +449,42 @@ class Kgcloud(object):
     def create_network(self, name, cidr, dhcp=True, nat=True, domain=None, plan='kvirt', pxe=None):
         conn = self.conn
         project = self.project
-        body = {'name': name, 'IPv4Range': cidr}
+        region = self.region
+        body = {'name': name, "autoCreateSubnetworks": False}
         conn.networks().insert(project=project, body=body).execute()
+        timeout = 0
+        subnetbody = {'name': name, "ipCidrRange": cidr, "network": "projects/%s/global/networks/%s" % (project, name),
+                      'region': "projects/%s/regions/%s" % (project, region)}
+        while True:
+            if timeout > 60:
+                return {'result': 'failure', 'reason': 'timeout waiting for network to be ready'}
+            try:
+                conn.subnetworks().insert(project=project, subnet=subnetbody).execute()
+                allowed = {"IPProtocol": "tcp", "ports": ["22"]}
+                firewallbody = {'name': 'allow-ssh-%s' % name, 'network': 'global/networks/%s' % name,
+                                'sourceRanges': ['0.0.0.0/0'], 'allowed': [allowed]}
+                conn.firewalls().insert(project=project, body=firewallbody).execute()
+                break
+            except:
+                timeout += 5
+                time.sleep(5)
+                common.pprint("Waiting for network to be ready", color='green')
         return {'result': 'success'}
 
     def delete_network(self, name=None):
         conn = self.conn
         project = self.project
+        region = self.region
         try:
-            conn.networks().delete(project=project, network=name).execute()
-            return {'result': 'success'}
+            network = conn.networks().get(project=project, network=name).execute()
         except:
             return {'result': 'failure', 'reason': "Network %s not found" % name}
+        if 'subnetworks' in network:
+            for subnet in network['subnetworks']:
+                subnetwork = os.path.basename(subnet)
+                conn.subnetworks().delete(region=region, project=project, subnetwork=subnetwork).execute()
+        conn.networks().delete(project=project, network=name).execute()
+        return {'result': 'success'}
 
 # should return a dict of pool strings
     def list_pools(self):
@@ -469,13 +494,22 @@ class Kgcloud(object):
     def list_networks(self):
         conn = self.conn
         project = self.project
+        region = self.region
         nets = conn.networks().list(project=project).execute()
+        subnets = conn.subnetworks().list(region=region, project=project).execute()['items']
         networks = {}
         for net in nets['items']:
             if self.debug:
                 print(net)
             networkname = net['name']
             cidr = net['IPv4Range'] if 'IPv4Range' in net else ''
+            if 'subnetworks' in net:
+                for subnet in net['subnetworks']:
+                    subnetname = os.path.basename(subnet)
+                    for sub in subnets:
+                        if sub['name'] == subnetname:
+                            cidr = sub['ipCidrRange']
+                            break
             dhcp = True
             domainname = ''
             mode = ''

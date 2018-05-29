@@ -49,8 +49,11 @@ class Kconfig(Kbaseconfig):
                     common.pprint("Missing project in the configuration. Leaving", color='red')
                     os._exit(1)
                 zone = self.options.get('zone', 'europe-west1-b')
+                region = self.options.get('region')
+                region = zone[:-2] if region is None else region
                 from kvirt.gcloud import Kgcloud
-                k = Kgcloud(host=self.host, port=self.port, user=self.user, zone=zone, project=project, debug=debug)
+                k = Kgcloud(host=self.host, port=self.port, user=self.user, region=region,
+                            zone=zone, project=project, debug=debug)
             else:
                 if self.host is None:
                     common.pprint("Problem parsing your configuration file", color='red')
