@@ -218,12 +218,18 @@ class Kgcloud(object):
         conn = self.conn
         project = self.project
         zone = self.zone
+        body = {'name': name, 'forceCreate': True}
         try:
             vm = conn.instances().get(zone=zone, project=project, instance=base).execute()
+            body['sourceDisk'] = vm['disks'][0]['source']
         except:
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
-        source = vm['disks'][0]['source']
-        body = {'name': name, 'sourceDisk': source, 'forceCreate': True}
+            try:
+                disk = conn.images().get(project=project, image=base).execute()
+                body['sourceImage'] = disk['selfLink']
+            except:
+                return {'result': 'failure', 'reason': "VM/disk %s not found" % name}
+        if revert:
+            body['licenses'] = ["projects/vm-options/global/licenses/enable-vmx"]
         conn.images().insert(project=project, body=body).execute()
         return {'result': 'success'}
 
