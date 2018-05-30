@@ -81,8 +81,11 @@ class Kgcloud(object):
             newdisk = {'boot': False, 'autoDelete': True}
             if index == 0 and template is not None:
                 template = self.__evaluate_template(template)
-                templateproject = self.__get_project(template)
-                image_response = conn.images().getFromFamily(project=templateproject, family=template).execute()
+                templateproject = self.__get_template_project(template)
+                if templateproject is not None:
+                    image_response = conn.images().getFromFamily(project=templateproject, family=template).execute()
+                else:
+                    image_response = conn.images().get(project=self.project, image=template).execute()
                 src = image_response['selfLink']
                 newdisk['initializeParams'] = {'sourceImage': src}
                 newdisk['boot'] = True
@@ -212,18 +215,27 @@ class Kgcloud(object):
             return {'result': 'success'}
 
     def snapshot(self, name, base, revert=False, delete=False, listing=False):
-        print("not implemented")
-        return
+        conn = self.conn
+        project = self.project
+        zone = self.zone
+        try:
+            vm = conn.instances().get(zone=zone, project=project, instance=base).execute()
+        except:
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        source = vm['disks'][0]['source']
+        body = {'name': name, 'sourceDisk': source, 'forceCreate': True}
+        conn.images().insert(project=project, body=body).execute()
+        return {'result': 'success'}
 
     def restart(self, name):
         conn = self.conn
         project = self.project
         zone = self.zone
-        request = conn.instances().reset(zone=zone, project=project, instance=name).execute()
-        if request is None:
+        try:
+            conn.instances().reset(zone=zone, project=project, instance=name).execute()
+        except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        else:
-            return {'result': 'success'}
+        return {'result': 'success'}
 
     def report(self):
         print("not implemented")
@@ -350,15 +362,18 @@ class Kgcloud(object):
     def volumes(self, iso=False):
         projects = ['centos-cloud', 'coreos-cloud', 'cos-cloud', 'debian-cloud',
                     'rhel-cloud', 'suse-cloud', 'ubuntu-os-cloud']
+        projects.append(self.project)
         conn = self.conn
         images = []
         for project in projects:
             results = conn.images().list(project=project).execute()
             if 'items' in results:
                 for image in results['items']:
-                    if 'family' not in image:
+                    if project == self.project:
+                        images.append(image['name'])
+                    elif 'family' not in image:
                         continue
-                    if image['family'] not in images:
+                    elif image['family'] not in images:
                         images.append(image['family'])
         return sorted(images)
 
@@ -577,14 +592,16 @@ class Kgcloud(object):
         print("not implemented")
         return
 
-    def __get_project(self, template):
+    def __get_template_project(self, template):
         if template.startswith('sles'):
             return 'suse-cloud'
         if template.startswith('ubuntu'):
             return 'ubuntu-os-cloud'
-        else:
+        elif template in ['centos', 'coreos', 'cos', 'debian', 'rhel']:
             project = template.split('-')[0]
             return "%s-cloud" % project
+        else:
+            return None
 
     def __evaluate_template(self, template):
         ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety']

@@ -276,7 +276,7 @@ Replace with your own client in default section and indicate host and protocol i
 Note that most of the parameters are actually optional, and can be overridden in the default, host or profile section (or in a plan file)
 
 
-# Kubevirt
+### Kubevirt
 
 for kubevirt, you will need to define one ( or several !) sections with the type kubevirt in your *~/.kcli/config.yml*
 
@@ -306,7 +306,7 @@ kubectl config view -o jsonpath='{.contexts[*].name}'
 
 Also, note that the kubevirt plugin uses *offlinevirtualmachines* instead of virtualmachines.
 
-# Basic Usage
+# Usage
 
 Templates aim to typically be the source for your vms, using the existing cloud images from the different distributions. 
 *kcli download* can be used to download a specific cloud image. for instance, centos7:
@@ -560,7 +560,6 @@ big:
 myvm:
   profile: big
 ```
-
 
 Specific scripts and IPS arrays can be used directly in the plan file (or in profiles one).
 
