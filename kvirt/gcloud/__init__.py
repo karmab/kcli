@@ -492,24 +492,26 @@ class Kgcloud(object):
         conn = self.conn
         project = self.project
         region = self.region
-        body = {'name': name, "autoCreateSubnetworks": False}
-        # body = {'name': name, "autoCreateSubnetworks": True}
+        body = {'name': name}
+        body['autoCreateSubnetworks'] = True if cidr is not None else False
         conn.networks().insert(project=project, body=body).execute()
         timeout = 0
         while True:
             if timeout > 60:
                 return {'result': 'failure', 'reason': 'timeout waiting for network to be ready'}
             try:
-                subnetbody = {'name': name, "ipCidrRange": cidr,
-                              "network": "projects/%s/global/networks/%s" % (project, name),
-                              'region': "projects/%s/regions/%s" % (project, region)}
-                conn.subnetworks().insert(project=project, subnet=subnetbody).execute()
+                if cidr is not None:
+                    subnetbody = {'name': name, "ipCidrRange": cidr,
+                                  "network": "projects/%s/global/networks/%s" % (project, name),
+                                  'region': "projects/%s/regions/%s" % (project, region)}
+                    conn.subnetworks().insert(region=region, project=project, body=subnetbody).execute()
                 allowed = {"IPProtocol": "tcp", "ports": ["22"]}
                 firewallbody = {'name': 'allow-ssh-%s' % name, 'network': 'global/networks/%s' % name,
                                 'sourceRanges': ['0.0.0.0/0'], 'allowed': [allowed]}
                 conn.firewalls().insert(project=project, body=firewallbody).execute()
                 break
-            except:
+            except Exception as e:
+                print(e)
                 timeout += 5
                 time.sleep(5)
                 common.pprint("Waiting for network to be ready", color='green')
@@ -521,10 +523,9 @@ class Kgcloud(object):
         region = self.region
         try:
             network = conn.networks().get(project=project, network=name).execute()
-            # conn.networks().get(project=project, network=name).execute()
         except:
             return {'result': 'failure', 'reason': "Network %s not found" % name}
-        if 'subnetworks' in network:
+        if not network['autoCreateSubnetworks'] and 'subnetworks' in network:
             for subnet in network['subnetworks']:
                 subnetwork = os.path.basename(subnet)
                 conn.subnetworks().delete(region=region, project=project, subnetwork=subnetwork).execute()

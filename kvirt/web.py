@@ -4,7 +4,6 @@ from flask import Flask, render_template, request, jsonify
 from kvirt.config import Kconfig
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.defaults import TEMPLATES
-from kvirt import dockerutils
 from kvirt import nameutils
 import os
 
@@ -451,6 +450,7 @@ def containerstable():
     """
     retrieves all containers in table
     """
+    from kvirt import dockerutils
     config = Kconfig()
     k = config.k
     containers = dockerutils.list_containers(k)
@@ -658,6 +658,7 @@ def containeraction():
     """
     start/stop/delete container
     """
+    from kvirt import dockerutils
     config = Kconfig()
     k = config.k
     if 'name' in request.form:

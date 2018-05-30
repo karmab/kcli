@@ -7,7 +7,6 @@ Kvirt config class
 from jinja2 import Environment, FileSystemLoader
 from kvirt.defaults import TEMPLATES, TEMPLATESCOMMANDS
 from kvirt import ansibleutils
-from kvirt import dockerutils
 from kvirt import nameutils
 from kvirt import common
 from kvirt.baseconfig import Kbaseconfig
@@ -502,6 +501,7 @@ class Kconfig(Kbaseconfig):
                         common.pprint("VM %s deleted on %s!" % (name, hypervisor), color='green')
                         found = True
             if container:
+                from kvirt import dockerutils
                 for cont in sorted(dockerutils.list_containers(k)):
                     name = cont[0]
                     container_plan = cont[3]
@@ -551,6 +551,7 @@ class Kconfig(Kbaseconfig):
                     k.start(name)
                     common.pprint("VM %s started!" % name, color='green')
             if container:
+                from kvirt import dockerutils
                 for cont in sorted(dockerutils.list_containers(k)):
                     name = cont[0]
                     containerplan = cont[3]
@@ -568,6 +569,7 @@ class Kconfig(Kbaseconfig):
                     k.stop(name)
                     common.pprint("%s stopped!" % name, color='green')
             if container:
+                from kvirt import dockerutils
                 for cont in sorted(dockerutils.list_containers(k)):
                     name = cont[0]
                     containerplan = cont[3]

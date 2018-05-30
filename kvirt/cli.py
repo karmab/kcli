@@ -8,7 +8,6 @@ from prettytable import PrettyTable
 import argparse
 from kvirt import common
 from kvirt import nameutils
-from kvirt import dockerutils
 import os
 import random
 import sys
@@ -30,6 +29,7 @@ def start(args):
     config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
     if container:
+        from kvirt import dockerutils
         for name in names:
             common.pprint("Starting container %s..." % name, color='green')
             dockerutils.start_container(k, name)
@@ -65,6 +65,7 @@ def stop(args):
     for cli in ks:
         k = ks[cli]
         if container:
+            from kvirt import dockerutils
             for name in names:
                 common.pprint("Stopping container %s in %s..." % (name, cli), color='green')
                 dockerutils.stop_container(k, name)
@@ -92,6 +93,7 @@ def restart(args):
     config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
     if container:
+        from kvirt import dockerutils
         for name in names:
             common.pprint("Restarting container %s..." % name, color='green')
             dockerutils.stop_container(k, name)
@@ -123,6 +125,7 @@ def console(args):
     k = config.k
     tunnel = config.tunnel
     if container:
+        from kvirt import dockerutils
         dockerutils.console_container(k, name)
         return
     elif serial:
@@ -150,6 +153,7 @@ def delete(args):
     if not yes:
         common.confirm("Are you sure?")
     if container:
+        from kvirt import dockerutils
         for name in names:
             common.pprint("Deleting container %s" % name, color='red')
             dockerutils.delete_container(k, name)
@@ -380,6 +384,7 @@ def list(args):
             diskstable.add_row([disk, pool, path])
         print(diskstable)
     elif containers:
+        from kvirt import dockerutils
         common.pprint("Listing containers...", color='green')
         containers = PrettyTable(["Name", "Status", "Image", "Plan", "Command", "Ports"])
         for container in dockerutils.list_containers(k):
@@ -865,6 +870,7 @@ def bootstrap(args):
 
 def container(args):
     """Create container"""
+    from kvirt import dockerutils
     name = args.name
     profile = args.profile
     config = Kconfig(client=args.client, debug=args.debug)
