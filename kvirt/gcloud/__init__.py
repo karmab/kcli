@@ -8,6 +8,7 @@ from jinja2 import Environment, FileSystemLoader
 from kvirt import common
 from dateutil import parser as dateparser
 import googleapiclient.discovery
+from iptools import IpRange
 import os
 import time
 
@@ -76,6 +77,30 @@ class Kgcloud(object):
             machine_type = 'f1-micro'
         machine_type = "zones/%s/machineTypes/%s" % (zone, machine_type)
         body = {'name': name, 'machineType': machine_type}
+        body['networkInterfaces'] = []
+        foundnets = []
+        for index, net in enumerate(nets):
+            ip = None
+            if isinstance(net, str):
+                netname = net
+            elif isinstance(net, dict) and 'name' in net:
+                netname = net['name']
+                if 'ip' in net:
+                    ip = net['ip']
+            if ips and len(ips) > index and ips[index] is not None:
+                ip = ips[index]
+            if netname in foundnets:
+                continue
+            else:
+                foundnets.append(netname)
+            newnet = {'network': 'global/networks/%s' % netname}
+            if netname == 'default':
+                newnet['accessConfigs'] = [{'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}]
+            else:
+                newnet['subnetwork'] = 'projects/%s/regions/%s/subnetworks/%s' % (project, region, netname)
+            if ip is not None:
+                newnet['networkIP'] = ip
+            body['networkInterfaces'].append(newnet)
         body['disks'] = []
         for index, disk in enumerate(disks):
             newdisk = {'boot': False, 'autoDelete': True}
@@ -111,30 +136,6 @@ class Kgcloud(object):
                         common.pprint("Waiting for disk %s to be ready" % diskname, color='green')
                 newdisk['source'] = diskpath
             body['disks'].append(newdisk)
-        body['networkInterfaces'] = []
-        foundnets = []
-        for index, net in enumerate(nets):
-            ip = None
-            if isinstance(net, str):
-                netname = net
-            elif isinstance(net, dict) and 'name' in net:
-                netname = net['name']
-                if 'ip' in net:
-                    ip = net['ip']
-            if ips and len(ips) > index and ips[index] is not None:
-                ip = ips[index]
-            if netname in foundnets:
-                continue
-            else:
-                foundnets.append(netname)
-            newnet = {'network': 'global/networks/%s' % netname}
-            if netname == 'default':
-                newnet['accessConfigs'] = [{'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}]
-            else:
-                newnet['subnetwork'] = 'projects/%s/regions/%s/subnetworks/%s' % (project, region, netname)
-            if ip is not None:
-                newnet['networkIP'] = ip
-            body['networkInterfaces'].append(newnet)
         body['serviceAccounts'] = [{'email': 'default',
                                     'scopes': ['https://www.googleapis.com/auth/devstorage.read_write',
                                                'https://www.googleapis.com/auth/logging.write']}]
@@ -529,6 +530,10 @@ class Kgcloud(object):
                 return {'result': 'failure', 'reason': 'timeout waiting for network to be ready'}
             try:
                 if cidr is not None:
+                    try:
+                        IpRange(cidr)
+                    except TypeError:
+                        return {'result': 'failure', 'reason': "Invalid Cidr %s" % cidr}
                     subnetbody = {'name': name, "ipCidrRange": cidr,
                                   "network": "projects/%s/global/networks/%s" % (project, name),
                                   'region': "projects/%s/regions/%s" % (project, region)}
