@@ -113,11 +113,16 @@ class Kgcloud(object):
             body['disks'].append(newdisk)
         body['networkInterfaces'] = []
         foundnets = []
-        for net in nets:
+        for index, net in enumerate(nets):
+            ip = None
             if isinstance(net, str):
                 netname = net
             elif isinstance(net, dict) and 'name' in net:
                 netname = net['name']
+                if 'ip' in net:
+                    ip = net['ip']
+            if ips and len(ips) > index and ips[index] is not None:
+                ip = ips[index]
             if netname in foundnets:
                 continue
             else:
@@ -127,6 +132,8 @@ class Kgcloud(object):
                 newnet['accessConfigs'] = [{'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}]
             else:
                 newnet['subnetwork'] = 'projects/%s/regions/%s/subnetworks/%s' % (project, region, netname)
+            if ip is not None:
+                newnet['networkIP'] = ip
             body['networkInterfaces'].append(newnet)
         body['serviceAccounts'] = [{'email': 'default',
                                     'scopes': ['https://www.googleapis.com/auth/devstorage.read_write',
