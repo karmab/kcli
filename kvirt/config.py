@@ -579,11 +579,13 @@ class Kconfig(Kbaseconfig):
             common.pprint("Plan %s stopped!" % plan, color='green')
             return {'result': 'success'}
         if get is not None:
+            # path = '.' if path is None else path
+            path = plan if path is None else path
             common.pprint("Retrieving specified plan from %s to %s" % (get, path), color='green')
             if not os.path.exists(path):
+                os.mkdir(path)
                 common.fetch(get, path)
-            os.chdir(path)
-            # return {'result': 'success'}
+            # os.chdir(path)
         if inputfile is None:
             inputfile = 'kcli_plan.yml'
             common.pprint("using default input file kcli_plan.yml", color='green')
