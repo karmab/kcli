@@ -103,6 +103,10 @@ class Kgcloud(object):
             body['networkInterfaces'].append(newnet)
         body['disks'] = []
         for index, disk in enumerate(disks):
+            if isinstance(disk, int):
+                disksize = disk
+            elif isinstance(disk, dict):
+                disksize = disk.get('size', '10')
             newdisk = {'boot': False, 'autoDelete': True}
             if index == 0 and template is not None:
                 template = self.__evaluate_template(template)
@@ -112,13 +116,9 @@ class Kgcloud(object):
                 else:
                     image_response = conn.images().get(project=self.project, image=template).execute()
                 src = image_response['selfLink']
-                newdisk['initializeParams'] = {'sourceImage': src}
+                newdisk['initializeParams'] = {'sourceImage': src, 'diskSizeGb': disksize}
                 newdisk['boot'] = True
             else:
-                if isinstance(disk, int):
-                    disksize = disk
-                elif isinstance(disk, dict):
-                    disksize = disk.get('size', '10')
                 diskname = "%s-disk%s" % (name, index)
                 diskpath = '/compute/v1/projects/%s/zones/%s/disks/%s' % (project, zone, diskname)
                 info = {'sizeGb': disksize, 'sourceDisk': 'zones/%s/diskTypes/pd-standard' % zone, 'name': diskname}

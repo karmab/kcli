@@ -1,4 +1,5 @@
 # setsebool -P virt_use_nfs 1
+yum -y install nfs-utils
 for i in `seq -f "%03g" 1 20` ; do
 mkdir /pv$i
 echo "/pv$i *(rw,no_root_squash)"  >>  /etc/exports
