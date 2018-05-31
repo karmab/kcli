@@ -616,7 +616,7 @@ class Kgcloud(object):
             return 'suse-cloud'
         if template.startswith('ubuntu'):
             return 'ubuntu-os-cloud'
-        elif template in ['centos', 'coreos', 'cos', 'debian', 'rhel']:
+        elif any([template.startswith(s) for s in ['centos', 'coreos', 'cos', 'debian', 'rhel']]):
             project = template.split('-')[0]
             return "%s-cloud" % project
         else:
