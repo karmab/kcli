@@ -241,6 +241,7 @@ def list(args):
     repos = args.repos
     products = args.products
     networks = args.networks
+    subnets = args.subnets
     containers = args.containers
     images = args.images
     plans = args.plans
@@ -321,14 +322,29 @@ def list(args):
                     domain = networks[network]['domain']
                 else:
                     domain = 'N/A'
-                # if 'plan' in networks[network]:
-                #    plan = networks[network]['plan']
-                # else:
-                #     plan = 'N/A'
-                # networkstable.add_row([network, networktype, cidr, dhcp, domain, mode, plan])
                 networkstable.add_row([network, networktype, cidr, dhcp, domain, mode])
         networkstable.align["Network"] = "l"
         print(networkstable)
+        return
+    if subnets:
+        subnets = k.list_subnets()
+        common.pprint("Listing Subnets...", color='green')
+        if short:
+            subnetstable = PrettyTable(["Subnets"])
+            for subnet in sorted(subnets):
+                subnetstable.add_row([subnet])
+        else:
+            subnetstable = PrettyTable(["Subnet", "Az", "Cidr", "Network"])
+            for subnet in sorted(subnets):
+                cidr = subnets[subnet]['cidr']
+                az = subnets[subnet]['az']
+                if 'network' in subnets[subnet]:
+                    network = subnets[subnet]['network']
+                else:
+                    network = 'N/A'
+                subnetstable.add_row([subnet, az, cidr, network])
+        subnetstable.align["Network"] = "l"
+        print(subnetstable)
         return
     elif profiles:
         if containers:
@@ -455,7 +471,8 @@ def vm(args):
         name = nameutils.get_random_name()
         if config.type in ['gcloud', 'kubevirt']:
             name = name.replace('_', '-')
-        common.pprint("Using %s as name of the vm" % name, color='green')
+        if config.type != 'aws':
+            common.pprint("Using %s as name of the vm" % name, color='green')
     if profile is not None and profile.endswith('.yml'):
         profilefile = profile
         profile = None
@@ -473,8 +490,11 @@ def vm(args):
             common.pprint("Missing profile", color='red')
             os._exit(1)
     result = config.create_vm(name, profile, ip1=ip1, ip2=ip2, ip3=ip3, ip4=ip4, overrides=overrides)
-    code = common.handle_response(result, name, element='', action='created', client=config.client)
-    return code
+    if config.type != 'aws':
+        code = common.handle_response(result, name, element='', action='created', client=config.client)
+        return code
+    else:
+        return 0
 
 
 def clone(args):
@@ -1057,6 +1077,7 @@ def cli():
     list_parser.add_argument('-d', '--disks', action='store_true')
     list_parser.add_argument('-P', '--pools', action='store_true')
     list_parser.add_argument('-n', '--networks', action='store_true')
+    list_parser.add_argument('-s', '--subnets', action='store_true')
     list_parser.add_argument('--containers', action='store_true')
     list_parser.add_argument('--images', action='store_true')
     list_parser.add_argument('--short', action='store_true')

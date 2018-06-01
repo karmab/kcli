@@ -20,11 +20,7 @@ binary_types = ['bz2', 'deb', 'jpg', 'gz', 'jpeg', 'iso', 'png', 'rpm', 'tgz', '
 class Kgcloud(object):
     def __init__(self, host='127.0.0.1', port=None, user='root', debug=False,
                  project="kubevirt-button", zone="europe-west1-b", region='europe-west1'):
-        if 'GOOGLE_APPLICATION_CREDENTIALS' not in os.environ:
-            common.pprint("set GOOGLE_APPLICATION_CREDENTIALS variable.Leaving...", color='red')
-            self.conn = None
-        else:
-            self.conn = googleapiclient.discovery.build('compute', 'v1')
+        self.conn = googleapiclient.discovery.build('compute', 'v1')
         self.project = project
         self.zone = zone
         self.region = region
@@ -435,8 +431,6 @@ class Kgcloud(object):
         return
 
     def add_disk(self, name, size, pool=None, thin=True, template=None, shareable=False, existing=None):
-        # if int(size) < 500:
-        #    common.pprint("Note that default size will be 500Gb", color='blue')
         conn = self.conn
         project = self.project
         zone = self.zone
@@ -464,7 +458,14 @@ class Kgcloud(object):
         return {'result': 'success'}
 
     def delete_disk(self, name, diskname):
-        print("not implemented")
+        conn = self.conn
+        project = self.project
+        zone = self.zone
+        try:
+            conn.disks().delete(zone=zone, project=project, disk=diskname).execute()
+        except Exception as e:
+            print(e)
+            return {'result': 'failure', 'reason': "Disk %s not found" % name}
         return
 
 # should return a dict of {'pool': poolname, 'path': name}
@@ -595,6 +596,10 @@ class Kgcloud(object):
             mode = ''
             networks[networkname] = {'cidr': cidr, 'dhcp': dhcp, 'domain': domainname, 'type': 'routed', 'mode': mode}
         return networks
+
+    def list_subnets(self):
+        print("not implemented")
+        return {}
 
     def delete_pool(self, name, full=False):
         print("not implemented")

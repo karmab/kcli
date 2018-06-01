@@ -43,6 +43,9 @@ class Kconfig(Kbaseconfig):
                              debug=debug)
                 self.host = k.host
             elif self.type == 'gcloud':
+                if 'GOOGLE_APPLICATION_CREDENTIALS' not in os.environ:
+                    common.pprint("set GOOGLE_APPLICATION_CREDENTIALS variable.Leaving...", color='red')
+                    os._exit(1)
                 project = self.options.get('project')
                 if project is None:
                     common.pprint("Missing project in the configuration. Leaving", color='red')
@@ -53,6 +56,22 @@ class Kconfig(Kbaseconfig):
                 from kvirt.gcloud import Kgcloud
                 k = Kgcloud(host=self.host, port=self.port, user=self.user, region=region,
                             zone=zone, project=project, debug=debug)
+            elif self.type == 'aws':
+                region = self.options.get('region')
+                if region is None:
+                    common.pprint("Missing region in the configuration. Leaving", color='red')
+                    os._exit(1)
+                access_key_id = self.options.get('access_key_id')
+                if access_key_id is None:
+                    common.pprint("Missing access_key_id in the configuration. Leaving", color='red')
+                    os._exit(1)
+                access_key_secret = self.options.get('access_key_secret')
+                if access_key_secret is None:
+                    common.pprint("Missing access_key_secret in the configuration. Leaving", color='red')
+                    os._exit(1)
+                from kvirt.aws import Kaws
+                k = Kaws(host=self.host, port=self.port, access_key_id=access_key_id,
+                         access_key_secret=access_key_secret, region=region, debug=debug)
             else:
                 if self.host is None:
                     common.pprint("Problem parsing your configuration file", color='red')

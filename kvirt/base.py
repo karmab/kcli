@@ -216,6 +216,10 @@ class Kbase(object):
         print("not implemented")
         return {}
 
+    def list_subnets(self):
+        print("not implemented")
+        return {}
+
     def delete_pool(self, name, full=False):
         print("not implemented")
         return

@@ -105,7 +105,7 @@ def fetch(url, path, syms=None):
 
 
 def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[],
-              enableroot=True, overrides={}, iso=True):
+              enableroot=True, overrides={}, iso=True, fqdn=False):
     default_gateway = gateway
     with open('/tmp/meta-data', 'w') as metadatafile:
         if domain is not None:
@@ -159,6 +159,9 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             metadatafile.write(json.dumps(metadata))
     with open('/tmp/user-data', 'w') as userdata:
         userdata.write('#cloud-config\nhostname: %s\n' % name)
+        if fqdn:
+            fqdn = "%s.%s" % (name, domain) if domain is not None else name
+            userdata.write("fqdn: %s\n" % fqdn)
         if enableroot:
             userdata.write("ssh_pwauth: True\ndisable_root: false\n")
         if domain is not None:

@@ -271,6 +271,10 @@ class Kfake(object):
             networks[network] = {'cidr': cidr, 'dhcp': dhcp, 'domain': domainname, 'type': 'routed', 'mode': mode}
         return networks
 
+    def list_subnets(self):
+        print("not implemented")
+        return {}
+
     def delete_pool(self, name, full=False):
         return
 

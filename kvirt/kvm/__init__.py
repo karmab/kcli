@@ -1830,6 +1830,10 @@ class Kvirt(Kbase):
             networks[interfacename]['plan'] = plan
         return networks
 
+    def list_subnets(self):
+        print("not implemented")
+        return {}
+
     def delete_pool(self, name, full=False):
         conn = self.conn
         try:

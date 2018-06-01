@@ -1007,6 +1007,10 @@ class Kbox(Kbase):
             networks[networkname] = {'cidr': cidr, 'dhcp': dhcp, 'type': 'routed', 'mode': 'nat'}
         return networks
 
+    def list_subnets(self):
+        print("not implemented")
+        return {}
+
     def delete_pool(self, name, full=False):
         poolfile = "%s/.vbox.yml" % os.environ.get('HOME')
         pools = self.list_pools()
