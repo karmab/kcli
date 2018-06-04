@@ -38,17 +38,19 @@ class Kaws(object):
 
     def exists(self, name):
         conn = self.conn
-        project = self.project
-        zone = self.zone
         try:
-            conn.instances().get(zone=zone, project=project, instance=name).execute()
+            conn.describe_instances(InstanceIds=[name])
             return True
         except:
             return False
 
     def net_exists(self, name):
-        print("not implemented")
-        return
+        conn = self.conn
+        try:
+            conn.describe_subnets(SubnetIds=[name])
+            return True
+        except:
+            return False
 
     def disk_exists(self, pool, name):
         print("not implemented")
@@ -59,8 +61,9 @@ class Kaws(object):
                reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[],
                ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[],
                enableroot=True, alias=[], overrides={}, tags={}):
+        template = self.__evaluate_template(template)
         defaultsubnetid = None
-        matchingflavors = [f for f in flavors if flavors[f]['cpus'] == numcpus and flavors[f]['memory'] == memory]
+        matchingflavors = [f for f in flavors if flavors[f]['cpus'] >= numcpus and flavors[f]['memory'] >= memory]
         if matchingflavors:
             flavor = matchingflavors[0]
             common.pprint("Using instance type %s" % flavor, color='green')
@@ -531,3 +534,12 @@ class Kaws(object):
     def get_pool_path(self, pool):
         print("not implemented")
         return
+
+    def __evaluate_template(self, template):
+        if template.lower().startswith('centos'):
+            amiid = 'ami-8352e3fe'
+            common.pprint("Using ami %s" % amiid, color='green')
+            return 'ami-8352e3fe'
+        else:
+            return template
+        return template
