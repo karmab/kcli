@@ -19,17 +19,20 @@ setup(
     author_email='karimboumedhel@gmail.com',
     license='ASL',
     install_requires=[
-        'libvirt-python>=2.0.0',
-        'docker>=2.0',
         'flask',
         'iptools',
-        'kubernetes',
         'netaddr',
         'PyYAML',
         'prettytable',
     ],
     extras_require={
-        'vitualbox': ['pyvbox'],
+        'all': ['libvirt-python>=2.0.0', 'docker>=2.0', 'kubernetes', 'boto3',
+                'google-api-python-client', 'google-auth-httplib2'],
+        'virtualbox': ['pyvbox'],
+        'kvm': ['libvirt-python>=2.0.0', 'docker>=2.0'],
+        'kubevirt': ['kubernetes'],
+        'aws': ['boto3'],
+        'gcp': ['google-api-python-client', 'google-auth-httplib2'],
     },
     entry_points='''
         [console_scripts]

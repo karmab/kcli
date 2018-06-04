@@ -17,7 +17,7 @@ RUN yum -y install epel-release && \
 
 # Group the pip installation
 RUN pip install -U --no-cache-dir ipaddress
-RUN pip install --no-cache-dir git+https://github.com/karmab/kcli.git kubernetes
+RUN pip install --no-cache-dir -e git+https://github.com/karmab/kcli.git#egg=kcli[kubevirt]
 
 VOLUME ["/var/run/libvirt", "/root/.ssh", "/root"]
 
