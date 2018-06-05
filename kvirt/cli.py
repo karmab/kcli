@@ -469,7 +469,7 @@ def vm(args):
     config = Kconfig(client=args.client, debug=args.debug)
     if name is None:
         name = nameutils.get_random_name()
-        if config.type in ['gcloud', 'kubevirt']:
+        if config.type in ['gcp', 'kubevirt']:
             name = name.replace('_', '-')
         if config.type != 'aws':
             common.pprint("Using %s as name of the vm" % name, color='green')

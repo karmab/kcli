@@ -42,7 +42,7 @@ class Kconfig(Kbaseconfig):
                 k = Kubevirt(context=context, usecloning=usecloning, host=self.host, port=self.port, user=self.user,
                              debug=debug)
                 self.host = k.host
-            elif self.type == 'gcloud':
+            elif self.type == 'gcp':
                 if 'GOOGLE_APPLICATION_CREDENTIALS' not in os.environ:
                     common.pprint("set GOOGLE_APPLICATION_CREDENTIALS variable.Leaving...", color='red')
                     os._exit(1)
@@ -53,9 +53,9 @@ class Kconfig(Kbaseconfig):
                 zone = self.options.get('zone', 'europe-west1-b')
                 region = self.options.get('region')
                 region = zone[:-2] if region is None else region
-                from kvirt.gcloud import Kgcloud
-                k = Kgcloud(host=self.host, port=self.port, user=self.user, region=region,
-                            zone=zone, project=project, debug=debug)
+                from kvirt.gcp import Kgcp
+                k = Kgcp(host=self.host, port=self.port, user=self.user, region=region,
+                         zone=zone, project=project, debug=debug)
             elif self.type == 'aws':
                 region = self.options.get('region')
                 if region is None:

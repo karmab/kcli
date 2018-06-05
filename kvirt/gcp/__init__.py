@@ -17,7 +17,7 @@ binary_types = ['bz2', 'deb', 'jpg', 'gz', 'jpeg', 'iso', 'png', 'rpm', 'tgz', '
 
 # your base class __init__ needs to define the conn attribute and set it to None when backend cannot be reached
 # it should also set debug from the debug variable passed in kcli client
-class Kgcloud(object):
+class Kgcp(object):
     def __init__(self, host='127.0.0.1', port=None, user='root', debug=False,
                  project="kubevirt-button", zone="europe-west1-b", region='europe-west1'):
         self.conn = googleapiclient.discovery.build('compute', 'v1')
