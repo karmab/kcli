@@ -9,7 +9,7 @@
 
 This tool is meant to interact with a local/remote libvirt daemon and to easily deploy from templates (optionally using cloudinit).
 It will also report IPS for any vm connected to a dhcp-enabled libvirt network and generally for every vm deployed from this client.
-There is also support for virtualbox and kubevirt
+There is also support for gcp, aws, virtualbox and kubevirt
 
 Refer to the [documentation](https://kcli.readthedocs.io) for more information
 

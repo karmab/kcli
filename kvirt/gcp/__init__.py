@@ -248,7 +248,11 @@ class Kgcp(object):
         return {'result': 'success'}
 
     def report(self):
-        print("not implemented")
+        # conn = self.conn
+        # project = self.project
+        # zone = self.zone
+        resource = googleapiclient.discovery.build('cloudresourcemanager', 'v1')
+        print dir(resource.projects())
         return
 
     def status(self, name):
