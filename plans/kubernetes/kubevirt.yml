@@ -3,8 +3,9 @@ parameters:
  domain: karmalabs.com
  template: CentOS-7-x86_64-GenericCloud.qcow2
  deploy_app: false
- kubevirt_version: v0.5.0
+ kubevirt_version: v0.6.0
  nfs: false
+ sdn: flannel
 
 kumaster:
  template: [[ template ]]
