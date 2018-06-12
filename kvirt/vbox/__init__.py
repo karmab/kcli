@@ -595,7 +595,7 @@ class Kbox(Kbase):
         vm = conn.lookupByName(new)
         if start:
             vm.setAutostart(1)
-            vm.create()
+        vm.create()
 
     def update_metadata(self, name, metatype, metavalue):
         conn = self.conn
@@ -874,7 +874,7 @@ class Kbox(Kbase):
         #    print("No port found. Cannot ssh...")
         return user, port
 
-    def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False):
+    def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, D=None):
         u, port = self._ssh_credentials(name)
         if user is None:
             user = u
@@ -882,6 +882,8 @@ class Kbox(Kbase):
             return None
         else:
             sshcommand = "-p %s %s@127.0.0.1" % (port, user)
+            if D is not None:
+                sshcommand = "-D %s %s" % (D, sshcommand)
             if cmd:
                 sshcommand = "%s %s" % (sshcommand, cmd)
             if local is not None:
@@ -978,7 +980,7 @@ class Kbox(Kbase):
     def _pool_info(self):
         poolfile = "%s/.vbox.yml" % os.environ.get('HOME')
         if not os.path.exists(poolfile):
-            return None
+            return {}
         with open(poolfile, 'r') as entries:
             poolinfo = yaml.load(entries)
         return poolinfo
