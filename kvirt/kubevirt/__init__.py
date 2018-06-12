@@ -100,8 +100,12 @@ class Kubevirt(object):
                overrides={}, tags={}):
         if self.exists(name):
             return {'result': 'failure', 'reason': "VM %s already exists" % name}
-        if template is not None and template not in self.volumes() and template not in REGISTRYDISKS:
-            return {'result': 'failure', 'reason': "you don't have template %s" % template}
+        if template is not None and template not in self.volumes():
+            if template in ['alpine, cirros', 'fedora']:
+                template = "kubevirt/%s-registry-disk-demo" % template
+                common.pprint("Using registry disk %s as template" % template)
+            elif template not in REGISTRYDISKS:
+                return {'result': 'failure', 'reason': "you don't have template %s" % template}
         default_disksize = disksize
         default_diskinterface = diskinterface
         default_pool = pool

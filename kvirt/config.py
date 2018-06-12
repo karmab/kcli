@@ -728,7 +728,8 @@ class Kconfig(Kbaseconfig):
                         if url is None:
                             common.pprint("Template %s skipped as url is missing!" % template, color='blue')
                             continue
-                        if not url.endswith('qcow2') and not url.endswith('img') and not url.endswith('qc2'):
+                        if not url.endswith('qcow2') and not url.endswith('img') and not url.endswith('qc2')\
+                                and not url.endswith('qcow2.xz'):
                             common.pprint("Opening url %s for you to grab complete url for %s" % (url, template),
                                           color='blue')
                             webbrowser.open(url, new=2, autoraise=True)
@@ -1163,7 +1164,8 @@ class Kconfig(Kbaseconfig):
                     url = TEMPLATES[template]
                     shortname = os.path.basename(url)
                     template = os.path.basename(template)
-                    if not url.endswith('qcow2') and not url.endswith('img') and not url.endswith('qc2'):
+                    if not url.endswith('qcow2') and not url.endswith('img') and not url.endswith('qc2')\
+                            and not url.endswith('qcow2.xz'):
                         if 'web' in sys.argv[0]:
                             return {'result': 'failure', 'reason': "Missing url"}
                         common.pprint("Opening url %s for you to grab complete url for %s" % (url, template), 'blue')

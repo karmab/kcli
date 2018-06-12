@@ -1681,7 +1681,14 @@ class Kvirt(Kbase):
         code = os.system(downloadcmd)
         if code != 0:
             return {'result': 'failure', 'reason': "Unable to download indicated template"}
-        pool.refresh()
+        if shortimage.endswith('xz'):
+            if self.host == 'localhost' or self.host == '127.0.0.1':
+                if find_executable('unxz') is not None:
+                    cmd = "unxz %s/%s" % (poolpath, shortimage)
+                    os.system(cmd)
+            elif self.protocol == 'ssh':
+                cmd = 'ssh -p %s %s@%s "unxz %s/%s"' % (self.port, self.user, self.host, poolpath, shortimage)
+                os.system(cmd)
         if cmd is not None:
             if self.host == 'localhost' or self.host == '127.0.0.1':
                 if find_executable('virt-customize') is not None:
@@ -1692,6 +1699,7 @@ class Kvirt(Kbase):
                                                                                           self.host, poolpath,
                                                                                           shortimage, cmd)
                 os.system(cmd)
+        pool.refresh()
         return {'result': 'success'}
 
     def create_network(self, name, cidr, dhcp=True, nat=True, domain=None, plan='kvirt', pxe=None):

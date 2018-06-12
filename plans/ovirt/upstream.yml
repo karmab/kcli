@@ -9,11 +9,6 @@ ovirt:
  reservedns: true
  reservehost: true
  cpumodel: host-model
- cpuflags:
-  - name: arat
-    enable: false
-  - name: clflushopt
-    enable: false
  nets:
   - default
  disks:
