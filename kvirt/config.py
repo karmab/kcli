@@ -195,7 +195,8 @@ class Kconfig(Kbaseconfig):
         iso = profile.get('iso', default_iso)
         vnc = profile.get('vnc', default_vnc)
         cloudinit = profile.get('cloudinit', default_cloudinit)
-        if cloudinit and find_executable('mkisofs') is None and find_executable('genisoimage') is None:
+        if cloudinit and self.type in ['kvm', 'vbox'] and\
+                find_executable('mkisofs') is None and find_executable('genisoimage') is None:
             common.pprint("mkisofs/genisoimage not found. One of them is needed for cloudinit.Leaving...", 'red')
             os._exit(1)
         reserveip = profile.get('reserveip', default_reserveip)

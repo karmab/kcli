@@ -16,7 +16,7 @@ import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 DOMAIN = "kubevirt.io"
-VERSION = 'v1alpha1'
+VERSION = 'v1alpha2'
 REGISTRYDISKS = ['kubevirt/alpine-registry-disk-demo', 'kubevirt/cirros-registry-disk-demo',
                  'kubevirt/fedora-cloud-registry-disk-demo']
 
@@ -56,7 +56,7 @@ class Kubevirt(object):
         self.crds = client.CustomObjectsApi()
         # extensions = client.ApiextensionsV1beta1Api()
         # current_crds = [x for x in extensions.list_custom_resource_definition().to_dict()['items']
-        #                if x['spec']['names']['kind'].lower() == 'offlinevirtualmachine']
+        #                if x['spec']['names']['kind'].lower() == 'virtualmachine']
         # if not current_crds:
         #    common.pprint("Kubevirt not installed", color='red')
         #    self.conn = None
@@ -78,7 +78,7 @@ class Kubevirt(object):
     def exists(self, name):
         crds = self.crds
         namespace = self.namespace
-        allvms = crds.list_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines')["items"]
+        allvms = crds.list_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines')["items"]
         vms = [vm for vm in allvms if vm.get("metadata")["namespace"] == namespace and
                vm.get("metadata")["name"] == name]
         result = True if vms else False
@@ -101,7 +101,7 @@ class Kubevirt(object):
         if self.exists(name):
             return {'result': 'failure', 'reason': "VM %s already exists" % name}
         if template is not None and template not in self.volumes():
-            if template in ['alpine, cirros', 'fedora']:
+            if template in ['alpine, cirros', 'fedora-cloud']:
                 template = "kubevirt/%s-registry-disk-demo" % template
                 common.pprint("Using registry disk %s as template" % template)
             elif template not in REGISTRYDISKS:
@@ -115,20 +115,17 @@ class Kubevirt(object):
         allpvc = core.list_namespaced_persistent_volume_claim(namespace)
         templates = {p.metadata.annotations['kcli/template']: p.metadata.name for p in allpvc.items
                      if p.metadata.annotations is not None and 'kcli/template' in p.metadata.annotations}
-        vm = {'kind': 'OfflineVirtualMachine', 'spec': {'running': start,
-                                                        'template': {'metadata': {'labels':
-                                                                                  {'kubevirt.io/provider': 'kcli'}},
-                                                                     'spec': {'domain': {'resources':
-                                                                                         {'requests':
-                                                                                          {'memory': '%sM' % memory}},
-                                                                                         'cpu': {'cores': numcpus},
-                                                                                         'devices': {'disks': []}},
-                                                                              'volumes': []}}}, 'apiVersion':
-              'kubevirt.io/v1alpha1', 'metadata': {'name': name, 'namespace': namespace, 'labels':
-                                                   {'kubevirt.io/os': 'linux'}, 'annotations': {'kcli/plan': plan,
-                                                                                                'kcli/profile': profile,
-                                                                                                'kcli/template':
-                                                                                                template}}}
+        vm = {'kind': 'VirtualMachine', 'spec': {'running': start, 'template':
+                                                 {'metadata': {'labels': {'kubevirt.io/provider': 'kcli'}},
+                                                  'spec': {'domain': {'resources':
+                                                                      {'requests': {'memory': '%sM' % memory}},
+                                                                      'cpu': {'cores': numcpus},
+                                                                      'devices': {'disks': []}}, 'volumes': []}}},
+              'apiVersion': 'kubevirt.io/%s' % VERSION, 'metadata': {'name': name, 'namespace': namespace,
+                                                                     'labels': {'kubevirt.io/os': 'linux'},
+                                                                     'annotations': {'kcli/plan': plan,
+                                                                                     'kcli/profile': profile,
+                                                                                     'kcli/template': template}}}
         vm['spec']['template']['spec']['domain']['machine'] = {'type': 'q35'}
         features = {}
         for flag in cpuflags:
@@ -232,7 +229,7 @@ class Kubevirt(object):
             if prepare['result'] == 'failure':
                 reason = prepare['reason']
                 return {'result': 'failure', 'reason': reason}
-        crds.create_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines', vm)
+        crds.create_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', vm)
         # except Exception as err:
         #    return {'result': 'failure', 'reason': err}
         return {'result': 'success'}
@@ -242,11 +239,11 @@ class Kubevirt(object):
         namespace = self.namespace
         common.pprint("Using current namespace %s" % namespace, color='green')
         try:
-            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines', name)
+            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         vm['spec']['running'] = True
-        crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "offlinevirtualmachines", name, vm)
+        crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
         return {'result': 'success'}
 
     def stop(self, name):
@@ -254,11 +251,11 @@ class Kubevirt(object):
         namespace = self.namespace
         common.pprint("Using current namespace %s" % namespace, color='green')
         try:
-            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines', name)
+            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         vm["spec"]['running'] = False
-        crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "offlinevirtualmachines", name, vm)
+        crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
         return {'result': 'success'}
 
     def snapshot(self, name, base, revert=False, delete=False, listing=False):
@@ -277,12 +274,12 @@ class Kubevirt(object):
         crds = self.crds
         namespace = self.namespace
         try:
-            crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines', name)
+            crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
         except Exception:
             return None
-        allvms = crds.list_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines')["items"]
-        vms = [vm for vm in allvms if 'labels' in vm.get("metadata") and 'kubevirt-ovm' in
-               vm["metadata"]['labels'] and vm["metadata"]['labels']['kubevirt-ovm'] == name]
+        allvms = crds.list_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachineinstance')["items"]
+        vms = [vm for vm in allvms if 'labels' in vm.get("metadata") and 'kubevirt-vm' in
+               vm["metadata"]['labels'] and vm["metadata"]['labels']['kubevirt-vm'] == name]
         if vms:
             return 'up'
         return 'down'
@@ -291,7 +288,7 @@ class Kubevirt(object):
         crds = self.crds
         namespace = self.namespace
         vms = []
-        for vm in crds.list_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines')["items"]:
+        for vm in crds.list_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines')["items"]:
             metadata = vm.get("metadata")
             namespace = metadata.get("namespace")
             spec = vm.get("spec")
@@ -307,7 +304,8 @@ class Kubevirt(object):
             state = 'down'
             if running:
                 try:
-                    runvm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
+                    runvm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace,
+                                                              'virtualmachineinstances', name)
                 except:
                     common.pprint("underlying VM %s not found" % name, color='red')
                     runvm = {}
@@ -327,7 +325,7 @@ class Kubevirt(object):
         crds = self.crds
         namespace = self.namespace
         try:
-            crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
+            crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachineinstances', name)
         except:
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
@@ -348,7 +346,7 @@ class Kubevirt(object):
         crds = self.crds
         namespace = self.namespace
         try:
-            crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
+            crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachineinstances', name)
         except:
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
@@ -374,7 +372,7 @@ class Kubevirt(object):
         namespace = self.namespace
         crds = self.crds
         try:
-            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines', name)
+            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
         except:
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
@@ -398,7 +396,7 @@ class Kubevirt(object):
         host = None
         if running:
             try:
-                runvm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
+                runvm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachineinstances', name)
             except:
                 common.pprint("underlying VM %s not found" % name, color='red')
                 return {'result': 'failure', 'reason': "underlying VM %s not found" % name}
@@ -465,7 +463,7 @@ class Kubevirt(object):
         namespace = self.namespace
         ip = None
         try:
-            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
+            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachineinstances', name)
             status = vm['status']
             if 'interfaces' in status:
                 interfaces = vm['status']['interfaces']
@@ -498,18 +496,18 @@ class Kubevirt(object):
         core = self.core
         namespace = self.namespace
         common.pprint("Using current namespace %s" % namespace, color='green')
-        crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines', name)
+        crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
         try:
-            crds.delete_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name,
+            crds.delete_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachineinstances', name,
                                                  client.V1DeleteOptions())
         except:
             pass
         try:
-            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines', name)
+            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
         except Exception as e:
             return {'result': 'failure', 'reason': e}
         try:
-            crds.delete_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines', name,
+            crds.delete_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name,
                                                  client.V1DeleteOptions())
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
@@ -531,25 +529,25 @@ class Kubevirt(object):
         crds = self.crds
         namespace = self.namespace
         try:
-            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines', name)
+            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
         except:
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         vm["metadata"]["annotations"]["kcli/%s" % metatype] = metavalue
-        crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "offlinevirtualmachines", name, vm)
+        crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
         return
 
     def update_memory(self, name, memory):
         crds = self.crds
         namespace = self.namespace
         try:
-            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines', name)
+            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
         except:
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         t = 'Template' if 'Template' in vm['spec'] else 'template'
         vm['spec'][t]['spec']['domain']['resources']['requests']['memory'] = "%sM" % memory
-        crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "offlinevirtualmachines", name, vm)
+        crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
         common.pprint("Change will only appear next full lifeclyclereboot", color='blue')
         return
 
@@ -557,14 +555,14 @@ class Kubevirt(object):
         crds = self.crds
         namespace = self.namespace
         try:
-            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines', name)
+            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
         except:
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         t = 'Template' if 'Template' in vm['spec'] else 'template'
         vm['spec'][t]['spec']['domain']['cpu']['cores'] = int(numcpus)
         common.pprint("Change will only appear next full lifeclyclereboot", color='blue')
-        crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "offlinevirtualmachines", name, vm)
+        crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
         return
 
     def update_start(self, name, start=True):
@@ -604,7 +602,7 @@ class Kubevirt(object):
         crds = self.crds
         namespace = self.namespace
         try:
-            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines', name)
+            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
         except:
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
@@ -626,7 +624,7 @@ class Kubevirt(object):
         newdisk = {'volumeName': volname, 'name': diskname}
         vm['spec'][t]['spec']['domain']['devices']['disks'].append(newdisk)
         vm['spec'][t]['spec']['volumes'].append(myvolume)
-        crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "offlinevirtualmachines", name, vm)
+        crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
         return
 
     def delete_disk(self, name, diskname):
@@ -634,7 +632,7 @@ class Kubevirt(object):
         core = self.core
         namespace = self.namespace
         try:
-            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines', name)
+            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         t = 'Template' if 'Template' in vm['spec'] else 'template'
@@ -650,7 +648,7 @@ class Kubevirt(object):
             volindex = volindex[0]
             del vm['spec'][t]['spec']['volumes'][volindex]
         del vm['spec'][t]['spec']['domain']['devices']['disks'][diskindex]
-        crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "offlinevirtualmachines", name, vm)
+        crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
         try:
             core.delete_namespaced_persistent_volume_claim(volname, namespace, client.V1DeleteOptions())
         except:
@@ -687,7 +685,7 @@ class Kubevirt(object):
         crds = self.crds
         namespace = self.namespace
         try:
-            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines', name)
+            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
         except:
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
