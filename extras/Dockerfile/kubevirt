@@ -1,4 +1,4 @@
-FROM centos:7
+FROM registry.centos.org/centos/centos7-atomic:latest
 MAINTAINER Karim Boumedhel <karimboumedhel@gmail.com>
 
 LABEL name="karmab/kcli" \
@@ -12,8 +12,9 @@ LABEL name="karmab/kcli" \
 EXPOSE 9000
 
 # Group the package installation
-RUN yum -y install epel-release && \
-    yum -y install git nmap-ncat python-pip openssh-clients
+RUN microdnf install --nodocs epel-release && \
+    microdnf install --nodocs git python-pip && \
+    microdnf clean all
 
 # Group the pip installation
 RUN pip install -U --no-cache-dir ipaddress
