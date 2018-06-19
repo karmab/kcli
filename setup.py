@@ -23,6 +23,7 @@ setup(
         'netaddr',
         'PyYAML',
         'prettytable',
+        'jinja2',
         # 'flask',
     ],
     extras_require={
