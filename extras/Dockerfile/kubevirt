@@ -13,7 +13,7 @@ EXPOSE 9000
 
 # Group the package installation
 RUN microdnf install --nodocs epel-release && \
-    microdnf install --nodocs git python-pip && \
+    microdnf install --nodocs git nmap-ncat python-pip openssh-clients && \
     microdnf clean all
 
 # Group the pip installation
