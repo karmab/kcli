@@ -1,4 +1,4 @@
-FROM registry.centos.org/centos/centos7-atomic:latest
+FROM centos:7
 MAINTAINER Karim Boumedhel <karimboumedhel@gmail.com>
 
 LABEL name="karmab/kcli" \
@@ -12,13 +12,12 @@ LABEL name="karmab/kcli" \
 EXPOSE 9000
 
 # Group the package installation
-RUN microdnf install --nodocs epel-release && \
-    microdnf install --nodocs git nmap-ncat python-pip openssh-clients && \
-    microdnf clean all
+RUN yum -y install --nodocs git nmap-ncat python-pip openssh-clients
 
 # Group the pip installation
 RUN pip install -U --no-cache-dir ipaddress
 RUN pip install --no-cache-dir -e git+https://github.com/karmab/kcli.git#egg=kcli[kubevirt]
+RUN yum -y remove git python-pip && yum clean all
 
 VOLUME ["/var/run/libvirt", "/root/.ssh", "/root"]
 

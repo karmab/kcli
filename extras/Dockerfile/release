@@ -18,6 +18,7 @@ RUN yum -y install epel-release && \
 # Group the pip installation
 RUN pip install -U --no-cache-dir ipaddress
 RUN pip install --no-cache-dir -e kcli#egg=kcli[all]
+RUN yum -y remove gcc git epel-release python-pip && yum clean all
 
 VOLUME ["/var/run/libvirt", "/root/.ssh", "/root"]
 
