@@ -1,11 +1,12 @@
 [%- set releaseurls = {
-                  '3.2': 'v1.2.2/openshift-origin-client-tools-v1.2.2-565691c',
-                  '3.3': 'v1.3.3/openshift-origin-client-tools-v1.3.3-bc17c1527938fa03b719e1a117d584442e3727b8',
-                  '3.4': 'v1.4.1/openshift-origin-client-tools-v1.4.1-3f9807a',
-                  '3.5' : 'v1.5.1/openshift-origin-client-tools-v1.5.1-7b451fc',
-                  '3.6' : 'v3.6.1/openshift-origin-client-tools-v3.6.1-008f2d5',
-                  '3.7' : 'v3.7.0/openshift-origin-client-tools-v3.7.0-7ed6862',
-                  '3.9' : 'v3.9.0/openshift-origin-client-tools-v3.9.0-191fece',
+                  '3.2'  : 'v1.2.2/openshift-origin-client-tools-v1.2.2-565691c',
+                  '3.3'  : 'v1.3.3/openshift-origin-client-tools-v1.3.3-bc17c1527938fa03b719e1a117d584442e3727b8',
+                  '3.4'  : 'v1.4.1/openshift-origin-client-tools-v1.4.1-3f9807a',
+                  '3.5'  : 'v1.5.1/openshift-origin-client-tools-v1.5.1-7b451fc',
+                  '3.6'  : 'v3.6.1/openshift-origin-client-tools-v3.6.1-008f2d5',
+                  '3.7'  : 'v3.7.0/openshift-origin-client-tools-v3.7.0-7ed6862',
+                  '3.9'  : 'v3.9.0/openshift-origin-client-tools-v3.9.0-191fece',
+                  '3.10' : 'v3.10.0-rc.0/openshift-origin-client-tools-v3.10.0-rc.0-c20e215',
                }
 -%]
 sleep 30
