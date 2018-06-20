@@ -12,8 +12,8 @@ left = ["astonishing", "happy", "jolly", "dreamy", "sad", "angry", "pensive", "f
         "prickly", "evil", "magic"]
 
 right = ["albattani", "almeida", "amazigh", "archimedes", "ardinghelli", "babbage", "bardeen", "bartik", "bbanks",
-         "bell", "beyonder", "blackwell", "bohr", "brattain", "briana", "brown", "bumblefoot", "carson", "cell",
-         "clapton", "colden", "cuqui", "curie", "darwin", "davinci", "django", "einstein", "elion", "engelbart",
+         "bell", "beyonder", "blackwell", "bohr", "brattain", "briana", "brown", "broza", "bumblefoot", "carson",
+         "cell", "clapton", "colden", "cuqui", "curie", "darwin", "davinci", "django", "einstein", "elion", "engelbart",
          "euclid", "fermat", "fermi", "feynman", "franklin", "freezer", "galactus", "galileo", "goiko", "gohan", "goku",
          "goldstine", "goodall", "hawking", "heisenberg", "hoover", "hopper", "hypatia", "jhendrix", "jmayer",
          "jones", "kirch", "kendra", "kowalevski", "lalande", "leakey", "lovelace", "lumiere", "lomax", "macenroe",
