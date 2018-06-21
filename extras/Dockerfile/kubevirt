@@ -12,7 +12,8 @@ LABEL name="karmab/kcli" \
 EXPOSE 9000
 
 # Group the package installation
-RUN yum -y install --nodocs git nmap-ncat python-pip openssh-clients
+RUN yum -y install epel-release && \
+yum -y install git nmap-ncat python-pip openssh-clients
 
 # Group the pip installation
 RUN pip install -U --no-cache-dir ipaddress
