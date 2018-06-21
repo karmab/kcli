@@ -691,7 +691,7 @@ class Kubevirt(object):
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         metadata = vm.get("metadata")
         annotations = metadata.get("annotations")
-        template = annotations.get('kcli/template')
+        template = annotations.get('kcli/template') if annotations is not None else None
         ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety']
         user = 'root'
         ip = self.ip(name)
