@@ -1,7 +1,7 @@
 FROM centos:7
 MAINTAINER Karim Boumedhel <karimboumedhel@gmail.com>
 
-LABEL name="karmab/kcli" \
+LABEL name="karmab/kcli-kubevirt" \
       maintainer="karimboumedhel@gmail.com" \
       vendor="Karmalabs" \
       version="10.6" \

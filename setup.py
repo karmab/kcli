@@ -24,12 +24,9 @@ setup(
         'PyYAML',
         'prettytable',
         'jinja2',
-        # 'flask',
     ],
     extras_require={
-        'all': ['libvirt-python>=2.0.0', 'docker>=2.0', 'kubernetes', 'boto3',
-                'google-api-python-client', 'google-auth-httplib2'],
-        'web': ['flask', 'libvirt-python>=2.0.0', 'docker>=2.0', 'kubernetes', 'boto3',
+        'all': ['flask', 'libvirt-python>=2.0.0', 'docker>=2.0', 'kubernetes', 'boto3',
                 'google-api-python-client', 'google-auth-httplib2'],
         'virtualbox': ['pyvbox'],
         'kvm': ['libvirt-python>=2.0.0', 'docker>=2.0'],
