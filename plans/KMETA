@@ -217,7 +217,7 @@
    memory: 6144
    docker_disk_size: 60
    initializer: false
-   openshift_version: 3.10
+   openshift_version: '3.10'
 
 - name: ocp
   group: openshift
@@ -257,7 +257,7 @@
     asb: true
     nfs: false
     org: ansibleplaybookbundle
-    version: 3.9
+    version: '3.9'
 
 - name: multi39
   group: openshift
@@ -295,8 +295,8 @@
   parameters:
    docker_disk_size: 60
    initializer: false
-   openshift_version: 3.7
-   helm_version: 2.6.0
+   openshift_version: '3.9'
+   helm_version: 2.9.1
 
 - name: monocular
   group: openshift

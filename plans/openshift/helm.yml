@@ -1,8 +1,8 @@
 parameters:
   docker_disk_size: 60
   initializer: false
-  openshift_version: 3.7
-  helm_version: 2.6.0
+  openshift_version: '3.9'
+  helm_version: 2.9.1
 
 helm:
  template: CentOS-7-x86_64-GenericCloud.qcow2
