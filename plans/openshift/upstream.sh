@@ -1,4 +1,4 @@
-sed -i '/OPTIONS=.*/c\OPTIONS="--selinux-enabled --insecure-registry 172.30.0.0/16"' /etc/sysconfig/docker
+sed -i 's@OPTIONS=.*@OPTIONS="--selinux-enabled --insecure-registry 172.30.0.0/16"@' /etc/sysconfig/docker
 systemctl start docker --ignore-dependencies
 [% if 'Fedora' in template %]
 sleep 120

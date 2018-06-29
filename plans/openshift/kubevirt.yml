@@ -2,7 +2,7 @@ parameters:
    docker_disk_size: 40
    kubevirt_version: v0.7.0-alpha.2
    initializer: false
-   openshift_version: 3.10
+   openshift_version: "3.10"
    memory: 10240
 
 kubevirt:

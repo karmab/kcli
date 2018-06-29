@@ -159,10 +159,10 @@ class Kgcp(object):
                                       loader=FileSystemLoader(basedir))
                     templ = env.get_template(os.path.basename(origin))
                     newfile = templ.render(overrides)
-                    startup_script += "echo '%s' > %s\n" % (newfile, path)
+                    startup_script += "cat <<'EOF' >%s\n%s\nEOF\n" % (path, newfile)
                 else:
                     newfile = open(origin, 'r').read()
-                    startup_script += "echo '%s' > %s\n" % (newfile, path)
+                    startup_script += "cat <<'EOF' >%s\n%s\nEOF\n" % (path, newfile)
             elif content is None:
                 continue
         if cmds:
