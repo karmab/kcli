@@ -39,7 +39,7 @@ class Kbase(object):
                diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True,
                reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[],
                ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[],
-               enableroot=True, alias=[], overrides={}, tags={}):
+               enableroot=True, alias=[], overrides={}, tags=None):
         print("not implemented")
         return {'result': 'success'}
 

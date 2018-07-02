@@ -28,7 +28,7 @@ def pretty_print(o):
 
 
 class Kubevirt(object):
-    def __init__(self, context=None, usecloning=False, host='127.0.0.1', port=22, user='root', debug=False, tags={}):
+    def __init__(self, context=None, usecloning=False, host='127.0.0.1', port=22, user='root', debug=False, tags=None):
         self.host = host
         self.port = port
         self.user = user
@@ -97,7 +97,7 @@ class Kubevirt(object):
                diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False,
                reservedns=False, reservehost=False, start=True, keys=None, cmds=[], ips=None, netmasks=None,
                gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[], enableroot=True, alias=[],
-               overrides={}, tags={}):
+               overrides={}, tags=None):
         if self.exists(name):
             return {'result': 'failure', 'reason': "VM %s already exists" % name}
         if template is not None and template not in self.volumes():
@@ -142,7 +142,7 @@ class Kubevirt(object):
                 features[feature] = {'enabled': enable}
         if features:
             vm['spec']['template']['spec']['domain']['features'] = features
-        if tags:
+        if tags is not None and isinstance(tags, dict):
             vm['spec']['template']['spec']['nodeSelector'] = tags
         pvcs = []
         sizes = []

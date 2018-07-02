@@ -4,7 +4,11 @@ systemctl start docker --ignore-dependencies
 sleep 120
 [% endif %]
 export IP=`ip a l  eth0 | grep 'inet ' | cut -d' ' -f6 | awk -F'/' '{ print $1}'`
+[% if openshift_version == '3.9' %]
 oc cluster up --public-hostname $IP.xip.io --routing-suffix $IP.xip.io
+[% else %]
+oc cluster up --public-hostname $IP.xip.io --routing-suffix $IP.xip.io --enable=service-catalog,router,registry,web-console,persistent-volumes,rhel-imagestreams,automation-service-broker
+[% endif %]
 oc login -u system:admin
 [% if initializer %]
 grep -q Initializers /var/lib/origin/openshift.local.config/master/master-config.yaml || sed  -i "/GenericAdmissionWebhook/i\ \ \ \ `cat /root/initializer.txt`" /var/lib/origin/openshift.local.config/master/master-config.yaml

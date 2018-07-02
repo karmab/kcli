@@ -39,7 +39,7 @@ class Kfake(object):
                diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True,
                reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[], ips=None,
                netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[],
-               enableroot=True, alias=[], overrides={}, tags={}):
+               enableroot=True, alias=[], overrides={}, tags=None):
         if cloudinit:
             common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
                              reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides, iso=False)

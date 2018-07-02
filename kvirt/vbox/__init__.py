@@ -92,7 +92,7 @@ class Kbox(Kbase):
                diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True,
                reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[], ips=None,
                netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[],
-               enableroot=True, alias=[], overrides={}, tags={}):
+               enableroot=True, alias=[], overrides={}, tags=None):
         if self.exists(name):
             return {'result': 'failure', 'reason': "VM %s already exists" % name}
         guestid = 'Linux_64'

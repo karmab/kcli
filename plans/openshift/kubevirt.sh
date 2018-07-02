@@ -13,5 +13,5 @@ chmod u+x /usr/bin/virtctl
 docker pull karmab/kcli
 echo alias kcli=\'docker run -it --rm -v ~/.kube:/root/.kube:Z -v ~/.ssh:/root/.ssh:Z  -v ~/.kcli:/root/.kcli:Z karmab/kcli\' >> /root/.bashrc
 ssh-keygen -t rsa -N '' -f /root/.ssh/id_rsa
-oc login --insecure-skip-tls-verify=true  kubevirt:8443 -u developer -p developer
+oc login --insecure-skip-tls-verify=true  `hostname`:8443 -u developer -p developer
 setfacl -m user:107:rwx /var/lib/origin/openshift.local.pv/pv*

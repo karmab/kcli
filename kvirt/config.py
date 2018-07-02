@@ -47,6 +47,7 @@ class Kconfig(Kbaseconfig):
                     common.pprint("set GOOGLE_APPLICATION_CREDENTIALS variable.Leaving...", color='red')
                     os._exit(1)
                 project = self.options.get('project')
+                # credentials = self.options.get('credentials')
                 if project is None:
                     common.pprint("Missing project in the configuration. Leaving", color='red')
                     os._exit(1)
@@ -215,9 +216,15 @@ class Kconfig(Kbaseconfig):
         scripts = common.remove_duplicates(default_scripts + profile.get('scripts', []))
         files = profile.get('files', default_files)
         enableroot = profile.get('enableroot', default_enableroot)
-        tags = profile.get('tags', default_tags)
-        tags = default_tags.copy()
-        tags.update(profile.get('tags', {}))
+        if default_tags is not None:
+            if isinstance(default_tags, dict):
+                tags = default_tags.copy()
+                tags.update(profile.get('tags', {}))
+            elif isinstance(default_tags, list):
+                customtags = profile.get('tags')
+                tags = default_tags + customtags if customtags else default_tags
+        elif profile.get('tags') is not None:
+            tags = profile.get('tags')
         privatekey = profile.get('privatekey', default_privatekey)
         scriptcmds = []
         if scripts:
@@ -943,9 +950,15 @@ class Kconfig(Kbaseconfig):
                                                   self.sharedkey] if e is not None))
                     enableroot = next((e for e in [profile.get('enableroot'), customprofile.get('enableroot'),
                                                    default_enableroot] if e is not None))
-                    tags = default_tags.copy()
-                    tags.update(profile.get('tags', {}))
-                    tags.update(customprofile.get('tags', {}))
+                    if default_tags is not None:
+                        if isinstance(default_tags, dict):
+                            tags = default_tags.copy()
+                            tags.update(profile.get('tags', {}))
+                        elif isinstance(default_tags, list):
+                            customtags = profile.get('tags')
+                            tags = default_tags + customtags if customtags else default_tags
+                    elif profile.get('tags') is not None:
+                        tags = profile.get('tags')
                     privatekey = next((e for e in [profile.get('privatekey'), customprofile.get('privatekey'),
                                                    default_privatekey] if e is not None))
                     scripts = default_scripts + customprofile.get('scripts', []) + profile.get('scripts', [])

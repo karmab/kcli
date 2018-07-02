@@ -193,6 +193,8 @@ class Kgcp(object):
         body['metadata']['items'].append(newval)
         newval = {'key': 'profile', 'value': profile}
         body['metadata']['items'].append(newval)
+        if tags:
+            body['tags'] = {'items': tags}
         if self.debug:
             print(body)
         conn.instances().insert(project=project, zone=zone, body=body).execute()
@@ -291,7 +293,7 @@ class Kgcp(object):
                     if data['key'] == 'profile':
                         profile = data['value']
             vms.append([name, state, ip, source, plan, profile, report])
-        return vms
+        return sorted(vms)
 
     def console(self, name, tunnel=False):
         print("not implemented")
@@ -357,6 +359,8 @@ class Kgcp(object):
                     yamlinfo['plan'] = data['value']
                 if data['key'] == 'profile':
                     yamlinfo['profile'] = data['value']
+        if 'tags' in vm:
+            yamlinfo['tags'] = ','.join(vm['tags']['items'])
         common.print_info(yamlinfo, output=output, fields=fields, values=values)
         return {'result': 'success'}
 

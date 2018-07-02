@@ -1,8 +1,7 @@
 parameters:
- docker_disk_size: 60
  initializer: false
- openshift_version: '3.9'
- template: Fedora-Cloud-Base-27-1.6.x86_64.qcow2
+ openshift_version: '3.10'
+ template: CentOS-7-x86_64-GenericCloud.qcow2
 
 asb:
  template: [[ template ]]
@@ -11,19 +10,10 @@ asb:
  nets:
   - default
  disks:
-  - size: 10
-  - size: [[ docker_disk_size ]] 
+  - size: 60
  pool: default
- files:
-  - path: /root/initializer.txt
-    origin: initializer.txt
- [% if org is defined %]
-  - path: /root/deploy-ansible-service-broker.template.yaml
-    origin: deploy-ansible-service-broker.template.yaml
- [% endif %]
  scripts: 
   - requirements.sh
  [% if org is defined %]
   - ~/dockerhub.sh
- [% endif %]
-  - asb.sh
+  - upstream.sh
