@@ -216,6 +216,7 @@ class Kconfig(Kbaseconfig):
         scripts = common.remove_duplicates(default_scripts + profile.get('scripts', []))
         files = profile.get('files', default_files)
         enableroot = profile.get('enableroot', default_enableroot)
+        tags = None
         if default_tags is not None:
             if isinstance(default_tags, dict):
                 tags = default_tags.copy()
