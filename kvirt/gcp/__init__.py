@@ -8,6 +8,7 @@ from jinja2 import Environment, FileSystemLoader
 from kvirt import common
 from dateutil import parser as dateparser
 import googleapiclient.discovery
+from google.cloud import dns
 from iptools import IpRange
 import os
 import time
@@ -204,9 +205,14 @@ class Kgcp(object):
         body['metadata']['items'].append(newval)
         if tags:
             body['tags'] = {'items': tags}
+        if reservedns:
+            newval = {'key': 'domain', 'value': domain}
+            body['metadata']['items'].append(newval)
         if self.debug:
             print(body)
         conn.instances().insert(project=project, zone=zone, body=body).execute()
+        if reservedns:
+            self.reserve_dns(name, nets=nets, domain=domain, alias=alias)
         return {'result': 'success'}
 
     def start(self, name):
@@ -382,6 +388,8 @@ class Kgcp(object):
             vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
         except:
             common.pprint("Vm %s not found" % name, color='red')
+        if 'natIP' not in vm['networkInterfaces'][0]['accessConfigs'][0]:
+            return None
         else:
             ip = vm['networkInterfaces'][0]['accessConfigs'][0]['natIP']
         return ip
@@ -410,10 +418,18 @@ class Kgcp(object):
         project = self.project
         zone = self.zone
         try:
-            conn.instances().delete(zone=zone, project=project, instance=name).execute()
-            return {'result': 'success'}
+            vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
+        domain = None
+        if 'items' in vm['metadata']:
+            for data in vm['metadata']['items']:
+                if data['key'] == 'domain':
+                    domain = data['value']
+        if domain is not None:
+            self.delete_dns(name, domain)
+        conn.instances().delete(zone=zone, project=project, instance=name).execute()
+        return {'result': 'success'}
 
     def clone(self, old, new, full=False, start=False):
         print("not implemented")
@@ -626,7 +642,7 @@ class Kgcp(object):
         return []
 
     def vm_ports(self, name):
-        return []
+        return ['default']
 
 # returns the path of the pool, if it makes sense. used by kcli list --pools
     def get_pool_path(self, pool):
@@ -657,3 +673,60 @@ class Kgcp(object):
             return 'ubuntu-1804-lts'
         else:
             return template
+
+    def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False):
+        net = nets[0]
+        project = self.project
+        zone = self.zone
+        client = dns.Client(project)
+        domain_name = domain.replace('.', '-')
+        common.pprint("Assuming Domain name is %s" % domain_name, color='green')
+        zone = client.zone(domain_name)
+        if not zone.exists():
+            common.pprint("Domain not found", color='red')
+            return {'result': 'failure', 'reason': "Domain not found"}
+        entry = "%s.%s." % (name, domain)
+        if ip is None:
+            if isinstance(net, dict):
+                ip = net.get('ip')
+            if ip is None:
+                counter = 0
+                while counter != 100:
+                    ip = self.ip(name)
+                    if ip is None:
+                        time.sleep(5)
+                        print("Waiting 5 seconds to grab ip and create DNS record...")
+                        counter += 10
+                    else:
+                        break
+        if ip is None:
+            print("Couldn't assign DNS")
+            return
+        changes = zone.changes()
+        record_set = zone.resource_record_set(entry, 'A', 300, [ip])
+        changes.add_record_set(record_set)
+        if alias:
+            for a in alias:
+                new = '%s.' % (a, domain) if '.' not in a else '%s.' % a
+                record_set = zone.resource_record_set(new, 'CNAME', 300, [entry])
+                changes.add_record_set(record_set)
+        changes.create()
+        return {'result': 'success'}
+
+    def delete_dns(self, name, domain):
+        project = self.project
+        zone = self.zone
+        client = dns.Client(project)
+        domain_name = domain.replace('.', '-')
+        zone = client.zone(domain_name)
+        if not zone.exists():
+            return
+        entry = "%s.%s." % (name, domain)
+        changes = zone.changes()
+        records = [record for record in zone.list_resource_record_sets() if record.name == entry]
+        if records:
+            for record in records:
+                record_set = zone.resource_record_set(record.name, record.record_type, record.ttl, record.rrdatas)
+                changes.delete_record_set(record_set)
+        changes.create()
+        return {'result': 'success'}

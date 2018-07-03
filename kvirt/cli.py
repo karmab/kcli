@@ -539,7 +539,6 @@ def update(args):
         if not nets:
             return
         else:
-            common.pprint("Updating ip of vm %s to %s..." % (name, ip1), color='green')
             k.reserve_dns(name=name, nets=nets, domain=domain, ip=ip1)
     elif ip1 is not None:
         common.pprint("Updating ip of vm %s to %s..." % (name, ip1), color='green')

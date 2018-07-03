@@ -27,12 +27,12 @@ setup(
     ],
     extras_require={
         'all': ['flask', 'libvirt-python>=2.0.0', 'docker>=2.0', 'kubernetes', 'boto3',
-                'google-api-python-client', 'google-auth-httplib2'],
+                'google-api-python-client', 'google-auth-httplib2', 'google-cloud-dns'],
         'virtualbox': ['pyvbox'],
         'kvm': ['libvirt-python>=2.0.0', 'docker>=2.0'],
         'kubevirt': ['kubernetes'],
         'aws': ['boto3'],
-        'gcp': ['google-api-python-client', 'google-auth-httplib2'],
+        'gcp': ['google-api-python-client', 'google-auth-httplib2', 'google-cloud-dns'],
     },
     entry_points='''
         [console_scripts]
