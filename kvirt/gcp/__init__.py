@@ -180,7 +180,10 @@ class Kgcp(object):
                                          variable_start_string='[[',
                                          variable_end_string=']]').from_string(cmd).render(overrides)
                 startup_script += '%s\n' % newcmd
-            newval = {'key': 'startup-script', 'value': startup_script}
+        if startup_script != '':
+            beginningcmd = 'test -f /root/.kcli_startup && exit 0\n'
+            endcmd = 'touch /root/.kcli_startup\n'
+            newval = {'key': 'startup-script', 'value': beginningcmd + startup_script + endcmd}
             body['metadata']['items'].append(newval)
         if not os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME'])\
                 and not os.path.exists("%s/.ssh/id_dsa.pub" % os.environ['HOME']):
