@@ -14,4 +14,8 @@ docker pull karmab/kcli
 echo alias kcli=\'docker run -it --rm -v ~/.kube:/root/.kube:Z -v ~/.ssh:/root/.ssh:Z  -v ~/.kcli:/root/.kcli:Z karmab/kcli\' >> /root/.bashrc
 ssh-keygen -t rsa -N '' -f /root/.ssh/id_rsa
 oc login --insecure-skip-tls-verify=true  `hostname`:8443 -u developer -p developer
+[% if openshift_version == '3.9' %] 
 setfacl -m user:107:rwx /var/lib/origin/openshift.local.pv/pv*
+[% else %]
+setfacl -m user:107:rwx /root/openshift.local.clusterup/openshift.local.pv/pv*
+[% endif %]

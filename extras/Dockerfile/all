@@ -15,7 +15,7 @@ EXPOSE 9000
 RUN apk add --update --no-cache g++ gcc libvirt libvirt-dev py-pip python-dev
 
 # Group the pip installation
-RUN pip install --no-cache-dir kcli
+RUN pip install -U --no-cache-dir kcli setuptools
 
 VOLUME ["/var/run/libvirt", "/root/.ssh", "/root"]
 
