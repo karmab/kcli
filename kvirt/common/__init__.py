@@ -187,16 +187,14 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 userdata.write("- %s\n" % key)
         if cmds:
                 userdata.write("runcmd:\n")
-                with open("/tmp/runcmd_%s" % name, 'w') as f:
-                    for cmd in cmds:
-                        if cmd.startswith('#'):
-                            continue
-                        else:
-                            newcmd = Environment(block_start_string='[%', block_end_string='%]',
-                                                 variable_start_string='[[',
-                                                 variable_end_string=']]').from_string(cmd).render(overrides)
-                            userdata.write("- %s\n" % newcmd)
-                            f.write("%s\n" % newcmd)
+                for cmd in cmds:
+                    if cmd.startswith('#'):
+                        continue
+                    else:
+                        newcmd = Environment(block_start_string='[%', block_end_string='%]',
+                                             variable_start_string='[[',
+                                             variable_end_string=']]').from_string(cmd).render(overrides)
+                        userdata.write("- %s\n" % newcmd)
         if files:
             binary = False
             userdata.write('ssh_pwauth: True\n')

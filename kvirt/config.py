@@ -96,8 +96,10 @@ class Kconfig(Kbaseconfig):
                     common.pprint("Couldn't connect to specify hypervisor %s. Leaving..." % extraclient, color='red')
                     os._exit(1)
         self.k = k
+        self.overrides = {'type': self.type}
 
     def create_vm(self, name, profile, ip1=None, ip2=None, ip3=None, ip4=None, overrides={}):
+        overrides.update(self.overrides)
         if name is None:
             name = nameutils.get_random_name()
         k = self.k
@@ -639,6 +641,7 @@ class Kconfig(Kbaseconfig):
                 if parameter not in overrides:
                     overrides[parameter] = parameters[parameter]
         with open(inputfile, 'r') as entries:
+            overrides.update(self.overrides)
             entries = templ.render(overrides)
             if self.type == 'fake':
                 with open("/tmp/%s.yml" % plan, 'w') as renderedplan:
@@ -982,6 +985,7 @@ class Kconfig(Kbaseconfig):
                                                   variable_start_string='[[', variable_end_string=']]',
                                                   loader=FileSystemLoader(basedir))
                                 templ = env.get_template(os.path.basename(script))
+                                overrides.update(self.overrides)
                                 scriptentries = templ.render(overrides)
                                 scriptlines = [line.strip() for line in scriptentries.split('\n') if line.strip() != '']
                                 if scriptlines:
