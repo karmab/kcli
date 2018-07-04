@@ -14,7 +14,8 @@ Group:          Development/Languages/Python
 Source:         https://files.pythonhosted.org/packages/source/k/kcli/kcli-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildRequires:  python2-devel rubygem-ronn gzip
-Requires:       python2 python-iptools libvirt-python genisoimage nmap-ncat python-prettytable PyYAML python-flask python-netaddr python2-docker python2-kubernetes
+#Requires:       python2 python-iptools libvirt-python genisoimage nmap-ncat python-prettytable PyYAML python-flask python-netaddr python2-docker python2-kubernetes
+Requires:       python2 python-iptools libvirt-python genisoimage nmap-ncat python-prettytable PyYAML python-flask python-netaddr
 
 %description
 Kcli is meant to interact with a local/remote libvirt daemon and
