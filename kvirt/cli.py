@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from distutils.spawn import find_executable
 from kvirt.config import Kconfig
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.config import __version__
@@ -809,7 +810,10 @@ def ssh(args):
         user = None
     sshcommand = k.ssh(name, user=user, local=l, remote=r, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, D=D)
     if sshcommand is not None:
-        os.system(sshcommand)
+        if find_executable('ssh') is not None:
+            os.system(sshcommand)
+        else:
+            print(sshcommand)
     else:
         common.pprint("Couldnt ssh to %s" % name, color='red')
 
@@ -841,7 +845,10 @@ def scp(args):
     scpcommand = k.scp(name, user=user, source=source, destination=destination,
                        tunnel=tunnel, download=download, recursive=recursive)
     if scpcommand is not None:
-        os.system(scpcommand)
+        if find_executable('scp') is not None:
+            os.system(scpcommand)
+        else:
+            print(scpcommand)
     else:
         common.pprint("Couldn't run scp", color='red')
 
