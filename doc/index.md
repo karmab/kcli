@@ -7,7 +7,11 @@
 
 This tool is meant to interact with a local/remote libvirt daemon and to easily deploy from templates (optionally using cloudinit).
 It will also report IPS for any vm connected to a dhcp-enabled libvirt network and generally for every vm deployed from this client.
-There is also support for virtualbox and kubevirt
+There is also support for
+- gcp 
+- aws 
+- kubevirt
+- virtualbox
 
 # Installation
 
@@ -275,6 +279,48 @@ Replace with your own client in default section and indicate host and protocol i
 
 Note that most of the parameters are actually optional, and can be overridden in the default, host or profile section (or in a plan file)
 
+# Provider specifics
+
+### Gcp
+
+```
+gcp1:
+ type: gcp
+ user: jhendrix
+ credentials: ~/myproject.json
+ enabled: true
+ project: myproject
+ zone: europe-west1-b
+```
+
+The following parameters are specific to gcp:
+
+- user
+- credentials (pointing to a json service account file). if not specified, the environment variable *GOOGLE_APPLICATION_CREDENTIALS* will be used
+- project 
+- zone
+
+also note that gcp provider supports creation of dns records for an existing domain and that your home public key will be uploaded if needed
+
+### Aws
+
+```
+aws:
+ type: aws
+ access_key_id: AKAAAAAAAAAAAAA
+ access_key_secret: xxxxxxxxxxyyyyyyyy
+ enabled: true
+ region: eu-west-3
+ keypair: mykey
+```
+
+The following parameters are specific to aws:
+
+- access_key_id
+- access_key_secret
+- region
+- keypair 
+
 
 ### Kubevirt
 
@@ -305,6 +351,17 @@ kubectl config view -o jsonpath='{.contexts[*].name}'
 *virtctl* is a hard requirement for consoles. If present on your local machine, this will be used. otherwise, it s expected that the host node has it installed.
 
 Also, note that the kubevirt plugin uses *offlinevirtualmachines* instead of virtualmachines.
+
+
+### Fake
+
+you can also use a fake provider to get a feel of how kcli works (or to generate the scripts for a platform yet not supported like openstack or ovirt)
+
+```
+fake:
+ type: fake
+ enabled: true
+```
 
 # Usage
 
@@ -820,6 +877,7 @@ While the tool should pretty much work the same on this hypervisor, there are so
 - *insecure* (optional) Handles all the ssh option details so you dont get any warnings about man in the middle
 - *host* (optional) Allows you to create the vm on a specific host, provided you used kcli -C host1,host2,... and specify the wanted hypervisor ( or use kcli -C all ). Note that this field is not used for other types like network, so expect to use this in relatively simple plans only
 - *base* (optional) Allows you to point to a parent profile so that values are taken from parent when not found in the current profile. Note that scripts and commands are rather concatenated between default, father and children ( so you have a happy family...)
+- *tags* (optional) Array of tags to apply to gcp instances (usefull when matched in a firewall rule). In the case of kubevirt, it s rather a dict of key=value used as node selector (allowing to force vms to be scheduled on a matching host)
 
 ## Overriding parameters
 
