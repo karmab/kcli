@@ -1,4 +1,5 @@
-FROM centos:7
+FROM alpine:3.7
+
 MAINTAINER Karim Boumedhel <karimboumedhel@gmail.com>
 
 LABEL name="karmab/kcli-kubevirt" \
@@ -11,14 +12,10 @@ LABEL name="karmab/kcli-kubevirt" \
 
 EXPOSE 9000
 
-# Group the package installation
-RUN yum -y install epel-release && \
-    yum -y install gcc git libvirt-devel python-devel genisoimage qemu-kvm nmap-ncat python-pip openssh-clients
+RUN apk add --update --no-cache g++ gcc libvirt libvirt-dev py-pip python-dev
 
 # Group the pip installation
-RUN pip install -U --no-cache-dir ipaddress
-RUN pip install --no-cache-dir -e git+https://github.com/karmab/kcli.git#egg=kcli[all]
-RUN yum -y remove gcc git epel-release python-pip && yum clean all
+RUN pip install --no-cache-dir kcli
 
 VOLUME ["/var/run/libvirt", "/root/.ssh", "/root"]
 
