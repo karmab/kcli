@@ -680,7 +680,7 @@ class Kgcp(object):
         zone = self.zone
         client = dns.Client(project)
         domain_name = domain.replace('.', '-')
-        common.pprint("Assuming Domain name is %s" % domain_name, color='green')
+        common.pprint("Assuming Domain name is %s..." % domain_name, color='green')
         zone = client.zone(domain_name)
         if not zone.exists():
             common.pprint("Domain not found", color='red')

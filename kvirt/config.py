@@ -43,11 +43,13 @@ class Kconfig(Kbaseconfig):
                              debug=debug)
                 self.host = k.host
             elif self.type == 'gcp':
-                if 'GOOGLE_APPLICATION_CREDENTIALS' not in os.environ:
+                credentials = self.options.get('credentials')
+                if credentials is not None:
+                    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = os.path.expanduser(credentials)
+                elif 'GOOGLE_APPLICATION_CREDENTIALS' not in os.environ:
                     common.pprint("set GOOGLE_APPLICATION_CREDENTIALS variable.Leaving...", color='red')
                     os._exit(1)
                 project = self.options.get('project')
-                # credentials = self.options.get('credentials')
                 if project is None:
                     common.pprint("Missing project in the configuration. Leaving", color='red')
                     os._exit(1)
