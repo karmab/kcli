@@ -956,6 +956,7 @@ class Kconfig(Kbaseconfig):
                                                   self.sharedkey] if e is not None))
                     enableroot = next((e for e in [profile.get('enableroot'), customprofile.get('enableroot'),
                                                    default_enableroot] if e is not None))
+                    tags = None
                     if default_tags is not None:
                         if isinstance(default_tags, dict):
                             tags = default_tags.copy()
