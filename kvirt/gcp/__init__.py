@@ -537,7 +537,7 @@ class Kgcp(object):
 
     def scp(self, name, user=None, source=None, destination=None, tunnel=False, download=False, recursive=False):
         u, ip = self._ssh_credentials(name)
-        scpcommand = common.scp(name, ip='', host=self.host, port=self.port, hostuser=self.user, user=user,
+        scpcommand = common.scp(name, ip=ip, host=self.host, port=self.port, hostuser=self.user, user=u,
                                 source=source, destination=destination, recursive=recursive, tunnel=tunnel,
                                 debug=self.debug, download=False)
         return scpcommand
