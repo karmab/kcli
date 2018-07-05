@@ -65,8 +65,8 @@ class KcliInventory(object):
                 metadata[description]["hosts"].append(name)
             hostvalues[name] = {'status': status}
             if tunnel and self.type in ['kvm', 'kubevirt']:
-                hostvalues[name]['ansible_ssh_common_args'] = "-o ProxyCommand="
-                "'ssh -p %s -W %%h:%%p %s@%s'" % (self.port, self.user, self.host)
+                hostvalues[name]['ansible_ssh_common_args'] = \
+                    "-o ProxyCommand='ssh -p %s -W %%h:%%p %s@%s'" % (self.port, self.user, self.host)
             if ip != '':
                 if self.type == 'vbox':
                     hostvalues[name]['ansible_host'] = '127.0.0.1'
