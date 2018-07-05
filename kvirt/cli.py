@@ -413,6 +413,7 @@ def list(args):
                 containers.add_row(container)
         print(containers)
     elif images:
+        from kvirt import dockerutils
         common.pprint("Listing images...", color='green')
         images = PrettyTable(["Name"])
         for image in dockerutils.list_images(k):
