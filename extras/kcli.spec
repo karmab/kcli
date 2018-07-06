@@ -5,8 +5,8 @@
 #
 
 Name:           kcli
-Version:        11.0
-Release:        1
+Version:        12.0
+Release:        2
 Url:            http://github.com/karmab/kcli
 Summary:        Libvirt/VirtualBox wrapper on steroids
 License:        ASL 2.0
@@ -33,6 +33,7 @@ sed -i.bak '/pyvbox/d' setup.py
 sed -i.bak '/docker/d' setup.py
 sed -i.bak '/libvirt/d' setup.py
 sed -i.bak '/kubernetes/d' setup.py
+sed -i.bak '/google/d' setup.py
 python setup.py build
 
 %install
