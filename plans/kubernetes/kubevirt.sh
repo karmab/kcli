@@ -10,4 +10,4 @@ mv virtctl-$VERSION-linux-amd64 /usr/bin/virtctl
 chmod u+x /usr/bin/virtctl
 kubectl config set-context `kubectl config current-context` --namespace=default
 docker pull karmab/kcli
-echo alias kcli=\'docker run -it --rm -v ~/.kube:/root/.kube:Z -v ~/.ssh:/root/.ssh:Z  -v ~/.kcli:/root/.kcli:Z karmab/kcli\' >> /root/.bashrc
+echo alias kcli=\'docker run -it --rm -v ~/.kube:/root/.kube:Z  -v $SSH_AUTH_SOCK:/ssh-agent --env SSH_AUTH_SOCK=/ssh-agent -v ~/.kcli:/root/.kcli:Z karmab/kcli\' >> /root/.bashrc

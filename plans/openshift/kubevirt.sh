@@ -11,7 +11,7 @@ wget https://github.com/kubevirt/kubevirt/releases/download/$VERSION/virtctl-$VE
 mv virtctl-$VERSION-linux-amd64 /usr/bin/virtctl
 chmod u+x /usr/bin/virtctl
 docker pull karmab/kcli
-echo alias kcli=\'docker run -it --rm -v ~/.kube:/root/.kube:Z -v ~/.ssh:/root/.ssh:Z  -v ~/.kcli:/root/.kcli:Z karmab/kcli\' >> /root/.bashrc
+echo alias kcli=\'docker run -it --rm -v ~/.kube:/root/.kube:Z  -v $SSH_AUTH_SOCK:/ssh-agent --env SSH_AUTH_SOCK=/ssh-agent -v ~/.kcli:/root/.kcli:Z karmab/kcli\' >> /root/.bashrc
 ssh-keygen -t rsa -N '' -f /root/.ssh/id_rsa
 oc login --insecure-skip-tls-verify=true  `hostname`:8443 -u developer -p developer
 [% if openshift_version == '3.9' %] 
