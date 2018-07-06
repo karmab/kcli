@@ -74,10 +74,22 @@ If running locally, launch it with:
 docker run --rm -v /var/run/libvirt:/var/run/libvirt -v ~/.ssh:/root/.ssh karmab/kcli
 ```
 
-If using a remote libvirt hypervisor, launch it with your local .kcli directory pointing to this hypervisor and providing your ssh keys too
+If You're running with selinux, you can workaround selinux ssh denials by passing your ssh socket to the container 
+
+```Shell
+docker run --rm -v /var/run/libvirt:/var/run/libvirt -v $SSH_AUTH_SOCK:/ssh-agent --env SSH_AUTH_SOCK=/ssh-agent karmab/kcli
+```
+
+If using a remote libvirt hypervisor or other providers, launch it with your local .kcli directory pointing to this hypervisor and providing your ssh keys too
 
 ```Shell
 docker run -it --rm -v ~/.kcli:/root/.kcli -v ~/.ssh:/root/.ssh karmab/kcli
+```
+
+Using the same ssh agent trick to workaround selinux issues
+
+```Shell
+docker run --rm -v ~/.kcli:/root/.kcli -v $SSH_AUTH_SOCK:/ssh-agent --env SSH_AUTH_SOCK=/ssh-agent karmab/kcli
 ```
 
 The entrypoint is defined as kcli, so you can type commands directly as:
@@ -301,6 +313,15 @@ The following parameters are specific to gcp:
 - zone
 
 also note that gcp provider supports creation of dns records for an existing domain and that your home public key will be uploaded if needed
+
+To gather your service account file:
+
+- Select the "IAM" → "Service accounts" section within the Google Cloud Platform console.
+- Select "Create Service account".
+- Select "Project" → "Editor" as service account Role.
+- Select "Furnish a new private key".
+- Select "Save"
+
 
 ### Aws
 
