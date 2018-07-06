@@ -74,60 +74,33 @@ Pull the latest image:
 
     docker pull karmab/kcli
 
-If running locally, launch it with:
+To run it
 
 .. code:: shell
 
-    docker run --rm -v /var/run/libvirt:/var/run/libvirt -v ~/.ssh:/root/.ssh karmab/kcli
+    docker run --rm karmab/kcli
 
-If You’re running with selinux, you can workaround selinux ssh denials
-by passing your ssh socket to the container
+the are several flags you’ll want to pass depending on your use case
 
-.. code:: shell
-
-    docker run --rm -v /var/run/libvirt:/var/run/libvirt -v $SSH_AUTH_SOCK:/ssh-agent --env SSH_AUTH_SOCK=/ssh-agent karmab/kcli
-
-If using a remote libvirt hypervisor or other providers, launch it with
-your local .kcli directory pointing to this hypervisor and providing
-your ssh keys too
-
-.. code:: shell
-
-    docker run -it --rm -v ~/.kcli:/root/.kcli -v ~/.ssh:/root/.ssh karmab/kcli
-
-Using the same ssh agent trick to workaround selinux issues
-
-.. code:: shell
-
-    docker run --rm -v ~/.kcli:/root/.kcli -v $SSH_AUTH_SOCK:/ssh-agent --env SSH_AUTH_SOCK=/ssh-agent karmab/kcli
-
-The entrypoint is defined as kcli, so you can type commands directly as:
-
-.. code:: shell
-
-    docker run -it --rm -v ~/.kcli:/root/.kcli -v ~/.ssh:/root/.ssh karmab/kcli list
+-  ``-v /var/run/libvirt:/var/run/libvirt`` if running against a local
+   hypervisor
+-  ``~/.kcli:/root/.kcli`` to use your kcli configuration (also profiles
+   and repositories) stored locally
+-  ``-v ~/.ssh:/root/.ssh`` to share your ssh keys
+-  ``-v $SSH_AUTH_SOCK:/ssh-agent --env SSH_AUTH_SOCK=/ssh-agent``
+   alternative way to share your ssh keys, to avoid selinux denials
 
 As a bonus, you can alias kcli and run kcli as if it is installed
 locally instead a Docker container:
 
 .. code:: shell
 
-    alias kcli='docker run -it --rm -v ~/.kcli:/root/.kcli -v ~/.ssh:/root/.ssh karmab/kcli'
-
-If you need a shell access to the container, use the following:
-
-.. code:: shell
-
-    alias kcli = "docker run -it --rm -v ~/.kcli:/root/.kcli -v ~/.ssh:/root/.ssh --entrypoint=/bin/bash karmab/kcli"
+    alias kcli='docker run -it --rm -v ~/.kcli:/root/.kcli -v /var/run/libvirt:/var/run/libvirt -v $SSH_AUTH_SOCK:/ssh-agent --env SSH_AUTH_SOCK=/ssh-agent karmab/kcli'
 
 Note that the container cant be used for virtualbox ( i tried hard but
 there’s no way that will work…)
 
-For the web access, you can use
-
-.. code:: shell
-
-    alias kweb = "docker run --rm -v ~/.kcli:/root/.kcli -v ~/.ssh:/root/.ssh --entrypoint=/usr/bin/kweb karmab/web"
+For web access, you can switch with ``--entrypoint=/usr/bin/kweb``
 
 Dev installation
 ----------------
