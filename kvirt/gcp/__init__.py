@@ -386,6 +386,7 @@ class Kgcp(object):
             vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
         except:
             common.pprint("Vm %s not found" % name, color='red')
+            return None
         if 'natIP' not in vm['networkInterfaces'][0]['accessConfigs'][0]:
             return None
         else:
@@ -530,6 +531,8 @@ class Kgcp(object):
 
     def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, D=None):
         u, ip = self._ssh_credentials(name)
+        if ip is None:
+            return None
         sshcommand = common.ssh(name, ip=ip, host=self.host, port=self.port, hostuser=self.user, user=u,
                                 local=local, remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X,
                                 debug=self.debug)
