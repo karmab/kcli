@@ -295,6 +295,11 @@ To gather your service account file:
 - Select "Furnish a new private key".
 - Select "Save"
 
+to Create a dns zone
+
+- Select the "Networking" → "Network Services" → "Cloud DNS"
+- Select "Create Zone"
+- Put the same name as your domain, but with '-' instead
 
 ### Aws
 
