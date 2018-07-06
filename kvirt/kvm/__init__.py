@@ -1549,7 +1549,7 @@ class Kvirt(Kbase):
         if ip == '':
             return None
         else:
-            sshcommand = "%s@%s" % (user, ip)
+            sshcommand = "-A %s@%s" % (user, ip)
             if X:
                 sshcommand = "-X %s" % (sshcommand)
             if D is not None:

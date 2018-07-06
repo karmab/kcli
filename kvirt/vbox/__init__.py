@@ -881,7 +881,7 @@ class Kbox(Kbase):
         if port == '':
             return None
         else:
-            sshcommand = "-p %s %s@127.0.0.1" % (port, user)
+            sshcommand = "-A -p %s %s@127.0.0.1" % (port, user)
             if D is not None:
                 sshcommand = "-D %s %s" % (D, sshcommand)
             if cmd:

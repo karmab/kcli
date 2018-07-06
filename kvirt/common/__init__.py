@@ -422,7 +422,7 @@ def ssh(name, ip='', host=None, port=22, hostuser=None, user=None, local=None, r
         if ip == '':
             return None
         else:
-            sshcommand = "%s@%s" % (user, ip)
+            sshcommand = "-A %s@%s" % (user, ip)
             if D:
                 sshcommand = "-D %s %s" % (D, sshcommand)
             if X:
