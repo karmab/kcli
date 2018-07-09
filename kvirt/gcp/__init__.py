@@ -82,6 +82,8 @@ class Kgcp(object):
                 netname = net['name']
                 if 'ip' in net:
                     ip = net['ip']
+                if 'alias' in net:
+                    alias = net['alias']
             if ips and len(ips) > index and ips[index] is not None:
                 ip = ips[index]
             if netname in foundnets:
@@ -708,8 +710,12 @@ class Kgcp(object):
         changes.add_record_set(record_set)
         if alias:
             for a in alias:
-                new = '%s.' % (a, domain) if '.' not in a else '%s.' % a
-                record_set = zone.resource_record_set(new, 'CNAME', 300, [entry])
+                if a == '*':
+                    new = '*.%s.%s.' % (name, domain)
+                    record_set = zone.resource_record_set(new, 'A', 300, [ip])
+                else:
+                    new = '%s.' % (a, domain) if '.' not in a else '%s.' % a
+                    record_set = zone.resource_record_set(new, 'CNAME', 300, [entry])
                 changes.add_record_set(record_set)
         changes.create()
         return {'result': 'success'}
@@ -724,10 +730,10 @@ class Kgcp(object):
             return
         entry = "%s.%s." % (name, domain)
         changes = zone.changes()
-        records = [record for record in zone.list_resource_record_sets() if record.name == entry]
+        records = [record for record in zone.list_resource_record_sets() if entry in record.name]
         if records:
             for record in records:
                 record_set = zone.resource_record_set(record.name, record.record_type, record.ttl, record.rrdatas)
                 changes.delete_record_set(record_set)
-        changes.create()
+            changes.create()
         return {'result': 'success'}
