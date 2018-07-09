@@ -714,7 +714,7 @@ class Kgcp(object):
                     new = '*.%s.%s.' % (name, domain)
                     record_set = zone.resource_record_set(new, 'A', 300, [ip])
                 else:
-                    new = '%s.' % (a, domain) if '.' not in a else '%s.' % a
+                    new = '%s.%s.' % (a, domain) if '.' not in a else '%s.' % a
                     record_set = zone.resource_record_set(new, 'CNAME', 300, [entry])
                 changes.add_record_set(record_set)
         changes.create()

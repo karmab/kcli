@@ -31,6 +31,8 @@ class Kaws(object):
                                  region_name=region)
         self.resource = boto3.resource('ec2', aws_access_key_id=access_key_id, aws_secret_access_key=access_key_secret,
                                        region_name=region)
+        self.dns = boto3.client('route53', aws_access_key_id=access_key_id, aws_secret_access_key=access_key_secret,
+                                region_name=region)
         return
 
     def close(self):
@@ -71,7 +73,8 @@ class Kaws(object):
             return {'result': 'failure', 'reason': 'Couldnt find instance type matching requirements'}
         conn = self.conn
         tags = [{'ResourceType': 'instance',
-                 'Tags': [{'Key': 'plan', 'Value': plan}, {'Key': 'profile', 'Value': profile}]}]
+                 'Tags': [{'Key': 'hostname', 'Value': name}, {'Key': 'plan', 'Value': plan},
+                          {'Key': 'profile', 'Value': profile}]}]
         keypairs = [k for k in conn.describe_key_pairs()['KeyPairs'] if k['KeyName'] == 'kvirt']
         if not keypairs:
             common.pprint("Importing your public key as kvirt keyname", color='green')
@@ -107,6 +110,8 @@ class Kaws(object):
                 netname = net['name']
                 if 'ip' in net:
                     ip = net['ip']
+                if 'alias' in net:
+                    alias = net['alias']
             if netname == 'default':
                 if defaultsubnetid is not None:
                     netname = defaultsubnetid
@@ -155,11 +160,15 @@ class Kaws(object):
 #                print(e.response)
 #            code = e.response['Error']['Code']
 #            return {'result': 'failure', 'reason': code}
+        if reservedns and domain is not None:
+            tags[0]['Tags'].append({'Key': 'domain', 'Value': domain})
         instance = conn.run_instances(ImageId=template, MinCount=1, MaxCount=1, InstanceType=flavor,
                                       KeyName='kvirt', BlockDeviceMappings=blockdevicemappings,
                                       UserData=userdata, TagSpecifications=tags)
         newname = instance['Instances'][0]['InstanceId']
         common.pprint("%s created on aws" % newname, color='green')
+        if reservedns and domain is not None:
+            self.reserve_dns(name, nets=nets, domain=domain, alias=alias, instanceid=newname)
         return {'result': 'success'}
 
     def start(self, name):
@@ -336,11 +345,22 @@ class Kaws(object):
 
     def delete(self, name, snapshots=False):
         conn = self.conn
+        domain = None
         try:
-            conn.terminate_instances(InstanceIds=[name])
-            return {'result': 'success'}
+            vm = conn.describe_instances(InstanceIds=[name])['Reservations'][0]['Instances'][0]
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
+        hostname = None
+        if 'Tags' in vm:
+            for tag in vm['Tags']:
+                if tag['Key'] == 'domain':
+                    domain = tag['Value']
+                if tag['Key'] == 'hostname':
+                    hostname = tag['Value']
+        vm = conn.terminate_instances(InstanceIds=[name])
+        if domain is not None and hostname is not None:
+            self.delete_dns(hostname, domain, name)
+        return {'result': 'success'}
 
     def clone(self, old, new, full=False, start=False):
         print("not implemented")
@@ -543,3 +563,64 @@ class Kaws(object):
         else:
             return template
         return template
+
+    def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, instanceid=None):
+        common.pprint("Reserving dns...", color='green')
+        dns = self.dns
+        net = nets[0]
+        zone = [z['Id'].split('/')[2] for z in dns.list_hosted_zones_by_name()['HostedZones']
+                if z['Name'] == '%s.' % domain]
+        if not zone:
+            common.pprint("Domain not found", color='red')
+            return {'result': 'failure', 'reason': "Domain not found"}
+        zoneid = zone[0]
+        entry = "%s.%s." % (name, domain)
+        if ip is None:
+            if isinstance(net, dict):
+                ip = net.get('ip')
+            if ip is None:
+                counter = 0
+                while counter != 100:
+                    ip = self.ip(instanceid)
+                    if ip is None:
+                        time.sleep(5)
+                        print("Waiting 5 seconds to grab ip and create DNS record...")
+                        counter += 10
+                    else:
+                        break
+        if ip is None:
+            print("Couldn't assign DNS")
+            return
+        changes = [{'Action': 'CREATE', 'ResourceRecordSet':
+                   {'Name': entry, 'Type': 'A', 'TTL': 300, 'ResourceRecords': [{'Value': ip}]}}]
+        if alias:
+            for a in alias:
+                if a == '*':
+                    new = '*.%s.%s.' % (name, domain)
+                    changes.append({'Action': 'CREATE', 'ResourceRecordSet':
+                                    {'Name': new, 'Type': 'A', 'TTL': 300, 'ResourceRecords': [{'Value': ip}]}})
+                else:
+                    new = '%s.%s.' % (a, domain) if '.' not in a else '%s.' % a
+                    changes.append({'Action': 'CREATE', 'ResourceRecordSet':
+                                    {'Name': new, 'Type': 'CNAME', 'TTL': 300, 'ResourceRecords': [{'Value': entry}]}})
+        dns.change_resource_record_sets(HostedZoneId=zoneid, ChangeBatch={'Changes': changes})
+        return {'result': 'success'}
+
+    def delete_dns(self, name, domain, instanceid=None):
+        dns = self.dns
+        zone = [z['Id'].split('/')[2] for z in dns.list_hosted_zones_by_name()['HostedZones']
+                if z['Name'] == '%s.' % domain]
+        if not zone:
+            common.pprint("Domain not found", color='red')
+            return {'result': 'failure', 'reason': "Domain not found"}
+        zoneid = zone[0]
+        entry = "%s.%s." % (name, domain)
+        ip = self.ip(instanceid)
+        if ip is None:
+            print("Couldn't Get DNS Ip")
+            return
+        changes = [{'Action': 'DELETE', 'ResourceRecordSet':
+                   {'Name': entry, 'Type': 'A', 'TTL': 300, 'ResourceRecords': [{'Value': ip}]}}]
+        entry = "%s.%s." % (name, domain)
+        dns.change_resource_record_sets(HostedZoneId=zoneid, ChangeBatch={'Changes': changes})
+        return {'result': 'success'}
