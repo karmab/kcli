@@ -20,7 +20,6 @@ setup(
     license='ASL',
     install_requires=[
         'iptools',
-        'ipaddress',
         'netaddr',
         'PyYAML',
         'prettytable',

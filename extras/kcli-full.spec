@@ -14,7 +14,7 @@ Group:          Development/Languages/Python
 Source:         https://files.pythonhosted.org/packages/source/k/kcli/kcli-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildRequires:  python2-devel rubygem-ronn gzip
-Requires:       python2 python-iptools libvirt-python genisoimage nmap-ncat python-prettytable PyYAML python-flask python-netaddr python2-docker python2-kubernetes python2-google-api-client python2-boto3 python-google-auth-httplib2 google-cloud-dns
+Requires:       python2 python-iptools libvirt-python genisoimage nmap-ncat python-prettytable PyYAML python-flask python-netaddr python2-docker python2-kubernetes python2-google-api-client python2-boto3 python-google-auth-httplib2 google-cloud-dns google-api-core python2-requests python2-protobuf python-boto3
 
 %description
 Kcli is meant to interact with a local/remote libvirt daemon and
@@ -33,6 +33,7 @@ sed -i.bak '/docker/d' setup.py
 sed -i.bak '/libvirt/d' setup.py
 sed -i.bak '/kubernetes/d' setup.py
 sed -i.bak '/google/d' setup.py
+sed -i.bak '/boto3/d' setup.py
 python setup.py build
 
 %install
@@ -61,6 +62,8 @@ rm -rf %{buildroot}
 %attr(0755,root,root) %{_bindir}/kweb
 
 %changelog
+* Tue Jul 09 2018 Karim Boumedhel <karimboumedhel@gmail.com> 12.2
+- 12.2 Release
 * Tue Mar 20 2018 Karim Boumedhel <karimboumedhel@gmail.com> 11.0
 - 11.0 Release
 * Fri Jul 14 2017 Karim Boumedhel <karimboumedhel@gmail.com> 8.2
