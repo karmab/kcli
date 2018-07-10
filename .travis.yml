@@ -11,7 +11,7 @@ python:
 before_install:
 - pip install pep8
 - pip install misspellings
-- docker build -t karmab/kcli -f extras/Dockerfile/travis .
+- docker build -t karmab/kcli -f extras/Dockerfile/alpine .
 
 script:
 - find . -name \*.py -exec pep8 --ignore=E402 --max-line-length=120 {} +
