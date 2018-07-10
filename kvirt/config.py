@@ -107,7 +107,7 @@ class Kconfig(Kbaseconfig):
         if profile is None:
             common.pprint("Missing profile", color='red')
             os._exit(1)
-        vmprofiles = {k: v for k, v in self.profiles.iteritems() if 'type' not in v or v['type'] == 'vm'}
+        vmprofiles = {k: v for k, v in self.profiles.items() if 'type' not in v or v['type'] == 'vm'}
         common.pprint("Deploying vm %s from profile %s..." % (name, profile), color='green')
         if profile not in vmprofiles:
             common.pprint("profile %s not found. Trying to use the profile as template and default values..." % profile,
@@ -310,10 +310,10 @@ class Kconfig(Kbaseconfig):
                     if inventory is not None:
                         if variables is not None:
                             for variable in variables:
-                                if not isinstance(variable, dict) or len(variable.keys()) != 1:
+                                if not isinstance(variable, dict) or len(list(variable.keys())) != 1:
                                     continue
                                 else:
-                                    key, value = variable.keys()[0], variable[variable.keys()[0]]
+                                    key, value = list(variable.keys())[0], variable[list(variable.keys())[0]]
                                     inventory = "%s %s=%s" % (inventory, key, value)
                     if self.tunnel:
                         inventory = "%s ansible_ssh_common_args='-o ProxyCommand=\"ssh -p %s -W %%h:%%p %s@%s\""
@@ -325,7 +325,7 @@ class Kconfig(Kbaseconfig):
                 ansibleconfig = os.path.expanduser('~/.ansible.cfg')
                 with open(ansibleconfig, "w") as f:
                     f.write("[ssh_connection]\nretries=10\n")
-                print("Running: %s -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
+                print(("Running: %s -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook)))
                 os.system("%s -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
         common.set_lastvm(name, self.client)
         return {'result': 'success'}
@@ -448,7 +448,7 @@ class Kconfig(Kbaseconfig):
                     for product in products:
                         group = product['group']
                         repo = product['repo']
-                        print("repo:%s\tgroup:%s" % (repo, group))
+                        print(("repo:%s\tgroup:%s" % (repo, group)))
                     os._exit(1)
         else:
             product = products[0]
@@ -461,14 +461,14 @@ class Kconfig(Kbaseconfig):
             template = product.get('template')
             parameters = product.get('parameters')
             if template is not None:
-                print("Note that this product uses template: %s" % template)
+                print(("Note that this product uses template: %s" % template))
             if parameters is not None:
                 for parameter in parameters:
                     applied_parameter = overrides[parameter] if parameter in overrides else parameters[parameter]
-                    print("Using parameter %s: %s" % (parameter, applied_parameter))
+                    print(("Using parameter %s: %s" % (parameter, applied_parameter)))
             extraparameters = list(set(overrides) - set(parameters)) if parameters is not None else overrides
             for parameter in extraparameters:
-                print("Using parameter %s: %s" % (parameter, overrides[parameter]))
+                print(("Using parameter %s: %s" % (parameter, overrides[parameter])))
             common.pprint("Gathering all from group %s" % group, color='green')
             if os.path.exists(group):
                 common.pprint("Using current directory %s. Make sure it contains kcli content" % group, color='green')
@@ -499,9 +499,9 @@ class Kconfig(Kbaseconfig):
         k = self.k
         no_overrides = not overrides
         newvms = []
-        vmprofiles = {key: value for key, value in self.profiles.iteritems()
+        vmprofiles = {key: value for key, value in self.profiles.items()
                       if 'type' not in value or value['type'] == 'vm'}
-        containerprofiles = {key: value for key, value in self.profiles.iteritems()
+        containerprofiles = {key: value for key, value in self.profiles.items()
                              if 'type' in value and value['type'] == 'container'}
         tunnel = self.tunnel
         if plan is None:
@@ -696,7 +696,7 @@ class Kconfig(Kbaseconfig):
                             if no_overrides and parameters:
                                 common.pprint("Using parameters from master plan in child ones", color='blue')
                                 for override in overrides:
-                                    print("Using parameter %s: %s" % (override, overrides[override]))
+                                    print(("Using parameter %s: %s" % (override, overrides[override])))
                             common.pprint("Running kcli plan -f %s %s" % (inputfile, plan), color='green')
                             self.plan(plan, ansible=False, get=None, path=path, autostart=False, container=False,
                                       noautostart=False, inputfile=inputfile, start=False, stop=False, delete=False,
@@ -755,7 +755,7 @@ class Kconfig(Kbaseconfig):
                             common.pprint("Opening url %s for you to grab complete url for %s" % (url, template),
                                           color='blue')
                             webbrowser.open(url, new=2, autoraise=True)
-                            url = raw_input("Copy Url:\n")
+                            url = input("Copy Url:\n")
                             if url.strip() == '':
                                 common.pprint("Template %s skipped as url is empty!" % template, color='blue')
                                 continue
@@ -1161,7 +1161,7 @@ class Kconfig(Kbaseconfig):
                     ansibleconfig = os.path.expanduser('~/.ansible.cfg')
                     with open(ansibleconfig, "w") as f:
                         f.write("[ssh_connection]\nretries=10\n")
-                    print("Running: %s -i /tmp/%s.inv %s" % (ansiblecommand, plan, playbook))
+                    print(("Running: %s -i /tmp/%s.inv %s" % (ansiblecommand, plan, playbook)))
                     os.system("%s -i /tmp/%s.inv %s" % (ansiblecommand, plan, playbook))
         if ansible:
             common.pprint("Deploying Ansible Inventory...", color='green')
@@ -1179,7 +1179,7 @@ class Kconfig(Kbaseconfig):
                 return
         return {'result': 'success'}
 
-    def handle_host(self, pool='default', templates=[], switch=None, download=False, enable=False, disable=False,
+    def handle_host(self, pool='default', templates=[], switch=None, download=False,
                     url=None, cmd=None, sync=False):
         if download:
             k = self.k
@@ -1200,7 +1200,7 @@ class Kconfig(Kbaseconfig):
                             return {'result': 'failure', 'reason': "Missing url"}
                         common.pprint("Opening url %s for you to grab complete url for %s" % (url, template), 'blue')
                         webbrowser.open(url, new=2, autoraise=True)
-                        url = raw_input("Copy Url:\n")
+                        url = input("Copy Url:\n")
                         if url.strip() == '':
                             common.pprint("Missing proper url.Leaving...", color='red')
                             return {'result': 'failure', 'reason': "Missing template"}
@@ -1232,62 +1232,6 @@ class Kconfig(Kbaseconfig):
                         newini += line
                 open(inifile, 'w').write(newini)
             return {'result': 'success'}
-        elif enable:
-            client = enable
-            if client not in self.clients:
-                common.pprint("Client %s not found in config.Leaving...." % client, color='green')
-                return {'result': 'failure', 'reason': "Client %s not found in config" % client}
-            common.pprint("Enabling client %s..." % client, color='green')
-            inifile = "%s/.kcli/config.yml" % os.environ.get('HOME')
-            if os.path.exists(inifile):
-                newini = ''
-                clientreached = False
-                for line in open(inifile).readlines():
-                    if line.startswith("%s:" % client):
-                        clientreached = True
-                        newini += line
-                        continue
-                    if clientreached and 'enabled' not in self.ini[client]:
-                        newini += " enabled: true\n"
-                        clientreached = False
-                        newini += line
-                        continue
-                    elif clientreached and line.startswith(' enabled:'):
-                        newini += " enabled: true\n"
-                        clientreached = False
-                    else:
-                        newini += line
-                open(inifile, 'w').write(newini)
-            return {'result': 'success'}
-        elif disable:
-            client = disable
-            if client not in self.clients:
-                common.pprint("Client %s not found in config.Leaving...." % client, color='red')
-                return {'result': 'failure', 'reason': "Client %s not found in config" % client}
-            elif self.ini['default']['client'] == client:
-                common.pprint("Client %s currently default.Leaving...." % client, color='red')
-                return {'result': 'failure', 'reason': "Client %s currently default" % client}
-            common.pprint("Disabling client %s..." % client, color='green')
-            inifile = "%s/.kcli/config.yml" % os.environ.get('HOME')
-            if os.path.exists(inifile):
-                newini = ''
-                clientreached = False
-                for line in open(inifile).readlines():
-                    if line.startswith("%s:" % client):
-                        clientreached = True
-                        newini += line
-                        continue
-                    if clientreached and 'enabled' not in self.ini[client]:
-                        newini += " enabled: false\n"
-                        clientreached = False
-                        newini += line
-                        continue
-                    elif clientreached and line.startswith(' enabled:'):
-                        newini += " enabled: false\n"
-                        clientreached = False
-                    else:
-                        newini += line
-                open(inifile, 'w').write(newini)
         elif sync:
             k = self.k
             if not self.extraclients:
@@ -1303,7 +1247,7 @@ class Kconfig(Kbaseconfig):
                     common.pprint("Ignoring %s as it's already there" % (template), color='blue')
                     continue
                 url = None
-                for n in TEMPLATES.values():
+                for n in list(TEMPLATES.values()):
                     if n is None:
                         continue
                     elif n.split('/')[-1] == template:
@@ -1315,7 +1259,7 @@ class Kconfig(Kbaseconfig):
                         return {'result': 'failure', 'reason': "Missing url"}
                     common.pprint("Opening url %s for you to grab complete url for %s" % (url, vol), color='blue')
                     webbrowser.open(url, new=2, autoraise=True)
-                    url = raw_input("Copy Url:\n")
+                    url = input("Copy Url:\n")
                     if url.strip() == '':
                         common.pprint("Missing proper url.Leaving...", color='red')
                         return {'result': 'failure', 'reason': "Missing template"}

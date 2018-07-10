@@ -87,7 +87,7 @@ def restart(args):
 
 def console(args):
     """Vnc/Spice/Serial/Container console"""
-    name = common.get_lastvm(args.client) if not args.name else args.name[0]
+    name = common.get_lastvm(args.client) if not args.name else args.name
     serial = args.serial
     container = args.container
     config = Kconfig(client=args.client, debug=args.debug)
@@ -173,10 +173,10 @@ def host(args):
         result = baseconfig.enable_host(enable)
     elif disable:
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-        result = baseconfig.switch_host(disable)
+        result = baseconfig.disable_host(disable)
     else:
         config = Kconfig(client=args.client, debug=args.debug)
-        result = config.handle_host(enable=enable, disable=disable, sync=sync)
+        result = config.handle_host(sync=sync)
     if result['result'] == 'success':
         os._exit(0)
     else:
@@ -439,7 +439,7 @@ def vm(args):
                 config.profiles = yaml.load(entries)
     if profile is None:
         if len(config.profiles) == 1:
-            profile = config.profiles.keys()[0]
+            profile = list(config.profiles.keys())[0]
         else:
             common.pprint("Missing profile", color='red')
             os._exit(1)
@@ -853,7 +853,7 @@ def container(args):
     if profile is None:
         common.pprint("Missing profile", color='red')
         os._exit(1)
-    containerprofiles = {k: v for k, v in config.profiles.iteritems() if 'type' in v and v['type'] == 'container'}
+    containerprofiles = {k: v for k, v in config.profiles.items() if 'type' in v and v['type'] == 'container'}
     if profile not in containerprofiles:
         common.pprint("profile %s not found. Trying to use the profile as image"
                       "and default values..." % profile, color='blue')
@@ -981,7 +981,7 @@ def cli():
     disk_info = 'Add/Delete disk of vm'
     disk_parser = subparsers.add_parser('disk', description=disk_info, help=disk_info)
     disk_parser.add_argument('-d', '--delete', action='store_true')
-    disk_parser.add_argument('-s', '--size', help='Size of the disk to add, in GB', metavar='SIZE')
+    disk_parser.add_argument('-s', '--size', type=int, help='Size of the disk to add, in GB', metavar='SIZE')
     disk_parser.add_argument('-n', '--diskname', help='Name or Path of the disk, when deleting', metavar='DISKNAME')
     disk_parser.add_argument('-t', '--template', help='Name or Path of a Template, when adding', metavar='TEMPLATE')
     disk_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
@@ -1222,11 +1222,11 @@ def cli():
                            'individual parameters', metavar='PARAMFILE')
     vm_parser.add_argument('name', metavar='VMNAME', nargs='?')
     vm_parser.set_defaults(func=vm)
-    if len(sys.argv) == 1:
+    if len(sys.argv) == 1 or (len(sys.argv) == 3 and sys.argv[1] == '-C'):
         parser.print_help()
         os._exit(0)
     args = parser.parse_args()
-    if args.func.func_name == 'vm' and args.client is not None and ',' in args.client:
+    if args.func.__name__ == 'vm' and args.client is not None and ',' in args.client:
             args.client = random.choice(args.client.split(','))
             common.pprint("Selecting %s for creation" % args.client, color='green')
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)

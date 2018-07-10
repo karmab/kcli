@@ -14,8 +14,8 @@ try:
 except ImportError:
     config = {'PORT': os.environ.get('PORT', 9000)}
 
-debug = config['DEBUG'] if 'DEBUG' in config.keys() else True
-port = int(config['PORT']) if 'PORT'in config.keys() else 9000
+debug = config['DEBUG'] if 'DEBUG' in list(config.keys()) else True
+port = int(config['PORT']) if 'PORT'in list(config.keys()) else 9000
 
 
 # VMS
@@ -167,7 +167,7 @@ def poolaction():
         if action == 'create':
             path = request.form['path']
             pooltype = request.form['type']
-            print pool, path, pooltype
+            print(pool, path, pooltype)
             result = k.create_pool(name=pool, poolpath=path, pooltype=pooltype)
             print(result)
         elif action == 'delete':
@@ -197,7 +197,7 @@ def repoaction():
         action = request.form['action']
         if action == 'create':
             url = request.form['url']
-            print repo, url
+            print(repo, url)
             if url == '':
                 failure = {'result': 'failure', 'reason': "Invalid Data"}
                 response = jsonify(failure)
@@ -248,7 +248,7 @@ def networkaction():
             dhcp = bool(request.form['dhcp'])
             isolated = bool(request.form['isolated'])
             nat = not isolated
-            print(network, cidr, dhcp, nat)
+            print((network, cidr, dhcp, nat))
             result = k.create_network(name=network, cidr=cidr, dhcp=dhcp, nat=nat)
         elif action == 'delete':
             result = k.delete_network(name=network)
@@ -437,7 +437,7 @@ def report():
         os.mkdir(reportdir)
     with open("%s/%s.txt" % (reportdir, name), 'w') as f:
         f.write(report)
-    print("Name: %s Status: %s" % (name, status))
+    print(("Name: %s Status: %s" % (name, status)))
     if status == 'Running' and not os.path.exists("%s/%s.running" % (reportdir, name)):
         open("%s/%s.running" % (reportdir, name), 'a').close()
     if status == 'OK' and os.path.exists("%s/%s.running" % (reportdir, name)):

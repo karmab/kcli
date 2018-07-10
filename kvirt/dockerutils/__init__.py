@@ -48,7 +48,7 @@ def create_container(self, name, image, nets=None, cmd=None, ports=[], volumes=[
                     else:
                         continue
                 elif isinstance(env, dict):
-                    if len(env.keys()) == 1:
+                    if len(list(env.keys())) == 1:
                         key = env.keys[0]
                         value = env[key]
                         finalenv[key] = value
@@ -106,8 +106,8 @@ def create_container(self, name, image, nets=None, cmd=None, ports=[], volumes=[
                     else:
                         continue
                 elif isinstance(env, dict):
-                    if len(env.keys()) == 1:
-                        key = env.keys()[0]
+                    if len(list(env.keys())) == 1:
+                        key = list(env.keys())[0]
                         value = env[key]
                     else:
                         continue

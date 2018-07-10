@@ -258,7 +258,7 @@ class Kaws(object):
         console = conn.instances().getSerialPortOutput(zone=zone, project=project, instance=name).execute()
         if console is None:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        print(console['contents'])
+        print((console['contents']))
         return
 
     def info(self, name, output='plain', fields=None, values=False):

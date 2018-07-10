@@ -153,7 +153,7 @@ class Kgcp(object):
             if origin is not None:
                 origin = os.path.expanduser(origin)
                 if not os.path.exists(origin):
-                    print("Skipping file %s as not found" % origin)
+                    print(("Skipping file %s as not found" % origin))
                     continue
                 binary = True if '.' in origin and origin.split('.')[-1].lower() in binary_types else False
                 if binary:
@@ -195,7 +195,7 @@ class Kgcp(object):
         else:
             homekey = open("%s/.ssh/id_dsa.pub" % os.environ['HOME']).read()
         keys = [homekey] + keys if keys is not None else [homekey]
-        keys = map(lambda x: "%s: %s" % (self.user, x), keys)
+        keys = ["%s: %s" % (self.user, x) for x in keys]
         keys = ''.join(keys)
         newval = {'key': 'ssh-keys', 'value': keys}
         body['metadata']['items'].append(newval)
@@ -269,7 +269,7 @@ class Kgcp(object):
         # project = self.project
         # zone = self.zone
         resource = googleapiclient.discovery.build('cloudresourcemanager', 'v1')
-        print dir(resource.projects())
+        print(dir(resource.projects()))
         return
 
     def status(self, name):
@@ -321,7 +321,7 @@ class Kgcp(object):
         console = conn.instances().getSerialPortOutput(zone=zone, project=project, instance=name).execute()
         if console is None:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        print(console['contents'])
+        print((console['contents']))
         return
 
     def info(self, name, output='plain', fields=None, values=False):
