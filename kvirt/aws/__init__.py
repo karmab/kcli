@@ -571,7 +571,7 @@ class Kaws(object):
         zone = [z['Id'].split('/')[2] for z in dns.list_hosted_zones_by_name()['HostedZones']
                 if z['Name'] == '%s.' % domain]
         if not zone:
-            common.pprint("Domain not found", color='red')
+            common.pprint("Domain %s not found" % domain, color='red')
             return {'result': 'failure', 'reason': "Domain not found"}
         zoneid = zone[0]
         entry = "%s.%s." % (name, domain)

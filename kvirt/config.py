@@ -325,7 +325,7 @@ class Kconfig(Kbaseconfig):
                     f.write("[ssh_connection]\nretries=10\n")
                 print("Running: %s -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
                 os.system("%s -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
-        common.lastvm(name)
+        common.set_lastvm(name, self.client)
         return {'result': 'success'}
 
     def list_plans(self):
@@ -1046,7 +1046,7 @@ class Kconfig(Kbaseconfig):
                     common.handle_response(result, name)
                     if result['result'] == 'success':
                         newvms.append(name)
-                        common.lastvm(name)
+                        common.set_lastvm(name, self.client)
                     _ansible = next((e for e in [profile.get('ansible'), customprofile.get('ansible')]
                                      if e is not None), None)
                     if _ansible is not None:

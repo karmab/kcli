@@ -686,7 +686,7 @@ class Kgcp(object):
         common.pprint("Assuming Domain name is %s..." % domain_name, color='green')
         zone = client.zone(domain_name)
         if not zone.exists():
-            common.pprint("Domain not found", color='red')
+            common.pprint("Domain %s not found" % domain_name, color='red')
             return {'result': 'failure', 'reason': "Domain not found"}
         entry = "%s.%s." % (name, domain)
         if ip is None:

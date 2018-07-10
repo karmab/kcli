@@ -297,7 +297,23 @@ def confirm(message):
     return
 
 
-def lastvm(name, delete=False):
+def get_lastvm(client):
+    lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
+    if os.path.exists(lastvm) and os.stat(lastvm).st_size > 0:
+        for line in open(lastvm).readlines():
+            line = line.split(' ')
+            if len(line) != 2:
+                continue
+            cli = line[0].strip()
+            vm = line[1].strip()
+            if cli == client:
+                pprint("Using %s from %s as vm" % (vm, cli), color='green')
+                return vm
+    pprint("Missing Vm's name", color='red')
+    os._exit(1)
+
+
+def set_lastvm(name, client, delete=False):
     configdir = "%s/.kcli/" % os.environ.get('HOME')
     vmfile = "%s/vm" % configdir
     if not os.path.exists(configdir):
@@ -306,7 +322,7 @@ def lastvm(name, delete=False):
         if not os.path.exists(vmfile):
             return
         else:
-            os.system("sed -i '/%s/d' %s/vm" % (name, configdir))
+            os.system("sed -i '/%s %s/d' %s/vm" % (client, name, configdir))
         return
     if not os.path.exists(vmfile) or os.stat(vmfile).st_size == 0:
         with open(vmfile, 'w') as f:
@@ -314,7 +330,7 @@ def lastvm(name, delete=False):
         return
     firstline = True
     for line in fileinput.input(vmfile, inplace=True):
-        line = "%s\n%s" % (name, line) if firstline else line
+        line = "%s %s\n%s" % (client, name, line) if firstline else line
         print line,
         firstline = False
 

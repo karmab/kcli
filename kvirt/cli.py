@@ -17,16 +17,8 @@ import yaml
 
 def start(args):
     """Start vm/container"""
-    names = args.names
+    names = [common.get_lastvm(args.client)] if not args.names else args.names
     container = args.container
-    lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
-    if not names:
-        if os.path.exists(lastvm) and os.stat(lastvm).st_size > 0:
-            names = [open(lastvm).readlines()[0].strip()]
-            common.pprint("Using %s as vm" % names[0], color='green')
-        else:
-            common.pprint("Missing Vm's name", color='red')
-            return
     config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
     if container:
@@ -46,16 +38,8 @@ def start(args):
 
 def stop(args):
     """Stop vm/container"""
-    names = args.names
     container = args.container
-    lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
-    if not names:
-        if os.path.exists(lastvm) and os.stat(lastvm).st_size > 0:
-            names = [open(lastvm).readlines()[0].strip()]
-            common.pprint("Using %s as vm" % names[0], color='green')
-        else:
-            common.pprint("Missing Vm's name", color='red')
-            return
+    names = [common.get_lastvm(args.client)] if not args.names else args.names
     config = Kconfig(client=args.client, debug=args.debug)
     if config.extraclients:
         ks = config.extraclients
@@ -81,16 +65,8 @@ def stop(args):
 
 def restart(args):
     """Restart vm/container"""
-    names = args.names
+    names = [common.get_lastvm(args.client)] if not args.names else args.names
     container = args.container
-    lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
-    if not names:
-        if os.path.exists(lastvm) and os.stat(lastvm).st_size > 0:
-            names = [open(lastvm).readlines()[0].strip()]
-            common.pprint("Using %s as vm" % names[0], color='green')
-        else:
-            common.pprint("Missing Vm's name", color='red')
-            return
     config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
     if container:
@@ -111,17 +87,9 @@ def restart(args):
 
 def console(args):
     """Vnc/Spice/Serial/Container console"""
-    name = args.name
+    name = common.get_lastvm(args.client) if not args.name else args.name[0]
     serial = args.serial
     container = args.container
-    lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
-    if not name:
-        if os.path.exists(lastvm) and os.stat(lastvm).st_size > 0:
-            name = open(lastvm).readlines()[0].strip()
-            common.pprint("Using %s as vm" % name, color='green')
-        else:
-            common.pprint("Missing Vm's name", color='red')
-            return
     config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
     tunnel = config.tunnel
@@ -137,18 +105,10 @@ def console(args):
 
 def delete(args):
     """Delete vm/container"""
-    names = args.names
+    names = [common.get_lastvm(args.client)] if not args.names else args.names
     container = args.container
     snapshots = args.snapshots
     yes = args.yes
-    lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
-    if not names:
-        if os.path.exists(lastvm) and os.stat(lastvm).st_size > 0:
-            names = [open(lastvm).readlines()[0].strip()]
-            common.pprint("Using %s as vm" % names[0], color='green')
-        else:
-            common.pprint("Missing Vm's name", color='red')
-            return
     config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
     if not yes:
@@ -165,7 +125,7 @@ def delete(args):
             if result['result'] == 'success':
                 common.pprint("vm %s deleted on %s" % (name, config.client), color='green')
                 codes.append(0)
-                common.lastvm(name, delete=True)
+                common.set_lastvm(name, args.client, delete=True)
             else:
                 reason = result['reason']
                 common.pprint("Could not delete vm %s because %s" % (name, reason), color='red')
@@ -189,18 +149,10 @@ def download(args):
 
 def info(args):
     """Get info on vm"""
-    names = args.names
+    names = [common.get_lastvm(args.client)] if not args.names else args.names
     output = args.output
     fields = args.fields
     values = args.values
-    lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
-    if not names:
-        if os.path.exists(lastvm) and os.stat(lastvm).st_size > 0:
-            names = [open(lastvm).readlines()[0].strip()]
-            common.pprint("Using %s as vm" % names[0], color='green')
-        else:
-            common.pprint("Missing Vm's name", color='red')
-            return
     config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
     codes = []
@@ -782,15 +734,7 @@ def product(args):
 
 def ssh(args):
     """Ssh into vm"""
-    name = args.name
-    lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
-    if not name:
-        if os.path.exists(lastvm) and os.stat(lastvm).st_size > 0:
-            name = [open(lastvm).readlines()[0].strip()]
-            common.pprint("Using %s as vm" % name[0], color='green')
-        else:
-            common.pprint("Missing Vm's name", color='red')
-            return
+    name = [common.get_lastvm(args.client)] if not args.name else args.name
     l = args.L
     r = args.R
     D = args.D
@@ -1286,6 +1230,8 @@ def cli():
             args.client = random.choice(args.client.split(','))
             common.pprint("Selecting %s for creation" % args.client, color='green')
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    if args.client is None:
+        args.client = baseconfig.client
     if args.client != 'all' and not baseconfig.enabled:
         common.pprint("Disabled hypervisor %s.Leaving..." % args.client, color='red')
         os._exit(1)
