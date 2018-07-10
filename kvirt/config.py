@@ -637,17 +637,23 @@ class Kconfig(Kbaseconfig):
                           variable_end_string=']]', loader=FileSystemLoader(basedir))
         templ = env.get_template(os.path.basename(inputfile))
         parameters = common.get_parameters(inputfile)
+        basefile = None
         if parameters is not None:
             parameters = yaml.load(parameters)['parameters']
             for parameter in parameters:
-                if parameter not in overrides:
+                if parameter == 'baseplan':
+                    basefile = parameters['baseplan']
+                    baseparameters = common.get_parameters(basefile)
+                    if baseparameters is not None:
+                        baseparameters = yaml.load(baseparameters)['parameters']
+                        for baseparameter in baseparameters:
+                            if baseparameter not in overrides:
+                                overrides[baseparameter] = baseparameters[baseparameter]
+                elif parameter not in overrides:
                     overrides[parameter] = parameters[parameter]
         with open(inputfile, 'r') as entries:
             overrides.update(self.overrides)
             entries = templ.render(overrides)
-            if self.type == 'fake':
-                with open("/tmp/%s.yml" % plan, 'w') as renderedplan:
-                    renderedplan.write(entries)
             entries = yaml.load(entries)
             parameters = entries.get('parameters')
             if parameters is not None:

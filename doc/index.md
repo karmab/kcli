@@ -930,3 +930,11 @@ vm4:
     - [[ net2 ]]
 {% endif %}
 ```
+
+Also, you can reference a *baseplan* file in the *parameters* section, so that parameters are concatenated between the base plan file and the current one
+
+```
+parameters:
+   baseplan: upstream.yml
+   xx_version: v0.7.0
+```

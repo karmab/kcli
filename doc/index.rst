@@ -337,6 +337,12 @@ To gather your service account file:
 -  Select “Furnish a new private key”.
 -  Select “Save”
 
+to Create a dns zone
+
+-  Select the “Networking” → “Network Services” → “Cloud DNS”
+-  Select “Create Zone”
+-  Put the same name as your domain, but with ‘-’ instead
+
 Aws
 ~~~
 
@@ -1174,6 +1180,16 @@ conditionals and so on. For instance:
     {% if net2 is defined %}
         - [[ net2 ]]
     {% endif %}
+
+Also, you can reference a *baseplan* file in the *parameters* section,
+so that parameters are concatenated between the base plan file and the
+current one
+
+::
+
+    parameters:
+       baseplan: upstream.yml
+       xx_version: v0.7.0
 
 .. |Build Status| image:: https://travis-ci.org/karmab/kcli.svg?branch=master
    :target: https://travis-ci.org/karmab/kcli
