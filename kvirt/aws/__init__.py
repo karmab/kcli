@@ -169,7 +169,7 @@ class Kaws(object):
         common.pprint("%s created on aws" % newname, color='green')
         if reservedns and domain is not None:
             self.reserve_dns(name, nets=nets, domain=domain, alias=alias, instanceid=newname)
-        return {'result': 'success'}
+        return {'result': 'success', 'name': newname}
 
     def start(self, name):
         conn = self.conn
@@ -565,7 +565,7 @@ class Kaws(object):
         return template
 
     def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, instanceid=None):
-        common.pprint("Reserving dns...", color='green')
+        common.pprint("Using domain %s..." % domain, color='green')
         dns = self.dns
         net = nets[0]
         zone = [z['Id'].split('/')[2] for z in dns.list_hosted_zones_by_name()['HostedZones']

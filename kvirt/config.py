@@ -291,6 +291,8 @@ class Kconfig(Kbaseconfig):
                           tags=tags)
         if result['result'] != 'success':
             return result
+        elif 'name' in result:
+            name = result['name']
         ansible = profile.get('ansible')
         if ansible is not None:
             for element in ansible:
