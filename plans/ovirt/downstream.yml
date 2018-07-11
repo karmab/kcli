@@ -1,10 +1,13 @@
 parameters:
+ memory: 8192
  password: unix1234
  version: 4.2
+ organization: Karmalabs
+ template: rhel-server-7.5-x86_64-kvm.qcow2
 
 rhv:
- template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
- memory: 8192
+ template: [[ template ]]
+ memory: [[ memory ]]
  numcpus: 2
  cpumodel: host-model
  reservehost: true

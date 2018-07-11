@@ -12,6 +12,7 @@ from kvirt.base import Kbase
 from netaddr import IPAddress, IPNetwork
 from libvirt import open as libvirtopen, registerErrorHandler
 import os
+from subprocess import call
 import re
 import string
 import time
@@ -938,7 +939,7 @@ class Kvirt(Kbase):
                     break
             if found:
                 print("Deleting hosts entry. sudo password might be asked")
-                os.system("sudo sed -i '/%s/d' /etc/hosts" % hostentry)
+                call("sudo sed -i '/%s/d' /etc/hosts" % hostentry, shell=True)
         return {'result': 'success'}
 
     def _xmldisk(self, diskpath, diskdev, diskbus='virtio', diskformat='qcow2', shareable=False):
@@ -1159,7 +1160,7 @@ class Kvirt(Kbase):
                 return
         hostscmd = "sudo sh -c 'echo %s >>/etc/hosts'" % hosts
         print("Creating hosts entry. sudo password might be asked")
-        os.popen(hostscmd)
+        call(hostscmd, shell=True)
 
     def handler(self, stream, data, file_):
         return file_.read(data)
