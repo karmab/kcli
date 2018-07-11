@@ -15,7 +15,7 @@ def play(self, name, playbook, variables=[], verbose=False):
         ip = self.ip(name)
         if ip is None:
             time.sleep(5)
-            print("Retrieving ip of %s..." % name)
+            print(("Retrieving ip of %s..." % name))
             counter += 10
         else:
             break
@@ -29,15 +29,15 @@ def play(self, name, playbook, variables=[], verbose=False):
         ansiblecommand = "%s -vvv" % ansiblecommand
     if variables is not None:
         for variable in variables:
-            if not isinstance(variable, dict) or len(variable.keys()) != 1:
+            if not isinstance(variable, dict) or len(list(variable.keys())) != 1:
                 continue
             else:
-                key, value = variable.keys()[0], variable[variable.keys()[0]]
+                key, value = list(variable.keys())[0], variable[list(variable.keys())[0]]
                 inventory = "%s %s=%s" % (inventory, key, value)
     with open("/tmp/%s.inv" % name, 'w') as f:
         f.write("%s\n" % inventory)
     print("Ansible Command run:")
-    print("%s -T 20 -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
+    print(("%s -T 20 -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook)))
     os.system("%s -T 20 -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
 
 
@@ -47,7 +47,7 @@ def inventory(self, name):
         ip = self.ip(name)
         if ip is None:
             time.sleep(5)
-            print("Retrieving ip of %s..." % name)
+            print(("Retrieving ip of %s..." % name))
             counter += 10
         else:
             break

@@ -266,7 +266,7 @@ Note that most of the parameters are actually optional, and can be overridden in
 
 # Provider specifics
 
-### Gcp
+## Gcp
 
 ```
 gcp1:
@@ -301,7 +301,7 @@ to Create a dns zone
 - Select "Create Zone"
 - Put the same name as your domain, but with '-' instead
 
-### Aws
+## Aws
 
 ```
 aws:
@@ -321,7 +321,7 @@ The following parameters are specific to aws:
 - keypair 
 
 
-### Kubevirt
+## Kubevirt
 
 for kubevirt, you will need to define one ( or several !) sections with the type kubevirt in your *~/.kcli/config.yml*
 
@@ -352,7 +352,7 @@ kubectl config view -o jsonpath='{.contexts[*].name}'
 Also, note that the kubevirt plugin uses *offlinevirtualmachines* instead of virtualmachines.
 
 
-### Fake
+## Fake
 
 you can also use a fake provider to get a feel of how kcli works (or to generate the scripts for a platform yet not supported like openstack or ovirt)
 

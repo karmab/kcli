@@ -12,10 +12,10 @@ LABEL name="karmab/kcli-kubevirt" \
 
 EXPOSE 9000
 
-RUN apk add --update --no-cache g++ gcc libvirt libvirt-dev py-pip python-dev openssh-client
+RUN apk add --update --no-cache g++ gcc libvirt libvirt-dev py-pip python3-dev openssh-client
 
 # Group the pip installation
-RUN pip install -U --no-cache-dir kcli setuptools
+RUN pip3 install -U --no-cache-dir kcli setuptools
 
 VOLUME ["/var/run/libvirt", "/root/.ssh", "/root"]
 

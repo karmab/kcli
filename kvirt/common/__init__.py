@@ -5,7 +5,8 @@ from distutils.spawn import find_executable
 import errno
 import fileinput
 import socket
-import urllib2
+from urllib.request import urlopen
+import urllib.error
 import json
 import os
 import yaml
@@ -17,14 +18,14 @@ def symlinks(user, repo):
     mappings = []
     url1 = 'https://api.github.com/repos/%s/%s/git/refs/heads/master' % (user, repo)
     try:
-        r = urllib2.urlopen(url1)
-    except urllib2.HTTPError as e:
-        print("Couldn't access url %s, got %s.Leaving..." % (url1, e))
+        r = urlopen(url1)
+    except urllib.error.HTTPError as e:
+        print(("Couldn't access url %s, got %s.Leaving..." % (url1, e)))
         os._exit(1)
     base = json.load(r)
     sha = base['object']['sha']
     url2 = 'https://api.github.com/repos/%s/%s/git/trees/%s?recursive=1' % (user, repo, sha)
-    r = urllib2.urlopen(url2)
+    r = urlopen(url2)
     try:
         base = json.load(r)
     except:
@@ -38,18 +39,18 @@ def symlinks(user, repo):
 def download(url, path, debug=False):
     filename = os.path.basename(url)
     if debug:
-        print("Fetching %s" % filename)
-    url = urllib2.urlopen(url)
+        print(("Fetching %s" % filename))
+    url = urlopen(url)
     with open("%s/%s" % (path, filename), 'wb') as output:
         output.write(url.read())
 
 
 def makelink(url, path, debug=False):
     filename = os.path.basename(url)
-    url = urllib2.urlopen(url)
+    url = urlopen(url)
     target = url.read()
     if debug:
-        print("Creating symlink for %s pointing to %s" % (filename, target))
+        print(("Creating symlink for %s pointing to %s" % (filename, target)))
     os.symlink(target, "%s/%s" % (path, filename))
 
 
@@ -77,20 +78,20 @@ def fetch(url, path, syms=None):
             else:
                 raise
     try:
-        r = urllib2.urlopen(url)
-    except urllib2.HTTPError:
-        print("Invalid url %s.Leaving..." % url)
+        r = urlopen(url)
+    except urllib.error.HTTPError:
+        print(("Invalid url %s.Leaving..." % url))
         os._exit(1)
     try:
         base = json.load(r)
     except:
-        print("Couldnt load json data from url %s.Leaving..." % url)
+        print(("Couldnt load json data from url %s.Leaving..." % url))
         os._exit(1)
     if not isinstance(base, list):
         base = [base]
     for b in base:
         if 'name' not in b or 'type' not in b or 'download_url' not in b:
-            print("Missing data in url %s.Leaving..." % url)
+            print(("Missing data in url %s.Leaving..." % url))
             os._exit(1)
         filename = b['name']
         filetype = b['type']
@@ -212,7 +213,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 if origin is not None:
                     origin = os.path.expanduser(origin)
                     if not os.path.exists(origin):
-                        print("Skipping file %s as not found" % origin)
+                        print(("Skipping file %s as not found" % origin))
                         continue
                     binary = True if '.' in origin and origin.split('.')[-1].lower() in binary_types else False
                     if binary:
@@ -268,7 +269,7 @@ def pprint(text, color=None):
     colors = {'blue': '34', 'red': '31', 'green': '32', 'yellow': '33', 'pink': '35', 'white': '37'}
     if color is not None and color in colors:
         color = colors[color]
-        print('\033[1;%sm%s\033[0;0m' % (color, text))
+        print(('\033[1;%sm%s\033[0;0m' % (color, text)))
     else:
         print(text)
 
@@ -290,8 +291,8 @@ def handle_response(result, name, quiet=False, element='', action='deployed', cl
 
 def confirm(message):
     message = "%s [y/N]: " % message
-    input = raw_input(message)
-    if input.lower() not in ['y', 'yes']:
+    _input = input(message)
+    if _input.lower() not in ['y', 'yes']:
         pprint("Leaving...", color='red')
         os._exit(1)
     return
@@ -331,7 +332,7 @@ def set_lastvm(name, client, delete=False):
     firstline = True
     for line in fileinput.input(vmfile, inplace=True):
         line = "%s %s\n%s" % (client, name, line) if firstline else line
-        print line,
+        print(line,)
         firstline = False
 
 
@@ -393,8 +394,8 @@ def print_info(yamlinfo, output='plain', fields=None, values=False):
                 if key not in fields:
                     del yamlinfo[key]
         if output == 'yaml':
-            print yaml.dump(yamlinfo, default_flow_style=False, indent=2, allow_unicode=True,
-                            encoding=None).replace("'", '')[:-1]
+            print((yaml.dump(yamlinfo, default_flow_style=False, indent=2, allow_unicode=True,
+                             encoding=None).replace("'", '')[:-1]))
         else:
             if fields is None:
                 fields = ['name', 'creationdate', 'host', 'status', 'description', 'autostart', 'template', 'plan',
@@ -410,7 +411,7 @@ def print_info(yamlinfo, output='plain', fields=None, values=False):
                             mac = net['mac']
                             network = net['net']
                             network_type = net['type']
-                            print("net interfaces:%s mac: %s net: %s type: %s" % (device, mac, network, network_type))
+                            print(("net interfaces:%s mac: %s net: %s type: %s" % (device, mac, network, network_type)))
                     elif key == 'disks':
                         for disk in value:
                             device = disk['device']
@@ -418,19 +419,19 @@ def print_info(yamlinfo, output='plain', fields=None, values=False):
                             diskformat = disk['format']
                             drivertype = disk['type']
                             path = disk['path']
-                            print("diskname: %s disksize: %sGB diskformat: %s type: %s path: %s" % (device, disksize,
-                                                                                                    diskformat,
-                                                                                                    drivertype, path))
+                            print(("diskname: %s disksize: %sGB diskformat: %s type: %s path: %s" % (device, disksize,
+                                                                                                     diskformat,
+                                                                                                     drivertype, path)))
                     elif key == 'snapshots':
                         for snap in value:
                             snapshot = snap['snapshot']
                             current = snap['current']
-                            print("snapshot: %s current: %s" % (snapshot, current))
+                            print(("snapshot: %s current: %s" % (snapshot, current)))
                     else:
                         if values:
                             print(value)
                         else:
-                            print("%s: %s" % (key, value))
+                            print(("%s: %s" % (key, value)))
 
 
 def ssh(name, ip='', host=None, port=22, hostuser=None, user=None, local=None, remote=None, tunnel=False,

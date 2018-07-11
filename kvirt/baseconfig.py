@@ -429,7 +429,7 @@ class Kbaseconfig:
         if parameters is not None:
             parameters = yaml.load(parameters)['parameters']
             for parameter in parameters:
-                print("%s: %s" % (parameter, parameters[parameter]))
+                print(("%s: %s" % (parameter, parameters[parameter])))
         else:
             common.pprint("No parameters found. Leaving...", color='blue')
         return {'result': 'success'}
@@ -465,19 +465,19 @@ class Kbaseconfig:
             if not verbose:
                 return {'product': product, 'comments': comments, 'description': description, 'parameters': parameters}
             if description is not None:
-                print("description: %s" % description)
+                print(("description: %s" % description))
             if group is not None:
-                print("group: %s" % group)
+                print(("group: %s" % group))
             if numvms is not None:
                 numvmsinfo = "numvms: %s" % numvms
                 if numvms == 1:
                     numvmsinfo += " (Vm name can be overriden)"
                 print(numvmsinfo)
             if template is not None:
-                print("template: %s" % template)
+                print(("template: %s" % template))
             if comments is not None:
-                print("Comments : %s" % comments)
+                print(("Comments : %s" % comments))
             if parameters is not None:
                 print("Available parameters:")
                 for parameter in sorted(parameters):
-                    print(" %s: %s" % (parameter, parameters[parameter]))
+                    print((" %s: %s" % (parameter, parameters[parameter])))

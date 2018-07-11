@@ -296,7 +296,7 @@ class Kbox(Kbase):
         hostname = os.uname()[1]
         cpus = host.processor_count
         memory = host.memory_size
-        print("Host:%s Cpu:%s Memory:%sMB\n" % (hostname, cpus, memory))
+        print(("Host:%s Cpu:%s Memory:%sMB\n" % (hostname, cpus, memory)))
         for pool in self._pool_info():
             poolname = pool['name']
             pooltype = 'dir'
@@ -306,16 +306,16 @@ class Kbox(Kbase):
             # Type,Status, Total space in Gb, Available space in Gb
             # print("Storage:%s Type:%s Path:%s Used space:%sGB Available space:%sGB" % (poolname, pooltype, poolpath,
             # used, available))
-            print("Storage:%s Type:%s Path:%s" % (poolname, pooltype, poolpath))
-        print
+            print(("Storage:%s Type:%s Path:%s" % (poolname, pooltype, poolpath)))
+        print()
         dhcp = {}
         dhcpservers = conn.dhcp_servers
         for dhcpserver in dhcpservers:
             dhcp[dhcpserver.network_name] = dhcpserver.ip_address
         for network in conn.internal_networks:
-            print("Network:%s Type:internal" % (network))
+            print(("Network:%s Type:internal" % (network)))
         for network in conn.nat_networks:
-            print("Network:%s Type:routed" % (network.network_name))
+            print(("Network:%s Type:routed" % (network.network_name)))
         return {'result': 'success'}
         # print("Network:%s Type:routed Cidr:%s Dhcp:%s" % (networkname, cidr, dhcp))
 
@@ -385,7 +385,7 @@ class Kbox(Kbase):
         if self.status(name) == 'down':
             vm.launch_vm_process(None, 'gui', '')
         else:
-            print "VM %s already running in headless mode.Use kcli console -s instead" % name
+            print("VM %s already running in headless mode.Use kcli console -s instead" % name)
 
     def serialconsole(self, name):
         conn = self.conn
@@ -419,17 +419,17 @@ class Kbox(Kbase):
         memory = vm.memory_size
         numcpus = vm.cpu_count
         state = status[str(vm.state)]
-        print("name: %s" % name)
-        print("status: %s" % state)
-        print("autostart: %s" % autostart)
+        print(("name: %s" % name))
+        print(("status: %s" % state))
+        print(("autostart: %s" % autostart))
         description = vm.description
-        print("description: %s" % description)
+        print(("description: %s" % description))
         profile = vm.get_extra_data('profile')
         ip = vm.get_extra_data('ip')
         if profile != '':
-            print("profile: %s" % profile)
-        print("cpus: %s" % numcpus)
-        print("memory: %sMB" % memory)
+            print(("profile: %s" % profile))
+        print(("cpus: %s" % numcpus))
+        print(("memory: %sMB" % memory))
         for n in range(7):
             nic = vm.get_network_adapter(n)
             enabled = nic.enabled
@@ -470,7 +470,7 @@ class Kbox(Kbase):
             else:
                 networktype = 'N/A'
                 network = 'N/A'
-            print("net interfaces:%s mac: %s net: %s type: %s" % (device, mac, network, networktype))
+            print(("net interfaces:%s mac: %s net: %s type: %s" % (device, mac, network, networktype)))
         disks = []
         for index in range(10):
             try:
@@ -485,12 +485,12 @@ class Kbox(Kbase):
             disksize = disk.size / 1024 / 1024 / 1024
             drivertype = os.path.splitext(disk.name)[1].replace('.', '')
             diskformat = 'file'
-            print("diskname: %s disksize: %sGB diskformat: %s type: %s path: %s" % (device, disksize, diskformat,
-                                                                                    drivertype, path))
+            print(("diskname: %s disksize: %sGB diskformat: %s type: %s path: %s" % (device, disksize, diskformat,
+                                                                                    drivertype, path)))
             if ip != '':
-                print("ip: %s" % (ip))
+                print(("ip: %s" % (ip)))
             for hostport in hostports:
-                print("ssh port: %s" % (hostport))
+                print(("ssh port: %s" % (hostport)))
                 break
         return {'result': 'success'}
 
@@ -682,7 +682,7 @@ class Kbox(Kbase):
         if template is not None:
             volumes = self.volumes()
             if template not in volumes:
-                print("you don't have template %s.Leaving..." % template)
+                print(("you don't have template %s.Leaving..." % template))
                 return
             templatepath = "%s/%s" % (poolpath, template)
             self._convert_qcow2(templatepath, diskpath)
@@ -738,7 +738,7 @@ class Kbox(Kbase):
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if status[str(vm.state)] == "up":
-            print("VM %s up. Leaving" % name)
+            print(("VM %s up. Leaving" % name))
             return {'result': 'failure', 'reason': "VM %s is up" % name}
         for index in range(10):
             try:
@@ -754,7 +754,7 @@ class Kbox(Kbase):
                 session.unlock_machine()
                 disk.delete_storage()
                 return {'result': 'success'}
-        print("Disk %s not found in %s" % (diskname, name))
+        print(("Disk %s not found in %s" % (diskname, name)))
         return {'result': 'failure', 'reason': "Disk %s not found in %s" % (diskname, name)}
 
     def list_disks(self):
@@ -790,7 +790,7 @@ class Kbox(Kbase):
         conn = self.conn
         networks = self.list_networks()
         if network not in networks:
-            print("Network %s not found" % network)
+            print(("Network %s not found" % network))
             return {'result': 'failure', 'reason': "Network %s not found" % network}
         networktype = networks[network]['type']
         try:
@@ -799,7 +799,7 @@ class Kbox(Kbase):
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if self.status(name) == 'up':
-            print("VM %s must be down" % name)
+            print(("VM %s must be down" % name))
             return {'result': 'failure', 'reason': "VM %s must be down" % name}
         session = Session()
         vm.lock_machine(session, library.LockType.write)
@@ -828,7 +828,7 @@ class Kbox(Kbase):
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if self.status(name) == 'up':
-            print("VM %s must be down" % name)
+            print(("VM %s must be down" % name))
             return {'result': 'failure', 'reason': "VM %s nust be down" % name}
         session = Session()
         vm.lock_machine(session, library.LockType.write)
@@ -923,7 +923,7 @@ class Kbox(Kbase):
             try:
                 os.makedirs(poolpath)
             except OSError:
-                print("Couldn't create directory %s.Leaving..." % poolpath)
+                print(("Couldn't create directory %s.Leaving..." % poolpath))
                 return
         poolfile = "%s/.vbox.yml" % os.environ.get('HOME')
         if not os.path.exists(poolfile):
