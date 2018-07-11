@@ -439,7 +439,7 @@ def vm(args):
                 config.profiles = yaml.load(entries)
     if profile is None:
         if len(config.profiles) == 1:
-            profile = list(config.profiles.keys())[0]
+            profile = list(config.profiles)[0]
         else:
             common.pprint("Missing profile", color='red')
             os._exit(1)

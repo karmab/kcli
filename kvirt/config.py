@@ -310,10 +310,10 @@ class Kconfig(Kbaseconfig):
                     if inventory is not None:
                         if variables is not None:
                             for variable in variables:
-                                if not isinstance(variable, dict) or len(list(variable.keys())) != 1:
+                                if not isinstance(variable, dict) or len(list(variable)) != 1:
                                     continue
                                 else:
-                                    key, value = list(variable.keys())[0], variable[list(variable.keys())[0]]
+                                    key, value = list(variable)[0], variable[list(variable)[0]]
                                     inventory = "%s %s=%s" % (inventory, key, value)
                     if self.tunnel:
                         inventory = "%s ansible_ssh_common_args='-o ProxyCommand=\"ssh -p %s -W %%h:%%p %s@%s\""

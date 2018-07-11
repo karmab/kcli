@@ -14,8 +14,8 @@ try:
 except ImportError:
     config = {'PORT': os.environ.get('PORT', 9000)}
 
-debug = config['DEBUG'] if 'DEBUG' in list(config.keys()) else True
-port = int(config['PORT']) if 'PORT'in list(config.keys()) else 9000
+debug = config['DEBUG'] if 'DEBUG' in list(config) else True
+port = int(config['PORT']) if 'PORT'in list(config) else 9000
 
 
 # VMS

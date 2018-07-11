@@ -29,10 +29,10 @@ def play(self, name, playbook, variables=[], verbose=False):
         ansiblecommand = "%s -vvv" % ansiblecommand
     if variables is not None:
         for variable in variables:
-            if not isinstance(variable, dict) or len(list(variable.keys())) != 1:
+            if not isinstance(variable, dict) or len(list(variable)) != 1:
                 continue
             else:
-                key, value = list(variable.keys())[0], variable[list(variable.keys())[0]]
+                key, value = list(variable)[0], variable[list(variable)[0]]
                 inventory = "%s %s=%s" % (inventory, key, value)
     with open("/tmp/%s.inv" % name, 'w') as f:
         f.write("%s\n" % inventory)
