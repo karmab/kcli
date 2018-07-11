@@ -4,10 +4,14 @@
 Kvirt config class
 """
 
-from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS, DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID,
-                            VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, RESERVEHOST, START, NESTED, TUNNEL, REPORTURL,
-                            REPORTDIR, REPORT, REPORTALL, INSECURE, KEYS, CMDS, DNS, DOMAIN, SCRIPTS, FILES, ISO,
-                            NETMASKS, GATEWAY, SHAREDKEY, TEMPLATE, ENABLEROOT, PLANVIEW, PRIVATEKEY, TAGS)
+from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
+                            DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID,
+                            VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, RESERVEHOST,
+                            START, NESTED, TUNNEL, REPORTURL, REPORTDIR,
+                            REPORT, REPORTALL, INSECURE, KEYS, CMDS, DNS,
+                            DOMAIN, SCRIPTS, FILES, ISO,
+                            NETMASKS, GATEWAY, SHAREDKEY, TEMPLATE, ENABLEROOT,
+                            PLANVIEW, PRIVATEKEY, TAGS)
 from kvirt import common
 import os
 from shutil import copyfile, rmtree
@@ -30,24 +34,28 @@ class Kbaseconfig:
             else:
                 _type = 'fake'
                 client = 'fake'
-            self.ini = {'default': {'client': client}, client: {'pool': 'default', 'type': _type}}
+            self.ini = {'default': {'client': client}, client:
+                        {'pool': 'default', 'type': _type}}
         else:
             with open(inifile, 'r') as entries:
                 try:
                     self.ini = yaml.load(entries)
                 except yaml.scanner.ScannerError as err:
-                    common.pprint("Couldn't parse yaml in .kcli/config.yml. Leaving...", color='red')
+                    common.pprint("Couldn't parse yaml in .kcli/config.yml.\
+                                  Leaving...", color='red')
                     common.pprint(err, color='red')
                     os._exit(1)
                 except:
                     self.host = None
                     return
             if 'default' not in self.ini:
-                common.pprint("Missing default section in config file. Leaving...", color='red')
+                common.pprint("Missing default section in config file.\
+                              Leaving...", color='red')
                 self.host = None
                 return
             if 'client' not in self.ini['default']:
-                common.pprint("Using local hypervisor as no client was specified...", color='green')
+                common.pprint("Using local hypervisor as no client was\
+                              specified...", color='green')
                 self.ini['default']['client'] = 'local'
                 self.ini['local'] = {}
         self.clients = [e for e in self.ini if e != 'default']
@@ -97,7 +105,8 @@ class Kbaseconfig:
         else:
             self.currentplan = 'kvirt'
         self.default = defaults
-        profilefile = default.get('profiles', "%s/.kcli/profiles.yml" % os.environ.get('HOME'))
+        profilefile = default.get('profiles', "%s/.kcli/profiles.yml" %
+                                  os.environ.get('HOME'))
         profilefile = os.path.expanduser(profilefile)
         if not os.path.exists(profilefile):
             self.profiles = {}
@@ -107,7 +116,8 @@ class Kbaseconfig:
         self.extraclients = {}
         self._extraclients = []
         if client == 'all':
-            clis = [cli for cli in self.clients if self.ini[cli].get('enabled', True)]
+            clis = [cli for cli in self.clients if
+                    self.ini[cli].get('enabled', True)]
             self.client = clis[0]
             self._extraclients = clis[1:]
         elif client is None:
@@ -118,7 +128,8 @@ class Kbaseconfig:
         else:
             self.client = client
         if self.client not in self.ini:
-            common.pprint("Missing section for client %s in config file. Leaving..." % self.client, color='red')
+            common.pprint("Missing section for client %s in config file. \
+                          Leaving..." % self.client, color='red')
             os._exit(1)
         self.options = self.ini[self.client]
         options = self.options
@@ -144,14 +155,16 @@ class Kbaseconfig:
         self.memory = options.get('memory', self.default['memory'])
         self.disks = options.get('disks', self.default['disks'])
         self.disksize = options.get('disksize', self.default['disksize'])
-        self.diskinterface = options.get('diskinterface', self.default['diskinterface'])
+        self.diskinterface = options.get('diskinterface',
+                                         self.default['diskinterface'])
         self.diskthin = options.get('diskthin', self.default['diskthin'])
         self.guestid = options.get('guestid', self.default['guestid'])
         self.vnc = options.get('vnc', self.default['vnc'])
         self.cloudinit = options.get('cloudinit', self.default['cloudinit'])
         self.reserveip = options.get('reserveip', self.default['reserveip'])
         self.reservedns = options.get('reservedns', self.default['reservedns'])
-        self.reservehost = options.get('reservehost', self.default['reservehost'])
+        self.reservehost = options.get('reservehost',
+                                       self.default['reservehost'])
         self.nested = options.get('nested', self.default['nested'])
         self.start = options.get('start', self.default['start'])
         self.iso = options.get('iso', self.default['iso'])
@@ -171,13 +184,17 @@ class Kbaseconfig:
 
     def switch_host(self, client):
         if client not in self.clients:
-            common.pprint("Client %s not found in config.Leaving...." % client, color='red')
-            return {'result': 'failure', 'reason': "Client %s not found in config" % client}
+            common.pprint("Client %s not found in config.Leaving...." % client,
+                          color='red')
+            return {'result': 'failure', 'reason': "Client %s not found in \
+                    config" % client}
         enabled = self.ini[client].get('enabled', True)
         oldclient = self.ini['default']['client']
         if not enabled:
-            common.pprint("Client %s is disabled.Leaving...." % client, color='red')
-            return {'result': 'failure', 'reason': "Client %s is disabled" % client}
+            common.pprint("Client %s is disabled.Leaving...." % client,
+                          color='red')
+            return {'result': 'failure', 'reason': "Client %s is disabled" %
+                    client}
         common.pprint("Switching to client %s..." % client, color='green')
         inifile = "%s/.kcli/config.yml" % os.environ.get('HOME')
         if os.path.exists(inifile):
@@ -192,8 +209,10 @@ class Kbaseconfig:
 
     def enable_host(self, client):
         if client not in self.clients:
-            common.pprint("Client %s not found in config.Leaving...." % client, color='green')
-            return {'result': 'failure', 'reason': "Client %s not found in config" % client}
+            common.pprint("Client %s not found in config.Leaving...." % client,
+                          color='green')
+            return {'result': 'failure', 'reason': "Client %s not found in \
+                    config" % client}
         common.pprint("Enabling client %s..." % client, color='green')
         inifile = "%s/.kcli/config.yml" % os.environ.get('HOME')
         if os.path.exists(inifile):
@@ -219,11 +238,15 @@ class Kbaseconfig:
 
     def disable_host(self, client):
         if client not in self.clients:
-            common.pprint("Client %s not found in config.Leaving...." % client, color='red')
-            return {'result': 'failure', 'reason': "Client %s not found in config" % client}
+            common.pprint("Client %s not found in config.Leaving...." % client,
+                          color='red')
+            return {'result': 'failure', 'reason': "Client %s not found in \
+                    config" % client}
         elif self.ini['default']['client'] == client:
-            common.pprint("Client %s currently default.Leaving...." % client, color='red')
-            return {'result': 'failure', 'reason': "Client %s currently default" % client}
+            common.pprint("Client %s currently default.Leaving...." % client,
+                          color='red')
+            return {'result': 'failure', 'reason': "Client %s currently \
+                    default" % client}
         common.pprint("Disabling client %s..." % client, color='green')
         inifile = "%s/.kcli/config.yml" % os.environ.get('HOME')
         if os.path.exists(inifile):
@@ -257,18 +280,24 @@ class Kbaseconfig:
         if poolpath is None:
             poolpath = '/var/lib/libvirt/images'
         if host == '127.0.0.1':
-            ini = {'default': {'client': 'local', 'cloudinit': True, 'tunnel': False, 'reservehost': False,
-                               'insecure': True, 'enableroot': True, 'reserveip': False, 'reservedns': False,
-                               'reservehost': False, 'nested': True, 'start': True},
+            ini = {'default': {'client': 'local', 'cloudinit': True,
+                               'tunnel': False, 'reservehost': False,
+                               'insecure': True, 'enableroot': True,
+                               'reserveip': False, 'reservedns': False,
+                               'reservehost': False, 'nested': True,
+                               'start': True},
                    'local': {'pool': pool, 'nets': ['default']}}
             if not sys.platform.startswith('linux'):
                 ini['local']['type'] = 'vbox'
         else:
             if name is None:
                 name = host
-            ini = {'default': {'client': name, 'cloudinit': True, 'tunnel': True, 'reservehost': False,
-                               'insecure': True, 'enableroot': True, 'reserveip': False, 'reservedns': False,
-                               'reservehost': False, 'nested': True, 'start': True}}
+            ini = {'default': {'client': name, 'cloudinit': True,
+                               'tunnel': True, 'reservehost': False,
+                               'insecure': True, 'enableroot': True,
+                               'reserveip': False, 'reservedns': False,
+                               'reservehost': False, 'nested': True,
+                               'start': True}}
             ini[name] = {'host': host, 'pool': pool, 'nets': ['default']}
             if protocol is not None:
                 ini[name]['protocol'] = protocol
@@ -285,7 +314,8 @@ class Kbaseconfig:
         if not os.path.exists(rootdir):
             os.makedirs(rootdir)
         with open(path, 'w') as conf_file:
-            yaml.safe_dump(ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True)
+            yaml.safe_dump(ini, conf_file, default_flow_style=False,
+                           encoding='utf-8', allow_unicode=True)
         common.pprint("Environment bootstrapped!", color='green')
 
     def list_repos(self):
@@ -297,7 +327,8 @@ class Kbaseconfig:
                 try:
                     repos = yaml.load(entries)
                 except yaml.scanner.ScannerError:
-                    common.pprint("Couldn't properly parse .kcli/repos.yml. Leaving...", color='red')
+                    common.pprint("Couldn't properly parse .kcli/repos.yml. \
+                                  Leaving...", color='red')
                     os._exit(1)
         return repos
 
@@ -308,7 +339,8 @@ class Kbaseconfig:
         else:
             products = []
             repodirs = [d.replace('repo_', '') for d in os.listdir(configdir)
-                        if os.path.isdir("%s/%s" % (configdir, d)) and d.startswith('repo_')]
+                        if os.path.isdir("%s/%s" % (configdir, d)) and
+                        d.startswith('repo_')]
             for rep in repodirs:
                 repometa = "%s/repo_%s/KMETA" % (configdir, rep)
                 if not os.path.exists(repometa):
@@ -325,12 +357,15 @@ class Kbaseconfig:
                                     repoproduct['file'] = 'kcli_plan.yml'
                                 products.append(repoproduct)
                         except yaml.scanner.ScannerError:
-                            common.pprint("Couldn't properly parse .kcli/repo. Leaving...", color='red')
+                            common.pprint("Couldn't properly parse .kcli/repo. \
+                                          Leaving...", color='red')
                             continue
             if repo is not None:
-                products = [product for product in products if 'repo' in product and product['repo'] == repo]
+                products = [product for product in products if 'repo'
+                            in product and product['repo'] == repo]
             if group is not None:
-                products = [product for product in products if 'group' in product and product['group'] == group]
+                products = [product for product in products if 'group'
+                            in product and product['group'] == group]
             return products
 
     def create_repo(self, name, url):
@@ -344,14 +379,17 @@ class Kbaseconfig:
                 try:
                     repos = yaml.load(entries)
                 except yaml.scanner.ScannerError:
-                    common.pprint("Couldn't properly parse .kcli/repos.yml. Leaving...", color='red')
+                    common.pprint("Couldn't properly parse .kcli/repos.yml. \
+                                  Leaving...", color='red')
                     os._exit(1)
             if name in repos:
                 if repos[name] == url:
-                    common.pprint("Entry for name already there. Leaving...", color='blue')
+                    common.pprint("Entry for name already there. Leaving...",
+                                  color='blue')
                     return {'result': 'success'}
                 else:
-                    common.pprint("Updating url for repo %s" % name, color='green')
+                    common.pprint("Updating url for repo %s" % name,
+                                  color='green')
             repos[name] = url
             with open(reposfile, 'w') as reposfile:
                 for repo in sorted(repos):
@@ -364,7 +402,8 @@ class Kbaseconfig:
         reposfile = "%s/.kcli/repos.yml" % os.environ.get('HOME')
         repodir = "%s/.kcli/repo_%s" % (os.environ.get('HOME'), name)
         if url is None:
-            if not os.path.exists(reposfile) or os.path.getsize(reposfile) == 0:
+            if not os.path.exists(reposfile)\
+                    or os.path.getsize(reposfile) == 0:
                 common.pprint("Empty .kcli/repos.yml. Leaving...", color='red')
                 os._exit(1)
             else:
@@ -372,10 +411,13 @@ class Kbaseconfig:
                     try:
                         repos = yaml.load(entries)
                     except yaml.scanner.ScannerError:
-                        common.pprint("Couldn't properly parse .kcli/repos.yml. Leaving...", color='red')
+                        common.pprint("Couldn't properly parse \
+                                      .kcli/repos.yml. Leaving...",
+                                      color='red')
                         os._exit(1)
                 if name not in repos:
-                    common.pprint("Entry for name already there. Leaving...", color='red')
+                    common.pprint("Entry for name already there. Leaving...",
+                                  color='red')
                     os._exit(1)
             url = "%s/KMETA" % repos[name]
         elif 'KMETA' not in url:
@@ -385,10 +427,13 @@ class Kbaseconfig:
 
     def download_repo(self, name):
         repodir = "%s/.kcli/repo_%s" % (os.environ.get('HOME'), name)
-        products = [(i['name'], i['group'], i['url']) for i in self.list_products(repo=name)]
+        products = [(i['name'], i['group'], i['url']) for i in
+                    self.list_products(repo=name)]
         os.chdir(repodir)
         for (product, group, url) in products:
-            common.pprint("Downloading product %s in directory %s" % (product, group), color='green')
+            common.pprint("Downloading product %s in directory %s" % (product,
+                                                                      group),
+                          color='green')
             common.fetch(url, group)
 
     def delete_repo(self, name):
@@ -402,12 +447,14 @@ class Kbaseconfig:
                 try:
                     repos = yaml.load(entries)
                 except yaml.scanner.ScannerError:
-                    common.pprint("Couldn't properly parse .kcli/repos.yml. Leaving...", color='red')
+                    common.pprint("Couldn't properly parse .kcli/repos.yml. \
+                                  Leaving...", color='red')
                     os._exit(1)
             if name in repos:
                 del repos[name]
             else:
-                common.pprint("Repo %s not found. Leaving..." % name, color='blue')
+                common.pprint("Repo %s not found. Leaving..." % name,
+                              color='blue')
             if not repos:
                 os.remove(reposfile)
             with open(reposfile, 'w') as reposfile:
@@ -420,10 +467,12 @@ class Kbaseconfig:
             return {'result': 'success'}
 
     def info_plan(self, inputfile):
-        common.pprint("Providing information on parameters of plan %s..." % inputfile, color='green')
+        common.pprint("Providing information on parameters of plan %s..." %
+                      inputfile, color='green')
         inputfile = os.path.expanduser(inputfile)
         if not os.path.exists(inputfile):
-            common.pprint("No input file found nor default kcli_plan.yml.Leaving....", color='red')
+            common.pprint("No input file found nor default kcli_plan.yml. \
+                          Leaving....", color='red')
             os._exit(1)
         parameters = common.get_parameters(inputfile)
         if parameters is not None:
@@ -437,21 +486,26 @@ class Kbaseconfig:
     def info_product(self, name, repo=None, group=None, verbose=True):
         """Info product"""
         if repo is not None and group is not None:
-            products = [product for product in self.list_products()
-                        if product['name'] == name and product['repo'] == repo and product['group'] == group]
+            products = [product for product in self.list_products
+                        if product['name'] == name and
+                        product['repo'] == repo and
+                        product['group'] == group]
         elif repo is not None:
             products = [product for product in self.list_products()
                         if product['name'] == name and product['repo'] == repo]
         if group is not None:
             products = [product for product in self.list_products()
-                        if product['name'] == name and product['group'] == group]
+                        if product['name'] == name and
+                        product['group'] == group]
         else:
-            products = [product for product in self.list_products() if product['name'] == name]
+            products = [product for product in self.list_products()
+                        if product['name'] == name]
         if len(products) == 0:
                     common.pprint("Product not found. Leaving...", color='red')
                     os._exit(1)
         elif len(products) > 1:
-                    common.pprint("Product found in several places. Specify repo or group", color='red')
+                    common.pprint("Product found in several places. \
+                                  Specify repo or group", color='red')
                     os._exit(1)
         else:
             product = products[0]
@@ -463,7 +517,8 @@ class Kbaseconfig:
             comments = product.get('comments')
             parameters = product.get('parameters')
             if not verbose:
-                return {'product': product, 'comments': comments, 'description': description, 'parameters': parameters}
+                return {'product': product, 'comments': comments,
+                        'description': description, 'parameters': parameters}
             if description is not None:
                 print(("description: %s" % description))
             if group is not None:

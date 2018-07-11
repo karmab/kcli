@@ -23,8 +23,8 @@ REGISTRYDISKS = ['kubevirt/alpine-registry-disk-demo', 'kubevirt/cirros-registry
 
 def pretty_print(o):
     print(yaml.dump(o, default_flow_style=False, indent=2, allow_unicode=True,
-                    encoding='utf-8').replace('!!python/unicode ', '').replace("'", '').replace('\n\n', '\n')\
-        .replace('#cloud-config', '|\n            #cloud-config'))
+                    encoding='utf-8').replace('!!python/unicode ', '').replace("'", '').replace('\n\n', '\n').
+          replace('#cloud-config', '|\n            #cloud-config'))
 
 
 class Kubevirt(object):

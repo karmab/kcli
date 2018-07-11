@@ -6,15 +6,16 @@
 
 Name:           kcli-full
 Version:        12.1
-Release:        0
+Release:        1
 Url:            http://github.com/karmab/kcli
 Summary:        Libvirt/VirtualBox wrapper on steroids
 License:        ASL 2.0
 Group:          Development/Languages/Python
 Source:         https://files.pythonhosted.org/packages/source/k/kcli/kcli-%{version}.tar.gz
+AutoReq:        no
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildRequires:  python3-devel rubygem-ronn gzip
-Requires:       python3 python3-iptools python3-libvirt genisoimage nmap-ncat python3-prettytable PyYAML python3-flask python3-netaddr python3-docker python3-kubernetes python3-google-api-client python3-boto3 python-google-auth-httplib2 google-cloud-dns google-api-core python3-requests python3-protobuf python-boto3
+Requires:       python3 python3-iptools libvirt-python3 genisoimage nmap-ncat python3-prettytable PyYAML python3-flask python3-netaddr python3-docker python3-kubernetes python3-google-api-client python3-boto3 python-google-auth-httplib2 google-cloud-dns google-api-core python3-requests python3-protobuf python-boto3
 
 %description
 Kcli is meant to interact with a local/remote libvirt daemon and
@@ -23,6 +24,9 @@ also report ips for any vm connected to a dhcp-enabled libvirt network
 and generally for every vm deployed from this client.
 
 %global debug_package %{nil}
+%global __python /usr/bin/python3
+%{!?python_sitelib: %global python_sitelib %(%{__python} -c "import sys; from distutils.sysconfig import get_python_lib; sys.stdout.write(get_python_lib())")}
+
 
 %prep
 %setup -q -n kcli-%{version}
@@ -34,10 +38,10 @@ sed -i.bak '/libvirt/d' setup.py
 sed -i.bak '/kubernetes/d' setup.py
 sed -i.bak '/google/d' setup.py
 sed -i.bak '/boto3/d' setup.py
-python setup.py build
+%{__python} setup.py build
 
 %install
-python setup.py install --prefix=%{_prefix} --root=%{buildroot}
+%{__python} setup.py install --prefix=%{_prefix} --root=%{buildroot}
 mkdir -p %{buildroot}/%{_docdir}/kcli
 mkdir -p %{buildroot}/%{_mandir}/man1
 #cp doc/*md %{buildroot}/%{_docdir}/kcli
@@ -62,8 +66,8 @@ rm -rf %{buildroot}
 %attr(0755,root,root) %{_bindir}/kweb
 
 %changelog
-* Tue Jul 09 2018 Karim Boumedhel <karimboumedhel@gmail.com> 12.2
-- 12.2 Release
+* Wed Jul 11 2018 Karim Boumedhel <karimboumedhel@gmail.com> 12.1
+- 12.1 Release switching to python3
 * Tue Mar 20 2018 Karim Boumedhel <karimboumedhel@gmail.com> 11.0
 - 11.0 Release
 * Fri Jul 14 2017 Karim Boumedhel <karimboumedhel@gmail.com> 8.2

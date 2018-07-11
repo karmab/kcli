@@ -486,7 +486,7 @@ class Kbox(Kbase):
             drivertype = os.path.splitext(disk.name)[1].replace('.', '')
             diskformat = 'file'
             print(("diskname: %s disksize: %sGB diskformat: %s type: %s path: %s" % (device, disksize, diskformat,
-                                                                                    drivertype, path)))
+                                                                                     drivertype, path)))
             if ip != '':
                 print(("ip: %s" % (ip)))
             for hostport in hostports:

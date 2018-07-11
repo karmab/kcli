@@ -44,7 +44,8 @@ registerErrorHandler(f=libvirt_callback, ctx=None)
 
 
 class Kvirt(Kbase):
-    def __init__(self, host='127.0.0.1', port=None, user='root', protocol='ssh', url=None, debug=False):
+    def __init__(self, host='127.0.0.1', port=None, user='root',
+                 protocol='ssh', url=None, debug=False):
         if url is None:
             if host == '127.0.0.1' or host == 'localhost':
                 url = "qemu:///system"
