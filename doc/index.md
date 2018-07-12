@@ -11,7 +11,7 @@ There is also support for
 - gcp 
 - aws 
 - kubevirt
-- virtualbox
+- ovirt
 
 # Installation
 
@@ -350,6 +350,27 @@ kubectl config view -o jsonpath='{.contexts[*].name}'
 *virtctl* is a hard requirement for consoles. If present on your local machine, this will be used. otherwise, it s expected that the host node has it installed.
 
 Also, note that the kubevirt plugin uses *offlinevirtualmachines* instead of virtualmachines.
+
+## Ovirt
+
+```
+ovirt:
+ type: ovirt
+ host: ovirt.default
+ user: admin@internal
+ password: prout
+ pool: vms
+ tunnel: false
+ org: Karmalabs
+ ca_file: ~/ovirt.pem
+ imagerepository: ovirt-image-repository
+```
+
+The following parameters are specific to ovirt:
+
+- org Organization (needed for accessing graphical console)
+- ca_file Points to a local path with the cert of the ovirt engine host ( that can be retrieved with `http://$HOST/ovirt-engine/services/pki-resource?resource=ca-certificate&format=X509-PEM-CA`. (needed for accessing graphical consoles)
+- imagerepository. A Glance image provider repository. Defaults to *ovirt-image-repository*. You can get it created for you with kcli download
 
 
 ## Fake

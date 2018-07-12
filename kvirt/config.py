@@ -75,6 +75,31 @@ class Kconfig(Kbaseconfig):
                 from kvirt.aws import Kaws
                 k = Kaws(host=self.host, port=self.port, access_key_id=access_key_id,
                          access_key_secret=access_key_secret, region=region, debug=debug)
+            elif self.type == 'ovirt':
+                datacenter = self.options.get('datacenter', 'Default')
+                cluster = self.options.get('cluster', 'Default')
+                user = self.options.get('user', 'admin@internal')
+                password = self.options.get('password')
+                if password is None:
+                    common.pprint("Missing password in the configuration. Leaving", color='red')
+                    os._exit(1)
+                org = self.options.get('org')
+                if org is None:
+                    common.pprint("Missing org in the configuration. Leaving", color='red')
+                    os._exit(1)
+                ca_file = self.options.get('ca_file')
+                if ca_file is None:
+                    common.pprint("Missing ca_file in the configuration. Leaving", color='red')
+                    os._exit(1)
+                ca_file = os.path.expanduser(ca_file)
+                if not os.path.exists(ca_file):
+                    common.pprint("Ca file path doesnt exist. Leaving", color='red')
+                    os._exit(1)
+                imagerepository = self.options('imagerepository', 'ovirt-image-repository')
+                from kvirt.ovirt import KOvirt
+                k = KOvirt(host=self.host, port=self.port, user=user, password=password,
+                           debug=debug, datacenter=datacenter, cluster=cluster, ca_file=ca_file, org=org,
+                           imagerepository=imagerepository)
             else:
                 if self.host is None:
                     common.pprint("Problem parsing your configuration file", color='red')

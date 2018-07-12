@@ -16,13 +16,13 @@ right = ["albattani", "almeida", "amazigh", "archimedes", "ardinghelli", "babbag
          "cell", "clapton", "colden", "cuqui", "curie", "darwin", "davinci", "django", "einstein", "elion", "engelbart",
          "euclid", "fermat", "fermi", "feynman", "franklin", "freezer", "galactus", "galileo", "goiko", "gohan", "goku",
          "goldstine", "goodall", "hawking", "heisenberg", "hoover", "hopper", "hypatia", "jhendrix", "jmayer",
-         "jones", "kirch", "kendra", "kowalevski", "lalande", "leakey", "lovelace", "lumiere", "lomax", "macenroe",
-         "manchadinha", "mayer", "mccarthy", "mcclintock", "mclean", "meitner", "mestorf", "mikel", "minwii", "morse",
-         "mirzoyan", "newton", "nobel", "pare", "pasteur", "pepenforce", "perlman", "picolo", "pike", "poincare",
-         "ptolemy", "ritchie", "rosalind", "sammet", "satriani", "selen", "shockley", "sinoussi", "spitzer", "stallman",
-         "tesla", "thompson", "torvalds", "turing", "wilson", "wozniak", "wright", "yonath", "rulo", "tudela",
-         "tdurdeen", "korsani", "karmab", "gotrunks", "xhamster", "minwii", "djokovic", "federer", "nadal", "sampras",
-         "valadas", "vai", "vegeta"]
+         "jones", "kirch", "kendra", "kowalevski", "lalande", "leakey", "lilou", "lovelace", "lumiere", "lomax",
+         "macenroe", "manchadinha", "mayer", "mccarthy", "mcclintock", "mclean", "meitner", "mestorf", "mikel",
+         "minwii", "morse", "mirzoyan", "newton", "nobel", "pare", "pasteur", "pepenforce", "perlman", "picolo", "pike",
+         "poincare", "ptolemy", "ritchie", "rosalind", "sammet", "satriani", "selen", "shockley", "sinoussi", "spitzer",
+         "stallman", "tesla", "thompson", "torvalds", "turing", "wilson", "wozniak", "wright", "yonath", "rulo",
+         "tudela", "tdurdeen", "korsani", "karmab", "gotrunks", "xhamster", "minwii", "djokovic", "federer", "nadal",
+         "sampras", "valadas", "vai", "vegeta"]
 
 
 def get_random_name(sep='_'):

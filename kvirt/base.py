@@ -122,7 +122,7 @@ class Kbase(object):
 
     def delete(self, name, snapshots=False):
         print("not implemented")
-        return
+        return {'result': 'success'}
 
     def clone(self, old, new, full=False, start=False):
         print("not implemented")

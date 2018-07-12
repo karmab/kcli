@@ -3,7 +3,6 @@
 from jinja2 import Environment, FileSystemLoader
 from distutils.spawn import find_executable
 import errno
-import fileinput
 import socket
 from urllib.request import urlopen
 import urllib.error
@@ -187,74 +186,96 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 key = ssh.read().rstrip()
                 userdata.write("- %s\n" % key)
         if cmds:
-                userdata.write("runcmd:\n")
-                for cmd in cmds:
-                    if cmd.startswith('#'):
-                        continue
-                    else:
-                        newcmd = Environment(block_start_string='[%', block_end_string='%]',
-                                             variable_start_string='[[',
-                                             variable_end_string=']]').from_string(cmd).render(overrides)
-                        userdata.write("- %s\n" % newcmd)
+                data = process_cmds(cmds, overrides)
+                if data != '':
+                    userdata.write("runcmd:\n")
+                    userdata.write(data)
+                # for cmd in cmds:
+                #     if cmd.startswith('#'):
+                #         continue
+                #     else:
+                #         newcmd = Environment(block_start_string='[%', block_end_string='%]',
+                #                              variable_start_string='[[',
+                #                              variable_end_string=']]').from_string(cmd).render(overrides)
+                #         userdata.write("- %s\n" % newcmd)
+        userdata.write('ssh_pwauth: True\n')
+        userdata.write('disable_root: false\n')
         if files:
-            binary = False
-            userdata.write('ssh_pwauth: True\n')
-            userdata.write('disable_root: false\n')
-            userdata.write("write_files:\n")
-            for fil in files:
-                if not isinstance(fil, dict):
-                    continue
-                origin = fil.get('origin')
-                content = fil.get('content')
-                path = fil.get('path')
-                owner = fil.get('owner', 'root')
-                mode = fil.get('mode', '0600')
-                permissions = fil.get('permissions', mode)
-                if origin is not None:
-                    origin = os.path.expanduser(origin)
-                    if not os.path.exists(origin):
-                        print(("Skipping file %s as not found" % origin))
-                        continue
-                    binary = True if '.' in origin and origin.split('.')[-1].lower() in binary_types else False
-                    if binary:
-                        with open(origin, "rb") as f:
-                            content = f.read().encode("base64")
-                    elif overrides:
-                        basedir = os.path.dirname(origin) if os.path.dirname(origin) != '' else '.'
-                        env = Environment(block_start_string='[%', block_end_string='%]',
-                                          variable_start_string='[[', variable_end_string=']]',
-                                          loader=FileSystemLoader(basedir))
-                        templ = env.get_template(os.path.basename(origin))
-                        fileentries = templ.render(overrides)
-                        # content = [line.rstrip() for line in fileentries.split('\n') if line.rstrip() != '']
-                        content = [line.rstrip() for line in fileentries.split('\n')]
-                        with open("/tmp/%s" % os.path.basename(path), 'w') as f:
-                            for line in fileentries.split('\n'):
-                                if line.rstrip() == '':
-                                    f.write("\n")
-                                else:
-                                    f.write("%s\n" % line.rstrip())
-                    else:
-                        content = open(origin, 'r').readlines()
-                elif content is None:
-                    continue
-                userdata.write("- owner: %s:%s\n" % (owner, owner))
-                userdata.write("  path: %s\n" % path)
-                userdata.write("  permissions: '%s'\n" % (permissions))
-                if binary:
-                    userdata.write("  content: !!binary | \n")
-                else:
-                    userdata.write("  content: | \n")
-                if isinstance(content, str):
-                    content = content.split('\n')
-                for line in content:
-                    userdata.write("     %s\n" % line.rstrip())
+            data = process_files(files=files, overrides=overrides)
+            if data != '':
+                userdata.write("write_files:\n")
+                userdata.write(data)
     if iso:
         isocmd = 'mkisofs'
         if find_executable('genisoimage') is not None:
             isocmd = 'genisoimage'
         os.system("%s --quiet -o /tmp/%s.ISO --volid cidata --joliet --rock /tmp/user-data /tmp/meta-data" % (isocmd,
                                                                                                               name))
+
+
+def process_files(files=[], overrides={}):
+    data = ''
+    for fil in files:
+        if not isinstance(fil, dict):
+            continue
+        origin = fil.get('origin')
+        content = fil.get('content')
+        path = fil.get('path')
+        owner = fil.get('owner', 'root')
+        mode = fil.get('mode', '0600')
+        permissions = fil.get('permissions', mode)
+        if origin is not None:
+            origin = os.path.expanduser(origin)
+            if not os.path.exists(origin):
+                print(("Skipping file %s as not found" % origin))
+                continue
+            binary = True if '.' in origin and origin.split('.')[-1].lower() in binary_types else False
+            if binary:
+                with open(origin, "rb") as f:
+                    content = f.read().encode("base64")
+            elif overrides:
+                basedir = os.path.dirname(origin) if os.path.dirname(origin) != '' else '.'
+                env = Environment(block_start_string='[%', block_end_string='%]',
+                                  variable_start_string='[[', variable_end_string=']]',
+                                  loader=FileSystemLoader(basedir))
+                templ = env.get_template(os.path.basename(origin))
+                fileentries = templ.render(overrides)
+                # content = [line.rstrip() for line in fileentries.split('\n') if line.rstrip() != '']
+                content = [line.rstrip() for line in fileentries.split('\n')]
+                with open("/tmp/%s" % os.path.basename(path), 'w') as f:
+                    for line in fileentries.split('\n'):
+                        if line.rstrip() == '':
+                            f.write("\n")
+                        else:
+                            f.write("%s\n" % line.rstrip())
+            else:
+                content = open(origin, 'r').readlines()
+        elif content is None:
+            continue
+        data += "- owner: %s:%s\n" % (owner, owner)
+        data += "  path: %s\n" % path
+        data += "  permissions: '%s'\n" % (permissions)
+        if binary:
+            data += "  content: !!binary | \n"
+        else:
+            data += "  content: | \n"
+        if isinstance(content, str):
+            content = content.split('\n')
+        for line in content:
+            data += "     %s\n" % line.rstrip()
+    return data
+
+
+def process_cmds(cmds, overrides):
+    data = ''
+    for cmd in cmds:
+        if cmd.startswith('#'):
+            continue
+        else:
+            newcmd = Environment(block_start_string='[%', block_end_string='%]', variable_start_string='[[',
+                                 variable_end_string=']]').from_string(cmd).render(overrides)
+            data += "- %s\n" % newcmd
+    return data
 
 
 def get_free_port():
@@ -327,13 +348,12 @@ def set_lastvm(name, client, delete=False):
         return
     if not os.path.exists(vmfile) or os.stat(vmfile).st_size == 0:
         with open(vmfile, 'w') as f:
-            f.write(name)
+            f.write("%s %s" % (client, name))
         return
-    firstline = True
-    for line in fileinput.input(vmfile, inplace=True):
-        line = "%s %s\n%s" % (client, name, line) if firstline else line
-        print(line,)
-        firstline = False
+    with open(vmfile, 'r') as original:
+        data = original.read()
+    with open(vmfile, 'w') as modified:
+        modified.write("%s %s\n%s" % (client, name, data))
 
 
 def remove_duplicates(oldlist):
@@ -411,7 +431,8 @@ def print_info(yamlinfo, output='plain', fields=None, values=False):
                             mac = net['mac']
                             network = net['net']
                             network_type = net['type']
-                            print(("net interfaces:%s mac: %s net: %s type: %s" % (device, mac, network, network_type)))
+                            print(("net interface: %s mac: %s net: %s type: %s" % (device, mac, network,
+                                                                                   network_type)))
                     elif key == 'disks':
                         for disk in value:
                             device = disk['device']
