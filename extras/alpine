@@ -5,17 +5,20 @@ MAINTAINER Karim Boumedhel <karimboumedhel@gmail.com>
 LABEL name="karmab/kcli-kubevirt" \
       maintainer="karimboumedhel@gmail.com" \
       vendor="Karmalabs" \
-      version="12.1" \
-      release="1" \
+      version="12.2" \
+      release="0" \
       summary="Libvirt/VirtualBox wrapper on steroids" \
       description="Libvirt/VirtualBox wrapper on steroids"
 
 EXPOSE 9000
 
-RUN apk add --update --no-cache g++ gcc libvirt libvirt-dev py-pip python3-dev openssh-client
+RUN apk add --update --no-cache g++ gcc libvirt libvirt-dev py-pip python3-dev openssh-client curl-dev openssl-dev libxml2-dev
 
 # Group the pip installation
 RUN pip3 install -U --no-cache-dir kcli setuptools
+ADD klist.py /usr/bin
+RUN chmod o+x /usr/bin/klist.py
+
 
 VOLUME ["/var/run/libvirt", "/root/.ssh", "/root"]
 

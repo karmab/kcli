@@ -8,7 +8,7 @@ if os.path.exists('README.rst'):
 
 setup(
     name='kcli',
-    version='12.1',
+    version='12.2',
     include_package_data=True,
     packages=find_packages(),
     zip_safe=False,
@@ -32,6 +32,7 @@ setup(
         'google-api-python-client',
         'google-auth-httplib2',
         'google-cloud-dns',
+        'ovirt-engine-sdk-python',
     ],
     entry_points='''
         [console_scripts]
