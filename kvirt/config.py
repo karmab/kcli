@@ -100,6 +100,21 @@ class Kconfig(Kbaseconfig):
                 k = KOvirt(host=self.host, port=self.port, user=user, password=password,
                            debug=debug, datacenter=datacenter, cluster=cluster, ca_file=ca_file, org=org,
                            imagerepository=imagerepository)
+            elif self.type == 'openstack':
+                version = self.options.get('version', '2')
+                auth_url = self.options.get('auth_url')
+                if auth_url is None:
+                    common.pprint("Missing auth_url in the configuration. Leaving", color='red')
+                    os._exit(1)
+                user = self.options.get('user', 'admin')
+                project = self.options.get('project', 'admin')
+                password = self.options.get('password')
+                if password is None:
+                    common.pprint("Missing password in the configuration. Leaving", color='red')
+                    os._exit(1)
+                from kvirt.openstack import Kopenstack
+                k = Kopenstack(host=self.host, port=self.port, user=user, password=password, version=version,
+                               debug=debug, project=project, auth_url=auth_url)
             else:
                 if self.host is None:
                     common.pprint("Problem parsing your configuration file", color='red')
