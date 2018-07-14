@@ -991,9 +991,7 @@ def cli():
     download_info = 'Download template'
     download_parser = subparsers.add_parser('download', description=download_info, help=download_info)
     download_parser.add_argument('-c', '--cmd', help='Extra command to launch after downloading', metavar='CMD')
-    download_parser.add_argument('-p', '--pool', default='default',
-                                 help='Pool to use. Defaults to default',
-                                 metavar='POOL')
+    download_parser.add_argument('-p', '--pool', help='Pool to use. Defaults to default', metavar='POOL')
     download_parser.add_argument('-u', '--url', help='Url to use', metavar='URL')
     download_parser.add_argument('templates', choices=sorted(TEMPLATES.keys()),
                                  default='', help='Template/Image to download',

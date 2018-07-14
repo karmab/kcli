@@ -1204,13 +1204,13 @@ class Kconfig(Kbaseconfig):
                 return
         return {'result': 'success'}
 
-    def handle_host(self, pool='default', templates=[], switch=None, download=False,
+    def handle_host(self, pool=None, templates=[], switch=None, download=False,
                     url=None, cmd=None, sync=False):
         if download:
             k = self.k
             if pool is None:
-                common.pprint("Missing pool.Leaving...", color='red')
-                return {'result': 'failure', 'reason': "Missing pool"}
+                pool = self.pool
+                common.pprint("Using pool %s" % pool, color='red')
             if url is None and not templates:
                 common.pprint("Missing template or url.Leaving...", color='red')
                 return {'result': 'failure', 'reason': "Missing template"}
