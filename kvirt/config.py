@@ -95,7 +95,7 @@ class Kconfig(Kbaseconfig):
                 if not os.path.exists(ca_file):
                     common.pprint("Ca file path doesnt exist. Leaving", color='red')
                     os._exit(1)
-                imagerepository = self.options('imagerepository', 'ovirt-image-repository')
+                imagerepository = self.options.get('imagerepository', 'ovirt-image-repository')
                 from kvirt.ovirt import KOvirt
                 k = KOvirt(host=self.host, port=self.port, user=user, password=password,
                            debug=debug, datacenter=datacenter, cluster=cluster, ca_file=ca_file, org=org,

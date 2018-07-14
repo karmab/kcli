@@ -50,7 +50,7 @@ class KOvirt(object):
         self.ca_file = ca_file
         self.org = org
         self.ssh_user = ssh_user
-        self.imagerepository = self.imagerepository
+        self.imagerepository = imagerepository
 
 # should cleanly close your connection, if needed
     def close(self):
@@ -58,11 +58,21 @@ class KOvirt(object):
         return
 
     def exists(self, name):
-        return
+        vmsearch = self.vms_service.list(search='name=%s' % name)
+        if vmsearch:
+            return True
+        return False
 
     def net_exists(self, name):
-        print("not implemented")
-        return
+        profiles_service = self.conn.system_service().vnic_profiles_service()
+        netprofiles = {}
+        for prof in profiles_service.list():
+                netprofiles[prof.name] = prof.id
+        if 'default' not in netprofiles and 'ovirtmgmt' in netprofiles:
+            netprofiles['default'] = netprofiles['ovirtmgmt']
+        if name in netprofiles:
+            return True
+        return False
 
     def disk_exists(self, pool, name):
         print("not implemented")
@@ -224,13 +234,13 @@ class KOvirt(object):
         return {'result': 'success'}
 
     def snapshot(self, name, base, revert=False, delete=False, listing=False):
-        print("not implemented")
-        vmsearch = self.vms_service.list(search='name=%s' % name)
+        vmsearch = self.vms_service.list(search='name=%s' % base)
         if not vmsearch:
-            common.pprint("VM %s not found" % name, color='red')
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            common.pprint("VM %s not found" % base, color='red')
+            return {'result': 'failure', 'reason': "VM %s not found" % base}
         vm = vmsearch[0]
-        print(vm)
+        snapshots_service = self.vms_service.vm_service(vm.id).snapshots_service()
+        snapshots_service.add(types.Snapshot(description=name))
         return
 
     def restart(self, name):
