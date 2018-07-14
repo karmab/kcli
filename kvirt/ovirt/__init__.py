@@ -167,7 +167,8 @@ class KOvirt(object):
             cmds.append('sleep 60')
             if template.lower().startswith('centos'):
                 cmds.append('yum -y install centos-release-ovirt42')
-            if template.lower().startswith('centos') or template.lower().startswith('fedora'):
+            if template.lower().startswith('centos') or template.lower().startswith('fedora')\
+                    or template.lower().startswith('rhel'):
                 cmds.append('yum -y install ovirt-guest-agent-common')
                 cmds.append('systemctl enable ovirt-guest-agent')
                 cmds.append('systemctl start ovirt-guest-agent')
@@ -529,6 +530,11 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
     def add_disk(self, name, size, pool=None, thin=True, template=None,
                  shareable=False, existing=None):
         size *= 2**30
+        system_service = self.conn.system_service()
+        sds_service = system_service.storage_domains_service()
+        poolcheck = sds_service.list(search='name=%s' % pool)
+        if not poolcheck:
+            return {'result': 'failure', 'reason': "Pool %s not found" % pool}
         vmsearch = self.vms_service.list(search='name=%s' % name)
         if not vmsearch:
             common.pprint("VM %s not found" % name, color='red')
@@ -629,6 +635,9 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
             return {'result': 'success'}
         system_service = self.conn.system_service()
         sds_service = system_service.storage_domains_service()
+        poolcheck = sds_service.list(search='name=%s' % pool)
+        if not poolcheck:
+            return {'result': 'failure', 'reason': "Pool %s not found" % pool}
         sd = sds_service.list(search='name=%s' % self.imagerepository)
         common.pprint("Using %s glance repository" % self.imagerepository, color='green')
         if not sd:
