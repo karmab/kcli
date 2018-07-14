@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python'
 # -*- coding: utf-8 -*-
 """
 Ovirt provider
@@ -203,8 +203,11 @@ class KOvirt(object):
                                                   dns_servers=dns_servers, dns_search=domain,
                                                   custom_script=custom_script)
             tags_service = self.conn.system_service().tags_service()
-            tags_service.add(types.Tag(name="profile_%s" % profile))
-            tags_service.add(types.Tag(name="plan_%s" % plan))
+            existing_tags = [tag.name for tag in tags_service.list()]
+            if "profile_%s" % profile not in existing_tags:
+                tags_service.add(types.Tag(name="profile_%s" % profile))
+            if "plan_%s" % plan not in existing_tags:
+                tags_service.add(types.Tag(name="plan_%s" % plan))
             tags_service = vm_service.tags_service()
             tags_service.add(tag=types.Tag(name="profile_%s" % profile))
             tags_service.add(tag=types.Tag(name="plan_%s" % plan))
