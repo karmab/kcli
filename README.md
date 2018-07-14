@@ -8,9 +8,10 @@
 
 ![Screenshot](kcli.jpg)
 
-This tool is meant to interact with a local/remote libvirt daemon and to easily deploy from templates (optionally using cloudinit).
+This tool is meant to interact with a local/remote libvirt daemon and to easily deploy from templates (using cloudinit).
 It will also report IPS for any vm connected to a dhcp-enabled libvirt network and generally for every vm deployed from this client.
-There is also support for gcp, aws, virtualbox and kubevirt
+Futhermore, you can deploy vms using defined profiles or several at once using plans
+There is support for gcp, aws, kubevirt and ovirt 
 
 Refer to the [documentation](https://kcli.readthedocs.io) for more information
 
@@ -21,12 +22,12 @@ Refer to the [documentation](https://kcli.readthedocs.io) for more information
 - Interact with libvirt without XML
 - Declare all your objects(vm, containers, networks, ansible,...) in a single yaml file!
 - Easily grab and share those files from github
-- Easily Test all Redhat Infrastructure products, and their upstream counterpart
+- Easily Test all Redhat Infrastructure products, and their upstream counterparts
 - Easily share private keys between your vms
 - Inject all configuration with cloudinit
 - Use the default cloud images
-- Have a web UI to do it too!
-- Do all of this in virtualbox or kubevirt using same commands and files
+- Use a web UI to do it too
+- Do all of this in additional providers(gcp, aws, kubevirt, ovirt) using same commands and files
 
 ## Demo!
 

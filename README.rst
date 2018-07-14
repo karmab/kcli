@@ -1,7 +1,7 @@
 kcli repository
 ===============
 
-|Build Status| |Pypi| |Copr| |image3|
+|Build Status| |Pypi| |Copr| |image3| |Visit our IRC channel|
 
 .. figure:: kcli.jpg
    :alt: Screenshot
@@ -9,10 +9,11 @@ kcli repository
    Screenshot
 
 This tool is meant to interact with a local/remote libvirt daemon and to
-easily deploy from templates (optionally using cloudinit). It will also
-report IPS for any vm connected to a dhcp-enabled libvirt network and
-generally for every vm deployed from this client. There is also support
-for virtualbox and kubevirt
+easily deploy from templates (using cloudinit). It will also report IPS
+for any vm connected to a dhcp-enabled libvirt network and generally for
+every vm deployed from this client. Futhermore, you can deploy vms using
+defined profiles or several at once using plans There is support for
+gcp, aws, kubevirt and ovirt
 
 Refer to the `documentation <https://kcli.readthedocs.io>`__ for more
 information
@@ -28,13 +29,13 @@ What you can do
    single yaml file!
 -  Easily grab and share those files from github
 -  Easily Test all Redhat Infrastructure products, and their upstream
-   counterpart
+   counterparts
 -  Easily share private keys between your vms
 -  Inject all configuration with cloudinit
 -  Use the default cloud images
--  Have a web UI to do it too!
--  Do all of this in virtualbox or kubevirt using same commands and
-   files
+-  Use a web UI to do it too
+-  Do all of this in additional providers(gcp, aws, kubevirt, ovirt)
+   using same commands and files
 
 Demo!
 -----
@@ -69,9 +70,10 @@ limitations under the License.
 Problems?
 ---------
 
-Send me a mail at karimboumedhel@gmail.com !
+Send me a mail at karimboumedhel@gmail.com ! Or drop by #kcli channel on
+IRC
 
-Mac Fly!!!
+Mc Fly!!!
 
 karmab
 
@@ -83,5 +85,7 @@ karmab
    :target: https://copr.fedorainfracloud.org/coprs/karmab/kcli/package/kcli
 .. |image3| image:: https://images.microbadger.com/badges/image/karmab/kcli.svg
    :target: https://microbadger.com/images/karmab/kcli
+.. |Visit our IRC channel| image:: https://kiwiirc.com/buttons/irc.freenode.net/kcli.png
+   :target: https://kiwiirc.com/client/irc.freenode.net/#kcli
 .. |asciicast| image:: https://asciinema.org/a/153423.png
    :target: https://asciinema.org/a/153423?autoplay=1
