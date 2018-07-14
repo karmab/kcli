@@ -368,9 +368,9 @@ ovirt:
 
 The following parameters are specific to ovirt:
 
-- org Organization (needed for accessing graphical console)
-- ca_file Points to a local path with the cert of the ovirt engine host ( that can be retrieved with `http://$HOST/ovirt-engine/services/pki-resource?resource=ca-certificate&format=X509-PEM-CA`. (needed for accessing graphical consoles)
-- imagerepository. A Glance image provider repository. Defaults to *ovirt-image-repository*. You can get it created for you with kcli download
+- org Organization 
+- ca_file Points to a local path with the cert of the ovirt engine host. It can be retrieved with `wget http://$HOST/ovirt-engine/services/pki-resource?resource=ca-certificate&format=X509-PEM-CA`.
+- imagerepository. A Glance image provider repository. Defaults to `ovirt-image-repository`. You can get default one created for you with kcli download
 
 
 ## Fake
