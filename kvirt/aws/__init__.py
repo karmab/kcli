@@ -244,6 +244,8 @@ class Kaws(object):
                         plan = tag['Value']
                     if tag['Key'] == 'profile':
                         profile = tag['Value']
+                    if tag['Key'] == 'hostname':
+                        report = tag['Value']
             vms.append([name, state, ip, source, plan, profile, report])
         return vms
 
@@ -279,12 +281,15 @@ class Kaws(object):
         source = os.path.basename(image.image_location)
         plan = ''
         profile = ''
+        hostname = ''
         if 'Tags' in vm:
             for tag in vm['Tags']:
                 if tag['Key'] == 'plan':
                     plan = tag['Value']
                 if tag['Key'] == 'profile':
                     profile = tag['Value']
+                if tag['Key'] == 'hostname':
+                    hostname = tag['Value']
         yamlinfo['name'] = name
         yamlinfo['status'] = state
         yamlinfo['ip'] = ip
@@ -296,6 +301,7 @@ class Kaws(object):
         # yamlinfo['creationdate'] = dateparser.parse(vm['creationTimestamp']).strftime("%d-%m-%Y %H:%M")
         yamlinfo['plan'] = plan
         yamlinfo['profile'] = profile
+        yamlinfo['hostname'] = hostname
         nets = []
         for interface in vm['NetworkInterfaces']:
             network = interface['VpcId']

@@ -419,7 +419,7 @@ def print_info(yamlinfo, output='plain', fields=None, values=False):
         else:
             if fields is None:
                 fields = ['name', 'creationdate', 'host', 'status', 'description', 'autostart', 'template', 'plan',
-                          'profile', 'cpus', 'memory', 'nets', 'ip', 'disks', 'snapshots', 'tags']
+                          'profile', 'cpus', 'memory', 'nets', 'ip', 'disks', 'snapshots', 'tags', 'hostname']
             for key in fields:
                 if key not in yamlinfo:
                     continue

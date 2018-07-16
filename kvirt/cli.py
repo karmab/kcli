@@ -380,7 +380,8 @@ def list(args):
             plans.add_row([planname, planvms])
         print(plans)
     else:
-        customcolumn = 'Namespace' if config.type == 'kubevirt' else 'Report'
+        customcolumns = {'kubevirt': 'Namespace', 'aws': 'Hostname'}
+        customcolumn = customcolumns[config.type] if config.type in customcolumns else 'Report'
         if config.extraclients:
             allclients = config.extraclients.copy()
             allclients.update({config.client: config.k})
