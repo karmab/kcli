@@ -1255,7 +1255,7 @@ class Kvirt(Kbase):
         currentmemory = list(root.getiterator('currentMemory'))[0]
         currentmemory.text = memory
         newxml = ET.tostring(root)
-        conn.defineXML(newxml)
+        conn.defineXML(newxml.decode("utf-8"))
         return {'result': 'success'}
 
     def update_iso(self, name, iso):
