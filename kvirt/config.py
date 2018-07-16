@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python'
 # -*- coding: utf-8 -*-
 """
 Kvirt config class
@@ -101,6 +101,7 @@ class Kconfig(Kbaseconfig):
                            debug=debug, datacenter=datacenter, cluster=cluster, ca_file=ca_file, org=org,
                            imagerepository=imagerepository)
             elif self.type == 'openstack':
+                domain = self.options.get('domain', 'Default')
                 version = self.options.get('version', '2')
                 auth_url = self.options.get('auth_url')
                 if auth_url is None:
@@ -114,7 +115,7 @@ class Kconfig(Kbaseconfig):
                     os._exit(1)
                 from kvirt.openstack import Kopenstack
                 k = Kopenstack(host=self.host, port=self.port, user=user, password=password, version=version,
-                               debug=debug, project=project, auth_url=auth_url)
+                               debug=debug, project=project, domain=domain, auth_url=auth_url)
             else:
                 if self.host is None:
                     common.pprint("Problem parsing your configuration file", color='red')
