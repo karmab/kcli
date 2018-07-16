@@ -12,10 +12,10 @@ LABEL name="karmab/kcli-kubevirt" \
 
 EXPOSE 9000
 
-RUN apk add --update --no-cache g++ gcc libvirt libvirt-dev py-pip python3-dev openssh-client curl-dev openssl-dev libxml2-dev git
+RUN apk add --update --no-cache g++ gcc libvirt libvirt-dev py-pip python3-dev openssh-client curl-dev openssl-dev libxml2-dev
 
 # Group the pip installation
-RUN pip3 install -U --no-cache-dir setuptools git+https://github.com/karmab/kcli.git 
+RUN pip3 install -U --no-cache-dir kcli setuptools
 ADD klist.py /usr/bin
 RUN chmod o+x /usr/bin/klist.py
 
