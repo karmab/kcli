@@ -11,7 +11,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             REPORT, REPORTALL, INSECURE, KEYS, CMDS, DNS,
                             DOMAIN, SCRIPTS, FILES, ISO,
                             NETMASKS, GATEWAY, SHAREDKEY, TEMPLATE, ENABLEROOT,
-                            PLANVIEW, PRIVATEKEY, TAGS)
+                            PLANVIEW, PRIVATEKEY, TAGS, RHNREGISTER, RHNUSER, RHNPASSWORD, RHNAK, RHNORG)
 from kvirt import common
 import os
 from shutil import copyfile, rmtree
@@ -98,6 +98,11 @@ class Kbaseconfig:
         defaults['enableroot'] = default.get('enableroot', ENABLEROOT)
         defaults['planview'] = default.get('planview', PLANVIEW)
         defaults['privatekey'] = default.get('privatekey', PRIVATEKEY)
+        defaults['rhnregister'] = default.get('rhnregister', RHNREGISTER)
+        defaults['rhnuser'] = default.get('rhnuser', RHNUSER)
+        defaults['rhnpassword'] = default.get('rhnpassword', RHNPASSWORD)
+        defaults['rhnactivationkey'] = default.get('rhnactivationkey', RHNAK)
+        defaults['rhnorg'] = default.get('rhnorg', RHNORG)
         defaults['tags'] = default.get('tags', TAGS)
         currentplanfile = "%s/.kcli/plan" % os.environ.get('HOME')
         if os.path.exists(currentplanfile):
@@ -180,6 +185,11 @@ class Kbaseconfig:
         self.scripts = options.get('scripts', self.default['scripts'])
         self.files = options.get('files', self.default['files'])
         self.privatekey = options.get('privatekey', self.default['privatekey'])
+        self.rhnregister = options.get('rhnregister', self.default['rhnregister'])
+        self.rhnuser = options.get('rhnuser', self.default['rhnuser'])
+        self.rhnpassword = options.get('rhnpassword', self.default['rhnpassword'])
+        self.rhnak = options.get('rhnactivationkey', self.default['rhnactivationkey'])
+        self.rhnorg = options.get('rhnorg', self.default['rhnorg'])
         self.tags = options.get('tags', self.default['tags'])
 
     def switch_host(self, client):

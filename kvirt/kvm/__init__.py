@@ -1511,7 +1511,6 @@ class Kvirt(Kbase):
         return {'result': 'success'}
 
     def _ssh_credentials(self, name):
-        ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety']
         user = 'root'
         conn = self.conn
         try:
@@ -1525,20 +1524,7 @@ class Kvirt(Kbase):
         vm = [v for v in self.list() if v[0] == name][0]
         template = vm[3]
         if template != '':
-            if 'centos' in template.lower():
-                user = 'centos'
-            elif 'cirros' in template.lower():
-                user = 'cirros'
-            elif [x for x in ubuntus if x in template.lower()]:
-                user = 'ubuntu'
-            elif 'fedora' in template.lower():
-                user = 'fedora'
-            elif 'rhel' in template.lower():
-                user = 'cloud-user'
-            elif 'debian' in template.lower():
-                user = 'debian'
-            elif 'arch' in template.lower():
-                user = 'arch'
+            user = common.get_user(template)
         ip = vm[2]
         if ip == '':
             print("No ip found. Cannot ssh...")
@@ -1704,9 +1690,11 @@ class Kvirt(Kbase):
         pool.refresh()
         return {'result': 'success'}
 
-    def create_network(self, name, cidr, dhcp=True, nat=True, domain=None, plan='kvirt', pxe=None):
+    def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', pxe=None, vlan=None):
         conn = self.conn
         networks = self.list_networks()
+        if cidr is None:
+            return {'result': 'failure', 'reason': "Missing Cidr"}
         cidrs = [network['cidr'] for network in list(networks.values())]
         if name in networks:
             return {'result': 'failure', 'reason': "Network %s already exists" % name}
@@ -1755,7 +1743,7 @@ class Kvirt(Kbase):
         new_net.create()
         return {'result': 'success'}
 
-    def delete_network(self, name=None):
+    def delete_network(self, name=None, cidr=None):
         conn = self.conn
         try:
             network = conn.networkLookupByName(name)

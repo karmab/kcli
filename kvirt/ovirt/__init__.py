@@ -658,15 +658,16 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
                               storage_domain=types.StorageDomain(name=pool))
         return {'result': 'success'}
 
-    def create_network(self, name, cidr, dhcp=True, nat=True, domain=None,
-                       plan='kvirt', pxe=None):
-        # we use cidr as vlan id
+    def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None,
+                       plan='kvirt', pxe=None, vlan=None):
+        if vlan is None:
+            return {'result': 'failure', 'reason': "Missing Vlan"}
         networks_service = self.conn.system_service().networks_service()
         networks_service.add(network=types.Network(name=name, data_center=types.DataCenter(name=self.datacenter),
-                                                   vlan=types.Vlan(cidr), usages=[types.NetworkUsage.VM], mtu=1500))
+                                                   vlan=types.Vlan(vlan), usages=[types.NetworkUsage.VM], mtu=1500))
         return
 
-    def delete_network(self, name=None):
+    def delete_network(self, name=None, cidr=None):
         print("not implemented")
         return
 

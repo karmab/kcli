@@ -805,6 +805,7 @@ def network(args):
     delete = args.delete
     isolated = args.isolated
     cidr = args.cidr
+    vlan = args.vlan
     nodhcp = args.nodhcp
     domain = args.domain
     pxe = args.pxe
@@ -814,7 +815,7 @@ def network(args):
         common.pprint("Missing Network", color='red')
         os._exit(1)
     if delete:
-        result = k.delete_network(name=name)
+        result = k.delete_network(name=name, cidr=cidr)
         common.handle_response(result, name, element='Network ', action='deleted')
     else:
         if isolated:
@@ -822,7 +823,7 @@ def network(args):
         else:
             nat = True
         dhcp = not nodhcp
-        result = k.create_network(name=name, cidr=cidr, dhcp=dhcp, nat=nat, domain=domain, pxe=pxe)
+        result = k.create_network(name=name, cidr=cidr, dhcp=dhcp, nat=nat, domain=domain, pxe=pxe, vlan=vlan)
         common.handle_response(result, name, element='Network ')
 
 
@@ -1047,6 +1048,7 @@ def cli():
     network_parser.add_argument('--nodhcp', action='store_true', help='Disable dhcp on the net')
     network_parser.add_argument('--domain', help='DNS domain. Defaults to network name')
     network_parser.add_argument('-p', '--pxe', help='Ip of a Pxe Server', metavar='PXE')
+    network_parser.add_argument('-v', '--vlan', help='Vlan', metavar='VLAN. Ovirt specific')
     network_parser.add_argument('name', metavar='NETWORK')
     network_parser.set_defaults(func=network)
 

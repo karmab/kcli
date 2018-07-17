@@ -502,3 +502,24 @@ def scp(name, ip='', host=None, port=22, hostuser=None, user=None, source=None, 
             if debug:
                 print(scpcommand)
             return scpcommand
+
+
+def get_user(template):
+    ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety']
+    if 'centos' in template.lower():
+        user = 'centos'
+    elif 'cirros' in template.lower():
+        user = 'cirros'
+    elif [x for x in ubuntus if x in template.lower()]:
+        user = 'ubuntu'
+    elif 'fedora' in template.lower():
+        user = 'fedora'
+    elif 'rhel' in template.lower():
+        user = 'cloud-user'
+    elif 'debian' in template.lower():
+        user = 'debian'
+    elif 'arch' in template.lower():
+        user = 'arch'
+    else:
+        user = 'root'
+    return user

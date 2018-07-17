@@ -188,6 +188,11 @@ class Kconfig(Kbaseconfig):
             default_files = father.get('files', self.files)
             default_enableroot = father.get('enableroot', self.enableroot)
             default_privatekey = father.get('privatekey', self.privatekey)
+            default_rhnregister = father.get('rhnregister', self.rhnregister)
+            default_rhnuser = father.get('rhnuser', self.rhnuser)
+            default_rhnpassword = father.get('rhnpassword', self.rhnpassword)
+            default_rhnak = father.get('rhnactivationkey', self.rhnak)
+            default_rhnorg = father.get('rhnorg', self.rhnorg)
             default_tags = father.get('tags', self.tags)
             default_cmds = common.remove_duplicates(self.cmds + father.get('cmds', []))
             default_scripts = common.remove_duplicates(self.scripts + father.get('scripts', []))
@@ -223,6 +228,11 @@ class Kconfig(Kbaseconfig):
             default_enableroot = self.enableroot
             default_tags = self.tags
             default_privatekey = self.privatekey
+            default_rhnregister = self.rhnregister
+            default_rhnuser = self.rhnuser
+            default_rhnpassword = self.rhnpassword
+            default_rhnak = self.rhnak
+            default_rhnorg = self.rhnorg
             default_cmds = self.cmds
             default_scripts = self.scripts
         template = profile.get('template', default_template)
@@ -272,11 +282,25 @@ class Kconfig(Kbaseconfig):
         elif profile.get('tags') is not None:
             tags = profile.get('tags')
         privatekey = profile.get('privatekey', default_privatekey)
+        rhnregister = profile.get('rhnregister', default_rhnregister)
+        rhnuser = profile.get('rhnuser', default_rhnuser)
+        rhnpassword = profile.get('rhnpassword', default_rhnpassword)
+        rhnak = profile.get('rhnactivationkey', default_rhnak)
+        rhnorg = profile.get('rhnorg', default_rhnorg)
         scriptcmds = []
+        skip_rhnregister_script = False
+        if rhnregister:
+            if (rhnuser is not None and rhnpassword is not None) or (rhnak is not None and rhnorg is not None):
+                skip_rhnregister_script = True
+            else:
+                common.pprint("Rhn registration required but missing credentials.Leaving...", color='red')
+                os._exit(1)
         if scripts:
             for script in scripts:
                 script = os.path.expanduser(script)
-                if not os.path.exists(script):
+                if script.endswith('register.sh') and skip_rhnregister_script:
+                    continue
+                elif not os.path.exists(script):
                     common.pprint("Script %s not found.Ignoring..." % script, color='red')
                     os._exit(1)
                 else:
@@ -289,7 +313,20 @@ class Kconfig(Kbaseconfig):
                     scriptlines = [line.strip() for line in scriptentries.split('\n') if line.strip() != '']
                     if scriptlines:
                         scriptcmds.extend(scriptlines)
-        cmds = cmds + scriptcmds
+        if skip_rhnregister_script and template.startswith('rhel'):
+            # rhncommands = ['sleep 30']
+            rhncommands = []
+            if rhnuser is not None and rhnpassword is not None:
+                rhncommands.append('subscription-manager register --force --username=%s --password=%s'
+                                   % (rhnuser, rhnpassword))
+                rhncommands.append('subscription-manager attach --auto')
+            elif rhnak is not None and rhnorg is not None:
+                rhncommands.append('subscription-manager register --force --activationkey=%s --org=%s'
+                                   % (rhnak, rhnorg))
+                rhncommands.append('subscription-manager repos --enable=rhel-7-server-rpms')
+        else:
+            rhncommands = []
+        cmds = rhncommands + cmds + scriptcmds
         if reportall:
             reportcmd = 'curl -s -X POST -d "name=%s&status=Running&report=`cat /var/log/cloud-init.log`" %s/report '
             '>/dev/null' % (name, self.reporturl)

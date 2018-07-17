@@ -489,7 +489,7 @@ class Kaws(object):
         print("not implemented")
         return {'result': 'success'}
 
-    def create_network(self, name, cidr, dhcp=True, nat=True, domain=None, plan='kvirt', pxe=None):
+    def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', pxe=None, vlan=None):
         conn = self.conn
         if cidr is not None:
             try:
@@ -503,7 +503,7 @@ class Kaws(object):
             conn.create_internet_gateway()
         return {'result': 'success'}
 
-    def delete_network(self, name=None):
+    def delete_network(self, name=None, cidr=None):
         conn = self.conn
         Filters = [{'Name': 'vpc-id', 'Values': [name]}]
         subnets = conn.describe_subnets(Filters=Filters)

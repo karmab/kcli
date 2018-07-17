@@ -555,7 +555,7 @@ class Kgcp(object):
         print("not implemented")
         return {'result': 'success'}
 
-    def create_network(self, name, cidr, dhcp=True, nat=True, domain=None, plan='kvirt', pxe=None):
+    def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', pxe=None, vlan=None):
         conn = self.conn
         project = self.project
         region = self.region
@@ -588,7 +588,7 @@ class Kgcp(object):
                 common.pprint("Waiting for network to be ready", color='green')
         return {'result': 'success'}
 
-    def delete_network(self, name=None):
+    def delete_network(self, name=None, cidr=None):
         conn = self.conn
         project = self.project
         region = self.region

@@ -952,7 +952,9 @@ class Kbox(Kbase):
             os.system(cmd)
         return {'result': 'success'}
 
-    def create_network(self, name, cidr, dhcp=True, nat=True, domain=None, plan='kvirt', pxe=None):
+    def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', pxe=None, vlan=None):
+        if cidr is None:
+            return {'result': 'failure', 'reason': "Missing Cidr"}
         conn = self.conn
         network = conn.create_nat_network(name)
         network.network = cidr
@@ -960,7 +962,7 @@ class Kbox(Kbase):
             network.need_dhcp_server = True
         return {'result': 'success'}
 
-    def delete_network(self, name=None):
+    def delete_network(self, name=None, cidr=None):
         conn = self.conn
         for network in conn.nat_networks:
             networkname = network.network_name

@@ -248,10 +248,10 @@ class Kfake(object):
     def add_image(self, image, pool, short=None, cmd=None, name=None, size=1):
         return {'result': 'success'}
 
-    def create_network(self, name, cidr, dhcp=True, nat=True, domain=None, plan='kvirt', pxe=None):
+    def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', pxe=None, vlan=None):
         return {'result': 'success'}
 
-    def delete_network(self, name=None):
+    def delete_network(self, name=None, cidr=None):
         return {'result': 'success'}
 
 # should return a dict of pool strings

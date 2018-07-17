@@ -16,7 +16,7 @@ openstack project create [[ project ]]
 openstack user create  --project [[ project ]] --password [[ password ]] [[ user ]]
 openstack role add --user=[[ user ]] --project=[[ project ]] admin
 grep -q 'type_drivers = vxlan' /etc/neutron/plugin.ini && sed -i 's/type_drivers =.*/type_drivers = vxlan,flat/' /etc/neutron/plugin.ini && systemctl restart neutron-server
-neutron net-create external --provider:network_type flat --provider:physical_network external --router:external || neutron net-create external --router:external
+neutron net-create external --provider:network_type flat --provider:physical_network extnet --router:external || neutron net-create external --router:external
 neutron subnet-create --name $EXTERNAL_SUBNET --allocation-pool start=$EXTERNAL_START,end=$EXTERNAL_END --disable-dhcp --gateway $EXTERNAL_GATEWAY external $EXTERNAL_SUBNET
 OLD_PASSWORD=`grep PASSWORD /root/keystonerc_admin | cut -f2 -d'='`
 openstack user password set  --original-password $OLD_PASSWORD --password $ADMIN_PASSWORD || openstack user set --password $ADMIN_PASSWORD admin || keystone password-update --new-password $ADMIN_PASSWORD

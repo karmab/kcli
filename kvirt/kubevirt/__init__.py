@@ -829,11 +829,11 @@ class Kubevirt(object):
             core.delete_namespaced_pod(podname, namespace, client.V1DeleteOptions())
         return {'result': 'success'}
 
-    def create_network(self, name, cidr, dhcp=True, nat=True, domain=None, plan='kvirt', pxe=None):
+    def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', pxe=None, vlan=None):
         print("not implemented")
         return
 
-    def delete_network(self, name=None):
+    def delete_network(self, name=None, cidr=None):
         print("not implemented")
         return
 
