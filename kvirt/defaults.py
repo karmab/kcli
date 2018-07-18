@@ -38,7 +38,7 @@ TEMPLATES = {'': None, 'arch': 'https://linuximages.de/openstack/arch/arch-opens
              'Fedora-Cloud-Base-26-1.5.x86_64.qcow2',
              'fedora27': 'https://download.fedoraproject.org/pub/fedora/linux/releases/27/CloudImages/x86_64/images/'
              'Fedora-Cloud-Base-27-1.6.x86_64.qcow2',
-             'fedora28': 'https://download.fedoraproject.org/pub/fedora/linux/releases/28/CloudImages/x86_64/images/'
+             'fedora28': 'https://download.fedoraproject.org/pub/fedora/linux/releases/28/Cloud/x86_64/images/'
              'Fedora-Cloud-Base-28-1.1.x86_64.qcow2',
              'gentoo': 'https://gentoo.osuosl.org/experimental/amd64/openstack/gentoo-openstack-amd64-default-20180621.'
              'qcow2',
