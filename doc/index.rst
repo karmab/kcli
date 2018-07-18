@@ -431,7 +431,7 @@ The following parameters are specific to ovirt:
 -  org Organization
 -  ca_file Points to a local path with the cert of the ovirt engine
    host. It can be retrieved with
-   ``wget http://$HOST/ovirt-engine/services/pki-resource?resource=ca-certificate&format=X509-PEM-CA``.
+   ``wget http://$HOST/ovirt-engine/services/pki-resource?resource=ca-certificate&format=X509-PEM-CA``
 -  imagerepository. A Glance image provider repository. Defaults to
    ``ovirt-image-repository``. You can get default one created for you
    with kcli download
@@ -440,8 +440,7 @@ Fake
 ----
 
 you can also use a fake provider to get a feel of how kcli works (or to
-generate the scripts for a platform yet not supported like openstack or
-ovirt)
+generate the scripts for a platform yet not supported like Openstack)
 
 ::
 
@@ -1153,6 +1152,14 @@ Available parameters for hypervisor/profile/plan files
    when matched in a firewall rule). In the case of kubevirt, it s
    rather a dict of key=value used as node selector (allowing to force
    vms to be scheduled on a matching host)
+-  rhnregister (optional). Auto registers vms whose template starts with
+   rhel Defaults to false. Requires to either rhnuser and rhnpassword,
+   or rhnactivationkey and rhnorg
+-  rhnuser (optional). Red Hat network user
+-  rhnpassword (optional). Red Hat network password
+-  rhnactivationkey (optional). Red Hat network activation key
+-  rhnorg (optional). Red Hat network organization
+-  rhnuser (optional). Red Hat network user
 
 Overriding parameters
 ---------------------
