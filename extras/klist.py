@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!/usr/bin/env python3
 
 from kvirt.config import Kconfig
 import json
@@ -35,7 +35,7 @@ class KcliInventory(object):
         # If no groups or vars are present, return an empty inventory.
         else:
             self.inventory = empty()
-        print json.dumps(self.inventory)
+        print(json.dumps(self.inventory))
 
     # Read the command line args passed to the script.
     def read_cli_args(self):
@@ -45,7 +45,6 @@ class KcliInventory(object):
         self.args = parser.parse_args()
 
     def get(self):
-        ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety']
         k = self.k
         tunnel = self.tunnel
         metadata = {'_meta': {'hostvars': {}}}
@@ -74,20 +73,8 @@ class KcliInventory(object):
                 else:
                     hostvalues[name]['ansible_host'] = ip
             if template != '':
-                if 'centos' in template.lower():
-                    hostvalues[name]['ansible_user'] = 'centos'
-                elif 'cirros' in template.lower():
-                    hostvalues[name]['ansible_user'] = 'cirros'
-                elif [x for x in ubuntus if x in template.lower()]:
-                    hostvalues[name]['ansible_user'] = 'ubuntu'
-                elif 'fedora' in template.lower():
-                    hostvalues[name]['ansible_user'] = 'fedora'
-                elif 'rhel' in template.lower():
-                    hostvalues[name]['ansible_user'] = 'cloud-user'
-                elif 'debian' in template.lower():
-                    hostvalues[name]['ansible_user'] = 'debian'
-                elif 'arch' in template.lower():
-                    hostvalues[name]['ansible_user'] = 'arch'
+                user = k._ssh_credentials(name)[0]
+                hostvalues[name]['ansible_user'] = user
         return metadata
 
 
