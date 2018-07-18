@@ -39,6 +39,10 @@ sed -i.bak '/kubernetes/d' setup.py
 sed -i.bak '/google/d' setup.py
 sed -i.bak '/boto3/d' setup.py
 sed -i.bak '/ovirt-engine-sdk-python/d' setup.py
+sed -i.bak '/python-keystoneclient/d' setup.py
+sed -i.bak '/python-neutronclient/d' setup.py
+sed -i.bak '/python-novaclient/d' setup.py
+sed -i.bak '/python-glanceclient/d' setup.py
 %{__python} setup.py build
 
 %install
