@@ -46,8 +46,7 @@ groups
     sudo usermod -aG qemu,libvirt YOUR_USER
 
 for *macosx*, you’ll want to check the docker installation section ( if
-planning to go against a remote kvm host ) or the dev section for
-virtualbox
+planning to go against a remote kvm host)
 
 Recomended install method
 -------------------------
@@ -102,8 +101,17 @@ there’s no way that will work…)
 
 For web access, you can switch with ``--entrypoint=/usr/bin/kweb``
 
-Dev installation
-----------------
+Dev installation from pip
+-------------------------
+
+Centos installation
+~~~~~~~~~~~~~~~~~~~
+
+Use the provided `script <extras/centos.sh>`__ which will install a
+dedicated python3 env
+
+Generic plafrom
+~~~~~~~~~~~~~~~
 
 1. Install requirements. you will also need to grab *genisoimage* (or
    *mkisofs* on OSX) for cloudinit isos to get generated Console access
@@ -131,102 +139,6 @@ If using a Debian based distribution:
 .. code:: shell
 
     pip install kcli
-
-Centos installation
--------------------
-
-.. code:: bash
-
-    yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-    yum -y install http://dl.fedoraproject.org/pub/fedora-secondary/releases/26/Everything/i386/os/Packages/p/python2-six-1.10.0-8.fc26.noarch.rpm
-    yum -y install ftp://fr2.rpmfind.net/linux/fedora-secondary/releases/25/Everything/s390x/os/Packages/p/python2-docker-pycreds-0.2.1-2.fc25.noarch.rpm
-
-    cat > /etc/yum.repos.d/kcli.repo <<EOF
-    [karmab-kcli]
-    name=Copr repo for kcli owned by karmab
-    baseurl=https://copr-be.cloud.fedoraproject.org/results/karmab/kcli/fedora-26-x86_64/
-    type=rpm-md
-    skip_if_unavailable=True
-    gpgcheck=0
-    repo_gpgcheck=0
-    enabled=1
-    enabled_metadata=1
-    EOF
-    yum -y install kcli
-
-Debian/Ubuntu installation
---------------------------
-
-.. code:: bash
-
-    wget -P /root https://packagecloud.io/install/repositories/karmab/kcli/script.deb.sh
-    bash /root/script.deb.sh
-    ln -s /usr/lib/python2.7/dist-packages/ /usr/lib/python2.7/site-packages
-    apt-get install kcli python2.7 python-setuptools python-prettytable python-yaml python-netaddr python-iptools python-flask python2-docker python-requests python-websocket python2-docker-pycreds python-libvirt
-
-VirtualBox
-----------
-
-plugin for virtualbox tries to replicate most of the functionality so
-that experience is transparent to the end user. Note that the plugin:
-
--  only works for localhost
--  makes use of directories as pools to store vms and templates
--  converts under the hood cloud images to vdi disks
--  dont leverage copy on write…
-
-.. _requisites-1:
-
-requisites
-^^^^^^^^^^
-
-Note that if using *macosx*, note that the virtualbox sdk is only
-compatible with system python ( so use /usr/bin/python when installing
-kcli so it uses this interpreter, and not the one from brew).
-
-install requirements
-^^^^^^^^^^^^^^^^^^^^
-
-::
-
-    pip install libvirt-python pyvbox
-
-install kcli
-^^^^^^^^^^^^
-
-::
-
-    pip install kcli
-
-download sdk and install it
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-::
-
-    export VBOX_INSTALL_PATH=/usr/lib/virtualbox
-    sudo -E python vboxapisetup.py install
-
-then in your *.kcli/config.yml*, you will need a client section defining
-your virtualbox
-
-::
-
-    local:
-     type: vbox
-
-known issues
-^^^^^^^^^^^^
-
-there’s little control made on the available space when creating disks
-from profiles, plans or products.
-
-while it’s generally not an issue on remote kvm hosts and/or when using
-copy on write, you might get this kind of exceptions when trying disks
-with size beyond what’s in your system :
-
-::
-
-    virtualbox.library.VBoxErrorObjectNotFound: 0x80bb0001 (Object corresponding to the supplied arguments does not exist (VBOX_E_OBJECT_NOT_FOUND))
 
 Configuration
 =============

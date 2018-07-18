@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python'
 # -*- coding: utf-8 -*-
 """
 Kvirt config class
@@ -41,21 +41,18 @@ class Kbaseconfig:
                 try:
                     self.ini = yaml.load(entries)
                 except yaml.scanner.ScannerError as err:
-                    common.pprint("Couldn't parse yaml in .kcli/config.yml.\
-                                  Leaving...", color='red')
+                    common.pprint("Couldn't parse yaml in .kcli/config.yml. Leaving...", color='red')
                     common.pprint(err, color='red')
                     os._exit(1)
                 except:
                     self.host = None
                     return
             if 'default' not in self.ini:
-                common.pprint("Missing default section in config file.\
-                              Leaving...", color='red')
+                common.pprint("Missing default section in config file. Leaving...", color='red')
                 self.host = None
                 return
             if 'client' not in self.ini['default']:
-                common.pprint("Using local hypervisor as no client was\
-                              specified...", color='green')
+                common.pprint("Using local hypervisor as no client was specified...", color='green')
                 self.ini['default']['client'] = 'local'
                 self.ini['local'] = {}
         self.clients = [e for e in self.ini if e != 'default']
@@ -133,8 +130,7 @@ class Kbaseconfig:
         else:
             self.client = client
         if self.client not in self.ini:
-            common.pprint("Missing section for client %s in config file. \
-                          Leaving..." % self.client, color='red')
+            common.pprint("Missing section for client %s in config file. Leaving..." % self.client, color='red')
             os._exit(1)
         self.options = self.ini[self.client]
         options = self.options
@@ -196,8 +192,7 @@ class Kbaseconfig:
         if client not in self.clients:
             common.pprint("Client %s not found in config.Leaving...." % client,
                           color='red')
-            return {'result': 'failure', 'reason': "Client %s not found in \
-                    config" % client}
+            return {'result': 'failure', 'reason': "Client %s not found in config" % client}
         enabled = self.ini[client].get('enabled', True)
         oldclient = self.ini['default']['client']
         if not enabled:
@@ -221,8 +216,7 @@ class Kbaseconfig:
         if client not in self.clients:
             common.pprint("Client %s not found in config.Leaving...." % client,
                           color='green')
-            return {'result': 'failure', 'reason': "Client %s not found in \
-                    config" % client}
+            return {'result': 'failure', 'reason': "Client %s not found in config" % client}
         common.pprint("Enabling client %s..." % client, color='green')
         inifile = "%s/.kcli/config.yml" % os.environ.get('HOME')
         if os.path.exists(inifile):
@@ -250,13 +244,11 @@ class Kbaseconfig:
         if client not in self.clients:
             common.pprint("Client %s not found in config.Leaving...." % client,
                           color='red')
-            return {'result': 'failure', 'reason': "Client %s not found in \
-                    config" % client}
+            return {'result': 'failure', 'reason': "Client %s not found in config" % client}
         elif self.ini['default']['client'] == client:
             common.pprint("Client %s currently default.Leaving...." % client,
                           color='red')
-            return {'result': 'failure', 'reason': "Client %s currently \
-                    default" % client}
+            return {'result': 'failure', 'reason': "Client %s currently default" % client}
         common.pprint("Disabling client %s..." % client, color='green')
         inifile = "%s/.kcli/config.yml" % os.environ.get('HOME')
         if os.path.exists(inifile):
@@ -337,8 +329,7 @@ class Kbaseconfig:
                 try:
                     repos = yaml.load(entries)
                 except yaml.scanner.ScannerError:
-                    common.pprint("Couldn't properly parse .kcli/repos.yml. \
-                                  Leaving...", color='red')
+                    common.pprint("Couldn't properly parse .kcli/repos.yml. Leaving...", color='red')
                     os._exit(1)
         return repos
 
@@ -367,8 +358,7 @@ class Kbaseconfig:
                                     repoproduct['file'] = 'kcli_plan.yml'
                                 products.append(repoproduct)
                         except yaml.scanner.ScannerError:
-                            common.pprint("Couldn't properly parse .kcli/repo. \
-                                          Leaving...", color='red')
+                            common.pprint("Couldn't properly parse .kcli/repo. Leaving...", color='red')
                             continue
             if repo is not None:
                 products = [product for product in products if 'repo'
@@ -389,8 +379,7 @@ class Kbaseconfig:
                 try:
                     repos = yaml.load(entries)
                 except yaml.scanner.ScannerError:
-                    common.pprint("Couldn't properly parse .kcli/repos.yml. \
-                                  Leaving...", color='red')
+                    common.pprint("Couldn't properly parse .kcli/repos.yml. Leaving...", color='red')
                     os._exit(1)
             if name in repos:
                 if repos[name] == url:
@@ -421,8 +410,7 @@ class Kbaseconfig:
                     try:
                         repos = yaml.load(entries)
                     except yaml.scanner.ScannerError:
-                        common.pprint("Couldn't properly parse \
-                                      .kcli/repos.yml. Leaving...",
+                        common.pprint("Couldn't properly parse .kcli/repos.yml. Leaving...",
                                       color='red')
                         os._exit(1)
                 if name not in repos:
@@ -457,8 +445,7 @@ class Kbaseconfig:
                 try:
                     repos = yaml.load(entries)
                 except yaml.scanner.ScannerError:
-                    common.pprint("Couldn't properly parse .kcli/repos.yml. \
-                                  Leaving...", color='red')
+                    common.pprint("Couldn't properly parse .kcli/repos.yml. Leaving...", color='red')
                     os._exit(1)
             if name in repos:
                 del repos[name]
@@ -481,8 +468,7 @@ class Kbaseconfig:
                       inputfile, color='green')
         inputfile = os.path.expanduser(inputfile)
         if not os.path.exists(inputfile):
-            common.pprint("No input file found nor default kcli_plan.yml. \
-                          Leaving....", color='red')
+            common.pprint("No input file found nor default kcli_plan.yml. Leaving....", color='red')
             os._exit(1)
         parameters = common.get_parameters(inputfile)
         if parameters is not None:
@@ -514,8 +500,7 @@ class Kbaseconfig:
                     common.pprint("Product not found. Leaving...", color='red')
                     os._exit(1)
         elif len(products) > 1:
-                    common.pprint("Product found in several places. \
-                                  Specify repo or group", color='red')
+                    common.pprint("Product found in several places. Specify repo or group", color='red')
                     os._exit(1)
         else:
             product = products[0]

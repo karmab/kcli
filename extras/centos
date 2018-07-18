@@ -12,12 +12,13 @@ LABEL name="karmab/kcli-kubevirt" \
 EXPOSE 9000
 
 # Group the package installation
-RUN yum -y install epel-release && \
-    yum -y install gcc git libvirt-devel python-devel genisoimage qemu-kvm nmap-ncat python-pip openssh-clients
+RUN yum -y install epel-release https://centos7.iuscommunity.org/ius-release.rpm && \
+    yum -y install gcc git libvirt-devel genisoimage qemu-kvm nmap-ncat python-pip openssh-clients curl-devel python36u python36u-libs python36u-devel python36u-pip openssl-devel libxml2-devel
 
 # Group the pip installation
-RUN pip install -U --no-cache-dir ipaddress
-RUN pip install --no-cache-dir -e git+https://github.com/karmab/kcli.git
+RUN pip3.6 install -U --no-cache-dir ipaddress
+RUN export PYCURL_SSL_LIBRARY=openssl
+RUN pip3.6 install --no-cache-dir git+https://github.com/karmab/kcli.git
 RUN yum -y remove gcc git epel-release python-pip && yum clean all
 ADD klist.py /usr/bin
 RUN chmod o+x /usr/bin/klist.py

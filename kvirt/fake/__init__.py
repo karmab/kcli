@@ -219,10 +219,8 @@ class Kfake(object):
         print("not implemented")
         return
 
-# should return (user, ip)
     def _ssh_credentials(self, name):
-        print("not implemented")
-        return
+        return 'root', '127.0.0.1'
 
 # should leverage if possible
 # should return a sshcommand string
