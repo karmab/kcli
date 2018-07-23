@@ -151,6 +151,7 @@ class Kopenstack(object):
             sleep(5)
             timeout += 5
             if timeout >= 15:
+                common.pprint("Time out waiting for vm to get an ip", color='red')
                 break
             vm = nova.servers.get(instance.id)
             for key in list(vm.addresses):
@@ -459,6 +460,11 @@ class Kopenstack(object):
 
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None,
                        plan='kvirt', pxe=None, vlan=None):
+        if nat:
+            externalnets = [n for n in self.neutron.list_networks()['networks'] if n['router:external']]
+            externalnet_id = externalnets[0]['id'] if externalnets else None
+            routers = [router for router in self.neutron.list_routers()['routers'] if router['name'] == 'kvirt']
+            router_id = routers[0]['id'] if routers else None
         try:
             IpRange(cidr)
         except TypeError:
@@ -470,6 +476,9 @@ class Kopenstack(object):
             network = {'name': name, 'admin_state_up': True}
             network = neutron.create_network({'network': network})
             network_id = network['network']['id']
+            tenant_id = network['network']['tenant_id']
+        else:
+            common.pprint("Network already there. Creating subnet", color='blue')
         if cidr is not None:
             if network_id is None:
                 network_id = networks[name]
@@ -477,33 +486,63 @@ class Kopenstack(object):
             if cidr not in cidrs:
                 subnet = {'name': cidr, 'network_id': network_id, 'ip_version': 4, "cidr": cidr, 'enable_dhcp': dhcp}
                 subnet = neutron.create_subnet({'subnet': subnet})
-        # router = {'name':novarouter, 'tenant_id': tenantid}
-        # router['external_gateway_info']= {"network_id": externalnet['id'], "enable_snat": True}
-        # router = neutron.create_router({'router':router})
-        # routerid = router['router']['id']
-        # neutron.add_interface_router(routerid,{'subnet_id':subnetid } )
+                subnet_id = subnet['subnet']['id']
+                tenant_id = subnet['subnet']['tenant_id']
+            else:
+                common.pprint("Subnet already there. Leaving", color='blue')
+                return {'result': 'success'}
+        if nat:
+            if externalnet_id is not None:
+                if router_id is None:
+                    router = {'name': 'kvirt', 'tenant_id': tenant_id}
+                    router['external_gateway_info'] = {"network_id": externalnet_id, "enable_snat": True}
+                    router = neutron.create_router({'router': router})
+                    router_id = router['router']['id']
+                neutron.add_interface_router(router_id, {'subnet_id': subnet_id})
         return {'result': 'success'}
 
     def delete_network(self, name=None, cidr=None):
         neutron = self.neutron
+        routers = [router for router in self.neutron.list_routers()['routers'] if router['name'] == 'kvirt']
+        router_id = routers[0]['id'] if routers else None
         networks = neutron.list_networks(name=name)
-        # routerid  = router['id']
         # if router['external_gateway_info']:
-        #    neutron.remove_gateway_router(routerid)
-        # ports = [ p for p in neutron.list_ports()['ports'] if p['device_id'] == routerid ]
-        # for port in ports:
-        #     portid = port['id']
-        #    neutron.remove_interface_router(routerid, {'port_id':portid})
-        # neutron.delete_router(routerid)
-        if networks:
-            network_id = networks['networks'][0]['id']
+        #    neutron.remove_gateway_router(router_id)
+        # neutron.delete_router(router_id)
+        if not networks:
+            return {'result': 'failure', 'reason': 'Network %s not found' % name}
+        network_id = networks['networks'][0]['id']
         if cidr is None:
+            ports = [p for p in neutron.list_ports()['ports']
+                     if p['device_owner'] != 'network:router_interface' and network_id == network_id]
+            if ports:
+                return {'result': 'failure', 'reason': 'Non router ports still present in this network'}
+            if router_id is not None:
+                floating_ips = [f['id'] for f in neutron.list_floatingips()['floatingips']
+                                if f['router_id'] == router_id]
+                if floating_ips:
+                    return {'result': 'failure', 'reason': 'Floating ips still in use through router on this network'}
+                ports = [p for p in neutron.list_ports()['ports']
+                         if p['device_id'] == router_id and network_id == network_id]
+                for port in ports:
+                    neutron.remove_interface_router(router_id, {'port_id': port['id']})
             neutron.delete_network(network_id)
         else:
             subnets = [s['id'] for s in neutron.list_subnets()['subnets']
                        if s['network_id'] == network_id and s['cidr'] == cidr]
             if subnets:
-                neutron.delete_subnet(subnets[0])
+                subnet_id = subnets[0]
+                if router_id is not None:
+                    floating_ips = [f['id'] for f in neutron.list_floatingips()['floatingips']
+                                    if f['router_id'] == router_id]
+                    if floating_ips:
+                        return {'result': 'failure',
+                                'reason': 'Floating ips still in use through router on this network'}
+                    ports = [p for p in neutron.list_ports()['ports'] if p['device_id'] == router_id]
+                    for port in ports:
+                        if 'fixed_ips' in port and subnet_id in port['fixed_ips'][0].values():
+                            neutron.remove_interface_router(router_id, {'port_id': port['id']})
+                neutron.delete_subnet(subnet_id)
         return {'result': 'success'}
 
 # should return a dict of pool strings
@@ -516,11 +555,18 @@ class Kopenstack(object):
         neutron = self.neutron
         for subnet in neutron.list_subnets()['subnets']:
             networkname = subnet['name']
+            subnet_id = subnet['id']
             cidr = subnet['cidr']
             dhcp = subnet['enable_dhcp']
-            networkid = subnet['network_id']
-            domainname = neutron.show_network(networkid)['network']['name']
-            mode = ''
+            network_id = subnet['network_id']
+            domainname = neutron.show_network(network_id)['network']['name']
+            mode = 'isolated'
+            ports = [p for p in neutron.list_ports()['ports']
+                     if p['device_owner'] != 'network:router_interface' and network_id == network_id]
+            for port in ports:
+                if 'fixed_ips' in port and subnet_id in port['fixed_ips'][0].values():
+                    mode = 'nat'
+                    break
             networks[networkname] = {'cidr': cidr, 'dhcp': dhcp, 'domain': domainname, 'type': 'routed', 'mode': mode}
         return networks
 
