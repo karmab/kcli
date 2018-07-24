@@ -505,10 +505,9 @@ class Kopenstack(object):
         neutron = self.neutron
         routers = [router for router in self.neutron.list_routers()['routers'] if router['name'] == 'kvirt']
         router_id = routers[0]['id'] if routers else None
+        if router_id is not None:
+            router = routers[0]
         networks = neutron.list_networks(name=name)
-        # if router['external_gateway_info']:
-        #    neutron.remove_gateway_router(router_id)
-        # neutron.delete_router(router_id)
         if not networks:
             return {'result': 'failure', 'reason': 'Network %s not found' % name}
         network_id = networks['networks'][0]['id']
@@ -524,8 +523,10 @@ class Kopenstack(object):
                     return {'result': 'failure', 'reason': 'Floating ips still in use through router on this network'}
                 ports = [p for p in neutron.list_ports()['ports']
                          if p['device_id'] == router_id and network_id == network_id]
+                routerports = len(ports)
                 for port in ports:
                     neutron.remove_interface_router(router_id, {'port_id': port['id']})
+                    routerports -= 1
             neutron.delete_network(network_id)
         else:
             subnets = [s['id'] for s in neutron.list_subnets()['subnets']
@@ -539,10 +540,17 @@ class Kopenstack(object):
                         return {'result': 'failure',
                                 'reason': 'Floating ips still in use through router on this network'}
                     ports = [p for p in neutron.list_ports()['ports'] if p['device_id'] == router_id]
+                    routerports = len(ports)
                     for port in ports:
                         if 'fixed_ips' in port and subnet_id in port['fixed_ips'][0].values():
                             neutron.remove_interface_router(router_id, {'port_id': port['id']})
+                            routerports -= 1
                 neutron.delete_subnet(subnet_id)
+        if routerports == 0:
+            if router['external_gateway_info']:
+                neutron.remove_gateway_router(router_id)
+            common.pprint("Removing unused router kvirt", color="green")
+            neutron.delete_router(router_id)
         return {'result': 'success'}
 
 # should return a dict of pool strings
@@ -559,10 +567,12 @@ class Kopenstack(object):
             cidr = subnet['cidr']
             dhcp = subnet['enable_dhcp']
             network_id = subnet['network_id']
+            network = neutron.show_network(network_id)
+            mode = 'external' if network['network']['router:external'] else 'isolated'
+            # networks = [n for n in neutron.list_networks()['networks'] if n['router:external']]
             domainname = neutron.show_network(network_id)['network']['name']
-            mode = 'isolated'
             ports = [p for p in neutron.list_ports()['ports']
-                     if p['device_owner'] != 'network:router_interface' and network_id == network_id]
+                     if p['device_owner'] == 'network:router_interface' and network_id == network_id]
             for port in ports:
                 if 'fixed_ips' in port and subnet_id in port['fixed_ips'][0].values():
                     mode = 'nat'
