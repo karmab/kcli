@@ -128,6 +128,21 @@
 
 - name: kubernetes
   group: kubernetes
+  url: github.com/karmab/kcli/plans/kubernetes/single
+  file: kcli_plan.yml
+  description: Latest kubernetes with single node
+  numvms: 1
+  template: CentOS-7-x86_64-GenericCloud.qcow2
+  comments: you can set version to 1.10.5 or 1.11.1
+  parameters:
+   domain: karmalabs.com
+   template: CentOS-7-x86_64-GenericCloud.qcow2
+   sdn: flannel
+   nfs: false
+   version: 1.10.5
+
+- name: kubernetes
+  group: kubernetes
   url: github.com/karmab/kcli/plans/kubernetes
   file: kubernetes.yml
   description: Latest kubernetes with single master and multiple nodes
