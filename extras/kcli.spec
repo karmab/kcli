@@ -5,10 +5,10 @@
 #
 
 Name:           kcli
-Version:        12.2
-Release:        0
+Version:        12.6
+Release:        1
 Url:            http://github.com/karmab/kcli
-Summary:        Libvirt/VirtualBox wrapper on steroids
+Summary:        Wapper for libvirt,gcp,aws,ovirt and openstack
 License:        ASL 2.0
 Group:          Development/Languages/Python
 Source:         https://files.pythonhosted.org/packages/source/k/kcli/kcli-%{version}.tar.gz
