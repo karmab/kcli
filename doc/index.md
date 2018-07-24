@@ -205,7 +205,7 @@ gcp1:
 
 The following parameters are specific to gcp:
 
-- user
+- user this is the user that will be used to access yours vms through ssh
 - credentials (pointing to a json service account file). if not specified, the environment variable *GOOGLE_APPLICATION_CREDENTIALS* will be used
 - project 
 - zone
