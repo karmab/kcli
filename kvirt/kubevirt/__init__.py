@@ -109,6 +109,8 @@ class Kubevirt(object):
                 common.pprint("Using registry disk %s as template" % template)
             elif template not in REGISTRYDISKS:
                 return {'result': 'failure', 'reason': "you don't have template %s" % template}
+            if template == 'kubevirt/fedora-cloud-registry-disk-demo' and memory <= 512:
+                memory = 1024
         default_disksize = disksize
         default_diskinterface = diskinterface
         default_pool = pool
