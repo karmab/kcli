@@ -15,18 +15,6 @@ from subprocess import call
 from time import sleep
 
 
-# general notes
-# most functions should either return
-# return {'result': 'success'}
-# or
-# return {'result': 'failure', 'reason': reason}
-# for instance
-# return {'result': 'failure', 'reason': "VM %s not found" % name}
-
-
-# your base class __init__ needs to define conn attribute and set it to None
-# when backend cannot be reached
-# it should also set debug from the debug variable passed in kcli client
 class KOvirt(object):
     def __init__(self, host='127.0.0.1', port=22, user='admin@internal',
                  password=None, insecure=True, ca_file=None, org=None, debug=False,
@@ -52,7 +40,6 @@ class KOvirt(object):
         self.ssh_user = ssh_user
         self.imagerepository = imagerepository
 
-# should cleanly close your connection, if needed
     def close(self):
         self.api.disconnect()
         return
@@ -264,7 +251,6 @@ class KOvirt(object):
         print("not implemented")
         return
 
-# should return a sorted list of name, state, ip, source, plan, profile, report
     def list(self):
         vms = []
         conn = self.conn
@@ -464,7 +450,6 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
         print("not implemented")
         return None
 
-# should return a list of available templates, or isos ( if iso is set to True
     def volumes(self, iso=False):
         if iso:
             return []

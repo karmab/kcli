@@ -909,3 +909,15 @@ parameters:
    baseplan: upstream.yml
    xx_version: v0.7.0
 ```
+
+# Api Usage
+
+You can also use kvirt library directly, without the client or to embed it into your own application. Here's a sample
+
+```
+from kvirt.config import Kconfig
+config = Kconfig()
+k = config.k
+```
+
+You can then either use config for high level actions or the more low level k object
