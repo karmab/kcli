@@ -279,7 +279,7 @@ Also, note that the kubevirt plugin uses *offlinevirtualmachines* instead of vir
 ## Ovirt
 
 ```
-ovirt:
+myovirt:
  type: ovirt
  host: ovirt.default
  user: admin@internal
@@ -298,10 +298,28 @@ The following parameters are specific to ovirt:
 `wget http://$HOST/ovirt-engine/services/pki-resource?resource=ca-certificate&format=X509-PEM-CA`
 - imagerepository. A Glance image provider repository. Defaults to `ovirt-image-repository`. You can get default one created for you with kcli download
 
+## Openstack
+
+```
+myopenstack:
+ type: openstack
+ enabled: true
+ user: testk
+ password: testk
+ project: testk
+ domain: Default
+ auth_url: http://openstack:5000/v3
+```
+
+The following parameters are specific to openstack:
+
+- auth_url
+- project
+- domain
 
 ## Fake
 
-you can also use a fake provider to get a feel of how kcli works (or to generate the scripts for a platform yet not supported like Openstack)
+you can also use a fake provider to get a feel of how kcli works (or to generate the cloudinit scripts)
 
 ```
 fake:
