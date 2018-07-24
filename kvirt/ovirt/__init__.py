@@ -258,7 +258,6 @@ class KOvirt(object):
         for vm in vmslist:
             name = vm.name
             state = vm.status
-            ip = ''
             template = conn.follow_link(vm.template)
             source = template.name
             plan = ''
@@ -271,13 +270,14 @@ class KOvirt(object):
                     plan = tag.name.split('_')[1]
                 if tag.name.startswith('profile_'):
                     profile = tag.name.split('_')[1]
+            ips = []
             devices = self.vms_service.vm_service(vm.id).reported_devices_service().list()
             for device in devices:
                 if device.ips:
-                    for i in device.ips:
-                        if str(i.version) == 'v4' and i.address not in ['172.17.0.1', '127.0.0.1']:
-                            ip = i.address
-                            break
+                    for ip in device.ips:
+                        if str(ip.version) == 'v4' and ip.address not in ['172.17.0.1', '127.0.0.1']:
+                            ips.append(ip.address)
+            ip = ips[-1] if ips else ''
             vms.append([name, state, ip, source, plan, profile, report])
         return vms
 
@@ -416,15 +416,17 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
         yamlinfo['cpus'] = cores
         yamlinfo['creationdate'] = vm._creation_time.strftime("%d-%m-%Y %H:%M")
         devices = self.vms_service.vm_service(vm.id).reported_devices_service().list()
+        ips = []
         for device in devices:
             if device.ips:
                 for ip in device.ips:
                     if str(ip.version) == 'v4' and ip.address not in ['172.17.0.1', '127.0.0.1']:
-                        yamlinfo['ip'] = ip.address
-                        break
+                        ips.append(ip.address)
         nics = self.vms_service.vm_service(vm.id).nics_service().list()
         profiles_service = self.conn.system_service().vnic_profiles_service()
         netprofiles = {}
+        if ips:
+            yamlinfo['ip'] = ips[-1]
         for profile in profiles_service.list():
                 netprofiles[profile.id] = profile.name
         for nic in nics:
@@ -578,14 +580,16 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
             common.pprint("VM %s not found" % name, color='red')
             return 'root', None
         vm = vmsearch[0]
+        ips = []
         devices = self.vms_service.vm_service(vm.id).reported_devices_service().list()
         for device in devices:
             if device.ips:
                 for i in device.ips:
-                    ip = i.address
-                    break
-        if ip == '':
+                    ips.append(i.address)
+        if not ips:
             common.print("No ip found. Cannot ssh...", color='red')
+        else:
+            ip = ips[-1]
         return user, ip
 
     def ssh(self, name, user=None, local=None, remote=None, tunnel=False,
