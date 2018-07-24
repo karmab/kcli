@@ -274,9 +274,10 @@ class KOvirt(object):
             devices = self.vms_service.vm_service(vm.id).reported_devices_service().list()
             for device in devices:
                 if device.ips:
-                    for ip in device.ips:
-                        ip = ip.address
-                        break
+                    for i in device.ips:
+                        if str(i.version) == 'v4' and i.address not in ['172.17.0.1', '127.0.0.1']:
+                            ip = i.address
+                            break
             vms.append([name, state, ip, source, plan, profile, report])
         return vms
 
@@ -418,8 +419,9 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
         for device in devices:
             if device.ips:
                 for ip in device.ips:
-                    yamlinfo['ip'] = ip.address
-                    break
+                    if str(ip.version) == 'v4' and ip.address not in ['172.17.0.1', '127.0.0.1']:
+                        yamlinfo['ip'] = ip.address
+                        break
         nics = self.vms_service.vm_service(vm.id).nics_service().list()
         profiles_service = self.conn.system_service().vnic_profiles_service()
         netprofiles = {}
