@@ -19,10 +19,6 @@ kubernetes:
  files:
   - path: /etc/yum.repos.d/kubernetes.repo
     origin: kubernetes.repo
-  - path: /root/kube-flannel.yml
-    origin: kube-flannel.yml
-  - path: /root/kube-flannel-rbac.yml
-    origin: kube-flannel-rbac.yml
 [% if nfs %]
   - path: /root/nfs.yml
     origin: nfs.yml
