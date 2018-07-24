@@ -45,7 +45,6 @@ class Kbox(Kbase):
         self.conn = None
 
     def guestinstall(self, template):
-        ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety']
         template = template.lower()
         version = self.conn.version
         commands = ['curl -O http://download.virtualbox.org/virtualbox/%s/VBoxGuestAdditions_%s.iso' % (version,
@@ -53,7 +52,7 @@ class Kbox(Kbase):
         commands.append('mount -o loop VBoxGuestAdditions_5.1.14.iso /mnt')
         if 'centos' in template or 'rhel' in template or 'fedora' in template:
             commands.append('yum -y install gcc make kernel-devel-`uname -r`')
-        elif 'debian' in template or [x for x in ubuntus if x in template]:
+        elif 'debian' in template or [x for x in common.ubuntus if x in template]:
             commands.append('apt-get install build-essential linux-headers-`uname -r`')
         else:
             return []
@@ -841,7 +840,6 @@ class Kbox(Kbase):
         return {'result': 'success'}
 
     def _ssh_credentials(self, name):
-        ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety']
         user = 'root'
         conn = self.conn
         try:
@@ -859,7 +857,7 @@ class Kbox(Kbase):
                 user = 'centos'
             elif 'cirros' in template.lower():
                 user = 'cirros'
-            elif [x for x in ubuntus if x in template.lower()]:
+            elif [x for x in common.ubuntus if x in template.lower()]:
                 user = 'ubuntu'
             elif 'fedora' in template.lower():
                 user = 'fedora'

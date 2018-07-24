@@ -133,7 +133,7 @@
   description: Latest kubernetes with single node
   numvms: 1
   template: CentOS-7-x86_64-GenericCloud.qcow2
-  comments: you can set version to 1.10.5 or 1.11.1
+  comments: you can set version to 1.10.5 or 1.11.1 and template to CentOS-7-x86_64-GenericCloud.qcow2 or ubuntu ones
   parameters:
    domain: karmalabs.com
    template: CentOS-7-x86_64-GenericCloud.qcow2

@@ -11,6 +11,7 @@ import os
 import yaml
 
 binary_types = ['bz2', 'deb', 'jpg', 'gz', 'jpeg', 'iso', 'png', 'rpm', 'tgz', 'zip']
+ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety', 'zesty', 'artful', 'bionic', 'cosmic']
 
 
 def symlinks(user, repo):
@@ -505,7 +506,6 @@ def scp(name, ip='', host=None, port=22, hostuser=None, user=None, source=None, 
 
 
 def get_user(template):
-    ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety']
     if 'centos' in template.lower():
         user = 'centos'
     elif 'cirros' in template.lower():

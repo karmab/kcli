@@ -30,6 +30,10 @@ kubernetes:
     origin: nfs.sh
 [% endif %]
  scripts: 
+[% if 'xenial' in template or 'yaketty' in template or 'zesty' in template or 'artful' in template or 'bionic' in template or 'cosmic' in template %]
   - pre.sh
+[% else %]
+  - pre_ubuntu.sh
+[% endif %]
   - master.sh
   - dashboard.sh

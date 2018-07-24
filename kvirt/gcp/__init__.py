@@ -664,7 +664,6 @@ class Kgcp(object):
             return None
 
     def __evaluate_template(self, template):
-        ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety']
         template = template.lower()
         if 'centos-7' in template:
             return 'centos-7'
@@ -672,7 +671,7 @@ class Kgcp(object):
             return 'debian-8'
         elif 'rhel-guest-image-7' in template or 'rhel-server-7' in template:
             return 'rhel-7'
-        elif [x for x in ubuntus if x in template]:
+        elif [x for x in common.ubuntus if x in template]:
             return 'ubuntu-1804-lts'
         else:
             return template

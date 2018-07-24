@@ -182,8 +182,7 @@ class KOvirt(object):
                 cmds.append('apt-get -Y install ovirt-guest-agent')
                 cmds.append('service ovirt-guest-agent enable')
                 cmds.append('service ovirt-guest-agent start')
-            ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety']
-            if [x for x in ubuntus if x in template.lower()]:
+            if [x for x in common.ubuntus if x in template.lower()]:
                 cmds.append('echo deb http://download.opensuse.org/repositories/home:/evilissimo:/ubuntu:/16.04/'
                             'xUbuntu_16.04/ /')
                 cmds.append('wget http://download.opensuse.org/repositories/home:/evilissimo:/ubuntu:/16.04/'

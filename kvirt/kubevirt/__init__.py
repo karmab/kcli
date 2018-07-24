@@ -697,7 +697,6 @@ class Kubevirt(object):
         metadata = vm.get("metadata")
         annotations = metadata.get("annotations")
         template = annotations.get('kcli/template') if annotations is not None else None
-        ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety']
         user = 'root'
         ip = self.ip(name)
         if template is not None:
@@ -705,7 +704,7 @@ class Kubevirt(object):
                 user = 'centos'
             elif 'cirros' in template.lower():
                 user = 'cirros'
-            elif [x for x in ubuntus if x in template.lower()]:
+            elif [x for x in common.ubuntus if x in template.lower()]:
                 user = 'ubuntu'
             elif 'fedora' in template.lower():
                 user = 'fedora'
