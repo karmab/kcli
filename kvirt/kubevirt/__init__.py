@@ -95,12 +95,12 @@ class Kubevirt(object):
         print("not implemented")
         return
 
-    def create(self, name, virttype='kvm', profile='', plan='kvirt', cpumodel='q35', cpuflags=[], numcpus=2, memory=512,
-               guestid='guestrhel764', pool=None, template=None, disks=[{'size': 10}], disksize=10, diskthin=True,
-               diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False,
-               reservedns=False, reservehost=False, start=True, keys=None, cmds=[], ips=None, netmasks=None,
-               gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[], enableroot=True, alias=[],
-               overrides={}, tags=None):
+    def create(self, name, virttype='kvm', profile='', plan='kvirt', cpumodel='host-model', cpuflags=[], numcpus=2,
+               memory=512, guestid='guestrhel764', pool=None, template=None, disks=[{'size': 10}], disksize=10,
+               diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True,
+               reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[], ips=None,
+               netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[], enableroot=True,
+               alias=[], overrides={}, tags=None):
         if self.exists(name):
             return {'result': 'failure', 'reason': "VM %s already exists" % name}
         if template is not None and template not in self.volumes():
@@ -124,6 +124,7 @@ class Kubevirt(object):
                                                  {'metadata': {'labels': {'kubevirt.io/provider': 'kcli'}},
                                                   'spec': {'domain': {'resources':
                                                                       {'requests': {'memory': '%sM' % memory}},
+                                                                      # 'cpu': {'cores': numcpus, 'model': cpumodel},
                                                                       'cpu': {'cores': numcpus},
                                                                       'devices': {'disks': []}}, 'volumes': []}}},
               'apiVersion': 'kubevirt.io/%s' % VERSION, 'metadata': {'name': name, 'namespace': namespace,
@@ -149,6 +150,28 @@ class Kubevirt(object):
             vm['spec']['template']['spec']['domain']['features'] = features
         if tags is not None and isinstance(tags, dict):
             vm['spec']['template']['spec']['nodeSelector'] = tags
+        interfaces = []
+        networks = []
+        for index, net in enumerate(nets):
+            newif = {'bridge': {}}
+            newnet = {'pod': {}}
+            if isinstance(net, str):
+                newif['name'] = net
+                newnet['name'] = net
+            elif isinstance(net, dict):
+                if 'noconf' in net and net['noconf']:
+                    vm['spec']['template']['spec']['domain']['devices']['autoattachPodInterface'] = False
+                    break
+                if 'name' in net:
+                    newif['name'] = net['name']
+                    newnet['name'] = net['name']
+                if 'mac' in net:
+                    newif['macAddress'] = net['mac']
+            interfaces.append(newif)
+            networks.append(newnet)
+        if interfaces and networks:
+            vm['spec']['template']['spec']['domain']['devices']['interfaces'] = interfaces
+            vm['spec']['template']['spec']['networks'] = networks
         pvcs = []
         sizes = []
         for index, disk in enumerate(disks):
