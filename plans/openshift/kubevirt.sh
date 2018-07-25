@@ -7,7 +7,7 @@ oc create configmap -n kube-system kubevirt-config --from-literal debug.allowEmu
 wget https://github.com/kubevirt/kubevirt/releases/download/$VERSION/kubevirt.yaml
 oc adm policy add-scc-to-user privileged -z kubevirt-privileged
 oc adm policy add-scc-to-user privileged -z kubevirt-controller
-oc create -f kubevirt.yaml
+oc create -f kubevirt.yaml --validate=false
 wget https://github.com/kubevirt/kubevirt/releases/download/$VERSION/virtctl-$VERSION-linux-amd64
 mv virtctl-$VERSION-linux-amd64 /usr/bin/virtctl
 chmod u+x /usr/bin/virtctl
