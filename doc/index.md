@@ -7,11 +7,14 @@
 
 This tool is meant to interact with a local/remote libvirt daemon and to easily deploy from templates (optionally using cloudinit).
 It will also report IPS for any vm connected to a dhcp-enabled libvirt network and generally for every vm deployed from this client.
+
 There is also support for
+
 - gcp 
 - aws 
 - kubevirt
 - ovirt
+- openstack
 
 # Installation
 
@@ -77,17 +80,17 @@ docker run --rm karmab/kcli
 the are several flags you'll want to pass depending on your use case 
 
 - `-v /var/run/libvirt:/var/run/libvirt` if running against a local hypervisor
+- `-v /var/lib/libvirt/images:/var/lib/libvirt/images` against a local hypervisor too and to be able to use kcli download
 - ` ~/.kcli:/root/.kcli` to use your kcli configuration (also profiles and repositories) stored locally
 - `-v ~/.ssh:/root/.ssh` to share your ssh keys
-- `-v $SSH_AUTH_SOCK:/ssh-agent --env SSH_AUTH_SOCK=/ssh-agent` alternative way to share your ssh keys, to avoid selinux denials
+- `-v $SSH_AUTH_SOCK:/ssh-agent --env SSH_AUTH_SOCK=/ssh-agent` alternative way to share your ssh keys
+- `--security-opt label:disable` if running with selinux
 
-As a bonus, you can alias kcli and run kcli as if it is installed locally instead a Docker container:
+As a bonus, you can alias kcli and run it as if it was installed locally:
 
 ```Shell
-alias kcli='docker run -it --rm -v ~/.kcli:/root/.kcli -v /var/run/libvirt:/var/run/libvirt -v $SSH_AUTH_SOCK:/ssh-agent --env SSH_AUTH_SOCK=/ssh-agent karmab/kcli'
+alias kcli='docker run -it --rm --security-opt label:disable -v ~/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt ~/.ssh:/root/.ssh karmab/kcli'
 ```
-
-Note that the container cant be used for virtualbox ( i tried hard but there's no way that will work...)
 
 For web access, you can switch with `--entrypoint=/usr/bin/kweb`
 
@@ -123,6 +126,12 @@ apt-get -y install python-pip pkg-config libvirt-dev genisoimage qemu-kvm netcat
 
 ```Shell
 pip install kcli
+```
+
+Or for a full install using latest
+
+```
+pip install -e git+https://github.com/karmab/kcli.git#egg=kcli[all]
 ```
 
 # Configuration
@@ -787,15 +796,6 @@ kcli product YOUR_PRODUCT
 ## Testing
 
 Basic testing can be run with pytest. If using a remote hypervisor, you ll want to set the *KVIRT_HOST* and *KVIRT_USER* environment variables so that it points to your host with the corresponding user.
-
-
-## about virtualbox support
-
-While the tool should pretty much work the same on this hypervisor, there are some issues:
-
-- it's impossible to connect using ip, so port forwarding is used instead
-- with NATnetworks ( not NAT!), guest addons are needed to gather ip of the vm so they are automatically installed for you. It implies an automatic reboot at the end of provisioning....
-- when you specify an unknown network, NAT is used instead. The reason behind is to be able to seamlessly use simple existing plans which make use of the default network ( as found on libvirt)
 
 ## Specific parameters for a hypervisor
 

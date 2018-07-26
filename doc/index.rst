@@ -6,8 +6,15 @@ About
 This tool is meant to interact with a local/remote libvirt daemon and to
 easily deploy from templates (optionally using cloudinit). It will also
 report IPS for any vm connected to a dhcp-enabled libvirt network and
-generally for every vm deployed from this client. There is also support
-for - gcp - aws - kubevirt - ovirt
+generally for every vm deployed from this client.
+
+There is also support for
+
+-  gcp
+-  aws
+-  kubevirt
+-  ovirt
+-  openstack
 
 Installation
 ============
@@ -87,17 +94,15 @@ the are several flags you’ll want to pass depending on your use case
    and repositories) stored locally
 -  ``-v ~/.ssh:/root/.ssh`` to share your ssh keys
 -  ``-v $SSH_AUTH_SOCK:/ssh-agent --env SSH_AUTH_SOCK=/ssh-agent``
-   alternative way to share your ssh keys, to avoid selinux denials
+   alternative way to share your ssh keys
+-  ``--security-opt label:disable`` if running with selinux
 
-As a bonus, you can alias kcli and run kcli as if it is installed
-locally instead a Docker container:
+As a bonus, you can alias kcli and run it as if it was installed
+locally:
 
 .. code:: shell
 
-    alias kcli='docker run -it --rm -v ~/.kcli:/root/.kcli -v /var/run/libvirt:/var/run/libvirt -v $SSH_AUTH_SOCK:/ssh-agent --env SSH_AUTH_SOCK=/ssh-agent karmab/kcli'
-
-Note that the container cant be used for virtualbox ( i tried hard but
-there’s no way that will work…)
+    alias kcli='docker run -it --rm --security-opt label:disable -v ~/.kcli:/root/.kcli -v /var/run/libvirt:/var/run/libvirt ~/.ssh:/root/.ssh karmab/kcli'
 
 For web access, you can switch with ``--entrypoint=/usr/bin/kweb``
 
@@ -107,8 +112,9 @@ Dev installation from pip
 Centos installation
 ~~~~~~~~~~~~~~~~~~~
 
-Use the provided `script <extras/centos.sh>`__ which will install a
-dedicated python3 env
+Use the provided
+`script <https://github.com/karmab/kcli/blob/master/extras/centos.sh>`__
+which will install a dedicated python3 env
 
 Generic plafrom
 ~~~~~~~~~~~~~~~
@@ -139,6 +145,12 @@ If using a Debian based distribution:
 .. code:: shell
 
     pip install kcli
+
+Or for a full install using latest
+
+::
+
+    pip install -e git+https://github.com/karmab/kcli.git#egg=kcli[all]
 
 Configuration
 =============
@@ -230,7 +242,8 @@ Gcp
 
 The following parameters are specific to gcp:
 
--  user
+-  user this is the user that will be used to access yours vms through
+   ssh
 -  credentials (pointing to a json service account file). if not
    specified, the environment variable *GOOGLE_APPLICATION_CREDENTIALS*
    will be used
@@ -327,7 +340,7 @@ Ovirt
 
 ::
 
-    ovirt:
+    myovirt:
      type: ovirt
      host: ovirt.default
      user: admin@internal
@@ -348,11 +361,31 @@ The following parameters are specific to ovirt:
    ``ovirt-image-repository``. You can get default one created for you
    with kcli download
 
+Openstack
+---------
+
+::
+
+    myopenstack:
+     type: openstack
+     enabled: true
+     user: testk
+     password: testk
+     project: testk
+     domain: Default
+     auth_url: http://openstack:5000/v3
+
+The following parameters are specific to openstack:
+
+-  auth_url
+-  project
+-  domain
+
 Fake
 ----
 
 you can also use a fake provider to get a feel of how kcli works (or to
-generate the scripts for a platform yet not supported like Openstack)
+generate the cloudinit scripts)
 
 ::
 
@@ -967,21 +1000,6 @@ Basic testing can be run with pytest. If using a remote hypervisor, you
 ll want to set the *KVIRT_HOST* and *KVIRT_USER* environment variables
 so that it points to your host with the corresponding user.
 
-about virtualbox support
-------------------------
-
-While the tool should pretty much work the same on this hypervisor,
-there are some issues:
-
--  it’s impossible to connect using ip, so port forwarding is used
-   instead
--  with NATnetworks ( not NAT!), guest addons are needed to gather ip of
-   the vm so they are automatically installed for you. It implies an
-   automatic reboot at the end of provisioning….
--  when you specify an unknown network, NAT is used instead. The reason
-   behind is to be able to seamlessly use simple existing plans which
-   make use of the default network ( as found on libvirt)
-
 Specific parameters for a hypervisor
 ------------------------------------
 
@@ -1135,6 +1153,21 @@ current one
     parameters:
        baseplan: upstream.yml
        xx_version: v0.7.0
+
+Api Usage
+=========
+
+You can also use kvirt library directly, without the client or to embed
+it into your own application. Here’s a sample
+
+::
+
+    from kvirt.config import Kconfig
+    config = Kconfig()
+    k = config.k
+
+You can then either use config for high level actions or the more low
+level k object
 
 .. |Build Status| image:: https://travis-ci.org/karmab/kcli.svg?branch=master
    :target: https://travis-ci.org/karmab/kcli
