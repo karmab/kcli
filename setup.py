@@ -26,18 +26,21 @@ setup(
         'jinja2',
         'flask',
         'libvirt-python>=2.0.0',
-        'docker>=2.0',
-        'kubernetes',
-        'boto3',
-        'google-api-python-client',
-        'google-auth-httplib2',
-        'google-cloud-dns',
-        'ovirt-engine-sdk-python',
-        'python-neutronclient',
-        'python-glanceclient',
-        'python-keystoneclient',
-        'python-novaclient',
     ],
+    extras_require={
+        'all': [
+            'docker>=2.0',
+            'kubernetes',
+            'boto3',
+            'google-api-python-client',
+            'google-auth-httplib2',
+            'google-cloud-dns',
+            'ovirt-engine-sdk-python',
+            'python-neutronclient',
+            'python-glanceclient',
+            'python-keystoneclient',
+            'python-novaclient',
+        ]},
     entry_points='''
         [console_scripts]
         kcli=kvirt.cli:cli

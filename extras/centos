@@ -18,7 +18,7 @@ RUN yum -y install epel-release https://centos7.iuscommunity.org/ius-release.rpm
 # Group the pip installation
 RUN pip3.6 install -U --no-cache-dir ipaddress
 RUN export PYCURL_SSL_LIBRARY=openssl
-RUN pip3.6 install --no-cache-dir git+https://github.com/karmab/kcli.git
+RUN pip3.6 install --no-cache-dir -e git+https://github.com/karmab/kcli.git#egg=kcli[all]
 RUN yum -y remove gcc git epel-release python-pip && yum clean all
 ADD klist.py /usr/bin
 RUN chmod o+x /usr/bin/klist.py

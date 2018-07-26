@@ -32,17 +32,7 @@ and generally for every vm deployed from this client.
 %setup -q -n kcli-%{version}
 
 %build
-sed -i.bak '/pyvbox/d' setup.py
-sed -i.bak '/docker/d' setup.py
 sed -i.bak '/libvirt/d' setup.py
-sed -i.bak '/kubernetes/d' setup.py
-sed -i.bak '/google/d' setup.py
-sed -i.bak '/boto3/d' setup.py
-sed -i.bak '/ovirt-engine-sdk-python/d' setup.py
-sed -i.bak '/python-keystoneclient/d' setup.py
-sed -i.bak '/python-neutronclient/d' setup.py
-sed -i.bak '/python-novaclient/d' setup.py
-sed -i.bak '/python-glanceclient/d' setup.py
 %{__python} setup.py build
 
 %install
