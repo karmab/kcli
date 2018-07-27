@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-interact with a local/remote libvirt daemon
+Virtualbox Provider Class
 """
 
 from distutils.spawn import find_executable

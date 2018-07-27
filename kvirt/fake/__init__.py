@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Fake class
+Fake Provider Class
 """
 from kvirt import common
 from kvirt.defaults import TEMPLATES

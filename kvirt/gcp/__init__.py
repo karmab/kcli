@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
- Interacts with google compute engine
+Gcp Provider Class
 """
 
 from jinja2 import Environment, FileSystemLoader

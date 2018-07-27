@@ -1,7 +1,7 @@
 #!/usr/bin/env python'
 # -*- coding: utf-8 -*-
 """
-Ovirt provider
+Ovirt Provider Class
 """
 
 from kvirt import common

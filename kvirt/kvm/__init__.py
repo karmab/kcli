@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-interact with a local/remote libvirt daemon
+Kvm Provider class
 """
 
 from distutils.spawn import find_executable

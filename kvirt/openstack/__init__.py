@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Base Kvirt serving as interface for the virtualisation providers
+Openstack Provider Class
 """
 
 from iptools import IpRange

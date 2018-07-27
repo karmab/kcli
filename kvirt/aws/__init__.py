@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
- Interacts with aws ec2
+Aws Provider Class
 """
 
 from kvirt import common
