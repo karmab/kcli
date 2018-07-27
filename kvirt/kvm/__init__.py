@@ -313,13 +313,16 @@ class Kvirt(Kbase):
                       <readonly/>
                     </disk>""" % iso
         if cloudinit:
-            cloudinitiso = "%s/%s.ISO" % (default_poolpath, name)
-            isoxml = """%s<disk type='file' device='cdrom'>
-                      <driver name='qemu' type='raw'/>
-                      <source file='%s'/>
-                      <target dev='hdd' bus='ide'/>
-                      <readonly/>
-                    </disk>""" % (isoxml, cloudinitiso)
+            if template.startswith('coreos'):
+                print("prout")
+            else:
+                cloudinitiso = "%s/%s.ISO" % (default_poolpath, name)
+                isoxml = """%s<disk type='file' device='cdrom'>
+                        <driver name='qemu' type='raw'/>
+                        <source file='%s'/>
+                        <target dev='hdd' bus='ide'/>
+                        <readonly/>
+                        </disk>""" % (isoxml, cloudinitiso)
         if tunnel:
             listen = '127.0.0.1'
         else:
@@ -416,9 +419,12 @@ class Kvirt(Kbase):
             for volxml in volsxml[pool]:
                 storagepool.createXML(volxml, 0)
         if cloudinit:
-            common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
-                             reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides)
-            self._uploadimage(name, pool=default_storagepool)
+            if template.startswith('coreos'):
+                print("prout")
+            else:
+                common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
+                                 reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides)
+                self._uploadimage(name, pool=default_storagepool)
         if reserveip:
             xml = vm.XMLDesc(0)
             vmxml = ET.fromstring(xml)
