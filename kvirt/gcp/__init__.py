@@ -297,7 +297,14 @@ class Kgcp(object):
             state = vm['status']
             ip = vm['networkInterfaces'][0]['accessConfigs'][0]['natIP'] if 'natIP'\
                 in vm['networkInterfaces'][0]['accessConfigs'][0] else ''
-            source = os.path.basename(vm['disks'][0]['licenses'][-1]) if 'licenses' in vm['disks'][0] else ''
+            source = os.path.basename(vm['disks'][0]['source'])
+            source = conn.disks().get(zone=zone, project=self.project, disk=source).execute()
+            if self.project in source['sourceImage']:
+                source = os.path.basename(source['sourceImage'])
+            elif 'licenses' in vm['disks'][0]:
+                source = os.path.basename(vm['disks'][0]['licenses'][-1])
+            else:
+                source = ''
             plan = ''
             profile = ''
             report = 'N/A'
@@ -344,7 +351,11 @@ class Kgcp(object):
         yamlinfo['autostart'] = vm['scheduling']['automaticRestart']
         if 'natIP'in vm['networkInterfaces'][0]['accessConfigs'][0]:
             yamlinfo['ip'] = vm['networkInterfaces'][0]['accessConfigs'][0]['natIP']
-        if 'licenses' in vm['disks'][0]:
+        source = os.path.basename(vm['disks'][0]['source'])
+        source = conn.disks().get(zone=zone, project=self.project, disk=source).execute()
+        if self.project in source['sourceImage']:
+            yamlinfo['template'] = os.path.basename(source['sourceImage'])
+        elif 'licenses' in vm['disks'][0]:
             yamlinfo['template'] = os.path.basename(vm['disks'][0]['licenses'][-1])
         yamlinfo['creationdate'] = dateparser.parse(vm['creationTimestamp']).strftime("%d-%m-%Y %H:%M")
         nets = []

@@ -295,6 +295,7 @@ class Kvirt(Kbase):
                     <kvirt:plan>%s</kvirt:plan>
                     </kvirt:info>
                     </metadata>""" % (metadata, plan)
+        qemuextraxml = ''
         isoxml = ''
         if iso is not None:
             try:
@@ -314,7 +315,9 @@ class Kvirt(Kbase):
                     </disk>""" % iso
         if cloudinit:
             if template.startswith('coreos'):
-                print("prout")
+                qemuextraxml = """<qemu:commandline>
+                                  <qemu:fw_cfg value='name=opt/com.coreos/config,file="/tmp/ignition"'/>
+                                  </qemu:commandline>"""
             else:
                 cloudinitiso = "%s/%s.ISO" % (default_poolpath, name)
                 isoxml = """%s<disk type='file' device='cdrom'>
@@ -406,8 +409,9 @@ class Kvirt(Kbase):
                     %s
                   </devices>
                     %s
+                    %s
                     </domain>""" % (virttype, name, metadata, memory, numcpus, machine, disksxml, netxml, isoxml,
-                                    displayxml, serialxml, cpuxml)
+                                    displayxml, serialxml, cpuxml, qemuextraxml)
         if self.debug:
             print(vmxml)
         conn.defineXML(vmxml)
