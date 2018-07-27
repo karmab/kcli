@@ -72,9 +72,9 @@ class KcliInventory(object):
                     hostvalues[name]['ansible_port'] = ip
                 else:
                     hostvalues[name]['ansible_host'] = ip
-            if template != '':
-                user = k._ssh_credentials(name)[0]
-                hostvalues[name]['ansible_user'] = user
+                if template != '':
+                    user = k._ssh_credentials(name)[0]
+                    hostvalues[name]['ansible_user'] = user
         return metadata
 
 
