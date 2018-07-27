@@ -9,7 +9,6 @@ import os
 import time
 from virtualbox import VirtualBox, library, Session
 from kvirt import common
-from kvirt.base import Kbase
 import string
 import yaml
 
@@ -33,7 +32,7 @@ guestwindows200864 = "Windows2008_64"
 status = {'PoweredOff': 'down', 'PoweredOn': 'up', 'FirstOnline': 'up', 'Aborted': 'down', 'Saved': 'down'}
 
 
-class Kbox(Kbase):
+class Kbox(object):
     def __init__(self):
         try:
             self.conn = VirtualBox()

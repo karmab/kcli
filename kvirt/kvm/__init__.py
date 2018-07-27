@@ -8,7 +8,6 @@ from distutils.spawn import find_executable
 from kvirt import defaults
 from iptools import IpRange
 from kvirt import common
-from kvirt.base import Kbase
 from netaddr import IPAddress, IPNetwork
 from libvirt import open as libvirtopen, registerErrorHandler
 import os
@@ -44,7 +43,7 @@ def libvirt_callback(ignore, err):
 registerErrorHandler(f=libvirt_callback, ctx=None)
 
 
-class Kvirt(Kbase):
+class Kvirt(object):
     def __init__(self, host='127.0.0.1', port=None, user='root',
                  protocol='ssh', url=None, debug=False):
         if url is None:
