@@ -1669,6 +1669,22 @@ class Kvirt(Kbase):
         code = os.system(downloadcmd)
         if code != 0:
             return {'result': 'failure', 'reason': "Unable to download indicated template"}
+        if shortimage.endswith('bz2'):
+            if self.host == 'localhost' or self.host == '127.0.0.1':
+                if find_executable('bunzip2') is not None:
+                    cmd = "bunzip2 %s/%s" % (poolpath, shortimage)
+                    os.system(cmd)
+            elif self.protocol == 'ssh':
+                cmd = 'ssh -p %s %s@%s "bunzip2 %s/%s"' % (self.port, self.user, self.host, poolpath, shortimage)
+                os.system(cmd)
+        if shortimage.endswith('gz'):
+            if self.host == 'localhost' or self.host == '127.0.0.1':
+                if find_executable('gunzip') is not None:
+                    cmd = "gunzip %s/%s" % (poolpath, shortimage)
+                    os.system(cmd)
+            elif self.protocol == 'ssh':
+                cmd = 'ssh -p %s %s@%s "bunzip2 %s/%s"' % (self.port, self.user, self.host, poolpath, shortimage)
+                os.system(cmd)
         if shortimage.endswith('xz'):
             if self.host == 'localhost' or self.host == '127.0.0.1':
                 if find_executable('unxz') is not None:
