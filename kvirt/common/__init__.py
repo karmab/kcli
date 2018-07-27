@@ -4,6 +4,7 @@ from jinja2 import Environment, FileSystemLoader
 from distutils.spawn import find_executable
 import errno
 import socket
+from urllib.parse import quote
 from urllib.request import urlopen
 import urllib.error
 import json
@@ -171,8 +172,8 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                                   % os.environ['HOME']) or os.path.exists("%s/.ssh/id_dsa.pub" % os.environ['HOME']):
             userdata.write("ssh_authorized_keys:\n")
         else:
-            print("neither id_rsa or id_dsa public keys found in your .ssh directory, you might have trouble "
-                  "accessing the vm")
+            pprint("neither id_rsa or id_dsa public keys found in your .ssh directory, you might have trouble "
+                   "accessing the vm", color='red')
         if keys:
             for key in list(set(keys)):
                 userdata.write("- %s\n" % key)
@@ -264,6 +265,47 @@ def process_files(files=[], overrides={}):
             content = content.split('\n')
         for line in content:
             data += "     %s\n" % line.rstrip()
+    return data
+
+
+def process_ignition_files(files=[], overrides={}):
+    data = []
+    for fil in files:
+        if not isinstance(fil, dict):
+            continue
+        origin = fil.get('origin')
+        content = fil.get('content')
+        path = fil.get('path')
+        # owner = fil.get('owner', 'root')
+        mode = int(fil.get('mode', '0600'))
+        permissions = fil.get('permissions', mode)
+        if origin is not None:
+            origin = os.path.expanduser(origin)
+            if not os.path.exists(origin):
+                print(("Skipping file %s as not found" % origin))
+                continue
+            binary = True if '.' in origin and origin.split('.')[-1].lower() in binary_types else False
+            if binary:
+                with open(origin, "rb") as f:
+                    content = f.read().encode("base64")
+            elif overrides:
+                basedir = os.path.dirname(origin) if os.path.dirname(origin) != '' else '.'
+                env = Environment(block_start_string='[%', block_end_string='%]',
+                                  variable_start_string='[[', variable_end_string=']]',
+                                  loader=FileSystemLoader(basedir))
+                templ = env.get_template(os.path.basename(origin))
+                fileentries = templ.render(overrides)
+                # content = [line.rstrip() for line in fileentries.split('\n') if line.rstrip() != '']
+                content = [line.rstrip() for line in fileentries.split('\n')]
+            else:
+                content = open(origin, 'r').readlines()
+        elif content is None:
+            continue
+        if not isinstance(content, str):
+            content = '\n'.join(content)
+        content = quote(content)
+        data.append({'filesystem': 'root', 'path': path, 'mode': permissions,
+                     "contents": {"source": "data:,%s" % content, "verification": {}}})
     return data
 
 
@@ -508,6 +550,8 @@ def scp(name, ip='', host=None, port=22, hostuser=None, user=None, source=None, 
 def get_user(template):
     if 'centos' in template.lower():
         user = 'centos'
+    elif 'coreos' in template.lower():
+        user = 'core'
     elif 'cirros' in template.lower():
         user = 'cirros'
     elif [x for x in ubuntus if x in template.lower()]:
@@ -523,3 +567,35 @@ def get_user(template):
     else:
         user = 'root'
     return user
+
+
+def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[],
+             enableroot=True, overrides={}, iso=True, fqdn=False):
+    publickeys = []
+    if domain is not None:
+        localhostname = "%s.%s" % (name, domain)
+    else:
+        localhostname = name
+    if os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME']):
+        publickeyfile = "%s/.ssh/id_rsa.pub" % os.environ['HOME']
+    elif os.path.exists("%s/.ssh/id_dsa.pub" % os.environ['HOME']):
+        publickeyfile = "%s/.ssh/id_dsa.pub" % os.environ['HOME']
+    if publickeyfile is not None:
+        with open(publickeyfile, 'r') as ssh:
+            publickeys.append(ssh.read().rstrip())
+    if keys:
+        for key in list(set(keys)):
+            publickeys.append(key)
+    if not publickeys:
+        pprint("neither id_rsa or id_dsa public keys found in your .ssh directory, you might have trouble "
+               "accessing the vm", color='red')
+    storage = {"files": []}
+    storage["files"].append({"filesystem": "root", "path": "/etc/hostname",
+                             "contents": {"source": "data:,%s" % localhostname, "verification": {}}, "mode": 420})
+    if files:
+        filesdata = process_ignition_files(files=files, overrides=overrides)
+        if filesdata:
+            storage["files"].extend(filesdata)
+    data = {'ignition': {'version': '2.0.0', 'config': {}}, 'storage': storage, 'systemd': {}, 'networkd': {},
+            'passwd': {'users': [{'name': 'core', 'sshAuthorizedKeys': publickeys}]}}
+    return json.dumps(data)

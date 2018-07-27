@@ -7,6 +7,7 @@ Kvm Provider class
 from distutils.spawn import find_executable
 from kvirt import defaults
 from iptools import IpRange
+import json
 from kvirt import common
 from netaddr import IPAddress, IPNetwork
 from libvirt import open as libvirtopen, registerErrorHandler
@@ -106,6 +107,7 @@ class Kvirt(object):
                vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None,
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
                files=[], enableroot=True, overrides={}, tags=None):
+        namespace = ''
         if self.exists(name):
             return {'result': 'failure', 'reason': "VM %s already exists" % name}
         default_diskinterface = diskinterface
@@ -314,8 +316,23 @@ class Kvirt(object):
                     </disk>""" % iso
         if cloudinit:
             if template.startswith('coreos'):
+                namespace = "xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'"
+                ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
+                                               domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
+                                               overrides=overrides)
+                if self.host == 'localhost' or self.host == '127.0.0.1':
+                    with open('/tmp/ignition', 'w') as ignitionfile:
+                        json.dump(ignitiondata, ignitionfile)
+                elif self.protocol == 'ssh':
+                    ignitiondata = ignitiondata.replace('"', '\\"')
+                    ignitioncmd = 'ssh -p %s %s@%s "echo \'%s\' >/tmp/ignition"' % (self.port, self.user, self.host,
+                                                                                    ignitiondata)
+                    code = os.system(ignitioncmd)
+                    if code != 0:
+                        return {'result': 'failure', 'reason': "Unable to creation ignition data file in hypervisor"}
                 qemuextraxml = """<qemu:commandline>
-                                  <qemu:fw_cfg value='name=opt/com.coreos/config,file="/tmp/ignition"'/>
+                                  <qemu:arg value='-fw_cfg' />
+                                  <qemu:arg value='name=opt/com.coreos/config,file=/tmp/ignition' />
                                   </qemu:commandline>"""
             else:
                 cloudinitiso = "%s/%s.ISO" % (default_poolpath, name)
@@ -380,7 +397,7 @@ class Kvirt(object):
                      <protocol type="telnet"/>
                      <target port="0"/>
                      </serial>""" % common.get_free_port()
-        vmxml = """<domain type='%s'>
+        vmxml = """<domain type='%s' %s>
                   <name>%s</name>
                   %s
                   <memory unit='MiB'>%d</memory>
@@ -409,8 +426,8 @@ class Kvirt(object):
                   </devices>
                     %s
                     %s
-                    </domain>""" % (virttype, name, metadata, memory, numcpus, machine, disksxml, netxml, isoxml,
-                                    displayxml, serialxml, cpuxml, qemuextraxml)
+                    </domain>""" % (virttype, namespace, name, metadata, memory, numcpus, machine, disksxml, netxml,
+                                    isoxml, displayxml, serialxml, cpuxml, qemuextraxml)
         if self.debug:
             print(vmxml)
         conn.defineXML(vmxml)
@@ -422,9 +439,7 @@ class Kvirt(object):
             for volxml in volsxml[pool]:
                 storagepool.createXML(volxml, 0)
         if cloudinit:
-            if template.startswith('coreos'):
-                print("prout")
-            else:
+            if not template.startswith('coreos'):
                 common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
                                  reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides)
                 self._uploadimage(name, pool=default_storagepool)
@@ -851,7 +866,8 @@ class Kvirt(object):
     def volumes(self, iso=False):
         isos = []
         templates = []
-        default_templates = [os.path.basename(t) for t in list(defaults.TEMPLATES.values()) if t is not None]
+        default_templates = [os.path.basename(t).replace('.bz2', '') for t in list(defaults.TEMPLATES.values())
+                             if t is not None and 'product-software' not in t]
         conn = self.conn
         for storage in conn.listStoragePools():
             storage = conn.storagePoolLookupByName(storage)
