@@ -1,8 +1,9 @@
-#!/usr/bin/env python
+#!/usr/bin/env python''
 
 from jinja2 import Environment, FileSystemLoader
 from distutils.spawn import find_executable
 import errno
+from netaddr import IPAddress
 import socket
 from urllib.parse import quote
 from urllib.request import urlopen
@@ -277,7 +278,7 @@ def process_ignition_files(files=[], overrides={}):
         content = fil.get('content')
         path = fil.get('path')
         # owner = fil.get('owner', 'root')
-        mode = int(fil.get('mode', '0600'))
+        mode = int(fil.get('mode', '420'))
         permissions = fil.get('permissions', mode)
         if origin is not None:
             origin = os.path.expanduser(origin)
@@ -296,13 +297,13 @@ def process_ignition_files(files=[], overrides={}):
                 templ = env.get_template(os.path.basename(origin))
                 fileentries = templ.render(overrides)
                 # content = [line.rstrip() for line in fileentries.split('\n') if line.rstrip() != '']
-                content = [line.rstrip() for line in fileentries.split('\n')]
+                content = [line for line in fileentries.split('\n')]
             else:
                 content = open(origin, 'r').readlines()
         elif content is None:
             continue
         if not isinstance(content, str):
-            content = '\n'.join(content)
+            content = '\n'.join(content) + '\n'
         content = quote(content)
         data.append({'filesystem': 'root', 'path': path, 'mode': permissions,
                      "contents": {"source": "data:,%s" % content, "verification": {}}})
@@ -319,6 +320,24 @@ def process_cmds(cmds, overrides):
                                  variable_end_string=']]').from_string(cmd).render(overrides)
             data += "- %s\n" % newcmd
     return data
+
+
+def process_ignition_cmds(cmds, overrides):
+    path = '/root/first.sh'
+    permissions = 448
+    content = ''
+    for cmd in cmds:
+        newcmd = Environment(block_start_string='[%', block_end_string='%]', variable_start_string='[[',
+                             variable_end_string=']]').from_string(cmd).render(overrides)
+        content += "%s\n" % newcmd
+    if content == '':
+        return content
+    else:
+        # content = "#!/bin/bash\n%s" % content
+        content = quote(content)
+        data = {'filesystem': 'root', 'path': path, 'mode': permissions,
+                "contents": {"source": "data:,%s" % content, "verification": {}}}
+        return data
 
 
 def get_free_port():
@@ -571,6 +590,7 @@ def get_user(template):
 
 def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[],
              enableroot=True, overrides={}, iso=True, fqdn=False):
+    default_gateway = gateway
     publickeys = []
     if domain is not None:
         localhostname = "%s.%s" % (name, domain)
@@ -596,6 +616,60 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
         filesdata = process_ignition_files(files=files, overrides=overrides)
         if filesdata:
             storage["files"].extend(filesdata)
-    data = {'ignition': {'version': '2.0.0', 'config': {}}, 'storage': storage, 'systemd': {}, 'networkd': {},
-            'passwd': {'users': [{'name': 'core', 'sshAuthorizedKeys': publickeys}]}}
+    cmdunit = None
+    if cmds:
+        cmdsdata = process_ignition_cmds(cmds, overrides)
+        storage["files"].append(cmdsdata)
+        content = "[Unit]\nDescription=First Boot\n\n\n[Service]\nType=oneshot\nExecStart=/root/first.sh\n"
+        content += "[Install]\nWantedBy=multi-user.target\n"
+        cmdunit = {"contents": content, "name": "first-boot.service"}
+    if cmdunit is not None:
+        systemd = {"units": [cmdunit]}
+    else:
+        systemd = {}
+    networkunits = []
+    if nets:
+        for index, net in enumerate(nets):
+            netdata = ''
+            if isinstance(net, str):
+                if index == 0:
+                    continue
+                nicname = "eth%d" % index
+                ip = None
+                netmask = None
+                cidr = None
+                noconf = None
+                vips = []
+            elif isinstance(net, dict):
+                nicname = net.get('nic', "eth%d" % index)
+                ip = net.get('ip')
+                gateway = net.get('gateway')
+                netmask = next((e for e in [net.get('mask'), net.get('netmask')] if e is not None), None)
+                cidr = IPAddress(netmask).netmask_bits()
+                noconf = net.get('noconf')
+                vips = net.get('vips')
+            if noconf is not None:
+                netdata += "[Match]\nName=%s\n\n[Network]\nDHCP=no\n" % nicname
+            elif ip is not None and cidr is not None and not reserveip and gateway is not None:
+                netdata += "[Match]\nName=%s\n\n" % nicname
+                if index == 0 and default_gateway is not None:
+                    gateway = default_gateway
+                netdata += "[Network]\nAddress=%s/%s\nGateway=%s\n" % (ip, cidr, gateway)
+                dns = net.get('dns')
+                if dns is not None:
+                    netdata += "DNS=%s\n" % dns
+                # domain = net.get('domain')
+                # if domain is not None:
+                #    netdata += "  dns-search %s\n" % domain
+                if isinstance(vips, list) and vips:
+                    for vip in vips:
+                        netdata += "[Network]\nAddress=%s/%s\nGateway=%s\n" % (vip, netmask, gateway)
+            if netdata != '':
+                networkunits.append({"contents": netdata, "name": "static.network"})
+    if networkunits:
+        networkd = {"units": networkunits}
+    else:
+        networkd = {}
+    data = {'ignition': {'version': '2.0.0', 'config': {}}, 'storage': storage, 'systemd': systemd,
+            'networkd': networkd, 'passwd': {'users': [{'name': 'core', 'sshAuthorizedKeys': publickeys}]}}
     return json.dumps(data)
