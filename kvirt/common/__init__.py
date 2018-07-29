@@ -333,7 +333,7 @@ def process_ignition_cmds(cmds, overrides):
     if content == '':
         return content
     else:
-        # content = "#!/bin/bash\n%s" % content
+        content = "#!/bin/sh\n%s" % content
         content = quote(content)
         data = {'filesystem': 'root', 'path': path, 'mode': permissions,
                 "contents": {"source": "data:,%s" % content, "verification": {}}}
@@ -620,9 +620,8 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     if cmds:
         cmdsdata = process_ignition_cmds(cmds, overrides)
         storage["files"].append(cmdsdata)
-        content = "[Unit]\nDescription=First Boot\n\n\n[Service]\nType=oneshot\nExecStart=/root/first.sh\n"
-        content += "[Install]\nWantedBy=multi-user.target\n"
-        cmdunit = {"contents": content, "name": "first-boot.service"}
+        content = "[Service]\nType=oneshot\nExecStart=/root/first.sh\n[Install]\nWantedBy=multi-user.target\n"
+        cmdunit = {"contents": content, "name": "first-boot.service", "enabled": True}
     if cmdunit is not None:
         systemd = {"units": [cmdunit]}
     else:
@@ -645,12 +644,12 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
                 ip = net.get('ip')
                 gateway = net.get('gateway')
                 netmask = next((e for e in [net.get('mask'), net.get('netmask')] if e is not None), None)
-                cidr = IPAddress(netmask).netmask_bits()
                 noconf = net.get('noconf')
                 vips = net.get('vips')
             if noconf is not None:
                 netdata += "[Match]\nName=%s\n\n[Network]\nDHCP=no\n" % nicname
-            elif ip is not None and cidr is not None and not reserveip and gateway is not None:
+            elif ip is not None and netmask is not None and not reserveip and gateway is not None:
+                cidr = IPAddress(netmask).netmask_bits()
                 netdata += "[Match]\nName=%s\n\n" % nicname
                 if index == 0 and default_gateway is not None:
                     gateway = default_gateway
@@ -665,11 +664,12 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
                     for vip in vips:
                         netdata += "[Network]\nAddress=%s/%s\nGateway=%s\n" % (vip, netmask, gateway)
             if netdata != '':
-                networkunits.append({"contents": netdata, "name": "static.network"})
+                # networkunits.append({"contents": netdata, "name": "static.network"})
+                networkunits.append({"contents": netdata, "name": "%s.network" % nicname})
     if networkunits:
         networkd = {"units": networkunits}
     else:
         networkd = {}
-    data = {'ignition': {'version': '2.0.0', 'config': {}}, 'storage': storage, 'systemd': systemd,
+    data = {'ignition': {'version': '2.2.0', 'config': {}}, 'storage': storage, 'systemd': systemd,
             'networkd': networkd, 'passwd': {'users': [{'name': 'core', 'sshAuthorizedKeys': publickeys}]}}
     return json.dumps(data)
