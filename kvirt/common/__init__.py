@@ -589,7 +589,7 @@ def get_user(template):
 
 
 def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[],
-             enableroot=True, overrides={}, iso=True, fqdn=False):
+             enableroot=True, overrides={}, iso=True, fqdn=False, etcd=False, flannel=False):
     default_gateway = gateway
     publickeys = []
     if domain is not None:
@@ -672,4 +672,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
         networkd = {}
     data = {'ignition': {'version': '2.2.0', 'config': {}}, 'storage': storage, 'systemd': systemd,
             'networkd': networkd, 'passwd': {'users': [{'name': 'core', 'sshAuthorizedKeys': publickeys}]}}
+    if enableroot:
+        rootdata = {'name': 'root', 'sshAuthorizedKeys': publickeys}
+        data['passwd']['users'].append(rootdata)
     return json.dumps(data)
