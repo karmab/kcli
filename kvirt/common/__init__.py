@@ -277,8 +277,7 @@ def process_ignition_files(files=[], overrides={}):
         origin = fil.get('origin')
         content = fil.get('content')
         path = fil.get('path')
-        # owner = fil.get('owner', 'root')
-        mode = int(fil.get('mode', '420'))
+        mode = int(fil.get('mode', '644'), 8)
         permissions = fil.get('permissions', mode)
         if origin is not None:
             origin = os.path.expanduser(origin)
@@ -324,7 +323,7 @@ def process_cmds(cmds, overrides):
 
 def process_ignition_cmds(cmds, overrides):
     path = '/root/first.sh'
-    permissions = 448
+    permissions = '700'
     content = ''
     for cmd in cmds:
         newcmd = Environment(block_start_string='[%', block_end_string='%]', variable_start_string='[[',
@@ -335,7 +334,7 @@ def process_ignition_cmds(cmds, overrides):
     else:
         content = "#!/bin/sh\n%s" % content
         content = quote(content)
-        data = {'filesystem': 'root', 'path': path, 'mode': permissions,
+        data = {'filesystem': 'root', 'path': path, 'mode': int(permissions, 8),
                 "contents": {"source": "data:,%s" % content, "verification": {}}}
         return data
 
