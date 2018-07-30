@@ -588,7 +588,7 @@ def get_user(template):
 
 
 def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[],
-             enableroot=True, overrides={}, iso=True, fqdn=False, etcd=False, flannel=False):
+             enableroot=True, overrides={}, iso=True, fqdn=False, etcd=None, flannel=None):
     default_gateway = gateway
     publickeys = []
     if domain is not None:
@@ -674,4 +674,30 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     if enableroot:
         rootdata = {'name': 'root', 'sshAuthorizedKeys': publickeys}
         data['passwd']['users'].append(rootdata)
+    if etcd is not None:
+        metadataget = '#!/bin/sh\necho COREOS_CUSTOM_HOSTNAME=`hostname` > /run/metadata/coreos\n'
+        ipcommand = "ifconfig %s | grep \"inet \" | awk '{print $2}'" % etcd
+        metadataget += 'echo COREOS_CUSTOM_PRIVATE_IPV4=`%s` >> /run/metadata/coreos\n' % ipcommand
+        storage["files"].append({"filesystem": "root", "path": "/opt/get-metadata.sh",
+                                 "contents": {"source": "data:,%s" % quote(metadataget), "verification": {}},
+                                 "mode": int('700', 8)})
+        metacontent = "[Service]\nExecStart=\nExecStart=/opt/get-metadata.sh\n"
+        metadrop = {"dropins": [{"contents": metacontent, "name": "use-script.conf"}],
+                    "name": "coreos-metadata.service"}
+        etcdcontent = "[Unit]\nRequires=coreos-metadata.service\nAfter=coreos-metadata.service\n\n"
+        etcdcontent += "[Service]\nEnvironmentFile=/run/metadata/coreos\nEnvironment=\"ETCD_IMAGE_TAG=v3.0.15\"\n"
+        etcdcontent += "ExecStart=\nExecStart=/usr/lib/coreos/etcd-wrapper $ETCD_OPTS \\\n"
+        etcdcontent += "--name=\"${COREOS_CUSTOM_HOSTNAME}\" \\\n  "
+        etcdcontent += "--listen-peer-urls=\"http://${COREOS_CUSTOM_PRIVATE_IPV4}:2380\" \\\n  "
+        etcdcontent += "--listen-client-urls=\"http://0.0.0.0:2379\" \\\n  "
+        etcdcontent += "--initial-advertise-peer-urls=\"http://${COREOS_CUSTOM_PRIVATE_IPV4}:2380\" \\\n  "
+        etcdcontent += "--initial-cluster=\"${COREOS_CUSTOM_HOSTNAME}=http://${COREOS_CUSTOM_PRIVATE_IPV4}:2380\" \\\n"
+        etcdcontent += "--advertise-client-urls=\"http://${COREOS_CUSTOM_PRIVATE_IPV4}:2379\""
+        etcddrop = {"dropins": [{"contents": etcdcontent, "name": "20-clct-etcd-member.conf"}],
+                    "name": "etcd-member.service", "enabled": True}
+        if 'units' in data['systemd']:
+            data['systemd']['units'].append(metadrop)
+            data['systemd']['units'].append(etcddrop)
+        else:
+            data['systemd']['units'] = [metadrop, etcddrop]
     return json.dumps(data)

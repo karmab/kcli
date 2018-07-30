@@ -7,7 +7,6 @@ Kvm Provider class
 from distutils.spawn import find_executable
 from kvirt import defaults
 from iptools import IpRange
-import json
 from kvirt import common
 from netaddr import IPAddress, IPNetwork
 from libvirt import open as libvirtopen, registerErrorHandler
@@ -258,6 +257,7 @@ class Kvirt(object):
                     </disk>""" % (disksxml, diskformat, diskpath, backingxml, diskdev, diskbus, diskwwn)
         netxml = ''
         alias = []
+        etcd = None
         for index, net in enumerate(nets):
             macxml = ''
             nettype = 'virtio'
@@ -280,6 +280,8 @@ class Kvirt(object):
                     metadata = """%s<kvirt:ip >%s</kvirt:ip>""" % (metadata, ip)
                 if reservedns and index == 0 and 'alias' in nets[index] and isinstance(nets[index]['alias'], list):
                     alias = nets[index]['alias']
+                if 'etcd' in nets[index] and nets[index]['etcd']:
+                    etcd = "eth%s" % index
             if netname in bridges:
                 sourcenet = 'bridge'
             elif netname in networks:
@@ -319,14 +321,11 @@ class Kvirt(object):
                 namespace = "xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'"
                 ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                                domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
-                                               overrides=overrides)
-                if self.host == 'localhost' or self.host == '127.0.0.1':
-                    with open('/tmp/ignition', 'w') as ignitionfile:
-                        json.dump(ignitiondata, ignitionfile)
-                elif self.protocol == 'ssh':
-                    ignitiondata = ignitiondata.replace('"', '\\"')
-                    ignitioncmd = 'ssh -p %s %s@%s "echo \'%s\' >/tmp/ignition"' % (self.port, self.user, self.host,
-                                                                                    ignitiondata)
+                                               overrides=overrides, etcd=etcd)
+                with open('/tmp/ignition', 'w') as ignitionfile:
+                    ignitionfile.write(ignitiondata)
+                if self.protocol == 'ssh':
+                    ignitioncmd = 'scp -qP %s /tmp/ignition %s@%s:/tmp' % (self.port, self.user, self.host)
                     code = os.system(ignitioncmd)
                     if code != 0:
                         return {'result': 'failure', 'reason': "Unable to creation ignition data file in hypervisor"}
