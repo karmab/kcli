@@ -569,7 +569,7 @@ def scp(name, ip='', host=None, port=22, hostuser=None, user=None, source=None, 
 def get_user(template):
     if 'centos' in template.lower():
         user = 'centos'
-    elif 'coreos' in template.lower():
+    elif 'coreos' in template.lower() or 'rhcos' in template.lower():
         user = 'core'
     elif 'cirros' in template.lower():
         user = 'cirros'

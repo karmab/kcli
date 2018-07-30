@@ -315,7 +315,7 @@ class Kvirt(object):
                       <readonly/>
                     </disk>""" % iso
         if cloudinit:
-            if template.startswith('coreos'):
+            if template.startswith('coreos') or template.startswith('rhcos'):
                 namespace = "xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'"
                 ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                                domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
@@ -439,7 +439,7 @@ class Kvirt(object):
             for volxml in volsxml[pool]:
                 storagepool.createXML(volxml, 0)
         if cloudinit:
-            if not template.startswith('coreos'):
+            if not template.startswith('coreos') and not template.startswith('rhcos'):
                 common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
                                  reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides)
                 self._uploadimage(name, pool=default_storagepool)
