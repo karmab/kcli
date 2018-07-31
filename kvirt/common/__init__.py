@@ -332,7 +332,8 @@ def process_ignition_cmds(cmds, overrides):
     if content == '':
         return content
     else:
-        content = "#!/bin/sh\n%s" % content
+        if not content.startswith('#!'):
+            content = "#!/bin/sh\n%s" % content
         content = quote(content)
         data = {'filesystem': 'root', 'path': path, 'mode': int(permissions, 8),
                 "contents": {"source": "data:,%s" % content, "verification": {}}}
@@ -709,10 +710,11 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
             storage["files"].append({"filesystem": "root", "path": "/opt/set-flannelenv.sh",
                                      "contents": {"source": "data:,%s" % quote(flannelcmd), "verification": {}},
                                      "mode": int('700', 8)})
-            flannelmetacontent = "[Service]\nExecStart=/opt/set-flannelenv.sh\n"
+            flannelmetacontent = "[Service]\nExecStartPre=/opt/set-flannelenv.sh\n"
             flannelmetadrop = {"dropins": [{"contents": flannelmetacontent, "name": "40-ExecStartPre-symlink.conf"}],
                                "name": "flanneld.service"}
             dockercontent = "[Unit]\nRequires=flanneld.service\nAfter=flanneld.service\n"
+            dockercontent += "EnvironmentFile=/etc/kubernetes/docker_opts_cni.env"
             dockerdrop = {"dropins": [{"contents": dockercontent, "name": "40-flannel.conf"}],
                           "name": "docker.service"}
             data['systemd']['units'].append(flannelmetadrop)
