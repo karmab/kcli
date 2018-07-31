@@ -258,7 +258,6 @@ class Kvirt(object):
         netxml = ''
         alias = []
         etcd = None
-        flannel = None
         for index, net in enumerate(nets):
             macxml = ''
             nettype = 'virtio'
@@ -283,8 +282,6 @@ class Kvirt(object):
                     alias = nets[index]['alias']
                 if 'etcd' in nets[index] and nets[index]['etcd']:
                     etcd = "eth%s" % index
-                if 'flannel' in nets[index] and nets[index]['flannel']:
-                    flannel = "eth%s" % index
             if netname in bridges:
                 sourcenet = 'bridge'
             elif netname in networks:
@@ -324,7 +321,7 @@ class Kvirt(object):
                 namespace = "xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'"
                 ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                                domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
-                                               overrides=overrides, etcd=etcd, flannel=flannel)
+                                               overrides=overrides, etcd=etcd)
                 with open('/tmp/ignition', 'w') as ignitionfile:
                     ignitionfile.write(ignitiondata)
                 if self.protocol == 'ssh':
