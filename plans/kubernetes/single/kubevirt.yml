@@ -1,0 +1,30 @@
+parameters:
+ baseplan: kcli_plan.yml
+ kubevirt_version: v0.7.0
+ emulation: false
+
+kubevirt:
+ template: [[ template ]]
+ numcpus: 2
+ memory: 8192
+ reservedns: true
+ domain: [[ domain ]]
+ nets:
+  - default
+ disks:
+  - size: 50
+ pool: default
+ files:
+  - path: /etc/yum.repos.d/kubernetes.repo
+    origin: kubernetes.repo
+[% if nfs %]
+  - path: /root/nfs.yml
+    origin: nfs.yml
+  - path: /root/nfs.sh
+    origin: nfs.sh
+[% endif %]
+ scripts: 
+  - pre.sh
+  - master.sh
+  - dashboard.sh
+  - kubevirt.sh
