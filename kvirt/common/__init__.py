@@ -588,7 +588,7 @@ def get_user(template):
 
 
 def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[],
-             enableroot=True, overrides={}, iso=True, fqdn=False, etcd=None, flannel=None):
+             enableroot=True, overrides={}, iso=True, fqdn=False, etcd=None, flannel=False):
     default_gateway = gateway
     publickeys = []
     if domain is not None:
@@ -675,8 +675,8 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
         rootdata = {'name': 'root', 'sshAuthorizedKeys': publickeys}
         data['passwd']['users'].append(rootdata)
     if etcd is not None:
-        metadataget = '#!/bin/sh\necho COREOS_CUSTOM_HOSTNAME=`hostname` > /run/metadata/coreos\n'
         ipcommand = "ifconfig %s | grep \"inet \" | awk '{print $2}'" % etcd
+        metadataget = '#!/bin/sh\necho COREOS_CUSTOM_HOSTNAME=`hostname` > /run/metadata/coreos\n'
         metadataget += 'echo COREOS_CUSTOM_PRIVATE_IPV4=`%s` >> /run/metadata/coreos\n' % ipcommand
         storage["files"].append({"filesystem": "root", "path": "/opt/get-metadata.sh",
                                  "contents": {"source": "data:,%s" % quote(metadataget), "verification": {}},
@@ -700,4 +700,21 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
             data['systemd']['units'].append(etcddrop)
         else:
             data['systemd']['units'] = [metadrop, etcddrop]
+        if flannel is not None:
+            ipcommand = "ifconfig %s | grep \"inet \" | awk '{print $2}'" % flannel
+            flannelcmd = '#!/bin/sh\nmkdir -p /etc/flannel\n'
+            flannelcmd += 'echo FLANNELD_IFACE=`%s` > /etc/flannel/options.env\n' % ipcommand
+            flannelcmd += 'echo FLANNELD_ETCD_ENDPOINTS=http://`%s`:2379 >> /etc/flannel/options.env\n' % ipcommand
+            flannelcmd += '/usr/bin/ln -sf /etc/flannel/options.env /run/flannel/options.env'
+            storage["files"].append({"filesystem": "root", "path": "/opt/set-flannelenv.sh",
+                                     "contents": {"source": "data:,%s" % quote(flannelcmd), "verification": {}},
+                                     "mode": int('700', 8)})
+            flannelmetacontent = "[Service]\nExecStart=/opt/set-flannelenv.sh\n"
+            flannelmetadrop = {"dropins": [{"contents": flannelmetacontent, "name": "40-ExecStartPre-symlink.conf"}],
+                               "name": "flanneld.service"}
+            dockercontent = "[Unit]\nRequires=flanneld.service\nAfter=flanneld.service\n"
+            dockerdrop = {"dropins": [{"contents": dockercontent, "name": "40-flannel.conf"}],
+                          "name": "docker.service"}
+            data['systemd']['units'].append(flannelmetadrop)
+            data['systemd']['units'].append(dockerdrop)
     return json.dumps(data)
