@@ -365,7 +365,9 @@ If cloudinit is enabled (it is by default), a custom iso is generated on the fly
 
 The iso handles static networking configuration, hostname setting, injecting ssh keys and running specific commands and entire scripts, and copying entire files
 
-Also note that if you use cloudinit but dont specify ssh keys to inject, the default *~/.ssh/id_rsa.pub* will be used, if present.
+If you use cloudinit but dont specify ssh keys to inject, the default *~/.ssh/id_rsa.pub* will be used, if present.
+
+For kvm vms based on coreos, ignition is used instead of cloudinit although the syntax is the same.
 
 
 ## Profiles configuration
@@ -654,6 +656,8 @@ nets:
 Within a net section, you can use name, nic, IP, mac, mask, gateway and alias as keys.
 
 You can also use  *noconf: true* to only add the nic with no configuration done in the vm
+
+Fore coreos based vms, You can also use  *etcd: true* to auto configure etcd on the corresponding nic
 
 Up to 4 IPS can also be provided on command line when creating a single vm (with the flag -1, -2, -3,-4,...)
 

@@ -32,6 +32,10 @@ koreos:
     origin: deploy.sh
   - path: /etc/systemd/system/kubelet.service
     origin: kubelet.service
+  - path: /etc/systemd/system/flanneld.service.d/40-ExecStartPre-symlink.conf
+    origin: 40-ExecStartPre-symlink.conf
+  - path: /etc/systemd/system/docker.service.d/40-flannel.conf
+    origin: 40-flannel.conf
  scripts:
   - openssl.sh
  

@@ -90,6 +90,8 @@ the are several flags you’ll want to pass depending on your use case
 
 -  ``-v /var/run/libvirt:/var/run/libvirt`` if running against a local
    hypervisor
+-  ``-v /var/lib/libvirt/images:/var/lib/libvirt/images`` against a
+   local hypervisor too and to be able to use kcli download
 -  ``~/.kcli:/root/.kcli`` to use your kcli configuration (also profiles
    and repositories) stored locally
 -  ``-v ~/.ssh:/root/.ssh`` to share your ssh keys
@@ -102,9 +104,11 @@ locally:
 
 .. code:: shell
 
-    alias kcli='docker run -it --rm --security-opt label:disable -v ~/.kcli:/root/.kcli -v /var/run/libvirt:/var/run/libvirt ~/.ssh:/root/.ssh karmab/kcli'
+    alias kcli='docker run -it --rm --security-opt label:disable -v ~/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt ~/.ssh:/root/.ssh karmab/kcli'
 
-For web access, you can switch with ``--entrypoint=/usr/bin/kweb``
+For web access, you can switch with
+``-p 9000:9000 --entrypoint=/usr/bin/kweb`` and thus accessing to port
+9000
 
 Dev installation from pip
 -------------------------
@@ -221,8 +225,8 @@ You can also edit directly ~/.kcli/config.yml. For instance,
 Replace with your own client in default section and indicate host and
 protocol in the corresponding client section.
 
-Note that most of the parameters are actually optional, and can be
-overridden in the default, host or profile section (or in a plan file)
+Most of the parameters are actually optional, and can be overridden in
+the default, host or profile section (or in a plan file)
 
 Provider specifics
 ==================
@@ -416,8 +420,7 @@ vm!
 
 you can then access the vm using *kcli ssh*
 
-Note also that kcli uses the default ssh_user according to the different
-`cloud
+kcli uses the default ssh_user according to the different `cloud
 images <http://docs.openstack.org/image-guide/obtain-images.html>`__. To
 guess it, kcli checks the template name. So for example, your centos
 image must contain the term “centos” in the file name, otherwise the
@@ -434,8 +437,11 @@ The iso handles static networking configuration, hostname setting,
 injecting ssh keys and running specific commands and entire scripts, and
 copying entire files
 
-Also note that if you use cloudinit but dont specify ssh keys to inject,
-the default *~/.ssh/id_rsa.pub* will be used, if present.
+If you use cloudinit but dont specify ssh keys to inject, the default
+*~/.ssh/id_rsa.pub* will be used, if present.
+
+For kvm vms based on coreos, ignition is used instead of cloudinit
+although the syntax is the same.
 
 Profiles configuration
 ----------------------
@@ -468,7 +474,7 @@ Typical commands
 
 -  List vms, along with their private IP (and plan if applicable)
 -  ``kcli list``
--  List templates (Note that it will find them out based on their qcow2
+-  List templates (it will find them out based on their qcow2
    extension…)
 -  ``kcli list -t``
 -  Create vm from profile base7
@@ -483,9 +489,8 @@ Typical commands
 -  ``kcli stop vm1``
 -  Get remote-viewer console
 -  ``kcli console vm1``
--  Get serial console (over TCP!!!). Note that it will only work with
-   vms created with kcli and will require netcat client to be installed
-   on host
+-  Get serial console (over TCP!!!). It will only work with vms created
+   with kcli and will require netcat client to be installed on host
 -  ``kcli console -s vm1``
 -  Deploy multiple vms using plan x defined in x.yml file
 -  ``kcli plan -f x.yml x``
@@ -581,7 +586,7 @@ network
      cidr: 192.168.95.0/24
 
 You can also use the boolean keyword dhcp (mostly to disable it) and
-isolated . Note that when not specified, dhcp and nat will be enabled
+isolated . When not specified, dhcp and nat will be enabled
 
 template
 ~~~~~~~~
@@ -594,10 +599,10 @@ template
 
 It will only be downloaded only if not present
 
-Note that if you point to an url not ending in qcow2/qc2 ( or img), your
-browser will be opened for you to proceed. Also note that you can
-specify a command with the cmd: key, so that virt-customize is used on
-the template once it s downloaded
+If you point to an url not ending in qcow2/qc2 ( or img), your browser
+will be opened for you to proceed. Also note that you can specify a
+command with the cmd: key, so that virt-customize is used on the
+template once it s downloaded
 
 disk
 ~~~~
@@ -612,7 +617,7 @@ disk
       - centos1
       - centos2
 
-Note the disk is shared between two vms (that typically would be defined
+Here the disk is shared between two vms (that typically would be defined
 within the same plan):
 
 pool
@@ -659,10 +664,10 @@ ansible
        - master2
        - master3
 
-Note that an inventory will be created for you in /tmp and that
-*group_vars* and *host_vars* directory are taken into account. You can
-optionally define your own groups, as in this example The playbooks are
-launched in alphabetical order
+An inventory will be created for you in /tmp and that *group_vars* and
+*host_vars* directory are taken into account. You can optionally define
+your own groups, as in this example The playbooks are launched in
+alphabetical order
 
 container
 ~~~~~~~~~
@@ -730,9 +735,9 @@ Specific scripts and IPS arrays can be used directly in the plan file
 
 The samples directory contains examples to get you started.
 
-Note that the description of the vm will automatically be set to the
-plan name, and this value will be used when deleting the entire plan as
-a way to locate matching vms.
+The description of the vm will automatically be set to the plan name,
+and this value will be used when deleting the entire plan as a way to
+locate matching vms.
 
 When launching a plan, the plan name is optional. If not is provided, a
 random generated keyword will be used.
@@ -808,8 +813,11 @@ alias as keys.
 You can also use *noconf: true* to only add the nic with no
 configuration done in the vm
 
-Note that up to 4 IPS can also be provided on command line when creating
-a single vm (with the flag -1, -2, -3,-4,…)
+Fore coreos based vms, You can also use *etcd: true* to auto configure
+etcd on the corresponding nic
+
+Up to 4 IPS can also be provided on command line when creating a single
+vm (with the flag -1, -2, -3,-4,…)
 
 ip, dns and host Reservations
 -----------------------------
@@ -823,8 +831,8 @@ in the corresponding network ( only done for the first nic)
 
 You can also set *reservehost* to True to create a HOST entry for the
 host in /etc/hosts ( only done for the first nic). It’s done with sudo
-and the entry gets removed when you delete the host. Note you should use
-gnu-sed ( from brew ) instead of regular sed on macosx for proper
+and the entry gets removed when you delete the host. On macosx, you
+should use gnu-sed ( from brew ) instead of regular sed for proper
 deletion.
 
 If you dont want to be asked for your sudo password each time, here are
@@ -892,7 +900,9 @@ Ansible support
 ---------------
 
 You can check klist.py in the extra directory and use it as a dynamic
-inventory for ansible.
+inventory for ansible. It’s also present at
+``/usr/share/doc/kcli/extras/klist.py`` in the rpm and
+``/usr/bin/klist.py`` in the container
 
 The script uses sames conf as kcli (and as such defaults to local
 hypervisor if no configuration file is found).
@@ -907,8 +917,16 @@ Try it with:
 
 .. code:: shell
 
-    python extra/klist.py --list
-    ansible all -i extra/klist.py -m ping
+    python extras/klist.py --list
+    ansible all -i extras/klist.py -m ping
+
+If you’re using kcli as a container, you will have to create a script
+such as the following to properly call the inventory
+
+::
+
+    #!/bin/bash
+    docker run -it --security-opt label:disable -v ~/.kcli:/root/.kcli -v /var/run/libvirt:/var/run/libvirt --entrypoint=/usr/bin/klist.py karmab/kcli $@
 
 Additionally, there is an ansible kcli/kvirt module under extras, with a
 sample playbook
@@ -937,8 +955,8 @@ host_vars and groups_vars directory for this purpose
      verbose: false
      playbook: prout.yml
 
-Note that when leveraging ansible this way, an inventory file will be
-generated on the fly for you and let in */tmp/$PLAN.inv*
+When leveraging ansible this way, an inventory file will be generated on
+the fly for you and let in */tmp/$PLAN.inv*
 
 Using products
 --------------
@@ -986,8 +1004,8 @@ number of vms deployed and all parameters that can be overriden)
 
     kcli product --info YOUR_PRODUCT 
 
-And deploy any product . Note deletion is currently handled by deleting
-the corresponding plan
+And deploy any product . Deletion is currently handled by deleting the
+corresponding plan
 
 ::
 
@@ -1022,15 +1040,15 @@ Available parameters for hypervisor/profile/plan files
 -  *cpumodel* Defaults to Westmere
 -  *cpuflags* (optional). You can specify a list of strings with
    features to enable or use dict entries with *name* of the feature and
-   *enable* either set to True or False. Note that the value for vmx is
-   ignored, as it s handled by the nested flag
+   *enable* either set to True or False. The value for vmx is ignored,
+   as it s handled by the nested flag
 -  *numcpus* Defaults to 2
 -  *memory* Defaults to 512M
 -  *guestid* Defaults to guestrhel764
 -  *pool* Defaults to default
 -  *template* Should point to your base cloud image(optional). You can
-   either specify short name or complete path. Note that if you omit the
-   full path and your image lives in several pools, the one from last
+   either specify short name or complete path. If you omit the full path
+   and your image lives in several pools, the one from last
    (alphabetical) pool will be used.
 -  *disksize* Defaults to 10GB
 -  *diskinterface* Defaults to virtio. You can set it to ide if using
@@ -1056,7 +1074,7 @@ Available parameters for hypervisor/profile/plan files
 -  *cmds* (optional). Array of commands to run
 -  *profile* name of one of your profile. Only checked in plan file
 -  *scripts* array of paths of custom script to inject with cloudinit.
-   Note that it will override cmds part. You can either specify full
+   It will be merged with cmds parameter. You can either specify full
    paths or relative to where you’re running kcli. Only checked in
    profile or plan file
 -  *nested* Defaults to True
@@ -1071,13 +1089,13 @@ Available parameters for hypervisor/profile/plan files
    get any warnings about man in the middle
 -  *host* (optional) Allows you to create the vm on a specific host,
    provided you used kcli -C host1,host2,… and specify the wanted
-   hypervisor ( or use kcli -C all ). Note that this field is not used
-   for other types like network, so expect to use this in relatively
-   simple plans only
+   hypervisor ( or use kcli -C all ). This field is not used for other
+   types like network, so expect to use this in relatively simple plans
+   only
 -  *base* (optional) Allows you to point to a parent profile so that
    values are taken from parent when not found in the current profile.
-   Note that scripts and commands are rather concatenated between
-   default, father and children ( so you have a happy family…)
+   Scripts and commands are rather concatenated between default, father
+   and children ( so you have a happy family…)
 -  *tags* (optional) Array of tags to apply to gcp instances (usefull
    when matched in a firewall rule). In the case of kubevirt, it s
    rather a dict of key=value used as node selector (allowing to force
@@ -1094,15 +1112,15 @@ Available parameters for hypervisor/profile/plan files
 Overriding parameters
 ---------------------
 
-Note that you can override parameters in - commands - scripts - files -
-plan files - profiles
+You can override parameters in - commands - scripts - files - plan files
+- profiles
 
 For that , you can pass in kcli vm or kcli plan the following
 parameters: - -P x=1 -P y=2 and so on - –paramfile - In this case, you
 provide a yaml file ( and as such can provide more complex structures )
 
 The indicated objects are then rendered using jinja. For instance in a
-profile Note we use the delimiters ‘[[’ and ’]]’ instead of the commonly
+profile The delimiters ‘[[’ and ’]]’ are used instead of the commonly
 used ‘{{’ and ‘}}’ so that this rendering doesnt get in the way when
 providing j2 files for instance
 
