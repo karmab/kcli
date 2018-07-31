@@ -1,5 +1,5 @@
 parameters:
-    k8s_version: v1.6.1_coreos.0
+    k8s_version: v1.10.5_coreos.0
 
 coreos_production_qemu_image.img:
  type: template
@@ -37,5 +37,3 @@ koreos:
     origin: 40-flannel.conf
  scripts:
   - openssl.sh
-  - deploy.sh
- 
