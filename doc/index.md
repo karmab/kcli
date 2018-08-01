@@ -85,6 +85,7 @@ the are several flags you'll want to pass depending on your use case
 - `-v ~/.ssh:/root/.ssh` to share your ssh keys
 - `-v $SSH_AUTH_SOCK:/ssh-agent --env SSH_AUTH_SOCK=/ssh-agent` alternative way to share your ssh keys
 - `--security-opt label:disable` if running with selinux
+- `-v $PWD:/plans` to access plans below your current directory (you then would use kcli plan -f /plans/...)
 
 As a bonus, you can alias kcli and run it as if it was installed locally:
 
