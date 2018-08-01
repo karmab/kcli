@@ -463,9 +463,23 @@ class Kaws(object):
         return
 
     def _ssh_credentials(self, name):
-        user = 'ec2-user'
-        ip = self.ip(name)
-        return (user, ip)
+        # user = 'ec2-user'
+        # ip = self.ip(name)
+        # return (user, ip)
+        conn = self.conn
+        try:
+            vm = conn.describe_instances(InstanceIds=[name])['Reservations'][0]['Instances'][0]
+        except:
+            print(("VM %s not found" % name))
+            return '', ''
+        vm = [v for v in self.list() if v[0] == name][0]
+        template = vm[3]
+        if template != '':
+            user = common.get_user(template)
+        ip = vm[2]
+        if ip == '':
+            print("No ip found. Cannot ssh...")
+        return user, ip
 
     def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, D=None):
         u, ip = self._ssh_credentials(name)
