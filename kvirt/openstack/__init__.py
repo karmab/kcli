@@ -483,6 +483,8 @@ class Kopenstack(object):
             cidrs = [s['cidr'] for s in neutron.list_subnets()['subnets'] if s['network_id'] == network_id]
             if cidr not in cidrs:
                 subnet = {'name': cidr, 'network_id': network_id, 'ip_version': 4, "cidr": cidr, 'enable_dhcp': dhcp}
+                if domain is not None:
+                    subnet['dns_nameservers'] = [domain]
                 subnet = neutron.create_subnet({'subnet': subnet})
                 subnet_id = subnet['subnet']['id']
                 tenant_id = subnet['subnet']['tenant_id']
