@@ -701,4 +701,4 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
             data['systemd']['units'].append(etcddrop)
         else:
             data['systemd']['units'] = [metadrop, etcddrop]
-    return json.dumps(data)
+    return json.dumps(data, sort_keys=True, indent=4, separators=(',', ': '))
