@@ -288,6 +288,7 @@ class Kgcp(object):
         conn = self.conn
         project = self.project
         zone = self.zone
+        # zones = [zone['name'] for zone in self.conn.zones().list(project=project).execute()['items']]
         vms = []
         results = conn.instances().list(project=project, zone=zone).execute()
         if 'items' not in results:
@@ -307,7 +308,8 @@ class Kgcp(object):
                 source = ''
             plan = ''
             profile = ''
-            report = 'N/A'
+            # report = 'N/A'
+            report = zone
             if 'items' in vm['metadata']:
                 for data in vm['metadata']['items']:
                     if data['key'] == 'plan':
