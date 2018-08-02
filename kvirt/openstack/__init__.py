@@ -130,14 +130,12 @@ class Kopenstack(object):
         floating_ips = [f['id'] for f in neutron.list_floatingips()['floatingips']
                         if f['port_id'] is None]
         if not floating_ips:
-            external_tenant_id = None
             network_id = None
             networks = [n for n in neutron.list_networks()['networks'] if n['router:external']]
             if networks:
-                external_tenant_id = networks[0]['tenant_id']
                 network_id = networks[0]['id']
             if network_id is not None and tenant_id is not None:
-                args = dict(floating_network_id=network_id, tenant_id=external_tenant_id)
+                args = dict(floating_network_id=network_id, tenant_id=tenant_id)
                 floating_ip = neutron.create_floatingip(body={'floatingip': args})
                 floatingip_id = floating_ip['floatingip']['id']
                 floatingip_ip = floating_ip['floatingip']['floating_ip_address']
