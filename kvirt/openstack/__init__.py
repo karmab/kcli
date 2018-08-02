@@ -493,9 +493,11 @@ class Kopenstack(object):
             if externalnet_id is not None:
                 if router_id is None:
                     router = {'name': 'kvirt', 'tenant_id': tenant_id}
-                    router['external_gateway_info'] = {"network_id": externalnet_id, "enable_snat": True}
+                    # router['external_gateway_info'] = {"network_id": externalnet_id, "enable_snat": True}
                     router = neutron.create_router({'router': router})
                     router_id = router['router']['id']
+                    router_dict = {"network_id": externalnet_id}
+                    neutron.add_gateway_router(router_id, router_dict)
                 neutron.add_interface_router(router_id, {'subnet_id': subnet_id})
         return {'result': 'success'}
 
