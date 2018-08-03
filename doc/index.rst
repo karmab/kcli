@@ -106,7 +106,7 @@ locally:
 
 .. code:: shell
 
-    alias kcli='docker run -it --rm --security-opt label:disable -v ~/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt ~/.ssh:/root/.ssh karmab/kcli'
+    alias kcli='docker run -it --rm --security-opt label:disable -v ~/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v ~/.ssh:/root/.ssh karmab/kcli'
 
 For web access, you can switch with
 ``-p 9000:9000 --entrypoint=/usr/bin/kweb`` and thus accessing to port
@@ -1021,7 +1021,7 @@ ll want to set the *KVIRT_HOST* and *KVIRT_USER* environment variables
 so that it points to your host with the corresponding user.
 
 Specific parameters for a hypervisor
-------------------------------------
+====================================
 
 -  *host* Defaults to 127.0.0.1
 -  *port*
@@ -1037,7 +1037,7 @@ Specific parameters for a hypervisor
    wont show up when listing
 
 Available parameters for hypervisor/profile/plan files
-------------------------------------------------------
+======================================================
 
 -  *cpumodel* Defaults to Westmere
 -  *cpuflags* (optional). You can specify a list of strings with
@@ -1101,15 +1101,14 @@ Available parameters for hypervisor/profile/plan files
 -  *tags* (optional) Array of tags to apply to gcp instances (usefull
    when matched in a firewall rule). In the case of kubevirt, it s
    rather a dict of key=value used as node selector (allowing to force
-   vms to be scheduled on a matching host)
--  rhnregister (optional). Auto registers vms whose template starts with
-   rhel Defaults to false. Requires to either rhnuser and rhnpassword,
-   or rhnactivationkey and rhnorg
--  rhnuser (optional). Red Hat network user
--  rhnpassword (optional). Red Hat network password
--  rhnactivationkey (optional). Red Hat network activation key
--  rhnorg (optional). Red Hat network organization
--  rhnuser (optional). Red Hat network user
+   vms to be scheduled on a matching host) *rhnregister* (optional).
+   Auto registers vms whose template starts with rhel Defaults to false.
+   Requires to either rhnuser and rhnpassword, or rhnactivationkey and
+   rhnorg
+-  *rhnuser* (optional). Red Hat network user
+-  *rhnpassword* (optional). Red Hat network password
+-  *rhnactivationkey* (optional). Red Hat network activation key
+-  *rhnorg* (optional). Red Hat network organization
 
 Overriding parameters
 ---------------------

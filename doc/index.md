@@ -85,12 +85,12 @@ the are several flags you'll want to pass depending on your use case
 - `-v ~/.ssh:/root/.ssh` to share your ssh keys
 - `-v $SSH_AUTH_SOCK:/ssh-agent --env SSH_AUTH_SOCK=/ssh-agent` alternative way to share your ssh keys
 - `--security-opt label:disable` if running with selinux
-- `-v $PWD:/plans` to access plans below your current directory (you then would use kcli plan -f /plans/...)
+- `-v $PWD:/plans` to access plans below your current directory (you then would use *kcli plan -f /plans/...*)
 
 As a bonus, you can alias kcli and run it as if it was installed locally:
 
 ```Shell
-alias kcli='docker run -it --rm --security-opt label:disable -v ~/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt ~/.ssh:/root/.ssh karmab/kcli'
+alias kcli='docker run -it --rm --security-opt label:disable -v ~/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v ~/.ssh:/root/.ssh karmab/kcli'
 ```
 
 For web access, you can switch with `-p 9000:9000 --entrypoint=/usr/bin/kweb` and thus accessing to port 9000
@@ -101,29 +101,9 @@ For web access, you can switch with `-p 9000:9000 --entrypoint=/usr/bin/kweb` an
 
 Use the provided [script](https://github.com/karmab/kcli/blob/master/extras/centos.sh) which will install a dedicated python3 env
 
-### Generic plafrom 
+### Generic platform
 
-1. Install requirements. you will also need to grab *genisoimage* (or *mkisofs* on OSX) for cloudinit isos to get generated
-Console access is based on remote-viewer
-For instance if using a RHEL based distribution:
-
-```bash
-yum -y install gcc libvirt-devel python-devel genisoimage qemu-kvm nmap-ncat python-pip libguestfs-tools
-```
-
-On Fedora, you' will need an additional package
-
-```Shell
-yum -y install redhat-rpm-config
-```
-
-If using a Debian based distribution:
-
-```Shell
-apt-get -y install python-pip pkg-config libvirt-dev genisoimage qemu-kvm netcat libvirt-bin python-dev libyaml-dev
-```
-
-2. Install kcli from pypi
+Install kcli from pypi
 
 ```Shell
 pip install kcli
@@ -811,7 +791,7 @@ kcli product YOUR_PRODUCT
 
 Basic testing can be run with pytest. If using a remote hypervisor, you ll want to set the *KVIRT_HOST* and *KVIRT_USER* environment variables so that it points to your host with the corresponding user.
 
-## Specific parameters for a hypervisor
+# Specific parameters for a hypervisor
 
 - *host* Defaults to 127.0.0.1
 - *port*
@@ -821,7 +801,7 @@ Basic testing can be run with pytest. If using a remote hypervisor, you ll want 
 - *tunnel* Defaults to False. Setting it to true will make kcli use tunnels for console and for ssh access. You want that if you only open ssh port to your hypervisor!
 - *planview* Defaults to False. Setting it to true will make kcli use the value specified in *~/.kcli/plan* as default plan upon starting and stopping plan. Additionally, vms not belonging to the set plan wont show up when listing
 
-## Available parameters for hypervisor/profile/plan files
+# Available parameters for hypervisor/profile/plan files
 
 - *cpumodel* Defaults to Westmere
 - *cpuflags* (optional). You can specify a list of strings with features to enable or use dict entries with *name* of the feature and *enable* either set to True or False. The value for vmx is ignored, as it s handled by the nested flag
@@ -856,12 +836,11 @@ Basic testing can be run with pytest. If using a remote hypervisor, you ll want 
 - *host* (optional) Allows you to create the vm on a specific host, provided you used kcli -C host1,host2,... and specify the wanted hypervisor ( or use kcli -C all ). This field is not used for other types like network, so expect to use this in relatively simple plans only
 - *base* (optional) Allows you to point to a parent profile so that values are taken from parent when not found in the current profile. Scripts and commands are rather concatenated between default, father and children ( so you have a happy family...)
 - *tags* (optional) Array of tags to apply to gcp instances (usefull when matched in a firewall rule). In the case of kubevirt, it s rather a dict of key=value used as node selector (allowing to force vms to be scheduled on a matching host)
-- rhnregister (optional). Auto registers vms whose template starts with rhel Defaults to false. Requires to either rhnuser and rhnpassword, or rhnactivationkey and rhnorg
-- rhnuser (optional). Red Hat network user
-- rhnpassword (optional). Red Hat network password
-- rhnactivationkey (optional). Red Hat network activation key
-- rhnorg (optional). Red Hat network organization
-- rhnuser (optional). Red Hat network user
+ *rhnregister* (optional). Auto registers vms whose template starts with rhel Defaults to false. Requires to either rhnuser and rhnpassword, or rhnactivationkey and rhnorg
+- *rhnuser* (optional). Red Hat network user
+- *rhnpassword* (optional). Red Hat network password
+- *rhnactivationkey* (optional). Red Hat network activation key
+- *rhnorg* (optional). Red Hat network organization
 
 ## Overriding parameters
 

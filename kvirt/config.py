@@ -710,7 +710,8 @@ class Kconfig(Kbaseconfig):
         if info:
             self.info_plan(inputfile)
             return {'result': 'success'}
-        basedir = os.path.dirname(inputfile)
+        # basedir = os.path.dirname(inputfile)
+        basedir = os.path.dirname(inputfile) if os.path.dirname(inputfile) != '' else '.'
         env = Environment(block_start_string='[%', block_end_string='%]', variable_start_string='[[',
                           variable_end_string=']]', loader=FileSystemLoader(basedir))
         templ = env.get_template(os.path.basename(inputfile))
@@ -1061,16 +1062,16 @@ class Kconfig(Kbaseconfig):
                         for script in scripts:
                             if '~' in script:
                                 script = os.path.expanduser(script)
-                            basedir = os.path.dirname(script) if os.path.dirname(script) != '' else '.'
-                            # elif basedir != '':
-                            #    script = "%s/%s" % (basedir, script)
+                            else:
+                                script = "%s/%s" % (basedir, script)
+                            scriptbasedir = os.path.dirname(script) if os.path.dirname(script) != '' else '.'
                             if not os.path.exists(script):
                                 common.pprint("Script %s not found. Ignoring this vm..." % script, color='red')
                                 missingscript = True
                             else:
                                 env = Environment(block_start_string='[%', block_end_string='%]',
                                                   variable_start_string='[[', variable_end_string=']]',
-                                                  loader=FileSystemLoader(basedir))
+                                                  loader=FileSystemLoader(scriptbasedir))
                                 templ = env.get_template(os.path.basename(script))
                                 overrides.update(self.overrides)
                                 scriptentries = templ.render(overrides)
@@ -1089,6 +1090,10 @@ class Kconfig(Kbaseconfig):
                         else:
                             cmds = cmds + reportcmd
                     files = next((e for e in [profile.get('files'), customprofile.get('files')] if e is not None), [])
+                    if basedir != '.':
+                        for index, _file in enumerate(files):
+                            if 'origin' in _file and '~' not in _file:
+                                files[index]['origin'] = '%s/%s' % (basedir, files[index]['origin'])
                     if sharedkey:
                         vmcounter += 1
                         if not os.path.exists("%s.key" % plan) or not os.path.exists("%s.key.pub" % plan):
