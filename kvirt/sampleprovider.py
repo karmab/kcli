@@ -247,7 +247,7 @@ class Kbase(object):
 
     def vm_ports(self, name):
         print("not implemented")
-        return
+        return ['default']
 
 # returns the path of the pool, if it makes sense. used by kcli list --pools
     def get_pool_path(self, pool):
