@@ -48,9 +48,13 @@ class Kbaseconfig:
                     self.host = None
                     return
             if 'default' not in self.ini:
-                common.pprint("Missing default section in config file. Leaving...", color='red')
-                self.host = None
-                return
+                if len(self.ini) == 1:
+                    client = list(self.ini.keys())[0]
+                    self.ini['default'] = {"client": client}
+                else:
+                    common.pprint("Missing default section in config file. Leaving...", color='red')
+                    self.host = None
+                    return
             if 'client' not in self.ini['default']:
                 common.pprint("Using local hypervisor as no client was specified...", color='green')
                 self.ini['default']['client'] = 'local'
