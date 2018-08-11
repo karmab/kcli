@@ -1097,7 +1097,7 @@ class Kconfig(Kbaseconfig):
                     if sharedkey:
                         vmcounter += 1
                         if not os.path.exists("%s.key" % plan) or not os.path.exists("%s.key.pub" % plan):
-                            os.popen("ssh-keygen -t rsa -N '' -f %s.key" % plan)
+                            os.system("ssh-keygen -qt rsa -N '' -f %s.key" % plan)
                         publickey = open("%s.key.pub" % plan).read().strip()
                         privatekey = open("%s.key" % plan).read().strip()
                         if keys is None:
