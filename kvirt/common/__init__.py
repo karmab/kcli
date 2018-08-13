@@ -5,9 +5,18 @@ from distutils.spawn import find_executable
 import errno
 from netaddr import IPAddress
 import socket
-from urllib.parse import quote
-from urllib.request import urlopen
-import urllib.error
+try:
+    from urllib.parse import quote
+except ImportError:
+    from urlparse import urlparse
+try:
+    from urllib.request import urlopen, Request
+except ImportError:
+    from urllib2 import urlopen
+try:    
+    import urllib.error
+except ImportError:
+    pass
 import json
 import os
 import yaml
