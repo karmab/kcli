@@ -696,10 +696,16 @@ class Kgcp(object):
         client = dns.Client(project)
         domain_name = domain.replace('.', '-')
         common.pprint("Assuming Domain name is %s..." % domain_name, color='green')
-        zone = client.zone(domain_name)
-        if not zone.exists():
+        zones = [z for z in client.list_zones() if z.name == domain_name]
+        if not zones:
             common.pprint("Domain %s not found" % domain_name, color='red')
             return {'result': 'failure', 'reason': "Domain not found"}
+        else:
+            zone = zones[0]
+        # zone = client.zone(domain_name)
+        # if not zone.exists():
+        #     common.pprint("Domain %s not found" % domain_name, color='red')
+        #    return {'result': 'failure', 'reason': "Domain not found"}
         entry = "%s.%s." % (name, domain)
         if ip is None:
             if isinstance(net, dict):
@@ -737,9 +743,15 @@ class Kgcp(object):
         zone = self.zone
         client = dns.Client(project)
         domain_name = domain.replace('.', '-')
-        zone = client.zone(domain_name)
-        if not zone.exists():
+        zones = [z for z in client.list_zones() if z.name == domain_name]
+        if not zones:
             return
+        else:
+            zone = zones[0]
+        # zone = client.zone(domain_name)
+        #
+        # if not zone.exists():
+        #    return
         entry = "%s.%s." % (name, domain)
         changes = zone.changes()
         records = [record for record in zone.list_resource_record_sets() if entry in record.name]
