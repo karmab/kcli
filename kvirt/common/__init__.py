@@ -227,6 +227,7 @@ def process_files(files=[], overrides={}):
         owner = fil.get('owner', 'root')
         mode = fil.get('mode', '0600')
         permissions = fil.get('permissions', mode)
+        binary = False
         if origin is not None:
             origin = os.path.expanduser(origin)
             if not os.path.exists(origin):
