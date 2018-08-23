@@ -99,7 +99,7 @@ the are several flags you’ll want to pass depending on your use case
    alternative way to share your ssh keys
 -  ``--security-opt label:disable`` if running with selinux
 -  ``-v $PWD:/plans`` to access plans below your current directory (you
-   then would use kcli plan -f /plans/…)
+   then would use *kcli plan -f /plans/…*)
 
 As a bonus, you can alias kcli and run it as if it was installed
 locally:
@@ -122,31 +122,10 @@ Use the provided
 `script <https://github.com/karmab/kcli/blob/master/extras/centos.sh>`__
 which will install a dedicated python3 env
 
-Generic plafrom
-~~~~~~~~~~~~~~~
+Generic platform
+~~~~~~~~~~~~~~~~
 
-1. Install requirements. you will also need to grab *genisoimage* (or
-   *mkisofs* on OSX) for cloudinit isos to get generated Console access
-   is based on remote-viewer For instance if using a RHEL based
-   distribution:
-
-.. code:: bash
-
-    yum -y install gcc libvirt-devel python-devel genisoimage qemu-kvm nmap-ncat python-pip libguestfs-tools
-
-On Fedora, you’ will need an additional package
-
-.. code:: shell
-
-    yum -y install redhat-rpm-config
-
-If using a Debian based distribution:
-
-.. code:: shell
-
-    apt-get -y install python-pip pkg-config libvirt-dev genisoimage qemu-kvm netcat libvirt-bin python-dev libyaml-dev
-
-2. Install kcli from pypi
+Install kcli from pypi
 
 .. code:: shell
 
@@ -1101,10 +1080,10 @@ Available parameters for hypervisor/profile/plan files
 -  *tags* (optional) Array of tags to apply to gcp instances (usefull
    when matched in a firewall rule). In the case of kubevirt, it s
    rather a dict of key=value used as node selector (allowing to force
-   vms to be scheduled on a matching host) *rhnregister* (optional).
-   Auto registers vms whose template starts with rhel Defaults to false.
-   Requires to either rhnuser and rhnpassword, or rhnactivationkey and
-   rhnorg
+   vms to be scheduled on a matching host)
+-  *rhnregister* (optional). Auto registers vms whose template starts
+   with rhel Defaults to false. Requires to either rhnuser and
+   rhnpassword, or rhnactivationkey and rhnorg
 -  *rhnuser* (optional). Red Hat network user
 -  *rhnpassword* (optional). Red Hat network password
 -  *rhnactivationkey* (optional). Red Hat network activation key
