@@ -1125,6 +1125,22 @@ class Kconfig(Kbaseconfig):
                             files.append({'path': '/root/.ssh/id_rsa', 'content': privatekey})
                         else:
                             files = [{'path': '/root/.ssh/id_rsa', 'content': privatekey}]
+                    if files:
+                        for fil in files:
+                            if not isinstance(fil, dict):
+                                common.pprint("Script %s not found.Ignoring..." % script, color='red')
+                                os._exit(1)
+                            else:
+                                origin = fil.get('origin')
+                                content = fil.get('content')
+                                if origin is not None:
+                                    origin = os.path.expanduser(origin)
+                                    if not os.path.exists(origin):
+                                        common.pprint("File %s not found.Ignoring..." % origin, color='red')
+                                        os._exit(1)
+                                elif content is not None:
+                                        common.pprint("Content for file %s not found.Ignoring..." % origin, color='red')
+                                        os._exit(1)
                     result = z.create(name=name, plan=plan, profile=profilename, cpumodel=cpumodel, cpuflags=cpuflags,
                                       numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool,
                                       template=template, disks=disks, disksize=disksize, diskthin=diskthin,

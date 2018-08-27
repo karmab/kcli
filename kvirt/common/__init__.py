@@ -230,9 +230,6 @@ def process_files(files=[], overrides={}):
         binary = False
         if origin is not None:
             origin = os.path.expanduser(origin)
-            if not os.path.exists(origin):
-                print(("Skipping file %s as not found" % origin))
-                continue
             binary = True if '.' in origin and origin.split('.')[-1].lower() in binary_types else False
             if binary:
                 with open(origin, "rb") as f:
@@ -254,8 +251,6 @@ def process_files(files=[], overrides={}):
                             f.write("%s\n" % line.rstrip())
             else:
                 content = open(origin, 'r').readlines()
-        elif content is None:
-            continue
         data += "- owner: %s:%s\n" % (owner, owner)
         data += "  path: %s\n" % path
         data += "  permissions: '%s'\n" % (permissions)
