@@ -137,12 +137,6 @@ class Kgcp(object):
                                     'scopes': ['https://www.googleapis.com/auth/devstorage.read_write',
                                                'https://www.googleapis.com/auth/logging.write']}]
         body['metadata'] = {'items': []}
-        # if cloudinit:
-        #   common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
-        #                     reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides, iso=False)
-        #    cloudinitdata = open('/tmp/user-data', 'r').read().strip()
-        #    newval = {'key': 'user-data', 'value': cloudinitdata}
-        #    body['metadata']['items'].append(newval)
         startup_script = ''
         for fil in files:
             if not isinstance(fil, dict):
@@ -190,15 +184,18 @@ class Kgcp(object):
                 and not os.path.exists("%s/.ssh/id_dsa.pub" % os.environ['HOME']):
             print("neither id_rsa.pub or id_dsa public keys found in your .ssh directory, you might have trouble "
                   "accessing the vm")
+            homekey = None
         elif os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME']):
             homekey = open("%s/.ssh/id_rsa.pub" % os.environ['HOME']).read()
         else:
             homekey = open("%s/.ssh/id_dsa.pub" % os.environ['HOME']).read()
-        keys = [homekey] + keys if keys is not None else [homekey]
-        keys = ["%s: %s" % (self.user, x) for x in keys]
-        keys = ''.join(keys)
-        newval = {'key': 'ssh-keys', 'value': keys}
-        body['metadata']['items'].append(newval)
+        if homekey is not None:
+            keys = [homekey] + keys if keys is not None else [homekey]
+        if keys is not None:
+            keys = ["%s: %s" % (self.user, x) for x in keys]
+            keys = ''.join(keys)
+            newval = {'key': 'ssh-keys', 'value': keys}
+            body['metadata']['items'].append(newval)
         newval = {'key': 'plan', 'value': plan}
         body['metadata']['items'].append(newval)
         newval = {'key': 'profile', 'value': profile}

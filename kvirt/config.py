@@ -945,6 +945,11 @@ class Kconfig(Kbaseconfig):
                         default_enableroot = father.get('enableroot', self.enableroot)
                         default_tags = father.get('tags', self.tags)
                         default_privatekey = father.get('privatekey', self.privatekey)
+                        default_rhnregister = father.get('rhnregister', self.rhnregister)
+                        default_rhnuser = father.get('rhnuser', self.rhnuser)
+                        default_rhnpassword = father.get('rhnpassword', self.rhnpassword)
+                        default_rhnak = father.get('rhnak', self.rhnak)
+                        default_rhnorg = father.get('rhnorg', self.rhnorg)
                         default_cmds = common.remove_duplicates(self.cmds + father.get('cmds', []))
                         default_scripts = common.remove_duplicates(self.scripts + father.get('scripts', []))
                     else:
@@ -979,6 +984,11 @@ class Kconfig(Kbaseconfig):
                         default_enableroot = self.enableroot
                         default_tags = self.tags
                         default_privatekey = self.privatekey
+                        default_rhnregister = self.rhnregister
+                        default_rhnuser = self.rhnuser
+                        default_rhnpassword = self.rhnpassword
+                        default_rhnorg = self.rhnorg
+                        default_rhnak = self.rhnak
                         default_cmds = self.cmds
                         default_scripts = self.scripts
                     pool = next((e for e in [profile.get('pool'), customprofile.get('pool'), default_pool]
@@ -1055,6 +1065,24 @@ class Kconfig(Kbaseconfig):
                         tags = profile.get('tags')
                     privatekey = next((e for e in [profile.get('privatekey'), customprofile.get('privatekey'),
                                                    default_privatekey] if e is not None))
+                    rhnregister = next((e for e in [profile.get('rhnregister'), customprofile.get('rhnregister'),
+                                                    default_rhnregister] if e is not None))
+                    rhnuser = next((e for e in [profile.get('rhnuser'), customprofile.get('rhnuser'),
+                                                default_rhnuser] if e is not None), None)
+                    rhnpassword = next((e for e in [profile.get('rhnpassword'), customprofile.get('rhnpassword'),
+                                                    default_rhnpassword] if e is not None), None)
+                    rhnak = next((e for e in [profile.get('rhnak'), customprofile.get('rhnak'),
+                                              default_rhnak] if e is not None), None)
+                    rhnorg = next((e for e in [profile.get('rhnorg'), customprofile.get('rhnorg'),
+                                               default_rhnorg] if e is not None), None)
+                    skip_rhnregister_script = False
+                    if rhnregister:
+                        if (rhnuser is not None and rhnpassword is not None)\
+                                or (rhnak is not None and rhnorg is not None):
+                            skip_rhnregister_script = True
+                        else:
+                            common.pprint("Rhn registration required but missing credentials.Leaving...", color='red')
+                            os._exit(1)
                     scripts = default_scripts + customprofile.get('scripts', []) + profile.get('scripts', [])
                     missingscript = False
                     if scripts:
@@ -1089,6 +1117,19 @@ class Kconfig(Kbaseconfig):
                             cmds = reportcmd
                         else:
                             cmds = cmds + reportcmd
+                    if skip_rhnregister_script and template.startswith('rhel'):
+                        rhncommands = []
+                        if rhnuser is not None and rhnpassword is not None:
+                            rhncommands.append('subscription-manager register --force --username=%s --password=%s'
+                                               % (rhnuser, rhnpassword))
+                            rhncommands.append('subscription-manager attach --auto')
+                        elif rhnak is not None and rhnorg is not None:
+                            rhncommands.append('subscription-manager register --force --activationkey=%s --org=%s'
+                                               % (rhnak, rhnorg))
+                            rhncommands.append('subscription-manager repos --enable=rhel-7-server-rpms')
+                    else:
+                        rhncommands = []
+                    cmds = rhncommands + cmds
                     files = next((e for e in [profile.get('files'), customprofile.get('files')] if e is not None), [])
                     if basedir != '.':
                         for index, _file in enumerate(files):
@@ -1128,18 +1169,24 @@ class Kconfig(Kbaseconfig):
                     if files:
                         for fil in files:
                             if not isinstance(fil, dict):
-                                common.pprint("Script %s not found.Ignoring..." % script, color='red')
+                                common.pprint("Incorrect file entry.Leaving...", color='red')
                                 os._exit(1)
                             else:
+                                path = fil.get('path')
                                 origin = fil.get('origin')
                                 content = fil.get('content')
+                                if path is None:
+                                        common.pprint("Missing path in files of %s.Leaving..." % name, color='red')
+                                        os._exit(1)
                                 if origin is not None:
                                     origin = os.path.expanduser(origin)
                                     if not os.path.exists(origin):
-                                        common.pprint("File %s not found.Ignoring..." % origin, color='red')
+                                        common.pprint("File %s not found in %s.Leaving..." % (origin, name),
+                                                      color='red')
                                         os._exit(1)
-                                elif content is not None:
-                                        common.pprint("Content for file %s not found.Ignoring..." % origin, color='red')
+                                elif content is None:
+                                        common.pprint("Content of file %s not found in %s.Ignoring..." % (path, name),
+                                                      color='red')
                                         os._exit(1)
                     result = z.create(name=name, plan=plan, profile=profilename, cpumodel=cpumodel, cpuflags=cpuflags,
                                       numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool,
