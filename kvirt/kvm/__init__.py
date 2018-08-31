@@ -44,8 +44,7 @@ registerErrorHandler(f=libvirt_callback, ctx=None)
 
 
 class Kvirt(object):
-    def __init__(self, host='127.0.0.1', port=None, user='root',
-                 protocol='ssh', url=None, debug=False):
+    def __init__(self, host='127.0.0.1', port=None, user='root', protocol='ssh', url=None, debug=False):
         if url is None:
             if host == '127.0.0.1' or host == 'localhost':
                 url = "qemu:///system"
@@ -317,7 +316,7 @@ class Kvirt(object):
                       <readonly/>
                     </disk>""" % iso
         if cloudinit:
-            if template.startswith('coreos') or template.startswith('rhcos'):
+            if template is not None and (template.startswith('coreos') or template.startswith('rhcos')):
                 namespace = "xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'"
                 ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                                domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
@@ -438,7 +437,7 @@ class Kvirt(object):
             for volxml in volsxml[pool]:
                 storagepool.createXML(volxml, 0)
         if cloudinit:
-            if not template.startswith('coreos') and not template.startswith('rhcos'):
+            if template is not None and not template.startswith('coreos') and not template.startswith('rhcos'):
                 common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
                                  reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides)
                 self._uploadimage(name, pool=default_storagepool)
