@@ -691,8 +691,12 @@ class Kvirt(object):
                                                                                                            port,
                                                                                                            self.user,
                                                                                                            self.host)
+                    if self.debug:
+                        print(consolecommand)
                     os.popen(consolecommand)
                 url = "%s://%s:%s" % (protocol, host, localport)
+                if self.debug:
+                    print(url)
                 os.popen("remote-viewer %s &" % url)
 
     def serialconsole(self, name):

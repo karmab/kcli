@@ -622,7 +622,10 @@ def plan(args):
     yes = args.yes
     scale = args.scale
     info = args.info
+    volumepath = args.volumepath
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
+    if inputfile is not None and volumepath is not None:
+        inputfile = "%s/%s" % inputfile
     if info and get is None:
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
         baseconfig.info_plan(inputfile)
@@ -1079,6 +1082,8 @@ def cli():
     plan_parser.add_argument('-u', '--use', nargs='?', const='kvirt',
                              help='Plan to set as current. Defaults to kvirt',
                              metavar='USE')
+    plan_parser.add_argument('-v', '--volumepath', help='Volume Path where to find plans (useful with kcli container)',
+                             default='volumepath', metavar='VOLUMEPATH')
     plan_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     plan_parser.add_argument('--delay', default=0, help="Delay between each vm's creation", metavar='DELAY')
     plan_parser.add_argument('-P', '--param', action='append',

@@ -612,7 +612,7 @@ disks:
    pool: vms
  - size: 10
    thin: False
-   format: ide
+   interface: ide
 ```
 
 Within a disk section, you can use the word size, thin and format as keys
@@ -634,7 +634,7 @@ nets:
    gateway: 192.168.0.1
 ```
 
-Within a net section, you can use name, nic, IP, mac, mask, gateway and alias as keys.
+Within a net section, you can use name, nic, IP, mac, mask, gateway and alias as keys. type defaults to virtio but you can specify anyone (e1000,....)
 
 You can also use  *noconf: true* to only add the nic with no configuration done in the vm
 
