@@ -79,18 +79,16 @@ docker run --rm karmab/kcli
 
 the are several flags you'll want to pass depending on your use case 
 
-- `-v /var/run/libvirt:/var/run/libvirt` if running against a local hypervisor
-- `-v /var/lib/libvirt/images:/var/lib/libvirt/images` against a local hypervisor too and to be able to use kcli download
+- `-v /var/run/libvirt:/var/run/libvirt -v /var/lib/libvirt/images:/var/lib/libvirt/images` if running against a local hypervisor
 - ` ~/.kcli:/root/.kcli` to use your kcli configuration (also profiles and repositories) stored locally
 - `-v ~/.ssh:/root/.ssh` to share your ssh keys
-- `-v $SSH_AUTH_SOCK:/ssh-agent --env SSH_AUTH_SOCK=/ssh-agent` alternative way to share your ssh keys
 - `--security-opt label:disable` if running with selinux
-- `-v $PWD:/plans` to access plans below your current directory
+- `-v $PWD:/workdir` to access plans below your current directory
 
 As a bonus, you can alias kcli and run it as if it was installed locally:
 
 ```Shell
-alias kcli='docker run -it --rm --security-opt label:disable -v ~/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v ~/.ssh:/root/.ssh karmab/kcli'
+alias kcli='docker run -it --rm --security-opt label:disable -v ~/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v ~/.ssh:/root/.ssh -v $PWD:/workdir karmab/kcli'
 ```
 
 For web access, you can switch with `-p 9000:9000 --entrypoint=/usr/bin/kweb` and thus accessing to port 9000

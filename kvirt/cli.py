@@ -771,6 +771,7 @@ def scp(args):
     """Scp into vm"""
     recursive = args.recursive
     source = args.source[0]
+    volumepath = args.volumepath
     destination = args.destination[0]
     config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
@@ -778,6 +779,7 @@ def scp(args):
     if len(source.split(':')) == 2:
         name = source.split(':')[0]
         source = source.split(':')[1]
+        source = source if not os.path.exists("/i_am_a_container") else "%s/%s" % (volumepath, source)
         download = True
     elif len(destination.split(':')) == 2:
         name = destination.split(':')[0]
@@ -1083,7 +1085,7 @@ def cli():
                              help='Plan to set as current. Defaults to kvirt',
                              metavar='USE')
     plan_parser.add_argument('-v', '--volumepath', help='Volume Path (only used with kcli container)',
-                             default='/plans', metavar='VOLUMEPATH')
+                             default='/workdir', metavar='VOLUMEPATH')
     plan_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     plan_parser.add_argument('--delay', default=0, help="Delay between each vm's creation", metavar='DELAY')
     plan_parser.add_argument('-P', '--param', action='append',
@@ -1138,6 +1140,8 @@ def cli():
     scp_info = 'Scp into vm'
     scp_parser = subparsers.add_parser('scp', description=scp_info, help=scp_info)
     scp_parser.add_argument('-r', '--recursive', help='Recursive', action='store_true')
+    scp_parser.add_argument('-v', '--volumepath', help='Volume Path (only used with kcli container)',
+                            default='/workdir', metavar='VOLUMEPATH')
     scp_parser.add_argument('source', nargs=1)
     scp_parser.add_argument('destination', nargs=1)
     scp_parser.set_defaults(func=scp)
