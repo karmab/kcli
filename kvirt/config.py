@@ -948,7 +948,7 @@ class Kconfig(Kbaseconfig):
                         default_rhnregister = father.get('rhnregister', self.rhnregister)
                         default_rhnuser = father.get('rhnuser', self.rhnuser)
                         default_rhnpassword = father.get('rhnpassword', self.rhnpassword)
-                        default_rhnak = father.get('rhnak', self.rhnak)
+                        default_rhnak = father.get('rhnactivationkey', self.rhnak)
                         default_rhnorg = father.get('rhnorg', self.rhnorg)
                         default_cmds = common.remove_duplicates(self.cmds + father.get('cmds', []))
                         default_scripts = common.remove_duplicates(self.scripts + father.get('scripts', []))
@@ -1071,7 +1071,7 @@ class Kconfig(Kbaseconfig):
                                                 default_rhnuser] if e is not None), None)
                     rhnpassword = next((e for e in [profile.get('rhnpassword'), customprofile.get('rhnpassword'),
                                                     default_rhnpassword] if e is not None), None)
-                    rhnak = next((e for e in [profile.get('rhnak'), customprofile.get('rhnak'),
+                    rhnak = next((e for e in [profile.get('rhnactivationkey'), customprofile.get('rhnactivationkey'),
                                               default_rhnak] if e is not None), None)
                     rhnorg = next((e for e in [profile.get('rhnorg'), customprofile.get('rhnorg'),
                                                default_rhnorg] if e is not None), None)
