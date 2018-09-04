@@ -468,9 +468,9 @@ class Kbaseconfig:
             return {'result': 'success'}
 
     def info_plan(self, inputfile):
+        inputfile = os.path.expanduser(inputfile) if inputfile is not None else 'kcli_plan.yml'
         common.pprint("Providing information on parameters of plan %s..." %
                       inputfile, color='green')
-        inputfile = os.path.expanduser(inputfile) if inputfile is not None else 'kcli_plan.yml'
         if not os.path.exists(inputfile):
             common.pprint("No input file found nor default kcli_plan.yml. Leaving....", color='red')
             os._exit(1)
