@@ -138,8 +138,7 @@
   group: openshift
   url: github.com/karmab/kcli/plans/openshift
   file: minishift.yml
-  description: minshift bringing up a secondary vm
-  comments: driver can either be set to generic (default or kvm)
+  description: minshift based on kvm driver
   numvms: 2
   memory: 8192
   template: CentOS-7-x86_64-GenericCloud.qcow2
