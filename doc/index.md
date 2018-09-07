@@ -25,6 +25,7 @@ If you dont have kvm installed on the target host, you can also use the followin
 ```bash
 yum -y install libvirt libvirt-daemon-driver-qemu qemu-kvm 
 sudo usermod -aG qemu,libvirt YOUR_USER
+newgrp libvirt
 ```
 
 For interaction with local docker, you might also need the following

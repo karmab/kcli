@@ -30,6 +30,7 @@ when installing kcli package)
 
     yum -y install libvirt libvirt-daemon-driver-qemu qemu-kvm 
     sudo usermod -aG qemu,libvirt YOUR_USER
+    newgrp libvirt
 
 For interaction with local docker, you might also need the following
 
@@ -131,6 +132,12 @@ Or for a full install using latest
 ::
 
     pip install -e git+https://github.com/karmab/kcli.git#egg=kcli[all]
+
+On MacOSX, run the following command too
+
+::
+
+    sudo  /Applications/Python\ 3.6/Install\ Certificates.command
 
 Configuration
 =============
