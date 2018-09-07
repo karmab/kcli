@@ -18,4 +18,4 @@ docker pull karmab/kcli
 echo alias kcli=\'docker run --security-opt label:disable -it --rm -v ~/.kube:/root/.kube -v ~/.ssh:/root/.ssh -v ~/.kcli:/root/.kcli -v \$PWD:/workdir karmab/kcli\' >> /root/.bashrc
 ssh-keygen -t rsa -N '' -f /root/.ssh/id_rsa
 oc login --insecure-skip-tls-verify=true  `hostname -I | cut -f1 -d' '`:8443 -u developer -p developer
-setfacl -m user:107:rwx /root/openshift.local.clusterup/openshift.local.pv/pv*
+setfacl -m user:107:rwx /root/openshift.local.pv/pv*
