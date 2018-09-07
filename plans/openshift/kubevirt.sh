@@ -5,7 +5,7 @@ mount -o bind $KUBELET_ROOTFS/var/lib/kubelet/device-plugins /var/lib/kubelet/de
 yum -y install xorg-x11-xauth virt-viewer
 oc project kube-system
 [% if emulation %]
-oc create configmap -n kube-system kubevirt-config --from-literal debug.allowEmulation=true
+oc create configmap -n kube-system kubevirt-config --from-literal debug.useEmulation=true
 [% endif %]
 wget https://github.com/kubevirt/kubevirt/releases/download/$VERSION/kubevirt.yaml
 oc adm policy add-scc-to-user privileged -z kubevirt-privileged
