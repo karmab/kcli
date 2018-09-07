@@ -359,13 +359,16 @@
   group: openshift
   url: github.com/karmab/kcli/plans/openshift
   file: minishift.yml
-  description: minshift based on kvm driver
+  description: minshift based on kvm driver or generic
   numvms: 2
   memory: 8192
   template: CentOS-7-x86_64-GenericCloud.qcow2
   parameters:
    minishift_version: 1.23.0
    baseplan: upstream.yml
+   driver: generic
+   memory: 8192
+   deploy: false
 
 - name: kubevirt
   group: openshift

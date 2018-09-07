@@ -3,6 +3,7 @@ parameters:
  minishift_version: 1.23.0
  memory: 8192
  driver: generic
+ deploy: false
 
 minishift:
  template: Fedora-Cloud-Base-28-1.1.x86_64.qcow2
@@ -19,6 +20,9 @@ minishift:
  pool: default
  scripts: 
   - minishift_requirements.sh
+[% if deploy %]
+  - minishift_deploy.sh
+[% endif %]
  files:
    - path: /root/minishift_deploy.sh
      origin: minishift_deploy.sh
