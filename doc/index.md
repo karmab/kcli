@@ -113,6 +113,12 @@ Or for a full install using latest
 pip install -e git+https://github.com/karmab/kcli.git#egg=kcli[all]
 ```
 
+On MacOSX, run the following command too
+
+```
+sudo  /Applications/Python\ 3.6/Install\ Certificates.command
+```
+
 # Configuration
 
 If you are starting from a completely clean kvm host, you might have to create default pool . You can do it with kcli actually 
