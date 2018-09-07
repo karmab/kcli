@@ -467,10 +467,11 @@ class Kbaseconfig:
                 rmtree(repodir)
             return {'result': 'success'}
 
-    def info_plan(self, inputfile):
+    def info_plan(self, inputfile, quiet=False):
         inputfile = os.path.expanduser(inputfile) if inputfile is not None else 'kcli_plan.yml'
-        common.pprint("Providing information on parameters of plan %s..." %
-                      inputfile, color='green')
+        if not quiet:
+            common.pprint("Providing information on parameters of plan %s..." %
+                          inputfile, color='green')
         if not os.path.exists(inputfile):
             common.pprint("No input file found nor default kcli_plan.yml. Leaving....", color='red')
             os._exit(1)
@@ -479,6 +480,9 @@ class Kbaseconfig:
             parameters = yaml.load(parameters)['parameters']
             for parameter in parameters:
                 print(("%s: %s" % (parameter, parameters[parameter])))
+                if parameter == 'baseplan':
+                    self.info_plan(parameters[parameter], quiet=True)
+                    print()
         else:
             common.pprint("No parameters found. Leaving...", color='blue')
         return {'result': 'success'}
