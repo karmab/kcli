@@ -10,8 +10,7 @@
                }
 -%]
 sleep 30
-#yum -y install wget docker git
-yum -y install wget docker-1.13.1-63.git94f4240.el7.centos.x86_64 git
+yum -y install wget docker git
 systemctl enable docker
 sed -i "s@# INSECURE_REGISTRY=.*@INSECURE_REGISTRY='--insecure-registry 172.30.0.0/16'@" /etc/sysconfig/docker
 echo -e "DEVS=/dev/vdb\nVG=dockervg" > /etc/sysconfig/docker-storage-setup
