@@ -1,6 +1,6 @@
 parameters:
    baseplan: upstream.yml
-   kubevirt_version: v0.7.0
+   kubevirt_version: v0.8.0
    emulation: false
 
 kubevirt:
