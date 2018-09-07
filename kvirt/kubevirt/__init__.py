@@ -363,8 +363,8 @@ class Kubevirt(object):
         else:
             common.pprint("Tunneling virtctl through remote host %s. Make sure virtctl is installed there" % self.host,
                           color='blue')
-            command = "ssh -o LogLevel=QUIET -Xtp %s %s@%s virtctl vnc -n %s" % (self.port, self.user, self.host, name,
-                                                                                 namespace)
+            command = "ssh -o LogLevel=QUIET -Xtp %s %s@%s virtctl vnc %s -n %s" % (self.port, self.user, self.host,
+                                                                                    name, namespace)
         if self.debug:
             print(command)
         os.system(command)
