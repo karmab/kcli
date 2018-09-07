@@ -2,6 +2,7 @@ parameters:
  baseplan: upstream.yml
  minishift_version: 1.23.0
  memory: 8192
+ driver: generic
 
 minishift:
  template: Fedora-Cloud-Base-28-1.1.x86_64.qcow2
