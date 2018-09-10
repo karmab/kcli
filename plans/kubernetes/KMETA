@@ -12,6 +12,7 @@
    sdn: flannel
    nfs: false
    version: 1.10.5
+   multus: false
 
 - name: kubernetes
   group: kubernetes
