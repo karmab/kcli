@@ -1659,6 +1659,13 @@ class Kvirt(object):
                          <path>/dev/%s</path>
                          </target>
                          </pool>""" % (name, poolpath, name, name)
+        elif pooltype == 'zfs':
+            poolxml = """<pool type='zfs'>
+                         <name>%s</name>
+                         <source>
+                         <name>%s</name>
+                         </source>
+                         </pool>""" % (name, poolpath)
         else:
             print(("Invalid pool type %s.Leaving..." % pooltype))
             return {'result': 'failure', 'reason': "Invalid pool type %s" % pooltype}
@@ -1950,7 +1957,7 @@ class Kvirt(object):
         poolxml = pool.XMLDesc(0)
         root = ET.fromstring(poolxml)
         pooltype = list(root.getiterator('pool'))[0].get('type')
-        if pooltype == 'dir':
+        if pooltype in ['dir', 'zfs']:
             poolpath = list(root.getiterator('path'))[0].text
         else:
             poolpath = list(root.getiterator('device'))[0].get('path')
