@@ -1,7 +1,7 @@
 parameters:
  baseplan: upstream.yml
  minishift_version: 1.23.0
- memory: 8192
+ minishift_memory: 4096
  driver: generic
  deploy: false
 
