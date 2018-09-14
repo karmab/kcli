@@ -693,20 +693,23 @@ class Kvirt(object):
                 protocol = attributes['type']
                 port = attributes['port']
                 localport = port
+                consolecommand = ''
                 if tunnel:
                     localport = common.get_free_port()
-                    consolecommand = "ssh -o LogLevel=QUIET -f -p %s -L %s:127.0.0.1:%s %s@%s sleep 10" % (self.port,
-                                                                                                           localport,
-                                                                                                           port,
-                                                                                                           self.user,
-                                                                                                           self.host)
+                    consolecommand += "ssh -o LogLevel=QUIET -f -p %s -L %s:127.0.0.1:%s %s@%s sleep 10" % (self.port,
+                                                                                                            localport,
+                                                                                                            port,
+                                                                                                            self.user,
+                                                                                                            self.host)
                     if self.debug:
                         print(consolecommand)
-                    os.popen(consolecommand)
+                    # os.system(consolecommand)
                 url = "%s://%s:%s" % (protocol, host, localport)
                 if self.debug:
                     print(url)
-                os.popen("remote-viewer %s &" % url)
+                consolecommand += "; remote-viewer %s &" % url
+                # os.popen("remote-viewer %s &" % url)
+                os.popen(consolecommand)
 
     def serialconsole(self, name):
         conn = self.conn

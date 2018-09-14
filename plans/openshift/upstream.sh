@@ -9,9 +9,9 @@ export IP=`ip a l  eth0 | grep 'inet ' | cut -d' ' -f6 | awk -F'/' '{ print $1}'
 [% if openshift_version == '3.9' %]
 oc cluster up --public-hostname $IP.xip.io --routing-suffix $IP.xip.io
 [% elif asb %]
-oc cluster up --public-hostname $IP.xip.io --routing-suffix $IP.xip.io --enable=service-catalog,router,registry,web-console,persistent-volumes,rhel-imagestreams,automation-service-broker --base-dir=/root
+oc cluster up --public-hostname $IP.xip.io --routing-suffix $IP.xip.io --enable=service-catalog,router,registry,web-console,persistent-volumes,rhel-imagestreams,automation-service-broker
 [% else %]
-oc cluster up --public-hostname $IP.xip.io --routing-suffix $IP.xip.io --enable=router,registry,web-console,persistent-volumes,rhel-imagestreams --base-dir=/root
+oc cluster up --public-hostname $IP.xip.io --routing-suffix $IP.xip.io --enable=router,registry,web-console,persistent-volumes,rhel-imagestreams
 [% endif %]
 oc login -u system:admin
 docker update --restart=always origin
