@@ -9,7 +9,11 @@ label 1
 menu label ^1) Install CentOS 7
 menu default
 kernel centos7/vmlinuz
+[% if kickstart %]
+append initrd=centos7/initrd.img method=http://192.168.127.2 devfs=nomount ks=http://192.168.127.2/ks.cfg
+[% else %]
 append initrd=centos7/initrd.img method=http://192.168.127.2 devfs=nomount
+[% endif %]
 
 label 2
 menu label ^2) Boot from local drive
