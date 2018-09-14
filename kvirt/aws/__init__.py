@@ -11,12 +11,12 @@ from iptools import IpRange
 import os
 import time
 
-flavors = {'t2.nano': {'cpus': 1, 'memory': 512}, 't2.micro': {'cpus': 1, 'memory': 1024},
-           't2.small': {'cpus': 1, 'memory': 2048}, 't2.medium': {'cpus': 2, 'memory': 4096},
-           't2.large': {'cpus': 2, 'memory': 8144}, 't2.xlarge': {'cpus': 2, 'memory': 16384},
-           'm5.large': {'cpus': 2, 'memory': 8144}, 'm5.xlarge': {'cpus': 4, 'memory': 16384},
-           'm5.2xlarge': {'cpus': 8, 'memory': 32768}, 'm5.4xlarge': {'cpus': 16, 'memory': 65536}
-           }
+static_flavors = {'t2.nano': {'cpus': 1, 'memory': 512}, 't2.micro': {'cpus': 1, 'memory': 1024},
+                  't2.small': {'cpus': 1, 'memory': 2048}, 't2.medium': {'cpus': 2, 'memory': 4096},
+                  't2.large': {'cpus': 2, 'memory': 8144}, 't2.xlarge': {'cpus': 2, 'memory': 16384},
+                  'm5.large': {'cpus': 2, 'memory': 8144}, 'm5.xlarge': {'cpus': 4, 'memory': 16384},
+                  'm5.2xlarge': {'cpus': 8, 'memory': 32768}, 'm5.4xlarge': {'cpus': 16, 'memory': 65536}
+                  }
 
 
 # your base class __init__ needs to define the conn attribute and set it to None when backend cannot be reached
@@ -65,7 +65,8 @@ class Kaws(object):
                enableroot=True, alias=[], overrides={}, tags=None):
         template = self.__evaluate_template(template)
         defaultsubnetid = None
-        matchingflavors = [f for f in flavors if flavors[f]['cpus'] >= numcpus and flavors[f]['memory'] >= memory]
+        matchingflavors = [f for f in static_flavors if static_flavors[f]['cpus'] >= numcpus and
+                           static_flavors[f]['memory'] >= memory]
         if matchingflavors:
             flavor = matchingflavors[0]
             common.pprint("Using instance type %s" % flavor, color='green')
@@ -294,8 +295,9 @@ class Kaws(object):
         yamlinfo['status'] = state
         yamlinfo['ip'] = ip
         machinetype = vm['InstanceType']
-        if machinetype in flavors:
-            yamlinfo['cpus'], yamlinfo['memory'] = flavors[machinetype]['cpus'], flavors[machinetype]['memory']
+        if machinetype in static_flavors:
+            yamlinfo['cpus'] = static_flavors[machinetype]['cpus']
+            yamlinfo['memory'] = static_flavors[machinetype]['memory']
         # yamlinfo['autostart'] = vm['scheduling']['automaticRestart']
         yamlinfo['template'] = source
         # yamlinfo['creationdate'] = dateparser.parse(vm['creationTimestamp']).strftime("%d-%m-%Y %H:%M")
@@ -644,3 +646,12 @@ class Kaws(object):
         entry = "%s.%s." % (name, domain)
         dns.change_resource_record_sets(HostedZoneId=zoneid, ChangeBatch={'Changes': changes})
         return {'result': 'success'}
+
+    def flavors(self):
+        results = []
+        for flavor in static_flavors:
+            name = flavor
+            numcpus = static_flavors[flavor]['cpus']
+            memory = static_flavors[flavor]['memory']
+            results.append([name, numcpus, memory])
+        return results

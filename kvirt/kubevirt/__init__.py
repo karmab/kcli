@@ -952,3 +952,6 @@ class Kubevirt(object):
                 return pool
         common.pprint("Pool %s not found. Using None" % pool, color='blue')
         return None
+
+    def flavors(self):
+        return []

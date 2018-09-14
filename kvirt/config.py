@@ -489,6 +489,17 @@ class Kconfig(Kbaseconfig):
                                 reservedns, reservehost])
         return sorted(results, key=lambda x: x[0])
 
+    def list_flavors(self):
+        results = []
+        for flavor in self.flavors:
+            info = self.flavors[flavor]
+            numcpus = info.get('numcpus')
+            memory = info.get('memory')
+            disk = info.get('disk', '')
+            if numcpus is not None and memory is not None:
+                results.append([flavor, numcpus, memory, disk])
+        return sorted(results, key=lambda x: x[0])
+
     def list_containerprofiles(self):
         results = []
         for profile in sorted(self.profiles):

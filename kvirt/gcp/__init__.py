@@ -758,3 +758,18 @@ class Kgcp(object):
                 changes.delete_record_set(record_set)
             changes.create()
         return {'result': 'success'}
+
+    def flavors(self):
+        conn = self.conn
+        project = self.project
+        zone = self.zone
+        flavors = []
+        results = conn.machineTypes().list(project=project, zone=zone).execute()
+        if 'items' not in results:
+            return []
+        for flavor in results['items']:
+            name = flavor['name']
+            numcpus = flavor['guestCpus']
+            memory = flavor['memoryMb']
+            flavors.append([name, numcpus, memory])
+        return flavors

@@ -253,3 +253,7 @@ class Kbase(object):
     def get_pool_path(self, pool):
         print("not implemented")
         return
+
+# return a list of [name, numcpus, memory] for each flavor, if the platform has this concept
+    def flavors(self):
+        return []

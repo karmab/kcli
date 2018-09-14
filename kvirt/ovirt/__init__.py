@@ -693,3 +693,6 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
             return {'result': 'failure', 'reason': "Pool %s not found" % pool}
         pool = poolsearch[0]
         return pool.storage.path
+
+    def flavors(self):
+        return []

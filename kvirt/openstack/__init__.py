@@ -601,3 +601,9 @@ class Kopenstack(object):
     def get_pool_path(self, pool):
         print("not implemented")
         return
+
+    def flavors(self):
+        nova = self.nova
+        nova.flavors.list
+        flavors = [[flavor.name, flavor.vcpus, flavor.ram] for flavor in nova.flavors.list()]
+        return flavors

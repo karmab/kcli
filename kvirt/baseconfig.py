@@ -119,6 +119,14 @@ class Kbaseconfig:
         else:
             with open(profilefile, 'r') as entries:
                 self.profiles = yaml.load(entries)
+        flavorsfile = default.get('flavors', "%s/.kcli/flavors.yml" %
+                                  os.environ.get('HOME'))
+        flavorsfile = os.path.expanduser(flavorsfile)
+        if not os.path.exists(flavorsfile):
+            self.flavors = {}
+        else:
+            with open(flavorsfile, 'r') as entries:
+                self.flavors = yaml.load(entries)
         self.extraclients = {}
         self._extraclients = []
         if client == 'all':

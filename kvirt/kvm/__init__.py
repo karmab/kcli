@@ -1999,3 +1999,6 @@ class Kvirt(object):
         else:
             poolpath = list(root.getiterator('device'))[0].get('path')
         return poolpath
+
+    def flavors(self):
+        return []

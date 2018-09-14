@@ -184,9 +184,10 @@ def host(args):
 
 
 def list(args):
-    """List hosts, profiles, templates, isos, pools or vms"""
+    """List hosts, profiles, flavors, templates, isos, pools or vms"""
     hosts = args.hosts
     profiles = args.profiles
+    flavors = args.flavors
     templates = args.templates
     isos = args.isos
     disks = args.disks
@@ -329,6 +330,21 @@ def list(args):
                         profilestable.add_row(profile)
             profilestable.align["Profile"] = "l"
             print(profilestable)
+        return
+    elif flavors:
+        # flavors = config.list_flavors()
+        flavors = k.flavors()
+        if short:
+            flavorstable = PrettyTable(["Flavor"])
+            for flavor in sorted(flavors):
+                flavorname = profile[0]
+                flavorstable.add_row([flavorname])
+        else:
+            flavorstable = PrettyTable(["Flavor", "Numcpus", "Memory"])
+            for flavor in sorted(flavors):
+                    flavorstable.add_row(flavor)
+        flavorstable.align["Flavor"] = "l"
+        print(flavorstable)
         return
     elif templates:
         templatestable = PrettyTable(["Template"])
@@ -1024,10 +1040,11 @@ def cli():
     info_parser.add_argument('names', help='VMNAMES', nargs='*')
     info_parser.set_defaults(func=info)
 
-    list_info = 'List hosts, profiles, templates, isos,...'
+    list_info = 'List hosts, profiles, flavors, templates, isos,...'
     list_parser = subparsers.add_parser('list', description=list_info, help=list_info)
     list_parser.add_argument('-H', '--hosts', action='store_true')
     list_parser.add_argument('-p', '--profiles', action='store_true')
+    list_parser.add_argument('-f', '--flavors', action='store_true')
     list_parser.add_argument('-t', '--templates', action='store_true')
     list_parser.add_argument('-i', '--isos', action='store_true')
     list_parser.add_argument('-d', '--disks', action='store_true')
@@ -1042,7 +1059,7 @@ def cli():
     list_parser.add_argument('--products', action='store_true')
     list_parser.add_argument('-g', '--group', help='Only Display products of the indicated group', metavar='GROUP')
     list_parser.add_argument('-r', '--repo', help='Only Display products of the indicated repository', metavar='REPO')
-    list_parser.add_argument('-f', '--filters', choices=('up', 'down'))
+    list_parser.add_argument('--filters', choices=('up', 'down'))
     list_parser.set_defaults(func=list)
 
     network_info = 'Create/Delete Network'

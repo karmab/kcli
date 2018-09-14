@@ -1078,3 +1078,6 @@ class Kbox(object):
         path = [p['path'] for p in self._pool_info() if p['name'] == pool]
         if path:
             return path[0]
+
+    def flavors(self):
+        return []

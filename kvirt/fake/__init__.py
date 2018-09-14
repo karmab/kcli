@@ -288,3 +288,6 @@ class Kfake(object):
     def get_pool_path(self, pool):
         print("not implemented")
         return
+
+    def flavors(self):
+        return []
