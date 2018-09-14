@@ -226,11 +226,20 @@ class Kvirt(object):
                     return {'result': 'failure', 'reason': "lvm template can not be used with a dir pool.Leaving..."}
                 if '/dev' not in backing and diskpooltype == 'logical':
                     return {'result': 'failure', 'reason': "file template can not be used with a lvm pool.Leaving..."}
-                backingxml = """<backingStore type='file' index='1'>
-                                <format type='qcow2'/>
-                                <source file='%s'/>
-                                <backingStore/>
-                                </backingStore>""" % backing
+                if '/dev' in backing:
+                    # backingxml = """<backingStore type='block' index='1'>
+                    #                <format type='raw'/>
+                    #                <path>%s</path>
+                    #                </backingStore>""" % backing
+                    backingxml = """<backingStore type='block' index='1'>
+                                    <format type='raw'/>
+                                    <source file='%s'/>
+                                    </backingStore>""" % backing
+                else:
+                    backingxml = """<backingStore type='file' index='1'>
+                                    <format type='qcow2'/>
+                                    <source file='%s'/>
+                                    </backingStore>""" % backing
             else:
                 backing = None
                 backingxml = '<backingStore/>'
@@ -565,7 +574,7 @@ class Kvirt(object):
             poolxml = pool.XMLDesc(0)
             root = ET.fromstring(poolxml)
             pooltype = list(root.getiterator('pool'))[0].get('type')
-            if pooltype == 'dir':
+            if pooltype in ['dir', 'zfs']:
                 poolpath = list(root.getiterator('path'))[0].text
             else:
                 poolpath = list(root.getiterator('device'))[0].get('path')
@@ -987,17 +996,30 @@ class Kvirt(object):
     def _xmlvolume(self, path, size, pooltype='file', backing=None, diskformat='qcow2'):
         size = int(size) * MB
         if int(size) == 0:
-            size = 500 * 1024
+            # size = 500 * 1024
+            size = 512 * 1024
         name = os.path.basename(path)
-        if pooltype == 'block':
+        if pooltype == 'logical':
             volume = """<volume type='block'>
                         <name>%s</name>
                         <capacity unit="bytes">%d</capacity>
                         <target>
                         <path>%s</path>
                         <compat>1.1</compat>
-                      </target>
-                    </volume>""" % (name, size, path)
+                        </target>
+                        </volume>""" % (name, size, path)
+            return volume
+        if pooltype == 'zfs':
+            volume = """<volume type='block'>
+                        <name>%s</name>
+                        <key>%s/%s</key>
+                        <source>
+                        </source>
+                        <capacity unit='bytes'>%d</capacity>
+                        <target>
+                        <path>/%s/%s</path>
+                        </target>
+                        </volume>""" % (name, path, name, size, path, name)
             return volume
         if backing is not None:
             backingstore = """
@@ -1194,7 +1216,7 @@ class Kvirt(object):
     def handler(self, stream, data, file_):
         return file_.read(data)
 
-    def _uploadimage(self, name, pool='default', origin='/tmp', suffix='.ISO'):
+    def _uploadimage(self, name, pool='default', pooltype='file', origin='/tmp', suffix='.ISO', size=0):
         name = "%s%s" % (name, suffix)
         conn = self.conn
         poolxml = pool.XMLDesc(0)
@@ -1203,7 +1225,7 @@ class Kvirt(object):
             poolpath = element.text
             break
         imagepath = "%s/%s" % (poolpath, name)
-        imagexml = self._xmlvolume(path=imagepath, size=0, diskformat='raw')
+        imagexml = self._xmlvolume(path=imagepath, size=size, diskformat='raw', pooltype=pooltype)
         pool.createXML(imagexml, 0)
         imagevolume = conn.storageVolLookupByPath(imagepath)
         stream = conn.newStream(0)
@@ -1690,17 +1712,18 @@ class Kvirt(object):
         poolxml = pool.XMLDesc(0)
         root = ET.fromstring(poolxml)
         pooltype = list(root.getiterator('pool'))[0].get('type')
-        if pooltype == 'dir':
+        if pooltype in ['dir', 'zfs']:
             poolpath = list(root.getiterator('path'))[0].text
         else:
             poolpath = list(root.getiterator('device'))[0].get('path')
             return {'result': 'failure', 'reason': "Upload to a lvm pool not implemented not found"}
+        downloadpath = poolpath if pooltype == 'dir' else '/tmp'
         if shortimage in volumes:
             return {'result': 'failure', 'reason': "Template %s already exists in pool %s" % (shortimage, poolname)}
-        if self.host == 'localhost' or self.host == '127.0.0.1':
-            downloadcmd = 'curl -Lo %s/%s -f %s' % (poolpath, shortimage, image)
+        if self.host == 'localhost' or self.host == '127.0.0.1' or pooltype in ['logical', 'zfs']:
+            downloadcmd = 'curl -Lo %s/%s -f %s' % (downloadpath, shortimage, image)
         elif self.protocol == 'ssh':
-            downloadcmd = 'ssh -p %s %s@%s "curl -Lo %s/%s -f %s"' % (self.port, self.user, self.host, poolpath,
+            downloadcmd = 'ssh -p %s %s@%s "curl -Lo %s/%s -f %s"' % (self.port, self.user, self.host, downloadpath,
                                                                       shortimage, image)
         code = os.system(downloadcmd)
         if code != 0:
@@ -1713,6 +1736,7 @@ class Kvirt(object):
             elif self.protocol == 'ssh':
                 cmd = 'ssh -p %s %s@%s "bunzip2 %s/%s"' % (self.port, self.user, self.host, poolpath, shortimage)
                 os.system(cmd)
+            shortimage = shortimage.replace('.bz2', '')
         if shortimage.endswith('gz'):
             if self.host == 'localhost' or self.host == '127.0.0.1':
                 if find_executable('gunzip') is not None:
@@ -1721,6 +1745,7 @@ class Kvirt(object):
             elif self.protocol == 'ssh':
                 cmd = 'ssh -p %s %s@%s "bunzip2 %s/%s"' % (self.port, self.user, self.host, poolpath, shortimage)
                 os.system(cmd)
+            shortimage = shortimage.replace('.gz', '')
         if shortimage.endswith('xz'):
             if self.host == 'localhost' or self.host == '127.0.0.1':
                 if find_executable('unxz') is not None:
@@ -1729,6 +1754,7 @@ class Kvirt(object):
             elif self.protocol == 'ssh':
                 cmd = 'ssh -p %s %s@%s "unxz %s/%s"' % (self.port, self.user, self.host, poolpath, shortimage)
                 os.system(cmd)
+            shortimage = shortimage.replace('.xz', '')
         if cmd is not None:
             if self.host == 'localhost' or self.host == '127.0.0.1':
                 if find_executable('virt-customize') is not None:
@@ -1739,6 +1765,14 @@ class Kvirt(object):
                                                                                           self.host, poolpath,
                                                                                           shortimage, cmd)
                 os.system(cmd)
+        if pooltype == 'zfs':
+            # if self.host == 'localhost' or self.host == '127.0.0.1':
+            #    downloadsize = os.path.getsize("/tmp/%s" % shortimage) >> 20
+            # elif self.protocol == 'ssh':
+            #    cmd = 'ssh -p %s %s@%s "du -m /tmp/%s | cut -f1"' % (self.port, self.user, self.host, shortimage)
+            #    downloadsize = int(os.popen(cmd).read())
+            downloadsize = os.path.getsize("/tmp/%s" % shortimage) >> 20
+            self._uploadimage(shortimage, pool=pool, pooltype=pooltype, suffix='', size=downloadsize)
         pool.refresh()
         return {'result': 'success'}
 
