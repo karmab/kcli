@@ -342,20 +342,6 @@
    initializer: true
    openshift_version: 3.7
 
-- name: asb39
-  group: openshift
-  url: github.com/karmab/kcli/plans/openshift
-  file: asb39.yml
-  description: Ansible Service Broker based on run_latest_build.sh script suitable for openshift 3.9
-  comments: you can define the org parameter to use an additional apb org from docker hub
-  numvms: 1
-  memory: 6144
-  template: Fedora-Cloud-Base-27-1.6.x86_64.qcow2
-  parameters:
-   docker_disk_size: 60
-   initializer: false
-   openshift_version: latest
-
 - name: minishift
   group: openshift
   url: github.com/karmab/kcli/plans/openshift

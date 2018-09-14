@@ -1,7 +1,6 @@
 parameters:
   docker_disk_size: 60
   deploy_book_info: false
-  initializer: true
   openshift_version: 3.7
 
 istio:
@@ -18,8 +17,6 @@ istio:
   - path: /root/bookgen.sh
     origin: bookgen.sh
     mode: 700
-  - path: /root/initializer.txt
-    origin: initializer.txt
  scripts: 
   - requirements.sh
   - upstream.sh

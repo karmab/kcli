@@ -2,7 +2,6 @@ parameters:
   template: CentOS-7-x86_64-GenericCloud.qcow2
   memory: 6144
   docker_disk_size: 60
-  initializer: false
   openshift_version: '3.10'
   asb: false
 
@@ -16,9 +15,6 @@ origin:
   - size: 10
   - size: [[ docker_disk_size ]]
  pool: default
- files:
-  - path: /root/initializer.txt
-    origin: initializer.txt
  scripts: 
   - requirements.sh
   - upstream.sh

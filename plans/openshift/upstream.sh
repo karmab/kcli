@@ -14,9 +14,5 @@ oc cluster up --public-hostname $IP.xip.io --routing-suffix $IP.xip.io --enable=
 oc cluster up --public-hostname $IP.xip.io --routing-suffix $IP.xip.io --enable=router,registry,web-console,persistent-volumes,rhel-imagestreams --base-dir=/root
 [% endif %]
 oc login -u system:admin
-[% if initializer %]
-grep -q Initializers /var/lib/origin/openshift.local.config/master/master-config.yaml || sed  -i "/GenericAdmissionWebhook/i\ \ \ \ `cat /root/initializer.txt`" /var/lib/origin/openshift.local.config/master/master-config.yaml
-docker restart origin
-[% endif %]
 docker update --restart=always origin
 oc adm policy add-cluster-role-to-user cluster-admin developer
