@@ -1128,7 +1128,7 @@ class Kconfig(Kbaseconfig):
                             cmds = reportcmd
                         else:
                             cmds = cmds + reportcmd
-                    if skip_rhnregister_script and template.startswith('rhel'):
+                    if skip_rhnregister_script and template is not None and template.startswith('rhel'):
                         rhncommands = []
                         if rhnuser is not None and rhnpassword is not None:
                             rhncommands.append('subscription-manager register --force --username=%s --password=%s'

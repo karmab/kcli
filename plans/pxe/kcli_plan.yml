@@ -1,0 +1,47 @@
+parameters:
+ template: [[ template ]]
+ network: pxetest
+
+[[ network ]]:
+ type: network
+ cidr: 192.168.127.0/24
+ pxe: 192.168.127.2
+
+pxeserver:
+ template: CentOS-7-x86_64-GenericCloud.qcow2
+ nets:
+ - name: [[ network ]]
+   ip: 192.168.127.2
+   mask: 255.255.255.0
+   gateway: 192.168.127.1
+   dns: 192.168.127.1
+ files:
+ - path: /root/pxeserver_default
+   origin: pxeserver_default
+ cmds:
+   - yum -y install httpd xinetd syslinux tftp-server wget
+   - wget http://repo.nixval.com/CentOS/7/isos/x86_64/CentOS-7-x86_64-Minimal-1804.iso
+   - mount -o loop CentOS-7-x86_64-Minimal-1804.iso /mnt/
+   - cp -a /mnt/* /var/www/html
+   - chmod -R 755 /var/www/html
+   - setenforce 0 
+   - cp -a /usr/share/syslinux/* /var/lib/tftpboot/
+   - mkdir /var/lib/tftpboot/centos7
+   - cp /mnt/images/pxeboot/vmlinuz  /var/lib/tftpboot/centos7
+   - cp /mnt/images/pxeboot/initrd.img  /var/lib/tftpboot/centos7
+   - mkdir /var/lib/tftpboot/pxelinux.cfg
+   - cp /root/pxeserver_default /var/lib/tftpboot/pxelinux.cfg/default
+   - chmod 777 /var/lib/tftpboot/pxelinux.cfg/default
+   - sed -i "s/disable.*/disable = no/" /etc/xinetd.d/tftp
+   - systemctl restart xinetd
+   - systemctl restart httpd
+   - systemctl enable xinetd
+   - systemctl enable httpd
+
+pxeclient:
+ cloudinit: false
+ memory: 2048
+ disks:
+ - 20
+ nets:
+ - name: [[ network ]]
