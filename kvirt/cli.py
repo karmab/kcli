@@ -759,6 +759,7 @@ def ssh(args):
     r = args.R
     D = args.D
     X = args.X
+    Y = args.Y
     config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
     tunnel = config.tunnel
@@ -773,7 +774,7 @@ def ssh(args):
         name = name.split('@')[1]
     else:
         user = None
-    sshcommand = k.ssh(name, user=user, local=l, remote=r, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, D=D)
+    sshcommand = k.ssh(name, user=user, local=l, remote=r, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, Y=Y, D=D)
     if sshcommand is not None:
         if find_executable('ssh') is not None:
             os.system(sshcommand)
@@ -1181,6 +1182,7 @@ def cli():
     ssh_parser.add_argument('-L', help='Local Forwarding', metavar='LOCAL')
     ssh_parser.add_argument('-R', help='Remote Forwarding', metavar='REMOTE')
     ssh_parser.add_argument('-X', action='store_true', help='Enable X11 Forwarding')
+    ssh_parser.add_argument('-Y', action='store_true', help='Enable X11 Forwarding(Insecure)')
     ssh_parser.add_argument('name', metavar='VMNAME', nargs='*')
     ssh_parser.set_defaults(func=ssh)
 

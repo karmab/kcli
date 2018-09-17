@@ -418,11 +418,11 @@ class Kopenstack(object):
         return user, ip
 
     def ssh(self, name, user=None, local=None, remote=None, tunnel=False,
-            insecure=False, cmd=None, X=False, D=None):
+            insecure=False, cmd=None, X=False, Y=False, D=None):
         u, ip = self._ssh_credentials(name)
         tunnel = False
         sshcommand = common.ssh(name, ip=ip, host=self.host, user=u, local=local, remote=remote,
-                                tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, debug=self.debug)
+                                tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, Y=Y, debug=self.debug)
         if self.debug:
             print(sshcommand)
         return sshcommand

@@ -191,7 +191,7 @@ class Kbase(object):
 # remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X,
 # debug=self.debug)
     def ssh(self, name, user=None, local=None, remote=None, tunnel=False,
-            insecure=False, cmd=None, X=False, D=None):
+            insecure=False, cmd=None, X=False, Y=False, D=None):
         print("not implemented")
         return
 

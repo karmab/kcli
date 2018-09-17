@@ -1592,7 +1592,8 @@ class Kvirt(object):
             print("No ip found. Cannot ssh...")
         return user, ip
 
-    def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, D=None):
+    def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, Y=False,
+            D=None):
         u, ip = self._ssh_credentials(name)
         if user is None:
             user = u
@@ -1602,6 +1603,8 @@ class Kvirt(object):
             sshcommand = "-A %s@%s" % (user, ip)
             if X:
                 sshcommand = "-X %s" % (sshcommand)
+            if Y:
+                sshcommand = "-Y %s" % (sshcommand)
             if D is not None:
                 sshcommand = "-D %s %s" % (D, sshcommand)
             if cmd:

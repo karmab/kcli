@@ -483,10 +483,11 @@ class Kaws(object):
             print("No ip found. Cannot ssh...")
         return user, ip
 
-    def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, D=None):
+    def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, Y=False,
+            D=None):
         u, ip = self._ssh_credentials(name)
         sshcommand = common.ssh(name, ip=ip, host=self.host, port=self.port, user=u,
-                                local=local, remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X,
+                                local=local, remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, Y=Y,
                                 debug=self.debug)
         return sshcommand
 

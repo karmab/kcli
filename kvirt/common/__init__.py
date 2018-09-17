@@ -514,7 +514,7 @@ def print_info(yamlinfo, output='plain', fields=None, values=False):
 
 
 def ssh(name, ip='', host=None, port=22, hostuser=None, user=None, local=None, remote=None, tunnel=False,
-        insecure=False, cmd=None, X=False, debug=False, D=None):
+        insecure=False, cmd=None, X=False, Y=False, debug=False, D=None):
         if ip == '':
             return None
         else:
@@ -523,6 +523,8 @@ def ssh(name, ip='', host=None, port=22, hostuser=None, user=None, local=None, r
                 sshcommand = "-D %s %s" % (D, sshcommand)
             if X:
                 sshcommand = "-X %s" % (sshcommand)
+            if Y:
+                sshcommand = "-Y %s" % (sshcommand)
             if cmd:
                 sshcommand = "%s %s" % (sshcommand, cmd)
             if host not in ['localhost', '127.0.0.1'] and tunnel:

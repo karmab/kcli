@@ -593,12 +593,12 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
         return user, ip
 
     def ssh(self, name, user=None, local=None, remote=None, tunnel=False,
-            insecure=False, cmd=None, X=False, D=None):
+            insecure=False, cmd=None, X=False, Y=False, D=None):
         u, ip = self._ssh_credentials(name)
         if ip == '':
             return None
         sshcommand = common.ssh(name, ip=ip, host=self.host, port=self.port, hostuser=self.ssh_user, user=u,
-                                local=local, remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X,
+                                local=local, remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, Y=Y,
                                 debug=self.debug)
         return sshcommand
 
