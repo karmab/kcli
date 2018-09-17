@@ -9,7 +9,7 @@ from kvirt import defaults
 from iptools import IpRange
 from kvirt import common
 from netaddr import IPAddress, IPNetwork
-from libvirt import open as libvirtopen, registerErrorHandler
+from libvirt import open as libvirtopen, registerErrorHandler, VIR_DOMAIN_AFFECT_LIVE, VIR_DOMAIN_AFFECT_CONFIG
 import os
 from subprocess import call
 import re
@@ -1516,7 +1516,11 @@ class Kvirt(object):
                     %s
                     <model type='virtio'/>
                     </interface>""" % (networktype, source)
-        vm.attachDevice(nicxml)
+        if vm.isActive() == 1:
+            # vm.attachDevice(nicxml)
+            vm.attachDeviceFlags(nicxml, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
+        else:
+            vm.attachDeviceFlags(nicxml, VIR_DOMAIN_AFFECT_CONFIG)
         vm = conn.lookupByName(name)
         vmxml = vm.XMLDesc(0)
         conn.defineXML(vmxml)
@@ -1558,7 +1562,11 @@ class Kvirt(object):
                     </interface>""" % (networktype, mac, source)
         if self.debug:
             print(nicxml)
-        vm.detachDevice(nicxml)
+        # vm.detachDevice(nicxml)
+        if vm.isActive() == 1:
+            vm.detachDeviceFlags(nicxml, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
+        else:
+            vm.detachDeviceFlags(nicxml, VIR_DOMAIN_AFFECT_CONFIG)
         vm = conn.lookupByName(name)
         vmxml = vm.XMLDesc(0)
         conn.defineXML(vmxml)
