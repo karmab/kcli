@@ -1,7 +1,7 @@
 parameters:
- template: CentOS-7-x86_64-GenericCloud.qcow2
  network: pxetest
- kickstart: false
+ kickstart: true
+ template: CentOS-7-x86_64-GenericCloud.qcow2
  user: centos
  password: unix1234
  url: http://repo.nixval.com/CentOS/7/isos/x86_64/CentOS-7-x86_64-Minimal-1804.iso
@@ -24,10 +24,10 @@ pxeserver:
    gateway: 192.168.127.1
    dns: 192.168.127.1
  files:
- - path: /root/pxeserver_default
-   origin: pxeserver_default
- - path: /root/ks.cfg
-   origin: ks.cfg
+  - path: /root/default.ks
+    origin: default.ks
+  - path: /root/default.pxe
+    origin: default.pxe
  scripts:
  - setup.sh
 

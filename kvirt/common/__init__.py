@@ -1,5 +1,6 @@
 #!/usr/bin/env python''
 
+import base64
 from jinja2 import Environment, FileSystemLoader
 from distutils.spawn import find_executable
 import errno
@@ -12,7 +13,7 @@ import json
 import os
 import yaml
 
-binary_types = ['bz2', 'deb', 'jpg', 'gz', 'jpeg', 'iso', 'png', 'rpm', 'tgz', 'zip']
+binary_types = ['bz2', 'deb', 'jpg', 'gz', 'jpeg', 'iso', 'png', 'rpm', 'tgz', 'zip', 'ks']
 ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety', 'zesty', 'artful', 'bionic', 'cosmic']
 
 
@@ -233,7 +234,8 @@ def process_files(files=[], overrides={}):
             binary = True if '.' in origin and origin.split('.')[-1].lower() in binary_types else False
             if binary:
                 with open(origin, "rb") as f:
-                    content = f.read().encode("base64")
+                    # content = f.read().encode("base64")
+                    content = base64.b64encode(f.read())
             elif overrides:
                 basedir = os.path.dirname(origin) if os.path.dirname(origin) != '' else '.'
                 env = Environment(block_start_string='[%', block_end_string='%]',
@@ -255,13 +257,13 @@ def process_files(files=[], overrides={}):
         data += "  path: %s\n" % path
         data += "  permissions: '%s'\n" % (permissions)
         if binary:
-            data += "  content: !!binary | \n"
+            data += "  content: !!binary | \n     %s\n" % str(content, "utf-8")
         else:
             data += "  content: | \n"
-        if isinstance(content, str):
-            content = content.split('\n')
-        for line in content:
-            data += "     %s\n" % line.rstrip()
+            if isinstance(content, str):
+                content = content.split('\n')
+            for line in content:
+                data += "     %s\n" % line.strip()
     return data
 
 
