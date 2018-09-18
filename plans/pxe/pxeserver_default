@@ -3,16 +3,16 @@ prompt 0
 timeout 100
 ONTIMEOUT 1
 
-menu title ########## CentOS 7 PXE Boot Menu ##########
+menu title ########## PXE Boot Menu ##########
 
 label 1
-menu label ^1) Install CentOS 7
+menu label ^1) Install Distro
 menu default
-kernel centos7/vmlinuz
+kernel distro/vmlinuz
 [% if kickstart %]
-append initrd=centos7/initrd.img method=http://192.168.127.2 devfs=nomount ks=http://192.168.127.2/ks.cfg
+append initrd=distro/initrd.img method=http://192.168.127.2 devfs=nomount ks=http://192.168.127.2/ks.cfg
 [% else %]
-append initrd=centos7/initrd.img method=http://192.168.127.2 devfs=nomount
+append initrd=distro/initrd.img method=http://192.168.127.2 devfs=nomount
 [% endif %]
 
 label 2
