@@ -1,7 +1,7 @@
 default menu.c32
 prompt 0
 timeout 100
-ONTIMEOUT 1
+ONTIMEOUT 2
 
 menu title ########## PXE Boot Menu ##########
 
