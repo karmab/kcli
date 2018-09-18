@@ -227,13 +227,14 @@
   description: Upstream Openshift based on oc cluster up
   numvms: 1
   memory: 6144
-  comments: openshift_version can also be set to to an older one
+  comments: openshift_version can also be set to to an older one and asb enabled
   template: CentOS-7-x86_64-GenericCloud.qcow2
   parameters:
    memory: 6144
    docker_disk_size: 60
    initializer: false
    openshift_version: '3.10'
+   asb: False
 
 - name: ocp
   group: openshift
@@ -598,6 +599,22 @@
   parameters:
     password: unix1234
     version: 4.2
+
+- name: pxeserver
+  group: pxe
+  url:  github.com/karmab/kcli/plans/pxe
+  file: kcli_plan.yml
+  description: pxeserver with optional kickstart and test machine. Override iso url if needed
+  numvms: 1
+  template: CentOS-7-x86_64-GenericCloud.qcow2
+  parameters:
+   template: CentOS-7-x86_64-GenericCloud.qcow2
+   network: pxetest
+   kickstart: false
+   user: centos
+   password: unix1234
+   url: http://repo.nixval.com/CentOS/7/isos/x86_64/CentOS-7-x86_64-Minimal-1804.iso
+   test: false
 
 - name: tower
   group: tower
