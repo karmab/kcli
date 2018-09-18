@@ -267,6 +267,7 @@ class Kvirt(object):
         alias = []
         etcd = None
         for index, net in enumerate(nets):
+            ovs = False
             macxml = ''
             nettype = 'virtio'
             if isinstance(net, str):
@@ -290,18 +291,22 @@ class Kvirt(object):
                     alias = nets[index]['alias']
                 if 'etcd' in nets[index] and nets[index]['etcd']:
                     etcd = "eth%s" % index
-            if netname in bridges:
+                if 'ovs' in nets[index] and nets[index]['ovs']:
+                    ovs = True
+            if netname in bridges or ovs:
                 sourcenet = 'bridge'
             elif netname in networks:
                 sourcenet = 'network'
             else:
                 return {'result': 'failure', 'reason': "Invalid network %s" % netname}
+            ovsxml = "<virtualport type='openvswitch'/>" if ovs else ''
             netxml = """%s
                      <interface type='%s'>
                      %s
                      <source %s='%s'/>
+                     %s
                      <model type='%s'/>
-                     </interface>""" % (netxml, sourcenet, macxml, sourcenet, netname, nettype)
+                     </interface>""" % (netxml, sourcenet, macxml, sourcenet, netname, ovsxml, nettype)
         metadata = """%s
                     <kvirt:plan>%s</kvirt:plan>
                     </kvirt:info>
