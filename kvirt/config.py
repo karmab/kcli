@@ -38,9 +38,10 @@ class Kconfig(Kbaseconfig):
             elif self.type == 'kubevirt':
                 context = self.options.get('context')
                 usecloning = self.options.get('usecloning', False)
+                multus = self.options.get('multus', True)
                 from kvirt.kubevirt import Kubevirt
-                k = Kubevirt(context=context, usecloning=usecloning, host=self.host, port=self.port, user=self.user,
-                             debug=debug)
+                k = Kubevirt(context=context, usecloning=usecloning, multus=multus, host=self.host, port=self.port,
+                             user=self.user, debug=debug)
                 self.host = k.host
             elif self.type == 'gcp':
                 credentials = self.options.get('credentials')

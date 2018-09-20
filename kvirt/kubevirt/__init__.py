@@ -31,11 +31,13 @@ def pretty_print(o):
 
 
 class Kubevirt(object):
-    def __init__(self, context=None, usecloning=False, host='127.0.0.1', port=22, user='root', debug=False, tags=None):
+    def __init__(self, context=None, usecloning=False, multus=True, host='127.0.0.1', port=22, user='root', debug=False,
+                 tags=None):
         self.host = host
         self.port = port
         self.user = user
         self.usecloning = usecloning
+        self.multus = multus
         self.conn = 'OK'
         self.tags = tags
         contexts, current = config.list_kube_config_contexts()
@@ -121,7 +123,8 @@ class Kubevirt(object):
         templates = {p.metadata.annotations['kcli/template']: p.metadata.name for p in allpvc.items
                      if p.metadata.annotations is not None and 'kcli/template' in p.metadata.annotations}
         vm = {'kind': 'VirtualMachine', 'spec': {'running': start, 'template':
-                                                 {'metadata': {'labels': {'kubevirt.io/provider': 'kcli'}},
+                                                 {'metadata': {'labels': {'kubevirt.io/provider': 'kcli',
+                                                                          'kubevirt.io/domain': name}},
                                                   'spec': {'domain': {'resources':
                                                                       {'requests': {'memory': '%sM' % memory}},
                                                                       # 'cpu': {'cores': numcpus, 'model': cpumodel},
@@ -154,19 +157,29 @@ class Kubevirt(object):
         networks = []
         for index, net in enumerate(nets):
             newif = {'bridge': {}}
-            newnet = {'pod': {}}
+            # newnet = {'pod': {}}
+            newnet = {}
             if isinstance(net, str):
-                newif['name'] = net
-                newnet['name'] = net
+                netname = net
+                newif['name'] = netname
+                newnet['name'] = netname
             elif isinstance(net, dict):
                 if 'noconf' in net and net['noconf']:
                     vm['spec']['template']['spec']['domain']['devices']['autoattachPodInterface'] = False
                     break
                 if 'name' in net:
-                    newif['name'] = net['name']
-                    newnet['name'] = net['name']
+                    netname = net['name']
+                    newif['name'] = netname
+                    newnet['name'] = netname
                 if 'mac' in net:
                     newif['macAddress'] = net['mac']
+            if index > 0:
+                if self.multus:
+                    newnet['multus'] = netname
+                else:
+                    newnet['hostBridge'] = {'bridgeName': netname}
+            else:
+                newnet['pod'] = {}
             interfaces.append(newif)
             networks.append(newnet)
         if interfaces and networks:
@@ -869,8 +882,17 @@ class Kubevirt(object):
         return pools
 
     def list_networks(self):
-        print("not implemented")
-        return
+        networks = {}
+        if self.multus:
+            crds = self.crds
+            namespace = self.namespace
+            nafs = crds.list_namespaced_custom_object(DOMAIN, VERSION, namespace,
+                                                      'network-attachment-definitions.k8s.cni.cncf.io')["items"]
+            print(nafs)
+            # networks[interfacename] = {'cidr': cidr, 'dhcp': 'N/A', 'type': 'bridged', 'mode': 'N/A'}
+            return networks
+        else:
+            return {'default': {'cidr': 'N/A', 'dhcp': 'N/A', 'type': 'bridged', 'mode': 'N/A'}}
 
     def list_subnets(self):
         print("not implemented")

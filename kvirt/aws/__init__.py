@@ -4,6 +4,7 @@
 Aws Provider Class
 """
 
+from datetime import datetime
 from kvirt import common
 import boto3
 # from botocore.exceptions import ClientError
@@ -256,9 +257,8 @@ class Kaws(object):
 
     def serialconsole(self, name):
         conn = self.conn
-        project = self.project
         zone = self.zone
-        console = conn.instances().getSerialPortOutput(zone=zone, project=project, instance=name).execute()
+        console = conn.instances().getSerialPortOutput(zone=zone, instance=name).execute()
         if console is None:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         print((console['contents']))
@@ -340,16 +340,26 @@ class Kaws(object):
         ip = vm['PublicIpAddress'] if 'PublicIpAddress' in vm else ''
         return ip
 
-# should return a list of available templates, or isos ( if iso is set to True
     def volumes(self, iso=False):
         conn = self.conn
-        images = []
-        oses = ['Amazon Linux AMI*', 'Provided by Red Hat, Inc.', 'SUSE Linux Enterprise*', 'Ubuntu Server*']
-        Filters = [{'Name': 'description', 'Values': oses}]
+        images = {}
+        finalimages = []
+        oses = ['amzn*', 'CentOS Linux 7 x86_64*', 'RHEL-7.*GA*', 'suse-sles-1?-*', 'ubuntu-*-server-*']
+        Filters = [{'Name': 'name', 'Values': oses}]
         allimages = conn.describe_images(Filters=Filters)
         for image in allimages['Images']:
-            images.append("%s - %s" % (image['Name'], image['ImageId']))
-        return sorted(images, key=str.lower)
+            name = image['Name']
+            amiid = image['ImageId']
+            date = datetime.strptime(image['CreationDate'], '%Y-%m-%dT%H:%M:%S.000Z')
+            if 'ProductCodes' in image:
+                codeid = image['ProductCodes'][0]['ProductCodeId']
+                if codeid not in images or date > images[codeid]['date']:
+                    images[codeid] = {'name': name, 'date': date, 'id': amiid}
+            else:
+                finalimages.append("%s - %s" % (name, amiid))
+        for image in images:
+            finalimages.append("%s - %s" % (images[image]['name'], images[image]['id']))
+        return sorted(finalimages, key=str.lower)
 
     def delete(self, name, snapshots=False):
         conn = self.conn
@@ -645,7 +655,10 @@ class Kaws(object):
         changes = [{'Action': 'DELETE', 'ResourceRecordSet':
                    {'Name': entry, 'Type': 'A', 'TTL': 300, 'ResourceRecords': [{'Value': ip}]}}]
         entry = "%s.%s." % (name, domain)
-        dns.change_resource_record_sets(HostedZoneId=zoneid, ChangeBatch={'Changes': changes})
+        try:
+            dns.change_resource_record_sets(HostedZoneId=zoneid, ChangeBatch={'Changes': changes})
+        except:
+            pass
         return {'result': 'success'}
 
     def flavors(self):
