@@ -4,6 +4,7 @@
 Kubevirt Provider Class
 """
 
+from ast import literal_eval
 from kubernetes import client, config
 from kvirt import common
 from kvirt.defaults import TEMPLATES
@@ -17,6 +18,8 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 DOMAIN = "kubevirt.io"
 VERSION = 'v1alpha2'
+MULTUSDOMAIN = 'k8s.cni.cncf.io'
+MULTUSVERSION = 'v1'
 REGISTRYDISKS = ['kubevirt/alpine-registry-disk-demo', 'kubevirt/cirros-registry-disk-demo',
                  'kubevirt/fedora-cloud-registry-disk-demo']
 
@@ -52,29 +55,19 @@ class Kubevirt(object):
             context = current
             contextname = current['name']
         config.load_kube_config(context=contextname)
-        # configuration = client.Configuration()
-        # configuration.assert_hostname = False
         if 'namespace' in context['context']:
             self.namespace = context['context']['namespace']
         else:
             self.namespace = 'default'
         self.crds = client.CustomObjectsApi()
-        # extensions = client.ApiextensionsV1beta1Api()
-        # current_crds = [x for x in extensions.list_custom_resource_definition().to_dict()['items']
-        #                if x['spec']['names']['kind'].lower() == 'virtualmachine']
-        # if not current_crds:
-        #    common.pprint("Kubevirt not installed", color='red')
-        #    self.conn = None
-        #    self.host = context
-        #    return
         self.core = client.CoreV1Api()
         self.debug = debug
-        try:
-            hosts = [node.metadata.name for node in self.core.list_node().items]
-        except client.rest.ApiException as e:
-            common.pprint("Couldn't connect, got %s" % (e.reason), color='red')
-            os._exit(1)
-        self.host = hosts[0]
+        # try:
+        #    hosts = [node.metadata.name for node in self.core.list_node().items]
+        # except client.rest.ApiException as e:
+        #    common.pprint("Couldn't connect, got %s" % (e.reason), color='red')
+        #    os._exit(1)
+        # self.host = hosts[0]
         return
 
     def close(self):
@@ -175,7 +168,7 @@ class Kubevirt(object):
                     newif['macAddress'] = net['mac']
             if index > 0:
                 if self.multus:
-                    newnet['multus'] = netname
+                    newnet['multus'] = {'networkName': netname}
                 else:
                     newnet['hostBridge'] = {'bridgeName': netname}
             else:
@@ -537,12 +530,6 @@ class Kubevirt(object):
         core = self.core
         namespace = self.namespace
         common.pprint("Using current namespace %s" % namespace, color='green')
-        crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
-        try:
-            crds.delete_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachineinstances', name,
-                                                 client.V1DeleteOptions())
-        except:
-            pass
         try:
             vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
         except Exception as e:
@@ -757,7 +744,7 @@ class Kubevirt(object):
         u, ip = self._ssh_credentials(name)
         if user is None:
             user = u
-        tunnel = True if 'TUNNEL' in os.environ and os.environ('TUNNEL').lower() == 'true' else False
+        # tunnel = True if 'TUNNEL' in os.environ and os.environ('TUNNEL').lower() == 'true' else False
         sshcommand = common.ssh(name, ip=ip, host=self.host, port=self.port, hostuser=self.user, user=user, local=local,
                                 remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, Y=Y,
                                 debug=self.debug, D=D)
@@ -869,12 +856,28 @@ class Kubevirt(object):
         return {'result': 'success'}
 
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', pxe=None, vlan=None):
-        print("not implemented")
-        return
+        crds = self.crds
+        namespace = self.namespace
+        bridge = cidr
+        apiversion = "%s/%s" % (MULTUSDOMAIN, MULTUSVERSION)
+        vlanconfig = '"vlan": %s' % vlan if vlan is not None else ''
+        config = '{ "cniVersion": "0.3.1", "type": "ovs", "bridge": "%s" %s}' % (bridge, vlanconfig)
+        network = {'kind': 'NetworkAttachmentDefinition', 'spec': {'config': config}, 'apiVersion': apiversion,
+                   'metadata': {'name': name}}
+        crds.create_namespaced_custom_object(MULTUSDOMAIN, MULTUSVERSION, namespace, 'network-attachment-definitions',
+                                             network)
+        return {'result': 'success'}
 
     def delete_network(self, name=None, cidr=None):
-        print("not implemented")
-        return
+        crds = self.crds
+        namespace = self.namespace
+        try:
+            crds.delete_namespaced_custom_object(MULTUSDOMAIN, MULTUSVERSION, namespace,
+                                                 'network-attachment-definitions', name,
+                                                 client.V1DeleteOptions())
+        except:
+            return {'result': 'failure', 'reason': "network %s not found" % name}
+        return {'result': 'success'}
 
     def list_pools(self):
         storageapi = client.StorageV1Api()
@@ -886,10 +889,15 @@ class Kubevirt(object):
         if self.multus:
             crds = self.crds
             namespace = self.namespace
-            nafs = crds.list_namespaced_custom_object(DOMAIN, VERSION, namespace,
-                                                      'network-attachment-definitions.k8s.cni.cncf.io')["items"]
-            print(nafs)
-            # networks[interfacename] = {'cidr': cidr, 'dhcp': 'N/A', 'type': 'bridged', 'mode': 'N/A'}
+            nafs = crds.list_namespaced_custom_object(MULTUSDOMAIN, MULTUSVERSION, namespace,
+                                                      'network-attachment-definitions')["items"]
+            for naf in nafs:
+                config = literal_eval(naf['spec']['config'])
+                name = naf['metadata']['name']
+                _type = config['type']
+                bridge = config['bridge']
+                vlan = config.get('vlan', 'N/A')
+                networks[name] = {'cidr': bridge, 'dhcp': 'N/A', 'type': _type, 'mode': vlan}
             return networks
         else:
             return {'default': {'cidr': 'N/A', 'dhcp': 'N/A', 'type': 'bridged', 'mode': 'N/A'}}

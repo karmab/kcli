@@ -233,6 +233,8 @@ class Kaws(object):
             vm = reservation['Instances'][0]
             name = vm['InstanceId']
             state = vm['State']['Name']
+            if state == 'terminated':
+                continue
             ip = vm['PublicIpAddress'] if 'PublicIpAddress' in vm else ''
             amid = vm['ImageId']
             image = resource.Image(amid)
@@ -652,13 +654,13 @@ class Kaws(object):
         if ip is None:
             print("Couldn't Get DNS Ip")
             return
-        changes = [{'Action': 'DELETE', 'ResourceRecordSet':
-                   {'Name': entry, 'Type': 'A', 'TTL': 300, 'ResourceRecords': [{'Value': ip}]}}]
-        entry = "%s.%s." % (name, domain)
-        try:
-            dns.change_resource_record_sets(HostedZoneId=zoneid, ChangeBatch={'Changes': changes})
-        except:
-            pass
+        for entry in ["%s.%s." % (name, domain), "*.%s.%s." % (name, domain)]:
+            changes = [{'Action': 'DELETE', 'ResourceRecordSet':
+                        {'Name': entry, 'Type': 'A', 'TTL': 300, 'ResourceRecords': [{'Value': ip}]}}]
+            try:
+                dns.change_resource_record_sets(HostedZoneId=zoneid, ChangeBatch={'Changes': changes})
+            except:
+                pass
         return {'result': 'success'}
 
     def flavors(self):

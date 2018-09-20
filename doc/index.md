@@ -263,7 +263,7 @@ You can use additional parameters for the kubevirt section:
 kubectl config view -o jsonpath='{.contexts[*].name}'
 ```
 - pool: your default storageclass. can also be set as blank, if no storage class should try to bind pvcs
-- host: the node to use for tunneling to reach ssh (and consoles). If running on openshift, this is evaluated from your current context
+- host: the node to use for tunneling to reach ssh (and consoles)
 - usecloning: whether pvcs for templates will be cloned by the underlying storageclass. Defaults to false, so pvcs are manually copied under the hood launching a specific copy pod.
 - tags: additional tags to put to all created vms in their *nodeSelector*. Can be further indicated at profile or plan level in which case values are combined. This provides an easy way to force vms to run on specific nodes, by matching labels.
 
