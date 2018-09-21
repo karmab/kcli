@@ -263,7 +263,8 @@ def process_files(files=[], overrides={}):
             if isinstance(content, str):
                 content = content.split('\n')
             for line in content:
-                data += "     %s\n" % line.strip()
+                # data += "     %s\n" % line.strip()
+                data += "     %s\n" % line
     return data
 
 
