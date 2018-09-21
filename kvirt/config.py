@@ -37,10 +37,10 @@ class Kconfig(Kbaseconfig):
                 k = Kbox()
             elif self.type == 'kubevirt':
                 context = self.options.get('context')
-                usecloning = self.options.get('usecloning', False)
+                cdi = self.options.get('cdi', False)
                 multus = self.options.get('multus', True)
                 from kvirt.kubevirt import Kubevirt
-                k = Kubevirt(context=context, usecloning=usecloning, multus=multus, host=self.host, port=self.port,
+                k = Kubevirt(context=context, cdi=cdi, multus=multus, host=self.host, port=self.port,
                              user=self.user, debug=debug)
                 self.host = k.host
             elif self.type == 'gcp':

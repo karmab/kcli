@@ -305,11 +305,10 @@ You can use additional parameters for the kubevirt section:
 
 -  pool: your default storageclass. can also be set as blank, if no
    storage class should try to bind pvcs
--  host: the node to use for tunneling to reach ssh (and consoles). If
-   running on openshift, this is evaluated from your current context
--  usecloning: whether pvcs for templates will be cloned by the
-   underlying storageclass. Defaults to false, so pvcs are manually
-   copied under the hood launching a specific copy pod.
+-  host: the node to use for tunneling to reach ssh (and consoles)
+-  cdi: whether pvcs for templates will be cloned by cdi component.
+   Defaults to False, so pvcs are manually copied under the hood
+   launching a specific copy pod.
 -  tags: additional tags to put to all created vms in their
    *nodeSelector*. Can be further indicated at profile or plan level in
    which case values are combined. This provides an easy way to force
@@ -800,6 +799,10 @@ configuration done in the vm
 Fore coreos based vms, You can also use *etcd: true* to auto configure
 etcd on the corresponding nic
 
+the *ovs: true* allows you to create the nic as ovs port of the
+indicated bridge. Not that such bridges have to be created independently
+at the moment
+
 Up to 4 IPS can also be provided on command line when creating a single
 vm (with the flag -1, -2, -3,-4,…)
 
@@ -1028,6 +1031,8 @@ Available parameters for hypervisor/profile/plan files
    as it s handled by the nested flag
 -  *numcpus* Defaults to 2
 -  *memory* Defaults to 512M
+-  *flavor* For gcp, aws and openstack, You can specify an existing
+   flavor so that cpu and memory is derived from it
 -  *guestid* Defaults to guestrhel764
 -  *pool* Defaults to default
 -  *template* Should point to your base cloud image(optional). You can

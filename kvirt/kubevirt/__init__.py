@@ -34,12 +34,12 @@ def pretty_print(o):
 
 
 class Kubevirt(object):
-    def __init__(self, context=None, usecloning=False, multus=True, host='127.0.0.1', port=22, user='root', debug=False,
+    def __init__(self, context=None, cdi=False, multus=True, host='127.0.0.1', port=22, user='root', debug=False,
                  tags=None):
         self.host = host
         self.port = port
         self.user = user
-        self.usecloning = usecloning
+        self.cdi = cdi
         self.multus = multus
         self.conn = 'OK'
         self.tags = tags
@@ -221,7 +221,7 @@ class Kubevirt(object):
                                                              'accessModes': ['ReadWriteOnce'],
                                                              'resources': {'requests': {'storage': '%sGi' % disksize}}},
                    'apiVersion': 'v1', 'metadata': {'name': volname}}
-            if template is not None and index == 0 and template not in REGISTRYDISKS and self.usecloning:
+            if template is not None and index == 0 and template not in REGISTRYDISKS and self.cdi:
                 pvc['metadata']['annotations'] = {'k8s.io/CloneRequest': templates[template]}
             pvcs.append(pvc)
             sizes.append(disksize)
@@ -241,12 +241,18 @@ class Kubevirt(object):
             pvcname = pvc['metadata']['name']
             pvcsize = pvc['spec']['resources']['requests']['storage'].replace('Gi', '')
             if template not in REGISTRYDISKS and index == 0:
-                if self.usecloning:
+                if self.cdi:
                     # NOTE: we should also check that cloning finished in this case
                     core.create_namespaced_persistent_volume_claim(namespace, pvc)
                     bound = self.pvc_bound(pvcname, namespace)
                     if not bound:
                         return {'result': 'failure', 'reason': 'timeout waiting for pvc %s to get bound' % pvcname}
+                    completed = self.import_completed(self, pvc, namespace)
+                    if completed is None:
+                        common.pprint("Issue with cdi import", color='red')
+                        return {'result': 'failure', 'reason': 'timeout waiting for cdi importer pod to complete'}
+                    else:
+                        core.delete_namespaced_pod(completed, namespace, client.V1DeleteOptions())
                     continue
                 else:
                     volname = "%s-vol0" % (name)
@@ -785,16 +791,21 @@ class Kubevirt(object):
                                                          'accessModes': ['ReadWriteOnce'],
                                                          'resources': {'requests': {'storage': '%sGi' % size}}},
                'apiVersion': 'v1', 'metadata': {'name': volname, 'annotations': {'kcli/template': shortimage}}}
-        pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'Never',
-                                       'containers': [{'image': 'kubevirtci/disk-importer',
-                                                       'volumeMounts': [{'mountPath': '/storage', 'name': 'storage1'}],
-                                                       'name': 'importer', 'env': [{'name': 'CURL_OPTS', 'value': '-L'},
-                                                                                   {'name': 'INSTALL_TO',
-                                                                                    'value': '/storage/disk.img'},
-                                                                                   {'name': 'URL', 'value': image}]}],
-                                       'volumes': [{'name': 'storage1',
-                                                    'persistentVolumeClaim': {'claimName': volname}}]},
-               'apiVersion': 'v1', 'metadata': {'name': podname}}
+        if self.cdi:
+                pvc['metadata']['annotations'] = {'cdi.kubevirt.io/storage.import.endpoint': image}
+        else:
+            pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'Never',
+                                           'containers': [{'image': 'kubevirtci/disk-importer',
+                                                           'volumeMounts': [{'mountPath': '/storage',
+                                                                             'name': 'storage1'}],
+                                                           'name': 'importer',
+                                                           'env': [{'name': 'CURL_OPTS', 'value': '-L'},
+                                                                   {'name': 'INSTALL_TO',
+                                                                    'value': '/storage/disk.img'},
+                                                                   {'name': 'URL', 'value': image}]}],
+                                           'volumes': [{'name': 'storage1',
+                                                        'persistentVolumeClaim': {'claimName': volname}}]},
+                   'apiVersion': 'v1', 'metadata': {'name': podname}}
         try:
             core.read_namespaced_persistent_volume_claim(volname, namespace)
             common.pprint("Using existing pvc")
@@ -803,13 +814,21 @@ class Kubevirt(object):
             bound = self.pvc_bound(volname, namespace)
             if not bound:
                 return {'result': 'failure', 'reason': 'timeout waiting for pvc to get bound'}
-        core.create_namespaced_pod(namespace, pod)
-        completed = self.pod_completed(podname, namespace)
-        if not completed:
-            common.pprint("Issue with pod %s. Leaving it for debugging purposes" % podname, color='red')
-            return {'result': 'failure', 'reason': 'timeout waiting for importer pod to complete'}
+        if self.cdi:
+            completed = self.import_completed(self, volname, namespace)
+            if completed is None:
+                common.pprint("Issue with cdi import", color='red')
+                return {'result': 'failure', 'reason': 'timeout waiting for cdi importer pod to complete'}
+            else:
+                core.delete_namespaced_pod(completed, namespace, client.V1DeleteOptions())
         else:
-            core.delete_namespaced_pod(podname, namespace, client.V1DeleteOptions())
+            core.create_namespaced_pod(namespace, pod)
+            completed = self.pod_completed(podname, namespace)
+            if not completed:
+                common.pprint("Issue with pod %s. Leaving it for debugging purposes" % podname, color='red')
+                return {'result': 'failure', 'reason': 'timeout waiting for importer pod to complete'}
+            else:
+                core.delete_namespaced_pod(podname, namespace, client.V1DeleteOptions())
         return {'result': 'success'}
 
     def copy_image(self, pool, ori, dest, size=1):
@@ -937,6 +956,22 @@ class Kubevirt(object):
             common.pprint("Waiting for pvc %s to get bound..." % volname)
             pvcruntime += 2
         return True
+
+    def import_completed(self, volname, namespace):
+        core = self.core
+        pvctimeout = 40
+        pvcruntime = 0
+        phase = ''
+        while phase != 'Succeeded':
+            if pvcruntime >= pvctimeout:
+                return None
+            pvc = core.read_namespaced_persistent_volume_claim(volname, namespace)
+            pod = pvc.metadata.annotations['cdi.kubevirt.io/storage.import.importPodName']
+            phase = pvc.metadata.annotations['cdi.kubevirt.io/storage.import.pod.phase']
+            time.sleep(2)
+            common.pprint("Waiting for import to complete...")
+            pvcruntime += 2
+        return pod
 
     def pod_completed(self, podname, namespace):
         core = self.core

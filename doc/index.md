@@ -264,7 +264,7 @@ kubectl config view -o jsonpath='{.contexts[*].name}'
 ```
 - pool: your default storageclass. can also be set as blank, if no storage class should try to bind pvcs
 - host: the node to use for tunneling to reach ssh (and consoles)
-- usecloning: whether pvcs for templates will be cloned by the underlying storageclass. Defaults to false, so pvcs are manually copied under the hood launching a specific copy pod.
+- cdi: whether pvcs for templates will be cloned by cdi component. Defaults to False, so pvcs are manually copied under the hood launching a specific copy pod.
 - tags: additional tags to put to all created vms in their *nodeSelector*. Can be further indicated at profile or plan level in which case values are combined. This provides an easy way to force vms to run on specific nodes, by matching labels.
 
 *virtctl* is a hard requirement for consoles. If present on your local machine, this will be used. otherwise, it s expected that the host node has it installed.
