@@ -1117,7 +1117,7 @@ def cli():
     pool_parser = subparsers.add_parser('pool', description=pool_info, help=pool_info)
     pool_parser.add_argument('-d', '--delete', action='store_true')
     pool_parser.add_argument('-f', '--full', action='store_true')
-    pool_parser.add_argument('-t', '--pooltype', help='Type of the pool', choices=('dir', 'logical', 'zfs'),
+    pool_parser.add_argument('-t', '--pooltype', help='Type of the pool', choices=('dir', 'lvm', 'zfs'),
                              default='dir')
     pool_parser.add_argument('-p', '--path', help='Path of the pool', metavar='PATH')
     pool_parser.add_argument('pool')

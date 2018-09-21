@@ -227,14 +227,7 @@ class Kvirt(object):
                 if '/dev' not in backing and diskpooltype == 'logical':
                     return {'result': 'failure', 'reason': "file template can not be used with a lvm pool.Leaving..."}
                 if '/dev' in backing:
-                    # backingxml = """<backingStore type='block' index='1'>
-                    #                <format type='raw'/>
-                    #                <path>%s</path>
-                    #                </backingStore>""" % backing
-                    backingxml = """<backingStore type='block' index='1'>
-                                    <format type='raw'/>
-                                    <source file='%s'/>
-                                    </backingStore>""" % backing
+                    backingxml = "<backingStore/>"
                 else:
                     backingxml = """<backingStore type='file' index='1'>
                                     <format type='qcow2'/>
@@ -256,13 +249,16 @@ class Kvirt(object):
                 diskwwn = "<wwn>%s</wwn>" % diskwwn
             else:
                 diskwwn = ''
-            disksxml = """%s<disk type='file' device='disk'>
+            dtype = 'block' if '/dev' in diskpath else 'file'
+            dsource = 'dev' if '/dev' in diskpath else 'file'
+            disksxml = """%s<disk type='%s' device='disk'>
                     <driver name='qemu' type='%s'/>
-                    <source file='%s'/>
+                    <source %s='%s'/>
                     %s
                     <target dev='%s' bus='%s'/>
                     %s
-                    </disk>""" % (disksxml, diskformat, diskpath, backingxml, diskdev, diskbus, diskwwn)
+                    </disk>""" % (disksxml, dtype, diskformat, dsource, diskpath, backingxml, diskdev, diskbus,
+                                  diskwwn)
         netxml = ''
         alias = []
         etcd = None
@@ -348,12 +344,14 @@ class Kvirt(object):
                                   </qemu:commandline>"""
             else:
                 cloudinitiso = "%s/%s.ISO" % (default_poolpath, name)
-                isoxml = """%s<disk type='file' device='cdrom'>
+                dtype = 'block' if '/dev' in diskpath else 'file'
+                dsource = 'dev' if '/dev' in diskpath else 'file'
+                isoxml = """%s<disk type='%s' device='cdrom'>
                         <driver name='qemu' type='raw'/>
-                        <source file='%s'/>
+                        <source %s='%s'/>
                         <target dev='hdd' bus='ide'/>
                         <readonly/>
-                        </disk>""" % (isoxml, cloudinitiso)
+                        </disk>""" % (isoxml, dtype, dsource, cloudinitiso)
         if tunnel:
             listen = '127.0.0.1'
         else:
@@ -839,7 +837,9 @@ class Kvirt(object):
             device = element.find('target').get('dev')
             diskformat = 'file'
             drivertype = element.find('driver').get('type')
-            path = element.find('source').get('file')
+            # path = element.find('source').get('file')
+            imagefiles = [element.find('source').get('file'), element.find('source').get('dev')]
+            path = next(item for item in imagefiles if item is not None)
             volume = conn.storageVolLookupByPath(path)
             disksize = int(float(volume.info()[1]) / 1024 / 1024 / 1024)
             yamlinfo['disks'].append({'device': device, 'size': disksize, 'format': diskformat, 'type': drivertype,
@@ -928,7 +928,9 @@ class Kvirt(object):
         for element in list(root.getiterator('disk')):
             source = element.find('source')
             if source is not None:
-                imagefile = element.find('source').get('file')
+                # imagefile = element.find('source').get('file')
+                imagefiles = [element.find('source').get('file'), element.find('source').get('dev')]
+                imagefile = next(item for item in imagefiles if item is not None)
                 if imagefile.endswith('.iso'):
                     continue
                 elif imagefile.endswith("%s.ISO" % name) or "%s_" % name in imagefile or "%s.img" % name in imagefile:
@@ -1688,7 +1690,7 @@ class Kvirt(object):
                          <path>%s</path>
                          </target>
                          </pool>""" % (name, poolpath)
-        elif pooltype == 'logical':
+        elif pooltype == 'lvm':
             poolxml = """<pool type='logical'>
                          <name>%s</name>
                          <source>
@@ -1712,7 +1714,7 @@ class Kvirt(object):
             return {'result': 'failure', 'reason': "Invalid pool type %s" % pooltype}
         pool = conn.storagePoolDefineXML(poolxml, 0)
         pool.setAutostart(True)
-        if pooltype == 'logical':
+        if pooltype == 'lvm':
             pool.build()
         pool.create()
         return {'result': 'success'}
