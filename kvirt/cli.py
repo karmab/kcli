@@ -322,7 +322,7 @@ def list(args):
                     profilename = profile[0]
                     profilestable.add_row([profilename])
             else:
-                profilestable = PrettyTable(["Profile", "Numcpus", "Memory",
+                profilestable = PrettyTable(["Profile", "Flavor",
                                              "Pool", "Disks", "Template",
                                              "Nets", "Cloudinit", "Nested",
                                              "Reservedns", "Reservehost"])

@@ -56,7 +56,7 @@ class Kopenstack(object):
     def disk_exists(self, pool, name):
         print("not implemented")
 
-    def create(self, name, virttype='kvm', profile='', plan='kvirt',
+    def create(self, name, virttype='kvm', profile='', plan='kvirt', flavor=None,
                cpumodel='Westmere', cpuflags=[], numcpus=2, memory=512,
                guestid='guestrhel764', pool='default', template=None,
                disks=[{'size': 10}], disksize=10, diskthin=True,
@@ -81,9 +81,14 @@ class Kopenstack(object):
         else:
             msg = "you don't have template %s" % template
             return {'result': 'failure', 'reason': msg}
-        flavors = [flavor for flavor in nova.flavors.list() if flavor.ram >= memory and flavor.vcpus == numcpus]
-        flavor = flavors[0] if flavors else nova.flavors.find(name="m1.tiny")
-        common.pprint("Using flavor %s" % flavor.name, color='green')
+        allflavors = [f for f in nova.flavors.list()]
+        allflavornames = [flavor.name for flavor in allflavors]
+        if flavor is None:
+            flavors = [flavor for flavor in allflavors if flavor.ram >= memory and flavor.vcpus == numcpus]
+            flavor = flavors[0] if flavors else nova.flavors.find(name="m1.tiny")
+            common.pprint("Using flavor %s" % flavor.name, color='green')
+        elif flavor not in allflavornames:
+            return {'result': 'failure', 'reason': "Flavor % not found" % flavor}
         nics = []
         for net in nets:
             if isinstance(net, str):
@@ -290,6 +295,7 @@ class Kopenstack(object):
             print(vars(vm))
         yamlinfo = {'name': vm.name, 'status': vm.status, 'template': self.glance.images.get(vm.image['id']).name}
         flavor = nova.flavors.get(vm.flavor['id'])
+        yamlinfo['flavor'] = flavor.name
         yamlinfo['memory'] = flavor.ram
         yamlinfo['cpus'] = flavor.vcpus
         yamlinfo['nets'] = []

@@ -1,4 +1,4 @@
-#!/usr/bin/env python'
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 Kvirt config class
@@ -11,7 +11,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             REPORT, REPORTALL, INSECURE, KEYS, CMDS, DNS,
                             DOMAIN, SCRIPTS, FILES, ISO,
                             NETMASKS, GATEWAY, SHAREDKEY, TEMPLATE, ENABLEROOT,
-                            PLANVIEW, PRIVATEKEY, TAGS, RHNREGISTER, RHNUSER, RHNPASSWORD, RHNAK, RHNORG)
+                            PLANVIEW, PRIVATEKEY, TAGS, RHNREGISTER, RHNUSER, RHNPASSWORD, RHNAK, RHNORG, FLAVOR)
 from kvirt import common
 import os
 from shutil import copyfile, rmtree
@@ -105,6 +105,7 @@ class Kbaseconfig:
         defaults['rhnactivationkey'] = default.get('rhnactivationkey', RHNAK)
         defaults['rhnorg'] = default.get('rhnorg', RHNORG)
         defaults['tags'] = default.get('tags', TAGS)
+        defaults['flavor'] = default.get('flavor', FLAVOR)
         currentplanfile = "%s/.kcli/plan" % os.environ.get('HOME')
         if os.path.exists(currentplanfile):
             self.currentplan = open(currentplanfile).read().strip()
@@ -199,6 +200,7 @@ class Kbaseconfig:
         self.rhnak = options.get('rhnactivationkey', self.default['rhnactivationkey'])
         self.rhnorg = options.get('rhnorg', self.default['rhnorg'])
         self.tags = options.get('tags', self.default['tags'])
+        self.flavor = options.get('flavor', self.default['flavor'])
 
     def switch_host(self, client):
         if client not in self.clients:

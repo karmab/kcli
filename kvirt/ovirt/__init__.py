@@ -1,4 +1,4 @@
-#!/usr/bin/env python'
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 Ovirt Provider Class
@@ -64,7 +64,7 @@ class KOvirt(object):
     def disk_exists(self, pool, name):
         print("not implemented")
 
-    def create(self, name, virttype='kvm', profile='', plan='kvirt',
+    def create(self, name, virttype='kvm', profile='', flavor=None, plan='kvirt',
                cpumodel='Westmere', cpuflags=[], numcpus=2, memory=512,
                guestid='guestrhel764', pool='default', template=None,
                disks=[{'size': 10}], disksize=10, diskthin=True,

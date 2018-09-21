@@ -90,12 +90,12 @@ class Kubevirt(object):
         print("not implemented")
         return
 
-    def create(self, name, virttype='kvm', profile='', plan='kvirt', cpumodel='host-model', cpuflags=[], numcpus=2,
-               memory=512, guestid='guestrhel764', pool=None, template=None, disks=[{'size': 10}], disksize=10,
-               diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True,
-               reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[], ips=None,
-               netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[], enableroot=True,
-               alias=[], overrides={}, tags=None):
+    def create(self, name, virttype='kvm', profile='', flavor=None, plan='kvirt', cpumodel='host-model', cpuflags=[],
+               numcpus=2, memory=512, guestid='guestrhel764', pool=None, template=None, disks=[{'size': 10}],
+               disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False,
+               cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[],
+               ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[],
+               enableroot=True, alias=[], overrides={}, tags=None):
         if self.exists(name):
             return {'result': 'failure', 'reason': "VM %s already exists" % name}
         if template is not None and template not in self.volumes():

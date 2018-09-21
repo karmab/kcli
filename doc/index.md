@@ -814,6 +814,7 @@ Basic testing can be run with pytest. If using a remote hypervisor, you ll want 
 - *cpuflags* (optional). You can specify a list of strings with features to enable or use dict entries with *name* of the feature and *enable* either set to True or False. The value for vmx is ignored, as it s handled by the nested flag
 - *numcpus* Defaults to 2
 - *memory* Defaults to 512M
+- *flavor* For gcp, aws and openstack, You can specify an existing flavor so that cpu and memory is derived from it
 - *guestid* Defaults to guestrhel764
 - *pool* Defaults to default
 - *template* Should point to your base cloud image(optional). You can either specify short name or complete path. If you omit the full path and your image lives in several pools, the one from last (alphabetical) pool will be used.

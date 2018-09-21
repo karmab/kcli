@@ -58,21 +58,22 @@ class Kaws(object):
     def disk_exists(self, pool, name):
         print("not implemented")
 
-    def create(self, name, virttype='kvm', profile='', plan='kvirt', cpumodel='Westmere', cpuflags=[], numcpus=2,
-               memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{'size': 10}], disksize=10,
-               diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True,
-               reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[],
+    def create(self, name, virttype='kvm', profile='', flavor=None, plan='kvirt', cpumodel='Westmere', cpuflags=[],
+               numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{'size': 10}],
+               disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False,
+               cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[],
                ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[],
                enableroot=True, alias=[], overrides={}, tags=None):
         template = self.__evaluate_template(template)
         defaultsubnetid = None
-        matchingflavors = [f for f in static_flavors if static_flavors[f]['cpus'] >= numcpus and
-                           static_flavors[f]['memory'] >= memory]
-        if matchingflavors:
-            flavor = matchingflavors[0]
-            common.pprint("Using instance type %s" % flavor, color='green')
-        else:
-            return {'result': 'failure', 'reason': 'Couldnt find instance type matching requirements'}
+        if flavor is None:
+            matchingflavors = [f for f in static_flavors if static_flavors[f]['cpus'] >= numcpus and
+                               static_flavors[f]['memory'] >= memory]
+            if matchingflavors:
+                flavor = matchingflavors[0]
+                common.pprint("Using instance type %s" % flavor, color='green')
+            else:
+                return {'result': 'failure', 'reason': 'Couldnt find instance type matching requirements'}
         conn = self.conn
         tags = [{'ResourceType': 'instance',
                  'Tags': [{'Key': 'hostname', 'Value': name}, {'Key': 'plan', 'Value': plan},
@@ -297,6 +298,7 @@ class Kaws(object):
         yamlinfo['status'] = state
         yamlinfo['ip'] = ip
         machinetype = vm['InstanceType']
+        yamlinfo['flavor'] = machinetype
         if machinetype in static_flavors:
             yamlinfo['cpus'] = static_flavors[machinetype]['cpus']
             yamlinfo['memory'] = static_flavors[machinetype]['memory']

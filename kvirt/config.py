@@ -1,4 +1,4 @@
-#!/usr/bin/env python'
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 Kvirt config class
@@ -195,6 +195,7 @@ class Kconfig(Kbaseconfig):
             default_rhnak = father.get('rhnactivationkey', self.rhnak)
             default_rhnorg = father.get('rhnorg', self.rhnorg)
             default_tags = father.get('tags', self.tags)
+            default_flavor = father.get('flavor', self.flavor)
             default_cmds = common.remove_duplicates(self.cmds + father.get('cmds', []))
             default_scripts = common.remove_duplicates(self.scripts + father.get('scripts', []))
         else:
@@ -228,6 +229,7 @@ class Kconfig(Kbaseconfig):
             default_files = self.files
             default_enableroot = self.enableroot
             default_tags = self.tags
+            default_flavor = self.flavor
             default_privatekey = self.privatekey
             default_rhnregister = self.rhnregister
             default_rhnuser = self.rhnuser
@@ -288,6 +290,7 @@ class Kconfig(Kbaseconfig):
         rhnpassword = profile.get('rhnpassword', default_rhnpassword)
         rhnak = profile.get('rhnactivationkey', default_rhnak)
         rhnorg = profile.get('rhnorg', default_rhnorg)
+        flavor = profile.get('flavor', default_flavor)
         scriptcmds = []
         skip_rhnregister_script = False
         if rhnregister:
@@ -360,14 +363,14 @@ class Kconfig(Kbaseconfig):
                     files.append({'path': '/root/.ssh/id_rsa', 'content': privatekey})
                 else:
                     files = [{'path': '/root/.ssh/id_rsa', 'content': privatekey}]
-        result = k.create(name=name, plan=plan, profile=profilename, cpumodel=cpumodel, cpuflags=cpuflags,
-                          numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template,
-                          disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets,
-                          iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip),
-                          reservedns=bool(reservedns), reservehost=bool(reservehost), start=bool(start), keys=keys,
-                          cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain,
-                          nested=bool(nested), tunnel=tunnel, files=files, enableroot=enableroot, overrides=overrides,
-                          tags=tags)
+        result = k.create(name=name, plan=plan, profile=profilename, flavor=flavor, cpumodel=cpumodel,
+                          cpuflags=cpuflags, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool,
+                          template=template, disks=disks, disksize=disksize, diskthin=diskthin,
+                          diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit),
+                          reserveip=bool(reserveip), reservedns=bool(reservedns), reservehost=bool(reservehost),
+                          start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns,
+                          domain=domain, nested=bool(nested), tunnel=tunnel, files=files, enableroot=enableroot,
+                          overrides=overrides, tags=tags)
         if result['result'] != 'success':
             return result
         elif 'name' in result:
@@ -444,6 +447,7 @@ class Kconfig(Kbaseconfig):
                     default_nested = father.get('nested', default['nested'])
                     default_reservedns = father.get('reservedns', default['reservedns'])
                     default_reservehost = father.get('reservehost', default['reservehost'])
+                    default_flavor = father.get('flavor', default['flavor'])
                 else:
                     default_numcpus = default['numcpus']
                     default_memory = default['memory']
@@ -455,6 +459,7 @@ class Kconfig(Kbaseconfig):
                     default_nested = default['nested']
                     default_reservedns = default['reservedns']
                     default_reservehost = default['reservehost']
+                    default_flavor = default['flavor']
                 profiletype = info.get('type', '')
                 if profiletype == 'container':
                     continue
@@ -486,7 +491,10 @@ class Kconfig(Kbaseconfig):
                 nested = info.get('nested', default_nested)
                 reservedns = info.get('reservedns', default_reservedns)
                 reservehost = info.get('reservehost', default_reservehost)
-                results.append([profile, numcpus, memory, pool, diskinfo, template, netinfo, cloudinit, nested,
+                flavor = info.get('flavor', default_flavor)
+                if flavor is None:
+                    flavor = "%scpus %sMb ram" % (numcpus, memory)
+                results.append([profile, flavor, pool, diskinfo, template, netinfo, cloudinit, nested,
                                 reservedns, reservehost])
         return sorted(results, key=lambda x: x[0])
 
@@ -622,6 +630,7 @@ class Kconfig(Kbaseconfig):
                             if network != 'default' and network not in networks:
                                 networks.append(network)
                         c.delete(name)
+                        common.set_lastvm(name, self.client, delete=True)
                         common.pprint("VM %s deleted on %s!" % (name, hypervisor), color='green')
                         found = True
             if container:
@@ -962,6 +971,7 @@ class Kconfig(Kbaseconfig):
                         default_rhnpassword = father.get('rhnpassword', self.rhnpassword)
                         default_rhnak = father.get('rhnactivationkey', self.rhnak)
                         default_rhnorg = father.get('rhnorg', self.rhnorg)
+                        default_flavor = father.get('flavor', self.flavor)
                         default_cmds = common.remove_duplicates(self.cmds + father.get('cmds', []))
                         default_scripts = common.remove_duplicates(self.scripts + father.get('scripts', []))
                     else:
@@ -1003,6 +1013,7 @@ class Kconfig(Kbaseconfig):
                         default_rhnak = self.rhnak
                         default_cmds = self.cmds
                         default_scripts = self.scripts
+                        default_flavor = self.flavor
                     pool = next((e for e in [profile.get('pool'), customprofile.get('pool'), default_pool]
                                  if e is not None))
                     template = next((e for e in [profile.get('template'), customprofile.get('template')]
@@ -1087,6 +1098,8 @@ class Kconfig(Kbaseconfig):
                                               default_rhnak] if e is not None), None)
                     rhnorg = next((e for e in [profile.get('rhnorg'), customprofile.get('rhnorg'),
                                                default_rhnorg] if e is not None), None)
+                    flavor = next((e for e in [profile.get('flavor'), customprofile.get('flavor'),
+                                               default_flavor] if e is not None), None)
                     skip_rhnregister_script = False
                     if rhnregister:
                         if (rhnuser is not None and rhnpassword is not None)\
@@ -1200,9 +1213,9 @@ class Kconfig(Kbaseconfig):
                                         common.pprint("Content of file %s not found in %s.Ignoring..." % (path, name),
                                                       color='red')
                                         os._exit(1)
-                    result = z.create(name=name, plan=plan, profile=profilename, cpumodel=cpumodel, cpuflags=cpuflags,
-                                      numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool,
-                                      template=template, disks=disks, disksize=disksize, diskthin=diskthin,
+                    result = z.create(name=name, plan=plan, profile=profilename, flavor=flavor, cpumodel=cpumodel,
+                                      cpuflags=cpuflags, numcpus=int(numcpus), memory=int(memory), guestid=guestid,
+                                      pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin,
                                       diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc),
                                       cloudinit=bool(cloudinit), reserveip=bool(reserveip),
                                       reservedns=bool(reservedns), reservehost=bool(reservehost),
@@ -1212,7 +1225,8 @@ class Kconfig(Kbaseconfig):
                     common.handle_response(result, name)
                     if result['result'] == 'success':
                         newvms.append(name)
-                        common.set_lastvm(name, self.client)
+                        lastvmname = result['name'] if 'name' in result else name
+                        common.set_lastvm(lastvmname, self.client)
                     _ansible = next((e for e in [profile.get('ansible'), customprofile.get('ansible')]
                                      if e is not None), None)
                     if _ansible is not None:
