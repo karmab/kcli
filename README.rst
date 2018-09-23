@@ -3,7 +3,7 @@ kcli repository
 
 |Build Status| |Pypi| |Copr| |image3| |Visit our IRC channel|
 
-.. figure:: kcli.jpg
+.. figure:: kcli-small.png
    :alt: Screenshot
 
    Screenshot

@@ -6,7 +6,7 @@
 [![](https://images.microbadger.com/badges/image/karmab/kcli.svg)](https://microbadger.com/images/karmab/kcli "Get your own image badge on microbadger.com")
 [![Visit our IRC channel](https://kiwiirc.com/buttons/irc.freenode.net/kcli.png)](https://kiwiirc.com/client/irc.freenode.net/#kcli)
 
-![Screenshot](kcli.jpg)
+![Screenshot](kcli-small.png)
 
 This tool is meant to interact with a local/remote libvirt daemon and to easily deploy from templates (using cloudinit).
 It will also report IPS for any vm connected to a dhcp-enabled libvirt network and generally for every vm deployed from this client.
