@@ -373,8 +373,6 @@ class Kconfig(Kbaseconfig):
                           overrides=overrides, tags=tags)
         if result['result'] != 'success':
             return result
-        elif 'name' in result:
-            name = result['name']
         ansible = profile.get('ansible')
         if ansible is not None:
             for element in ansible:
@@ -1225,8 +1223,7 @@ class Kconfig(Kbaseconfig):
                     common.handle_response(result, name)
                     if result['result'] == 'success':
                         newvms.append(name)
-                        lastvmname = result['name'] if 'name' in result else name
-                        common.set_lastvm(lastvmname, self.client)
+                        common.set_lastvm(name, self.client)
                     _ansible = next((e for e in [profile.get('ansible'), customprofile.get('ansible')]
                                      if e is not None), None)
                     if _ansible is not None:

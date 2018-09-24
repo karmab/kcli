@@ -7,7 +7,6 @@ Aws Provider Class
 from datetime import datetime
 from kvirt import common
 import boto3
-# from botocore.exceptions import ClientError
 from iptools import IpRange
 import os
 import time
@@ -20,8 +19,6 @@ static_flavors = {'t2.nano': {'cpus': 1, 'memory': 512}, 't2.micro': {'cpus': 1,
                   }
 
 
-# your base class __init__ needs to define the conn attribute and set it to None when backend cannot be reached
-# it should also set debug from the debug variable passed in kcli client
 class Kaws(object):
     def __init__(self, host='127.0.0.1', port=None, access_key_id=None, access_key_secret=None, debug=False,
                  region='us-west-1'):
@@ -76,8 +73,8 @@ class Kaws(object):
                 return {'result': 'failure', 'reason': 'Couldnt find instance type matching requirements'}
         conn = self.conn
         tags = [{'ResourceType': 'instance',
-                 'Tags': [{'Key': 'hostname', 'Value': name}, {'Key': 'plan', 'Value': plan},
-                          {'Key': 'profile', 'Value': profile}]}]
+                 'Tags': [{'Key': 'Name', 'Value': name}, {'Key': 'plan', 'Value': plan},
+                          {'Key': 'hostname', 'Value': name}, {'Key': 'profile', 'Value': profile}]}]
         keypairs = [k for k in conn.describe_key_pairs()['KeyPairs'] if k['KeyName'] == 'kvirt']
         if not keypairs:
             common.pprint("Importing your public key as kvirt keyname", color='green')
@@ -165,14 +162,13 @@ class Kaws(object):
 #            return {'result': 'failure', 'reason': code}
         if reservedns and domain is not None:
             tags[0]['Tags'].append({'Key': 'domain', 'Value': domain})
-        instance = conn.run_instances(ImageId=template, MinCount=1, MaxCount=1, InstanceType=flavor,
-                                      KeyName='kvirt', BlockDeviceMappings=blockdevicemappings,
-                                      UserData=userdata, TagSpecifications=tags)
-        newname = instance['Instances'][0]['InstanceId']
-        common.pprint("%s created on aws" % newname, color='green')
+        conn.run_instances(ImageId=template, MinCount=1, MaxCount=1, InstanceType=flavor,
+                           KeyName='kvirt', BlockDeviceMappings=blockdevicemappings,
+                           UserData=userdata, TagSpecifications=tags)
+        common.pprint("%s created on aws" % name, color='green')
         if reservedns and domain is not None:
-            self.reserve_dns(name, nets=nets, domain=domain, alias=alias, instanceid=newname)
-        return {'result': 'success', 'name': newname}
+            self.reserve_dns(name, nets=nets, domain=domain, alias=alias, instanceid=name)
+        return {'result': 'success'}
 
     def start(self, name):
         conn = self.conn
@@ -185,23 +181,8 @@ class Kaws(object):
         return {'result': 'success'}
 
     def snapshot(self, name, base, revert=False, delete=False, listing=False):
-        conn = self.conn
-        project = self.project
-        zone = self.zone
-        body = {'name': name, 'forceCreate': True}
-        try:
-            vm = conn.instances().get(zone=zone, project=project, instance=base).execute()
-            body['sourceDisk'] = vm['disks'][0]['source']
-        except:
-            try:
-                disk = conn.images().get(project=project, image=base).execute()
-                body['sourceImage'] = disk['selfLink']
-            except:
-                return {'result': 'failure', 'reason': "VM/disk %s not found" % name}
-        if revert:
-            body['licenses'] = ["projects/vm-options/global/licenses/enable-vmx"]
-        conn.images().insert(project=project, body=body).execute()
-        return {'result': 'success'}
+        print("not implemented")
+        return
 
     def restart(self, name):
         conn = self.conn
@@ -213,15 +194,13 @@ class Kaws(object):
         return
 
     def status(self, name):
-        status = None
         conn = self.conn
-        project = self.project
-        zone = self.zone
         try:
-            vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
-            status = vm['status']
+            Filters = {'Name': "tag:Name", 'Values': [name]}
+            vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
         except:
-            common.pprint("Vm %s not found" % name, color='red')
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        status = vm['State']['Name']
         return status
 
     def list(self):
@@ -232,7 +211,8 @@ class Kaws(object):
         reservations = results['Reservations']
         for reservation in reservations:
             vm = reservation['Instances'][0]
-            name = vm['InstanceId']
+            instanceid = vm['InstanceId']
+            name = instanceid
             state = vm['State']['Name']
             if state == 'terminated':
                 continue
@@ -242,15 +222,15 @@ class Kaws(object):
             source = os.path.basename(image.image_location)
             plan = ''
             profile = ''
-            report = 'N/A'
+            report = instanceid
             if 'Tags' in vm:
                 for tag in vm['Tags']:
                     if tag['Key'] == 'plan':
                         plan = tag['Value']
                     if tag['Key'] == 'profile':
                         profile = tag['Value']
-                    if tag['Key'] == 'hostname':
-                        report = tag['Value']
+                    if tag['Key'] == 'Name':
+                        name = tag['Value']
             vms.append([name, state, ip, source, plan, profile, report])
         return vms
 
@@ -259,12 +239,7 @@ class Kaws(object):
         return
 
     def serialconsole(self, name):
-        conn = self.conn
-        zone = self.zone
-        console = conn.instances().getSerialPortOutput(zone=zone, instance=name).execute()
-        if console is None:
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
-        print((console['contents']))
+        print("not implemented")
         return
 
     def info(self, name, output='plain', fields=None, values=False):
@@ -272,12 +247,14 @@ class Kaws(object):
         conn = self.conn
         resource = self.resource
         try:
-            vm = conn.describe_instances(InstanceIds=[name])['Reservations'][0]['Instances'][0]
+            Filters = {'Name': "tag:Name", 'Values': [name]}
+            vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if self.debug:
             print(vm)
-        name = vm['InstanceId']
+        instanceid = vm['InstanceId']
+        name = instanceid
         state = vm['State']['Name']
         ip = vm['PublicIpAddress'] if 'PublicIpAddress' in vm else ''
         amid = vm['ImageId']
@@ -285,15 +262,14 @@ class Kaws(object):
         source = os.path.basename(image.image_location)
         plan = ''
         profile = ''
-        hostname = ''
         if 'Tags' in vm:
             for tag in vm['Tags']:
                 if tag['Key'] == 'plan':
                     plan = tag['Value']
                 if tag['Key'] == 'profile':
                     profile = tag['Value']
-                if tag['Key'] == 'hostname':
-                    hostname = tag['Value']
+                if tag['Key'] == 'Name':
+                    name = tag['Value']
         yamlinfo['name'] = name
         yamlinfo['status'] = state
         yamlinfo['ip'] = ip
@@ -307,7 +283,7 @@ class Kaws(object):
         # yamlinfo['creationdate'] = dateparser.parse(vm['creationTimestamp']).strftime("%d-%m-%Y %H:%M")
         yamlinfo['plan'] = plan
         yamlinfo['profile'] = profile
-        yamlinfo['hostname'] = hostname
+        yamlinfo['instanceid'] = instanceid
         nets = []
         for interface in vm['NetworkInterfaces']:
             network = interface['VpcId']
@@ -336,7 +312,8 @@ class Kaws(object):
         ip = None
         conn = self.conn
         try:
-            vm = conn.describe_instances(InstanceIds=[name])['Reservations'][0]['Instances'][0]
+            Filters = {'Name': "tag:Name", 'Values': [name]}
+            vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if self.debug:
@@ -369,19 +346,18 @@ class Kaws(object):
         conn = self.conn
         domain = None
         try:
-            vm = conn.describe_instances(InstanceIds=[name])['Reservations'][0]['Instances'][0]
+            Filters = {'Name': "tag:Name", 'Values': [name]}
+            vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        hostname = None
         if 'Tags' in vm:
             for tag in vm['Tags']:
                 if tag['Key'] == 'domain':
                     domain = tag['Value']
-                if tag['Key'] == 'hostname':
-                    hostname = tag['Value']
-        vm = conn.terminate_instances(InstanceIds=[name])
-        if domain is not None and hostname is not None:
-            self.delete_dns(hostname, domain, name)
+        instanceid = vm['InstanceId']
+        vm = conn.terminate_instances(InstanceIds=[instanceid])
+        if domain is not None:
+            self.delete_dns(name, domain, name)
         return {'result': 'success'}
 
     def clone(self, old, new, full=False, start=False):
@@ -417,58 +393,17 @@ class Kaws(object):
         return
 
     def add_disk(self, name, size, pool=None, thin=True, template=None, shareable=False, existing=None):
-        conn = self.conn
-        project = self.project
-        zone = self.zone
-        try:
-            vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
-        except:
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
-        numdisks = len(vm['disks']) + 1
-        diskname = "%s-disk%s" % (name, numdisks)
-        body = {'sizeGb': size, 'sourceDisk': 'zones/%s/diskTypes/pd-standard' % zone, 'name': diskname}
-        conn.disks().insert(zone=zone, project=project, body=body).execute()
-        timeout = 0
-        while True:
-            if timeout > 60:
-                return {'result': 'failure', 'reason': 'timeout waiting for new disk to be ready'}
-            newdisk = conn.disks().get(zone=zone, project=project, disk=diskname).execute()
-            if newdisk['status'] == 'READY':
-                break
-            else:
-                timeout += 5
-                time.sleep(5)
-                common.pprint("Waiting for disk to be ready", color='green')
-        body = {'source': '/compute/v1/projects/%s/zones/%s/disks/%s' % (project, zone, diskname), 'autoDelete': True}
-        conn.instances().attachDisk(zone=zone, project=project, instance=name, body=body).execute()
-        return {'result': 'success'}
+        print("not implemented")
+        return
 
     def delete_disk(self, name, diskname):
-        conn = self.conn
-        project = self.project
-        zone = self.zone
-        try:
-            conn.disks().delete(zone=zone, project=project, disk=diskname).execute()
-        except Exception as e:
-            print(e)
-            return {'result': 'failure', 'reason': "Disk %s not found" % name}
+        print("not implemented")
         return
 
 # should return a dict of {'pool': poolname, 'path': name}
     def list_disks(self):
-        disks = {}
-        conn = self.conn
-        project = self.project
-        zone = self.zone
-        alldisks = conn.disks().list(zone=zone, project=project).execute()
-        if 'items' in alldisks:
-            for disk in alldisks['items']:
-                if self.debug:
-                    print(disk)
-                diskname = disk['name']
-                pool = os.path.basename(disk['type'])
-                disks[diskname] = {'pool': pool, 'path': zone}
-        return disks
+        print("not implemented")
+        return
 
     def add_nic(self, name, network):
         print("not implemented")
@@ -479,12 +414,10 @@ class Kaws(object):
         return
 
     def _ssh_credentials(self, name):
-        # user = 'ec2-user'
-        # ip = self.ip(name)
-        # return (user, ip)
         conn = self.conn
         try:
-            vm = conn.describe_instances(InstanceIds=[name])['Reservations'][0]['Instances'][0]
+            Filters = {'Name': "tag:Name", 'Values': [name]}
+            vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
         except:
             print(("VM %s not found" % name))
             return '', ''

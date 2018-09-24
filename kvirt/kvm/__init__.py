@@ -57,7 +57,8 @@ class Kvirt(object):
         try:
             self.conn = libvirtopen(url)
             self.debug = debug
-        except Exception:
+        except Exception as e:
+            common.pprint(e, color='red')
             self.conn = None
         self.host = host
         self.user = user
@@ -1714,8 +1715,8 @@ class Kvirt(object):
             return {'result': 'failure', 'reason': "Invalid pool type %s" % pooltype}
         pool = conn.storagePoolDefineXML(poolxml, 0)
         pool.setAutostart(True)
-        if pooltype == 'lvm':
-            pool.build()
+        # if pooltype == 'lvm':
+        #    pool.build()
         pool.create()
         return {'result': 'success'}
 

@@ -479,8 +479,9 @@ def print_info(yamlinfo, output='plain', fields=None, values=False):
                              encoding=None).replace("'", '')[:-1]))
         else:
             if fields is None:
-                fields = ['name', 'creationdate', 'host', 'status', 'description', 'autostart', 'template', 'plan',
-                          'profile', 'flavor', 'cpus', 'memory', 'nets', 'ip', 'disks', 'snapshots', 'tags', 'hostname']
+                fields = ['name', 'instanceid', 'creationdate', 'host', 'status', 'description', 'autostart',
+                          'template', 'plan', 'profile', 'flavor', 'cpus', 'memory', 'nets', 'ip', 'disks', 'snapshots',
+                          'tags']
             for key in fields:
                 if key not in yamlinfo:
                     continue
