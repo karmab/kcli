@@ -6,7 +6,6 @@ Kvm Provider class
 
 from distutils.spawn import find_executable
 from kvirt import defaults
-from iptools import IpRange
 from kvirt import common
 from netaddr import IPAddress, IPNetwork
 from libvirt import open as libvirtopen, registerErrorHandler, VIR_DOMAIN_AFFECT_LIVE, VIR_DOMAIN_AFFECT_CONFIG
@@ -228,7 +227,15 @@ class Kvirt(object):
                 if '/dev' not in backing and diskpooltype == 'logical':
                     return {'result': 'failure', 'reason': "file template can not be used with a lvm pool.Leaving..."}
                 if '/dev' in backing:
-                    backingxml = "<backingStore/>"
+                    # backingxml = "<backingStore/>"
+                    # backingxml = """<backingStore type='block' index='1'>
+                    #                <format type='raw'/>
+                    #                <path>%s</path>
+                    #                </backingStore>""" % backing
+                    backingxml = """<backingStore type='block' index='1'>
+                                    <format type='raw'/>
+                                    <source dev='%s'/>
+                                    </backingStore>""" % backing
                 else:
                     backingxml = """<backingStore type='file' index='1'>
                                     <format type='qcow2'/>
@@ -1007,7 +1014,6 @@ class Kvirt(object):
     def _xmlvolume(self, path, size, pooltype='file', backing=None, diskformat='qcow2'):
         size = int(size) * MB
         if int(size) == 0:
-            # size = 500 * 1024
             size = 512 * 1024
         name = os.path.basename(path)
         if pooltype == 'logical':
@@ -1692,7 +1698,6 @@ class Kvirt(object):
                          </target>
                          </pool>""" % (name, poolpath)
         elif pooltype == 'lvm':
-            poolpath = '/dev/%s' % poolpath if '/dev' not in poolpath else poolpath
             poolxml = """<pool type='logical'>
                          <name>%s</name>
                          <source>
@@ -1700,9 +1705,9 @@ class Kvirt(object):
                          <format type='lvm2'/>
                          </source>
                          <target>
-                         <path>%s</path>
+                         <path>/dev/%s</path>
                          </target>
-                         </pool>""" % (name, name, poolpath)
+                         </pool>""" % (name, poolpath, poolpath)
         elif pooltype == 'zfs':
             poolxml = """<pool type='zfs'>
                          <name>%s</name>
@@ -1734,15 +1739,16 @@ class Kvirt(object):
         poolxml = pool.XMLDesc(0)
         root = ET.fromstring(poolxml)
         pooltype = list(root.getiterator('pool'))[0].get('type')
-        if pooltype in ['dir', 'zfs']:
-            poolpath = list(root.getiterator('path'))[0].text
-        else:
-            poolpath = list(root.getiterator('device'))[0].get('path')
-            return {'result': 'failure', 'reason': "Upload to a lvm pool not implemented not found"}
+        poolpath = list(root.getiterator('path'))[0].text
+        # if pooltype in ['dir', 'zfs']:
+        #    poolpath = list(root.getiterator('path'))[0].text
+        # else:
+        #    poolpath = list(root.getiterator('device'))[0].get('path')
+        #    return {'result': 'failure', 'reason': "Upload to a lvm pool not implemented not found"}
         downloadpath = poolpath if pooltype == 'dir' else '/tmp'
         if shortimage in volumes:
             return {'result': 'failure', 'reason': "Template %s already exists in pool %s" % (shortimage, poolname)}
-        if self.host == 'localhost' or self.host == '127.0.0.1' or pooltype in ['logical', 'zfs']:
+        if self.host == 'localhost' or self.host == '127.0.0.1':
             downloadcmd = 'curl -Lo %s/%s -f %s' % (downloadpath, shortimage, image)
         elif self.protocol == 'ssh':
             downloadcmd = 'ssh -p %s %s@%s "curl -Lo %s/%s -f %s"' % (self.port, self.user, self.host, downloadpath,
@@ -1787,14 +1793,22 @@ class Kvirt(object):
                                                                                           self.host, poolpath,
                                                                                           shortimage, cmd)
                 os.system(cmd)
-        if pooltype == 'zfs':
-            # if self.host == 'localhost' or self.host == '127.0.0.1':
-            #    downloadsize = os.path.getsize("/tmp/%s" % shortimage) >> 20
-            # elif self.protocol == 'ssh':
-            #    cmd = 'ssh -p %s %s@%s "du -m /tmp/%s | cut -f1"' % (self.port, self.user, self.host, shortimage)
-            #    downloadsize = int(os.popen(cmd).read())
-            downloadsize = os.path.getsize("/tmp/%s" % shortimage) >> 20
-            self._uploadimage(shortimage, pool=pool, pooltype=pooltype, suffix='', size=downloadsize)
+        if pooltype in ['logical', 'zfs']:
+            if self.host == 'localhost' or self.host == '127.0.0.1':
+                downloadsize = os.path.getsize("/tmp/%s" % shortimage) >> 20
+                cmd = "lvcreate -L %sM --name %s %s" % (downloadsize, shortimage, poolpath.replace('/dev/', ''))
+                os.system(cmd)
+                cmd = "qemu-img convert -O raw /tmp/%s %s/%s" % (shortimage, poolpath, shortimage)
+                os.system(cmd)
+            elif self.protocol == 'ssh':
+                sizecommand = "ssh -p %s %s@%s du -hs /tmp/%s | awk '{print $1}'" % (self.port, self.user, self.host,
+                                                                                     shortimage)
+                downloadsize = os.popen(sizecommand).read().strip()
+                sshcmd = "lvcreate -L %s --name %s %s" % (downloadsize, shortimage, poolpath.replace('/dev/', ''))
+                sshcmd += " ; qemu-img convert -O raw /tmp/%s %s/%s" % (shortimage, poolpath, shortimage)
+                print(sshcmd)
+                cmd = 'ssh -p %s %s@%s "%s"' % (self.port, self.user, self.host, sshcmd)
+                os.system(cmd)
         pool.refresh()
         return {'result': 'success'}
 
@@ -1807,16 +1821,16 @@ class Kvirt(object):
         if name in networks:
             return {'result': 'failure', 'reason': "Network %s already exists" % name}
         try:
-            range = IpRange(cidr)
-        except TypeError:
+            range = IPNetwork(cidr)
+        except:
             return {'result': 'failure', 'reason': "Invalid Cidr %s" % cidr}
         if IPNetwork(cidr) in cidrs:
             return {'result': 'failure', 'reason': "Cidr %s already exists" % cidr}
         netmask = IPNetwork(cidr).netmask
-        gateway = range[1]
+        gateway = str(range[1])
         if dhcp:
-            start = range[2]
-            end = range[-2]
+            start = str(range[2])
+            end = str(range[-2])
             dhcpxml = """<dhcp>
                     <range start='%s' end='%s'/>""" % (start, end)
             if pxe is not None:
@@ -2013,7 +2027,7 @@ class Kvirt(object):
         poolxml = pool.XMLDesc(0)
         root = ET.fromstring(poolxml)
         pooltype = list(root.getiterator('pool'))[0].get('type')
-        if pooltype in ['dir', 'zfs']:
+        if pooltype in ['dir', 'logical', 'zfs']:
             poolpath = list(root.getiterator('path'))[0].text
         else:
             poolpath = list(root.getiterator('device'))[0].get('path')

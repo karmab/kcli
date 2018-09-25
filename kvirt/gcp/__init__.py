@@ -9,7 +9,7 @@ from kvirt import common
 from dateutil import parser as dateparser
 import googleapiclient.discovery
 from google.cloud import dns
-from iptools import IpRange
+from netaddr import IPNetwork
 import os
 import time
 
@@ -584,8 +584,8 @@ class Kgcp(object):
             try:
                 if cidr is not None:
                     try:
-                        IpRange(cidr)
-                    except TypeError:
+                        IPNetwork(cidr)
+                    except:
                         return {'result': 'failure', 'reason': "Invalid Cidr %s" % cidr}
                     subnetbody = {'name': name, "ipCidrRange": cidr,
                                   "network": "projects/%s/global/networks/%s" % (project, name),

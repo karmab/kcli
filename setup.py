@@ -19,7 +19,6 @@ setup(
     author_email='karimboumedhel@gmail.com',
     license='ASL',
     install_requires=[
-        'iptools',
         'netaddr',
         'PyYAML',
         'prettytable',

@@ -4,7 +4,7 @@
 Openstack Provider Class
 """
 
-from iptools import IpRange
+from netaddr import IPNetwork
 from kvirt import common
 from keystoneauth1 import loading
 from keystoneauth1 import session
@@ -470,8 +470,8 @@ class Kopenstack(object):
             routers = [router for router in self.neutron.list_routers()['routers'] if router['name'] == 'kvirt']
             router_id = routers[0]['id'] if routers else None
         try:
-            IpRange(cidr)
-        except TypeError:
+            IPNetwork(cidr)
+        except:
             return {'result': 'failure', 'reason': "Invalid Cidr %s" % cidr}
         neutron = self.neutron
         network_id = None

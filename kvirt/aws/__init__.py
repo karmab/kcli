@@ -7,7 +7,7 @@ Aws Provider Class
 from datetime import datetime
 from kvirt import common
 import boto3
-from iptools import IpRange
+from netaddr import IPNetwork
 import os
 import time
 
@@ -457,8 +457,8 @@ class Kaws(object):
         conn = self.conn
         if cidr is not None:
             try:
-                IpRange(cidr)
-            except TypeError:
+                IPNetwork(cidr)
+            except:
                 return {'result': 'failure', 'reason': "Invalid Cidr %s" % cidr}
         vpc = conn.create_vpc(CidrBlock=cidr)
         vpcid = vpc['Vpc']['VpcId']
