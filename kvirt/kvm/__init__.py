@@ -1692,17 +1692,17 @@ class Kvirt(object):
                          </target>
                          </pool>""" % (name, poolpath)
         elif pooltype == 'lvm':
+            poolpath = '/dev/%s' % poolpath if '/dev' not in poolpath else poolpath
             poolxml = """<pool type='logical'>
                          <name>%s</name>
                          <source>
-                         <device path='%s'/>
                          <name>%s</name>
                          <format type='lvm2'/>
                          </source>
                          <target>
-                         <path>/dev/%s</path>
+                         <path>%s</path>
                          </target>
-                         </pool>""" % (name, poolpath, name, name)
+                         </pool>""" % (name, name, poolpath)
         elif pooltype == 'zfs':
             poolxml = """<pool type='zfs'>
                          <name>%s</name>
