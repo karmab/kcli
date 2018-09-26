@@ -586,7 +586,8 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
         for device in devices:
             if device.ips:
                 for i in device.ips:
-                    ips.append(i.address)
+                    if str(i.version) == 'v4' and i.address not in ['172.17.0.1', '127.0.0.1']:
+                        ips.append(i.address)
         if not ips:
             common.print("No ip found. Cannot ssh...", color='red')
         else:
