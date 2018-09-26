@@ -397,10 +397,11 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
             print(vars(vm))
         vm_service = self.vms_service.vm_service(vm.id)
         yamlinfo = {'name': vm.name, 'disks': [], 'nets': []}
-        host = conn.follow_link(vm.host)
-        yamlinfo['host'] = host.name
         # yamlinfo['autostart'] = ''
         yamlinfo['status'] = vm.status
+        if vm.status == 'up':
+            host = conn.follow_link(vm.host)
+            yamlinfo['host'] = host.name
         tags_service = vm_service.tags_service()
         for tag in tags_service.list():
             if tag.name.startswith('plan_'):

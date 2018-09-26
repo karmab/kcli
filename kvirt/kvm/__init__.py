@@ -224,8 +224,8 @@ class Kvirt(object):
                 backing = backingvolume.path()
                 if '/dev' in backing and diskpooltype == 'dir':
                     return {'result': 'failure', 'reason': "lvm template can not be used with a dir pool.Leaving..."}
-                if '/dev' not in backing and diskpooltype == 'logical':
-                    return {'result': 'failure', 'reason': "file template can not be used with a lvm pool.Leaving..."}
+                # if '/dev' not in backing and diskpooltype == 'logical':
+                #    return {'result': 'failure', 'reason': "file template can not be used with a lvm pool.Leaving..."}
                 if '/dev' in backing:
                     # backingxml = "<backingStore/>"
                     # backingxml = """<backingStore type='block' index='1'>
@@ -848,8 +848,11 @@ class Kvirt(object):
             # path = element.find('source').get('file')
             imagefiles = [element.find('source').get('file'), element.find('source').get('dev')]
             path = next(item for item in imagefiles if item is not None)
-            volume = conn.storageVolLookupByPath(path)
-            disksize = int(float(volume.info()[1]) / 1024 / 1024 / 1024)
+            try:
+                volume = conn.storageVolLookupByPath(path)
+                disksize = int(float(volume.info()[1]) / 1024 / 1024 / 1024)
+            except:
+                disksize = 'N/A'
             yamlinfo['disks'].append({'device': device, 'size': disksize, 'format': diskformat, 'type': drivertype,
                                       'path': path})
         if vm.hasCurrentSnapshot():
@@ -1685,8 +1688,7 @@ class Kvirt(object):
                     return
                 return2 = os.system(cmd2)
                 if return2 > 0:
-                    print(("Couldn't change permission of directory %s to qemu.Leaving..." % poolpath))
-                    return
+                    print(("Couldn't change permission of directory %s to qemu" % poolpath))
             else:
                 print(("Make sur %s directory exists on hypervisor" % name))
             poolxml = """<pool type='dir'>
