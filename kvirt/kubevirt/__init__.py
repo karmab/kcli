@@ -495,6 +495,22 @@ class Kubevirt(object):
             disk = {'device': d['name'], 'size': size, 'format': bus, 'type': _type, 'path': volumename}
             disks.append(disk)
         yamlinfo['disks'] = disks
+        interfaces = vm['spec']['template']['spec']['domain']['devices']['interfaces']
+        networks = vm['spec']['template']['spec']['networks']
+        for index, interface in enumerate(interfaces):
+            device = 'eth%s' % index
+            net = networks[index]
+            mac = interface['macAddress'] = interface['mac'] if 'mac' in interface else 'N/A'
+            if 'multus' in net:
+                network = net['multus']['networkName']
+                network_type = 'multus'
+            elif 'hostBridge' in net:
+                network = net['hostBridge']['bridgeName']
+                network_type = 'hostbridge'
+            else:
+                network = 'default'
+                network_type = 'pod'
+            yamlinfo['nets'].append({'device': device, 'mac': mac, 'net': network, 'type': network_type})
         common.print_info(yamlinfo, output=output, fields=fields, values=values)
         return {'result': 'success'}
 
