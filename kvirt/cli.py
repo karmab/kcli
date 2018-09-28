@@ -606,6 +606,7 @@ def pool(args):
     full = args.delete
     pooltype = args.pooltype
     path = args.path
+    thinpool = args.thinpool
     config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
     if delete:
@@ -616,7 +617,7 @@ def pool(args):
         common.pprint("Missing path. Leaving...", color='red')
         os._exit(1)
     common.pprint("Adding pool %s..." % (pool), color='green')
-    k.create_pool(name=pool, poolpath=path, pooltype=pooltype)
+    k.create_pool(name=pool, poolpath=path, pooltype=pooltype, thinpool=thinpool)
 
 
 def plan(args):
@@ -1120,6 +1121,7 @@ def cli():
     pool_parser.add_argument('-t', '--pooltype', help='Type of the pool', choices=('dir', 'lvm', 'zfs'),
                              default='dir')
     pool_parser.add_argument('-p', '--path', help='Path of the pool', metavar='PATH')
+    pool_parser.add_argument('--thinpool', help='Existing thin pool to use with lvm', metavar='THINPOOL')
     pool_parser.add_argument('pool')
     pool_parser.set_defaults(func=pool)
 

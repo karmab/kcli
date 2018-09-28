@@ -445,7 +445,7 @@ class Kaws(object):
                                 debug=self.debug, download=False)
         return scpcommand
 
-    def create_pool(self, name, poolpath, pooltype='dir', user='qemu'):
+    def create_pool(self, name, poolpath, pooltype='dir', user='qemu', thinpool=None):
         print("not implemented")
         return
 

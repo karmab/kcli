@@ -766,7 +766,7 @@ class Kubevirt(object):
                                 debug=self.debug, download=download)
         return scpcommand
 
-    def create_pool(self, name, poolpath, pooltype='dir', user='qemu'):
+    def create_pool(self, name, poolpath, pooltype='dir', user='qemu', thinpool=None):
         print("not implemented")
         return
 

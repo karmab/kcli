@@ -15,12 +15,12 @@ Source:         https://files.pythonhosted.org/packages/source/k/kcli/kcli-%{ver
 AutoReq:        no
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildRequires:  python3-devel rubygem-ronn gzip
-Requires:       python3 python3-iptools libvirt-python3 genisoimage nmap-ncat python3-prettytable python3-PyYAML python3-flask python3-netaddr
+Requires:       python3 libvirt-python3 genisoimage nmap-ncat python3-prettytable python3-PyYAML python3-flask python3-netaddr
 
 %description
-Kcli is meant to interact with a local/remote libvirt daemon and
-to easily deploy from templates (optionally using cloud-init). It will
-also report ips for any vm connected to a dhcp-enabled libvirt network
+Kcli is meant to interact with a local/remote libvirt, gcp, aws ovirt,
+openstack, kubevirt and to easily deploy from templates (optionally using cloud-init).
+It will also report ips for any vm connected to a dhcp-enabled libvirt network
 and generally for every vm deployed from this client.
 
 %global debug_package %{nil}

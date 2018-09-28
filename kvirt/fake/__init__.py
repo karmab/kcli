@@ -241,7 +241,7 @@ class Kfake(object):
         print("not implemented")
         return
 
-    def create_pool(self, name, poolpath, pooltype='dir', user='qemu'):
+    def create_pool(self, name, poolpath, pooltype='dir', user='qemu', thinpool=None):
         return
 
     def add_image(self, image, pool, short=None, cmd=None, name=None, size=1):

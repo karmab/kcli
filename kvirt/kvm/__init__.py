@@ -130,6 +130,11 @@ class Kvirt(object):
         root = ET.fromstring(default_poolxml)
         default_pooltype = list(root.getiterator('pool'))[0].get('type')
         default_poolpath = None
+        product = list(root.getiterator('product'))
+        if product:
+            default_thinpool = list(root.getiterator('product'))[0].get('name')
+        else:
+            default_thinpool = None
         for element in root.getiterator('path'):
             default_poolpath = element.text
             break
@@ -165,6 +170,7 @@ class Kvirt(object):
                 diskpool = default_pool
                 diskpooltype = default_pooltype
                 diskpoolpath = default_poolpath
+                diskthinpool = default_thinpool
                 diskwwn = None
                 disktemplate = None
             elif isinstance(disk, int):
@@ -174,6 +180,7 @@ class Kvirt(object):
                 diskpool = default_pool
                 diskpooltype = default_pooltype
                 diskpoolpath = default_poolpath
+                diskthinpool = default_thinpool
                 diskwwn = None
                 disktemplate = None
             elif isinstance(disk, dict):
@@ -194,6 +201,11 @@ class Kvirt(object):
                 for element in list(root.getiterator('path')):
                     diskpoolpath = element.text
                     break
+                product = list(root.getiterator('product'))
+                if product:
+                    diskthinpool = list(root.getiterator('product'))[0].get('name')
+                else:
+                    diskthinpool = None
             else:
                 return {'result': 'failure', 'reason': "Invalid disk entry"}
             letter = chr(index + ord('a'))
@@ -209,13 +221,18 @@ class Kvirt(object):
                 disktemplate = template
             if disktemplate is not None:
                 try:
-                    default_storagepool.refresh(0)
-                    if '/' in disktemplate:
-                        backingvolume = volumespaths[disktemplate]['object']
+                    if diskthinpool is not None:
+                        matchingthintemplates = self.thintemplates(diskpoolpath, diskthinpool)
+                        if disktemplate not in matchingthintemplates:
+                            raise NameError('No Template found')
                     else:
-                        backingvolume = volumes[disktemplate]['object']
-                    backingxml = backingvolume.XMLDesc(0)
-                    root = ET.fromstring(backingxml)
+                        default_storagepool.refresh(0)
+                        if '/' in disktemplate:
+                            backingvolume = volumespaths[disktemplate]['object']
+                        else:
+                            backingvolume = volumes[disktemplate]['object']
+                        backingxml = backingvolume.XMLDesc(0)
+                        root = ET.fromstring(backingxml)
                 except:
                     shortname = [t for t in defaults.TEMPLATES if defaults.TEMPLATES[t] == disktemplate]
                     if shortname:
@@ -223,26 +240,34 @@ class Kvirt(object):
                     else:
                         msg = "you don't have template %s" % disktemplate
                     return {'result': 'failure', 'reason': msg}
-                backing = backingvolume.path()
-                if '/dev' in backing:
-                    backingxml = """<backingStore type='block' index='1'>
-                                    <format type='raw'/>
-                                    <source dev='%s'/>
-                                    </backingStore>""" % backing
+                if diskthinpool is not None:
+                    backing = None
+                    backingxml = '<backingStore/>'
                 else:
-                    backingxml = """<backingStore type='file' index='1'>
-                                    <format type='qcow2'/>
-                                    <source file='%s'/>
-                                    </backingStore>""" % backing
+                    backing = backingvolume.path()
+                    if '/dev' in backing:
+                        backingxml = """<backingStore type='block' index='1'>
+                                        <format type='raw'/>
+                                        <source dev='%s'/>
+                                        </backingStore>""" % backing
+                    else:
+                        backingxml = """<backingStore type='file' index='1'>
+                                        <format type='qcow2'/>
+                                        <source file='%s'/>
+                                        </backingStore>""" % backing
             else:
                 backing = None
                 backingxml = '<backingStore/>'
             volxml = self._xmlvolume(path=diskpath, size=disksize, pooltype=diskpooltype, backing=backing,
                                      diskformat=diskformat)
-            if index == 0 and template is not None and diskpooltype == 'logical' and not backing.startswith('/dev'):
+            if index == 0 and template is not None and diskpooltype in ['logical', 'zfs']\
+                    and diskpool is None and not backing.startswith('/dev'):
                 fixqcow2path = diskpath
                 fixqcow2backing = backing
-            if diskpool in volsxml:
+            if diskpooltype == 'logical' and diskthinpool is not None:
+                thinsource = template if index == 0 and template is not None else None
+                self._createthinlvm(storagename, diskpoolpath, diskthinpool, backing=thinsource, size=disksize)
+            elif diskpool in volsxml:
                 volsxml[diskpool].append(volxml)
             else:
                 volsxml[diskpool] = [volxml]
@@ -253,8 +278,7 @@ class Kvirt(object):
                 diskwwn = ''
             dtype = 'block' if '/dev' in diskpath else 'file'
             dsource = 'dev' if '/dev' in diskpath else 'file'
-            # if diskpooltype == 'logical' and backing is None:
-            if diskpooltype == 'logical' and (backing is None or backing.startswith('/dev')):
+            if diskpooltype in ['logical', 'zfs'] and (backing is None or backing.startswith('/dev')):
                 diskformat = 'raw'
             disksxml = """%s<disk type='%s' device='disk'>
                     <driver name='qemu' type='%s'/>
@@ -903,15 +927,17 @@ class Kvirt(object):
             pool.refresh(0)
             poolxml = pool.XMLDesc(0)
             root = ET.fromstring(poolxml)
-            # pooltype = list(root.getiterator('pool'))[0].get('type')
-            # if pooltype == 'logical':
-            #    if iso:
-            #        return []
-            #    else:
-            #        templates.extend(self.thintemplates(poolname))
             for element in list(root.getiterator('path')):
                 poolpath = element.text
                 break
+            product = list(root.getiterator('product'))
+            if product:
+                thinpool = list(root.getiterator('product'))[0].get('name')
+                matchingtemplates = ["%s/%s" % (poolpath, volume) for volume in self.thintemplates(poolpath, thinpool)
+                                     if volume.endswith('qcow2') or volume.endswith('qc2') or
+                                     volume in default_templates]
+                if matchingtemplates:
+                    templates.extend(matchingtemplates)
             for volume in pool.listVolumes():
                 if volume.endswith('iso'):
                     isos.append("%s/%s" % (poolpath, volume))
@@ -956,10 +982,20 @@ class Kvirt(object):
         if status[vm.isActive()] != "down":
             vm.destroy()
         vm.undefine()
+        founddisks = []
+        thinpools = []
         for storage in conn.listStoragePools():
             deleted = False
             storage = conn.storagePoolLookupByName(storage)
             storage.refresh(0)
+            poolxml = storage.XMLDesc(0)
+            root = ET.fromstring(poolxml)
+            for element in list(root.getiterator('path')):
+                poolpath = element.text
+                break
+            product = list(root.getiterator('product'))
+            if product:
+                thinpools.append(poolpath)
             for stor in storage.listVolumes():
                 for disk in disks:
                     if stor in disk:
@@ -969,8 +1005,14 @@ class Kvirt(object):
                             continue
                         volume.delete(0)
                         deleted = True
+                        founddisks.append(disk)
             if deleted:
                 storage.refresh(0)
+        remainingdisks = list(set(disks) - set(founddisks))
+        for p in thinpools:
+            for disk in remainingdisks:
+                if disk.startswith(p):
+                    self._deletelvm(disk)
         for element in list(root.getiterator('interface')):
             mac = element.find('mac').get('address')
             networktype = element.get('type')
@@ -1037,9 +1079,9 @@ class Kvirt(object):
                         </target>
                         </volume>""" % (name, path, name, size, path, name)
             return volume
-        if backing is not None and pooltype == 'logical' and backing.startswith('/dev'):
+        if backing is not None and pooltype in ['logical', 'zfs'] and backing.startswith('/dev'):
             diskformat = 'qcow2'
-        if backing is not None and pooltype == 'logical' and not backing.startswith('/dev'):
+        if backing is not None and pooltype in ['logical', 'zfs'] and not backing.startswith('/dev'):
             backingstore = "<backingStore/>"
         elif backing is not None:
             backingstore = """
@@ -1664,7 +1706,7 @@ class Kvirt(object):
                 print(scpcommand)
             return scpcommand
 
-    def create_pool(self, name, poolpath, pooltype='dir', user='qemu'):
+    def create_pool(self, name, poolpath, pooltype='dir', user='qemu', thinpool=None):
         conn = self.conn
         for pool in conn.listStoragePools():
             if pool == name:
@@ -1700,16 +1742,18 @@ class Kvirt(object):
                          </target>
                          </pool>""" % (name, poolpath)
         elif pooltype == 'lvm':
+            thinpoolxml = "<product name='%s'/>" % thinpool if thinpool is not None else ''
             poolxml = """<pool type='logical'>
                          <name>%s</name>
                          <source>
                          <name>%s</name>
                          <format type='lvm2'/>
+                         %s
                          </source>
                          <target>
                          <path>/dev/%s</path>
                          </target>
-                         </pool>""" % (name, poolpath, poolpath)
+                         </pool>""" % (name, poolpath, thinpoolxml, poolpath)
         elif pooltype == 'zfs':
             poolxml = """<pool type='zfs'>
                          <name>%s</name>
@@ -1791,7 +1835,12 @@ class Kvirt(object):
                                                                                           shortimage, cmd)
                 os.system(cmd)
         if pooltype in ['logical', 'zfs']:
-            self.add_image_to_lvm_pool(poolpath, shortimage)
+            product = list(root.getiterator('product'))
+            if product:
+                thinpool = list(root.getiterator('product'))[0].get('name')
+            else:
+                thinpool = None
+            self.add_image_to_deadpool(poolname, pooltype, poolpath, shortimage, thinpool)
             return {'result': 'success'}
         pool.refresh()
         return {'result': 'success'}
@@ -2015,19 +2064,25 @@ class Kvirt(object):
             poolpath = list(root.getiterator('path'))[0].text
         else:
             poolpath = list(root.getiterator('device'))[0].get('path')
+        if pooltype == 'logical':
+            product = list(root.getiterator('product'))
+            if product:
+                thinpool = list(root.getiterator('product'))[0].get('name')
+                poolpath += " (thinpool:%s)" % thinpool
         return poolpath
 
     def flavors(self):
         return []
 
-    def thintemplates(self, poolname):
-        thincommand = "lvs -o lv_name  %s -S 'lv_attr =~ ^V && origin = \"\"'  --noheadings" % poolname
+    def thintemplates(self, path, thinpool):
+        thincommand = ("lvs -o lv_name  %s -S 'lv_attr =~ ^V && origin = \"\" && pool_lv = \"%s\"'  --noheadings"
+                       % (path, thinpool))
         if self.protocol == 'ssh':
             thincommand = "ssh -p %s %s@%s \"%s\"" % (self.port, self.user, self.host, thincommand)
-        thintemplates = os.popen(thincommand).read().strip()
-        if thintemplates == '':
+        results = os.popen(thincommand).read().strip()
+        if results == '':
             return []
-        return ['/dev/%s/%s' % (poolname, name) for name in thintemplates.split('\n')]
+        return [name.strip() for name in results.split('\n')]
 
     def _fixqcow2(self, path, backing):
         command = "qemu-img create -q -f qcow2 -b %s -F qcow2 %s" % (backing, path)
@@ -2035,15 +2090,40 @@ class Kvirt(object):
             command = "ssh -p %s %s@%s \"%s\"" % (self.port, self.user, self.host, command)
         os.system(command)
 
-    def add_image_to_lvm_pool(self, poolpath, shortimage):
+    def add_image_to_deadpool(self, poolname, pooltype, poolpath, shortimage, thinpool=None):
         sizecommand = "qemu-img info /tmp/%s --output=json" % shortimage
         if self.protocol == 'ssh':
             sizecommand = "ssh -p %s %s@%s \"%s\"" % (self.port, self.user, self.host, sizecommand)
         size = os.popen(sizecommand).read().strip()
         virtualsize = json.loads(size)['virtual-size']
-        command = "lvcreate -L %sb -n %s %s" % (virtualsize, shortimage, poolpath)
+        if pooltype == 'logical':
+            if thinpool is not None:
+                command = "lvcreate -qq -V %sb -T %s/%s -n %s" % (virtualsize, poolpath, thinpool, shortimage)
+            else:
+                command = "lvcreate -qq -L %sb -n %s %s" % (virtualsize, shortimage, poolpath)
+        elif pooltype == 'zfs':
+            command = "zfs create -V %s %s/%s" % (virtualsize, poolname, shortimage)
+        else:
+            common.pprint("Invalid pooltype %s" % pooltype, color='red')
+            return
         command += "; qemu-img convert -p -f qcow2 -O raw -t none -T none /tmp/%s %s/%s" % (shortimage, poolpath,
                                                                                             shortimage)
+        command += "; rm -rf /tmp/%s" % shortimage
+        if self.protocol == 'ssh':
+            command = "ssh -p %s %s@%s \"%s\"" % (self.port, self.user, self.host, command)
+        os.system(command)
+
+    def _createthinlvm(self, name, path, thinpool, backing=None, size=None):
+        if backing is not None:
+            command = "lvcreate -qq -ay -K -s --name %s %s/%s" % (name, path, backing)
+        else:
+            command = "lvcreate -qq -V %sG -T %s/%s -n %s" % (size, path, thinpool, name)
+        if self.protocol == 'ssh':
+            command = "ssh -p %s %s@%s \"%s\"" % (self.port, self.user, self.host, command)
+        os.system(command)
+
+    def _deletelvm(self, disk):
+        command = "lvremove -qqy %s" % (disk)
         if self.protocol == 'ssh':
             command = "ssh -p %s %s@%s \"%s\"" % (self.port, self.user, self.host, command)
         os.system(command)

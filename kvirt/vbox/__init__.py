@@ -916,7 +916,7 @@ class Kbox(object):
                 scpcommand = "%s %s %s@127.0.0.1:%s" % (scpcommand, source, user, destination)
             return scpcommand
 
-    def create_pool(self, name, poolpath, pooltype='dir', user='qemu'):
+    def create_pool(self, name, poolpath, pooltype='dir', user='qemu', thinpool=None):
         pools = self.list_pools()
         poolpath = os.path.expanduser(poolpath)
         if name in pools:

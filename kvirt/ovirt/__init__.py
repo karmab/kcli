@@ -614,7 +614,7 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
                                 recursive=recursive, tunnel=tunnel, debug=self.debug, download=False)
         return scpcommand
 
-    def create_pool(self, name, poolpath, pooltype='dir', user='qemu'):
+    def create_pool(self, name, poolpath, pooltype='dir', user='qemu', thinpool=None):
         print("not implemented")
         return
 

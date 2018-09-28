@@ -207,7 +207,7 @@ class Kbase(object):
         print("not implemented")
         return
 
-    def create_pool(self, name, poolpath, pooltype='dir', user='qemu'):
+    def create_pool(self, name, poolpath, pooltype='dir', user='qemu', thinpool=None):
         print("not implemented")
         return
 

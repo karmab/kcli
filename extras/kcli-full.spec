@@ -15,8 +15,7 @@ Source:         https://files.pythonhosted.org/packages/source/k/kcli/kcli-%{ver
 AutoReq:        no
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildRequires:  python3-devel rubygem-ronn gzip
-#Requires:       python3 python3-iptools libvirt-python3 genisoimage nmap-ncat python3-prettytable python3-PyYAML python3-flask python3-netaddr python3-docker python3-kubernetes python3-google-api-client python3-boto3 python-google-auth-httplib2 google-cloud-dns google-api-core python3-requests python3-protobuf python-boto3 python-ovirt-engine-sdk4
-Requires:       python3 python3-iptools libvirt-python3 genisoimage nmap-ncat python3-prettytable python3-PyYAML python3-flask python3-netaddr python3-docker python3-kubernetes python3-google-api-client python3-boto3 python3-requests python3-protobuf python-boto3
+Requires:       python3 libvirt-python3 genisoimage nmap-ncat python3-prettytable python3-PyYAML python3-flask python3-netaddr python3-docker python3-kubernetes python3-google-api-client python3-boto3 python3-requests python3-protobuf python-boto3
 
 %description
 Kcli is meant to interact with a local/remote libvirt daemon and
