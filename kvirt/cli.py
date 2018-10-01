@@ -183,7 +183,7 @@ def host(args):
         os._exit(1)
 
 
-def list(args):
+def _list(args):
     """List hosts, profiles, flavors, templates, isos, pools or vms"""
     hosts = args.hosts
     profiles = args.profiles
@@ -1062,7 +1062,7 @@ def cli():
     list_parser.add_argument('-g', '--group', help='Only Display products of the indicated group', metavar='GROUP')
     list_parser.add_argument('-r', '--repo', help='Only Display products of the indicated repository', metavar='REPO')
     list_parser.add_argument('--filters', choices=('up', 'down'))
-    list_parser.set_defaults(func=list)
+    list_parser.set_defaults(func=_list)
 
     network_info = 'Create/Delete Network'
     network_parser = subparsers.add_parser('network', description=network_info, help=network_info)

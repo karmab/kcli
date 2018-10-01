@@ -102,15 +102,21 @@ class Kconfig(Kbaseconfig):
                            debug=debug, datacenter=datacenter, cluster=cluster, ca_file=ca_file, org=org,
                            imagerepository=imagerepository)
             elif self.type == 'openstack':
-                domain = self.options.get('domain', 'Default')
                 version = self.options.get('version', '2')
-                auth_url = self.options.get('auth_url')
+                domain = next((e for e in [self.options.get('domain'),
+                                           os.environ.get("OS_USER_DOMAIN_NAME")] if e is not None), 'Default')
+                auth_url = next((e for e in [self.options.get('auth_url'),
+                                             os.environ.get("OS_AUTH_URL")] if e is not None),
+                                None)
                 if auth_url is None:
                     common.pprint("Missing auth_url in the configuration. Leaving", color='red')
                     os._exit(1)
-                user = self.options.get('user', 'admin')
-                project = self.options.get('project', 'admin')
-                password = self.options.get('password')
+                user = next((e for e in [self.options.get('user'),
+                                         os.environ.get("OS_USERNAME")] if e is not None), 'admin')
+                project = next((e for e in [self.options.get('project'),
+                                            os.environ.get("OS_PROJECT_NAME")] if e is not None), 'admin')
+                password = next((e for e in [self.options.get('password'),
+                                             os.environ.get("OS_PASSWORD")] if e is not None), None)
                 if password is None:
                     common.pprint("Missing password in the configuration. Leaving", color='red')
                     os._exit(1)

@@ -13,16 +13,16 @@ left = ["astonishing", "happy", "jolly", "dreamy", "sad", "angry", "pensive", "f
 
 right = ["albattani", "almeida", "amazigh", "archimedes", "ardinghelli", "babbage", "bardeen", "bartik", "bbanks",
          "bell", "beyonder", "blackwell", "bohr", "brattain", "briana", "brown", "broza", "bumblefoot", "carson",
-         "cell", "clapton", "colden", "cuqui", "curie", "darwin", "davinci", "django", "einstein", "elion", "engelbart",
-         "euclid", "fermat", "fermi", "feynman", "fiambre", "franklin", "freezer", "galactus", "galileo", "goiko",
-         "gohan", "goku", "goldstine", "goodall", "hawking", "heisenberg", "hoover", "hopper", "hypatia", "jhendrix",
-         "jmayer", "jones", "kirch", "kendra", "kowalevski", "lalande", "leakey", "lilou", "lovelace", "lumiere",
-         "lomax", "macenroe", "manchadinha", "mayer", "mccarthy", "mcclintock", "mclean", "meitner", "mestorf", "mikel",
-         "minwii", "morse", "mirzoyan", "newton", "nobel", "pare", "pasteur", "pepenforce", "perlman", "picolo", "pike",
-         "poincare", "ptolemy", "ritchie", "rosalind", "sammet", "satriani", "selen", "shockley", "sinoussi", "spitzer",
-         "stallman", "tesla", "thompson", "torvalds", "turing", "wilson", "wozniak", "wright", "yonath", "rulo",
-         "tudela", "tdurdeen", "korsani", "karmab", "gotrunks", "xhamster", "minwii", "djokovic", "federer", "nadal",
-         "sampras", "valadas", "vai", "vegeta"]
+         "cell", "citellus", "clapton", "colden", "cuqui", "curie", "darwin", "davinci", "django", "einstein", "elion",
+         "engelbart", "euclid", "fermat", "fermi", "feynman", "fiambre", "franklin", "freezer", "galactus", "galileo",
+         "goiko", "gohan", "goku", "goldstine", "goodall", "hawking", "heisenberg", "hoover", "hopper", "hypatia",
+         "jhendrix", "jmayer", "jones", "kirch", "kendra", "kowalevski", "lalande", "leakey", "lilou", "lovelace",
+         "lumiere", "lomax", "macenroe", "manchadinha", "mayer", "mccarthy", "mcclintock", "mclean", "meitner",
+         "mestorf", "mikel", "minwii", "morse", "mirzoyan", "newton", "nobel", "pare", "pasteur", "pepenforce",
+         "perlman", "picolo", "pike", "poincare", "ptolemy", "ritchie", "rosalind", "sammet", "satriani",
+         "selen", "shockley", "sinoussi", "spitzer", "stallman", "tesla", "thompson", "torvalds", "turing", "wilson",
+         "wozniak", "wright", "yonath", "rulo", "tudela", "tdurdeen", "korsani", "karmab", "gotrunks",
+         "xhamster", "minwii", "djokovic", "federer", "nadal", "sampras", "valadas", "vai", "vegeta"]
 
 
 def get_random_name(sep='_'):

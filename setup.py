@@ -35,6 +35,7 @@ setup(
             'google-auth-httplib2',
             'google-cloud-dns',
             'ovirt-engine-sdk-python',
+            'python-cinderclient',
             'python-neutronclient',
             'python-glanceclient',
             'python-keystoneclient',

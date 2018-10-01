@@ -9,20 +9,12 @@ from kvirt import common
 from keystoneauth1 import loading
 from keystoneauth1 import session
 from glanceclient import Client as glanceclient
+from cinderclient import client as cinderclient
 from novaclient import client as novaclient
 from neutronclient.v2_0.client import Client as neutronclient
 import os
 from time import sleep
 import webbrowser
-
-
-# general notes
-# most functions should either return
-# return {'result': 'success'}
-# or
-# return {'result': 'failure', 'reason': reason}
-# for instance
-# return {'result': 'failure', 'reason': "VM %s not found" % name}
 
 
 class Kopenstack(object):
@@ -36,6 +28,7 @@ class Kopenstack(object):
         sess = session.Session(auth=auth)
         self.nova = novaclient.Client(version, session=sess)
         self.glance = glanceclient(version, session=sess)
+        self.cinder = cinderclient.Client(version, session=sess)
         self.neutron = neutronclient(session=sess)
         self.conn = self.nova
         self.project = project
@@ -75,12 +68,6 @@ class Kopenstack(object):
             return {'result': 'failure', 'reason': "VM %s already exists" % name}
         except:
             pass
-        images = [image for image in glance.images.list() if image.name == template]
-        if images:
-            image = images[0]
-        else:
-            msg = "you don't have template %s" % template
-            return {'result': 'failure', 'reason': msg}
         allflavors = [f for f in nova.flavors.list()]
         allflavornames = [flavor.name for flavor in allflavors]
         if flavor is None:
@@ -89,6 +76,8 @@ class Kopenstack(object):
             common.pprint("Using flavor %s" % flavor.name, color='green')
         elif flavor not in allflavornames:
             return {'result': 'failure', 'reason': "Flavor % not found" % flavor}
+        else:
+            flavor = nova.flavors.find(name=flavor)
         nics = []
         for net in nets:
             if isinstance(net, str):
@@ -101,6 +90,32 @@ class Kopenstack(object):
                 common.pprint(e, color='red')
                 return {'result': 'failure', 'reason': "Network %s not found" % netname}
             nics.append({'net-id': net.id})
+        image = None
+        if template is not None:
+            images = [image for image in glance.images.list() if image.name == template]
+            if images:
+                image = images[0]
+            else:
+                msg = "you don't have template %s" % template
+                return {'result': 'failure', 'reason': msg}
+        block_dev_mapping = {}
+        for index, disk in enumerate(disks):
+            imageref = None
+            diskname = "%s-disk%s" % (name, index)
+            letter = chr(index + ord('a'))
+            if isinstance(disk, int):
+                disksize = disk
+                diskthin = True
+            elif isinstance(disk, dict):
+                disksize = disk.get('size', '10')
+                diskthin = disk.get('thin', True)
+            if index == 0 and template is not None:
+                if not diskthin:
+                    imageref = image.id
+                else:
+                    continue
+            newvol = self.cinder.volumes.create(name=diskname, size=disksize, imageRef=imageref)
+            block_dev_mapping['vd%s' % letter] = newvol.id
         key_name = 'kvirt'
         keypairs = [k.name for k in nova.keypairs.list()]
         if key_name not in keypairs:
@@ -130,7 +145,7 @@ class Kopenstack(object):
                              iso=False)
             userdata = open('/tmp/user-data', 'r').read().strip()
         instance = nova.servers.create(name=name, image=image, flavor=flavor, key_name=key_name, nics=nics, meta=meta,
-                                       userdata=userdata)
+                                       userdata=userdata, block_device_mapping=block_dev_mapping)
         tenant_id = instance.tenant_id
         floating_ips = [f['id'] for f in neutron.list_floatingips()['floatingips']
                         if f['port_id'] is None]
@@ -153,7 +168,7 @@ class Kopenstack(object):
             common.pprint("Waiting 5 seconds for vm to get an ip", color='green')
             sleep(5)
             timeout += 5
-            if timeout >= 15:
+            if timeout >= 60:
                 common.pprint("Time out waiting for vm to get an ip", color='red')
                 break
             vm = nova.servers.get(instance.id)
@@ -277,15 +292,11 @@ class Kopenstack(object):
         print(vm.get_console_output())
         return
 
-# disks list of
-# {'device': device, 'size': disksize, 'format': diskformat,
-# 'type': drivertype, 'path': path}
-# snapshots list of {'snapshot': snapshot, current: current}
-# fields should be split with fields.split(',')
     def info(self, name, output='plain', fields=None, values=False):
         if fields is not None:
             fields = fields.split(',')
         nova = self.nova
+        cinder = self.cinder
         try:
             vm = nova.servers.find(name=name)
         except:
@@ -310,6 +321,16 @@ class Kopenstack(object):
                     net = {'device': 'eth%s' % index, 'mac': mac, 'net': key, 'type': entry2['addr']}
                     yamlinfo['nets'].append(net)
                     index += 1
+        disks = []
+        for disk in vm._info['os-extended-volumes:volumes_attached']:
+            diskid = disk['id']
+            volume = cinder.volumes.get(diskid)
+            print(vars(volume))
+            disksize = volume.size
+            devname = volume.name
+            disks.append({'device': devname, 'size': disksize, 'format': '', 'type': '', 'path': diskid})
+        if disks:
+            yamlinfo['disks'] = disks
         metadata = vm.metadata
         if metadata is not None:
             if 'plan' in metadata:
@@ -333,6 +354,7 @@ class Kopenstack(object):
         return images
 
     def delete(self, name, snapshots=False):
+        cinder = self.cinder
         nova = self.nova
         try:
             vm = nova.servers.find(name=name)
@@ -350,6 +372,12 @@ class Kopenstack(object):
         for floating in vm_floating_ips:
             floatingid = floating_ips[floating]
             self.neutron.delete_floatingip(floatingid)
+        for disk in vm._info['os-extended-volumes:volumes_attached']:
+            volume = cinder.volumes.get(disk['id'])
+            for attachment in volume.attachments:
+                if attachment['server_id'] == vm.id:
+                    cinder.volumes.detach(volume, attachment['attachment_id'])
+            cinder.volumes.delete(disk['id'])
         return {'result': 'success'}
 
     def clone(self, old, new, full=False, start=False):
@@ -381,22 +409,50 @@ class Kopenstack(object):
         return
 
     def create_disk(self, name, size, pool=None, thin=True, template=None):
-        print("not implemented")
-        return
+        glance = self.glance
+        cinder = self.cinder
+        image = None
+        if template is not None:
+            images = [image for image in glance.images.list() if image.name == template]
+            if images:
+                image = images[0]
+            else:
+                msg = "you don't have template %s" % template
+                return {'result': 'failure', 'reason': msg}
+        cinder.volumes.create(name=name, size=size, imageRef=image)
+        return {'result': 'success'}
 
     def add_disk(self, name, size, pool=None, thin=True, template=None,
                  shareable=False, existing=None):
-        print("not implemented")
-        return
+        glance = self.glance
+        cinder = self.cinder
+        nova = self.nova
+        try:
+            vm = nova.servers.find(name=name)
+        except:
+            common.pprint("VM %s not found" % name, color='red')
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        if template is not None:
+            images = [image for image in glance.images.list() if image.name == template]
+            if images:
+                image = images[0]
+            else:
+                msg = "you don't have template %s" % template
+                return {'result': 'failure', 'reason': msg}
+        volume = cinder.volumes.create(name=name, size=size, imageRef=image)
+        cinder.volumes.attach(volume, vm.id, '/dev/vdi', mode='rw')
+        return {'result': 'success'}
 
     def delete_disk(self, name, diskname):
         print("not implemented")
         return
 
-# should return a dict of {'pool': poolname, 'path': name}
     def list_disks(self):
-        print("not implemented")
-        return
+        volumes = {}
+        cinder = self.cinder
+        for volume in cinder.volumes.list():
+            volumes[volume.name] = {'pool': 'default', 'path': volume.id}
+        return volumes
 
     def add_nic(self, name, network):
         print("not implemented")
