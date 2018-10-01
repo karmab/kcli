@@ -948,7 +948,7 @@ class Kvirt(object):
         else:
             return sorted(templates, key=lambda s: s.lower())
 
-    def delete(self, name, snapshots=False):
+    def delete(self, name, snapshots=False, keep_disk=False):
         conn = self.conn
         try:
             vm = conn.lookupByName(name)
@@ -967,16 +967,18 @@ class Kvirt(object):
         vmxml = vm.XMLDesc(0)
         root = ET.fromstring(vmxml)
         disks = []
-        for element in list(root.getiterator('disk')):
+        for index, element in enumerate(list(root.getiterator('disk'))):
             source = element.find('source')
             if source is not None:
-                # imagefile = element.find('source').get('file')
                 imagefiles = [element.find('source').get('file'), element.find('source').get('dev')]
                 imagefile = next(item for item in imagefiles if item is not None)
                 if imagefile.endswith('.iso'):
                     continue
                 elif imagefile.endswith("%s.ISO" % name) or "%s_" % name in imagefile or "%s.img" % name in imagefile:
-                    disks.append(imagefile)
+                    if index == 0 and keep_disk:
+                        continue
+                    else:
+                        disks.append(imagefile)
                 else:
                     continue
         if status[vm.isActive()] != "down":

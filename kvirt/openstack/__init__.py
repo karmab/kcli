@@ -353,7 +353,7 @@ class Kopenstack(object):
             images.append(image.name)
         return images
 
-    def delete(self, name, snapshots=False):
+    def delete(self, name, snapshots=False, keep_disk=False):
         cinder = self.cinder
         nova = self.nova
         try:

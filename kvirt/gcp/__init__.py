@@ -428,7 +428,7 @@ class Kgcp(object):
                         images.append(image['family'])
         return sorted(images)
 
-    def delete(self, name, snapshots=False):
+    def delete(self, name, snapshots=False, keep_disk=False):
         conn = self.conn
         project = self.project
         zone = self.zone
@@ -443,6 +443,9 @@ class Kgcp(object):
                     domain = data['value']
         if domain is not None:
             self.delete_dns(name, domain)
+        if keep_disk:
+            conn.instances().setDiskAutoDelete(zone=zone, project=project, instance=name,
+                                               autoDelete=False, deviceName='persistent-disk-0').execute()
         conn.instances().delete(zone=zone, project=project, instance=name).execute()
         return {'result': 'success'}
 

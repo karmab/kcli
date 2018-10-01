@@ -580,6 +580,31 @@ def disk(args):
     k.add_disk(name=name, size=size, pool=pool, template=template)
 
 
+def export(args):
+    """Export a vm"""
+    names = [common.get_lastvm(args.client)] if not args.names else args.names
+    config = Kconfig(client=args.client, debug=args.debug)
+    k = config.k
+    codes = []
+    for name in names:
+        result = k.delete(name, keep_disk=True)
+        if result['result'] == 'success':
+            common.pprint("Exporting vm %s" % (name), color='green')
+            codes.append(0)
+            common.set_lastvm(name, args.client, delete=True)
+        else:
+            reason = result['reason']
+            common.pprint("Could not delete vm %s because %s" % (name, reason), color='red')
+            codes.append(1)
+    os._exit(1 if 1 in codes else 0)
+
+
+def lb(args):
+    """Create/Delete loadbalancer"""
+    name = args.name
+    common.pprint("Creating new %s" % (name), color='green')
+
+
 def nic(args):
     """Add/Delete nic of vm"""
     name = args.name
@@ -1041,6 +1066,16 @@ def cli():
     info_parser.add_argument('-v', '--values', action='store_true', help='Only report values')
     info_parser.add_argument('names', help='VMNAMES', nargs='*')
     info_parser.set_defaults(func=info)
+
+    export_info = 'Export vm'
+    export_parser = subparsers.add_parser('export', description=export_info, help=export_info)
+    export_parser.add_argument('names', metavar='VMNAMES', nargs='*')
+    export_parser.set_defaults(func=export)
+
+    lb_info = 'Create/Delete loadbalancer'
+    lb_parser = subparsers.add_parser('lb', description=lb_info, help=lb_info)
+    lb_parser.add_argument('name', metavar='NAME', nargs='*')
+    lb_parser.set_defaults(func=lb)
 
     list_info = 'List hosts, profiles, flavors, templates, isos,...'
     list_parser = subparsers.add_parser('list', description=list_info, help=list_info)

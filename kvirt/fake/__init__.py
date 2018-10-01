@@ -162,7 +162,7 @@ class Kfake(object):
             return sorted(self.templates)
         return
 
-    def delete(self, name, snapshots=False):
+    def delete(self, name, snapshots=False, keep_disk=False):
         print("not implemented")
         return
 

@@ -547,7 +547,7 @@ class Kubevirt(object):
             common.pprint("No pvc based templates found, defaulting to registry disks", color='blue')
             return REGISTRYDISKS
 
-    def delete(self, name, snapshots=False):
+    def delete(self, name, snapshots=False, keep_disk=False):
         crds = self.crds
         core = self.core
         namespace = self.namespace
