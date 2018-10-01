@@ -378,7 +378,9 @@ class Kopenstack(object):
                 if attachment['server_id'] == vm.id:
                     cinder.volumes.detach(volume, attachment['attachment_id'])
             if index == 0 and keep_disk:
-                continue
+                volume.upload_to_image(True, volume.name, 'bare', 'qcow2')
+            # if index != 0 or not keep_disk:
+            #    cinder.volumes.delete(disk['id'])
             cinder.volumes.delete(disk['id'])
             index += 1
         return {'result': 'success'}

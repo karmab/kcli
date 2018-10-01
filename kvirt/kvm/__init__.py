@@ -584,7 +584,9 @@ class Kvirt(object):
         hostname = conn.getHostname()
         cpus = conn.getCPUMap()[0]
         totalmemory = conn.getInfo()[1]
-        print(("Host:%s Cpu:%s\n" % (hostname, cpus)))
+        print("Connection: %s" % self.url)
+        print("Host: %s" % hostname)
+        print("Cpus: %s" % cpus)
         totalvms = 0
         usedmemory = 0
         for vm in conn.listAllDomains(0):
@@ -600,8 +602,8 @@ class Kvirt(object):
                 memory = float(memory) / 1024
                 memory = int(memory)
             usedmemory += memory
-        print(("Vms Running : %s\n" % (totalvms)))
-        print(("Memory Used : %sMB of %sMB\n" % (usedmemory, totalmemory)))
+        print(("Vms Running: %s" % (totalvms)))
+        print(("Memory Used: %sMB of %sMB" % (usedmemory, totalmemory)))
         for pool in conn.listStoragePools():
             poolname = pool
             pool = conn.storagePoolLookupByName(pool)
@@ -618,14 +620,13 @@ class Kvirt(object):
             # Type,Status, Total space in Gb, Available space in Gb
             used = float(used)
             available = float(available)
-            print(("Storage:%s Type:%s Path:%s Used space:%sGB Available space:%sGB" % (poolname, pooltype, poolpath,
-                                                                                        used, available)))
-        print()
+            print(("Storage:%s Type: %s Path:%s Used space: %sGB Available space: %sGB" % (poolname, pooltype, poolpath,
+                                                                                           used, available)))
         for interface in conn.listAllInterfaces():
             interfacename = interface.name()
             if interfacename == 'lo':
                 continue
-            print(("Network:%s Type:bridged" % (interfacename)))
+            print(("Network: %s Type: bridged" % (interfacename)))
         for network in conn.listAllNetworks():
             networkname = network.name()
             netxml = network.XMLDesc(0)
@@ -648,7 +649,7 @@ class Kvirt(object):
                 dhcp = True
             else:
                 dhcp = False
-            print(("Network:%s Type:routed Cidr:%s Dhcp:%s" % (networkname, cidr, dhcp)))
+            print(("Network: %s Type: routed Cidr: %s Dhcp: %s" % (networkname, cidr, dhcp)))
 
     def status(self, name):
         conn = self.conn
