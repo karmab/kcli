@@ -444,8 +444,6 @@ class Kgcp(object):
         if domain is not None:
             self.delete_dns(name, domain)
         if keep_disk:
-            # conn.instances().setDiskAutoDelete(zone=zone, project=project, instance=name,
-            #                                   autoDelete=False, deviceName='persistent-disk-0').execute()
             body = {'name': name, 'forceCreate': True}
             body['sourceDisk'] = vm['disks'][0]['source']
             body['licenses'] = ["projects/vm-options/global/licenses/enable-vmx"]
