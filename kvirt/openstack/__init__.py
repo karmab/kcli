@@ -325,7 +325,6 @@ class Kopenstack(object):
         for disk in vm._info['os-extended-volumes:volumes_attached']:
             diskid = disk['id']
             volume = cinder.volumes.get(diskid)
-            print(vars(volume))
             disksize = volume.size
             devname = volume.name
             disks.append({'device': devname, 'size': disksize, 'format': '', 'type': '', 'path': diskid})
@@ -372,12 +371,16 @@ class Kopenstack(object):
         for floating in vm_floating_ips:
             floatingid = floating_ips[floating]
             self.neutron.delete_floatingip(floatingid)
+        index = 0
         for disk in vm._info['os-extended-volumes:volumes_attached']:
             volume = cinder.volumes.get(disk['id'])
             for attachment in volume.attachments:
                 if attachment['server_id'] == vm.id:
                     cinder.volumes.detach(volume, attachment['attachment_id'])
+            if index == 0 and keep_disk:
+                continue
             cinder.volumes.delete(disk['id'])
+            index += 1
         return {'result': 'success'}
 
     def clone(self, old, new, full=False, start=False):
@@ -443,9 +446,31 @@ class Kopenstack(object):
         cinder.volumes.attach(volume, vm.id, '/dev/vdi', mode='rw')
         return {'result': 'success'}
 
-    def delete_disk(self, name, diskname):
-        print("not implemented")
-        return
+    def delete_disk(self, name=None, diskname=None, pool=None):
+        cinder = self.cinder
+        nova = self.nova
+        if name is None:
+            volumes = [volume for volume in cinder.volumes.list() if volume.name == diskname]
+            if volumes:
+                volume = volumes[0]
+            else:
+                msg = "Disk %s not found" % diskname
+                return {'result': 'failure', 'reason': msg}
+            cinder.volumes.delete(volume.id)
+            return {'result': 'success'}
+        try:
+            vm = nova.servers.find(name=name)
+        except:
+            common.pprint("VM %s not found" % name, color='red')
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        for disk in vm._info['os-extended-volumes:volumes_attached']:
+            volume = cinder.volumes.get(disk['id'])
+            if diskname == volume.name:
+                for attachment in volume.attachments:
+                    if attachment['server_id'] == vm.id:
+                        cinder.volumes.detach(volume, attachment['attachment_id'])
+                cinder.volumes.delete(disk['id'])
+            return {'result': 'success'}
 
     def list_disks(self):
         volumes = {}

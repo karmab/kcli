@@ -202,7 +202,7 @@ class Kfake(object):
         print("not implemented")
         return
 
-    def delete_disk(self, name, diskname):
+    def delete_disk(self, name=None, diskname=None, pool=None):
         print("not implemented")
         return
 

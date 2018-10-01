@@ -444,8 +444,12 @@ class Kgcp(object):
         if domain is not None:
             self.delete_dns(name, domain)
         if keep_disk:
-            conn.instances().setDiskAutoDelete(zone=zone, project=project, instance=name,
-                                               autoDelete=False, deviceName='persistent-disk-0').execute()
+            # conn.instances().setDiskAutoDelete(zone=zone, project=project, instance=name,
+            #                                   autoDelete=False, deviceName='persistent-disk-0').execute()
+            body = {'name': name, 'forceCreate': True}
+            body['sourceDisk'] = vm['disks'][0]['source']
+            body['licenses'] = ["projects/vm-options/global/licenses/enable-vmx"]
+            conn.images().insert(project=project, body=body).execute()
         conn.instances().delete(zone=zone, project=project, instance=name).execute()
         return {'result': 'success'}
 
@@ -508,7 +512,7 @@ class Kgcp(object):
         conn.instances().attachDisk(zone=zone, project=project, instance=name, body=body).execute()
         return {'result': 'success'}
 
-    def delete_disk(self, name, diskname):
+    def delete_disk(self, name=None, diskname=None, pool=None):
         conn = self.conn
         project = self.project
         zone = self.zone
@@ -519,7 +523,6 @@ class Kgcp(object):
             return {'result': 'failure', 'reason': "Disk %s not found" % name}
         return
 
-# should return a dict of {'pool': poolname, 'path': name}
     def list_disks(self):
         disks = {}
         conn = self.conn

@@ -161,7 +161,7 @@ class Kbase(object):
         print("not implemented")
         return
 
-    def delete_disk(self, name, diskname):
+    def delete_disk(self, name, diskname, pool=None):
         print("not implemented")
         return
 

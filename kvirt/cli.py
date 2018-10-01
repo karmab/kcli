@@ -567,14 +567,17 @@ def disk(args):
         if diskname is None:
             common.pprint("Missing diskname. Leaving...", color='red')
             os._exit(1)
-        common.pprint("Deleting disk %s from %s..." % (diskname, name), color='green')
-        k.delete_disk(name, diskname)
+        common.pprint("Deleting disk %s" % (diskname), color='green')
+        k.delete_disk(name=name, diskname=diskname, pool=pool)
         return
     if size is None:
         common.pprint("Missing size. Leaving...", color='red')
         os._exit(1)
     if pool is None:
         common.pprint("Missing pool. Leaving...", color='red')
+        os._exit(1)
+    if name is None:
+        common.pprint("Missing name. Leaving...", color='red')
         os._exit(1)
     common.pprint("Adding disk to %s..." % (name), color='green')
     k.add_disk(name=name, size=size, pool=pool, template=template)
@@ -1035,7 +1038,7 @@ def cli():
     disk_parser.add_argument('-n', '--diskname', help='Name or Path of the disk, when deleting', metavar='DISKNAME')
     disk_parser.add_argument('-t', '--template', help='Name or Path of a Template, when adding', metavar='TEMPLATE')
     disk_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
-    disk_parser.add_argument('name')
+    disk_parser.add_argument('name', metavar='VMNAME', nargs='?')
     disk_parser.set_defaults(func=disk)
 
     download_info = 'Download template'

@@ -677,7 +677,7 @@ class Kubevirt(object):
         crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
         return
 
-    def delete_disk(self, name, diskname):
+    def delete_disk(self, name=None, diskname=None, pool=None):
         crds = self.crds
         core = self.core
         namespace = self.namespace

@@ -1516,7 +1516,20 @@ class Kvirt(object):
         conn.defineXML(vmxml)
         return {'result': 'success'}
 
-    def delete_disk(self, name, diskname):
+    def delete_disk_by_name(self, name, pool):
+        conn = self.conn
+        try:
+            pool = conn.storagePoolLookupByName(pool)
+        except:
+            print(("Pool %s not found. Leaving..." % pool))
+            return {'result': 'failure', 'reason': "Pool %s not found" % pool}
+        volume = pool.storageVolLookupByName(name)
+        volume.delete()
+
+    def delete_disk(self, name=None, diskname=None, pool=None):
+        if name is None:
+            result = self.delete_disk_by_name(diskname, pool)
+            return result
         conn = self.conn
         try:
             vm = conn.lookupByName(name)
@@ -1578,7 +1591,6 @@ class Kvirt(object):
                     <model type='virtio'/>
                     </interface>""" % (networktype, source)
         if vm.isActive() == 1:
-            # vm.attachDevice(nicxml)
             vm.attachDeviceFlags(nicxml, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
         else:
             vm.attachDeviceFlags(nicxml, VIR_DOMAIN_AFFECT_CONFIG)

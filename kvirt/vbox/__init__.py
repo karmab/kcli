@@ -728,7 +728,7 @@ class Kbox(object):
         session.unlock_machine()
         return {'result': 'success'}
 
-    def delete_disk(self, name, diskname):
+    def delete_disk(self, name=None, diskname=None, pool=None):
         conn = self.conn
         try:
             vm = conn.find_machine(name)

@@ -555,11 +555,10 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
             if timeout > 40:
                 return {'result': 'failure', 'reason': 'timeout waiting for disk %s to be ready' % diskname}
 
-    def delete_disk(self, name, diskname):
+    def delete_disk(self, name=None, diskname=None, pool=None):
         print("not implemented")
         return
 
-# should return a dict of {'pool': poolname, 'path': name}
     def list_disks(self):
         print("not implemented")
         return
