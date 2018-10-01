@@ -378,9 +378,17 @@ class Kopenstack(object):
                 if attachment['server_id'] == vm.id:
                     cinder.volumes.detach(volume, attachment['attachment_id'])
             if index == 0 and keep_disk:
-                volume.upload_to_image(True, volume.name, 'bare', 'qcow2')
-            # if index != 0 or not keep_disk:
-            #    cinder.volumes.delete(disk['id'])
+                volume.upload_to_image(True, volume.name.replace('-disk0', ''), 'bare', 'qcow2')
+                status = ''
+                timeout = 0
+                while status != 'available':
+                    status = cinder.volumes.get(disk['id']).status
+                    common.pprint("Waiting 5 seconds for export to complete", color='green')
+                    sleep(5)
+                    timeout += 5
+                    if timeout >= 90:
+                        common.pprint("Time out waiting for export to complete", color='red')
+                        break
             cinder.volumes.delete(disk['id'])
             index += 1
         return {'result': 'success'}
