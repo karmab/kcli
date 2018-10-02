@@ -114,7 +114,10 @@ class Kgcp(object):
                 if templateproject is not None:
                     image_response = conn.images().getFromFamily(project=templateproject, family=template).execute()
                 else:
-                    image_response = conn.images().get(project=self.project, image=template).execute()
+                    try:
+                        image_response = conn.images().get(project=self.project, image=template).execute()
+                    except:
+                        return {'result': 'failure', 'reason': 'Issue with template %s' % template}
                 src = image_response['selfLink']
                 newdisk['initializeParams'] = {'sourceImage': src, 'diskSizeGb': disksize}
                 newdisk['boot'] = True
