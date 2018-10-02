@@ -325,7 +325,7 @@ class Kaws(object):
         conn = self.conn
         images = {}
         finalimages = []
-        oses = ['amzn*', 'CentOS Linux 7 x86_64*', 'RHEL-7.*GA*', 'suse-sles-1?-*', 'ubuntu-*-server-*']
+        oses = ['amzn*', 'CentOS Linux 7 x86_64*', 'RHEL-7.*GA*', 'suse-sles-1?-*', 'ubuntu-*-server-*', 'kcli*']
         Filters = [{'Name': 'name', 'Values': oses}]
         allimages = conn.describe_images(Filters=Filters)
         for image in allimages['Images']:
@@ -355,6 +355,10 @@ class Kaws(object):
                 if tag['Key'] == 'domain':
                     domain = tag['Value']
         instanceid = vm['InstanceId']
+        if keep_disk:
+            Description = "kcli %s" % name
+            conn.create_image(InstanceId=instanceid, Name=name, Description=Description, NoReboot=True)
+            return {'result': 'success'}
         vm = conn.terminate_instances(InstanceIds=[instanceid])
         if domain is not None:
             self.delete_dns(name, domain, name)
