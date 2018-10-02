@@ -342,7 +342,7 @@ class Kaws(object):
             finalimages.append("%s - %s" % (images[image]['name'], images[image]['id']))
         return sorted(finalimages, key=str.lower)
 
-    def delete(self, name, snapshots=False, keep_disk=False):
+    def delete(self, name, snapshots=False):
         conn = self.conn
         domain = None
         try:

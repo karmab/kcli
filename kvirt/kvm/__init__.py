@@ -949,7 +949,7 @@ class Kvirt(object):
         else:
             return sorted(templates, key=lambda s: s.lower())
 
-    def delete(self, name, snapshots=False, keep_disk=False):
+    def delete(self, name, snapshots=False):
         conn = self.conn
         try:
             vm = conn.lookupByName(name)
@@ -976,10 +976,7 @@ class Kvirt(object):
                 if imagefile.endswith('.iso'):
                     continue
                 elif imagefile.endswith("%s.ISO" % name) or "%s_" % name in imagefile or "%s.img" % name in imagefile:
-                    if index == 0 and keep_disk:
-                        continue
-                    else:
-                        disks.append(imagefile)
+                    disks.append(imagefile)
                 else:
                     continue
         if status[vm.isActive()] != "down":
@@ -2144,4 +2141,29 @@ class Kvirt(object):
         os.system(command)
 
     def export(self, name, template=None):
-        self.delete(name, snapshots=False, keep_disk=True)
+        # self.delete(name, snapshots=False, keep_disk=True)
+        newname = template if template is not None else "template-%s" % name
+        conn = self.conn
+        oldvm = conn.lookupByName(name)
+        oldxml = oldvm.XMLDesc(0)
+        tree = ET.fromstring(oldxml)
+        for disk in list(tree.getiterator('disk')):
+            source = disk.find('source')
+            oldpath = source.get('file')
+            oldvolume = self.conn.storageVolLookupByPath(oldpath)
+            pool = oldvolume.storagePoolLookupByVolume()
+            oldinfo = oldvolume.info()
+            oldvolumesize = (float(oldinfo[1]) / 1024 / 1024 / 1024)
+            oldvolumexml = oldvolume.XMLDesc(0)
+            backing = None
+            voltree = ET.fromstring(oldvolumexml)
+            for b in list(voltree.getiterator('backingStore')):
+                backingstoresource = b.find('path')
+                if backingstoresource is not None:
+                    backing = backingstoresource.text
+            newpath = oldpath.replace(name, newname)
+            source.set('file', newpath)
+            newvolumexml = self._xmlvolume(newpath, oldvolumesize, backing=backing)
+            pool.createXMLFrom(newvolumexml, oldvolume, 0)
+            break
+        return {'result': 'success'}

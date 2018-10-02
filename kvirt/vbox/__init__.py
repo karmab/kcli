@@ -526,7 +526,7 @@ class Kbox(object):
         else:
             return templates
 
-    def delete(self, name, snapshots=False, keep_disk=False):
+    def delete(self, name, snapshots=False):
         conn = self.conn
         try:
             vm = conn.find_machine(name)

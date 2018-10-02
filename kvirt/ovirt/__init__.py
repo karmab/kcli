@@ -477,7 +477,7 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
                     templates.append(template.name)
             return templates
 
-    def delete(self, name, snapshots=False, keep_disk=False):
+    def delete(self, name, snapshots=False):
         vmsearch = self.vms_service.list(search='name=%s' % name)
         if not vmsearch:
             common.pprint("VM %s not found" % name, color='red')
