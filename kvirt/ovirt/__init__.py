@@ -244,8 +244,13 @@ class KOvirt(object):
         return {'result': 'success'}
 
     def report(self):
-        print("not implemented")
-        return
+        api = self.conn.system_service().get()
+        # vmslist = self.vms_service.list()
+        # print("Vms Running: %s" % len(vmslist))
+        print("Version: %s" % api.product_info.version.full_version)
+        print("Vms Running: %s" % api.summary.vms.total)
+        print("Hosts: %d" % api.summary.hosts.total)
+        print("Storage Domains: %d" % api.summary.storage_domains.total)
 
     def status(self, name):
         print("not implemented")
