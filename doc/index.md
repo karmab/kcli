@@ -841,6 +841,7 @@ Basic testing can be run with pytest. If using a remote hypervisor, you ll want 
 - *scripts* array of paths of custom script to inject with cloudinit. It will be merged with cmds parameter. You can either specify full paths or relative to where you're running kcli. Only checked in profile or plan file
 - *nested* Defaults to True
 - *sharedkey* Defaults to False. Set it to true so that a private/public key gets shared between all the nodes of your plan. Additionally, root access will be allowed
+- *privatekey* Defaults to False. Set it to true so that your private key is passed to the nodes of your plan. If you need this, you know why :)
 - *files* (optional)- Array of files to inject to the vm. For ecach of the them , you can specify path, owner ( root by default) , permissions (600 by default ) and either origin or content to gather content data directly or from specified origin
 - *insecure* (optional) Handles all the ssh option details so you dont get any warnings about man in the middle
 - *host* (optional) Allows you to create the vm on a specific host, provided you used kcli -C host1,host2,... and specify the wanted hypervisor ( or use kcli -C all ). This field is not used for other types like network, so expect to use this in relatively simple plans only
