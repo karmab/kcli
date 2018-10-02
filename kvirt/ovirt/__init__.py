@@ -181,10 +181,11 @@ class KOvirt(object):
             custom_script += "runcmd:\n"
             custom_script += data
             custom_script = None if custom_script == '' else custom_script
-            root_password = 'unix1234'
+            user_name = common.get_user(template)
+            root_password = None
             dns_servers = '8.8.8.8 1.1.1.1'
             key = get_home_ssh_key()
-            initialization = types.Initialization(user_name='root', root_password=root_password,
+            initialization = types.Initialization(user_name=user_name, root_password=root_password,
                                                   authorized_ssh_keys=key, host_name=name,
                                                   nic_configurations=nic_configurations,
                                                   dns_servers=dns_servers, dns_search=domain,
@@ -262,7 +263,7 @@ class KOvirt(object):
         vmslist = self.vms_service.list()
         for vm in vmslist:
             name = vm.name
-            state = vm.status
+            state = str(vm.status)
             template = conn.follow_link(vm.template)
             source = template.name
             plan = ''
@@ -579,12 +580,13 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
 # should return (user, ip)
     def _ssh_credentials(self, name):
         ip = ''
-        user = 'root'
         vmsearch = self.vms_service.list(search='name=%s' % name)
         if not vmsearch:
             common.pprint("VM %s not found" % name, color='red')
             return 'root', None
         vm = vmsearch[0]
+        template = self.conn.follow_link(vm.template)
+        user = common.get_user(template.name)
         ips = []
         devices = self.vms_service.vm_service(vm.id).reported_devices_service().list()
         for device in devices:
