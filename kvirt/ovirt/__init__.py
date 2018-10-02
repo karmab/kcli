@@ -481,6 +481,20 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
         vm = self.vms_service.vm_service(vminfo.id)
         if str(vminfo.status) == 'up':
             vm.stop()
+        if keep_disk:
+            attachments = self.conn.follow_link(vm.disk_attachments)
+            disk_ids = [attachment.disk.id for attachment in attachments]
+            _format = types.DiskFormat.COW
+            attachments = [types.DiskAttachment(disk=types.Disk(id=disk_id, format=_format)) for disk_id in disk_ids]
+            newvm = types.Vm(id=vm.id, disk_attachments=attachments)
+            template = types.Template(name=name, vm=newvm)
+            template = self.templates_service.add(template=template)
+            template_service = self.templates_service.template_service(template.id)
+            while True:
+                sleep(5)
+                template = template_service.get()
+                if template.status == types.TemplateStatus.OK:
+                    break
         vm.remove()
         return {'result': 'success'}
 
