@@ -586,12 +586,12 @@ def disk(args):
 def export(args):
     """Export a vm"""
     names = [common.get_lastvm(args.client)] if not args.names else args.names
+    template = args.template
     config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
     codes = []
     for name in names:
-        # result = k.delete(name, keep_disk=True)
-        result = k.export(name)
+        result = k.export(name=name, template=template)
         if result['result'] == 'success':
             common.pprint("Exporting vm %s" % (name), color='green')
             codes.append(0)
@@ -1072,6 +1072,8 @@ def cli():
 
     export_info = 'Export vm'
     export_parser = subparsers.add_parser('export', description=export_info, help=export_info)
+    export_parser.add_argument('-t', '--template', help='Name for the generated template. Uses the vm name otherwise',
+                               metavar='TEMPLATE')
     export_parser.add_argument('names', metavar='VMNAMES', nargs='*')
     export_parser.set_defaults(func=export)
 

@@ -704,7 +704,7 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
     def flavors(self):
         return []
 
-    def export(self, name):
+    def export(self, name, template=None):
         vmsearch = self.vms_service.list(search='name=%s' % name)
         if not vmsearch:
             common.pprint("VM %s not found" % name, color='red')
@@ -718,7 +718,8 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
         _format = types.DiskFormat.COW
         attachments = [types.DiskAttachment(disk=types.Disk(id=disk_id, format=_format)) for disk_id in disk_ids]
         newvm = types.Vm(id=vm.id, disk_attachments=attachments)
-        template = types.Template(name=name, vm=newvm)
+        newname = template if template is not None else name
+        template = types.Template(name=newname, vm=newvm)
         template = self.templates_service.add(template=template)
         template_service = self.templates_service.template_service(template.id)
         while True:

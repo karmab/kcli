@@ -778,15 +778,20 @@ class Kgcp(object):
             flavors.append([name, numcpus, memory])
         return flavors
 
-    def export(self, name):
+    def export(self, name, template=None):
         conn = self.conn
         project = self.project
         zone = self.zone
         try:
             vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
+            status = vm['status']
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        body = {'name': name, 'forceCreate': True}
+        if status.lower() == 'running':
+            return {'result': 'failure', 'reason': "VM %s up" % name}
+        newname = template if template is not None else name
+        description = "template based on %s" % name
+        body = {'name': newname, 'forceCreate': True, 'description': description}
         body['sourceDisk'] = vm['disks'][0]['source']
         body['licenses'] = ["projects/vm-options/global/licenses/enable-vmx"]
         conn.images().insert(project=project, body=body).execute()

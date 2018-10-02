@@ -259,5 +259,5 @@ class Kbase(object):
         return []
 
 # export the primary disk of the corresponding instance so it's available as a template
-    def export(name):
+    def export(name, template=None):
         return

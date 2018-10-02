@@ -2143,5 +2143,5 @@ class Kvirt(object):
             command = "ssh -p %s %s@%s \"%s\"" % (self.port, self.user, self.host, command)
         os.system(command)
 
-    def export(self, name):
+    def export(self, name, template=None):
         self.delete(name, snapshots=False, keep_disk=True)

@@ -705,7 +705,7 @@ class Kopenstack(object):
         flavors = [[flavor.name, flavor.vcpus, flavor.ram] for flavor in nova.flavors.list()]
         return flavors
 
-    def export(self, name):
+    def export(self, name, template=None):
         cinder = self.cinder
         nova = self.nova
         try:
@@ -716,7 +716,8 @@ class Kopenstack(object):
         for disk in vm._info['os-extended-volumes:volumes_attached']:
             volume = cinder.volumes.get(disk['id'])
             for attachment in volume.attachments:
-                volume.upload_to_image(True, volume.name.replace('-disk0', ''), 'bare', 'qcow2')
+                newname = template if template is not None else volume.name.replace('-disk0', '')
+                volume.upload_to_image(True, newname, 'bare', 'qcow2')
                 status = ''
                 timeout = 0
                 while status != 'available':

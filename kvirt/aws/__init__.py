@@ -607,14 +607,15 @@ class Kaws(object):
             results.append([name, numcpus, memory])
         return results
 
-    def export(self, name):
+    def export(self, name, template=None):
         conn = self.conn
         try:
             Filters = {'Name': "tag:Name", 'Values': [name]}
             vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        instanceid = vm['InstanceId']
-        Description = "kcli %s" % name
-        conn.create_image(InstanceId=instanceid, Name=Description, Description=Description, NoReboot=True)
+        InstanceId = vm['InstanceId']
+        Name = template if template is not None else "kcli %s" % name
+        Description = "template based on %s" % name
+        conn.create_image(InstanceId=InstanceId, Name=Name, Description=Description, NoReboot=True)
         return {'result': 'success'}
