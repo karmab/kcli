@@ -1,5 +1,5 @@
 yum -y install libvirt-client libvirt-devel golang-bin gcc-c++ git unzip
-tar -Cvf /usr/local -xzf go{{ go_version }}.linux-amd64.tar.gz
+tar -Cvf /usr/local -xzf go[[ go_version ]].linux-amd64.tar.gz
 export GOPATH=/root/go
 export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin:$GOPATH/src/github/openshift/installer/bin
 echo export GOPATH=/root/go >> ~/.bashrc

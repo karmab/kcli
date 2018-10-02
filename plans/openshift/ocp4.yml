@@ -2,6 +2,10 @@ parameters:
   template: Fedora-Cloud-Base-28-1.1.x86_64.qcow2
   memory: 16384
   go_version: 1.11.1
+  rhcos_url: http://192.168.122.1/rhcos-qemu.qcow2
+  domain: tt.testing
+  email_address: admin@magnifico.es
+  password: password
 
 ocp4:
  template: [[ template ]]

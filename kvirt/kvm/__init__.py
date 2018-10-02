@@ -869,8 +869,8 @@ class Kvirt(object):
             device = element.find('target').get('dev')
             diskformat = 'file'
             drivertype = element.find('driver').get('type')
-            # path = element.find('source').get('file')
-            imagefiles = [element.find('source').get('file'), element.find('source').get('dev')]
+            imagefiles = [element.find('source').get('file'), element.find('source').get('dev'),
+                          element.find('source').get('volume')]
             path = next(item for item in imagefiles if item is not None)
             try:
                 volume = conn.storageVolLookupByPath(path)
@@ -971,7 +971,8 @@ class Kvirt(object):
         for index, element in enumerate(list(root.getiterator('disk'))):
             source = element.find('source')
             if source is not None:
-                imagefiles = [element.find('source').get('file'), element.find('source').get('dev')]
+                imagefiles = [element.find('source').get('file'), element.find('source').get('dev'),
+                              element.find('source').get('volume')]
                 imagefile = next(item for item in imagefiles if item is not None)
                 if imagefile.endswith('.iso'):
                     continue
