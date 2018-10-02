@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from kvirt.config import Kconfig
+from kvirt.common import get_user
 import json
 import os
 import argparse
@@ -73,7 +74,7 @@ class KcliInventory(object):
                 else:
                     hostvalues[name]['ansible_host'] = ip
                 if template != '':
-                    user = k._ssh_credentials(name)[0]
+                    user = get_user(template)
                     hostvalues[name]['ansible_user'] = user
         return metadata
 
