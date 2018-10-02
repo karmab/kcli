@@ -22,7 +22,7 @@ Refer to the [documentation](https://kcli.readthedocs.io) for more information
 - Interact with libvirt without XML
 - Declare all your objects(vm, containers, networks, ansible,...) in a single yaml file!
 - Easily grab and share those files from github
-- Easily Test all Redhat Infrastructure products, and their upstream counterparts
+- Easily Test all Red Hat Infrastructure products, and their upstream counterparts
 - Easily share private keys between your vms
 - Inject all configuration with cloudinit
 - Use the default cloud images

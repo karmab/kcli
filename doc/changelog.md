@@ -418,7 +418,7 @@ IMPORTANT: Starting from now, each version will have their own page, accessible 
 
 ## 1.0.25 release (2016-09-29)
 
-- Uci/rhci support, providing plans for RedHat upstream and dowsntream infrastructure projects
+- Uci/rhci support, providing plans for Red Hat upstream and dowsntream infrastructure projects
 - Serial consoles over tcp
 - lvm based pool support
 - Bootstrap command
