@@ -355,10 +355,6 @@ class Kaws(object):
                 if tag['Key'] == 'domain':
                     domain = tag['Value']
         instanceid = vm['InstanceId']
-        if keep_disk:
-            Description = "kcli %s" % name
-            conn.create_image(InstanceId=instanceid, Name=name, Description=Description, NoReboot=True)
-            return {'result': 'success'}
         vm = conn.terminate_instances(InstanceIds=[instanceid])
         if domain is not None:
             self.delete_dns(name, domain, name)
@@ -610,3 +606,15 @@ class Kaws(object):
             memory = static_flavors[flavor]['memory']
             results.append([name, numcpus, memory])
         return results
+
+    def export(self, name):
+        conn = self.conn
+        try:
+            Filters = {'Name': "tag:Name", 'Values': [name]}
+            vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
+        except:
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        instanceid = vm['InstanceId']
+        Description = "kcli %s" % name
+        conn.create_image(InstanceId=instanceid, Name=Description, Description=Description, NoReboot=True)
+        return {'result': 'success'}

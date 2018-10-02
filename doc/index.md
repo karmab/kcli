@@ -292,6 +292,8 @@ The following parameters are specific to ovirt:
 - ca_file Points to a local path with the cert of the ovirt engine host. It can be retrieved with 
 `wget http://$HOST/ovirt-engine/services/pki-resource?resource=ca-certificate&format=X509-PEM-CA`
 - imagerepository. A Glance image provider repository. Defaults to `ovirt-image-repository`. You can get default one created for you with kcli download
+- cluster  Defaults to Default
+- datacenter Defaults to Default
 
 ## Openstack
 

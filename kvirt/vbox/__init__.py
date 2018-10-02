@@ -1086,3 +1086,7 @@ class Kbox(object):
 
     def flavors(self):
         return []
+
+    def export(self, name):
+        print("not implemented")
+        return

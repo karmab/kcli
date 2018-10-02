@@ -2142,3 +2142,6 @@ class Kvirt(object):
         if self.protocol == 'ssh':
             command = "ssh -p %s %s@%s \"%s\"" % (self.port, self.user, self.host, command)
         os.system(command)
+
+    def export(self, name):
+        self.delete(name, snapshots=False, keep_disk=True)

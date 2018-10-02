@@ -590,11 +590,11 @@ def export(args):
     k = config.k
     codes = []
     for name in names:
-        result = k.delete(name, keep_disk=True)
+        # result = k.delete(name, keep_disk=True)
+        result = k.export(name)
         if result['result'] == 'success':
             common.pprint("Exporting vm %s" % (name), color='green')
             codes.append(0)
-            common.set_lastvm(name, args.client, delete=True)
         else:
             reason = result['reason']
             common.pprint("Could not delete vm %s because %s" % (name, reason), color='red')

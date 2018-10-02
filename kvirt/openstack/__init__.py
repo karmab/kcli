@@ -704,3 +704,28 @@ class Kopenstack(object):
         nova.flavors.list
         flavors = [[flavor.name, flavor.vcpus, flavor.ram] for flavor in nova.flavors.list()]
         return flavors
+
+    def export(self, name):
+        cinder = self.cinder
+        nova = self.nova
+        try:
+            vm = nova.servers.find(name=name)
+        except:
+            common.pprint("VM %s not found" % name, color='red')
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        for disk in vm._info['os-extended-volumes:volumes_attached']:
+            volume = cinder.volumes.get(disk['id'])
+            for attachment in volume.attachments:
+                volume.upload_to_image(True, volume.name.replace('-disk0', ''), 'bare', 'qcow2')
+                status = ''
+                timeout = 0
+                while status != 'available':
+                    status = cinder.volumes.get(disk['id']).status
+                    common.pprint("Waiting 5 seconds for export to complete", color='green')
+                    sleep(5)
+                    timeout += 5
+                    if timeout >= 90:
+                        common.pprint("Time out waiting for export to complete", color='red')
+                        break
+                break
+        return {'result': 'success'}

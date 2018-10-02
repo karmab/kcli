@@ -257,3 +257,7 @@ class Kbase(object):
 # return a list of [name, numcpus, memory] for each flavor, if the platform has this concept
     def flavors(self):
         return []
+
+# export the primary disk of the corresponding instance so it's available as a template
+    def export(name):
+        return

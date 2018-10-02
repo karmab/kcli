@@ -443,11 +443,6 @@ class Kgcp(object):
                     domain = data['value']
         if domain is not None:
             self.delete_dns(name, domain)
-        if keep_disk:
-            body = {'name': name, 'forceCreate': True}
-            body['sourceDisk'] = vm['disks'][0]['source']
-            body['licenses'] = ["projects/vm-options/global/licenses/enable-vmx"]
-            conn.images().insert(project=project, body=body).execute()
         conn.instances().delete(zone=zone, project=project, instance=name).execute()
         return {'result': 'success'}
 
@@ -782,3 +777,17 @@ class Kgcp(object):
             memory = flavor['memoryMb']
             flavors.append([name, numcpus, memory])
         return flavors
+
+    def export(self, name):
+        conn = self.conn
+        project = self.project
+        zone = self.zone
+        try:
+            vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
+        except:
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        body = {'name': name, 'forceCreate': True}
+        body['sourceDisk'] = vm['disks'][0]['source']
+        body['licenses'] = ["projects/vm-options/global/licenses/enable-vmx"]
+        conn.images().insert(project=project, body=body).execute()
+        return {'result': 'success'}

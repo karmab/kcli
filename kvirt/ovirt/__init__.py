@@ -481,20 +481,6 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
         vm = self.vms_service.vm_service(vminfo.id)
         if str(vminfo.status) == 'up':
             vm.stop()
-        if keep_disk:
-            attachments = self.conn.follow_link(vm.disk_attachments)
-            disk_ids = [attachment.disk.id for attachment in attachments]
-            _format = types.DiskFormat.COW
-            attachments = [types.DiskAttachment(disk=types.Disk(id=disk_id, format=_format)) for disk_id in disk_ids]
-            newvm = types.Vm(id=vm.id, disk_attachments=attachments)
-            template = types.Template(name=name, vm=newvm)
-            template = self.templates_service.add(template=template)
-            template_service = self.templates_service.template_service(template.id)
-            while True:
-                sleep(5)
-                template = template_service.get()
-                if template.status == types.TemplateStatus.OK:
-                    break
         vm.remove()
         return {'result': 'success'}
 
@@ -651,6 +637,7 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
             sd_service = providers_service.add(provider=types.OpenStackImageProvider(name='ovirt-image-repository',
                                                                                      url='http://glance.ovirt.org:9292',
                                                                                      requires_authentication=False))
+            common.pprint("Relaunch kcli download now", color='green')
             return {'result': 'success'}
         else:
             sd_service = sds_service.storage_domain_service(sd[0].id)
@@ -711,3 +698,27 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
 
     def flavors(self):
         return []
+
+    def export(self, name):
+        vmsearch = self.vms_service.list(search='name=%s' % name)
+        if not vmsearch:
+            common.pprint("VM %s not found" % name, color='red')
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        vminfo = vmsearch[0]
+        vm = self.vms_service.vm_service(vminfo.id)
+        if str(vminfo.status) == 'up':
+            vm.stop()
+        attachments = self.conn.follow_link(vm.disk_attachments)
+        disk_ids = [attachment.disk.id for attachment in attachments]
+        _format = types.DiskFormat.COW
+        attachments = [types.DiskAttachment(disk=types.Disk(id=disk_id, format=_format)) for disk_id in disk_ids]
+        newvm = types.Vm(id=vm.id, disk_attachments=attachments)
+        template = types.Template(name=name, vm=newvm)
+        template = self.templates_service.add(template=template)
+        template_service = self.templates_service.template_service(template.id)
+        while True:
+            sleep(5)
+            template = template_service.get()
+            if template.status == types.TemplateStatus.OK:
+                break
+        return {'result': 'success'}
