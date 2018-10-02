@@ -27,7 +27,6 @@ EXAMPLES = '''
   kvirt_vm:
     name: prout
     state: absent
-  register: result
 '''
 
 
@@ -67,6 +66,7 @@ def main():
             skipped = True
             meta = {'result': 'skipped'}
     module.exit_json(changed=changed, skipped=skipped, meta=meta)
+
 
 if __name__ == '__main__':
     main()

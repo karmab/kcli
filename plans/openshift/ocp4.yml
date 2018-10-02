@@ -18,9 +18,11 @@ ocp4:
   - size: 30
  pool: default
  files:
- - path: ocp4_env.sh
+ - path: /root/ocp4_env.sh
    origin: ocp4_env.sh
- - path: coreos_pull.json
+ - path: /root/ocp4_cleanup.sh
+   origin: ocp4_cleanup.sh
+ - path: /root/coreos_pull.json
    origin: ~/coreos_pull.json
  scripts:
  - ocp4.sh

@@ -728,9 +728,27 @@ If you're using kcli as a container, you will have to create a script such as th
 docker run -it --security-opt label:disable -v ~/.kcli:/root/.kcli -v /var/run/libvirt:/var/run/libvirt --entrypoint=/usr/bin/klist.py karmab/kcli $@
 ```
 
-Additionally, there is an ansible kcli/kvirt module under extras, with a sample playbook
+Additionally, there are three ansible kcli modules under extras, with sample playbooks:
 
-You can also use the key ansible within a profile
+- kvirt_vm allows you to create/delete vm (based on one of your profiles)
+- kvirt_plan allows you to create/delete a plan
+- kvirt_product allows you to create/delete a product (provided you have a product repository configured)
+
+Those modules rely on python3 so you will need to pass `-e 'ansible_python_interpreter=path_to_python3'` to your ansible-playbook invocations
+
+Both kvirt_plan and kvirt_product supports overriding parameters
+
+```
+- name: Deploy fission with additional parameters
+  kvirt_product:
+    name: fission
+    product: fission
+    parameters:
+     fission_type: all
+     docker_disk_size: 10
+```
+
+Finally, you can use the key ansible within a profile
 
 ```YAML
 ansible:

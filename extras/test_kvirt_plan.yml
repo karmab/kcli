@@ -1,9 +1,8 @@
 - hosts: localhost
   tasks:
     - name: Test kvirt here
-      kvirt_vm: 
-        name: bobby2
-        state: present
-        profile: centos
+      kvirt_plan: 
+        name: wilibonka
+        src: myplan.yml
       register: result
     - debug: var=result 

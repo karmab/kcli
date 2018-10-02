@@ -21,7 +21,7 @@ EXAMPLES = '''
 - name: Deploy origin
   kvirt_plan:
     name: my_plan
-    product: origin
+    src: my_plan.yml
 
 - name: Delete that plan
   kvirt_plan:
@@ -69,6 +69,7 @@ def main():
             skipped = True
             meta = {'result': 'skipped'}
     module.exit_json(changed=changed, skipped=skipped, meta=meta)
+
 
 if __name__ == '__main__':
     main()

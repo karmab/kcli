@@ -346,6 +346,8 @@ The following parameters are specific to ovirt:
 -  imagerepository. A Glance image provider repository. Defaults to
    ``ovirt-image-repository``. You can get default one created for you
    with kcli download
+-  cluster Defaults to Default
+-  datacenter Defaults to Default
 
 Openstack
 ---------
@@ -915,10 +917,32 @@ such as the following to properly call the inventory
     #!/bin/bash
     docker run -it --security-opt label:disable -v ~/.kcli:/root/.kcli -v /var/run/libvirt:/var/run/libvirt --entrypoint=/usr/bin/klist.py karmab/kcli $@
 
-Additionally, there is an ansible kcli/kvirt module under extras, with a
-sample playbook
+Additionally, there are three ansible kcli modules under extras, with
+sample playbooks:
 
-You can also use the key ansible within a profile
+-  kvirt_vm allows you to create/delete vm (based on one of your
+   profiles)
+-  kvirt_plan allows you to create/delete a plan
+-  kvirt_product allows you to create/delete a product (provided you
+   have a product repository configured)
+
+Those modules rely on python3 so you will need to pass
+``-e 'ansible_python_interpreter=path_to_python3'`` to your
+ansible-playbook invocations
+
+Both kvirt_plan and kvirt_product supports overriding parameters
+
+::
+
+    - name: Deploy fission with additional parameters
+      kvirt_product:
+        name: fission
+        product: fission
+        parameters:
+         fission_type: all
+         docker_disk_size: 10
+
+Finally, you can use the key ansible within a profile
 
 .. code:: yaml
 
@@ -1070,6 +1094,9 @@ Available parameters for hypervisor/profile/plan files
 -  *sharedkey* Defaults to False. Set it to true so that a
    private/public key gets shared between all the nodes of your plan.
    Additionally, root access will be allowed
+-  *privatekey* Defaults to False. Set it to true so that your private
+   key is passed to the nodes of your plan. If you need this, you know
+   why :)
 -  *files* (optional)- Array of files to inject to the vm. For ecach of
    the them , you can specify path, owner ( root by default) ,
    permissions (600 by default ) and either origin or content to gather
