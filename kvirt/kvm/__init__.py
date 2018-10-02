@@ -2141,7 +2141,6 @@ class Kvirt(object):
         os.system(command)
 
     def export(self, name, template=None):
-        # self.delete(name, snapshots=False, keep_disk=True)
         newname = template if template is not None else "template-%s" % name
         conn = self.conn
         oldvm = conn.lookupByName(name)
@@ -2161,7 +2160,7 @@ class Kvirt(object):
                 backingstoresource = b.find('path')
                 if backingstoresource is not None:
                     backing = backingstoresource.text
-            newpath = oldpath.replace(name, newname)
+            newpath = oldpath.replace(name, newname).replace('.img', '.qcow2')
             source.set('file', newpath)
             newvolumexml = self._xmlvolume(newpath, oldvolumesize, backing=backing)
             pool.createXMLFrom(newvolumexml, oldvolume, 0)
