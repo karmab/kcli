@@ -96,7 +96,7 @@ For web access, you can switch with `-p 9000:9000 --entrypoint=/usr/bin/kweb` an
 
 ## Dev installation from pip
 
-### Centos installation
+### CentOS installation
 
 Use the provided [script](https://github.com/karmab/kcli/blob/master/extras/centos.sh) which will install a dedicated python3 env
 
