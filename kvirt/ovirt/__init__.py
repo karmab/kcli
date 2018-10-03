@@ -186,7 +186,7 @@ class KOvirt(object):
             dns_servers = '8.8.8.8 1.1.1.1'
             key = get_home_ssh_key()
             initialization = types.Initialization(user_name=user_name, root_password=root_password,
-                                                  authorized_ssh_keys=key, host_name=name,
+                                                  regenerate_ssh_keys=False, authorized_ssh_keys=key, host_name=name,
                                                   nic_configurations=nic_configurations,
                                                   dns_servers=dns_servers, dns_search=domain,
                                                   custom_script=custom_script)
