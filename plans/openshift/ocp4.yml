@@ -3,6 +3,7 @@ parameters:
   memory: 16384
   go_version: 1.11.1
   rhcos_url: http://192.168.122.1/rhcos-qemu.qcow2
+  cluster: testk
   domain: tt.testing
   email_address: admin@magnifico.es
   password: password
@@ -18,9 +19,9 @@ ocp4:
   - size: 30
  pool: default
  files:
- - path: /root/ocp4_env.sh
+ - path: /root/env.sh
    origin: ocp4_env.sh
- - path: /root/ocp4_cleanup.sh
+ - path: /root/cleanup.sh
    origin: ocp4_cleanup.sh
  - path: /root/coreos_pull.json
    origin: ~/coreos_pull.json

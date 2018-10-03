@@ -5,5 +5,6 @@ virsh -c $URI destroy bootstrap
 virsh -c $URI undefine bootstrap
 ssh root@192.168.122.1 rm -rf /var/lib/libvirt/images/bootstrap* /var/lib/libvirt/images/coreos_base /var/lib/libvirt/images/master* /var/lib/libvirt/images/worker.ign master-0.ign
 virsh -c $URI pool-refresh default
-virsh -c $URI net-undefine testk
+virsh -c $URI net-destroy [[ cluster ]]
+virsh -c $URI net-undefine [[ cluster ]]
 rm -rf terraform.*

@@ -5,7 +5,7 @@ export GOPATH=/root/go
 export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin:$GOPATH/src/github/openshift/installer/bin
 echo export GOPATH=/root/go >> ~/.bashrc
 echo export PATH=\$PATH:/usr/local/go/bin:\$GOPATH/bin:\$GOPATH/src/github/openshift/installer/bin >> ~/.bashrc
-echo alias go_ocp4=\"cd \$GOPATH/src/github/openshift/installer\">> ~/.bashrc
+echo alias go_ocp=\"cd \$GOPATH/src/github.com/openshift/installer\">> ~/.bashrc
 mkdir -p $GOPATH/{bin,pkg,src}
 mkdir -p $GOPATH/src/github.com/openshift
 cd $GOPATH/src/github.com/openshift
@@ -22,6 +22,6 @@ TAGS=libvirt_destroy hack/build.sh
 GOBIN=~/.terraform.d/plugins go get -u github.com/dmacvicar/terraform-provider-libvirt
 ssh-keyscan -H 192.168.122.1 >> ~/.ssh/known_hosts
 PUBKEY=`cat ~/.ssh/authorized_keys`
-echo export OPENSHIFT_INSTALL_SSH_PUB_KEY=\"$PUBKEY\" >> ~/ocp4_env.sh
-source ~/ocp4_env.sh
+echo export OPENSHIFT_INSTALL_SSH_PUB_KEY=\"$PUBKEY\" >> ~/env.sh
+source ~/env.sh
 # bin/openshift-install cluster
