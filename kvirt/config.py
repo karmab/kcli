@@ -120,6 +120,8 @@ class Kconfig(Kbaseconfig):
                 if password is None:
                     common.pprint("Missing password in the configuration. Leaving", color='red')
                     os._exit(1)
+                if auth_url.endswith('v2.0'):
+                    domain = None
                 from kvirt.openstack import Kopenstack
                 k = Kopenstack(host=self.host, port=self.port, user=user, password=password, version=version,
                                debug=debug, project=project, domain=domain, auth_url=auth_url)
