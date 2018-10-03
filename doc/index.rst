@@ -331,6 +331,8 @@ Ovirt
      host: ovirt.default
      user: admin@internal
      password: prout
+     datacenter: Default
+     cluster: Default
      pool: vms
      tunnel: false
      org: Karmalabs

@@ -8,3 +8,4 @@ virsh -c $URI pool-refresh default
 virsh -c $URI net-destroy [[ cluster ]]
 virsh -c $URI net-undefine [[ cluster ]]
 rm -rf terraform.*
+rm -rf /tmp/openshift-install-*

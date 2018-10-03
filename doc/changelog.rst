@@ -602,7 +602,7 @@ Either update (recommended) or use the following alternative repository
 1.0.25 release (2016-09-29)
 ---------------------------
 
--  Uci/rhci support, providing plans for RedHat upstream and dowsntream
+-  Uci/rhci support, providing plans for Red Hat upstream and dowsntream
    infrastructure projects
 -  Serial consoles over tcp
 -  lvm based pool support
