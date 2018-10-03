@@ -2,6 +2,7 @@ parameters:
   template: Fedora-Cloud-Base-28-1.1.x86_64.qcow2
   memory: 16384
   go_version: 1.11.1
+  uri: qemu+tcp://192.168.122.1/system
   rhcos_path: /var/lib/libvirt/images/rhcos-qemu.qcow2
   cluster: testk
   domain: tt.testing
