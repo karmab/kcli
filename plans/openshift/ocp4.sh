@@ -1,4 +1,6 @@
 yum -y install libvirt-client libvirt-devel gcc-c++ git unzip wget
+ssh-keyscan -H 192.168.122.1 >> ~/.ssh/known_hosts
+scp root@192.168.122.1:[[ rhcos_path ]] /root/rhcos.qcow2
 wget https://dl.google.com/go/go[[ go_version ]].linux-amd64.tar.gz
 tar -C /usr/local -xzf go[[ go_version ]].linux-amd64.tar.gz
 export GOPATH=/root/go
@@ -20,7 +22,6 @@ hack/get-terraform.sh
 #hack/build.sh
 TAGS=libvirt_destroy hack/build.sh
 GOBIN=~/.terraform.d/plugins go get -u github.com/dmacvicar/terraform-provider-libvirt
-ssh-keyscan -H 192.168.122.1 >> ~/.ssh/known_hosts
 PUBKEY=`cat ~/.ssh/authorized_keys`
 echo export OPENSHIFT_INSTALL_SSH_PUB_KEY=\"$PUBKEY\" >> ~/env.sh
 source ~/env.sh
