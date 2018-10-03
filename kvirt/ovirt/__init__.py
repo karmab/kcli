@@ -675,8 +675,17 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
         return [pool.name for pool in self.conn.system_service().storage_domains_service().list()]
 
     def list_networks(self):
-        print("not implemented")
-        return {}
+        networks = {}
+        networks_service = self.conn.system_service().networks_service()
+        for network in networks_service.list():
+            networkname = network._name
+            cidr = network._vlan
+            dhcp = network._id
+            domainname = network._data_center
+            domainname = self.conn.follow_link(network._data_center).name
+            mode = network._description
+            networks[networkname] = {'cidr': cidr, 'dhcp': dhcp, 'domain': domainname, 'type': 'routed', 'mode': mode}
+        return networks
 
     def list_subnets(self):
         print("not implemented")
