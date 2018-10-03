@@ -43,8 +43,13 @@ class Kgcp(object):
             return False
 
     def net_exists(self, name):
-        print("not implemented")
-        return
+        conn = self.conn
+        project = self.project
+        try:
+            conn.networks().get(project=project, network=name).execute()
+        except:
+            return False
+        return True
 
     def disk_exists(self, pool, name):
         print("not implemented")

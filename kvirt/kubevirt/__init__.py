@@ -83,7 +83,13 @@ class Kubevirt(object):
         return result
 
     def net_exists(self, name):
-        print("not implemented")
+        crds = self.crds
+        namespace = self.namespace
+        try:
+            crds.get_namespaced_custom_object(MULTUSDOMAIN, MULTUSVERSION, namespace,
+                                              'network-attachment-definitions', name)
+        except:
+            return False
         return True
 
     def disk_exists(self, pool, name):

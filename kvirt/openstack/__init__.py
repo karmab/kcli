@@ -43,8 +43,11 @@ class Kopenstack(object):
         return
 
     def net_exists(self, name):
-        print("not implemented")
-        return
+        neutron = self.neutron
+        networks = neutron.list_networks(name=name)
+        if not networks:
+            False
+        return True
 
     def disk_exists(self, pool, name):
         print("not implemented")
