@@ -21,3 +21,4 @@ vm2:
 vm3:
   memory: 512
   numcpus: 1
+  cloudinit: false

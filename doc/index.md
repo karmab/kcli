@@ -94,6 +94,12 @@ alias kcli='docker run -it --rm --security-opt label:disable -v ~/.kcli:/root/.k
 
 For web access, you can switch with `-p 9000:9000 --entrypoint=/usr/bin/kweb` and thus accessing to port 9000
 
+## I don't want a big fat daemon
+
+```
+alias kcli='sudo podman run -it --rm --security-opt label=disable -v ~/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v ~/.ssh:/root/.ssh -v $PWD:/workdir karmab/kcli'
+``
+
 ## Dev installation from pip
 
 ### Centos installation
