@@ -25,4 +25,4 @@ GOBIN=~/.terraform.d/plugins go get -u github.com/dmacvicar/terraform-provider-l
 PUBKEY=`cat ~/.ssh/authorized_keys`
 echo export OPENSHIFT_INSTALL_SSH_PUB_KEY=\"$PUBKEY\" >> ~/env.sh
 source ~/env.sh
-# bin/openshift-install cluster
+# bin/openshift-install cluster --log-level=debug
