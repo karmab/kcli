@@ -7,7 +7,7 @@ export GOPATH=/root/go
 export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin:$GOPATH/src/github/openshift/installer/bin
 echo export GOPATH=/root/go >> ~/.bashrc
 echo export PATH=\$PATH:/usr/local/go/bin:\$GOPATH/bin:\$GOPATH/src/github/openshift/installer/bin >> ~/.bashrc
-echo alias go_ocp=\"cd \$GOPATH/src/github.com/openshift/installer\">> ~/.bashrc
+echo alias go_okd=\"cd \$GOPATH/src/github.com/openshift/installer\">> ~/.bashrc
 mkdir -p $GOPATH/{bin,pkg,src}
 mkdir -p $GOPATH/src/github.com/openshift
 cd $GOPATH/src/github.com/openshift
