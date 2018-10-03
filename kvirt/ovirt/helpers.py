@@ -1,3 +1,4 @@
+from kvirt.common import pprint
 import os
 
 TEMPLATES = {'CentOS-6-x86_64-GenericCloud.qcow2': 'CentOS 6 Generic Cloud Image v1802 for x86_64',
@@ -29,4 +30,7 @@ def get_home_ssh_key():
         publickeyfile = "%s/.ssh/id_dsa.pub" % os.environ['HOME']
         with open(publickeyfile, 'r') as ssh:
             key = ssh.read().rstrip()
+    else:
+        pprint("neither id_rsa or id_dsa public keys found in your .ssh directory, you might have trouble "
+               "accessing the vm", color='red')
     return key

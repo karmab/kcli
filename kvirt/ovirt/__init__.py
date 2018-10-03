@@ -186,7 +186,7 @@ class KOvirt(object):
             dns_servers = '8.8.8.8 1.1.1.1'
             key = get_home_ssh_key()
             initialization = types.Initialization(user_name=user_name, root_password=root_password,
-                                                  regenerate_ssh_keys=False, authorized_ssh_keys=key, host_name=name,
+                                                  regenerate_ssh_keys=True, authorized_ssh_keys=key, host_name=name,
                                                   nic_configurations=nic_configurations,
                                                   dns_servers=dns_servers, dns_search=domain,
                                                   custom_script=custom_script)
@@ -603,9 +603,11 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
     def ssh(self, name, user=None, local=None, remote=None, tunnel=False,
             insecure=False, cmd=None, X=False, Y=False, D=None):
         u, ip = self._ssh_credentials(name)
+        if user is None:
+            user = u
         if ip == '':
             return None
-        sshcommand = common.ssh(name, ip=ip, host=self.host, port=self.port, hostuser=self.ssh_user, user=u,
+        sshcommand = common.ssh(name, ip=ip, host=self.host, port=self.port, hostuser=self.ssh_user, user=user,
                                 local=local, remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, Y=Y,
                                 debug=self.debug)
         return sshcommand
@@ -613,6 +615,8 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
     def scp(self, name, user=None, source=None, destination=None, tunnel=False,
             download=False, recursive=False):
         u, ip = self._ssh_credentials(name)
+        if user is None:
+            user = u
         if ip == '':
             return None
         scpcommand = common.scp(name, ip=ip, host=self.host, port=self.port,
