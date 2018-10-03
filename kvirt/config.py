@@ -822,8 +822,9 @@ class Kconfig(Kbaseconfig):
                     dhcp = netprofile.get('dhcp', True)
                     domain = netprofile.get('domain')
                     pxe = netprofile.get('pxe')
+                    vlan = netprofile.get('vlan')
                     result = k.create_network(name=net, cidr=cidr, dhcp=dhcp, nat=nat, domain=domain, plan=plan,
-                                              pxe=pxe)
+                                              pxe=pxe, vlan=vlan)
                     common.handle_response(result, net, element='Network ')
             if poolentries:
                 common.pprint("Deploying Pool...", color='green')
