@@ -1,5 +1,4 @@
 yum -y install libvirt-client libvirt-devel gcc-c++ git unzip wget
-ssh-keyscan -H 192.168.122.1 >> ~/.ssh/known_hosts
 scp root@192.168.122.1:[[ rhcos_path ]] /root/rhcos.qcow2
 wget https://dl.google.com/go/go[[ go_version ]].linux-amd64.tar.gz
 tar -C /usr/local -xzf go[[ go_version ]].linux-amd64.tar.gz
