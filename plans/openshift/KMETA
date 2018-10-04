@@ -32,27 +32,23 @@
   description: Downstream ocp with arbitrary number of nodes
   comments: router and registry run on the master node(s), as do gluster components
   numvms: 4
-  template: rhel-server-7.4-x86_64-kvm.qcow2
+  template: rhel-server-7.5-x86_64-kvm.qcow2
   parameters:
-    template: rhel-server-7.4-x86_64-kvm.qcow2
-    domain: karmalabs.local
-    base_disk_size: 60
-    cns_disk_size: 100
-    cns_disk_device: vdb
-    master_memory: 8144
-    node_memory: 4096
-    masters: 1
-    nodes: 3
-    cidr: 192.168.96.0/24
-    user: developer
-    password: developer
-    deploy: false
-    metrics: true
-    cns: true
-    asb: true
-    nfs: false
-    org: ansibleplaybookbundle
-    version: '3.9'
+   template: rhel-server-7.5-x86_64-kvm.qcow2
+   domain: default
+   base_disk_size: 60
+   gluster_disk_size: 100
+   master_memory: 8144
+   infra_memory: 4096
+   node_memory: 4096
+   masters: 1
+   infras: 2
+   nodes: 1
+   cidr: 192.168.122.0/24
+   crio: true
+   metrics: false
+   gluster: true
+   version: "3.10"
 
 - name: multi39
   group: openshift

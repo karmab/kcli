@@ -114,7 +114,9 @@ For web access, you can switch with
 I don’t want a big fat daemon
 -----------------------------
 
-\`\ ``alias kcli='sudo podman run -it --rm --security-opt label=disable -v ~/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v ~/.ssh:/root/.ssh -v $PWD:/workdir karmab/kcli'``
+::
+
+    alias kcli='sudo podman run -it --rm --security-opt label=disable -v ~/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v ~/.ssh:/root/.ssh -v $PWD:/workdir karmab/kcli'
 
 Dev installation from pip
 -------------------------

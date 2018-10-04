@@ -2,22 +2,19 @@ parameters:
  template: rhel-server-7.5-x86_64-kvm.qcow2
  domain: default
  base_disk_size: 60
- cns_disk_size: 100
- cns_disk_device: vdb
+ gluster_disk_size: 100
  master_memory: 8144
+ infra_memory: 4096
  node_memory: 4096
  masters: 1
- nodes: 3
+ infras: 2
+ nodes: 1
  cidr: 192.168.122.0/24
- user: developer
- password: developer
- deploy: false
- metrics: true
- cns: true
+ crio: true
  asb: true
- nfs: false
- org: ansibleplaybookbundle
- version: 3.9
+ metrics: false
+ gluster: true
+ version: "3.10"
 
 [[ domain ]]:
  type: network
@@ -38,13 +35,13 @@ master0[[ master + 1 ]]:
   - [[ domain ]]
  disks:
   - size: [[ base_disk_size ]]
-  - size: [[ cns_disk_size ]]
+  - size: [[ gluster_disk_size ]]
  pool: default
  files:
-  - path: /root/hosts
-    origin: multi/hosts
+  - path: /root/inventory
+    origin: multi/inventory
   - path: /root/install.sh
-    origin: kcli/install.sh
+    origin: multi/install.sh
     mode: 700
  scripts: 
   - multi/subscription.sh
@@ -65,7 +62,28 @@ node0[[ node + 1 ]]:
   - [[ domain ]]
  disks:
   - size: [[ base_disk_size ]]
-  - size: [[ cns_disk_size ]]
+  - size: [[ gluster_disk_size ]]
+ pool: default
+ scripts: 
+  - multi/subscription.sh
+  - multi/pre.sh
+[% endfor %]
+
+[% for infra in range(0, infras) %]
+infra0[[ infra + 1 ]]:
+ template: [[ template ]]
+ numcpus: 2
+ memory: [[ infra_memory ]]
+ rhnregister: true
+ reservedns: true
+ sharedkey: true
+ domain: [[ domain ]]
+ dns: [[ domain ]]
+ nets:
+  - [[ domain ]]
+ disks:
+  - size: [[ base_disk_size ]]
+  - size: [[ gluster_disk_size ]]
  pool: default
  scripts: 
   - multi/subscription.sh
