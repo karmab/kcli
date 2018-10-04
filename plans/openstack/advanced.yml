@@ -6,11 +6,13 @@ parameters:
  computes: 2
  version: queen
  livemigration: false
+ template: rhel-server-7.5-x86_64-kvm.qcow2
 
 ospcontroller:
- template: rhel-guest-image-7.3-35.x86_64.qcow2
+ template: [[ template ]]
  memory: 6144
  numcpus: 2
+ rhnregister: true
  disks: 
   - size: 50
  nets:
@@ -21,7 +23,6 @@ ospcontroller:
  reservedns: true
  domain: default
  scripts: 
-  - ~/register.sh
   - subscription.sh
   - advanced/install.sh
   - provision.sh
@@ -33,6 +34,7 @@ ospcontroller:
 [% for number in range(1,computes+1) %]
 ospcompute0[[ number ]]:
  template: rhel-guest-image-7.3-35.x86_64.qcow2
+ rhnregister: true
  memory: 6144
  numcpus: 2
  disks: 
@@ -44,6 +46,5 @@ ospcompute0[[ number ]]:
  sharedkey: true
  reservedns: true
  scripts: 
-  - ~/register.sh
   - subscription.sh
 [% endfor %]

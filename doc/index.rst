@@ -96,6 +96,9 @@ the are several flags you’ll want to pass depending on your use case
 -  ``-v ~/.ssh:/root/.ssh`` to share your ssh keys
 -  ``--security-opt label:disable`` if running with selinux
 -  ``-v $PWD:/workdir`` to access plans below your current directory
+-  ``-v $HOME:/root`` to share your entire home directory, useful if you
+   want to share secret files, ``~/register.sh`` for instance (although
+   you can use `rhnregister <#rhnregister>`__)
 
 As a bonus, you can alias kcli and run it as if it was installed
 locally:
@@ -108,10 +111,15 @@ For web access, you can switch with
 ``-p 9000:9000 --entrypoint=/usr/bin/kweb`` and thus accessing to port
 9000
 
+I don’t want a big fat daemon
+-----------------------------
+
+\`\ ``alias kcli='sudo podman run -it --rm --security-opt label=disable -v ~/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v ~/.ssh:/root/.ssh -v $PWD:/workdir karmab/kcli'``
+
 Dev installation from pip
 -------------------------
 
-Centos installation
+CentOS installation
 ~~~~~~~~~~~~~~~~~~~
 
 Use the provided
@@ -1118,8 +1126,8 @@ Available parameters for hypervisor/profile/plan files
    when matched in a firewall rule). In the case of kubevirt, it s
    rather a dict of key=value used as node selector (allowing to force
    vms to be scheduled on a matching host)
--  *rhnregister* (optional). Auto registers vms whose template starts
-   with rhel Defaults to false. Requires to either rhnuser and
+-  \ *rhnregister*\  (optional). Auto registers vms whose template
+   starts with rhel Defaults to false. Requires to either rhnuser and
    rhnpassword, or rhnactivationkey and rhnorg
 -  *rhnuser* (optional). Red Hat network user
 -  *rhnpassword* (optional). Red Hat network password

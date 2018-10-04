@@ -7,6 +7,7 @@ parameters:
 
 rhv:
  template: [[ template ]]
+ rhnregister: true
  memory: [[ memory ]]
  numcpus: 2
  cpumodel: host-model
@@ -26,7 +27,6 @@ rhv:
  domain: localdomain
  reservedns: true
  scripts: 
-  - ~/register.sh
   - nfs.sh
   - subscription.sh
   - install.sh

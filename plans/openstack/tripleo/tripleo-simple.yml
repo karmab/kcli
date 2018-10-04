@@ -1,5 +1,6 @@
 parameters:
  admin_password: unix1234
+ template: rhel-server-7.5-x86_64-kvm.qcow2
 
 tripleoprovisioning:
  type: network
@@ -13,7 +14,8 @@ tripleopublic:
  dhcp: True
 
 undercloud:
- template: rhel-guest-image-7.3-35.x86_64.qcow2
+ template: [[ template ]]
+ rhnregister: true
  memory: 8192
  numcpus: 2
  disks:
@@ -35,7 +37,6 @@ undercloud:
   - echo undercloud.localdomain > /etc/hostname
   - echo 192.168.101.10 undercloud.localdomain undercloud >> /etc/hosts
  scripts:
-  - ~/register.sh
   - common/newton.sh
   - common/undercloud_pre.sh
  files:

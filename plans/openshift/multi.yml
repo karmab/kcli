@@ -1,6 +1,6 @@
 parameters:
- template: rhel-server-7.4-x86_64-kvm.qcow2
- domain: karmalabs.local
+ template: rhel-server-7.5-x86_64-kvm.qcow2
+ domain: default
  base_disk_size: 60
  cns_disk_size: 100
  cns_disk_device: vdb
@@ -8,7 +8,7 @@ parameters:
  node_memory: 4096
  masters: 1
  nodes: 3
- cidr: 192.168.96.0/24
+ cidr: 192.168.122.0/24
  user: developer
  password: developer
  deploy: false
@@ -29,6 +29,7 @@ master0[[ master + 1 ]]:
  template: [[ template ]]
  numcpus: 2
  memory: [[ master_memory ]]
+ rhnregister: true
  reservedns: true
  sharedkey: true
  domain: [[ domain ]]
@@ -46,8 +47,6 @@ master0[[ master + 1 ]]:
     origin: kcli/install.sh
     mode: 700
  scripts: 
-  - multi/heketi.sh
-  - ~/register.sh
   - multi/subscription.sh
   - multi/pre.sh
 [% endfor %]
@@ -57,6 +56,7 @@ node0[[ node + 1 ]]:
  template: [[ template ]]
  numcpus: 2
  memory: [[ node_memory ]]
+ rhnregister: true
  reservedns: true
  sharedkey: true
  domain: [[ domain ]]
@@ -68,7 +68,6 @@ node0[[ node + 1 ]]:
   - size: [[ cns_disk_size ]]
  pool: default
  scripts: 
-  - ~/register.sh
   - multi/subscription.sh
   - multi/pre.sh
 [% endfor %]
