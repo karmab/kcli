@@ -261,7 +261,7 @@ class Kopenstack(object):
                         break
             name = vm.name
             state = vm.status
-            source = glance.images.get(vm.image['id']).name
+            source = glance.images.get(vm.image['id']).name if 'id' in vm.image else ''
             plan = ''
             profile = ''
             metadata = vm.metadata
@@ -307,7 +307,9 @@ class Kopenstack(object):
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if self.debug:
             print(vars(vm))
-        yamlinfo = {'name': vm.name, 'status': vm.status, 'template': self.glance.images.get(vm.image['id']).name}
+        yamlinfo = {'name': vm.name, 'status': vm.status}
+        source = self.glance.images.get(vm.image['id']).name if 'id' in vm.image else ''
+        yamlinfo['template'] = source
         flavor = nova.flavors.get(vm.flavor['id'])
         yamlinfo['flavor'] = flavor.name
         yamlinfo['memory'] = flavor.ram
