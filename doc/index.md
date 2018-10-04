@@ -102,7 +102,7 @@ alias kcli='sudo podman run -it --rm --security-opt label=disable -v ~/.kcli:/ro
 
 ## Dev installation from pip
 
-### Centos installation
+### CentOS installation
 
 Use the provided [script](https://github.com/karmab/kcli/blob/master/extras/centos.sh) which will install a dedicated python3 env
 
