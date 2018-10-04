@@ -240,13 +240,17 @@ class KOvirt(object):
         return
 
     def restart(self, name):
-        print("not implemented")
         vmsearch = self.vms_service.list(search='name=%s' % name)
         if not vmsearch:
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         vm = vmsearch[0]
-        print(vm)
+        status = str(vm.status)
+        vm = self.vms_service.vm_service(vmsearch[0].id)
+        if status == 'down':
+            vm.start()
+        else:
+            vm.reboot()
         return {'result': 'success'}
 
     def report(self):
