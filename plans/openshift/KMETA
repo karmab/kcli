@@ -14,6 +14,26 @@
    openshift_version: '3.10'
    asb: False
 
+- name: okd
+  group: openshift
+  url: github.com/karmab/kcli/plans/openshift
+  file: okd.yml
+  description: Upstream Compilation of openshift new installer
+  numvms: 1
+  memory: 16384
+  comments: you ll need to download rhcos-qemu.qcow2 from somewhere 
+  template: Fedora-Cloud-Base-28-1.1.x86_64.qcow2
+  parameters:
+   template: Fedora-Cloud-Base-28-1.1.x86_64.qcow2
+   memory: 16384
+   go_version: 1.11.1
+   uri: qemu+tcp://192.168.122.1/system
+   rhcos_path: /var/lib/libvirt/images/rhcos-qemu.qcow2
+   cluster: testk
+   domain: tt.testing
+   email_address: admin@magnifico.es
+   password: password
+
 - name: ocp
   group: openshift
   url: github.com/karmab/kcli/plans/openshift
