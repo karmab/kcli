@@ -77,9 +77,14 @@ class KOvirt(object):
         clone = not diskthin
         templateobject = types.Template(name=template) if template else None
         console = types.Console(enabled=True)
-        vm = self.vms_service.add(types.Vm(name=name, cluster=types.Cluster(name=self.cluster),
-                                           template=templateobject, console=console), clone=clone)
-        vm_service = self.vms_service.vm_service(vm.id)
+        try:
+            vm = self.vms_service.add(types.Vm(name=name, cluster=types.Cluster(name=self.cluster),
+                                               template=templateobject, console=console), clone=clone)
+            vm_service = self.vms_service.vm_service(vm.id)
+        except Exception as e:
+            if self.debug:
+                print(e)
+            return {'result': 'failure', 'reason': e}
         timeout = 0
         while True:
             vm = vm_service.get()
