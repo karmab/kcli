@@ -86,6 +86,7 @@ the are several flags you'll want to pass depending on your use case
 - `--security-opt label:disable` if running with selinux
 - `-v $PWD:/workdir` to access plans below your current directory
 - `-v $HOME:/root` to share your entire home directory, useful if you want to share secret files, `~/register.sh` for instance (although you can use [rhnregister](#rhnregister))
+- `-e HTTP_PROXY=your_proxy -e HTTPS_PROXY=your_proxy` if accessing behind a proxy
 
 As a bonus, you can alias kcli and run it as if it was installed locally:
 
@@ -227,6 +228,8 @@ to Create a dns zone
 - Select the "Networking" → "Network Services" → "Cloud DNS"
 - Select "Create Zone"
 - Put the same name as your domain, but with '-' instead
+
+If accessing behind a proxy, be sure to set *HTTPS_PROXY* environment variable to `http://your_proxy:your_port`
 
 ## Aws
 

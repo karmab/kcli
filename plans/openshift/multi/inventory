@@ -71,8 +71,8 @@ master0[[ master +1 ]].[[ domain ]] ansible_connection=local
 [glusterfs]
 [% if infras == 2 -%]
 master01.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
+infra01.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
 infra02.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
-infra03.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
 [% elif infra > 2 %]
 infra01.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
 infra02.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'

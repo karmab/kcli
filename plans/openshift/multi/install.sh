@@ -7,7 +7,7 @@ ssh-keyscan -H master0[[ master + 1 ]].[[ domain ]] >> ~/.ssh/known_hosts
 ssh-keyscan -H node0[[ node + 1 ]].[[ domain ]] >> ~/.ssh/known_hosts
 [% endfor %]
 [% for infra in range(0, infras) %]
-ssh-keyscan -H infra0[[ node + 1 ]].[[ domain ]] >> ~/.ssh/known_hosts
+ssh-keyscan -H infra0[[ infra + 1 ]].[[ domain ]] >> ~/.ssh/known_hosts
 [% endfor %]
 sed -i "s/#log_path/log_path/" /etc/ansible/ansible.cfg
 #export IP=`dig +short master01.[[ domain ]]`

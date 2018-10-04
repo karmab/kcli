@@ -50,7 +50,7 @@
   url: github.com/karmab/kcli/plans/openshift
   file: multi.yml
   description: Downstream ocp with arbitrary number of nodes
-  comments: router and registry run on the master node(s), as do gluster components
+  comments: router and registry located on infra if present. gluster uses first 3 infra if present, otherwise 1 master and 2 infra
   numvms: 4
   template: rhel-server-7.5-x86_64-kvm.qcow2
   parameters:
@@ -69,6 +69,7 @@
    metrics: false
    gluster: true
    version: "3.10"
+   deploy: false
 
 - name: multi39
   group: openshift
