@@ -1132,11 +1132,11 @@ class Kvirt(object):
             storage = conn.storagePoolLookupByName(storage)
             storage.refresh(0)
             poolxml = storage.XMLDesc(0)
-            root = ET.fromstring(poolxml)
-            for element in list(root.getiterator('path')):
+            storageroot = ET.fromstring(poolxml)
+            for element in list(storageroot.getiterator('path')):
                 poolpath = element.text
                 break
-            product = list(root.getiterator('product'))
+            product = list(storageroot.getiterator('product'))
             if product:
                 thinpools.append(poolpath)
             for stor in storage.listVolumes():
@@ -1163,20 +1163,24 @@ class Kvirt(object):
                 network = element.find('source').get('network')
                 network = conn.networkLookupByName(network)
                 netxml = network.XMLDesc(0)
-                root = ET.fromstring(netxml)
-                for host in list(root.getiterator('host')):
+                netroot = ET.fromstring(netxml)
+                for host in list(netroot.getiterator('host')):
                     hostmac = host.get('mac')
                     iphost = host.get('ip')
                     hostname = host.get('name')
                     if hostmac == mac:
                         hostentry = "<host mac='%s' name='%s' ip='%s'/>" % (mac, hostname, iphost)
                         network.update(2, 4, 0, hostentry, 1)
-                for host in list(root.getiterator('host')):
-                    iphost = host.get('ip')
                     hostname = host.find('hostname')
                     if hostname is not None and hostname.text == name:
                         hostentry = '<host ip="%s"><hostname>%s</hostname></host>' % (iphost, name)
                         network.update(2, 10, 0, hostentry, 1)
+                # for host in list(root.getiterator('host')):
+                #    iphost = host.get('ip')
+                #    hostname = host.find('hostname')
+                #    if hostname is not None and hostname.text == name:
+                #        hostentry = '<host ip="%s"><hostname>%s</hostname></host>' % (iphost, name)
+                #        network.update(2, 10, 0, hostentry, 1)
         if ip is not None:
             os.system("ssh-keygen -q -R %s >/dev/null 2>&1" % ip)
             # delete hosts entry
@@ -1398,7 +1402,7 @@ class Kvirt(object):
             # network.update(4, 10, 0, dnsentry, 2)
             return 0
         except:
-            print(("Entry already found for %s" % name))
+            print("Entry already found for %s" % name)
             return {'result': 'failure', 'reason': "Entry already found found for %s" % name}
 
     def reserve_host(self, name, nets, domain):
