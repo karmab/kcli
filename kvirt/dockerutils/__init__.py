@@ -9,6 +9,19 @@ import os
 
 
 def create_container(self, name, image, nets=None, cmd=None, ports=[], volumes=[], environment=[], label=None):
+    """
+
+    :param self:
+    :param name:
+    :param image:
+    :param nets:
+    :param cmd:
+    :param ports:
+    :param volumes:
+    :param environment:
+    :param label:
+    :return:
+    """
     if self.host == '127.0.0.1':
         finalvolumes = {}
         if volumes is not None:
@@ -122,6 +135,12 @@ def create_container(self, name, image, nets=None, cmd=None, ports=[], volumes=[
 
 
 def delete_container(self, name):
+    """
+
+    :param self:
+    :param name:
+    :return:
+    """
     if self.host == '127.0.0.1':
         base_url = 'unix://var/run/docker.sock'
         d = docker.DockerClient(base_url=base_url, version='1.22')
@@ -137,6 +156,12 @@ def delete_container(self, name):
 
 
 def start_container(self, name):
+    """
+
+    :param self:
+    :param name:
+    :return:
+    """
     if self.host == '127.0.0.1':
         base_url = 'unix://var/run/docker.sock'
         d = docker.DockerClient(base_url=base_url, version='1.22')
@@ -152,6 +177,12 @@ def start_container(self, name):
 
 
 def stop_container(self, name):
+    """
+
+    :param self:
+    :param name:
+    :return:
+    """
     if self.host == '127.0.0.1':
         base_url = 'unix://var/run/docker.sock'
         d = docker.DockerClient(base_url=base_url, version='1.22')
@@ -167,6 +198,12 @@ def stop_container(self, name):
 
 
 def console_container(self, name):
+    """
+
+    :param self:
+    :param name:
+    :return:
+    """
     if self.host == '127.0.0.1':
         dockercommand = "docker attach %s" % name
         os.system(dockercommand)
@@ -178,6 +215,11 @@ def console_container(self, name):
 
 
 def list_containers(self):
+    """
+
+    :param self:
+    :return:
+    """
     containers = []
     if self.host == '127.0.0.1':
         base_url = 'unix://var/run/docker.sock'
@@ -234,6 +276,12 @@ def list_containers(self):
 
 
 def exists_container(self, name):
+    """
+
+    :param self:
+    :param name:
+    :return:
+    """
     if self.host == '127.0.0.1':
         base_url = 'unix://var/run/docker.sock'
         d = docker.DockerClient(base_url=base_url, version='1.22')
@@ -252,6 +300,11 @@ def exists_container(self, name):
 
 
 def list_images(self):
+    """
+
+    :param self:
+    :return:
+    """
     if self.host == '127.0.0.1':
         base_url = 'unix://var/run/docker.sock'
         d = docker.DockerClient(base_url=base_url, version='1.22')

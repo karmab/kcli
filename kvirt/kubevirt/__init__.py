@@ -25,6 +25,10 @@ REGISTRYDISKS = ['kubevirt/alpine-registry-disk-demo', 'kubevirt/cirros-registry
 
 
 def pretty_print(o):
+    """
+
+    :param o:
+    """
     # print(yaml.dump(o, default_flow_style=False, indent=2, allow_unicode=True,
     #                encoding='utf-8').replace('!!python/unicode ', '').replace("'", '').replace('\n\n', '\n').
     #      replace('#cloud-config', '|\n            #cloud-config'))
@@ -34,6 +38,9 @@ def pretty_print(o):
 
 
 class Kubevirt(object):
+    """
+
+    """
     def __init__(self, context=None, cdi=False, multus=True, host='127.0.0.1', port=22, user='root', debug=False,
                  tags=None):
         self.host = host
@@ -71,9 +78,18 @@ class Kubevirt(object):
         return
 
     def close(self):
+        """
+
+        :return:
+        """
         return
 
     def exists(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         crds = self.crds
         namespace = self.namespace
         allvms = crds.list_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines')["items"]
@@ -83,6 +99,11 @@ class Kubevirt(object):
         return result
 
     def net_exists(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         crds = self.crds
         namespace = self.namespace
         try:
@@ -93,6 +114,12 @@ class Kubevirt(object):
         return True
 
     def disk_exists(self, pool, name):
+        """
+
+        :param pool:
+        :param name:
+        :return:
+        """
         print("not implemented")
         return
 
@@ -102,6 +129,48 @@ class Kubevirt(object):
                cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[],
                ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[],
                enableroot=True, alias=[], overrides={}, tags=None):
+        """
+
+        :param name:
+        :param virttype:
+        :param profile:
+        :param flavor:
+        :param plan:
+        :param cpumodel:
+        :param cpuflags:
+        :param numcpus:
+        :param memory:
+        :param guestid:
+        :param pool:
+        :param template:
+        :param disks:
+        :param disksize:
+        :param diskthin:
+        :param diskinterface:
+        :param nets:
+        :param iso:
+        :param vnc:
+        :param cloudinit:
+        :param reserveip:
+        :param reservedns:
+        :param reservehost:
+        :param start:
+        :param keys:
+        :param cmds:
+        :param ips:
+        :param netmasks:
+        :param gateway:
+        :param nested:
+        :param dns:
+        :param domain:
+        :param tunnel:
+        :param files:
+        :param enableroot:
+        :param alias:
+        :param overrides:
+        :param tags:
+        :return:
+        """
         if self.exists(name):
             return {'result': 'failure', 'reason': "VM %s already exists" % name}
         if template is not None and template not in self.volumes():
@@ -281,6 +350,11 @@ class Kubevirt(object):
         return {'result': 'success'}
 
     def start(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         crds = self.crds
         namespace = self.namespace
         common.pprint("Using current namespace %s" % namespace, color='green')
@@ -293,6 +367,11 @@ class Kubevirt(object):
         return {'result': 'success'}
 
     def stop(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         crds = self.crds
         namespace = self.namespace
         common.pprint("Using current namespace %s" % namespace, color='green')
@@ -305,18 +384,41 @@ class Kubevirt(object):
         return {'result': 'success'}
 
     def snapshot(self, name, base, revert=False, delete=False, listing=False):
+        """
+
+        :param name:
+        :param base:
+        :param revert:
+        :param delete:
+        :param listing:
+        :return:
+        """
         print("not implemented")
         return
 
     def restart(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         print("not implemented")
         return {'result': 'success'}
 
     def report(self):
+        """
+
+        :return:
+        """
         print("not implemented")
         return
 
     def status(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         crds = self.crds
         namespace = self.namespace
         try:
@@ -331,6 +433,10 @@ class Kubevirt(object):
         return 'down'
 
     def list(self):
+        """
+
+        :return:
+        """
         crds = self.crds
         namespace = self.namespace
         vms = []
@@ -368,6 +474,12 @@ class Kubevirt(object):
         return sorted(vms, key=lambda x: (x[6], x[0]))
 
     def console(self, name, tunnel=False):
+        """
+
+        :param name:
+        :param tunnel:
+        :return:
+        """
         crds = self.crds
         namespace = self.namespace
         try:
@@ -389,6 +501,11 @@ class Kubevirt(object):
         return
 
     def serialconsole(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         crds = self.crds
         namespace = self.namespace
         try:
@@ -410,6 +527,14 @@ class Kubevirt(object):
         return
 
     def info(self, name, output='plain', fields=None, values=False):
+        """
+
+        :param name:
+        :param output:
+        :param fields:
+        :param values:
+        :return:
+        """
         if fields is not None:
             fields = fields.split(',')
         yamlinfo = {}
@@ -521,6 +646,11 @@ class Kubevirt(object):
         return {'result': 'success'}
 
     def ip(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         crds = self.crds
         namespace = self.namespace
         ip = None
@@ -540,6 +670,11 @@ class Kubevirt(object):
         return ip
 
     def volumes(self, iso=False):
+        """
+
+        :param iso:
+        :return:
+        """
         core = self.core
         namespace = self.namespace
         if iso:
@@ -554,6 +689,12 @@ class Kubevirt(object):
             return REGISTRYDISKS
 
     def delete(self, name, snapshots=False):
+        """
+
+        :param name:
+        :param snapshots:
+        :return:
+        """
         crds = self.crds
         core = self.core
         namespace = self.namespace
@@ -578,10 +719,25 @@ class Kubevirt(object):
         return {'result': 'success'}
 
     def clone(self, old, new, full=False, start=False):
+        """
+
+        :param old:
+        :param new:
+        :param full:
+        :param start:
+        :return:
+        """
         print("not implemented")
         return
 
     def update_metadata(self, name, metatype, metavalue):
+        """
+
+        :param name:
+        :param metatype:
+        :param metavalue:
+        :return:
+        """
         crds = self.crds
         namespace = self.namespace
         try:
@@ -594,6 +750,12 @@ class Kubevirt(object):
         return
 
     def update_memory(self, name, memory):
+        """
+
+        :param name:
+        :param memory:
+        :return:
+        """
         crds = self.crds
         namespace = self.namespace
         try:
@@ -608,6 +770,12 @@ class Kubevirt(object):
         return
 
     def update_cpu(self, name, numcpus):
+        """
+
+        :param name:
+        :param numcpus:
+        :return:
+        """
         crds = self.crds
         namespace = self.namespace
         try:
@@ -622,18 +790,45 @@ class Kubevirt(object):
         return
 
     def update_start(self, name, start=True):
+        """
+
+        :param name:
+        :param start:
+        :return:
+        """
         print("not implemented")
         return
 
     def update_information(self, name, information):
+        """
+
+        :param name:
+        :param information:
+        :return:
+        """
         self.update_metadata(name, 'information', information)
         return
 
     def update_iso(self, name, iso):
+        """
+
+        :param name:
+        :param iso:
+        :return:
+        """
         print("not implemented")
         return
 
     def create_disk(self, name, size, pool=None, thin=True, template=None):
+        """
+
+        :param name:
+        :param size:
+        :param pool:
+        :param thin:
+        :param template:
+        :return:
+        """
         core = self.core
         namespace = self.namespace
         pvc = core.list_namespaced_persistent_volume_claim(namespace)
@@ -655,6 +850,17 @@ class Kubevirt(object):
         return
 
     def add_disk(self, name, size, pool=None, thin=True, template=None, shareable=False, existing=None):
+        """
+
+        :param name:
+        :param size:
+        :param pool:
+        :param thin:
+        :param template:
+        :param shareable:
+        :param existing:
+        :return:
+        """
         crds = self.crds
         namespace = self.namespace
         try:
@@ -684,6 +890,13 @@ class Kubevirt(object):
         return
 
     def delete_disk(self, name=None, diskname=None, pool=None):
+        """
+
+        :param name:
+        :param diskname:
+        :param pool:
+        :return:
+        """
         crds = self.crds
         core = self.core
         namespace = self.namespace
@@ -713,6 +926,10 @@ class Kubevirt(object):
         return
 
     def list_disks(self):
+        """
+
+        :return:
+        """
         disks = {}
         namespace = self.namespace
         core = self.core
@@ -730,10 +947,22 @@ class Kubevirt(object):
         return disks
 
     def add_nic(self, name, network):
+        """
+
+        :param name:
+        :param network:
+        :return:
+        """
         print("not implemented")
         return
 
     def delete_nic(self, name, interface):
+        """
+
+        :param name:
+        :param interface:
+        :return:
+        """
         print("not implemented")
         return
 
@@ -769,6 +998,20 @@ class Kubevirt(object):
 
     def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, Y=False,
             D=None):
+        """
+
+        :param name:
+        :param user:
+        :param local:
+        :param remote:
+        :param tunnel:
+        :param insecure:
+        :param cmd:
+        :param X:
+        :param Y:
+        :param D:
+        :return:
+        """
         u, ip = self._ssh_credentials(name)
         if user is None:
             user = u
@@ -779,6 +1022,17 @@ class Kubevirt(object):
         return sshcommand
 
     def scp(self, name, user=None, source=None, destination=None, tunnel=False, download=False, recursive=False):
+        """
+
+        :param name:
+        :param user:
+        :param source:
+        :param destination:
+        :param tunnel:
+        :param download:
+        :param recursive:
+        :return:
+        """
         u, ip = self._ssh_credentials(name)
         if user is None:
             user = u
@@ -789,10 +1043,29 @@ class Kubevirt(object):
         return scpcommand
 
     def create_pool(self, name, poolpath, pooltype='dir', user='qemu', thinpool=None):
+        """
+
+        :param name:
+        :param poolpath:
+        :param pooltype:
+        :param user:
+        :param thinpool:
+        :return:
+        """
         print("not implemented")
         return
 
     def add_image(self, image, pool, short=None, cmd=None, name=None, size=1):
+        """
+
+        :param image:
+        :param pool:
+        :param short:
+        :param cmd:
+        :param name:
+        :param size:
+        :return:
+        """
         sizes = {'debian': 2, 'centos': 8, 'fedora': 4, 'rhel': 10, 'trusty': 2.2, 'xenial': 2.2, 'yakkety': 2.2,
                  'zesty': 2.2, 'artful': 2.2}
         core = self.core
@@ -854,6 +1127,14 @@ class Kubevirt(object):
         return {'result': 'success'}
 
     def copy_image(self, pool, ori, dest, size=1):
+        """
+
+        :param pool:
+        :param ori:
+        :param dest:
+        :param size:
+        :return:
+        """
         sizes = {'debian': 2, 'centos': 8, 'fedora': 4, 'rhel': 10, 'trusty': 2.2, 'xenial': 2.2, 'yakkety': 2.2,
                  'zesty': 2.2, 'artful': 2.2}
         core = self.core
@@ -897,6 +1178,18 @@ class Kubevirt(object):
         return {'result': 'success'}
 
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', pxe=None, vlan=None):
+        """
+
+        :param name:
+        :param cidr:
+        :param dhcp:
+        :param nat:
+        :param domain:
+        :param plan:
+        :param pxe:
+        :param vlan:
+        :return:
+        """
         crds = self.crds
         namespace = self.namespace
         bridge = cidr
@@ -910,6 +1203,12 @@ class Kubevirt(object):
         return {'result': 'success'}
 
     def delete_network(self, name=None, cidr=None):
+        """
+
+        :param name:
+        :param cidr:
+        :return:
+        """
         crds = self.crds
         namespace = self.namespace
         try:
@@ -921,11 +1220,19 @@ class Kubevirt(object):
         return {'result': 'success'}
 
     def list_pools(self):
+        """
+
+        :return:
+        """
         storageapi = client.StorageV1Api()
         pools = [x.metadata.name for x in storageapi.list_storage_class().items]
         return pools
 
     def list_networks(self):
+        """
+
+        :return:
+        """
         networks = {}
         if self.multus:
             crds = self.crds
@@ -944,27 +1251,58 @@ class Kubevirt(object):
             return {'default': {'cidr': 'N/A', 'dhcp': 'N/A', 'type': 'bridged', 'mode': 'N/A'}}
 
     def list_subnets(self):
+        """
+
+        :return:
+        """
         print("not implemented")
         return {}
 
     def delete_pool(self, name, full=False):
+        """
+
+        :param name:
+        :param full:
+        :return:
+        """
         print("not implemented")
         return
 
     def network_ports(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         print("not implemented")
         return
 
     def vm_ports(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         print("not implemented")
         return
 
     def get_pool_path(self, pool):
+        """
+
+        :param pool:
+        :return:
+        """
         storageapi = client.StorageV1Api()
         storageclass = storageapi.read_storage_class(pool)
         return storageclass.provisioner
 
     def pvc_bound(self, volname, namespace):
+        """
+
+        :param volname:
+        :param namespace:
+        :return:
+        """
         core = self.core
         pvctimeout = 40
         pvcruntime = 0
@@ -980,6 +1318,12 @@ class Kubevirt(object):
         return True
 
     def import_completed(self, volname, namespace):
+        """
+
+        :param volname:
+        :param namespace:
+        :return:
+        """
         core = self.core
         pvctimeout = 40
         pvcruntime = 0
@@ -996,6 +1340,12 @@ class Kubevirt(object):
         return pod
 
     def pod_completed(self, podname, namespace):
+        """
+
+        :param podname:
+        :param namespace:
+        :return:
+        """
         core = self.core
         podtimeout = 600
         podruntime = 0
@@ -1011,6 +1361,12 @@ class Kubevirt(object):
         return True
 
     def prepare_pvc(self, name, size=1):
+        """
+
+        :param name:
+        :param size:
+        :return:
+        """
         core = self.core
         namespace = self.namespace
         now = datetime.datetime.now().strftime("%Y%M%d%H%M")
@@ -1033,6 +1389,11 @@ class Kubevirt(object):
         return {'result': 'success'}
 
     def check_pool(self, pool):
+        """
+
+        :param pool:
+        :return:
+        """
         storage = client.StorageV1Api()
         storageclasses = storage.list_storage_class().items
         if storageclasses:
@@ -1043,4 +1404,8 @@ class Kubevirt(object):
         return None
 
     def flavors(self):
+        """
+
+        :return:
+        """
         return []

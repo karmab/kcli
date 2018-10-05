@@ -37,6 +37,12 @@ guestwindows200864 = "windows_2008x64"
 
 
 def libvirt_callback(ignore, err):
+    """
+
+    :param ignore:
+    :param err:
+    :return:
+    """
     return
 
 
@@ -44,6 +50,9 @@ registerErrorHandler(f=libvirt_callback, ctx=None)
 
 
 class Kvirt(object):
+    """
+
+    """
     def __init__(self, host='127.0.0.1', port=None, user='root', protocol='ssh', url=None, debug=False):
         if url is None:
             if host == '127.0.0.1' or host == 'localhost':
@@ -69,12 +78,20 @@ class Kvirt(object):
         self.url = url
 
     def close(self):
+        """
+
+        """
         conn = self.conn
         if conn is not None:
             conn.close()
         self.conn = None
 
     def exists(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         conn = self.conn
         for vm in conn.listAllDomains():
             if vm.name() == name:
@@ -82,6 +99,11 @@ class Kvirt(object):
         return False
 
     def net_exists(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         conn = self.conn
         try:
             conn.networkLookupByName(name)
@@ -90,6 +112,12 @@ class Kvirt(object):
             return False
 
     def disk_exists(self, pool, name):
+        """
+
+        :param pool:
+        :param name:
+        :return:
+        """
         conn = self.conn
         try:
             storage = conn.storagePoolLookupByName(pool)
@@ -106,6 +134,47 @@ class Kvirt(object):
                vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None,
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
                files=[], enableroot=True, overrides={}, tags=None):
+        """
+
+        :param name:
+        :param virttype:
+        :param profile:
+        :param flavor:
+        :param plan:
+        :param cpumodel:
+        :param cpuflags:
+        :param numcpus:
+        :param memory:
+        :param guestid:
+        :param pool:
+        :param template:
+        :param disks:
+        :param disksize:
+        :param diskthin:
+        :param diskinterface:
+        :param nets:
+        :param iso:
+        :param vnc:
+        :param cloudinit:
+        :param reserveip:
+        :param reservedns:
+        :param reservehost:
+        :param start:
+        :param keys:
+        :param cmds:
+        :param ips:
+        :param netmasks:
+        :param gateway:
+        :param nested:
+        :param dns:
+        :param domain:
+        :param tunnel:
+        :param files:
+        :param enableroot:
+        :param overrides:
+        :param tags:
+        :return:
+        """
         namespace = ''
         if self.exists(name):
             return {'result': 'failure', 'reason': "VM %s already exists" % name}
@@ -503,6 +572,11 @@ class Kvirt(object):
         return {'result': 'success'}
 
     def start(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         conn = self.conn
         status = {0: 'down', 1: 'up'}
         try:
@@ -516,6 +590,11 @@ class Kvirt(object):
             return {'result': 'success'}
 
     def stop(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         conn = self.conn
         status = {0: 'down', 1: 'up'}
         try:
@@ -529,6 +608,15 @@ class Kvirt(object):
             return {'result': 'success'}
 
     def snapshot(self, name, base, revert=False, delete=False, listing=False):
+        """
+
+        :param name:
+        :param base:
+        :param revert:
+        :param delete:
+        :param listing:
+        :return:
+        """
         conn = self.conn
         try:
             vm = conn.lookupByName(base)
@@ -568,6 +656,11 @@ class Kvirt(object):
         return {'result': 'success'}
 
     def restart(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         conn = self.conn
         status = {0: 'down', 1: 'up'}
         try:
@@ -581,6 +674,9 @@ class Kvirt(object):
             return {'result': 'success'}
 
     def report(self):
+        """
+
+        """
         conn = self.conn
         status = {0: 'down', 1: 'up'}
         hostname = conn.getHostname()
@@ -654,6 +750,11 @@ class Kvirt(object):
             print(("Network: %s Type: routed Cidr: %s Dhcp: %s" % (networkname, cidr, dhcp)))
 
     def status(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         conn = self.conn
         status = {0: 'down', 1: 'up'}
         try:
@@ -663,6 +764,10 @@ class Kvirt(object):
         return status[vm.isActive()]
 
     def list(self):
+        """
+
+        :return:
+        """
         vms = []
         leases = {}
         conn = self.conn
@@ -709,6 +814,12 @@ class Kvirt(object):
         return sorted(vms)
 
     def console(self, name, tunnel=False):
+        """
+
+        :param name:
+        :param tunnel:
+        :return:
+        """
         conn = self.conn
         try:
             vm = conn.lookupByName(name)
@@ -749,6 +860,11 @@ class Kvirt(object):
                 os.popen(consolecommand)
 
     def serialconsole(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         conn = self.conn
         try:
             vm = conn.lookupByName(name)
@@ -781,6 +897,14 @@ class Kvirt(object):
                         os.system(serialcommand)
 
     def info(self, name, output='plain', fields=None, values=False):
+        """
+
+        :param name:
+        :param output:
+        :param fields:
+        :param values:
+        :return:
+        """
         if fields is not None:
             fields = fields.split(',')
         leases = {}
@@ -895,6 +1019,11 @@ class Kvirt(object):
         return {'result': 'success'}
 
     def ip(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         leases = {}
         conn = self.conn
         for network in conn.listAllNetworks():
@@ -920,6 +1049,11 @@ class Kvirt(object):
             return None
 
     def volumes(self, iso=False):
+        """
+
+        :param iso:
+        :return:
+        """
         isos = []
         templates = []
         default_templates = [os.path.basename(t).replace('.bz2', '') for t in list(defaults.TEMPLATES.values())
@@ -952,6 +1086,12 @@ class Kvirt(object):
             return sorted(templates, key=lambda s: s.lower())
 
     def delete(self, name, snapshots=False):
+        """
+
+        :param name:
+        :param snapshots:
+        :return:
+        """
         conn = self.conn
         try:
             vm = conn.lookupByName(name)
@@ -1111,6 +1251,13 @@ class Kvirt(object):
         return volume
 
     def clone(self, old, new, full=False, start=False):
+        """
+
+        :param old:
+        :param new:
+        :param full:
+        :param start:
+        """
         conn = self.conn
         oldvm = conn.lookupByName(old)
         oldxml = oldvm.XMLDesc(0)
@@ -1185,6 +1332,16 @@ class Kvirt(object):
             # network.update(4, 4, 0, '<host mac="%s" name="%s" ip="%s" />' % (mac, name, ip), 2)
 
     def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False):
+        """
+
+        :param name:
+        :param nets:
+        :param domain:
+        :param ip:
+        :param alias:
+        :param force:
+        :return:
+        """
         conn = self.conn
         net = nets[0]
         if isinstance(net, dict):
@@ -1245,6 +1402,13 @@ class Kvirt(object):
             return {'result': 'failure', 'reason': "Entry already found found for %s" % name}
 
     def reserve_host(self, name, nets, domain):
+        """
+
+        :param name:
+        :param nets:
+        :param domain:
+        :return:
+        """
         net = nets[0]
         ip = None
         if isinstance(net, dict):
@@ -1279,6 +1443,13 @@ class Kvirt(object):
         call(hostscmd, shell=True)
 
     def handler(self, stream, data, file_):
+        """
+
+        :param stream:
+        :param data:
+        :param file_:
+        :return:
+        """
         return file_.read(data)
 
     def _uploadimage(self, name, pool='default', pooltype='file', origin='/tmp', suffix='.ISO', size=0):
@@ -1300,6 +1471,13 @@ class Kvirt(object):
             stream.finish()
 
     def update_metadata(self, name, metatype, metavalue):
+        """
+
+        :param name:
+        :param metatype:
+        :param metavalue:
+        :return:
+        """
         ET.register_namespace('kvirt', 'kvirt')
         conn = self.conn
         vm = conn.lookupByName(name)
@@ -1341,6 +1519,12 @@ class Kvirt(object):
         return {'result': 'success'}
 
     def update_information(self, name, information):
+        """
+
+        :param name:
+        :param information:
+        :return:
+        """
         conn = self.conn
         vm = conn.lookupByName(name)
         xml = vm.XMLDesc(0)
@@ -1357,6 +1541,12 @@ class Kvirt(object):
         return {'result': 'success'}
 
     def update_memory(self, name, memory):
+        """
+
+        :param name:
+        :param memory:
+        :return:
+        """
         conn = self.conn
         memory = str(int(memory) * 1024)
         try:
@@ -1375,6 +1565,12 @@ class Kvirt(object):
         return {'result': 'success'}
 
     def update_iso(self, name, iso):
+        """
+
+        :param name:
+        :param iso:
+        :return:
+        """
         isos = self.volumes(iso=True)
         isofound = False
         for i in isos:
@@ -1408,6 +1604,11 @@ class Kvirt(object):
         return {'result': 'success'}
 
     def remove_cloudinit(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         conn = self.conn
         try:
             vm = conn.lookupByName(name)
@@ -1430,6 +1631,12 @@ class Kvirt(object):
         conn.defineXML(newxml)
 
     def update_start(self, name, start=True):
+        """
+
+        :param name:
+        :param start:
+        :return:
+        """
         conn = self.conn
         try:
             vm = conn.lookupByName(name)
@@ -1443,6 +1650,15 @@ class Kvirt(object):
         return {'result': 'success'}
 
     def create_disk(self, name, size, pool=None, thin=True, template=None):
+        """
+
+        :param name:
+        :param size:
+        :param pool:
+        :param thin:
+        :param template:
+        :return:
+        """
         conn = self.conn
         diskformat = 'qcow2'
         if size < 1:
@@ -1481,6 +1697,17 @@ class Kvirt(object):
         return diskpath
 
     def add_disk(self, name, size=1, pool=None, thin=True, template=None, shareable=False, existing=None):
+        """
+
+        :param name:
+        :param size:
+        :param pool:
+        :param thin:
+        :param template:
+        :param shareable:
+        :param existing:
+        :return:
+        """
         conn = self.conn
         diskformat = 'qcow2'
         diskbus = 'virtio'
@@ -1518,6 +1745,12 @@ class Kvirt(object):
         return {'result': 'success'}
 
     def delete_disk_by_name(self, name, pool):
+        """
+
+        :param name:
+        :param pool:
+        :return:
+        """
         conn = self.conn
         try:
             pool = conn.storagePoolLookupByName(pool)
@@ -1528,6 +1761,13 @@ class Kvirt(object):
         volume.delete()
 
     def delete_disk(self, name=None, diskname=None, pool=None):
+        """
+
+        :param name:
+        :param diskname:
+        :param pool:
+        :return:
+        """
         if name is None:
             result = self.delete_disk_by_name(diskname, pool)
             return result
@@ -1560,6 +1800,10 @@ class Kvirt(object):
         return {'result': 'failure', 'reason': "Disk %s not found in %s" % (diskname, name)}
 
     def list_disks(self):
+        """
+
+        :return:
+        """
         volumes = {}
         for p in self.conn.listStoragePools():
             poo = self.conn.storagePoolLookupByName(p)
@@ -1570,6 +1814,12 @@ class Kvirt(object):
         return volumes
 
     def add_nic(self, name, network):
+        """
+
+        :param name:
+        :param network:
+        :return:
+        """
         conn = self.conn
         networks = {}
         for interface in conn.listAllInterfaces():
@@ -1601,6 +1851,12 @@ class Kvirt(object):
         return {'result': 'success'}
 
     def delete_nic(self, name, interface):
+        """
+
+        :param name:
+        :param interface:
+        :return:
+        """
         conn = self.conn
         networks = {}
         nicnumber = 0
@@ -1668,6 +1924,20 @@ class Kvirt(object):
 
     def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, Y=False,
             D=None):
+        """
+
+        :param name:
+        :param user:
+        :param local:
+        :param remote:
+        :param tunnel:
+        :param insecure:
+        :param cmd:
+        :param X:
+        :param Y:
+        :param D:
+        :return:
+        """
         u, ip = self._ssh_credentials(name)
         if user is None:
             user = u
@@ -1700,6 +1970,17 @@ class Kvirt(object):
             return sshcommand
 
     def scp(self, name, user=None, source=None, destination=None, tunnel=False, download=False, recursive=False):
+        """
+
+        :param name:
+        :param user:
+        :param source:
+        :param destination:
+        :param tunnel:
+        :param download:
+        :param recursive:
+        :return:
+        """
         u, ip = self._ssh_credentials(name)
         if user is None:
             user = u
@@ -1722,6 +2003,15 @@ class Kvirt(object):
             return scpcommand
 
     def create_pool(self, name, poolpath, pooltype='dir', user='qemu', thinpool=None):
+        """
+
+        :param name:
+        :param poolpath:
+        :param pooltype:
+        :param user:
+        :param thinpool:
+        :return:
+        """
         conn = self.conn
         for pool in conn.listStoragePools():
             if pool == name:
@@ -1787,6 +2077,15 @@ class Kvirt(object):
         return {'result': 'success'}
 
     def add_image(self, image, pool, cmd=None, name=None, size=1):
+        """
+
+        :param image:
+        :param pool:
+        :param cmd:
+        :param name:
+        :param size:
+        :return:
+        """
         poolname = pool
         shortimage = os.path.basename(image).split('?')[0]
         conn = self.conn
@@ -1861,6 +2160,18 @@ class Kvirt(object):
         return {'result': 'success'}
 
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', pxe=None, vlan=None):
+        """
+
+        :param name:
+        :param cidr:
+        :param dhcp:
+        :param nat:
+        :param domain:
+        :param plan:
+        :param pxe:
+        :param vlan:
+        :return:
+        """
         conn = self.conn
         networks = self.list_networks()
         if cidr is None:
@@ -1914,6 +2225,12 @@ class Kvirt(object):
         return {'result': 'success'}
 
     def delete_network(self, name=None, cidr=None):
+        """
+
+        :param name:
+        :param cidr:
+        :return:
+        """
         conn = self.conn
         try:
             network = conn.networkLookupByName(name)
@@ -1929,6 +2246,10 @@ class Kvirt(object):
         return {'result': 'success'}
 
     def list_pools(self):
+        """
+
+        :return:
+        """
         pools = []
         conn = self.conn
         for pool in conn.listStoragePools():
@@ -1936,6 +2257,10 @@ class Kvirt(object):
         return pools
 
     def list_networks(self):
+        """
+
+        :return:
+        """
         networks = {}
         conn = self.conn
         for network in conn.listAllNetworks():
@@ -2000,10 +2325,20 @@ class Kvirt(object):
         return networks
 
     def list_subnets(self):
+        """
+
+        :return:
+        """
         print("not implemented")
         return {}
 
     def delete_pool(self, name, full=False):
+        """
+
+        :param name:
+        :param full:
+        :return:
+        """
         conn = self.conn
         try:
             pool = conn.storagePoolLookupByName(name)
@@ -2019,6 +2354,11 @@ class Kvirt(object):
         return {'result': 'success'}
 
     def network_ports(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         conn = self.conn
         machines = []
         for vm in conn.listAllDomains(0):
@@ -2035,6 +2375,11 @@ class Kvirt(object):
         return machines
 
     def vm_ports(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         conn = self.conn
         networks = []
         try:
@@ -2071,6 +2416,11 @@ class Kvirt(object):
         return bridge
 
     def get_pool_path(self, pool):
+        """
+
+        :param pool:
+        :return:
+        """
         conn = self.conn
         pool = conn.storagePoolLookupByName(pool)
         poolxml = pool.XMLDesc(0)
@@ -2088,9 +2438,19 @@ class Kvirt(object):
         return poolpath
 
     def flavors(self):
+        """
+
+        :return:
+        """
         return []
 
     def thintemplates(self, path, thinpool):
+        """
+
+        :param path:
+        :param thinpool:
+        :return:
+        """
         thincommand = ("lvs -o lv_name  %s -S 'lv_attr =~ ^V && origin = \"\" && pool_lv = \"%s\"'  --noheadings"
                        % (path, thinpool))
         if self.protocol == 'ssh':
@@ -2107,6 +2467,15 @@ class Kvirt(object):
         os.system(command)
 
     def add_image_to_deadpool(self, poolname, pooltype, poolpath, shortimage, thinpool=None):
+        """
+
+        :param poolname:
+        :param pooltype:
+        :param poolpath:
+        :param shortimage:
+        :param thinpool:
+        :return:
+        """
         sizecommand = "qemu-img info /tmp/%s --output=json" % shortimage
         if self.protocol == 'ssh':
             sizecommand = "ssh -p %s %s@%s \"%s\"" % (self.port, self.user, self.host, sizecommand)
@@ -2145,6 +2514,12 @@ class Kvirt(object):
         os.system(command)
 
     def export(self, name, template=None):
+        """
+
+        :param name:
+        :param template:
+        :return:
+        """
         newname = template if template is not None else "template-%s" % name
         conn = self.conn
         oldvm = conn.lookupByName(name)

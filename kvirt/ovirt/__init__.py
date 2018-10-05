@@ -16,6 +16,9 @@ from time import sleep
 
 
 class KOvirt(object):
+    """
+
+    """
     def __init__(self, host='127.0.0.1', port=22, user='admin@internal',
                  password=None, insecure=True, ca_file=None, org=None, debug=False,
                  cluster='Default', datacenter='Default', ssh_user='root', imagerepository='ovirt-image-repository'):
@@ -41,16 +44,30 @@ class KOvirt(object):
         self.imagerepository = imagerepository
 
     def close(self):
+        """
+
+        :return:
+        """
         self.api.disconnect()
         return
 
     def exists(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         vmsearch = self.vms_service.list(search='name=%s' % name)
         if vmsearch:
             return True
         return False
 
     def net_exists(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         profiles_service = self.conn.system_service().vnic_profiles_service()
         netprofiles = {}
         for prof in profiles_service.list():
@@ -62,6 +79,11 @@ class KOvirt(object):
         return False
 
     def disk_exists(self, pool, name):
+        """
+
+        :param pool:
+        :param name:
+        """
         print("not implemented")
 
     def create(self, name, virttype='kvm', profile='', flavor=None, plan='kvirt',
@@ -74,6 +96,48 @@ class KOvirt(object):
                netmasks=None, gateway=None, nested=True, dns=None, domain=None,
                tunnel=False, files=[], enableroot=True, alias=[], overrides={},
                tags=None):
+        """
+
+        :param name:
+        :param virttype:
+        :param profile:
+        :param flavor:
+        :param plan:
+        :param cpumodel:
+        :param cpuflags:
+        :param numcpus:
+        :param memory:
+        :param guestid:
+        :param pool:
+        :param template:
+        :param disks:
+        :param disksize:
+        :param diskthin:
+        :param diskinterface:
+        :param nets:
+        :param iso:
+        :param vnc:
+        :param cloudinit:
+        :param reserveip:
+        :param reservedns:
+        :param reservehost:
+        :param start:
+        :param keys:
+        :param cmds:
+        :param ips:
+        :param netmasks:
+        :param gateway:
+        :param nested:
+        :param dns:
+        :param domain:
+        :param tunnel:
+        :param files:
+        :param enableroot:
+        :param alias:
+        :param overrides:
+        :param tags:
+        :return:
+        """
         clone = not diskthin
         templateobject = types.Template(name=template) if template else None
         console = types.Console(enabled=True)
@@ -208,6 +272,11 @@ class KOvirt(object):
         return {'result': 'success'}
 
     def start(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         vmsearch = self.vms_service.list(search='name=%s' % name)
         if not vmsearch:
             common.pprint("VM %s not found" % name, color='red')
@@ -219,6 +288,11 @@ class KOvirt(object):
         return {'result': 'success'}
 
     def stop(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         vmsearch = self.vms_service.list(search='name=%s' % name)
         if not vmsearch:
             common.pprint("VM %s not found" % name, color='red')
@@ -230,6 +304,15 @@ class KOvirt(object):
         return {'result': 'success'}
 
     def snapshot(self, name, base, revert=False, delete=False, listing=False):
+        """
+
+        :param name:
+        :param base:
+        :param revert:
+        :param delete:
+        :param listing:
+        :return:
+        """
         vmsearch = self.vms_service.list(search='name=%s' % base)
         if not vmsearch:
             common.pprint("VM %s not found" % base, color='red')
@@ -240,6 +323,11 @@ class KOvirt(object):
         return
 
     def restart(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         vmsearch = self.vms_service.list(search='name=%s' % name)
         if not vmsearch:
             common.pprint("VM %s not found" % name, color='red')
@@ -254,6 +342,9 @@ class KOvirt(object):
         return {'result': 'success'}
 
     def report(self):
+        """
+
+        """
         api = self.conn.system_service().get()
         # vmslist = self.vms_service.list()
         # print("Vms Running: %s" % len(vmslist))
@@ -263,10 +354,19 @@ class KOvirt(object):
         print("Storage Domains: %d" % api.summary.storage_domains.total)
 
     def status(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         print("not implemented")
         return
 
     def list(self):
+        """
+
+        :return:
+        """
         vms = []
         conn = self.conn
         vmslist = self.vms_service.list()
@@ -297,6 +397,12 @@ class KOvirt(object):
         return vms
 
     def console(self, name, tunnel=False):
+        """
+
+        :param name:
+        :param tunnel:
+        :return:
+        """
         tunnel = False
         vmsearch = self.vms_service.list(search='name=%s' % name)
         if not vmsearch:
@@ -368,6 +474,11 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
         return
 
     def serialconsole(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         # localport1 = common.get_free_port()
         #    command = "ssh -o LogLevel=QUIET -f -p %s -L %s:127.0.0.1:2222  ovirt-vmconsole@%s sleep 10"\
         #        % (self.port, localport, self.host)
@@ -402,6 +513,14 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
         return
 
     def info(self, name, output='plain', fields=None, values=False):
+        """
+
+        :param name:
+        :param output:
+        :param fields:
+        :param values:
+        :return:
+        """
         conn = self.conn
         vmsearch = self.vms_service.list(search='name=%s' % name)
         if not vmsearch:
@@ -467,10 +586,20 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
 
 # should return ip string
     def ip(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         print("not implemented")
         return None
 
     def volumes(self, iso=False):
+        """
+
+        :param iso:
+        :return:
+        """
         if iso:
             return []
             isos = []
@@ -488,6 +617,12 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
             return templates
 
     def delete(self, name, snapshots=False):
+        """
+
+        :param name:
+        :param snapshots:
+        :return:
+        """
         vmsearch = self.vms_service.list(search='name=%s' % name)
         if not vmsearch:
             common.pprint("VM %s not found" % name, color='red')
@@ -500,39 +635,104 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
         return {'result': 'success'}
 
     def clone(self, old, new, full=False, start=False):
+        """
+
+        :param old:
+        :param new:
+        :param full:
+        :param start:
+        :return:
+        """
         print("not implemented")
         return
 
     def update_metadata(self, name, metatype, metavalue):
+        """
+
+        :param name:
+        :param metatype:
+        :param metavalue:
+        :return:
+        """
         print("not implemented")
         return
 
     def update_memory(self, name, memory):
+        """
+
+        :param name:
+        :param memory:
+        :return:
+        """
         print("not implemented")
         return
 
     def update_cpu(self, name, numcpus):
+        """
+
+        :param name:
+        :param numcpus:
+        :return:
+        """
         print("not implemented")
         return
 
     def update_start(self, name, start=True):
+        """
+
+        :param name:
+        :param start:
+        :return:
+        """
         print("not implemented")
         return
 
     def update_information(self, name, information):
+        """
+
+        :param name:
+        :param information:
+        :return:
+        """
         print("not implemented")
         return
 
     def update_iso(self, name, iso):
+        """
+
+        :param name:
+        :param iso:
+        :return:
+        """
         print("not implemented")
         return
 
     def create_disk(self, name, size, pool=None, thin=True, template=None):
+        """
+
+        :param name:
+        :param size:
+        :param pool:
+        :param thin:
+        :param template:
+        :return:
+        """
         print("not implemented")
         return
 
     def add_disk(self, name, size, pool=None, thin=True, template=None,
                  shareable=False, existing=None):
+        """
+
+        :param name:
+        :param size:
+        :param pool:
+        :param thin:
+        :param template:
+        :param shareable:
+        :param existing:
+        :return:
+        """
         size *= 2**30
         system_service = self.conn.system_service()
         sds_service = system_service.storage_domains_service()
@@ -571,18 +771,41 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
                 return {'result': 'failure', 'reason': 'timeout waiting for disk %s to be ready' % diskname}
 
     def delete_disk(self, name=None, diskname=None, pool=None):
+        """
+
+        :param name:
+        :param diskname:
+        :param pool:
+        :return:
+        """
         print("not implemented")
         return
 
     def list_disks(self):
+        """
+
+        :return:
+        """
         print("not implemented")
         return
 
     def add_nic(self, name, network):
+        """
+
+        :param name:
+        :param network:
+        :return:
+        """
         print("not implemented")
         return
 
     def delete_nic(self, name, interface):
+        """
+
+        :param name:
+        :param interface:
+        :return:
+        """
         print("not implemented")
         return
 
@@ -611,6 +834,20 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
 
     def ssh(self, name, user=None, local=None, remote=None, tunnel=False,
             insecure=False, cmd=None, X=False, Y=False, D=None):
+        """
+
+        :param name:
+        :param user:
+        :param local:
+        :param remote:
+        :param tunnel:
+        :param insecure:
+        :param cmd:
+        :param X:
+        :param Y:
+        :param D:
+        :return:
+        """
         u, ip = self._ssh_credentials(name)
         if user is None:
             user = u
@@ -623,6 +860,17 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
 
     def scp(self, name, user=None, source=None, destination=None, tunnel=False,
             download=False, recursive=False):
+        """
+
+        :param name:
+        :param user:
+        :param source:
+        :param destination:
+        :param tunnel:
+        :param download:
+        :param recursive:
+        :return:
+        """
         u, ip = self._ssh_credentials(name)
         if user is None:
             user = u
@@ -634,10 +882,29 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
         return scpcommand
 
     def create_pool(self, name, poolpath, pooltype='dir', user='qemu', thinpool=None):
+        """
+
+        :param name:
+        :param poolpath:
+        :param pooltype:
+        :param user:
+        :param thinpool:
+        :return:
+        """
         print("not implemented")
         return
 
     def add_image(self, image, pool, short=None, cmd=None, name=None, size=1):
+        """
+
+        :param image:
+        :param pool:
+        :param short:
+        :param cmd:
+        :param name:
+        :param size:
+        :return:
+        """
         image = os.path.basename(image)
         if image not in otemplates:
             return {'result': 'failure', 'reason': "Image not supported"}
@@ -672,6 +939,18 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
 
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None,
                        plan='kvirt', pxe=None, vlan=None):
+        """
+
+        :param name:
+        :param cidr:
+        :param dhcp:
+        :param nat:
+        :param domain:
+        :param plan:
+        :param pxe:
+        :param vlan:
+        :return:
+        """
         if vlan is None:
             return {'result': 'failure', 'reason': "Missing Vlan"}
         networks_service = self.conn.system_service().networks_service()
@@ -680,14 +959,28 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
         return
 
     def delete_network(self, name=None, cidr=None):
+        """
+
+        :param name:
+        :param cidr:
+        :return:
+        """
         print("not implemented")
         return
 
 # should return a dict of pool strings
     def list_pools(self):
+        """
+
+        :return:
+        """
         return [pool.name for pool in self.conn.system_service().storage_domains_service().list()]
 
     def list_networks(self):
+        """
+
+        :return:
+        """
         networks = {}
         networks_service = self.conn.system_service().networks_service()
         for network in networks_service.list():
@@ -701,23 +994,48 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
         return networks
 
     def list_subnets(self):
+        """
+
+        :return:
+        """
         print("not implemented")
         return {}
 
     def delete_pool(self, name, full=False):
+        """
+
+        :param name:
+        :param full:
+        :return:
+        """
         print("not implemented")
         return
 
     def network_ports(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         print("not implemented")
         return
 
     def vm_ports(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         print("not implemented")
         return
 
 # returns the path of the pool, if it makes sense. used by kcli list --pools
     def get_pool_path(self, pool):
+        """
+
+        :param pool:
+        :return:
+        """
         poolsearch = self.conn.system_service().storage_domains_service().list(search='name=%s' % pool)
         if not poolsearch:
             common.pprint("Pool %s not found" % pool, color='red')
@@ -726,9 +1044,19 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
         return pool.storage.path
 
     def flavors(self):
+        """
+
+        :return:
+        """
         return []
 
     def export(self, name, template=None):
+        """
+
+        :param name:
+        :param template:
+        :return:
+        """
         vmsearch = self.vms_service.list(search='name=%s' % name)
         if not vmsearch:
             common.pprint("VM %s not found" % name, color='red')

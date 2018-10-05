@@ -10,6 +10,14 @@ import time
 
 
 def play(self, name, playbook, variables=[], verbose=False):
+    """
+
+    :param self:
+    :param name:
+    :param playbook:
+    :param variables:
+    :param verbose:
+    """
     counter = 0
     while counter != 80:
         ip = self.ip(name)
@@ -42,6 +50,12 @@ def play(self, name, playbook, variables=[], verbose=False):
 
 
 def inventory(self, name):
+    """
+
+    :param self:
+    :param name:
+    :return:
+    """
     counter = 0
     while counter != 80:
         ip = self.ip(name)
@@ -62,6 +76,14 @@ def inventory(self, name):
 
 
 def make_inventory(k, plan, vms, tunnel=True, groups={}):
+    """
+
+    :param k:
+    :param plan:
+    :param vms:
+    :param tunnel:
+    :param groups:
+    """
     with open("/tmp/%s.inv" % plan, "w") as f:
         if groups:
             f.write("[%s:children]\n" % plan)

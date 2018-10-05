@@ -1,3 +1,4 @@
+# coding=utf-8
 NETS = ['default']
 POOL = 'default'
 TEMPLATE = None

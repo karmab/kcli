@@ -26,6 +26,11 @@ right = ["albattani", "almeida", "amazigh", "archimedes", "ardinghelli", "babbag
 
 
 def get_random_name(sep='_'):
+    """
+
+    :param sep:
+    :return:
+    """
     r = random.SystemRandom()
     while 1:
         name = '%s%s%s' % (r.choice(left), sep, r.choice(right))
@@ -33,6 +38,10 @@ def get_random_name(sep='_'):
 
 
 def random_ip():
+    """
+
+    :return:
+    """
     ip = ".".join(map(str, (random.randint(0, 255) for _ in range(4))))
     return ip
 

@@ -24,6 +24,9 @@ __version__ = '13.1'
 
 
 class Kconfig(Kbaseconfig):
+    """
+
+    """
     def __init__(self, client=None, debug=False, quiet=False):
         Kbaseconfig.__init__(self, client=client, debug=debug, quiet=quiet)
         if not self.enabled:
@@ -94,7 +97,7 @@ class Kconfig(Kbaseconfig):
                     os._exit(1)
                 ca_file = os.path.expanduser(ca_file)
                 if not os.path.exists(ca_file):
-                    common.pprint("Ca file path doesnt exist. Leaving", color='red')
+                    common.pprint("Ca file path doesn't exist. Leaving", color='red')
                     os._exit(1)
                 imagerepository = self.options.get('imagerepository', 'ovirt-image-repository')
                 from kvirt.ovirt import KOvirt
@@ -150,6 +153,18 @@ class Kconfig(Kbaseconfig):
 
     def create_vm(self, name, profile, overrides={}, customprofile={}, k=None,
                   plan='kvirt'):
+        """
+
+        :param name:
+        :param profile:
+        :param ip1:
+        :param ip2:
+        :param ip3:
+        :param ip4:
+        :param overrides:
+        :param customprofile:
+        :return:
+        """
         overrides.update(self.overrides)
         if name is None:
             name = nameutils.get_random_name()
@@ -447,6 +462,10 @@ class Kconfig(Kbaseconfig):
         return {'result': 'success'}
 
     def list_plans(self):
+        """
+
+        :return:
+        """
         k = self.k
         vms = {}
         plans = []
@@ -463,6 +482,10 @@ class Kconfig(Kbaseconfig):
         return plans
 
     def list_profiles(self):
+        """
+
+        :return:
+        """
         default_disksize = '10'
         default = self.default
         results = []
@@ -533,6 +556,10 @@ class Kconfig(Kbaseconfig):
         return sorted(results, key=lambda x: x[0])
 
     def list_flavors(self):
+        """
+
+        :return:
+        """
         results = []
         for flavor in self.flavors:
             info = self.flavors[flavor]
@@ -544,6 +571,10 @@ class Kconfig(Kbaseconfig):
         return sorted(results, key=lambda x: x[0])
 
     def list_containerprofiles(self):
+        """
+
+        :return:
+        """
         results = []
         for profile in sorted(self.profiles):
                 info = self.profiles[profile]
@@ -1094,6 +1125,17 @@ class Kconfig(Kbaseconfig):
 
     def handle_host(self, pool=None, templates=[], switch=None, download=False,
                     url=None, cmd=None, sync=False):
+        """
+
+        :param pool:
+        :param templates:
+        :param switch:
+        :param download:
+        :param url:
+        :param cmd:
+        :param sync:
+        :return:
+        """
         if download:
             k = self.k
             if pool is None:

@@ -20,6 +20,9 @@ import yaml
 
 
 class Kbaseconfig:
+    """
+
+    """
     def __init__(self, client=None, debug=False, quiet=False):
         inifile = "%s/.kcli/config.yml" % os.environ.get('HOME')
         if not os.path.exists(inifile):
@@ -203,6 +206,11 @@ class Kbaseconfig:
         self.flavor = options.get('flavor', self.default['flavor'])
 
     def switch_host(self, client):
+        """
+
+        :param client:
+        :return:
+        """
         if client not in self.clients:
             common.pprint("Client %s not found in config.Leaving...." % client,
                           color='red')
@@ -227,6 +235,11 @@ class Kbaseconfig:
         return {'result': 'success'}
 
     def enable_host(self, client):
+        """
+
+        :param client:
+        :return:
+        """
         if client not in self.clients:
             common.pprint("Client %s not found in config.Leaving...." % client,
                           color='green')
@@ -255,6 +268,11 @@ class Kbaseconfig:
         return {'result': 'success'}
 
     def disable_host(self, client):
+        """
+
+        :param client:
+        :return:
+        """
         if client not in self.clients:
             common.pprint("Client %s not found in config.Leaving...." % client,
                           color='red')
@@ -287,6 +305,17 @@ class Kbaseconfig:
         return {'result': 'success'}
 
     def bootstrap(self, name, host, port, user, protocol, url, pool, poolpath):
+        """
+
+        :param name:
+        :param host:
+        :param port:
+        :param user:
+        :param protocol:
+        :param url:
+        :param pool:
+        :param poolpath:
+        """
         common.pprint("Bootstrapping env", color='green')
         if host is None and url is None:
             url = 'qemu:///system'
@@ -335,6 +364,10 @@ class Kbaseconfig:
         common.pprint("Environment bootstrapped!", color='green')
 
     def list_repos(self):
+        """
+
+        :return:
+        """
         reposfile = "%s/.kcli/repos.yml" % os.environ.get('HOME')
         if not os.path.exists(reposfile) or os.path.getsize(reposfile) == 0:
             repos = {}
@@ -348,6 +381,12 @@ class Kbaseconfig:
         return repos
 
     def list_products(self, group=None, repo=None):
+        """
+
+        :param group:
+        :param repo:
+        :return:
+        """
         configdir = "%s/.kcli" % os.environ.get('HOME')
         if not os.path.exists(configdir):
             return []
@@ -383,6 +422,12 @@ class Kbaseconfig:
             return products
 
     def create_repo(self, name, url):
+        """
+
+        :param name:
+        :param url:
+        :return:
+        """
         self.update_repo(name, url=url)
         reposfile = "%s/.kcli/repos.yml" % os.environ.get('HOME')
         if not os.path.exists(reposfile) or os.path.getsize(reposfile) == 0:
@@ -412,6 +457,12 @@ class Kbaseconfig:
         return {'result': 'success'}
 
     def update_repo(self, name, url=None):
+        """
+
+        :param name:
+        :param url:
+        :return:
+        """
         reposfile = "%s/.kcli/repos.yml" % os.environ.get('HOME')
         repodir = "%s/.kcli/repo_%s" % (os.environ.get('HOME'), name)
         if url is None:
@@ -438,6 +489,10 @@ class Kbaseconfig:
         return {'result': 'success'}
 
     def download_repo(self, name):
+        """
+
+        :param name:
+        """
         repodir = "%s/.kcli/repo_%s" % (os.environ.get('HOME'), name)
         products = [(i['name'], i['group'], i['url']) for i in
                     self.list_products(repo=name)]
@@ -449,6 +504,11 @@ class Kbaseconfig:
             common.fetch(url, group)
 
     def delete_repo(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         reposfile = "%s/.kcli/repos.yml" % os.environ.get('HOME')
         repodir = "%s/.kcli/repo_%s" % (os.environ.get('HOME'), name)
         if not os.path.exists(reposfile):
@@ -478,6 +538,12 @@ class Kbaseconfig:
             return {'result': 'success'}
 
     def info_plan(self, inputfile, quiet=False):
+        """
+
+        :param inputfile:
+        :param quiet:
+        :return:
+        """
         inputfile = os.path.expanduser(inputfile) if inputfile is not None else 'kcli_plan.yml'
         if not quiet:
             common.pprint("Providing information on parameters of plan %s..." %

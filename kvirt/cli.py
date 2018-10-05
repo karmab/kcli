@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# coding=utf-8
 
 from distutils.spawn import find_executable
 from kvirt.config import Kconfig
@@ -973,6 +974,9 @@ def switch(args):
 
 
 def cli():
+    """
+
+    """
     parser = argparse.ArgumentParser(description='Libvirt/VirtualBox/Kubevirt'
                                      'wrapper on steroids. Check out '
                                      'https://github.com/karmab/kcli!')

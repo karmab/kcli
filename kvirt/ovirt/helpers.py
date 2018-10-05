@@ -1,3 +1,4 @@
+# coding=utf-8
 from kvirt.common import pprint
 import os
 
@@ -21,6 +22,10 @@ TEMPLATES = {'CentOS-6-x86_64-GenericCloud.qcow2': 'CentOS 6 Generic Cloud Image
 
 
 def get_home_ssh_key():
+    """
+
+    :return:
+    """
     key = None
     if os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME']):
         publickeyfile = "%s/.ssh/id_rsa.pub" % os.environ['HOME']

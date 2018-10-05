@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# coding=utf-8
 
 from kvirt.config import Kconfig
 from kvirt.common import get_user
@@ -8,11 +9,17 @@ import argparse
 
 
 def empty():
+    """
+
+    :return:
+    """
     return {'_meta': {'hostvars': {}}}
 
 
 class KcliInventory(object):
+    """
 
+    """
     def __init__(self):
         self.inventory = {}
         self.read_cli_args()
@@ -40,12 +47,19 @@ class KcliInventory(object):
 
     # Read the command line args passed to the script.
     def read_cli_args(self):
+        """
+
+        """
         parser = argparse.ArgumentParser()
         parser.add_argument('--list', action='store_true')
         parser.add_argument('--host', action='store')
         self.args = parser.parse_args()
 
     def get(self):
+        """
+
+        :return:
+        """
         k = self.k
         tunnel = self.tunnel
         metadata = {'_meta': {'hostvars': {}}}
