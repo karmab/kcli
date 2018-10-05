@@ -33,6 +33,9 @@ status = {'PoweredOff': 'down', 'PoweredOn': 'up', 'FirstOnline': 'up', 'Aborted
 
 
 class Kbox(object):
+    """
+
+    """
     def __init__(self):
         try:
             self.conn = VirtualBox()
@@ -41,9 +44,17 @@ class Kbox(object):
             self.conn = None
 
     def close(self):
+        """
+
+        """
         self.conn = None
 
     def guestinstall(self, template):
+        """
+
+        :param template:
+        :return:
+        """
         template = template.lower()
         version = self.conn.version
         commands = ['curl -O http://download.virtualbox.org/virtualbox/%s/VBoxGuestAdditions_%s.iso' % (version,
@@ -60,6 +71,11 @@ class Kbox(object):
         return commands
 
     def exists(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         conn = self.conn
         for vmname in conn.machines:
             if str(vmname) == name:
@@ -67,6 +83,11 @@ class Kbox(object):
         return False
 
     def net_exists(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         conn = self.conn
         networks = []
         for network in conn.internal_networks:
@@ -79,6 +100,12 @@ class Kbox(object):
             return False
 
     def disk_exists(self, pool, name):
+        """
+
+        :param pool:
+        :param name:
+        :return:
+        """
         disks = self.list_disks()
         if name in disks:
             return True
@@ -91,6 +118,48 @@ class Kbox(object):
                cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[],
                ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[],
                enableroot=True, alias=[], overrides={}, tags=None):
+        """
+
+        :param name:
+        :param virttype:
+        :param profile:
+        :param flavor:
+        :param plan:
+        :param cpumodel:
+        :param cpuflags:
+        :param numcpus:
+        :param memory:
+        :param guestid:
+        :param pool:
+        :param template:
+        :param disks:
+        :param disksize:
+        :param diskthin:
+        :param diskinterface:
+        :param nets:
+        :param iso:
+        :param vnc:
+        :param cloudinit:
+        :param reserveip:
+        :param reservedns:
+        :param reservehost:
+        :param start:
+        :param keys:
+        :param cmds:
+        :param ips:
+        :param netmasks:
+        :param gateway:
+        :param nested:
+        :param dns:
+        :param domain:
+        :param tunnel:
+        :param files:
+        :param enableroot:
+        :param alias:
+        :param overrides:
+        :param tags:
+        :return:
+        """
         if self.exists(name):
             return {'result': 'failure', 'reason': "VM %s already exists" % name}
         guestid = 'Linux_64'
@@ -249,6 +318,11 @@ class Kbox(object):
         return {'result': 'success'}
 
     def start(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         conn = self.conn
         try:
             vm = conn.find_machine(name)
@@ -264,6 +338,11 @@ class Kbox(object):
                 return {'result': 'failure', 'reason': e}
 
     def stop(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         conn = self.conn
         try:
             vm = conn.find_machine(name)
@@ -278,6 +357,11 @@ class Kbox(object):
             return {'result': 'failure', 'reason': "VM %s not found" % name}
 
     def restart(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         conn = self.conn
         vm = conn.find_machine(name)
         if status[str(vm.state)] == "down":
@@ -289,6 +373,10 @@ class Kbox(object):
             return {'result': 'success'}
 
     def report(self):
+        """
+
+        :return:
+        """
         conn = self.conn
         host = conn.host
         hostname = os.uname()[1]
@@ -318,6 +406,11 @@ class Kbox(object):
         # print("Network:%s Type:routed Cidr:%s Dhcp:%s" % (networkname, cidr, dhcp))
 
     def status(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         conn = self.conn
         try:
             vm = conn.find_machine(name)
@@ -326,6 +419,10 @@ class Kbox(object):
         return status[str(str(vm.state))]
 
     def list(self):
+        """
+
+        :return:
+        """
         vms = []
         conn = self.conn
         for vm in conn.machines:
@@ -374,6 +471,12 @@ class Kbox(object):
         return sorted(vms)
 
     def console(self, name, tunnel=False):
+        """
+
+        :param name:
+        :param tunnel:
+        :return:
+        """
         conn = self.conn
         try:
             vm = conn.find_machine(name)
@@ -386,6 +489,11 @@ class Kbox(object):
             print("VM %s already running in headless mode.Use kcli console -s instead" % name)
 
     def serialconsole(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         conn = self.conn
         try:
             vm = conn.find_machine(name)
@@ -404,6 +512,14 @@ class Kbox(object):
             os.system("nc 127.0.0.1 %s" % serialport)
 
     def info(self, name, output='plain', fields=None, values=False):
+        """
+
+        :param name:
+        :param output:
+        :param fields:
+        :param values:
+        :return:
+        """
         starts = {False: 'no', True: 'yes'}
         conn = self.conn
         try:
@@ -493,6 +609,11 @@ class Kbox(object):
         return {'result': 'success'}
 
     def ip(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         vm = [vm for vm in self.list() if vm[0] == name]
         if not vm:
             return None
@@ -501,12 +622,22 @@ class Kbox(object):
             return port
 
     def guestip(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         conn = self.conn
         vm = conn.find_machine(name)
         ip = vm.get_guest_property('/VirtualBox/GuestInfo/Net/0/V4/IP')[0]
         return ip
 
     def volumes(self, iso=False):
+        """
+
+        :param iso:
+        :return:
+        """
         isos = []
         templates = []
         poolinfo = self._pool_info()
@@ -527,6 +658,12 @@ class Kbox(object):
             return templates
 
     def delete(self, name, snapshots=False):
+        """
+
+        :param name:
+        :param snapshots:
+        :return:
+        """
         conn = self.conn
         try:
             vm = conn.find_machine(name)
@@ -554,6 +691,13 @@ class Kbox(object):
         return {'result': 'success'}
 
     def clone(self, old, new, full=False, start=False):
+        """
+
+        :param old:
+        :param new:
+        :param full:
+        :param start:
+        """
         conn = self.conn
         tree = ''
         uuid = tree.getiterator('uuid')[0]
@@ -596,6 +740,13 @@ class Kbox(object):
         vm.create()
 
     def update_metadata(self, name, metatype, metavalue):
+        """
+
+        :param name:
+        :param metatype:
+        :param metavalue:
+        :return:
+        """
         conn = self.conn
         try:
             vm = conn.find_machine(name)
@@ -611,9 +762,20 @@ class Kbox(object):
         return {'result': 'success'}
 
     def update_information(self, name, information):
+        """
+
+        :param name:
+        :param information:
+        """
         self.update_metadata(name, 'information', information)
 
     def update_memory(self, name, memory):
+        """
+
+        :param name:
+        :param memory:
+        :return:
+        """
         conn = self.conn
         memory = int(memory)
         try:
@@ -630,6 +792,12 @@ class Kbox(object):
         return {'result': 'success'}
 
     def update_cpu(self, name, numcpus):
+        """
+
+        :param name:
+        :param numcpus:
+        :return:
+        """
         conn = self.conn
         try:
             vm = conn.find_machine(name)
@@ -641,6 +809,12 @@ class Kbox(object):
         return {'result': 'success'}
 
     def update_start(self, name, start=True):
+        """
+
+        :param name:
+        :param start:
+        :return:
+        """
         conn = self.conn
         try:
             vm = conn.find_machine(name)
@@ -660,6 +834,15 @@ class Kbox(object):
         os.system("qemu-img convert -f qcow2 %s -O vdi %s" % (name, newname))
 
     def create_disk(self, name, size, pool=None, thin=True, template=None):
+        """
+
+        :param name:
+        :param size:
+        :param pool:
+        :param thin:
+        :param template:
+        :return:
+        """
         conn = self.conn
         # diskformat = 'qcow2'
         if size < 1:
@@ -690,6 +873,17 @@ class Kbox(object):
         return diskpath
 
     def add_disk(self, name, size, pool=None, thin=True, template=None, shareable=False, existing=None):
+        """
+
+        :param name:
+        :param size:
+        :param pool:
+        :param thin:
+        :param template:
+        :param shareable:
+        :param existing:
+        :return:
+        """
         conn = self.conn
         # diskformat = 'qcow2'
         if size < 1:
@@ -729,6 +923,13 @@ class Kbox(object):
         return {'result': 'success'}
 
     def delete_disk(self, name=None, diskname=None, pool=None):
+        """
+
+        :param name:
+        :param diskname:
+        :param pool:
+        :return:
+        """
         conn = self.conn
         try:
             vm = conn.find_machine(name)
@@ -756,6 +957,10 @@ class Kbox(object):
         return {'result': 'failure', 'reason': "Disk %s not found in %s" % (diskname, name)}
 
     def list_disks(self):
+        """
+
+        :return:
+        """
         volumes = {}
         poolinfo = self._pool_info()
         for pool in poolinfo:
@@ -785,6 +990,12 @@ class Kbox(object):
         # return volumes
 
     def add_nic(self, name, network):
+        """
+
+        :param name:
+        :param network:
+        :return:
+        """
         conn = self.conn
         networks = self.list_networks()
         if network not in networks:
@@ -819,6 +1030,12 @@ class Kbox(object):
         return {'result': 'success'}
 
     def delete_nic(self, name, interface):
+        """
+
+        :param name:
+        :param interface:
+        :return:
+        """
         conn = self.conn
         try:
             vm = conn.find_machine(name)
@@ -873,6 +1090,20 @@ class Kbox(object):
 
     def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, Y=False,
             D=None):
+        """
+
+        :param name:
+        :param user:
+        :param local:
+        :param remote:
+        :param tunnel:
+        :param insecure:
+        :param cmd:
+        :param X:
+        :param Y:
+        :param D:
+        :return:
+        """
         u, port = self._ssh_credentials(name)
         if user is None:
             user = u
@@ -900,6 +1131,17 @@ class Kbox(object):
             return sshcommand
 
     def scp(self, name, user=None, source=None, destination=None, tunnel=False, download=False, recursive=False):
+        """
+
+        :param name:
+        :param user:
+        :param source:
+        :param destination:
+        :param tunnel:
+        :param download:
+        :param recursive:
+        :return:
+        """
         u, port = self._ssh_credentials(name)
         if user is None:
             user = u
@@ -917,6 +1159,15 @@ class Kbox(object):
             return scpcommand
 
     def create_pool(self, name, poolpath, pooltype='dir', user='qemu', thinpool=None):
+        """
+
+        :param name:
+        :param poolpath:
+        :param pooltype:
+        :param user:
+        :param thinpool:
+        :return:
+        """
         pools = self.list_pools()
         poolpath = os.path.expanduser(poolpath)
         if name in pools:
@@ -939,6 +1190,15 @@ class Kbox(object):
                 f.write("  path: %s" % pool['path'])
 
     def add_image(self, image, pool, cmd=None, name=None, size=1):
+        """
+
+        :param image:
+        :param pool:
+        :param cmd:
+        :param name:
+        :param size:
+        :return:
+        """
         shortimage = os.path.basename(image).split('?')[0]
         if pool is not None:
             pool = [p['path'] for p in self._pool_info() if p['name'] == pool]
@@ -955,6 +1215,18 @@ class Kbox(object):
         return {'result': 'success'}
 
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', pxe=None, vlan=None):
+        """
+
+        :param name:
+        :param cidr:
+        :param dhcp:
+        :param nat:
+        :param domain:
+        :param plan:
+        :param pxe:
+        :param vlan:
+        :return:
+        """
         if cidr is None:
             return {'result': 'failure', 'reason': "Missing Cidr"}
         conn = self.conn
@@ -965,6 +1237,12 @@ class Kbox(object):
         return {'result': 'success'}
 
     def delete_network(self, name=None, cidr=None):
+        """
+
+        :param name:
+        :param cidr:
+        :return:
+        """
         conn = self.conn
         for network in conn.nat_networks:
             networkname = network.network_name
@@ -990,6 +1268,10 @@ class Kbox(object):
         return poolinfo
 
     def list_pools(self):
+        """
+
+        :return:
+        """
         poolinfo = self._pool_info()
         if poolinfo is None:
             return []
@@ -997,6 +1279,10 @@ class Kbox(object):
             return [pool['name'] for pool in poolinfo]
 
     def list_networks(self):
+        """
+
+        :return:
+        """
         networks = {}
         conn = self.conn
         for network in conn.internal_networks:
@@ -1014,10 +1300,20 @@ class Kbox(object):
         return networks
 
     def list_subnets(self):
+        """
+
+        :return:
+        """
         print("not implemented")
         return {}
 
     def delete_pool(self, name, full=False):
+        """
+
+        :param name:
+        :param full:
+        :return:
+        """
         poolfile = "%s/.vbox.yml" % os.environ.get('HOME')
         pools = self.list_pools()
         if not os.path.exists(poolfile) or name not in pools:
@@ -1033,6 +1329,11 @@ class Kbox(object):
                         f.write("  path: %s" % pool['path'])
 
     def vm_ports(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         conn = self.conn
         networks = []
         try:
@@ -1054,6 +1355,14 @@ class Kbox(object):
         return networks
 
     def snapshot(self, name, base, revert=False, delete=False, listing=False):
+        """
+
+        :param name:
+        :param base:
+        :param revert:
+        :param delete:
+        :param listing:
+        """
         super(Kbox, self).snapshot(name, base, revert, delete, listing)
         # conn = self.conn
         # try:
@@ -1080,13 +1389,28 @@ class Kbox(object):
         #    # progress.wait_for_completion()
 
     def get_pool_path(self, pool):
+        """
+
+        :param pool:
+        :return:
+        """
         path = [p['path'] for p in self._pool_info() if p['name'] == pool]
         if path:
             return path[0]
 
     def flavors(self):
+        """
+
+        :return:
+        """
         return []
 
     def export(self, name, template=None):
+        """
+
+        :param name:
+        :param template:
+        :return:
+        """
         print("not implemented")
         return

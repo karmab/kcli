@@ -17,6 +17,9 @@ binary_types = ['bz2', 'deb', 'jpg', 'gz', 'jpeg', 'iso', 'png', 'rpm', 'tgz', '
 
 
 class Kgcp(object):
+    """
+
+    """
     def __init__(self, host='127.0.0.1', port=None, user='root', debug=False,
                  project="kubevirt-button", zone="europe-west1-b", region='europe-west1'):
         self.conn = googleapiclient.discovery.build('compute', 'v1')
@@ -30,9 +33,18 @@ class Kgcp(object):
         return
 
     def close(self):
+        """
+
+        :return:
+        """
         return
 
     def exists(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         conn = self.conn
         project = self.project
         zone = self.zone
@@ -43,6 +55,11 @@ class Kgcp(object):
             return False
 
     def net_exists(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         conn = self.conn
         project = self.project
         try:
@@ -52,6 +69,11 @@ class Kgcp(object):
         return True
 
     def disk_exists(self, pool, name):
+        """
+
+        :param pool:
+        :param name:
+        """
         print("not implemented")
 
     def create(self, name, virttype='kvm', profile='', flavor=None, plan='kvirt', cpumodel='Westmere', cpuflags=[],
@@ -60,6 +82,48 @@ class Kgcp(object):
                cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[],
                ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[],
                enableroot=True, alias=[], overrides={}, tags={}):
+        """
+
+        :param name:
+        :param virttype:
+        :param profile:
+        :param flavor:
+        :param plan:
+        :param cpumodel:
+        :param cpuflags:
+        :param numcpus:
+        :param memory:
+        :param guestid:
+        :param pool:
+        :param template:
+        :param disks:
+        :param disksize:
+        :param diskthin:
+        :param diskinterface:
+        :param nets:
+        :param iso:
+        :param vnc:
+        :param cloudinit:
+        :param reserveip:
+        :param reservedns:
+        :param reservehost:
+        :param start:
+        :param keys:
+        :param cmds:
+        :param ips:
+        :param netmasks:
+        :param gateway:
+        :param nested:
+        :param dns:
+        :param domain:
+        :param tunnel:
+        :param files:
+        :param enableroot:
+        :param alias:
+        :param overrides:
+        :param tags:
+        :return:
+        """
         conn = self.conn
         project = self.project
         zone = self.zone
@@ -224,6 +288,11 @@ class Kgcp(object):
         return {'result': 'success'}
 
     def start(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         conn = self.conn
         project = self.project
         zone = self.zone
@@ -234,6 +303,11 @@ class Kgcp(object):
             return {'result': 'success'}
 
     def stop(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         conn = self.conn
         project = self.project
         zone = self.zone
@@ -244,6 +318,15 @@ class Kgcp(object):
             return {'result': 'success'}
 
     def snapshot(self, name, base, revert=False, delete=False, listing=False):
+        """
+
+        :param name:
+        :param base:
+        :param revert:
+        :param delete:
+        :param listing:
+        :return:
+        """
         conn = self.conn
         project = self.project
         zone = self.zone
@@ -263,6 +346,11 @@ class Kgcp(object):
         return {'result': 'success'}
 
     def restart(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         conn = self.conn
         project = self.project
         zone = self.zone
@@ -273,6 +361,10 @@ class Kgcp(object):
         return {'result': 'success'}
 
     def report(self):
+        """
+
+        :return:
+        """
         # conn = self.conn
         # project = self.project
         # zone = self.zone
@@ -281,6 +373,11 @@ class Kgcp(object):
         return
 
     def status(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         status = None
         conn = self.conn
         project = self.project
@@ -293,6 +390,10 @@ class Kgcp(object):
         return status
 
     def list(self):
+        """
+
+        :return:
+        """
         conn = self.conn
         project = self.project
         zone = self.zone
@@ -328,10 +429,21 @@ class Kgcp(object):
         return sorted(vms)
 
     def console(self, name, tunnel=False):
+        """
+
+        :param name:
+        :param tunnel:
+        :return:
+        """
         print("not implemented")
         return
 
     def serialconsole(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         conn = self.conn
         project = self.project
         zone = self.zone
@@ -342,6 +454,14 @@ class Kgcp(object):
         return
 
     def info(self, name, output='plain', fields=None, values=False):
+        """
+
+        :param name:
+        :param output:
+        :param fields:
+        :param values:
+        :return:
+        """
         yamlinfo = {}
         conn = self.conn
         project = self.project
@@ -402,6 +522,11 @@ class Kgcp(object):
         return {'result': 'success'}
 
     def ip(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         ip = None
         conn = self.conn
         project = self.project
@@ -419,6 +544,11 @@ class Kgcp(object):
 
 # should return a list of available templates, or isos ( if iso is set to True
     def volumes(self, iso=False):
+        """
+
+        :param iso:
+        :return:
+        """
         projects = ['centos-cloud', 'coreos-cloud', 'cos-cloud', 'debian-cloud',
                     'rhel-cloud', 'suse-cloud', 'ubuntu-os-cloud']
         projects.append(self.project)
@@ -437,6 +567,12 @@ class Kgcp(object):
         return sorted(images)
 
     def delete(self, name, snapshots=False):
+        """
+
+        :param name:
+        :param snapshots:
+        :return:
+        """
         conn = self.conn
         project = self.project
         zone = self.zone
@@ -455,38 +591,103 @@ class Kgcp(object):
         return {'result': 'success'}
 
     def clone(self, old, new, full=False, start=False):
+        """
+
+        :param old:
+        :param new:
+        :param full:
+        :param start:
+        :return:
+        """
         print("not implemented")
         return
 
     def update_metadata(self, name, metatype, metavalue):
+        """
+
+        :param name:
+        :param metatype:
+        :param metavalue:
+        :return:
+        """
         print("not implemented")
         return
 
     def update_memory(self, name, memory):
+        """
+
+        :param name:
+        :param memory:
+        :return:
+        """
         print("not implemented")
         return
 
     def update_cpu(self, name, numcpus):
+        """
+
+        :param name:
+        :param numcpus:
+        :return:
+        """
         print("not implemented")
         return
 
     def update_start(self, name, start=True):
+        """
+
+        :param name:
+        :param start:
+        :return:
+        """
         print("not implemented")
         return
 
     def update_information(self, name, information):
+        """
+
+        :param name:
+        :param information:
+        :return:
+        """
         print("not implemented")
         return
 
     def update_iso(self, name, iso):
+        """
+
+        :param name:
+        :param iso:
+        :return:
+        """
         print("not implemented")
         return
 
     def create_disk(self, name, size, pool=None, thin=True, template=None):
+        """
+
+        :param name:
+        :param size:
+        :param pool:
+        :param thin:
+        :param template:
+        :return:
+        """
         print("not implemented")
         return
 
     def add_disk(self, name, size, pool=None, thin=True, template=None, shareable=False, existing=None):
+        """
+
+        :param name:
+        :param size:
+        :param pool:
+        :param thin:
+        :param template:
+        :param shareable:
+        :param existing:
+        :return:
+        """
         conn = self.conn
         project = self.project
         zone = self.zone
@@ -514,6 +715,13 @@ class Kgcp(object):
         return {'result': 'success'}
 
     def delete_disk(self, name=None, diskname=None, pool=None):
+        """
+
+        :param name:
+        :param diskname:
+        :param pool:
+        :return:
+        """
         conn = self.conn
         project = self.project
         zone = self.zone
@@ -525,6 +733,10 @@ class Kgcp(object):
         return
 
     def list_disks(self):
+        """
+
+        :return:
+        """
         disks = {}
         conn = self.conn
         project = self.project
@@ -540,10 +752,22 @@ class Kgcp(object):
         return disks
 
     def add_nic(self, name, network):
+        """
+
+        :param name:
+        :param network:
+        :return:
+        """
         print("not implemented")
         return
 
     def delete_nic(self, name, interface):
+        """
+
+        :param name:
+        :param interface:
+        :return:
+        """
         print("not implemented")
         return
 
@@ -554,6 +778,20 @@ class Kgcp(object):
 
     def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, Y=False,
             D=None):
+        """
+
+        :param name:
+        :param user:
+        :param local:
+        :param remote:
+        :param tunnel:
+        :param insecure:
+        :param cmd:
+        :param X:
+        :param Y:
+        :param D:
+        :return:
+        """
         u, ip = self._ssh_credentials(name)
         if ip is None:
             return None
@@ -563,6 +801,17 @@ class Kgcp(object):
         return sshcommand
 
     def scp(self, name, user=None, source=None, destination=None, tunnel=False, download=False, recursive=False):
+        """
+
+        :param name:
+        :param user:
+        :param source:
+        :param destination:
+        :param tunnel:
+        :param download:
+        :param recursive:
+        :return:
+        """
         u, ip = self._ssh_credentials(name)
         scpcommand = common.scp(name, ip=ip, host=self.host, port=self.port, hostuser=self.user, user=u,
                                 source=source, destination=destination, recursive=recursive, tunnel=tunnel,
@@ -570,14 +819,45 @@ class Kgcp(object):
         return scpcommand
 
     def create_pool(self, name, poolpath, pooltype='dir', user='qemu', thinpool=None):
+        """
+
+        :param name:
+        :param poolpath:
+        :param pooltype:
+        :param user:
+        :param thinpool:
+        :return:
+        """
         print("not implemented")
         return
 
     def add_image(self, image, pool, short=None, cmd=None, name=None, size=1):
+        """
+
+        :param image:
+        :param pool:
+        :param short:
+        :param cmd:
+        :param name:
+        :param size:
+        :return:
+        """
         print("not implemented")
         return {'result': 'success'}
 
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', pxe=None, vlan=None):
+        """
+
+        :param name:
+        :param cidr:
+        :param dhcp:
+        :param nat:
+        :param domain:
+        :param plan:
+        :param pxe:
+        :param vlan:
+        :return:
+        """
         conn = self.conn
         project = self.project
         region = self.region
@@ -611,6 +891,12 @@ class Kgcp(object):
         return {'result': 'success'}
 
     def delete_network(self, name=None, cidr=None):
+        """
+
+        :param name:
+        :param cidr:
+        :return:
+        """
         conn = self.conn
         project = self.project
         region = self.region
@@ -627,10 +913,18 @@ class Kgcp(object):
 
 # should return a dict of pool strings
     def list_pools(self):
+        """
+
+        :return:
+        """
         print("not implemented")
         return
 
     def list_networks(self):
+        """
+
+        :return:
+        """
         conn = self.conn
         project = self.project
         region = self.region
@@ -656,21 +950,46 @@ class Kgcp(object):
         return networks
 
     def list_subnets(self):
+        """
+
+        :return:
+        """
         print("not implemented")
         return {}
 
     def delete_pool(self, name, full=False):
+        """
+
+        :param name:
+        :param full:
+        :return:
+        """
         print("not implemented")
         return
 
     def network_ports(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         return []
 
     def vm_ports(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         return ['default']
 
 # returns the path of the pool, if it makes sense. used by kcli list --pools
     def get_pool_path(self, pool):
+        """
+
+        :param pool:
+        :return:
+        """
         print("not implemented")
         return
 
@@ -699,6 +1018,16 @@ class Kgcp(object):
             return template
 
     def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False):
+        """
+
+        :param name:
+        :param nets:
+        :param domain:
+        :param ip:
+        :param alias:
+        :param force:
+        :return:
+        """
         net = nets[0]
         project = self.project
         zone = self.zone
@@ -748,6 +1077,12 @@ class Kgcp(object):
         return {'result': 'success'}
 
     def delete_dns(self, name, domain):
+        """
+
+        :param name:
+        :param domain:
+        :return:
+        """
         project = self.project
         zone = self.zone
         client = dns.Client(project)
@@ -772,6 +1107,10 @@ class Kgcp(object):
         return {'result': 'success'}
 
     def flavors(self):
+        """
+
+        :return:
+        """
         conn = self.conn
         project = self.project
         zone = self.zone
@@ -787,6 +1126,12 @@ class Kgcp(object):
         return flavors
 
     def export(self, name, template=None):
+        """
+
+        :param name:
+        :param template:
+        :return:
+        """
         conn = self.conn
         project = self.project
         zone = self.zone

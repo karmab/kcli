@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# coding=utf-8
 
 import base64
 from jinja2 import Environment, FileSystemLoader
@@ -18,6 +19,12 @@ ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety', 'zesty', 'artful', 'b
 
 
 def symlinks(user, repo):
+    """
+
+    :param user:
+    :param repo:
+    :return:
+    """
     mappings = []
     url1 = 'https://api.github.com/repos/%s/%s/git/refs/heads/master' % (user, repo)
     try:
@@ -40,6 +47,12 @@ def symlinks(user, repo):
 
 
 def download(url, path, debug=False):
+    """
+
+    :param url:
+    :param path:
+    :param debug:
+    """
     filename = os.path.basename(url)
     if debug:
         print(("Fetching %s" % filename))
@@ -49,6 +62,12 @@ def download(url, path, debug=False):
 
 
 def makelink(url, path, debug=False):
+    """
+
+    :param url:
+    :param path:
+    :param debug:
+    """
     filename = os.path.basename(url)
     url = urlopen(url)
     target = url.read()
@@ -58,6 +77,13 @@ def makelink(url, path, debug=False):
 
 
 def fetch(url, path, syms=None):
+    """
+
+    :param url:
+    :param path:
+    :param syms:
+    :return:
+    """
     if not url.startswith('http'):
         url = "https://%s" % url
     if 'github.com' not in url or 'raw.githubusercontent.com' in url:
@@ -110,6 +136,22 @@ def fetch(url, path, syms=None):
 
 def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[],
               enableroot=True, overrides={}, iso=True, fqdn=False):
+    """
+
+    :param name:
+    :param keys:
+    :param cmds:
+    :param nets:
+    :param gateway:
+    :param dns:
+    :param domain:
+    :param reserveip:
+    :param files:
+    :param enableroot:
+    :param overrides:
+    :param iso:
+    :param fqdn:
+    """
     default_gateway = gateway
     with open('/tmp/meta-data', 'w') as metadatafile:
         if domain is not None:
@@ -218,6 +260,12 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
 
 
 def process_files(files=[], overrides={}):
+    """
+
+    :param files:
+    :param overrides:
+    :return:
+    """
     data = ''
     for fil in files:
         if not isinstance(fil, dict):
@@ -269,6 +317,12 @@ def process_files(files=[], overrides={}):
 
 
 def process_ignition_files(files=[], overrides={}):
+    """
+
+    :param files:
+    :param overrides:
+    :return:
+    """
     data = []
     for fil in files:
         if not isinstance(fil, dict):
@@ -309,6 +363,12 @@ def process_ignition_files(files=[], overrides={}):
 
 
 def process_cmds(cmds, overrides):
+    """
+
+    :param cmds:
+    :param overrides:
+    :return:
+    """
     data = ''
     for cmd in cmds:
         if cmd.startswith('#'):
@@ -321,6 +381,12 @@ def process_cmds(cmds, overrides):
 
 
 def process_ignition_cmds(cmds, overrides):
+    """
+
+    :param cmds:
+    :param overrides:
+    :return:
+    """
     path = '/root/first.sh'
     permissions = '700'
     content = ''
@@ -340,6 +406,10 @@ def process_ignition_cmds(cmds, overrides):
 
 
 def get_free_port():
+    """
+
+    :return:
+    """
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind(('localhost', 0))
     addr, port = s.getsockname()
@@ -348,6 +418,11 @@ def get_free_port():
 
 
 def pprint(text, color=None):
+    """
+
+    :param text:
+    :param color:
+    """
     colors = {'blue': '34', 'red': '31', 'green': '32', 'yellow': '33', 'pink': '35', 'white': '37'}
     if color is not None and color in colors:
         color = colors[color]
@@ -357,6 +432,16 @@ def pprint(text, color=None):
 
 
 def handle_response(result, name, quiet=False, element='', action='deployed', client=None):
+    """
+
+    :param result:
+    :param name:
+    :param quiet:
+    :param element:
+    :param action:
+    :param client:
+    :return:
+    """
     if result['result'] == 'success':
         if not quiet:
             response = "%s%s %s" % (element, name, action)
@@ -372,6 +457,11 @@ def handle_response(result, name, quiet=False, element='', action='deployed', cl
 
 
 def confirm(message):
+    """
+
+    :param message:
+    :return:
+    """
     message = "%s [y/N]: " % message
     _input = input(message)
     if _input.lower() not in ['y', 'yes']:
@@ -381,6 +471,11 @@ def confirm(message):
 
 
 def get_lastvm(client):
+    """
+
+    :param client:
+    :return:
+    """
     lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
     if os.path.exists(lastvm) and os.stat(lastvm).st_size > 0:
         for line in open(lastvm).readlines():
@@ -397,6 +492,13 @@ def get_lastvm(client):
 
 
 def set_lastvm(name, client, delete=False):
+    """
+
+    :param name:
+    :param client:
+    :param delete:
+    :return:
+    """
     configdir = "%s/.kcli/" % os.environ.get('HOME')
     vmfile = "%s/vm" % configdir
     if not os.path.exists(configdir):
@@ -418,6 +520,11 @@ def set_lastvm(name, client, delete=False):
 
 
 def remove_duplicates(oldlist):
+    """
+
+    :param oldlist:
+    :return:
+    """
     newlist = []
     for item in oldlist:
         if item not in newlist:
@@ -426,6 +533,12 @@ def remove_duplicates(oldlist):
 
 
 def get_overrides(paramfile=None, param=[]):
+    """
+
+    :param paramfile:
+    :param param:
+    :return:
+    """
     if paramfile is not None and os.path.exists(os.path.expanduser(paramfile)):
         with open(os.path.expanduser(paramfile)) as f:
             try:
@@ -453,6 +566,11 @@ def get_overrides(paramfile=None, param=[]):
 
 
 def get_parameters(inputfile):
+    """
+
+    :param inputfile:
+    :return:
+    """
     parameters = ""
     found = False
     for line in open(inputfile).readlines():
@@ -470,6 +588,13 @@ def get_parameters(inputfile):
 
 
 def print_info(yamlinfo, output='plain', fields=None, values=False):
+        """
+
+        :param yamlinfo:
+        :param output:
+        :param fields:
+        :param values:
+        """
         if fields is not None:
             for key in list(yamlinfo):
                 if key not in fields:
@@ -519,6 +644,25 @@ def print_info(yamlinfo, output='plain', fields=None, values=False):
 
 def ssh(name, ip='', host=None, port=22, hostuser=None, user=None, local=None, remote=None, tunnel=False,
         insecure=False, cmd=None, X=False, Y=False, debug=False, D=None):
+        """
+
+        :param name:
+        :param ip:
+        :param host:
+        :param port:
+        :param hostuser:
+        :param user:
+        :param local:
+        :param remote:
+        :param tunnel:
+        :param insecure:
+        :param cmd:
+        :param X:
+        :param Y:
+        :param debug:
+        :param D:
+        :return:
+        """
         if ip == '':
             return None
         else:
@@ -549,6 +693,22 @@ def ssh(name, ip='', host=None, port=22, hostuser=None, user=None, local=None, r
 
 def scp(name, ip='', host=None, port=22, hostuser=None, user=None, source=None, destination=None, recursive=None,
         tunnel=False, debug=False, download=False):
+        """
+
+        :param name:
+        :param ip:
+        :param host:
+        :param port:
+        :param hostuser:
+        :param user:
+        :param source:
+        :param destination:
+        :param recursive:
+        :param tunnel:
+        :param debug:
+        :param download:
+        :return:
+        """
         if ip == '':
             print("No ip found. Cannot scp...")
         else:
@@ -569,6 +729,11 @@ def scp(name, ip='', host=None, port=22, hostuser=None, user=None, source=None, 
 
 
 def get_user(template):
+    """
+
+    :param template:
+    :return:
+    """
     if 'centos' in template.lower():
         user = 'centos'
     elif 'coreos' in template.lower() or 'rhcos' in template.lower():
@@ -592,6 +757,24 @@ def get_user(template):
 
 def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[],
              enableroot=True, overrides={}, iso=True, fqdn=False, etcd=None):
+    """
+
+    :param name:
+    :param keys:
+    :param cmds:
+    :param nets:
+    :param gateway:
+    :param dns:
+    :param domain:
+    :param reserveip:
+    :param files:
+    :param enableroot:
+    :param overrides:
+    :param iso:
+    :param fqdn:
+    :param etcd:
+    :return:
+    """
     default_gateway = gateway
     publickeys = []
     if domain is not None:

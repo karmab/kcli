@@ -1,3 +1,4 @@
+# coding=utf-8
 |Build Status| |Pypi| |Copr| |image3|
 
 About

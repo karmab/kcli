@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# coding=utf-8
 
 '''
 ansible dynamic inventory script for use with kcli and libvirt
@@ -13,6 +14,10 @@ import yaml
 
 
 def render(args):
+    """
+
+    :param args:
+    """
     info = args.info
     inputfile = args.inputfile
     inputfile = os.path.expanduser(inputfile)
@@ -49,6 +54,9 @@ def render(args):
 
 
 def cli():
+    """
+
+    """
     parser = argparse.ArgumentParser(description='Render scripts manually using kcli helpers')
     parser.add_argument('-i', '--info', help='Only report parameters used in the file', action='store_true')
     parser.add_argument('-f', '--inputfile', help='Input Plan file', required=True)

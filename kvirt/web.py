@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# coding=utf-8
 
 from flask import Flask, render_template, request, jsonify
 from kvirt.config import Kconfig
@@ -44,6 +45,10 @@ def vmstable():
 @app.route("/")
 @app.route('/vms')
 def vms():
+    """
+
+    :return:
+    """
     config = Kconfig()
     return render_template('vms.html', title='Home', client=config.client)
 
@@ -70,6 +75,10 @@ def vmprofilestable():
 
 @app.route('/vmprofiles')
 def vmprofiles():
+    """
+
+    :return:
+    """
     config = Kconfig()
     return render_template('vmprofiles.html', title='VmProfiles', client=config.client)
 
@@ -527,6 +536,10 @@ def repostable():
 
 @app.route('/repos')
 def repos():
+    """
+
+    :return:
+    """
     config = Kconfig()
     return render_template('repos.html', title='Repos', client=config.client)
 
@@ -561,6 +574,10 @@ def productstable():
 
 @app.route('/products')
 def products():
+    """
+
+    :return:
+    """
     baseconfig = Kbaseconfig()
     return render_template('products.html', title='Products', client=baseconfig.client)
 
@@ -649,6 +666,10 @@ def planstable():
 
 @app.route('/plans')
 def plans():
+    """
+
+    :return:
+    """
     config = Kconfig()
     return render_template('plans.html', title='Plans', client=config.client)
 
@@ -695,6 +716,10 @@ def templatestable():
 
 @app.route('/templates')
 def templates():
+    """
+
+    :return:
+    """
     config = Kconfig()
     return render_template('templates.html', title='Templates', client=config.client)
 
@@ -757,6 +782,10 @@ def isostable():
 
 @app.route('/isos')
 def isos():
+    """
+
+    :return:
+    """
     config = Kconfig()
     return render_template('isos.html', title='Isos', client=config.client)
 
@@ -781,6 +810,9 @@ def containerprofiles():
 
 
 def run():
+    """
+
+    """
     app.run(host='0.0.0.0', port=port, debug=debug)
 
 

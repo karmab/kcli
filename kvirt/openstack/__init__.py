@@ -18,6 +18,9 @@ import webbrowser
 
 
 class Kopenstack(object):
+    """
+
+    """
     def __init__(self, host='127.0.0.1', version='2', port=None, user='root', password=None, debug=False, project=None,
                  domain='Default', auth_url=None):
         self.debug = debug
@@ -36,13 +39,27 @@ class Kopenstack(object):
 
 # should cleanly close your connection, if needed
     def close(self):
+        """
+
+        :return:
+        """
         print("not implemented")
         return
 
     def exists(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         return
 
     def net_exists(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         neutron = self.neutron
         networks = neutron.list_networks(name=name)
         if not networks:
@@ -50,6 +67,11 @@ class Kopenstack(object):
         return True
 
     def disk_exists(self, pool, name):
+        """
+
+        :param pool:
+        :param name:
+        """
         print("not implemented")
 
     def create(self, name, virttype='kvm', profile='', plan='kvirt', flavor=None,
@@ -62,6 +84,48 @@ class Kopenstack(object):
                netmasks=None, gateway=None, nested=True, dns=None, domain=None,
                tunnel=False, files=[], enableroot=True, alias=[], overrides={},
                tags=None):
+        """
+
+        :param name:
+        :param virttype:
+        :param profile:
+        :param plan:
+        :param flavor:
+        :param cpumodel:
+        :param cpuflags:
+        :param numcpus:
+        :param memory:
+        :param guestid:
+        :param pool:
+        :param template:
+        :param disks:
+        :param disksize:
+        :param diskthin:
+        :param diskinterface:
+        :param nets:
+        :param iso:
+        :param vnc:
+        :param cloudinit:
+        :param reserveip:
+        :param reservedns:
+        :param reservehost:
+        :param start:
+        :param keys:
+        :param cmds:
+        :param ips:
+        :param netmasks:
+        :param gateway:
+        :param nested:
+        :param dns:
+        :param domain:
+        :param tunnel:
+        :param files:
+        :param enableroot:
+        :param alias:
+        :param overrides:
+        :param tags:
+        :return:
+        """
         glance = self.glance
         nova = self.nova
         neutron = self.neutron
@@ -205,6 +269,11 @@ class Kopenstack(object):
         return {'result': 'success'}
 
     def start(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         nova = self.nova
         try:
             vm = nova.servers.find(name=name)
@@ -215,6 +284,11 @@ class Kopenstack(object):
         return {'result': 'success'}
 
     def stop(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         nova = self.nova
         try:
             vm = nova.servers.find(name=name)
@@ -225,10 +299,24 @@ class Kopenstack(object):
         return {'result': 'success'}
 
     def snapshot(self, name, base, revert=False, delete=False, listing=False):
+        """
+
+        :param name:
+        :param base:
+        :param revert:
+        :param delete:
+        :param listing:
+        :return:
+        """
         print("not implemented")
         return
 
     def restart(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         nova = self.nova
         try:
             vm = nova.servers.find(name=name)
@@ -239,15 +327,28 @@ class Kopenstack(object):
         return {'result': 'success'}
 
     def report(self):
+        """
+
+        :return:
+        """
         print("not implemented")
         return
 
     def status(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         print("not implemented")
         return
 
 # should return a sorted list of name, state, ip, source, plan, profile, report
     def list(self):
+        """
+
+        :return:
+        """
         vms = []
         nova = self.nova
         glance = self.glance
@@ -273,6 +374,12 @@ class Kopenstack(object):
         return vms
 
     def console(self, name, tunnel=False):
+        """
+
+        :param name:
+        :param tunnel:
+        :return:
+        """
         nova = self.nova
         try:
             vm = nova.servers.find(name=name)
@@ -286,6 +393,11 @@ class Kopenstack(object):
         return
 
     def serialconsole(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         nova = self.nova
         try:
             vm = nova.servers.find(name=name)
@@ -296,6 +408,14 @@ class Kopenstack(object):
         return
 
     def info(self, name, output='plain', fields=None, values=False):
+        """
+
+        :param name:
+        :param output:
+        :param fields:
+        :param values:
+        :return:
+        """
         if fields is not None:
             fields = fields.split(',')
         nova = self.nova
@@ -346,11 +466,21 @@ class Kopenstack(object):
 
 # should return ip string
     def ip(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         print("not implemented")
         return None
 
 # should return a list of available templates, or isos ( if iso is set to True
     def volumes(self, iso=False):
+        """
+
+        :param iso:
+        :return:
+        """
         images = []
         glance = self.glance
         for image in glance.images.list():
@@ -358,6 +488,12 @@ class Kopenstack(object):
         return images
 
     def delete(self, name, snapshots=False):
+        """
+
+        :param name:
+        :param snapshots:
+        :return:
+        """
         cinder = self.cinder
         nova = self.nova
         try:
@@ -387,34 +523,88 @@ class Kopenstack(object):
         return {'result': 'success'}
 
     def clone(self, old, new, full=False, start=False):
+        """
+
+        :param old:
+        :param new:
+        :param full:
+        :param start:
+        :return:
+        """
         print("not implemented")
         return
 
     def update_metadata(self, name, metatype, metavalue):
+        """
+
+        :param name:
+        :param metatype:
+        :param metavalue:
+        :return:
+        """
         print("not implemented")
         return
 
     def update_memory(self, name, memory):
+        """
+
+        :param name:
+        :param memory:
+        :return:
+        """
         print("not implemented")
         return
 
     def update_cpu(self, name, numcpus):
+        """
+
+        :param name:
+        :param numcpus:
+        :return:
+        """
         print("not implemented")
         return
 
     def update_start(self, name, start=True):
+        """
+
+        :param name:
+        :param start:
+        :return:
+        """
         print("not implemented")
         return
 
     def update_information(self, name, information):
+        """
+
+        :param name:
+        :param information:
+        :return:
+        """
         print("not implemented")
         return
 
     def update_iso(self, name, iso):
+        """
+
+        :param name:
+        :param iso:
+        :return:
+        """
         print("not implemented")
         return
 
     def create_disk(self, name, size, pool=None, thin=True, template=None):
+        """
+
+        :param name:
+        :param size:
+        :param pool:
+        :param thin:
+        :param template:
+        :return:
+        """
         glance = self.glance
         cinder = self.cinder
         image = None
@@ -430,6 +620,17 @@ class Kopenstack(object):
 
     def add_disk(self, name, size, pool=None, thin=True, template=None,
                  shareable=False, existing=None):
+        """
+
+        :param name:
+        :param size:
+        :param pool:
+        :param thin:
+        :param template:
+        :param shareable:
+        :param existing:
+        :return:
+        """
         glance = self.glance
         cinder = self.cinder
         nova = self.nova
@@ -450,6 +651,13 @@ class Kopenstack(object):
         return {'result': 'success'}
 
     def delete_disk(self, name=None, diskname=None, pool=None):
+        """
+
+        :param name:
+        :param diskname:
+        :param pool:
+        :return:
+        """
         cinder = self.cinder
         nova = self.nova
         if name is None:
@@ -476,6 +684,10 @@ class Kopenstack(object):
             return {'result': 'success'}
 
     def list_disks(self):
+        """
+
+        :return:
+        """
         volumes = {}
         cinder = self.cinder
         for volume in cinder.volumes.list():
@@ -483,10 +695,22 @@ class Kopenstack(object):
         return volumes
 
     def add_nic(self, name, network):
+        """
+
+        :param name:
+        :param network:
+        :return:
+        """
         print("not implemented")
         return
 
     def delete_nic(self, name, interface):
+        """
+
+        :param name:
+        :param interface:
+        :return:
+        """
         print("not implemented")
         return
 
@@ -509,6 +733,20 @@ class Kopenstack(object):
 
     def ssh(self, name, user=None, local=None, remote=None, tunnel=False,
             insecure=False, cmd=None, X=False, Y=False, D=None):
+        """
+
+        :param name:
+        :param user:
+        :param local:
+        :param remote:
+        :param tunnel:
+        :param insecure:
+        :param cmd:
+        :param X:
+        :param Y:
+        :param D:
+        :return:
+        """
         u, ip = self._ssh_credentials(name)
         tunnel = False
         sshcommand = common.ssh(name, ip=ip, host=self.host, user=u, local=local, remote=remote,
@@ -519,6 +757,17 @@ class Kopenstack(object):
 
     def scp(self, name, user=None, source=None, destination=None, tunnel=False,
             download=False, recursive=False):
+        """
+
+        :param name:
+        :param user:
+        :param source:
+        :param destination:
+        :param tunnel:
+        :param download:
+        :param recursive:
+        :return:
+        """
         tunnel = False
         u, ip = self._ssh_credentials(name)
         scpcommand = common.scp(name, ip=ip, host=self.host, user=u, source=source,
@@ -529,10 +778,29 @@ class Kopenstack(object):
         return scpcommand
 
     def create_pool(self, name, poolpath, pooltype='dir', user='qemu', thinpool=None):
+        """
+
+        :param name:
+        :param poolpath:
+        :param pooltype:
+        :param user:
+        :param thinpool:
+        :return:
+        """
         print("not implemented")
         return
 
     def add_image(self, image, pool, short=None, cmd=None, name=None, size=1):
+        """
+
+        :param image:
+        :param pool:
+        :param short:
+        :param cmd:
+        :param name:
+        :param size:
+        :return:
+        """
         shortimage = os.path.basename(image).split('?')[0]
         if [i for i in self.glance.images.list() if i['name'] == shortimage]:
             return {'result': 'success'}
@@ -548,6 +816,18 @@ class Kopenstack(object):
 
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None,
                        plan='kvirt', pxe=None, vlan=None):
+        """
+
+        :param name:
+        :param cidr:
+        :param dhcp:
+        :param nat:
+        :param domain:
+        :param plan:
+        :param pxe:
+        :param vlan:
+        :return:
+        """
         if nat:
             externalnets = [n for n in self.neutron.list_networks()['networks'] if n['router:external']]
             externalnet_id = externalnets[0]['id'] if externalnets else None
@@ -594,6 +874,12 @@ class Kopenstack(object):
         return {'result': 'success'}
 
     def delete_network(self, name=None, cidr=None):
+        """
+
+        :param name:
+        :param cidr:
+        :return:
+        """
         neutron = self.neutron
         routers = [router for router in self.neutron.list_routers()['routers'] if router['name'] == 'kvirt']
         router_id = routers[0]['id'] if routers else None
@@ -647,10 +933,18 @@ class Kopenstack(object):
 
 # should return a dict of pool strings
     def list_pools(self):
+        """
+
+        :return:
+        """
         print("not implemented")
         return
 
     def list_networks(self):
+        """
+
+        :return:
+        """
         networks = {}
         neutron = self.neutron
         for subnet in neutron.list_subnets()['subnets']:
@@ -673,32 +967,67 @@ class Kopenstack(object):
         return networks
 
     def list_subnets(self):
+        """
+
+        :return:
+        """
         print("not implemented")
         return {}
 
     def delete_pool(self, name, full=False):
+        """
+
+        :param name:
+        :param full:
+        :return:
+        """
         print("not implemented")
         return
 
     def network_ports(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         print("not implemented")
         return
 
     def vm_ports(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         return ['default']
 
 # returns the path of the pool, if it makes sense. used by kcli list --pools
     def get_pool_path(self, pool):
+        """
+
+        :param pool:
+        :return:
+        """
         print("not implemented")
         return
 
     def flavors(self):
+        """
+
+        :return:
+        """
         nova = self.nova
         nova.flavors.list
         flavors = [[flavor.name, flavor.vcpus, flavor.ram] for flavor in nova.flavors.list()]
         return flavors
 
     def export(self, name, template=None):
+        """
+
+        :param name:
+        :param template:
+        :return:
+        """
         cinder = self.cinder
         nova = self.nova
         try:
