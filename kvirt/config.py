@@ -148,7 +148,7 @@ class Kconfig(Kbaseconfig):
         self.k = k
         self.overrides = {'type': self.type}
 
-    def create_vm(self, name, profile, ip1=None, ip2=None, ip3=None, ip4=None, overrides={}):
+    def create_vm(self, name, profile, ip1=None, ip2=None, ip3=None, ip4=None, overrides={}, customprofile={}):
         overrides.update(self.overrides)
         if name is None:
             name = nameutils.get_random_name()
@@ -165,6 +165,7 @@ class Kconfig(Kbaseconfig):
             vmprofiles[profile] = {'template': profile}
         profilename = profile
         profile = vmprofiles[profile]
+        profile.update(overrides)
         if 'base' in profile:
             father = vmprofiles[profile['base']]
             default_numcpus = father.get('numcpus', self.numcpus)
