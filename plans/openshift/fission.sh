@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 FISSION_VERSION="[[ fission_version ]]"
 oc new-project fission
 export TILLER_NAMESPACE=helm

@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 kubeadm init --pod-network-cidr=10.244.0.0/16
 cp /etc/kubernetes/admin.conf /root/
 chown root:root /root/admin.conf

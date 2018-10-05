@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 VERSION="[[ kubevirt_version ]]"
 KUBELET_ROOTFS=/var/lib/docker/devicemapper/mnt/$(docker inspect $(docker ps | grep kubelet | cut -d" " -f1) | grep DeviceName  | awk -F- '{print $4}' | sed 's/",//')/rootfs
 mkdir -p /var/lib/kubelet/device-plugins $KUBELET_ROOTFS/var/lib/kubelet/device-plugins

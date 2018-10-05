@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 sleep 40
 gluster peer probe gluster02
 sleep 15

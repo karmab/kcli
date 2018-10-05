@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 export HYPERVISOR_IP=`hostname -I`
 export PASSWORD="[[ password ]]"
 sed -i "s/username =.*/username = admin@internal/" /root/.ovirtshellrc

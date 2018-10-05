@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 export PASSWORD="[[ password ]]"
 sed -i "s/username =.*/username = admin@internal/" /root/.ovirtshellrc
 sed -i "s/password =.*/password = $PASSWORD/" /root/.ovirtshellrc

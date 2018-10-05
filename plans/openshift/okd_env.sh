@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 export OPENSHIFT_INSTALL_PLATFORM=libvirt
 export OPENSHIFT_INSTALL_BASE_DOMAIN=[[ domain ]]
 export OPENSHIFT_INSTALL_CLUSTER_NAME=[[ cluster ]]

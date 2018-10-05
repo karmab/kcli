@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 yum -y install atomic-openshift-clients docker atomic-openshift
 sed -i '/OPTIONS=.*/c\OPTIONS="--selinux-enabled --insecure-registry 172.30.0.0/16"' /etc/sysconfig/docker
 systemctl enable docker

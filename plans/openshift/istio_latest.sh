@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 export project="istio-system"
 sed -i /requiretty/d /etc/sudoers
 export KUBECONFIG=/root/.kube/config

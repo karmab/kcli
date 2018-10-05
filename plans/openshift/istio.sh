@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 sed -i /requiretty/d /etc/sudoers
 export KUBECONFIG=/root/.kube/config
 git clone https://github.com/istio/istio.git /root/istio

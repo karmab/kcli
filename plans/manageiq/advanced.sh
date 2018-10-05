@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 echo [[ password ]] | passwd --stdin root
 source /etc/profile.d/evm.sh
 appliance_console_cli --host=cloudforms --region=01 --internal --password="[[ password ]]" --key --force-key

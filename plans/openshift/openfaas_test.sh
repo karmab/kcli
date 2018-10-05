@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 source /etc/profile.d/openfaas.sh
 docker login -u developer -p `oc whoami -t --config=/root/.kube/config` 172.30.1.1:5000
 cd /root/faas-netes/yaml

@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 VERSION=v[[ helm_version ]]
 oc login -u system:admin
 oc new-project helm

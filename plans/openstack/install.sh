@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 export ADMIN_PASSWORD="[[ password ]]"
 echo `hostname -I` `hostname -s` >> /etc/hosts
 yum update -y

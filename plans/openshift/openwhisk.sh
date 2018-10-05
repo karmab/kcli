@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 wget https://github.com/apache/incubator-openwhisk-cli/releases/download/latest/OpenWhisk_CLI-latest-linux-amd64.tgz
 tar zxvf OpenWhisk_CLI-latest-linux-amd64.tgz
 mv wsk /usr/bin/

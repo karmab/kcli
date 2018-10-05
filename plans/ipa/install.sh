@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 export PASSWORD="[[ password ]]"
 export DOMAIN="[[ domain ]]"
 export REALM="[[ domain | upper ]]"

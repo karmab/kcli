@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 yum -y install NetworkManager wget nc
 [% if not crio %]
 yum -y install docker

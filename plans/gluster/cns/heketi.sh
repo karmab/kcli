@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 yum -y install heketi-client heketi bind-utils
 rm -f /etc/heketi/heketi.json
 cp /root/heketi.json /etc/heketi

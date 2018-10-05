@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 export MINISHIFT_VERSION="[[ minishift_version ]]"
 export OPENSHIFT_VERSION="v[[ openshift_version ]]"
 curl -L https://github.com/minishift/minishift/releases/download/v$MINISHIFT_VERSION/minishift-$MINISHIFT_VERSION-linux-amd64.tgz > /root/minishift-$MINISHIFT_VERSION-linux-amd64.tgz

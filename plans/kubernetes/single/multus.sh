@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 kubectl create ns multus
 kubectl apply -f /root/multus.yml
 kubectl apply -f /root/cni-plugins.yml

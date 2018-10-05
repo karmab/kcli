@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 oc new-project openfaas-fn
 oc new-project openfaas
 oc create sa faas-controller

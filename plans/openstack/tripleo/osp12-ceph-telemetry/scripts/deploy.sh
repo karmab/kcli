@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 openstack overcloud deploy --templates /usr/share/openstack-tripleo-heat-templates \
     --ntp-server hora.rediris.es \
     --answers-file /home/stack/templates/environments/deployment-answer-file.yaml \

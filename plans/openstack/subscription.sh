@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 [%- set versions = {
                   'kilo': '7.0',
                   'liberty': '8',

@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 yum -y install httpd xinetd syslinux tftp-server wget
 wget -O distro.iso [[ url ]]
 mount -o loop distro.iso /mnt/

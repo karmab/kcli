@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 [% if sdn == 'calico' %]
 CIDR="192.168.0.0/16"
 [% else %] 

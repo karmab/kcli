@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 echo "option kvm_intel nested=1" >> /etc/modprobe.d/kvm-intel.conf
 modprobe -r kvm_intel ; modprobe kvm_intel
 yum -y install ovirt-engine

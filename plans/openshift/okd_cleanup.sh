@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 URI="qemu+ssh://root@192.168.122.1/system"
 virsh -c $URI destroy master0
 virsh -c $URI undefine master0

@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 echo net.bridge.bridge-nf-call-iptables=1 >> /etc/sysctl.d/99-sysctl.conf
 sysctl -p
 setenforce 0

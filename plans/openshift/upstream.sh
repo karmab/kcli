@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 setenforce 0
 sed -i "s/SELINUX=enforcing/SELINUX=permissive/" /etc/selinux/config
 sed -i 's@OPTIONS=.*@OPTIONS="--selinux-enabled --insecure-registry 172.30.0.0/16"@' /etc/sysconfig/docker

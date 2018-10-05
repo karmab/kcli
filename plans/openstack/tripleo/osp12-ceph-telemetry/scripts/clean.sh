@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 heat stack-delete -y overcloud
 uuids=`ironic node-list | grep -v UUID | awk -F'|' '{ print $2}' | xargs`
 for uuid in $uuids ; do

@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 ###Rally
 source ~/keystonerc_testk
 openstack project create rally_project

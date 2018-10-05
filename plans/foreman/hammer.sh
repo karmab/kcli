@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 mkdir ~/.hammer
 wget -O /root/.hammer/cli_config.yml https://raw.githubusercontent.com/karmab/kcli/master/plans/foreman/hammer.yml
 chmod 600 ~/.hammer/cli_config.yml

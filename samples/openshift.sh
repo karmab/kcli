@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 yum -y install wget docker
 systemctl enable docker
 sed -i "s/SELINUX=enforcing/SELINUX=permissive/" /etc/selinux/config

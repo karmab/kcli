@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 [%- set releaseurls = {
                   '3.2'  : 'v1.2.2/openshift-origin-client-tools-v1.2.2-565691c',
                   '3.3'  : 'v1.3.3/openshift-origin-client-tools-v1.3.3-bc17c1527938fa03b719e1a117d584442e3727b8',

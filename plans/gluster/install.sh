@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 yum -y install glusterfs-server glusterfs-ganesha glusterfs glusterfs-geo-replication glusterfs-cli samba ctdb #firewalld -y
 systemctl start glusterd
 systemctl enable glusterd

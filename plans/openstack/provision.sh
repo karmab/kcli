@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 export ADMIN_PASSWORD="[[ admin_password ]]"
 export EXTERNAL_SUBNET="192.168.122.0/24"
 export EXTERNAL_START="192.168.122.200"

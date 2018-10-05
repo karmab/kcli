@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 echo [[ password ]] | passwd --stdin root
 hostnamectl set-hostname manageiq
 source /etc/profile.d/evm.sh

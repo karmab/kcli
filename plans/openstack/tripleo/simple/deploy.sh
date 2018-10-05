@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 openstack overcloud deploy --templates /usr/share/openstack-tripleo-heat-templates \
     --ntp-server 95.81.173.74 \
     -e /home/stack/templates/environments/password.yaml \

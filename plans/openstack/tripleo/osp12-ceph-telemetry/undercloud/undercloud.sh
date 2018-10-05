@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 VERSION="12"
 #Stack user configure ssh 
 cat > ~/.ssh/config <<EOF

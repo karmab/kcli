@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 #Install vars
 POOL_START="10.147.15.120"
 POOL_END="10.147.15.160"

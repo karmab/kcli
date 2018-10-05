@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 export ORG="[[ organization ]]"
 export LOCATION="[[ location ]]"
 export PASSWORD="[[ password ]]"

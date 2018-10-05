@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 export IP=`ip a l  eth0 | grep 'inet ' | cut -d' ' -f6 | awk -F'/' '{ print $1}'`
 export TILLER_NAMESPACE=helm
 export MONOCULAR_API_URL="monocular-api.$IP.xip.io"

@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 ##Server
 echo "/var/lib/nova/instances *(rw,no_root_squash)" >> /etc/exports
 yum install nfs-utils -y

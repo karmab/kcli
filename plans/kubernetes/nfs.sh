@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # setsebool -P virt_use_nfs 1
 yum -y install nfs-utils
 for i in `seq -f "%03g" 1 20` ; do

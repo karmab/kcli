@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 PASSWORD="[[ password ]]"
 echo $PASSWORD | passwd --stdin root
 sed -i "s/PasswordAuthentication no/PasswordAuthentication yes/" /etc/ssh/sshd_config

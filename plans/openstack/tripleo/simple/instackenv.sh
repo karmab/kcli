@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 USER="root"
 jq . << EOF > ~/instackenv.json
 {

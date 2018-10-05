@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 mkdir /isos
 mkdir /vms
 echo '/vms *(rw)'  >>  /etc/exports

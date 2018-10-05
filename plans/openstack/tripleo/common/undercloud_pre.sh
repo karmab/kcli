@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 sysctl -w net.ipv4.ip_forward=1
 sysctl -p /etc/sysctl.conf
 useradd stack

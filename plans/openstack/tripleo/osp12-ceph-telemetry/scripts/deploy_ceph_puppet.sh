@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 openstack overcloud deploy --templates /usr/share/openstack-tripleo-heat-templates \
     --ntp-server hora.rediris.es \
     -e /usr/share/openstack-tripleo-heat-templates/environments/network-isolation.yaml \

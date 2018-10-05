@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 VERSION="10"
 
 ssh-keyscan -H 192.168.101.1 >> ~/.ssh/known_hosts

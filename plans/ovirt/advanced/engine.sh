@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 yum --nogpgcheck -y install ovirt-engine
 sed -i "s/0000/`hostname -s`.default/" /root/answers.txt
 yum -y install rng-tools

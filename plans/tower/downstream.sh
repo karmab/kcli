@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 VERSION="3.0.3"
 yum -y install wget
 wget -P /root http://releases.ansible.com/ansible-tower/setup/ansible-tower-setup-$VERSION.tar.gz

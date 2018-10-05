@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 mkdir -p /root/.config
 mv /root/copr /root/.config
 dnf -y install wget rpm-build python2-devel copr-cli alien gcc gcc-c++ rpm-build jq libstdc++-devel ruby ruby-devel

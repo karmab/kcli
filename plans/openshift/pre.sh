@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 yum -y install wget git net-tools bind-utils iptables-services bridge-utils bash-completion atomic-openshift-utils atomic-openshift-excluder atomic-openshift-docker-excluder docker
 atomic-openshift-excluder unexclude
 atomic-openshift-docker-excluder unexclude

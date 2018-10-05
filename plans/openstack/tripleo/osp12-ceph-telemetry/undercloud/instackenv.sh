@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 USER="admin"
 PASSWD="unix1234"
 jq . << EOF > ~/instackenv.json
