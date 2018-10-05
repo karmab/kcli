@@ -658,14 +658,12 @@ def plan(args):
     noautostart = args.noautostart
     container = args.container
     inputfile = args.inputfile
-    topologyfile = args.topologyfile
     start = args.start
     stop = args.stop
     delete = args.delete
     delay = args.delay
     use = args.use
     yes = args.yes
-    scale = args.scale
     info = args.info
     volumepath = args.volumepath
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
@@ -693,9 +691,7 @@ def plan(args):
         common.confirm("Are you sure?")
     config.plan(plan, ansible=ansible, get=get, path=path, autostart=autostart,
                 container=container, noautostart=noautostart, inputfile=inputfile,
-                start=start, stop=stop, delete=delete, delay=delay,
-                topologyfile=topologyfile, scale=scale,
-                overrides=overrides, info=info)
+                start=start, stop=stop, delete=delete, delay=delay, overrides=overrides, info=info)
     return 0
 
 
@@ -1138,8 +1134,6 @@ def cli():
     plan_parser.add_argument('-f', '--inputfile', help='Input Plan file')
     plan_parser.add_argument('-s', '--start', action='store_true', help='start all vms from plan')
     plan_parser.add_argument('-w', '--stop', action='store_true')
-    plan_parser.add_argument('--scale', help='Scale plan using provided parameters')
-    plan_parser.add_argument('-t', '--topologyfile', help='Topology file')
     plan_parser.add_argument('-u', '--use', nargs='?', const='kvirt',
                              help='Plan to set as current. Defaults to kvirt',
                              metavar='USE')

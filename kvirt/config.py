@@ -597,8 +597,7 @@ class Kconfig(Kbaseconfig):
         return {'result': 'success', 'plan': plan}
 
     def plan(self, plan, ansible=False, get=None, path=None, autostart=False, container=False, noautostart=False,
-             inputfile=None, start=False, stop=False, delete=False, delay=0, force=True, topologyfile=None,
-             scale=None, overrides={}, info=False):
+             inputfile=None, start=False, stop=False, delete=False, delay=0, force=True, overrides={}, info=False):
         """Create/Delete/Stop/Start vms from plan file"""
         k = self.k
         no_overrides = not overrides
@@ -885,35 +884,6 @@ class Kconfig(Kbaseconfig):
                         return
                     k.reserve_dns(name=dnsentry, nets=[dnsnet], domain=dnsdomain, ip=dnsip, alias=dnsalias, force=True)
             if vmentries:
-                topentries = {}
-                if scale is not None:
-                    common.pprint("Applying scale", color='green')
-                    scale = scale.split(',')
-                    for s in scale:
-                        s = s.split('=')
-                        if len(s) == 2 and s[1].isdigit():
-                            topentries[s[0]] = int(s[1])
-                elif topologyfile is not None:
-                    common.pprint("Processing Topology File %s..." % topologyfile, color='green')
-                    topologyfile = os.path.expanduser(topologyfile)
-                    if not os.path.exists(topologyfile):
-                        common.pprint("Topology file %s not found.Ignoring...." % topologyfile, color='blue')
-                    else:
-                        with open(topologyfile, 'r') as topentries:
-                            topentries = yaml.load(topentries)
-                if topentries:
-                    for entry in topentries:
-                        if isinstance(topentries[entry], str) and not topentries[entry].isdigit():
-                            continue
-                        elif not isinstance(topentries[entry], int):
-                            continue
-                        number = int(topentries[entry])
-                        if entry in [n[:-2] for n in vmentries]:
-                            for i in range(1, number + 1):
-                                newentry = "%s%0.2d" % (entry, i)
-                                if newentry not in vmentries:
-                                    entries[newentry] = entries["%s01" % entry]
-                                    vmentries.append(newentry)
                 common.pprint("Deploying Vms...", color='green')
                 vmcounter = 0
                 for name in vmentries:
