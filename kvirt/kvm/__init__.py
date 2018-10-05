@@ -367,7 +367,7 @@ class Kvirt(object):
             nettype = 'virtio'
             if isinstance(net, str):
                 netname = net
-                nets[index] = {'name': name}
+                nets[index] = {'name': netname}
             elif isinstance(net, dict) and 'name' in net:
                 netname = net['name']
                 if 'mac' in nets[index]:
