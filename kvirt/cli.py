@@ -432,10 +432,6 @@ def vm(args):
     name = args.name
     profile = args.profile
     profilefile = args.profilefile
-    ip1 = args.ip1
-    ip2 = args.ip2
-    ip3 = args.ip3
-    ip4 = args.ip4
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
     config = Kconfig(client=args.client, debug=args.debug)
     if name is None:
@@ -460,7 +456,7 @@ def vm(args):
         else:
             common.pprint("Missing profile", color='red')
             os._exit(1)
-    result = config.create_vm(name, profile, ip1=ip1, ip2=ip2, ip3=ip3, ip4=ip4, overrides=overrides)
+    result = config.create_vm(name, profile, overrides=overrides)
     if config.type != 'aws':
         code = common.handle_response(result, name, element='', action='created', client=config.client)
         return code
@@ -1268,18 +1264,6 @@ def cli():
     vm_parser = subparsers.add_parser('vm', description=vm_info, help=vm_info)
     vm_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
     vm_parser.add_argument('--profilefile', help='File to load profiles from', metavar='PROFILEFILE')
-    vm_parser.add_argument('-1', '--ip1', help='Optional Ip to assign to eth0. '
-                           'Netmask and gateway will be retrieved from profile',
-                           metavar='IP1')
-    vm_parser.add_argument('-2', '--ip2', help='Optional Ip to assign to eth1. '
-                           'Netmask and gateway will be retrieved from profile',
-                           metavar='IP2')
-    vm_parser.add_argument('-3', '--ip3', help='Optional Ip to assign to eth2. '
-                           'Netmask and gateway will be retrieved from profile',
-                           metavar='IP3')
-    vm_parser.add_argument('-4', '--ip4', help='Optional Ip to assign to eth3. '
-                           'Netmask and gateway will be retrieved from profile',
-                           metavar='IP4')
     vm_parser.add_argument('-P', '--param', action='append',
                            help='Define parameter for rendering within scripts.'
                            'Can be repeated', metavar='PARAM')

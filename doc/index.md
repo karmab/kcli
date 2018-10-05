@@ -661,7 +661,7 @@ Fore coreos based vms, You can also use  *etcd: true* to auto configure etcd on 
 
 the *ovs: true* allows you to create the nic as ovs port of the indicated bridge. Not that such bridges have to be created independently at the moment
 
-Up to 4 IPS can also be provided on command line when creating a single vm (with the flag -1, -2, -3,-4,...)
+You can provide network configuration on the command line when creating a single vm with -P ip1=... -P netmask1=... -P gateway=...
 
 ## ip, dns and host Reservations
 

@@ -120,7 +120,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
         netdata = ''
         if nets:
             for index, net in enumerate(nets):
-                if isinstance(net, str):
+                if isinstance(net, str) or (len(net) == 1 and 'name' in net):
                     if index == 0:
                         continue
                     nicname = "eth%d" % index

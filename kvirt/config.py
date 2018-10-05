@@ -148,17 +148,21 @@ class Kconfig(Kbaseconfig):
         self.k = k
         self.overrides = {'type': self.type}
 
-    def create_vm(self, name, profile, ip1=None, ip2=None, ip3=None, ip4=None, overrides={}, customprofile={}):
+    def create_vm(self, name, profile, overrides={}, customprofile={}, k=None,
+                  plan='kvirt'):
         overrides.update(self.overrides)
         if name is None:
             name = nameutils.get_random_name()
-        k = self.k
+        k = self.k if k is None else k
         tunnel = self.tunnel
         if profile is None:
             common.pprint("Missing profile", color='red')
             os._exit(1)
         vmprofiles = {k: v for k, v in self.profiles.items() if 'type' not in v or v['type'] == 'vm'}
-        common.pprint("Deploying vm %s from profile %s..." % (name, profile), color='green')
+        if customprofile:
+            vmprofiles[profile] = customprofile
+        else:
+            common.pprint("Deploying vm %s from profile %s..." % (name, profile), color='green')
         if profile not in vmprofiles:
             common.pprint("profile %s not found. Trying to use the profile as template and default values..." % profile,
                           color='blue')
@@ -247,8 +251,8 @@ class Kconfig(Kbaseconfig):
             default_rhnorg = self.rhnorg
             default_cmds = self.cmds
             default_scripts = self.scripts
+        plan = profile.get('plan', plan)
         template = profile.get('template', default_template)
-        plan = 'kvirt'
         nets = profile.get('nets', default_nets)
         cpumodel = profile.get('cpumodel', default_cpumodel)
         cpuflags = profile.get('cpuflags', default_cpuflags)
@@ -282,6 +286,28 @@ class Kconfig(Kbaseconfig):
         domain = profile.get('domain', default_domain)
         scripts = common.remove_duplicates(default_scripts + profile.get('scripts', []))
         files = profile.get('files', default_files)
+        if files:
+            for fil in files:
+                if not isinstance(fil, dict):
+                    common.pprint("Incorrect file entry.Leaving...", color='red')
+                    os._exit(1)
+                else:
+                    path = fil.get('path')
+                    origin = fil.get('origin')
+                    content = fil.get('content')
+                    if path is None:
+                            common.pprint("Missing path in files of %s.Leaving..." % name, color='red')
+                            os._exit(1)
+                    if origin is not None:
+                        origin = os.path.expanduser(origin)
+                        if not os.path.exists(origin):
+                            common.pprint("File %s not found in %s.Leaving..." % (origin, name),
+                                          color='red')
+                            os._exit(1)
+                    elif content is None:
+                            common.pprint("Content of file %s not found in %s.Ignoring..." % (path, name),
+                                          color='red')
+                            os._exit(1)
         enableroot = profile.get('enableroot', default_enableroot)
         tags = None
         if default_tags is not None:
@@ -326,7 +352,7 @@ class Kconfig(Kbaseconfig):
                     scriptlines = [line.strip() for line in scriptentries.split('\n') if line.strip() != '']
                     if scriptlines:
                         scriptcmds.extend(scriptlines)
-        if skip_rhnregister_script and template.startswith('rhel'):
+        if skip_rhnregister_script and cloudinit and template is not None and template.startswith('rhel'):
             # rhncommands = ['sleep 30']
             rhncommands = []
             if rhnuser is not None and rhnpassword is not None:
@@ -359,7 +385,8 @@ class Kconfig(Kbaseconfig):
             reportcmd = ['curl -s -X POST -d "name=%s&status=OK&report=`cat /var/log/cloud-init.log`" %s/report '
                          '/dev/null' % (name, self.reporturl)]
             cmds = cmds + reportcmd
-        ips = [ip1, ip2, ip3, ip4]
+        ips = [overrides[key] for key in overrides if key.startswith('ip')]
+        netmasks = [overrides[key] for key in overrides if key.startswith('netmask')]
         if privatekey:
             privatekeyfile = None
             if os.path.exists("%s/.ssh/id_rsa" % os.environ['HOME']):
@@ -607,7 +634,6 @@ class Kconfig(Kbaseconfig):
                       if 'type' not in value or value['type'] == 'vm'}
         containerprofiles = {key: value for key, value in self.profiles.items()
                              if 'type' in value and value['type'] == 'container'}
-        tunnel = self.tunnel
         if plan is None:
             plan = nameutils.get_random_name()
         # if path is None:
@@ -911,295 +937,33 @@ class Kconfig(Kbaseconfig):
                     else:
                         customprofile = {}
                         profilename = 'kvirt'
-                    if 'base' in profile:
-                        father = vmprofiles[profile['base']]
-                        default_numcpus = father.get('numcpus', self.numcpus)
-                        default_memory = father.get('memory', self.memory)
-                        default_pool = father.get('pool', self.pool)
-                        default_disks = father.get('disks', self.disks)
-                        default_nets = father.get('nets', self.nets)
-                        default_template = father.get('template', self.template)
-                        default_cloudinit = father.get('cloudinit', self.cloudinit)
-                        default_nested = father.get('nested', self.nested)
-                        default_reservedns = father.get('reservedns', self.reservedns)
-                        default_reservehost = father.get('reservehost', self.reservehost)
-                        default_cpumodel = father.get('cpumodel', self.cpumodel)
-                        # default_cpuflags = father.get('cpuflags', self.cpuflags)
-                        default_disksize = father.get('disksize', self.disksize)
-                        default_diskinterface = father.get('diskinterface', self.diskinterface)
-                        default_diskthin = father.get('diskthin', self.diskthin)
-                        default_guestid = father.get('guestid', self.guestid)
-                        default_iso = father.get('iso', self.iso)
-                        default_vnc = father.get('vnc', self.vnc)
-                        default_reserveip = father.get('reserveip', self.reserveip)
-                        default_start = father.get('start', self.start)
-                        default_report = father.get('report', self.report)
-                        # default_reportall = father.get('reportall', self.reportall)
-                        default_keys = father.get('keys', self.keys)
-                        default_netmasks = father.get('netmasks', self.netmasks)
-                        default_gateway = father.get('gateway', self.gateway)
-                        default_dns = father.get('dns', self.dns)
-                        default_domain = father.get('domain', self.domain)
-                        # default_files = father.get('files', self.files)
-                        default_enableroot = father.get('enableroot', self.enableroot)
-                        default_tags = father.get('tags', self.tags)
-                        default_privatekey = father.get('privatekey', self.privatekey)
-                        default_rhnregister = father.get('rhnregister', self.rhnregister)
-                        default_rhnuser = father.get('rhnuser', self.rhnuser)
-                        default_rhnpassword = father.get('rhnpassword', self.rhnpassword)
-                        default_rhnak = father.get('rhnactivationkey', self.rhnak)
-                        default_rhnorg = father.get('rhnorg', self.rhnorg)
-                        default_flavor = father.get('flavor', self.flavor)
-                        default_cmds = common.remove_duplicates(self.cmds + father.get('cmds', []))
-                        default_scripts = common.remove_duplicates(self.scripts + father.get('scripts', []))
-                    else:
-                        default_numcpus = self.numcpus
-                        default_memory = self.memory
-                        default_pool = self.pool
-                        default_disks = self.disks
-                        default_nets = self.nets
-                        default_template = self.template
-                        default_cloudinit = self.cloudinit
-                        default_nested = self.nested
-                        default_reservedns = self.reservedns
-                        default_reservehost = self.reservehost
-                        default_cpumodel = self.cpumodel
-                        # default_cpuflags = self.cpuflags
-                        default_disksize = self.disksize
-                        default_diskinterface = self.diskinterface
-                        default_diskthin = self.diskthin
-                        default_guestid = self.guestid
-                        default_iso = self.iso
-                        default_vnc = self.vnc
-                        default_reserveip = self.reserveip
-                        default_start = self.start
-                        default_report = self.report
-                        # default_reportall = self.reportall
-                        default_keys = self.keys
-                        default_netmasks = self.netmasks
-                        default_gateway = self.gateway
-                        default_dns = self.dns
-                        default_domain = self.domain
-                        # default_files = self.files
-                        default_enableroot = self.enableroot
-                        default_tags = self.tags
-                        default_privatekey = self.privatekey
-                        default_rhnregister = self.rhnregister
-                        default_rhnuser = self.rhnuser
-                        default_rhnpassword = self.rhnpassword
-                        default_rhnorg = self.rhnorg
-                        default_rhnak = self.rhnak
-                        default_cmds = self.cmds
-                        default_scripts = self.scripts
-                        default_flavor = self.flavor
-                    pool = next((e for e in [profile.get('pool'), customprofile.get('pool'), default_pool]
-                                 if e is not None))
-                    template = next((e for e in [profile.get('template'), customprofile.get('template')]
-                                     if e is not None), default_template)
-                    cpumodel = next((e for e in [profile.get('cpumodel'), customprofile.get('cpumodel'),
-                                                 default_cpumodel] if e is not None))
-                    cpuflags = next((e for e in [profile.get('cpuflags'), customprofile.get('cpuflags'), []]
-                                     if e is not None))
-                    numcpus = next((e for e in [profile.get('numcpus'), customprofile.get('numcpus'), default_numcpus]
-                                    if e is not None))
-                    memory = next((e for e in [profile.get('memory'), customprofile.get('memory'), default_memory]
-                                   if e is not None))
-                    disks = next((e for e in [profile.get('disks'), customprofile.get('disks'), default_disks]
-                                  if e is not None))
-                    disksize = next((e for e in [profile.get('disksize'), customprofile.get('disksize'),
-                                                 default_disksize] if e is not None))
-                    diskinterface = next((e for e in [profile.get('diskinterface'), customprofile.get('diskinterface'),
-                                                      default_diskinterface] if e is not None))
-                    diskthin = next((e for e in [profile.get('diskthin'), customprofile.get('diskthin'),
-                                                 default_diskthin] if e is not None))
-                    guestid = next((e for e in [profile.get('guestid'), customprofile.get('guestid'),
-                                                default_guestid] if e is not None))
-                    vnc = next((e for e in [profile.get('vnc'), customprofile.get('vnc'), default_vnc]
-                                if e is not None))
-                    cloudinit = next((e for e in [profile.get('cloudinit'), customprofile.get('cloudinit'),
-                                                  default_cloudinit] if e is not None))
-                    if cloudinit and find_executable('mkisofs') is None and find_executable('genisoimage') is None:
-                        common.pprint("mkisofs/genisoimage not found. One of them is needed for cloudinit.Leaving...",
-                                      'red')
-                        os._exit(1)
-                    reserveip = next((e for e in [profile.get('reserveip'), customprofile.get('reserveip'),
-                                                  default_reserveip] if e is not None))
-                    reservedns = next((e for e in [profile.get('reservedns'), customprofile.get('reservedns'),
-                                                   default_reservedns] if e is not None))
-                    reservehost = next((e for e in [profile.get('reservehost'), customprofile.get('reservehost'),
-                                                    default_reservehost] if e is not None))
-                    report = next((e for e in [profile.get('report'), customprofile.get('report'), default_report]
-                                   if e is not None))
-                    nested = next((e for e in [profile.get('nested'), customprofile.get('nested'), default_nested]
-                                   if e is not None))
-                    start = next((e for e in [profile.get('start'), customprofile.get('start'), default_start]
-                                  if e is not None))
-                    nets = next((e for e in [profile.get('nets'), customprofile.get('nets'), default_nets]
-                                 if e is not None))
-                    iso = next((e for e in [profile.get('iso'), customprofile.get('iso')] if e is not None),
-                               default_iso)
-                    keys = next((e for e in [profile.get('keys'), customprofile.get('keys'), default_keys]
-                                 if e is not None))
-                    cmds = default_cmds + customprofile.get('cmds', []) + profile.get('cmds', [])
-                    netmasks = next((e for e in [profile.get('netmasks'), customprofile.get('netmasks'),
-                                                 default_netmasks] if e is not None))
-                    gateway = next((e for e in [profile.get('gateway'), customprofile.get('gateway')]
-                                    if e is not None), default_gateway)
-                    dns = next((e for e in [profile.get('dns'), customprofile.get('dns')]
-                                if e is not None), default_dns)
-                    domain = next((e for e in [profile.get('domain'), customprofile.get('domain')]
-                                   if e is not None), default_domain)
-                    ips = profile.get('ips')
+                    if customprofile:
+                        profile.update(customprofile)
+                    # cmds = default_cmds + customprofile.get('cmds', []) + profile.get('cmds', [])
+                    # ips = profile.get('ips')
                     sharedkey = next((e for e in [profile.get('sharedkey'), customprofile.get('sharedkey'),
                                                   self.sharedkey] if e is not None))
-                    enableroot = next((e for e in [profile.get('enableroot'), customprofile.get('enableroot'),
-                                                   default_enableroot] if e is not None))
-                    tags = None
-                    if default_tags is not None:
-                        if isinstance(default_tags, dict):
-                            tags = default_tags.copy()
-                            tags.update(profile.get('tags', {}))
-                        elif isinstance(default_tags, list):
-                            customtags = profile.get('tags')
-                            tags = default_tags + customtags if customtags else default_tags
-                    elif profile.get('tags') is not None:
-                        tags = profile.get('tags')
-                    privatekey = next((e for e in [profile.get('privatekey'), customprofile.get('privatekey'),
-                                                   default_privatekey] if e is not None))
-                    rhnregister = next((e for e in [profile.get('rhnregister'), customprofile.get('rhnregister'),
-                                                    default_rhnregister] if e is not None))
-                    rhnuser = next((e for e in [profile.get('rhnuser'), customprofile.get('rhnuser'),
-                                                default_rhnuser] if e is not None), None)
-                    rhnpassword = next((e for e in [profile.get('rhnpassword'), customprofile.get('rhnpassword'),
-                                                    default_rhnpassword] if e is not None), None)
-                    rhnak = next((e for e in [profile.get('rhnactivationkey'), customprofile.get('rhnactivationkey'),
-                                              default_rhnak] if e is not None), None)
-                    rhnorg = next((e for e in [profile.get('rhnorg'), customprofile.get('rhnorg'),
-                                               default_rhnorg] if e is not None), None)
-                    flavor = next((e for e in [profile.get('flavor'), customprofile.get('flavor'),
-                                               default_flavor] if e is not None), None)
-                    skip_rhnregister_script = False
-                    if rhnregister:
-                        if (rhnuser is not None and rhnpassword is not None)\
-                                or (rhnak is not None and rhnorg is not None):
-                            skip_rhnregister_script = True
-                        else:
-                            common.pprint("Rhn registration required but missing credentials.Leaving...", color='red')
-                            os._exit(1)
-                    scripts = default_scripts + customprofile.get('scripts', []) + profile.get('scripts', [])
-                    missingscript = False
-                    if scripts:
-                        scriptcmds = []
-                        for script in scripts:
-                            if '~' in script:
-                                script = os.path.expanduser(script)
-                            else:
-                                script = "%s/%s" % (basedir, script)
-                            scriptbasedir = os.path.dirname(script) if os.path.dirname(script) != '' else '.'
-                            if not os.path.exists(script):
-                                common.pprint("Script %s not found. Ignoring this vm..." % script, color='red')
-                                missingscript = True
-                            else:
-                                env = Environment(block_start_string='[%', block_end_string='%]',
-                                                  variable_start_string='[[', variable_end_string=']]',
-                                                  loader=FileSystemLoader(scriptbasedir))
-                                templ = env.get_template(os.path.basename(script))
-                                overrides.update(self.overrides)
-                                scriptentries = templ.render(overrides)
-                                scriptlines = [line.strip() for line in scriptentries.split('\n') if line.strip() != '']
-                                if scriptlines:
-                                    scriptcmds.extend(scriptlines)
-                        if scriptcmds:
-                            cmds = cmds + scriptcmds
-                    if missingscript:
-                        continue
-                    if report:
-                        reportcmd = ['curl -X POST -d "name=%s&status=OK&report=`cat /var/log/cloud-init.log`" '
-                                     '%s/report' % (name, self.reporturl)]
-                        if not cmds:
-                            cmds = reportcmd
-                        else:
-                            cmds = cmds + reportcmd
-                    if skip_rhnregister_script and template is not None and template.startswith('rhel'):
-                        rhncommands = []
-                        if rhnuser is not None and rhnpassword is not None:
-                            rhncommands.append('subscription-manager register --force --username=%s --password=%s'
-                                               % (rhnuser, rhnpassword))
-                            rhncommands.append('subscription-manager attach --auto')
-                        elif rhnak is not None and rhnorg is not None:
-                            rhncommands.append('subscription-manager register --force --activationkey=%s --org=%s'
-                                               % (rhnak, rhnorg))
-                            rhncommands.append('subscription-manager repos --enable=rhel-7-server-rpms')
-                    else:
-                        rhncommands = []
-                    cmds = rhncommands + cmds
-                    files = next((e for e in [profile.get('files'), customprofile.get('files')] if e is not None), [])
-                    if basedir != '.':
-                        for index, _file in enumerate(files):
-                            if 'origin' in _file and '~' not in _file:
-                                files[index]['origin'] = '%s/%s' % (basedir, files[index]['origin'])
                     if sharedkey:
                         vmcounter += 1
                         if not os.path.exists("%s.key" % plan) or not os.path.exists("%s.key.pub" % plan):
                             os.system("ssh-keygen -qt rsa -N '' -f %s.key" % plan)
                         publickey = open("%s.key.pub" % plan).read().strip()
                         privatekey = open("%s.key" % plan).read().strip()
-                        if keys is None:
-                            keys = [publickey]
+                        if 'keys' not in profile:
+                            profile['keys'] = [publickey]
                         else:
-                            keys.append(publickey)
-                        if files:
-                            files.append({'path': '/root/.ssh/id_rsa', 'content': privatekey})
-                            files.append({'path': '/root/.ssh/id_rsa.pub', 'content': publickey})
+                            profile['keys'].append(publickey)
+                        if 'files' in profile:
+                            profile['files'].append({'path': '/root/.ssh/id_rsa', 'content': privatekey})
+                            profile['files'].append({'path': '/root/.ssh/id_rsa.pub', 'content': publickey})
                         else:
-                            files = [{'path': '/root/.ssh/id_rsa', 'content': privatekey},
-                                     {'path': '/root/.ssh/id_rsa.pub', 'content': publickey}]
+                            profile['files'] = [{'path': '/root/.ssh/id_rsa', 'content': privatekey},
+                                                {'path': '/root/.ssh/id_rsa.pub', 'content': publickey}]
                         if vmcounter >= len(vmentries):
                             os.remove("%s.key.pub" % plan)
                             os.remove("%s.key" % plan)
-                    elif privatekey:
-                        privatekeyfile = None
-                        if os.path.exists("%s/.ssh/id_rsa" % os.environ['HOME']):
-                            privatekeyfile = "%s/.ssh/id_rsa" % os.environ['HOME']
-                        elif os.path.exists("%s/.ssh/id_rsa" % os.environ['HOME']):
-                            privatekeyfile = "%s/.ssh/id_dsa" % os.environ['HOME']
-                        if privatekeyfile is not None:
-                            privatekey = open(privatekeyfile).read().strip()
-                        if files:
-                            files.append({'path': '/root/.ssh/id_rsa', 'content': privatekey})
-                        else:
-                            files = [{'path': '/root/.ssh/id_rsa', 'content': privatekey}]
-                    if files:
-                        for fil in files:
-                            if not isinstance(fil, dict):
-                                common.pprint("Incorrect file entry.Leaving...", color='red')
-                                os._exit(1)
-                            else:
-                                path = fil.get('path')
-                                origin = fil.get('origin')
-                                content = fil.get('content')
-                                if path is None:
-                                        common.pprint("Missing path in files of %s.Leaving..." % name, color='red')
-                                        os._exit(1)
-                                if origin is not None:
-                                    origin = os.path.expanduser(origin)
-                                    if not os.path.exists(origin):
-                                        common.pprint("File %s not found in %s.Leaving..." % (origin, name),
-                                                      color='red')
-                                        os._exit(1)
-                                elif content is None:
-                                        common.pprint("Content of file %s not found in %s.Ignoring..." % (path, name),
-                                                      color='red')
-                                        os._exit(1)
-                    result = z.create(name=name, plan=plan, profile=profilename, flavor=flavor, cpumodel=cpumodel,
-                                      cpuflags=cpuflags, numcpus=int(numcpus), memory=int(memory), guestid=guestid,
-                                      pool=pool, template=template, disks=disks, disksize=disksize, diskthin=diskthin,
-                                      diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc),
-                                      cloudinit=bool(cloudinit), reserveip=bool(reserveip),
-                                      reservedns=bool(reservedns), reservehost=bool(reservehost),
-                                      start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks,
-                                      gateway=gateway, dns=dns, domain=domain, nested=nested, tunnel=tunnel,
-                                      files=files, enableroot=enableroot, overrides=overrides, tags=tags)
+                    result = self.create_vm(name, profilename, overrides=overrides, customprofile=profile, k=z,
+                                            plan=plan)
                     common.handle_response(result, name)
                     if result['result'] == 'success':
                         newvms.append(name)

@@ -291,20 +291,16 @@ class Kvirt(object):
         netxml = ''
         alias = []
         etcd = None
+        ip = None
         for index, net in enumerate(nets):
             ovs = False
             macxml = ''
             nettype = 'virtio'
             if isinstance(net, str):
                 netname = net
+                nets[index] = {'name': name}
             elif isinstance(net, dict) and 'name' in net:
                 netname = net['name']
-                ip = None
-                if ips and len(ips) > index and ips[index] is not None:
-                    ip = ips[index]
-                    nets[index]['ip'] = ip
-                elif 'ip' in nets[index]:
-                    ip = nets[index]['ip']
                 if 'mac' in nets[index]:
                     mac = nets[index]['mac']
                     macxml = "<mac address='%s'/>" % mac
@@ -318,6 +314,12 @@ class Kvirt(object):
                     etcd = "eth%s" % index
                 if 'ovs' in nets[index] and nets[index]['ovs']:
                     ovs = True
+            if ips and len(ips) > index and ips[index] is not None and\
+                    netmasks and len(netmasks) > index and netmasks[index] is not None and gateway is not None:
+                nets[index]['ip'] = ips[index]
+                if index == 0:
+                    ip = ips[index]
+                nets[index]['netmask'] = netmasks[index]
             if netname in bridges or ovs:
                 sourcenet = 'bridge'
             elif netname in networks:
@@ -479,11 +481,11 @@ class Kvirt(object):
                 storagepool.createXML(volxml, 0)
         if fixqcow2path is not None and fixqcow2backing is not None:
             self._fixqcow2(fixqcow2path, fixqcow2backing)
-        if cloudinit:
-            if template is not None and not template.startswith('coreos') and not template.startswith('rhcos'):
-                common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
-                                 reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides)
-                self._uploadimage(name, pool=default_storagepool)
+        if cloudinit and template is not None and not template.startswith('coreos') and\
+                not template.startswith('rhcos'):
+            common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
+                             reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides)
+            self._uploadimage(name, pool=default_storagepool)
         if reserveip:
             xml = vm.XMLDesc(0)
             vmxml = ET.fromstring(xml)
