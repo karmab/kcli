@@ -33,6 +33,7 @@ class KOvirt(object):
         self.debug = debug
         self.vms_service = self.conn.system_service().vms_service()
         self.templates_service = self.conn.system_service().templates_service()
+        self.sds_service = self.conn.system_service().storage_domains_service()
         self.datacenter = datacenter
         self.cluster = cluster
         self.host = host
@@ -601,11 +602,13 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
         :return:
         """
         if iso:
-            return []
             isos = []
             for pool in self.conn.system_service().storage_domains_service().list():
                 if str(pool.type) == 'iso':
-                    continue
+                    sd_service = self.sds_service.storage_domain_service(pool.id)
+                    file_service = sd_service.files_service()
+                    for isofile in file_service.list():
+                        isos.append(isofile._name)
             return isos
         else:
             templates = []
