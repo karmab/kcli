@@ -1283,8 +1283,8 @@ def cli():
     vm_parser.add_argument('-P', '--param', action='append',
                            help='Define parameter for rendering within scripts.'
                            'Can be repeated', metavar='PARAM')
-    vm_parser.add_argument('--paramfile', help='Get parameters for rendering'
-                           'within scripts from a file.Takes precedence over'
+    vm_parser.add_argument('--paramfile', help='Get parameters for rendering '
+                           'within scripts from a file.Takes precedence over '
                            'individual parameters', metavar='PARAMFILE')
     vm_parser.add_argument('name', metavar='VMNAME', nargs='?')
     vm_parser.set_defaults(func=vm)
