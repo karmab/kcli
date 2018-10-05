@@ -268,6 +268,10 @@ class Kubevirt(object):
                 disksize = disk
                 diskpool = default_pool
                 diskinterface = default_diskinterface
+            elif isinstance(disk, str) and disk.isdigit():
+                disksize = int(disk)
+                diskpool = default_pool
+                diskinterface = default_diskinterface
             elif isinstance(disk, dict):
                 disksize = disk.get('size', default_disksize)
                 diskpool = disk.get('pool', default_pool)

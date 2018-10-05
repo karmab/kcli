@@ -559,6 +559,8 @@ def get_overrides(paramfile=None, param=[]):
                     value = True
                 elif value.lower() == 'false':
                     value = False
+                elif value.startswith('[') and value.endswith(']'):
+                    value = value[1:-1].split(',')
                 overrides[key] = value
     else:
         overrides = {}

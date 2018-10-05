@@ -210,6 +210,8 @@ class Kaws(object):
                                                                     'VolumeType': 'standard'}}
             if isinstance(disk, int):
                 disksize = disk
+            elif isinstance(disk, str) and disk.isdigit():
+                disksize = str(disk)
             elif isinstance(disk, dict):
                 disksize = disk.get('size', '10')
                 blockdevicemapping['Ebs']['VolumeType'] = disk.get('type', 'standard')

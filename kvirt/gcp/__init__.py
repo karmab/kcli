@@ -174,6 +174,8 @@ class Kgcp(object):
         for index, disk in enumerate(disks):
             if isinstance(disk, int):
                 disksize = disk
+            elif isinstance(disk, str) and disk.isdigit():
+                disksize = int(disk)
             elif isinstance(disk, dict):
                 disksize = disk.get('size', '10')
             newdisk = {'boot': False, 'autoDelete': True}

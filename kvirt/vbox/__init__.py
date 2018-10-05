@@ -260,6 +260,12 @@ class Kbox(object):
                 diskinterface = default_diskinterface
                 diskpool = default_pool
                 # diskpoolpath = default_poolpath
+            elif isinstance(disk, str) or disk.isdigit():
+                disksize = int(disk)
+                diskthin = default_diskthin
+                diskinterface = default_diskinterface
+                diskpool = default_pool
+                # diskpoolpath = default_poolpath
             elif isinstance(disk, dict):
                 disksize = disk.get('size', default_disksize)
                 diskthin = disk.get('thin', default_diskthin)

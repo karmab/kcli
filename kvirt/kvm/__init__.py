@@ -252,6 +252,16 @@ class Kvirt(object):
                 diskthinpool = default_thinpool
                 diskwwn = None
                 disktemplate = None
+            elif isinstance(disk, str) and disk.isdigit():
+                disksize = int(disk)
+                diskthin = default_diskthin
+                diskinterface = default_diskinterface
+                diskpool = default_pool
+                diskpooltype = default_pooltype
+                diskpoolpath = default_poolpath
+                diskthinpool = default_thinpool
+                diskwwn = None
+                disktemplate = None
             elif isinstance(disk, dict):
                 disksize = disk.get('size', default_disksize)
                 diskthin = disk.get('thin', default_diskthin)

@@ -173,6 +173,9 @@ class Kopenstack(object):
             if isinstance(disk, int):
                 disksize = disk
                 diskthin = True
+            elif isinstance(disk, str) and disk.isdigit():
+                disksize = int(disk)
+                diskthin = True
             elif isinstance(disk, dict):
                 disksize = disk.get('size', '10')
                 diskthin = disk.get('thin', True)

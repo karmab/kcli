@@ -208,6 +208,8 @@ class KOvirt(object):
                 continue
             if isinstance(disk, int):
                 disksize = disk
+            elif isinstance(disk, str) and disk.isdigit():
+                disksize = int(disk)
             elif isinstance(disk, dict):
                 disksize = disk.get('size', disksize)
                 diskpool = disk.get('pool', pool)
