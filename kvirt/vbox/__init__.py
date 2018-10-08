@@ -58,8 +58,8 @@ class Kbox(object):
         template = template.lower()
         version = self.conn.version
         commands = ['curl -O http://download.virtualbox.org/virtualbox/%s/VBoxGuestAdditions_%s.iso' % (version,
-                                                                                                        version)]
-        commands.append('mount -o loop VBoxGuestAdditions_5.1.14.iso /mnt')
+                                                                                                        version),
+                    'mount -o loop VBoxGuestAdditions_5.1.14.iso /mnt']
         if 'centos' in template or 'rhel' in template or 'fedora' in template:
             commands.append('yum -y install gcc make kernel-devel-`uname -r`')
         elif 'debian' in template or [x for x in common.ubuntus if x in template]:
@@ -388,7 +388,7 @@ class Kbox(object):
         hostname = os.uname()[1]
         cpus = host.processor_count
         memory = host.memory_size
-        print(("Host:%s Cpu:%s Memory:%sMB\n" % (hostname, cpus, memory)))
+        print("Host:%s Cpu:%s Memory:%sMB\n" % (hostname, cpus, memory))
         for pool in self._pool_info():
             poolname = pool['name']
             pooltype = 'dir'
@@ -398,16 +398,16 @@ class Kbox(object):
             # Type,Status, Total space in Gb, Available space in Gb
             # print("Storage:%s Type:%s Path:%s Used space:%sGB Available space:%sGB" % (poolname, pooltype, poolpath,
             # used, available))
-            print(("Storage:%s Type:%s Path:%s" % (poolname, pooltype, poolpath)))
+            print("Storage:%s Type:%s Path:%s" % (poolname, pooltype, poolpath))
         print()
         dhcp = {}
         dhcpservers = conn.dhcp_servers
         for dhcpserver in dhcpservers:
             dhcp[dhcpserver.network_name] = dhcpserver.ip_address
         for network in conn.internal_networks:
-            print(("Network:%s Type:internal" % (network)))
+            print("Network:%s Type:internal" % network)
         for network in conn.nat_networks:
-            print(("Network:%s Type:routed" % (network.network_name)))
+            print("Network:%s Type:routed" % network.network_name)
         return {'result': 'success'}
         # print("Network:%s Type:routed Cidr:%s Dhcp:%s" % (networkname, cidr, dhcp))
 
@@ -539,17 +539,17 @@ class Kbox(object):
         memory = vm.memory_size
         numcpus = vm.cpu_count
         state = status[str(vm.state)]
-        print(("name: %s" % name))
-        print(("status: %s" % state))
-        print(("autostart: %s" % autostart))
+        print("name: %s" % name)
+        print("status: %s" % state)
+        print("autostart: %s" % autostart)
         description = vm.description
-        print(("description: %s" % description))
+        print("description: %s" % description)
         profile = vm.get_extra_data('profile')
         ip = vm.get_extra_data('ip')
         if profile != '':
-            print(("profile: %s" % profile))
-        print(("cpus: %s" % numcpus))
-        print(("memory: %sMB" % memory))
+            print("profile: %s" % profile)
+        print("cpus: %s" % numcpus)
+        print("memory: %sMB" % memory)
         for n in range(7):
             nic = vm.get_network_adapter(n)
             enabled = nic.enabled
@@ -590,7 +590,7 @@ class Kbox(object):
             else:
                 networktype = 'N/A'
                 network = 'N/A'
-            print(("net interfaces:%s mac: %s net: %s type: %s" % (device, mac, network, networktype)))
+            print("net interfaces:%s mac: %s net: %s type: %s" % (device, mac, network, networktype))
         disks = []
         for index in range(10):
             try:
@@ -608,9 +608,9 @@ class Kbox(object):
             print(("diskname: %s disksize: %sGB diskformat: %s type: %s path: %s" % (device, disksize, diskformat,
                                                                                      drivertype, path)))
             if ip != '':
-                print(("ip: %s" % (ip)))
+                print("ip: %s" % ip)
             for hostport in hostports:
-                print(("ssh port: %s" % (hostport)))
+                print("ssh port: %s" % hostport)
                 break
         return {'result': 'success'}
 
@@ -869,7 +869,7 @@ class Kbox(object):
         if template is not None:
             volumes = self.volumes()
             if template not in volumes:
-                print(("you don't have template %s.Leaving..." % template))
+                print("you don't have template %s.Leaving..." % template)
                 return
             templatepath = "%s/%s" % (poolpath, template)
             self._convert_qcow2(templatepath, diskpath)
@@ -943,7 +943,7 @@ class Kbox(object):
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if status[str(vm.state)] == "up":
-            print(("VM %s up. Leaving" % name))
+            print("VM %s up. Leaving" % name)
             return {'result': 'failure', 'reason': "VM %s is up" % name}
         for index in range(10):
             try:
@@ -959,7 +959,7 @@ class Kbox(object):
                 session.unlock_machine()
                 disk.delete_storage()
                 return {'result': 'success'}
-        print(("Disk %s not found in %s" % (diskname, name)))
+        print("Disk %s not found in %s" % (diskname, name))
         return {'result': 'failure', 'reason': "Disk %s not found in %s" % (diskname, name)}
 
     def list_disks(self):
@@ -1005,7 +1005,7 @@ class Kbox(object):
         conn = self.conn
         networks = self.list_networks()
         if network not in networks:
-            print(("Network %s not found" % network))
+            print("Network %s not found" % network)
             return {'result': 'failure', 'reason': "Network %s not found" % network}
         networktype = networks[network]['type']
         try:
@@ -1014,7 +1014,7 @@ class Kbox(object):
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if self.status(name) == 'up':
-            print(("VM %s must be down" % name))
+            print("VM %s must be down" % name)
             return {'result': 'failure', 'reason': "VM %s must be down" % name}
         session = Session()
         vm.lock_machine(session, library.LockType.write)
@@ -1049,7 +1049,7 @@ class Kbox(object):
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if self.status(name) == 'up':
-            print(("VM %s must be down" % name))
+            print("VM %s must be down" % name)
             return {'result': 'failure', 'reason': "VM %s nust be down" % name}
         session = Session()
         vm.lock_machine(session, library.LockType.write)
@@ -1118,9 +1118,9 @@ class Kbox(object):
         else:
             sshcommand = "-A -p %s %s@127.0.0.1" % (port, user)
             if X:
-                sshcommand = "-X %s" % (sshcommand)
+                sshcommand = "-X %s" % sshcommand
             if Y:
-                sshcommand = "-X %s" % (sshcommand)
+                sshcommand = "-X %s" % sshcommand
             if D is not None:
                 sshcommand = "-D %s %s" % (D, sshcommand)
             if cmd:
@@ -1182,7 +1182,7 @@ class Kbox(object):
             try:
                 os.makedirs(poolpath)
             except OSError:
-                print(("Couldn't create directory %s.Leaving..." % poolpath))
+                print("Couldn't create directory %s.Leaving..." % poolpath)
                 return
         poolfile = "%s/.vbox.yml" % os.environ.get('HOME')
         if not os.path.exists(poolfile):

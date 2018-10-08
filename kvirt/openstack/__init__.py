@@ -142,7 +142,7 @@ class Kopenstack(object):
             flavor = flavors[0] if flavors else nova.flavors.find(name="m1.tiny")
             common.pprint("Using flavor %s" % flavor.name, color='green')
         elif flavor not in allflavornames:
-            return {'result': 'failure', 'reason': "Flavor % not found" % flavor}
+            return {'result': 'failure', 'reason': "Flavor %ds not found" % flavor}
         else:
             flavor = nova.flavors.find(name=flavor)
         nics = []

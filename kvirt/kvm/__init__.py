@@ -710,8 +710,8 @@ class Kvirt(object):
                 memory = float(memory) / 1024
                 memory = int(memory)
             usedmemory += memory
-        print(("Vms Running: %s" % (totalvms)))
-        print(("Memory Used: %sMB of %sMB" % (usedmemory, totalmemory)))
+        print("Vms Running: %s" % totalvms)
+        print("Memory Used: %sMB of %sMB" % (usedmemory, totalmemory))
         for pool in conn.listStoragePools():
             poolname = pool
             pool = conn.storagePoolLookupByName(pool)
@@ -734,7 +734,7 @@ class Kvirt(object):
             interfacename = interface.name()
             if interfacename == 'lo':
                 continue
-            print(("Network: %s Type: bridged" % (interfacename)))
+            print("Network: %s Type: bridged" % interfacename)
         for network in conn.listAllNetworks():
             networkname = network.name()
             netxml = network.XMLDesc(0)
@@ -757,7 +757,7 @@ class Kvirt(object):
                 dhcp = True
             else:
                 dhcp = False
-            print(("Network: %s Type: routed Cidr: %s Dhcp: %s" % (networkname, cidr, dhcp)))
+            print("Network: %s Type: routed Cidr: %s Dhcp: %s" % (networkname, cidr, dhcp))
 
     def status(self, name):
         """
@@ -1112,7 +1112,7 @@ class Kvirt(object):
                 return {'result': 'failure', 'reason': "VM %s has snapshots" % name}
             else:
                 for snapshot in vm.snapshotListNames():
-                    print(("Deleting snapshot %s" % snapshot))
+                    print("Deleting snapshot %s" % snapshot)
                     snap = vm.snapshotLookupByName(snapshot)
                     snap.delete()
         ip = self.ip(name)
@@ -1402,10 +1402,10 @@ class Kvirt(object):
                     for hostname in list(host.getiterator('hostname')):
                         existing.append(hostname.text)
                     if name in existing:
-                        print(("Entry already found for %s" % name))
+                        print("Entry already found for %s" % name)
                         return {'result': 'failure', 'reason': "Entry already found found for %s" % name}
-                    oldentry = '<host ip="%s"></host>' % (iphost)
-                    print(("Removing old dns entry for ip %s" % ip))
+                    oldentry = '<host ip="%s"></host>' % iphost
+                    print("Removing old dns entry for ip %s" % ip)
                     network.update(2, 10, 0, oldentry, 1)
         try:
             network.update(4, 10, 0, dnsentry, 1)
@@ -1498,7 +1498,7 @@ class Kvirt(object):
         xml = vm.XMLDesc(0)
         root = ET.fromstring(xml)
         if not vm:
-            print(("VM %s not found" % name))
+            print("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if vm.isActive() == 1:
             print("Machine up. Change will only appear upon next reboot")
@@ -1568,7 +1568,7 @@ class Kvirt(object):
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
         except:
-            print(("VM %s not found" % name))
+            print("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         memorynode = list(root.getiterator('memory'))[0]
         memorynode.text = memory
@@ -1596,7 +1596,7 @@ class Kvirt(object):
                 isofound = True
                 break
         if not isofound:
-            print(("Iso %s not found.Leaving..." % iso))
+            print("Iso %s not found.Leaving..." % iso)
             return {'result': 'failure', 'reason': "Iso %s not found" % iso}
         conn = self.conn
         try:
@@ -1604,7 +1604,7 @@ class Kvirt(object):
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
         except:
-            print(("VM %s not found" % name))
+            print("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         for element in list(root.getiterator('disk')):
             disktype = element.get('device')
@@ -1629,7 +1629,7 @@ class Kvirt(object):
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
         except:
-            print(("VM %s not found" % name))
+            print("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         for element in list(root.getiterator('disk')):
             disktype = element.get('device')
@@ -1655,7 +1655,7 @@ class Kvirt(object):
         try:
             vm = conn.lookupByName(name)
         except:
-            print(("VM %s not found" % name))
+            print("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if start:
             vm.setAutostart(1)
@@ -1698,7 +1698,7 @@ class Kvirt(object):
                 for vol in poo.listAllVolumes():
                     volumes[vol.name()] = vol.path()
             if template not in volumes and template not in list(volumes.values()):
-                print(("Invalid template %s.Leaving..." % template))
+                print("Invalid template %s.Leaving..." % template)
             if template in volumes:
                 template = volumes[template]
         pool.refresh(0)
@@ -1735,7 +1735,7 @@ class Kvirt(object):
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
         except:
-            print(("VM %s not found" % name))
+            print("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         currentdisk = 0
         for element in list(root.getiterator('disk')):
@@ -1769,7 +1769,7 @@ class Kvirt(object):
         try:
             pool = conn.storagePoolLookupByName(pool)
         except:
-            print(("Pool %s not found. Leaving..." % pool))
+            print("Pool %s not found. Leaving..." % pool)
             return {'result': 'failure', 'reason': "Pool %s not found" % pool}
         volume = pool.storageVolLookupByName(name)
         volume.delete()
@@ -1791,7 +1791,7 @@ class Kvirt(object):
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
         except:
-            print(("VM %s not found" % name))
+            print("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         for element in list(root.getiterator('disk')):
             disktype = element.get('device')
@@ -1810,7 +1810,7 @@ class Kvirt(object):
                 vmxml = vm.XMLDesc(0)
                 conn.defineXML(vmxml)
                 return {'result': 'success'}
-        print(("Disk %s not found in %s" % (diskname, name)))
+        print("Disk %s not found in %s" % (diskname, name))
         return {'result': 'failure', 'reason': "Disk %s not found in %s" % (diskname, name)}
 
     def list_disks(self):
@@ -1922,7 +1922,7 @@ class Kvirt(object):
         try:
             vm = conn.lookupByName(name)
         except:
-            print(("VM %s not found" % name))
+            print("VM %s not found" % name)
             return '', ''
         if vm.isActive() != 1:
             print("Machine down. Cannot ssh...")
@@ -1960,9 +1960,9 @@ class Kvirt(object):
         else:
             sshcommand = "-A %s@%s" % (user, ip)
             if X:
-                sshcommand = "-X %s" % (sshcommand)
+                sshcommand = "-X %s" % sshcommand
             if Y:
-                sshcommand = "-Y %s" % (sshcommand)
+                sshcommand = "-Y %s" % sshcommand
             if D is not None:
                 sshcommand = "-D %s %s" % (D, sshcommand)
             if cmd:
@@ -2029,7 +2029,7 @@ class Kvirt(object):
         conn = self.conn
         for pool in conn.listStoragePools():
             if pool == name:
-                print(("Pool %s already there.Leaving..." % name))
+                print("Pool %s already there.Leaving..." % name)
                 return
         if pooltype == 'dir':
             if self.host == 'localhost' or self.host == '127.0.0.1':
@@ -2037,7 +2037,7 @@ class Kvirt(object):
                     try:
                         os.makedirs(poolpath)
                     except OSError:
-                        print(("Couldn't create directory %s.Leaving..." % poolpath))
+                        print("Couldn't create directory %s.Leaving..." % poolpath)
                         return 1
             elif self.protocol == 'ssh':
                 cmd1 = 'ssh -p %s %s@%s "test -d %s || mkdir %s"' % (self.port, self.user, self.host, poolpath,
@@ -2045,13 +2045,13 @@ class Kvirt(object):
                 cmd2 = 'ssh -p %s -t %s@%s "sudo chown %s %s"' % (self.port, self.user, self.host, user, poolpath)
                 return1 = os.system(cmd1)
                 if return1 > 0:
-                    print(("Couldn't create directory %s.Leaving..." % poolpath))
+                    print("Couldn't create directory %s.Leaving..." % poolpath)
                     return
                 return2 = os.system(cmd2)
                 if return2 > 0:
-                    print(("Couldn't change permission of directory %s to qemu" % poolpath))
+                    print("Couldn't change permission of directory %s to qemu" % poolpath)
             else:
-                print(("Make sur %s directory exists on hypervisor" % name))
+                print("Make sur %s directory exists on hypervisor" % name)
             poolxml = """<pool type='dir'>
                          <name>%s</name>
                          <source>
@@ -2081,7 +2081,7 @@ class Kvirt(object):
                          </source>
                          </pool>""" % (name, poolpath)
         else:
-            print(("Invalid pool type %s.Leaving..." % pooltype))
+            print("Invalid pool type %s.Leaving..." % pooltype)
             return {'result': 'failure', 'reason': "Invalid pool type %s" % pooltype}
         pool = conn.storagePoolDefineXML(poolxml, 0)
         pool.setAutostart(True)
@@ -2224,7 +2224,7 @@ class Kvirt(object):
         <kvirt:info xmlns:kvirt="kvirt">
         <kvirt:plan>%s</kvirt:plan>
         </kvirt:info>
-        </metadata>""" % (plan)
+        </metadata>""" % plan
         networkxml = """<network><name>%s</name>
                     %s
                     %s
@@ -2357,7 +2357,7 @@ class Kvirt(object):
         try:
             pool = conn.storagePoolLookupByName(name)
         except:
-            print(("Pool %s not found. Leaving..." % name))
+            print("Pool %s not found. Leaving..." % name)
             return {'result': 'failure', 'reason': "Pool %s not found" % name}
         if pool.isActive() and full:
             for vol in pool.listAllVolumes():
@@ -2522,7 +2522,7 @@ class Kvirt(object):
         os.system(command)
 
     def _deletelvm(self, disk):
-        command = "lvremove -qqy %s" % (disk)
+        command = "lvremove -qqy %s" % disk
         if self.protocol == 'ssh':
             command = "ssh -p %s %s@%s \"%s\"" % (self.port, self.user, self.host, command)
         os.system(command)

@@ -257,7 +257,7 @@ def networkaction():
             dhcp = bool(request.form['dhcp'])
             isolated = bool(request.form['isolated'])
             nat = not isolated
-            print((network, cidr, dhcp, nat))
+            print(network, cidr, dhcp, nat)
             result = k.create_network(name=network, cidr=cidr, dhcp=dhcp, nat=nat)
         elif action == 'delete':
             result = k.delete_network(name=network)
@@ -446,7 +446,7 @@ def report():
         os.mkdir(reportdir)
     with open("%s/%s.txt" % (reportdir, name), 'w') as f:
         f.write(report)
-    print(("Name: %s Status: %s" % (name, status)))
+    print("Name: %s Status: %s" % (name, status))
     if status == 'Running' and not os.path.exists("%s/%s.running" % (reportdir, name)):
         open("%s/%s.running" % (reportdir, name), 'a').close()
     if status == 'OK' and os.path.exists("%s/%s.running" % (reportdir, name)):

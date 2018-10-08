@@ -499,7 +499,7 @@ def update(args):
     config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
     if dns:
-        common.pprint("Creating Dns entry for %s..." % (name), color='green')
+        common.pprint("Creating Dns entry for %s..." % name, color='green')
         if net is not None:
             nets = [net]
         else:
@@ -514,7 +514,7 @@ def update(args):
         common.pprint("Updating ip of vm %s to %s..." % (name, ip1), color='green')
         k.update_metadata(name, 'ip', ip1)
     elif cloudinit:
-        common.pprint("Removing cloudinit information of vm %s" % (name), color='green')
+        common.pprint("Removing cloudinit information of vm %s" % name, color='green')
         k.remove_cloudinit(name)
         return
     elif plan is not None:
@@ -530,20 +530,20 @@ def update(args):
         common.pprint("Updating numcpus of vm %s to %s..." % (name, numcpus), color='green')
         k.update_cpu(name, numcpus)
     elif autostart:
-        common.pprint("Setting autostart for vm %s..." % (name), color='green')
+        common.pprint("Setting autostart for vm %s..." % name, color='green')
         k.update_start(name, start=True)
     elif noautostart:
-        common.pprint("Removing autostart for vm %s..." % (name), color='green')
+        common.pprint("Removing autostart for vm %s..." % name, color='green')
         k.update_start(name, start=False)
     elif information:
-        common.pprint("Setting information for vm %s..." % (name), color='green')
+        common.pprint("Setting information for vm %s..." % name, color='green')
         k.update_information(name, information)
     elif iso:
         common.pprint("Switching iso for vm %s to %s..." % (name, iso), color='green')
         common.pprint("Note it will only be effective upon next start", color='green')
         k.update_iso(name, iso)
     elif host:
-        common.pprint("Creating Host entry for vm %s..." % (name), color='green')
+        common.pprint("Creating Host entry for vm %s..." % name, color='green')
         nets = k.vm_ports(name)
         if not nets:
             return
@@ -566,7 +566,7 @@ def disk(args):
         if diskname is None:
             common.pprint("Missing diskname. Leaving...", color='red')
             os._exit(1)
-        common.pprint("Deleting disk %s" % (diskname), color='green')
+        common.pprint("Deleting disk %s" % diskname, color='green')
         k.delete_disk(name=name, diskname=diskname, pool=pool)
         return
     if size is None:
@@ -578,7 +578,7 @@ def disk(args):
     if name is None:
         common.pprint("Missing name. Leaving...", color='red')
         os._exit(1)
-    common.pprint("Adding disk to %s..." % (name), color='green')
+    common.pprint("Adding disk to %s..." % name, color='green')
     k.add_disk(name=name, size=size, pool=pool, template=template)
 
 
@@ -592,7 +592,7 @@ def export(args):
     for name in names:
         result = k.export(name=name, template=template)
         if result['result'] == 'success':
-            common.pprint("Exporting vm %s" % (name), color='green')
+            common.pprint("Exporting vm %s" % name, color='green')
             codes.append(0)
         else:
             reason = result['reason']
@@ -604,7 +604,7 @@ def export(args):
 def lb(args):
     """Create/Delete loadbalancer"""
     name = args.name
-    common.pprint("Creating new %s" % (name), color='green')
+    common.pprint("Creating new %s" % name, color='green')
 
 
 def nic(args):
@@ -616,13 +616,13 @@ def nic(args):
     config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
     if delete:
-        common.pprint("Deleting nic from %s..." % (name), color='green')
+        common.pprint("Deleting nic from %s..." % name, color='green')
         k.delete_nic(name, interface)
         return
     if network is None:
         common.pprint("Missing network. Leaving...", color='red')
         os._exit(1)
-    common.pprint("Adding Nic %s..." % (name), color='green')
+    common.pprint("Adding Nic %s..." % name, color='green')
     k.add_nic(name=name, network=network)
 
 
@@ -637,13 +637,13 @@ def pool(args):
     config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
     if delete:
-        common.pprint("Deleting pool %s..." % (pool), color='green')
+        common.pprint("Deleting pool %s..." % pool, color='green')
         k.delete_pool(name=pool, full=full)
         return
     if path is None:
         common.pprint("Missing path. Leaving...", color='red')
         os._exit(1)
-    common.pprint("Adding pool %s..." % (pool), color='green')
+    common.pprint("Adding pool %s..." % pool, color='green')
     k.create_pool(name=pool, poolpath=path, pooltype=pooltype, thinpool=thinpool)
 
 
@@ -707,31 +707,31 @@ def repo(args):
             common.pprint("Updating all repos...", color='blue')
             repos = baseconfig.list_repos()
             for repo in repos:
-                common.pprint("Updating repo %s..." % (repo), color='green')
+                common.pprint("Updating repo %s..." % repo, color='green')
                 baseconfig.update_repo(repo)
         else:
-            common.pprint("Updating repo %s..." % (repo), color='green')
+            common.pprint("Updating repo %s..." % repo, color='green')
             baseconfig.update_repo(repo)
         return
     if repo is None:
         common.pprint("Missing repo. Leaving...", color='red')
         os._exit(1)
     if delete:
-        common.pprint("Deleting repo %s..." % (repo), color='green')
+        common.pprint("Deleting repo %s..." % repo, color='green')
         baseconfig.delete_repo(repo)
         return
     if update:
-        common.pprint("Deleting repo %s..." % (repo), color='green')
+        common.pprint("Deleting repo %s..." % repo, color='green')
         baseconfig.delete_repo(repo)
         return
     if download:
-        common.pprint("Downloading repo %s..." % (repo), color='green')
+        common.pprint("Downloading repo %s..." % repo, color='green')
         baseconfig.download_repo(repo)
         return
     if url is None:
         common.pprint("Missing url. Leaving...", color='red')
         os._exit(1)
-    common.pprint("Adding repo %s..." % (repo), color='green')
+    common.pprint("Adding repo %s..." % repo, color='green')
     baseconfig.create_repo(repo, url)
     return 0
 
@@ -748,7 +748,7 @@ def product(args):
     search = args.search
     if info:
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-        common.pprint("Providing information on product %s..." % (product), color='green')
+        common.pprint("Providing information on product %s..." % product, color='green')
         baseconfig.info_product(product, repo, group)
     elif search:
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
@@ -771,7 +771,7 @@ def product(args):
         print(products)
     else:
         config = Kconfig(client=args.client, debug=args.debug)
-        common.pprint("Creating product %s..." % (product), color='green')
+        common.pprint("Creating product %s..." % product, color='green')
         config.create_product(product, repo=repo, group=group, plan=plan, latest=latest, overrides=overrides)
     return 0
 
@@ -920,7 +920,7 @@ def container(args):
         dockerutils.create_container(k, name, image, nets=None, cmd=cmd,
                                      ports=ports, volumes=volumes,
                                      environment=environment)
-    common.pprint("container %s created" % (name), color='green')
+    common.pprint("container %s created" % name, color='green')
     return
 
 
@@ -938,10 +938,10 @@ def snapshot(args):
     elif delete:
         common.pprint("Deleting snapshot of %s named %s..." % (name, snapshot), color='green')
     elif listing:
-        common.pprint("Listing snapshots of %s..." % (name), color='green')
+        common.pprint("Listing snapshots of %s..." % name, color='green')
         snapshots = k.snapshot(snapshot, name, listing=True)
         if isinstance(snapshots, dict):
-            common.pprint("Vm %s not found" % (name), color='red')
+            common.pprint("Vm %s not found" % name, color='red')
             return
         else:
             for snapshot in snapshots:
