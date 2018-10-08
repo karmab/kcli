@@ -328,7 +328,7 @@ class Kbaseconfig:
             ini = {'default': {'client': 'local', 'cloudinit': True,
                                'tunnel': False, 'insecure': True, 'enableroot': True,
                                'reserveip': False, 'reservedns': False,
-                               'nested': True, 'reservehost': False, 
+                               'nested': True, 'reservehost': False,
                                'start': True},
                    'local': {'pool': pool, 'nets': ['default']}}
             if not sys.platform.startswith('linux'):
@@ -339,7 +339,7 @@ class Kbaseconfig:
             ini = {'default': {'client': name, 'cloudinit': True,
                                'tunnel': True, 'insecure': True, 'enableroot': True,
                                'reserveip': False, 'reservedns': False,
-                               'nested': True,
+                               'nested': True, 'reservehost': False,
                                'start': True}, name: {'host': host, 'pool': pool, 'nets': ['default']}}
             if protocol is not None:
                 ini[name]['protocol'] = protocol
