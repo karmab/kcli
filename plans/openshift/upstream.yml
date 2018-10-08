@@ -4,6 +4,7 @@ parameters:
   docker_disk_size: 60
   openshift_version: '3.10'
   asb: false
+  admin_user: admin
 
 origin:
  template: [[ template ]]

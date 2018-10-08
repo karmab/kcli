@@ -15,4 +15,4 @@ oc cluster up --public-hostname $IP.xip.io --routing-suffix $IP.xip.io --enable=
 [% endif %]
 oc login -u system:admin
 docker update --restart=always origin
-oc adm policy add-cluster-role-to-user cluster-admin developer
+oc adm policy add-cluster-role-to-user cluster-admin [[ admin_user ]]
