@@ -27,7 +27,7 @@ export CA_CERT=/etc/kubernetes/ssl/ca.pem
 export ADMIN_KEY=/etc/kubernetes/ssl/admin.pem
 export ADMIN_KEY=/etc/kubernetes/ssl/admin-key.pem
 export ADMIN_CERT=/etc/kubernetes/ssl/admin.pem
-./kubectl config set-cluster default-cluster --server=https://$IP --certificate-authority=$CA_CERT
-./kubectl config set-credentials default-admin --certificate-authority=$CA_CERT --client-key=$ADMIN_KEY --client-certificate=$ADMIN_CERT
+./kubectl config set-cluster default-cluster --server=https://${IP} --certificate-authority=${CA_CERT}
+./kubectl config set-credentials default-admin --certificate-authority=${CA_CERT} --client-key=${ADMIN_KEY} --client-certificate=${ADMIN_CERT}
 ./kubectl config set-context default-system --cluster=default-cluster --user=default-admin
 ./kubectl config use-context default-system

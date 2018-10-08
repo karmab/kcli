@@ -3,7 +3,7 @@ CIDR="192.168.0.0/16"
 [% else %] 
 CIDR="10.244.0.0/16"
 [% endif %] 
-kubeadm init --pod-network-cidr=$CIDR
+kubeadm init --pod-network-cidr=${CIDR}
 cp /etc/kubernetes/admin.conf /root/
 chown root:root /root/admin.conf
 export KUBECONFIG=/root/admin.conf

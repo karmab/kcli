@@ -128,7 +128,7 @@ ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null cirros@$(opensta
 ####
 #Configure fence-virt on the host
 ###
-if [ $FENCEVIRT = True ] ; then
+if [ ${FENCEVIRT} = True ] ; then
 HOSTIP=$(cat instackenv.json | grep pm_addr | uniq | awk -F "\"" '{ print $4}')
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@${HOSTIP}  yum install fence-virt fence-virtd fence-virtd-multicast fence-virtd-libvirt
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@${HOSTIP} mkdir -p /etc/cluster
@@ -177,7 +177,7 @@ fi
 ###
 #Install rally and run tests
 ###
-if [ $RALLY = True ] ; then
+if [ ${RALLY} = True ] ; then
 mkdir ~/rally_home
 sudo chown 65500 ~/rally_home
 cd ~/rally_home && git clone ssh://git@gitlab.consulting.redhat.com:2222/dparkes/Rally-tasks.git

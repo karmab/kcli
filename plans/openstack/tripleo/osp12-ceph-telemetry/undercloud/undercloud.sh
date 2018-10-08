@@ -11,15 +11,15 @@ chmod 600 ~/.ssh/config
 ssh-keyscan -H 10.10.11.1 >> ~/.ssh/known_hosts
 #ssh-keygen -N '' -t rsa -f /home/stack/.ssh/id_rsa
 ssh-copy-id -i ~/.ssh/id_rsa.pub root@10.10.11.1
-PORT=31 ; for i in ctrl01 ctrl02 ctrl03 c01 c02 ceph01 ceph02 ceph03 telemetry01 telemetry02 ; do vbmc add $i --port 62${PORT} --username admin --password unix1234 --libvirt-uri qemu+ssh://root@10.10.11.1/system; ((PORT++)); done
-for i in ctrl01 ctrl02 ctrl03 c01 c02 ceph01 ceph02 ceph03 telemetry01 telemetry02 ; do vbmc start $i ; done
+PORT=31 ; for i in ctrl01 ctrl02 ctrl03 c01 c02 ceph01 ceph02 ceph03 telemetry01 telemetry02 ; do vbmc add ${i} --port 62${PORT} --username admin --password unix1234 --libvirt-uri qemu+ssh://root@10.10.11.1/system; ((PORT++)); done
+for i in ctrl01 ctrl02 ctrl03 c01 c02 ceph01 ceph02 ceph03 telemetry01 telemetry02 ; do vbmc start ${i} ; done
 sudo iptables -I INPUT -p udp --match multiport  --dport 6231:6244 -j ACCEPT
 #permanent rules
 
 #configure overcloud images
 mkdir ~/images
 cd ~/images
-for i in /usr/share/rhosp-director-images/overcloud-full-latest-$VERSION.0.tar /usr/share/rhosp-director-images/ironic-python-agent-latest-$VERSION.0.tar; do tar -xvf $i; done
+for i in /usr/share/rhosp-director-images/overcloud-full-latest-${VERSION}.0.tar /usr/share/rhosp-director-images/ironic-python-agent-latest-${VERSION}.0.tar; do tar -xvf ${i}; done
 virt-customize -a /home/stack/images/overcloud-full.qcow2 --root-password password:redhat
 
 #upload overcloud images
@@ -36,9 +36,9 @@ openstack overcloud node import instackenv.json
 
 #configure root disk
 for type in ctrl c0 ceph telemetry; do
-for node in $(openstack baremetal node list  -f value -c Name | grep $type)
+for node in $(openstack baremetal node list  -f value -c Name | grep ${type})
   do
-   ironic node-update $node add properties/root_device='{"name": "/dev/vda"}'
+   ironic node-update ${node} add properties/root_device='{"name": "/dev/vda"}'
   done
 done
 
@@ -54,9 +54,9 @@ if [ ${type} = compute ] ; then name=c0 ; fi
 if [ ${type} = ceph ] ; then name=ceph ; fi
 if [ ${type} = telemetry ] ; then name=telemetry ; fi
 counter=0
-	for node in $(openstack baremetal node list  -f value -c Name | grep $name)
+	for node in $(openstack baremetal node list  -f value -c Name | grep ${name})
 	do
-    		ironic node-update $node add properties/capabilities="node:${type}-${counter},boot_option:local"
+    		ironic node-update ${node} add properties/capabilities="node:${type}-${counter},boot_option:local"
                 counter=$(( counter +1))
         done
 done
@@ -71,7 +71,7 @@ openstack overcloud container image prepare \
   --set ceph_image=rhceph-2-rhel7 \
   --set ceph_tag=latest \
   --prefix=openstack- \
-  --tag=$VERSIONTAG \
+  --tag=${VERSIONTAG} \
   --output-images-file=/home/stack/templates/local_registry_images.yaml \
   -e /usr/share/openstack-tripleo-heat-templates/environments/ceph-ansible/ceph-ansible.yaml \
   ${ENV}
@@ -88,7 +88,7 @@ openstack overcloud container image prepare \
   --set ceph_image=rhceph-2-rhel7 \
   --set ceph_tag=latest \
   --prefix=openstack- \
-  --tag=$VERSIONTAG \
+  --tag=${VERSIONTAG} \
   --env-file=/home/stack/templates/environments/overcloud_images.yaml \
   -e /usr/share/openstack-tripleo-heat-templates/environments/ceph-ansible/ceph-ansible.yaml \
   ${ENV}

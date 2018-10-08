@@ -8,4 +8,4 @@ yum -y install foreman-release-scl wget katello
 #yum-y update
 yum -y install katello
 echo `hostname -I` `hostname -s`.default `hostname -s` >> /etc/hosts
-foreman-installer --scenario katello --foreman-admin-username admin  --foreman-admin-password $PASSWORD --foreman-initial-location $LOCATION --foreman-initial-organization $ORG
+foreman-installer --scenario katello --foreman-admin-username admin  --foreman-admin-password ${PASSWORD} --foreman-initial-location ${LOCATION} --foreman-initial-organization ${ORG}

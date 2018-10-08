@@ -15,7 +15,7 @@ chmod 0600 ~/.ssh/config
 mkdir images
 tar zxvf templates.tar.gz
 cd ~/images
-for i in /usr/share/rhosp-director-images/overcloud-full-latest-$VERSION.0.tar /usr/share/rhosp-director-images/ironic-python-agent-latest-$VERSION.0.tar; do tar -xvf $i; done
+for i in /usr/share/rhosp-director-images/overcloud-full-latest-${VERSION}.0.tar /usr/share/rhosp-director-images/ironic-python-agent-latest-${VERSION}.0.tar; do tar -xvf ${i}; done
 
 source ~/stackrc
 openstack overcloud image upload --image-path /home/stack/images
