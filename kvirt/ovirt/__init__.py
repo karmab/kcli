@@ -533,9 +533,8 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
         if self.debug:
             print(vars(vm))
         vm_service = self.vms_service.vm_service(vm.id)
-        yamlinfo = {'name': vm.name, 'disks': [], 'nets': []}
+        yamlinfo = {'name': vm.name, 'disks': [], 'nets': [], 'status': vm.status}
         # yamlinfo['autostart'] = ''
-        yamlinfo['status'] = vm.status
         if vm.status == 'up':
             host = conn.follow_link(vm.host)
             yamlinfo['host'] = host.name

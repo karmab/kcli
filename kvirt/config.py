@@ -155,12 +155,10 @@ class Kconfig(Kbaseconfig):
                   plan='kvirt'):
         """
 
+        :param k:
+        :param plan:
         :param name:
         :param profile:
-        :param ip1:
-        :param ip2:
-        :param ip3:
-        :param ip4:
         :param overrides:
         :param customprofile:
         :return:
@@ -454,7 +452,7 @@ class Kconfig(Kbaseconfig):
                 ansibleconfig = os.path.expanduser('~/.ansible.cfg')
                 with open(ansibleconfig, "w") as f:
                     f.write("[ssh_connection]\nretries=10\n")
-                print(("Running: %s -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook)))
+                print("Running: %s -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
                 os.system("%s -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
         common.set_lastvm(name, self.client)
         return {'result': 'success'}
@@ -609,7 +607,7 @@ class Kconfig(Kbaseconfig):
                     for product in products:
                         group = product['group']
                         repo = product['repo']
-                        print(("repo:%s\tgroup:%s" % (repo, group)))
+                        print("repo:%s\tgroup:%s" % (repo, group))
                     os._exit(1)
         else:
             product = products[0]
@@ -622,14 +620,14 @@ class Kconfig(Kbaseconfig):
             template = product.get('template')
             parameters = product.get('parameters')
             if template is not None:
-                print(("Note that this product uses template: %s" % template))
+                print("Note that this product uses template: %s" % template)
             if parameters is not None:
                 for parameter in parameters:
                     applied_parameter = overrides[parameter] if parameter in overrides else parameters[parameter]
-                    print(("Using parameter %s: %s" % (parameter, applied_parameter)))
+                    print("Using parameter %s: %s" % (parameter, applied_parameter))
             extraparameters = list(set(overrides) - set(parameters)) if parameters is not None else overrides
             for parameter in extraparameters:
-                print(("Using parameter %s: %s" % (parameter, overrides[parameter])))
+                print("Using parameter %s: %s" % (parameter, overrides[parameter]))
             common.pprint("Gathering all from group %s" % group, color='green')
             if os.path.exists(group):
                 common.pprint("Using current directory %s. Make sure it contains kcli content" % group, color='green')
@@ -650,7 +648,7 @@ class Kconfig(Kbaseconfig):
             # common.pprint("Running: kcli plan -f %s %s" % (inputfile, plan), color='green')
             # self.plan(plan, inputfile=inputfile, overrides=overrides)
             # os.chdir('..')
-            common.pprint("Product can be deleted with: kcli plan -d %s" % (plan), color='green')
+            common.pprint("Product can be deleted with: kcli plan -d %s" % plan, color='green')
         return {'result': 'success', 'plan': plan}
 
     def plan(self, plan, ansible=False, get=None, path=None, autostart=False, container=False, noautostart=False,
@@ -719,7 +717,7 @@ class Kconfig(Kbaseconfig):
                 os._exit(1)
             return {'result': 'success'}
         if autostart:
-            common.pprint("Set vms from plan %s to autostart" % (plan), color='green')
+            common.pprint("Set vms from plan %s to autostart" % plan, color='green')
             for vm in sorted(k.list()):
                 name = vm[0]
                 description = vm[4]
@@ -728,7 +726,7 @@ class Kconfig(Kbaseconfig):
                     common.pprint("%s set to autostart!" % name, color='green')
             return {'result': 'success'}
         if noautostart:
-            common.pprint("Preventing vms from plan %s to autostart" % (plan), color='green')
+            common.pprint("Preventing vms from plan %s to autostart" % plan, color='green')
             for vm in sorted(k.list()):
                 name = vm[0]
                 description = vm[4]
@@ -737,7 +735,7 @@ class Kconfig(Kbaseconfig):
                     common.pprint("%s prevented to autostart!" % name, color='green')
             return {'result': 'success'}
         if start:
-            common.pprint("Starting vms from plan %s" % (plan), color='green')
+            common.pprint("Starting vms from plan %s" % plan, color='green')
             for vm in sorted(k.list()):
                 name = vm[0]
                 description = vm[4]
@@ -755,7 +753,7 @@ class Kconfig(Kbaseconfig):
             common.pprint("Plan %s started!" % plan, color='green')
             return {'result': 'success'}
         if stop:
-            common.pprint("Stopping vms from plan %s" % (plan), color='green')
+            common.pprint("Stopping vms from plan %s" % plan, color='green')
             for vm in sorted(k.list()):
                 name = vm[0]
                 description = vm[4]
@@ -857,7 +855,7 @@ class Kconfig(Kbaseconfig):
                             if no_overrides and parameters:
                                 common.pprint("Using parameters from master plan in child ones", color='blue')
                                 for override in overrides:
-                                    print(("Using parameter %s: %s" % (override, overrides[override])))
+                                    print("Using parameter %s: %s" % (override, overrides[override]))
                             common.pprint("Running kcli plan -f %s %s" % (inputfile, plan), color='green')
                             self.plan(plan, ansible=False, get=None, path=path, autostart=False, container=False,
                                       noautostart=False, inputfile=inputfile, start=False, stop=False, delete=False,
@@ -1044,7 +1042,7 @@ class Kconfig(Kbaseconfig):
                                thin=False)
             if containerentries:
                 common.pprint("Deploying Containers...", color='green')
-                label = "plan=%s" % (plan)
+                label = "plan=%s" % plan
                 for container in containerentries:
                     if dockerutils.exists_container(k, container):
                         common.pprint("Container %s skipped!" % container, color='blue')
@@ -1103,12 +1101,12 @@ class Kconfig(Kbaseconfig):
                     ansibleconfig = os.path.expanduser('~/.ansible.cfg')
                     with open(ansibleconfig, "w") as f:
                         f.write("[ssh_connection]\nretries=10\n")
-                    print(("Running: %s -i /tmp/%s.inv %s" % (ansiblecommand, plan, playbook)))
+                    print("Running: %s -i /tmp/%s.inv %s" % (ansiblecommand, plan, playbook))
                     os.system("%s -i /tmp/%s.inv %s" % (ansiblecommand, plan, playbook))
         if ansible:
             common.pprint("Deploying Ansible Inventory...", color='green')
             if os.path.exists("/tmp/%s.inv" % plan):
-                common.pprint("Inventory in /tmp/%s.inv skipped!" % (plan), color='blue')
+                common.pprint("Inventory in /tmp/%s.inv skipped!" % plan, color='blue')
             else:
                 common.pprint("Creating ansible inventory for plan %s in /tmp/%s.inv" % (plan, plan), color='green')
                 vms = []
@@ -1197,7 +1195,7 @@ class Kconfig(Kbaseconfig):
             for vol in k.volumes():
                 template = os.path.basename(vol)
                 if template in [os.path.basename(v) for v in dest.volumes()]:
-                    common.pprint("Ignoring %s as it's already there" % (template), color='blue')
+                    common.pprint("Ignoring %s as it's already there" % template, color='blue')
                     continue
                 url = None
                 for n in list(TEMPLATES.values()):

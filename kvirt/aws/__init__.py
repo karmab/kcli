@@ -645,7 +645,7 @@ class Kaws(object):
             Filters = {'Name': "tag:Name", 'Values': [name]}
             vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
         except:
-            print(("VM %s not found" % name))
+            print("VM %s not found" % name)
             return '', ''
         vm = [v for v in self.list() if v[0] == name][0]
         template = vm[3]

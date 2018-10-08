@@ -334,7 +334,7 @@ class Kubevirt(object):
                         core.delete_namespaced_pod(completed, namespace, client.V1DeleteOptions())
                     continue
                 else:
-                    volname = "%s-vol0" % (name)
+                    volname = "%s-vol0" % name
                     copy = self.copy_image(diskpool, template, volname)
                     if copy['result'] == 'failure':
                         reason = copy['reason']
@@ -718,7 +718,7 @@ class Kubevirt(object):
                 if pvc.metadata.name in volumes]
         for p in sorted(pvcs):
             pvcname = p.metadata.name
-            print(("Deleting pvc %s" % pvcname))
+            print("Deleting pvc %s" % pvcname)
             core.delete_namespaced_persistent_volume_claim(pvcname, namespace, client.V1DeleteOptions())
         return {'result': 'success'}
 
@@ -998,7 +998,7 @@ class Kubevirt(object):
                 user = 'debian'
             elif 'arch' in template.lower():
                 user = 'arch'
-        return (user, ip)
+        return user, ip
 
     def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, Y=False,
             D=None):

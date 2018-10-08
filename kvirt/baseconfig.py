@@ -326,10 +326,9 @@ class Kbaseconfig:
             poolpath = '/var/lib/libvirt/images'
         if host == '127.0.0.1':
             ini = {'default': {'client': 'local', 'cloudinit': True,
-                               'tunnel': False, 'reservehost': False,
-                               'insecure': True, 'enableroot': True,
+                               'tunnel': False, 'insecure': True, 'enableroot': True,
                                'reserveip': False, 'reservedns': False,
-                               'reservehost': False, 'nested': True,
+                               'nested': True, 'reservehost': False,
                                'start': True},
                    'local': {'pool': pool, 'nets': ['default']}}
             if not sys.platform.startswith('linux'):
@@ -338,12 +337,10 @@ class Kbaseconfig:
             if name is None:
                 name = host
             ini = {'default': {'client': name, 'cloudinit': True,
-                               'tunnel': True, 'reservehost': False,
-                               'insecure': True, 'enableroot': True,
+                               'tunnel': True, 'insecure': True, 'enableroot': True,
                                'reserveip': False, 'reservedns': False,
-                               'reservehost': False, 'nested': True,
-                               'start': True}}
-            ini[name] = {'host': host, 'pool': pool, 'nets': ['default']}
+                               'nested': True, 'reservehost': False,
+                               'start': True}, name: {'host': host, 'pool': pool, 'nets': ['default']}}
             if protocol is not None:
                 ini[name]['protocol'] = protocol
             if user is not None:
@@ -555,7 +552,7 @@ class Kbaseconfig:
         if parameters is not None:
             parameters = yaml.load(parameters)['parameters']
             for parameter in parameters:
-                print(("%s: %s" % (parameter, parameters[parameter])))
+                print("%s: %s" % (parameter, parameters[parameter]))
                 if parameter == 'baseplan':
                     self.info_plan(parameters[parameter], quiet=True)
                     print()
@@ -599,19 +596,19 @@ class Kbaseconfig:
                 return {'product': product, 'comments': comments,
                         'description': description, 'parameters': parameters}
             if description is not None:
-                print(("description: %s" % description))
+                print("description: %s" % description)
             if group is not None:
-                print(("group: %s" % group))
+                print("group: %s" % group)
             if numvms is not None:
                 numvmsinfo = "numvms: %s" % numvms
                 if numvms == 1:
                     numvmsinfo += " (Vm name can be overriden)"
                 print(numvmsinfo)
             if template is not None:
-                print(("template: %s" % template))
+                print("template: %s" % template)
             if comments is not None:
-                print(("Comments : %s" % comments))
+                print("Comments : %s" % comments)
             if parameters is not None:
                 print("Available parameters:")
                 for parameter in sorted(parameters):
-                    print((" %s: %s" % (parameter, parameters[parameter])))
+                    print(" %s: %s" % (parameter, parameters[parameter]))

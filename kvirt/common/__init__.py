@@ -30,7 +30,7 @@ def symlinks(user, repo):
     try:
         r = urlopen(url1)
     except urllib.error.HTTPError as e:
-        print(("Couldn't access url %s, got %s.Leaving..." % (url1, e)))
+        print("Couldn't access url %s, got %s.Leaving..." % (url1, e))
         os._exit(1)
     base = json.load(r)
     sha = base['object']['sha']
@@ -55,7 +55,7 @@ def download(url, path, debug=False):
     """
     filename = os.path.basename(url)
     if debug:
-        print(("Fetching %s" % filename))
+        print("Fetching %s" % filename)
     url = urlopen(url)
     with open("%s/%s" % (path, filename), 'wb') as output:
         output.write(url.read())
@@ -72,7 +72,7 @@ def makelink(url, path, debug=False):
     url = urlopen(url)
     target = url.read()
     if debug:
-        print(("Creating symlink for %s pointing to %s" % (filename, target)))
+        print("Creating symlink for %s pointing to %s" % (filename, target))
     os.symlink(target, "%s/%s" % (path, filename))
 
 
@@ -109,18 +109,18 @@ def fetch(url, path, syms=None):
     try:
         r = urlopen(url)
     except urllib.error.HTTPError:
-        print(("Invalid url %s.Leaving..." % url))
+        print("Invalid url %s.Leaving..." % url)
         os._exit(1)
     try:
         base = json.load(r)
     except:
-        print(("Couldnt load json data from url %s.Leaving..." % url))
+        print("Couldnt load json data from url %s.Leaving..." % url)
         os._exit(1)
     if not isinstance(base, list):
         base = [base]
     for b in base:
         if 'name' not in b or 'type' not in b or 'download_url' not in b:
-            print(("Missing data in url %s.Leaving..." % url))
+            print("Missing data in url %s.Leaving..." % url)
             os._exit(1)
         filename = b['name']
         filetype = b['type']
@@ -303,7 +303,7 @@ def process_files(files=[], overrides={}):
                 content = open(origin, 'r').readlines()
         data += "- owner: %s:%s\n" % (owner, owner)
         data += "  path: %s\n" % path
-        data += "  permissions: '%s'\n" % (permissions)
+        data += "  permissions: '%s'\n" % permissions
         if binary:
             data += "  content: !!binary | \n     %s\n" % str(content, "utf-8")
         else:
@@ -335,7 +335,7 @@ def process_ignition_files(files=[], overrides={}):
         if origin is not None:
             origin = os.path.expanduser(origin)
             if not os.path.exists(origin):
-                print(("Skipping file %s as not found" % origin))
+                print("Skipping file %s as not found" % origin)
                 continue
             binary = True if '.' in origin and origin.split('.')[-1].lower() in binary_types else False
             if binary:
@@ -426,7 +426,7 @@ def pprint(text, color=None):
     colors = {'blue': '34', 'red': '31', 'green': '32', 'yellow': '33', 'pink': '35', 'white': '37'}
     if color is not None and color in colors:
         color = colors[color]
-        print(('\033[1;%sm%s\033[0;0m' % (color, text)))
+        print('\033[1;%sm%s\033[0;0m' % (color, text))
     else:
         print(text)
 
@@ -636,12 +636,12 @@ def print_info(yamlinfo, output='plain', fields=None, values=False):
                         for snap in value:
                             snapshot = snap['snapshot']
                             current = snap['current']
-                            print(("snapshot: %s current: %s" % (snapshot, current)))
+                            print("snapshot: %s current: %s" % (snapshot, current))
                     else:
                         if values:
                             print(value)
                         else:
-                            print(("%s: %s" % (key, value)))
+                            print("%s: %s" % (key, value))
 
 
 def ssh(name, ip='', host=None, port=22, hostuser=None, user=None, local=None, remote=None, tunnel=False,
@@ -672,9 +672,9 @@ def ssh(name, ip='', host=None, port=22, hostuser=None, user=None, local=None, r
             if D:
                 sshcommand = "-D %s %s" % (D, sshcommand)
             if X:
-                sshcommand = "-X %s" % (sshcommand)
+                sshcommand = "-X %s" % sshcommand
             if Y:
-                sshcommand = "-Y %s" % (sshcommand)
+                sshcommand = "-Y %s" % sshcommand
             if cmd:
                 sshcommand = "%s %s" % (sshcommand, cmd)
             if host not in ['localhost', '127.0.0.1'] and tunnel:

@@ -143,8 +143,7 @@ class Kgcp(object):
         else:
             machine_type = flavor
         machine_type = "zones/%s/machineTypes/%s" % (zone, machine_type)
-        body = {'name': name, 'machineType': machine_type}
-        body['networkInterfaces'] = []
+        body = {'name': name, 'machineType': machine_type, 'networkInterfaces': []}
         foundnets = []
         for index, net in enumerate(nets):
             ip = None
@@ -224,7 +223,7 @@ class Kgcp(object):
             if origin is not None:
                 origin = os.path.expanduser(origin)
                 if not os.path.exists(origin):
-                    print(("Skipping file %s as not found" % origin))
+                    print("Skipping file %s as not found" % origin)
                     continue
                 binary = True if '.' in origin and origin.split('.')[-1].lower() in binary_types else False
                 if binary:
@@ -452,7 +451,7 @@ class Kgcp(object):
         console = conn.instances().getSerialPortOutput(zone=zone, project=project, instance=name).execute()
         if console is None:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        print((console['contents']))
+        print(console['contents'])
         return
 
     def info(self, name, output='plain', fields=None, values=False):
@@ -551,9 +550,8 @@ class Kgcp(object):
         :param iso:
         :return:
         """
-        projects = ['centos-cloud', 'coreos-cloud', 'cos-cloud', 'debian-cloud',
-                    'rhel-cloud', 'suse-cloud', 'ubuntu-os-cloud']
-        projects.append(self.project)
+        projects = ['centos-cloud', 'coreos-cloud', 'cos-cloud', 'debian-cloud', 'rhel-cloud', 'suse-cloud',
+                    'ubuntu-os-cloud', self.project]
         conn = self.conn
         images = []
         for project in projects:
@@ -776,7 +774,7 @@ class Kgcp(object):
     def _ssh_credentials(self, name):
         user = self.user
         ip = self.ip(name)
-        return (user, ip)
+        return user, ip
 
     def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, Y=False,
             D=None):
@@ -863,8 +861,7 @@ class Kgcp(object):
         conn = self.conn
         project = self.project
         region = self.region
-        body = {'name': name}
-        body['autoCreateSubnetworks'] = True if cidr is not None else False
+        body = {'name': name, 'autoCreateSubnetworks': True if cidr is not None else False}
         conn.networks().insert(project=project, body=body).execute()
         timeout = 0
         while True:
@@ -1146,8 +1143,7 @@ class Kgcp(object):
             return {'result': 'failure', 'reason': "VM %s up" % name}
         newname = template if template is not None else name
         description = "template based on %s" % name
-        body = {'name': newname, 'forceCreate': True, 'description': description}
-        body['sourceDisk'] = vm['disks'][0]['source']
-        body['licenses'] = ["projects/vm-options/global/licenses/enable-vmx"]
+        body = {'name': newname, 'forceCreate': True, 'description': description,
+                'sourceDisk': vm['disks'][0]['source'], 'licenses': ["projects/vm-options/global/licenses/enable-vmx"]}
         conn.images().insert(project=project, body=body).execute()
         return {'result': 'success'}

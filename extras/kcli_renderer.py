@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # coding=utf-8
 
-'''
+"""
 ansible dynamic inventory script for use with kcli and libvirt
-'''
+"""
 
 from jinja2 import Environment, FileSystemLoader
 from kvirt.common import get_overrides, get_parameters, pprint
@@ -47,7 +47,7 @@ def render(args):
             continue
         elif line.startswith('parameters:'):
             parametersfound = 0
-        elif parametersfound > -1 and parametersfound < numparameters:
+        elif -1 < parametersfound < numparameters:
             parametersfound += 1
         else:
             print(line.strip())
