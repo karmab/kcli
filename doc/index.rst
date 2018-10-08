@@ -4,11 +4,10 @@ About
 =====
 
 This tool is meant to interact with a local/remote libvirt daemon and to
-easily deploy from templates (optionally using cloudinit). It will also
-report IPS for any vm connected to a dhcp-enabled libvirt network and
-generally for every vm deployed from this client.
+easily deploy from templates (using cloudinit). It will also report ips
+for any vm connected to a dhcp-enabled libvirt network.
 
-There is also support for
+There is also support for:
 
 -  gcp
 -  aws
@@ -23,8 +22,7 @@ Requisites
 ----------
 
 If you dont have kvm installed on the target host, you can also use the
-following command to get you going ( not needed for ubuntu as it’s done
-when installing kcli package)
+following command to get you going
 
 .. code:: bash
 
@@ -32,7 +30,7 @@ when installing kcli package)
     sudo usermod -aG qemu,libvirt YOUR_USER
     newgrp libvirt
 
-For interaction with local docker, you might also need the following
+For interaction with local docker daemon, you also need the following
 
 .. code:: bash
 
@@ -40,14 +38,13 @@ For interaction with local docker, you might also need the following
     sudo usermod -aG docker YOUR_USER
     sudo systemctl restart docker
 
-For ubuntu, you will also need the following hack:
+For ubuntu, you will need the following hack:
 
 .. code:: bash
 
     export PYTHONPATH=/usr/lib/python2.7/site-packages
 
-If not running as root, you’ll also have to add your user to those
-groups
+If not running as root, you’ll have to add your user to those groups
 
 .. code:: bash
 
@@ -56,8 +53,8 @@ groups
 for *macosx*, you’ll want to check the docker installation section ( if
 planning to go against a remote kvm host)
 
-Recomended install method
--------------------------
+RPM install method
+------------------
 
 If using *fedora*, you can use this:
 
@@ -72,8 +69,8 @@ ubuntu zesty):
 
     echo deb [trusted=yes] https://packagecloud.io/karmab/kcli/ubuntu/ zesty main > /etc/apt/sources.list.d/kcli.list ; apt-get update ; apt-get -y install kcli-all
 
-Using docker
-------------
+Container install method
+------------------------
 
 Pull the latest image:
 
@@ -97,10 +94,8 @@ the are several flags you’ll want to pass depending on your use case
 -  ``--security-opt label:disable`` if running with selinux
 -  ``-v $PWD:/workdir`` to access plans below your current directory
 -  ``-v $HOME:/root`` to share your entire home directory, useful if you
-   want to share secret files, ``~/register.sh`` for instance (although
-   you can use `rhnregister <#rhnregister>`__)
--  ``-e HTTP_PROXY=your_proxy -e HTTPS_PROXY=your_proxy`` if accessing
-   behind a proxy
+   want to share secret files, ``~/register.sh`` for instance)
+-  ``-e HTTP_PROXY=your_proxy -e HTTPS_PROXY=your_proxy``
 
 As a bonus, you can alias kcli and run it as if it was installed
 locally:
@@ -115,6 +110,8 @@ For web access, you can switch with
 
 I don’t want a big fat daemon
 -----------------------------
+
+Use podman!
 
 ::
 
@@ -154,17 +151,9 @@ On MacOSX, run the following command too
 Configuration
 =============
 
-If you are starting from a completely clean kvm host, you might have to
-create default pool . You can do it with kcli actually
-
-.. code:: bash
-
-    sudo kcli pool -p /var/lib/libvirt/images default
-    sudo chmod g+rw /var/lib/libvirt/images
-
-If you only want to use your local libvirt or virtualbox daemon, *no
-configuration* is needed. On most distributions, default network and
-storage pool already exist.
+If you only want to use your local libvirt, *no configuration* is
+needed. On most distributions, default network and storage pool already
+exist.
 
 You can add an additional storage pool with:
 
@@ -178,21 +167,7 @@ You can also create a default network
 
     kcli network  -c 192.168.122.0/24 default
 
-If you want to generate a settings file ( for tweaking or to add remote
-hosts), you can use the following command:
-
-.. code:: shell
-
-    kcli bootstrap
-
-And for advanced bootstrapping, you can specify a target name, host, a
-pool with a path, and have centos cloud image downloaded
-
-.. code:: shell
-
-    kcli bootstrap -n twix -H 192.168.0.6 --pool vms --poolpath /home/vms
-
-You can also edit directly ~/.kcli/config.yml. For instance,
+You can edit ~/.kcli/config.yml. For instance,
 
 .. code:: yaml
 
@@ -222,6 +197,20 @@ protocol in the corresponding client section.
 
 Most of the parameters are actually optional, and can be overridden in
 the default, host or profile section (or in a plan file)
+
+Alternatively, you can generate this settings file ( for tweaking or to
+add remote hosts):
+
+.. code:: shell
+
+    kcli bootstrap
+
+And for advanced bootstrapping, you can specify a target name, host, a
+pool with a path, and have centos cloud image downloaded
+
+.. code:: shell
+
+    kcli bootstrap -n twix -H 192.168.0.6 --pool vms --poolpath /home/vms
 
 Provider specifics
 ==================
@@ -270,6 +259,12 @@ to Create a dns zone
 If accessing behind a proxy, be sure to set *HTTPS_PROXY* environment
 variable to ``http://your_proxy:your_port``
 
+To use this provider with kcli rpm, you’ll need to install (from pip)
+
+-  *google-api-python-client*
+-  *google-auth-httplib2*
+-  *google-cloud-dns*
+
 Aws
 ---
 
@@ -289,6 +284,9 @@ The following parameters are specific to aws:
 -  access_key_secret
 -  region
 -  keypair
+
+To use this provider with kcli rpm, you’ll need to install
+*python3-boto3* rpm
 
 Kubevirt
 --------
@@ -333,8 +331,8 @@ You can use additional parameters for the kubevirt section:
 machine, this will be used. otherwise, it s expected that the host node
 has it installed.
 
-Also, note that the kubevirt plugin uses *offlinevirtualmachines*
-instead of virtualmachines.
+To use this provider with kcli rpm, you’ll need to install
+*python3-kubernetes* rpm
 
 Ovirt
 -----
@@ -366,6 +364,9 @@ The following parameters are specific to ovirt:
 -  cluster Defaults to Default
 -  datacenter Defaults to Default
 
+To use this provider with kcli rpm, you’ll need to install (from pip)
+*ovirt-engine-sdk-python*
+
 Openstack
 ---------
 
@@ -385,6 +386,15 @@ The following parameters are specific to openstack:
 -  auth_url
 -  project
 -  domain
+
+To use this provider with kcli rpm, you’ll need to install the following
+rpms
+
+-  *python3-keystoneclient*
+-  *python3-glanceclient*
+-  *python3-cinderclient*
+-  *python3-neutronclient*
+-  *python3-novaclient*
 
 Fake
 ----
@@ -427,6 +437,8 @@ guess it, kcli checks the template name. So for example, your centos
 image must contain the term “centos” in the file name, otherwise the
 default user “root” will be used.
 
+Using parameters, you can tweak this vm or use profiles.
+
 Cloudinit stuff
 ---------------
 
@@ -443,6 +455,8 @@ If you use cloudinit but dont specify ssh keys to inject, the default
 
 For kvm vms based on coreos, ignition is used instead of cloudinit
 although the syntax is the same.
+
+A similar mechanism allows customization for cloud providers.
 
 Profiles configuration
 ----------------------
@@ -473,7 +487,7 @@ Typical commands
 
    -  ``kcli host --switch bumblefoot``
 
--  List vms, along with their private IP (and plan if applicable)
+-  List vms
 -  ``kcli list``
 -  List templates (it will find them out based on their qcow2
    extension…)
@@ -490,7 +504,7 @@ Typical commands
 -  ``kcli stop vm1``
 -  Get remote-viewer console
 -  ``kcli console vm1``
--  Get serial console (over TCP!!!). It will only work with vms created
+-  Get serial console (over TCP). It will only work with vms created
    with kcli and will require netcat client to be installed on host
 -  ``kcli console -s vm1``
 -  Deploy multiple vms using plan x defined in x.yml file
@@ -549,7 +563,7 @@ Multiple hypervisors
 --------------------
 
 If you have multiple hypervisors, you can generally use the flag *-C
-$CLIENT* to temporarily point to a specific one.
+$CLIENT* to point to a specific one.
 
 You can also use the following to list all you vms :
 
@@ -570,12 +584,12 @@ with kcli plan. The following type can be used within a plan:
 -  ansible
 -  container
 -  dns
--  plan ( so you can compose plans from several url)
+-  plan ( so you can compose plans from several urls)
 -  vm ( this is the type used when none is specified )
 
 Here are some examples of each type ( additional ones can be found in
 the `samples
-directory <https://github.com/karmab/kcli/tree/master/samples>`__:
+directory <https://github.com/karmab/kcli/tree/master/samples>`__ ):
 
 network
 ~~~~~~~
@@ -586,7 +600,7 @@ network
      type: network
      cidr: 192.168.95.0/24
 
-You can also use the boolean keyword dhcp (mostly to disable it) and
+You can also use the boolean keyword *dhcp* (mostly to disable it) and
 isolated . When not specified, dhcp and nat will be enabled
 
 template
@@ -602,8 +616,8 @@ It will only be downloaded only if not present
 
 If you point to an url not ending in qcow2/qc2 ( or img), your browser
 will be opened for you to proceed. Also note that you can specify a
-command with the cmd: key, so that virt-customize is used on the
-template once it s downloaded
+command with the *cmd* key, so that virt-customize is used on the
+template once it’s downloaded
 
 disk
 ~~~~
@@ -746,11 +760,11 @@ random generated keyword will be used.
 If a file with the plan isn’t specified with -f , the file kcli_plan.yml
 in the current directory will be used, if available.
 
-Also note that when deleting a plan, the network of the vms will also be
-deleted if no other vm are using them. You can prevent this by using the
-keep (-k) flag.
+When deleting a plan, the network of the vms will also be deleted if no
+other vm are using them. You can prevent this by using the keep (-k)
+flag.
 
-For an advanced use of plans along with scripts, you can check the
+For an advanced use of plans along with scripts, check the
 `plans <plans/README.md>`__ page to deploy all upstream projects
 associated with Red Hat Cloud Infrastructure products (or downstream
 versions too).
@@ -823,7 +837,7 @@ indicated bridge. Not that such bridges have to be created independently
 at the moment
 
 You can provide network configuration on the command line when creating
-a single vm with -P ip1=… -P netmask1=… -P gateway=…
+a single vm with *-P ip1=… -P netmask1=… -P gateway=…*
 
 ip, dns and host Reservations
 -----------------------------
@@ -832,14 +846,13 @@ If you set *reserveip* to True, a reservation will be made if the
 corresponding network has dhcp and when the provided IP belongs to the
 network range.
 
-You can also set *reservedns* to True to create a DNS entry for the host
-in the corresponding network ( only done for the first nic)
+You can set *reservedns* to True to create a DNS entry for the host in
+the corresponding network ( only done for the first nic)
 
-You can also set *reservehost* to True to create a HOST entry for the
-host in /etc/hosts ( only done for the first nic). It’s done with sudo
-and the entry gets removed when you delete the host. On macosx, you
-should use gnu-sed ( from brew ) instead of regular sed for proper
-deletion.
+You can set *reservehost* to True to create a HOST entry for the host in
+/etc/hosts ( only done for the first nic). It’s done with sudo and the
+entry gets removed when you delete the host. On macosx, you should use
+gnu-sed ( from brew ) instead of regular sed for proper deletion.
 
 If you dont want to be asked for your sudo password each time, here are
 the commands that are escalated:
@@ -1153,7 +1166,7 @@ provide a yaml file ( and as such can provide more complex structures )
 
 The indicated objects are then rendered using jinja. For instance in a
 profile The delimiters ‘[[’ and ’]]’ are used instead of the commonly
-used ‘{{’ and ‘}}’ so that this rendering doesnt get in the way when
+used ‘{{’ and ‘}}’ so that this rendering doesn’t get in the way when
 providing j2 files for instance
 
 ::
