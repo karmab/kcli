@@ -152,10 +152,16 @@ class Kaws(object):
                 homekey = open("%s/.ssh/id_dsa.pub" % os.environ['HOME']).read()
             conn.import_key_pair(KeyName='kvirt', PublicKeyMaterial=homekey)
         if cloudinit:
-            common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
-                             reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides,
-                             iso=False, fqdn=True)
-            userdata = open('/tmp/user-data', 'r').read()
+            if template is not None and (template.startswith('coreos') or template.startswith('rhcos')):
+                etcd = None
+                userdata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
+                                           domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
+                                           overrides=overrides, etcd=etcd)
+            else:
+                common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
+                                 reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides,
+                                 iso=False, fqdn=True)
+                userdata = open('/tmp/user-data', 'r').read()
         else:
             userdata = ''
         networkinterfaces = []
@@ -217,15 +223,6 @@ class Kaws(object):
                 blockdevicemapping['Ebs']['VolumeType'] = disk.get('type', 'standard')
             blockdevicemapping['Ebs']['VolumeSize'] = disksize
             blockdevicemappings.append(blockdevicemapping)
-#        try:
-#            instance = conn.run_instances(ImageId=template, MinCount=1, MaxCount=1, InstanceType=flavor,
-#                                          KeyName='kvirt', BlockDeviceMappings=blockdevicemappings,
-#                                          UserData=userdata, TagSpecifications=tags)
-#        except ClientError as e:
-#            if self.debug:
-#                print(e.response)
-#            code = e.response['Error']['Code']
-#            return {'result': 'failure', 'reason': code}
         if reservedns and domain is not None:
             tags[0]['Tags'].append({'Key': 'domain', 'Value': domain})
         conn.run_instances(ImageId=template, MinCount=1, MaxCount=1, InstanceType=flavor,
@@ -457,7 +454,8 @@ class Kaws(object):
         conn = self.conn
         images = {}
         finalimages = []
-        oses = ['amzn*', 'CentOS Linux 7 x86_64*', 'RHEL-7.*GA*', 'suse-sles-1?-*', 'ubuntu-*-server-*', 'kcli*']
+        oses = ['amzn*', 'CentOS Linux 7 x86_64*', 'RHEL-7.*GA*', 'suse-sles-1?-*', 'ubuntu-*-server-*', 'kcli*',
+                'CoreOS-stable*']
         Filters = [{'Name': 'name', 'Values': oses}]
         allimages = conn.describe_images(Filters=Filters)
         for image in allimages['Images']:

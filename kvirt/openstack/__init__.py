@@ -210,9 +210,15 @@ class Kopenstack(object):
         meta = {'plan': plan, 'profile': profile}
         userdata = None
         if cloudinit:
-            common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
-                             reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides,
-                             iso=False)
+            if template is not None and (template.startswith('coreos') or template.startswith('rhcos')):
+                etcd = None
+                userdata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
+                                           domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
+                                           overrides=overrides, etcd=etcd)
+            else:
+                common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
+                                 reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides,
+                                 iso=False)
             userdata = open('/tmp/user-data', 'r').read().strip()
         instance = nova.servers.create(name=name, image=image, flavor=flavor, key_name=key_name, nics=nics, meta=meta,
                                        userdata=userdata, block_device_mapping=block_dev_mapping)

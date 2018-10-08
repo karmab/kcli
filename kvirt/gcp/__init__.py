@@ -281,6 +281,13 @@ class Kgcp(object):
         if reservedns:
             newval = {'key': 'domain', 'value': domain}
             body['metadata']['items'].append(newval)
+        if template is not None and (template.startswith('coreos') or template.startswith('rhcos')):
+            etcd = None
+            userdata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
+                                       domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
+                                       overrides=overrides, etcd=etcd)
+            newval = {'key': 'user-data', 'value': userdata}
+            body['metadata']['items'].append(newval)
         if self.debug:
             print(body)
         conn.instances().insert(project=project, zone=zone, body=body).execute()
