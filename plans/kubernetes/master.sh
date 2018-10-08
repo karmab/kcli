@@ -9,13 +9,13 @@ kubectl apply -f /root/kube-flannel.yml
 #export TOKEN=`kubeadm token list  | tail -1 | cut -f1 -d' '`
 #export CMD="kubeadm join --token $TOKEN kumaster:6443"
 export CMD=`kubeadm token create --print-join-command`
-echo $CMD > /root/join.sh
+echo ${CMD} > /root/join.sh
 sleep 160
 [% if nodes > 0 %]
 [% for number in range(0,nodes) %]
 ssh-keyscan -H kunode0[[ number +1 ]] >> ~/.ssh/known_hosts
 scp /etc/kubernetes/admin.conf root@kunode0[[ number + 1 ]]:/etc/kubernetes/
-ssh root@kunode0[[ number +1 ]] $CMD > kunode0[[ number +1 ]].log
+ssh root@kunode0[[ number +1 ]] ${CMD} > kunode0[[ number +1 ]].log
 [% endfor %]
 [% endif %]
 mkdir -p /root/.kube

@@ -11,7 +11,7 @@ URL="https://raw.githubusercontent.com/projectodd/openwhisk-openshift/master/per
 URL="https://git.io/openwhisk-template"
 [% endif %]
 [% if large %]
-oc process -f $URL --param-file=/root/larger.env | oc create -f -
+oc process -f ${URL} --param-file=/root/larger.env | oc create -f -
 [% else %]
-oc process -f $URL | oc create -f -
+oc process -f ${URL} | oc create -f -
 [% endif %]

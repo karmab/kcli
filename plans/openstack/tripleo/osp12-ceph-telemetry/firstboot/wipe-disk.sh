@@ -7,15 +7,15 @@ then
   do
     ROOTFOUND=0
     echo "Checking /dev/$DEVICE..."
-    echo "Number of partitions on /dev/$DEVICE: $(expr $(lsblk -n /dev/$DEVICE | awk '{print $7}' | wc -l) - 1)"
-    for MOUNTS in `lsblk -n /dev/$DEVICE | awk '{print $7}'`
+    echo "Number of partitions on /dev/$DEVICE: $(expr $(lsblk -n /dev/${DEVICE} | awk '{print $7}' | wc -l) - 1)"
+    for MOUNTS in `lsblk -n /dev/${DEVICE} | awk '{print $7}'`
     do
       if [ "$MOUNTS" = "/" ]
       then
         ROOTFOUND=1
       fi
     done
-    if [ $ROOTFOUND = 0 ]
+    if [ ${ROOTFOUND} = 0 ]
     then
       echo "Root not found in /dev/${DEVICE}"
       echo "Wiping disk /dev/${DEVICE}"

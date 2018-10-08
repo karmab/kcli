@@ -23,6 +23,6 @@ compute_hosts=""
 export comp[[ number ]]=`dig +short ospcompute0[[ number ]].localdomain`
 compute_hosts="$compute_hosts,$comp[[ number ]]"
 [% endfor %]
-compute_hosts=`echo $compute_hosts | sed 's/^,//'`
+compute_hosts=`echo ${compute_hosts} | sed 's/^,//'`
 sed -i "s/CONFIG_COMPUTE_HOSTS=.*/CONFIG_COMPUTE_HOSTS=$compute_hosts/" /root/answers.txt
 HOME=/root packstack --answer-file=/root/answers.txt

@@ -7,7 +7,7 @@ set -o pipefail
 
 OK=/mnt/state/var/lib/rhsm/rhsm.ok
 
-if [ -e $OK ] ; then
+if [ -e ${OK} ] ; then
     exit 0
 fi
 
@@ -96,7 +96,7 @@ if [ -n "${REG_ORG:-}" ]; then
 fi
 
 if [ -n "${REG_REPOS:-}" ]; then
-    for repo in $(echo $REG_REPOS | tr ',' '\n'); do
+    for repo in $(echo ${REG_REPOS} | tr ',' '\n'); do
         repos="$repos --enable $repo"
     done
 fi
@@ -163,7 +163,7 @@ function retry() {
     retry_delay=2.0
     retry_count=0
     mycli="$@"
-    while [ $retry_count -lt ${retry_max_count} ]
+    while [ ${retry_count} -lt ${retry_max_count} ]
     do
         echo "INFO: Sleeping ${retry_delay} ..."
         sleep ${retry_delay}
@@ -174,11 +174,11 @@ function retry() {
             break
         else
             echo "WARN: Failed to connect when running '${mycli}', retrying (attempt #$retry_count )..."
-            retry_count=$(echo $retry_count + 1 | bc)
+            retry_count=$(echo ${retry_count} + 1 | bc)
         fi
     done
 
-    if [ $retry_count -ge ${retry_max_count} ]; then
+    if [ ${retry_count} -ge ${retry_max_count} ]; then
         echo "ERROR: Failed to connect after ${retry_max_count} attempts when running '${mycli}'"
         exit 1
     fi
@@ -187,14 +187,14 @@ function retry() {
 }
 
 function detect_satellite_server {
-    if curl --retry ${retry_max_count} --retry-delay 10 --max-time 30 -L -k -s -D - -o /dev/null $REG_SAT_URL/pub/katello-ca-consumer-latest.noarch.rpm | grep "200 OK"; then
-        echo Satellite 6 or beyond with Katello API detected at $REG_SAT_URL
+    if curl --retry ${retry_max_count} --retry-delay 10 --max-time 30 -L -k -s -D - -o /dev/null ${REG_SAT_URL}/pub/katello-ca-consumer-latest.noarch.rpm | grep "200 OK"; then
+        echo Satellite 6 or beyond with Katello API detected at ${REG_SAT_URL}
         katello_api_enabled=1
-    elif curl --retry ${retry_max_count} --retry-delay 10 --max-time 30 -L -k -s -D - -o /dev/null $REG_SAT_URL/rhn/Login.do | grep "200 OK"; then
-        echo Satellite 5 with RHN detected at $REG_SAT_URL
+    elif curl --retry ${retry_max_count} --retry-delay 10 --max-time 30 -L -k -s -D - -o /dev/null ${REG_SAT_URL}/rhn/Login.do | grep "200 OK"; then
+        echo Satellite 5 with RHN detected at ${REG_SAT_URL}
         katello_api_enabled=0
     else
-        echo No Satellite detected at $REG_SAT_URL
+        echo No Satellite detected at ${REG_SAT_URL}
         exit 1
     fi
 }
@@ -222,12 +222,12 @@ fi
 
 case "${REG_METHOD:-}" in
     portal)
-        retry subscription-manager register $opts
+        retry subscription-manager register ${opts}
         if [ -z "${REG_AUTO_ATTACH:-}" -a -z "${REG_ACTIVATION_KEY:-}" ]; then
-            retry subscription-manager attach $attach_opts
+            retry subscription-manager attach ${attach_opts}
         fi
         retry subscription-manager repos --disable='*'
-        retry subscription-manager $repos
+        retry subscription-manager ${repos}
         ;;
     satellite)
         detect_satellite_server
@@ -245,8 +245,8 @@ case "${REG_METHOD:-}" in
             fi
 
             rpm -Uvh katello-ca-consumer-latest.noarch.rpm || true
-            retry subscription-manager register $opts
-            retry subscription-manager $repos
+            retry subscription-manager register ${opts}
+            retry subscription-manager ${repos}
             retry yum install -y katello-agent || true # needed for errata reporting to satellite6
             katello-package-upload
 
@@ -255,9 +255,9 @@ case "${REG_METHOD:-}" in
             mkdir -p /etc/rhsm/facts
         else
             pushd /usr/share/rhn/
-            curl --retry ${retry_max_count} --retry-delay 10 --max-time 30 -k -O $REG_SAT_URL/pub/RHN-ORG-TRUSTED-SSL-CERT
+            curl --retry ${retry_max_count} --retry-delay 10 --max-time 30 -k -O ${REG_SAT_URL}/pub/RHN-ORG-TRUSTED-SSL-CERT
             popd
-            retry rhnreg_ks --serverUrl=$REG_SAT_URL/XMLRPC $sat5_opts
+            retry rhnreg_ks --serverUrl=${REG_SAT_URL}/XMLRPC ${sat5_opts}
         fi
         ;;
     disable)
@@ -268,5 +268,5 @@ case "${REG_METHOD:-}" in
         exit 0
 esac
 
-mkdir -p $(dirname $OK)
-touch $OK
+mkdir -p $(dirname ${OK})
+touch ${OK}
