@@ -2128,29 +2128,37 @@ class Kvirt(object):
         if shortimage.endswith('bz2'):
             if self.host == 'localhost' or self.host == '127.0.0.1':
                 if find_executable('bunzip2') is not None:
-                    cmd = "bunzip2 %s/%s" % (poolpath, shortimage)
-                    os.system(cmd)
+                    uncompresscmd = "bunzip2 %s/%s" % (poolpath, shortimage)
+                    os.system(uncompresscmd)
+                else:
+                    common.pprint("bunzip2 not found. Can't uncompress image", color="blue")
             elif self.protocol == 'ssh':
-                cmd = 'ssh -p %s %s@%s "bunzip2 %s/%s"' % (self.port, self.user, self.host, poolpath, shortimage)
-                os.system(cmd)
+                uncompresscmd = 'ssh -p %s %s@%s "bunzip2 %s/%s"' % (self.port, self.user, self.host, poolpath,
+                                                                     shortimage)
+                os.system(uncompresscmd)
             shortimage = shortimage.replace('.bz2', '')
         if shortimage.endswith('gz'):
             if self.host == 'localhost' or self.host == '127.0.0.1':
                 if find_executable('gunzip') is not None:
-                    cmd = "gunzip %s/%s" % (poolpath, shortimage)
-                    os.system(cmd)
+                    uncompresscmd = "gunzip %s/%s" % (poolpath, shortimage)
+                    os.system(uncompresscmd)
+                else:
+                    common.pprint("gunzip not found. Can't uncompress image", color="blue")
             elif self.protocol == 'ssh':
-                cmd = 'ssh -p %s %s@%s "bunzip2 %s/%s"' % (self.port, self.user, self.host, poolpath, shortimage)
-                os.system(cmd)
+                uncompresscmd = 'ssh -p %s %s@%s "gunzip %s/%s"' % (self.port, self.user, self.host, poolpath,
+                                                                    shortimage)
+                os.system(uncompresscmd)
             shortimage = shortimage.replace('.gz', '')
         if shortimage.endswith('xz'):
             if self.host == 'localhost' or self.host == '127.0.0.1':
                 if find_executable('unxz') is not None:
-                    cmd = "unxz %s/%s" % (poolpath, shortimage)
-                    os.system(cmd)
+                    uncompresscmd = "unxz %s/%s" % (poolpath, shortimage)
+                    os.system(uncompresscmd)
+                else:
+                    common.pprint("unxz not found. Can't uncompress image", color="blue")
             elif self.protocol == 'ssh':
-                cmd = 'ssh -p %s %s@%s "unxz %s/%s"' % (self.port, self.user, self.host, poolpath, shortimage)
-                os.system(cmd)
+                uncompresscmd = 'ssh -p %s %s@%s "unxz %s/%s"' % (self.port, self.user, self.host, poolpath, shortimage)
+                os.system(uncompresscmd)
             shortimage = shortimage.replace('.xz', '')
         if cmd is not None:
             if self.host == 'localhost' or self.host == '127.0.0.1':

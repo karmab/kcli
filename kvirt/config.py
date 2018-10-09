@@ -1158,6 +1158,8 @@ class Kconfig(Kbaseconfig):
                         search = re.search(r".*/(.*)\?.*", url)
                         if search is not None:
                             shortname = search.group(1)
+                else:
+                    shortname = os.path.basename(url)
                 if cmd is None and template != '' and template in TEMPLATESCOMMANDS:
                     cmd = TEMPLATESCOMMANDS[template]
                 common.pprint("Grabbing template %s..." % shortname, color='green')
