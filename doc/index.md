@@ -843,6 +843,31 @@ And deploy any product . Deletion is currently handled by deleting the correspon
 kcli product YOUR_PRODUCT
 ```
 
+## Running on kubernetes/openshift 
+
+You can run the container on those platforms and either use the web interface or log in the pod to run `kcli` commandline
+
+on kubernetes 
+
+```
+kubectl create configmap kcli-config --from-file=~/.kcli
+kubectl create configmap ssh-config --from-file=~/.ssh
+kubectl create -f https://raw.githubusercontent.com/karmab/kcli/master/extras/k8sdeploy.yml
+```
+
+on openshift, you'll need to run those extra commands
+
+```
+oc new-project kcli
+oc adm policy add-scc-to-user anyuid system:serviceaccount:kcli:default
+oc expose svc kcli
+```
+
+on the web interface, you won't be able to switch to a different provider. You would have to modify the configmap to point to a different provider and recreate the pod
+
+
+alternatively, look at [https://github.com/karmab/kcli-controller](https://github.com/karmab/kcli-controller) for a controller handling machines crds and creating vms with kcli/kvirt library
+
 ## Testing
 
 Basic testing can be run with pytest. If using a remote hypervisor, you ll want to set the *KVIRT_HOST* and *KVIRT_USER* environment variables so that it points to your host with the corresponding user.
