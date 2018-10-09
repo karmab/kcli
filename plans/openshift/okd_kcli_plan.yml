@@ -15,7 +15,10 @@ bootstrap:
   memory: 6144
   numcpus: 2
   nets: 
-   - [[ network ]]
+   - name: [[ network ]]
+     alias:
+      - [[ network ]]-api
+   - name: default
   pool: default
   reservedns: True
 
@@ -24,6 +27,10 @@ master-0:
   memory: 6144
   numcpus: 1
   nets: 
-   - [[ network ]]
+   - name: [[ network ]]
+     alias:
+      - [[ network ]]-master-0
+      - [[ network ]]-etcd-0
+   - name: default
   pool: default
   reservedns: True
