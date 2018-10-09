@@ -454,7 +454,8 @@ class Kconfig(Kbaseconfig):
                     f.write("[ssh_connection]\nretries=10\n")
                 print("Running: %s -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
                 os.system("%s -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
-        common.set_lastvm(name, self.client)
+        if os.access(os.path.expanduser('~/.kcli'), os.W_OK):
+            common.set_lastvm(name, self.client)
         return {'result': 'success'}
 
     def list_plans(self):
