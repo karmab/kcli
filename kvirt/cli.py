@@ -984,7 +984,7 @@ def cli():
                                      'https://github.com/karmab/kcli!')
     parser.add_argument('-C', '--client')
     parser.add_argument('-d', '--debug', action='store_true')
-    parser.add_argument('--version', action='version', version=__version__)
+    parser.add_argument('-v', '--version', action='version', version=__version__)
 
     subparsers = parser.add_subparsers(metavar='')
 
