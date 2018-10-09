@@ -101,7 +101,7 @@ For web access, you can switch with `-p 9000:9000 --entrypoint=/usr/bin/kweb` an
 Use podman!
 
 ```
-alias kcli='sudo podman run -it --rm --security-opt label=disable -v ~/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v ~/.ssh:/root/.ssh -v $PWD:/workdir karmab/kcli'
+alias kcli='podman run -it --rm --security-opt label=disable -v ~/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v ~/.ssh:/root/.ssh -v $PWD:/workdir karmab/kcli'
 ```
 
 ## Dev installation from pip
@@ -122,12 +122,6 @@ Or for a full install using latest
 
 ```
 pip install -e git+https://github.com/karmab/kcli.git#egg=kcli[all]
-```
-
-On MacOSX, run the following command too
-
-```
-sudo  /Applications/Python\ 3.6/Install\ Certificates.command
 ```
 
 # Configuration
