@@ -8,6 +8,7 @@ parameters:
   domain: tt.testing
   email_address: admin@magnifico.es
   password: password
+  use_kcli: false
 
 okd:
  template: [[ template ]]
@@ -26,5 +27,8 @@ okd:
    origin: okd_cleanup.sh
  - path: /root/coreos_pull.json
    origin: ~/coreos_pull.json
+ - path: /root/kcli_plan.yml
+   origin: okd_kcli_plan.yml
+   render: false
  scripts:
  - okd.sh

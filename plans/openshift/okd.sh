@@ -25,6 +25,8 @@ GOBIN=~/.terraform.d/plugins go get -u github.com/dmacvicar/terraform-provider-l
 PUBKEY=`cat ~/.ssh/authorized_keys`
 echo export OPENSHIFT_INSTALL_SSH_PUB_KEY=\"${PUBKEY}\" >> ~/env.sh
 source ~/env.sh
-# bin/openshift-install ignition-configs --dir ${WORKSPACE}
-# bin/openshift-install manifests --dir ${WORKSPACE}
 # bin/openshift-install cluster --log-level=debug
+[% if use_kcli %]
+bin/openshift-install ignition-configs --dir /root/
+bin/openshift-install manifests --dir /root
+[% endif %]

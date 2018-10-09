@@ -1,0 +1,29 @@
+parameters:
+ template: rhcos-qemu.qcow2
+ network: testk
+ domain: tt.testing
+ cidr: 192.168.126.0/24
+
+[[ network ]]:
+ type: network
+ domain: [[ domain ]]
+ cidr: [[ cidr ]]
+ dhcp: True
+
+bootstrap:
+  template: [[ template ]]
+  memory: 6144
+  numcpus: 2
+  nets: 
+   - [[ network ]]
+  pool: default
+  reservedns: True
+
+master-0:
+  template: [[ template ]]
+  memory: 6144
+  numcpus: 1
+  nets: 
+   - [[ network ]]
+  pool: default
+  reservedns: True

@@ -276,6 +276,7 @@ def process_files(files=[], overrides={}):
         owner = fil.get('owner', 'root')
         mode = fil.get('mode', '0600')
         permissions = fil.get('permissions', mode)
+        render = fil.get('render', True)
         binary = False
         if origin is not None:
             origin = os.path.expanduser(origin)
@@ -284,7 +285,7 @@ def process_files(files=[], overrides={}):
                 with open(origin, "rb") as f:
                     # content = f.read().encode("base64")
                     content = base64.b64encode(f.read())
-            elif overrides:
+            elif overrides and render:
                 basedir = os.path.dirname(origin) if os.path.dirname(origin) != '' else '.'
                 env = Environment(block_start_string='[%', block_end_string='%]',
                                   variable_start_string='[[', variable_end_string=']]',
@@ -300,7 +301,7 @@ def process_files(files=[], overrides={}):
                         else:
                             f.write("%s\n" % line.rstrip())
             else:
-                content = open(origin, 'r').readlines()
+                content = [line.rstrip() for line in open(origin, 'r').readlines()]
         data += "- owner: %s:%s\n" % (owner, owner)
         data += "  path: %s\n" % path
         data += "  permissions: '%s'\n" % permissions
@@ -777,6 +778,9 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     :param etcd:
     :return:
     """
+    if os.path.exists("%s.ign" % name):
+        pprint("Using existing %s.ign for %s" % (name, name), color="blue")
+        return open("%s.ign" % name).read()
     default_gateway = gateway
     publickeys = []
     if domain is not None:

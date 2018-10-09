@@ -439,8 +439,8 @@ class Kvirt(object):
             if template is not None and (template.startswith('coreos') or template.startswith('rhcos')):
                 namespace = "xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'"
                 ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
-                                               domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
-                                               overrides=overrides, etcd=etcd)
+                                               domain=domain, reserveip=reserveip, files=files,
+                                               enableroot=enableroot, overrides=overrides, etcd=etcd)
                 with open('/tmp/ignition', 'w') as ignitionfile:
                     ignitionfile.write(ignitiondata)
                 if self.protocol == 'ssh':
