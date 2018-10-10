@@ -93,4 +93,5 @@ RHNUSER = None
 RHNPASSWORD = None
 RHNAK = None
 RHNORG = None
+RHNPOOL = None
 FLAVOR = None

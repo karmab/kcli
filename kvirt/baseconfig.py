@@ -11,7 +11,8 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             REPORT, REPORTALL, INSECURE, KEYS, CMDS, DNS,
                             DOMAIN, SCRIPTS, FILES, ISO,
                             NETMASKS, GATEWAY, SHAREDKEY, TEMPLATE, ENABLEROOT,
-                            PLANVIEW, PRIVATEKEY, TAGS, RHNREGISTER, RHNUSER, RHNPASSWORD, RHNAK, RHNORG, FLAVOR)
+                            PLANVIEW, PRIVATEKEY, TAGS, RHNREGISTER, RHNUSER, RHNPASSWORD, RHNAK, RHNORG, RHNPOOL,
+                            FLAVOR)
 from kvirt import common
 import os
 from shutil import copyfile, rmtree
@@ -107,6 +108,7 @@ class Kbaseconfig:
         defaults['rhnpassword'] = default.get('rhnpassword', RHNPASSWORD)
         defaults['rhnactivationkey'] = default.get('rhnactivationkey', RHNAK)
         defaults['rhnorg'] = default.get('rhnorg', RHNORG)
+        defaults['rhnpool'] = default.get('rhnpool', RHNPOOL)
         defaults['tags'] = default.get('tags', TAGS)
         defaults['flavor'] = default.get('flavor', FLAVOR)
         currentplanfile = "%s/.kcli/plan" % os.environ.get('HOME')
@@ -202,6 +204,7 @@ class Kbaseconfig:
         self.rhnpassword = options.get('rhnpassword', self.default['rhnpassword'])
         self.rhnak = options.get('rhnactivationkey', self.default['rhnactivationkey'])
         self.rhnorg = options.get('rhnorg', self.default['rhnorg'])
+        self.rhnpool = options.get('rhnpool', self.default['rhnpool'])
         self.tags = options.get('tags', self.default['tags'])
         self.flavor = options.get('flavor', self.default['flavor'])
 

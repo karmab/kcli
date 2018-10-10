@@ -218,6 +218,7 @@ class Kconfig(Kbaseconfig):
             default_rhnpassword = father.get('rhnpassword', self.rhnpassword)
             default_rhnak = father.get('rhnactivationkey', self.rhnak)
             default_rhnorg = father.get('rhnorg', self.rhnorg)
+            default_rhnpool = father.get('rhnpool', self.rhnpool)
             default_tags = father.get('tags', self.tags)
             default_flavor = father.get('flavor', self.flavor)
             default_cmds = common.remove_duplicates(self.cmds + father.get('cmds', []))
@@ -260,6 +261,7 @@ class Kconfig(Kbaseconfig):
             default_rhnpassword = self.rhnpassword
             default_rhnak = self.rhnak
             default_rhnorg = self.rhnorg
+            default_rhnpool = self.rhnpool
             default_cmds = self.cmds
             default_scripts = self.scripts
         plan = profile.get('plan', plan)
@@ -336,6 +338,7 @@ class Kconfig(Kbaseconfig):
         rhnpassword = profile.get('rhnpassword', default_rhnpassword)
         rhnak = profile.get('rhnactivationkey', default_rhnak)
         rhnorg = profile.get('rhnorg', default_rhnorg)
+        rhnpool = profile.get('rhnpool', default_rhnpool)
         flavor = profile.get('flavor', default_flavor)
         scriptcmds = []
         skip_rhnregister_script = False
@@ -369,7 +372,10 @@ class Kconfig(Kbaseconfig):
             if rhnuser is not None and rhnpassword is not None:
                 rhncommands.append('subscription-manager register --force --username=%s --password=%s'
                                    % (rhnuser, rhnpassword))
-                rhncommands.append('subscription-manager attach --auto')
+                if rhnpool is not None:
+                    rhncommands.append('subscription-manager attach --pool %s' % rhnpool)
+                else:
+                    rhncommands.append('subscription-manager attach --auto')
             elif rhnak is not None and rhnorg is not None:
                 rhncommands.append('subscription-manager register --force --activationkey=%s --org=%s'
                                    % (rhnak, rhnorg))
