@@ -126,6 +126,8 @@ class Kaws(object):
         :return:
         """
         template = self.__evaluate_template(template)
+        if template is not None and not template.startswith('ami-'):
+                return {'result': 'failure', 'reason': 'Invalid template %s' % template}
         defaultsubnetid = None
         if flavor is None:
             matchingflavors = [f for f in static_flavors if static_flavors[f]['cpus'] >= numcpus and
