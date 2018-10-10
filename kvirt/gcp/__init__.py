@@ -256,15 +256,21 @@ class Kgcp(object):
             endcmd = 'touch /root/.kcli_startup\n'
             newval = {'key': 'startup-script', 'value': beginningcmd + startup_script + endcmd}
             body['metadata']['items'].append(newval)
-        if not os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME'])\
-                and not os.path.exists("%s/.ssh/id_dsa.pub" % os.environ['HOME']):
-            print("neither id_rsa.pub or id_dsa public keys found in your .ssh directory, you might have trouble "
-                  "accessing the vm")
+        if not os.path.exists(os.path.expanduser("~/.ssh/id_rsa.pub"))\
+                and not os.path.exists(os.path.expanduser("~/.ssh/id_dsa.pub"))\
+                and not os.path.exists(os.path.expanduser("~/.kcli/id_rsa.pub"))\
+                and not os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub")):
+            print("neither id_rsa.pub or id_dsa public keys found in your .ssh or .kcli directory, you might have "
+                  "trouble accessing the vm")
             homekey = None
-        elif os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME']):
-            homekey = open("%s/.ssh/id_rsa.pub" % os.environ['HOME']).read()
+        elif os.path.exists(os.path.expanduser("~/.ssh/id_rsa.pub")):
+            homekey = open(os.path.expanduser("~/.ssh/id_rsa.pub")).read()
+        elif os.path.exists(os.path.expanduser("~/.ssh/id_dsa.pub")):
+            homekey = open(os.path.expanduser("~/.ssh/id_dsa.pub")).read()
+        elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa.pub")):
+            homekey = open(os.path.expanduser("~/.kcli/id_rsa.pub")).read()
         else:
-            homekey = open("%s/.ssh/id_dsa.pub" % os.environ['HOME']).read()
+            homekey = open(os.path.expanduser("~/.kcli/id_dsa.pub")).read()
         if homekey is not None:
             keys = [homekey] + keys if keys is not None else [homekey]
         if keys is not None:
