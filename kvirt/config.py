@@ -134,7 +134,7 @@ class Kconfig(Kbaseconfig):
                     os._exit(1)
                 from kvirt.kvm import Kvirt
                 k = Kvirt(host=self.host, port=self.port, user=self.user, protocol=self.protocol, url=self.url,
-                          debug=debug, insecure=self.insecure)
+                          debug=debug, insecure=self.insecure, detect_bridge_ips=self.detect_bridge_ips)
             if k.conn is None:
                 common.pprint("Couldn't connect to client %s. Leaving..." % self.client, color='red')
                 os._exit(1)

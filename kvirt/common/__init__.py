@@ -13,6 +13,7 @@ import urllib.error
 import json
 import os
 import yaml
+# from scapy.all import Ether, ARP, srp
 
 binary_types = ['bz2', 'deb', 'jpg', 'gz', 'jpeg', 'iso', 'png', 'rpm', 'tgz', 'zip', 'ks']
 ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety', 'zesty', 'artful', 'bionic', 'cosmic']
@@ -920,3 +921,13 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
         else:
             data['systemd']['units'] = [metadrop, etcddrop]
     return json.dumps(data, sort_keys=True, indent=4, separators=(',', ': '))
+
+
+# def get_ip_from_mac(interface, cidr, mac):
+#         packet = Ether(dst=mac) / ARP(pdst=cidr)
+#         ans, unans = srp(packet, timeout=2, iface=interface, verbose=False)
+#         for s, r in ans:
+#                 currentmac = r.sprintf("%Ether.src%")
+#                 if currentmac == mac:
+#                     return r.sprintf("%ARP.psrc%")
+#         return None

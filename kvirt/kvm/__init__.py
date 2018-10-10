@@ -16,6 +16,7 @@ import re
 import string
 import time
 import xml.etree.ElementTree as ET
+import yaml
 
 
 KB = 1024 * 1024
@@ -53,7 +54,8 @@ class Kvirt(object):
     """
 
     """
-    def __init__(self, host='127.0.0.1', port=None, user='root', protocol='ssh', url=None, debug=False, insecure=False):
+    def __init__(self, host='127.0.0.1', port=None, user='root', protocol='ssh', url=None, debug=False, insecure=False,
+                 detect_bridge_ips=False):
         if url is None:
             if host == '127.0.0.1' or host == 'localhost':
                 url = "qemu:///system"
@@ -83,6 +85,11 @@ class Kvirt(object):
         if self.protocol == 'ssh' and port is None:
             self.port = '22'
         self.url = url
+        if detect_bridge_ips and self.protocol != 'ssh':
+            common.pprint("detect_bridge_ips only works with ssh remote hosts. Disabling", color="blue")
+            self.detect_bridge_ips = False
+        else:
+            self.detect_bridge_ips = detect_bridge_ips
 
     def close(self):
         """
@@ -793,6 +800,16 @@ class Kvirt(object):
                 ip = lease['ipaddr']
                 mac = lease['mac']
                 leases[mac] = ip
+        if self.detect_bridge_ips:
+            for network in self.list_networks():
+                if self.list_networks()[network]['type'] != 'bridged':
+                    continue
+                cidr = self.list_networks()[network]['cidr']
+                command = "bridge_helper.py -i %s -c %s" % (network, cidr)
+                command = "ssh -p %s %s@%s \"%s\"" % (self.port, self.user, self.host, command)
+                bridgeips = os.popen(command).read().strip()
+                bridgeips = yaml.load(bridgeips)
+                leases.update(bridgeips)
         status = {0: 'down', 1: 'up'}
         for vm in conn.listAllDomains(0):
             template, plan, profile = '', '', ''
@@ -995,6 +1012,11 @@ class Kvirt(object):
             if networktype == 'bridge':
                 network = element.find('source').get('bridge')
                 network_type = 'bridge'
+                if self.detect_bridge_ips:
+                    cidr = self.list_networks()[network]['cidr']
+                    command = "bridge_helper.py -i %s -c %s -m %s" % (network, cidr, mac)
+                    command = "ssh -p %s %s@%s \"%s\"" % (self.port, self.user, self.host, command)
+                    ip = os.popen(command).read().strip()
             else:
                 network = element.find('source').get('network')
                 network_type = 'routed'
@@ -1962,7 +1984,9 @@ class Kvirt(object):
         u, ip = self._ssh_credentials(name)
         if ip is None:
             return None
-        sshcommand = common.ssh(name, ip=ip, host=self.host, port=self.port, hostuser=self.user, user=u,
+        if user is None:
+            user = u
+        sshcommand = common.ssh(name, ip=ip, host=self.host, port=self.port, hostuser=self.user, user=user,
                                 local=local, remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, Y=Y, D=D,
                                 debug=self.debug)
         return sshcommand
