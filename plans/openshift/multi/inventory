@@ -73,7 +73,7 @@ master0[[ master +1 ]].[[ domain ]] ansible_connection=local
 master01.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
 infra01.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
 infra02.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
-[% elif infra > 2 %]
+[% elif infras > 2 %]
 infra01.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
 infra02.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
 infra03.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
