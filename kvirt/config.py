@@ -152,7 +152,7 @@ class Kconfig(Kbaseconfig):
         self.overrides = {'type': self.type}
 
     def create_vm(self, name, profile, overrides={}, customprofile={}, k=None,
-                  plan='kvirt'):
+                  plan='kvirt', basedir='.'):
         """
 
         :param k:
@@ -300,7 +300,7 @@ class Kconfig(Kbaseconfig):
         scripts = common.remove_duplicates(default_scripts + profile.get('scripts', []))
         files = profile.get('files', default_files)
         if files:
-            for fil in files:
+            for index, fil in enumerate(files):
                 if not isinstance(fil, dict):
                     common.pprint("Incorrect file entry.Leaving...", color='red')
                     os._exit(1)
@@ -313,6 +313,9 @@ class Kconfig(Kbaseconfig):
                             os._exit(1)
                     if origin is not None:
                         origin = os.path.expanduser(origin)
+                        if basedir != '.':
+                            origin = "%s/%s" % (basedir, origin)
+                            files[index]['origin'] = origin
                         if not os.path.exists(origin):
                             common.pprint("File %s not found in %s.Leaving..." % (origin, name),
                                           color='red')
@@ -351,16 +354,18 @@ class Kconfig(Kbaseconfig):
         if scripts:
             for script in scripts:
                 script = os.path.expanduser(script)
+                if basedir != '.':
+                    script = '%s/%s' % (basedir, script)
                 if script.endswith('register.sh') and skip_rhnregister_script:
                     continue
                 elif not os.path.exists(script):
                     common.pprint("Script %s not found.Ignoring..." % script, color='red')
                     os._exit(1)
                 else:
-                    basedir = os.path.dirname(script) if os.path.dirname(script) != '' else '.'
+                    scriptbasedir = os.path.dirname(script) if os.path.dirname(script) != '' else '.'
                     env = Environment(block_start_string='[%', block_end_string='%]',
                                       variable_start_string='[[', variable_end_string=']]',
-                                      loader=FileSystemLoader(basedir))
+                                      loader=FileSystemLoader(scriptbasedir))
                     templ = env.get_template(os.path.basename(script))
                     scriptentries = templ.render(overrides)
                     scriptlines = [line.strip() for line in scriptentries.split('\n') if line.strip() != '']
@@ -997,7 +1002,7 @@ class Kconfig(Kbaseconfig):
                             os.remove("%s.key.pub" % plan)
                             os.remove("%s.key" % plan)
                     result = self.create_vm(name, profilename, overrides=overrides, customprofile=profile, k=z,
-                                            plan=plan)
+                                            plan=plan, basedir=basedir)
                     common.handle_response(result, name)
                     if result['result'] == 'success':
                         newvms.append(name)

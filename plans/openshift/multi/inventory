@@ -77,6 +77,10 @@ infra02.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
 infra01.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
 infra02.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
 infra03.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
+[% else %]
+master01.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
+infra01.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
+node01.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
 [%- endif %]
 [%- endif %]
 
