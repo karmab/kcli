@@ -27,15 +27,23 @@ def get_home_ssh_key():
     :return:
     """
     key = None
-    if os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME']):
-        publickeyfile = "%s/.ssh/id_rsa.pub" % os.environ['HOME']
+    if os.path.exists(os.path.expanduser("~/.ssh/id_rsa.pub")):
+        publickeyfile = os.path.expanduser("~/.ssh/id_rsa.pub")
         with open(publickeyfile, 'r') as ssh:
             key = ssh.read().rstrip()
-    elif os.path.exists("%s/.ssh/id_dsa.pub" % os.environ['HOME']):
-        publickeyfile = "%s/.ssh/id_dsa.pub" % os.environ['HOME']
+    elif os.path.exists(os.path.expanduser("~/.ssh/id_dsa.pub")):
+        publickeyfile = os.path.expanduser("~/.ssh/id_dsa.pub")
+        with open(publickeyfile, 'r') as ssh:
+            key = ssh.read().rstrip()
+    elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa.pub")):
+        publickeyfile = os.path.expanduser("~/.kcli/id_rsa.pub")
+        with open(publickeyfile, 'r') as ssh:
+            key = ssh.read().rstrip()
+    elif os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub")):
+        publickeyfile = os.path.expanduser("~/.kcli/id_rda.pub")
         with open(publickeyfile, 'r') as ssh:
             key = ssh.read().rstrip()
     else:
-        pprint("neither id_rsa or id_dsa public keys found in your .ssh directory, you might have trouble "
+        pprint("neither id_rsa or id_dsa public keys found in your .ssh or .kcli directory, you might have trouble "
                "accessing the vm", color='red')
     return key

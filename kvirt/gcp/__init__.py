@@ -376,8 +376,9 @@ class Kgcp(object):
         # conn = self.conn
         # project = self.project
         # zone = self.zone
-        resource = googleapiclient.discovery.build('cloudresourcemanager', 'v1')
-        print(dir(resource.projects()))
+        # resource = googleapiclient.discovery.build('cloudresourcemanager', 'v1')
+        # print(dir(resource.projects()))
+        print("not implemented")
         return
 
     def status(self, name):
@@ -803,7 +804,7 @@ class Kgcp(object):
         if ip is None:
             return None
         sshcommand = common.ssh(name, ip=ip, host=self.host, port=self.port, hostuser=self.user, user=u,
-                                local=local, remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, Y=Y,
+                                local=local, remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, Y=Y, D=D,
                                 debug=self.debug)
         return sshcommand
 

@@ -1021,8 +1021,8 @@ class Kubevirt(object):
             user = u
         # tunnel = True if 'TUNNEL' in os.environ and os.environ('TUNNEL').lower() == 'true' else False
         sshcommand = common.ssh(name, ip=ip, host=self.host, port=self.port, hostuser=self.user, user=user, local=local,
-                                remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, Y=Y,
-                                debug=self.debug, D=D)
+                                remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, Y=Y, D=D,
+                                debug=self.debug)
         return sshcommand
 
     def scp(self, name, user=None, source=None, destination=None, tunnel=False, download=False, recursive=False):

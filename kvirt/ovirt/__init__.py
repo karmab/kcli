@@ -858,7 +858,7 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
         if ip == '':
             return None
         sshcommand = common.ssh(name, ip=ip, host=self.host, port=self.port, hostuser=self.ssh_user, user=user,
-                                local=local, remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, Y=Y,
+                                local=local, remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, Y=Y, D=D,
                                 debug=self.debug)
         return sshcommand
 

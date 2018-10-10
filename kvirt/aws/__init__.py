@@ -674,7 +674,7 @@ class Kaws(object):
         """
         u, ip = self._ssh_credentials(name)
         sshcommand = common.ssh(name, ip=ip, host=self.host, port=self.port, user=u,
-                                local=local, remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, Y=Y,
+                                local=local, remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, Y=Y, D=D,
                                 debug=self.debug)
         return sshcommand
 

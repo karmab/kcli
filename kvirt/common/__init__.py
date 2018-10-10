@@ -212,22 +212,27 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             userdata.write("ssh_pwauth: True\ndisable_root: false\n")
         if domain is not None:
             userdata.write("fqdn: %s.%s\n" % (name, domain))
-        if keys or os.path.exists("%s/.ssh/id_rsa.pub"
-                                  % os.environ['HOME']) or os.path.exists("%s/.ssh/id_dsa.pub" % os.environ['HOME']):
+        if keys or os.path.exists(os.path.expanduser("~/.ssh/id_rsa.pub"))\
+                or os.path.exists(os.path.expanduser("~/.ssh/id_dsa.pub"))\
+                or os.path.exists(os.path.expanduser("~/.kcli/id_rsa.pub"))\
+                or os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub")):
             userdata.write("ssh_authorized_keys:\n")
         else:
-            pprint("neither id_rsa or id_dsa public keys found in your .ssh directory, you might have trouble "
+            pprint("neither id_rsa or id_dsa public keys found in your .ssh or .kcli directory, you might have trouble "
                    "accessing the vm", color='red')
         if keys:
             for key in list(set(keys)):
                 userdata.write("- %s\n" % key)
-        if os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME']):
-            publickeyfile = "%s/.ssh/id_rsa.pub" % os.environ['HOME']
-            with open(publickeyfile, 'r') as ssh:
-                key = ssh.read().rstrip()
-                userdata.write("- %s\n" % key)
-        if os.path.exists("%s/.ssh/id_dsa.pub" % os.environ['HOME']):
-            publickeyfile = "%s/.ssh/id_dsa.pub" % os.environ['HOME']
+        publickeyfile = None
+        if os.path.exists(os.path.expanduser("~/.ssh/id_rsa.pub")):
+            publickeyfile = os.path.expanduser("~/.ssh/id_rsa.pub")
+        elif os.path.exists(os.path.expanduser("~/.ssh/id_dsa.pub")):
+            publickeyfile = os.path.expanduser("~/.ssh/id_dsa.pub")
+        elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa.pub")):
+            publickeyfile = os.path.expanduser("~/.kcli/id_rsa.pub")
+        elif os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub")):
+            publickeyfile = os.path.expanduser("~/.kcli/id_dsa.pub")
+        if publickeyfile is not None:
             with open(publickeyfile, 'r') as ssh:
                 key = ssh.read().rstrip()
                 userdata.write("- %s\n" % key)
@@ -670,6 +675,13 @@ def ssh(name, ip='', host=None, port=22, hostuser=None, user=None, local=None, r
             return None
         else:
             sshcommand = "-A %s@%s" % (user, ip)
+            identityfile = None
+            if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
+                identityfile = os.path.expanduser("~/.kcli/id_rsa")
+            elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
+                identityfile = os.path.expanduser("~/.kcli/id_rsa")
+            if identityfile is not None:
+                sshcommand = "-i %s %s" % (identityfile, sshcommand)
             if D:
                 sshcommand = "-D %s %s" % (D, sshcommand)
             if X:
@@ -679,7 +691,11 @@ def ssh(name, ip='', host=None, port=22, hostuser=None, user=None, local=None, r
             if cmd:
                 sshcommand = "%s %s" % (sshcommand, cmd)
             if host not in ['localhost', '127.0.0.1'] and tunnel:
-                sshcommand = "-o ProxyCommand='ssh -qp %s -W %%h:%%p %s@%s' %s" % (port, hostuser, host, sshcommand)
+                if identityfile is not None:
+                    sshcommand = "-o ProxyCommand='ssh -i %s -qp %s -W %%h:%%p %s@%s' %s" % (identityfile, port,
+                                                                                             hostuser, host, sshcommand)
+                else:
+                    sshcommand = "-o ProxyCommand='ssh -qp %s -W %%h:%%p %s@%s' %s" % (port, hostuser, host, sshcommand)
             if local is not None:
                 sshcommand = "-L %s %s" % (local, sshcommand)
             if remote is not None:
@@ -720,6 +736,13 @@ def scp(name, ip='', host=None, port=22, hostuser=None, user=None, source=None, 
             else:
                 arguments = ''
             scpcommand = 'scp'
+            identityfile = None
+            if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
+                identityfile = os.path.expanduser("~/.kcli/id_rsa")
+            elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
+                identityfile = os.path.expanduser("~/.kcli/id_rsa")
+            if identityfile is not None:
+                scpcommand = "%s -i %s" % (scpcommand, identityfile)
             if recursive:
                 scpcommand = "%s -r" % scpcommand
             if download:
@@ -787,10 +810,14 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
         localhostname = "%s.%s" % (name, domain)
     else:
         localhostname = name
-    if os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME']):
-        publickeyfile = "%s/.ssh/id_rsa.pub" % os.environ['HOME']
-    elif os.path.exists("%s/.ssh/id_dsa.pub" % os.environ['HOME']):
-        publickeyfile = "%s/.ssh/id_dsa.pub" % os.environ['HOME']
+    if os.path.exists(os.path.expanduser("~/.ssh/id_rsa.pub")):
+        publickeyfile = os.path.expanduser("~/.ssh/id_rsa.pub")
+    elif os.path.exists(os.path.expanduser("~/.ssh/id_dsa.pub")):
+        publickeyfile = os.path.expanduser("~/.ssh/id_dsa.pub")
+    elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa.pub")):
+        publickeyfile = os.path.expanduser("~/.kcli/id_rsa.pub")
+    elif os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub")):
+        publickeyfile = os.path.expanduser("~/.kcli/id_dsa.pub")
     if publickeyfile is not None:
         with open(publickeyfile, 'r') as ssh:
             publickeys.append(ssh.read().rstrip())
@@ -798,7 +825,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
         for key in list(set(keys)):
             publickeys.append(key)
     if not publickeys:
-        pprint("neither id_rsa or id_dsa public keys found in your .ssh directory, you might have trouble "
+        pprint("neither id_rsa or id_dsa public keys found in your .ssh or .kcli directory, you might have trouble "
                "accessing the vm", color='red')
     storage = {"files": []}
     storage["files"].append({"filesystem": "root", "path": "/etc/hostname",

@@ -53,7 +53,7 @@ class Kvirt(object):
     """
 
     """
-    def __init__(self, host='127.0.0.1', port=None, user='root', protocol='ssh', url=None, debug=False):
+    def __init__(self, host='127.0.0.1', port=None, user='root', protocol='ssh', url=None, debug=False, insecure=False):
         if url is None:
             if host == '127.0.0.1' or host == 'localhost':
                 url = "qemu:///system"
@@ -63,6 +63,13 @@ class Kvirt(object):
                 url = "qemu+%s://%s@%s/system?socket=/var/run/libvirt/libvirt-sock" % (protocol, user, host)
             else:
                 url = "qemu:///system"
+            if url.startswith('qemu+ssh'):
+                if insecure:
+                    url = "%s&no_verify=1" % url
+                if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
+                    url = "%s&keyfile=%s" % (url, os.path.expanduser("~/.kcli/id_rsa"))
+                elif os.path.exists(os.path.expanduser("~/.kcli/id_dsa")):
+                    url = "%s&keyfile=%s" % (url, os.path.expanduser("~/.kcli/id_dsa"))
         try:
             self.conn = libvirtopen(url)
             self.debug = debug
@@ -1953,35 +1960,12 @@ class Kvirt(object):
         :return:
         """
         u, ip = self._ssh_credentials(name)
-        if user is None:
-            user = u
-        if ip == '':
+        if ip is None:
             return None
-        else:
-            sshcommand = "-A %s@%s" % (user, ip)
-            if X:
-                sshcommand = "-X %s" % sshcommand
-            if Y:
-                sshcommand = "-Y %s" % sshcommand
-            if D is not None:
-                sshcommand = "-D %s %s" % (D, sshcommand)
-            if cmd:
-                sshcommand = "%s %s" % (sshcommand, cmd)
-            if self.host not in ['localhost', '127.0.0.1'] and tunnel:
-                sshcommand = "-o ProxyCommand='ssh -qp %s -W %%h:%%p %s@%s' %s" % (self.port, self.user, self.host,
-                                                                                   sshcommand)
-            if local is not None:
-                sshcommand = "-L %s %s" % (local, sshcommand)
-            if remote is not None:
-                sshcommand = "-R %s %s" % (remote, sshcommand)
-            if insecure:
-                sshcommand = "ssh -o LogLevel=quiet -o 'UserKnownHostsFile=/dev/null' -o 'StrictHostKeyChecking=no' %s"\
-                    % sshcommand
-            else:
-                sshcommand = "ssh %s" % sshcommand
-            if self.debug:
-                print(sshcommand)
-            return sshcommand
+        sshcommand = common.ssh(name, ip=ip, host=self.host, port=self.port, hostuser=self.user, user=u,
+                                local=local, remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, Y=Y, D=D,
+                                debug=self.debug)
+        return sshcommand
 
     def scp(self, name, user=None, source=None, destination=None, tunnel=False, download=False, recursive=False):
         """
@@ -1996,25 +1980,10 @@ class Kvirt(object):
         :return:
         """
         u, ip = self._ssh_credentials(name)
-        if user is None:
-            user = u
-        if ip == '':
-            print("No ip found. Cannot scp...")
-        else:
-            if self.host not in ['localhost', '127.0.0.1'] and tunnel:
-                arguments = "-o ProxyCommand='ssh -qp %s -W %%h:%%p %s@%s'" % (self.port, self.user, self.host)
-            else:
-                arguments = ''
-            scpcommand = 'scp'
-            if recursive:
-                scpcommand = "%s -r" % scpcommand
-            if download:
-                scpcommand = "%s %s %s@%s:%s %s" % (scpcommand, arguments, user, ip, source, destination)
-            else:
-                scpcommand = "%s %s %s %s@%s:%s" % (scpcommand, arguments, source, user, ip, destination)
-            if self.debug:
-                print(scpcommand)
-            return scpcommand
+        scpcommand = common.scp(name, ip=ip, host=self.host, port=self.port, hostuser=self.user, user=u,
+                                source=source, destination=destination, recursive=recursive, tunnel=tunnel,
+                                debug=self.debug, download=False)
+        return scpcommand
 
     def create_pool(self, name, poolpath, pooltype='dir', user='qemu', thinpool=None):
         """
