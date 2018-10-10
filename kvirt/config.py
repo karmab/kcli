@@ -373,7 +373,7 @@ class Kconfig(Kbaseconfig):
                 rhncommands.append('subscription-manager register --force --username=%s --password=%s'
                                    % (rhnuser, rhnpassword))
                 if rhnpool is not None:
-                    rhncommands.append('subscription-manager attach --pool %s' % rhnpool)
+                    rhncommands.append('subscription-manager attach --pool=%s' % rhnpool)
                 else:
                     rhncommands.append('subscription-manager attach --auto')
             elif rhnak is not None and rhnorg is not None:
