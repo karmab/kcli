@@ -90,7 +90,8 @@ the are several flags you’ll want to pass depending on your use case
    if running against a local hypervisor
 -  ``~/.kcli:/root/.kcli`` to use your kcli configuration (also profiles
    and repositories) stored locally
--  ``-v ~/.ssh:/root/.ssh`` to share your ssh keys
+-  ``-v ~/.ssh:/root/.ssh`` to share your ssh keys. Alternatively store
+   your public and private key in the ~/.kcli directory
 -  ``--security-opt label:disable`` if running with selinux
 -  ``-v $PWD:/workdir`` to access plans below your current directory
 -  ``-v $HOME:/root`` to share your entire home directory, useful if you
@@ -102,7 +103,7 @@ locally:
 
 .. code:: shell
 
-    alias kcli='docker run -it --rm --security-opt label:disable -v ~/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v ~/.ssh:/root/.ssh -v $PWD:/workdir karmab/kcli'
+    alias kcli='docker run -it --rm --security-opt label:disable -v ~/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir karmab/kcli'
 
 For web access, you can switch with
 ``-p 9000:9000 --entrypoint=/usr/bin/kweb`` and thus accessing to port
@@ -111,21 +112,17 @@ For web access, you can switch with
 I don’t want a big fat daemon
 -----------------------------
 
-Use podman!
+Use podman! Remember to store your public and private key in the ~/.kcli
+directory so you dont need to share your entire .ssh directory as a
+volume (kcli container is based on alpine, and as such uses a ssh client
+which doesnt support gssapi)
 
 ::
 
-    alias kcli='podman run -it --rm --security-opt label=disable -v ~/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v ~/.ssh:/root/.ssh -v $PWD:/workdir karmab/kcli'
+    alias kcli='podman run -it --rm --security-opt label=disable -v ~/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir karmab/kcli'
 
 Dev installation from pip
 -------------------------
-
-CentOS installation
-~~~~~~~~~~~~~~~~~~~
-
-Use the provided
-`script <https://github.com/karmab/kcli/blob/master/extras/centos.sh>`__
-which will install a dedicated python3 env
 
 Generic platform
 ~~~~~~~~~~~~~~~~
@@ -142,12 +139,19 @@ Or for a full install using latest
 
     pip install -e git+https://github.com/karmab/kcli.git#egg=kcli[all]
 
+CentOS installation
+~~~~~~~~~~~~~~~~~~~
+
+Use the provided
+`script <https://github.com/karmab/kcli/blob/master/extras/centos.sh>`__
+which will install a dedicated python3 env
+
 Configuration
 =============
 
-If you only want to use your local libvirt, *no configuration* is
-needed. On most distributions, default network and storage pool already
-exist.
+If you only want to use your local libvirt, *no specific configuration*
+is needed. On most distributions, default network and storage pool
+already exist.
 
 You can add an additional storage pool with:
 
@@ -161,12 +165,27 @@ You can also create a default network
 
     kcli network  -c 192.168.122.0/24 default
 
-You can edit ~/.kcli/config.yml. For instance,
+kcli configuration is done ~/.kcli directory that you need to manually
+create. It will contain:
+
+-  config.yml generic configuration where you declare hypervisors/hosts
+   ( we use the term *client*)
+-  profiles.yml hosts your profile, where you combine things like
+   memory, numcpus and all supported parameters into named profiles to
+   create vms from
+-  id_rsa/id_rsa.pub/id_dsa/id_dsa.pub You can also choose to store your
+   default public and private keys in *kcli* directory which will be the
+   first place to look at them when connecting to a remote kvm host,
+   virtual machine or when injecting your public key. This is useful
+   when using kcli container and not wanting to share your entire ~/.ssh
+   directory in your container alias
+
+For instance, here ’s a sample ``~/.kcli/config.yml``
 
 .. code:: yaml
 
     default:
-     client: twix
+     client: myhypervisor
      numcpus: 2
      diskthin: true
      memory: 512
@@ -178,9 +197,9 @@ You can edit ~/.kcli/config.yml. For instance,
      nets:
       - default
 
-    twix:
+    myhypervisor:
      host: 192.168.0.6
-     pool: images
+     pool: default
 
     bumblefoot:
      host: 192.168.0.4
