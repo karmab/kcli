@@ -1075,10 +1075,10 @@ def cli():
     export_parser.add_argument('names', metavar='VMNAMES', nargs='*')
     export_parser.set_defaults(func=export)
 
-    lb_info = 'Create/Delete loadbalancer'
-    lb_parser = subparsers.add_parser('lb', description=lb_info, help=lb_info)
-    lb_parser.add_argument('name', metavar='NAME', nargs='*')
-    lb_parser.set_defaults(func=lb)
+    # lb_info = 'Create/Delete loadbalancer'
+    # lb_parser = subparsers.add_parser('lb', description=lb_info, help=lb_info)
+    # lb_parser.add_argument('name', metavar='NAME', nargs='*')
+    # lb_parser.set_defaults(func=lb)
 
     list_info = 'List hosts, profiles, flavors, templates, isos,...'
     list_parser = subparsers.add_parser('list', description=list_info, help=list_info)
