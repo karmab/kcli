@@ -9,12 +9,13 @@ parameters:
  masters: 1
  infras: 1
  nodes: 1
+ registry: redhat.io
  cidr: 192.168.122.0/24
  crio: true
  asb: true
  metrics: false
  gluster: false
- version: "3.10"
+ version: "3.11"
  deploy: false
 
 [[ domain ]]:

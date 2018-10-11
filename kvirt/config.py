@@ -346,8 +346,14 @@ class Kconfig(Kbaseconfig):
         scriptcmds = []
         skip_rhnregister_script = False
         if rhnregister:
-            if (rhnuser is not None and rhnpassword is not None) or (rhnak is not None and rhnorg is not None):
+            if rhnuser is not None and rhnpassword is not None:
                 skip_rhnregister_script = True
+                overrides['rhnuser'] = rhnuser
+                overrides['rhnpassword'] = rhnpassword
+            elif rhnak is not None and rhnorg is not None:
+                skip_rhnregister_script = True
+                overrides['rhnak'] = rhnak
+                overrides['rhnorg'] = rhnorg
             else:
                 common.pprint("Rhn registration required but missing credentials.Leaving...", color='red')
                 os._exit(1)
@@ -374,17 +380,17 @@ class Kconfig(Kbaseconfig):
         if skip_rhnregister_script and cloudinit and template is not None and template.startswith('rhel'):
             # rhncommands = ['sleep 30']
             rhncommands = []
-            if rhnuser is not None and rhnpassword is not None:
+            if rhnak is not None and rhnorg is not None:
+                rhncommands.append('subscription-manager register --force --activationkey=%s --org=%s'
+                                   % (rhnak, rhnorg))
+                rhncommands.append('subscription-manager repos --enable=rhel-7-server-rpms')
+            elif rhnuser is not None and rhnpassword is not None:
                 rhncommands.append('subscription-manager register --force --username=%s --password=%s'
                                    % (rhnuser, rhnpassword))
                 if rhnpool is not None:
                     rhncommands.append('subscription-manager attach --pool=%s' % rhnpool)
                 else:
                     rhncommands.append('subscription-manager attach --auto')
-            elif rhnak is not None and rhnorg is not None:
-                rhncommands.append('subscription-manager register --force --activationkey=%s --org=%s'
-                                   % (rhnak, rhnorg))
-                rhncommands.append('subscription-manager repos --enable=rhel-7-server-rpms')
         else:
             rhncommands = []
         cmds = rhncommands + cmds + scriptcmds
