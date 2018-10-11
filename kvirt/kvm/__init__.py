@@ -820,7 +820,8 @@ class Kvirt(object):
                         command = "ssh -p %s %s@%s \"%s\"" % (self.port, self.user, self.host, command)
                         bridgeips = os.popen(command).read().strip()
                         bridgeips = yaml.load(bridgeips)
-                        leases.update(bridgeips)
+                        if bridgeips is not None:
+                            leases.update(bridgeips)
                         bridgeipschecked.append(network)
                 if vm.isActive():
                     if mac in leases:
