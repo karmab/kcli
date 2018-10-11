@@ -800,17 +800,8 @@ class Kvirt(object):
                 ip = lease['ipaddr']
                 mac = lease['mac']
                 leases[mac] = ip
-        if self.detect_bridge_ips:
-            for network in self.list_networks():
-                if self.list_networks()[network]['type'] != 'bridged':
-                    continue
-                cidr = self.list_networks()[network]['cidr']
-                command = "bridge_helper.py -i %s -c %s" % (network, cidr)
-                command = "ssh -p %s %s@%s \"%s\"" % (self.port, self.user, self.host, command)
-                bridgeips = os.popen(command).read().strip()
-                bridgeips = yaml.load(bridgeips)
-                leases.update(bridgeips)
         status = {0: 'down', 1: 'up'}
+        bridgeipschecked = []
         for vm in conn.listAllDomains(0):
             template, plan, profile = '', '', ''
             xml = vm.XMLDesc(0)
@@ -820,6 +811,17 @@ class Kvirt(object):
             ips = []
             for element in list(root.getiterator('interface')):
                 mac = element.find('mac').get('address')
+                networktype = element.get('type')
+                if networktype == 'bridge':
+                    network = element.find('source').get('bridge')
+                    if self.detect_bridge_ips and network not in bridgeipschecked:
+                        cidr = self.list_networks()[network]['cidr']
+                        command = "bridge_helper.py -i %s -c %s" % (network, cidr)
+                        command = "ssh -p %s %s@%s \"%s\"" % (self.port, self.user, self.host, command)
+                        bridgeips = os.popen(command).read().strip()
+                        bridgeips = yaml.load(bridgeips)
+                        leases.update(bridgeips)
+                        bridgeipschecked.append(network)
                 if vm.isActive():
                     if mac in leases:
                         ips.append(leases[mac])
