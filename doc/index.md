@@ -145,8 +145,8 @@ kcli network  -c 192.168.122.0/24 default
 kcli configuration is done ~/.kcli directory that you need to manually create. It will contain:
 
 - config.yml generic configuration where you declare hypervisors/hosts ( we use the term *client*)
-- profiles.yml hosts your profile, where you combine things like memory, numcpus and all supported parameters into named profiles to create vms from
-- id_rsa/id_rsa.pub/id_dsa/id_dsa.pub You can also choose to store your default public and private keys in *kcli* directory which will be the first place to look at them when connecting to a remote kvm host, virtual machine or when injecting your public key. This is useful when using kcli container and not wanting to share your entire ~/.ssh directory in your container alias
+- profiles.yml hosts your profiles where you combine things like memory, numcpus and all supported parameters into named profiles to create vms from
+- id_rsa/id_rsa.pub/id_dsa/id_dsa.pub You can also choose to store your default public and private keys in *kcli* directory which will be the first place to look at them when connecting to a remote kvm host, virtual machine or when injecting your public key. This is useful when using kcli container and not wanting to share your entire ~/.ssh directory in your container
 
 For instance, here 's a sample `~/.kcli/config.yml`
 
@@ -192,8 +192,8 @@ kcli bootstrap -n twix -H 192.168.0.6 --pool vms --poolpath /home/vms
 
 ## Kvm
 
-kvm has an additional parameter `detect_bridge_ips` that you can either set in the default section or in a specific hypervisor section
-If set to *True*, It allows you to grab ips from your bridge network on a remote kvm host accessed other ssh.
+kvm has an additional parameter `detect_bridge_ips` that you can either set in the default section or in a specific hypervisor section.
+If set to *True*, It allows you to detects dhcp ips from the bridge networks of a remote kvm host accessed other ssh.
 
 for this to work, you'll need to manually install scapy (either from pip or using python3-scapy rpm) and copy the [bridge_helper.py](https://raw.githubusercontent.com/karmab/kcli/master/extras/bridge_helper.py) script somewhere in the PATH of your remote kvm host
 
@@ -365,13 +365,13 @@ Templates aim to typically be the source for your vms, using the existing cloud 
 kcli download centos7
 ```
 
-at this point, you can actually deploy vms directly from the template, using default settings for the vm:
+at this point, you can deploy vms directly from the template, using default settings for the vm:
 
 ```Shell
 kcli vm -p CentOS-7-x86_64-GenericCloud.qcow2 vm1
 ```
 
-by default, your public key will be injected (using cloudinit) to the vm!
+by default, your public key will be injected (using cloudinit) to the vm
 
 you can then access the vm using *kcli ssh*
 
@@ -379,20 +379,19 @@ kcli uses the default ssh_user according to the different [cloud images](http://
 To guess it, kcli checks the template name. So for example, your centos image must contain the term "centos" in the file name,
 otherwise the default user "root" will be used.
 
-Using parameters, you can tweak this vm or use profiles.
+Using parameters, you can tweak the vm creation. All keywords can be used. For instance
 
-## Cloudinit stuff
+```Shell
+kcli vm -p CentOS-7-x86_64-GenericCloud.qcow2 -P memory=2048 -P numcpus=2 vm1
+```
 
-If cloudinit is enabled (it is by default), a custom iso is generated on the fly for your vm (using mkisofs) and uploaded to your kvm instance (using the libvirt API, not using ssh commands).
+You can also pass disks, networks, cmds (or any keyword)
 
-The iso handles static networking configuration, hostname setting, injecting ssh keys and running specific commands and entire scripts, and copying entire files
+```Shell
+kcli vm -p CentOS-7-x86_64-GenericCloud.qcow2 -P disks=[10,20] -P nets=[default,default] -P cmds=[yum -y install nc] vm1
+```
 
-If you use cloudinit but dont specify ssh keys to inject, the default *~/.ssh/id_rsa.pub* will be used, if present.
-
-For kvm vms based on coreos, ignition is used instead of cloudinit although the syntax is the same.
-
-A similar mechanism allows customization for cloud providers.
-
+Instead of passing parameters this way, you can use profiles.
 
 ## Profiles configuration
 
@@ -400,14 +399,21 @@ Profiles are meant to help creating single vm with preconfigured settings (numbe
 
 You use the file *~/.kcli/profiles.yml* to declare your profiles.
 
-Once created, you can use the following for instance to create a vm named myvm from profile centos7
+Once created, you can use the following for instance to create a vm from profile named centos7
 
 ```Shell
 kcli vm -p centos7 myvm
 ```
 
-The [samples directory](https://github.com/karmab/kcli/tree/master/samples) contains more examples to get you started
+The [samples directory](https://github.com/karmab/kcli/tree/master/samples) contains examples to get you started
 
+## Cloudinit stuff
+
+cloudinit is enabled by default and handles static networking configuration, hostname setting, injecting ssh keys and running specific commands and entire scripts, and copying entire files.
+
+For kvm vms based on coreos, ignition is used instead of cloudinit although the syntax is the same.
+
+A similar mechanism allows customization for other providers.
 
 ## Typical commands
 

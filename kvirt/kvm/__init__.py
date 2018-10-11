@@ -90,6 +90,15 @@ class Kvirt(object):
             self.detect_bridge_ips = False
         else:
             self.detect_bridge_ips = detect_bridge_ips
+        identityfile = None
+        if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
+            identityfile = os.path.expanduser("~/.kcli/id_rsa")
+        elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
+            identityfile = os.path.expanduser("~/.kcli/id_rsa")
+        if identityfile is not None:
+            self.identitycommand = "-i %s" % identityfile
+        else:
+            self.identitycommand = ""
 
     def close(self):
         """
@@ -457,8 +466,17 @@ class Kvirt(object):
                                                enableroot=enableroot, overrides=overrides, etcd=etcd)
                 with open('/tmp/ignition', 'w') as ignitionfile:
                     ignitionfile.write(ignitiondata)
-                if self.protocol == 'ssh':
-                    ignitioncmd = 'scp -qP %s /tmp/ignition %s@%s:/tmp' % (self.port, self.user, self.host)
+                    identityfile = None
+                    if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
+                        identityfile = os.path.expanduser("~/.kcli/id_rsa")
+                    elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
+                        identityfile = os.path.expanduser("~/.kcli/id_rsa")
+                    if identityfile is not None:
+                        identitycommand = "-i %s" % identityfile
+                    else:
+                        identitycommand = ""
+                    ignitioncmd = 'scp %s -qP %s /tmp/ignition %s@%s:/tmp' % (identitycommand, self.port, self.user,
+                                                                              self.host)
                     code = os.system(ignitioncmd)
                     if code != 0:
                         return {'result': 'failure', 'reason': "Unable to creation ignition data file in hypervisor"}
@@ -817,7 +835,8 @@ class Kvirt(object):
                     if self.detect_bridge_ips and network not in bridgeipschecked:
                         cidr = self.list_networks()[network]['cidr']
                         command = "bridge_helper.py -i %s -c %s" % (network, cidr)
-                        command = "ssh -p %s %s@%s \"%s\"" % (self.port, self.user, self.host, command)
+                        command = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host,
+                                                                 command)
                         bridgeips = os.popen(command).read().strip()
                         bridgeips = yaml.load(bridgeips)
                         if bridgeips is not None:
@@ -881,11 +900,8 @@ class Kvirt(object):
                 consolecommand = ''
                 if tunnel:
                     localport = common.get_free_port()
-                    consolecommand += "ssh -o LogLevel=QUIET -f -p %s -L %s:127.0.0.1:%s %s@%s sleep 10" % (self.port,
-                                                                                                            localport,
-                                                                                                            port,
-                                                                                                            self.user,
-                                                                                                            self.host)
+                    consolecommand += "ssh %s -o LogLevel=QUIET -f -p %s -L %s:127.0.0.1:%s %s@%s sleep 10"\
+                        % (self.identitycommand, self.port, localport, port, self.user, self.host)
                     if self.debug:
                         print(consolecommand)
                     # os.system(consolecommand)
@@ -928,9 +944,8 @@ class Kvirt(object):
                             print("Remote serial Console requires using ssh . Leaving...")
                             return
                         else:
-                            serialcommand = "ssh -o LogLevel=QUIET -p %s %s@%s nc 127.0.0.1 %s" % (self.port, self.user,
-                                                                                                   self.host,
-                                                                                                   serialport)
+                            serialcommand = "ssh %s -o LogLevel=QUIET -p %s %s@%s nc 127.0.0.1 %s" %\
+                                (self.identitycommand, self.port, self.user, self.host, serialport)
                         os.system(serialcommand)
 
     def info(self, name, output='plain', fields=None, values=False):
@@ -1018,7 +1033,8 @@ class Kvirt(object):
                 if self.detect_bridge_ips:
                     cidr = self.list_networks()[network]['cidr']
                     command = "bridge_helper.py -i %s -c %s -m %s" % (network, cidr, mac)
-                    command = "ssh -p %s %s@%s \"%s\"" % (self.port, self.user, self.host, command)
+                    command = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host,
+                                                             command)
                     ip = os.popen(command).read().strip()
             else:
                 network = element.find('source').get('network')
@@ -1394,6 +1410,11 @@ class Kvirt(object):
             network = net.get('name')
         else:
             network = net
+        try:
+            network = conn.networkLookupByName(network)
+        except:
+            print("Skipping DNS reservation on bridged network %s" % network)
+            return
         if ip is None:
             if isinstance(net, dict):
                 ip = net.get('ip')
@@ -1410,7 +1431,6 @@ class Kvirt(object):
         if ip is None:
             print("Couldn't assign DNS")
             return
-        network = conn.networkLookupByName(network)
         oldnetxml = network.XMLDesc()
         root = ET.fromstring(oldnetxml)
         dns = list(root.getiterator('dns'))
@@ -1983,7 +2003,7 @@ class Kvirt(object):
         elif networktype == 'bridge' and self.detect_bridge_ips:
             cidr = self.list_networks()[network]['cidr']
             command = "bridge_helper.py -i %s -c %s -m %s" % (network, cidr, mac)
-            command = "ssh -p %s %s@%s \"%s\"" % (self.port, self.user, self.host, command)
+            command = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host, command)
             ip = os.popen(command).read().strip()
         if ip is None:
             print("No ip found. Cannot ssh...")
@@ -2057,9 +2077,10 @@ class Kvirt(object):
                         print("Couldn't create directory %s.Leaving..." % poolpath)
                         return 1
             elif self.protocol == 'ssh':
-                cmd1 = 'ssh -p %s %s@%s "test -d %s || mkdir %s"' % (self.port, self.user, self.host, poolpath,
-                                                                     poolpath)
-                cmd2 = 'ssh -p %s -t %s@%s "sudo chown %s %s"' % (self.port, self.user, self.host, user, poolpath)
+                cmd1 = 'ssh %s -p %s %s@%s "test -d %s || mkdir %s"' % (self.identitycommand, self.port, self.user,
+                                                                        self.host, poolpath, poolpath)
+                cmd2 = 'ssh %s -p %s -t %s@%s "sudo chown %s %s"' % (self.identitycommand, self.port, self.user,
+                                                                     self.host, user, poolpath)
                 return1 = os.system(cmd1)
                 if return1 > 0:
                     print("Couldn't create directory %s.Leaving..." % poolpath)
@@ -2137,8 +2158,8 @@ class Kvirt(object):
         if self.host == 'localhost' or self.host == '127.0.0.1':
             downloadcmd = 'curl -Lo %s/%s -f %s' % (downloadpath, shortimage, image)
         elif self.protocol == 'ssh':
-            downloadcmd = 'ssh -p %s %s@%s "curl -Lo %s/%s -f %s"' % (self.port, self.user, self.host, downloadpath,
-                                                                      shortimage, image)
+            downloadcmd = 'ssh %s -p %s %s@%s "curl -Lo %s/%s -f %s"' % (self.identitycommand, self.port, self.user,
+                                                                         self.host, downloadpath, shortimage, image)
         code = os.system(downloadcmd)
         if code != 0:
             return {'result': 'failure', 'reason': "Unable to download indicated template"}
@@ -2150,8 +2171,8 @@ class Kvirt(object):
                 else:
                     common.pprint("bunzip2 not found. Can't uncompress image", color="blue")
             elif self.protocol == 'ssh':
-                uncompresscmd = 'ssh -p %s %s@%s "bunzip2 %s/%s"' % (self.port, self.user, self.host, poolpath,
-                                                                     shortimage)
+                uncompresscmd = 'ssh %s -p %s %s@%s "bunzip2 %s/%s"' % (self.identitycommand, self.port, self.user,
+                                                                        self.host, poolpath, shortimage)
                 os.system(uncompresscmd)
             shortimage = shortimage.replace('.bz2', '')
         if shortimage.endswith('gz'):
@@ -2162,8 +2183,8 @@ class Kvirt(object):
                 else:
                     common.pprint("gunzip not found. Can't uncompress image", color="blue")
             elif self.protocol == 'ssh':
-                uncompresscmd = 'ssh -p %s %s@%s "gunzip %s/%s"' % (self.port, self.user, self.host, poolpath,
-                                                                    shortimage)
+                uncompresscmd = 'ssh %s -p %s %s@%s "gunzip %s/%s"' % (self.identitycommand, self.port, self.user,
+                                                                       self.host, poolpath, shortimage)
                 os.system(uncompresscmd)
             shortimage = shortimage.replace('.gz', '')
         if shortimage.endswith('xz'):
@@ -2174,7 +2195,8 @@ class Kvirt(object):
                 else:
                     common.pprint("unxz not found. Can't uncompress image", color="blue")
             elif self.protocol == 'ssh':
-                uncompresscmd = 'ssh -p %s %s@%s "unxz %s/%s"' % (self.port, self.user, self.host, poolpath, shortimage)
+                uncompresscmd = 'ssh -p %s %s@%s "unxz %s/%s"' % (self.identitycommand, self.port, self.user, self.host,
+                                                                  poolpath, shortimage)
                 os.system(uncompresscmd)
             shortimage = shortimage.replace('.xz', '')
         if cmd is not None:
@@ -2183,9 +2205,10 @@ class Kvirt(object):
                     cmd = "virt-customize -a %s/%s --run-command '%s'" % (poolpath, shortimage, cmd)
                     os.system(cmd)
             elif self.protocol == 'ssh':
-                cmd = 'ssh -p %s %s@%s "virt-customize -a %s/%s --run-command \'%s\'"' % (self.port, self.user,
-                                                                                          self.host, poolpath,
-                                                                                          shortimage, cmd)
+                cmd = 'ssh %s -p %s %s@%s "virt-customize -a %s/%s --run-command \'%s\'"' % (self.identitycommand,
+                                                                                             self.port, self.user,
+                                                                                             self.host, poolpath,
+                                                                                             shortimage, cmd)
                 os.system(cmd)
         if pooltype in ['logical', 'zfs']:
             product = list(root.getiterator('product'))
@@ -2493,7 +2516,8 @@ class Kvirt(object):
         thincommand = ("lvs -o lv_name  %s -S 'lv_attr =~ ^V && origin = \"\" && pool_lv = \"%s\"'  --noheadings"
                        % (path, thinpool))
         if self.protocol == 'ssh':
-            thincommand = "ssh -p %s %s@%s \"%s\"" % (self.port, self.user, self.host, thincommand)
+            thincommand = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host,
+                                                         thincommand)
         results = os.popen(thincommand).read().strip()
         if results == '':
             return []
@@ -2502,7 +2526,7 @@ class Kvirt(object):
     def _fixqcow2(self, path, backing):
         command = "qemu-img create -q -f qcow2 -b %s -F qcow2 %s" % (backing, path)
         if self.protocol == 'ssh':
-            command = "ssh -p %s %s@%s \"%s\"" % (self.port, self.user, self.host, command)
+            command = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host, command)
         os.system(command)
 
     def add_image_to_deadpool(self, poolname, pooltype, poolpath, shortimage, thinpool=None):
@@ -2517,7 +2541,8 @@ class Kvirt(object):
         """
         sizecommand = "qemu-img info /tmp/%s --output=json" % shortimage
         if self.protocol == 'ssh':
-            sizecommand = "ssh -p %s %s@%s \"%s\"" % (self.port, self.user, self.host, sizecommand)
+            sizecommand = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host,
+                                                         sizecommand)
         size = os.popen(sizecommand).read().strip()
         virtualsize = json.loads(size)['virtual-size']
         if pooltype == 'logical':
@@ -2534,7 +2559,7 @@ class Kvirt(object):
                                                                                             shortimage)
         command += "; rm -rf /tmp/%s" % shortimage
         if self.protocol == 'ssh':
-            command = "ssh -p %s %s@%s \"%s\"" % (self.port, self.user, self.host, command)
+            command = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host, command)
         os.system(command)
 
     def _createthinlvm(self, name, path, thinpool, backing=None, size=None):
@@ -2543,13 +2568,13 @@ class Kvirt(object):
         else:
             command = "lvcreate -qq -V %sG -T %s/%s -n %s" % (size, path, thinpool, name)
         if self.protocol == 'ssh':
-            command = "ssh -p %s %s@%s \"%s\"" % (self.port, self.user, self.host, command)
+            command = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host, command)
         os.system(command)
 
     def _deletelvm(self, disk):
         command = "lvremove -qqy %s" % disk
         if self.protocol == 'ssh':
-            command = "ssh -p %s %s@%s \"%s\"" % (self.port, self.user, self.host, command)
+            command = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host, command)
         os.system(command)
 
     def export(self, name, template=None):
