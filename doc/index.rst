@@ -115,7 +115,7 @@ Use podman!
 
 ::
 
-    alias kcli='sudo podman run -it --rm --security-opt label=disable -v ~/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v ~/.ssh:/root/.ssh -v $PWD:/workdir karmab/kcli'
+    alias kcli='podman run -it --rm --security-opt label=disable -v ~/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v ~/.ssh:/root/.ssh -v $PWD:/workdir karmab/kcli'
 
 Dev installation from pip
 -------------------------
@@ -141,12 +141,6 @@ Or for a full install using latest
 ::
 
     pip install -e git+https://github.com/karmab/kcli.git#egg=kcli[all]
-
-On MacOSX, run the following command too
-
-::
-
-    sudo  /Applications/Python\ 3.6/Install\ Certificates.command
 
 Configuration
 =============
@@ -214,6 +208,18 @@ pool with a path, and have centos cloud image downloaded
 
 Provider specifics
 ==================
+
+Kvm
+---
+
+kvm has an additional parameter ``detect_bridge_ips`` that you can also
+set in the default section. If set to *True*, It allows you to grab ips
+from a remote kvm host accessed other ssh.
+
+for this to work, you’ll need to manually install scapy (either from pip
+or using python3-scapy rpm) and copy the
+```bridge_helper.py`` <https://raw.githubusercontent.com/karmab/kcli/master/extras/bridge_helper.py>`__
+script somewhere in the PATH of your remote kvm host
 
 Gcp
 ---
@@ -1052,6 +1058,36 @@ corresponding plan
 
     kcli product YOUR_PRODUCT
 
+Running on kubernetes/openshift
+-------------------------------
+
+You can run the container on those platforms and either use the web
+interface or log in the pod to run ``kcli`` commandline
+
+on kubernetes
+
+::
+
+    kubectl create configmap kcli-config --from-file=~/.kcli
+    kubectl create configmap ssh-config --from-file=~/.ssh
+    kubectl create -f https://raw.githubusercontent.com/karmab/kcli/master/extras/k8sdeploy.yml
+
+on openshift, you’ll need to run those extra commands
+
+::
+
+    oc new-project kcli
+    oc adm policy add-scc-to-user anyuid system:serviceaccount:kcli:default
+    oc expose svc kcli
+
+on the web interface, you won’t be able to switch to a different
+provider. You would have to modify the configmap to point to a different
+provider and recreate the pod
+
+alternatively, look at https://github.com/karmab/kcli-controller for a
+controller handling machines crds and creating vms with kcli/kvirt
+library
+
 Testing
 -------
 
@@ -1148,11 +1184,12 @@ Available parameters for hypervisor/profile/plan files
    vms to be scheduled on a matching host)
 -  \ *rhnregister*\  (optional). Auto registers vms whose template
    starts with rhel Defaults to false. Requires to either rhnuser and
-   rhnpassword, or rhnactivationkey and rhnorg
+   rhnpassword, or rhnactivationkey and rhnorg, and an optional pool
 -  *rhnuser* (optional). Red Hat network user
 -  *rhnpassword* (optional). Red Hat network password
 -  *rhnactivationkey* (optional). Red Hat network activation key
 -  *rhnorg* (optional). Red Hat network organization
+-  *rhnpool* (optional). Red Hat network pool
 
 Overriding parameters
 ---------------------
