@@ -186,10 +186,10 @@ kcli bootstrap -n twix -H 192.168.0.6 --pool vms --poolpath /home/vms
 
 ## Kvm
 
-kvm has an additional parameter `detect_bridge_ips` that you can also set in the default section.
-If set to *True*, It allows you to grab ips from a remote kvm host accessed other ssh.
+kvm has an additional parameter `detect_bridge_ips` that you can either set in the default section or in a specific hypervisor section
+If set to *True*, It allows you to grab ips from your bridge network on a remote kvm host accessed other ssh.
 
-for this to work, you'll need to manually install scapy (either from pip or using python3-scapy rpm) and copy the [`bridge_helper.py`](https://raw.githubusercontent.com/karmab/kcli/master/extras/bridge_helper.py) script somewhere in the PATH of your remote kvm host
+for this to work, you'll need to manually install scapy (either from pip or using python3-scapy rpm) and copy the [bridge_helper.py](https://raw.githubusercontent.com/karmab/kcli/master/extras/bridge_helper.py) script somewhere in the PATH of your remote kvm host
 
 ## Gcp
 
