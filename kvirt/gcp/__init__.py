@@ -275,7 +275,7 @@ class Kgcp(object):
             keys = [homekey] + keys if keys is not None else [homekey]
         if keys is not None:
             keys = ["%s: %s" % (self.user, x) for x in keys]
-            keys = ''.join(keys)
+            keys = '\n'.join(keys)
             newval = {'key': 'ssh-keys', 'value': keys}
             body['metadata']['items'].append(newval)
         newval = {'key': 'plan', 'value': plan}
