@@ -66,12 +66,12 @@ class Kvirt(object):
             else:
                 url = "qemu:///system"
             if url.startswith('qemu+ssh'):
-                if insecure:
-                    url = "%s&no_verify=1" % url
                 if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
-                    url = "%s&keyfile=%s" % (url, os.path.expanduser("~/.kcli/id_rsa"))
+                    url = "%s&no_verify=1&keyfile=%s" % (url, os.path.expanduser("~/.kcli/id_rsa"))
                 elif os.path.exists(os.path.expanduser("~/.kcli/id_dsa")):
-                    url = "%s&keyfile=%s" % (url, os.path.expanduser("~/.kcli/id_dsa"))
+                    url = "%s&no_verify=1&keyfile=%s" % (url, os.path.expanduser("~/.kcli/id_dsa"))
+                elif insecure:
+                    url = "%s&no_verify=1" % url
         try:
             self.conn = libvirtopen(url)
             self.debug = debug
