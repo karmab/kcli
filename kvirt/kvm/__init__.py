@@ -1947,21 +1947,42 @@ class Kvirt(object):
 
     def _ssh_credentials(self, name):
         user = 'root'
+        ip = None
         conn = self.conn
+        leases = {}
+        conn = self.conn
+        for network in conn.listAllNetworks():
+            for lease in network.DHCPLeases():
+                mac = lease['mac']
+                leases[mac] = lease['ipaddr']
         try:
             vm = conn.lookupByName(name)
+            xml = vm.XMLDesc(0)
+            root = ET.fromstring(xml)
         except:
             print("VM %s not found" % name)
-            return '', ''
-        if vm.isActive() != 1:
-            print("Machine down. Cannot ssh...")
-            return '', ''
-        vm = [v for v in self.list() if v[0] == name][0]
-        template = vm[3]
-        if template != '':
-            user = common.get_user(template)
-        ip = vm[2]
-        if ip == '':
+            return None, None
+        for element in list(root.getiterator('{kvirt}info')):
+            e = element.find('{kvirt}ip')
+            if e is not None:
+                return e.text
+            e = element.find('{kvirt}template')
+            if e is not None:
+                template = e.text
+                if template != '':
+                    user = common.get_user(template)
+        nic = list(root.getiterator('interface'))[0]
+        mac = nic.find('mac').get('address')
+        network = nic.find('source').get('bridge')
+        networktype = nic.get('type')
+        if vm.isActive() and mac in leases:
+            ip = leases[mac]
+        elif networktype == 'bridge' and self.detect_bridge_ips:
+            cidr = self.list_networks()[network]['cidr']
+            command = "bridge_helper.py -i %s -c %s -m %s" % (network, cidr, mac)
+            command = "ssh -p %s %s@%s \"%s\"" % (self.port, self.user, self.host, command)
+            ip = os.popen(command).read().strip()
+        if ip is None:
             print("No ip found. Cannot ssh...")
         return user, ip
 
