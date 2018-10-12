@@ -170,7 +170,7 @@ create. It will contain:
 
 -  config.yml generic configuration where you declare hypervisors/hosts
    ( we use the term *client*)
--  profiles.yml hosts your profile, where you combine things like
+-  profiles.yml hosts your profiles where you combine things like
    memory, numcpus and all supported parameters into named profiles to
    create vms from
 -  id_rsa/id_rsa.pub/id_dsa/id_dsa.pub You can also choose to store your
@@ -178,7 +178,7 @@ create. It will contain:
    first place to look at them when connecting to a remote kvm host,
    virtual machine or when injecting your public key. This is useful
    when using kcli container and not wanting to share your entire ~/.ssh
-   directory in your container alias
+   directory in your container
 
 For instance, here ’s a sample ``~/.kcli/config.yml``
 
@@ -232,9 +232,9 @@ Kvm
 ---
 
 kvm has an additional parameter ``detect_bridge_ips`` that you can
-either set in the default section or in a specific hypervisor section If
-set to *True*, It allows you to grab ips from your bridge network on a
-remote kvm host accessed other ssh.
+either set in the default section or in a specific hypervisor section.
+If set to *True*, It allows you to detects dhcp ips from the bridge
+networks of a remote kvm host accessed other ssh.
 
 for this to work, you’ll need to manually install scapy (either from pip
 or using python3-scapy rpm) and copy the
@@ -445,15 +445,14 @@ can be used to download a specific cloud image. for instance, centos7:
 
     kcli download centos7
 
-at this point, you can actually deploy vms directly from the template,
-using default settings for the vm:
+at this point, you can deploy vms directly from the template, using
+default settings for the vm:
 
 .. code:: shell
 
     kcli vm -p CentOS-7-x86_64-GenericCloud.qcow2 vm1
 
-by default, your public key will be injected (using cloudinit) to the
-vm!
+by default, your public key will be injected (using cloudinit) to the vm
 
 you can then access the vm using *kcli ssh*
 
@@ -463,85 +462,126 @@ guess it, kcli checks the template name. So for example, your centos
 image must contain the term “centos” in the file name, otherwise the
 default user “root” will be used.
 
-Using parameters, you can tweak this vm or use profiles.
+Using parameters, you can tweak the vm creation. All keywords can be
+used. For instance
 
-Cloudinit stuff
----------------
+.. code:: shell
 
-If cloudinit is enabled (it is by default), a custom iso is generated on
-the fly for your vm (using mkisofs) and uploaded to your kvm instance
-(using the libvirt API, not using ssh commands).
+    kcli vm -p CentOS-7-x86_64-GenericCloud.qcow2 -P memory=2048 -P numcpus=2 vm1
 
-The iso handles static networking configuration, hostname setting,
-injecting ssh keys and running specific commands and entire scripts, and
-copying entire files
+You can also pass disks, networks, cmds (or any keyword)
 
-If you use cloudinit but dont specify ssh keys to inject, the default
-*~/.ssh/id_rsa.pub* will be used, if present.
+.. code:: shell
 
-For kvm vms based on coreos, ignition is used instead of cloudinit
-although the syntax is the same.
+    kcli vm -p CentOS-7-x86_64-GenericCloud.qcow2 -P disks=[10,20] -P nets=[default,default] -P cmds=[yum -y install nc] vm1
 
-A similar mechanism allows customization for cloud providers.
+Instead of passing parameters this way, you can use profiles.
 
 Profiles configuration
 ----------------------
 
 Profiles are meant to help creating single vm with preconfigured
-settings (number of CPUS, memory, size of disk, network,whether to use a
-template,…)
+settings (number of CPUS, memory, size of disk, network, whether to use
+a template, extra commands to run on start, whether reserving dns,….)
 
-You use the file *~/.kcli/profiles.yml* to declare your profiles.
+You use the file *~/.kcli/profiles.yml* to declare your profiles. Here’s
+a snippet declaring the profile ``centos``
 
-Once created, you can use the following for instance to create a vm
-named myvm from profile centos7
+::
+
+    centos:
+     template: CentOS-7-x86_64-GenericCloud.qcow2
+     numcpus: 2
+     disks:
+      - size: 10
+     reservedns: true
+     nets:
+      - name: default
+     cmds:
+      - echo unix1234 | passwd --stdin root
+
+With this section, you can use the following to create a vm
 
 .. code:: shell
 
-    kcli vm -p centos7 myvm
+    kcli vm -p centos myvm
 
-The `samples
-directory <https://github.com/karmab/kcli/tree/master/samples>`__
-contains more examples to get you started
+You can use the `profile file
+sample <https://github.com/karmab/kcli/tree/master/samples/profiles.yml>`__
+to get you started
+
+Cloudinit stuff
+---------------
+
+cloudinit is enabled by default and handles static networking
+configuration, hostname setting, injecting ssh keys and running specific
+commands and entire scripts, and copying entire files.
+
+For kvm vms based on coreos, ignition is used instead of cloudinit
+although the syntax is the same.
+
+A similar mechanism allows customization for other providers.
 
 Typical commands
 ----------------
 
--  Get info on your kvm setup
--  ``kcli report``
+-  List vms
+
+   -  ``kcli list``
+
+-  List templates (it will find them out based on their qcow2
+   extension…)
+
+   -  ``kcli list -t``
+
+-  Create vm from profile base7
+
+   -  ``kcli vm -p base7 myvm``
+
+-  Create vm from profile base7 for the specific client twix
+
+   -  ``kcli -C twix vm -p base7 myvm``
+
+-  Delete vm
+
+   -  ``kcli delete vm1``
+
+-  Get detailed info on a specific vm
+
+   -  ``kcli info vm1``
+
+-  Start vm
+
+   -  ``kcli start vm1``
+
+-  Stop vm
+
+   -  ``kcli stop vm1``
+
 -  Switch active client to bumblefoot
 
    -  ``kcli host --switch bumblefoot``
 
--  List vms
--  ``kcli list``
--  List templates (it will find them out based on their qcow2
-   extension…)
--  ``kcli list -t``
--  Create vm from profile base7
--  ``kcli vm -p base7 myvm``
--  Delete vm
--  ``kcli delete vm1``
--  Get detailed info on a specific vm
--  ``kcli infovm1``
--  Start vm
--  ``kcli start vm1``
--  Stop vm
--  ``kcli stop vm1``
 -  Get remote-viewer console
--  ``kcli console vm1``
+
+   -  ``kcli console vm1``
+
 -  Get serial console (over TCP). It will only work with vms created
    with kcli and will require netcat client to be installed on host
--  ``kcli console -s vm1``
+
+   -  ``kcli console -s vm1``
+
 -  Deploy multiple vms using plan x defined in x.yml file
--  ``kcli plan -f x.yml x``
+
+   -  ``kcli plan -f x.yml x``
+
 -  Delete all vm from plan x
 
    -  ``kcli plan -d x``
 
--  Add 5GB disk to vm1, using pool named vms
+-  Add 5GB disk to vm1, using pool named images
 
-   -  ``kcli disk -s 5 -p vms vm1``
+   -  ``kcli disk -s 5 -p images vm1``
 
 -  Delete disk named vm1_2.img from vm1
 
@@ -551,17 +591,11 @@ Typical commands
 
    -  ``kcli update -m 2048 vm1``
 
--  Update internal IP (useful for ansible inventory over existing
-   bridged vms)
-
-   -  ``kcli update -1 192.168.0.40 vm1``
-
 -  Clone vm1 to new vm2
 
    -  ``kcli clone -b vm1 vm2``
 
--  Connect by ssh to the vm (retrieving ip and adjusting user based on
-   the template)
+-  Connect by ssh to the vm
 
    -  ``kcli ssh vm1``
 
@@ -569,12 +603,29 @@ Typical commands
 
    -  ``kcli network -c 192.168.7.0/24 --dhcp mynet``
 
+-  Add a new pool
+
+   -  ``kcli pool -t dir -p /hom/images images``
+
 -  Add a new nic from network default
--  ``kcli nic -n default myvm``
+
+   -  ``kcli nic -n default myvm``
+
 -  Delete nic eth2 from vm
--  ``kcli nic -di eth2 myvm``
+
+   -  ``kcli nic -di eth2 myvm``
+
 -  Create snapshot snap of vm:
--  ``kcli snapshot -n vm1 snap1``
+
+   -  ``kcli snapshot -n vm1 snap1``
+
+-  Get info on your kvm setup
+
+   -  ``kcli report``
+
+-  Export vm:
+
+   -  ``kcli export vm1``
 
 How to use the web version
 --------------------------
@@ -588,8 +639,8 @@ Launch the following command and access your machine at port 9000:
 Multiple hypervisors
 --------------------
 
-If you have multiple hypervisors, you can generally use the flag *-C
-$CLIENT* to point to a specific one.
+If you have multiple hypervisors/clients, you can generally use the flag
+*-C $CLIENT* to point to a specific one.
 
 You can also use the following to list all you vms :
 
@@ -1214,17 +1265,25 @@ Available parameters for hypervisor/profile/plan files
 Overriding parameters
 ---------------------
 
-You can override parameters in - commands - scripts - files - plan files
-- profiles
+You can override parameters in
+
+-  commands
+-  scripts
+-  files
+-  plan files
+-  profiles
 
 For that , you can pass in kcli vm or kcli plan the following
-parameters: - -P x=1 -P y=2 and so on - –paramfile - In this case, you
-provide a yaml file ( and as such can provide more complex structures )
+parameters:
 
-The indicated objects are then rendered using jinja. For instance in a
-profile The delimiters ‘[[’ and ’]]’ are used instead of the commonly
-used ‘{{’ and ‘}}’ so that this rendering doesn’t get in the way when
-providing j2 files for instance
+-  -P x=1 -P y=2 and so on
+-  –paramfile - In this case, you provide a yaml file ( and as such can
+   provide more complex structures )
+
+The indicated objects are then rendered using jinja. The delimiters ‘[[’
+and ’]]’ are used instead of the commonly used ‘{{’ and ‘}}’ so that
+this rendering doesn’t get in the way when providing j2 files for
+instance
 
 ::
 
