@@ -9,7 +9,7 @@ parameters:
  masters: 1
  infras: 1
  nodes: 1
- registry: redhat.io
+ registry: registry.redhat.io
  cidr: 192.168.122.0/24
  crio: true
  asb: true

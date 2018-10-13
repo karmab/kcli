@@ -82,7 +82,7 @@ the are several flags you'll want to pass depending on your use case
 
 - `-v /var/run/libvirt:/var/run/libvirt -v /var/lib/libvirt/images:/var/lib/libvirt/images` if running against a local hypervisor
 - ` ~/.kcli:/root/.kcli` to use your kcli configuration (also profiles and repositories) stored locally
-- `-v ~/.ssh:/root/.ssh` to share your ssh keys. Alternatively store your public and private key in the ~/.kcli directory
+- `-v ~/.ssh:/root/.ssh` to share your ssh keys. Alternatively, you can store your public and private key in the ~/.kcli directory
 - `--security-opt label:disable` if running with selinux
 - `-v $PWD:/workdir` to access plans below your current directory
 - `-v $HOME:/root` to share your entire home directory, useful if you want to share secret files, `~/register.sh` for instance)
@@ -142,7 +142,7 @@ You can also create a default network
 kcli network  -c 192.168.122.0/24 default
 ```
 
-kcli configuration is done ~/.kcli directory that you need to manually create. It will contain:
+kcli configuration is done in ~/.kcli directory that you need to manually create. It will contain:
 
 - config.yml generic configuration where you declare hypervisors/hosts ( we use the term *client*)
 - profiles.yml hosts your profiles where you combine things like memory, numcpus and all supported parameters into named profiles to create vms from
