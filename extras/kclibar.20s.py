@@ -6,7 +6,7 @@
 # <bitbar.author>Karim Boumedhel</bitbar.author>
 # <bitbar.author.github>karmab</bitbar.author.github>
 # <bitbar.desc>Lists running vms using kcli</bitbar.desc>
-# <bitbar.image>https://raw.githubusercontent.com/karmab/kcli/master/kcli.jpg</bitbar.image>
+# <bitbar.image>https://raw.githubusercontent.com/karmab/kcli/master/kcli-small.png</bitbar.image>
 # <bitbar.abouturl>https://github.com/karmab/kcli</bitbar.abouturl>
 
 import sys

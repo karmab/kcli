@@ -1,0 +1,68 @@
+# Generated with the following on 2018-03-11T13:48:18.038153
+#
+#   openstack overcloud container image prepare --namespace=10.10.11.2:8787/rhosp12 --set ceph_namespace=10.10.11.2:8787/rhceph --set ceph_image=rhceph-2-rhel7 --set ceph_tag=latest --prefix=openstack- --tag=12.0-20180124.1 --env-file=/home/stack/templates/environments/overcloud_images.yaml -e /usr/share/openstack-tripleo-heat-templates/environments/ceph-ansible/ceph-ansible.yaml --environment-file /home/stack/templates/environments/network-environment.yaml --environment-file /home/stack/templates/environments/HostnameMap.yaml --environment-file /home/stack/templates/environments/nic-names.yaml --environment-file /home/stack/templates/environments/ips-from-pool-all.yaml --environment-file /home/stack/templates/environments/firstboot.yaml --environment-file /home/stack/templates/environments/postconfig.yaml --environment-file /home/stack/templates/environments/timezone.yaml --environment-file /home/stack/templates/environments/fencing.yaml --environment-file /home/stack/templates/environments/parameters_extraconf.yaml --environment-file /home/stack/templates/environments/firewall-rules.yaml --environment-file /home/stack/templates/environments/ceph-ansible.yaml --environment-file /home/stack/templates/environments/node-count.yaml
+#
+
+parameter_defaults:
+  DockerAodhApiImage: 10.10.11.2:8787/rhosp12/openstack-aodh-api:12.0-20180124.1
+  DockerAodhConfigImage: 10.10.11.2:8787/rhosp12/openstack-aodh-api:12.0-20180124.1
+  DockerAodhEvaluatorImage: 10.10.11.2:8787/rhosp12/openstack-aodh-evaluator:12.0-20180124.1
+  DockerAodhListenerImage: 10.10.11.2:8787/rhosp12/openstack-aodh-listener:12.0-20180124.1
+  DockerAodhNotifierImage: 10.10.11.2:8787/rhosp12/openstack-aodh-notifier:12.0-20180124.1
+  DockerCeilometerCentralImage: 10.10.11.2:8787/rhosp12/openstack-ceilometer-central:12.0-20180124.1
+  DockerCeilometerComputeImage: 10.10.11.2:8787/rhosp12/openstack-ceilometer-compute:12.0-20180124.1
+  DockerCeilometerConfigImage: 10.10.11.2:8787/rhosp12/openstack-ceilometer-central:12.0-20180124.1
+  DockerCeilometerNotificationImage: 10.10.11.2:8787/rhosp12/openstack-ceilometer-notification:12.0-20180124.1
+  DockerCephDaemonImage: 10.10.11.2:8787/rhceph/rhceph-2-rhel7:latest
+  DockerClustercheckConfigImage: 10.10.11.2:8787/rhosp12/openstack-mariadb:12.0-20180124.1
+  DockerClustercheckImage: 10.10.11.2:8787/rhosp12/openstack-mariadb:12.0-20180124.1
+  DockerCrondConfigImage: 10.10.11.2:8787/rhosp12/openstack-cron:12.0-20180124.1
+  DockerCrondImage: 10.10.11.2:8787/rhosp12/openstack-cron:12.0-20180124.1
+  DockerGlanceApiConfigImage: 10.10.11.2:8787/rhosp12/openstack-glance-api:12.0-20180124.1
+  DockerGlanceApiImage: 10.10.11.2:8787/rhosp12/openstack-glance-api:12.0-20180124.1
+  DockerGnocchiApiImage: 10.10.11.2:8787/rhosp12/openstack-gnocchi-api:12.0-20180124.1
+  DockerGnocchiConfigImage: 10.10.11.2:8787/rhosp12/openstack-gnocchi-api:12.0-20180124.1
+  DockerGnocchiMetricdImage: 10.10.11.2:8787/rhosp12/openstack-gnocchi-metricd:12.0-20180124.1
+  DockerGnocchiStatsdImage: 10.10.11.2:8787/rhosp12/openstack-gnocchi-statsd:12.0-20180124.1
+  DockerHAProxyConfigImage: 10.10.11.2:8787/rhosp12/openstack-haproxy:12.0-20180124.1
+  DockerHAProxyImage: 10.10.11.2:8787/rhosp12/openstack-haproxy:12.0-20180124.1
+  DockerHeatApiCfnConfigImage: 10.10.11.2:8787/rhosp12/openstack-heat-api-cfn:12.0-20180124.1
+  DockerHeatApiCfnImage: 10.10.11.2:8787/rhosp12/openstack-heat-api-cfn:12.0-20180124.1
+  DockerHeatApiConfigImage: 10.10.11.2:8787/rhosp12/openstack-heat-api:12.0-20180124.1
+  DockerHeatApiImage: 10.10.11.2:8787/rhosp12/openstack-heat-api:12.0-20180124.1
+  DockerHeatConfigImage: 10.10.11.2:8787/rhosp12/openstack-heat-api:12.0-20180124.1
+  DockerHeatEngineImage: 10.10.11.2:8787/rhosp12/openstack-heat-engine:12.0-20180124.1
+  DockerHorizonConfigImage: 10.10.11.2:8787/rhosp12/openstack-horizon:12.0-20180124.1
+  DockerHorizonImage: 10.10.11.2:8787/rhosp12/openstack-horizon:12.0-20180124.1
+  DockerInsecureRegistryAddress:
+  - 10.10.11.2:8787
+  DockerKeystoneConfigImage: 10.10.11.2:8787/rhosp12/openstack-keystone:12.0-20180124.1
+  DockerKeystoneImage: 10.10.11.2:8787/rhosp12/openstack-keystone:12.0-20180124.1
+  DockerMemcachedConfigImage: 10.10.11.2:8787/rhosp12/openstack-memcached:12.0-20180124.1
+  DockerMemcachedImage: 10.10.11.2:8787/rhosp12/openstack-memcached:12.0-20180124.1
+  DockerMysqlClientConfigImage: 10.10.11.2:8787/rhosp12/openstack-mariadb:12.0-20180124.1
+  DockerMysqlConfigImage: 10.10.11.2:8787/rhosp12/openstack-mariadb:12.0-20180124.1
+  DockerMysqlImage: 10.10.11.2:8787/rhosp12/openstack-mariadb:12.0-20180124.1
+  DockerNovaApiImage: 10.10.11.2:8787/rhosp12/openstack-nova-api:12.0-20180124.1
+  DockerNovaComputeImage: 10.10.11.2:8787/rhosp12/openstack-nova-compute:12.0-20180124.1
+  DockerNovaConductorImage: 10.10.11.2:8787/rhosp12/openstack-nova-conductor:12.0-20180124.1
+  DockerNovaConfigImage: 10.10.11.2:8787/rhosp12/openstack-nova-api:12.0-20180124.1
+  DockerNovaConsoleauthImage: 10.10.11.2:8787/rhosp12/openstack-nova-consoleauth:12.0-20180124.1
+  DockerNovaLibvirtConfigImage: 10.10.11.2:8787/rhosp12/openstack-nova-compute:12.0-20180124.1
+  DockerNovaLibvirtImage: 10.10.11.2:8787/rhosp12/openstack-nova-libvirt:12.0-20180124.1
+  DockerNovaMetadataImage: 10.10.11.2:8787/rhosp12/openstack-nova-api:12.0-20180124.1
+  DockerNovaPlacementConfigImage: 10.10.11.2:8787/rhosp12/openstack-nova-placement-api:12.0-20180124.1
+  DockerNovaPlacementImage: 10.10.11.2:8787/rhosp12/openstack-nova-placement-api:12.0-20180124.1
+  DockerNovaSchedulerImage: 10.10.11.2:8787/rhosp12/openstack-nova-scheduler:12.0-20180124.1
+  DockerNovaVncProxyImage: 10.10.11.2:8787/rhosp12/openstack-nova-novncproxy:12.0-20180124.1
+  DockerPankoApiImage: 10.10.11.2:8787/rhosp12/openstack-panko-api:12.0-20180124.1
+  DockerPankoConfigImage: 10.10.11.2:8787/rhosp12/openstack-panko-api:12.0-20180124.1
+  DockerRabbitmqConfigImage: 10.10.11.2:8787/rhosp12/openstack-rabbitmq:12.0-20180124.1
+  DockerRabbitmqImage: 10.10.11.2:8787/rhosp12/openstack-rabbitmq:12.0-20180124.1
+  DockerRedisConfigImage: 10.10.11.2:8787/rhosp12/openstack-redis:12.0-20180124.1
+  DockerRedisImage: 10.10.11.2:8787/rhosp12/openstack-redis:12.0-20180124.1
+  DockerSwiftAccountImage: 10.10.11.2:8787/rhosp12/openstack-swift-account:12.0-20180124.1
+  DockerSwiftConfigImage: 10.10.11.2:8787/rhosp12/openstack-swift-proxy-server:12.0-20180124.1
+  DockerSwiftContainerImage: 10.10.11.2:8787/rhosp12/openstack-swift-container:12.0-20180124.1
+  DockerSwiftObjectImage: 10.10.11.2:8787/rhosp12/openstack-swift-object:12.0-20180124.1
+  DockerSwiftProxyImage: 10.10.11.2:8787/rhosp12/openstack-swift-proxy-server:12.0-20180124.1

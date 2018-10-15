@@ -1,12 +1,17 @@
 parameters:
- minishift_version: 1.8.0
- openshift_version: 3.7.0
+ baseplan: upstream.yml
+ minishift_version: 1.23.0
+ minishift_memory: 4096
+ driver: generic
+ deploy: false
 
-minishiftX:
- template: CentOS-7-x86_64-GenericCloud.qcow2
+minishift:
+ template: Fedora-Cloud-Base-28-1.1.x86_64.qcow2
  numcpus: 2
- memory: 6144
- privatekey: true
+ memory: [[ memory ]]
+[% if driver == 'generic' %]
+ sharedkey: true
+[% endif %]
  nets:
   - default
  disks:
@@ -14,7 +19,10 @@ minishiftX:
   - size: 60
  pool: default
  scripts: 
-  - minishift.sh
+  - minishift_requirements.sh
+[% if deploy %]
+  - minishift_deploy.sh
+[% endif %]
  files:
-  - path: /root/minishift_no_config.sh
-    origin: minishift_no_config.sh
+   - path: /root/minishift_deploy.sh
+     origin: minishift_deploy.sh

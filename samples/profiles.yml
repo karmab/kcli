@@ -12,14 +12,13 @@ centos:
 rhel:
  template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
  numcpus: 2
+ rhnregister: true
  nets:
   - default
  disks:
   - size: 10
  cmds:
   - echo unix1234 | passwd --stdin root
- scripts: 
-  - ~/register.sh
 
 debian:
  template: debian-8-openstack-amd64.qcow2
@@ -37,5 +36,6 @@ ubuntu:
  memory: 2048
  nets:
   - default
+  - localnet
  cmds: 
   - echo unix1234 | passwd --stdin root

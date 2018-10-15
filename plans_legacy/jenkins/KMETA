@@ -1,7 +1,0 @@
-- name: jenkins
-  group: jenkins
-  url: github.com/karmab/kcli/plans/jenkins
-  file: upstream.yml
-  description: Jenkins
-  numvms: 1
-  template: CentOS-7-x86_64-GenericCloud.qcow2

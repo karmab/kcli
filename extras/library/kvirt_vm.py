@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# coding=utf-8
 
 from ansible.module_utils.basic import AnsibleModule
 from kvirt.config import Kconfig
@@ -27,11 +28,13 @@ EXAMPLES = '''
   kvirt_vm:
     name: prout
     state: absent
-  register: result
 '''
 
 
 def main():
+    """
+
+    """
     argument_spec = {
         "state": {
             "default": "present",
@@ -67,6 +70,7 @@ def main():
             skipped = True
             meta = {'result': 'skipped'}
     module.exit_json(changed=changed, skipped=skipped, meta=meta)
+
 
 if __name__ == '__main__':
     main()

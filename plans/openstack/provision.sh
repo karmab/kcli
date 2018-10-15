@@ -16,10 +16,10 @@ openstack project create [[ project ]]
 openstack user create  --project [[ project ]] --password [[ password ]] [[ user ]]
 openstack role add --user=[[ user ]] --project=[[ project ]] admin
 grep -q 'type_drivers = vxlan' /etc/neutron/plugin.ini && sed -i 's/type_drivers =.*/type_drivers = vxlan,flat/' /etc/neutron/plugin.ini && systemctl restart neutron-server
-neutron net-create external --provider:network_type flat --provider:physical_network external --router:external || neutron net-create external --router:external
-neutron subnet-create --name $EXTERNAL_SUBNET --allocation-pool start=$EXTERNAL_START,end=$EXTERNAL_END --disable-dhcp --gateway $EXTERNAL_GATEWAY external $EXTERNAL_SUBNET
+neutron net-create external --provider:network_type flat --provider:physical_network extnet --router:external || neutron net-create external --router:external
+neutron subnet-create --name ${EXTERNAL_SUBNET} --allocation-pool start=${EXTERNAL_START},end=${EXTERNAL_END} --disable-dhcp --gateway ${EXTERNAL_GATEWAY} external ${EXTERNAL_SUBNET}
 OLD_PASSWORD=`grep PASSWORD /root/keystonerc_admin | cut -f2 -d'='`
-openstack user password set  --original-password $OLD_PASSWORD --password $ADMIN_PASSWORD || openstack user set --password $ADMIN_PASSWORD admin || keystone password-update --new-password $ADMIN_PASSWORD
+openstack user password set  --original-password ${OLD_PASSWORD} --password ${ADMIN_PASSWORD} || openstack user set --password ${ADMIN_PASSWORD} admin || keystone password-update --new-password ${ADMIN_PASSWORD}
 sed -i "s/OS_PASSWORD=.*/OS_PASSWORD=$ADMIN_PASSWORD/" ~/keystonerc_admin
 source ~/keystonerc_[[ user ]]
 curl http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img > /tmp/c.img
@@ -37,4 +37,4 @@ neutron security-group-rule-create --direction ingress --protocol tcp --port_ran
 neutron security-group-rule-create --protocol icmp --direction ingress  --remote-ip-prefix 0.0.0.0/0 [[ user ]]
 nova boot --flavor m1.tiny --security-groups testk --key-name testk --image cirros --nic net-id=`neutron net-show private -c id -f value` [[ user ]]
 sleep 8
-ip=$(neutron  floatingip-list -f value -c floating_ip_address  | head -1) ; nova floating-ip-associate [[ user ]] $ip || openstack server add floating ip [[ user ]] $ip
+ip=$(neutron  floatingip-list -f value -c floating_ip_address  | head -1) ; nova floating-ip-associate [[ user ]] ${ip} || openstack server add floating ip [[ user ]] ${ip}

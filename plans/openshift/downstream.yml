@@ -1,11 +1,11 @@
 parameters:
- openshift_version: 3.7
- template: rhel-server-7.4-x86_64-kvm.qcow2
+ openshift_version: 3.10
+ template: rhel-server-7.5-x86_64-kvm.qcow2
  memory: 2048
- metrics: false
 
 ocp:
  template: [[ template ]]
+ rhnregister: true
  numcpus: 2
  memory: [[ memory ]]
  nets:
@@ -15,6 +15,5 @@ ocp:
   - size: 20
  pool: default
  scripts: 
-  - ~/register.sh
   - subscription.sh
   - downstream.sh

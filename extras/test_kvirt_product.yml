@@ -1,0 +1,6 @@
+- hosts: localhost
+  tasks:
+    - name: Deploy origin
+      kvirt_product: 
+        name: origin
+        product: origin

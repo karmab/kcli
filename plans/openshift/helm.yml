@@ -1,9 +1,6 @@
 parameters:
-  docker_disk_size: 60
-  initializer: false
-  openshift_version: 3.7
-  helm_version: 2.6.0
-  metrics: false
+  baseplan: upstream.yml
+  helm_version: 2.9.1
 
 helm:
  template: CentOS-7-x86_64-GenericCloud.qcow2
@@ -15,9 +12,6 @@ helm:
   - size: 10
   - size: [[ docker_disk_size ]]
  pool: default
- files:
-  - path: /root/initializer.txt
-    origin: initializer.txt
  scripts: 
   - requirements.sh
   - upstream.sh

@@ -8,20 +8,13 @@ parameters:
 
 [[ version ]]:
  template: CentOS-7-x86_64-GenericCloud.qcow2
- memory: 8096
+ memory: 10240
  numcpus: 2
  disks: 
-  - size: 10
-  - size: 40
+  - size: 90
  nets:
  - default
  pool: default
- cpumodel: host-model
- cpuflags:
-  - name: arat
-    enable: false
-  - name: clflushopt
-    enable: false
  scripts: 
   - repo.sh
   - install.sh

@@ -1,3 +1,4 @@
+# coding=utf-8
 from setuptools import setup, find_packages
 
 import os
@@ -8,7 +9,7 @@ if os.path.exists('README.rst'):
 
 setup(
     name='kcli',
-    version='11.7',
+    version='13.4',
     include_package_data=True,
     packages=find_packages(),
     zip_safe=False,
@@ -19,18 +20,28 @@ setup(
     author_email='karimboumedhel@gmail.com',
     license='ASL',
     install_requires=[
-        'libvirt-python>=2.0.0',
-        'docker>=2.0',
-        'flask',
-        'iptools',
-        'kubernetes',
         'netaddr',
         'PyYAML',
         'prettytable',
+        'jinja2',
+        'flask',
+        'libvirt-python>=2.0.0',
     ],
     extras_require={
-        'vitualbox': ['pyvbox'],
-    },
+        'all': [
+            'docker>=2.0',
+            'kubernetes',
+            'boto3',
+            'google-api-python-client',
+            'google-auth-httplib2',
+            'google-cloud-dns',
+            'ovirt-engine-sdk-python',
+            'python-cinderclient',
+            'python-neutronclient',
+            'python-glanceclient',
+            'python-keystoneclient',
+            'python-novaclient',
+        ]},
     entry_points='''
         [console_scripts]
         kcli=kvirt.cli:cli

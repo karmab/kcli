@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# coding=utf-8
 
 from ansible.module_utils.basic import AnsibleModule
 from kvirt.config import Kconfig
@@ -39,6 +40,9 @@ EXAMPLES = '''
 
 
 def main():
+    """
+
+    """
     argument_spec = {
         "state": {
             "default": "present",

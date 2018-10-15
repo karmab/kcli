@@ -1,3 +1,4 @@
+# coding=utf-8
 import os
 import random
 import string
@@ -8,6 +9,9 @@ from kvirt.kvm import Kvirt
 class TestK:
     @classmethod
     def setup_class(self):
+        """
+
+        """
         self.host = os.environ.get('KVIRT_HOST', '127.0.0.1')
         self.user = os.environ.get('KVIRT_USER', 'root')
         self.path = os.environ.get('KVIRT_PATH', '')
@@ -67,6 +71,9 @@ class TestK:
 
     @classmethod
     def teardown_class(self):
+        """
+
+        """
         print("Cleaning stuff")
         k = self.conn
         time.sleep(10)

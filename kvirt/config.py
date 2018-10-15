@@ -7,20 +7,9 @@ Kvirt config class
 from jinja2 import Environment, FileSystemLoader
 from kvirt.defaults import TEMPLATES, TEMPLATESCOMMANDS
 from kvirt import ansibleutils
-from kvirt import dockerutils
 from kvirt import nameutils
 from kvirt import common
 from kvirt.baseconfig import Kbaseconfig
-from kvirt.fake import Kfake
-from kvirt.kvm import Kvirt
-try:
-    from kvirt.vbox import Kbox
-except:
-    pass
-try:
-    from kvirt.kubevirt import Kubevirt
-except:
-    pass
 from distutils.spawn import find_executable
 import glob
 import os
@@ -31,31 +20,123 @@ from time import sleep
 import webbrowser
 import yaml
 
-__version__ = '11.7'
+__version__ = '13.4'
 
 
 class Kconfig(Kbaseconfig):
+    """
+
+    """
     def __init__(self, client=None, debug=False, quiet=False):
         Kbaseconfig.__init__(self, client=client, debug=debug, quiet=quiet)
+        self.overrides = {}
         if not self.enabled:
             k = None
         else:
             if self.type == 'fake':
+                from kvirt.fake import Kfake
                 k = Kfake()
             elif self.type == 'vbox':
+                from kvirt.vbox import Kbox
                 k = Kbox()
             elif self.type == 'kubevirt':
                 context = self.options.get('context')
-                usecloning = self.options.get('usecloning', False)
-                k = Kubevirt(context=context, usecloning=usecloning, host=self.host, port=self.port, user=self.user,
-                             debug=debug)
+                cdi = self.options.get('cdi', False)
+                multus = self.options.get('multus', True)
+                from kvirt.kubevirt import Kubevirt
+                k = Kubevirt(context=context, cdi=cdi, multus=multus, host=self.host, port=self.port,
+                             user=self.user, debug=debug)
                 self.host = k.host
+            elif self.type == 'gcp':
+                credentials = self.options.get('credentials')
+                if credentials is not None:
+                    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = os.path.expanduser(credentials)
+                elif 'GOOGLE_APPLICATION_CREDENTIALS' not in os.environ:
+                    common.pprint("set GOOGLE_APPLICATION_CREDENTIALS variable.Leaving...", color='red')
+                    os._exit(1)
+                project = self.options.get('project')
+                if project is None:
+                    common.pprint("Missing project in the configuration. Leaving", color='red')
+                    os._exit(1)
+                zone = self.options.get('zone', 'europe-west1-b')
+                region = self.options.get('region')
+                region = zone[:-2] if region is None else region
+                from kvirt.gcp import Kgcp
+                k = Kgcp(host=self.host, port=self.port, user=self.user, region=region,
+                         zone=zone, project=project, debug=debug)
+            elif self.type == 'aws':
+                region = self.options.get('region')
+                if region is None:
+                    common.pprint("Missing region in the configuration. Leaving", color='red')
+                    os._exit(1)
+                access_key_id = self.options.get('access_key_id')
+                if access_key_id is None:
+                    common.pprint("Missing access_key_id in the configuration. Leaving", color='red')
+                    os._exit(1)
+                access_key_secret = self.options.get('access_key_secret')
+                if access_key_secret is None:
+                    common.pprint("Missing access_key_secret in the configuration. Leaving", color='red')
+                    os._exit(1)
+                from kvirt.aws import Kaws
+                k = Kaws(host=self.host, port=self.port, access_key_id=access_key_id,
+                         access_key_secret=access_key_secret, region=region, debug=debug)
+            elif self.type == 'ovirt':
+                datacenter = self.options.get('datacenter', 'Default')
+                cluster = self.options.get('cluster', 'Default')
+                user = self.options.get('user', 'admin@internal')
+                password = self.options.get('password')
+                if password is None:
+                    common.pprint("Missing password in the configuration. Leaving", color='red')
+                    os._exit(1)
+                org = self.options.get('org')
+                if org is None:
+                    common.pprint("Missing org in the configuration. Leaving", color='red')
+                    os._exit(1)
+                ca_file = self.options.get('ca_file')
+                if ca_file is None:
+                    common.pprint("Missing ca_file in the configuration. Leaving", color='red')
+                    os._exit(1)
+                ca_file = os.path.expanduser(ca_file)
+                if not os.path.exists(ca_file):
+                    common.pprint("Ca file path doesn't exist. Leaving", color='red')
+                    os._exit(1)
+                imagerepository = self.options.get('imagerepository', 'ovirt-image-repository')
+                from kvirt.ovirt import KOvirt
+                k = KOvirt(host=self.host, port=self.port, user=user, password=password,
+                           debug=debug, datacenter=datacenter, cluster=cluster, ca_file=ca_file, org=org,
+                           imagerepository=imagerepository)
+                self.overrides.update({'host': self.host, 'user': user, 'password': password})
+            elif self.type == 'openstack':
+                version = self.options.get('version', '2')
+                domain = next((e for e in [self.options.get('domain'),
+                                           os.environ.get("OS_USER_DOMAIN_NAME")] if e is not None), 'Default')
+                auth_url = next((e for e in [self.options.get('auth_url'),
+                                             os.environ.get("OS_AUTH_URL")] if e is not None),
+                                None)
+                if auth_url is None:
+                    common.pprint("Missing auth_url in the configuration. Leaving", color='red')
+                    os._exit(1)
+                user = next((e for e in [self.options.get('user'),
+                                         os.environ.get("OS_USERNAME")] if e is not None), 'admin')
+                project = next((e for e in [self.options.get('project'),
+                                            os.environ.get("OS_PROJECT_NAME")] if e is not None), 'admin')
+                password = next((e for e in [self.options.get('password'),
+                                             os.environ.get("OS_PASSWORD")] if e is not None), None)
+                if password is None:
+                    common.pprint("Missing password in the configuration. Leaving", color='red')
+                    os._exit(1)
+                if auth_url.endswith('v2.0'):
+                    domain = None
+                from kvirt.openstack import Kopenstack
+                k = Kopenstack(host=self.host, port=self.port, user=user, password=password, version=version,
+                               debug=debug, project=project, domain=domain, auth_url=auth_url)
             else:
                 if self.host is None:
                     common.pprint("Problem parsing your configuration file", color='red')
                     os._exit(1)
+                from kvirt.kvm import Kvirt
                 k = Kvirt(host=self.host, port=self.port, user=self.user, protocol=self.protocol, url=self.url,
-                          debug=debug)
+                          debug=debug, insecure=self.insecure, detect_bridge_ips=self.detect_bridge_ips)
             if k.conn is None:
                 common.pprint("Couldn't connect to client %s. Leaving..." % self.client, color='red')
                 os._exit(1)
@@ -70,23 +151,39 @@ class Kconfig(Kbaseconfig):
                     common.pprint("Couldn't connect to specify hypervisor %s. Leaving..." % extraclient, color='red')
                     os._exit(1)
         self.k = k
+        self.overrides.update({'type': self.type})
 
-    def create_vm(self, name, profile, ip1=None, ip2=None, ip3=None, ip4=None, overrides={}):
-        if name is None:
-            name = nameutils.get_random_name()
-        k = self.k
+    def create_vm(self, name, profile, overrides={}, customprofile={}, k=None,
+                  plan='kvirt', basedir='.'):
+        """
+
+        :param k:
+        :param plan:
+        :param name:
+        :param profile:
+        :param overrides:
+        :param customprofile:
+        :return:
+        """
+        overrides.update(self.overrides)
+        overrides.update({'plan': plan})
+        k = self.k if k is None else k
         tunnel = self.tunnel
         if profile is None:
             common.pprint("Missing profile", color='red')
             os._exit(1)
-        vmprofiles = {k: v for k, v in self.profiles.iteritems() if 'type' not in v or v['type'] == 'vm'}
-        common.pprint("Deploying vm %s from profile %s..." % (name, profile), color='green')
+        vmprofiles = {k: v for k, v in self.profiles.items() if 'type' not in v or v['type'] == 'vm'}
+        if customprofile:
+            vmprofiles[profile] = customprofile
+        else:
+            common.pprint("Deploying vm %s from profile %s..." % (name, profile), color='green')
         if profile not in vmprofiles:
             common.pprint("profile %s not found. Trying to use the profile as template and default values..." % profile,
                           color='blue')
             vmprofiles[profile] = {'template': profile}
         profilename = profile
         profile = vmprofiles[profile]
+        profile.update(overrides)
         if 'base' in profile:
             father = vmprofiles[profile['base']]
             default_numcpus = father.get('numcpus', self.numcpus)
@@ -119,7 +216,14 @@ class Kconfig(Kbaseconfig):
             default_files = father.get('files', self.files)
             default_enableroot = father.get('enableroot', self.enableroot)
             default_privatekey = father.get('privatekey', self.privatekey)
+            default_rhnregister = father.get('rhnregister', self.rhnregister)
+            default_rhnuser = father.get('rhnuser', self.rhnuser)
+            default_rhnpassword = father.get('rhnpassword', self.rhnpassword)
+            default_rhnak = father.get('rhnactivationkey', self.rhnak)
+            default_rhnorg = father.get('rhnorg', self.rhnorg)
+            default_rhnpool = father.get('rhnpool', self.rhnpool)
             default_tags = father.get('tags', self.tags)
+            default_flavor = father.get('flavor', self.flavor)
             default_cmds = common.remove_duplicates(self.cmds + father.get('cmds', []))
             default_scripts = common.remove_duplicates(self.scripts + father.get('scripts', []))
         else:
@@ -153,11 +257,18 @@ class Kconfig(Kbaseconfig):
             default_files = self.files
             default_enableroot = self.enableroot
             default_tags = self.tags
+            default_flavor = self.flavor
             default_privatekey = self.privatekey
+            default_rhnregister = self.rhnregister
+            default_rhnuser = self.rhnuser
+            default_rhnpassword = self.rhnpassword
+            default_rhnak = self.rhnak
+            default_rhnorg = self.rhnorg
+            default_rhnpool = self.rhnpool
             default_cmds = self.cmds
             default_scripts = self.scripts
+        plan = profile.get('plan', plan)
         template = profile.get('template', default_template)
-        plan = 'kvirt'
         nets = profile.get('nets', default_nets)
         cpumodel = profile.get('cpumodel', default_cpumodel)
         cpuflags = profile.get('cpuflags', default_cpuflags)
@@ -172,7 +283,8 @@ class Kconfig(Kbaseconfig):
         iso = profile.get('iso', default_iso)
         vnc = profile.get('vnc', default_vnc)
         cloudinit = profile.get('cloudinit', default_cloudinit)
-        if cloudinit and find_executable('mkisofs') is None and find_executable('genisoimage') is None:
+        if cloudinit and self.type in ['kvm', 'vbox'] and\
+                find_executable('mkisofs') is None and find_executable('genisoimage') is None:
             common.pprint("mkisofs/genisoimage not found. One of them is needed for cloudinit.Leaving...", 'red')
             os._exit(1)
         reserveip = profile.get('reserveip', default_reserveip)
@@ -190,29 +302,101 @@ class Kconfig(Kbaseconfig):
         domain = profile.get('domain', default_domain)
         scripts = common.remove_duplicates(default_scripts + profile.get('scripts', []))
         files = profile.get('files', default_files)
+        if files:
+            for index, fil in enumerate(files):
+                if not isinstance(fil, dict):
+                    common.pprint("Incorrect file entry.Leaving...", color='red')
+                    os._exit(1)
+                else:
+                    path = fil.get('path')
+                    origin = fil.get('origin')
+                    content = fil.get('content')
+                    if path is None:
+                            common.pprint("Missing path in files of %s.Leaving..." % name, color='red')
+                            os._exit(1)
+                    if origin is not None:
+                        origin = os.path.expanduser(origin)
+                        if basedir != '.':
+                            origin = "%s/%s" % (basedir, origin)
+                            files[index]['origin'] = origin
+                        if not os.path.exists(origin):
+                            common.pprint("File %s not found in %s.Leaving..." % (origin, name),
+                                          color='red')
+                            os._exit(1)
+                    elif content is None:
+                            common.pprint("Content of file %s not found in %s.Ignoring..." % (path, name),
+                                          color='red')
+                            os._exit(1)
         enableroot = profile.get('enableroot', default_enableroot)
-        tags = profile.get('tags', default_tags)
-        tags = default_tags.copy()
-        tags.update(profile.get('tags', {}))
+        tags = None
+        if default_tags is not None:
+            if isinstance(default_tags, dict):
+                tags = default_tags.copy()
+                tags.update(profile.get('tags', {}))
+            elif isinstance(default_tags, list):
+                customtags = profile.get('tags')
+                tags = default_tags + customtags if customtags else default_tags
+        elif profile.get('tags') is not None:
+            tags = profile.get('tags')
         privatekey = profile.get('privatekey', default_privatekey)
+        rhnregister = profile.get('rhnregister', default_rhnregister)
+        rhnuser = profile.get('rhnuser', default_rhnuser)
+        rhnpassword = profile.get('rhnpassword', default_rhnpassword)
+        rhnak = profile.get('rhnactivationkey', default_rhnak)
+        rhnorg = profile.get('rhnorg', default_rhnorg)
+        rhnpool = profile.get('rhnpool', default_rhnpool)
+        flavor = profile.get('flavor', default_flavor)
         scriptcmds = []
+        skip_rhnregister_script = False
+        if rhnregister:
+            if rhnuser is not None and rhnpassword is not None:
+                skip_rhnregister_script = True
+                overrides['rhnuser'] = rhnuser
+                overrides['rhnpassword'] = rhnpassword
+            elif rhnak is not None and rhnorg is not None:
+                skip_rhnregister_script = True
+                overrides['rhnak'] = rhnak
+                overrides['rhnorg'] = rhnorg
+            else:
+                common.pprint("Rhn registration required but missing credentials.Leaving...", color='red')
+                os._exit(1)
         if scripts:
             for script in scripts:
                 script = os.path.expanduser(script)
-                if not os.path.exists(script):
+                if basedir != '.':
+                    script = '%s/%s' % (basedir, script)
+                if script.endswith('register.sh') and skip_rhnregister_script:
+                    continue
+                elif not os.path.exists(script):
                     common.pprint("Script %s not found.Ignoring..." % script, color='red')
                     os._exit(1)
                 else:
-                    basedir = os.path.dirname(script) if os.path.dirname(script) != '' else '.'
+                    scriptbasedir = os.path.dirname(script) if os.path.dirname(script) != '' else '.'
                     env = Environment(block_start_string='[%', block_end_string='%]',
                                       variable_start_string='[[', variable_end_string=']]',
-                                      loader=FileSystemLoader(basedir))
+                                      loader=FileSystemLoader(scriptbasedir))
                     templ = env.get_template(os.path.basename(script))
                     scriptentries = templ.render(overrides)
                     scriptlines = [line.strip() for line in scriptentries.split('\n') if line.strip() != '']
                     if scriptlines:
                         scriptcmds.extend(scriptlines)
-        cmds = cmds + scriptcmds
+        if skip_rhnregister_script and cloudinit and template is not None and template.lower().startswith('rhel'):
+            # rhncommands = ['sleep 30']
+            rhncommands = []
+            if rhnak is not None and rhnorg is not None:
+                rhncommands.append('subscription-manager register --force --activationkey=%s --org=%s'
+                                   % (rhnak, rhnorg))
+                rhncommands.append('subscription-manager repos --enable=rhel-7-server-rpms')
+            elif rhnuser is not None and rhnpassword is not None:
+                rhncommands.append('subscription-manager register --force --username=%s --password=%s'
+                                   % (rhnuser, rhnpassword))
+                if rhnpool is not None:
+                    rhncommands.append('subscription-manager attach --pool=%s' % rhnpool)
+                else:
+                    rhncommands.append('subscription-manager attach --auto')
+        else:
+            rhncommands = []
+        cmds = rhncommands + cmds + scriptcmds
         if reportall:
             reportcmd = 'curl -s -X POST -d "name=%s&status=Running&report=`cat /var/log/cloud-init.log`" %s/report '
             '>/dev/null' % (name, self.reporturl)
@@ -232,7 +416,8 @@ class Kconfig(Kbaseconfig):
             reportcmd = ['curl -s -X POST -d "name=%s&status=OK&report=`cat /var/log/cloud-init.log`" %s/report '
                          '/dev/null' % (name, self.reporturl)]
             cmds = cmds + reportcmd
-        ips = [ip1, ip2, ip3, ip4]
+        ips = [overrides[key] for key in overrides if key.startswith('ip')]
+        netmasks = [overrides[key] for key in overrides if key.startswith('netmask')]
         if privatekey:
             privatekeyfile = None
             if os.path.exists("%s/.ssh/id_rsa" % os.environ['HOME']):
@@ -245,14 +430,14 @@ class Kconfig(Kbaseconfig):
                     files.append({'path': '/root/.ssh/id_rsa', 'content': privatekey})
                 else:
                     files = [{'path': '/root/.ssh/id_rsa', 'content': privatekey}]
-        result = k.create(name=name, plan=plan, profile=profilename, cpumodel=cpumodel, cpuflags=cpuflags,
-                          numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool, template=template,
-                          disks=disks, disksize=disksize, diskthin=diskthin, diskinterface=diskinterface, nets=nets,
-                          iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit), reserveip=bool(reserveip),
-                          reservedns=bool(reservedns), reservehost=bool(reservehost), start=bool(start), keys=keys,
-                          cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns, domain=domain,
-                          nested=bool(nested), tunnel=tunnel, files=files, enableroot=enableroot, overrides=overrides,
-                          tags=tags)
+        result = k.create(name=name, plan=plan, profile=profilename, flavor=flavor, cpumodel=cpumodel,
+                          cpuflags=cpuflags, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool,
+                          template=template, disks=disks, disksize=disksize, diskthin=diskthin,
+                          diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit),
+                          reserveip=bool(reserveip), reservedns=bool(reservedns), reservehost=bool(reservehost),
+                          start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns,
+                          domain=domain, nested=bool(nested), tunnel=tunnel, files=files, enableroot=enableroot,
+                          overrides=overrides, tags=tags)
         if result['result'] != 'success':
             return result
         ansible = profile.get('ansible')
@@ -272,10 +457,10 @@ class Kconfig(Kbaseconfig):
                     if inventory is not None:
                         if variables is not None:
                             for variable in variables:
-                                if not isinstance(variable, dict) or len(variable.keys()) != 1:
+                                if not isinstance(variable, dict) or len(list(variable)) != 1:
                                     continue
                                 else:
-                                    key, value = variable.keys()[0], variable[variable.keys()[0]]
+                                    key, value = list(variable)[0], variable[list(variable)[0]]
                                     inventory = "%s %s=%s" % (inventory, key, value)
                     if self.tunnel:
                         inventory = "%s ansible_ssh_common_args='-o ProxyCommand=\"ssh -p %s -W %%h:%%p %s@%s\""
@@ -289,10 +474,15 @@ class Kconfig(Kbaseconfig):
                     f.write("[ssh_connection]\nretries=10\n")
                 print("Running: %s -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
                 os.system("%s -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
-        common.lastvm(name)
+        if os.access(os.path.expanduser('~/.kcli'), os.W_OK):
+            common.set_lastvm(name, self.client)
         return {'result': 'success'}
 
     def list_plans(self):
+        """
+
+        :return:
+        """
         k = self.k
         vms = {}
         plans = []
@@ -309,6 +499,10 @@ class Kconfig(Kbaseconfig):
         return plans
 
     def list_profiles(self):
+        """
+
+        :return:
+        """
         default_disksize = '10'
         default = self.default
         results = []
@@ -327,6 +521,7 @@ class Kconfig(Kbaseconfig):
                     default_nested = father.get('nested', default['nested'])
                     default_reservedns = father.get('reservedns', default['reservedns'])
                     default_reservehost = father.get('reservehost', default['reservehost'])
+                    default_flavor = father.get('flavor', default['flavor'])
                 else:
                     default_numcpus = default['numcpus']
                     default_memory = default['memory']
@@ -338,6 +533,7 @@ class Kconfig(Kbaseconfig):
                     default_nested = default['nested']
                     default_reservedns = default['reservedns']
                     default_reservehost = default['reservehost']
+                    default_flavor = default['flavor']
                 profiletype = info.get('type', '')
                 if profiletype == 'container':
                     continue
@@ -369,11 +565,33 @@ class Kconfig(Kbaseconfig):
                 nested = info.get('nested', default_nested)
                 reservedns = info.get('reservedns', default_reservedns)
                 reservehost = info.get('reservehost', default_reservehost)
-                results.append([profile, numcpus, memory, pool, diskinfo, template, netinfo, cloudinit, nested,
+                flavor = info.get('flavor', default_flavor)
+                if flavor is None:
+                    flavor = "%scpus %sMb ram" % (numcpus, memory)
+                results.append([profile, flavor, pool, diskinfo, template, netinfo, cloudinit, nested,
                                 reservedns, reservehost])
         return sorted(results, key=lambda x: x[0])
 
+    def list_flavors(self):
+        """
+
+        :return:
+        """
+        results = []
+        for flavor in self.flavors:
+            info = self.flavors[flavor]
+            numcpus = info.get('numcpus')
+            memory = info.get('memory')
+            disk = info.get('disk', '')
+            if numcpus is not None and memory is not None:
+                results.append([flavor, numcpus, memory, disk])
+        return sorted(results, key=lambda x: x[0])
+
     def list_containerprofiles(self):
+        """
+
+        :return:
+        """
         results = []
         for profile in sorted(self.profiles):
                 info = self.profiles[profile]
@@ -451,25 +669,23 @@ class Kconfig(Kbaseconfig):
             # common.pprint("Running: kcli plan -f %s %s" % (inputfile, plan), color='green')
             # self.plan(plan, inputfile=inputfile, overrides=overrides)
             # os.chdir('..')
-            common.pprint("Product can be deleted with: kcli plan -d %s" % (plan), color='green')
+            common.pprint("Product can be deleted with: kcli plan -d %s" % plan, color='green')
         return {'result': 'success', 'plan': plan}
 
     def plan(self, plan, ansible=False, get=None, path=None, autostart=False, container=False, noautostart=False,
-             inputfile=None, start=False, stop=False, delete=False, delay=0, force=True, topologyfile=None,
-             scale=None, overrides={}, info=False):
+             inputfile=None, start=False, stop=False, delete=False, delay=0, force=True, overrides={}, info=False):
         """Create/Delete/Stop/Start vms from plan file"""
         k = self.k
         no_overrides = not overrides
         newvms = []
-        vmprofiles = {key: value for key, value in self.profiles.iteritems()
+        vmprofiles = {key: value for key, value in self.profiles.items()
                       if 'type' not in value or value['type'] == 'vm'}
-        containerprofiles = {key: value for key, value in self.profiles.iteritems()
+        containerprofiles = {key: value for key, value in self.profiles.items()
                              if 'type' in value and value['type'] == 'container'}
-        tunnel = self.tunnel
         if plan is None:
             plan = nameutils.get_random_name()
-        if path is None:
-            path = plan
+        # if path is None:
+        #    path = plan
         if delete:
             networks = []
             if plan == '':
@@ -494,9 +710,11 @@ class Kconfig(Kbaseconfig):
                             if network != 'default' and network not in networks:
                                 networks.append(network)
                         c.delete(name)
+                        common.set_lastvm(name, self.client, delete=True)
                         common.pprint("VM %s deleted on %s!" % (name, hypervisor), color='green')
                         found = True
             if container:
+                from kvirt import dockerutils
                 for cont in sorted(dockerutils.list_containers(k)):
                     name = cont[0]
                     container_plan = cont[3]
@@ -520,7 +738,7 @@ class Kconfig(Kbaseconfig):
                 os._exit(1)
             return {'result': 'success'}
         if autostart:
-            common.pprint("Set vms from plan %s to autostart" % (plan), color='green')
+            common.pprint("Set vms from plan %s to autostart" % plan, color='green')
             for vm in sorted(k.list()):
                 name = vm[0]
                 description = vm[4]
@@ -529,7 +747,7 @@ class Kconfig(Kbaseconfig):
                     common.pprint("%s set to autostart!" % name, color='green')
             return {'result': 'success'}
         if noautostart:
-            common.pprint("Preventing vms from plan %s to autostart" % (plan), color='green')
+            common.pprint("Preventing vms from plan %s to autostart" % plan, color='green')
             for vm in sorted(k.list()):
                 name = vm[0]
                 description = vm[4]
@@ -538,7 +756,7 @@ class Kconfig(Kbaseconfig):
                     common.pprint("%s prevented to autostart!" % name, color='green')
             return {'result': 'success'}
         if start:
-            common.pprint("Starting vms from plan %s" % (plan), color='green')
+            common.pprint("Starting vms from plan %s" % plan, color='green')
             for vm in sorted(k.list()):
                 name = vm[0]
                 description = vm[4]
@@ -546,6 +764,7 @@ class Kconfig(Kbaseconfig):
                     k.start(name)
                     common.pprint("VM %s started!" % name, color='green')
             if container:
+                from kvirt import dockerutils
                 for cont in sorted(dockerutils.list_containers(k)):
                     name = cont[0]
                     containerplan = cont[3]
@@ -555,7 +774,7 @@ class Kconfig(Kbaseconfig):
             common.pprint("Plan %s started!" % plan, color='green')
             return {'result': 'success'}
         if stop:
-            common.pprint("Stopping vms from plan %s" % (plan), color='green')
+            common.pprint("Stopping vms from plan %s" % plan, color='green')
             for vm in sorted(k.list()):
                 name = vm[0]
                 description = vm[4]
@@ -563,6 +782,7 @@ class Kconfig(Kbaseconfig):
                     k.stop(name)
                     common.pprint("%s stopped!" % name, color='green')
             if container:
+                from kvirt import dockerutils
                 for cont in sorted(dockerutils.list_containers(k)):
                     name = cont[0]
                     containerplan = cont[3]
@@ -572,11 +792,13 @@ class Kconfig(Kbaseconfig):
             common.pprint("Plan %s stopped!" % plan, color='green')
             return {'result': 'success'}
         if get is not None:
+            # path = '.' if path is None else path
+            path = plan if path is None else path
             common.pprint("Retrieving specified plan from %s to %s" % (get, path), color='green')
             if not os.path.exists(path):
+                os.mkdir(path)
                 common.fetch(get, path)
-            os.chdir(path)
-            # return {'result': 'success'}
+            # os.chdir(path)
         if inputfile is None:
             inputfile = 'kcli_plan.yml'
             common.pprint("using default input file kcli_plan.yml", color='green')
@@ -589,21 +811,29 @@ class Kconfig(Kbaseconfig):
         if info:
             self.info_plan(inputfile)
             return {'result': 'success'}
-        basedir = os.path.dirname(inputfile)
+        # basedir = os.path.dirname(inputfile)
+        basedir = os.path.dirname(inputfile) if os.path.dirname(inputfile) != '' else '.'
         env = Environment(block_start_string='[%', block_end_string='%]', variable_start_string='[[',
                           variable_end_string=']]', loader=FileSystemLoader(basedir))
         templ = env.get_template(os.path.basename(inputfile))
         parameters = common.get_parameters(inputfile)
+        basefile = None
         if parameters is not None:
             parameters = yaml.load(parameters)['parameters']
             for parameter in parameters:
-                if parameter not in overrides:
+                if parameter == 'baseplan':
+                    basefile = parameters['baseplan']
+                    baseparameters = common.get_parameters(basefile)
+                    if baseparameters is not None:
+                        baseparameters = yaml.load(baseparameters)['parameters']
+                        for baseparameter in baseparameters:
+                            if baseparameter not in overrides:
+                                overrides[baseparameter] = baseparameters[baseparameter]
+                elif parameter not in overrides:
                     overrides[parameter] = parameters[parameter]
         with open(inputfile, 'r') as entries:
+            overrides.update(self.overrides)
             entries = templ.render(overrides)
-            if self.type == 'fake':
-                with open("/tmp/%s.yml" % plan, 'w') as renderedplan:
-                    renderedplan.write(entries)
             entries = yaml.load(entries)
             parameters = entries.get('parameters')
             if parameters is not None:
@@ -668,8 +898,9 @@ class Kconfig(Kbaseconfig):
                     dhcp = netprofile.get('dhcp', True)
                     domain = netprofile.get('domain')
                     pxe = netprofile.get('pxe')
+                    vlan = netprofile.get('vlan')
                     result = k.create_network(name=net, cidr=cidr, dhcp=dhcp, nat=nat, domain=domain, plan=plan,
-                                              pxe=pxe)
+                                              pxe=pxe, vlan=vlan)
                     common.handle_response(result, net, element='Network ')
             if poolentries:
                 common.pprint("Deploying Pool...", color='green')
@@ -700,11 +931,12 @@ class Kconfig(Kbaseconfig):
                         if url is None:
                             common.pprint("Template %s skipped as url is missing!" % template, color='blue')
                             continue
-                        if not url.endswith('qcow2') and not url.endswith('img') and not url.endswith('qc2'):
+                        if not url.endswith('qcow2') and not url.endswith('img') and not url.endswith('qc2')\
+                                and not url.endswith('qcow2.xz'):
                             common.pprint("Opening url %s for you to grab complete url for %s" % (url, template),
                                           color='blue')
                             webbrowser.open(url, new=2, autoraise=True)
-                            url = raw_input("Copy Url:\n")
+                            url = input("Copy Url:\n")
                             if url.strip() == '':
                                 common.pprint("Template %s skipped as url is empty!" % template, color='blue')
                                 continue
@@ -727,35 +959,6 @@ class Kconfig(Kbaseconfig):
                         return
                     k.reserve_dns(name=dnsentry, nets=[dnsnet], domain=dnsdomain, ip=dnsip, alias=dnsalias, force=True)
             if vmentries:
-                topentries = {}
-                if scale is not None:
-                    common.pprint("Applying scale", color='green')
-                    scale = scale.split(',')
-                    for s in scale:
-                        s = s.split('=')
-                        if len(s) == 2 and s[1].isdigit():
-                            topentries[s[0]] = int(s[1])
-                elif topologyfile is not None:
-                    common.pprint("Processing Topology File %s..." % topologyfile, color='green')
-                    topologyfile = os.path.expanduser(topologyfile)
-                    if not os.path.exists(topologyfile):
-                        common.pprint("Topology file %s not found.Ignoring...." % topologyfile, color='blue')
-                    else:
-                        with open(topologyfile, 'r') as topentries:
-                            topentries = yaml.load(topentries)
-                if topentries:
-                    for entry in topentries:
-                        if isinstance(topentries[entry], str) and not topentries[entry].isdigit():
-                            continue
-                        elif not isinstance(topentries[entry], int):
-                            continue
-                        number = int(topentries[entry])
-                        if entry in [n[:-2] for n in vmentries]:
-                            for i in range(1, number + 1):
-                                newentry = "%s%0.2d" % (entry, i)
-                                if newentry not in vmentries:
-                                    entries[newentry] = entries["%s01" % entry]
-                                    vmentries.append(newentry)
                 common.pprint("Deploying Vms...", color='green')
                 vmcounter = 0
                 for name in vmentries:
@@ -782,220 +985,37 @@ class Kconfig(Kbaseconfig):
                     else:
                         customprofile = {}
                         profilename = 'kvirt'
-                    if 'base' in profile:
-                        father = vmprofiles[profile['base']]
-                        default_numcpus = father.get('numcpus', self.numcpus)
-                        default_memory = father.get('memory', self.memory)
-                        default_pool = father.get('pool', self.pool)
-                        default_disks = father.get('disks', self.disks)
-                        default_nets = father.get('nets', self.nets)
-                        default_template = father.get('template', self.template)
-                        default_cloudinit = father.get('cloudinit', self.cloudinit)
-                        default_nested = father.get('nested', self.nested)
-                        default_reservedns = father.get('reservedns', self.reservedns)
-                        default_reservehost = father.get('reservehost', self.reservehost)
-                        default_cpumodel = father.get('cpumodel', self.cpumodel)
-                        # default_cpuflags = father.get('cpuflags', self.cpuflags)
-                        default_disksize = father.get('disksize', self.disksize)
-                        default_diskinterface = father.get('diskinterface', self.diskinterface)
-                        default_diskthin = father.get('diskthin', self.diskthin)
-                        default_guestid = father.get('guestid', self.guestid)
-                        default_iso = father.get('iso', self.iso)
-                        default_vnc = father.get('vnc', self.vnc)
-                        default_reserveip = father.get('reserveip', self.reserveip)
-                        default_start = father.get('start', self.start)
-                        default_report = father.get('report', self.report)
-                        # default_reportall = father.get('reportall', self.reportall)
-                        default_keys = father.get('keys', self.keys)
-                        default_netmasks = father.get('netmasks', self.netmasks)
-                        default_gateway = father.get('gateway', self.gateway)
-                        default_dns = father.get('dns', self.dns)
-                        default_domain = father.get('domain', self.domain)
-                        # default_files = father.get('files', self.files)
-                        default_enableroot = father.get('enableroot', self.enableroot)
-                        default_tags = father.get('tags', self.tags)
-                        default_privatekey = father.get('privatekey', self.privatekey)
-                        default_cmds = common.remove_duplicates(self.cmds + father.get('cmds', []))
-                        default_scripts = common.remove_duplicates(self.scripts + father.get('scripts', []))
-                    else:
-                        default_numcpus = self.numcpus
-                        default_memory = self.memory
-                        default_pool = self.pool
-                        default_disks = self.disks
-                        default_nets = self.nets
-                        default_template = self.template
-                        default_cloudinit = self.cloudinit
-                        default_nested = self.nested
-                        default_reservedns = self.reservedns
-                        default_reservehost = self.reservehost
-                        default_cpumodel = self.cpumodel
-                        # default_cpuflags = self.cpuflags
-                        default_disksize = self.disksize
-                        default_diskinterface = self.diskinterface
-                        default_diskthin = self.diskthin
-                        default_guestid = self.guestid
-                        default_iso = self.iso
-                        default_vnc = self.vnc
-                        default_reserveip = self.reserveip
-                        default_start = self.start
-                        default_report = self.report
-                        # default_reportall = self.reportall
-                        default_keys = self.keys
-                        default_netmasks = self.netmasks
-                        default_gateway = self.gateway
-                        default_dns = self.dns
-                        default_domain = self.domain
-                        # default_files = self.files
-                        default_enableroot = self.enableroot
-                        default_tags = self.tags
-                        default_privatekey = self.privatekey
-                        default_cmds = self.cmds
-                        default_scripts = self.scripts
-                    pool = next((e for e in [profile.get('pool'), customprofile.get('pool'), default_pool]
-                                 if e is not None))
-                    template = next((e for e in [profile.get('template'), customprofile.get('template')]
-                                     if e is not None), default_template)
-                    cpumodel = next((e for e in [profile.get('cpumodel'), customprofile.get('cpumodel'),
-                                                 default_cpumodel] if e is not None))
-                    cpuflags = next((e for e in [profile.get('cpuflags'), customprofile.get('cpuflags'), []]
-                                     if e is not None))
-                    numcpus = next((e for e in [profile.get('numcpus'), customprofile.get('numcpus'), default_numcpus]
-                                    if e is not None))
-                    memory = next((e for e in [profile.get('memory'), customprofile.get('memory'), default_memory]
-                                   if e is not None))
-                    disks = next((e for e in [profile.get('disks'), customprofile.get('disks'), default_disks]
-                                  if e is not None))
-                    disksize = next((e for e in [profile.get('disksize'), customprofile.get('disksize'),
-                                                 default_disksize] if e is not None))
-                    diskinterface = next((e for e in [profile.get('diskinterface'), customprofile.get('diskinterface'),
-                                                      default_diskinterface] if e is not None))
-                    diskthin = next((e for e in [profile.get('diskthin'), customprofile.get('diskthin'),
-                                                 default_diskthin] if e is not None))
-                    guestid = next((e for e in [profile.get('guestid'), customprofile.get('guestid'),
-                                                default_guestid] if e is not None))
-                    vnc = next((e for e in [profile.get('vnc'), customprofile.get('vnc'), default_vnc]
-                                if e is not None))
-                    cloudinit = next((e for e in [profile.get('cloudinit'), customprofile.get('cloudinit'),
-                                                  default_cloudinit] if e is not None))
-                    if cloudinit and find_executable('mkisofs') is None and find_executable('genisoimage') is None:
-                        common.pprint("mkisofs/genisoimage not found. One of them is needed for cloudinit.Leaving...",
-                                      'red')
-                        os._exit(1)
-                    reserveip = next((e for e in [profile.get('reserveip'), customprofile.get('reserveip'),
-                                                  default_reserveip] if e is not None))
-                    reservedns = next((e for e in [profile.get('reservedns'), customprofile.get('reservedns'),
-                                                   default_reservedns] if e is not None))
-                    reservehost = next((e for e in [profile.get('reservehost'), customprofile.get('reservehost'),
-                                                    default_reservehost] if e is not None))
-                    report = next((e for e in [profile.get('report'), customprofile.get('report'), default_report]
-                                   if e is not None))
-                    nested = next((e for e in [profile.get('nested'), customprofile.get('nested'), default_nested]
-                                   if e is not None))
-                    start = next((e for e in [profile.get('start'), customprofile.get('start'), default_start]
-                                  if e is not None))
-                    nets = next((e for e in [profile.get('nets'), customprofile.get('nets'), default_nets]
-                                 if e is not None))
-                    iso = next((e for e in [profile.get('iso'), customprofile.get('iso')] if e is not None),
-                               default_iso)
-                    keys = next((e for e in [profile.get('keys'), customprofile.get('keys'), default_keys]
-                                 if e is not None))
-                    cmds = default_cmds + customprofile.get('cmds', []) + profile.get('cmds', [])
-                    netmasks = next((e for e in [profile.get('netmasks'), customprofile.get('netmasks'),
-                                                 default_netmasks] if e is not None))
-                    gateway = next((e for e in [profile.get('gateway'), customprofile.get('gateway')]
-                                    if e is not None), default_gateway)
-                    dns = next((e for e in [profile.get('dns'), customprofile.get('dns')]
-                                if e is not None), default_dns)
-                    domain = next((e for e in [profile.get('domain'), customprofile.get('domain')]
-                                   if e is not None), default_domain)
-                    ips = profile.get('ips')
+                    if customprofile:
+                        profile.update(customprofile)
+                    # cmds = default_cmds + customprofile.get('cmds', []) + profile.get('cmds', [])
+                    # ips = profile.get('ips')
                     sharedkey = next((e for e in [profile.get('sharedkey'), customprofile.get('sharedkey'),
                                                   self.sharedkey] if e is not None))
-                    enableroot = next((e for e in [profile.get('enableroot'), customprofile.get('enableroot'),
-                                                   default_enableroot] if e is not None))
-                    tags = default_tags.copy()
-                    tags.update(profile.get('tags', {}))
-                    tags.update(customprofile.get('tags', {}))
-                    privatekey = next((e for e in [profile.get('privatekey'), customprofile.get('privatekey'),
-                                                   default_privatekey] if e is not None))
-                    scripts = default_scripts + customprofile.get('scripts', []) + profile.get('scripts', [])
-                    missingscript = False
-                    if scripts:
-                        scriptcmds = []
-                        for script in scripts:
-                            if '~' in script:
-                                script = os.path.expanduser(script)
-                            basedir = os.path.dirname(script) if os.path.dirname(script) != '' else '.'
-                            # elif basedir != '':
-                            #    script = "%s/%s" % (basedir, script)
-                            if not os.path.exists(script):
-                                common.pprint("Script %s not found. Ignoring this vm..." % script, color='red')
-                                missingscript = True
-                            else:
-                                env = Environment(block_start_string='[%', block_end_string='%]',
-                                                  variable_start_string='[[', variable_end_string=']]',
-                                                  loader=FileSystemLoader(basedir))
-                                templ = env.get_template(os.path.basename(script))
-                                scriptentries = templ.render(overrides)
-                                scriptlines = [line.strip() for line in scriptentries.split('\n') if line.strip() != '']
-                                if scriptlines:
-                                    scriptcmds.extend(scriptlines)
-                        if scriptcmds:
-                            cmds = cmds + scriptcmds
-                    if missingscript:
-                        continue
-                    if report:
-                        reportcmd = ['curl -X POST -d "name=%s&status=OK&report=`cat /var/log/cloud-init.log`" '
-                                     '%s/report' % (name, self.reporturl)]
-                        if not cmds:
-                            cmds = reportcmd
-                        else:
-                            cmds = cmds + reportcmd
-                    files = next((e for e in [profile.get('files'), customprofile.get('files')] if e is not None), [])
                     if sharedkey:
                         vmcounter += 1
                         if not os.path.exists("%s.key" % plan) or not os.path.exists("%s.key.pub" % plan):
-                            os.popen("ssh-keygen -t rsa -N '' -f %s.key" % plan)
+                            os.system("ssh-keygen -qt rsa -N '' -f %s.key" % plan)
                         publickey = open("%s.key.pub" % plan).read().strip()
                         privatekey = open("%s.key" % plan).read().strip()
-                        if keys is None:
-                            keys = [publickey]
+                        if 'keys' not in profile:
+                            profile['keys'] = [publickey]
                         else:
-                            keys.append(publickey)
-                        if files:
-                            files.append({'path': '/root/.ssh/id_rsa', 'content': privatekey})
-                            files.append({'path': '/root/.ssh/id_rsa.pub', 'content': publickey})
+                            profile['keys'].append(publickey)
+                        if 'files' in profile:
+                            profile['files'].append({'path': '/root/.ssh/id_rsa', 'content': privatekey})
+                            profile['files'].append({'path': '/root/.ssh/id_rsa.pub', 'content': publickey})
                         else:
-                            files = [{'path': '/root/.ssh/id_rsa', 'content': privatekey},
-                                     {'path': '/root/.ssh/id_rsa.pub', 'content': publickey}]
+                            profile['files'] = [{'path': '/root/.ssh/id_rsa', 'content': privatekey},
+                                                {'path': '/root/.ssh/id_rsa.pub', 'content': publickey}]
                         if vmcounter >= len(vmentries):
                             os.remove("%s.key.pub" % plan)
                             os.remove("%s.key" % plan)
-                    elif privatekey:
-                        privatekeyfile = None
-                        if os.path.exists("%s/.ssh/id_rsa" % os.environ['HOME']):
-                            privatekeyfile = "%s/.ssh/id_rsa" % os.environ['HOME']
-                        elif os.path.exists("%s/.ssh/id_rsa" % os.environ['HOME']):
-                            privatekeyfile = "%s/.ssh/id_dsa" % os.environ['HOME']
-                        if privatekeyfile is not None:
-                            privatekey = open(privatekeyfile).read().strip()
-                        if files:
-                            files.append({'path': '/root/.ssh/id_rsa', 'content': privatekey})
-                        else:
-                            files = [{'path': '/root/.ssh/id_rsa', 'content': privatekey}]
-                    result = z.create(name=name, plan=plan, profile=profilename, cpumodel=cpumodel, cpuflags=cpuflags,
-                                      numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool,
-                                      template=template, disks=disks, disksize=disksize, diskthin=diskthin,
-                                      diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc),
-                                      cloudinit=bool(cloudinit), reserveip=bool(reserveip),
-                                      reservedns=bool(reservedns), reservehost=bool(reservehost),
-                                      start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks,
-                                      gateway=gateway, dns=dns, domain=domain, nested=nested, tunnel=tunnel,
-                                      files=files, enableroot=enableroot, overrides=overrides, tags=tags)
+                    result = self.create_vm(name, profilename, overrides=overrides, customprofile=profile, k=z,
+                                            plan=plan, basedir=basedir)
                     common.handle_response(result, name)
                     if result['result'] == 'success':
                         newvms.append(name)
-                        common.lastvm(name)
+                        common.set_lastvm(name, self.client)
                     _ansible = next((e for e in [profile.get('ansible'), customprofile.get('ansible')]
                                      if e is not None), None)
                     if _ansible is not None:
@@ -1043,7 +1063,7 @@ class Kconfig(Kbaseconfig):
                                thin=False)
             if containerentries:
                 common.pprint("Deploying Containers...", color='green')
-                label = "plan=%s" % (plan)
+                label = "plan=%s" % plan
                 for container in containerentries:
                     if dockerutils.exists_container(k, container):
                         common.pprint("Container %s skipped!" % container, color='blue')
@@ -1107,7 +1127,7 @@ class Kconfig(Kbaseconfig):
         if ansible:
             common.pprint("Deploying Ansible Inventory...", color='green')
             if os.path.exists("/tmp/%s.inv" % plan):
-                common.pprint("Inventory in /tmp/%s.inv skipped!" % (plan), color='blue')
+                common.pprint("Inventory in /tmp/%s.inv skipped!" % plan, color='blue')
             else:
                 common.pprint("Creating ansible inventory for plan %s in /tmp/%s.inv" % (plan, plan), color='green')
                 vms = []
@@ -1120,13 +1140,24 @@ class Kconfig(Kbaseconfig):
                 return
         return {'result': 'success'}
 
-    def handle_host(self, pool='default', templates=[], switch=None, download=False, enable=False, disable=False,
+    def handle_host(self, pool=None, templates=[], switch=None, download=False,
                     url=None, cmd=None, sync=False):
+        """
+
+        :param pool:
+        :param templates:
+        :param switch:
+        :param download:
+        :param url:
+        :param cmd:
+        :param sync:
+        :return:
+        """
         if download:
             k = self.k
             if pool is None:
-                common.pprint("Missing pool.Leaving...", color='red')
-                return {'result': 'failure', 'reason': "Missing pool"}
+                pool = self.pool
+                common.pprint("Using pool %s" % pool, color='red')
             if url is None and not templates:
                 common.pprint("Missing template or url.Leaving...", color='red')
                 return {'result': 'failure', 'reason': "Missing template"}
@@ -1135,18 +1166,21 @@ class Kconfig(Kbaseconfig):
                     url = TEMPLATES[template]
                     shortname = os.path.basename(url)
                     template = os.path.basename(template)
-                    if not url.endswith('qcow2') and not url.endswith('img') and not url.endswith('qc2'):
+                    if not url.endswith('qcow2') and not url.endswith('img') and not url.endswith('qc2')\
+                            and not url.endswith('qcow2.xz'):
                         if 'web' in sys.argv[0]:
                             return {'result': 'failure', 'reason': "Missing url"}
                         common.pprint("Opening url %s for you to grab complete url for %s" % (url, template), 'blue')
                         webbrowser.open(url, new=2, autoraise=True)
-                        url = raw_input("Copy Url:\n")
+                        url = input("Copy Url:\n")
                         if url.strip() == '':
                             common.pprint("Missing proper url.Leaving...", color='red')
                             return {'result': 'failure', 'reason': "Missing template"}
                         search = re.search(r".*/(.*)\?.*", url)
                         if search is not None:
                             shortname = search.group(1)
+                else:
+                    shortname = os.path.basename(url)
                 if cmd is None and template != '' and template in TEMPLATESCOMMANDS:
                     cmd = TEMPLATESCOMMANDS[template]
                 common.pprint("Grabbing template %s..." % shortname, color='green')
@@ -1172,62 +1206,6 @@ class Kconfig(Kbaseconfig):
                         newini += line
                 open(inifile, 'w').write(newini)
             return {'result': 'success'}
-        elif enable:
-            client = enable
-            if client not in self.clients:
-                common.pprint("Client %s not found in config.Leaving...." % client, color='green')
-                return {'result': 'failure', 'reason': "Client %s not found in config" % client}
-            common.pprint("Enabling client %s..." % client, color='green')
-            inifile = "%s/.kcli/config.yml" % os.environ.get('HOME')
-            if os.path.exists(inifile):
-                newini = ''
-                clientreached = False
-                for line in open(inifile).readlines():
-                    if line.startswith("%s:" % client):
-                        clientreached = True
-                        newini += line
-                        continue
-                    if clientreached and 'enabled' not in self.ini[client]:
-                        newini += " enabled: true\n"
-                        clientreached = False
-                        newini += line
-                        continue
-                    elif clientreached and line.startswith(' enabled:'):
-                        newini += " enabled: true\n"
-                        clientreached = False
-                    else:
-                        newini += line
-                open(inifile, 'w').write(newini)
-            return {'result': 'success'}
-        elif disable:
-            client = disable
-            if client not in self.clients:
-                common.pprint("Client %s not found in config.Leaving...." % client, color='red')
-                return {'result': 'failure', 'reason': "Client %s not found in config" % client}
-            elif self.ini['default']['client'] == client:
-                common.pprint("Client %s currently default.Leaving...." % client, color='red')
-                return {'result': 'failure', 'reason': "Client %s currently default" % client}
-            common.pprint("Disabling client %s..." % client, color='green')
-            inifile = "%s/.kcli/config.yml" % os.environ.get('HOME')
-            if os.path.exists(inifile):
-                newini = ''
-                clientreached = False
-                for line in open(inifile).readlines():
-                    if line.startswith("%s:" % client):
-                        clientreached = True
-                        newini += line
-                        continue
-                    if clientreached and 'enabled' not in self.ini[client]:
-                        newini += " enabled: false\n"
-                        clientreached = False
-                        newini += line
-                        continue
-                    elif clientreached and line.startswith(' enabled:'):
-                        newini += " enabled: false\n"
-                        clientreached = False
-                    else:
-                        newini += line
-                open(inifile, 'w').write(newini)
         elif sync:
             k = self.k
             if not self.extraclients:
@@ -1240,10 +1218,10 @@ class Kconfig(Kbaseconfig):
             for vol in k.volumes():
                 template = os.path.basename(vol)
                 if template in [os.path.basename(v) for v in dest.volumes()]:
-                    common.pprint("Ignoring %s as it's already there" % (template), color='blue')
+                    common.pprint("Ignoring %s as it's already there" % template, color='blue')
                     continue
                 url = None
-                for n in TEMPLATES.values():
+                for n in list(TEMPLATES.values()):
                     if n is None:
                         continue
                     elif n.split('/')[-1] == template:
@@ -1255,7 +1233,7 @@ class Kconfig(Kbaseconfig):
                         return {'result': 'failure', 'reason': "Missing url"}
                     common.pprint("Opening url %s for you to grab complete url for %s" % (url, vol), color='blue')
                     webbrowser.open(url, new=2, autoraise=True)
-                    url = raw_input("Copy Url:\n")
+                    url = input("Copy Url:\n")
                     if url.strip() == '':
                         common.pprint("Missing proper url.Leaving...", color='red')
                         return {'result': 'failure', 'reason': "Missing template"}

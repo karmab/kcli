@@ -1,5 +1,7 @@
 #!/usr/bin/env python
+# coding=utf-8
 
+from distutils.spawn import find_executable
 from kvirt.config import Kconfig
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.config import __version__
@@ -8,7 +10,6 @@ from prettytable import PrettyTable
 import argparse
 from kvirt import common
 from kvirt import nameutils
-from kvirt import dockerutils
 import os
 import random
 import sys
@@ -17,19 +18,12 @@ import yaml
 
 def start(args):
     """Start vm/container"""
-    names = args.names
+    names = [common.get_lastvm(args.client)] if not args.names else args.names
     container = args.container
-    lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
-    if not names:
-        if os.path.exists(lastvm) and os.stat(lastvm).st_size > 0:
-            names = [open(lastvm).readlines()[0].strip()]
-            common.pprint("Using %s as vm" % names[0], color='green')
-        else:
-            common.pprint("Missing Vm's name", color='red')
-            return
     config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
     if container:
+        from kvirt import dockerutils
         for name in names:
             common.pprint("Starting container %s..." % name, color='green')
             dockerutils.start_container(k, name)
@@ -45,16 +39,8 @@ def start(args):
 
 def stop(args):
     """Stop vm/container"""
-    names = args.names
     container = args.container
-    lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
-    if not names:
-        if os.path.exists(lastvm) and os.stat(lastvm).st_size > 0:
-            names = [open(lastvm).readlines()[0].strip()]
-            common.pprint("Using %s as vm" % names[0], color='green')
-        else:
-            common.pprint("Missing Vm's name", color='red')
-            return
+    names = [common.get_lastvm(args.client)] if not args.names else args.names
     config = Kconfig(client=args.client, debug=args.debug)
     if config.extraclients:
         ks = config.extraclients
@@ -65,6 +51,7 @@ def stop(args):
     for cli in ks:
         k = ks[cli]
         if container:
+            from kvirt import dockerutils
             for name in names:
                 common.pprint("Stopping container %s in %s..." % (name, cli), color='green')
                 dockerutils.stop_container(k, name)
@@ -79,19 +66,12 @@ def stop(args):
 
 def restart(args):
     """Restart vm/container"""
-    names = args.names
+    names = [common.get_lastvm(args.client)] if not args.names else args.names
     container = args.container
-    lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
-    if not names:
-        if os.path.exists(lastvm) and os.stat(lastvm).st_size > 0:
-            names = [open(lastvm).readlines()[0].strip()]
-            common.pprint("Using %s as vm" % names[0], color='green')
-        else:
-            common.pprint("Missing Vm's name", color='red')
-            return
     config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
     if container:
+        from kvirt import dockerutils
         for name in names:
             common.pprint("Restarting container %s..." % name, color='green')
             dockerutils.stop_container(k, name)
@@ -108,21 +88,14 @@ def restart(args):
 
 def console(args):
     """Vnc/Spice/Serial/Container console"""
-    name = args.name
+    name = common.get_lastvm(args.client) if not args.name else args.name
     serial = args.serial
     container = args.container
-    lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
-    if not name:
-        if os.path.exists(lastvm) and os.stat(lastvm).st_size > 0:
-            name = open(lastvm).readlines()[0].strip()
-            common.pprint("Using %s as vm" % name, color='green')
-        else:
-            common.pprint("Missing Vm's name", color='red')
-            return
     config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
     tunnel = config.tunnel
     if container:
+        from kvirt import dockerutils
         dockerutils.console_container(k, name)
         return
     elif serial:
@@ -133,23 +106,16 @@ def console(args):
 
 def delete(args):
     """Delete vm/container"""
-    names = args.names
+    names = [common.get_lastvm(args.client)] if not args.names else args.names
     container = args.container
     snapshots = args.snapshots
     yes = args.yes
-    lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
-    if not names:
-        if os.path.exists(lastvm) and os.stat(lastvm).st_size > 0:
-            names = [open(lastvm).readlines()[0].strip()]
-            common.pprint("Using %s as vm" % names[0], color='green')
-        else:
-            common.pprint("Missing Vm's name", color='red')
-            return
     config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
     if not yes:
         common.confirm("Are you sure?")
     if container:
+        from kvirt import dockerutils
         for name in names:
             common.pprint("Deleting container %s" % name, color='red')
             dockerutils.delete_container(k, name)
@@ -160,7 +126,7 @@ def delete(args):
             if result['result'] == 'success':
                 common.pprint("vm %s deleted on %s" % (name, config.client), color='green')
                 codes.append(0)
-                common.lastvm(name, delete=True)
+                common.set_lastvm(name, args.client, delete=True)
             else:
                 reason = result['reason']
                 common.pprint("Could not delete vm %s because %s" % (name, reason), color='red')
@@ -184,18 +150,10 @@ def download(args):
 
 def info(args):
     """Get info on vm"""
-    names = args.names
+    names = [common.get_lastvm(args.client)] if not args.names else args.names
     output = args.output
     fields = args.fields
     values = args.values
-    lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
-    if not names:
-        if os.path.exists(lastvm) and os.stat(lastvm).st_size > 0:
-            names = [open(lastvm).readlines()[0].strip()]
-            common.pprint("Using %s as vm" % names[0], color='green')
-        else:
-            common.pprint("Missing Vm's name", color='red')
-            return
     config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
     codes = []
@@ -216,20 +174,21 @@ def host(args):
         result = baseconfig.enable_host(enable)
     elif disable:
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-        result = baseconfig.switch_host(disable)
+        result = baseconfig.disable_host(disable)
     else:
         config = Kconfig(client=args.client, debug=args.debug)
-        result = config.handle_host(enable=enable, disable=disable, sync=sync)
+        result = config.handle_host(sync=sync)
     if result['result'] == 'success':
         os._exit(0)
     else:
         os._exit(1)
 
 
-def list(args):
-    """List hosts, profiles, templates, isos, pools or vms"""
+def _list(args):
+    """List hosts, profiles, flavors, templates, isos, pools or vms"""
     hosts = args.hosts
     profiles = args.profiles
+    flavors = args.flavors
     templates = args.templates
     isos = args.isos
     disks = args.disks
@@ -237,6 +196,7 @@ def list(args):
     repos = args.repos
     products = args.products
     networks = args.networks
+    subnets = args.subnets
     containers = args.containers
     images = args.images
     plans = args.plans
@@ -317,14 +277,29 @@ def list(args):
                     domain = networks[network]['domain']
                 else:
                     domain = 'N/A'
-                # if 'plan' in networks[network]:
-                #    plan = networks[network]['plan']
-                # else:
-                #     plan = 'N/A'
-                # networkstable.add_row([network, networktype, cidr, dhcp, domain, mode, plan])
                 networkstable.add_row([network, networktype, cidr, dhcp, domain, mode])
         networkstable.align["Network"] = "l"
         print(networkstable)
+        return
+    if subnets:
+        subnets = k.list_subnets()
+        common.pprint("Listing Subnets...", color='green')
+        if short:
+            subnetstable = PrettyTable(["Subnets"])
+            for subnet in sorted(subnets):
+                subnetstable.add_row([subnet])
+        else:
+            subnetstable = PrettyTable(["Subnet", "Az", "Cidr", "Network"])
+            for subnet in sorted(subnets):
+                cidr = subnets[subnet]['cidr']
+                az = subnets[subnet]['az']
+                if 'network' in subnets[subnet]:
+                    network = subnets[subnet]['network']
+                else:
+                    network = 'N/A'
+                subnetstable.add_row([subnet, az, cidr, network])
+        subnetstable.align["Network"] = "l"
+        print(subnetstable)
         return
     elif profiles:
         if containers:
@@ -348,7 +323,7 @@ def list(args):
                     profilename = profile[0]
                     profilestable.add_row([profilename])
             else:
-                profilestable = PrettyTable(["Profile", "Numcpus", "Memory",
+                profilestable = PrettyTable(["Profile", "Flavor",
                                              "Pool", "Disks", "Template",
                                              "Nets", "Cloudinit", "Nested",
                                              "Reservedns", "Reservehost"])
@@ -356,6 +331,21 @@ def list(args):
                         profilestable.add_row(profile)
             profilestable.align["Profile"] = "l"
             print(profilestable)
+        return
+    elif flavors:
+        # flavors = config.list_flavors()
+        flavors = k.flavors()
+        if short:
+            flavorstable = PrettyTable(["Flavor"])
+            for flavor in sorted(flavors):
+                flavorname = profile[0]
+                flavorstable.add_row([flavorname])
+        else:
+            flavorstable = PrettyTable(["Flavor", "Numcpus", "Memory"])
+            for flavor in sorted(flavors):
+                    flavorstable.add_row(flavor)
+        flavorstable.align["Flavor"] = "l"
+        print(flavorstable)
         return
     elif templates:
         templatestable = PrettyTable(["Template"])
@@ -380,6 +370,7 @@ def list(args):
             diskstable.add_row([disk, pool, path])
         print(diskstable)
     elif containers:
+        from kvirt import dockerutils
         common.pprint("Listing containers...", color='green')
         containers = PrettyTable(["Name", "Status", "Image", "Plan", "Command", "Ports"])
         for container in dockerutils.list_containers(k):
@@ -391,6 +382,7 @@ def list(args):
                 containers.add_row(container)
         print(containers)
     elif images:
+        from kvirt import dockerutils
         common.pprint("Listing images...", color='green')
         images = PrettyTable(["Name"])
         for image in dockerutils.list_images(k):
@@ -405,7 +397,8 @@ def list(args):
             plans.add_row([planname, planvms])
         print(plans)
     else:
-        customcolumn = 'Namespace' if config.type == 'kubevirt' else 'Report'
+        customcolumns = {'kubevirt': 'Namespace', 'aws': 'InstanceId', 'openstack': 'Project'}
+        customcolumn = customcolumns[config.type] if config.type in customcolumns else 'Report'
         if config.extraclients:
             allclients = config.extraclients.copy()
             allclients.update({config.client: config.k})
@@ -440,17 +433,16 @@ def vm(args):
     name = args.name
     profile = args.profile
     profilefile = args.profilefile
-    ip1 = args.ip1
-    ip2 = args.ip2
-    ip3 = args.ip3
-    ip4 = args.ip4
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
     config = Kconfig(client=args.client, debug=args.debug)
+    if 'name' in overrides:
+        name = overrides['name']
     if name is None:
         name = nameutils.get_random_name()
-        if config.type == 'kubevirt':
+        if config.type in ['gcp', 'kubevirt']:
             name = name.replace('_', '-')
-        common.pprint("Using %s as name of the vm" % name, color='green')
+        if config.type != 'aws':
+            common.pprint("Using %s as name of the vm" % name, color='green')
     if profile is not None and profile.endswith('.yml'):
         profilefile = profile
         profile = None
@@ -463,13 +455,16 @@ def vm(args):
                 config.profiles = yaml.load(entries)
     if profile is None:
         if len(config.profiles) == 1:
-            profile = config.profiles.keys()[0]
+            profile = list(config.profiles)[0]
         else:
             common.pprint("Missing profile", color='red')
             os._exit(1)
-    result = config.create_vm(name, profile, ip1=ip1, ip2=ip2, ip3=ip3, ip4=ip4, overrides=overrides)
-    code = common.handle_response(result, name, element='', action='created', client=config.client)
-    return code
+    result = config.create_vm(name, profile, overrides=overrides)
+    if config.type != 'aws':
+        code = common.handle_response(result, name, element='', action='created', client=config.client)
+        return code
+    else:
+        return 0
 
 
 def clone(args):
@@ -504,7 +499,7 @@ def update(args):
     config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
     if dns:
-        common.pprint("Creating Dns entry for %s..." % (name), color='green')
+        common.pprint("Creating Dns entry for %s..." % name, color='green')
         if net is not None:
             nets = [net]
         else:
@@ -514,13 +509,12 @@ def update(args):
         if not nets:
             return
         else:
-            common.pprint("Updating ip of vm %s to %s..." % (name, ip1), color='green')
             k.reserve_dns(name=name, nets=nets, domain=domain, ip=ip1)
     elif ip1 is not None:
         common.pprint("Updating ip of vm %s to %s..." % (name, ip1), color='green')
         k.update_metadata(name, 'ip', ip1)
     elif cloudinit:
-        common.pprint("Removing cloudinit information of vm %s" % (name), color='green')
+        common.pprint("Removing cloudinit information of vm %s" % name, color='green')
         k.remove_cloudinit(name)
         return
     elif plan is not None:
@@ -536,20 +530,20 @@ def update(args):
         common.pprint("Updating numcpus of vm %s to %s..." % (name, numcpus), color='green')
         k.update_cpu(name, numcpus)
     elif autostart:
-        common.pprint("Setting autostart for vm %s..." % (name), color='green')
+        common.pprint("Setting autostart for vm %s..." % name, color='green')
         k.update_start(name, start=True)
     elif noautostart:
-        common.pprint("Removing autostart for vm %s..." % (name), color='green')
+        common.pprint("Removing autostart for vm %s..." % name, color='green')
         k.update_start(name, start=False)
     elif information:
-        common.pprint("Setting information for vm %s..." % (name), color='green')
+        common.pprint("Setting information for vm %s..." % name, color='green')
         k.update_information(name, information)
     elif iso:
         common.pprint("Switching iso for vm %s to %s..." % (name, iso), color='green')
         common.pprint("Note it will only be effective upon next start", color='green')
         k.update_iso(name, iso)
     elif host:
-        common.pprint("Creating Host entry for vm %s..." % (name), color='green')
+        common.pprint("Creating Host entry for vm %s..." % name, color='green')
         nets = k.vm_ports(name)
         if not nets:
             return
@@ -572,8 +566,8 @@ def disk(args):
         if diskname is None:
             common.pprint("Missing diskname. Leaving...", color='red')
             os._exit(1)
-        common.pprint("Deleting disk %s from %s..." % (diskname, name), color='green')
-        k.delete_disk(name, diskname)
+        common.pprint("Deleting disk %s" % diskname, color='green')
+        k.delete_disk(name=name, diskname=diskname, pool=pool)
         return
     if size is None:
         common.pprint("Missing size. Leaving...", color='red')
@@ -581,8 +575,36 @@ def disk(args):
     if pool is None:
         common.pprint("Missing pool. Leaving...", color='red')
         os._exit(1)
-    common.pprint("Adding disk to %s..." % (name), color='green')
+    if name is None:
+        common.pprint("Missing name. Leaving...", color='red')
+        os._exit(1)
+    common.pprint("Adding disk to %s..." % name, color='green')
     k.add_disk(name=name, size=size, pool=pool, template=template)
+
+
+def export(args):
+    """Export a vm"""
+    names = [common.get_lastvm(args.client)] if not args.names else args.names
+    template = args.template
+    config = Kconfig(client=args.client, debug=args.debug)
+    k = config.k
+    codes = []
+    for name in names:
+        result = k.export(name=name, template=template)
+        if result['result'] == 'success':
+            common.pprint("Exporting vm %s" % name, color='green')
+            codes.append(0)
+        else:
+            reason = result['reason']
+            common.pprint("Could not delete vm %s because %s" % (name, reason), color='red')
+            codes.append(1)
+    os._exit(1 if 1 in codes else 0)
+
+
+def lb(args):
+    """Create/Delete loadbalancer"""
+    name = args.name
+    common.pprint("Creating new %s" % name, color='green')
 
 
 def nic(args):
@@ -594,13 +616,13 @@ def nic(args):
     config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
     if delete:
-        common.pprint("Deleting nic from %s..." % (name), color='green')
+        common.pprint("Deleting nic from %s..." % name, color='green')
         k.delete_nic(name, interface)
         return
     if network is None:
         common.pprint("Missing network. Leaving...", color='red')
         os._exit(1)
-    common.pprint("Adding Nic %s..." % (name), color='green')
+    common.pprint("Adding Nic %s..." % name, color='green')
     k.add_nic(name=name, network=network)
 
 
@@ -611,17 +633,18 @@ def pool(args):
     full = args.delete
     pooltype = args.pooltype
     path = args.path
+    thinpool = args.thinpool
     config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
     if delete:
-        common.pprint("Deleting pool %s..." % (pool), color='green')
+        common.pprint("Deleting pool %s..." % pool, color='green')
         k.delete_pool(name=pool, full=full)
         return
     if path is None:
         common.pprint("Missing path. Leaving...", color='red')
         os._exit(1)
-    common.pprint("Adding pool %s..." % (pool), color='green')
-    k.create_pool(name=pool, poolpath=path, pooltype=pooltype)
+    common.pprint("Adding pool %s..." % pool, color='green')
+    k.create_pool(name=pool, poolpath=path, pooltype=pooltype, thinpool=thinpool)
 
 
 def plan(args):
@@ -634,16 +657,17 @@ def plan(args):
     noautostart = args.noautostart
     container = args.container
     inputfile = args.inputfile
-    topologyfile = args.topologyfile
     start = args.start
     stop = args.stop
     delete = args.delete
     delay = args.delay
     use = args.use
     yes = args.yes
-    scale = args.scale
     info = args.info
+    volumepath = args.volumepath
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
+    if os.path.exists("/i_am_a_container"):
+        inputfile = "%s/%s" % (volumepath, inputfile) if inputfile is not None else "%s/kcli_plan.yml" % volumepath
     if info and get is None:
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
         baseconfig.info_plan(inputfile)
@@ -666,9 +690,7 @@ def plan(args):
         common.confirm("Are you sure?")
     config.plan(plan, ansible=ansible, get=get, path=path, autostart=autostart,
                 container=container, noautostart=noautostart, inputfile=inputfile,
-                start=start, stop=stop, delete=delete, delay=delay,
-                topologyfile=topologyfile, scale=scale,
-                overrides=overrides, info=info)
+                start=start, stop=stop, delete=delete, delay=delay, overrides=overrides, info=info)
     return 0
 
 
@@ -685,31 +707,31 @@ def repo(args):
             common.pprint("Updating all repos...", color='blue')
             repos = baseconfig.list_repos()
             for repo in repos:
-                common.pprint("Updating repo %s..." % (repo), color='green')
+                common.pprint("Updating repo %s..." % repo, color='green')
                 baseconfig.update_repo(repo)
         else:
-            common.pprint("Updating repo %s..." % (repo), color='green')
+            common.pprint("Updating repo %s..." % repo, color='green')
             baseconfig.update_repo(repo)
         return
     if repo is None:
         common.pprint("Missing repo. Leaving...", color='red')
         os._exit(1)
     if delete:
-        common.pprint("Deleting repo %s..." % (repo), color='green')
+        common.pprint("Deleting repo %s..." % repo, color='green')
         baseconfig.delete_repo(repo)
         return
     if update:
-        common.pprint("Deleting repo %s..." % (repo), color='green')
+        common.pprint("Deleting repo %s..." % repo, color='green')
         baseconfig.delete_repo(repo)
         return
     if download:
-        common.pprint("Downloading repo %s..." % (repo), color='green')
+        common.pprint("Downloading repo %s..." % repo, color='green')
         baseconfig.download_repo(repo)
         return
     if url is None:
         common.pprint("Missing url. Leaving...", color='red')
         os._exit(1)
-    common.pprint("Adding repo %s..." % (repo), color='green')
+    common.pprint("Adding repo %s..." % repo, color='green')
     baseconfig.create_repo(repo, url)
     return 0
 
@@ -726,7 +748,7 @@ def product(args):
     search = args.search
     if info:
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-        common.pprint("Providing information on product %s..." % (product), color='green')
+        common.pprint("Providing information on product %s..." % product, color='green')
         baseconfig.info_product(product, repo, group)
     elif search:
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
@@ -749,26 +771,19 @@ def product(args):
         print(products)
     else:
         config = Kconfig(client=args.client, debug=args.debug)
-        common.pprint("Creating product %s..." % (product), color='green')
+        common.pprint("Creating product %s..." % product, color='green')
         config.create_product(product, repo=repo, group=group, plan=plan, latest=latest, overrides=overrides)
     return 0
 
 
 def ssh(args):
     """Ssh into vm"""
-    name = args.name
-    lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
-    if not name:
-        if os.path.exists(lastvm) and os.stat(lastvm).st_size > 0:
-            name = [open(lastvm).readlines()[0].strip()]
-            common.pprint("Using %s as vm" % name[0], color='green')
-        else:
-            common.pprint("Missing Vm's name", color='red')
-            return
+    name = [common.get_lastvm(args.client)] if not args.name else args.name
     l = args.L
     r = args.R
     D = args.D
     X = args.X
+    Y = args.Y
     config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
     tunnel = config.tunnel
@@ -783,9 +798,12 @@ def ssh(args):
         name = name.split('@')[1]
     else:
         user = None
-    sshcommand = k.ssh(name, user=user, local=l, remote=r, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, D=D)
+    sshcommand = k.ssh(name, user=user, local=l, remote=r, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, Y=Y, D=D)
     if sshcommand is not None:
-        os.system(sshcommand)
+        if find_executable('ssh') is not None:
+            os.system(sshcommand)
+        else:
+            print(sshcommand)
     else:
         common.pprint("Couldnt ssh to %s" % name, color='red')
 
@@ -794,6 +812,7 @@ def scp(args):
     """Scp into vm"""
     recursive = args.recursive
     source = args.source[0]
+    volumepath = args.volumepath
     destination = args.destination[0]
     config = Kconfig(client=args.client, debug=args.debug)
     k = config.k
@@ -801,6 +820,7 @@ def scp(args):
     if len(source.split(':')) == 2:
         name = source.split(':')[0]
         source = source.split(':')[1]
+        source = source if not os.path.exists("/i_am_a_container") else "%s/%s" % (volumepath, source)
         download = True
     elif len(destination.split(':')) == 2:
         name = destination.split(':')[0]
@@ -817,7 +837,10 @@ def scp(args):
     scpcommand = k.scp(name, user=user, source=source, destination=destination,
                        tunnel=tunnel, download=download, recursive=recursive)
     if scpcommand is not None:
-        os.system(scpcommand)
+        if find_executable('scp') is not None:
+            os.system(scpcommand)
+        else:
+            print(scpcommand)
     else:
         common.pprint("Couldn't run scp", color='red')
 
@@ -828,6 +851,7 @@ def network(args):
     delete = args.delete
     isolated = args.isolated
     cidr = args.cidr
+    vlan = args.vlan
     nodhcp = args.nodhcp
     domain = args.domain
     pxe = args.pxe
@@ -837,7 +861,7 @@ def network(args):
         common.pprint("Missing Network", color='red')
         os._exit(1)
     if delete:
-        result = k.delete_network(name=name)
+        result = k.delete_network(name=name, cidr=cidr)
         common.handle_response(result, name, element='Network ', action='deleted')
     else:
         if isolated:
@@ -845,7 +869,7 @@ def network(args):
         else:
             nat = True
         dhcp = not nodhcp
-        result = k.create_network(name=name, cidr=cidr, dhcp=dhcp, nat=nat, domain=domain, pxe=pxe)
+        result = k.create_network(name=name, cidr=cidr, dhcp=dhcp, nat=nat, domain=domain, pxe=pxe, vlan=vlan)
         common.handle_response(result, name, element='Network ')
 
 
@@ -865,6 +889,7 @@ def bootstrap(args):
 
 def container(args):
     """Create container"""
+    from kvirt import dockerutils
     name = args.name
     profile = args.profile
     config = Kconfig(client=args.client, debug=args.debug)
@@ -876,7 +901,7 @@ def container(args):
     if profile is None:
         common.pprint("Missing profile", color='red')
         os._exit(1)
-    containerprofiles = {k: v for k, v in config.profiles.iteritems() if 'type' in v and v['type'] == 'container'}
+    containerprofiles = {k: v for k, v in config.profiles.items() if 'type' in v and v['type'] == 'container'}
     if profile not in containerprofiles:
         common.pprint("profile %s not found. Trying to use the profile as image"
                       "and default values..." % profile, color='blue')
@@ -895,7 +920,7 @@ def container(args):
         dockerutils.create_container(k, name, image, nets=None, cmd=cmd,
                                      ports=ports, volumes=volumes,
                                      environment=environment)
-    common.pprint("container %s created" % (name), color='green')
+    common.pprint("container %s created" % name, color='green')
     return
 
 
@@ -913,10 +938,10 @@ def snapshot(args):
     elif delete:
         common.pprint("Deleting snapshot of %s named %s..." % (name, snapshot), color='green')
     elif listing:
-        common.pprint("Listing snapshots of %s..." % (name), color='green')
+        common.pprint("Listing snapshots of %s..." % name, color='green')
         snapshots = k.snapshot(snapshot, name, listing=True)
         if isinstance(snapshots, dict):
-            common.pprint("Vm %s not found" % (name), color='red')
+            common.pprint("Vm %s not found" % name, color='red')
             return
         else:
             for snapshot in snapshots:
@@ -951,12 +976,15 @@ def switch(args):
 
 
 def cli():
+    """
+
+    """
     parser = argparse.ArgumentParser(description='Libvirt/VirtualBox/Kubevirt'
                                      'wrapper on steroids. Check out '
                                      'https://github.com/karmab/kcli!')
     parser.add_argument('-C', '--client')
     parser.add_argument('-d', '--debug', action='store_true')
-    parser.add_argument('--version', action='version', version=__version__)
+    parser.add_argument('-v', '--version', action='version', version=__version__)
 
     subparsers = parser.add_subparsers(metavar='')
 
@@ -1004,19 +1032,17 @@ def cli():
     disk_info = 'Add/Delete disk of vm'
     disk_parser = subparsers.add_parser('disk', description=disk_info, help=disk_info)
     disk_parser.add_argument('-d', '--delete', action='store_true')
-    disk_parser.add_argument('-s', '--size', help='Size of the disk to add, in GB', metavar='SIZE')
+    disk_parser.add_argument('-s', '--size', type=int, help='Size of the disk to add, in GB', metavar='SIZE')
     disk_parser.add_argument('-n', '--diskname', help='Name or Path of the disk, when deleting', metavar='DISKNAME')
     disk_parser.add_argument('-t', '--template', help='Name or Path of a Template, when adding', metavar='TEMPLATE')
     disk_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
-    disk_parser.add_argument('name')
+    disk_parser.add_argument('name', metavar='VMNAME', nargs='?')
     disk_parser.set_defaults(func=disk)
 
     download_info = 'Download template'
     download_parser = subparsers.add_parser('download', description=download_info, help=download_info)
     download_parser.add_argument('-c', '--cmd', help='Extra command to launch after downloading', metavar='CMD')
-    download_parser.add_argument('-p', '--pool', default='default',
-                                 help='Pool to use. Defaults to default',
-                                 metavar='POOL')
+    download_parser.add_argument('-p', '--pool', help='Pool to use. Defaults to default', metavar='POOL')
     download_parser.add_argument('-u', '--url', help='Url to use', metavar='URL')
     download_parser.add_argument('templates', choices=sorted(TEMPLATES.keys()),
                                  default='', help='Template/Image to download',
@@ -1042,15 +1068,29 @@ def cli():
     info_parser.add_argument('names', help='VMNAMES', nargs='*')
     info_parser.set_defaults(func=info)
 
-    list_info = 'List hosts, profiles, templates, isos,...'
+    export_info = 'Export vm'
+    export_parser = subparsers.add_parser('export', description=export_info, help=export_info)
+    export_parser.add_argument('-t', '--template', help='Name for the generated template. Uses the vm name otherwise',
+                               metavar='TEMPLATE')
+    export_parser.add_argument('names', metavar='VMNAMES', nargs='*')
+    export_parser.set_defaults(func=export)
+
+    # lb_info = 'Create/Delete loadbalancer'
+    # lb_parser = subparsers.add_parser('lb', description=lb_info, help=lb_info)
+    # lb_parser.add_argument('name', metavar='NAME', nargs='*')
+    # lb_parser.set_defaults(func=lb)
+
+    list_info = 'List hosts, profiles, flavors, templates, isos,...'
     list_parser = subparsers.add_parser('list', description=list_info, help=list_info)
     list_parser.add_argument('-H', '--hosts', action='store_true')
     list_parser.add_argument('-p', '--profiles', action='store_true')
+    list_parser.add_argument('-f', '--flavors', action='store_true')
     list_parser.add_argument('-t', '--templates', action='store_true')
     list_parser.add_argument('-i', '--isos', action='store_true')
     list_parser.add_argument('-d', '--disks', action='store_true')
     list_parser.add_argument('-P', '--pools', action='store_true')
     list_parser.add_argument('-n', '--networks', action='store_true')
+    list_parser.add_argument('-s', '--subnets', action='store_true')
     list_parser.add_argument('--containers', action='store_true')
     list_parser.add_argument('--images', action='store_true')
     list_parser.add_argument('--short', action='store_true')
@@ -1059,8 +1099,8 @@ def cli():
     list_parser.add_argument('--products', action='store_true')
     list_parser.add_argument('-g', '--group', help='Only Display products of the indicated group', metavar='GROUP')
     list_parser.add_argument('-r', '--repo', help='Only Display products of the indicated repository', metavar='REPO')
-    list_parser.add_argument('-f', '--filters', choices=('up', 'down'))
-    list_parser.set_defaults(func=list)
+    list_parser.add_argument('--filters', choices=('up', 'down'))
+    list_parser.set_defaults(func=_list)
 
     network_info = 'Create/Delete Network'
     network_parser = subparsers.add_parser('network', description=network_info, help=network_info)
@@ -1070,6 +1110,7 @@ def cli():
     network_parser.add_argument('--nodhcp', action='store_true', help='Disable dhcp on the net')
     network_parser.add_argument('--domain', help='DNS domain. Defaults to network name')
     network_parser.add_argument('-p', '--pxe', help='Ip of a Pxe Server', metavar='PXE')
+    network_parser.add_argument('-v', '--vlan', help='Vlan', metavar='VLAN. only used on Ovirt and Kubevirt')
     network_parser.add_argument('name', metavar='NETWORK')
     network_parser.set_defaults(func=network)
 
@@ -1095,17 +1136,16 @@ def cli():
     plan_parser.add_argument('-f', '--inputfile', help='Input Plan file')
     plan_parser.add_argument('-s', '--start', action='store_true', help='start all vms from plan')
     plan_parser.add_argument('-w', '--stop', action='store_true')
-    plan_parser.add_argument('--scale', help='Scale plan using provided parameters')
-    plan_parser.add_argument('-t', '--topologyfile', help='Topology file')
     plan_parser.add_argument('-u', '--use', nargs='?', const='kvirt',
                              help='Plan to set as current. Defaults to kvirt',
                              metavar='USE')
+    plan_parser.add_argument('-v', '--volumepath', help='Volume Path (only used with kcli container)',
+                             default='/workdir', metavar='VOLUMEPATH')
     plan_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     plan_parser.add_argument('--delay', default=0, help="Delay between each vm's creation", metavar='DELAY')
     plan_parser.add_argument('-P', '--param', action='append',
-                             help='Define parameter for rendering within'
-                             ' scripts. Can be repeated', metavar='PARAM')
-    plan_parser.add_argument('--paramfile', help='Param file', metavar='PARAMFILE')
+                             help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    plan_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
     plan_parser.add_argument('plan', metavar='PLAN', nargs='?')
     plan_parser.set_defaults(func=plan)
 
@@ -1113,8 +1153,10 @@ def cli():
     pool_parser = subparsers.add_parser('pool', description=pool_info, help=pool_info)
     pool_parser.add_argument('-d', '--delete', action='store_true')
     pool_parser.add_argument('-f', '--full', action='store_true')
-    pool_parser.add_argument('-t', '--pooltype', help='Type of the pool', choices=('dir', 'logical'), default='dir')
+    pool_parser.add_argument('-t', '--pooltype', help='Type of the pool', choices=('dir', 'lvm', 'zfs'),
+                             default='dir')
     pool_parser.add_argument('-p', '--path', help='Path of the pool', metavar='PATH')
+    pool_parser.add_argument('--thinpool', help='Existing thin pool to use with lvm', metavar='THINPOOL')
     pool_parser.add_argument('pool')
     pool_parser.set_defaults(func=pool)
 
@@ -1129,7 +1171,7 @@ def cli():
                                 help='Define parameter for rendering within '
                                 'scripts. Can be repeated several times',
                                 metavar='PARAM')
-    product_parser.add_argument('--paramfile', help='Input file', metavar='PARAMFILE')
+    product_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
     product_parser.add_argument('-r', '--repo', help='Repo to use, '
                                 'if deploying a product present in several '
                                 'repos', metavar='REPO')
@@ -1154,6 +1196,8 @@ def cli():
     scp_info = 'Scp into vm'
     scp_parser = subparsers.add_parser('scp', description=scp_info, help=scp_info)
     scp_parser.add_argument('-r', '--recursive', help='Recursive', action='store_true')
+    scp_parser.add_argument('-v', '--volumepath', help='Volume Path (only used with kcli container)',
+                            default='/workdir', metavar='VOLUMEPATH')
     scp_parser.add_argument('source', nargs=1)
     scp_parser.add_argument('destination', nargs=1)
     scp_parser.set_defaults(func=scp)
@@ -1175,6 +1219,7 @@ def cli():
     ssh_parser.add_argument('-L', help='Local Forwarding', metavar='LOCAL')
     ssh_parser.add_argument('-R', help='Remote Forwarding', metavar='REMOTE')
     ssh_parser.add_argument('-X', action='store_true', help='Enable X11 Forwarding')
+    ssh_parser.add_argument('-Y', action='store_true', help='Enable X11 Forwarding(Insecure)')
     ssh_parser.add_argument('name', metavar='VMNAME', nargs='*')
     ssh_parser.set_defaults(func=ssh)
 
@@ -1224,36 +1269,23 @@ def cli():
     vm_parser = subparsers.add_parser('vm', description=vm_info, help=vm_info)
     vm_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
     vm_parser.add_argument('--profilefile', help='File to load profiles from', metavar='PROFILEFILE')
-    vm_parser.add_argument('-1', '--ip1', help='Optional Ip to assign to eth0. '
-                           'Netmask and gateway will be retrieved from profile',
-                           metavar='IP1')
-    vm_parser.add_argument('-2', '--ip2', help='Optional Ip to assign to eth1. '
-                           'Netmask and gateway will be retrieved from profile',
-                           metavar='IP2')
-    vm_parser.add_argument('-3', '--ip3', help='Optional Ip to assign to eth2. '
-                           'Netmask and gateway will be retrieved from profile',
-                           metavar='IP3')
-    vm_parser.add_argument('-4', '--ip4', help='Optional Ip to assign to eth3. '
-                           'Netmask and gateway will be retrieved from profile',
-                           metavar='IP4')
     vm_parser.add_argument('-P', '--param', action='append',
-                           help='Define parameter for rendering within scripts.'
-                           'Can be repeated', metavar='PARAM')
-    vm_parser.add_argument('--paramfile', help='Get parameters for rendering'
-                           'within scripts from a file.Takes precedence over'
-                           'individual parameters', metavar='PARAMFILE')
+                           help='specify parameter or keyword for rendering (can specify multiple)', metavar='PARAM')
+    vm_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
     vm_parser.add_argument('name', metavar='VMNAME', nargs='?')
     vm_parser.set_defaults(func=vm)
-    if len(sys.argv) == 1:
+    if len(sys.argv) == 1 or (len(sys.argv) == 3 and sys.argv[1] == '-C'):
         parser.print_help()
         os._exit(0)
     args = parser.parse_args()
-    if args.func.func_name == 'vm' and args.client is not None and ',' in args.client:
+    if args.func.__name__ == 'vm' and args.client is not None and ',' in args.client:
             args.client = random.choice(args.client.split(','))
             common.pprint("Selecting %s for creation" % args.client, color='green')
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    if args.client is None:
+        args.client = baseconfig.client
     if args.client != 'all' and not baseconfig.enabled:
-        common.pprint("Disabled hypervisor.Leaving...", color='red')
+        common.pprint("Disabled hypervisor %s.Leaving..." % args.client, color='red')
         os._exit(1)
     args.func(args)
 

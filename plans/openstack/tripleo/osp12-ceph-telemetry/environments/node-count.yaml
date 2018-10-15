@@ -1,0 +1,9 @@
+parameter_defaults:
+  OvercloudControlFlavor: baremetal
+  OvercloudTelemetryFlavor: baremetal
+  OvercloudComputeFlavor: baremetal
+  OvercloudCephStorageFlavor: baremetal
+  ControllerCount: 3
+  CephStorageCount: 3
+  ComputeCount: 2
+  TelemetryCount: 2

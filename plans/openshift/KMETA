@@ -5,14 +5,34 @@
   description: Upstream Openshift based on oc cluster up
   numvms: 1
   memory: 6144
-  comments: openshift_version can also be set to to an older one and openshift_tag defined to use a specific tag
+  comments: openshift_version can also be set to to an older one and asb enabled
   template: CentOS-7-x86_64-GenericCloud.qcow2
   parameters:
    memory: 6144
    docker_disk_size: 60
    initializer: false
-   openshift_version: 3.9
-   metrics: false
+   openshift_version: '3.10'
+   asb: False
+
+- name: okd
+  group: openshift
+  url: github.com/karmab/kcli/plans/openshift
+  file: okd.yml
+  description: Upstream Compilation of openshift new installer
+  numvms: 1
+  memory: 16384
+  comments: you ll need to download rhcos-qemu.qcow2 from somewhere 
+  template: Fedora-Cloud-Base-28-1.1.x86_64.qcow2
+  parameters:
+   template: Fedora-Cloud-Base-28-1.1.x86_64.qcow2
+   memory: 16384
+   go_version: 1.11.1
+   uri: qemu+tcp://192.168.122.1/system
+   rhcos_path: /var/lib/libvirt/images/rhcos-qemu.qcow2
+   cluster: testk
+   domain: tt.testing
+   email_address: admin@magnifico.es
+   password: password
 
 - name: ocp
   group: openshift
@@ -24,32 +44,32 @@
   template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
   parameters:
    openshift_version: 3.7
-   metrics: false
 
 - name: multi
   group: openshift
   url: github.com/karmab/kcli/plans/openshift
   file: multi.yml
-  description: Openshift with arbitrary number of nodes
-  comments: an extra lb node is created when there are more than 1 master. The first node is also tagged as infra to host router and docker registry. You can create a dedicated nfs node with nfs parameter or have the master do that for you with nfs_master
-  numvms: 7
-  template: CentOS-7-x86_64-GenericCloud.qcow2
+  description: Downstream ocp with arbitrary number of nodes
+  comments: router and registry located on infra if present. gluster uses first 3 infra if present, otherwise 1 master and 2 infra
+  numvms: 4
+  template: rhel-server-7.5-x86_64-kvm.qcow2
   parameters:
-    template: CentOS-7-x86_64-GenericCloud.qcow2
-    domain: karmalabs.local
-    docker_disk_size: 30
-    masters: 3
-    master_memory: 8192
-    nodes: 3
-    node_memory: 4096
-    cidr: 192.168.105.0/24
-    deploy: true
-    user: developer
-    password: developer
-    openshift_version: 3.7
-    upstream: true
-    nfs: false
-    nfs_master: false
+   template: rhel-server-7.5-x86_64-kvm.qcow2
+   domain: default
+   base_disk_size: 60
+   gluster_disk_size: 100
+   master_memory: 8144
+   infra_memory: 4096
+   node_memory: 4096
+   masters: 1
+   infras: 2
+   nodes: 1
+   cidr: 192.168.122.0/24
+   crio: true
+   metrics: false
+   gluster: true
+   version: "3.10"
+   deploy: false
 
 - name: multi39
   group: openshift
@@ -87,9 +107,8 @@
   parameters:
    docker_disk_size: 60
    initializer: false
-   openshift_version: 3.7
-   helm_version: 2.6.0
-   metrics: false
+   openshift_version: '3.9'
+   helm_version: 2.9.1
 
 - name: monocular
   group: openshift
@@ -104,7 +123,6 @@
    initializer: false
    openshift_version: 3.7
    helm_version: 2.6.0
-   metrics: false
 
 - name: istio
   group: openshift
@@ -119,34 +137,21 @@
    deploy_book_info: false
    initializer: true
    openshift_version: 3.7
-   metrics: false
-
-- name: asb
-  group: openshift
-  url: github.com/karmab/kcli/plans/openshift
-  file: asb.yml
-  description: Ansible Service Broker based on run_latest_build.sh script
-  comments: you can define the org parameter to use an additional apb org from docker hub
-  numvms: 1
-  memory: 6144
-  template: Fedora-Cloud-Base-27-1.6.x86_64.qcow2
-  parameters:
-   docker_disk_size: 60
-   initializer: false
-   openshift_version: latest
 
 - name: minishift
   group: openshift
   url: github.com/karmab/kcli/plans/openshift
   file: minishift.yml
-  description: minshift bringing up a secondary vm
-  comments: openshift_version can also be set to 3.6.1/3.7.0-rc.0
+  description: minshift based on kvm driver or generic
   numvms: 2
-  memory: 7168
+  memory: 8192
   template: CentOS-7-x86_64-GenericCloud.qcow2
   parameters:
-   minishift_version: 1.8.0
-   openshift_version: 3.7.0
+   minishift_version: 1.23.0
+   baseplan: upstream.yml
+   driver: generic
+   memory: 8192
+   deploy: false
 
 - name: kubevirt
   group: openshift
@@ -154,15 +159,14 @@
   file: kubevirt.yml
   description: Upstream Kubevirt all in one
   numvms: 1
-  memory: 8192
+  memory: 10240
   template: CentOS-7-x86_64-GenericCloud.qcow2
   comments: version has to be superior or equal to 0.1.0
   parameters:
-   docker_disk_size: 60
-   kubevirt_version: v0.4.0
+   docker_disk_size: 40
+   kubevirt_version: v0.7.0-alpha.2
    initializer: false
-   openshift_version: 3.9
-   metrics: false
+   openshift_version: 3.10
 
 - name: fission
   group: openshift
@@ -179,7 +183,6 @@
    docker_disk_size: 60
    openshift_version: 3.7
    helm_version: 2.6.0
-   metrics: false
 
 - name: openfaas
   group: openshift
@@ -193,7 +196,6 @@
   parameters:
    docker_disk_size: 60
    openshift_version: 3.7
-   metrics: false
 
 - name: openwhisk
   group: openshift
@@ -207,6 +209,5 @@
    docker_disk_size: 60
    initializer: false
    openshift_version: 3.7
-   metrics: false
    persistent: true
    large: false

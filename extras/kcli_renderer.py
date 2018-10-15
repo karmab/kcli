@@ -1,8 +1,9 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+# coding=utf-8
 
-'''
+"""
 ansible dynamic inventory script for use with kcli and libvirt
-'''
+"""
 
 from jinja2 import Environment, FileSystemLoader
 from kvirt.common import get_overrides, get_parameters, pprint
@@ -13,6 +14,10 @@ import yaml
 
 
 def render(args):
+    """
+
+    :param args:
+    """
     info = args.info
     inputfile = args.inputfile
     inputfile = os.path.expanduser(inputfile)
@@ -42,13 +47,16 @@ def render(args):
             continue
         elif line.startswith('parameters:'):
             parametersfound = 0
-        elif parametersfound > -1 and parametersfound < numparameters:
+        elif -1 < parametersfound < numparameters:
             parametersfound += 1
         else:
             print(line.strip())
 
 
 def cli():
+    """
+
+    """
     parser = argparse.ArgumentParser(description='Render scripts manually using kcli helpers')
     parser.add_argument('-i', '--info', help='Only report parameters used in the file', action='store_true')
     parser.add_argument('-f', '--inputfile', help='Input Plan file', required=True)

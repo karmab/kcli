@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# coding=utf-8
 
 from ansible.module_utils.basic import AnsibleModule
 from kvirt.config import Kconfig
@@ -21,7 +22,7 @@ EXAMPLES = '''
 - name: Deploy origin
   kvirt_plan:
     name: my_plan
-    product: origin
+    src: my_plan.yml
 
 - name: Delete that plan
   kvirt_plan:
@@ -32,6 +33,9 @@ EXAMPLES = '''
 
 
 def main():
+    """
+
+    """
     argument_spec = {
         "state": {
             "default": "present",
@@ -69,6 +73,7 @@ def main():
             skipped = True
             meta = {'result': 'skipped'}
     module.exit_json(changed=changed, skipped=skipped, meta=meta)
+
 
 if __name__ == '__main__':
     main()

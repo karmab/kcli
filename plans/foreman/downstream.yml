@@ -2,9 +2,12 @@ parameters:
  password: unix1234
  organization: Karmalabs
  location: Madrid
+ template: rhel-server-7.5-x86_64-kvm.qcow2
+ version: 6.3
 
 satellite:
- template: rhel-guest-image-7.3-35.x86_64.qcow2
+ template: [[ template ]]
+ rhnregister: true
  memory: 8192
  numcpus: 2
  reservedns: true
@@ -15,7 +18,6 @@ satellite:
   - size: 40
  pool: default
  scripts: 
-  - ~/register.sh
   - subscription.sh
   - downstream.sh
   - hammer.sh

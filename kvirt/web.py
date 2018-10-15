@@ -1,10 +1,10 @@
 #!/usr/bin/python
+# coding=utf-8
 
 from flask import Flask, render_template, request, jsonify
 from kvirt.config import Kconfig
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.defaults import TEMPLATES
-from kvirt import dockerutils
 from kvirt import nameutils
 import os
 
@@ -15,8 +15,8 @@ try:
 except ImportError:
     config = {'PORT': os.environ.get('PORT', 9000)}
 
-debug = config['DEBUG'] if 'DEBUG' in config.keys() else True
-port = int(config['PORT']) if 'PORT'in config.keys() else 9000
+debug = config['DEBUG'] if 'DEBUG' in list(config) else True
+port = int(config['PORT']) if 'PORT'in list(config) else 9000
 
 
 # VMS
@@ -45,6 +45,10 @@ def vmstable():
 @app.route("/")
 @app.route('/vms')
 def vms():
+    """
+
+    :return:
+    """
     config = Kconfig()
     return render_template('vms.html', title='Home', client=config.client)
 
@@ -71,6 +75,10 @@ def vmprofilestable():
 
 @app.route('/vmprofiles')
 def vmprofiles():
+    """
+
+    :return:
+    """
     config = Kconfig()
     return render_template('vmprofiles.html', title='VmProfiles', client=config.client)
 
@@ -168,7 +176,7 @@ def poolaction():
         if action == 'create':
             path = request.form['path']
             pooltype = request.form['type']
-            print pool, path, pooltype
+            print(pool, path, pooltype)
             result = k.create_pool(name=pool, poolpath=path, pooltype=pooltype)
             print(result)
         elif action == 'delete':
@@ -198,7 +206,7 @@ def repoaction():
         action = request.form['action']
         if action == 'create':
             url = request.form['url']
-            print repo, url
+            print(repo, url)
             if url == '':
                 failure = {'result': 'failure', 'reason': "Invalid Data"}
                 response = jsonify(failure)
@@ -451,6 +459,7 @@ def containerstable():
     """
     retrieves all containers in table
     """
+    from kvirt import dockerutils
     config = Kconfig()
     k = config.k
     containers = dockerutils.list_containers(k)
@@ -527,6 +536,10 @@ def repostable():
 
 @app.route('/repos')
 def repos():
+    """
+
+    :return:
+    """
     config = Kconfig()
     return render_template('repos.html', title='Repos', client=config.client)
 
@@ -561,17 +574,26 @@ def productstable():
 
 @app.route('/products')
 def products():
+    """
+
+    :return:
+    """
     baseconfig = Kbaseconfig()
     return render_template('products.html', title='Products', client=baseconfig.client)
 
 
-@app.route('/productcreate')
-def productcreate():
+@app.route('/productcreate/<prod>')
+def productcreate(prod):
     """
     product form
     """
-    config = Kconfig()
-    return render_template('productcreate.html', title='CreateProduct', client=config.client)
+    config = Kbaseconfig()
+    info = config.info_product(prod, verbose=False)
+    parameters = info['parameters']
+    description = info['description']
+    comments = info['comments']
+    return render_template('productcreate.html', title='CreateProduct', client=config.client, product=prod,
+                           parameters=parameters, description=description, comments=comments)
 
 
 @app.route("/productaction", methods=['POST'])
@@ -585,14 +607,20 @@ def productaction():
         action = request.form['action']
         if action == 'create' and 'plan' in request.form:
             plan = request.form['plan']
+            parameters = {}
+            for p in request.form:
+                if p.startswith('parameters'):
+                    value = request.form[p]
+                    key = p.replace('parameters[', '').replace(']', '')
+                    parameters[key] = value
+            print(parameters)
             if plan == '':
                 plan = None
-            result = config.create_product(product, plan=plan)
+            result = config.create_product(product, plan=plan, overrides=parameters)
         else:
             result = "Nothing to do"
         print(result)
         response = jsonify(result)
-        print(response)
         response.status_code = 200
         return response
     else:
@@ -638,6 +666,10 @@ def planstable():
 
 @app.route('/plans')
 def plans():
+    """
+
+    :return:
+    """
     config = Kconfig()
     return render_template('plans.html', title='Plans', client=config.client)
 
@@ -647,6 +679,7 @@ def containeraction():
     """
     start/stop/delete container
     """
+    from kvirt import dockerutils
     config = Kconfig()
     k = config.k
     if 'name' in request.form:
@@ -683,6 +716,10 @@ def templatestable():
 
 @app.route('/templates')
 def templates():
+    """
+
+    :return:
+    """
     config = Kconfig()
     return render_template('templates.html', title='Templates', client=config.client)
 
@@ -745,6 +782,10 @@ def isostable():
 
 @app.route('/isos')
 def isos():
+    """
+
+    :return:
+    """
     config = Kconfig()
     return render_template('isos.html', title='Isos', client=config.client)
 
@@ -769,6 +810,9 @@ def containerprofiles():
 
 
 def run():
+    """
+
+    """
     app.run(host='0.0.0.0', port=port, debug=debug)
 
 

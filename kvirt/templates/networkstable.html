@@ -9,13 +9,13 @@
             </tr>
         </thead>
         <tbody>
-            {% for network, value in networks.iteritems() %}
+            {% for network in networks %}
             <tr>
                 <td>{{ network }}</td>
-                <td>{{ value.type }}</td>
-                <td>{{ value.cidr }}</td>
-                <td>{{ value.dhcp }}</td>
-                <td>{{ value.mode }}</td>
+                <td>{{ networks[network]['type'] }}</td>
+                <td>{{ networks[network]['cidr'] }}</td>
+                <td>{{ networks[network]['dhcp'] }}</td>
+                <td>{{ networks[network]['mode'] }}</td>
                 <td onclick="networkdelete('{{ network }}');"><span class="glyphicon glyphicon-trash"></span> Delete</td>
             </tr>
             {% endfor %} 

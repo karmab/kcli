@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kcli
+  labels:
+    app: kcli
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kcli
+  template:
+    metadata:
+      labels:
+        app: kcli
+    spec:
+      containers:
+      - name: kcli
+        command:
+        - kweb
+        image: karmab/kcli:latest
+        ports:
+        - containerPort: 9000
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /root/.kcli
+          name: kcli-config
+        - mountPath: /root/.ssh
+          name: ssh-config
+      volumes:
+      - configMap:
+          defaultMode: 0700
+          name: kcli-config
+        name: kcli-config
+      - configMap:
+          defaultMode: 0700
+          name: ssh-config
+        name: ssh-config

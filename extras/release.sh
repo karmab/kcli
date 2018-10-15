@@ -30,9 +30,9 @@ if [ "$VERSION" == "" ] ; then
     exit 1
 fi
 
-cd $BASEDIR/$REPOSITORYWIKI
-echo $BASEDIR/$REPOSITORYWIKI/$VERSION.md
-ls $VERSION.md
+cd ${BASEDIR}/${REPOSITORYWIKI}
+echo ${BASEDIR}/${REPOSITORYWIKI}/${VERSION}.md
+ls ${VERSION}.md
 if [ "$?" != "0" ] ; then
     echo "Missing changelog file in wiki for version $VERSION. Leaving..."
     exit 1
@@ -44,7 +44,7 @@ sed -i s"@wiki.*@wiki/$VERSION)@" home.md
 git commit -am "$VERSION RELEASE"
 git push
 
-cd $BASEDIR/$REPOSITORY
+cd ${BASEDIR}/${REPOSITORY}
 # SET NEW VERSIONS
 sed -i s"/    version.*/    version='$VERSION',/" setup.py
 sed -i "s/Version:.*/Version:        $VERSION/"  ~/kcli.spec
@@ -58,8 +58,8 @@ git push
 python setup.py sdist upload
 
 # GENERATE RELEASE
-API_JSON=$(printf '{"tag_name": "v%s","target_commitish": "master","name": "v%s","body": "[release notes](https://github.com/karmab/kcli/wiki)","draft": false,"prerelease": false}' $VERSION $VERSION)
-curl --data "$API_JSON" https://api.github.com/repos/$USER/$REPOSITORY/releases?access_token=$RELEASETOKEN
+API_JSON=$(printf '{"tag_name": "v%s","target_commitish": "master","name": "v%s","body": "[release notes](https://github.com/karmab/kcli/wiki)","draft": false,"prerelease": false}' ${VERSION} ${VERSION})
+curl --data "$API_JSON" https://api.github.com/repos/${USER}/${REPOSITORY}/releases?access_token=${RELEASETOKEN}
 
 # GENERATE RPM/DEB
 kcli delete --yes copr

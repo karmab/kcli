@@ -7,6 +7,8 @@ alice01:
  nets:
   - name: default
  files:
-  - path: /root/coco
-    origin: coco.txt
+  - path: /root/coco1
+    origin: coco1.txt
+  - path: /root/coco2
+    origin: coco2.txt
 

@@ -1,3 +1,4 @@
+# coding=utf-8
 NETS = ['default']
 POOL = 'default'
 TEMPLATE = None
@@ -28,6 +29,7 @@ TEMPLATES = {'': None, 'arch': 'https://linuximages.de/openstack/arch/arch-opens
              'product-software',
              'cloudforms45': 'https://access.redhat.com/downloads/content/167/ver=/cf-me---4.5/4.5/x86_64/'
              'product-software',
+             'coreos': 'https://stable.release.core-os.net/amd64-usr/current/coreos_production_qemu_image.img.bz2',
              'debian8': 'https://cdimage.debian.org/cdimage/openstack/current-8/debian-8-openstack-amd64.qcow2',
              'debian9': 'https://cdimage.debian.org/cdimage/openstack/current-9/debian-9-openstack-amd64.qcow2',
              'fedora24': 'https://download.fedoraproject.org/pub/fedora/linux/releases/24/CloudImages/x86_64/images/'
@@ -38,7 +40,9 @@ TEMPLATES = {'': None, 'arch': 'https://linuximages.de/openstack/arch/arch-opens
              'Fedora-Cloud-Base-26-1.5.x86_64.qcow2',
              'fedora27': 'https://download.fedoraproject.org/pub/fedora/linux/releases/27/CloudImages/x86_64/images/'
              'Fedora-Cloud-Base-27-1.6.x86_64.qcow2',
-             'gentoo': 'https://gentoo.osuosl.org/experimental/amd64/openstack/gentoo-openstack-amd64-default-20170819.'
+             'fedora28': 'https://download.fedoraproject.org/pub/fedora/linux/releases/28/Cloud/x86_64/images/'
+             'Fedora-Cloud-Base-28-1.1.x86_64.qcow2',
+             'gentoo': 'https://gentoo.osuosl.org/experimental/amd64/openstack/gentoo-openstack-amd64-default-20180621.'
              'qcow2',
              'manageiq57': 'http://releases.manageiq.org/manageiq-openstack-euwe-3.qc2',
              'manageiq58': 'http://releases.manageiq.org/manageiq-openstack-fine-3.qc2',
@@ -49,6 +53,7 @@ TEMPLATES = {'': None, 'arch': 'https://linuximages.de/openstack/arch/arch-opens
              'rhel72': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.2/x86_64/product-software',
              'rhel73': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.3/x86_64/product-software',
              'rhel74': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.4/x86_64/product-software',
+             'rhel75': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.5/x86_64/product-software',
              'rhel72atomic': 'https://access.redhat.com/downloads/content/271/ver=/rhel---7/7.2.6-1/x86_64/'
              'product-software',
              'rhel73atomic': 'https://access.redhat.com/downloads/content/271/ver=/rhel---7/7.3.6/x86_64/'
@@ -82,4 +87,12 @@ SHAREDKEY = False
 ENABLEROOT = True
 PLANVIEW = False
 PRIVATEKEY = False
-TAGS = {}
+TAGS = None
+RHNREGISTER = False
+RHNUSER = None
+RHNPASSWORD = None
+RHNAK = None
+RHNORG = None
+RHNPOOL = None
+FLAVOR = None
+DETECT_BRIDGE_IPS = False

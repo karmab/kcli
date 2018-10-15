@@ -1,0 +1,103 @@
+[OSEv3:children]
+masters
+nodes
+etcd
+[% if gluster %]
+glusterfs
+[% endif %]
+
+# Set variables common for all OSEv3 hosts
+[OSEv3:vars]
+openshift_deployment_type=openshift-enterprise
+openshift_hosted_modify_imagestreams=true
+openshift_use_openshift_sdn=true
+openshift_use_crio = [[ crio ]]
+openshift_install_examples=false
+ansible_ssh_user=cloud-user
+ansible_become=True
+oreg_url=[[ registry]]/openshift3/ose-${component}:v[[ version ]]
+[% if registry == 'registry.redhat.io' and rhnuser is defined and rhnpassword is defined %]
+oreg_auth_user = [[ rhnuser ]]
+oreg_auth_password = [[ rhnpassword ]]
+[% endif %]
+openshift_release=v[[ version ]]
+openshift_portal_net=172.30.0.0/16
+openshift_disable_check=disk_availability,memory_availability,docker_image_availability
+openshift_storageclass_default = False
+
+openshift_node_groups=[{'name': 'master', 'labels': ['node-role.kubernetes.io/master=true', 'node-role.kubernetes.io/compute=true']},{'name': 'infra', 'labels': ['node-role.kubernetes.io/infra=true', 'node-role.kubernetes.io/compute=true']},{'name': 'compute', 'labels': ['node-role.kubernetes.io/compute=true']}]
+openshift_disable_check=disk_availability,memory_availability,docker_image_availability
+
+[% if infras > 0 -%] 
+openshift_router_selector="node-role.kubernetes.io/infra=true"
+openshift_registry_selector="node-role.kubernetes.io/infra=true"
+[% else %]
+openshift_router_selector="node-role.kubernetes.io/master=true"
+openshift_registry_selector="node-role.kubernetes.io/master=true"
+[%- endif %]
+
+openshift_master_identity_providers=[{'name': 'allow_all', 'login': 'true', 'challenge': 'true', 'kind': 'AllowAllPasswordIdentityProvider'}]
+
+[% if gluster -%]
+openshift_storage_glusterfs_namespace=app-storage
+openshift_storage_glusterfs_storageclass=true
+openshift_storageclass_default=false
+openshift_storage_glusterfs_storageclass_default=True
+openshift_storage_glusterfs_block_deploy=false
+[%- endif %]
+
+[% if metrics -%]
+# metrics
+openshift_metrics_install_metrics=true
+openshift_metrics_cassanda_pvc_storage_class_name=glusterfs-storage
+#openshift_metrics_storage_access_modes=['ReadWriteOnce']
+openshift_metrics_storage_volume_name=metrics
+openshift_metrics_storage_volume_size=10Gi
+openshift_metrics_storage_kind=dynamic
+[%- endif %]
+
+[% if asb -%]
+ansible_service_broker_local_registry_whitelist=['.*-apb$']
+ansible_service_broker_registry_tag=latest
+[%- endif %]
+
+# host group for masters
+[masters]
+[% for master in range(0, masters) -%]
+master0[[ master +1 ]].[[ domain ]] ansible_connection=local openshift_node_group_name="master"
+[%- endfor %]
+
+# host group for etcd
+[etcd]
+[% for master in range(0, masters) -%]
+master0[[ master +1 ]].[[ domain ]] ansible_connection=local
+[%- endfor %]
+
+[% if gluster -%]
+[glusterfs]
+[% if infras == 2 -%]
+master01.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
+infra01.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
+infra02.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
+[% elif infras > 2 %]
+infra01.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
+infra02.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
+infra03.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
+[% else %]
+master01.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
+infra01.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
+node01.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
+[%- endif %]
+[%- endif %]
+
+# host group for nodes, includes region info
+[nodes]
+[% for master in range(0, masters) %]
+master0[[ master +1 ]].[[ domain ]] openshift_node_group_name="master" ansible_connection=local
+[% endfor %]
+[% for node in range(0, nodes) %]
+node0[[ node +1 ]].[[ domain ]] openshift_node_group_name="compute"
+[% endfor %]
+[% for infra in range(0, infras) %]
+infra0[[ infra +1 ]].[[ domain ]] openshift_node_group_name="infra"
+[% endfor %]

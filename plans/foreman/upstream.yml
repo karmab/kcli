@@ -1,7 +1,9 @@
 parameters:
+ user: admin
  password: unix1234
  organization: Karmalabs
  location: Madrid
+ version: 1.17
 
 foreman:
  template: CentOS-7-x86_64-GenericCloud.qcow2

@@ -1,30 +1,42 @@
 #!/usr/bin/env python
+# coding=utf-8
 
+import base64
 from jinja2 import Environment, FileSystemLoader
 from distutils.spawn import find_executable
 import errno
-import fileinput
+from netaddr import IPAddress
 import socket
-import urllib2
+from urllib.parse import quote
+from urllib.request import urlopen
+import urllib.error
 import json
 import os
 import yaml
+# from scapy.all import Ether, ARP, srp
 
-binary_types = ['bz2', 'deb', 'jpg', 'gz', 'jpeg', 'iso', 'png', 'rpm', 'tgz', 'zip']
+binary_types = ['bz2', 'deb', 'jpg', 'gz', 'jpeg', 'iso', 'png', 'rpm', 'tgz', 'zip', 'ks']
+ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety', 'zesty', 'artful', 'bionic', 'cosmic']
 
 
 def symlinks(user, repo):
+    """
+
+    :param user:
+    :param repo:
+    :return:
+    """
     mappings = []
     url1 = 'https://api.github.com/repos/%s/%s/git/refs/heads/master' % (user, repo)
     try:
-        r = urllib2.urlopen(url1)
-    except urllib2.HTTPError as e:
+        r = urlopen(url1)
+    except urllib.error.HTTPError as e:
         print("Couldn't access url %s, got %s.Leaving..." % (url1, e))
         os._exit(1)
     base = json.load(r)
     sha = base['object']['sha']
     url2 = 'https://api.github.com/repos/%s/%s/git/trees/%s?recursive=1' % (user, repo, sha)
-    r = urllib2.urlopen(url2)
+    r = urlopen(url2)
     try:
         base = json.load(r)
     except:
@@ -36,17 +48,29 @@ def symlinks(user, repo):
 
 
 def download(url, path, debug=False):
+    """
+
+    :param url:
+    :param path:
+    :param debug:
+    """
     filename = os.path.basename(url)
     if debug:
         print("Fetching %s" % filename)
-    url = urllib2.urlopen(url)
+    url = urlopen(url)
     with open("%s/%s" % (path, filename), 'wb') as output:
         output.write(url.read())
 
 
 def makelink(url, path, debug=False):
+    """
+
+    :param url:
+    :param path:
+    :param debug:
+    """
     filename = os.path.basename(url)
-    url = urllib2.urlopen(url)
+    url = urlopen(url)
     target = url.read()
     if debug:
         print("Creating symlink for %s pointing to %s" % (filename, target))
@@ -54,6 +78,13 @@ def makelink(url, path, debug=False):
 
 
 def fetch(url, path, syms=None):
+    """
+
+    :param url:
+    :param path:
+    :param syms:
+    :return:
+    """
     if not url.startswith('http'):
         url = "https://%s" % url
     if 'github.com' not in url or 'raw.githubusercontent.com' in url:
@@ -77,8 +108,8 @@ def fetch(url, path, syms=None):
             else:
                 raise
     try:
-        r = urllib2.urlopen(url)
-    except urllib2.HTTPError:
+        r = urlopen(url)
+    except urllib.error.HTTPError:
         print("Invalid url %s.Leaving..." % url)
         os._exit(1)
     try:
@@ -105,7 +136,23 @@ def fetch(url, path, syms=None):
 
 
 def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[],
-              enableroot=True, overrides={}, iso=True):
+              enableroot=True, overrides={}, iso=True, fqdn=False):
+    """
+
+    :param name:
+    :param keys:
+    :param cmds:
+    :param nets:
+    :param gateway:
+    :param dns:
+    :param domain:
+    :param reserveip:
+    :param files:
+    :param enableroot:
+    :param overrides:
+    :param iso:
+    :param fqdn:
+    """
     default_gateway = gateway
     with open('/tmp/meta-data', 'w') as metadatafile:
         if domain is not None:
@@ -116,7 +163,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
         netdata = ''
         if nets:
             for index, net in enumerate(nets):
-                if isinstance(net, str):
+                if isinstance(net, str) or (len(net) == 1 and 'name' in net):
                     if index == 0:
                         continue
                     nicname = "eth%d" % index
@@ -159,93 +206,57 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             metadatafile.write(json.dumps(metadata))
     with open('/tmp/user-data', 'w') as userdata:
         userdata.write('#cloud-config\nhostname: %s\n' % name)
+        if fqdn:
+            fqdn = "%s.%s" % (name, domain) if domain is not None else name
+            userdata.write("fqdn: %s\n" % fqdn)
         if enableroot:
             userdata.write("ssh_pwauth: True\ndisable_root: false\n")
         if domain is not None:
             userdata.write("fqdn: %s.%s\n" % (name, domain))
-        if keys or os.path.exists("%s/.ssh/id_rsa.pub"
-                                  % os.environ['HOME']) or os.path.exists("%s/.ssh/id_dsa.pub" % os.environ['HOME']):
+        if keys or os.path.exists(os.path.expanduser("~/.ssh/id_rsa.pub"))\
+                or os.path.exists(os.path.expanduser("~/.ssh/id_dsa.pub"))\
+                or os.path.exists(os.path.expanduser("~/.kcli/id_rsa.pub"))\
+                or os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub")):
             userdata.write("ssh_authorized_keys:\n")
         else:
-            print("neither id_rsa.pub or id_dsa public keys found in your .ssh directory, you might have trouble "
-                  "accessing the vm")
+            pprint("neither id_rsa or id_dsa public keys found in your .ssh or .kcli directory, you might have trouble "
+                   "accessing the vm", color='red')
         if keys:
             for key in list(set(keys)):
                 userdata.write("- %s\n" % key)
-        if os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME']):
-            publickeyfile = "%s/.ssh/id_rsa.pub" % os.environ['HOME']
-            with open(publickeyfile, 'r') as ssh:
-                key = ssh.read().rstrip()
-                userdata.write("- %s\n" % key)
-        if os.path.exists("%s/.ssh/id_dsa.pub" % os.environ['HOME']):
-            publickeyfile = "%s/.ssh/id_dsa.pub" % os.environ['HOME']
+        publickeyfile = None
+        if os.path.exists(os.path.expanduser("~/.ssh/id_rsa.pub")):
+            publickeyfile = os.path.expanduser("~/.ssh/id_rsa.pub")
+        elif os.path.exists(os.path.expanduser("~/.ssh/id_dsa.pub")):
+            publickeyfile = os.path.expanduser("~/.ssh/id_dsa.pub")
+        elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa.pub")):
+            publickeyfile = os.path.expanduser("~/.kcli/id_rsa.pub")
+        elif os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub")):
+            publickeyfile = os.path.expanduser("~/.kcli/id_dsa.pub")
+        if publickeyfile is not None:
             with open(publickeyfile, 'r') as ssh:
                 key = ssh.read().rstrip()
                 userdata.write("- %s\n" % key)
         if cmds:
-                userdata.write("runcmd:\n")
-                with open("/tmp/runcmd_%s" % name, 'w') as f:
-                    for cmd in cmds:
-                        if cmd.startswith('#'):
-                            continue
-                        else:
-                            newcmd = Environment(block_start_string='[%', block_end_string='%]',
-                                                 variable_start_string='[[',
-                                                 variable_end_string=']]').from_string(cmd).render(overrides)
-                            userdata.write("- %s\n" % newcmd)
-                            f.write("%s\n" % newcmd)
+                data = process_cmds(cmds, overrides)
+                if data != '':
+                    userdata.write("runcmd:\n")
+                    userdata.write(data)
+                # for cmd in cmds:
+                #     if cmd.startswith('#'):
+                #         continue
+                #     else:
+                #         newcmd = Environment(block_start_string='[%', block_end_string='%]',
+                #                              variable_start_string='[[',
+                #                              variable_end_string=']]').from_string(cmd).render(overrides)
+                #         userdata.write("- %s\n" % newcmd)
+        userdata.write('ssh_pwauth: True\n')
+        userdata.write('disable_root: false\n')
         if files:
-            binary = False
-            userdata.write('ssh_pwauth: True\n')
-            userdata.write('disable_root: false\n')
-            userdata.write("write_files:\n")
-            for fil in files:
-                if not isinstance(fil, dict):
-                    continue
-                origin = fil.get('origin')
-                content = fil.get('content')
-                path = fil.get('path')
-                owner = fil.get('owner', 'root')
-                mode = fil.get('mode', '0600')
-                permissions = fil.get('permissions', mode)
-                if origin is not None:
-                    origin = os.path.expanduser(origin)
-                    if not os.path.exists(origin):
-                        print("Skipping file %s as not found" % origin)
-                        continue
-                    binary = True if '.' in origin and origin.split('.')[-1].lower() in binary_types else False
-                    if binary:
-                        with open(origin, "rb") as f:
-                            content = f.read().encode("base64")
-                    elif overrides:
-                        basedir = os.path.dirname(origin) if os.path.dirname(origin) != '' else '.'
-                        env = Environment(block_start_string='[%', block_end_string='%]',
-                                          variable_start_string='[[', variable_end_string=']]',
-                                          loader=FileSystemLoader(basedir))
-                        templ = env.get_template(os.path.basename(origin))
-                        fileentries = templ.render(overrides)
-                        content = [line.rstrip() for line in fileentries.split('\n') if line.rstrip() != '']
-                        with open("/tmp/%s" % os.path.basename(path), 'w') as f:
-                            for line in fileentries.split('\n'):
-                                if line.rstrip() == '':
-                                    continue
-                                else:
-                                    f.write("%s\n" % line.rstrip())
-                    else:
-                        content = open(origin, 'r').readlines()
-                elif content is None:
-                    continue
-                userdata.write("- owner: %s:%s\n" % (owner, owner))
-                userdata.write("  path: %s\n" % path)
-                userdata.write("  permissions: '%s'\n" % (permissions))
-                if binary:
-                    userdata.write("  content: !!binary | \n")
-                else:
-                    userdata.write("  content: | \n")
-                if isinstance(content, str):
-                    content = content.split('\n')
-                for line in content:
-                    userdata.write("     %s\n" % line.rstrip())
+            data = process_files(files=files, overrides=overrides)
+            if data != '':
+                userdata.write("write_files:\n")
+                userdata.write(data)
     if iso:
         isocmd = 'mkisofs'
         if find_executable('genisoimage') is not None:
@@ -254,7 +265,158 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                                                                                                               name))
 
 
+def process_files(files=[], overrides={}):
+    """
+
+    :param files:
+    :param overrides:
+    :return:
+    """
+    data = ''
+    for fil in files:
+        if not isinstance(fil, dict):
+            continue
+        origin = fil.get('origin')
+        content = fil.get('content')
+        path = fil.get('path')
+        owner = fil.get('owner', 'root')
+        mode = fil.get('mode', '0600')
+        permissions = fil.get('permissions', mode)
+        render = fil.get('render', True)
+        binary = False
+        if origin is not None:
+            origin = os.path.expanduser(origin)
+            binary = True if '.' in origin and origin.split('.')[-1].lower() in binary_types else False
+            if binary:
+                with open(origin, "rb") as f:
+                    # content = f.read().encode("base64")
+                    content = base64.b64encode(f.read())
+            elif overrides and render:
+                basedir = os.path.dirname(origin) if os.path.dirname(origin) != '' else '.'
+                env = Environment(block_start_string='[%', block_end_string='%]',
+                                  variable_start_string='[[', variable_end_string=']]',
+                                  loader=FileSystemLoader(basedir))
+                templ = env.get_template(os.path.basename(origin))
+                fileentries = templ.render(overrides)
+                # content = [line.rstrip() for line in fileentries.split('\n') if line.rstrip() != '']
+                content = [line.rstrip() for line in fileentries.split('\n')]
+                with open("/tmp/%s" % os.path.basename(path), 'w') as f:
+                    for line in fileentries.split('\n'):
+                        if line.rstrip() == '':
+                            f.write("\n")
+                        else:
+                            f.write("%s\n" % line.rstrip())
+            else:
+                content = [line.rstrip() for line in open(origin, 'r').readlines()]
+        data += "- owner: %s:%s\n" % (owner, owner)
+        data += "  path: %s\n" % path
+        data += "  permissions: '%s'\n" % permissions
+        if binary:
+            data += "  content: !!binary | \n     %s\n" % str(content, "utf-8")
+        else:
+            data += "  content: | \n"
+            if isinstance(content, str):
+                content = content.split('\n')
+            for line in content:
+                # data += "     %s\n" % line.strip()
+                data += "     %s\n" % line
+    return data
+
+
+def process_ignition_files(files=[], overrides={}):
+    """
+
+    :param files:
+    :param overrides:
+    :return:
+    """
+    data = []
+    for fil in files:
+        if not isinstance(fil, dict):
+            continue
+        origin = fil.get('origin')
+        content = fil.get('content')
+        path = fil.get('path')
+        mode = int(fil.get('mode', '644'), 8)
+        permissions = fil.get('permissions', mode)
+        if origin is not None:
+            origin = os.path.expanduser(origin)
+            if not os.path.exists(origin):
+                print("Skipping file %s as not found" % origin)
+                continue
+            binary = True if '.' in origin and origin.split('.')[-1].lower() in binary_types else False
+            if binary:
+                with open(origin, "rb") as f:
+                    content = f.read().encode("base64")
+            elif overrides:
+                basedir = os.path.dirname(origin) if os.path.dirname(origin) != '' else '.'
+                env = Environment(block_start_string='[%', block_end_string='%]',
+                                  variable_start_string='[[', variable_end_string=']]',
+                                  loader=FileSystemLoader(basedir))
+                templ = env.get_template(os.path.basename(origin))
+                fileentries = templ.render(overrides)
+                # content = [line.rstrip() for line in fileentries.split('\n') if line.rstrip() != '']
+                content = [line for line in fileentries.split('\n')]
+            else:
+                content = open(origin, 'r').readlines()
+        elif content is None:
+            continue
+        if not isinstance(content, str):
+            content = '\n'.join(content) + '\n'
+        content = quote(content)
+        data.append({'filesystem': 'root', 'path': path, 'mode': permissions,
+                     "contents": {"source": "data:,%s" % content, "verification": {}}})
+    return data
+
+
+def process_cmds(cmds, overrides):
+    """
+
+    :param cmds:
+    :param overrides:
+    :return:
+    """
+    data = ''
+    for cmd in cmds:
+        if cmd.startswith('#'):
+            continue
+        else:
+            newcmd = Environment(block_start_string='[%', block_end_string='%]', variable_start_string='[[',
+                                 variable_end_string=']]').from_string(cmd).render(overrides)
+            data += "- %s\n" % newcmd
+    return data
+
+
+def process_ignition_cmds(cmds, overrides):
+    """
+
+    :param cmds:
+    :param overrides:
+    :return:
+    """
+    path = '/root/first.sh'
+    permissions = '700'
+    content = ''
+    for cmd in cmds:
+        newcmd = Environment(block_start_string='[%', block_end_string='%]', variable_start_string='[[',
+                             variable_end_string=']]').from_string(cmd).render(overrides)
+        content += "%s\n" % newcmd
+    if content == '':
+        return content
+    else:
+        if not content.startswith('#!'):
+            content = "#!/bin/sh\n%s" % content
+        content = quote(content)
+        data = {'filesystem': 'root', 'path': path, 'mode': int(permissions, 8),
+                "contents": {"source": "data:,%s" % content, "verification": {}}}
+        return data
+
+
 def get_free_port():
+    """
+
+    :return:
+    """
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind(('localhost', 0))
     addr, port = s.getsockname()
@@ -263,6 +425,11 @@ def get_free_port():
 
 
 def pprint(text, color=None):
+    """
+
+    :param text:
+    :param color:
+    """
     colors = {'blue': '34', 'red': '31', 'green': '32', 'yellow': '33', 'pink': '35', 'white': '37'}
     if color is not None and color in colors:
         color = colors[color]
@@ -272,6 +439,16 @@ def pprint(text, color=None):
 
 
 def handle_response(result, name, quiet=False, element='', action='deployed', client=None):
+    """
+
+    :param result:
+    :param name:
+    :param quiet:
+    :param element:
+    :param action:
+    :param client:
+    :return:
+    """
     if result['result'] == 'success':
         if not quiet:
             response = "%s%s %s" % (element, name, action)
@@ -287,15 +464,48 @@ def handle_response(result, name, quiet=False, element='', action='deployed', cl
 
 
 def confirm(message):
+    """
+
+    :param message:
+    :return:
+    """
     message = "%s [y/N]: " % message
-    input = raw_input(message)
-    if input.lower() not in ['y', 'yes']:
+    _input = input(message)
+    if _input.lower() not in ['y', 'yes']:
         pprint("Leaving...", color='red')
         os._exit(1)
     return
 
 
-def lastvm(name, delete=False):
+def get_lastvm(client):
+    """
+
+    :param client:
+    :return:
+    """
+    lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
+    if os.path.exists(lastvm) and os.stat(lastvm).st_size > 0:
+        for line in open(lastvm).readlines():
+            line = line.split(' ')
+            if len(line) != 2:
+                continue
+            cli = line[0].strip()
+            vm = line[1].strip()
+            if cli == client:
+                pprint("Using %s from %s as vm" % (vm, cli), color='green')
+                return vm
+    pprint("Missing Vm's name", color='red')
+    os._exit(1)
+
+
+def set_lastvm(name, client, delete=False):
+    """
+
+    :param name:
+    :param client:
+    :param delete:
+    :return:
+    """
     configdir = "%s/.kcli/" % os.environ.get('HOME')
     vmfile = "%s/vm" % configdir
     if not os.path.exists(configdir):
@@ -304,20 +514,24 @@ def lastvm(name, delete=False):
         if not os.path.exists(vmfile):
             return
         else:
-            os.system("sed -i '/%s/d' %s/vm" % (name, configdir))
+            os.system("sed -i '/%s %s/d' %s/vm" % (client, name, configdir))
         return
     if not os.path.exists(vmfile) or os.stat(vmfile).st_size == 0:
         with open(vmfile, 'w') as f:
-            f.write(name)
+            f.write("%s %s" % (client, name))
         return
-    firstline = True
-    for line in fileinput.input(vmfile, inplace=True):
-        line = "%s\n%s" % (name, line) if firstline else line
-        print line,
-        firstline = False
+    with open(vmfile, 'r') as original:
+        data = original.read()
+    with open(vmfile, 'w') as modified:
+        modified.write("%s %s\n%s" % (client, name, data))
 
 
 def remove_duplicates(oldlist):
+    """
+
+    :param oldlist:
+    :return:
+    """
     newlist = []
     for item in oldlist:
         if item not in newlist:
@@ -326,6 +540,12 @@ def remove_duplicates(oldlist):
 
 
 def get_overrides(paramfile=None, param=[]):
+    """
+
+    :param paramfile:
+    :param param:
+    :return:
+    """
     if paramfile is not None and os.path.exists(os.path.expanduser(paramfile)):
         with open(os.path.expanduser(paramfile)) as f:
             try:
@@ -346,6 +566,8 @@ def get_overrides(paramfile=None, param=[]):
                     value = True
                 elif value.lower() == 'false':
                     value = False
+                elif value.startswith('[') and value.endswith(']'):
+                    value = value[1:-1].split(',')
                 overrides[key] = value
     else:
         overrides = {}
@@ -353,6 +575,11 @@ def get_overrides(paramfile=None, param=[]):
 
 
 def get_parameters(inputfile):
+    """
+
+    :param inputfile:
+    :return:
+    """
     parameters = ""
     found = False
     for line in open(inputfile).readlines():
@@ -370,17 +597,25 @@ def get_parameters(inputfile):
 
 
 def print_info(yamlinfo, output='plain', fields=None, values=False):
+        """
+
+        :param yamlinfo:
+        :param output:
+        :param fields:
+        :param values:
+        """
         if fields is not None:
             for key in list(yamlinfo):
                 if key not in fields:
                     del yamlinfo[key]
         if output == 'yaml':
-            print yaml.dump(yamlinfo, default_flow_style=False, indent=2, allow_unicode=True,
-                            encoding=None).replace("'", '')[:-1]
+            print((yaml.dump(yamlinfo, default_flow_style=False, indent=2, allow_unicode=True,
+                             encoding=None).replace("'", '')[:-1]))
         else:
             if fields is None:
-                fields = ['name', 'creationdate', 'host', 'status', 'description', 'autostart', 'template', 'plan',
-                          'profile', 'cpus', 'memory', 'nets', 'ip', 'disks', 'snapshots']
+                fields = ['name', 'instanceid', 'creationdate', 'host', 'status', 'description', 'autostart',
+                          'template', 'plan', 'profile', 'flavor', 'cpus', 'memory', 'nets', 'ip', 'disks', 'snapshots',
+                          'tags']
             for key in fields:
                 if key not in yamlinfo:
                     continue
@@ -392,7 +627,8 @@ def print_info(yamlinfo, output='plain', fields=None, values=False):
                             mac = net['mac']
                             network = net['net']
                             network_type = net['type']
-                            print("net interfaces:%s mac: %s net: %s type: %s" % (device, mac, network, network_type))
+                            print(("net interface: %s mac: %s net: %s type: %s" % (device, mac, network,
+                                                                                   network_type)))
                     elif key == 'disks':
                         for disk in value:
                             device = disk['device']
@@ -400,9 +636,9 @@ def print_info(yamlinfo, output='plain', fields=None, values=False):
                             diskformat = disk['format']
                             drivertype = disk['type']
                             path = disk['path']
-                            print("diskname: %s disksize: %sGB diskformat: %s type: %s path: %s" % (device, disksize,
-                                                                                                    diskformat,
-                                                                                                    drivertype, path))
+                            print(("diskname: %s disksize: %sGB diskformat: %s type: %s path: %s" % (device, disksize,
+                                                                                                     diskformat,
+                                                                                                     drivertype, path)))
                     elif key == 'snapshots':
                         for snap in value:
                             snapshot = snap['snapshot']
@@ -416,19 +652,51 @@ def print_info(yamlinfo, output='plain', fields=None, values=False):
 
 
 def ssh(name, ip='', host=None, port=22, hostuser=None, user=None, local=None, remote=None, tunnel=False,
-        insecure=False, cmd=None, X=False, debug=False, D=None):
+        insecure=False, cmd=None, X=False, Y=False, debug=False, D=None):
+        """
+
+        :param name:
+        :param ip:
+        :param host:
+        :param port:
+        :param hostuser:
+        :param user:
+        :param local:
+        :param remote:
+        :param tunnel:
+        :param insecure:
+        :param cmd:
+        :param X:
+        :param Y:
+        :param debug:
+        :param D:
+        :return:
+        """
         if ip == '':
             return None
         else:
-            sshcommand = "%s@%s" % (user, ip)
+            sshcommand = "-A %s@%s" % (user, ip)
+            identityfile = None
+            if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
+                identityfile = os.path.expanduser("~/.kcli/id_rsa")
+            elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
+                identityfile = os.path.expanduser("~/.kcli/id_rsa")
+            if identityfile is not None:
+                sshcommand = "-i %s %s" % (identityfile, sshcommand)
             if D:
                 sshcommand = "-D %s %s" % (D, sshcommand)
             if X:
-                sshcommand = "-X %s" % (sshcommand)
+                sshcommand = "-X %s" % sshcommand
+            if Y:
+                sshcommand = "-Y %s" % sshcommand
             if cmd:
                 sshcommand = "%s %s" % (sshcommand, cmd)
             if host not in ['localhost', '127.0.0.1'] and tunnel:
-                sshcommand = "-o ProxyCommand='ssh -qp %s -W %%h:%%p %s@%s' %s" % (port, hostuser, host, sshcommand)
+                if identityfile is not None:
+                    sshcommand = "-o ProxyCommand='ssh -i %s -qp %s -W %%h:%%p %s@%s' %s" % (identityfile, port,
+                                                                                             hostuser, host, sshcommand)
+                else:
+                    sshcommand = "-o ProxyCommand='ssh -qp %s -W %%h:%%p %s@%s' %s" % (port, hostuser, host, sshcommand)
             if local is not None:
                 sshcommand = "-L %s %s" % (local, sshcommand)
             if remote is not None:
@@ -445,6 +713,22 @@ def ssh(name, ip='', host=None, port=22, hostuser=None, user=None, local=None, r
 
 def scp(name, ip='', host=None, port=22, hostuser=None, user=None, source=None, destination=None, recursive=None,
         tunnel=False, debug=False, download=False):
+        """
+
+        :param name:
+        :param ip:
+        :param host:
+        :param port:
+        :param hostuser:
+        :param user:
+        :param source:
+        :param destination:
+        :param recursive:
+        :param tunnel:
+        :param debug:
+        :param download:
+        :return:
+        """
         if ip == '':
             print("No ip found. Cannot scp...")
         else:
@@ -453,6 +737,13 @@ def scp(name, ip='', host=None, port=22, hostuser=None, user=None, source=None, 
             else:
                 arguments = ''
             scpcommand = 'scp'
+            identityfile = None
+            if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
+                identityfile = os.path.expanduser("~/.kcli/id_rsa")
+            elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
+                identityfile = os.path.expanduser("~/.kcli/id_rsa")
+            if identityfile is not None:
+                scpcommand = "%s -i %s" % (scpcommand, identityfile)
             if recursive:
                 scpcommand = "%s -r" % scpcommand
             if download:
@@ -462,3 +753,181 @@ def scp(name, ip='', host=None, port=22, hostuser=None, user=None, source=None, 
             if debug:
                 print(scpcommand)
             return scpcommand
+
+
+def get_user(template):
+    """
+
+    :param template:
+    :return:
+    """
+    if 'centos' in template.lower():
+        user = 'centos'
+    elif 'coreos' in template.lower() or 'rhcos' in template.lower():
+        user = 'core'
+    elif 'cirros' in template.lower():
+        user = 'cirros'
+    elif [x for x in ubuntus if x in template.lower()]:
+        user = 'ubuntu'
+    elif 'fedora' in template.lower():
+        user = 'fedora'
+    elif 'rhel' in template.lower():
+        user = 'cloud-user'
+    elif 'debian' in template.lower():
+        user = 'debian'
+    elif 'arch' in template.lower():
+        user = 'arch'
+    else:
+        user = 'root'
+    return user
+
+
+def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[],
+             enableroot=True, overrides={}, iso=True, fqdn=False, etcd=None):
+    """
+
+    :param name:
+    :param keys:
+    :param cmds:
+    :param nets:
+    :param gateway:
+    :param dns:
+    :param domain:
+    :param reserveip:
+    :param files:
+    :param enableroot:
+    :param overrides:
+    :param iso:
+    :param fqdn:
+    :param etcd:
+    :return:
+    """
+    if os.path.exists("%s.ign" % name):
+        pprint("Using existing %s.ign for %s" % (name, name), color="blue")
+        return open("%s.ign" % name).read()
+    default_gateway = gateway
+    publickeys = []
+    if domain is not None:
+        localhostname = "%s.%s" % (name, domain)
+    else:
+        localhostname = name
+    if os.path.exists(os.path.expanduser("~/.ssh/id_rsa.pub")):
+        publickeyfile = os.path.expanduser("~/.ssh/id_rsa.pub")
+    elif os.path.exists(os.path.expanduser("~/.ssh/id_dsa.pub")):
+        publickeyfile = os.path.expanduser("~/.ssh/id_dsa.pub")
+    elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa.pub")):
+        publickeyfile = os.path.expanduser("~/.kcli/id_rsa.pub")
+    elif os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub")):
+        publickeyfile = os.path.expanduser("~/.kcli/id_dsa.pub")
+    if publickeyfile is not None:
+        with open(publickeyfile, 'r') as ssh:
+            publickeys.append(ssh.read().rstrip())
+    if keys:
+        for key in list(set(keys)):
+            publickeys.append(key)
+    if not publickeys:
+        pprint("neither id_rsa or id_dsa public keys found in your .ssh or .kcli directory, you might have trouble "
+               "accessing the vm", color='red')
+    storage = {"files": []}
+    storage["files"].append({"filesystem": "root", "path": "/etc/hostname",
+                             "contents": {"source": "data:,%s" % localhostname, "verification": {}}, "mode": 420})
+    if files:
+        filesdata = process_ignition_files(files=files, overrides=overrides)
+        if filesdata:
+            storage["files"].extend(filesdata)
+    cmdunit = None
+    if cmds:
+        cmdsdata = process_ignition_cmds(cmds, overrides)
+        storage["files"].append(cmdsdata)
+        content = "[Service]\nType=oneshot\nExecStart=/root/first.sh\n[Install]\nWantedBy=multi-user.target\n"
+        cmdunit = {"contents": content, "name": "first-boot.service", "enabled": True}
+    if cmdunit is not None:
+        systemd = {"units": [cmdunit]}
+    else:
+        systemd = {}
+    networkunits = []
+    if nets:
+        for index, net in enumerate(nets):
+            netdata = ''
+            if isinstance(net, str):
+                if index == 0:
+                    continue
+                nicname = "eth%d" % index
+                ip = None
+                netmask = None
+                cidr = None
+                noconf = None
+                vips = []
+            elif isinstance(net, dict):
+                nicname = net.get('nic', "eth%d" % index)
+                ip = net.get('ip')
+                gateway = net.get('gateway')
+                netmask = next((e for e in [net.get('mask'), net.get('netmask')] if e is not None), None)
+                noconf = net.get('noconf')
+                vips = net.get('vips')
+            if noconf is not None:
+                netdata += "[Match]\nName=%s\n\n[Network]\nDHCP=no\n" % nicname
+            elif ip is not None and netmask is not None and not reserveip and gateway is not None:
+                cidr = IPAddress(netmask).netmask_bits()
+                netdata += "[Match]\nName=%s\n\n" % nicname
+                if index == 0 and default_gateway is not None:
+                    gateway = default_gateway
+                netdata += "[Network]\nAddress=%s/%s\nGateway=%s\n" % (ip, cidr, gateway)
+                dns = net.get('dns')
+                if dns is not None:
+                    netdata += "DNS=%s\n" % dns
+                # domain = net.get('domain')
+                # if domain is not None:
+                #    netdata += "  dns-search %s\n" % domain
+                if isinstance(vips, list) and vips:
+                    for vip in vips:
+                        netdata += "[Network]\nAddress=%s/%s\nGateway=%s\n" % (vip, netmask, gateway)
+            if netdata != '':
+                # networkunits.append({"contents": netdata, "name": "static.network"})
+                networkunits.append({"contents": netdata, "name": "%s.network" % nicname})
+    if networkunits:
+        networkd = {"units": networkunits}
+    else:
+        networkd = {}
+    data = {'ignition': {'version': '2.2.0', 'config': {}}, 'storage': storage, 'systemd': systemd,
+            'networkd': networkd, 'passwd': {'users': [{'name': 'core', 'sshAuthorizedKeys': publickeys}]}}
+    if enableroot:
+        rootdata = {'name': 'root', 'sshAuthorizedKeys': publickeys}
+        data['passwd']['users'].append(rootdata)
+    if etcd is not None:
+        ipcommand = "ifconfig %s | grep \"inet \" | awk '{print $2}'" % etcd
+        metadataget = '#!/bin/sh\necho COREOS_CUSTOM_HOSTNAME=`hostname` > /run/metadata/coreos\n'
+        metadataget += 'echo COREOS_CUSTOM_PRIVATE_IPV4=`%s` >> /run/metadata/coreos\n' % ipcommand
+        storage["files"].append({"filesystem": "root", "path": "/opt/get-metadata.sh",
+                                 "contents": {"source": "data:,%s" % quote(metadataget), "verification": {}},
+                                 "mode": int('700', 8)})
+        metacontent = "[Service]\nExecStart=\nExecStart=/opt/get-metadata.sh\n"
+        metadrop = {"dropins": [{"contents": metacontent, "name": "use-script.conf"}],
+                    "name": "coreos-metadata.service"}
+        etcdcontent = "[Unit]\nRequires=coreos-metadata.service\nAfter=coreos-metadata.service\n\n"
+        etcdcontent += "[Service]\nEnvironmentFile=/run/metadata/coreos\nEnvironment=\"ETCD_IMAGE_TAG=v3.0.15\"\n"
+        etcdcontent += "ExecStart=\nExecStart=/usr/lib/coreos/etcd-wrapper $ETCD_OPTS \\\n"
+        etcdcontent += "--name=\"${COREOS_CUSTOM_HOSTNAME}\" \\\n  "
+        etcdcontent += "--listen-peer-urls=\"http://${COREOS_CUSTOM_PRIVATE_IPV4}:2380\" \\\n  "
+        etcdcontent += "--listen-client-urls=\"http://0.0.0.0:2379\" \\\n  "
+        etcdcontent += "--initial-advertise-peer-urls=\"http://${COREOS_CUSTOM_PRIVATE_IPV4}:2380\" \\\n  "
+        etcdcontent += "--initial-cluster=\"${COREOS_CUSTOM_HOSTNAME}=http://${COREOS_CUSTOM_PRIVATE_IPV4}:2380\" \\\n"
+        etcdcontent += "--advertise-client-urls=\"http://${COREOS_CUSTOM_PRIVATE_IPV4}:2379\""
+        etcddrop = {"dropins": [{"contents": etcdcontent, "name": "20-clct-etcd-member.conf"}],
+                    "name": "etcd-member.service", "enabled": True}
+        if 'units' in data['systemd']:
+            data['systemd']['units'].append(metadrop)
+            data['systemd']['units'].append(etcddrop)
+        else:
+            data['systemd']['units'] = [metadrop, etcddrop]
+    return json.dumps(data, sort_keys=True, indent=4, separators=(',', ': '))
+
+
+# def get_ip_from_mac(interface, cidr, mac):
+#         packet = Ether(dst=mac) / ARP(pdst=cidr)
+#         ans, unans = srp(packet, timeout=2, iface=interface, verbose=False)
+#         for s, r in ans:
+#                 currentmac = r.sprintf("%Ether.src%")
+#                 if currentmac == mac:
+#                     return r.sprintf("%ARP.psrc%")
+#         return None

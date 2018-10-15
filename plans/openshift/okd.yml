@@ -1,0 +1,34 @@
+parameters:
+  template: Fedora-Cloud-Base-28-1.1.x86_64.qcow2
+  memory: 16384
+  go_version: 1.11.1
+  uri: qemu+tcp://192.168.122.1/system
+  rhcos_path: /var/lib/libvirt/images/rhcos-qemu.qcow2
+  cluster: testk
+  domain: tt.testing
+  email_address: admin@magnifico.es
+  password: password
+  use_kcli: false
+
+okd:
+ template: [[ template ]]
+ numcpus: 2
+ memory: [[ memory ]]
+ privatekey: True
+ nets:
+  - default
+ disks:
+  - size: 30
+ pool: default
+ files:
+ - path: /root/env.sh
+   origin: okd_env.sh
+ - path: /root/cleanup.sh
+   origin: okd_cleanup.sh
+ - path: /root/coreos_pull.json
+   origin: ~/coreos_pull.json
+ - path: /root/kcli_plan.yml
+   origin: okd_kcli_plan.yml
+   render: false
+ scripts:
+ - okd.sh

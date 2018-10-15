@@ -2,6 +2,8 @@ parameters:
  password: unix1234
  organization: Karmalabs
  location: Madrid
+ foreman_version: 1.17
+ katello_version: 3.5
 
 katello:
  template: CentOS-7-x86_64-GenericCloud.qcow2

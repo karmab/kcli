@@ -1,17 +1,25 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
+# coding=utf-8
 
 from kvirt.config import Kconfig
+from kvirt.common import get_user
 import json
 import os
 import argparse
 
 
 def empty():
+    """
+
+    :return:
+    """
     return {'_meta': {'hostvars': {}}}
 
 
 class KcliInventory(object):
+    """
 
+    """
     def __init__(self):
         self.inventory = {}
         self.read_cli_args()
@@ -35,17 +43,23 @@ class KcliInventory(object):
         # If no groups or vars are present, return an empty inventory.
         else:
             self.inventory = empty()
-        print json.dumps(self.inventory)
+        print(json.dumps(self.inventory))
 
     # Read the command line args passed to the script.
     def read_cli_args(self):
+        """
+
+        """
         parser = argparse.ArgumentParser()
         parser.add_argument('--list', action='store_true')
         parser.add_argument('--host', action='store')
         self.args = parser.parse_args()
 
     def get(self):
-        ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety']
+        """
+
+        :return:
+        """
         k = self.k
         tunnel = self.tunnel
         metadata = {'_meta': {'hostvars': {}}}
@@ -65,29 +79,17 @@ class KcliInventory(object):
                 metadata[description]["hosts"].append(name)
             hostvalues[name] = {'status': status}
             if tunnel and self.type in ['kvm', 'kubevirt']:
-                hostvalues[name]['ansible_ssh_common_args'] = "-o ProxyCommand="
-                "'ssh -p %s -W %%h:%%p %s@%s'" % (self.port, self.user, self.host)
+                hostvalues[name]['ansible_ssh_common_args'] = \
+                    "-o ProxyCommand='ssh -p %s -W %%h:%%p %s@%s'" % (self.port, self.user, self.host)
             if ip != '':
                 if self.type == 'vbox':
                     hostvalues[name]['ansible_host'] = '127.0.0.1'
                     hostvalues[name]['ansible_port'] = ip
                 else:
                     hostvalues[name]['ansible_host'] = ip
-            if template != '':
-                if 'centos' in template.lower():
-                    hostvalues[name]['ansible_user'] = 'centos'
-                elif 'cirros' in template.lower():
-                    hostvalues[name]['ansible_user'] = 'cirros'
-                elif [x for x in ubuntus if x in template.lower()]:
-                    hostvalues[name]['ansible_user'] = 'ubuntu'
-                elif 'fedora' in template.lower():
-                    hostvalues[name]['ansible_user'] = 'fedora'
-                elif 'rhel' in template.lower():
-                    hostvalues[name]['ansible_user'] = 'cloud-user'
-                elif 'debian' in template.lower():
-                    hostvalues[name]['ansible_user'] = 'debian'
-                elif 'arch' in template.lower():
-                    hostvalues[name]['ansible_user'] = 'arch'
+                if template != '':
+                    user = get_user(template)
+                    hostvalues[name]['ansible_user'] = user
         return metadata
 
 

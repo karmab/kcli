@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Kubevirt class
+Kubevirt Provider Class
 """
 
+from ast import literal_eval
 from kubernetes import client, config
 from kvirt import common
 from kvirt.defaults import TEMPLATES
-import base64
 import datetime
 from distutils.spawn import find_executable
 import os
@@ -17,22 +17,37 @@ import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 DOMAIN = "kubevirt.io"
-VERSION = 'v1alpha1'
+VERSION = 'v1alpha2'
+MULTUSDOMAIN = 'k8s.cni.cncf.io'
+MULTUSVERSION = 'v1'
 REGISTRYDISKS = ['kubevirt/alpine-registry-disk-demo', 'kubevirt/cirros-registry-disk-demo',
                  'kubevirt/fedora-cloud-registry-disk-demo']
 
 
 def pretty_print(o):
-    print yaml.dump(o, default_flow_style=False, indent=2, allow_unicode=True,
-                    encoding='utf-8').replace('!!python/unicode ', '').replace("'", '')
+    """
+
+    :param o:
+    """
+    # print(yaml.dump(o, default_flow_style=False, indent=2, allow_unicode=True,
+    #                encoding='utf-8').replace('!!python/unicode ', '').replace("'", '').replace('\n\n', '\n').
+    #      replace('#cloud-config', '|\n            #cloud-config'))
+    print(yaml.dump(o, default_flow_style=False, indent=2,
+                    allow_unicode=True).replace('!!python/unicode ', '').replace("'", '').replace('\n\n', '\n').
+          replace('#cloud-config', '|\n            #cloud-config'))
 
 
 class Kubevirt(object):
-    def __init__(self, context=None, usecloning=False, host='127.0.0.1', port=22, user='root', debug=False, tags={}):
+    """
+
+    """
+    def __init__(self, context=None, cdi=False, multus=True, host='127.0.0.1', port=22, user='root', debug=False,
+                 tags=None):
         self.host = host
         self.port = port
         self.user = user
-        self.usecloning = usecloning
+        self.cdi = cdi
+        self.multus = multus
         self.conn = 'OK'
         self.tags = tags
         contexts, current = config.list_kube_config_contexts()
@@ -47,57 +62,125 @@ class Kubevirt(object):
             context = current
             contextname = current['name']
         config.load_kube_config(context=contextname)
-        # configuration = client.Configuration()
-        # configuration.assert_hostname = False
         if 'namespace' in context['context']:
             self.namespace = context['context']['namespace']
         else:
             self.namespace = 'default'
         self.crds = client.CustomObjectsApi()
-        # extensions = client.ApiextensionsV1beta1Api()
-        # current_crds = [x for x in extensions.list_custom_resource_definition().to_dict()['items']
-        #                if x['spec']['names']['kind'].lower() == 'offlinevirtualmachine']
-        # if not current_crds:
-        #    common.pprint("Kubevirt not installed", color='red')
-        #    self.conn = None
-        #    self.host = context
-        #    return
         self.core = client.CoreV1Api()
         self.debug = debug
-        if host == '127.0.0.1' and len(contextname.split('/')) == 3 and len(contextname.split('/')[1].split(':')) == 2:
-            self.host = contextname.split('/')[1].split(':')[0].replace('-', '.')
+        # try:
+        #    hosts = [node.metadata.name for node in self.core.list_node().items]
+        # except client.rest.ApiException as e:
+        #    common.pprint("Couldn't connect, got %s" % (e.reason), color='red')
+        #    os._exit(1)
+        # self.host = hosts[0]
         return
 
     def close(self):
+        """
+
+        :return:
+        """
         return
 
     def exists(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         crds = self.crds
         namespace = self.namespace
-        allvms = crds.list_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines')["items"]
+        allvms = crds.list_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines')["items"]
         vms = [vm for vm in allvms if vm.get("metadata")["namespace"] == namespace and
                vm.get("metadata")["name"] == name]
         result = True if vms else False
         return result
 
     def net_exists(self, name):
-        print("not implemented")
+        """
+
+        :param name:
+        :return:
+        """
+        crds = self.crds
+        namespace = self.namespace
+        try:
+            crds.get_namespaced_custom_object(MULTUSDOMAIN, MULTUSVERSION, namespace,
+                                              'network-attachment-definitions', name)
+        except:
+            return False
         return True
 
     def disk_exists(self, pool, name):
+        """
+
+        :param pool:
+        :param name:
+        :return:
+        """
         print("not implemented")
         return
 
-    def create(self, name, virttype='kvm', profile='', plan='kvirt', cpumodel='q35', cpuflags=[], numcpus=2, memory=512,
-               guestid='guestrhel764', pool=None, template=None, disks=[{'size': 10}], disksize=10, diskthin=True,
-               diskinterface='virtio', nets=['default'], iso=None, vnc=False, cloudinit=True, reserveip=False,
-               reservedns=False, reservehost=False, start=True, keys=None, cmds=[], ips=None, netmasks=None,
-               gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[], enableroot=True, alias=[],
-               overrides={}, tags={}):
+    def create(self, name, virttype='kvm', profile='', flavor=None, plan='kvirt', cpumodel='host-model', cpuflags=[],
+               numcpus=2, memory=512, guestid='guestrhel764', pool=None, template=None, disks=[{'size': 10}],
+               disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False,
+               cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[],
+               ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[],
+               enableroot=True, alias=[], overrides={}, tags=None):
+        """
+
+        :param name:
+        :param virttype:
+        :param profile:
+        :param flavor:
+        :param plan:
+        :param cpumodel:
+        :param cpuflags:
+        :param numcpus:
+        :param memory:
+        :param guestid:
+        :param pool:
+        :param template:
+        :param disks:
+        :param disksize:
+        :param diskthin:
+        :param diskinterface:
+        :param nets:
+        :param iso:
+        :param vnc:
+        :param cloudinit:
+        :param reserveip:
+        :param reservedns:
+        :param reservehost:
+        :param start:
+        :param keys:
+        :param cmds:
+        :param ips:
+        :param netmasks:
+        :param gateway:
+        :param nested:
+        :param dns:
+        :param domain:
+        :param tunnel:
+        :param files:
+        :param enableroot:
+        :param alias:
+        :param overrides:
+        :param tags:
+        :return:
+        """
         if self.exists(name):
             return {'result': 'failure', 'reason': "VM %s already exists" % name}
-        if template is not None and template not in self.volumes() and template not in REGISTRYDISKS:
-            return {'result': 'failure', 'reason': "you don't have template %s" % template}
+        if template is not None and template not in self.volumes():
+            if template in ['alpine, cirros', 'fedora-cloud']:
+                template = "kubevirt/%s-registry-disk-demo" % template
+                common.pprint("Using registry disk %s as template" % template)
+            elif template not in REGISTRYDISKS:
+                return {'result': 'failure', 'reason': "you don't have template %s" % template}
+            if template == 'kubevirt/fedora-cloud-registry-disk-demo' and memory <= 512:
+                memory = 1024
         default_disksize = disksize
         default_diskinterface = diskinterface
         default_pool = pool
@@ -107,18 +190,19 @@ class Kubevirt(object):
         allpvc = core.list_namespaced_persistent_volume_claim(namespace)
         templates = {p.metadata.annotations['kcli/template']: p.metadata.name for p in allpvc.items
                      if p.metadata.annotations is not None and 'kcli/template' in p.metadata.annotations}
-        vm = {'kind': 'OfflineVirtualMachine', 'spec': {'running': start,
-                                                        'template': {'metadata': {'labels':
-                                                                                  {'kubevirt.io/provider': 'kcli'}},
-                                                                     'spec': {'domain': {'resources':
-                                                                                         {'requests':
-                                                                                          {'memory': '%sM' % memory}},
-                                                                                         'cpu': {'cores': numcpus},
-                                                                                         'devices': {'disks': []}},
-                                                                              'volumes': []}}}, 'apiVersion':
-              'kubevirt.io/v1alpha1', 'metadata': {'name': name, 'namespace': namespace, 'annotations':
-                                                   {'kcli/plan': plan, 'kcli/profile': profile,
-                                                    'kcli/template': template}}}
+        vm = {'kind': 'VirtualMachine', 'spec': {'running': start, 'template':
+                                                 {'metadata': {'labels': {'kubevirt.io/provider': 'kcli',
+                                                                          'kubevirt.io/domain': name}},
+                                                  'spec': {'domain': {'resources':
+                                                                      {'requests': {'memory': '%sM' % memory}},
+                                                                      # 'cpu': {'cores': numcpus, 'model': cpumodel},
+                                                                      'cpu': {'cores': numcpus},
+                                                                      'devices': {'disks': []}}, 'volumes': []}}},
+              'apiVersion': 'kubevirt.io/%s' % VERSION, 'metadata': {'name': name, 'namespace': namespace,
+                                                                     'labels': {'kubevirt.io/os': 'linux'},
+                                                                     'annotations': {'kcli/plan': plan,
+                                                                                     'kcli/profile': profile,
+                                                                                     'kcli/template': template}}}
         vm['spec']['template']['spec']['domain']['machine'] = {'type': 'q35'}
         features = {}
         for flag in cpuflags:
@@ -135,8 +219,40 @@ class Kubevirt(object):
                 features[feature] = {'enabled': enable}
         if features:
             vm['spec']['template']['spec']['domain']['features'] = features
-        if tags:
+        if tags is not None and isinstance(tags, dict):
             vm['spec']['template']['spec']['nodeSelector'] = tags
+        interfaces = []
+        networks = []
+        for index, net in enumerate(nets):
+            newif = {'bridge': {}}
+            # newnet = {'pod': {}}
+            newnet = {}
+            if isinstance(net, str):
+                netname = net
+                newif['name'] = netname
+                newnet['name'] = netname
+            elif isinstance(net, dict):
+                if 'noconf' in net and net['noconf']:
+                    vm['spec']['template']['spec']['domain']['devices']['autoattachPodInterface'] = False
+                    break
+                if 'name' in net:
+                    netname = net['name']
+                    newif['name'] = netname
+                    newnet['name'] = netname
+                if 'mac' in net:
+                    newif['macAddress'] = net['mac']
+            if index > 0:
+                if self.multus:
+                    newnet['multus'] = {'networkName': netname}
+                else:
+                    newnet['hostBridge'] = {'bridgeName': netname}
+            else:
+                newnet['pod'] = {}
+            interfaces.append(newif)
+            networks.append(newnet)
+        if interfaces and networks:
+            vm['spec']['template']['spec']['domain']['devices']['interfaces'] = interfaces
+            vm['spec']['template']['spec']['networks'] = networks
         pvcs = []
         sizes = []
         for index, disk in enumerate(disks):
@@ -150,6 +266,10 @@ class Kubevirt(object):
                 diskinterface = default_diskinterface
             elif isinstance(disk, int):
                 disksize = disk
+                diskpool = default_pool
+                diskinterface = default_diskinterface
+            elif isinstance(disk, str) and disk.isdigit():
+                disksize = int(disk)
                 diskpool = default_pool
                 diskinterface = default_diskinterface
             elif isinstance(disk, dict):
@@ -180,7 +300,7 @@ class Kubevirt(object):
                                                              'accessModes': ['ReadWriteOnce'],
                                                              'resources': {'requests': {'storage': '%sGi' % disksize}}},
                    'apiVersion': 'v1', 'metadata': {'name': volname}}
-            if template is not None and index == 0 and template not in REGISTRYDISKS and self.usecloning:
+            if template is not None and index == 0 and template not in REGISTRYDISKS and self.cdi:
                 pvc['metadata']['annotations'] = {'k8s.io/CloneRequest': templates[template]}
             pvcs.append(pvc)
             sizes.append(disksize)
@@ -188,11 +308,11 @@ class Kubevirt(object):
             common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
                              reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides,
                              iso=False)
-            cloudinitdata = open('/tmp/user-data', 'r').read()
-            cloudinitdisk = {'volumeName': 'cloudinitvolume', 'cdrom': {'readOnly': True}, 'name': 'cloudinitdisk'}
+            cloudinitdata = open('/tmp/user-data', 'r').read().strip()
+            cloudinitdisk = {'volumeName': 'cloudinitvolume', 'cdrom': {'readOnly': True, 'bus': 'sata'},
+                             'name': 'cloudinitdisk'}
             vm['spec']['template']['spec']['domain']['devices']['disks'].append(cloudinitdisk)
-            cloudinitencoded = base64.b64encode(cloudinitdata)
-            cloudinitvolume = {'cloudInitNoCloud': {'userDataBase64': cloudinitencoded}, 'name': 'cloudinitvolume'}
+            cloudinitvolume = {'cloudInitNoCloud': {'userData': cloudinitdata}, 'name': 'cloudinitvolume'}
             vm['spec']['template']['spec']['volumes'].append(cloudinitvolume)
         if self.debug:
             pretty_print(vm)
@@ -200,15 +320,21 @@ class Kubevirt(object):
             pvcname = pvc['metadata']['name']
             pvcsize = pvc['spec']['resources']['requests']['storage'].replace('Gi', '')
             if template not in REGISTRYDISKS and index == 0:
-                if self.usecloning:
+                if self.cdi:
                     # NOTE: we should also check that cloning finished in this case
                     core.create_namespaced_persistent_volume_claim(namespace, pvc)
                     bound = self.pvc_bound(pvcname, namespace)
                     if not bound:
                         return {'result': 'failure', 'reason': 'timeout waiting for pvc %s to get bound' % pvcname}
+                    completed = self.import_completed(self, pvc, namespace)
+                    if completed is None:
+                        common.pprint("Issue with cdi import", color='red')
+                        return {'result': 'failure', 'reason': 'timeout waiting for cdi importer pod to complete'}
+                    else:
+                        core.delete_namespaced_pod(completed, namespace, client.V1DeleteOptions())
                     continue
                 else:
-                    volname = "%s-vol0" % (name)
+                    volname = "%s-vol0" % name
                     copy = self.copy_image(diskpool, template, volname)
                     if copy['result'] == 'failure':
                         reason = copy['reason']
@@ -222,66 +348,103 @@ class Kubevirt(object):
             if prepare['result'] == 'failure':
                 reason = prepare['reason']
                 return {'result': 'failure', 'reason': reason}
-        crds.create_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines', vm)
+        crds.create_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', vm)
         # except Exception as err:
         #    return {'result': 'failure', 'reason': err}
         return {'result': 'success'}
 
     def start(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         crds = self.crds
         namespace = self.namespace
         common.pprint("Using current namespace %s" % namespace, color='green')
         try:
-            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines', name)
+            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         vm['spec']['running'] = True
-        crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "offlinevirtualmachines", name, vm)
+        crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
         return {'result': 'success'}
 
     def stop(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         crds = self.crds
         namespace = self.namespace
         common.pprint("Using current namespace %s" % namespace, color='green')
         try:
-            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines', name)
+            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         vm["spec"]['running'] = False
-        crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "offlinevirtualmachines", name, vm)
+        crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
         return {'result': 'success'}
 
     def snapshot(self, name, base, revert=False, delete=False, listing=False):
+        """
+
+        :param name:
+        :param base:
+        :param revert:
+        :param delete:
+        :param listing:
+        :return:
+        """
         print("not implemented")
         return
 
     def restart(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         print("not implemented")
         return {'result': 'success'}
 
     def report(self):
+        """
+
+        :return:
+        """
         print("not implemented")
         return
 
     def status(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         crds = self.crds
         namespace = self.namespace
         try:
-            crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines', name)
+            crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
         except Exception:
             return None
-        allvms = crds.list_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines')["items"]
-        vms = [vm for vm in allvms if 'labels' in vm.get("metadata") and 'kubevirt-ovm' in
-               vm["metadata"]['labels'] and vm["metadata"]['labels']['kubevirt-ovm'] == name]
+        allvms = crds.list_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachineinstance')["items"]
+        vms = [vm for vm in allvms if 'labels' in vm.get("metadata") and 'kubevirt-vm' in
+               vm["metadata"]['labels'] and vm["metadata"]['labels']['kubevirt-vm'] == name]
         if vms:
             return 'up'
         return 'down'
 
     def list(self):
+        """
+
+        :return:
+        """
         crds = self.crds
         namespace = self.namespace
         vms = []
-        for vm in crds.list_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines')["items"]:
+        for vm in crds.list_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines')["items"]:
             metadata = vm.get("metadata")
             namespace = metadata.get("namespace")
             spec = vm.get("spec")
@@ -297,7 +460,8 @@ class Kubevirt(object):
             state = 'down'
             if running:
                 try:
-                    runvm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
+                    runvm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace,
+                                                              'virtualmachineinstances', name)
                 except:
                     common.pprint("underlying VM %s not found" % name, color='red')
                     runvm = {}
@@ -314,38 +478,47 @@ class Kubevirt(object):
         return sorted(vms, key=lambda x: (x[6], x[0]))
 
     def console(self, name, tunnel=False):
+        """
+
+        :param name:
+        :param tunnel:
+        :return:
+        """
         crds = self.crds
         namespace = self.namespace
         try:
-            crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
+            crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachineinstances', name)
         except:
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if find_executable('virtctl') is not None:
-            home = os.path.expanduser('~')
-            command = "virtctl vnc --kubeconfig=%s/.kube/config %s -n %s" % (home, name, namespace)
+            common.pprint("Using local virtctl")
+            command = "virtctl vnc %s -n %s" % (name, namespace)
         else:
             common.pprint("Tunneling virtctl through remote host %s. Make sure virtctl is installed there" % self.host,
                           color='blue')
-            command = "ssh -o LogLevel=QUIET -Xtp %s %s@%s virtctl vnc --kubeconfig=.kube/config %s -n %s" % (self.port,
-                                                                                                              self.user,
-                                                                                                              self.host,
-                                                                                                              name,
-                                                                                                              namespace)
+            command = "ssh -o LogLevel=QUIET -Xtp %s %s@%s virtctl vnc %s -n %s" % (self.port, self.user, self.host,
+                                                                                    name, namespace)
         if self.debug:
             print(command)
         os.system(command)
         return
 
     def serialconsole(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         crds = self.crds
         namespace = self.namespace
         try:
-            crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
+            crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachineinstances', name)
         except:
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if find_executable('virtctl') is not None:
+            common.pprint("Using local virtctl")
             home = os.path.expanduser('~')
             command = "virtctl console --kubeconfig=%s/.kube/config %s -n %s" % (home, name, namespace)
         else:
@@ -358,6 +531,14 @@ class Kubevirt(object):
         return
 
     def info(self, name, output='plain', fields=None, values=False):
+        """
+
+        :param name:
+        :param output:
+        :param fields:
+        :param values:
+        :return:
+        """
         if fields is not None:
             fields = fields.split(',')
         yamlinfo = {}
@@ -366,7 +547,7 @@ class Kubevirt(object):
         namespace = self.namespace
         crds = self.crds
         try:
-            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines', name)
+            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
         except:
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
@@ -390,7 +571,7 @@ class Kubevirt(object):
         host = None
         if running:
             try:
-                runvm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
+                runvm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachineinstances', name)
             except:
                 common.pprint("underlying VM %s not found" % name, color='red')
                 return {'result': 'failure', 'reason': "underlying VM %s not found" % name}
@@ -449,15 +630,36 @@ class Kubevirt(object):
             disk = {'device': d['name'], 'size': size, 'format': bus, 'type': _type, 'path': volumename}
             disks.append(disk)
         yamlinfo['disks'] = disks
+        interfaces = vm['spec']['template']['spec']['domain']['devices']['interfaces']
+        networks = vm['spec']['template']['spec']['networks']
+        for index, interface in enumerate(interfaces):
+            device = 'eth%s' % index
+            net = networks[index]
+            mac = interface['macAddress'] = interface['mac'] if 'mac' in interface else 'N/A'
+            if 'multus' in net:
+                network = net['multus']['networkName']
+                network_type = 'multus'
+            elif 'hostBridge' in net:
+                network = net['hostBridge']['bridgeName']
+                network_type = 'hostbridge'
+            else:
+                network = 'default'
+                network_type = 'pod'
+            yamlinfo['nets'].append({'device': device, 'mac': mac, 'net': network, 'type': network_type})
         common.print_info(yamlinfo, output=output, fields=fields, values=values)
         return {'result': 'success'}
 
     def ip(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         crds = self.crds
         namespace = self.namespace
         ip = None
         try:
-            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
+            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachineinstances', name)
             status = vm['status']
             if 'interfaces' in status:
                 interfaces = vm['status']['interfaces']
@@ -472,6 +674,11 @@ class Kubevirt(object):
         return ip
 
     def volumes(self, iso=False):
+        """
+
+        :param iso:
+        :return:
+        """
         core = self.core
         namespace = self.namespace
         if iso:
@@ -486,22 +693,22 @@ class Kubevirt(object):
             return REGISTRYDISKS
 
     def delete(self, name, snapshots=False):
+        """
+
+        :param name:
+        :param snapshots:
+        :return:
+        """
         crds = self.crds
         core = self.core
         namespace = self.namespace
         common.pprint("Using current namespace %s" % namespace, color='green')
-        crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines', name)
         try:
-            crds.delete_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name,
-                                                 client.V1DeleteOptions())
-        except:
-            pass
-        try:
-            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines', name)
+            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
         except Exception as e:
             return {'result': 'failure', 'reason': e}
         try:
-            crds.delete_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines', name,
+            crds.delete_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name,
                                                  client.V1DeleteOptions())
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
@@ -516,62 +723,116 @@ class Kubevirt(object):
         return {'result': 'success'}
 
     def clone(self, old, new, full=False, start=False):
+        """
+
+        :param old:
+        :param new:
+        :param full:
+        :param start:
+        :return:
+        """
         print("not implemented")
         return
 
     def update_metadata(self, name, metatype, metavalue):
+        """
+
+        :param name:
+        :param metatype:
+        :param metavalue:
+        :return:
+        """
         crds = self.crds
         namespace = self.namespace
         try:
-            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines', name)
+            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
         except:
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         vm["metadata"]["annotations"]["kcli/%s" % metatype] = metavalue
-        crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "offlinevirtualmachines", name, vm)
+        crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
         return
 
     def update_memory(self, name, memory):
+        """
+
+        :param name:
+        :param memory:
+        :return:
+        """
         crds = self.crds
         namespace = self.namespace
         try:
-            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines', name)
+            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
         except:
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         t = 'Template' if 'Template' in vm['spec'] else 'template'
         vm['spec'][t]['spec']['domain']['resources']['requests']['memory'] = "%sM" % memory
-        crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "offlinevirtualmachines", name, vm)
+        crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
         common.pprint("Change will only appear next full lifeclyclereboot", color='blue')
         return
 
     def update_cpu(self, name, numcpus):
+        """
+
+        :param name:
+        :param numcpus:
+        :return:
+        """
         crds = self.crds
         namespace = self.namespace
         try:
-            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines', name)
+            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
         except:
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         t = 'Template' if 'Template' in vm['spec'] else 'template'
         vm['spec'][t]['spec']['domain']['cpu']['cores'] = int(numcpus)
         common.pprint("Change will only appear next full lifeclyclereboot", color='blue')
-        crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "offlinevirtualmachines", name, vm)
+        crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
         return
 
     def update_start(self, name, start=True):
+        """
+
+        :param name:
+        :param start:
+        :return:
+        """
         print("not implemented")
         return
 
     def update_information(self, name, information):
+        """
+
+        :param name:
+        :param information:
+        :return:
+        """
         self.update_metadata(name, 'information', information)
         return
 
     def update_iso(self, name, iso):
+        """
+
+        :param name:
+        :param iso:
+        :return:
+        """
         print("not implemented")
         return
 
     def create_disk(self, name, size, pool=None, thin=True, template=None):
+        """
+
+        :param name:
+        :param size:
+        :param pool:
+        :param thin:
+        :param template:
+        :return:
+        """
         core = self.core
         namespace = self.namespace
         pvc = core.list_namespaced_persistent_volume_claim(namespace)
@@ -593,10 +854,21 @@ class Kubevirt(object):
         return
 
     def add_disk(self, name, size, pool=None, thin=True, template=None, shareable=False, existing=None):
+        """
+
+        :param name:
+        :param size:
+        :param pool:
+        :param thin:
+        :param template:
+        :param shareable:
+        :param existing:
+        :return:
+        """
         crds = self.crds
         namespace = self.namespace
         try:
-            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines', name)
+            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
         except:
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
@@ -618,15 +890,22 @@ class Kubevirt(object):
         newdisk = {'volumeName': volname, 'name': diskname}
         vm['spec'][t]['spec']['domain']['devices']['disks'].append(newdisk)
         vm['spec'][t]['spec']['volumes'].append(myvolume)
-        crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "offlinevirtualmachines", name, vm)
+        crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
         return
 
-    def delete_disk(self, name, diskname):
+    def delete_disk(self, name=None, diskname=None, pool=None):
+        """
+
+        :param name:
+        :param diskname:
+        :param pool:
+        :return:
+        """
         crds = self.crds
         core = self.core
         namespace = self.namespace
         try:
-            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines', name)
+            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         t = 'Template' if 'Template' in vm['spec'] else 'template'
@@ -642,7 +921,7 @@ class Kubevirt(object):
             volindex = volindex[0]
             del vm['spec'][t]['spec']['volumes'][volindex]
         del vm['spec'][t]['spec']['domain']['devices']['disks'][diskindex]
-        crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "offlinevirtualmachines", name, vm)
+        crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
         try:
             core.delete_namespaced_persistent_volume_claim(volname, namespace, client.V1DeleteOptions())
         except:
@@ -651,6 +930,10 @@ class Kubevirt(object):
         return
 
     def list_disks(self):
+        """
+
+        :return:
+        """
         disks = {}
         namespace = self.namespace
         core = self.core
@@ -668,10 +951,22 @@ class Kubevirt(object):
         return disks
 
     def add_nic(self, name, network):
+        """
+
+        :param name:
+        :param network:
+        :return:
+        """
         print("not implemented")
         return
 
     def delete_nic(self, name, interface):
+        """
+
+        :param name:
+        :param interface:
+        :return:
+        """
         print("not implemented")
         return
 
@@ -679,14 +974,13 @@ class Kubevirt(object):
         crds = self.crds
         namespace = self.namespace
         try:
-            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'offlinevirtualmachines', name)
+            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
         except:
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         metadata = vm.get("metadata")
         annotations = metadata.get("annotations")
-        template = annotations.get('kcli/template')
-        ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety']
+        template = annotations.get('kcli/template') if annotations is not None else None
         user = 'root'
         ip = self.ip(name)
         if template is not None:
@@ -694,7 +988,7 @@ class Kubevirt(object):
                 user = 'centos'
             elif 'cirros' in template.lower():
                 user = 'cirros'
-            elif [x for x in ubuntus if x in template.lower()]:
+            elif [x for x in common.ubuntus if x in template.lower()]:
                 user = 'ubuntu'
             elif 'fedora' in template.lower():
                 user = 'fedora'
@@ -704,32 +998,78 @@ class Kubevirt(object):
                 user = 'debian'
             elif 'arch' in template.lower():
                 user = 'arch'
-        return (user, ip)
+        return user, ip
 
-    def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, D=None):
+    def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, Y=False,
+            D=None):
+        """
+
+        :param name:
+        :param user:
+        :param local:
+        :param remote:
+        :param tunnel:
+        :param insecure:
+        :param cmd:
+        :param X:
+        :param Y:
+        :param D:
+        :return:
+        """
         u, ip = self._ssh_credentials(name)
         if user is None:
             user = u
-        tunnel = True
+        # tunnel = True if 'TUNNEL' in os.environ and os.environ('TUNNEL').lower() == 'true' else False
         sshcommand = common.ssh(name, ip=ip, host=self.host, port=self.port, hostuser=self.user, user=user, local=local,
-                                remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, debug=self.debug, D=D)
+                                remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, Y=Y, D=D,
+                                debug=self.debug)
         return sshcommand
 
     def scp(self, name, user=None, source=None, destination=None, tunnel=False, download=False, recursive=False):
+        """
+
+        :param name:
+        :param user:
+        :param source:
+        :param destination:
+        :param tunnel:
+        :param download:
+        :param recursive:
+        :return:
+        """
         u, ip = self._ssh_credentials(name)
         if user is None:
             user = u
-        tunnel = True
+        tunnel = True if 'TUNNEL' in os.environ and os.environ('TUNNEL').lower() == 'true' else False
         scpcommand = common.scp(name, ip=ip, host=self.host, port=self.port, hostuser=self.user, user=user,
                                 source=source, destination=destination, recursive=recursive, tunnel=tunnel,
                                 debug=self.debug, download=download)
         return scpcommand
 
-    def create_pool(self, name, poolpath, pooltype='dir', user='qemu'):
+    def create_pool(self, name, poolpath, pooltype='dir', user='qemu', thinpool=None):
+        """
+
+        :param name:
+        :param poolpath:
+        :param pooltype:
+        :param user:
+        :param thinpool:
+        :return:
+        """
         print("not implemented")
         return
 
     def add_image(self, image, pool, short=None, cmd=None, name=None, size=1):
+        """
+
+        :param image:
+        :param pool:
+        :param short:
+        :param cmd:
+        :param name:
+        :param size:
+        :return:
+        """
         sizes = {'debian': 2, 'centos': 8, 'fedora': 4, 'rhel': 10, 'trusty': 2.2, 'xenial': 2.2, 'yakkety': 2.2,
                  'zesty': 2.2, 'artful': 2.2}
         core = self.core
@@ -750,16 +1090,21 @@ class Kubevirt(object):
                                                          'accessModes': ['ReadWriteOnce'],
                                                          'resources': {'requests': {'storage': '%sGi' % size}}},
                'apiVersion': 'v1', 'metadata': {'name': volname, 'annotations': {'kcli/template': shortimage}}}
-        pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'Never',
-                                       'containers': [{'image': 'kubevirtci/disk-importer',
-                                                       'volumeMounts': [{'mountPath': '/storage', 'name': 'storage1'}],
-                                                       'name': 'importer', 'env': [{'name': 'CURL_OPTS', 'value': '-L'},
-                                                                                   {'name': 'INSTALL_TO',
-                                                                                    'value': '/storage/disk.img'},
-                                                                                   {'name': 'URL', 'value': image}]}],
-                                       'volumes': [{'name': 'storage1',
-                                                    'persistentVolumeClaim': {'claimName': volname}}]},
-               'apiVersion': 'v1', 'metadata': {'name': podname}}
+        if self.cdi:
+                pvc['metadata']['annotations'] = {'cdi.kubevirt.io/storage.import.endpoint': image}
+        else:
+            pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'Never',
+                                           'containers': [{'image': 'kubevirtci/disk-importer',
+                                                           'volumeMounts': [{'mountPath': '/storage',
+                                                                             'name': 'storage1'}],
+                                                           'name': 'importer',
+                                                           'env': [{'name': 'CURL_OPTS', 'value': '-L'},
+                                                                   {'name': 'INSTALL_TO',
+                                                                    'value': '/storage/disk.img'},
+                                                                   {'name': 'URL', 'value': image}]}],
+                                           'volumes': [{'name': 'storage1',
+                                                        'persistentVolumeClaim': {'claimName': volname}}]},
+                   'apiVersion': 'v1', 'metadata': {'name': podname}}
         try:
             core.read_namespaced_persistent_volume_claim(volname, namespace)
             common.pprint("Using existing pvc")
@@ -768,16 +1113,32 @@ class Kubevirt(object):
             bound = self.pvc_bound(volname, namespace)
             if not bound:
                 return {'result': 'failure', 'reason': 'timeout waiting for pvc to get bound'}
-        core.create_namespaced_pod(namespace, pod)
-        completed = self.pod_completed(podname, namespace)
-        if not completed:
-            common.pprint("Issue with pod %s. Leaving it for debugging purposes" % podname, color='red')
-            return {'result': 'failure', 'reason': 'timeout waiting for importer pod to complete'}
+        if self.cdi:
+            completed = self.import_completed(self, volname, namespace)
+            if completed is None:
+                common.pprint("Issue with cdi import", color='red')
+                return {'result': 'failure', 'reason': 'timeout waiting for cdi importer pod to complete'}
+            else:
+                core.delete_namespaced_pod(completed, namespace, client.V1DeleteOptions())
         else:
-            core.delete_namespaced_pod(podname, namespace, client.V1DeleteOptions())
+            core.create_namespaced_pod(namespace, pod)
+            completed = self.pod_completed(podname, namespace)
+            if not completed:
+                common.pprint("Issue with pod %s. Leaving it for debugging purposes" % podname, color='red')
+                return {'result': 'failure', 'reason': 'timeout waiting for importer pod to complete'}
+            else:
+                core.delete_namespaced_pod(podname, namespace, client.V1DeleteOptions())
         return {'result': 'success'}
 
     def copy_image(self, pool, ori, dest, size=1):
+        """
+
+        :param pool:
+        :param ori:
+        :param dest:
+        :param size:
+        :return:
+        """
         sizes = {'debian': 2, 'centos': 8, 'fedora': 4, 'rhel': 10, 'trusty': 2.2, 'xenial': 2.2, 'yakkety': 2.2,
                  'zesty': 2.2, 'artful': 2.2}
         core = self.core
@@ -820,41 +1181,132 @@ class Kubevirt(object):
             core.delete_namespaced_pod(podname, namespace, client.V1DeleteOptions())
         return {'result': 'success'}
 
-    def create_network(self, name, cidr, dhcp=True, nat=True, domain=None, plan='kvirt', pxe=None):
-        print("not implemented")
-        return
+    def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', pxe=None, vlan=None):
+        """
 
-    def delete_network(self, name=None):
-        print("not implemented")
-        return
+        :param name:
+        :param cidr:
+        :param dhcp:
+        :param nat:
+        :param domain:
+        :param plan:
+        :param pxe:
+        :param vlan:
+        :return:
+        """
+        crds = self.crds
+        namespace = self.namespace
+        bridge = cidr
+        apiversion = "%s/%s" % (MULTUSDOMAIN, MULTUSVERSION)
+        vlanconfig = '"vlan": %s' % vlan if vlan is not None else ''
+        config = '{ "cniVersion": "0.3.1", "type": "ovs", "bridge": "%s" %s}' % (bridge, vlanconfig)
+        network = {'kind': 'NetworkAttachmentDefinition', 'spec': {'config': config}, 'apiVersion': apiversion,
+                   'metadata': {'name': name}}
+        crds.create_namespaced_custom_object(MULTUSDOMAIN, MULTUSVERSION, namespace, 'network-attachment-definitions',
+                                             network)
+        return {'result': 'success'}
+
+    def delete_network(self, name=None, cidr=None):
+        """
+
+        :param name:
+        :param cidr:
+        :return:
+        """
+        crds = self.crds
+        namespace = self.namespace
+        try:
+            crds.delete_namespaced_custom_object(MULTUSDOMAIN, MULTUSVERSION, namespace,
+                                                 'network-attachment-definitions', name,
+                                                 client.V1DeleteOptions())
+        except:
+            return {'result': 'failure', 'reason': "network %s not found" % name}
+        return {'result': 'success'}
 
     def list_pools(self):
+        """
+
+        :return:
+        """
         storageapi = client.StorageV1Api()
         pools = [x.metadata.name for x in storageapi.list_storage_class().items]
         return pools
 
     def list_networks(self):
+        """
+
+        :return:
+        """
+        networks = {}
+        if self.multus:
+            crds = self.crds
+            namespace = self.namespace
+            nafs = crds.list_namespaced_custom_object(MULTUSDOMAIN, MULTUSVERSION, namespace,
+                                                      'network-attachment-definitions')["items"]
+            for naf in nafs:
+                config = literal_eval(naf['spec']['config'])
+                name = naf['metadata']['name']
+                _type = config['type']
+                bridge = config['bridge']
+                vlan = config.get('vlan', 'N/A')
+                networks[name] = {'cidr': bridge, 'dhcp': 'N/A', 'type': _type, 'mode': vlan}
+            return networks
+        else:
+            return {'default': {'cidr': 'N/A', 'dhcp': 'N/A', 'type': 'bridged', 'mode': 'N/A'}}
+
+    def list_subnets(self):
+        """
+
+        :return:
+        """
         print("not implemented")
-        return
+        return {}
 
     def delete_pool(self, name, full=False):
+        """
+
+        :param name:
+        :param full:
+        :return:
+        """
         print("not implemented")
         return
 
     def network_ports(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         print("not implemented")
         return
 
     def vm_ports(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         print("not implemented")
         return
 
     def get_pool_path(self, pool):
+        """
+
+        :param pool:
+        :return:
+        """
         storageapi = client.StorageV1Api()
         storageclass = storageapi.read_storage_class(pool)
         return storageclass.provisioner
 
     def pvc_bound(self, volname, namespace):
+        """
+
+        :param volname:
+        :param namespace:
+        :return:
+        """
         core = self.core
         pvctimeout = 40
         pvcruntime = 0
@@ -869,7 +1321,35 @@ class Kubevirt(object):
             pvcruntime += 2
         return True
 
+    def import_completed(self, volname, namespace):
+        """
+
+        :param volname:
+        :param namespace:
+        :return:
+        """
+        core = self.core
+        pvctimeout = 40
+        pvcruntime = 0
+        phase = ''
+        while phase != 'Succeeded':
+            if pvcruntime >= pvctimeout:
+                return None
+            pvc = core.read_namespaced_persistent_volume_claim(volname, namespace)
+            pod = pvc.metadata.annotations['cdi.kubevirt.io/storage.import.importPodName']
+            phase = pvc.metadata.annotations['cdi.kubevirt.io/storage.import.pod.phase']
+            time.sleep(2)
+            common.pprint("Waiting for import to complete...")
+            pvcruntime += 2
+        return pod
+
     def pod_completed(self, podname, namespace):
+        """
+
+        :param podname:
+        :param namespace:
+        :return:
+        """
         core = self.core
         podtimeout = 600
         podruntime = 0
@@ -885,6 +1365,12 @@ class Kubevirt(object):
         return True
 
     def prepare_pvc(self, name, size=1):
+        """
+
+        :param name:
+        :param size:
+        :return:
+        """
         core = self.core
         namespace = self.namespace
         now = datetime.datetime.now().strftime("%Y%M%d%H%M")
@@ -907,6 +1393,11 @@ class Kubevirt(object):
         return {'result': 'success'}
 
     def check_pool(self, pool):
+        """
+
+        :param pool:
+        :return:
+        """
         storage = client.StorageV1Api()
         storageclasses = storage.list_storage_class().items
         if storageclasses:
@@ -915,3 +1406,10 @@ class Kubevirt(object):
                 return pool
         common.pprint("Pool %s not found. Using None" % pool, color='blue')
         return None
+
+    def flavors(self):
+        """
+
+        :return:
+        """
+        return []

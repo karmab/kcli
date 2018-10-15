@@ -1,8 +1,25 @@
 - name: kubernetes
   group: kubernetes
+  url: github.com/karmab/kcli/plans/kubernetes/single
+  file: kcli_plan.yml
+  description: Latest kubernetes with single node
+  numvms: 1
+  template: CentOS-7-x86_64-GenericCloud.qcow2
+  comments: you can set version to 1.10.5 or 1.11.1 and template to CentOS-7-x86_64-GenericCloud.qcow2 or ubuntu ones
+  parameters:
+   domain: karmalabs.com
+   template: CentOS-7-x86_64-GenericCloud.qcow2
+   sdn: flannel
+   nfs: false
+   version: 1.10.5
+   multus: false
+
+- name: kubernetes
+  group: kubernetes
   url: github.com/karmab/kcli/plans/kubernetes
-  file: basic.yml
+  file: kubernetes.yml
   description: Latest kubernetes with single master and multiple nodes
+  comments: set nodes to 0 for a single all in one with master
   numvms: 3
   template: CentOS-7-x86_64-GenericCloud.qcow2
   parameters:
@@ -10,6 +27,7 @@
    domain: karmalabs.com
    template: CentOS-7-x86_64-GenericCloud.qcow2
    deploy_app: false
+   sdn: flannel
 
 - name: minikube
   group: kubernetes
@@ -35,4 +53,4 @@
    domain: karmalabs.com
    template: CentOS-7-x86_64-GenericCloud.qcow2
    deploy_app: false
-   kubevirt_version: v0.4.0
+   kubevirt_version: v0.7.0-alpha.2

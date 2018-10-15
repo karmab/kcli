@@ -2,11 +2,14 @@ parameters:
     user: karmab
     package: kcli
     debian: true
+    numcpus: 2
+    memory: 6144
+    template: Fedora-Cloud-Base-28-1.1.x86_64.qcow2
 
 copr:
- template: Fedora-Cloud-Base-26-1.5.x86_64.qcow2
- numcpus: 2
- memory: 6144
+ teaplate: [[ template ]]
+ numcpus: [[ numcpus ]]
+ memory: [[ memory ]]
  nets:
   - default
  files:

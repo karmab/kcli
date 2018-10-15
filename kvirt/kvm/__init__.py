@@ -1,21 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-interact with a local/remote libvirt daemon
+Kvm Provider class
 """
 
 from distutils.spawn import find_executable
 from kvirt import defaults
-from iptools import IpRange
 from kvirt import common
-from kvirt.base import Kbase
 from netaddr import IPAddress, IPNetwork
-from libvirt import open as libvirtopen, registerErrorHandler
+from libvirt import open as libvirtopen, registerErrorHandler, VIR_DOMAIN_AFFECT_LIVE, VIR_DOMAIN_AFFECT_CONFIG
+import json
 import os
+from subprocess import call
 import re
 import string
 import time
 import xml.etree.ElementTree as ET
+import yaml
 
 
 KB = 1024 * 1024
@@ -37,14 +38,24 @@ guestwindows200864 = "windows_2008x64"
 
 
 def libvirt_callback(ignore, err):
+    """
+
+    :param ignore:
+    :param err:
+    :return:
+    """
     return
 
 
 registerErrorHandler(f=libvirt_callback, ctx=None)
 
 
-class Kvirt(Kbase):
-    def __init__(self, host='127.0.0.1', port=None, user='root', protocol='ssh', url=None, debug=False):
+class Kvirt(object):
+    """
+
+    """
+    def __init__(self, host='127.0.0.1', port=None, user='root', protocol='ssh', url=None, debug=False, insecure=False,
+                 detect_bridge_ips=False):
         if url is None:
             if host == '127.0.0.1' or host == 'localhost':
                 url = "qemu:///system"
@@ -54,10 +65,18 @@ class Kvirt(Kbase):
                 url = "qemu+%s://%s@%s/system?socket=/var/run/libvirt/libvirt-sock" % (protocol, user, host)
             else:
                 url = "qemu:///system"
+            if url.startswith('qemu+ssh'):
+                if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
+                    url = "%s&no_verify=1&keyfile=%s" % (url, os.path.expanduser("~/.kcli/id_rsa"))
+                elif os.path.exists(os.path.expanduser("~/.kcli/id_dsa")):
+                    url = "%s&no_verify=1&keyfile=%s" % (url, os.path.expanduser("~/.kcli/id_dsa"))
+                elif insecure:
+                    url = "%s&no_verify=1" % url
         try:
             self.conn = libvirtopen(url)
             self.debug = debug
-        except Exception:
+        except Exception as e:
+            common.pprint(e, color='red')
             self.conn = None
         self.host = host
         self.user = user
@@ -66,14 +85,36 @@ class Kvirt(Kbase):
         if self.protocol == 'ssh' and port is None:
             self.port = '22'
         self.url = url
+        if detect_bridge_ips and self.protocol != 'ssh':
+            common.pprint("detect_bridge_ips only works with ssh remote hosts. Disabling", color="blue")
+            self.detect_bridge_ips = False
+        else:
+            self.detect_bridge_ips = detect_bridge_ips
+        identityfile = None
+        if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
+            identityfile = os.path.expanduser("~/.kcli/id_rsa")
+        elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
+            identityfile = os.path.expanduser("~/.kcli/id_rsa")
+        if identityfile is not None:
+            self.identitycommand = "-i %s" % identityfile
+        else:
+            self.identitycommand = ""
 
     def close(self):
+        """
+
+        """
         conn = self.conn
         if conn is not None:
             conn.close()
         self.conn = None
 
     def exists(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         conn = self.conn
         for vm in conn.listAllDomains():
             if vm.name() == name:
@@ -81,6 +122,11 @@ class Kvirt(Kbase):
         return False
 
     def net_exists(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         conn = self.conn
         try:
             conn.networkLookupByName(name)
@@ -89,6 +135,12 @@ class Kvirt(Kbase):
             return False
 
     def disk_exists(self, pool, name):
+        """
+
+        :param pool:
+        :param name:
+        :return:
+        """
         conn = self.conn
         try:
             storage = conn.storagePoolLookupByName(pool)
@@ -99,12 +151,54 @@ class Kvirt(Kbase):
         except:
             return False
 
-    def create(self, name, virttype='kvm', profile='kvirt', plan='kvirt', cpumodel='host-model', cpuflags=[],
-               numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None,
+    def create(self, name, virttype='kvm', profile='kvirt', flavor=None, plan='kvirt', cpumodel='host-model',
+               cpuflags=[], numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None,
                disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None,
                vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None,
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
-               files=[], enableroot=True, overrides={}, tags={}):
+               files=[], enableroot=True, overrides={}, tags=None):
+        """
+
+        :param name:
+        :param virttype:
+        :param profile:
+        :param flavor:
+        :param plan:
+        :param cpumodel:
+        :param cpuflags:
+        :param numcpus:
+        :param memory:
+        :param guestid:
+        :param pool:
+        :param template:
+        :param disks:
+        :param disksize:
+        :param diskthin:
+        :param diskinterface:
+        :param nets:
+        :param iso:
+        :param vnc:
+        :param cloudinit:
+        :param reserveip:
+        :param reservedns:
+        :param reservehost:
+        :param start:
+        :param keys:
+        :param cmds:
+        :param ips:
+        :param netmasks:
+        :param gateway:
+        :param nested:
+        :param dns:
+        :param domain:
+        :param tunnel:
+        :param files:
+        :param enableroot:
+        :param overrides:
+        :param tags:
+        :return:
+        """
+        namespace = ''
         if self.exists(name):
             return {'result': 'failure', 'reason': "VM %s already exists" % name}
         default_diskinterface = diskinterface
@@ -126,8 +220,13 @@ class Kvirt(Kbase):
                         <kvirt:template>%s</kvirt:template>""" % (metadata, template)
         default_poolxml = default_storagepool.XMLDesc(0)
         root = ET.fromstring(default_poolxml)
-        default_pooltype = root.getiterator('pool')[0].get('type')
+        default_pooltype = list(root.getiterator('pool'))[0].get('type')
         default_poolpath = None
+        product = list(root.getiterator('product'))
+        if product:
+            default_thinpool = list(root.getiterator('product'))[0].get('name')
+        else:
+            default_thinpool = None
         for element in root.getiterator('path'):
             default_poolpath = element.text
             break
@@ -153,6 +252,7 @@ class Kvirt(Kbase):
         machine = 'pc'
         # sysinfo = "<smbios mode='sysinfo'/>"
         disksxml = ''
+        fixqcow2path, fixqcow2backing = None, None
         volsxml = {}
         for index, disk in enumerate(disks):
             if disk is None:
@@ -162,6 +262,7 @@ class Kvirt(Kbase):
                 diskpool = default_pool
                 diskpooltype = default_pooltype
                 diskpoolpath = default_poolpath
+                diskthinpool = default_thinpool
                 diskwwn = None
                 disktemplate = None
             elif isinstance(disk, int):
@@ -171,6 +272,17 @@ class Kvirt(Kbase):
                 diskpool = default_pool
                 diskpooltype = default_pooltype
                 diskpoolpath = default_poolpath
+                diskthinpool = default_thinpool
+                diskwwn = None
+                disktemplate = None
+            elif isinstance(disk, str) and disk.isdigit():
+                disksize = int(disk)
+                diskthin = default_diskthin
+                diskinterface = default_diskinterface
+                diskpool = default_pool
+                diskpooltype = default_pooltype
+                diskpoolpath = default_poolpath
+                diskthinpool = default_thinpool
                 diskwwn = None
                 disktemplate = None
             elif isinstance(disk, dict):
@@ -186,11 +298,16 @@ class Kvirt(Kbase):
                     return {'result': 'failure', 'reason': "Pool %s not found" % diskpool}
                 diskpoolxml = storagediskpool.XMLDesc(0)
                 root = ET.fromstring(diskpoolxml)
-                diskpooltype = root.getiterator('pool')[0].get('type')
+                diskpooltype = list(root.getiterator('pool'))[0].get('type')
                 diskpoolpath = None
-                for element in root.getiterator('path'):
+                for element in list(root.getiterator('path')):
                     diskpoolpath = element.text
                     break
+                product = list(root.getiterator('product'))
+                if product:
+                    diskthinpool = list(root.getiterator('product'))[0].get('name')
+                else:
+                    diskthinpool = None
             else:
                 return {'result': 'failure', 'reason': "Invalid disk entry"}
             letter = chr(index + ord('a'))
@@ -206,13 +323,18 @@ class Kvirt(Kbase):
                 disktemplate = template
             if disktemplate is not None:
                 try:
-                    default_storagepool.refresh(0)
-                    if '/' in disktemplate:
-                        backingvolume = volumespaths[disktemplate]['object']
+                    if diskthinpool is not None:
+                        matchingthintemplates = self.thintemplates(diskpoolpath, diskthinpool)
+                        if disktemplate not in matchingthintemplates:
+                            raise NameError('No Template found')
                     else:
-                        backingvolume = volumes[disktemplate]['object']
-                    backingxml = backingvolume.XMLDesc(0)
-                    root = ET.fromstring(backingxml)
+                        default_storagepool.refresh(0)
+                        if '/' in disktemplate:
+                            backingvolume = volumespaths[disktemplate]['object']
+                        else:
+                            backingvolume = volumes[disktemplate]['object']
+                        backingxml = backingvolume.XMLDesc(0)
+                        root = ET.fromstring(backingxml)
                 except:
                     shortname = [t for t in defaults.TEMPLATES if defaults.TEMPLATES[t] == disktemplate]
                     if shortname:
@@ -220,54 +342,67 @@ class Kvirt(Kbase):
                     else:
                         msg = "you don't have template %s" % disktemplate
                     return {'result': 'failure', 'reason': msg}
-                backing = backingvolume.path()
-                if '/dev' in backing and diskpooltype == 'dir':
-                    return {'result': 'failure', 'reason': "lvm template can not be used with a dir pool.Leaving..."}
-                if '/dev' not in backing and diskpooltype == 'logical':
-                    return {'result': 'failure', 'reason': "file template can not be used with a lvm pool.Leaving..."}
-                backingxml = """<backingStore type='file' index='1'>
-                                <format type='qcow2'/>
-                                <source file='%s'/>
-                                <backingStore/>
-                                </backingStore>""" % backing
+                if diskthinpool is not None:
+                    backing = None
+                    backingxml = '<backingStore/>'
+                else:
+                    backing = backingvolume.path()
+                    if '/dev' in backing:
+                        backingxml = """<backingStore type='block' index='1'>
+                                        <format type='raw'/>
+                                        <source dev='%s'/>
+                                        </backingStore>""" % backing
+                    else:
+                        backingxml = """<backingStore type='file' index='1'>
+                                        <format type='qcow2'/>
+                                        <source file='%s'/>
+                                        </backingStore>""" % backing
             else:
                 backing = None
                 backingxml = '<backingStore/>'
             volxml = self._xmlvolume(path=diskpath, size=disksize, pooltype=diskpooltype, backing=backing,
                                      diskformat=diskformat)
-            if diskpool in volsxml:
+            if index == 0 and template is not None and diskpooltype in ['logical', 'zfs']\
+                    and diskpool is None and not backing.startswith('/dev'):
+                fixqcow2path = diskpath
+                fixqcow2backing = backing
+            if diskpooltype == 'logical' and diskthinpool is not None:
+                thinsource = template if index == 0 and template is not None else None
+                self._createthinlvm(storagename, diskpoolpath, diskthinpool, backing=thinsource, size=disksize)
+            elif diskpool in volsxml:
                 volsxml[diskpool].append(volxml)
             else:
                 volsxml[diskpool] = [volxml]
-            if diskpooltype == 'logical':
-                diskformat = 'raw'
             if diskwwn is not None and diskbus == 'ide':
                 diskwwn = '0x%016x' % diskwwn
                 diskwwn = "<wwn>%s</wwn>" % diskwwn
             else:
                 diskwwn = ''
-            disksxml = """%s<disk type='file' device='disk'>
+            dtype = 'block' if '/dev' in diskpath else 'file'
+            dsource = 'dev' if '/dev' in diskpath else 'file'
+            if diskpooltype in ['logical', 'zfs'] and (backing is None or backing.startswith('/dev')):
+                diskformat = 'raw'
+            disksxml = """%s<disk type='%s' device='disk'>
                     <driver name='qemu' type='%s'/>
-                    <source file='%s'/>
+                    <source %s='%s'/>
                     %s
                     <target dev='%s' bus='%s'/>
                     %s
-                    </disk>""" % (disksxml, diskformat, diskpath, backingxml, diskdev, diskbus, diskwwn)
+                    </disk>""" % (disksxml, dtype, diskformat, dsource, diskpath, backingxml, diskdev, diskbus,
+                                  diskwwn)
         netxml = ''
         alias = []
+        etcd = None
+        ip = None
         for index, net in enumerate(nets):
+            ovs = False
             macxml = ''
             nettype = 'virtio'
             if isinstance(net, str):
                 netname = net
+                nets[index] = {'name': netname}
             elif isinstance(net, dict) and 'name' in net:
                 netname = net['name']
-                ip = None
-                if ips and len(ips) > index and ips[index] is not None:
-                    ip = ips[index]
-                    nets[index]['ip'] = ip
-                elif 'ip' in nets[index]:
-                    ip = nets[index]['ip']
                 if 'mac' in nets[index]:
                     mac = nets[index]['mac']
                     macxml = "<mac address='%s'/>" % mac
@@ -277,22 +412,35 @@ class Kvirt(Kbase):
                     metadata = """%s<kvirt:ip >%s</kvirt:ip>""" % (metadata, ip)
                 if reservedns and index == 0 and 'alias' in nets[index] and isinstance(nets[index]['alias'], list):
                     alias = nets[index]['alias']
-            if netname in bridges:
+                if 'etcd' in nets[index] and nets[index]['etcd']:
+                    etcd = "eth%s" % index
+                if 'ovs' in nets[index] and nets[index]['ovs']:
+                    ovs = True
+            if ips and len(ips) > index and ips[index] is not None and\
+                    netmasks and len(netmasks) > index and netmasks[index] is not None and gateway is not None:
+                nets[index]['ip'] = ips[index]
+                if index == 0:
+                    ip = ips[index]
+                nets[index]['netmask'] = netmasks[index]
+            if netname in bridges or ovs:
                 sourcenet = 'bridge'
             elif netname in networks:
                 sourcenet = 'network'
             else:
                 return {'result': 'failure', 'reason': "Invalid network %s" % netname}
+            ovsxml = "<virtualport type='openvswitch'/>" if ovs else ''
             netxml = """%s
                      <interface type='%s'>
                      %s
                      <source %s='%s'/>
+                     %s
                      <model type='%s'/>
-                     </interface>""" % (netxml, sourcenet, macxml, sourcenet, netname, nettype)
+                     </interface>""" % (netxml, sourcenet, macxml, sourcenet, netname, ovsxml, nettype)
         metadata = """%s
                     <kvirt:plan>%s</kvirt:plan>
                     </kvirt:info>
                     </metadata>""" % (metadata, plan)
+        qemuextraxml = ''
         isoxml = ''
         if iso is not None:
             try:
@@ -311,13 +459,41 @@ class Kvirt(Kbase):
                       <readonly/>
                     </disk>""" % iso
         if cloudinit:
-            cloudinitiso = "%s/%s.ISO" % (default_poolpath, name)
-            isoxml = """%s<disk type='file' device='cdrom'>
-                      <driver name='qemu' type='raw'/>
-                      <source file='%s'/>
-                      <target dev='hdd' bus='ide'/>
-                      <readonly/>
-                    </disk>""" % (isoxml, cloudinitiso)
+            if template is not None and (template.startswith('coreos') or template.startswith('rhcos')):
+                namespace = "xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'"
+                ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
+                                               domain=domain, reserveip=reserveip, files=files,
+                                               enableroot=enableroot, overrides=overrides, etcd=etcd)
+                with open('/tmp/ignition', 'w') as ignitionfile:
+                    ignitionfile.write(ignitiondata)
+                    identityfile = None
+                    if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
+                        identityfile = os.path.expanduser("~/.kcli/id_rsa")
+                    elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
+                        identityfile = os.path.expanduser("~/.kcli/id_rsa")
+                    if identityfile is not None:
+                        identitycommand = "-i %s" % identityfile
+                    else:
+                        identitycommand = ""
+                    ignitioncmd = 'scp %s -qP %s /tmp/ignition %s@%s:/tmp' % (identitycommand, self.port, self.user,
+                                                                              self.host)
+                    code = os.system(ignitioncmd)
+                    if code != 0:
+                        return {'result': 'failure', 'reason': "Unable to creation ignition data file in hypervisor"}
+                qemuextraxml = """<qemu:commandline>
+                                  <qemu:arg value='-fw_cfg' />
+                                  <qemu:arg value='name=opt/com.coreos/config,file=/tmp/ignition' />
+                                  </qemu:commandline>"""
+            else:
+                cloudinitiso = "%s/%s.ISO" % (default_poolpath, name)
+                dtype = 'block' if '/dev' in diskpath else 'file'
+                dsource = 'dev' if '/dev' in diskpath else 'file'
+                isoxml = """%s<disk type='%s' device='cdrom'>
+                        <driver name='qemu' type='raw'/>
+                        <source %s='%s'/>
+                        <target dev='hdd' bus='ide'/>
+                        <readonly/>
+                        </disk>""" % (isoxml, dtype, dsource, cloudinitiso)
         if tunnel:
             listen = '127.0.0.1'
         else:
@@ -373,7 +549,7 @@ class Kvirt(Kbase):
                      <protocol type="telnet"/>
                      <target port="0"/>
                      </serial>""" % common.get_free_port()
-        vmxml = """<domain type='%s'>
+        vmxml = """<domain type='%s' %s>
                   <name>%s</name>
                   %s
                   <memory unit='MiB'>%d</memory>
@@ -401,8 +577,9 @@ class Kvirt(Kbase):
                     %s
                   </devices>
                     %s
-                    </domain>""" % (virttype, name, metadata, memory, numcpus, machine, disksxml, netxml, isoxml,
-                                    displayxml, serialxml, cpuxml)
+                    %s
+                    </domain>""" % (virttype, namespace, name, metadata, memory, numcpus, machine, disksxml, netxml,
+                                    isoxml, displayxml, serialxml, cpuxml, qemuextraxml)
         if self.debug:
             print(vmxml)
         conn.defineXML(vmxml)
@@ -413,7 +590,10 @@ class Kvirt(Kbase):
             storagepool.refresh(0)
             for volxml in volsxml[pool]:
                 storagepool.createXML(volxml, 0)
-        if cloudinit:
+        if fixqcow2path is not None and fixqcow2backing is not None:
+            self._fixqcow2(fixqcow2path, fixqcow2backing)
+        if cloudinit and template is not None and not template.startswith('coreos') and\
+                not template.startswith('rhcos'):
             common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
                              reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides)
             self._uploadimage(name, pool=default_storagepool)
@@ -421,7 +601,7 @@ class Kvirt(Kbase):
             xml = vm.XMLDesc(0)
             vmxml = ET.fromstring(xml)
             macs = []
-            for element in vmxml.getiterator('interface'):
+            for element in list(vmxml.getiterator('interface')):
                 mac = element.find('mac').get('address')
                 macs.append(mac)
             self._reserve_ip(name, nets, macs)
@@ -434,6 +614,11 @@ class Kvirt(Kbase):
         return {'result': 'success'}
 
     def start(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         conn = self.conn
         status = {0: 'down', 1: 'up'}
         try:
@@ -447,6 +632,11 @@ class Kvirt(Kbase):
             return {'result': 'success'}
 
     def stop(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         conn = self.conn
         status = {0: 'down', 1: 'up'}
         try:
@@ -460,6 +650,15 @@ class Kvirt(Kbase):
             return {'result': 'success'}
 
     def snapshot(self, name, base, revert=False, delete=False, listing=False):
+        """
+
+        :param name:
+        :param base:
+        :param revert:
+        :param delete:
+        :param listing:
+        :return:
+        """
         conn = self.conn
         try:
             vm = conn.lookupByName(base)
@@ -491,14 +690,19 @@ class Kvirt(Kbase):
           %s
           <disks>
             <disk name='vda' snapshot='internal'/>
-            <disk name='hdc' snapshot='no'/>
           </disks>
           %s
           </domainsnapshot>""" % (name, memoryxml, vmxml)
+        # <disk name='hdc' snapshot='no'/>
         vm.snapshotCreateXML(snapxml)
         return {'result': 'success'}
 
     def restart(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         conn = self.conn
         status = {0: 'down', 1: 'up'}
         try:
@@ -512,12 +716,17 @@ class Kvirt(Kbase):
             return {'result': 'success'}
 
     def report(self):
+        """
+
+        """
         conn = self.conn
         status = {0: 'down', 1: 'up'}
         hostname = conn.getHostname()
         cpus = conn.getCPUMap()[0]
         totalmemory = conn.getInfo()[1]
-        print("Host:%s Cpu:%s\n" % (hostname, cpus))
+        print("Connection: %s" % self.url)
+        print("Host: %s" % hostname)
+        print("Cpus: %s" % cpus)
         totalvms = 0
         usedmemory = 0
         for vm in conn.listAllDomains(0):
@@ -526,45 +735,44 @@ class Kvirt(Kbase):
             totalvms += 1
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
-            memory = root.getiterator('memory')[0]
+            memory = list(root.getiterator('memory'))[0]
             unit = memory.attrib['unit']
             memory = memory.text
             if unit == 'KiB':
                 memory = float(memory) / 1024
                 memory = int(memory)
             usedmemory += memory
-        print("Vms Running : %s\n" % (totalvms))
-        print("Memory Used : %sMB of %sMB\n" % (usedmemory, totalmemory))
+        print("Vms Running: %s" % totalvms)
+        print("Memory Used: %sMB of %sMB" % (usedmemory, totalmemory))
         for pool in conn.listStoragePools():
             poolname = pool
             pool = conn.storagePoolLookupByName(pool)
             poolxml = pool.XMLDesc(0)
             root = ET.fromstring(poolxml)
-            pooltype = root.getiterator('pool')[0].get('type')
-            if pooltype == 'dir':
-                poolpath = root.getiterator('path')[0].text
+            pooltype = list(root.getiterator('pool'))[0].get('type')
+            if pooltype in ['dir', 'zfs']:
+                poolpath = list(root.getiterator('path'))[0].text
             else:
-                poolpath = root.getiterator('device')[0].get('path')
+                poolpath = list(root.getiterator('device'))[0].get('path')
             s = pool.info()
             used = "%.2f" % (float(s[2]) / 1024 / 1024 / 1024)
             available = "%.2f" % (float(s[3]) / 1024 / 1024 / 1024)
             # Type,Status, Total space in Gb, Available space in Gb
             used = float(used)
             available = float(available)
-            print("Storage:%s Type:%s Path:%s Used space:%sGB Available space:%sGB" % (poolname, pooltype, poolpath,
-                                                                                       used, available))
-        print
+            print(("Storage:%s Type: %s Path:%s Used space: %sGB Available space: %sGB" % (poolname, pooltype, poolpath,
+                                                                                           used, available)))
         for interface in conn.listAllInterfaces():
             interfacename = interface.name()
             if interfacename == 'lo':
                 continue
-            print("Network:%s Type:bridged" % (interfacename))
+            print("Network: %s Type: bridged" % interfacename)
         for network in conn.listAllNetworks():
             networkname = network.name()
             netxml = network.XMLDesc(0)
             cidr = 'N/A'
             root = ET.fromstring(netxml)
-            ip = root.getiterator('ip')
+            ip = list(root.getiterator('ip'))
             if ip:
                 attributes = ip[0].attrib
                 firstip = attributes.get('address')
@@ -576,14 +784,19 @@ class Kvirt(Kbase):
                     cidr = ip.cidr
                 except:
                     cidr = "N/A"
-            dhcp = root.getiterator('dhcp')
+            dhcp = list(root.getiterator('dhcp'))
             if dhcp:
                 dhcp = True
             else:
                 dhcp = False
-            print("Network:%s Type:routed Cidr:%s Dhcp:%s" % (networkname, cidr, dhcp))
+            print("Network: %s Type: routed Cidr: %s Dhcp: %s" % (networkname, cidr, dhcp))
 
     def status(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         conn = self.conn
         status = {0: 'down', 1: 'up'}
         try:
@@ -593,6 +806,10 @@ class Kvirt(Kbase):
         return status[vm.isActive()]
 
     def list(self):
+        """
+
+        :return:
+        """
         vms = []
         leases = {}
         conn = self.conn
@@ -602,6 +819,7 @@ class Kvirt(Kbase):
                 mac = lease['mac']
                 leases[mac] = ip
         status = {0: 'down', 1: 'up'}
+        bridgeipschecked = []
         for vm in conn.listAllDomains(0):
             template, plan, profile = '', '', ''
             xml = vm.XMLDesc(0)
@@ -609,8 +827,21 @@ class Kvirt(Kbase):
             name = vm.name()
             state = status[vm.isActive()]
             ips = []
-            for element in root.getiterator('interface'):
+            for element in list(root.getiterator('interface')):
                 mac = element.find('mac').get('address')
+                networktype = element.get('type')
+                if networktype == 'bridge':
+                    network = element.find('source').get('bridge')
+                    if self.detect_bridge_ips and network not in bridgeipschecked:
+                        cidr = self.list_networks()[network]['cidr']
+                        command = "bridge_helper.py -i %s -c %s" % (network, cidr)
+                        command = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host,
+                                                                 command)
+                        bridgeips = os.popen(command).read().strip()
+                        bridgeips = yaml.load(bridgeips)
+                        if bridgeips is not None:
+                            leases.update(bridgeips)
+                        bridgeipschecked.append(network)
                 if vm.isActive():
                     if mac in leases:
                         ips.append(leases[mac])
@@ -619,7 +850,7 @@ class Kvirt(Kbase):
                 else:
                     ip = ''
             plan, profile, template, report = '', '', '', ''
-            for element in root.getiterator('{kvirt}info'):
+            for element in list(root.getiterator('{kvirt}info')):
                 e = element.find('{kvirt}plan')
                 if e is not None:
                     plan = e.text
@@ -639,6 +870,12 @@ class Kvirt(Kbase):
         return sorted(vms)
 
     def console(self, name, tunnel=False):
+        """
+
+        :param name:
+        :param tunnel:
+        :return:
+        """
         conn = self.conn
         try:
             vm = conn.lookupByName(name)
@@ -651,7 +888,7 @@ class Kvirt(Kbase):
         else:
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
-            for element in root.getiterator('graphics'):
+            for element in list(root.getiterator('graphics')):
                 attributes = element.attrib
                 if attributes['listen'] == '127.0.0.1' or tunnel:
                     host = '127.0.0.1'
@@ -660,18 +897,27 @@ class Kvirt(Kbase):
                 protocol = attributes['type']
                 port = attributes['port']
                 localport = port
+                consolecommand = ''
                 if tunnel:
                     localport = common.get_free_port()
-                    consolecommand = "ssh -o LogLevel=QUIET -f -p %s -L %s:127.0.0.1:%s %s@%s sleep 10" % (self.port,
-                                                                                                           localport,
-                                                                                                           port,
-                                                                                                           self.user,
-                                                                                                           self.host)
-                    os.popen(consolecommand)
+                    consolecommand += "ssh %s -o LogLevel=QUIET -f -p %s -L %s:127.0.0.1:%s %s@%s sleep 10"\
+                        % (self.identitycommand, self.port, localport, port, self.user, self.host)
+                    if self.debug:
+                        print(consolecommand)
+                    # os.system(consolecommand)
                 url = "%s://%s:%s" % (protocol, host, localport)
-                os.popen("remote-viewer %s &" % url)
+                if self.debug:
+                    print(url)
+                consolecommand += "; remote-viewer %s &" % url
+                # os.popen("remote-viewer %s &" % url)
+                os.popen(consolecommand)
 
     def serialconsole(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         conn = self.conn
         try:
             vm = conn.lookupByName(name)
@@ -684,7 +930,7 @@ class Kvirt(Kbase):
         else:
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
-            serial = root.getiterator('serial')
+            serial = list(root.getiterator('serial'))
             if not serial:
                 print("No serial Console found. Leaving...")
                 return
@@ -698,12 +944,19 @@ class Kvirt(Kbase):
                             print("Remote serial Console requires using ssh . Leaving...")
                             return
                         else:
-                            serialcommand = "ssh -o LogLevel=QUIET -p %s %s@%s nc 127.0.0.1 %s" % (self.port, self.user,
-                                                                                                   self.host,
-                                                                                                   serialport)
+                            serialcommand = "ssh %s -o LogLevel=QUIET -p %s %s@%s nc 127.0.0.1 %s" %\
+                                (self.identitycommand, self.port, self.user, self.host, serialport)
                         os.system(serialcommand)
 
     def info(self, name, output='plain', fields=None, values=False):
+        """
+
+        :param name:
+        :param output:
+        :param fields:
+        :param values:
+        :return:
+        """
         if fields is not None:
             fields = fields.split(',')
         leases = {}
@@ -725,15 +978,15 @@ class Kvirt(Kbase):
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         status = 'down'
         autostart = starts[vm.autostart()]
-        memory = root.getiterator('memory')[0]
+        memory = list(root.getiterator('memory'))[0]
         unit = memory.attrib['unit']
         memory = memory.text
         if unit == 'KiB':
             memory = float(memory) / 1024
             memory = int(memory)
-        numcpus = root.getiterator('vcpu')[0]
+        numcpus = list(root.getiterator('vcpu'))[0]
         numcpus = numcpus.text
-        description = root.getiterator('description')
+        description = list(root.getiterator('description'))
         if description:
             description = description[0].text
         else:
@@ -742,7 +995,7 @@ class Kvirt(Kbase):
             status = 'up'
         yamlinfo = {'name': name, 'autostart': autostart, 'nets': [], 'disks': [], 'snapshots': [], 'status': status}
         plan, profile, template, ip, creationdate = None, None, None, None, None
-        for element in root.getiterator('{kvirt}info'):
+        for element in list(root.getiterator('{kvirt}info')):
             e = element.find('{kvirt}plan')
             if e is not None:
                 plan = e.text
@@ -770,13 +1023,19 @@ class Kvirt(Kbase):
         yamlinfo['cpus'] = numcpus
         yamlinfo['memory'] = memory
         nicnumber = 0
-        for element in root.getiterator('interface'):
+        for element in list(root.getiterator('interface')):
             networktype = element.get('type')
             device = "eth%s" % nicnumber
             mac = element.find('mac').get('address')
             if networktype == 'bridge':
                 network = element.find('source').get('bridge')
                 network_type = 'bridge'
+                if self.detect_bridge_ips:
+                    cidr = self.list_networks()[network]['cidr']
+                    command = "bridge_helper.py -i %s -c %s -m %s" % (network, cidr, mac)
+                    command = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host,
+                                                             command)
+                    ip = os.popen(command).read().strip()
             else:
                 network = element.find('source').get('network')
                 network_type = 'routed'
@@ -787,16 +1046,21 @@ class Kvirt(Kbase):
             nicnumber = nicnumber + 1
         if ip is not None:
             yamlinfo['ip'] = ip
-        for element in root.getiterator('disk'):
+        for element in list(root.getiterator('disk')):
             disktype = element.get('device')
             if disktype == 'cdrom':
                 continue
             device = element.find('target').get('dev')
             diskformat = 'file'
             drivertype = element.find('driver').get('type')
-            path = element.find('source').get('file')
-            volume = conn.storageVolLookupByPath(path)
-            disksize = int(float(volume.info()[1]) / 1024 / 1024 / 1024)
+            imagefiles = [element.find('source').get('file'), element.find('source').get('dev'),
+                          element.find('source').get('volume')]
+            path = next(item for item in imagefiles if item is not None)
+            try:
+                volume = conn.storageVolLookupByPath(path)
+                disksize = int(float(volume.info()[1]) / 1024 / 1024 / 1024)
+            except:
+                disksize = 'N/A'
             yamlinfo['disks'].append({'device': device, 'size': disksize, 'format': diskformat, 'type': drivertype,
                                       'path': path})
         if vm.hasCurrentSnapshot():
@@ -813,6 +1077,11 @@ class Kvirt(Kbase):
         return {'result': 'success'}
 
     def ip(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         leases = {}
         conn = self.conn
         for network in conn.listAllNetworks():
@@ -826,11 +1095,11 @@ class Kvirt(Kbase):
             root = ET.fromstring(xml)
         except:
             return None
-        for element in root.getiterator('{kvirt}info'):
+        for element in list(root.getiterator('{kvirt}info')):
             e = element.find('{kvirt}ip')
             if e is not None:
                 return e.text
-        nic = root.getiterator('interface')[0]
+        nic = list(root.getiterator('interface'))[0]
         mac = nic.find('mac').get('address')
         if vm.isActive() and mac in leases:
             return leases[mac]
@@ -838,29 +1107,49 @@ class Kvirt(Kbase):
             return None
 
     def volumes(self, iso=False):
+        """
+
+        :param iso:
+        :return:
+        """
         isos = []
         templates = []
-        default_templates = [os.path.basename(t) for t in defaults.TEMPLATES.values() if t is not None]
+        default_templates = [os.path.basename(t).replace('.bz2', '') for t in list(defaults.TEMPLATES.values())
+                             if t is not None and 'product-software' not in t]
         conn = self.conn
-        for storage in conn.listStoragePools():
-            storage = conn.storagePoolLookupByName(storage)
-            storage.refresh(0)
-            storagexml = storage.XMLDesc(0)
-            root = ET.fromstring(storagexml)
-            for element in root.getiterator('path'):
-                storagepath = element.text
+        for poolname in conn.listStoragePools():
+            pool = conn.storagePoolLookupByName(poolname)
+            pool.refresh(0)
+            poolxml = pool.XMLDesc(0)
+            root = ET.fromstring(poolxml)
+            for element in list(root.getiterator('path')):
+                poolpath = element.text
                 break
-            for volume in storage.listVolumes():
+            product = list(root.getiterator('product'))
+            if product:
+                thinpool = list(root.getiterator('product'))[0].get('name')
+                matchingtemplates = ["%s/%s" % (poolpath, volume) for volume in self.thintemplates(poolpath, thinpool)
+                                     if volume.endswith('qcow2') or volume.endswith('qc2') or
+                                     volume in default_templates]
+                if matchingtemplates:
+                    templates.extend(matchingtemplates)
+            for volume in pool.listVolumes():
                 if volume.endswith('iso'):
-                    isos.append("%s/%s" % (storagepath, volume))
+                    isos.append("%s/%s" % (poolpath, volume))
                 elif volume.endswith('qcow2') or volume.endswith('qc2') or volume in default_templates:
-                    templates.append("%s/%s" % (storagepath, volume))
+                    templates.append("%s/%s" % (poolpath, volume))
         if iso:
             return sorted(isos, key=lambda s: s.lower())
         else:
             return sorted(templates, key=lambda s: s.lower())
 
     def delete(self, name, snapshots=False):
+        """
+
+        :param name:
+        :param snapshots:
+        :return:
+        """
         conn = self.conn
         try:
             vm = conn.lookupByName(name)
@@ -879,21 +1168,35 @@ class Kvirt(Kbase):
         vmxml = vm.XMLDesc(0)
         root = ET.fromstring(vmxml)
         disks = []
-        for element in root.getiterator('disk'):
+        for index, element in enumerate(list(root.getiterator('disk'))):
             source = element.find('source')
             if source is not None:
-                imagefile = element.find('source').get('file')
-                if imagefile.endswith("%s.ISO" % name) or "%s_" % name in imagefile or "%s.img" % name in imagefile:
+                imagefiles = [element.find('source').get('file'), element.find('source').get('dev'),
+                              element.find('source').get('volume')]
+                imagefile = next(item for item in imagefiles if item is not None)
+                if imagefile.endswith('.iso'):
+                    continue
+                elif imagefile.endswith("%s.ISO" % name) or "%s_" % name in imagefile or "%s.img" % name in imagefile:
                     disks.append(imagefile)
                 else:
                     continue
         if status[vm.isActive()] != "down":
             vm.destroy()
         vm.undefine()
+        founddisks = []
+        thinpools = []
         for storage in conn.listStoragePools():
             deleted = False
             storage = conn.storagePoolLookupByName(storage)
             storage.refresh(0)
+            poolxml = storage.XMLDesc(0)
+            storageroot = ET.fromstring(poolxml)
+            for element in list(storageroot.getiterator('path')):
+                poolpath = element.text
+                break
+            product = list(storageroot.getiterator('product'))
+            if product:
+                thinpools.append(poolpath)
             for stor in storage.listVolumes():
                 for disk in disks:
                     if stor in disk:
@@ -903,29 +1206,39 @@ class Kvirt(Kbase):
                             continue
                         volume.delete(0)
                         deleted = True
+                        founddisks.append(disk)
             if deleted:
                 storage.refresh(0)
-        for element in root.getiterator('interface'):
+        remainingdisks = list(set(disks) - set(founddisks))
+        for p in thinpools:
+            for disk in remainingdisks:
+                if disk.startswith(p):
+                    self._deletelvm(disk)
+        for element in list(root.getiterator('interface')):
             mac = element.find('mac').get('address')
             networktype = element.get('type')
             if networktype != 'bridge':
                 network = element.find('source').get('network')
                 network = conn.networkLookupByName(network)
                 netxml = network.XMLDesc(0)
-                root = ET.fromstring(netxml)
-                for host in root.getiterator('host'):
+                netroot = ET.fromstring(netxml)
+                for host in list(netroot.getiterator('host')):
                     hostmac = host.get('mac')
                     iphost = host.get('ip')
                     hostname = host.get('name')
                     if hostmac == mac:
                         hostentry = "<host mac='%s' name='%s' ip='%s'/>" % (mac, hostname, iphost)
                         network.update(2, 4, 0, hostentry, 1)
-                for host in root.getiterator('host'):
-                    iphost = host.get('ip')
                     hostname = host.find('hostname')
                     if hostname is not None and hostname.text == name:
                         hostentry = '<host ip="%s"><hostname>%s</hostname></host>' % (iphost, name)
                         network.update(2, 10, 0, hostentry, 1)
+                # for host in list(root.getiterator('host')):
+                #    iphost = host.get('ip')
+                #    hostname = host.find('hostname')
+                #    if hostname is not None and hostname.text == name:
+                #        hostentry = '<host ip="%s"><hostname>%s</hostname></host>' % (iphost, name)
+                #        network.update(2, 10, 0, hostentry, 1)
         if ip is not None:
             os.system("ssh-keygen -q -R %s >/dev/null 2>&1" % ip)
             # delete hosts entry
@@ -937,7 +1250,7 @@ class Kvirt(Kbase):
                     break
             if found:
                 print("Deleting hosts entry. sudo password might be asked")
-                os.system("sudo sed -i '/%s/d' /etc/hosts" % hostentry)
+                call("sudo sed -i '/%s/d' /etc/hosts" % hostentry, shell=True)
         return {'result': 'success'}
 
     def _xmldisk(self, diskpath, diskdev, diskbus='virtio', diskformat='qcow2', shareable=False):
@@ -954,21 +1267,28 @@ class Kvirt(Kbase):
         return diskxml
 
     def _xmlvolume(self, path, size, pooltype='file', backing=None, diskformat='qcow2'):
+        disktype = 'file' if pooltype == 'file' else 'block'
         size = int(size) * MB
         if int(size) == 0:
-            size = 500 * 1024
+            size = 512 * 1024
         name = os.path.basename(path)
-        if pooltype == 'block':
+        if pooltype == 'zfs':
             volume = """<volume type='block'>
                         <name>%s</name>
-                        <capacity unit="bytes">%d</capacity>
+                        <key>%s/%s</key>
+                        <source>
+                        </source>
+                        <capacity unit='bytes'>%d</capacity>
                         <target>
-                        <path>%s</path>
-                        <compat>1.1</compat>
-                      </target>
-                    </volume>""" % (name, size, path)
+                        <path>/%s/%s</path>
+                        </target>
+                        </volume>""" % (name, path, name, size, path, name)
             return volume
-        if backing is not None:
+        if backing is not None and pooltype in ['logical', 'zfs'] and backing.startswith('/dev'):
+            diskformat = 'qcow2'
+        if backing is not None and pooltype in ['logical', 'zfs'] and not backing.startswith('/dev'):
+            backingstore = "<backingStore/>"
+        elif backing is not None:
             backingstore = """
 <backingStore>
 <path>%s</path>
@@ -977,7 +1297,7 @@ class Kvirt(Kbase):
         else:
             backingstore = "<backingStore/>"
         volume = """
-<volume type='file'>
+<volume type='%s'>
 <name>%s</name>
 <capacity unit="bytes">%d</capacity>
 <target>
@@ -989,20 +1309,27 @@ class Kvirt(Kbase):
 <compat>1.1</compat>
 </target>
 %s
-</volume>""" % (name, size, path, diskformat, backingstore)
+</volume>""" % (disktype, name, size, path, diskformat, backingstore)
         return volume
 
     def clone(self, old, new, full=False, start=False):
+        """
+
+        :param old:
+        :param new:
+        :param full:
+        :param start:
+        """
         conn = self.conn
         oldvm = conn.lookupByName(old)
         oldxml = oldvm.XMLDesc(0)
         tree = ET.fromstring(oldxml)
-        uuid = tree.getiterator('uuid')[0]
+        uuid = list(tree.getiterator('uuid'))[0]
         tree.remove(uuid)
-        for vmname in tree.getiterator('name'):
+        for vmname in list(tree.getiterator('name')):
             vmname.text = new
         firstdisk = True
-        for disk in tree.getiterator('disk'):
+        for disk in list(tree.getiterator('disk')):
             if firstdisk or full:
                 source = disk.find('source')
                 oldpath = source.get('file')
@@ -1013,7 +1340,7 @@ class Kvirt(Kbase):
                 oldvolumexml = oldvolume.XMLDesc(0)
                 backing = None
                 voltree = ET.fromstring(oldvolumexml)
-                for b in voltree.getiterator('backingStore'):
+                for b in list(voltree.getiterator('backingStore')):
                     backingstoresource = b.find('path')
                     if backingstoresource is not None:
                         backing = backingstoresource.text
@@ -1023,13 +1350,13 @@ class Kvirt(Kbase):
                 pool.createXMLFrom(newvolumexml, oldvolume, 0)
                 firstdisk = False
             else:
-                devices = tree.getiterator('devices')[0]
+                devices = list(tree.getiterator('devices'))[0]
                 devices.remove(disk)
-        for interface in tree.getiterator('interface'):
+        for interface in list(tree.getiterator('interface')):
             mac = interface.find('mac')
             interface.remove(mac)
         if self.host not in ['127.0.0.1', 'localhost']:
-            for serial in tree.getiterator('serial'):
+            for serial in list(tree.getiterator('serial')):
                 source = serial.find('source')
                 source.set('service', str(common.get_free_port()))
         newxml = ET.tostring(tree)
@@ -1052,13 +1379,13 @@ class Kvirt(Kbase):
             network = conn.networkLookupByName(network)
             oldnetxml = network.XMLDesc()
             root = ET.fromstring(oldnetxml)
-            ipentry = root.getiterator('ip')
+            ipentry = list(root.getiterator('ip'))
             if ipentry:
                 attributes = ipentry[0].attrib
                 firstip = attributes.get('address')
                 netmask = attributes.get('netmask')
                 netip = IPNetwork('%s/%s' % (firstip, netmask))
-            dhcp = root.getiterator('dhcp')
+            dhcp = list(root.getiterator('dhcp'))
             if not dhcp:
                 continue
             if not IPAddress(ip) in netip:
@@ -1067,12 +1394,27 @@ class Kvirt(Kbase):
             # network.update(4, 4, 0, '<host mac="%s" name="%s" ip="%s" />' % (mac, name, ip), 2)
 
     def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False):
+        """
+
+        :param name:
+        :param nets:
+        :param domain:
+        :param ip:
+        :param alias:
+        :param force:
+        :return:
+        """
         conn = self.conn
         net = nets[0]
         if isinstance(net, dict):
             network = net.get('name')
         else:
             network = net
+        try:
+            network = conn.networkLookupByName(network)
+        except:
+            print("Skipping DNS reservation on bridged network %s" % network)
+            return
         if ip is None:
             if isinstance(net, dict):
                 ip = net.get('ip')
@@ -1089,16 +1431,15 @@ class Kvirt(Kbase):
         if ip is None:
             print("Couldn't assign DNS")
             return
-        network = conn.networkLookupByName(network)
         oldnetxml = network.XMLDesc()
         root = ET.fromstring(oldnetxml)
-        dns = root.getiterator('dns')
+        dns = list(root.getiterator('dns'))
         if not dns:
-            base = root.getiterator('network')[0]
+            base = list(root.getiterator('network'))[0]
             dns = ET.Element("dns")
             base.append(dns)
             newxml = ET.tostring(root)
-            conn.networkDefineXML(newxml)
+            conn.networkDefineXML(newxml.decode("utf-8"))
         dnsentry = '<host ip="%s"><hostname>%s</hostname>' % (ip, name)
         if domain is not None:
             dnsentry = '%s<hostname>%s.%s</hostname>' % (dnsentry, name, domain)
@@ -1106,16 +1447,16 @@ class Kvirt(Kbase):
             dnsentry = "%s<hostname>%s</hostname>" % (dnsentry, entry)
         dnsentry = "%s</host>" % dnsentry
         if force:
-            for host in root.getiterator('host'):
+            for host in list(root.getiterator('host')):
                 iphost = host.get('ip')
                 if iphost == ip:
                     existing = []
-                    for hostname in host.getiterator('hostname'):
+                    for hostname in list(host.getiterator('hostname')):
                         existing.append(hostname.text)
                     if name in existing:
                         print("Entry already found for %s" % name)
                         return {'result': 'failure', 'reason': "Entry already found found for %s" % name}
-                    oldentry = '<host ip="%s"></host>' % (iphost)
+                    oldentry = '<host ip="%s"></host>' % iphost
                     print("Removing old dns entry for ip %s" % ip)
                     network.update(2, 10, 0, oldentry, 1)
         try:
@@ -1127,6 +1468,13 @@ class Kvirt(Kbase):
             return {'result': 'failure', 'reason': "Entry already found found for %s" % name}
 
     def reserve_host(self, name, nets, domain):
+        """
+
+        :param name:
+        :param nets:
+        :param domain:
+        :return:
+        """
         net = nets[0]
         ip = None
         if isinstance(net, dict):
@@ -1158,30 +1506,44 @@ class Kvirt(Kbase):
                 return
         hostscmd = "sudo sh -c 'echo %s >>/etc/hosts'" % hosts
         print("Creating hosts entry. sudo password might be asked")
-        os.popen(hostscmd)
+        call(hostscmd, shell=True)
 
     def handler(self, stream, data, file_):
+        """
+
+        :param stream:
+        :param data:
+        :param file_:
+        :return:
+        """
         return file_.read(data)
 
-    def _uploadimage(self, name, pool='default', origin='/tmp', suffix='.ISO'):
+    def _uploadimage(self, name, pool='default', pooltype='file', origin='/tmp', suffix='.ISO', size=0):
         name = "%s%s" % (name, suffix)
         conn = self.conn
         poolxml = pool.XMLDesc(0)
         root = ET.fromstring(poolxml)
-        for element in root.getiterator('path'):
+        for element in list(root.getiterator('path')):
             poolpath = element.text
             break
         imagepath = "%s/%s" % (poolpath, name)
-        imagexml = self._xmlvolume(path=imagepath, size=0, diskformat='raw')
+        imagexml = self._xmlvolume(path=imagepath, size=size, diskformat='raw', pooltype=pooltype)
         pool.createXML(imagexml, 0)
         imagevolume = conn.storageVolLookupByPath(imagepath)
         stream = conn.newStream(0)
         imagevolume.upload(stream, 0, 0)
-        with open("%s/%s" % (origin, name)) as ori:
+        with open("%s/%s" % (origin, name), 'rb') as ori:
             stream.sendAll(self.handler, ori)
             stream.finish()
 
     def update_metadata(self, name, metatype, metavalue):
+        """
+
+        :param name:
+        :param metatype:
+        :param metavalue:
+        :return:
+        """
         ET.register_namespace('kvirt', 'kvirt')
         conn = self.conn
         vm = conn.lookupByName(name)
@@ -1194,10 +1556,10 @@ class Kvirt(Kbase):
             print("Machine up. Change will only appear upon next reboot")
         metadata = root.find('metadata')
         kroot, kmeta = None, None
-        for element in root.getiterator('{kvirt}info'):
+        for element in list(root.getiterator('{kvirt}info')):
             kroot = element
             break
-        for element in root.getiterator('{kvirt}%s' % metatype):
+        for element in list(root.getiterator('{kvirt}%s' % metatype)):
             kmeta = element
             break
         if metadata is None:
@@ -1219,10 +1581,16 @@ class Kvirt(Kbase):
             kroot.append(kmeta)
         kmeta.text = metavalue
         newxml = ET.tostring(root)
-        conn.defineXML(newxml)
+        conn.defineXML(newxml.decode("utf-8"))
         return {'result': 'success'}
 
     def update_information(self, name, information):
+        """
+
+        :param name:
+        :param information:
+        :return:
+        """
         conn = self.conn
         vm = conn.lookupByName(name)
         xml = vm.XMLDesc(0)
@@ -1235,10 +1603,16 @@ class Kvirt(Kbase):
         else:
             description.text = information
         newxml = ET.tostring(root)
-        conn.defineXML(newxml)
+        conn.defineXML(newxml.decode("utf-8"))
         return {'result': 'success'}
 
     def update_memory(self, name, memory):
+        """
+
+        :param name:
+        :param memory:
+        :return:
+        """
         conn = self.conn
         memory = str(int(memory) * 1024)
         try:
@@ -1248,15 +1622,21 @@ class Kvirt(Kbase):
         except:
             print("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        memorynode = root.getiterator('memory')[0]
+        memorynode = list(root.getiterator('memory'))[0]
         memorynode.text = memory
-        currentmemory = root.getiterator('currentMemory')[0]
+        currentmemory = list(root.getiterator('currentMemory'))[0]
         currentmemory.text = memory
         newxml = ET.tostring(root)
-        conn.defineXML(newxml)
+        conn.defineXML(newxml.decode("utf-8"))
         return {'result': 'success'}
 
     def update_iso(self, name, iso):
+        """
+
+        :param name:
+        :param iso:
+        :return:
+        """
         isos = self.volumes(iso=True)
         isofound = False
         for i in isos:
@@ -1278,7 +1658,7 @@ class Kvirt(Kbase):
         except:
             print("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        for element in root.getiterator('disk'):
+        for element in list(root.getiterator('disk')):
             disktype = element.get('device')
             if disktype != 'cdrom':
                 continue
@@ -1286,10 +1666,15 @@ class Kvirt(Kbase):
             source.set('file', iso)
             break
         newxml = ET.tostring(root)
-        conn.defineXML(newxml)
+        conn.defineXML(newxml.decode("utf-8"))
         return {'result': 'success'}
 
     def remove_cloudinit(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         conn = self.conn
         try:
             vm = conn.lookupByName(name)
@@ -1298,7 +1683,7 @@ class Kvirt(Kbase):
         except:
             print("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        for element in root.getiterator('disk'):
+        for element in list(root.getiterator('disk')):
             disktype = element.get('device')
             if disktype == 'cdrom':
                 source = element.find('source')
@@ -1309,9 +1694,15 @@ class Kvirt(Kbase):
                 volume.delete(0)
                 element.remove(source)
         newxml = ET.tostring(root)
-        conn.defineXML(newxml)
+        conn.defineXML(newxml.decode("utf-8"))
 
     def update_start(self, name, start=True):
+        """
+
+        :param name:
+        :param start:
+        :return:
+        """
         conn = self.conn
         try:
             vm = conn.lookupByName(name)
@@ -1325,6 +1716,15 @@ class Kvirt(Kbase):
         return {'result': 'success'}
 
     def create_disk(self, name, size, pool=None, thin=True, template=None):
+        """
+
+        :param name:
+        :param size:
+        :param pool:
+        :param thin:
+        :param template:
+        :return:
+        """
         conn = self.conn
         diskformat = 'qcow2'
         if size < 1:
@@ -1336,8 +1736,8 @@ class Kvirt(Kbase):
             pool = conn.storagePoolLookupByName(pool)
             poolxml = pool.XMLDesc(0)
             poolroot = ET.fromstring(poolxml)
-            pooltype = poolroot.getiterator('pool')[0].get('type')
-            for element in poolroot.getiterator('path'):
+            pooltype = list(poolroot.getiterator('pool'))[0].get('type')
+            for element in list(poolroot.getiterator('path')):
                 poolpath = element.text
                 break
         else:
@@ -1349,7 +1749,7 @@ class Kvirt(Kbase):
                 poo = conn.storagePoolLookupByName(p)
                 for vol in poo.listAllVolumes():
                     volumes[vol.name()] = vol.path()
-            if template not in volumes and template not in volumes.values():
+            if template not in volumes and template not in list(volumes.values()):
                 print("Invalid template %s.Leaving..." % template)
             if template in volumes:
                 template = volumes[template]
@@ -1363,6 +1763,17 @@ class Kvirt(Kbase):
         return diskpath
 
     def add_disk(self, name, size=1, pool=None, thin=True, template=None, shareable=False, existing=None):
+        """
+
+        :param name:
+        :param size:
+        :param pool:
+        :param thin:
+        :param template:
+        :param shareable:
+        :param existing:
+        :return:
+        """
         conn = self.conn
         diskformat = 'qcow2'
         diskbus = 'virtio'
@@ -1379,7 +1790,7 @@ class Kvirt(Kbase):
             print("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         currentdisk = 0
-        for element in root.getiterator('disk'):
+        for element in list(root.getiterator('disk')):
             disktype = element.get('device')
             if disktype == 'cdrom':
                 continue
@@ -1399,7 +1810,33 @@ class Kvirt(Kbase):
         conn.defineXML(vmxml)
         return {'result': 'success'}
 
-    def delete_disk(self, name, diskname):
+    def delete_disk_by_name(self, name, pool):
+        """
+
+        :param name:
+        :param pool:
+        :return:
+        """
+        conn = self.conn
+        try:
+            pool = conn.storagePoolLookupByName(pool)
+        except:
+            print("Pool %s not found. Leaving..." % pool)
+            return {'result': 'failure', 'reason': "Pool %s not found" % pool}
+        volume = pool.storageVolLookupByName(name)
+        volume.delete()
+
+    def delete_disk(self, name=None, diskname=None, pool=None):
+        """
+
+        :param name:
+        :param diskname:
+        :param pool:
+        :return:
+        """
+        if name is None:
+            result = self.delete_disk_by_name(diskname, pool)
+            return result
         conn = self.conn
         try:
             vm = conn.lookupByName(name)
@@ -1408,7 +1845,7 @@ class Kvirt(Kbase):
         except:
             print("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        for element in root.getiterator('disk'):
+        for element in list(root.getiterator('disk')):
             disktype = element.get('device')
             diskdev = element.find('target').get('dev')
             diskbus = element.find('target').get('bus')
@@ -1429,6 +1866,10 @@ class Kvirt(Kbase):
         return {'result': 'failure', 'reason': "Disk %s not found in %s" % (diskname, name)}
 
     def list_disks(self):
+        """
+
+        :return:
+        """
         volumes = {}
         for p in self.conn.listStoragePools():
             poo = self.conn.storagePoolLookupByName(p)
@@ -1439,6 +1880,12 @@ class Kvirt(Kbase):
         return volumes
 
     def add_nic(self, name, network):
+        """
+
+        :param name:
+        :param network:
+        :return:
+        """
         conn = self.conn
         networks = {}
         for interface in conn.listAllInterfaces():
@@ -1460,13 +1907,22 @@ class Kvirt(Kbase):
                     %s
                     <model type='virtio'/>
                     </interface>""" % (networktype, source)
-        vm.attachDevice(nicxml)
+        if vm.isActive() == 1:
+            vm.attachDeviceFlags(nicxml, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
+        else:
+            vm.attachDeviceFlags(nicxml, VIR_DOMAIN_AFFECT_CONFIG)
         vm = conn.lookupByName(name)
         vmxml = vm.XMLDesc(0)
         conn.defineXML(vmxml)
         return {'result': 'success'}
 
     def delete_nic(self, name, interface):
+        """
+
+        :param name:
+        :param interface:
+        :return:
+        """
         conn = self.conn
         networks = {}
         nicnumber = 0
@@ -1481,7 +1937,7 @@ class Kvirt(Kbase):
         except:
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        for element in root.getiterator('interface'):
+        for element in list(root.getiterator('interface')):
             device = "eth%s" % nicnumber
             if device == interface:
                 mac = element.find('mac').get('address')
@@ -1502,99 +1958,111 @@ class Kvirt(Kbase):
                     </interface>""" % (networktype, mac, source)
         if self.debug:
             print(nicxml)
-        vm.detachDevice(nicxml)
+        # vm.detachDevice(nicxml)
+        if vm.isActive() == 1:
+            vm.detachDeviceFlags(nicxml, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
+        else:
+            vm.detachDeviceFlags(nicxml, VIR_DOMAIN_AFFECT_CONFIG)
         vm = conn.lookupByName(name)
         vmxml = vm.XMLDesc(0)
         conn.defineXML(vmxml)
         return {'result': 'success'}
 
     def _ssh_credentials(self, name):
-        ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety']
         user = 'root'
+        ip = None
         conn = self.conn
+        leases = {}
+        conn = self.conn
+        for network in conn.listAllNetworks():
+            for lease in network.DHCPLeases():
+                mac = lease['mac']
+                leases[mac] = lease['ipaddr']
         try:
             vm = conn.lookupByName(name)
+            xml = vm.XMLDesc(0)
+            root = ET.fromstring(xml)
         except:
             print("VM %s not found" % name)
-            return '', ''
-        if vm.isActive() != 1:
-            print("Machine down. Cannot ssh...")
-            return '', ''
-        vm = [v for v in self.list() if v[0] == name][0]
-        template = vm[3]
-        if template != '':
-            if 'centos' in template.lower():
-                user = 'centos'
-            elif 'cirros' in template.lower():
-                user = 'cirros'
-            elif [x for x in ubuntus if x in template.lower()]:
-                user = 'ubuntu'
-            elif 'fedora' in template.lower():
-                user = 'fedora'
-            elif 'rhel' in template.lower():
-                user = 'cloud-user'
-            elif 'debian' in template.lower():
-                user = 'debian'
-            elif 'arch' in template.lower():
-                user = 'arch'
-        ip = vm[2]
-        if ip == '':
+            return None, None
+        for element in list(root.getiterator('{kvirt}info')):
+            e = element.find('{kvirt}ip')
+            if e is not None:
+                return e.text
+            e = element.find('{kvirt}template')
+            if e is not None:
+                template = e.text
+                if template != '':
+                    user = common.get_user(template)
+        nic = list(root.getiterator('interface'))[0]
+        mac = nic.find('mac').get('address')
+        network = nic.find('source').get('bridge')
+        networktype = nic.get('type')
+        if vm.isActive() and mac in leases:
+            ip = leases[mac]
+        elif networktype == 'bridge' and self.detect_bridge_ips:
+            cidr = self.list_networks()[network]['cidr']
+            command = "bridge_helper.py -i %s -c %s -m %s" % (network, cidr, mac)
+            command = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host, command)
+            ip = os.popen(command).read().strip()
+        if ip is None:
             print("No ip found. Cannot ssh...")
         return user, ip
 
-    def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, D=None):
+    def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, Y=False,
+            D=None):
+        """
+
+        :param name:
+        :param user:
+        :param local:
+        :param remote:
+        :param tunnel:
+        :param insecure:
+        :param cmd:
+        :param X:
+        :param Y:
+        :param D:
+        :return:
+        """
         u, ip = self._ssh_credentials(name)
+        if ip is None:
+            return None
         if user is None:
             user = u
-        if ip == '':
-            return None
-        else:
-            sshcommand = "%s@%s" % (user, ip)
-            if X:
-                sshcommand = "-X %s" % (sshcommand)
-            if D:
-                sshcommand = "-D %s %s" % (D, sshcommand)
-            if cmd:
-                sshcommand = "%s %s" % (sshcommand, cmd)
-            if self.host not in ['localhost', '127.0.0.1'] and tunnel:
-                sshcommand = "-o ProxyCommand='ssh -qp %s -W %%h:%%p %s@%s' %s" % (self.port, self.user, self.host,
-                                                                                   sshcommand)
-            if local is not None:
-                sshcommand = "-L %s %s" % (local, sshcommand)
-            if remote is not None:
-                sshcommand = "-R %s %s" % (remote, sshcommand)
-            if insecure:
-                sshcommand = "ssh -o LogLevel=quiet -o 'UserKnownHostsFile=/dev/null' -o 'StrictHostKeyChecking=no' %s"\
-                    % sshcommand
-            else:
-                sshcommand = "ssh %s" % sshcommand
-            if self.debug:
-                print(sshcommand)
-            return sshcommand
+        sshcommand = common.ssh(name, ip=ip, host=self.host, port=self.port, hostuser=self.user, user=user,
+                                local=local, remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, Y=Y, D=D,
+                                debug=self.debug)
+        return sshcommand
 
     def scp(self, name, user=None, source=None, destination=None, tunnel=False, download=False, recursive=False):
-        u, ip = self._ssh_credentials(name)
-        if user is None:
-            user = u
-        if ip == '':
-            print("No ip found. Cannot scp...")
-        else:
-            if self.host not in ['localhost', '127.0.0.1'] and tunnel:
-                arguments = "-o ProxyCommand='ssh -qp %s -W %%h:%%p %s@%s'" % (self.port, self.user, self.host)
-            else:
-                arguments = ''
-            scpcommand = 'scp'
-            if recursive:
-                scpcommand = "%s -r" % scpcommand
-            if download:
-                scpcommand = "%s %s %s@%s:%s %s" % (scpcommand, arguments, user, ip, source, destination)
-            else:
-                scpcommand = "%s %s %s %s@%s:%s" % (scpcommand, arguments, source, user, ip, destination)
-            if self.debug:
-                print(scpcommand)
-            return scpcommand
+        """
 
-    def create_pool(self, name, poolpath, pooltype='dir', user='qemu'):
+        :param name:
+        :param user:
+        :param source:
+        :param destination:
+        :param tunnel:
+        :param download:
+        :param recursive:
+        :return:
+        """
+        u, ip = self._ssh_credentials(name)
+        scpcommand = common.scp(name, ip=ip, host=self.host, port=self.port, hostuser=self.user, user=u,
+                                source=source, destination=destination, recursive=recursive, tunnel=tunnel,
+                                debug=self.debug, download=False)
+        return scpcommand
+
+    def create_pool(self, name, poolpath, pooltype='dir', user='qemu', thinpool=None):
+        """
+
+        :param name:
+        :param poolpath:
+        :param pooltype:
+        :param user:
+        :param thinpool:
+        :return:
+        """
         conn = self.conn
         for pool in conn.listStoragePools():
             if pool == name:
@@ -1609,17 +2077,17 @@ class Kvirt(Kbase):
                         print("Couldn't create directory %s.Leaving..." % poolpath)
                         return 1
             elif self.protocol == 'ssh':
-                cmd1 = 'ssh -p %s %s@%s "test -d %s || mkdir %s"' % (self.port, self.user, self.host, poolpath,
-                                                                     poolpath)
-                cmd2 = 'ssh -p %s -t %s@%s "sudo chown %s %s"' % (self.port, self.user, self.host, user, poolpath)
+                cmd1 = 'ssh %s -p %s %s@%s "test -d %s || mkdir %s"' % (self.identitycommand, self.port, self.user,
+                                                                        self.host, poolpath, poolpath)
+                cmd2 = 'ssh %s -p %s -t %s@%s "sudo chown %s %s"' % (self.identitycommand, self.port, self.user,
+                                                                     self.host, user, poolpath)
                 return1 = os.system(cmd1)
                 if return1 > 0:
                     print("Couldn't create directory %s.Leaving..." % poolpath)
                     return
                 return2 = os.system(cmd2)
                 if return2 > 0:
-                    print("Couldn't change permission of directory %s to qemu.Leaving..." % poolpath)
-                    return
+                    print("Couldn't change permission of directory %s to qemu" % poolpath)
             else:
                 print("Make sur %s directory exists on hypervisor" % name)
             poolxml = """<pool type='dir'>
@@ -1630,29 +2098,46 @@ class Kvirt(Kbase):
                          <path>%s</path>
                          </target>
                          </pool>""" % (name, poolpath)
-        elif pooltype == 'logical':
+        elif pooltype == 'lvm':
+            thinpoolxml = "<product name='%s'/>" % thinpool if thinpool is not None else ''
             poolxml = """<pool type='logical'>
                          <name>%s</name>
                          <source>
-                         <device path='%s'/>
                          <name>%s</name>
                          <format type='lvm2'/>
+                         %s
                          </source>
                          <target>
                          <path>/dev/%s</path>
                          </target>
-                         </pool>""" % (name, poolpath, name, name)
+                         </pool>""" % (name, poolpath, thinpoolxml, poolpath)
+        elif pooltype == 'zfs':
+            poolxml = """<pool type='zfs'>
+                         <name>%s</name>
+                         <source>
+                         <name>%s</name>
+                         </source>
+                         </pool>""" % (name, poolpath)
         else:
             print("Invalid pool type %s.Leaving..." % pooltype)
             return {'result': 'failure', 'reason': "Invalid pool type %s" % pooltype}
         pool = conn.storagePoolDefineXML(poolxml, 0)
         pool.setAutostart(True)
-        if pooltype == 'logical':
-            pool.build()
+        # if pooltype == 'lvm':
+        #    pool.build()
         pool.create()
         return {'result': 'success'}
 
     def add_image(self, image, pool, cmd=None, name=None, size=1):
+        """
+
+        :param image:
+        :param pool:
+        :param cmd:
+        :param name:
+        :param size:
+        :return:
+        """
         poolname = pool
         shortimage = os.path.basename(image).split('?')[0]
         conn = self.conn
@@ -1665,52 +2150,108 @@ class Kvirt(Kbase):
             return {'result': 'failure', 'reason': "Pool %s not found" % poolname}
         poolxml = pool.XMLDesc(0)
         root = ET.fromstring(poolxml)
-        pooltype = root.getiterator('pool')[0].get('type')
-        if pooltype == 'dir':
-            poolpath = root.getiterator('path')[0].text
-        else:
-            poolpath = root.getiterator('device')[0].get('path')
-            return {'result': 'failure', 'reason': "Upload to a lvm pool not implemented not found"}
+        pooltype = list(root.getiterator('pool'))[0].get('type')
+        poolpath = list(root.getiterator('path'))[0].text
+        downloadpath = poolpath if pooltype == 'dir' else '/tmp'
         if shortimage in volumes:
             return {'result': 'failure', 'reason': "Template %s already exists in pool %s" % (shortimage, poolname)}
         if self.host == 'localhost' or self.host == '127.0.0.1':
-            downloadcmd = 'curl -Lo %s/%s -f %s' % (poolpath, shortimage, image)
+            downloadcmd = 'curl -Lo %s/%s -f %s' % (downloadpath, shortimage, image)
         elif self.protocol == 'ssh':
-            downloadcmd = 'ssh -p %s %s@%s "curl -Lo %s/%s -f %s"' % (self.port, self.user, self.host, poolpath,
-                                                                      shortimage, image)
+            downloadcmd = 'ssh %s -p %s %s@%s "curl -Lo %s/%s -f %s"' % (self.identitycommand, self.port, self.user,
+                                                                         self.host, downloadpath, shortimage, image)
         code = os.system(downloadcmd)
         if code != 0:
             return {'result': 'failure', 'reason': "Unable to download indicated template"}
-        pool.refresh()
+        if shortimage.endswith('bz2'):
+            if self.host == 'localhost' or self.host == '127.0.0.1':
+                if find_executable('bunzip2') is not None:
+                    uncompresscmd = "bunzip2 %s/%s" % (poolpath, shortimage)
+                    os.system(uncompresscmd)
+                else:
+                    common.pprint("bunzip2 not found. Can't uncompress image", color="blue")
+            elif self.protocol == 'ssh':
+                uncompresscmd = 'ssh %s -p %s %s@%s "bunzip2 %s/%s"' % (self.identitycommand, self.port, self.user,
+                                                                        self.host, poolpath, shortimage)
+                os.system(uncompresscmd)
+            shortimage = shortimage.replace('.bz2', '')
+        if shortimage.endswith('gz'):
+            if self.host == 'localhost' or self.host == '127.0.0.1':
+                if find_executable('gunzip') is not None:
+                    uncompresscmd = "gunzip %s/%s" % (poolpath, shortimage)
+                    os.system(uncompresscmd)
+                else:
+                    common.pprint("gunzip not found. Can't uncompress image", color="blue")
+            elif self.protocol == 'ssh':
+                uncompresscmd = 'ssh %s -p %s %s@%s "gunzip %s/%s"' % (self.identitycommand, self.port, self.user,
+                                                                       self.host, poolpath, shortimage)
+                os.system(uncompresscmd)
+            shortimage = shortimage.replace('.gz', '')
+        if shortimage.endswith('xz'):
+            if self.host == 'localhost' or self.host == '127.0.0.1':
+                if find_executable('unxz') is not None:
+                    uncompresscmd = "unxz %s/%s" % (poolpath, shortimage)
+                    os.system(uncompresscmd)
+                else:
+                    common.pprint("unxz not found. Can't uncompress image", color="blue")
+            elif self.protocol == 'ssh':
+                uncompresscmd = 'ssh -p %s %s@%s "unxz %s/%s"' % (self.identitycommand, self.port, self.user, self.host,
+                                                                  poolpath, shortimage)
+                os.system(uncompresscmd)
+            shortimage = shortimage.replace('.xz', '')
         if cmd is not None:
             if self.host == 'localhost' or self.host == '127.0.0.1':
                 if find_executable('virt-customize') is not None:
                     cmd = "virt-customize -a %s/%s --run-command '%s'" % (poolpath, shortimage, cmd)
                     os.system(cmd)
             elif self.protocol == 'ssh':
-                cmd = 'ssh -p %s %s@%s "virt-customize -a %s/%s --run-command \'%s\'"' % (self.port, self.user,
-                                                                                          self.host, poolpath,
-                                                                                          shortimage, cmd)
+                cmd = 'ssh %s -p %s %s@%s "virt-customize -a %s/%s --run-command \'%s\'"' % (self.identitycommand,
+                                                                                             self.port, self.user,
+                                                                                             self.host, poolpath,
+                                                                                             shortimage, cmd)
                 os.system(cmd)
+        if pooltype in ['logical', 'zfs']:
+            product = list(root.getiterator('product'))
+            if product:
+                thinpool = list(root.getiterator('product'))[0].get('name')
+            else:
+                thinpool = None
+            self.add_image_to_deadpool(poolname, pooltype, poolpath, shortimage, thinpool)
+            return {'result': 'success'}
+        pool.refresh()
         return {'result': 'success'}
 
-    def create_network(self, name, cidr, dhcp=True, nat=True, domain=None, plan='kvirt', pxe=None):
+    def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', pxe=None, vlan=None):
+        """
+
+        :param name:
+        :param cidr:
+        :param dhcp:
+        :param nat:
+        :param domain:
+        :param plan:
+        :param pxe:
+        :param vlan:
+        :return:
+        """
         conn = self.conn
         networks = self.list_networks()
-        cidrs = [network['cidr'] for network in networks.values()]
+        if cidr is None:
+            return {'result': 'failure', 'reason': "Missing Cidr"}
+        cidrs = [network['cidr'] for network in list(networks.values())]
         if name in networks:
             return {'result': 'failure', 'reason': "Network %s already exists" % name}
         try:
-            range = IpRange(cidr)
-        except TypeError:
+            range = IPNetwork(cidr)
+        except:
             return {'result': 'failure', 'reason': "Invalid Cidr %s" % cidr}
         if IPNetwork(cidr) in cidrs:
             return {'result': 'failure', 'reason': "Cidr %s already exists" % cidr}
         netmask = IPNetwork(cidr).netmask
-        gateway = range[1]
+        gateway = str(range[1])
         if dhcp:
-            start = range[2]
-            end = range[-2]
+            start = str(range[2])
+            end = str(range[-2])
             dhcpxml = """<dhcp>
                     <range start='%s' end='%s'/>""" % (start, end)
             if pxe is not None:
@@ -1731,7 +2272,7 @@ class Kvirt(Kbase):
         <kvirt:info xmlns:kvirt="kvirt">
         <kvirt:plan>%s</kvirt:plan>
         </kvirt:info>
-        </metadata>""" % (plan)
+        </metadata>""" % plan
         networkxml = """<network><name>%s</name>
                     %s
                     %s
@@ -1745,7 +2286,13 @@ class Kvirt(Kbase):
         new_net.create()
         return {'result': 'success'}
 
-    def delete_network(self, name=None):
+    def delete_network(self, name=None, cidr=None):
+        """
+
+        :param name:
+        :param cidr:
+        :return:
+        """
         conn = self.conn
         try:
             network = conn.networkLookupByName(name)
@@ -1761,6 +2308,10 @@ class Kvirt(Kbase):
         return {'result': 'success'}
 
     def list_pools(self):
+        """
+
+        :return:
+        """
         pools = []
         conn = self.conn
         for pool in conn.listStoragePools():
@@ -1768,6 +2319,10 @@ class Kvirt(Kbase):
         return pools
 
     def list_networks(self):
+        """
+
+        :return:
+        """
         networks = {}
         conn = self.conn
         for network in conn.listAllNetworks():
@@ -1775,25 +2330,26 @@ class Kvirt(Kbase):
             netxml = network.XMLDesc(0)
             cidr = 'N/A'
             root = ET.fromstring(netxml)
-            ip = root.getiterator('ip')
+            ip = list(root.getiterator('ip'))
             if ip:
                 attributes = ip[0].attrib
                 firstip = attributes.get('address')
                 netmask = attributes.get('netmask')
+                netmask = attributes.get('prefix') if netmask is None else netmask
                 ip = IPNetwork('%s/%s' % (firstip, netmask))
                 cidr = ip.cidr
-            dhcp = root.getiterator('dhcp')
+            dhcp = list(root.getiterator('dhcp'))
             if dhcp:
                 dhcp = True
             else:
                 dhcp = False
-            domain = root.getiterator('domain')
+            domain = list(root.getiterator('domain'))
             if domain:
                 attributes = domain[0].attrib
                 domainname = attributes.get('name')
             else:
                 domainname = networkname
-            forward = root.getiterator('forward')
+            forward = list(root.getiterator('forward'))
             if forward:
                 attributes = forward[0].attrib
                 mode = attributes.get('mode')
@@ -1801,7 +2357,7 @@ class Kvirt(Kbase):
                 mode = 'isolated'
             networks[networkname] = {'cidr': cidr, 'dhcp': dhcp, 'domain': domainname, 'type': 'routed', 'mode': mode}
             plan = 'N/A'
-            for element in root.getiterator('{kvirt}info'):
+            for element in list(root.getiterator('{kvirt}info')):
                 e = element.find('{kvirt}plan')
                 if e is not None:
                     plan = e.text
@@ -1812,7 +2368,7 @@ class Kvirt(Kbase):
                 continue
             netxml = interface.XMLDesc(0)
             root = ET.fromstring(netxml)
-            ip = root.getiterator('ip')
+            ip = list(root.getiterator('ip'))
             if ip:
                 attributes = ip[0].attrib
                 ip = attributes.get('address')
@@ -1823,21 +2379,35 @@ class Kvirt(Kbase):
                 cidr = 'N/A'
             networks[interfacename] = {'cidr': cidr, 'dhcp': 'N/A', 'type': 'bridged', 'mode': 'N/A'}
             plan = 'N/A'
-            for element in root.getiterator('{kvirt}info'):
+            for element in list(root.getiterator('{kvirt}info')):
                 e = element.find('{kvirt}plan')
                 if e is not None:
                     plan = e.text
             networks[interfacename]['plan'] = plan
         return networks
 
+    def list_subnets(self):
+        """
+
+        :return:
+        """
+        print("not implemented")
+        return {}
+
     def delete_pool(self, name, full=False):
+        """
+
+        :param name:
+        :param full:
+        :return:
+        """
         conn = self.conn
         try:
             pool = conn.storagePoolLookupByName(name)
         except:
             print("Pool %s not found. Leaving..." % name)
             return {'result': 'failure', 'reason': "Pool %s not found" % name}
-        if full:
+        if pool.isActive() and full:
             for vol in pool.listAllVolumes():
                 vol.delete(0)
         if pool.isActive():
@@ -1846,12 +2416,17 @@ class Kvirt(Kbase):
         return {'result': 'success'}
 
     def network_ports(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         conn = self.conn
         machines = []
         for vm in conn.listAllDomains(0):
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
-            for element in root.getiterator('interface'):
+            for element in list(root.getiterator('interface')):
                 networktype = element.get('type')
                 if networktype == 'bridge':
                     network = element.find('source').get('bridge')
@@ -1862,6 +2437,11 @@ class Kvirt(Kbase):
         return machines
 
     def vm_ports(self, name):
+        """
+
+        :param name:
+        :return:
+        """
         conn = self.conn
         networks = []
         try:
@@ -1871,7 +2451,7 @@ class Kvirt(Kbase):
             return networks
         xml = vm.XMLDesc(0)
         root = ET.fromstring(xml)
-        for element in root.getiterator('interface'):
+        for element in list(root.getiterator('interface')):
             networktype = element.get('type')
             if networktype == 'bridge':
                 network = element.find('source').get('bridge')
@@ -1891,20 +2471,141 @@ class Kvirt(Kbase):
             return None
         netxml = net.XMLDesc(0)
         root = ET.fromstring(netxml)
-        bridge = root.getiterator('bridge')
+        bridge = list(root.getiterator('bridge'))
         if bridge:
             attributes = bridge[0].attrib
             bridge = attributes.get('name')
         return bridge
 
     def get_pool_path(self, pool):
+        """
+
+        :param pool:
+        :return:
+        """
         conn = self.conn
         pool = conn.storagePoolLookupByName(pool)
         poolxml = pool.XMLDesc(0)
         root = ET.fromstring(poolxml)
-        pooltype = root.getiterator('pool')[0].get('type')
-        if pooltype == 'dir':
-            poolpath = root.getiterator('path')[0].text
+        pooltype = list(root.getiterator('pool'))[0].get('type')
+        if pooltype in ['dir', 'logical', 'zfs']:
+            poolpath = list(root.getiterator('path'))[0].text
         else:
-            poolpath = root.getiterator('device')[0].get('path')
+            poolpath = list(root.getiterator('device'))[0].get('path')
+        if pooltype == 'logical':
+            product = list(root.getiterator('product'))
+            if product:
+                thinpool = list(root.getiterator('product'))[0].get('name')
+                poolpath += " (thinpool:%s)" % thinpool
         return poolpath
+
+    def flavors(self):
+        """
+
+        :return:
+        """
+        return []
+
+    def thintemplates(self, path, thinpool):
+        """
+
+        :param path:
+        :param thinpool:
+        :return:
+        """
+        thincommand = ("lvs -o lv_name  %s -S 'lv_attr =~ ^V && origin = \"\" && pool_lv = \"%s\"'  --noheadings"
+                       % (path, thinpool))
+        if self.protocol == 'ssh':
+            thincommand = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host,
+                                                         thincommand)
+        results = os.popen(thincommand).read().strip()
+        if results == '':
+            return []
+        return [name.strip() for name in results.split('\n')]
+
+    def _fixqcow2(self, path, backing):
+        command = "qemu-img create -q -f qcow2 -b %s -F qcow2 %s" % (backing, path)
+        if self.protocol == 'ssh':
+            command = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host, command)
+        os.system(command)
+
+    def add_image_to_deadpool(self, poolname, pooltype, poolpath, shortimage, thinpool=None):
+        """
+
+        :param poolname:
+        :param pooltype:
+        :param poolpath:
+        :param shortimage:
+        :param thinpool:
+        :return:
+        """
+        sizecommand = "qemu-img info /tmp/%s --output=json" % shortimage
+        if self.protocol == 'ssh':
+            sizecommand = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host,
+                                                         sizecommand)
+        size = os.popen(sizecommand).read().strip()
+        virtualsize = json.loads(size)['virtual-size']
+        if pooltype == 'logical':
+            if thinpool is not None:
+                command = "lvcreate -qq -V %sb -T %s/%s -n %s" % (virtualsize, poolpath, thinpool, shortimage)
+            else:
+                command = "lvcreate -qq -L %sb -n %s %s" % (virtualsize, shortimage, poolpath)
+        elif pooltype == 'zfs':
+            command = "zfs create -V %s %s/%s" % (virtualsize, poolname, shortimage)
+        else:
+            common.pprint("Invalid pooltype %s" % pooltype, color='red')
+            return
+        command += "; qemu-img convert -p -f qcow2 -O raw -t none -T none /tmp/%s %s/%s" % (shortimage, poolpath,
+                                                                                            shortimage)
+        command += "; rm -rf /tmp/%s" % shortimage
+        if self.protocol == 'ssh':
+            command = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host, command)
+        os.system(command)
+
+    def _createthinlvm(self, name, path, thinpool, backing=None, size=None):
+        if backing is not None:
+            command = "lvcreate -qq -ay -K -s --name %s %s/%s" % (name, path, backing)
+        else:
+            command = "lvcreate -qq -V %sG -T %s/%s -n %s" % (size, path, thinpool, name)
+        if self.protocol == 'ssh':
+            command = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host, command)
+        os.system(command)
+
+    def _deletelvm(self, disk):
+        command = "lvremove -qqy %s" % disk
+        if self.protocol == 'ssh':
+            command = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host, command)
+        os.system(command)
+
+    def export(self, name, template=None):
+        """
+
+        :param name:
+        :param template:
+        :return:
+        """
+        newname = template if template is not None else "template-%s" % name
+        conn = self.conn
+        oldvm = conn.lookupByName(name)
+        oldxml = oldvm.XMLDesc(0)
+        tree = ET.fromstring(oldxml)
+        for disk in list(tree.getiterator('disk')):
+            source = disk.find('source')
+            oldpath = source.get('file')
+            oldvolume = self.conn.storageVolLookupByPath(oldpath)
+            pool = oldvolume.storagePoolLookupByVolume()
+            oldinfo = oldvolume.info()
+            oldvolumesize = (float(oldinfo[1]) / 1024 / 1024 / 1024)
+            oldvolumexml = oldvolume.XMLDesc(0)
+            backing = None
+            voltree = ET.fromstring(oldvolumexml)
+            for b in list(voltree.getiterator('backingStore')):
+                backingstoresource = b.find('path')
+                if backingstoresource is not None:
+                    backing = backingstoresource.text
+            newpath = oldpath.replace(name, newname).replace('.img', '.qcow2')
+            source.set('file', newpath)
+            newvolumexml = self._xmlvolume(newpath, oldvolumesize, backing=backing)
+            pool.createXMLFrom(newvolumexml, oldvolume, 0)
+            break
+        return {'result': 'success'}

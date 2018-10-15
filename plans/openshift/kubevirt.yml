@@ -1,10 +1,7 @@
 parameters:
-   docker_disk_size: 60
-   kubevirt_version: v0.4.0
-   initializer: false
-   openshift_version: 3.9
-   metrics: false
-   memory: 8192
+   baseplan: upstream.yml
+   kubevirt_version: v0.9.1
+   emulation: false
 
 kubevirt:
  template: CentOS-7-x86_64-GenericCloud.qcow2
@@ -13,14 +10,9 @@ kubevirt:
  nets:
   - default
  disks:
-  - size: 10
+  - size: 60
   - size: [[ docker_disk_size ]] 
  pool: default
- files:
-  - path: /root/vm.yml
-    origin: vm.yml
-  - path: /root/iscsi-demo-target.yaml
-    origin: iscsi-demo-target.yaml
  scripts: 
   - requirements.sh
   - upstream.sh

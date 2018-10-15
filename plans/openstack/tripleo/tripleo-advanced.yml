@@ -1,4 +1,5 @@
 parameters:
+ template: rhel-server-7.5-x86_64-kvm.qcow2
  user: testk
  password: testk
  project: testk
@@ -16,7 +17,8 @@ tripleopublic:
  dhcp: False
 
 undercloud:
- template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+ template: [[ template ]]
+ rhnregister: true
  memory: 8192
  numcpus: 2
  disks:
@@ -37,7 +39,6 @@ undercloud:
   - echo GATEWAY=192.168.101.1 >> /etc/sysconfig/network
   - echo nameserver 192.168.101.1 >> /etc/resolv.conf
  scripts:
-  - ~/register.sh
   - common/newton.sh
   - common/undercloud_pre.sh
  files:

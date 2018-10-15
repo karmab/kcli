@@ -1,8 +1,10 @@
 parameters:
  password: unix1234
+ template: rhel-server-7.5-x86_64-kvm.qcow2
 
 rhvengine:
- template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+ template: [[ template ]]
+ rhnregister: true
  memory: 8192
  numcpus: 2
  nets:
@@ -13,14 +15,14 @@ rhvengine:
  domain: default
  reservedns: true
  scripts: 
-  - ~/register.sh
   - nfs.sh
   - advanced/subscription_engine.sh
   - advanced/engine.sh
   - advanced/provision.sh
 
 rhvnode01:
- template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+ template: [[ template ]]
+ rhnregister: true
  memory: 8192
  cpumodel: host-model
  cpuflags:
@@ -37,12 +39,12 @@ rhvnode01:
  domain: default
  reservedns: true
  scripts: 
-  - ~/register.sh
   - advanced/subscription_node.sh
   - advanced/node.sh
 
 rhvnode02:
- template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+ template: [[ template ]]
+ rhnregister: true
  memory: 8192
  cpumodel: host-model
  cpuflags:
@@ -59,7 +61,6 @@ rhvnode02:
  domain: default
  reservedns: true
  scripts: 
-  - ~/register.sh
   - advanced/subscription_node.sh
   - advanced/node.sh
  files:

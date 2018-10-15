@@ -8,7 +8,7 @@ vm1:
   reservedns: True
   reservehost: False
 vm2:
-  memory: 512
+  memory: 1024
   numcpus: 1
   cloudinit: false
   nets: 
@@ -18,3 +18,7 @@ vm2:
   reservedns: False
   cmds:
    - echo this stuff works > /tmp/result.txt
+vm3:
+  memory: 512
+  numcpus: 1
+  cloudinit: false

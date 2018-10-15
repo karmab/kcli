@@ -1,7 +1,7 @@
 USER="root"
 jq . << EOF > ~/instackenv.json
 {
-  "ssh-user": "$USER",
+  "ssh-user": "${USER}",
   "ssh-key": "",
   "power_manager": "nova.virt.baremetal.virtual_power_driver.VirtualPowerManager",
   "host-ip": "192.168.101.1",
@@ -19,7 +19,7 @@ jq . << EOF > ~/instackenv.json
       "memory": "4096",
       "disk": "30",
       "arch": "x86_64",
-      "pm_user": "$USER"
+      "pm_user": "${USER}"
     },
     {
       "node": "tricompute01",
@@ -33,7 +33,7 @@ jq . << EOF > ~/instackenv.json
       "memory": "4096",
       "disk": "30",
       "arch": "x86_64",
-      "pm_user": "$USER"
+      "pm_user": "${USER}"
     }
   ]
 }

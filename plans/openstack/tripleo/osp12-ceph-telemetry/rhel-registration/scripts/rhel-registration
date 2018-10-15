@@ -1,0 +1,272 @@
+#!/bin/bash
+
+# dib-lint: disable=setu sete setpipefail dibdebugtrace
+
+set -eu
+set -o pipefail
+
+OK=/mnt/state/var/lib/rhsm/rhsm.ok
+
+if [ -e ${OK} ] ; then
+    exit 0
+fi
+
+retry_max_count=10
+opts=
+config_opts=
+attach_opts=
+sat5_opts=
+repos="repos --enable rhel-7-server-rpms"
+satellite_repo=${REG_SAT_REPO}
+proxy_host=
+proxy_port=
+proxy_url=
+proxy_username=
+proxy_password=
+
+# process variables..
+if [ -n "${REG_AUTO_ATTACH:-}" ]; then
+    opts="$opts --auto-attach"
+
+    if [ -n "${REG_SERVICE_LEVEL:-}" ]; then
+        opts="$opts --servicelevel $REG_SERVICE_LEVEL"
+    fi
+
+    if [ -n "${REG_RELEASE:-}" ]; then
+        opts="$opts --release=$REG_RELEASE"
+    fi
+else
+    if [ -n "${REG_SERVICE_LEVEL:-}" ]; then
+        echo "WARNING: REG_SERVICE_LEVEL set without REG_AUTO_ATTACH."
+    fi
+
+    if [ -n "${REG_RELEASE:-}" ]; then
+        echo "WARNING: REG_RELEASE set without REG_AUTO_ATTACH."
+    fi
+
+    if [ -n "${REG_POOL_ID:-}" ]; then
+        attach_opts="$attach_opts --pool=$REG_POOL_ID"
+    fi
+fi
+
+if [ -n "${REG_BASE_URL:-}" ]; then
+    opts="$opts --baseurl=$REG_BASE_URL"
+fi
+
+if [ -n "${REG_ENVIRONMENT:-}" ]; then
+    opts="$opts --env=$REG_ENVIRONMENT"
+fi
+
+if [ -n "${REG_FORCE:-}" ]; then
+    opts="$opts --force"
+    sat5_opts="$sat5_opts --force"
+fi
+
+if [ -n "${REG_SERVER_URL:-}" ]; then
+    opts="$opts --serverurl=$REG_SERVER_URL"
+fi
+
+if [ -n "${REG_ACTIVATION_KEY:-}" ]; then
+    opts="$opts --activationkey=$REG_ACTIVATION_KEY"
+    sat5_opts="$sat5_opts --activationkey=$REG_ACTIVATION_KEY"
+
+    if [ -z "${REG_ORG:-}" ]; then
+        echo "WARNING: REG_ACTIVATION_KEY set without REG_ORG."
+    fi
+else
+    echo "WARNING: Support for registering with a username and password is deprecated."
+    echo "Please use activation keys instead.  See the README for more information."
+    if [ -n "${REG_PASSWORD:-}" ]; then
+        opts="$opts --password $REG_PASSWORD"
+    fi
+
+    if [ -n "${REG_USER:-}" ]; then
+        opts="$opts --username $REG_USER"
+    fi
+fi
+
+if [ -n "${REG_MACHINE_NAME:-}" ]; then
+    opts="$opts --name $REG_MACHINE_NAME"
+    sat5_opts="$sat5_opts --profilename=$REG_MACHINE_NAME"
+fi
+
+if [ -n "${REG_ORG:-}" ]; then
+    opts="$opts --org=$REG_ORG"
+    sat5_opts="$sat5_opts --systemorgid=$REG_ORG"
+fi
+
+if [ -n "${REG_REPOS:-}" ]; then
+    for repo in $(echo ${REG_REPOS} | tr ',' '\n'); do
+        repos="$repos --enable $repo"
+    done
+fi
+
+if [ -n "${REG_TYPE:-}" ]; then
+    opts="$opts --type=$REG_TYPE"
+fi
+
+# Proxy settings (host and port)
+if [ -n "${REG_HTTP_PROXY_HOST:-}" ]; then
+    proxy_host="${REG_HTTP_PROXY_HOST}"
+fi
+
+if [ -n "${REG_HTTP_PROXY_PORT:-}" ]; then
+    proxy_port="${REG_HTTP_PROXY_PORT}"
+fi
+
+# Proxy settings (user and password)
+if [ -n "${REG_HTTP_PROXY_USERNAME:-}" ]; then
+    proxy_username="${REG_HTTP_PROXY_USERNAME}"
+fi
+
+if [ -n "${REG_HTTP_PROXY_PASSWORD:-}" ]; then
+    proxy_password="${REG_HTTP_PROXY_PASSWORD}"
+fi
+
+# Sanity Checks for proxy host/port/user/password
+if [ -n "${REG_HTTP_PROXY_HOST:-}" ]; then
+    if [ -n "${REG_HTTP_PROXY_PORT:-}" ]; then
+        # Good both values are not empty
+        proxy_url="http://${proxy_host}:${proxy_port}"
+        config_opts="--server.proxy_hostname=${proxy_host} --server.proxy_port=${proxy_port}"
+        sat5_opts="${sat5_opts} --proxy_hostname=${proxy_url}"
+        echo "RHSM Proxy set to: ${proxy_url}"
+        if [ -n "${REG_HTTP_PROXY_USERNAME:-}" ]; then
+            if [ -n "${REG_HTTP_PROXY_PASSWORD:-}" ]; then
+                config_opts="${config_opts} --server.proxy_user=${proxy_username} --server.proxy_password=${proxy_password}"
+                sat5_opts="${sat5_opts} --proxyUser=${proxy_username} --proxyPassword=${proxy_password}"
+            else
+                echo "Warning: REG_HTTP_PROXY_PASSWORD cannot be null with non-empty REG_HTTP_PROXY_USERNAME! Skipping..."
+                proxy_username= ; proxy_password=
+            fi
+        else
+            if [ -n "${REG_HTTP_PROXY_PASSWORD:-}" ]; then
+                echo "Warning: REG_HTTP_PROXY_USERNAME cannot be null with non-empty REG_HTTP_PROXY_PASSWORD! Skipping..."
+                proxy_username= ; proxy_password=
+            fi
+        fi
+    else
+        echo "Warning: REG_HTTP_PROXY_PORT cannot be null with non-empty REG_HTTP_PROXY_HOST! Skipping..."
+        proxy_host= ; proxy_port= ; proxy_url= ; proxy_username= ; proxy_password=
+    fi
+else
+    if [ -n "${REG_HTTP_PROXY_PORT:-}" ]; then
+        echo "Warning: REG_HTTP_PROXY_HOST cannot be null with non-empty REG_HTTP_PROXY_PORT! Skipping..."
+        proxy_host= ; proxy_port= ; proxy_url= ; proxy_username= ; proxy_password=
+    fi
+fi
+
+function retry() {
+    # Inhibit -e since we want to retry without exiting..
+    set +e
+    # Retry delay (seconds)
+    retry_delay=2.0
+    retry_count=0
+    mycli="$@"
+    while [ ${retry_count} -lt ${retry_max_count} ]
+    do
+        echo "INFO: Sleeping ${retry_delay} ..."
+        sleep ${retry_delay}
+        echo "INFO: Executing '${mycli}' ..."
+        ${mycli}
+        if [ $? -eq 0 ]; then
+            echo "INFO: Ran '${mycli}' successfully, not retrying..."
+            break
+        else
+            echo "WARN: Failed to connect when running '${mycli}', retrying (attempt #$retry_count )..."
+            retry_count=$(echo ${retry_count} + 1 | bc)
+        fi
+    done
+
+    if [ ${retry_count} -ge ${retry_max_count} ]; then
+        echo "ERROR: Failed to connect after ${retry_max_count} attempts when running '${mycli}'"
+        exit 1
+    fi
+    # Re-enable -e when exiting retry()
+    set -e
+}
+
+function detect_satellite_server {
+    if curl --retry ${retry_max_count} --retry-delay 10 --max-time 30 -L -k -s -D - -o /dev/null ${REG_SAT_URL}/pub/katello-ca-consumer-latest.noarch.rpm | grep "200 OK"; then
+        echo Satellite 6 or beyond with Katello API detected at ${REG_SAT_URL}
+        katello_api_enabled=1
+    elif curl --retry ${retry_max_count} --retry-delay 10 --max-time 30 -L -k -s -D - -o /dev/null ${REG_SAT_URL}/rhn/Login.do | grep "200 OK"; then
+        echo Satellite 5 with RHN detected at ${REG_SAT_URL}
+        katello_api_enabled=0
+    else
+        echo No Satellite detected at ${REG_SAT_URL}
+        exit 1
+    fi
+}
+
+if [ "x${proxy_url}" != "x" ];then
+    # Config subscription-manager for proxy
+    subscription-manager config ${config_opts}
+
+    # Config yum for proxy..
+    sed -i -e '/^proxy=/d' /etc/yum.conf
+    echo "proxy=${proxy_url}" >> /etc/yum.conf
+
+    # Handle optional username/password
+    if [ -n "${proxy_username}" ]; then
+        sed -i -e '/^proxy_username=/d' /etc/yum.conf
+        echo "proxy_username=${proxy_username}" >> /etc/yum.conf
+    fi
+
+    if [ -n "${proxy_password}" ]; then
+        sed -i -e '/^proxy_password=/d' /etc/yum.conf
+        echo "proxy_password=${proxy_password}" >> /etc/yum.conf
+    fi
+
+fi
+
+case "${REG_METHOD:-}" in
+    portal)
+        retry subscription-manager register ${opts}
+        if [ -z "${REG_AUTO_ATTACH:-}" -a -z "${REG_ACTIVATION_KEY:-}" ]; then
+            retry subscription-manager attach ${attach_opts}
+        fi
+        retry subscription-manager repos --disable='*'
+        retry subscription-manager ${repos}
+        ;;
+    satellite)
+        detect_satellite_server
+        if [ "$katello_api_enabled" = "1" ]; then
+            repos="$repos --enable ${satellite_repo}"
+            curl --retry ${retry_max_count} --retry-delay 10 --max-time 30 -L -k -O "$REG_SAT_URL/pub/katello-ca-consumer-latest.noarch.rpm"
+
+            # https://bugs.launchpad.net/tripleo/+bug/1711435
+            # Delete the /etc/rhsm/facts directory entirely so that the
+            # %post script from katello-ca-consumer does not override the
+            # hostname with $(hostname -f) if there is no fqdn set
+            fqdn=$(hostname -f)
+            if [ "$fqdn" = "localhost" -o "$fqdn" = "localhost.localdomain" ]; then
+                rm -rf /etc/rhsm/facts
+            fi
+
+            rpm -Uvh katello-ca-consumer-latest.noarch.rpm || true
+            retry subscription-manager register ${opts}
+            retry subscription-manager ${repos}
+            retry yum install -y katello-agent || true # needed for errata reporting to satellite6
+            katello-package-upload
+
+            # https://bugs.launchpad.net/tripleo/+bug/1711435
+            # recreate the facts dir just in case we rm'd it earlier
+            mkdir -p /etc/rhsm/facts
+        else
+            pushd /usr/share/rhn/
+            curl --retry ${retry_max_count} --retry-delay 10 --max-time 30 -k -O ${REG_SAT_URL}/pub/RHN-ORG-TRUSTED-SSL-CERT
+            popd
+            retry rhnreg_ks --serverUrl=${REG_SAT_URL}/XMLRPC ${sat5_opts}
+        fi
+        ;;
+    disable)
+        echo "Disabling RHEL registration"
+        ;;
+    *)
+        echo "WARNING: only 'portal', 'satellite', and 'disable' are valid values for REG_METHOD."
+        exit 0
+esac
+
+mkdir -p $(dirname ${OK})
+touch ${OK}
