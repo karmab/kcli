@@ -21,4 +21,3 @@ public_domain=${ip_infra}.xip.io
 public_domain=${ip_master}.xip.io
 [%- endif %]
 sed -i "s/#openshift_master_cluster_public_hostname=.*/openshift_master_cluster_public_hostname=${public_domain}/" /root/inventory
-sed -i '/nameserver 192.168.122.1/d' /etc/resolv.conf

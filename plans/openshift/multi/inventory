@@ -2,11 +2,13 @@
 masters
 nodes
 etcd
+[% if gluster %]
 glusterfs
+[% endif %]
 
 # Set variables common for all OSEv3 hosts
 [OSEv3:vars]
-deployment_type=openshift-enterprise
+openshift_deployment_type=openshift-enterprise
 openshift_hosted_modify_imagestreams=true
 openshift_use_openshift_sdn=true
 openshift_use_crio = [[ crio ]]
