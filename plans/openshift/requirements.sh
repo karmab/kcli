@@ -7,6 +7,7 @@
                   '3.7'  : 'v3.7.0/openshift-origin-client-tools-v3.7.0-7ed6862',
                   '3.9'  : 'v3.9.0/openshift-origin-client-tools-v3.9.0-191fece',
                   '3.10' : 'v3.10.0/openshift-origin-client-tools-v3.10.0-dd10d17',
+                  '3.11' : 'v3.11.0/openshift-origin-client-tools-v3.11.0-0cbc58b',
                }
 -%]
 sleep 30
