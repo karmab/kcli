@@ -1,7 +1,7 @@
 VERSION="[[ kubevirt_version ]]"
-KUBELET_ROOTFS=/var/lib/docker/devicemapper/mnt/$(docker inspect $(docker ps | grep kubelet | cut -d" " -f1) | grep DeviceName  | awk -F- '{print $4}' | sed 's/",//')/rootfs
-mkdir -p /var/lib/kubelet/device-plugins ${KUBELET_ROOTFS}/var/lib/kubelet/device-plugins
-mount -o bind ${KUBELET_ROOTFS}/var/lib/kubelet/device-plugins /var/lib/kubelet/device-plugins
+#KUBELET_ROOTFS=/var/lib/docker/devicemapper/mnt/$(docker inspect $(docker ps | grep kubelet | cut -d" " -f1) | grep DeviceName  | awk -F- '{print $4}' | sed 's/",//')/rootfs
+#mkdir -p /var/lib/kubelet/device-plugins ${KUBELET_ROOTFS}/var/lib/kubelet/device-plugins
+#mount -o bind ${KUBELET_ROOTFS}/var/lib/kubelet/device-plugins /var/lib/kubelet/device-plugins
 yum -y install xorg-x11-xauth virt-viewer
 oc project kube-system
 [% if emulation %]
@@ -18,5 +18,5 @@ chmod u+x /usr/bin/virtctl
 docker pull karmab/kcli
 echo alias kcli=\'docker run --security-opt label:disable -it --rm -v ~/.kube:/root/.kube -v ~/.ssh:/root/.ssh -v ~/.kcli:/root/.kcli -v \$PWD:/workdir karmab/kcli\' >> /root/.bashrc
 ssh-keygen -t rsa -N '' -f /root/.ssh/id_rsa
-oc login --insecure-skip-tls-verify=true  `hostname -I | cut -f1 -d' '`:8443 -u developer -p developer
+oc login --insecure-skip-tls-verify=true  `hostname -I | cut -f1 -d' '`:8443 -u [[ admin_user  ]] -p [[ admin_password ]]
 setfacl -m user:107:rwx /root/openshift.local.pv/pv*

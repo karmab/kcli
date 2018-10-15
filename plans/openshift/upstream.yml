@@ -2,9 +2,10 @@ parameters:
   template: CentOS-7-x86_64-GenericCloud.qcow2
   memory: 6144
   docker_disk_size: 60
-  openshift_version: '3.10'
+  openshift_version: '3.11'
   asb: false
   admin_user: admin
+  admin_password: admin
 
 origin:
  template: [[ template ]]
