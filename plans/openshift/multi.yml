@@ -43,7 +43,7 @@ master0[[ master + 1 ]]:
   - path: /root/inventory
     origin: multi/inventory
 [% if type == 'ovirt' %]
-  - path: /root/ovirt_fix_inventory.sh
+  - path: /root/fix_inventory.sh
     origin: multi/ovirt_fix_inventory.sh
     mode: 700
 [% endif %]

@@ -255,7 +255,8 @@ class KOvirt(object):
             custom_script = None if custom_script == '' else custom_script
             user_name = common.get_user(template)
             root_password = None
-            dns_servers = '8.8.8.8 1.1.1.1'
+            # dns_servers = '8.8.8.8 1.1.1.1'
+            dns_servers = dns if dns is not None else '8.8.8.8 1.1.1.1'
             key = get_home_ssh_key()
             initialization = types.Initialization(user_name=user_name, root_password=root_password,
                                                   regenerate_ssh_keys=True, authorized_ssh_keys=key, host_name=name,
