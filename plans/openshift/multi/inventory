@@ -10,6 +10,9 @@ glusterfs
 [OSEv3:vars]
 openshift_deployment_type=openshift-enterprise
 openshift_hosted_modify_imagestreams=true
+#openshift_master_default_subdomain=
+#openshift_master_cluster_hostname=
+#openshift_master_cluster_public_hostname=
 openshift_use_openshift_sdn=true
 openshift_use_crio = [[ crio ]]
 openshift_install_examples=false

@@ -1,14 +1,6 @@
 #!/bin/bash
 yum -y install openshift-ansible screen bind-utils
-[% for master in range(0, masters) %]
-ssh-keyscan -H master0[[ master + 1 ]].[[ domain ]] >> ~/.ssh/known_hosts
-[% endfor %]
-[% for node in range(0, nodes) %]
-ssh-keyscan -H node0[[ node + 1 ]].[[ domain ]] >> ~/.ssh/known_hosts
-[% endfor %]
-[% for infra in range(0, infras) %]
-ssh-keyscan -H infra0[[ infra + 1 ]].[[ domain ]] >> ~/.ssh/known_hosts
-[% endfor %]
+sed -i "s/#host_key_checking/host_key_checking = True/" /etc/ansible/ansible.cfg
 sed -i "s/#log_path/log_path/" /etc/ansible/ansible.cfg
 #export IP=`dig +short master01.[[ domain ]]`
 #sed -i "s/openshift_master_default_subdomain=.*/openshift_master_default_subdomain=$IP.xip.io/" /root/hosts
