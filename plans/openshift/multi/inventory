@@ -91,7 +91,7 @@ node01.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
 # host group for nodes, includes region info
 [nodes]
 [% for master in range(0, masters) %]
-master0[[ master +1 ]].[[ domain ]] ansible_connection=local openshift_node_group_name="master"
+master0[[ master +1 ]].[[ domain ]] openshift_node_group_name="master" ansible_connection=local
 [% endfor %]
 [% for node in range(0, nodes) %]
 node0[[ node +1 ]].[[ domain ]] openshift_node_group_name="compute"

@@ -380,7 +380,7 @@ class Kconfig(Kbaseconfig):
                     scriptlines = [line.strip() for line in scriptentries.split('\n') if line.strip() != '']
                     if scriptlines:
                         scriptcmds.extend(scriptlines)
-        if skip_rhnregister_script and cloudinit and template is not None and template.startswith('rhel'):
+        if skip_rhnregister_script and cloudinit and template is not None and template.lower().startswith('rhel'):
             # rhncommands = ['sleep 30']
             rhncommands = []
             if rhnak is not None and rhnorg is not None:
