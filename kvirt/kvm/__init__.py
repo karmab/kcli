@@ -1581,7 +1581,7 @@ class Kvirt(object):
             kroot.append(kmeta)
         kmeta.text = metavalue
         newxml = ET.tostring(root)
-        conn.defineXML(newxml)
+        conn.defineXML(newxml.decode("utf-8"))
         return {'result': 'success'}
 
     def update_information(self, name, information):
@@ -1603,7 +1603,7 @@ class Kvirt(object):
         else:
             description.text = information
         newxml = ET.tostring(root)
-        conn.defineXML(newxml)
+        conn.defineXML(newxml.decode("utf-8"))
         return {'result': 'success'}
 
     def update_memory(self, name, memory):
@@ -1666,7 +1666,7 @@ class Kvirt(object):
             source.set('file', iso)
             break
         newxml = ET.tostring(root)
-        conn.defineXML(newxml)
+        conn.defineXML(newxml.decode("utf-8"))
         return {'result': 'success'}
 
     def remove_cloudinit(self, name):
@@ -1694,7 +1694,7 @@ class Kvirt(object):
                 volume.delete(0)
                 element.remove(source)
         newxml = ET.tostring(root)
-        conn.defineXML(newxml)
+        conn.defineXML(newxml.decode("utf-8"))
 
     def update_start(self, name, start=True):
         """
