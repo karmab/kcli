@@ -385,9 +385,9 @@ class KOvirt(object):
             tags_service = vm_service.tags_service()
             for tag in tags_service.list():
                 if tag.name.startswith('plan_'):
-                    plan = tag.name.split('_')[1]
+                    plan = tag.name.replace('plan_', '')
                 if tag.name.startswith('profile_'):
-                    profile = tag.name.split('_')[1]
+                    profile = tag.name.replace('profile_', '')
             ips = []
             devices = self.vms_service.vm_service(vm.id).reported_devices_service().list()
             for device in devices:
@@ -541,9 +541,9 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
         tags_service = vm_service.tags_service()
         for tag in tags_service.list():
             if tag.name.startswith('plan_'):
-                yamlinfo['plan'] = tag.name.split('_')[1]
+                yamlinfo['plan'] = tag.name.replace('plan_', '')
             if tag.name.startswith('profile_'):
-                yamlinfo['profile'] = tag.name.split('_')[1]
+                yamlinfo['profile'] = tag.name.replace('profile_', '')
         template = conn.follow_link(vm.template)
         source = template.name
         yamlinfo['template'] = source

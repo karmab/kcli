@@ -29,6 +29,7 @@ class Kconfig(Kbaseconfig):
     """
     def __init__(self, client=None, debug=False, quiet=False):
         Kbaseconfig.__init__(self, client=client, debug=debug, quiet=quiet)
+        self.overrides = {}
         if not self.enabled:
             k = None
         else:
@@ -104,6 +105,7 @@ class Kconfig(Kbaseconfig):
                 k = KOvirt(host=self.host, port=self.port, user=user, password=password,
                            debug=debug, datacenter=datacenter, cluster=cluster, ca_file=ca_file, org=org,
                            imagerepository=imagerepository)
+                self.overrides.update({'host': self.host, 'user': user, 'password': password})
             elif self.type == 'openstack':
                 version = self.options.get('version', '2')
                 domain = next((e for e in [self.options.get('domain'),
@@ -149,7 +151,7 @@ class Kconfig(Kbaseconfig):
                     common.pprint("Couldn't connect to specify hypervisor %s. Leaving..." % extraclient, color='red')
                     os._exit(1)
         self.k = k
-        self.overrides = {'type': self.type}
+        self.overrides.update({'type': self.type})
 
     def create_vm(self, name, profile, overrides={}, customprofile={}, k=None,
                   plan='kvirt', basedir='.'):
@@ -164,6 +166,7 @@ class Kconfig(Kbaseconfig):
         :return:
         """
         overrides.update(self.overrides)
+        overrides.update({'plan': plan})
         k = self.k if k is None else k
         tunnel = self.tunnel
         if profile is None:
