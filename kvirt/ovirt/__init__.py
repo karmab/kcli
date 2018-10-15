@@ -1030,8 +1030,7 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
         :param name:
         :return:
         """
-        print("not implemented")
-        return
+        return []
 
 # returns the path of the pool, if it makes sense. used by kcli list --pools
     def get_pool_path(self, pool):
