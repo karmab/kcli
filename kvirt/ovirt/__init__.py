@@ -764,8 +764,9 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
         currentdisk = len(disk_attachments_service.list())
         diskindex = currentdisk + 1
         diskname = '%s_Disk%s' % (name, diskindex)
+        _format = types.DiskFormat.COW if thin else types.DiskFormat.RAW
         disk_attachment = disk_attachments_service.add(types.DiskAttachment(disk=types.Disk(name=diskname,
-                                                                                            format=types.DiskFormat.COW,
+                                                                                            format=_format,
                                                                                             provisioned_size=size,
                                                                                             storage_domains=[
                                                                                                 types.StorageDomain(
