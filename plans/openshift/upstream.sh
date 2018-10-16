@@ -5,13 +5,14 @@ systemctl start docker --ignore-dependencies
 [% if 'Fedora' in template %]
 sleep 120
 [% endif %]
+export HOME=/root
 export IP=`ip a l  eth0 | grep 'inet ' | cut -d' ' -f6 | awk -F'/' '{ print $1}'`
 [% if openshift_version == '3.9' %]
 oc cluster up --public-hostname ${IP}.xip.io --routing-suffix ${IP}.xip.io
 [% elif asb %]
 oc cluster up --public-hostname ${IP}.xip.io --routing-suffix ${IP}.xip.io --enable=service-catalog,router,registry,web-console,persistent-volumes,rhel-imagestreams,automation-service-broker --write-config=true
 [% else %]
-oc cluster up --public-hostname ${IP}.xip.io --routing-suffix ${IP}.xip.io --enable=router,registry,web-console,persistent-volumes,rhel-imagestreams --write-config=true
+oc cluster up --public-hostname ${IP}.xip.io --routing-suffix ${IP}.xip.io --enable=router,registry,web-console,persistent-volumes,rhel-imagestreams
 [% endif %]
 oc login -u system:admin
 oc adm policy add-cluster-role-to-user cluster-admin [[ admin_user ]]
