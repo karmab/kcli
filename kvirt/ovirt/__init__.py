@@ -200,12 +200,12 @@ class KOvirt(object):
                 profile_id = netprofiles[netname]
                 nics_service.add(types.Nic(name='eth%s' % index, mac=mac,
                                            vnic_profile=types.VnicProfile(id=profile_id)))
-        disk_attachments_service = self.vms_service.vm_service(vm.id).disk_attachments_service()
+        # disk_attachments_service = self.vms_service.vm_service(vm.id).disk_attachments_service()
         for index, disk in enumerate(disks):
             diskpool = pool
             diskthin = True
             disksize = '10'
-            diskname = "%s_disk%s" % (name, index)
+            # diskname = "%s_disk%s" % (name, index)
             if index == 0 and template is not None:
                 continue
             if isinstance(disk, int):
@@ -216,26 +216,10 @@ class KOvirt(object):
                 disksize = disk.get('size', disksize)
                 diskpool = disk.get('pool', pool)
                 diskthin = disk.get('thin', diskthin)
-            # self.add_disk(name, disksize, pool=diskpool, thin=diskthin)
-            storage_domain = types.StorageDomain(name=diskpool)
-            disk_attachment = types.DiskAttachment(disk=types.Disk(name=diskname, format=types.DiskFormat.COW,
-                                                                   provisioned_size=disksize * 2**30,
-                                                                   storage_domains=[storage_domain]),
-                                                   interface=types.DiskInterface.VIRTIO, bootable=False, active=True)
-            disk_attachment = disk_attachments_service.add(disk_attachment)
-            disks_service = self.conn.system_service().disks_service()
-            disk_service = disks_service.disk_service(disk_attachment.disk.id)
-            timeout = 0
-            while True:
-                disk = disk_service.get()
-                if disk.status == types.DiskStatus.OK:
-                    break
-                else:
-                    timeout += 5
-                    sleep(5)
-                    common.pprint("Waiting for disk %s to be ready" % diskname, color='green')
-                if timeout > 40:
-                    return {'result': 'failure', 'reason': 'timeout waiting for disk %s to be ready' % diskname}
+            newdisk = self.add_disk(name, disksize, pool=diskpool, thin=diskthin)
+            if newdisk['result'] == 'failure':
+                # common.pprint(newdisk['reason'], color='red')
+                return {'result': 'failure', 'reason': newdisk['reason']}
         initialization = None
         if cloudinit:
             custom_script = ''
@@ -801,6 +785,7 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
                 common.pprint("Waiting for disk %s to be ready" % diskname, color='green')
             if timeout > 40:
                 return {'result': 'failure', 'reason': 'timeout waiting for disk %s to be ready' % diskname}
+        return {'result': 'success'}
 
     def delete_disk(self, name=None, diskname=None, pool=None):
         """
