@@ -200,10 +200,12 @@ class KOvirt(object):
                 profile_id = netprofiles[netname]
                 nics_service.add(types.Nic(name='eth%s' % index, mac=mac,
                                            vnic_profile=types.VnicProfile(id=profile_id)))
+        disk_attachments_service = self.vms_service.vm_service(vm.id).disk_attachments_service()
         for index, disk in enumerate(disks):
             diskpool = pool
             diskthin = True
             disksize = '10'
+            diskname = "%s_disk%s" % (name, index)
             if index == 0 and template is not None:
                 continue
             if isinstance(disk, int):
@@ -214,7 +216,26 @@ class KOvirt(object):
                 disksize = disk.get('size', disksize)
                 diskpool = disk.get('pool', pool)
                 diskthin = disk.get('thin', diskthin)
-            self.add_disk(name, disksize, pool=diskpool, thin=diskthin)
+            # self.add_disk(name, disksize, pool=diskpool, thin=diskthin)
+            storage_domain = types.StorageDomain(name=diskpool)
+            disk_attachment = types.DiskAttachment(disk=types.Disk(name=diskname, format=types.DiskFormat.COW,
+                                                                   provisioned_size=disksize * 2**30,
+                                                                   storage_domains=[storage_domain]),
+                                                   interface=types.DiskInterface.VIRTIO, bootable=False, active=True)
+            disk_attachment = disk_attachments_service.add(disk_attachment)
+            disks_service = self.conn.system_service().disks_service()
+            disk_service = disks_service.disk_service(disk_attachment.disk.id)
+            timeout = 0
+            while True:
+                disk = disk_service.get()
+                if disk.status == types.DiskStatus.OK:
+                    break
+                else:
+                    timeout += 5
+                    sleep(5)
+                    common.pprint("Waiting for disk %s to be ready" % diskname, color='green')
+                if timeout > 40:
+                    return {'result': 'failure', 'reason': 'timeout waiting for disk %s to be ready' % diskname}
         initialization = None
         if cloudinit:
             custom_script = ''
@@ -797,8 +818,14 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
 
         :return:
         """
-        print("not implemented")
-        return
+        volumes = {}
+        disks_service = self.conn.system_service().disks_service()
+        for disk in disks_service.list():
+            diskname = disk._id
+            pool = self.conn.follow_link(disk._storage_domains[0])._name
+            path = disk._alias
+            volumes[diskname] = {'pool': pool, 'path': path}
+        return volumes
 
     def add_nic(self, name, network):
         """
