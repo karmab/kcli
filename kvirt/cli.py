@@ -538,9 +538,8 @@ def update(args):
     elif information:
         common.pprint("Setting information for vm %s..." % name, color='green')
         k.update_information(name, information)
-    elif iso:
+    elif iso is not None:
         common.pprint("Switching iso for vm %s to %s..." % (name, iso), color='green')
-        common.pprint("Note it will only be effective upon next start", color='green')
         k.update_iso(name, iso)
     elif host:
         common.pprint("Creating Host entry for vm %s..." % name, color='green')

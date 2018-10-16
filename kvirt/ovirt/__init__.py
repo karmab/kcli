@@ -720,8 +720,24 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
         :param iso:
         :return:
         """
-        print("not implemented")
-        return
+        vmsearch = self.vms_service.list(search='name=%s' % name)
+        if not vmsearch:
+            common.pprint("VM %s not found" % name, color='red')
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        vminfo = vmsearch[0]
+        vm = self.vms_service.vm_service(vminfo.id)
+        cdroms_service = vm.cdroms_service()
+        cdrom = cdroms_service.list()[0]
+        cdrom_service = cdroms_service.cdrom_service(cdrom.id)
+        if iso == '':
+            cdrom_service.update(cdrom=types.Cdrom(file=types.File()), current=True)
+            return {'result': 'success'}
+        try:
+            cdrom_service.update(cdrom=types.Cdrom(file=types.File(id=iso)), current=True)
+        except:
+            common.pprint("Iso %s not found" % iso, color='red')
+            return {'result': 'failure', 'reason': "Iso %s not found" % iso}
+        return {'result': 'success'}
 
     def create_disk(self, name, size, pool=None, thin=True, template=None):
         """

@@ -1637,6 +1637,7 @@ class Kvirt(object):
         :param iso:
         :return:
         """
+        common.pprint("Note it will only be effective upon next start", color='blue')
         isos = self.volumes(iso=True)
         isofound = False
         for i in isos:
