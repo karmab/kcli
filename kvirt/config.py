@@ -724,10 +724,11 @@ class Kconfig(Kbaseconfig):
                         found = True
             # for network in k.list_networks():
             #    if 'plan' in network and network['plan'] == plan:
-            for network in networks:
-                k.delete_network(network)
-                common.pprint("Unused network %s deleted!" % network, color='green')
+            if not self.keep_networks and networks:
                 found = True
+                for network in networks:
+                    k.delete_network(network)
+                    common.pprint("Unused network %s deleted!" % network, color='green')
             for keyfile in glob.glob("%s.key*" % plan):
                 common.pprint("file %s from %s deleted!" % (keyfile, plan), color='green')
                 os.remove(keyfile)

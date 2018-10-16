@@ -910,6 +910,7 @@ Basic testing can be run with pytest. If using a remote hypervisor, you ll want 
 - *url* can be used to specify an exotic qemu url
 - *tunnel* Defaults to False. Setting it to true will make kcli use tunnels for console and for ssh access. You want that if you only open ssh port to your hypervisor!
 - *planview* Defaults to False. Setting it to true will make kcli use the value specified in *~/.kcli/plan* as default plan upon starting and stopping plan. Additionally, vms not belonging to the set plan wont show up when listing
+- *keep_networks* Defaults to False. Setting it to true will make kcli keeps networks when deleting plan
 
 # Available parameters for hypervisor/profile/plan files
 

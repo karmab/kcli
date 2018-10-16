@@ -12,7 +12,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             DOMAIN, SCRIPTS, FILES, ISO,
                             NETMASKS, GATEWAY, SHAREDKEY, TEMPLATE, ENABLEROOT,
                             PLANVIEW, PRIVATEKEY, TAGS, RHNREGISTER, RHNUSER, RHNPASSWORD, RHNAK, RHNORG, RHNPOOL,
-                            FLAVOR, DETECT_BRIDGE_IPS)
+                            FLAVOR, DETECT_BRIDGE_IPS, KEEP_NETWORKS)
 from kvirt import common
 import os
 from shutil import copyfile, rmtree
@@ -112,6 +112,7 @@ class Kbaseconfig:
         defaults['rhnpool'] = default.get('rhnpool', RHNPOOL)
         defaults['tags'] = default.get('tags', TAGS)
         defaults['flavor'] = default.get('flavor', FLAVOR)
+        defaults['keep_networks'] = default.get('keep_networks', KEEP_NETWORKS)
         currentplanfile = "%s/.kcli/plan" % os.environ.get('HOME')
         if os.path.exists(currentplanfile):
             self.currentplan = open(currentplanfile).read().strip()
@@ -209,6 +210,7 @@ class Kbaseconfig:
         self.rhnpool = options.get('rhnpool', self.default['rhnpool'])
         self.tags = options.get('tags', self.default['tags'])
         self.flavor = options.get('flavor', self.default['flavor'])
+        self.keep_networks = options.get('keep_networks', self.default['keep_networks'])
 
     def switch_host(self, client):
         """
