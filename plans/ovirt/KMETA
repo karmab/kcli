@@ -8,6 +8,7 @@
   parameters:
    password: unix1234
    version: 4.2
+   nested: false
 
 - name: ovirt3
   group: ovirt

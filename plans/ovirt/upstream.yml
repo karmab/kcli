@@ -2,6 +2,7 @@ parameters:
  password: unix1234
  version: 4.2
  organization: Karmalabs
+ nested: false
 
 ovirt:
  template: CentOS-7-x86_64-GenericCloud.qcow2
