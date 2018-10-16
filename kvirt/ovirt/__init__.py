@@ -838,7 +838,8 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
                     if str(i.version) == 'v4' and i.address not in ['172.17.0.1', '127.0.0.1']:
                         ips.append(i.address)
         if not ips:
-            common.print("No ip found. Cannot ssh...", color='red')
+            common.pprint("No ip found. Cannot ssh...", color='red')
+            return 'root', None
         else:
             ip = ips[-1]
         return user, ip
