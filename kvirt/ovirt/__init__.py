@@ -140,16 +140,25 @@ class KOvirt(object):
         :return:
         """
         clone = not diskthin
-        templateobject = types.Template(name=template) if template else None
+        _template = types.Template(name=template) if template is not None else types.Template(name='Blank')
+        _os = types.OperatingSystem(boot=types.Boot(devices=[types.BootDevice.HD, types.BootDevice.CDROM]))
         console = types.Console(enabled=True)
         try:
             vm = self.vms_service.add(types.Vm(name=name, cluster=types.Cluster(name=self.cluster),
-                                               template=templateobject, console=console), clone=clone)
+                                               template=_template, console=console, os=_os), clone=clone)
             vm_service = self.vms_service.vm_service(vm.id)
         except Exception as e:
             if self.debug:
                 print(e)
             return {'result': 'failure', 'reason': e}
+        cdroms_service = vm_service.cdroms_service()
+        cdrom = cdroms_service.list()[0]
+        cdrom_service = cdroms_service.cdrom_service(cdrom.id)
+        if iso is not None:
+            try:
+                cdrom_service.update(cdrom=types.Cdrom(file=types.File(id=iso)))
+            except:
+                return {'result': 'failure', 'reason': "Iso %s not found" % iso}
         timeout = 0
         while True:
             vm = vm_service.get()
@@ -230,14 +239,15 @@ class KOvirt(object):
                     custom_script += data
             cmds.insert(0, 'sed -i /192.168.122.1/d /etc/resolv.conf')
             cmds.append('sleep 60')
-            if template.lower().startswith('centos'):
+            if template is not None and template.lower().startswith('centos'):
                 cmds.append('yum -y install centos-release-ovirt42')
-            if template.lower().startswith('centos') or template.lower().startswith('fedora')\
-                    or template.lower().startswith('rhel'):
+            if template is not None and (template.lower().startswith('centos') or
+                                         template.lower().startswith('fedora') or
+                                         template.lower().startswith('rhel')):
                 cmds.append('yum -y install ovirt-guest-agent-common')
                 cmds.append('systemctl enable ovirt-guest-agent')
                 cmds.append('systemctl start ovirt-guest-agent')
-            if template.lower().startswith('debian'):
+            if template is not None and template.lower().startswith('debian'):
                 cmds.append('echo "deb http://download.opensuse.org/repositories/home:/evilissimo:/deb/Debian_7.0/ ./" '
                             '>> /etc/apt/sources.list')
                 cmds.append('gpg -v -a --keyserver http://download.opensuse.org/repositories/home:/evilissimo:/deb/'
@@ -247,7 +257,7 @@ class KOvirt(object):
                 cmds.append('apt-get -Y install ovirt-guest-agent')
                 cmds.append('service ovirt-guest-agent enable')
                 cmds.append('service ovirt-guest-agent start')
-            if [x for x in common.ubuntus if x in template.lower()]:
+            if template is not None and [x for x in common.ubuntus if x in template.lower()]:
                 cmds.append('echo deb http://download.opensuse.org/repositories/home:/evilissimo:/ubuntu:/16.04/'
                             'xUbuntu_16.04/ /')
                 cmds.append('wget http://download.opensuse.org/repositories/home:/evilissimo:/ubuntu:/16.04/'
@@ -259,7 +269,7 @@ class KOvirt(object):
             custom_script += "runcmd:\n"
             custom_script += data
             custom_script = None if custom_script == '' else custom_script
-            user_name = common.get_user(template)
+            user_name = common.get_user(template) if template is not None else 'root'
             root_password = None
             # dns_servers = '8.8.8.8 1.1.1.1'
             dns_servers = dns if dns is not None else '8.8.8.8 1.1.1.1'
@@ -647,6 +657,11 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
         vm = self.vms_service.vm_service(vminfo.id)
         if str(vminfo.status) == 'up':
             vm.stop()
+            while True:
+                sleep(5)
+                currentvm = vm.get()
+                if currentvm.status == types.VmStatus.DOWN:
+                    break
         vm.remove()
         return {'result': 'success'}
 
