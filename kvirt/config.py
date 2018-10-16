@@ -673,7 +673,7 @@ class Kconfig(Kbaseconfig):
         return {'result': 'success', 'plan': plan}
 
     def plan(self, plan, ansible=False, get=None, path=None, autostart=False, container=False, noautostart=False,
-             inputfile=None, start=False, stop=False, delete=False, delay=0, force=True, overrides={}, info=False):
+             inputfile=None, start=False, stop=False, delete=False, deletenetworks=False, delay=0, force=True, overrides={}, info=False):
         """Create/Delete/Stop/Start vms from plan file"""
         k = self.k
         no_overrides = not overrides
@@ -724,10 +724,13 @@ class Kconfig(Kbaseconfig):
                         found = True
             # for network in k.list_networks():
             #    if 'plan' in network and network['plan'] == plan:
-            for network in networks:
-                k.delete_network(network)
-                common.pprint("Unused network %s deleted!" % network, color='green')
-                found = True
+            if deletenetworks:
+                for network in networks:
+                    k.delete_network(network)
+                    common.pprint("Unused network %s deleted!" % network, color='green')
+                    found = True
+            else:
+                common.pprint("Not deleting networks. Delete them manually if required.")
             for keyfile in glob.glob("%s.key*" % plan):
                 common.pprint("file %s from %s deleted!" % (keyfile, plan), color='green')
                 os.remove(keyfile)

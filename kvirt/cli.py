@@ -660,6 +660,7 @@ def plan(args):
     start = args.start
     stop = args.stop
     delete = args.delete
+    deletenetworks = args.deletenetworks
     delay = args.delay
     use = args.use
     yes = args.yes
@@ -690,7 +691,7 @@ def plan(args):
         common.confirm("Are you sure?")
     config.plan(plan, ansible=ansible, get=get, path=path, autostart=autostart,
                 container=container, noautostart=noautostart, inputfile=inputfile,
-                start=start, stop=stop, delete=delete, delay=delay, overrides=overrides, info=info)
+                start=start, stop=stop, delete=delete, deletenetworks=deletenetworks, delay=delay, overrides=overrides, info=info)
     return 0
 
 
@@ -1126,6 +1127,8 @@ def cli():
     plan_parser = subparsers.add_parser('plan', description=plan_info, help=plan_info)
     plan_parser.add_argument('-A', '--ansible', help='Generate ansible inventory', action='store_true')
     plan_parser.add_argument('-d', '--delete', action='store_true')
+    plan_parser.add_argument('--deletenetworks', action='store_true', default=0,
+                             help='Delete networks when deleting a plan')
     plan_parser.add_argument('-g', '--get', help='Download specific plan(s).'
                              ' Use --path for specific directory', metavar='URL')
     plan_parser.add_argument('-i', '--info', action='store_true', help='Provide information on the given plan')
