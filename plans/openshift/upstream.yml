@@ -6,11 +6,13 @@ parameters:
   asb: false
   admin_user: admin
   admin_password: admin
+  domain: default
 
 origin:
  template: [[ template ]]
  numcpus: 2
  memory: [[ memory ]]
+ domain: default
  nets:
   - default
  disks:

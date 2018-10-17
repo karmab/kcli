@@ -145,13 +145,19 @@ class Kaws(object):
         if not keypairs:
             common.pprint("Importing your public key as kvirt keyname", color='green')
             if not os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME'])\
-                    and not os.path.exists("%s/.ssh/id_dsa.pub" % os.environ['HOME']):
+                    and not os.path.exists("%s/.ssh/id_dsa.pub" % os.environ['HOME'])\
+                    and not os.path.exists("%s/.kcli/id_rsa.pub" % os.environ['HOME'])\
+                    and not os.path.exists("%s/.kcli/id_dsa.pub" % os.environ['HOME']):
                 common.pprint("No public key found. Leaving", color='red')
                 return {'result': 'failure', 'reason': 'No public key found'}
             elif os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME']):
                 homekey = open("%s/.ssh/id_rsa.pub" % os.environ['HOME']).read()
-            else:
+            elif os.path.exists("%s/.ssh/id_dsa.pub" % os.environ['HOME']):
                 homekey = open("%s/.ssh/id_dsa.pub" % os.environ['HOME']).read()
+            elif os.path.exists("%s/.kcli/id_rsa.pub" % os.environ['HOME']):
+                homekey = open("%s/.kcli/id_rsa.pub" % os.environ['HOME']).read()
+            else:
+                homekey = open("%s/.kcli/id_dsa.pub" % os.environ['HOME']).read()
             conn.import_key_pair(KeyName='kvirt', PublicKeyMaterial=homekey)
         if cloudinit:
             if template is not None and (template.startswith('coreos') or template.startswith('rhcos')):
@@ -673,7 +679,9 @@ class Kaws(object):
         :return:
         """
         u, ip = self._ssh_credentials(name)
-        sshcommand = common.ssh(name, ip=ip, host=self.host, port=self.port, user=u,
+        if user is None:
+            user = u
+        sshcommand = common.ssh(name, ip=ip, host=self.host, port=self.port, user=user,
                                 local=local, remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, Y=Y, D=D,
                                 debug=self.debug)
         return sshcommand
