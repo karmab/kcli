@@ -51,7 +51,8 @@ class Kaws(object):
         """
         conn = self.conn
         try:
-            conn.describe_instances(InstanceIds=[name])
+            Filters = {'Name': "tag:Name", 'Values': [name]}
+            conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
             return True
         except:
             return False

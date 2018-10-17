@@ -6,7 +6,7 @@ systemctl start docker --ignore-dependencies
 sleep 120
 [% endif %]
 export HOME=/root
-[% if self.type == 'aws' or self.type == 'gcp'%]
+[% if type == 'aws' or type == 'gcp' %]
 export DNS=[[ name ]].[[ domain ]]
 [% else %]
 export DNS=`ip a l  eth0 | grep 'inet ' | cut -d' ' -f6 | awk -F'/' '{ print $1}'`.xip.io

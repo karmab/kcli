@@ -7,12 +7,14 @@ parameters:
   admin_user: admin
   admin_password: admin
   domain: default
+  reservedns: false
 
 origin:
  template: [[ template ]]
  numcpus: 2
  memory: [[ memory ]]
  domain: default
+ reservedns: [[ reservedns ]]
  nets:
   - default
  disks:
