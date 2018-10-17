@@ -76,9 +76,9 @@ master0[[ master +1 ]].[[ domain ]] ansible_connection=local openshift_node_grou
 master0[[ master +1 ]].[[ domain ]] ansible_connection=local
 [%- endfor %]
 
-[% if gluster -%]
+[% if gluster %]
 [glusterfs]
-[% if infras == 2 -%]
+[% if infras == 2 %]
 master01.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
 infra01.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
 infra02.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
@@ -90,8 +90,8 @@ infra03.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
 master01.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
 infra01.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
 node01.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
-[%- endif %]
-[%- endif %]
+[% endif %]
+[% endif %]
 
 # host group for nodes, includes region info
 [nodes]

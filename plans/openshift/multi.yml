@@ -18,11 +18,6 @@ parameters:
  version: "3.11"
  deploy: false
 
-[[ domain ]]:
- type: network
- cidr: [[ cidr ]]
- dhcp: True
-
 [% for master in range(0, masters) %]
 master0[[ master + 1 ]]:
  template: [[ template ]]
@@ -34,7 +29,7 @@ master0[[ master + 1 ]]:
  domain: [[ domain ]]
  dns: [[ domain ]]
  nets:
-  - [[ domain ]]
+  - default
  disks:
   - size: [[ base_disk_size ]]
   - size: [[ gluster_disk_size ]]
@@ -90,7 +85,7 @@ infra0[[ infra + 1 ]]:
  domain: [[ domain ]]
  dns: [[ domain ]]
  nets:
-  - [[ domain ]]
+  - default
  disks:
   - size: [[ base_disk_size ]]
   - size: [[ gluster_disk_size ]]
