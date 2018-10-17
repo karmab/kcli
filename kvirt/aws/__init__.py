@@ -249,7 +249,13 @@ class Kaws(object):
         :return:
         """
         conn = self.conn
-        conn.start_instances(InstanceIds=[name])
+        try:
+            Filters = {'Name': "tag:Name", 'Values': [name]}
+            vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
+        except:
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        instanceid = vm['InstanceId']
+        conn.start_instances(InstanceIds=[instanceid])
         return {'result': 'success'}
 
     def stop(self, name):
@@ -259,7 +265,13 @@ class Kaws(object):
         :return:
         """
         conn = self.conn
-        conn.stop_instances(InstanceIds=[name])
+        try:
+            Filters = {'Name': "tag:Name", 'Values': [name]}
+            vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
+        except:
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        instanceid = vm['InstanceId']
+        conn.stop_instances(InstanceIds=[instanceid])
         return {'result': 'success'}
 
     def snapshot(self, name, base, revert=False, delete=False, listing=False):
@@ -282,7 +294,13 @@ class Kaws(object):
         :return:
         """
         conn = self.conn
-        conn.start_instances(InstanceIds=[name])
+        try:
+            Filters = {'Name': "tag:Name", 'Values': [name]}
+            vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
+        except:
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        instanceid = vm['InstanceId']
+        conn.start_instances(InstanceIds=[instanceid])
         return {'result': 'success'}
 
     def report(self):
@@ -359,7 +377,15 @@ class Kaws(object):
         :param name:
         :return:
         """
-        print("not implemented")
+        conn = self.conn
+        try:
+            Filters = {'Name': "tag:Name", 'Values': [name]}
+            vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
+        except:
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        instanceid = vm['InstanceId']
+        response = conn.get_console_output(InstanceId=instanceid, DryRun=False, Latest=False)
+        print(response['Output'])
         return
 
     def info(self, name, output='plain', fields=None, values=False):
