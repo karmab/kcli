@@ -238,33 +238,36 @@ class KOvirt(object):
                     custom_script += "write_files:\n"
                     custom_script += data
             cmds.insert(0, 'sed -i /192.168.122.1/d /etc/resolv.conf')
-            cmds.append('sleep 60')
+            cmds.insert(1, 'sleep 10')
+            gcmds = []
             if template is not None and template.lower().startswith('centos'):
-                cmds.append('yum -y install centos-release-ovirt42')
+                gcmds.append('yum -y install centos-release-ovirt42')
             if template is not None and (template.lower().startswith('centos') or
                                          template.lower().startswith('fedora') or
                                          template.lower().startswith('rhel')):
-                cmds.append('yum -y install ovirt-guest-agent-common')
-                cmds.append('systemctl enable ovirt-guest-agent')
-                cmds.append('systemctl start ovirt-guest-agent')
+                gcmds.append('yum -y install ovirt-guest-agent-common')
+                gcmds.append('systemctl enable ovirt-guest-agent')
+                gcmds.append('systemctl start ovirt-guest-agent')
             if template is not None and template.lower().startswith('debian'):
-                cmds.append('echo "deb http://download.opensuse.org/repositories/home:/evilissimo:/deb/Debian_7.0/ ./" '
-                            '>> /etc/apt/sources.list')
-                cmds.append('gpg -v -a --keyserver http://download.opensuse.org/repositories/home:/evilissimo:/deb/'
-                            'Debian_7.0/Release.key --recv-keys D5C7F7C373A1A299')
-                cmds.append('gpg --export --armor 73A1A299 | apt-key add -')
-                cmds.append('apt-get update')
-                cmds.append('apt-get -Y install ovirt-guest-agent')
-                cmds.append('service ovirt-guest-agent enable')
-                cmds.append('service ovirt-guest-agent start')
+                gcmds.append('echo "deb http://download.opensuse.org/repositories/home:/evilissimo:/deb/Debian_7.0/ ./"'
+                             ' >> /etc/apt/sources.list')
+                gcmds.append('gpg -v -a --keyserver http://download.opensuse.org/repositories/home:/evilissimo:/deb/'
+                             'Debian_7.0/Release.key --recv-keys D5C7F7C373A1A299')
+                gcmds.append('gpg --export --armor 73A1A299 | apt-key add -')
+                gcmds.append('apt-get update')
+                gcmds.append('apt-get -Y install ovirt-guest-agent')
+                gcmds.append('service ovirt-guest-agent enable')
+                gcmds.append('service ovirt-guest-agent start')
             if template is not None and [x for x in common.ubuntus if x in template.lower()]:
-                cmds.append('echo deb http://download.opensuse.org/repositories/home:/evilissimo:/ubuntu:/16.04/'
-                            'xUbuntu_16.04/ /')
-                cmds.append('wget http://download.opensuse.org/repositories/home:/evilissimo:/ubuntu:/16.04/'
-                            'xUbuntu_16.04//Release.key')
-                cmds.append('apt-key add - < Release.key')
-                cmds.append('apt-get update')
-                cmds.append('apt-get -Y install ovirt-guest-agent')
+                gcmds.append('echo deb http://download.opensuse.org/repositories/home:/evilissimo:/ubuntu:/16.04/'
+                             'xUbuntu_16.04/ /')
+                gcmds.append('wget http://download.opensuse.org/repositories/home:/evilissimo:/ubuntu:/16.04/'
+                             'xUbuntu_16.04//Release.key')
+                gcmds.append('apt-key add - < Release.key')
+                gcmds.append('apt-get update')
+                gcmds.append('apt-get -Y install ovirt-guest-agent')
+            if gcmds:
+                cmds = cmds[:1] + gcmds + cmds[1:]
             data = common.process_cmds(cmds=cmds, overrides=overrides)
             custom_script += "runcmd:\n"
             custom_script += data
