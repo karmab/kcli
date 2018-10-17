@@ -294,6 +294,8 @@ class Kgcp(object):
                                        overrides=overrides, etcd=etcd)
             newval = {'key': 'user-data', 'value': userdata}
             body['metadata']['items'].append(newval)
+        newval = {'key': 'serial-port-enable', 'value': 1}
+        body['metadata']['items'].append(newval)
         if self.debug:
             print(body)
         conn.instances().insert(project=project, zone=zone, body=body).execute()
@@ -459,13 +461,21 @@ class Kgcp(object):
         :param name:
         :return:
         """
-        conn = self.conn
         project = self.project
+        user = self.user
         zone = self.zone
-        console = conn.instances().getSerialPortOutput(zone=zone, project=project, instance=name).execute()
-        if console is None:
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
-        print(console['contents'])
+        sshcommand = "ssh"
+        identityfile = None
+        if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
+            identityfile = os.path.expanduser("~/.kcli/id_rsa")
+        elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
+            identityfile = os.path.expanduser("~/.kcli/id_rsa")
+        if identityfile is not None:
+            sshcommand += " -i %s" % identityfile
+        sshcommand = "%s -p 9600 %s.%s.%s.%s@ssh-serialport.googleapis.com" % (sshcommand, project, zone, name, user)
+        if self.debug:
+            print(sshcommand)
+        os.system(sshcommand)
         return
 
     def info(self, name, output='plain', fields=None, values=False):
