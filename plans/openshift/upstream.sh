@@ -11,7 +11,7 @@ export DNS=[[ name ]].[[ domain ]]
 [% else %]
 export DNS=`ip a l  eth0 | grep 'inet ' | cut -d' ' -f6 | awk -F'/' '{ print $1}'`.xip.io
 [% endif %]
-[% if openshift_version == '3.9' %]
+[% if openshift_version == 'v3.9' %]
 oc cluster up --public-hostname ${DNS} --routing-suffix ${DNS}
 [% elif asb %]
 oc cluster up --public-hostname ${DNS} --routing-suffix ${DNS} --enable=service-catalog,router,registry,web-console,persistent-volumes,rhel-imagestreams,automation-service-broker --write-config=true

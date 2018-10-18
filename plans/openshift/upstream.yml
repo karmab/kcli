@@ -1,13 +1,13 @@
 parameters:
   template: CentOS-7-x86_64-GenericCloud.qcow2
   memory: 6144
-  docker_disk_size: 60
-  openshift_version: '3.11'
+  openshift_version: v3.11
   asb: false
   admin_user: admin
   admin_password: admin
   domain: default
   reservedns: false
+  disk_size: 30
 
 origin:
  template: [[ template ]]
@@ -18,8 +18,7 @@ origin:
  nets:
   - default
  disks:
-  - size: 10
-  - size: [[ docker_disk_size ]]
+  - size: [[ disk_size ]]
  pool: default
  scripts: 
   - requirements.sh
