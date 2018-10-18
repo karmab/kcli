@@ -23,10 +23,8 @@ class Kaws(object):
     """
 
     """
-    def __init__(self, host='127.0.0.1', port=None, access_key_id=None, access_key_secret=None, debug=False,
+    def __init__(self, access_key_id=None, access_key_secret=None, debug=False,
                  region='us-west-1'):
-        self.host = host
-        self.port = port
         self.debug = debug
         self.conn = boto3.client('ec2', aws_access_key_id=access_key_id, aws_secret_access_key=access_key_secret,
                                  region_name=region)
@@ -708,9 +706,8 @@ class Kaws(object):
         u, ip = self._ssh_credentials(name)
         if user is None:
             user = u
-        sshcommand = common.ssh(name, ip=ip, host=self.host, port=self.port, user=user,
-                                local=local, remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, Y=Y, D=D,
-                                debug=self.debug)
+        sshcommand = common.ssh(name, ip=ip, user=user, local=local, remote=remote, tunnel=tunnel, insecure=insecure,
+                                cmd=cmd, X=X, Y=Y, D=D, debug=self.debug)
         return sshcommand
 
     def scp(self, name, user=None, source=None, destination=None, tunnel=False, download=False, recursive=False):
@@ -726,9 +723,8 @@ class Kaws(object):
         :return:
         """
         u, ip = self._ssh_credentials(name)
-        scpcommand = common.scp(name, ip='', host=self.host, port=self.port, user=user,
-                                source=source, destination=destination, recursive=recursive, tunnel=tunnel,
-                                debug=self.debug, download=False)
+        scpcommand = common.scp(name, ip='', user=user, source=source, destination=destination, recursive=recursive,
+                                tunnel=tunnel, debug=self.debug, download=False)
         return scpcommand
 
     def create_pool(self, name, poolpath, pooltype='dir', user='qemu', thinpool=None):

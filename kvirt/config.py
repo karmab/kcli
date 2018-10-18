@@ -77,8 +77,8 @@ class Kconfig(Kbaseconfig):
                     common.pprint("Missing access_key_secret in the configuration. Leaving", color='red')
                     os._exit(1)
                 from kvirt.aws import Kaws
-                k = Kaws(host=self.host, port=self.port, access_key_id=access_key_id,
-                         access_key_secret=access_key_secret, region=region, debug=debug)
+                k = Kaws(access_key_id=access_key_id, access_key_secret=access_key_secret, region=region,
+                         debug=debug)
             elif self.type == 'ovirt':
                 datacenter = self.options.get('datacenter', 'Default')
                 cluster = self.options.get('cluster', 'Default')
