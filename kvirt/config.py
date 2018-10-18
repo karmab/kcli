@@ -27,7 +27,7 @@ class Kconfig(Kbaseconfig):
     """
 
     """
-    def __init__(self, client=None, debug=False, quiet=False):
+    def __init__(self, client=None, debug=False, quiet=False, region=None, zone=None):
         Kbaseconfig.__init__(self, client=client, debug=debug, quiet=quiet)
         self.overrides = {}
         if not self.enabled:
@@ -58,14 +58,14 @@ class Kconfig(Kbaseconfig):
                 if project is None:
                     common.pprint("Missing project in the configuration. Leaving", color='red')
                     os._exit(1)
-                zone = self.options.get('zone', 'europe-west1-b')
-                region = self.options.get('region')
+                zone = self.options.get('zone', 'europe-west1-b') if zone is None else zone
+                region = self.options.get('region') if region is None else region
                 region = zone[:-2] if region is None else region
                 from kvirt.gcp import Kgcp
                 k = Kgcp(host=self.host, port=self.port, user=self.user, region=region,
                          zone=zone, project=project, debug=debug)
             elif self.type == 'aws':
-                region = self.options.get('region')
+                region = self.options.get('region') if region is None else region
                 if region is None:
                     common.pprint("Missing region in the configuration. Leaving", color='red')
                     os._exit(1)

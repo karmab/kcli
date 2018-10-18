@@ -20,7 +20,7 @@ def start(args):
     """Start vm/container"""
     names = [common.get_lastvm(args.client)] if not args.names else args.names
     container = args.container
-    config = Kconfig(client=args.client, debug=args.debug)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
     k = config.k
     if container:
         from kvirt import dockerutils
@@ -41,7 +41,7 @@ def stop(args):
     """Stop vm/container"""
     container = args.container
     names = [common.get_lastvm(args.client)] if not args.names else args.names
-    config = Kconfig(client=args.client, debug=args.debug)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
     if config.extraclients:
         ks = config.extraclients
         ks.update({config.client: config.k})
@@ -68,7 +68,7 @@ def restart(args):
     """Restart vm/container"""
     names = [common.get_lastvm(args.client)] if not args.names else args.names
     container = args.container
-    config = Kconfig(client=args.client, debug=args.debug)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
     k = config.k
     if container:
         from kvirt import dockerutils
@@ -91,7 +91,7 @@ def console(args):
     name = common.get_lastvm(args.client) if not args.name else args.name
     serial = args.serial
     container = args.container
-    config = Kconfig(client=args.client, debug=args.debug)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
     k = config.k
     tunnel = config.tunnel
     if container:
@@ -110,7 +110,7 @@ def delete(args):
     container = args.container
     snapshots = args.snapshots
     yes = args.yes
-    config = Kconfig(client=args.client, debug=args.debug)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
     k = config.k
     if not yes:
         common.confirm("Are you sure?")
@@ -140,7 +140,7 @@ def download(args):
     templates = args.templates
     cmd = args.cmd
     url = args.url
-    config = Kconfig(client=args.client, debug=args.debug)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
     result = config.handle_host(pool=pool, templates=templates, download=True, cmd=cmd, url=url)
     if result['result'] == 'success':
         os._exit(0)
@@ -154,7 +154,7 @@ def info(args):
     output = args.output
     fields = args.fields
     values = args.values
-    config = Kconfig(client=args.client, debug=args.debug)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
     k = config.k
     codes = []
     for name in names:
@@ -176,7 +176,7 @@ def host(args):
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
         result = baseconfig.disable_host(disable)
     else:
-        config = Kconfig(client=args.client, debug=args.debug)
+        config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
         result = config.handle_host(sync=sync)
     if result['result'] == 'success':
         os._exit(0)
@@ -242,7 +242,7 @@ def _list(args):
             products.add_row([repo, group, name, description, numvms, memory])
         print(products)
         return
-    config = Kconfig(client=args.client, debug=args.debug)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
     if config.client != 'all':
         k = config.k
     if pools:
@@ -434,7 +434,7 @@ def vm(args):
     profile = args.profile
     profilefile = args.profilefile
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
-    config = Kconfig(client=args.client, debug=args.debug)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
     if 'name' in overrides:
         name = overrides['name']
     if name is None:
@@ -474,7 +474,7 @@ def clone(args):
     full = args.full
     start = args.start
     common.pprint("Cloning vm %s from vm %s..." % (name, base), color='green')
-    config = Kconfig(client=args.client, debug=args.debug)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
     k = config.k
     k.clone(base, name, full=full, start=start)
 
@@ -496,7 +496,7 @@ def update(args):
     net = args.network
     information = args.information
     iso = args.iso
-    config = Kconfig(client=args.client, debug=args.debug)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
     k = config.k
     if dns:
         common.pprint("Creating Dns entry for %s..." % name, color='green')
@@ -559,7 +559,7 @@ def disk(args):
     diskname = args.diskname
     template = args.template
     pool = args.pool
-    config = Kconfig(client=args.client, debug=args.debug)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
     k = config.k
     if delete:
         if diskname is None:
@@ -585,7 +585,7 @@ def export(args):
     """Export a vm"""
     names = [common.get_lastvm(args.client)] if not args.names else args.names
     template = args.template
-    config = Kconfig(client=args.client, debug=args.debug)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
     k = config.k
     codes = []
     for name in names:
@@ -612,7 +612,7 @@ def nic(args):
     delete = args.delete
     interface = args.interface
     network = args.network
-    config = Kconfig(client=args.client, debug=args.debug)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
     k = config.k
     if delete:
         common.pprint("Deleting nic from %s..." % name, color='green')
@@ -633,7 +633,7 @@ def pool(args):
     pooltype = args.pooltype
     path = args.path
     thinpool = args.thinpool
-    config = Kconfig(client=args.client, debug=args.debug)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
     k = config.k
     if delete:
         common.pprint("Deleting pool %s..." % pool, color='green')
@@ -671,7 +671,7 @@ def plan(args):
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
         baseconfig.info_plan(inputfile)
         os._exit(0)
-    config = Kconfig(client=args.client, debug=args.debug)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
     if use is not None:
         rootdir = os.path.expanduser('~/.kcli')
         if not os.path.exists(rootdir):
@@ -769,7 +769,7 @@ def product(args):
             products.add_row([repo, group, name, description, numvms, memory])
         print(products)
     else:
-        config = Kconfig(client=args.client, debug=args.debug)
+        config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
         common.pprint("Creating product %s..." % product, color='green')
         config.create_product(product, repo=repo, group=group, plan=plan, latest=latest, overrides=overrides)
     return 0
@@ -783,7 +783,7 @@ def ssh(args):
     D = args.D
     X = args.X
     Y = args.Y
-    config = Kconfig(client=args.client, debug=args.debug)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
     k = config.k
     tunnel = config.tunnel
     insecure = config.insecure
@@ -813,7 +813,7 @@ def scp(args):
     source = args.source[0]
     volumepath = args.volumepath
     destination = args.destination[0]
-    config = Kconfig(client=args.client, debug=args.debug)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
     k = config.k
     tunnel = config.tunnel
     if len(source.split(':')) == 2:
@@ -854,7 +854,7 @@ def network(args):
     nodhcp = args.nodhcp
     domain = args.domain
     pxe = args.pxe
-    config = Kconfig(client=args.client, debug=args.debug)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
     k = config.k
     if name is None:
         common.pprint("Missing Network", color='red')
@@ -891,7 +891,7 @@ def container(args):
     from kvirt import dockerutils
     name = args.name
     profile = args.profile
-    config = Kconfig(client=args.client, debug=args.debug)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
     k = config.k
     if name is None:
         name = nameutils.get_random_name()
@@ -930,7 +930,7 @@ def snapshot(args):
     revert = args.revert
     delete = args.delete
     listing = args.listing
-    config = Kconfig(client=args.client, debug=args.debug)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
     k = config.k
     if revert:
         common.pprint("Reverting snapshot of %s named %s..." % (name, snapshot), color='green')
@@ -958,7 +958,7 @@ def snapshot(args):
 
 def report(args):
     """Report info about host"""
-    config = Kconfig(client=args.client, debug=args.debug)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
     k = config.k
     k.report()
 
@@ -983,6 +983,8 @@ def cli():
                                      'https://github.com/karmab/kcli!')
     parser.add_argument('-C', '--client')
     parser.add_argument('-d', '--debug', action='store_true')
+    parser.add_argument('-r', '--region', help='Region to use. specific to aws/gcp')
+    parser.add_argument('-z', '--zone', help='Zone to use. specific to gcp')
     parser.add_argument('-v', '--version', action='version', version=__version__)
 
     subparsers = parser.add_subparsers(metavar='')

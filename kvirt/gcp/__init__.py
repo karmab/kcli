@@ -382,11 +382,12 @@ class Kgcp(object):
         :return:
         """
         # conn = self.conn
-        # project = self.project
-        # zone = self.zone
+        project = self.project
+        zone = self.zone
         # resource = googleapiclient.discovery.build('cloudresourcemanager', 'v1')
         # print(dir(resource.projects()))
-        print("not implemented")
+        print("Project: %s" % project)
+        print("Zone: %s" % zone)
         return
 
     def status(self, name):
