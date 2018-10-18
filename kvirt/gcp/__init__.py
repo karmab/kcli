@@ -1046,14 +1046,16 @@ class Kgcp(object):
             return None
 
     def __evaluate_template(self, template):
-        template = template.lower()
-        if 'centos-7' in template:
+        # template = template.lower()
+        if 'CentOS-7' in template:
             return 'centos-7'
-        elif 'debian' in template:
+        elif 'debian-8' in template:
             return 'debian-8'
-        elif 'rhel-guest-image-7' in template or 'rhel-server-7' in template:
+        elif 'debian-9' in template:
+            return 'debian-9'
+        elif 'rhel-guest-image-7' in template.lower() or 'rhel-server-7' in template.lower():
             return 'rhel-7'
-        elif [x for x in common.ubuntus if x in template]:
+        elif [x for x in common.ubuntus if x in template.lower()]:
             return 'ubuntu-1804-lts'
         else:
             return template
