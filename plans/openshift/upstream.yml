@@ -8,6 +8,7 @@ parameters:
   domain: default
   reservedns: false
   disk_size: 30
+  skydive: false
 
 origin:
  template: [[ template ]]
@@ -23,3 +24,6 @@ origin:
  scripts: 
   - requirements.sh
   - upstream.sh
+[% if skydive %]
+  - skydive.sh
+[% endif %]
