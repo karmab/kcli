@@ -202,7 +202,6 @@ for this to work, you'll need to manually install scapy (either from pip or usin
 ```
 gcp1:
  type: gcp
- user: jhendrix
  credentials: ~/myproject.json
  enabled: true
  project: myproject
@@ -211,7 +210,6 @@ gcp1:
 
 The following parameters are specific to gcp:
 
-- user this is the user that will be used to access yours vms through ssh
 - credentials (pointing to a json service account file). if not specified, the environment variable *GOOGLE_APPLICATION_CREDENTIALS* will be used
 - project 
 - zone

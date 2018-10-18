@@ -691,7 +691,7 @@ def ssh(name, ip='', host=None, port=22, hostuser=None, user=None, local=None, r
                 sshcommand = "-Y %s" % sshcommand
             if cmd:
                 sshcommand = "%s %s" % (sshcommand, cmd)
-            if host not in ['localhost', '127.0.0.1'] and tunnel:
+            if host is not None and host not in ['localhost', '127.0.0.1'] and tunnel and hostuser is not None:
                 if identityfile is not None:
                     sshcommand = "-o ProxyCommand='ssh -i %s -qp %s -W %%h:%%p %s@%s' %s" % (identityfile, port,
                                                                                              hostuser, host, sshcommand)
@@ -732,7 +732,7 @@ def scp(name, ip='', host=None, port=22, hostuser=None, user=None, source=None, 
         if ip == '':
             print("No ip found. Cannot scp...")
         else:
-            if host not in ['localhost', '127.0.0.1'] and tunnel:
+            if host is not None and host not in ['localhost', '127.0.0.1'] and tunnel and hostuser is not None:
                 arguments = "-o ProxyCommand='ssh -qp %s -W %%h:%%p %s@%s'" % (port, hostuser, host)
             else:
                 arguments = ''

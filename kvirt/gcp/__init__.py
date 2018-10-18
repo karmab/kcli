@@ -7,6 +7,7 @@ Gcp Provider Class
 from jinja2 import Environment, FileSystemLoader
 from kvirt import common
 from dateutil import parser as dateparser
+from getpass import getuser
 import googleapiclient.discovery
 from google.cloud import dns
 from netaddr import IPNetwork
@@ -20,15 +21,12 @@ class Kgcp(object):
     """
 
     """
-    def __init__(self, host='127.0.0.1', port=None, user='root', debug=False,
-                 project="kubevirt-button", zone="europe-west1-b", region='europe-west1'):
+    def __init__(self, debug=False, project="kubevirt-button", zone="europe-west1-b",
+                 region='europe-west1'):
         self.conn = googleapiclient.discovery.build('compute', 'v1')
         self.project = project
         self.zone = zone
         self.region = region
-        self.user = user
-        self.host = host
-        self.port = port
         self.debug = debug
         return
 
@@ -274,7 +272,10 @@ class Kgcp(object):
         if homekey is not None:
             keys = [homekey] + keys if keys is not None else [homekey]
         if keys is not None:
-            keys = ["%s: %s" % (self.user, x) for x in keys]
+            user = common.get_user(template)
+            if user == 'root':
+                user = getuser()
+            keys = ["%s: %s" % (user, x) for x in keys]
             keys = '\n'.join(keys)
             newval = {'key': 'ssh-keys', 'value': keys}
             body['metadata']['items'].append(newval)
@@ -463,8 +464,8 @@ class Kgcp(object):
         :return:
         """
         project = self.project
-        user = self.user
         zone = self.zone
+        user, ip = self._ssh_credentials(name)
         sshcommand = "ssh"
         identityfile = None
         if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
@@ -797,8 +798,21 @@ class Kgcp(object):
         return
 
     def _ssh_credentials(self, name):
-        user = self.user
-        ip = self.ip(name)
+        user, ip = None, None
+        conn = self.conn
+        project = self.project
+        zone = self.zone
+        try:
+            vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
+        except:
+            common.pprint("Vm %s not found" % name, color='red')
+            os._exit(1)
+        if 'natIP' in vm['networkInterfaces'][0]['accessConfigs'][0]:
+            ip = vm['networkInterfaces'][0]['accessConfigs'][0]['natIP']
+        template = os.path.basename(vm['disks'][0]['licenses'][-1])
+        user = common.get_user(template)
+        if user == 'root':
+            user = getuser()
         return user, ip
 
     def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, Y=False,
@@ -817,10 +831,13 @@ class Kgcp(object):
         :param D:
         :return:
         """
+        if user == 'root':
+            common.pprint("Cant access instance using root user", color='red')
+            os._exit(1)
         u, ip = self._ssh_credentials(name)
         if ip is None:
             return None
-        sshcommand = common.ssh(name, ip=ip, host=self.host, port=self.port, hostuser=self.user, user=u,
+        sshcommand = common.ssh(name, ip=ip, host=None, hostuser=None, user=u,
                                 local=local, remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, Y=Y, D=D,
                                 debug=self.debug)
         return sshcommand
@@ -838,7 +855,7 @@ class Kgcp(object):
         :return:
         """
         u, ip = self._ssh_credentials(name)
-        scpcommand = common.scp(name, ip=ip, host=self.host, port=self.port, hostuser=self.user, user=u,
+        scpcommand = common.scp(name, ip=ip, host=None, hostuser=None, user=u,
                                 source=source, destination=destination, recursive=recursive, tunnel=tunnel,
                                 debug=self.debug, download=False)
         return scpcommand
