@@ -287,15 +287,18 @@ class KOvirt(object):
                                                   nic_configurations=nic_configurations,
                                                   dns_servers=dns_servers, dns_search=domain,
                                                   custom_script=custom_script)
-            tags_service = self.conn.system_service().tags_service()
-            existing_tags = [tag.name for tag in tags_service.list()]
-            if "profile_%s" % profile not in existing_tags:
-                tags_service.add(types.Tag(name="profile_%s" % profile))
-            if "plan_%s" % plan not in existing_tags:
-                tags_service.add(types.Tag(name="plan_%s" % plan))
-            tags_service = vm_service.tags_service()
-            tags_service.add(tag=types.Tag(name="profile_%s" % profile))
-            tags_service.add(tag=types.Tag(name="plan_%s" % plan))
+            try:
+                tags_service = self.conn.system_service().tags_service()
+                existing_tags = [tag.name for tag in tags_service.list()]
+                if "profile_%s" % profile not in existing_tags:
+                    tags_service.add(types.Tag(name="profile_%s" % profile))
+                if "plan_%s" % plan not in existing_tags:
+                    tags_service.add(types.Tag(name="plan_%s" % plan))
+                tags_service = vm_service.tags_service()
+                tags_service.add(tag=types.Tag(name="profile_%s" % profile))
+                tags_service.add(tag=types.Tag(name="plan_%s" % plan))
+            except:
+                common.pprint("Tags not available. skipping", color='blue')
         vm_service.start(use_cloud_init=cloudinit, vm=types.Vm(initialization=initialization))
         return {'result': 'success'}
 
@@ -377,9 +380,12 @@ class KOvirt(object):
         # vmslist = self.vms_service.list()
         # print("Vms Running: %s" % len(vmslist))
         print("Version: %s" % api.product_info.version.full_version)
-        print("Vms Running: %s" % api.summary.vms.total)
-        print("Hosts: %d" % api.summary.hosts.total)
-        print("Storage Domains: %d" % api.summary.storage_domains.total)
+        if api.summary.vms is not None:
+            print("Vms Running: %s" % api.summary.vms.total)
+        if api.summary.hosts is not None:
+            print("Hosts: %d" % api.summary.hosts.total)
+        if api.summary.storage_domains is not None:
+            print("Storage Domains: %d" % api.summary.storage_domains.total)
 
     def status(self, name):
         """
@@ -407,12 +413,15 @@ class KOvirt(object):
             profile = ''
             report = 'N/A'
             vm_service = self.vms_service.vm_service(vm.id)
-            tags_service = vm_service.tags_service()
-            for tag in tags_service.list():
-                if tag.name.startswith('plan_'):
-                    plan = tag.name.replace('plan_', '')
-                if tag.name.startswith('profile_'):
-                    profile = tag.name.replace('profile_', '')
+            try:
+                tags_service = vm_service.tags_service()
+                for tag in tags_service.list():
+                    if tag.name.startswith('plan_'):
+                        plan = tag.name.replace('plan_', '')
+                    if tag.name.startswith('profile_'):
+                        profile = tag.name.replace('profile_', '')
+            except:
+                common.pprint("Tags not available. skipping", color='blue')
             ips = []
             devices = self.vms_service.vm_service(vm.id).reported_devices_service().list()
             for device in devices:
@@ -563,12 +572,15 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
         if vm.status == 'up':
             host = conn.follow_link(vm.host)
             yamlinfo['host'] = host.name
-        tags_service = vm_service.tags_service()
-        for tag in tags_service.list():
-            if tag.name.startswith('plan_'):
-                yamlinfo['plan'] = tag.name.replace('plan_', '')
-            if tag.name.startswith('profile_'):
-                yamlinfo['profile'] = tag.name.replace('profile_', '')
+        try:
+            tags_service = vm_service.tags_service()
+            for tag in tags_service.list():
+                if tag.name.startswith('plan_'):
+                    yamlinfo['plan'] = tag.name.replace('plan_', '')
+                if tag.name.startswith('profile_'):
+                    yamlinfo['profile'] = tag.name.replace('profile_', '')
+        except:
+                common.pprint("Tags not available. skipping", color='blue')
         template = conn.follow_link(vm.template)
         source = template.name
         yamlinfo['template'] = source
