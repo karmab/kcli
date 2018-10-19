@@ -675,7 +675,7 @@ def ssh(name, ip='', host=None, port=22, hostuser=None, user=None, local=None, r
         if ip == '':
             return None
         else:
-            sshcommand = "-A %s@%s" % (user, ip)
+            sshcommand = "%s@%s" % (user, ip)
             identityfile = None
             if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
                 identityfile = os.path.expanduser("~/.kcli/id_rsa")
