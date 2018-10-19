@@ -148,11 +148,11 @@ class KOvirt(object):
         console = types.Console(enabled=True)
         description = "plan=%s,profile=%s" % (plan, profile)
         memory = memory * 1024 * 1024
-        # cores = vm.cpu.topology.cores
+        cpu = types.Cpu(topology=types.CpuTopology(cores=numcpus, sockets=1))
         try:
             vm = self.vms_service.add(types.Vm(name=name, cluster=types.Cluster(name=self.cluster), memory=memory,
-                                               description=description, template=_template, console=console, os=_os),
-                                      clone=clone)
+                                               cpu=cpu, description=description, template=_template, console=console,
+                                               os=_os), clone=clone)
             vm_service = self.vms_service.vm_service(vm.id)
         except Exception as e:
             if self.debug:
@@ -255,7 +255,7 @@ class KOvirt(object):
                 gcmds.append('yum -y install ovirt-guest-agent-common')
                 gcmds.append('sed -i "s/# ignored_nic.*/ignored_nics = docker0 tun0 tun1/" /etc/ovirt-guest-agent.conf')
                 gcmds.append('systemctl enable ovirt-guest-agent')
-                gcmds.append('systemctl start ovirt-guest-agent')
+                gcmds.append('systemctl restart ovirt-guest-agent')
             if template is not None and template.lower().startswith('debian'):
                 gcmds.append('echo "deb http://download.opensuse.org/repositories/home:/evilissimo:/deb/Debian_7.0/ ./"'
                              ' >> /etc/apt/sources.list')
@@ -266,7 +266,7 @@ class KOvirt(object):
                 gcmds.append('apt-get -Y install ovirt-guest-agent')
                 gcmds.append('sed -i "s/# ignored_nics.*/ignored_nics = docker0,tun0/" /etc/ovirt-guest-agent.conf')
                 gcmds.append('service ovirt-guest-agent enable')
-                gcmds.append('service ovirt-guest-agent start')
+                gcmds.append('service ovirt-guest-agent restart')
             if template is not None and [x for x in common.ubuntus if x in template.lower()]:
                 gcmds.append('echo deb http://download.opensuse.org/repositories/home:/evilissimo:/ubuntu:/16.04/'
                              'xUbuntu_16.04/ /')
@@ -590,9 +590,8 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
         source = template.name
         yamlinfo['template'] = source
         yamlinfo['memory'] = int(vm._memory / 1024 / 1024)
-        cores = vm.cpu.topology.cores
-        # sockets = vm.cpu.topology.sockets
-        yamlinfo['cpus'] = cores
+        cpus = vm.cpu.topology.cores * vm.cpu.topology.sockets
+        yamlinfo['cpus'] = cpus
         yamlinfo['creationdate'] = vm._creation_time.strftime("%d-%m-%Y %H:%M")
         devices = self.vms_service.vm_service(vm.id).reported_devices_service().list()
         ips = []
@@ -733,7 +732,15 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
         :return:
         """
         print("not implemented")
-        return
+        return {'result': 'success'}
+        vmsearch = self.vms_service.list(search='name=%s' % name)
+        if not vmsearch:
+            common.pprint("VM %s not found" % name, color='red')
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        vminfo = vmsearch[0]
+        vm = self.vms_service.vm_service(vminfo.id)
+        vm.update(vm=types.Vm(types.Cpu(topology=types.CpuTopology(cores=int(numcpus)))))
+        return {'result': 'success'}
 
     def update_start(self, name, start=True):
         """
