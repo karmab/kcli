@@ -22,7 +22,7 @@ class KOvirt(object):
     def __init__(self, host='127.0.0.1', port=22, user='admin@internal',
                  password=None, insecure=True, ca_file=None, org=None, debug=False,
                  cluster='Default', datacenter='Default', ssh_user='root', imagerepository='ovirt-image-repository',
-                 filtervms=True):
+                 filtervms=True, filteruser=None):
         try:
             url = "https://%s/ovirt-engine/api" % host
             self.conn = sdk.Connection(url=url, username=user,
@@ -44,7 +44,8 @@ class KOvirt(object):
         self.org = org
         self.ssh_user = ssh_user
         self.imagerepository = imagerepository
-        self.filtervms = True
+        self.filtervms = filtervms
+        self.filteruser = filteruser
 
     def close(self):
         """
@@ -395,7 +396,13 @@ class KOvirt(object):
         """
         vms = []
         conn = self.conn
-        vmslist = self.vms_service.list()
+        if self.filtervms:
+            if self.filteruser:
+                vmslist = self.vms_service.list(search='description=plan*user=%s' % self.filteruser)
+            else:
+                vmslist = self.vms_service.list(search='description=plan=*profile=*')
+        else:
+            vmslist = self.vms_service.list()
         for vm in vmslist:
             name = vm.name
             state = str(vm.status)
@@ -403,15 +410,13 @@ class KOvirt(object):
             profile = ''
             report = 'N/A'
             description = vm.description.split(',')
-            if len(description) == 2:
-                description1 = description[0].split('=')
-                description2 = description[1].split('=')
-                if len(description1) == 2 and description1[0] == 'plan':
-                        plan = description1[1]
-                if len(description2) == 2 and description2[0] == 'profile':
-                    profile = description2[1]
-            if self.filtervms and (plan == '' or profile == ''):
-                continue
+            if len(description) >= 2:
+                planinfo = description[0].split('=')[1]
+                profileinfo = description[1].split('=')
+                if len(planinfo) == 2 and planinfo[0] == 'plan':
+                        plan = planinfo[1]
+                if len(profileinfo) == 2 and profileinfo[0] == 'profile':
+                    profile = profileinfo[1]
             template = conn.follow_link(vm.template)
             source = template.name
             ips = []
