@@ -197,16 +197,14 @@ class KOvirt(object):
                 mac = net.get('mac')
                 netmask = next((e for e in [net.get('mask'), net.get('netmask')] if e is not None), None)
                 gateway = net.get('gateway')
-                noconf = net.get('noconf')
-                if noconf is not None:
-                    continue
-                if 'ip' in net:
+                noconf = net.get('noconf', False)
+                if not noconf and 'ip' in net:
                     ip = net['ip']
                 # if 'alias' in net:
                 #    alias = net['alias']
-                if ips and len(ips) > index and ips[index] is not None:
+                if not noconf and ips and len(ips) > index and ips[index] is not None:
                     ip = ips[index]
-                if ip is not None and netmask is not None and gateway is not None:
+                if not noconf and ip is not None and netmask is not None and gateway is not None:
                     nic_configuration = types.NicConfiguration(name='nic%s' % index + 1, on_boot=True,
                                                                boot_protocol=types.BootProtocol.STATIC,
                                                                ip=types.Ip(version=types.IpVersion.V4, address=ip,
