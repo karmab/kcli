@@ -449,7 +449,6 @@ class KOvirt(object):
         :param tunnel:
         :return:
         """
-        tunnel = False
         vmsearch = self.vms_service.list(search='name=%s' % name)
         if not vmsearch:
             common.pprint("VM %s not found" % name, color='red')
@@ -459,17 +458,23 @@ class KOvirt(object):
         consoles_service = vm_service.graphics_consoles_service()
         consoles = consoles_service.list(current=True)
         for c in consoles:
+            console_service = consoles_service.console_service(c.id)
+            ticket = console_service.ticket()
             if str(c.protocol) == 'spice':
-                console_service = consoles_service.console_service(c.id)
-                ticket = console_service.ticket()
                 ocacontent = open(self.ca_file).read().replace('\n', '\\n')
-                subject = 'O=%s,CN=%s' % (self.org, c.address)
+                try:
+                    host = self.conn.follow_link(vm.host)
+                    hostname = host.address
+                except:
+                    hostname = c.address
+                subject = 'O=%s,CN=%s' % (self.org, hostname)
                 if tunnel:
                     localport1 = common.get_free_port()
                     localport2 = common.get_free_port()
-                    command = "ssh -o LogLevel=QUIET -f -p %s -L %s:127.0.0.1:%s -L %s:127.0.0.1:%s %s@%s sleep 10"\
-                        % (self.port, localport1, c.port, localport2, c.tls_port, self.ssh_user, self.host)
-                    os.popen(command)
+                    command = "ssh -o LogLevel=QUIET -f -p %s -L %s:%s:%s -L %s:%s:%s %s@%s sleep 5"\
+                        % (self.port, localport1, c.address, c.port, localport2, c.address, c.tls_port, self.ssh_user,
+                           self.host)
+                    os.system(command)
                 address = '127.0.0.1' if tunnel else c.address
                 port = localport1 if tunnel else c.port
                 sport = localport2 if tunnel else c.tls_port
@@ -483,7 +488,7 @@ fullscreen=0
 title={name}:%d
 enable-smartcard=0
 enable-usb-autoshare=1
-delete-this-file=0
+delete-this-file=1
 usb-filter=-1,-1,-1,-1,0
 tls-ciphers=DEFAULT
 host-subject={subject}
@@ -501,9 +506,10 @@ secure-channels=main;inputs;cursor;playback;record;display;usbredir;smartcard"""
             elif str(c.protocol) == 'vnc':
                 if tunnel:
                     localport1 = common.get_free_port()
-                    command = "ssh -o LogLevel=QUIET -f -p %s -L %s:127.0.0.1:%s %s@%s sleep 10"\
-                        % (self.port, localport1, c.port, self.ssh_user, self.host)
-                    os.popen(command)
+                    command = "ssh -o LogLevel=QUIET -f -p %s -L %s:%s:%s %s@%s sleep 5"\
+                        % (self.port, localport1, c.address, c.port, self.ssh_user, self.host)
+                    os.system(command)
+                address = '127.0.0.1' if tunnel else c.address
                 port = localport1 if tunnel else c.port
                 connectiondetails = """[virt-viewer]
 type=vnc
@@ -511,9 +517,9 @@ host={address}
 port={port}
 password={ticket}
 title={name}:%d
-delete-this-file=0
+delete-this-file=1
 toggle-fullscreen=shift+f11
-release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.value, name=name)
+release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.value, name=name)
         with open("/tmp/console.vv", "w") as f:
             f.write(connectiondetails)
         os.popen("remote-viewer /tmp/console.vv &")
@@ -576,10 +582,12 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
         if self.debug:
             print(vars(vm))
         yamlinfo = {'name': vm.name, 'disks': [], 'nets': [], 'status': vm.status, 'instanceid': vm.id}
-        # yamlinfo['autostart'] = ''
-        if vm.status == 'up':
-            host = conn.follow_link(vm.host)
-            yamlinfo['host'] = host.name
+        try:
+            if str(vm.status) == 'up':
+                host = conn.follow_link(vm.host)
+                yamlinfo['host'] = host.name
+        except:
+            pass
         description = vm.description.split(',')
         if len(description) == 2:
             description1 = description[0].split('=')
@@ -1171,3 +1179,15 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
             if template.status == types.TemplateStatus.OK:
                 break
         return {'result': 'success'}
+
+    def get_hostname(self, address):
+        conn = self.conn
+        try:
+            hosts_service = conn.system_service().hosts_service()
+            for host in hosts_service.list():
+                print(vars(host))
+                break
+            # host = hosts_service.list(search='name=myhost')[0]
+            # host_service = hosts_service.host_service(host.id)
+        except:
+            return address
