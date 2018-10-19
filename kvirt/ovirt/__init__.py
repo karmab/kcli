@@ -251,6 +251,7 @@ class KOvirt(object):
                                          template.lower().startswith('fedora') or
                                          template.lower().startswith('rhel')):
                 gcmds.append('yum -y install ovirt-guest-agent-common')
+                gcmds.append('sed -i "s/# ignored_nic.*/ignored_nics = docker0 tun0 tun1/" /etc/ovirt-guest-agent.conf')
                 gcmds.append('systemctl enable ovirt-guest-agent')
                 gcmds.append('systemctl start ovirt-guest-agent')
             if template is not None and template.lower().startswith('debian'):
@@ -261,6 +262,7 @@ class KOvirt(object):
                 gcmds.append('gpg --export --armor 73A1A299 | apt-key add -')
                 gcmds.append('apt-get update')
                 gcmds.append('apt-get -Y install ovirt-guest-agent')
+                gcmds.append('sed -i "s/# ignored_nics.*/ignored_nics = docker0,tun0/" /etc/ovirt-guest-agent.conf')
                 gcmds.append('service ovirt-guest-agent enable')
                 gcmds.append('service ovirt-guest-agent start')
             if template is not None and [x for x in common.ubuntus if x in template.lower()]:
@@ -271,6 +273,7 @@ class KOvirt(object):
                 gcmds.append('apt-key add - < Release.key')
                 gcmds.append('apt-get update')
                 gcmds.append('apt-get -Y install ovirt-guest-agent')
+                gcmds.append('sed -i "s/# ignored_nics.*/ignored_nics = docker0,tun0/" /etc/ovirt-guest-agent.conf')
             if gcmds:
                 index = 1
                 if template is not None and template.startswith('rhel'):
