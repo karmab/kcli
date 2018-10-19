@@ -398,9 +398,9 @@ class KOvirt(object):
         conn = self.conn
         if self.filtervms:
             if self.filteruser:
-                vmslist = self.vms_service.list(search='description=plan*user=%s' % self.filteruser)
+                vmslist = self.vms_service.list(search='description=plan*,user=%s' % self.filteruser)
             else:
-                vmslist = self.vms_service.list(search='description=plan=*profile=*')
+                vmslist = self.vms_service.list(search='description=plan=*,profile=*')
         else:
             vmslist = self.vms_service.list()
         for vm in vmslist:
@@ -411,7 +411,7 @@ class KOvirt(object):
             report = 'N/A'
             description = vm.description.split(',')
             if len(description) >= 2:
-                planinfo = description[0].split('=')[1]
+                planinfo = description[0].split('=')
                 profileinfo = description[1].split('=')
                 if len(planinfo) == 2 and planinfo[0] == 'plan':
                         plan = planinfo[1]
