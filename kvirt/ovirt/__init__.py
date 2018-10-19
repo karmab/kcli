@@ -147,8 +147,10 @@ class KOvirt(object):
         _os = types.OperatingSystem(boot=types.Boot(devices=[types.BootDevice.HD, types.BootDevice.CDROM]))
         console = types.Console(enabled=True)
         description = "plan=%s,profile=%s" % (plan, profile)
+        memory = memory * 1024 * 1024
+        # cores = vm.cpu.topology.cores
         try:
-            vm = self.vms_service.add(types.Vm(name=name, cluster=types.Cluster(name=self.cluster),
+            vm = self.vms_service.add(types.Vm(name=name, cluster=types.Cluster(name=self.cluster), memory=memory,
                                                description=description, template=_template, console=console, os=_os),
                                       clone=clone)
             vm_service = self.vms_service.vm_service(vm.id)
@@ -713,8 +715,15 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
         :param memory:
         :return:
         """
-        print("not implemented")
-        return
+        vmsearch = self.vms_service.list(search='name=%s' % name)
+        if not vmsearch:
+            common.pprint("VM %s not found" % name, color='red')
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        vminfo = vmsearch[0]
+        vm = self.vms_service.vm_service(vminfo.id)
+        memory = int(memory) * 1024 * 1024
+        vm.update(vm=types.Vm(memory=memory))
+        return {'result': 'success'}
 
     def update_cpu(self, name, numcpus):
         """
