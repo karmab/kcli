@@ -280,7 +280,7 @@ class KOvirt(object):
             user_name = common.get_user(template) if template is not None else 'root'
             root_password = None
             # dns_servers = '8.8.8.8 1.1.1.1'
-            dns_servers = dns if dns is not None else '8.8.8.8 1.1.1.1'
+            # dns_servers = dns if dns is not None else '8.8.8.8 1.1.1.1'
             userkey = get_home_ssh_key()
             if keys is None:
                 keys = userkey
@@ -290,7 +290,7 @@ class KOvirt(object):
             initialization = types.Initialization(user_name=user_name, root_password=root_password,
                                                   regenerate_ssh_keys=True, authorized_ssh_keys=keys, host_name=name,
                                                   nic_configurations=nic_configurations,
-                                                  dns_servers=dns_servers, dns_search=domain,
+                                                  dns_servers=dns, dns_search=domain,
                                                   custom_script=custom_script)
         vm_service.start(use_cloud_init=cloudinit, vm=types.Vm(initialization=initialization))
         return {'result': 'success'}
