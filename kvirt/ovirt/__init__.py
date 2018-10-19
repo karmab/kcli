@@ -21,7 +21,8 @@ class KOvirt(object):
     """
     def __init__(self, host='127.0.0.1', port=22, user='admin@internal',
                  password=None, insecure=True, ca_file=None, org=None, debug=False,
-                 cluster='Default', datacenter='Default', ssh_user='root', imagerepository='ovirt-image-repository'):
+                 cluster='Default', datacenter='Default', ssh_user='root', imagerepository='ovirt-image-repository',
+                 filtervms=True):
         try:
             url = "https://%s/ovirt-engine/api" % host
             self.conn = sdk.Connection(url=url, username=user,
@@ -43,6 +44,7 @@ class KOvirt(object):
         self.org = org
         self.ssh_user = ssh_user
         self.imagerepository = imagerepository
+        self.filtervms = True
 
     def close(self):
         """
@@ -397,8 +399,6 @@ class KOvirt(object):
         for vm in vmslist:
             name = vm.name
             state = str(vm.status)
-            template = conn.follow_link(vm.template)
-            source = template.name
             plan = ''
             profile = ''
             report = 'N/A'
@@ -410,6 +410,10 @@ class KOvirt(object):
                         plan = description1[1]
                 if len(description2) == 2 and description2[0] == 'profile':
                     profile = description2[1]
+            if self.filtervms and (plan == '' or profile == ''):
+                continue
+            template = conn.follow_link(vm.template)
+            source = template.name
             ips = []
             devices = self.vms_service.vm_service(vm.id).reported_devices_service().list()
             for device in devices:

@@ -314,6 +314,7 @@ The following parameters are specific to ovirt:
 - imagerepository. A Glance image provider repository. Defaults to `ovirt-image-repository`. You can get default one created for you with kcli download
 - cluster  Defaults to Default
 - datacenter Defaults to Default
+- filtervms Defaults to True. Only list vms created by kcli. Useful for environment when you are superadmin and have a ton of vms
 
 To use this provider with kcli rpm, you'll need to install (from pip) *ovirt-engine-sdk-python*
 

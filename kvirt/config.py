@@ -100,10 +100,11 @@ class Kconfig(Kbaseconfig):
                     common.pprint("Ca file path doesn't exist. Leaving", color='red')
                     os._exit(1)
                 imagerepository = self.options.get('imagerepository', 'ovirt-image-repository')
+                filtervms = self.options.get('filtervms', True)
                 from kvirt.ovirt import KOvirt
                 k = KOvirt(host=self.host, port=self.port, user=user, password=password,
                            debug=debug, datacenter=datacenter, cluster=cluster, ca_file=ca_file, org=org,
-                           imagerepository=imagerepository)
+                           imagerepository=imagerepository, filtervms=filtervms)
                 self.overrides.update({'host': self.host, 'user': user, 'password': password})
             elif self.type == 'openstack':
                 version = self.options.get('version', '2')
