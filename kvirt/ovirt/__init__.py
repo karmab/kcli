@@ -1125,11 +1125,11 @@ release-cursor=shift+f12""".format(address=c.address, port=port, ticket=ticket.v
         vm = self.vms_service.vm_service(vminfo.id)
         if str(vminfo.status) == 'up':
             vm.stop()
-        attachments = self.conn.follow_link(vm.disk_attachments)
+        attachments = self.conn.follow_link(vminfo.disk_attachments)
         disk_ids = [attachment.disk.id for attachment in attachments]
         _format = types.DiskFormat.COW
         attachments = [types.DiskAttachment(disk=types.Disk(id=disk_id, format=_format)) for disk_id in disk_ids]
-        newvm = types.Vm(id=vm.id, disk_attachments=attachments)
+        newvm = types.Vm(id=vminfo.id, disk_attachments=attachments)
         newname = template if template is not None else name
         template = types.Template(name=newname, vm=newvm)
         template = self.templates_service.add(template=template)
