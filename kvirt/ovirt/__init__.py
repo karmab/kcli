@@ -272,7 +272,12 @@ class KOvirt(object):
                 gcmds.append('apt-get update')
                 gcmds.append('apt-get -Y install ovirt-guest-agent')
             if gcmds:
-                cmds = cmds[:1] + gcmds + cmds[1:]
+                index = 1
+                if template is not None and template.startswith('rhel'):
+                    subindex = [i for i, value in enumerate(cmds) if value.startswith('subscription-manager')]
+                    if subindex:
+                        index = subindex.pop() + 1
+                cmds = cmds[:index] + gcmds + cmds[index:]
             data = common.process_cmds(cmds=cmds, overrides=overrides)
             custom_script += "runcmd:\n"
             custom_script += data
