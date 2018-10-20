@@ -146,22 +146,25 @@ class KOvirt(object):
         _template = types.Template(name=template) if template is not None else types.Template(name='Blank')
         _os = types.OperatingSystem(boot=types.Boot(devices=[types.BootDevice.HD, types.BootDevice.CDROM]))
         console = types.Console(enabled=True)
-        if vnc:
-            graphics_console = types.GraphicsConsole(protocol=types.GraphicsType.VNC)
-        else:
-            graphics_console = types.GraphicsConsole(protocol=types.GraphicsType.SPICE)
         description = "plan=%s,profile=%s" % (plan, profile)
         memory = memory * 1024 * 1024
         cpu = types.Cpu(topology=types.CpuTopology(cores=numcpus, sockets=1))
         try:
             vm = self.vms_service.add(types.Vm(name=name, cluster=types.Cluster(name=self.cluster), memory=memory,
                                                cpu=cpu, description=description, template=_template, console=console,
-                                               os=_os, graphics_consoles=[graphics_console]), clone=clone)
+                                               os=_os), clone=clone)
             vm_service = self.vms_service.vm_service(vm.id)
         except Exception as e:
             if self.debug:
                 print(e)
             return {'result': 'failure', 'reason': e}
+        if vnc:
+            vnc_console = types.GraphicsConsole(protocol=types.GraphicsType.VNC)
+            graphics_console_service = vm_service.graphics_consoles_service()
+            graphical_consoles = graphics_console_service
+            for gc in graphical_consoles.list():
+                graphics_console_service.console_service(gc.id).remove()
+                graphics_console_service.add(vnc_console)
         cdroms_service = vm_service.cdroms_service()
         cdrom = cdroms_service.list()[0]
         cdrom_service = cdroms_service.cdrom_service(cdrom.id)
