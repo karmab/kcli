@@ -156,12 +156,12 @@ def info(args):
     values = args.values
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
     k = config.k
-    codes = []
+    # codes = []
     for name in names:
-        result = k.info(name, output=output, fields=fields, values=values)
-        code = common.handle_response(result, name, quiet=True)
-        codes.append(code)
-    os._exit(1 if 1 in codes else 0)
+        k.info(name, output=output, fields=fields, values=values)
+        # code = common.handle_response(result, name, quiet=True)
+        # codes.append(code)
+    # os._exit(1 if 1 in codes else 0)
 
 
 def host(args):
