@@ -152,13 +152,15 @@ def info(args):
     """Get info on vm"""
     names = [common.get_lastvm(args.client)] if not args.names else args.names
     output = args.output
-    fields = args.fields
+    fields = args.fields.split(',') if args.fields is not None else []
     values = args.values
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
     k = config.k
     # codes = []
     for name in names:
-        k.info(name, output=output, fields=fields, values=values)
+        data = k.info(name, output=output, fields=fields, values=values)
+        if data is not None:
+            print(data)
         # code = common.handle_response(result, name, quiet=True)
         # codes.append(code)
     # os._exit(1 if 1 in codes else 0)

@@ -416,7 +416,7 @@ class Kopenstack(object):
         print(vm.get_console_output())
         return
 
-    def info(self, name, output='plain', fields=None, values=False):
+    def info(self, name, output='plain', fields=[], values=False, pretty=True):
         """
 
         :param name:
@@ -433,7 +433,7 @@ class Kopenstack(object):
             vm = nova.servers.find(name=name)
         except:
             common.pprint("VM %s not found" % name, color='red')
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            return
         if self.debug:
             print(vars(vm))
         yamlinfo = {'name': vm.name, 'status': vm.status}
@@ -470,8 +470,7 @@ class Kopenstack(object):
                 yamlinfo['plan'] = metadata['plan']
             if 'profile' in metadata:
                 yamlinfo['profile'] = metadata['profile']
-        common.print_info(yamlinfo, output=output, fields=fields, values=values)
-        return {'result': 'success'}
+        return common.print_info(yamlinfo, output=output, fields=fields, values=values, pretty=pretty)
 
 # should return ip string
     def ip(self, name):

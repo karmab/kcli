@@ -557,7 +557,8 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         keys_service = user_service.ssh_public_keys_service()
         key = get_home_ssh_key()
         if key is None:
-            common.print("neither id_rsa.pub or id_dsa public keys found in your .ssh directory. This is required")
+            common.pprint("neither id_rsa.pub or id_dsa public keys found in your .ssh directory. This is required",
+                          color='blue')
             return
         try:
             keys_service.add(key=types.SshPublicKey(content=key))
@@ -567,7 +568,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         call(command, shell=True)
         return
 
-    def info(self, name, output='plain', fields=None, values=False):
+    def info(self, name, output='plain', fields=[], values=False, pretty=True):
         """
 
         :param name:
@@ -580,7 +581,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         vmsearch = self.vms_service.list(search='name=%s' % name)
         if not vmsearch:
             common.pprint("VM %s not found" % name, color='red')
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            return
         vm = vmsearch[0]
         if self.debug:
             print(vars(vm))
@@ -637,8 +638,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             yamlinfo['disks'].append({'device': device, 'size': disksize, 'format': diskformat, 'type': drivertype,
                                       'path': path})
 
-        common.print_info(yamlinfo, output=output, fields=fields, values=values)
-        return {'result': 'success'}
+        return common.print_info(yamlinfo, output=output, fields=fields, values=values, pretty=pretty)
 
 # should return ip string
     def ip(self, name):

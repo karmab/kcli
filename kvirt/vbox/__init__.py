@@ -517,7 +517,7 @@ class Kbox(object):
             serialport = serial.path
             os.system("nc 127.0.0.1 %s" % serialport)
 
-    def info(self, name, output='plain', fields=None, values=False):
+    def info(self, name, output='plain', fields=[], values=False, pretty=True):
         """
 
         :param name:
@@ -532,7 +532,7 @@ class Kbox(object):
             vm = conn.find_machine(name)
         except:
             common.pprint("VM %s not found" % name, color='red')
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            return
         state = 'down'
         hostports = []
         autostart = starts[vm.autostart_enabled]

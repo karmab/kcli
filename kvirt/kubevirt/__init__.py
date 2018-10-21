@@ -530,7 +530,7 @@ class Kubevirt(object):
         os.system(command)
         return
 
-    def info(self, name, output='plain', fields=None, values=False):
+    def info(self, name, output='plain', fields=[], values=False, pretty=True):
         """
 
         :param name:
@@ -550,7 +550,7 @@ class Kubevirt(object):
             vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
         except:
             common.pprint("VM %s not found" % name, color='red')
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            return
         if self.debug:
             pretty_print(vm)
         metadata = vm.get("metadata")
@@ -646,8 +646,7 @@ class Kubevirt(object):
                 network = 'default'
                 network_type = 'pod'
             yamlinfo['nets'].append({'device': device, 'mac': mac, 'net': network, 'type': network_type})
-        common.print_info(yamlinfo, output=output, fields=fields, values=values)
-        return {'result': 'success'}
+        return common.print_info(yamlinfo, output=output, fields=fields, values=values, pretty=pretty)
 
     def ip(self, name):
         """

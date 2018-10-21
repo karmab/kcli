@@ -948,7 +948,7 @@ class Kvirt(object):
                                 (self.identitycommand, self.port, self.user, self.host, serialport)
                         os.system(serialcommand)
 
-    def info(self, name, output='plain', fields=None, values=False):
+    def info(self, name, output='plain', fields=[], values=False, pretty=True):
         """
 
         :param name:
@@ -957,8 +957,6 @@ class Kvirt(object):
         :param values:
         :return:
         """
-        if fields is not None:
-            fields = fields.split(',')
         leases = {}
         starts = {0: 'no', 1: 'yes'}
         conn = self.conn
@@ -975,7 +973,7 @@ class Kvirt(object):
             root = ET.fromstring(xml)
         except:
             common.pprint("VM %s not found" % name, color='red')
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            return
         status = 'down'
         autostart = starts[vm.autostart()]
         memory = list(root.getiterator('memory'))[0]
@@ -1073,8 +1071,7 @@ class Kvirt(object):
             else:
                 current = False
             yamlinfo['snapshots'].append({'snapshot': snapshot, current: current})
-        common.print_info(yamlinfo, output=output, fields=fields, values=values)
-        return {'result': 'success'}
+        return common.print_info(yamlinfo, output=output, fields=fields, values=values, pretty=pretty)
 
     def ip(self, name):
         """

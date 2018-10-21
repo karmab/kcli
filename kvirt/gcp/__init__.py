@@ -480,7 +480,7 @@ class Kgcp(object):
         os.system(sshcommand)
         return
 
-    def info(self, name, output='plain', fields=None, values=False):
+    def info(self, name, output='plain', fields=[], values=False, pretty=True):
         """
 
         :param name:
@@ -497,7 +497,7 @@ class Kgcp(object):
             vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
         except:
             common.pprint("VM %s not found" % name, color='red')
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            return
         if self.debug:
             print(vm)
         yamlinfo['name'] = vm['name']
@@ -545,8 +545,7 @@ class Kgcp(object):
                     yamlinfo['profile'] = data['value']
         if 'tags' in vm and 'items' in vm['tags']:
             yamlinfo['tags'] = ','.join(vm['tags']['items'])
-        common.print_info(yamlinfo, output=output, fields=fields, values=values)
-        return {'result': 'success'}
+        return common.print_info(yamlinfo, output=output, fields=fields, values=values, pretty=pretty)
 
     def ip(self, name):
         """

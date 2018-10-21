@@ -386,7 +386,7 @@ class Kaws(object):
         print(response['Output'])
         return
 
-    def info(self, name, output='plain', fields=None, values=False):
+    def info(self, name, output='plain', fields=[], values=False, pretty=True):
         """
 
         :param name:
@@ -402,7 +402,8 @@ class Kaws(object):
             Filters = {'Name': "tag:Name", 'Values': [name]}
             vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
         except:
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            common.pprint("VM %s not found" % name, color='red')
+            return
         if self.debug:
             print(vm)
         instanceid = vm['InstanceId']
@@ -457,8 +458,7 @@ class Kaws(object):
             disks.append({'device': devname, 'size': disksize, 'format': diskformat, 'type': drivertype, 'path': path})
         if disks:
             yamlinfo['disks'] = disks
-        common.print_info(yamlinfo, output=output, fields=fields, values=values)
-        return {'result': 'success'}
+        return common.print_info(yamlinfo, output=output, fields=fields, values=values, pretty=pretty)
 
     def ip(self, name):
         """

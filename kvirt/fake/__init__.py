@@ -221,7 +221,7 @@ class Kfake(object):
 # disks list of {'device': device, 'size': disksize, 'format': diskformat, 'type': drivertype, 'path': path}
 # snapshots list of {'snapshot': snapshot, current: current}
 # fields should be split with fields.split(',')
-    def info(self, name, output='plain', fields=None, values=False):
+    def info(self, name, output='plain', fields=[], values=False, pretty=True):
         """
 
         :param name:
@@ -267,8 +267,7 @@ class Kfake(object):
             disks.append({'device': device, 'size': disksize, 'format': diskformat, 'type': drivertype, 'path': path})
         yamlinfo['nets'] = nets
         yamlinfo['disks'] = disks
-        common.print_info(yamlinfo, output=output, fields=fields, values=values)
-        return {'result': 'success'}
+        return common.print_info(yamlinfo, output=output, fields=fields, values=values, pretty=pretty)
 
 # should return ip string
     def ip(self, name):

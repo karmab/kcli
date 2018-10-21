@@ -596,7 +596,7 @@ def get_parameters(inputfile):
     return results
 
 
-def print_info(yamlinfo, output='plain', fields=None, values=False):
+def print_info(yamlinfo, output='plain', fields=[], values=False, pretty=True):
         """
 
         :param yamlinfo:
@@ -604,15 +604,19 @@ def print_info(yamlinfo, output='plain', fields=None, values=False):
         :param fields:
         :param values:
         """
-        if fields is not None:
+        if fields:
             for key in list(yamlinfo):
                 if key not in fields:
                     del yamlinfo[key]
         if output == 'yaml':
-            print((yaml.dump(yamlinfo, default_flow_style=False, indent=2, allow_unicode=True,
-                             encoding=None).replace("'", '')[:-1]))
+            if pretty:
+                return yaml.dump(yamlinfo, default_flow_style=False, indent=2, allow_unicode=True,
+                                 encoding=None).replace("'", '')[:-1]
+            else:
+                return yamlinfo
         else:
-            if fields is None:
+            result = ''
+            if not fields:
                 fields = ['name', 'instanceid', 'creationdate', 'host', 'status', 'description', 'autostart',
                           'template', 'plan', 'profile', 'flavor', 'cpus', 'memory', 'nets', 'ip', 'disks', 'snapshots',
                           'tags']
@@ -627,8 +631,8 @@ def print_info(yamlinfo, output='plain', fields=None, values=False):
                             mac = net['mac']
                             network = net['net']
                             network_type = net['type']
-                            print(("net interface: %s mac: %s net: %s type: %s" % (device, mac, network,
-                                                                                   network_type)))
+                            result += "net interface: %s mac: %s net: %s type: %s\m" % (device, mac, network,
+                                                                                        network_type)
                     elif key == 'disks':
                         for disk in value:
                             device = disk['device']
@@ -636,19 +640,22 @@ def print_info(yamlinfo, output='plain', fields=None, values=False):
                             diskformat = disk['format']
                             drivertype = disk['type']
                             path = disk['path']
-                            print(("diskname: %s disksize: %sGB diskformat: %s type: %s path: %s" % (device, disksize,
-                                                                                                     diskformat,
-                                                                                                     drivertype, path)))
+                            result += "diskname: %s disksize: %sGB diskformat: %s type: %s path: %s\n" % (device,
+                                                                                                          disksize,
+                                                                                                          diskformat,
+                                                                                                          drivertype,
+                                                                                                          path)
                     elif key == 'snapshots':
                         for snap in value:
                             snapshot = snap['snapshot']
                             current = snap['current']
-                            print("snapshot: %s current: %s" % (snapshot, current))
+                            result += "snapshot: %s current: %s\n" % (snapshot, current)
                     else:
                         if values:
-                            print(value)
+                            result += "%s\n" % value
                         else:
-                            print("%s: %s" % (key, value))
+                            result += "%s: %s\n" % (key, value)
+                    return result
 
 
 def ssh(name, ip='', host=None, port=22, hostuser=None, user=None, local=None, remote=None, tunnel=False,
