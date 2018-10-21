@@ -631,7 +631,7 @@ def print_info(yamlinfo, output='plain', fields=[], values=False, pretty=True):
                             mac = net['mac']
                             network = net['net']
                             network_type = net['type']
-                            result += "net interface: %s mac: %s net: %s type: %s\m" % (device, mac, network,
+                            result += "net interface: %s mac: %s net: %s type: %s\n" % (device, mac, network,
                                                                                         network_type)
                     elif key == 'disks':
                         for disk in value:
@@ -655,7 +655,7 @@ def print_info(yamlinfo, output='plain', fields=[], values=False, pretty=True):
                             result += "%s\n" % value
                         else:
                             result += "%s: %s\n" % (key, value)
-                    return result
+            return result.rstrip()
 
 
 def ssh(name, ip='', host=None, port=22, hostuser=None, user=None, local=None, remote=None, tunnel=False,
