@@ -19,7 +19,7 @@ parameters:
  deploy: false
 
 [% for master in range(0, masters) %]
-master0[[ master + 1 ]]:
+m0[[ master + 1 ]]:
  template: [[ template ]]
  numcpus: 2
  memory: [[ master_memory ]]
@@ -46,15 +46,15 @@ master0[[ master + 1 ]]:
     origin: multi/install.sh
     mode: 700
  scripts: 
-  - multi/subscription.sh
-  - multi/pre.sh
+  - subscription.sh
+  - pre.sh
 [% if deploy and master == 0 %]
   - multi/install.sh
 [% endif %]
 [% endfor %]
 
 [% for node in range(0, nodes) %]
-node0[[ node + 1 ]]:
+n[[ node + 1 ]]:
  template: [[ template ]]
  numcpus: 2
  memory: [[ node_memory ]]
@@ -70,12 +70,12 @@ node0[[ node + 1 ]]:
   - size: [[ gluster_disk_size ]]
  pool: default
  scripts: 
-  - multi/subscription.sh
-  - multi/pre.sh
+  - subscription.sh
+  - pre.sh
 [% endfor %]
 
 [% for infra in range(0, infras) %]
-infra0[[ infra + 1 ]]:
+i0[[ infra + 1 ]]:
  template: [[ template ]]
  numcpus: 2
  memory: [[ infra_memory ]]
@@ -91,6 +91,6 @@ infra0[[ infra + 1 ]]:
   - size: [[ gluster_disk_size ]]
  pool: default
  scripts: 
-  - multi/subscription.sh
-  - multi/pre.sh
+  - subscription.sh
+  - pre.sh
 [% endfor %]

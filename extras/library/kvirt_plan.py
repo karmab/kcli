@@ -52,8 +52,8 @@ def main():
     inputfile = module.params['inputfile']
     state = module.params['state']
     if state == 'present':
-        if inputfile is None:
-            module.fail_json(msg='Missing inputfile parameter')
+        # if inputfile is None:
+        #    module.fail_json(msg='Missing inputfile parameter')
         overrides = module.params['parameters'] if module.params['parameters'] is not None else {}
         meta = config.plan(name, inputfile=inputfile, overrides=overrides)
         changed = True if 'newvms' in meta else False
