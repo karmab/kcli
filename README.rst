@@ -1,4 +1,3 @@
-# coding=utf-8
 kcli repository
 ===============
 
@@ -29,7 +28,7 @@ What you can do
 -  Declare all your objects(vm, containers, networks, ansible,…) in a
    single yaml file!
 -  Easily grab and share those files from github
--  Easily Test all Redhat Infrastructure products, and their upstream
+-  Easily Test all Red Hat Infrastructure products, and their upstream
    counterparts
 -  Easily share private keys between your vms
 -  Inject all configuration with cloudinit

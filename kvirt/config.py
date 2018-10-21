@@ -477,7 +477,7 @@ class Kconfig(Kbaseconfig):
                 os.system("%s -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
         if os.access(os.path.expanduser('~/.kcli'), os.W_OK):
             common.set_lastvm(name, self.client)
-        return {'result': 'success'}
+        return {'result': 'success', 'vm': name}
 
     def list_plans(self):
         """
@@ -679,6 +679,7 @@ class Kconfig(Kbaseconfig):
         k = self.k
         no_overrides = not overrides
         newvms = []
+        existingvms = []
         vmprofiles = {key: value for key, value in self.profiles.items()
                       if 'type' not in value or value['type'] == 'vm'}
         containerprofiles = {key: value for key, value in self.profiles.items()
@@ -688,6 +689,7 @@ class Kconfig(Kbaseconfig):
         # if path is None:
         #    path = plan
         if delete:
+            deletedvms = []
             networks = []
             if plan == '':
                 common.pprint("That would delete every vm...Not doing that", color='red')
@@ -713,6 +715,7 @@ class Kconfig(Kbaseconfig):
                         c.delete(name)
                         common.set_lastvm(name, self.client, delete=True)
                         common.pprint("VM %s deleted on %s!" % (name, hypervisor), color='green')
+                        deletedvms.append(name)
                         found = True
             if container:
                 from kvirt import dockerutils
@@ -738,7 +741,7 @@ class Kconfig(Kbaseconfig):
             else:
                 common.pprint("Nothing to do for plan %s" % plan, color='red')
                 os._exit(1)
-            return {'result': 'success'}
+            return {'result': 'success', 'deletedvm': deletedvms}
         if autostart:
             common.pprint("Set vms from plan %s to autostart" % plan, color='green')
             for vm in sorted(k.list()):
@@ -980,6 +983,7 @@ class Kconfig(Kbaseconfig):
                         z = k
                     if z.exists(name):
                         common.pprint("VM %s skipped!" % name, color='blue')
+                        existingvms.append(name)
                         continue
                     if 'profile' in profile and profile['profile'] in vmprofiles:
                         customprofile = vmprofiles[profile['profile']]
@@ -1140,7 +1144,14 @@ class Kconfig(Kbaseconfig):
                         vms.append(name)
                 ansibleutils.make_inventory(k, plan, vms, tunnel=self.tunnel)
                 return
-        return {'result': 'success'}
+        returndata = {'result': 'success', 'plan': plan}
+        if newvms:
+            returndata['newvms'] = newvms
+        if existingvms:
+            returndata['existingvms'] = existingvms
+        allvms = newvms + existingvms
+        returndata['vms'] = allvms if allvms else []
+        return returndata
 
     def handle_host(self, pool=None, templates=[], switch=None, download=False,
                     url=None, cmd=None, sync=False):

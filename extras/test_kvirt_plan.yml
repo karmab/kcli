@@ -3,6 +3,6 @@
     - name: Test kvirt here
       kvirt_plan: 
         name: wilibonka
-        src: myplan.yml
+        inputfile: myplan.yml
       register: result
     - debug: var=result 

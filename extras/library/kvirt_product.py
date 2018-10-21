@@ -59,29 +59,18 @@ def main():
     name = module.params['name']
     product = module.params['product']
     repo = module.params['repo']
-    plans = [p[0] for p in config.list_plans()]
-    exists = True if name in plans else False
     state = module.params['state']
     if state == 'present':
-        if exists:
-            changed = False
-            skipped = True
-            meta = {'result': 'skipped'}
-        else:
-            overrides = module.params['parameters'] if module.params['parameters'] is not None else {}
-            meta = config.create_product(product, repo=repo, plan=name, overrides=overrides)
-            changed = True
-            skipped = False
+        overrides = module.params['parameters'] if module.params['parameters'] is not None else {}
+        meta = config.create_product(product, repo=repo, plan=name, overrides=overrides)
+        changed = True if 'newvms' in meta else False
+        skipped = False
     else:
-        if exists:
-            meta = config.plan(name, delete=True)
-            changed = True
-            skipped = False
-        else:
-            changed = False
-            skipped = True
-            meta = {'result': 'skipped'}
+        meta = config.plan(name, delete=True)
+        changed = True if 'deletedvms' in meta else False
+        skipped = False
     module.exit_json(changed=changed, skipped=skipped, meta=meta)
+
 
 if __name__ == '__main__':
     main()

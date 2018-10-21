@@ -22,7 +22,7 @@ EXAMPLES = '''
 - name: Deploy origin
   kvirt_plan:
     name: my_plan
-    src: my_plan.yml
+    inputfile: my_plan.yml
 
 - name: Delete that plan
   kvirt_plan:
@@ -43,35 +43,25 @@ def main():
             "type": 'str'
         },
         "name": {"required": True, "type": "str"},
-        "src": {"required": True, "type": "str"},
+        "inputfile": {"required": False, "type": "str"},
         "parameters": {"required": False, "type": "dict"},
     }
     module = AnsibleModule(argument_spec=argument_spec)
     config = Kconfig(quiet=True)
     name = module.params['name']
-    src = module.params['src']
-    plans = [p[0] for p in config.list_plans()]
-    exists = True if name in plans else False
+    inputfile = module.params['inputfile']
     state = module.params['state']
     if state == 'present':
-        if exists:
-            changed = False
-            skipped = True
-            meta = {'result': 'skipped'}
-        else:
-            overrides = module.params['parameters'] if module.params['parameters'] is not None else {}
-            meta = config.plan(name, inputfile=src, overrides=overrides)
-            changed = True
-            skipped = False
+        if inputfile is None:
+            module.fail_json(msg='Missing inputfile parameter')
+        overrides = module.params['parameters'] if module.params['parameters'] is not None else {}
+        meta = config.plan(name, inputfile=inputfile, overrides=overrides)
+        changed = True if 'newvms' in meta else False
+        skipped = False
     else:
-        if exists:
-            meta = config.plan(name, delete=True)
-            changed = True
-            skipped = False
-        else:
-            changed = False
-            skipped = True
-            meta = {'result': 'skipped'}
+        meta = config.plan(name, delete=True)
+        changed = True if 'deletedvms' in meta else False
+        skipped = False
     module.exit_json(changed=changed, skipped=skipped, meta=meta)
 
 
