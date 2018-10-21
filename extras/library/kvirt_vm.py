@@ -43,6 +43,7 @@ def main():
         },
         "name": {"required": True, "type": "str"},
         "profile": {"required": True, "type": "str"},
+        "parameters": {"required": False, "type": "dict"},
     }
     module = AnsibleModule(argument_spec=argument_spec)
     config = Kconfig(quiet=True)
@@ -57,7 +58,8 @@ def main():
             meta = {'result': 'skipped'}
         else:
             profile = module.params['profile']
-            meta = config.create_vm(name, profile)
+            overrides = module.params['parameters'] if module.params['parameters'] is not None else {}
+            meta = config.create_vm(name, profile, overrides=overrides)
             changed = True
             skipped = False
     else:

@@ -2,8 +2,10 @@
   tasks:
     - name: Test kvirt here
       kvirt_vm: 
-        name: bobby2
+        name: taitibob
         state: present
-        profile: centos
+        profile: CentOS-7-x86_64-GenericCloud.qcow2
+        parameters:
+         memory: 2048
       register: result
     - debug: var=result 
