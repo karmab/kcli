@@ -4,5 +4,6 @@
       kvirt_plan: 
         name: wilibonka
         inputfile: myplan.yml
+        state: present
       register: result
     - debug: var=result 
