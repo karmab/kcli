@@ -799,6 +799,9 @@ def ssh(args):
         name = name.split('@')[1]
     else:
         user = None
+    if os.path.exists("/i_am_a_container") and not os.path.exists("/root/.kcli/config.yml")\
+            and not os.path.exists("/root/.ssh/config"):
+        insecure = True
     sshcommand = k.ssh(name, user=user, local=l, remote=r, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, Y=Y, D=D)
     if sshcommand is not None:
         if find_executable('ssh') is not None:
