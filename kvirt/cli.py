@@ -815,8 +815,9 @@ def ssh(args):
 def scp(args):
     """Scp into vm"""
     recursive = args.recursive
-    source = args.source[0]
     volumepath = args.volumepath
+    source = args.source[0]
+    source = source if not os.path.exists("/i_am_a_container") else "%s/%s" % (volumepath, source)
     destination = args.destination[0]
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
     k = config.k
@@ -824,7 +825,6 @@ def scp(args):
     if len(source.split(':')) == 2:
         name = source.split(':')[0]
         source = source.split(':')[1]
-        source = source if not os.path.exists("/i_am_a_container") else "%s/%s" % (volumepath, source)
         download = True
     elif len(destination.split(':')) == 2:
         name = destination.split(':')[0]
