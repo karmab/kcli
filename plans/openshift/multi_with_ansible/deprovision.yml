@@ -1,0 +1,12 @@
+- name: Deploy Infrastructure with kcli
+  hosts: localhost
+  vars:
+    plan: prout
+  tasks:
+    - import_role:
+        name: karmab.kcli-modules
+    - name: Deploy multi2 plan
+      kvirt_plan: 
+        name: prout
+        state: absent
+      register: result

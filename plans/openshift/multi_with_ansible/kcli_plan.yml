@@ -1,0 +1,81 @@
+parameters:
+ template: rhel-server-7.5-x86_64-kvm.qcow2
+ domain: default
+ base_disk_size: 60
+ gluster_disk_size: 100
+ master_memory: 8144
+ infra_memory: 4096
+ node_memory: 4096
+ masters: 1
+ infras: 1
+ nodes: 1
+ registry: registry.redhat.io
+ cidr: 192.168.122.0/24
+ crio: true
+ asb: true
+ metrics: false
+ gluster: false
+ version: "3.11"
+ deploy: false
+
+[% for master in range(0, masters) %]
+m0[[ master + 1 ]]:
+ template: [[ template ]]
+ numcpus: 2
+ memory: [[ master_memory ]]
+ rhnregister: true
+ reservedns: true
+ sharedkey: true
+ domain: [[ domain ]]
+ dns: [[ domain ]]
+ nets:
+  - default
+ disks:
+  - size: [[ base_disk_size ]]
+  - size: [[ gluster_disk_size ]]
+ pool: default
+ files:
+  - path: /root/inventory
+    origin: inventory
+[% if type == 'ovirt' %]
+  - path: /root/fix_inventory.sh
+    origin: ovirt_fix_inventory.sh
+    mode: 700
+[% endif %]
+[% endfor %]
+
+[% for node in range(0, nodes) %]
+n0[[ node + 1 ]]:
+ template: [[ template ]]
+ numcpus: 2
+ memory: [[ node_memory ]]
+ rhnregister: true
+ reservedns: true
+ sharedkey: true
+ domain: [[ domain ]]
+ dns: [[ domain ]]
+ nets:
+  - [[ domain ]]
+ disks:
+  - size: [[ base_disk_size ]]
+  - size: [[ gluster_disk_size ]]
+ pool: default
+[% endfor %]
+
+[% for infra in range(0, infras) %]
+i0[[ infra + 1 ]]:
+ template: [[ template ]]
+ numcpus: 2
+ memory: [[ infra_memory ]]
+ rhnregister: true
+ reservedns: true
+ sharedkey: true
+ domain: [[ domain ]]
+ dns: [[ domain ]]
+ nets:
+  - default
+ disks:
+  - size: [[ base_disk_size ]]
+  - size: [[ gluster_disk_size ]]
+ pool: default
+[% endfor %]
