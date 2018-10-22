@@ -15,13 +15,14 @@ parameters:
  asb: true
  metrics: false
  gluster: false
+ numcpus: 4
  version: "3.11"
  deploy: false
 
 [% for master in range(0, masters) %]
 m0[[ master + 1 ]]:
  template: [[ template ]]
- numcpus: 2
+ numcpus: [[ numcpus ]]
  memory: [[ master_memory ]]
  rhnregister: true
  reservedns: true
@@ -47,7 +48,7 @@ m0[[ master + 1 ]]:
 [% for node in range(0, nodes) %]
 n0[[ node + 1 ]]:
  template: [[ template ]]
- numcpus: 2
+ numcpus: [[ numcpus ]]
  memory: [[ node_memory ]]
  rhnregister: true
  reservedns: true
@@ -65,7 +66,7 @@ n0[[ node + 1 ]]:
 [% for infra in range(0, infras) %]
 i0[[ infra + 1 ]]:
  template: [[ template ]]
- numcpus: 2
+ numcpus: [[ numcpus ]]
  memory: [[ infra_memory ]]
  rhnregister: true
  reservedns: true

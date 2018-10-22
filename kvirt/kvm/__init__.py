@@ -1986,7 +1986,7 @@ class Kvirt(object):
         for element in list(root.getiterator('{kvirt}info')):
             e = element.find('{kvirt}ip')
             if e is not None:
-                return e.text
+                ip = e.text
             e = element.find('{kvirt}template')
             if e is not None:
                 template = e.text
