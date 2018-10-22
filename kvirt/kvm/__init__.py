@@ -2046,7 +2046,9 @@ class Kvirt(object):
         :return:
         """
         u, ip = self._ssh_credentials(name)
-        scpcommand = common.scp(name, ip=ip, host=self.host, port=self.port, hostuser=self.user, user=u,
+        if user is None:
+            user = u
+        scpcommand = common.scp(name, ip=ip, host=self.host, port=self.port, hostuser=self.user, user=user,
                                 source=source, destination=destination, recursive=recursive, tunnel=tunnel,
                                 debug=self.debug, download=False)
         return scpcommand
