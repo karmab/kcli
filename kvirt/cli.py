@@ -583,6 +583,26 @@ def disk(args):
     k.add_disk(name=name, size=size, pool=pool, template=template)
 
 
+def dns(args):
+    """Create/Delete dns entries"""
+    delete = args.delete
+    name = args.name
+    net = args.net
+    domain = net
+    ip = args.ip
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
+    k = config.k
+    if delete:
+        if config.type == 'kvm':
+            common.pprint("No deletion on kvm yet" % name, color='blue')
+        else:
+            common.pprint("Deleting Dns entry for %s..." % name, color='green')
+            k.delete_dns(name, domain)
+    else:
+        common.pprint("Creating Dns entry for %s..." % name, color='green')
+        k.reserve_dns(name=name, nets=[net], domain=domain, ip=ip)
+
+
 def export(args):
     """Export a vm"""
     names = [common.get_lastvm(args.client)] if not args.names else args.names
@@ -1044,6 +1064,14 @@ def cli():
     disk_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
     disk_parser.add_argument('name', metavar='VMNAME', nargs='?')
     disk_parser.set_defaults(func=disk)
+
+    dns_info = 'Create/Delete dns entries'
+    dns_parser = subparsers.add_parser('dns', description=dns_info, help=dns_info)
+    dns_parser.add_argument('-d', '--delete', action='store_true')
+    dns_parser.add_argument('-n', '--net', help='Domain where to create entry', metavar='NET')
+    dns_parser.add_argument('-i', '--ip', help='Ip', metavar='IP')
+    dns_parser.add_argument('name', metavar='NAME', nargs='?')
+    dns_parser.set_defaults(func=dns)
 
     download_info = 'Download template'
     download_parser = subparsers.add_parser('download', description=download_info, help=download_info)

@@ -950,7 +950,7 @@ class Kconfig(Kbaseconfig):
                         common.handle_response(result, template, element='Template ', action='Added')
             if dnsentries:
                 common.pprint("Deploying Dns Entry...", color='green')
-                # dnsclients = {}
+                dnsclients = {}
                 for dnsentry in dnsentries:
                     dnsprofile = entries[dnsentry]
                     dnsdomain = dnsprofile.get('domain')
@@ -961,8 +961,12 @@ class Kconfig(Kbaseconfig):
                     host = dnsprofile.get('host')
                     if host is None:
                         z = k
+                    elif host in dnsclients:
+                        z = dnsclients[host]
                     elif host in self.clients:
-                        z = self.extraclients[host]
+                        # z = Kconfig(client=host, debug=args.debug, region=args.region, zone=args.zone)
+                        z = Kconfig(client=host).k
+                        dnsclients[host] = z
                     else:
                         common.pprint("Host %s not found. Skipping" % host, color='blue')
                         return
