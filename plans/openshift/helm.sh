@@ -11,3 +11,4 @@ cd /root
 helm init --service-account helm --tiller-namespace helm
 echo "export TILLER_NAMESPACE=helm" >>/root/.bashrc
 echo "export HELM_HOME=/.helm" >>/root/.bashrc
+echo "export HELM_HOME=/root/.helm" >>/root/.bashrc
