@@ -18,9 +18,9 @@ import yaml
 
 def start(args):
     """Start vm/container"""
-    names = [common.get_lastvm(args.client)] if not args.names else args.names
     container = args.container
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
+    names = [common.get_lastvm(config.client)] if not args.names else args.names
     k = config.k
     if container:
         from kvirt import dockerutils
@@ -40,8 +40,8 @@ def start(args):
 def stop(args):
     """Stop vm/container"""
     container = args.container
-    names = [common.get_lastvm(args.client)] if not args.names else args.names
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
+    names = [common.get_lastvm(config.client)] if not args.names else args.names
     if config.extraclients:
         ks = config.extraclients
         ks.update({config.client: config.k})
@@ -66,9 +66,9 @@ def stop(args):
 
 def restart(args):
     """Restart vm/container"""
-    names = [common.get_lastvm(args.client)] if not args.names else args.names
     container = args.container
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
+    names = [common.get_lastvm(config.client)] if not args.names else args.names
     k = config.k
     if container:
         from kvirt import dockerutils
@@ -88,10 +88,10 @@ def restart(args):
 
 def console(args):
     """Vnc/Spice/Serial/Container console"""
-    name = common.get_lastvm(args.client) if not args.name else args.name
     serial = args.serial
     container = args.container
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
+    name = common.get_lastvm(config.client) if not args.name else args.name
     k = config.k
     tunnel = config.tunnel
     if container:
@@ -106,11 +106,11 @@ def console(args):
 
 def delete(args):
     """Delete vm/container"""
-    names = [common.get_lastvm(args.client)] if not args.names else args.names
     container = args.container
     snapshots = args.snapshots
     yes = args.yes
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
+    names = [common.get_lastvm(config.client)] if not args.names else args.names
     k = config.k
     if not yes:
         common.confirm("Are you sure?")
@@ -150,11 +150,11 @@ def download(args):
 
 def info(args):
     """Get info on vm"""
-    names = [common.get_lastvm(args.client)] if not args.names else args.names
     output = args.output
     fields = args.fields.split(',') if args.fields is not None else []
     values = args.values
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
+    names = [common.get_lastvm(config.client)] if not args.names else args.names
     k = config.k
     # codes = []
     for name in names:
@@ -605,9 +605,9 @@ def dns(args):
 
 def export(args):
     """Export a vm"""
-    names = [common.get_lastvm(args.client)] if not args.names else args.names
     template = args.template
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
+    names = [common.get_lastvm(config.client)] if not args.names else args.names
     k = config.k
     codes = []
     for name in names:
@@ -799,13 +799,13 @@ def product(args):
 
 def ssh(args):
     """Ssh into vm"""
-    name = [common.get_lastvm(args.client)] if not args.name else args.name
     l = args.L
     r = args.R
     D = args.D
     X = args.X
     Y = args.Y
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
+    name = [common.get_lastvm(config.client)] if not args.name else args.name
     k = config.k
     tunnel = config.tunnel
     insecure = config.insecure
