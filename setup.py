@@ -9,7 +9,7 @@ if os.path.exists('README.rst'):
 
 setup(
     name='kcli',
-    version='13.5',
+    version='13.6',
     include_package_data=True,
     packages=find_packages(),
     zip_safe=False,

@@ -453,7 +453,10 @@ class Kvirt(object):
                     gcmds.append('yum -y install qemu-guest-agent')
                     gcmds.append('systemctl enable qemu-guest-agent')
                     gcmds.append('systemctl restart qemu-guest-agent')
-                elif template.lower().startswith('debian') or [x for x in ubuntus if x in template.lower()]:
+                elif template.lower().startswith('debian'):
+                    gcmds.append('apt-get -f install qemu-guest-agent')
+                elif [x for x in ubuntus if x in template.lower()]:
+                    gcmds.append('apt-get update')
                     gcmds.append('apt-get -f install qemu-guest-agent')
             index = 1
             if template is not None and template.startswith('rhel'):
