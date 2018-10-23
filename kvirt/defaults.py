@@ -95,6 +95,5 @@ RHNAK = None
 RHNORG = None
 RHNPOOL = None
 FLAVOR = None
-DETECT_BRIDGE_IPS = False
 KEEP_NETWORKS = False
 DNSHOST = None

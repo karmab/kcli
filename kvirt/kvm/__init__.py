@@ -8,7 +8,10 @@ from distutils.spawn import find_executable
 from kvirt import defaults
 from kvirt import common
 from netaddr import IPAddress, IPNetwork
-from libvirt import open as libvirtopen, registerErrorHandler, VIR_DOMAIN_AFFECT_LIVE, VIR_DOMAIN_AFFECT_CONFIG
+from libvirt import open as libvirtopen, registerErrorHandler
+from libvirt import VIR_DOMAIN_AFFECT_LIVE, VIR_DOMAIN_AFFECT_CONFIG
+from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_AGENT as vir_src_agent
+from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE as vir_src_lease
 import json
 import os
 from subprocess import call
@@ -16,7 +19,6 @@ import re
 import string
 import time
 import xml.etree.ElementTree as ET
-import yaml
 
 
 KB = 1024 * 1024
@@ -35,6 +37,7 @@ guestwindows2003 = "windows_2003"
 guestwindows200364 = "windows_2003x64"
 guestwindows2008 = "windows_2008"
 guestwindows200864 = "windows_2008x64"
+ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety', 'zesty', 'artful', 'bionic', 'cosmic']
 
 
 def libvirt_callback(ignore, err):
@@ -54,8 +57,7 @@ class Kvirt(object):
     """
 
     """
-    def __init__(self, host='127.0.0.1', port=None, user='root', protocol='ssh', url=None, debug=False, insecure=False,
-                 detect_bridge_ips=False):
+    def __init__(self, host='127.0.0.1', port=None, user='root', protocol='ssh', url=None, debug=False, insecure=False):
         if url is None:
             if host == '127.0.0.1' or host == 'localhost':
                 url = "qemu:///system"
@@ -85,11 +87,6 @@ class Kvirt(object):
         if self.protocol == 'ssh' and port is None:
             self.port = '22'
         self.url = url
-        if detect_bridge_ips and self.protocol != 'ssh':
-            common.pprint("detect_bridge_ips only works with ssh remote hosts. Disabling", color="blue")
-            self.detect_bridge_ips = False
-        else:
-            self.detect_bridge_ips = detect_bridge_ips
         identityfile = None
         if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
             identityfile = os.path.expanduser("~/.kcli/id_rsa")
@@ -400,6 +397,7 @@ class Kvirt(object):
         alias = []
         etcd = None
         ip = None
+        guestagent = False
         for index, net in enumerate(nets):
             ovs = False
             macxml = ''
@@ -430,6 +428,7 @@ class Kvirt(object):
                 nets[index]['netmask'] = netmasks[index]
             if netname in bridges or ovs:
                 sourcenet = 'bridge'
+                guestagent = True
             elif netname in networks:
                 sourcenet = 'network'
             else:
@@ -446,6 +445,22 @@ class Kvirt(object):
                     <kvirt:plan>%s</kvirt:plan>
                     </kvirt:info>
                     </metadata>""" % (metadata, plan)
+        if guestagent:
+            gcmds = []
+            if template is not None:
+                if (template.lower().startswith('centos') or template.lower().startswith('fedora') or
+                        template.lower().startswith('rhel')):
+                    gcmds.append('yum -y install qemu-guest-agent')
+                    gcmds.append('systemctl enable qemu-guest-agent')
+                    gcmds.append('systemctl restart qemu-guest-agent')
+                elif template.lower().startswith('debian') or [x for x in ubuntus if x in template.lower()]:
+                    gcmds.append('apt-get -f install qemu-guest-agent')
+            index = 1
+            if template is not None and template.startswith('rhel'):
+                subindex = [i for i, value in enumerate(cmds) if value.startswith('subscription-manager')]
+                if subindex:
+                    index = subindex.pop() + 1
+            cmds = cmds[:index] + gcmds + cmds[index:]
         qemuextraxml = ''
         isoxml = ''
         if iso is not None:
@@ -555,6 +570,10 @@ class Kvirt(object):
                      <protocol type="telnet"/>
                      <target port="0"/>
                      </serial>""" % common.get_free_port()
+        guestxml = """<channel type='unix'>
+                      <source mode='bind'/>
+                      <target type='virtio' name='org.qemu.guest_agent.0'/>
+                      </channel>"""
         vmxml = """<domain type='%s' %s>
                   <name>%s</name>
                   %s
@@ -581,11 +600,12 @@ class Kvirt(object):
                     %s
                     %s
                     %s
+                    %s
                   </devices>
                     %s
                     %s
                     </domain>""" % (virttype, namespace, name, metadata, memory, numcpus, machine, disksxml, netxml,
-                                    isoxml, displayxml, serialxml, cpuxml, qemuextraxml)
+                                    isoxml, displayxml, serialxml, guestxml, cpuxml, qemuextraxml)
         if self.debug:
             print(vmxml)
         conn.defineXML(vmxml)
@@ -817,44 +837,34 @@ class Kvirt(object):
         :return:
         """
         vms = []
-        leases = {}
         conn = self.conn
-        for network in conn.listAllNetworks():
-            for lease in network.DHCPLeases():
-                ip = lease['ipaddr']
-                mac = lease['mac']
-                leases[mac] = ip
         status = {0: 'down', 1: 'up'}
-        bridgeipschecked = []
         for vm in conn.listAllDomains(0):
             template, plan, profile = '', '', ''
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
             name = vm.name()
             state = status[vm.isActive()]
-            ips = []
+            ip = ''
+            ifaces = []
+            if vm.isActive():
+                networktypes = [element.get('type') for element in list(root.getiterator('interface'))]
+                guestagent = vir_src_agent if 'bridge' in networktypes else vir_src_lease
+                try:
+                    gfaces = vm.interfaceAddresses(guestagent, 0)
+                    ifaces = gfaces
+                except:
+                    pass
             for element in list(root.getiterator('interface')):
                 mac = element.find('mac').get('address')
-                networktype = element.get('type')
-                if networktype == 'bridge':
-                    network = element.find('source').get('bridge')
-                    if self.detect_bridge_ips and network not in bridgeipschecked:
-                        cidr = self.list_networks()[network]['cidr']
-                        command = "bridge_helper.py -i %s -c %s" % (network, cidr)
-                        command = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host,
-                                                                 command)
-                        bridgeips = os.popen(command).read().strip()
-                        bridgeips = yaml.load(bridgeips)
-                        if bridgeips is not None:
-                            leases.update(bridgeips)
-                        bridgeipschecked.append(network)
-                if vm.isActive():
-                    if mac in leases:
-                        ips.append(leases[mac])
-                if ips:
-                    ip = ips[0]
-                else:
-                    ip = ''
+                if ifaces:
+                    matches = [ifaces[x]['addrs'] for x in ifaces if ifaces[x]['hwaddr'] == mac]
+                    if matches:
+                        for match in matches[0]:
+                            matchip = match['addr']
+                            if IPAddress(matchip).version == 4:
+                                ip = matchip
+                                break
             plan, profile, template, report = '', '', '', ''
             for element in list(root.getiterator('{kvirt}info')):
                 e = element.find('{kvirt}plan')
@@ -1027,6 +1037,15 @@ class Kvirt(object):
         yamlinfo['cpus'] = numcpus
         yamlinfo['memory'] = memory
         nicnumber = 0
+        ifaces = []
+        if vm.isActive():
+            networktypes = [element.get('type') for element in list(root.getiterator('interface'))]
+            guestagent = vir_src_agent if 'bridge' in networktypes else vir_src_lease
+            try:
+                gfaces = vm.interfaceAddresses(guestagent, 0)
+                ifaces = gfaces
+            except:
+                pass
         for element in list(root.getiterator('interface')):
             networktype = element.get('type')
             device = "eth%s" % nicnumber
@@ -1034,19 +1053,21 @@ class Kvirt(object):
             if networktype == 'bridge':
                 network = element.find('source').get('bridge')
                 network_type = 'bridge'
-                if self.detect_bridge_ips:
-                    cidr = self.list_networks()[network]['cidr']
-                    command = "bridge_helper.py -i %s -c %s -m %s" % (network, cidr, mac)
-                    command = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host,
-                                                             command)
-                    ip = os.popen(command).read().strip()
             else:
                 network = element.find('source').get('network')
                 network_type = 'routed'
+            if ifaces:
+                matches = [ifaces[x]['addrs'] for x in ifaces if ifaces[x]['hwaddr'] == mac]
+                if matches:
+                    for match in matches[0]:
+                        matchip = match['addr']
+                        if IPAddress(matchip).version == 4:
+                            ip = matchip
+                            break
             yamlinfo['nets'].append({'device': device, 'mac': mac, 'net': network, 'type': network_type})
-            if vm.isActive():
-                if mac in leases:
-                    yamlinfo['ip'] = leases[mac]
+            # if vm.isActive():
+            #    if mac in leases:
+            #        yamlinfo['ip'] = leases[mac]
             nicnumber = nicnumber + 1
         if ip is not None:
             yamlinfo['ip'] = ip
@@ -2000,12 +2021,6 @@ class Kvirt(object):
         user = 'root'
         ip = None
         conn = self.conn
-        leases = {}
-        conn = self.conn
-        for network in conn.listAllNetworks():
-            for lease in network.DHCPLeases():
-                mac = lease['mac']
-                leases[mac] = lease['ipaddr']
         try:
             vm = conn.lookupByName(name)
             xml = vm.XMLDesc(0)
@@ -2024,15 +2039,20 @@ class Kvirt(object):
                     user = common.get_user(template)
         nic = list(root.getiterator('interface'))[0]
         mac = nic.find('mac').get('address')
-        network = nic.find('source').get('bridge')
-        networktype = nic.get('type')
-        if vm.isActive() and mac in leases:
-            ip = leases[mac]
-        elif networktype == 'bridge' and self.detect_bridge_ips:
-            cidr = self.list_networks()[network]['cidr']
-            command = "bridge_helper.py -i %s -c %s -m %s" % (network, cidr, mac)
-            command = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host, command)
-            ip = os.popen(command).read().strip()
+        if vm.isActive():
+            networktypes = [element.get('type') for element in list(root.getiterator('interface'))]
+            guestagent = vir_src_agent if 'bridge' in networktypes else vir_src_lease
+            try:
+                ifaces = vm.interfaceAddresses(guestagent, 0)
+                matches = [ifaces[x]['addrs'] for x in ifaces if ifaces[x]['hwaddr'] == mac]
+                if matches:
+                    for match in matches[0]:
+                        matchip = match['addr']
+                        if IPAddress(matchip).version == 4:
+                            ip = matchip
+                            break
+            except:
+                pass
         if ip is None:
             print("No ip found. Cannot ssh...")
         return user, ip

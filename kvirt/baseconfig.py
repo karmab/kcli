@@ -12,7 +12,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             DOMAIN, SCRIPTS, FILES, ISO,
                             NETMASKS, GATEWAY, SHAREDKEY, TEMPLATE, ENABLEROOT,
                             PLANVIEW, PRIVATEKEY, TAGS, RHNREGISTER, RHNUSER, RHNPASSWORD, RHNAK, RHNORG, RHNPOOL,
-                            FLAVOR, DETECT_BRIDGE_IPS, KEEP_NETWORKS, DNSHOST)
+                            FLAVOR, KEEP_NETWORKS, DNSHOST)
 from kvirt import common
 import os
 from shutil import copyfile, rmtree
@@ -86,7 +86,6 @@ class Kbaseconfig:
         defaults['start'] = bool(default.get('start', START))
         defaults['tunnel'] = bool(default.get('tunnel', TUNNEL))
         defaults['insecure'] = bool(default.get('insecure', INSECURE))
-        defaults['detect_bridge_ips'] = bool(default.get('detect_bridge_ips', DETECT_BRIDGE_IPS))
         defaults['reporturl'] = default.get('reporturl', REPORTURL)
         defaults['reportdir'] = default.get('reportdir', REPORTDIR)
         defaults['report'] = bool(default.get('report', REPORT))
@@ -169,7 +168,6 @@ class Kbaseconfig:
         self.template = options.get('template', self.default['template'])
         self.tunnel = bool(options.get('tunnel', self.default['tunnel']))
         self.insecure = bool(options.get('insecure', self.default['insecure']))
-        self.detect_bridge_ips = bool(options.get('detect_bridge_ips', self.default['detect_bridge_ips']))
         self.report = options.get('report', self.default['report'])
         self.reporturl = options.get('reporturl', self.default['reportdir'])
         self.reportdir = options.get('reportdir', self.default['reportdir'])
@@ -351,7 +349,7 @@ class Kbaseconfig:
             ini = {'default': {'client': name, 'cloudinit': True,
                                'tunnel': True, 'insecure': True, 'enableroot': True,
                                'reserveip': False, 'reservedns': False,
-                               'nested': True, 'reservehost': False, 'detect_bridge_ips': False,
+                               'nested': True, 'reservehost': False,
                                'start': True}, name: {'host': host, 'pool': pool, 'nets': ['default']}}
             if protocol is not None:
                 ini[name]['protocol'] = protocol
