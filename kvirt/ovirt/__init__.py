@@ -99,7 +99,7 @@ class KOvirt(object):
                reservehost=False, start=True, keys=None, cmds=[], ips=None,
                netmasks=None, gateway=None, nested=True, dns=None, domain=None,
                tunnel=False, files=[], enableroot=True, alias=[], overrides={},
-               tags=None):
+               tags=None, dnshost=None):
         """
 
         :param name:
@@ -147,6 +147,10 @@ class KOvirt(object):
         _os = types.OperatingSystem(boot=types.Boot(devices=[types.BootDevice.HD, types.BootDevice.CDROM]))
         console = types.Console(enabled=True)
         description = "plan=%s,profile=%s" % (plan, profile)
+        if self.filtervms and self.filteruser is not None:
+            description += ',user=%s' % self.filteruser
+        if dnshost is not None:
+            description += ',dnshost=%s' % dnshost
         memory = memory * 1024 * 1024
         cpu = types.Cpu(topology=types.CpuTopology(cores=numcpus, sockets=1))
         try:
@@ -568,6 +572,26 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         call(command, shell=True)
         return
 
+    def dnshost(self, name):
+        """
+
+        :param name:
+        :return:
+        """
+        vmsearch = self.vms_service.list(search='name=%s' % name)
+        if not vmsearch:
+            common.pprint("VM %s not found" % name, color='red')
+            return None
+        vm = vmsearch[0]
+        dnshost = None
+        description = vm.description.split(',')
+        for description in vm.description.split(','):
+            desc = description.split('=')
+            if len(desc) == 2:
+                if desc[0] == 'dnshost':
+                    dnshost = desc[1]
+        return dnshost
+
     def info(self, name, output='plain', fields=[], values=False, pretty=True):
         """
 
@@ -593,13 +617,13 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         except:
             pass
         description = vm.description.split(',')
-        if len(description) == 2:
-            description1 = description[0].split('=')
-            description2 = description[1].split('=')
-            if len(description1) == 2 and description1[0] == 'plan':
-                    yamlinfo['plan'] = description1[1]
-            if len(description2) == 2 and description2[0] == 'profile':
-                    yamlinfo['profile'] = description2[1]
+        for description in vm.description.split(','):
+            desc = description.split('=')
+            if len(desc) == 2:
+                if desc[0] == 'plan':
+                    yamlinfo['plan'] = desc[1]
+                elif desc[0] == 'profile':
+                    yamlinfo['profile'] = desc[1]
         template = conn.follow_link(vm.template)
         source = template.name
         yamlinfo['template'] = source

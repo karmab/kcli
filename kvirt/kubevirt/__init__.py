@@ -128,7 +128,7 @@ class Kubevirt(object):
                disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False,
                cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[],
                ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[],
-               enableroot=True, alias=[], overrides={}, tags=None):
+               enableroot=True, alias=[], overrides={}, tags=None, dnshost=None):
         """
 
         :param name:
@@ -203,6 +203,8 @@ class Kubevirt(object):
                                                                      'annotations': {'kcli/plan': plan,
                                                                                      'kcli/profile': profile,
                                                                                      'kcli/template': template}}}
+        if dnshost is not None:
+            vm['metadata']['annotations']['kcli/dnshost'] = dnshost
         vm['spec']['template']['spec']['domain']['machine'] = {'type': 'q35'}
         features = {}
         for flag in cpuflags:
@@ -529,6 +531,29 @@ class Kubevirt(object):
             print(command)
         os.system(command)
         return
+
+    def dnshost(self, name):
+        """
+
+        :param name:
+        :return:
+        """
+        crds = self.crds
+        namespace = self.namespace
+        crds = self.crds
+        try:
+            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
+        except:
+            common.pprint("VM %s not found" % name, color='red')
+            return None
+        if self.debug:
+            pretty_print(vm)
+        metadata = vm.get("metadata")
+        annotations = metadata.get("annotations")
+        dnshost = None
+        if annotations is not None and 'kcli/dnshost' in annotations:
+            dnshost = annotations['kcli/dnshost']
+        return dnshost
 
     def info(self, name, output='plain', fields=[], values=False, pretty=True):
         """

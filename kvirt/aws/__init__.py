@@ -81,7 +81,7 @@ class Kaws(object):
                disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False,
                cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[],
                ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[],
-               enableroot=True, alias=[], overrides={}, tags=None):
+               enableroot=True, alias=[], overrides={}, tags=None, dnshost=None):
         """
 
         :param name:
@@ -232,6 +232,8 @@ class Kaws(object):
             blockdevicemappings.append(blockdevicemapping)
         if reservedns and domain is not None:
             tags[0]['Tags'].append({'Key': 'domain', 'Value': domain})
+        if dnshost is not None:
+            tags[0]['Tags'].append({'Key': 'dnshost', 'Value': dnshost})
         conn.run_instances(ImageId=template, MinCount=1, MaxCount=1, InstanceType=flavor,
                            KeyName='kvirt', BlockDeviceMappings=blockdevicemappings,
                            UserData=userdata, TagSpecifications=tags)
@@ -385,6 +387,29 @@ class Kaws(object):
         response = conn.get_console_output(InstanceId=instanceid, DryRun=False, Latest=False)
         print(response['Output'])
         return
+
+    def dnshost(self, name):
+        """
+
+        :param name:
+        :param output:
+        :param fields:
+        :param values:
+        :return:
+        """
+        conn = self.conn
+        try:
+            Filters = {'Name': "tag:Name", 'Values': [name]}
+            vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
+        except:
+            common.pprint("VM %s not found" % name, color='red')
+            return None
+        dnshost = None
+        if 'Tags' in vm:
+            for tag in vm['Tags']:
+                if tag['Key'] == 'dnshost':
+                    dnshost = tag['Value']
+        return dnshost
 
     def info(self, name, output='plain', fields=[], values=False, pretty=True):
         """

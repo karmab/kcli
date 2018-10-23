@@ -83,7 +83,7 @@ class Kopenstack(object):
                reservehost=False, start=True, keys=None, cmds=[], ips=None,
                netmasks=None, gateway=None, nested=True, dns=None, domain=None,
                tunnel=False, files=[], enableroot=True, alias=[], overrides={},
-               tags=None):
+               tags=None, dnshost=None):
         """
 
         :param name:
@@ -208,6 +208,8 @@ class Kopenstack(object):
             common.pprint('Couldnt locate or create keypair for use. Leaving...', color='red')
             return {'result': 'failure', 'reason': "No usable keypair found"}
         meta = {'plan': plan, 'profile': profile}
+        if dnshost is not None:
+            meta['dnshost'] == dnshost
         userdata = None
         if cloudinit:
             if template is not None and (template.startswith('coreos') or template.startswith('rhcos')):
@@ -415,6 +417,25 @@ class Kopenstack(object):
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         print(vm.get_console_output())
         return
+
+    def dnshost(self, name):
+        """
+
+        :param name:
+        :return:
+        """
+        nova = self.nova
+        try:
+            vm = nova.servers.find(name=name)
+        except:
+            common.pprint("VM %s not found" % name, color='red')
+            return None
+        dnshost = None
+        metadata = vm.metadata
+        if metadata is not None:
+            if 'dnshost' in metadata:
+                dnshost = metadata['dnshost']
+        return dnshost
 
     def info(self, name, output='plain', fields=[], values=False, pretty=True):
         """

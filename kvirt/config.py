@@ -227,6 +227,7 @@ class Kconfig(Kbaseconfig):
             default_flavor = father.get('flavor', self.flavor)
             default_cmds = common.remove_duplicates(self.cmds + father.get('cmds', []))
             default_scripts = common.remove_duplicates(self.scripts + father.get('scripts', []))
+            default_dnshost = father.get('dnshost', self.dnshost)
         else:
             default_numcpus = self.numcpus
             default_memory = self.memory
@@ -268,6 +269,7 @@ class Kconfig(Kbaseconfig):
             default_rhnpool = self.rhnpool
             default_cmds = self.cmds
             default_scripts = self.scripts
+            default_dnshost = self.dnshost
         plan = profile.get('plan', plan)
         template = profile.get('template', default_template)
         nets = profile.get('nets', default_nets)
@@ -347,6 +349,7 @@ class Kconfig(Kbaseconfig):
         rhnorg = profile.get('rhnorg', default_rhnorg)
         rhnpool = profile.get('rhnpool', default_rhnpool)
         flavor = profile.get('flavor', default_flavor)
+        dnshost = profile.get('dnshost', default_dnshost)
         scriptcmds = []
         skip_rhnregister_script = False
         if rhnregister:
@@ -438,9 +441,29 @@ class Kconfig(Kbaseconfig):
                           reserveip=bool(reserveip), reservedns=bool(reservedns), reservehost=bool(reservehost),
                           start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns,
                           domain=domain, nested=bool(nested), tunnel=tunnel, files=files, enableroot=enableroot,
-                          overrides=overrides, tags=tags)
+                          overrides=overrides, tags=tags, dnshost=None)
         if result['result'] != 'success':
             return result
+        if dnshost is not None and domain is not None:
+            if dnshost in self.clients:
+                z = Kconfig(client=dnshost).k
+                ip = None
+                if ip is None:
+                    counter = 0
+                    while counter != 300:
+                        ip = k.ip(name)
+                        if ip is None:
+                            sleep(5)
+                            print("Waiting 5 seconds to grab ip and create DNS record...")
+                            counter += 10
+                        else:
+                            break
+                if ip is None:
+                    common.print("Couldn't assign DNS", color='red')
+                else:
+                    z.reserve_dns(name=name, nets=[domain], domain=domain, ip=ip, force=True)
+            else:
+                common.pprint("Host %s not found. Skipping" % dnshost, color='blue')
         ansible = profile.get('ansible')
         if ansible is not None:
             for element in ansible:
@@ -980,6 +1003,7 @@ class Kconfig(Kbaseconfig):
             if vmentries:
                 common.pprint("Deploying Vms...", color='green')
                 vmcounter = 0
+                hosts = []
                 for name in vmentries:
                     if len(vmentries) == 1 and 'name' in overrides:
                         newname = overrides['name']
@@ -990,10 +1014,14 @@ class Kconfig(Kbaseconfig):
                     host = profile.get('host')
                     if host is None:
                         z = k
-                    elif host in self.extraclients:
-                        z = self.extraclients[host]
+                    elif host in hosts:
+                        z = hosts[host]
+                    elif host in self.clients:
+                        # z = Kconfig(client=host, debug=args.debug, region=args.region, zone=args.zone)
+                        z = Kconfig(client=host).k
+                        hosts[host] = z
                     else:
-                        common.pprint("Host %s not found. Using Default one" % host, color='blue')
+                        common.pprint("Host %s not found. Using default one" % host, color='blue')
                         z = k
                     if z.exists(name):
                         common.pprint("VM %s skipped!" % name, color='blue')

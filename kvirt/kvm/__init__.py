@@ -156,7 +156,7 @@ class Kvirt(object):
                disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None,
                vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None,
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
-               files=[], enableroot=True, overrides={}, tags=None):
+               files=[], enableroot=True, overrides={}, tags=None, dnshost=None):
         """
 
         :param name:
@@ -215,9 +215,12 @@ class Kvirt(object):
         <kvirt:info xmlns:kvirt="kvirt">
         <kvirt:creationdate>%s</kvirt:creationdate>
         <kvirt:profile>%s</kvirt:profile>""" % (creationdate, profile)
-        if template:
+        if template is not None:
             metadata = """%s
                         <kvirt:template>%s</kvirt:template>""" % (metadata, template)
+        if dnshost is not None:
+            metadata = """%s
+                        <kvirt:dnshost>%s</kvirt:dnshost>""" % (metadata, dnshost)
         default_poolxml = default_storagepool.XMLDesc(0)
         root = ET.fromstring(default_poolxml)
         default_pooltype = list(root.getiterator('pool'))[0].get('type')
@@ -1139,6 +1142,27 @@ class Kvirt(object):
             return sorted(isos, key=lambda s: s.lower())
         else:
             return sorted(templates, key=lambda s: s.lower())
+
+    def dnshost(self, name):
+        """
+
+        :param name:
+        :param snapshots:
+        :return:
+        """
+        conn = self.conn
+        try:
+            vm = conn.lookupByName(name)
+        except:
+            return None
+        vmxml = vm.XMLDesc(0)
+        root = ET.fromstring(vmxml)
+        dnshost = None
+        for element in list(root.getiterator('{kvirt}info')):
+            e = element.find('{kvirt}dnshost')
+            if e is not None:
+                dnshost = e.text
+        return dnshost
 
     def delete(self, name, snapshots=False):
         """

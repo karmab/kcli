@@ -79,7 +79,7 @@ class Kgcp(object):
                disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False,
                cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[],
                ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[],
-               enableroot=True, alias=[], overrides={}, tags={}):
+               enableroot=True, alias=[], overrides={}, tags={}, dnshost=None):
         """
 
         :param name:
@@ -297,6 +297,9 @@ class Kgcp(object):
             body['metadata']['items'].append(newval)
         newval = {'key': 'serial-port-enable', 'value': 1}
         body['metadata']['items'].append(newval)
+        if dnshost is not None:
+            newval = {'key': 'dnshost', 'value': dnshost}
+            body['metadata']['items'].append(newval)
         if self.debug:
             print(body)
         conn.instances().insert(project=project, zone=zone, body=body).execute()
@@ -479,6 +482,27 @@ class Kgcp(object):
             print(sshcommand)
         os.system(sshcommand)
         return
+
+    def dnshost(self, name):
+        """
+
+        :param name:
+        :return:
+        """
+        conn = self.conn
+        project = self.project
+        zone = self.zone
+        try:
+            vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
+        except:
+            common.pprint("VM %s not found" % name, color='red')
+            return None
+        dnshost = None
+        if 'items' in vm['metadata']:
+            for data in vm['metadata']['items']:
+                if data['key'] == 'dnshost':
+                    dnshost = data['value']
+        return dnshost
 
     def info(self, name, output='plain', fields=[], values=False, pretty=True):
         """
