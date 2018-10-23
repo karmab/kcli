@@ -647,8 +647,23 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         :param name:
         :return:
         """
-        print("not implemented")
-        return None
+        vmsearch = self.vms_service.list(search='name=%s' % name)
+        if not vmsearch:
+            common.pprint("VM %s not found" % name, color='red')
+            return None
+        vm = vmsearch[0]
+        ips = []
+        devices = self.vms_service.vm_service(vm.id).reported_devices_service().list()
+        for device in devices:
+            if device.ips:
+                for i in device.ips:
+                    if str(i.version) == 'v4' and i.address not in ['172.17.0.1', '127.0.0.1']:
+                        ips.append(i.address)
+        if not ips:
+            common.pprint("No ip found. Cannot ssh...", color='red')
+            return None
+        else:
+            return ips[-1]
 
     def volumes(self, iso=False):
         """
