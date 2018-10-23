@@ -205,6 +205,8 @@ class Kubevirt(object):
                                                                                      'kcli/template': template}}}
         if dnshost is not None:
             vm['metadata']['annotations']['kcli/dnshost'] = dnshost
+        if domain is not None:
+            vm['metadata']['annotations']['kcli/domain'] = domain
         vm['spec']['template']['spec']['domain']['machine'] = {'type': 'q35'}
         features = {}
         for flag in cpuflags:
@@ -532,7 +534,7 @@ class Kubevirt(object):
         os.system(command)
         return
 
-    def dnshost(self, name):
+    def dnsinfo(self, name):
         """
 
         :param name:
@@ -545,15 +547,18 @@ class Kubevirt(object):
             vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
         except:
             common.pprint("VM %s not found" % name, color='red')
-            return None
+            return None, None
         if self.debug:
             pretty_print(vm)
+        dnshost, domain = None
         metadata = vm.get("metadata")
         annotations = metadata.get("annotations")
-        dnshost = None
-        if annotations is not None and 'kcli/dnshost' in annotations:
-            dnshost = annotations['kcli/dnshost']
-        return dnshost
+        if annotations is not None:
+            if 'kcli/dnshost' in annotations:
+                dnshost = annotations['kcli/dnshost']
+            if 'kcli/domain' in annotations:
+                domain = annotations['kcli/domain']
+        return dnshost, domain
 
     def info(self, name, output='plain', fields=[], values=False, pretty=True):
         """

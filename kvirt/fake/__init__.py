@@ -204,6 +204,14 @@ class Kfake(object):
         print("not implemented")
         return
 
+    def dnsinfo(self, name):
+        """
+
+        :param name:
+        :return:
+        """
+        return None, None
+
 # should generate info in a dict and then pass it to print_info(yamlinfo, output=output, fields=fields, values=values)
 # from kvirt.common where:
 # yamlinfo is the dict

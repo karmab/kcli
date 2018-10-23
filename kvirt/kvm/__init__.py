@@ -215,6 +215,9 @@ class Kvirt(object):
         <kvirt:info xmlns:kvirt="kvirt">
         <kvirt:creationdate>%s</kvirt:creationdate>
         <kvirt:profile>%s</kvirt:profile>""" % (creationdate, profile)
+        if domain is not None:
+            metadata = """%s
+                        <kvirt:domain>%s</kvirt:domain>""" % (metadata, domain)
         if template is not None:
             metadata = """%s
                         <kvirt:template>%s</kvirt:template>""" % (metadata, template)
@@ -1143,7 +1146,7 @@ class Kvirt(object):
         else:
             return sorted(templates, key=lambda s: s.lower())
 
-    def dnshost(self, name):
+    def dnsinfo(self, name):
         """
 
         :param name:
@@ -1154,15 +1157,18 @@ class Kvirt(object):
         try:
             vm = conn.lookupByName(name)
         except:
-            return None
+            return None, None
         vmxml = vm.XMLDesc(0)
         root = ET.fromstring(vmxml)
-        dnshost = None
+        dnshost, domain = None, None
         for element in list(root.getiterator('{kvirt}info')):
             e = element.find('{kvirt}dnshost')
             if e is not None:
                 dnshost = e.text
-        return dnshost
+            e = element.find('{kvirt}domain')
+            if e is not None:
+                domain = e.text
+        return dnshost, domain
 
     def delete(self, name, snapshots=False):
         """

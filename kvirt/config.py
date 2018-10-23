@@ -713,6 +713,7 @@ class Kconfig(Kbaseconfig):
         #    path = plan
         if delete:
             deletedvms = []
+            dnsclients = []
             networks = []
             if plan == '':
                 common.pprint("That would delete every vm...Not doing that", color='red')
@@ -735,7 +736,15 @@ class Kconfig(Kbaseconfig):
                         for network in vmnetworks:
                             if network != 'default' and network not in networks:
                                 networks.append(network)
+                        dnshost, domain = c.dnsinfo(name)
                         c.delete(name)
+                        if dnshost is not None and domain is not None and dnshost in self.clients:
+                            if dnshost in dnsclients:
+                                z = dnsclients[dnshost]
+                            elif dnshost in self.clients:
+                                z = Kconfig(client=dnshost).k
+                                dnsclients[dnshost] = z
+                            z.delete_dns(dnshost, domain)
                         common.set_lastvm(name, self.client, delete=True)
                         common.pprint("VM %s deleted on %s!" % (name, hypervisor), color='green')
                         deletedvms.append(name)

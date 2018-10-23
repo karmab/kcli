@@ -210,6 +210,8 @@ class Kopenstack(object):
         meta = {'plan': plan, 'profile': profile}
         if dnshost is not None:
             meta['dnshost'] == dnshost
+        if domain is not None:
+            meta['domain'] == domain
         userdata = None
         if cloudinit:
             if template is not None and (template.startswith('coreos') or template.startswith('rhcos')):
@@ -418,7 +420,7 @@ class Kopenstack(object):
         print(vm.get_console_output())
         return
 
-    def dnshost(self, name):
+    def dnsinfo(self, name):
         """
 
         :param name:
@@ -429,13 +431,15 @@ class Kopenstack(object):
             vm = nova.servers.find(name=name)
         except:
             common.pprint("VM %s not found" % name, color='red')
-            return None
-        dnshost = None
+            return None, None
+        dnshost, domain = None
         metadata = vm.metadata
         if metadata is not None:
             if 'dnshost' in metadata:
                 dnshost = metadata['dnshost']
-        return dnshost
+            if 'domain' in metadata:
+                dnshost = metadata['domain']
+        return dnshost, domain
 
     def info(self, name, output='plain', fields=[], values=False, pretty=True):
         """

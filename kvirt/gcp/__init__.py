@@ -483,7 +483,7 @@ class Kgcp(object):
         os.system(sshcommand)
         return
 
-    def dnshost(self, name):
+    def dnsinfo(self, name):
         """
 
         :param name:
@@ -496,13 +496,15 @@ class Kgcp(object):
             vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
         except:
             common.pprint("VM %s not found" % name, color='red')
-            return None
-        dnshost = None
+            return None, None
+        dnshost, domain = None
         if 'items' in vm['metadata']:
             for data in vm['metadata']['items']:
                 if data['key'] == 'dnshost':
                     dnshost = data['value']
-        return dnshost
+                if data['key'] == 'domain':
+                    domain = data['value']
+        return dnshost, domain
 
     def info(self, name, output='plain', fields=[], values=False, pretty=True):
         """

@@ -388,7 +388,7 @@ class Kaws(object):
         print(response['Output'])
         return
 
-    def dnshost(self, name):
+    def dnsinfo(self, name):
         """
 
         :param name:
@@ -403,13 +403,15 @@ class Kaws(object):
             vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
         except:
             common.pprint("VM %s not found" % name, color='red')
-            return None
-        dnshost = None
+            return None, None
+        dnshost, domain = None
         if 'Tags' in vm:
             for tag in vm['Tags']:
                 if tag['Key'] == 'dnshost':
                     dnshost = tag['Value']
-        return dnshost
+                if tag['Key'] == 'domain':
+                    domain = tag['Value']
+        return dnshost, domain
 
     def info(self, name, output='plain', fields=[], values=False, pretty=True):
         """

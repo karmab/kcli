@@ -260,15 +260,14 @@ class Kbase(object):
         print("not implemented")
         return {'result': 'success'}
 
-# should return metadata dnshost for the given vm
-    def dnshost(self, name):
+# should return dnshost, domain for the given vm
+    def dnsinfo(self, name):
         """
 
         :param name:
-        :param snapshots:
         :return:
         """
-        return None
+        return None, None
 
     def clone(self, old, new, full=False, start=False):
         """

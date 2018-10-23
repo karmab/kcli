@@ -151,6 +151,8 @@ class KOvirt(object):
             description += ',user=%s' % self.filteruser
         if dnshost is not None:
             description += ',dnshost=%s' % dnshost
+        if domain is not None:
+            description += ',domain=%s' % domain
         memory = memory * 1024 * 1024
         cpu = types.Cpu(topology=types.CpuTopology(cores=numcpus, sockets=1))
         try:
@@ -572,7 +574,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         call(command, shell=True)
         return
 
-    def dnshost(self, name):
+    def dnsinfo(self, name):
         """
 
         :param name:
@@ -581,16 +583,18 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         vmsearch = self.vms_service.list(search='name=%s' % name)
         if not vmsearch:
             common.pprint("VM %s not found" % name, color='red')
-            return None
+            return None, None
         vm = vmsearch[0]
-        dnshost = None
+        dnshost, domain = None, None
         description = vm.description.split(',')
         for description in vm.description.split(','):
             desc = description.split('=')
             if len(desc) == 2:
                 if desc[0] == 'dnshost':
                     dnshost = desc[1]
-        return dnshost
+                if desc[0] == 'domain':
+                    domain = desc[1]
+        return dnshost, domain
 
     def info(self, name, output='plain', fields=[], values=False, pretty=True):
         """
@@ -684,7 +688,6 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                     if str(i.version) == 'v4' and i.address not in ['172.17.0.1', '127.0.0.1']:
                         ips.append(i.address)
         if not ips:
-            common.pprint("No ip found. Cannot ssh...", color='red')
             return None
         else:
             return ips[-1]
