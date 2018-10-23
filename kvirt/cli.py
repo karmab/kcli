@@ -188,7 +188,7 @@ def host(args):
 
 def _list(args):
     """List hosts, profiles, flavors, templates, isos, pools or vms"""
-    hosts = args.hosts
+    clients = args.clients
     profiles = args.profiles
     flavors = args.flavors
     templates = args.templates
@@ -206,9 +206,9 @@ def _list(args):
     short = args.short
     group = args.group
     repo = args.repo
-    if hosts:
-        clientstable = PrettyTable(["Host", "Type", "Enabled", "Current"])
-        clientstable.align["Host"] = "l"
+    if clients:
+        clientstable = PrettyTable(["Client", "Type", "Enabled", "Current"])
+        clientstable.align["Client"] = "l"
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
         for client in sorted(baseconfig.clients):
             enabled = baseconfig.ini[client].get('enabled', True)
@@ -1088,7 +1088,7 @@ def cli():
 
     list_info = 'List hosts, profiles, flavors, templates, isos,...'
     list_parser = subparsers.add_parser('list', description=list_info, help=list_info)
-    list_parser.add_argument('-H', '--hosts', action='store_true')
+    list_parser.add_argument('-c', '--clients', action='store_true')
     list_parser.add_argument('-p', '--profiles', action='store_true')
     list_parser.add_argument('-f', '--flavors', action='store_true')
     list_parser.add_argument('-t', '--templates', action='store_true')

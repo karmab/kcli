@@ -80,7 +80,7 @@ docker run --rm karmab/kcli
 
 the are several flags you'll want to pass depending on your use case 
 
-- `-v /var/run/libvirt:/var/run/libvirt -v /var/lib/libvirt/images:/var/lib/libvirt/images` if running against a local hypervisor
+- `-v /var/run/libvirt:/var/run/libvirt -v /var/lib/libvirt/images:/var/lib/libvirt/images` if running against a local client/host
 - ` ~/.kcli:/root/.kcli` to use your kcli configuration (also profiles and repositories) stored locally
 - `-v ~/.ssh:/root/.ssh` to share your ssh keys. Alternatively, you can store your public and private key in the ~/.kcli directory
 - `--security-opt label:disable` if running with selinux
@@ -144,7 +144,7 @@ kcli network  -c 192.168.122.0/24 default
 
 kcli configuration is done in ~/.kcli directory that you need to manually create. It will contain:
 
-- config.yml generic configuration where you declare hypervisors/hosts ( we use the term *client*)
+- config.yml generic configuration where you declare hosts ( we also use the term *client*)
 - profiles.yml hosts your profiles where you combine things like memory, numcpus and all supported parameters into named profiles to create vms from
 - id_rsa/id_rsa.pub/id_dsa/id_dsa.pub You can also choose to store your default public and private keys in *kcli* directory which will be the first place to look at them when connecting to a remote kvm host, virtual machine or when injecting your public key. This is useful when using kcli container and not wanting to share your entire ~/.ssh directory in your container
 
@@ -152,7 +152,7 @@ For instance, here 's a sample `~/.kcli/config.yml`
 
 ```YAML
 default:
- client: myhypervisor
+ client: mycli
  numcpus: 2
  diskthin: true
  memory: 512
@@ -164,7 +164,7 @@ default:
  nets:
   - default
 
-myhypervisor:
+mycli:
  host: 192.168.0.6
  pool: default
 
@@ -192,7 +192,7 @@ kcli bootstrap -n twix -H 192.168.0.6 --pool vms --poolpath /home/vms
 
 ## Kvm
 
-kvm has an additional parameter `detect_bridge_ips` that you can either set in the default section or in a specific hypervisor section.
+kvm has an additional parameter `detect_bridge_ips` that you can either set in the default section or in a specific client section.
 If set to *True*, It allows you to detects dhcp ips from the bridge networks of a remote kvm host accessed other ssh.
 
 for this to work, you'll need to manually install scapy (either from pip or using python3-scapy rpm) and copy the [bridge_helper.py](https://raw.githubusercontent.com/karmab/kcli/master/extras/bridge_helper.py) script somewhere in the PATH of your remote kvm host
@@ -489,7 +489,7 @@ Launch the following command and access your machine at port 9000:
 kweb
 ```
 
-## Multiple hypervisors
+## Multiple clients
 
 If you have multiple hypervisors/clients, you can generally use the flag *-C $CLIENT* to point to a specific one.
 
@@ -726,7 +726,7 @@ If you dont want to be asked for your sudo password each time, here are the comm
 
 ## Docker support
 
-Docker support is mainly enabled as a commodity to launch some containers along vms in plan files. Of course, you will need docker installed on the hypervisor. So the following can be used in a plan file to launch a container:
+Docker support is mainly enabled as a commodity to launch some containers along vms in plan files. Of course, you will need docker installed on the client. So the following can be used in a plan file to launch a container:
 
 ```YAML
 centos:
@@ -766,7 +766,7 @@ Finally, note that if using the docker version of kcli against your local host ,
 You can check klist.py in the extra directory and use it as a dynamic inventory for ansible.
 It's also present at `/usr/share/doc/kcli/extras/klist.py` in the rpm and `/usr/bin/klist.py` in the container
 
-The script uses sames conf as kcli (and as such defaults to local hypervisor if no configuration file is found).
+The script uses sames conf as kcli (and as such defaults to local if no configuration file is found).
 
 vm will be grouped by plan, or put in the kvirt group if they dont belong to any plan.
 
@@ -900,20 +900,20 @@ alternatively, look at [https://github.com/karmab/kcli-controller](https://githu
 
 ## Testing
 
-Basic testing can be run with pytest. If using a remote hypervisor, you ll want to set the *KVIRT_HOST* and *KVIRT_USER* environment variables so that it points to your host with the corresponding user.
+Basic testing can be run with pytest. If using a remote host/client, you ll want to set the *KVIRT_HOST* and *KVIRT_USER* environment variables so that it points to your host with the corresponding user.
 
-# Specific parameters for a hypervisor
+# Specific parameters for a host/client
 
 - *host* Defaults to 127.0.0.1
 - *port*
 - *user* Defaults to root
 - *protocol* Defaults to ssh
 - *url* can be used to specify an exotic qemu url
-- *tunnel* Defaults to False. Setting it to true will make kcli use tunnels for console and for ssh access. You want that if you only open ssh port to your hypervisor!
+- *tunnel* Defaults to False. Setting it to true will make kcli use tunnels for console and for ssh access. You want that if you only open ssh port to your client!
 - *planview* Defaults to False. Setting it to true will make kcli use the value specified in *~/.kcli/plan* as default plan upon starting and stopping plan. Additionally, vms not belonging to the set plan wont show up when listing
 - *keep_networks* Defaults to False. Setting it to true will make kcli keeps networks when deleting plan
 
-# Available parameters for hypervisor/profile/plan files
+# Available parameters for client/profile/plan files
 
 - *cpumodel* Defaults to Westmere
 - *cpuflags* (optional). You can specify a list of strings with features to enable or use dict entries with *name* of the feature and *enable* either set to True or False. The value for vmx is ignored, as it s handled by the nested flag
@@ -947,7 +947,7 @@ Basic testing can be run with pytest. If using a remote hypervisor, you ll want 
 - *privatekey* Defaults to False. Set it to true so that your private key is passed to the nodes of your plan. If you need this, you know why :)
 - *files* (optional)- Array of files to inject to the vm. For ecach of the them , you can specify path, owner ( root by default) , permissions (600 by default ) and either origin or content to gather content data directly or from specified origin
 - *insecure* (optional) Handles all the ssh option details so you dont get any warnings about man in the middle
-- *host* (optional) Allows you to create the vm on a specific host, provided you used kcli -C host1,host2,... and specify the wanted hypervisor ( or use kcli -C all ). This field is not used for other types like network, so expect to use this in relatively simple plans only
+- *host* (optional) Allows you to create the vm on a specific client, provided you used kcli -C host1,host2,... or use kcli -C all. This field is not used for other types like network, so expect to use this in relatively simple plans only
 - *base* (optional) Allows you to point to a parent profile so that values are taken from parent when not found in the current profile. Scripts and commands are rather concatenated between default, father and children ( so you have a happy family...)
 - *tags* (optional) Array of tags to apply to gcp instances (usefull when matched in a firewall rule). In the case of kubevirt, it s rather a dict of key=value used as node selector (allowing to force vms to be scheduled on a matching host)
 - <a name="rhnregister">*rhnregister*</a> (optional). Auto registers vms whose template starts with rhel Defaults to false. Requires to either rhnuser and rhnpassword, or rhnactivationkey and rhnorg, and an optional pool

@@ -87,11 +87,11 @@ To run it
 the are several flags you’ll want to pass depending on your use case
 
 -  ``-v /var/run/libvirt:/var/run/libvirt -v /var/lib/libvirt/images:/var/lib/libvirt/images``
-   if running against a local hypervisor
+   if running against a local client/host
 -  ``~/.kcli:/root/.kcli`` to use your kcli configuration (also profiles
    and repositories) stored locally
--  ``-v ~/.ssh:/root/.ssh`` to share your ssh keys. Alternatively store
-   your public and private key in the ~/.kcli directory
+-  ``-v ~/.ssh:/root/.ssh`` to share your ssh keys. Alternatively, you
+   can store your public and private key in the ~/.kcli directory
 -  ``--security-opt label:disable`` if running with selinux
 -  ``-v $PWD:/workdir`` to access plans below your current directory
 -  ``-v $HOME:/root`` to share your entire home directory, useful if you
@@ -165,11 +165,11 @@ You can also create a default network
 
     kcli network  -c 192.168.122.0/24 default
 
-kcli configuration is done ~/.kcli directory that you need to manually
-create. It will contain:
+kcli configuration is done in ~/.kcli directory that you need to
+manually create. It will contain:
 
--  config.yml generic configuration where you declare hypervisors/hosts
-   ( we use the term *client*)
+-  config.yml generic configuration where you declare hosts ( we also
+   use the term *client*)
 -  profiles.yml hosts your profiles where you combine things like
    memory, numcpus and all supported parameters into named profiles to
    create vms from
@@ -185,7 +185,7 @@ For instance, here ’s a sample ``~/.kcli/config.yml``
 .. code:: yaml
 
     default:
-     client: myhypervisor
+     client: mycli
      numcpus: 2
      diskthin: true
      memory: 512
@@ -197,7 +197,7 @@ For instance, here ’s a sample ``~/.kcli/config.yml``
      nets:
       - default
 
-    myhypervisor:
+    mycli:
      host: 192.168.0.6
      pool: default
 
@@ -232,8 +232,8 @@ Kvm
 ---
 
 kvm has an additional parameter ``detect_bridge_ips`` that you can
-either set in the default section or in a specific hypervisor section.
-If set to *True*, It allows you to detects dhcp ips from the bridge
+either set in the default section or in a specific client section. If
+set to *True*, It allows you to detects dhcp ips from the bridge
 networks of a remote kvm host accessed other ssh.
 
 for this to work, you’ll need to manually install scapy (either from pip
@@ -248,7 +248,6 @@ Gcp
 
     gcp1:
      type: gcp
-     user: jhendrix
      credentials: ~/myproject.json
      enabled: true
      project: myproject
@@ -256,8 +255,6 @@ Gcp
 
 The following parameters are specific to gcp:
 
--  user this is the user that will be used to access yours vms through
-   ssh
 -  credentials (pointing to a json service account file). if not
    specified, the environment variable *GOOGLE_APPLICATION_CREDENTIALS*
    will be used
@@ -389,6 +386,11 @@ The following parameters are specific to ovirt:
    with kcli download
 -  cluster Defaults to Default
 -  datacenter Defaults to Default
+-  filtervms Defaults to True. Only list vms created by kcli. Useful for
+   environments when you are superadmin and have a ton of vms
+-  filteruser Defaults to None. Only list vms created by kcli and by
+   specified user. Useful for environments when you share the same ovirt
+   user
 
 To use this provider with kcli rpm, you’ll need to install (from pip)
 *ovirt-engine-sdk-python*
@@ -636,8 +638,8 @@ Launch the following command and access your machine at port 9000:
 
     kweb
 
-Multiple hypervisors
---------------------
+Multiple clients
+----------------
 
 If you have multiple hypervisors/clients, you can generally use the flag
 *-C $CLIENT* to point to a specific one.
@@ -944,8 +946,8 @@ Docker support
 
 Docker support is mainly enabled as a commodity to launch some
 containers along vms in plan files. Of course, you will need docker
-installed on the hypervisor. So the following can be used in a plan file
-to launch a container:
+installed on the client. So the following can be used in a plan file to
+launch a container:
 
 .. code:: yaml
 
@@ -1000,8 +1002,8 @@ inventory for ansible. It’s also present at
 ``/usr/share/doc/kcli/extras/klist.py`` in the rpm and
 ``/usr/bin/klist.py`` in the container
 
-The script uses sames conf as kcli (and as such defaults to local
-hypervisor if no configuration file is found).
+The script uses sames conf as kcli (and as such defaults to local if no
+configuration file is found).
 
 vm will be grouped by plan, or put in the kvirt group if they dont
 belong to any plan.
@@ -1024,20 +1026,24 @@ such as the following to properly call the inventory
     #!/bin/bash
     docker run -it --security-opt label:disable -v ~/.kcli:/root/.kcli -v /var/run/libvirt:/var/run/libvirt --entrypoint=/usr/bin/klist.py karmab/kcli $@
 
-Additionally, there are three ansible kcli modules under extras, with
+Additionally, there are four ansible kcli modules under extras, with
 sample playbooks:
 
--  kvirt_vm allows you to create/delete vm (based on one of your
-   profiles)
+-  kvirt_vm allows you to create/delete vm (based on an existing profile
+   or a template)
 -  kvirt_plan allows you to create/delete a plan
 -  kvirt_product allows you to create/delete a product (provided you
    have a product repository configured)
+-  kvirt_info allows you to retrieve a dict of values similar to
+   ``kcli info`` output. You can select which fields to gather
 
 Those modules rely on python3 so you will need to pass
 ``-e 'ansible_python_interpreter=path_to_python3'`` to your
-ansible-playbook invocations
+ansible-playbook invocations if your default ansible installation is
+based on python2
 
-Both kvirt_plan and kvirt_product supports overriding parameters
+Both kvirt_vm, kvirt_plan and kvirt_product support overriding
+parameters
 
 ::
 
@@ -1162,12 +1168,12 @@ library
 Testing
 -------
 
-Basic testing can be run with pytest. If using a remote hypervisor, you
+Basic testing can be run with pytest. If using a remote host/client, you
 ll want to set the *KVIRT_HOST* and *KVIRT_USER* environment variables
 so that it points to your host with the corresponding user.
 
-Specific parameters for a hypervisor
-====================================
+Specific parameters for a host/client
+=====================================
 
 -  *host* Defaults to 127.0.0.1
 -  *port*
@@ -1176,14 +1182,16 @@ Specific parameters for a hypervisor
 -  *url* can be used to specify an exotic qemu url
 -  *tunnel* Defaults to False. Setting it to true will make kcli use
    tunnels for console and for ssh access. You want that if you only
-   open ssh port to your hypervisor!
+   open ssh port to your client!
 -  *planview* Defaults to False. Setting it to true will make kcli use
    the value specified in *~/.kcli/plan* as default plan upon starting
    and stopping plan. Additionally, vms not belonging to the set plan
    wont show up when listing
+-  *keep_networks* Defaults to False. Setting it to true will make kcli
+   keeps networks when deleting plan
 
-Available parameters for hypervisor/profile/plan files
-======================================================
+Available parameters for client/profile/plan files
+==================================================
 
 -  *cpumodel* Defaults to Westmere
 -  *cpuflags* (optional). You can specify a list of strings with
@@ -1240,11 +1248,10 @@ Available parameters for hypervisor/profile/plan files
    content data directly or from specified origin
 -  *insecure* (optional) Handles all the ssh option details so you dont
    get any warnings about man in the middle
--  *host* (optional) Allows you to create the vm on a specific host,
-   provided you used kcli -C host1,host2,… and specify the wanted
-   hypervisor ( or use kcli -C all ). This field is not used for other
-   types like network, so expect to use this in relatively simple plans
-   only
+-  *host* (optional) Allows you to create the vm on a specific client,
+   provided you used kcli -C host1,host2,… or use kcli -C all. This
+   field is not used for other types like network, so expect to use this
+   in relatively simple plans only
 -  *base* (optional) Allows you to point to a parent profile so that
    values are taken from parent when not found in the current profile.
    Scripts and commands are rather concatenated between default, father

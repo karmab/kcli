@@ -632,7 +632,7 @@ def productaction():
 @app.route('/hoststable')
 def hoststable():
     """
-    retrieves all hosts in table
+    retrieves all clients in table
     """
     baseconfig = Kbaseconfig()
     clients = []
