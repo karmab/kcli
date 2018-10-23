@@ -319,6 +319,15 @@ The following parameters are specific to ovirt:
 
 To use this provider with kcli rpm, you'll need to install (from pip) *ovirt-engine-sdk-python*
 
+On fedora, for instance, you can run the following
+
+```
+dnf -y copr enable karmab/kcli
+yum -y install kcli gcc redhat-rpm-config python3-devel openssl-devel libxml2-devel libcurl-devel
+export PYCURL_SSL_LIBRARY=openssl
+pip3 install ovirt-engine-sdk-python
+```
+
 ## Openstack
 
 ```

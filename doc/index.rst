@@ -395,6 +395,15 @@ The following parameters are specific to ovirt:
 To use this provider with kcli rpm, you’ll need to install (from pip)
 *ovirt-engine-sdk-python*
 
+On fedora, for instance, you can run the following
+
+::
+
+    dnf -y copr enable karmab/kcli
+    yum -y install kcli gcc redhat-rpm-config python3-devel openssl-devel libxml2-devel libcurl-devel
+    export PYCURL_SSL_LIBRARY=openssl
+    pip3 install ovirt-engine-sdk-python
+
 Openstack
 ---------
 
@@ -1248,10 +1257,9 @@ Available parameters for client/profile/plan files
    content data directly or from specified origin
 -  *insecure* (optional) Handles all the ssh option details so you dont
    get any warnings about man in the middle
--  *host* (optional) Allows you to create the vm on a specific client,
-   provided you used kcli -C host1,host2,… or use kcli -C all. This
-   field is not used for other types like network, so expect to use this
-   in relatively simple plans only
+-  *host* (optional) Allows you to create the vm on a specific client.
+   This field is not used for other types like network, so expect to use
+   this in relatively simple plans only
 -  *base* (optional) Allows you to point to a parent profile so that
    values are taken from parent when not found in the current profile.
    Scripts and commands are rather concatenated between default, father
