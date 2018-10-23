@@ -950,6 +950,7 @@ class Kconfig(Kbaseconfig):
                         common.handle_response(result, template, element='Template ', action='Added')
             if dnsentries:
                 common.pprint("Deploying Dns Entry...", color='green')
+                # dnsclients = {}
                 for dnsentry in dnsentries:
                     dnsprofile = entries[dnsentry]
                     dnsdomain = dnsprofile.get('domain')
@@ -957,13 +958,21 @@ class Kconfig(Kbaseconfig):
                     dnsdomain = dnsprofile.get('domain', dnsnet)
                     dnsip = dnsprofile.get('ip')
                     dnsalias = dnsprofile.get('alias', [])
+                    host = dnsprofile.get('host')
+                    if host is None:
+                        z = k
+                    elif host in self.clients:
+                        z = self.extraclients[host]
+                    else:
+                        common.pprint("Host %s not found. Skipping" % host, color='blue')
+                        return
                     if dnsip is None:
                         common.pprint("Missing ip. Skipping!", color='blue')
                         return
                     if dnsnet is None:
                         common.pprint("Missing net. Skipping!", color='blue')
                         return
-                    k.reserve_dns(name=dnsentry, nets=[dnsnet], domain=dnsdomain, ip=dnsip, alias=dnsalias, force=True)
+                    z.reserve_dns(name=dnsentry, nets=[dnsnet], domain=dnsdomain, ip=dnsip, alias=dnsalias, force=True)
             if vmentries:
                 common.pprint("Deploying Vms...", color='green')
                 vmcounter = 0

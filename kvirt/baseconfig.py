@@ -154,6 +154,10 @@ class Kbaseconfig:
             os._exit(1)
         self.options = self.ini[self.client]
         options = self.options
+        self.enabled = options.get('enabled', True)
+        if not self.enabled:
+            common.pprint("Disabled hypervisor %s.Leaving..." % client, color='red')
+            os._exit(1)
         self.host = options.get('host', '127.0.0.1')
         self.port = options.get('port', 22)
         self.user = options.get('user', 'root')
@@ -169,7 +173,6 @@ class Kbaseconfig:
         self.reporturl = options.get('reporturl', self.default['reportdir'])
         self.reportdir = options.get('reportdir', self.default['reportdir'])
         self.reportall = options.get('reportall', self.default['reportall'])
-        self.enabled = options.get('enabled', True)
         self.nets = options.get('nets', self.default['nets'])
         self.cpumodel = options.get('cpumodel', self.default['cpumodel'])
         self.cpuflags = options.get('cpuflags', [])
