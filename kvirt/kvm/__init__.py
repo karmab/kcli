@@ -860,6 +860,16 @@ class Kvirt(object):
                     pass
             for element in list(root.getiterator('interface')):
                 mac = element.find('mac').get('address')
+                networktype = element.get('type')
+                if networktype != 'bridge':
+                    network = element.find('source').get('network')
+                    network = conn.networkLookupByName(network)
+                    netxml = network.XMLDesc()
+                    netroot = ET.fromstring(netxml)
+                    hostentries = list(netroot.getiterator('host'))
+                    for host in hostentries:
+                        if host.get('mac') == mac:
+                            ip = host.get('ip')
                 if ifaces:
                     matches = [ifaces[x]['addrs'] for x in ifaces if ifaces[x]['hwaddr'] == mac]
                     if matches:
@@ -976,14 +986,8 @@ class Kvirt(object):
         :param values:
         :return:
         """
-        leases = {}
         starts = {0: 'no', 1: 'yes'}
         conn = self.conn
-        for network in conn.listAllNetworks():
-            for lease in network.DHCPLeases():
-                dhcpip = lease['ipaddr']
-                mac = lease['mac']
-                leases[mac] = dhcpip
         try:
             vm = conn.lookupByName(name)
             xml = vm.XMLDesc(0)
@@ -1059,6 +1063,13 @@ class Kvirt(object):
             else:
                 network = element.find('source').get('network')
                 network_type = 'routed'
+                network = conn.networkLookupByName(network)
+                netxml = network.XMLDesc()
+                netroot = ET.fromstring(netxml)
+                hostentries = list(netroot.getiterator('host'))
+                for host in hostentries:
+                    if host.get('mac') == mac:
+                        ip = host.get('ip')
             if ifaces:
                 matches = [ifaces[x]['addrs'] for x in ifaces if ifaces[x]['hwaddr'] == mac]
                 if matches:
