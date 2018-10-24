@@ -491,14 +491,15 @@ class Kvirt(object):
                 with open('/tmp/ignition', 'w') as ignitionfile:
                     ignitionfile.write(ignitiondata)
                     identityfile = None
-                    if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
-                        identityfile = os.path.expanduser("~/.kcli/id_rsa")
-                    elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
-                        identityfile = os.path.expanduser("~/.kcli/id_rsa")
-                    if identityfile is not None:
-                        identitycommand = "-i %s" % identityfile
-                    else:
-                        identitycommand = ""
+                if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
+                    identityfile = os.path.expanduser("~/.kcli/id_rsa")
+                elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
+                    identityfile = os.path.expanduser("~/.kcli/id_rsa")
+                if identityfile is not None:
+                    identitycommand = "-i %s" % identityfile
+                else:
+                    identitycommand = ""
+                if self.protocol == 'ssh':
                     ignitioncmd = 'scp %s -qP %s /tmp/ignition %s@%s:/tmp' % (identitycommand, self.port, self.user,
                                                                               self.host)
                     code = os.system(ignitioncmd)
