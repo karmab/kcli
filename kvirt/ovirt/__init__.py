@@ -308,9 +308,10 @@ class KOvirt(object):
             else:
                 keys.append(userkey)
                 keys = '\n'.join(keys)
+            host_name = "%s.%s" % (name, domain) if domain is not None else name
             initialization = types.Initialization(user_name=user_name, root_password=root_password,
-                                                  regenerate_ssh_keys=True, authorized_ssh_keys=keys, host_name=name,
-                                                  nic_configurations=nic_configurations,
+                                                  regenerate_ssh_keys=True, authorized_ssh_keys=keys,
+                                                  host_name=host_name, nic_configurations=nic_configurations,
                                                   dns_servers=dns, dns_search=domain,
                                                   custom_script=custom_script)
         vm_service.start(use_cloud_init=cloudinit, vm=types.Vm(initialization=initialization))
