@@ -42,11 +42,13 @@ def main():
             "type": 'str'
         },
         "name": {"required": True, "type": "str"},
+        "client": {"required": False, "type": "str"},
         "profile": {"required": True, "type": "str"},
         "parameters": {"required": False, "type": "dict"},
     }
     module = AnsibleModule(argument_spec=argument_spec)
-    config = Kconfig(quiet=True)
+    client = module.params['client']
+    config = Kconfig(client=client, quiet=True)
     k = config.k
     name = module.params['name']
     exists = k.exists(name)

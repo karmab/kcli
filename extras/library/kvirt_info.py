@@ -37,10 +37,12 @@ def main():
     """
     argument_spec = {
         "name": {"required": True, "type": "str"},
+        "client": {"required": False, "type": "str"},
         "fields": {"required": False, "type": "list"},
     }
     module = AnsibleModule(argument_spec=argument_spec)
-    config = Kconfig(quiet=True)
+    client = module.params['client']
+    config = Kconfig(client, quiet=True)
     k = config.k
     name = module.params['name']
     exists = k.exists(name)

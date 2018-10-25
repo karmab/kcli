@@ -1503,6 +1503,7 @@ class Kvirt(object):
             base.append(dns)
             newxml = ET.tostring(root)
             conn.networkDefineXML(newxml.decode("utf-8"))
+        print(alias)
         dnsentry = '<host ip="%s"><hostname>%s</hostname>' % (ip, name)
         if domain is not None:
             dnsentry = '%s<hostname>%s.%s</hostname>' % (dnsentry, name, domain)

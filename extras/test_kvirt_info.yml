@@ -2,6 +2,6 @@
   tasks:
     - name: Test kvirt here
       kvirt_info: 
-        name: taitibob
+        name: tahitibob
       register: result
     - debug: var=result.meta.ip

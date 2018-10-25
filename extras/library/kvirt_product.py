@@ -50,12 +50,14 @@ def main():
             "type": 'str'
         },
         "name": {"required": True, "type": "str"},
+        "client": {"required": False, "type": "str"},
         "product": {"required": True, "type": "str"},
         "repo": {"required": False, "type": "str"},
         "parameters": {"required": False, "type": "dict"},
     }
     module = AnsibleModule(argument_spec=argument_spec)
-    config = Kconfig(quiet=True)
+    client = module.params['client']
+    config = Kconfig(client, quiet=True)
     name = module.params['name']
     product = module.params['product']
     repo = module.params['repo']

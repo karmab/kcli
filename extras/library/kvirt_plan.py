@@ -43,11 +43,13 @@ def main():
             "type": 'str'
         },
         "name": {"required": True, "type": "str"},
+        "client": {"required": False, "type": "str"},
         "inputfile": {"required": False, "type": "str"},
         "parameters": {"required": False, "type": "dict"},
     }
     module = AnsibleModule(argument_spec=argument_spec)
-    config = Kconfig(quiet=True)
+    client = module.params['client']
+    config = Kconfig(client, quiet=True)
     name = module.params['name']
     inputfile = module.params['inputfile']
     state = module.params['state']

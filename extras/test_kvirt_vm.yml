@@ -2,7 +2,7 @@
   tasks:
     - name: Test kvirt here
       kvirt_vm: 
-        name: taitibob
+        name: tahitibob
         state: present
         profile: CentOS-7-x86_64-GenericCloud.qcow2
         parameters:
