@@ -1,7 +1,0 @@
-- hosts: localhost
-  tasks:
-    - name: Test kvirt here
-      kvirt_info: 
-        name: tahitibob
-      register: result
-    - debug: var=result.meta.ip

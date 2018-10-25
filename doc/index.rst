@@ -228,19 +228,6 @@ pool with a path, and have centos cloud image downloaded
 Provider specifics
 ==================
 
-Kvm
----
-
-kvm has an additional parameter ``detect_bridge_ips`` that you can
-either set in the default section or in a specific client section. If
-set to *True*, It allows you to detects dhcp ips from the bridge
-networks of a remote kvm host accessed other ssh.
-
-for this to work, you’ll need to manually install scapy (either from pip
-or using python3-scapy rpm) and copy the
-`bridge_helper.py <https://raw.githubusercontent.com/karmab/kcli/master/extras/bridge_helper.py>`__
-script somewhere in the PATH of your remote kvm host
-
 Gcp
 ---
 
@@ -1035,8 +1022,9 @@ such as the following to properly call the inventory
     #!/bin/bash
     docker run -it --security-opt label:disable -v ~/.kcli:/root/.kcli -v /var/run/libvirt:/var/run/libvirt --entrypoint=/usr/bin/klist.py karmab/kcli $@
 
-Additionally, there are four ansible kcli modules under extras, with
-sample playbooks:
+Additionally, there are ansible kcli modules in `this
+repo <https://github.com/karmab/ansible-kcli-modules>`__, with sample
+playbooks:
 
 -  kvirt_vm allows you to create/delete vm (based on an existing profile
    or a template)
@@ -1048,8 +1036,8 @@ sample playbooks:
 
 Those modules rely on python3 so you will need to pass
 ``-e 'ansible_python_interpreter=path_to_python3'`` to your
-ansible-playbook invocations if your default ansible installation is
-based on python2
+ansible-playbook invocations ( or set it in your inventory) if your
+default ansible installation is based on python2
 
 Both kvirt_vm, kvirt_plan and kvirt_product support overriding
 parameters

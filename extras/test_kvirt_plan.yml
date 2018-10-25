@@ -1,9 +1,0 @@
-- hosts: localhost
-  tasks:
-    - name: Test kvirt here
-      kvirt_plan: 
-        name: wilibonka
-        inputfile: myplan.yml
-        state: present
-      register: result
-    - debug: var=result 

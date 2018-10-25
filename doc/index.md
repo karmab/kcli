@@ -788,14 +788,14 @@ If you're using kcli as a container, you will have to create a script such as th
 docker run -it --security-opt label:disable -v ~/.kcli:/root/.kcli -v /var/run/libvirt:/var/run/libvirt --entrypoint=/usr/bin/klist.py karmab/kcli $@
 ```
 
-Additionally, there are four ansible kcli modules under extras, with sample playbooks:
+Additionally, there are ansible kcli modules in [this repo](https://github.com/karmab/ansible-kcli-modules), with sample playbooks:
 
 - kvirt_vm allows you to create/delete vm (based on an existing profile or a template)
 - kvirt_plan allows you to create/delete a plan
 - kvirt_product allows you to create/delete a product (provided you have a product repository configured)
 - kvirt_info allows you to retrieve a dict of values similar to `kcli info` output. You can select which fields to gather
 
-Those modules rely on python3 so you will need to pass `-e 'ansible_python_interpreter=path_to_python3'` to your ansible-playbook invocations if your default ansible installation is based on python2
+Those modules rely on python3 so you will need to pass `-e 'ansible_python_interpreter=path_to_python3'` to your ansible-playbook invocations ( or set it in your inventory) if your default ansible installation is based on python2
 
 Both kvirt_vm, kvirt_plan and kvirt_product support overriding parameters
 
