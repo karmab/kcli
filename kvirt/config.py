@@ -101,7 +101,7 @@ class Kconfig(Kbaseconfig):
                     os._exit(1)
                 imagerepository = self.options.get('imagerepository', 'ovirt-image-repository')
                 filtervms = self.options.get('filtervms', True)
-                filteruser = self.options.get('filtervms')
+                filteruser = self.options.get('filteruser')
                 from kvirt.ovirt import KOvirt
                 k = KOvirt(host=self.host, port=self.port, user=user, password=password,
                            debug=debug, datacenter=datacenter, cluster=cluster, ca_file=ca_file, org=org,
@@ -441,7 +441,7 @@ class Kconfig(Kbaseconfig):
                           reserveip=bool(reserveip), reservedns=bool(reservedns), reservehost=bool(reservehost),
                           start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns,
                           domain=domain, nested=bool(nested), tunnel=tunnel, files=files, enableroot=enableroot,
-                          overrides=overrides, tags=tags, dnshost=None)
+                          overrides=overrides, tags=tags, dnshost=dnshost)
         if result['result'] != 'success':
             return result
         if dnshost is not None and domain is not None:

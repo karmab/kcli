@@ -420,7 +420,7 @@ class KOvirt(object):
         conn = self.conn
         if self.filtervms:
             if self.filteruser:
-                vmslist = self.vms_service.list(search='description=plan*,user=%s' % self.filteruser)
+                vmslist = self.vms_service.list(search='description=plan*,user=%s*' % self.filteruser)
             else:
                 vmslist = self.vms_service.list(search='description=plan=*,profile=*')
         else:
