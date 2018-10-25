@@ -637,7 +637,7 @@ class Kvirt(object):
             self._reserve_ip(name, nets, macs)
         if start:
             vm.create()
-        if reservedns:
+        if reservedns and not guestagent:
             self.reserve_dns(name, nets=nets, domain=domain, alias=alias)
         if reservehost:
             self.reserve_host(name, nets, domain)
