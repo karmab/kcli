@@ -1064,8 +1064,8 @@ class Kvirt(object):
             else:
                 network = element.find('source').get('network')
                 network_type = 'routed'
-                network = conn.networkLookupByName(network)
-                netxml = network.XMLDesc()
+                networkdata = conn.networkLookupByName(network)
+                netxml = networkdata.XMLDesc()
                 netroot = ET.fromstring(netxml)
                 hostentries = list(netroot.getiterator('host'))
                 for host in hostentries:
