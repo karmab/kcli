@@ -3,6 +3,7 @@
 
 from flask import Flask, render_template, request, jsonify
 from kvirt.config import Kconfig
+from kvirt.common import print_info
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.defaults import TEMPLATES
 from kvirt import nameutils
@@ -32,13 +33,13 @@ def vmstable():
     reportdir = config.reportdir
     vms = []
     for vm in k.list():
-        name = vm[0]
+        name = vm['name']
         if os.path.exists('%s/%s.txt' % (reportdir, name)):
             if os.path.exists('%s/%s.running' % (reportdir, name)):
-                vm[6] = 'Running'
+                vm['report'] = 'Running'
             else:
-                vm[6] = 'OK'
-        vm.append(k.info(name).replace('\n', '\n\n'))
+                vm['report'] = 'OK'
+        vm['info'] = print_info(vm, output='plain', pretty=True)
         vms.append(vm)
     return render_template('vmstable.html', vms=vms)
 

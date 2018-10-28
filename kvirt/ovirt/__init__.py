@@ -417,7 +417,6 @@ class KOvirt(object):
         :return:
         """
         vms = []
-        conn = self.conn
         if self.filtervms:
             if self.filteruser:
                 vmslist = self.vms_service.list(search='description=plan*,user=%s*' % self.filteruser)
@@ -426,31 +425,8 @@ class KOvirt(object):
         else:
             vmslist = self.vms_service.list()
         for vm in vmslist:
-            name = vm.name
-            state = str(vm.status)
-            plan = ''
-            profile = ''
-            report = 'N/A'
-            description = vm.description.split(',')
-            if len(description) >= 2:
-                planinfo = description[0].split('=')
-                profileinfo = description[1].split('=')
-                if len(planinfo) == 2 and planinfo[0] == 'plan':
-                        plan = planinfo[1]
-                if len(profileinfo) == 2 and profileinfo[0] == 'profile':
-                    profile = profileinfo[1]
-            template = conn.follow_link(vm.template)
-            source = template.name
-            ips = []
-            devices = self.vms_service.vm_service(vm.id).reported_devices_service().list()
-            for device in devices:
-                if device.ips:
-                    for ip in device.ips:
-                        if str(ip.version) == 'v4' and ip.address not in ['172.17.0.1', '127.0.0.1']:
-                            ips.append(ip.address)
-            ip = ips[-1] if ips else ''
-            vms.append([name, state, ip, source, plan, profile, report])
-        return vms
+            vms.append(self.info(vm.name, vm=vm))
+        return sorted(vms, key=lambda x: x['name'])
 
     def console(self, name, tunnel=False):
         """
@@ -597,21 +573,20 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                     domain = desc[1]
         return dnshost, domain
 
-    def info(self, name, output='plain', fields=[], values=False, pretty=True):
+    def info(self, name, vm=None):
         """
 
         :param name:
-        :param output:
-        :param fields:
-        :param values:
+        :param vm:
         :return:
         """
         conn = self.conn
-        vmsearch = self.vms_service.list(search='name=%s' % name)
-        if not vmsearch:
-            common.pprint("VM %s not found" % name, color='red')
-            return
-        vm = vmsearch[0]
+        if vm is not None:
+            vmsearch = self.vms_service.list(search='name=%s' % name)
+            if not vmsearch:
+                common.pprint("VM %s not found" % name, color='red')
+                return {}
+            vm = vmsearch[0]
         if self.debug:
             print(vars(vm))
         yamlinfo = {'name': vm.name, 'disks': [], 'nets': [], 'status': vm.status, 'instanceid': vm.id}
@@ -667,7 +642,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             yamlinfo['disks'].append({'device': device, 'size': disksize, 'format': diskformat, 'type': drivertype,
                                       'path': path})
 
-        return common.print_info(yamlinfo, output=output, fields=fields, values=values, pretty=pretty)
+        return yamlinfo
 
 # should return ip string
     def ip(self, name):

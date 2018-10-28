@@ -364,27 +364,10 @@ class Kopenstack(object):
         """
         vms = []
         nova = self.nova
-        glance = self.glance
         vmslist = nova.servers.list()
         for vm in vmslist:
-            ip = ''
-            for entry1 in list(vm.addresses.values()):
-                for entry2 in entry1:
-                    if entry2['OS-EXT-IPS:type'] == 'floating':
-                        ip = entry2['addr']
-                        break
-            name = vm.name
-            state = vm.status
-            source = glance.images.get(vm.image['id']).name if 'id' in vm.image else ''
-            plan = ''
-            profile = ''
-            metadata = vm.metadata
-            if metadata is not None:
-                plan = metadata['plan'] if 'plan' in metadata else ''
-                profile = metadata['profile'] if 'profile' in metadata else ''
-            report = self.project
-            vms.append([name, state, ip, source, plan, profile, report])
-        return vms
+            vms.append(self.info(vm.name(), vm=vm))
+        return sorted(vms, key=lambda x: x['name'])
 
     def console(self, name, tunnel=False):
         """
@@ -441,27 +424,24 @@ class Kopenstack(object):
                 dnshost = metadata['domain']
         return dnshost, domain
 
-    def info(self, name, output='plain', fields=[], values=False, pretty=True):
+    def info(self, name, vm=None):
         """
 
         :param name:
-        :param output:
-        :param fields:
-        :param values:
+        :param vm:
         :return:
         """
-        if fields is not None:
-            fields = fields.split(',')
         nova = self.nova
         cinder = self.cinder
-        try:
-            vm = nova.servers.find(name=name)
-        except:
-            common.pprint("VM %s not found" % name, color='red')
-            return
+        if vm is None:
+            try:
+                vm = nova.servers.find(name=name)
+            except:
+                common.pprint("VM %s not found" % name, color='red')
+                return {}
         if self.debug:
             print(vars(vm))
-        yamlinfo = {'name': vm.name, 'status': vm.status}
+        yamlinfo = {'name': vm.name, 'status': vm.status, 'report': self.project}
         source = self.glance.images.get(vm.image['id']).name if 'id' in vm.image else ''
         yamlinfo['template'] = source
         flavor = nova.flavors.get(vm.flavor['id'])
@@ -495,7 +475,7 @@ class Kopenstack(object):
                 yamlinfo['plan'] = metadata['plan']
             if 'profile' in metadata:
                 yamlinfo['profile'] = metadata['profile']
-        return common.print_info(yamlinfo, output=output, fields=fields, values=values, pretty=pretty)
+        return yamlinfo
 
 # should return ip string
     def ip(self, name):

@@ -332,34 +332,14 @@ class Kaws(object):
         :return:
         """
         conn = self.conn
-        resource = self.resource
         vms = []
         results = conn.describe_instances()
         reservations = results['Reservations']
         for reservation in reservations:
             vm = reservation['Instances'][0]
-            instanceid = vm['InstanceId']
-            name = instanceid
-            state = vm['State']['Name']
-            if state == 'terminated':
-                continue
-            ip = vm['PublicIpAddress'] if 'PublicIpAddress' in vm else ''
-            amid = vm['ImageId']
-            image = resource.Image(amid)
-            source = os.path.basename(image.image_location)
-            plan = ''
-            profile = ''
-            report = instanceid
-            if 'Tags' in vm:
-                for tag in vm['Tags']:
-                    if tag['Key'] == 'plan':
-                        plan = tag['Value']
-                    if tag['Key'] == 'profile':
-                        profile = tag['Value']
-                    if tag['Key'] == 'Name':
-                        name = tag['Value']
-            vms.append([name, state, ip, source, plan, profile, report])
-        return vms
+            name = vm['InstanceId']
+            vms.append(self.info(name))
+        return sorted(vms, key=lambda x: x['name'])
 
     def console(self, name, tunnel=False):
         """
@@ -413,24 +393,26 @@ class Kaws(object):
                     domain = tag['Value']
         return dnshost, domain
 
-    def info(self, name, output='plain', fields=[], values=False, pretty=True):
+    def info(self, name, vm=None):
         """
 
         :param name:
-        :param output:
-        :param fields:
-        :param values:
+        :param vm:
         :return:
         """
         yamlinfo = {}
         conn = self.conn
         resource = self.resource
-        try:
-            Filters = {'Name': "tag:Name", 'Values': [name]}
-            vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
-        except:
-            common.pprint("VM %s not found" % name, color='red')
-            return
+        if vm is None:
+            try:
+                if name.startswith('i-'):
+                    vm = conn.describe_instances(InstanceIds=[name])['Reservations'][0]['Instances'][0]
+                else:
+                    Filters = {'Name': "tag:Name", 'Values': [name]}
+                    vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
+            except:
+                common.pprint("VM %s not found" % name, color='red')
+                return {}
         if self.debug:
             print(vm)
         instanceid = vm['InstanceId']
@@ -485,7 +467,7 @@ class Kaws(object):
             disks.append({'device': devname, 'size': disksize, 'format': diskformat, 'type': drivertype, 'path': path})
         if disks:
             yamlinfo['disks'] = disks
-        return common.print_info(yamlinfo, output=output, fields=fields, values=values, pretty=pretty)
+        return yamlinfo
 
     def ip(self, name):
         """

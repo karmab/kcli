@@ -842,62 +842,9 @@ class Kvirt(object):
         """
         vms = []
         conn = self.conn
-        status = {0: 'down', 1: 'up'}
         for vm in conn.listAllDomains(0):
-            template, plan, profile = '', '', ''
-            xml = vm.XMLDesc(0)
-            root = ET.fromstring(xml)
-            name = vm.name()
-            state = status[vm.isActive()]
-            ip = ''
-            ifaces = []
-            if vm.isActive():
-                networktypes = [element.get('type') for element in list(root.getiterator('interface'))]
-                guestagent = vir_src_agent if 'bridge' in networktypes else vir_src_lease
-                try:
-                    gfaces = vm.interfaceAddresses(guestagent, 0)
-                    ifaces = gfaces
-                except:
-                    pass
-            for element in list(root.getiterator('interface')):
-                mac = element.find('mac').get('address')
-                networktype = element.get('type')
-                if networktype != 'bridge':
-                    network = element.find('source').get('network')
-                    network = conn.networkLookupByName(network)
-                    netxml = network.XMLDesc()
-                    netroot = ET.fromstring(netxml)
-                    hostentries = list(netroot.getiterator('host'))
-                    for host in hostentries:
-                        if host.get('mac') == mac:
-                            ip = host.get('ip')
-                if ifaces:
-                    matches = [ifaces[x]['addrs'] for x in ifaces if ifaces[x]['hwaddr'] == mac]
-                    if matches:
-                        for match in matches[0]:
-                            matchip = match['addr']
-                            if IPAddress(matchip).version == 4:
-                                ip = matchip
-                                break
-            plan, profile, template, report = '', '', '', ''
-            for element in list(root.getiterator('{kvirt}info')):
-                e = element.find('{kvirt}plan')
-                if e is not None:
-                    plan = e.text
-                e = element.find('{kvirt}profile')
-                if e is not None:
-                    profile = e.text
-                e = element.find('{kvirt}template')
-                if e is not None:
-                    template = e.text
-                e = element.find('{kvirt}report')
-                if e is not None:
-                    report = e.text
-                e = element.find('{kvirt}ip')
-                if e is not None:
-                    ip = e.text
-            vms.append([name, state, ip, template, plan, profile, report])
-        return sorted(vms)
+            vms.append(self.info(vm.name(), vm=vm))
+        return sorted(vms, key=lambda x: x['name'])
 
     def console(self, name, tunnel=False):
         """
@@ -978,26 +925,25 @@ class Kvirt(object):
                                 (self.identitycommand, self.port, self.user, self.host, serialport)
                         os.system(serialcommand)
 
-    def info(self, name, output='plain', fields=[], values=False, pretty=True):
+    def info(self, name, vm=None):
         """
 
         :param name:
-        :param output:
-        :param fields:
-        :param values:
+        :param name:
         :return:
         """
         starts = {0: 'no', 1: 'yes'}
         conn = self.conn
-        try:
-            vm = conn.lookupByName(name)
-            xml = vm.XMLDesc(0)
-            if self.debug:
-                print(xml)
-            root = ET.fromstring(xml)
-        except:
-            common.pprint("VM %s not found" % name, color='red')
-            return
+        if vm is None:
+            try:
+                vm = conn.lookupByName(name)
+            except:
+                common.pprint("VM %s not found" % name, color='red')
+                return {}
+        xml = vm.XMLDesc(0)
+        if self.debug:
+            print(xml)
+        root = ET.fromstring(xml)
         status = 'down'
         autostart = starts[vm.autostart()]
         memory = list(root.getiterator('memory'))[0]
@@ -1016,7 +962,7 @@ class Kvirt(object):
         if vm.isActive():
             status = 'up'
         yamlinfo = {'name': name, 'autostart': autostart, 'nets': [], 'disks': [], 'snapshots': [], 'status': status}
-        plan, profile, template, ip, creationdate = None, None, None, None, None
+        plan, profile, template, ip, creationdate, report = None, None, None, None, None, None
         for element in list(root.getiterator('{kvirt}info')):
             e = element.find('{kvirt}plan')
             if e is not None:
@@ -1027,6 +973,9 @@ class Kvirt(object):
             e = element.find('{kvirt}template')
             if e is not None:
                 template = e.text
+            e = element.find('{kvirt}report')
+            if e is not None:
+                report = e.text
             e = element.find('{kvirt}report')
             e = element.find('{kvirt}ip')
             if e is not None:
@@ -1040,6 +989,8 @@ class Kvirt(object):
             yamlinfo['plan'] = plan
         if profile is not None:
             yamlinfo['profile'] = profile
+        if report is not None:
+            yamlinfo['report'] = report
         if creationdate is not None:
             yamlinfo['creationdate'] = creationdate
         yamlinfo['cpus'] = numcpus
@@ -1113,7 +1064,7 @@ class Kvirt(object):
             else:
                 current = False
             yamlinfo['snapshots'].append({'snapshot': snapshot, current: current})
-        return common.print_info(yamlinfo, output=output, fields=fields, values=values, pretty=pretty)
+        return yamlinfo
 
     def ip(self, name):
         """

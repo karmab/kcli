@@ -173,17 +173,8 @@ class Kfake(object):
         number = random.randint(1, 10)
         for i in range(number):
             name = random.choice(right)
-            state = self.status(name)
-            if state == 'up':
-                ip = random_ip()
-            else:
-                ip = ''
-            source = random.choice(self.templates + [''])
-            plan = get_random_name()
-            profile = 'kvirt'
-            report = ''
-            vms.append([name, state, ip, source, plan, profile, report])
-        return sorted(vms)
+            vms.append(self.info(name))
+        return sorted(vms, key=lambda x: x['name'])
 
     def console(self, name, tunnel=False):
         """
@@ -229,13 +220,11 @@ class Kfake(object):
 # disks list of {'device': device, 'size': disksize, 'format': diskformat, 'type': drivertype, 'path': path}
 # snapshots list of {'snapshot': snapshot, current: current}
 # fields should be split with fields.split(',')
-    def info(self, name, output='plain', fields=[], values=False, pretty=True):
+    def info(self, name, vm=None):
         """
 
         :param name:
-        :param output:
-        :param fields:
-        :param values:
+        :param vm:
         :return:
         """
         cpus = random.choice([1, 2, 4, 8])
@@ -275,7 +264,7 @@ class Kfake(object):
             disks.append({'device': device, 'size': disksize, 'format': diskformat, 'type': drivertype, 'path': path})
         yamlinfo['nets'] = nets
         yamlinfo['disks'] = disks
-        return common.print_info(yamlinfo, output=output, fields=fields, values=values, pretty=pretty)
+        return yamlinfo
 
 # should return ip string
     def ip(self, name):

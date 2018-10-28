@@ -432,49 +432,8 @@ class Kbox(object):
         vms = []
         conn = self.conn
         for vm in conn.machines:
-            name = vm.name
-            state = status[str(vm.state)]
-            port = ''
-            source = vm.get_extra_data('template')
-            description = vm.description
-            profile = vm.get_extra_data('profile')
-            report = vm.get_extra_data('report')
-            # ip = vm.get_extra_data('ip')
-            for n in range(7):
-                nic = vm.get_network_adapter(n)
-                enabled = nic.enabled
-                if not enabled:
-                    continue
-                if str(nic.attachment_type) == 'NAT':
-                    for redirect in nic.nat_engine.redirects:
-                        redirect = redirect.split(',')
-                        hostport = redirect[3]
-                        guestport = redirect[5]
-                        if guestport == '22':
-                            port = hostport
-                            break
-                elif str(nic.attachment_type) == 'NATNetwork':
-                    nat_network = [n for n in conn.nat_networks if n.network_name == nic.nat_network][0]
-                    for rule in nat_network.port_forward_rules4:
-                        rule = rule.split(':')
-                        rulename = rule[0]
-                        hostport = rule[3]
-                        guestip = rule[4][1:-1]
-                        if guestip != '':
-                            port = hostport
-                            break
-                        guestport = rule[5]
-                        if rulename == "ssh_%s" % name and guestip == '':
-                            guestip = self.guestip(name)
-                            if guestip == '':
-                                pass
-                            else:
-                                nat_network.remove_port_forward_rule(False, rulename)
-                                nat_network.add_port_forward_rule(False, rulename, library.NATProtocol.tcp, '',
-                                                                  int(hostport), guestip, 22)
-                                port = hostport
-            vms.append([name, state, port, source, description, profile, report])
-        return sorted(vms)
+            vms.append(self.info(vm.name, vm=vm))
+        return sorted(vms, key=lambda x: x['name'])
 
     def console(self, name, tunnel=False):
         """
@@ -517,39 +476,36 @@ class Kbox(object):
             serialport = serial.path
             os.system("nc 127.0.0.1 %s" % serialport)
 
-    def info(self, name, output='plain', fields=[], values=False, pretty=True):
+    def info(self, name, vm=None):
         """
 
         :param name:
-        :param output:
-        :param fields:
-        :param values:
+        :param vm:
         :return:
         """
         starts = {False: 'no', True: 'yes'}
         conn = self.conn
-        try:
-            vm = conn.find_machine(name)
-        except:
-            common.pprint("VM %s not found" % name, color='red')
-            return
+        if vm is None:
+            try:
+                vm = conn.find_machine(name)
+            except:
+                common.pprint("VM %s not found" % name, color='red')
+                return {}
         state = 'down'
         hostports = []
         autostart = starts[vm.autostart_enabled]
         memory = vm.memory_size
         numcpus = vm.cpu_count
         state = status[str(vm.state)]
-        print("name: %s" % name)
-        print("status: %s" % state)
-        print("autostart: %s" % autostart)
         description = vm.description
-        print("description: %s" % description)
         profile = vm.get_extra_data('profile')
+        yamlinfo = {'name': name, 'autostart': autostart, 'nets': [], 'disks': [], 'snapshots': [], 'status': state,
+                    'plan': description, 'profile': profile}
         ip = vm.get_extra_data('ip')
-        if profile != '':
-            print("profile: %s" % profile)
-        print("cpus: %s" % numcpus)
-        print("memory: %sMB" % memory)
+        if ip is not None:
+            yamlinfo['ip'] = vm.get_extra_data('ip')
+        yamlinfo['cpus'] = numcpus
+        yamlinfo['memory'] = memory
         for n in range(7):
             nic = vm.get_network_adapter(n)
             enabled = nic.enabled
@@ -590,7 +546,7 @@ class Kbox(object):
             else:
                 networktype = 'N/A'
                 network = 'N/A'
-            print("net interfaces:%s mac: %s net: %s type: %s" % (device, mac, network, networktype))
+            yamlinfo['nets'].append({'device': device, 'mac': mac, 'net': network, 'type': networktype})
         disks = []
         for index in range(10):
             try:
@@ -605,14 +561,14 @@ class Kbox(object):
             disksize = disk.size / 1024 / 1024 / 1024
             drivertype = os.path.splitext(disk.name)[1].replace('.', '')
             diskformat = 'file'
-            print(("diskname: %s disksize: %sGB diskformat: %s type: %s path: %s" % (device, disksize, diskformat,
-                                                                                     drivertype, path)))
+            yamlinfo['disks'].append({'device': device, 'size': disksize, 'format': diskformat, 'type': drivertype,
+                                      'path': path})
             if ip != '':
-                print("ip: %s" % ip)
-            for hostport in hostports:
-                print("ssh port: %s" % hostport)
-                break
-        return {'result': 'success'}
+                yamlinfo['ip'] = vm.get_extra_data('ip')
+            # for hostport in hostports:
+            #    print("ssh port: %s" % hostport)
+            #    break
+        return yamlinfo
 
     def ip(self, name):
         """

@@ -419,35 +419,12 @@ class Kgcp(object):
         conn = self.conn
         project = self.project
         zone = self.zone
-        # zones = [zone['name'] for zone in self.conn.zones().list(project=project).execute()['items']]
         vms = []
         results = conn.instances().list(project=project, zone=zone).execute()
         if 'items' not in results:
             return []
         for vm in results['items']:
-            name = vm['name']
-            state = vm['status']
-            ip = vm['networkInterfaces'][0]['accessConfigs'][0]['natIP'] if 'natIP'\
-                in vm['networkInterfaces'][0]['accessConfigs'][0] else ''
-            source = os.path.basename(vm['disks'][0]['source'])
-            source = conn.disks().get(zone=zone, project=self.project, disk=source).execute()
-            if self.project in source['sourceImage']:
-                source = os.path.basename(source['sourceImage'])
-            elif 'licenses' in vm['disks'][0]:
-                source = os.path.basename(vm['disks'][0]['licenses'][-1])
-            else:
-                source = ''
-            plan = ''
-            profile = ''
-            # report = 'N/A'
-            report = zone
-            if 'items' in vm['metadata']:
-                for data in vm['metadata']['items']:
-                    if data['key'] == 'plan':
-                        plan = data['value']
-                    if data['key'] == 'profile':
-                        profile = data['value']
-            vms.append([name, state, ip, source, plan, profile, report])
+            vms.append(self.info(vm['name'], vm=vm))
         return sorted(vms)
 
     def console(self, name, tunnel=False):
@@ -506,24 +483,23 @@ class Kgcp(object):
                     domain = data['value']
         return dnshost, domain
 
-    def info(self, name, output='plain', fields=[], values=False, pretty=True):
+    def info(self, name, vm=None):
         """
 
         :param name:
-        :param output:
-        :param fields:
-        :param values:
+        :param vm:
         :return:
         """
         yamlinfo = {}
         conn = self.conn
         project = self.project
         zone = self.zone
-        try:
-            vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
-        except:
-            common.pprint("VM %s not found" % name, color='red')
-            return
+        if vm is None:
+            try:
+                vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
+            except:
+                common.pprint("VM %s not found" % name, color='red')
+                return {}
         if self.debug:
             print(vm)
         yamlinfo['name'] = vm['name']
@@ -571,7 +547,7 @@ class Kgcp(object):
                     yamlinfo['profile'] = data['value']
         if 'tags' in vm and 'items' in vm['tags']:
             yamlinfo['tags'] = ','.join(vm['tags']['items'])
-        return common.print_info(yamlinfo, output=output, fields=fields, values=values, pretty=pretty)
+        return yamlinfo
 
     def ip(self, name):
         """

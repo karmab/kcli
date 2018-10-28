@@ -160,14 +160,10 @@ def info(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
     names = [common.get_lastvm(config.client)] if not args.names else args.names
     k = config.k
-    # codes = []
     for name in names:
-        data = k.info(name, output=output, fields=fields, values=values)
-        if data is not None:
-            print(data)
-        # code = common.handle_response(result, name, quiet=True)
-        # codes.append(code)
-    # os._exit(1 if 1 in codes else 0)
+        data = k.info(name)
+        if data:
+            print(common.print_info(data, output=output, fields=fields, values=values, pretty=True))
 
 
 def host(args):
@@ -422,14 +418,21 @@ def _list(args):
         else:
             vms = PrettyTable(["Name", "Status", "Ips", "Source", "Plan", "Profile", customcolumn])
             for vm in k.list():
+                name = vm.get('name')
+                status = vm.get('status')
+                ip = vm.get('ip', '')
+                source = vm.get('template', '')
+                plan = vm.get('plan', '')
+                profile = vm.get('profile', '')
+                report = vm.get('report', '')
+                vminfo = [name, status, ip, source, plan, profile, report]
                 if config.planview and vm[4] != config.currentplan:
                     continue
                 if filters:
-                    status = vm[1]
                     if status == filters:
-                        vms.add_row(vm)
+                        vms.add_row(vminfo)
                 else:
-                    vms.add_row(vm)
+                    vms.add_row(vminfo)
             print(vms)
             return
 
