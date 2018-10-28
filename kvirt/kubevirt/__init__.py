@@ -450,36 +450,9 @@ class Kubevirt(object):
         vms = []
         for vm in crds.list_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines')["items"]:
             metadata = vm.get("metadata")
-            namespace = metadata.get("namespace")
-            spec = vm.get("spec")
-            annotations = metadata.get("annotations")
-            running = spec.get("running")
             name = metadata["name"]
-            profile, plan, source = 'N/A', 'N/A', 'N/A'
-            if annotations is not None:
-                profile = annotations['kcli/profile'] if 'kcli/profile' in annotations else 'N/A'
-                plan = annotations['kcli/plan'] if 'kcli/plan' in annotations else 'N/A'
-                source = annotations['kcli/template'] if 'kcli/template' in annotations else 'N/A'
-            ip = 'N/A'
-            state = 'down'
-            if running:
-                try:
-                    runvm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace,
-                                                              'virtualmachineinstances', name)
-                except:
-                    common.pprint("underlying VM %s not found" % name, color='red')
-                    runvm = {}
-                status = runvm.get('status')
-                if status:
-                    state = status['phase'].replace('Running', 'up')
-                    if 'interfaces' in status:
-                        interfaces = runvm['status']['interfaces']
-                        for interface in interfaces:
-                            if 'ipAddress' in interface:
-                                ip = interface['ipAddress']
-                                break
-            vms.append([name, state, ip, source, plan, profile, namespace])
-        return sorted(vms, key=lambda x: (x[6], x[0]))
+            vms.append(self.info(name, vm=vm))
+        return sorted(vms, key=lambda x: x['name'])
 
     def console(self, name, tunnel=False):
         """
@@ -560,27 +533,24 @@ class Kubevirt(object):
                 domain = annotations['kcli/domain']
         return dnshost, domain
 
-    def info(self, name, output='plain', fields=[], values=False, pretty=True):
+    def info(self, name, vm=None):
         """
 
         :param name:
-        :param output:
-        :param fields:
-        :param values:
+        :param vm:
         :return:
         """
-        if fields is not None:
-            fields = fields.split(',')
         yamlinfo = {}
         core = self.core
         crds = self.crds
         namespace = self.namespace
         crds = self.crds
-        try:
-            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
-        except:
-            common.pprint("VM %s not found" % name, color='red')
-            return
+        if vm is None:
+            try:
+                vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
+            except:
+                common.pprint("VM %s not found" % name, color='red')
+                return {}
         if self.debug:
             pretty_print(vm)
         metadata = vm.get("metadata")
@@ -618,7 +588,7 @@ class Kubevirt(object):
         else:
             state = 'down'
         yamlinfo = {'name': name, 'nets': [], 'disks': [], 'state': state, 'creationdate': creationdate, 'host': host,
-                    'status': state}
+                    'status': state, 'report': namespace}
         if 'cpu' in spectemplate['spec']['domain']:
             numcpus = spectemplate['spec']['domain']['cpu']['cores']
             yamlinfo['cpus'] = numcpus
@@ -676,7 +646,7 @@ class Kubevirt(object):
                 network = 'default'
                 network_type = 'pod'
             yamlinfo['nets'].append({'device': device, 'mac': mac, 'net': network, 'type': network_type})
-        return common.print_info(yamlinfo, output=output, fields=fields, values=values, pretty=pretty)
+        return yamlinfo
 
     def ip(self, name):
         """

@@ -474,7 +474,7 @@ class Kgcp(object):
         except:
             common.pprint("VM %s not found" % name, color='red')
             return None, None
-        dnshost, domain = None
+        dnshost, domain = None, None
         if 'items' in vm['metadata']:
             for data in vm['metadata']['items']:
                 if data['key'] == 'dnshost':
