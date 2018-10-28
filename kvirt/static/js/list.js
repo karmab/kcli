@@ -11,6 +11,7 @@ function vmstable() {
             });
           }
     });
+    $('[data-toggle="tooltip"]').tooltip();
 }
 
 function vmprofilestable() {

@@ -49,7 +49,7 @@
                 {% if vm[6] == 'OK' or vm[6] == 'Running' %}
                 <td align="left"><a href="{{ url_for('static', filename='reports/'+ vm[0] + '.txt') }}"><span class="{{ report }}" data-toggle="tooltip" title="Consult Report"></span> {{ vm[0] }}</a></td>
                 {% else %}
-                <td align="left"><span class="{{ report }}"></span> {{ vm[0] }}</td>
+                <td align="left"> <a data-toggle="tooltip" data-placement="left" data-delay='{"show": "1000", "hide": "100"}' title="{{ vm[7] }}">{{ vm[0] }}</a></td>
                 {% endif %}
                 <td>{{ vm[1] }}</td>
                 <td>{{ vm[2] }}</td>

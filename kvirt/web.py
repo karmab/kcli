@@ -38,6 +38,7 @@ def vmstable():
                 vm[6] = 'Running'
             else:
                 vm[6] = 'OK'
+        vm.append(k.info(name).replace('\n', '\n\n'))
         vms.append(vm)
     return render_template('vmstable.html', vms=vms)
 
@@ -307,7 +308,6 @@ def vmaction():
             result = config.create_vm(name, profile)
         else:
             result = "Nothing to do"
-        print(result)
         response = jsonify(result)
         print(response)
         response.status_code = 200
