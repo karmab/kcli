@@ -12,7 +12,7 @@ import googleapiclient.discovery
 from google.cloud import dns
 from netaddr import IPNetwork
 import os
-import time
+from time import sleep
 
 binary_types = ['bz2', 'deb', 'jpg', 'gz', 'jpeg', 'iso', 'png', 'rpm', 'tgz', 'zip']
 
@@ -28,6 +28,25 @@ class Kgcp(object):
         self.zone = zone
         self.region = region
         self.debug = debug
+        return
+
+    def _wait_for_operation(self, operation):
+        selflink = operation['selfLink']
+        operation = operation['name']
+        conn = self.conn
+        project = self.project
+        done = False
+        while not done:
+            if 'zone' in selflink:
+                check = conn.zoneOperations().get(project=project, zone=self.zone, operation=operation).execute()
+            elif 'region' in selflink:
+                check = conn.regionOperations().get(project=project, region=self.region, operation=operation).execute()
+            else:
+                check = conn.globalOperations().get(project=project, operation=operation).execute()
+            if check['status'] == 'DONE':
+                done = True
+            else:
+                sleep(1)
         return
 
     def close(self):
@@ -203,7 +222,7 @@ class Kgcp(object):
                         break
                     else:
                         timeout += 5
-                        time.sleep(5)
+                        sleep(5)
                         common.pprint("Waiting for disk %s to be ready" % diskname, color='green')
                 newdisk['source'] = diskpath
             body['disks'].append(newdisk)
@@ -735,7 +754,7 @@ class Kgcp(object):
                 break
             else:
                 timeout += 5
-                time.sleep(5)
+                sleep(5)
                 common.pprint("Waiting for disk to be ready", color='green')
         body = {'source': '/compute/v1/projects/%s/zones/%s/disks/%s' % (project, zone, diskname), 'autoDelete': True}
         conn.instances().attachDisk(zone=zone, project=project, instance=name, body=body).execute()
@@ -928,7 +947,7 @@ class Kgcp(object):
             except Exception as e:
                 print(e)
                 timeout += 5
-                time.sleep(5)
+                sleep(5)
                 common.pprint("Waiting for network to be ready", color='green')
         return {'result': 'success'}
 
@@ -1097,7 +1116,7 @@ class Kgcp(object):
                 while counter != 100:
                     ip = self.ip(name)
                     if ip is None:
-                        time.sleep(5)
+                        sleep(5)
                         print("Waiting 5 seconds to grab ip and create DNS record...")
                         counter += 10
                     else:
@@ -1193,26 +1212,188 @@ class Kgcp(object):
         conn.images().insert(project=project, body=body).execute()
         return {'result': 'success'}
 
-    def create_loadbalancer(self, name, port=443, mode='tcp', checkpath='/', vms=[]):
-        mode = mode.upper()
+    def create_loadbalancer(self, name, port=443, checkpath='/', vms=[]):
+        protocols = {80: 'HTTP', 8080: 'HTTP', 443: 'HTTPS'}
+        protocol = protocols[port] if port in protocols else 'TCP'
         conn = self.conn
         project = self.project
-        health_check_body = {"checkIntervalSec": 10, "timeoutSec": 10, "unhealthyThreshold": 3,
-                             "healthyThreshold": 3, "type": mode}
-        newcheck = {"port": port, "portName": name}
-        if mode == 'TCP':
+        zone = self.zone
+        region = self.region
+        health_check_body = {"checkIntervalSec": "10", "timeoutSec": "10", "unhealthyThreshold": 3,
+                             "healthyThreshold": 3, "type": protocol, "name": name}
+        newcheck = {"port": port}
+        if protocol == 'TCP':
             health_check_body["tcpHealthCheck"] = newcheck
+            operation = conn.healthChecks().insert(project=project, body=health_check_body).execute()
+            healthurl = operation['targetLink']
+            self._wait_for_operation(operation)
+            instance_group_body = {"name": name, "namedPorts": [{"name": "%s-%d" % (name, port), "port": port}]}
+            operation = conn.instanceGroups().insert(project=project, zone=zone, body=instance_group_body).execute()
+            instancegroupurl = operation['targetLink']
+            self._wait_for_operation(operation)
+            if vms:
+                path = "https://www.googleapis.com/compute/v1/projects/%s/zones/%s/instances" % (project, zone)
+                instances_body = {"instances": [{"instance": "%s/%s" % (path, vm)} for vm in vms]}
+                operation = conn.instanceGroups().addInstances(project=project, zone=zone, instanceGroup=name,
+                                                               body=instances_body).execute()
+                self._wait_for_operation(operation)
+            backend_body = {"healthChecks": [healthurl], "sessionAffinity": 'CLIENT_IP', "protocol": protocol,
+                            "port-name": "%s-%d" % (name, port), "name": name,
+                            "backends": [{"group": instancegroupurl}]}
+            operation = conn.backendServices().insert(project=project, body=backend_body).execute()
+            backendurl = operation['targetLink']
+            self._wait_for_operation(operation)
+            target_tcp_proxy_body = {"service": backendurl, "proxyHeader": "NONE", "name": name}
+            operation = conn.targetTcpProxies().insert(project=project, body=target_tcp_proxy_body).execute()
+            targeturl = operation['targetLink']
+            self._wait_for_operation(operation)
         else:
             newcheck["requestPath"] = checkpath
             health_check_body["httpHealthCheck"] = newcheck
-        conn.healthChecks().insert(project=project, body=health_check_body).execute()
-        backend_body = {"healthChecks": [name], "sessionAffinity": 'CLIENT_IP', "protocol": 'TCP', "portName": name}
-        conn.backendServices().insert(project=project, body=backend_body).execute()
+            operation = conn.httpHealthChecks().insert(project=project, body=health_check_body).execute()
+            healthurl = operation['targetLink']
+            self._wait_for_operation(operation)
+            target_pool_body = {"name": name, "healthChecks": [healthurl]}
+            operation = conn.targetPools().insert(project=project, region=region, body=target_pool_body).execute()
+            targeturl = operation['targetLink']
+            self._wait_for_operation(operation)
+            if vms:
+                path = "https://www.googleapis.com/compute/v1/projects/%s/zones/%s/instances" % (project, zone)
+                instances_body = {"instances": [{"instance": "%s/%s" % (path, vm)} for vm in vms]}
+                operation = conn.targetPools().addInstance(project=project, region=region, targetPool=name,
+                                                           body=instances_body).execute()
+                self._wait_for_operation(operation)
+        if protocol == 'TCP':
+            address_body = {"name": name, "ipVersion": "IPV4"}
+            operation = conn.globalAddresses().insert(project=project, body=address_body).execute()
+            ipurl = operation['targetLink']
+            self._wait_for_operation(operation)
+            ip = conn.globalAddresses().get(project=project, address=name).execute()['address']
+            common.pprint("Using load balancer ip %s" % ip, color='green')
+            self._wait_for_operation(operation)
+            forwarding_rule_body = {"IPAddress": ipurl, "target": targeturl, "portRange": port, "name": name}
+            operation = conn.globalForwardingRules().insert(project=project, body=forwarding_rule_body).execute()
+        else:
+            address_body = {"name": name}
+            operation = conn.addresses().insert(project=project, region=region, body=address_body).execute()
+            ipurl = operation['targetLink']
+            self._wait_for_operation(operation)
+            ip = conn.addresses().get(project=project, region=region, address=name).execute()['address']
+            common.pprint("Using load balancer ip %s" % ip, color='green')
+            self._wait_for_operation(operation)
+            forwarding_rule_body = {"IPAddress": ipurl, "target": targeturl, "portRange": port, "name": name}
+            operation = conn.forwardingRules().insert(project=project, region=region,
+                                                      body=forwarding_rule_body).execute()
+        self._wait_for_operation(operation)
+        firewall_body = {"name": name, "direction": "INGRESS", "allowed": [{"IPProtocol": "tcp", "ports": [port]}]}
+        operation = conn.firewalls().insert(project=project, body=firewall_body).execute()
+        self._wait_for_operation(operation)
         return {'result': 'success'}
 
     def delete_loadbalancer(self, name):
         conn = self.conn
         project = self.project
-        conn.backendServices().delete(project=project, backendService=name).execute()
-        conn.healthChecks().delete(project=project, healthCheck=name).execute()
+        zone = self.zone
+        region = self.region
+        try:
+            operation = conn.firewalls().delete(project=project, firewall=name).execute()
+            self._wait_for_operation(operation)
+        except Exception as e:
+            if self.debug:
+                print(e)
+            pass
+        try:
+            operation = conn.targetTcpProxies().delete(project=project, targetTcpProxy=name).execute()
+            self._wait_for_operation(operation)
+        except Exception as e:
+            if self.debug:
+                print(e)
+            pass
+        try:
+            operation = conn.backendServices().delete(project=project, backendService=name).execute()
+            self._wait_for_operation(operation)
+        except Exception as e:
+            if self.debug:
+                print(e)
+            pass
+        try:
+            operation = conn.instanceGroups().delete(project=project, zone=zone, instanceGroup=name).execute()
+            self._wait_for_operation(operation)
+        except Exception as e:
+            if self.debug:
+                print(e)
+            pass
+        try:
+            operation = conn.targetPools().delete(project=project, region=region, targetPool=name).execute()
+            self._wait_for_operation(operation)
+        except Exception as e:
+            if self.debug:
+                print(e)
+            pass
+        try:
+            operation = conn.healthChecks().delete(project=project, healthCheck=name).execute()
+            self._wait_for_operation(operation)
+        except Exception as e:
+            if self.debug:
+                print(e)
+            pass
+        try:
+            operation = conn.httpHealthChecks().delete(project=project, httpHealthCheck=name).execute()
+            self._wait_for_operation(operation)
+        except Exception as e:
+            if self.debug:
+                print(e)
+        try:
+            operation = conn.globalForwardingRules().delete(project=project, forwardingRule=name).execute()
+            self._wait_for_operation(operation)
+        except Exception as e:
+            if self.debug:
+                print(e)
+            pass
+        try:
+            operation = conn.forwardingRules().delete(project=project, region=region, forwardingRule=name).execute()
+            self._wait_for_operation(operation)
+        except Exception as e:
+            if self.debug:
+                print(e)
+            pass
+        try:
+            operation = conn.globalAddresses().delete(project=project, address=name).execute()
+            self._wait_for_operation(operation)
+        except Exception as e:
+            if self.debug:
+                print(e)
+            pass
+        try:
+            operation = conn.addresses().delete(project=project, region=region, address=name).execute()
+            self._wait_for_operation(operation)
+        except Exception as e:
+            if self.debug:
+                print(e)
+            pass
         return {'result': 'success'}
+
+    def list_loadbalancers(self):
+        conn = self.conn
+        project = self.project
+        region = self.region
+        results = []
+        results1 = conn.globalForwardingRules().list(project=project).execute()
+        results2 = conn.forwardingRules().list(project=project, region=region).execute()
+        if 'items' in results1:
+            for lb in results1['items']:
+                name = lb['name']
+                ip = lb['IPAddress']
+                protocol = lb['IPProtocol']
+                port = lb['port']
+                target = os.path.basename(lb['target'])
+                results.append([name, ip, protocol, port, target])
+        if 'items' in results2:
+            for lb in results2['items']:
+                name = lb['name']
+                ip = lb['IPAddress']
+                protocol = lb['IPProtocol']
+                port = lb['portRange']
+                target = os.path.basename(lb['target'])
+                results.append([name, ip, protocol, port, target])
+        return results

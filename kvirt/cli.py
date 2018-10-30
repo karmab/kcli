@@ -199,6 +199,7 @@ def _list(args):
     products = args.products
     networks = args.networks
     subnets = args.subnets
+    loadbalancers = args.loadbalancers
     containers = args.containers
     images = args.images
     plans = args.plans
@@ -335,7 +336,6 @@ def _list(args):
             print(profilestable)
         return
     elif flavors:
-        # flavors = config.list_flavors()
         flavors = k.flavors()
         if short:
             flavorstable = PrettyTable(["Flavor"])
@@ -348,6 +348,19 @@ def _list(args):
                     flavorstable.add_row(flavor)
         flavorstable.align["Flavor"] = "l"
         print(flavorstable)
+        return
+    elif loadbalancers:
+        loadbalancers = config.list_loadbalancer()
+        if short:
+            loadbalancerstable = PrettyTable(["Loadbalancer"])
+            for lb in sorted(loadbalancers):
+                flavorstable.add_row([lb])
+        else:
+            loadbalancerstable = PrettyTable(["LoadBalancer", "IPAddress", "IPProtocol", "Port", "Target"])
+            for lb in sorted(loadbalancers):
+                    loadbalancerstable.add_row(lb)
+        loadbalancerstable.align["Loadbalancer"] = "l"
+        print(loadbalancerstable)
         return
     elif templates:
         templatestable = PrettyTable(["Template"])
@@ -633,22 +646,12 @@ def lb(args):
     """Create/Delete loadbalancer"""
     checkpath = args.checkpath
     delete = args.delete
-    mode = args.mode
     port = args.port
     vms = args.vms
     name = nameutils.get_random_name().replace('_', '-') if args.name is None else args.name
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
-    k = config.k
-    if config.type not in ['gcp']:
-        common.pprint("Not available on this provider at the moment", color='blue')
-        return
-    if delete:
-        common.pprint("Deleting loadbalancer %s" % name, color='green')
-        k.delete_loadbalancer(name)
-    else:
-        common.pprint("Creating loadbalancer %s" % name, color='green')
-        vms = vms.split(',') if vms is not None else []
-        k.create_loadbalancer(name, port=port, mode=mode, checkpath=checkpath, vms=vms)
+    config.handle_loadbalancer(name, port=port, checkpath=checkpath, vms=vms, delete=delete)
+    return 0
 
 
 def nic(args):
@@ -1139,8 +1142,6 @@ def cli():
     lb_parser = subparsers.add_parser('lb', description=lb_info, help=lb_info)
     lb_parser.add_argument('--checkpath', default='/', help="Path to check. Defaults to /healthz")
     lb_parser.add_argument('-d', '--delete', action='store_true')
-    lb_parser.add_argument('-m', '--mode', choices=['http', 'https', 'ssl', 'tcp'], default='tcp',
-                           help='Load Balancer Mode. Defaults to tcp')
     lb_parser.add_argument('-p', '--port', type=int, default=443, help='Load Balancer Port. Defaults to 443')
     lb_parser.add_argument('-v', '--vms', help='Vms to add to the pool')
     lb_parser.add_argument('name', metavar='NAME', nargs='?')
@@ -1153,6 +1154,7 @@ def cli():
     list_parser.add_argument('-f', '--flavors', action='store_true')
     list_parser.add_argument('-t', '--templates', action='store_true')
     list_parser.add_argument('-i', '--isos', action='store_true')
+    list_parser.add_argument('-l', '--loadbalancers', action='store_true')
     list_parser.add_argument('-d', '--disks', action='store_true')
     list_parser.add_argument('-P', '--pools', action='store_true')
     list_parser.add_argument('-n', '--networks', action='store_true')

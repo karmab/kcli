@@ -1307,3 +1307,25 @@ class Kconfig(Kbaseconfig):
                 common.pprint("Grabbing template %s..." % template, color='green')
                 dest.add_image(url, pool, cmd=cmd)
         return {'result': 'success'}
+
+    def handle_loadbalancer(self, name, port=443, checkpath='/', vms=[], delete=False):
+        name = nameutils.get_random_name().replace('_', '-') if name is None else name
+        k = self.k
+        if self.type not in ['gcp']:
+            common.pprint("Not available on this provider at the moment", color='blue')
+            return
+        if delete:
+            common.pprint("Deleting loadbalancer %s" % name, color='green')
+            k.delete_loadbalancer(name)
+        else:
+            common.pprint("Creating loadbalancer %s" % name, color='green')
+            vms = vms.split(',') if vms is not None else []
+            k.create_loadbalancer(name, port=port, checkpath=checkpath, vms=vms)
+
+    def list_loadbalancer(self):
+        if self.type not in ['gcp']:
+            common.pprint("Not available on this provider at the moment", color='blue')
+            return []
+        else:
+            k = self.k
+            return k.list_loadbalancers()
