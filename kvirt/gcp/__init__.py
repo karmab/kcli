@@ -425,7 +425,7 @@ class Kgcp(object):
             return []
         for vm in results['items']:
             vms.append(self.info(vm['name'], vm=vm))
-        return sorted(vms)
+        return sorted(vms, key=lambda x: x['name'])
 
     def console(self, name, tunnel=False):
         """
@@ -1191,4 +1191,28 @@ class Kgcp(object):
         body = {'name': newname, 'forceCreate': True, 'description': description,
                 'sourceDisk': vm['disks'][0]['source'], 'licenses': ["projects/vm-options/global/licenses/enable-vmx"]}
         conn.images().insert(project=project, body=body).execute()
+        return {'result': 'success'}
+
+    def create_loadbalancer(self, name, port=443, mode='tcp', checkpath='/', vms=[]):
+        mode = mode.upper()
+        conn = self.conn
+        project = self.project
+        health_check_body = {"checkIntervalSec": 10, "timeoutSec": 10, "unhealthyThreshold": 3,
+                             "healthyThreshold": 3, "type": mode}
+        newcheck = {"port": port, "portName": name}
+        if mode == 'TCP':
+            health_check_body["tcpHealthCheck"] = newcheck
+        else:
+            newcheck["requestPath"] = checkpath
+            health_check_body["httpHealthCheck"] = newcheck
+        conn.healthChecks().insert(project=project, body=health_check_body).execute()
+        backend_body = {"healthChecks": [name], "sessionAffinity": 'CLIENT_IP', "protocol": 'TCP', "portName": name}
+        conn.backendServices().insert(project=project, body=backend_body).execute()
+        return {'result': 'success'}
+
+    def delete_loadbalancer(self, name):
+        conn = self.conn
+        project = self.project
+        conn.backendServices().delete(project=project, backendService=name).execute()
+        conn.healthChecks().delete(project=project, healthCheck=name).execute()
         return {'result': 'success'}

@@ -631,19 +631,24 @@ def export(args):
 
 def lb(args):
     """Create/Delete loadbalancer"""
-    check = args.check
     checkpath = args.checkpath
     delete = args.delete
-    _type = args.type
+    mode = args.mode
     port = args.port
     vms = args.vms
-    name = args.name
+    name = nameutils.get_random_name().replace('_', '-') if args.name is None else args.name
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
+    k = config.k
+    if config.type not in ['gcp']:
+        common.pprint("Not available on this provider at the moment", color='blue')
+        return
     if delete:
-        common.pprint("Creating new loadbalancer %s" % name, color='green')
-    else:
         common.pprint("Deleting loadbalancer %s" % name, color='green')
-        vms = vms.split(',') if vm is not None else []
-        print(check, checkpath, port, _type, vms)
+        k.delete_loadbalancer(name)
+    else:
+        common.pprint("Creating loadbalancer %s" % name, color='green')
+        vms = vms.split(',') if vms is not None else []
+        k.create_loadbalancer(name, port=port, mode=mode, checkpath=checkpath, vms=vms)
 
 
 def nic(args):
@@ -1132,13 +1137,13 @@ def cli():
 
     lb_info = 'Create/Delete loadbalancer'
     lb_parser = subparsers.add_parser('lb', description=lb_info, help=lb_info)
-    lb_parser.add_argument('-c', '--check', action='store_true', help="Whether to check for healthness")
-    lb_parser.add_argument('--checkpath', default='/health', help="Path to check")
+    lb_parser.add_argument('--checkpath', default='/', help="Path to check. Defaults to /healthz")
     lb_parser.add_argument('-d', '--delete', action='store_true')
-    lb_parser.add_argument('-t', '--type', choices=['http', 'tcp'], default='tcp', help='Load Balancer Type')
-    lb_parser.add_argument('-p', '--port', type=int, default=443, help='Load Balancer Port')
+    lb_parser.add_argument('-m', '--mode', choices=['http', 'https', 'ssl', 'tcp'], default='tcp',
+                           help='Load Balancer Mode. Defaults to tcp')
+    lb_parser.add_argument('-p', '--port', type=int, default=443, help='Load Balancer Port. Defaults to 443')
     lb_parser.add_argument('-v', '--vms', help='Vms to add to the pool')
-    lb_parser.add_argument('name', metavar='NAME', nargs='*')
+    lb_parser.add_argument('name', metavar='NAME', nargs='?')
     lb_parser.set_defaults(func=lb)
 
     list_info = 'List hosts, profiles, flavors, templates, isos,...'
