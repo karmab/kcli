@@ -631,8 +631,19 @@ def export(args):
 
 def lb(args):
     """Create/Delete loadbalancer"""
+    check = args.check
+    checkpath = args.checkpath
+    delete = args.delete
+    _type = args.type
+    port = args.port
+    vms = args.vms
     name = args.name
-    common.pprint("Creating new %s" % name, color='green')
+    if delete:
+        common.pprint("Creating new loadbalancer %s" % name, color='green')
+    else:
+        common.pprint("Deleting loadbalancer %s" % name, color='green')
+        vms = vms.split(',') if vm is not None else []
+        print(check, checkpath, port, _type, vms)
 
 
 def nic(args):
@@ -1119,10 +1130,16 @@ def cli():
     export_parser.add_argument('names', metavar='VMNAMES', nargs='*')
     export_parser.set_defaults(func=export)
 
-    # lb_info = 'Create/Delete loadbalancer'
-    # lb_parser = subparsers.add_parser('lb', description=lb_info, help=lb_info)
-    # lb_parser.add_argument('name', metavar='NAME', nargs='*')
-    # lb_parser.set_defaults(func=lb)
+    lb_info = 'Create/Delete loadbalancer'
+    lb_parser = subparsers.add_parser('lb', description=lb_info, help=lb_info)
+    lb_parser.add_argument('-c', '--check', action='store_true', help="Whether to check for healthness")
+    lb_parser.add_argument('--checkpath', default='/health', help="Path to check")
+    lb_parser.add_argument('-d', '--delete', action='store_true')
+    lb_parser.add_argument('-t', '--type', choices=['http', 'tcp'], default='tcp', help='Load Balancer Type')
+    lb_parser.add_argument('-p', '--port', type=int, default=443, help='Load Balancer Port')
+    lb_parser.add_argument('-v', '--vms', help='Vms to add to the pool')
+    lb_parser.add_argument('name', metavar='NAME', nargs='*')
+    lb_parser.set_defaults(func=lb)
 
     list_info = 'List hosts, profiles, flavors, templates, isos,...'
     list_parser = subparsers.add_parser('list', description=list_info, help=list_info)
