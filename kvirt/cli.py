@@ -1080,14 +1080,17 @@ def cli():
     dns_parser.add_argument('name', metavar='NAME', nargs='?')
     dns_parser.set_defaults(func=dns)
 
-    download_info = 'Download template'
+    download_info = 'Download image'
+    download_help = "Image to download. Choose between \n%s" % '\n'.join(TEMPLATES.keys())
     download_parser = subparsers.add_parser('download', description=download_info, help=download_info)
     download_parser.add_argument('-c', '--cmd', help='Extra command to launch after downloading', metavar='CMD')
     download_parser.add_argument('-p', '--pool', help='Pool to use. Defaults to default', metavar='POOL')
     download_parser.add_argument('-u', '--url', help='Url to use', metavar='URL')
+    # download_parser.add_argument('templates', choices=sorted(TEMPLATES.keys()),
+    #                             default='', help='Template/Image to download',
+    #                             nargs='*')
     download_parser.add_argument('templates', choices=sorted(TEMPLATES.keys()),
-                                 default='', help='Template/Image to download',
-                                 nargs='*')
+                                 default='', help=download_help, nargs='*', metavar='')
     download_parser.set_defaults(func=download)
 
     host_info = 'List and Handle host'
