@@ -38,6 +38,7 @@ controller-[[ i ]]:
   - kubernetes-csr.json
   - service-account-csr.json
   - launch.sh
+[% endfor %]
 
 
 [% for i in range(0, 2) %]
@@ -52,3 +53,4 @@ worker-[[ i ]]:
  tags:
   - kubernetes-the-hard-way
   - controller
+[% endfor %]

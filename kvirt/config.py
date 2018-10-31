@@ -713,6 +713,7 @@ class Kconfig(Kbaseconfig):
         #    path = plan
         if delete:
             deletedvms = []
+            deletedlbs = []
             dnsclients = []
             networks = []
             if plan == '':
@@ -732,6 +733,8 @@ class Kconfig(Kbaseconfig):
                     name = vm['name']
                     description = vm['plan']
                     if description == plan:
+                        if 'loadbalancer' in vm and vm['loadbalancer'] not in deletedlbs:
+                            deletedlbs.append(vm['loadbalancer'])
                         vmnetworks = c.vm_ports(name)
                         for network in vmnetworks:
                             if network != 'default' and network not in networks:
@@ -769,6 +772,9 @@ class Kconfig(Kbaseconfig):
             for keyfile in glob.glob("%s.key*" % plan):
                 common.pprint("file %s from %s deleted!" % (keyfile, plan), color='green')
                 os.remove(keyfile)
+            if deletedlbs and self.type in ['gcp']:
+                for lb in deletedlbs:
+                    self.delete_loadbalancer(lb)
             if found:
                 common.pprint("Plan %s deleted!" % plan, color='green')
             else:
