@@ -36,7 +36,10 @@ class Kgcp(object):
         conn = self.conn
         project = self.project
         done = False
+        timeout = 0
         while not done:
+            if timeout > 60:
+                return
             if 'zone' in selflink:
                 check = conn.zoneOperations().get(project=project, zone=self.zone, operation=operation).execute()
             elif 'region' in selflink:
@@ -47,6 +50,12 @@ class Kgcp(object):
                 done = True
             else:
                 sleep(1)
+                timeout += 1
+        if 'httpErrorMessage' in check:
+            httperror = check['httpErrorMessage']
+            code = check['error']['errors'][0]["code"]
+            message = check['error']['errors'][0]["message"]
+            common.pprint("Got %s Code %s Error %s" % (httperror, code, message), color='red')
         return
 
     def close(self):
@@ -923,32 +932,24 @@ class Kgcp(object):
         conn = self.conn
         project = self.project
         region = self.region
-        body = {'name': name, 'autoCreateSubnetworks': True if cidr is not None else False}
-        conn.networks().insert(project=project, body=body).execute()
-        timeout = 0
-        while True:
-            if timeout > 60:
-                return {'result': 'failure', 'reason': 'timeout waiting for network to be ready'}
+        body = {'name': name, 'autoCreateSubnetworks': True if cidr is None else False}
+        operation = conn.networks().insert(project=project, body=body).execute()
+        networkpath = operation["targetLink"]
+        self._wait_for_operation(operation)
+        # sleep(20)
+        if cidr is not None:
             try:
-                if cidr is not None:
-                    try:
-                        IPNetwork(cidr)
-                    except:
-                        return {'result': 'failure', 'reason': "Invalid Cidr %s" % cidr}
-                    subnetbody = {'name': name, "ipCidrRange": cidr,
-                                  "network": "projects/%s/global/networks/%s" % (project, name),
-                                  'region': "projects/%s/regions/%s" % (project, region)}
-                    conn.subnetworks().insert(region=region, project=project, body=subnetbody).execute()
-                allowed = {"IPProtocol": "tcp", "ports": ["22"]}
-                firewallbody = {'name': 'allow-ssh-%s' % name, 'network': 'global/networks/%s' % name,
-                                'sourceRanges': ['0.0.0.0/0'], 'allowed': [allowed]}
-                conn.firewalls().insert(project=project, body=firewallbody).execute()
-                break
-            except Exception as e:
-                print(e)
-                timeout += 5
-                sleep(5)
-                common.pprint("Waiting for network to be ready", color='green')
+                IPNetwork(cidr)
+            except:
+                return {'result': 'failure', 'reason': "Invalid Cidr %s" % cidr}
+            regionpath = "https://www.googleapis.com/compute/v1/projects/%s/regions/%s" % (project, region)
+            subnet_body = {'name': name, "ipCidrRange": cidr, 'network': networkpath, "region": regionpath}
+            operation = conn.subnetworks().insert(region=region, project=project, body=subnet_body).execute()
+            self._wait_for_operation(operation)
+        allowed = {"IPProtocol": "tcp", "ports": ["22"]}
+        firewall_body = {'name': 'allow-ssh-%s' % name, 'network': 'global/networks/%s' % name,
+                         'sourceRanges': ['0.0.0.0/0'], 'allowed': [allowed]}
+        conn.firewalls().insert(project=project, body=firewall_body).execute()
         return {'result': 'success'}
 
     def delete_network(self, name=None, cidr=None):
@@ -968,8 +969,15 @@ class Kgcp(object):
         if not network['autoCreateSubnetworks'] and 'subnetworks' in network:
             for subnet in network['subnetworks']:
                 subnetwork = os.path.basename(subnet)
-                conn.subnetworks().delete(region=region, project=project, subnetwork=subnetwork).execute()
-        conn.networks().delete(project=project, network=name).execute()
+                operation = conn.subnetworks().delete(region=region, project=project, subnetwork=subnetwork).execute()
+                self._wait_for_operation(operation)
+        try:
+            operation = conn.firewalls().delete(project=project, firewall='allow-ssh-%s' % name).execute()
+            self._wait_for_operation(operation)
+        except:
+            pass
+        operation = conn.networks().delete(project=project, network=name).execute()
+        self._wait_for_operation(operation)
         return {'result': 'success'}
 
 # should return a dict of pool strings
