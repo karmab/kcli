@@ -510,9 +510,9 @@ class Kconfig(Kbaseconfig):
         k = self.k
         vms = {}
         plans = []
-        for vm in sorted(k.list(), key=lambda x: x[4]):
-                vmname = vm[0]
-                plan = vm[4]
+        for vm in sorted(k.list(), key=lambda x: x['plan']):
+                vmname = vm['name']
+                plan = vm['plan']
                 if plan in vms:
                     vms[plan].append(vmname)
                 else:
@@ -728,9 +728,9 @@ class Kconfig(Kbaseconfig):
                 deleteclients.update({self.client: k})
             for hypervisor in deleteclients:
                 c = deleteclients[hypervisor]
-                for vm in sorted(c.list()):
-                    name = vm[0]
-                    description = vm[4]
+                for vm in sorted(c.list(), key=lambda x: x['name']):
+                    name = vm['name']
+                    description = vm['plan']
                     if description == plan:
                         vmnetworks = c.vm_ports(name)
                         for network in vmnetworks:
@@ -777,27 +777,27 @@ class Kconfig(Kbaseconfig):
             return {'result': 'success', 'deletedvm': deletedvms}
         if autostart:
             common.pprint("Set vms from plan %s to autostart" % plan, color='green')
-            for vm in sorted(k.list()):
-                name = vm[0]
-                description = vm[4]
+            for vm in sorted(k.list(), key=lambda x: x['name']):
+                name = vm['name']
+                description = vm['plan']
                 if description == plan:
                     k.update_start(name, start=True)
                     common.pprint("%s set to autostart!" % name, color='green')
             return {'result': 'success'}
         if noautostart:
             common.pprint("Preventing vms from plan %s to autostart" % plan, color='green')
-            for vm in sorted(k.list()):
-                name = vm[0]
-                description = vm[4]
+            for vm in sorted(k.list(), key=lambda x: x['name']):
+                name = vm['name']
+                description = vm['plan']
                 if description == plan:
                     k.update_start(name, start=False)
                     common.pprint("%s prevented to autostart!" % name, color='green')
             return {'result': 'success'}
         if start:
             common.pprint("Starting vms from plan %s" % plan, color='green')
-            for vm in sorted(k.list()):
-                name = vm[0]
-                description = vm[4]
+            for vm in sorted(k.list(), key=lambda x: x['name']):
+                name = vm['name']
+                description = vm['plan']
                 if description == plan:
                     k.start(name)
                     common.pprint("VM %s started!" % name, color='green')
@@ -813,9 +813,9 @@ class Kconfig(Kbaseconfig):
             return {'result': 'success'}
         if stop:
             common.pprint("Stopping vms from plan %s" % plan, color='green')
-            for vm in sorted(k.list()):
-                name = vm[0]
-                description = vm[4]
+            for vm in sorted(k.list(), key=lambda x: x['name']):
+                name = vm['name']
+                description = vm['plan']
                 if description == plan:
                     k.stop(name)
                     common.pprint("%s stopped!" % name, color='green')
@@ -891,6 +891,8 @@ class Kconfig(Kbaseconfig):
             poolentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'pool']
             planentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'plan']
             dnsentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'dns']
+            lbentries = [entry for entry in entries if 'type' in entries[entry] and
+                         entries[entry]['type'] == 'loadbalancer']
             for p in profileentries:
                 vmprofiles[p] = entries[p]
             if planentries:
@@ -1188,13 +1190,29 @@ class Kconfig(Kbaseconfig):
             else:
                 common.pprint("Creating ansible inventory for plan %s in /tmp/%s.inv" % (plan, plan), color='green')
                 vms = []
-                for vm in sorted(k.list()):
-                    name = vm[0]
-                    description = vm[4]
+                for vm in sorted(k.list(), key=lambda x: x['name']):
+                    name = vm['name']
+                    description = vm['plan']
                     if description == plan:
                         vms.append(name)
                 ansibleutils.make_inventory(k, plan, vms, tunnel=self.tunnel)
                 return
+        if lbentries:
+                common.pprint("Deploying Loadbalancers...", color='green')
+                for lbentry in lbentries:
+                    details = entries[lbentry]
+                    port = details.get('port', 443)
+                    if not port.isdigit():
+                        common.pprint("Wrong Port %s for loadbalancer. Not creating it..." % port, color='red')
+                        continue
+                    checkpath = details.get('checkpath', '/')
+                    domain = details.get('domain')
+                    lbvms = details.get('vms', [])
+                    name = details.get('name')
+                    if name is None:
+                        common.pprint("Missing Name for loadbalancer. Not creating it...", color='red')
+                        continue
+                    self.handle_loadbalancer(name, port=port, checkpath=checkpath, vms=lbvms, domain=domain)
         returndata = {'result': 'success', 'plan': plan}
         if newvms:
             returndata['newvms'] = newvms

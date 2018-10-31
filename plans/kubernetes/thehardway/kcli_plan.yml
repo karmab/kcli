@@ -1,0 +1,54 @@
+parameters:
+ domain: cnvlab.gce.sysdeseng.com
+
+custom:
+ type: network
+ cidr: 10.240.0.0/24
+ dhcp: True
+
+lbhardway:
+ type: loadbalancer
+ port: 80
+ domain: [[ domain ]]
+ vms:
+  - controller1
+  - controller-2
+  - controller-3
+
+[% for i in range(0, 2) %]
+controller-[[ i ]]:
+ template: ubuntu-1804-lts
+ flavor: n1-standard-1
+ reservedns: true
+ sharedkey: true
+ disks:
+  - size: 200
+ nets:
+  - custom
+ tags:
+  - kubernetes-the-hard-way
+  - controller
+ files:
+  - ca-config.json
+  - ca-csr.json
+  - admin-csr.json
+  - instance-csr.json
+  - kube-controller-manager-csr.json
+  - kube-scheduler-csr.json
+  - kubernetes-csr.json
+  - service-account-csr.json
+  - launch.sh
+
+
+[% for i in range(0, 2) %]
+worker-[[ i ]]:
+ template: ubuntu-1804-lts
+ flavor: n1-standard-1
+ sharedkey: true
+ disks:
+  - size: 200
+ nets:
+  - custom
+ tags:
+  - kubernetes-the-hard-way
+  - controller
