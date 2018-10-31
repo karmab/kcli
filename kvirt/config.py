@@ -1308,7 +1308,7 @@ class Kconfig(Kbaseconfig):
                 dest.add_image(url, pool, cmd=cmd)
         return {'result': 'success'}
 
-    def handle_loadbalancer(self, name, port=443, checkpath='/', vms=[], delete=False):
+    def handle_loadbalancer(self, name, port=443, checkpath='/', vms=[], delete=False, domain=None):
         name = nameutils.get_random_name().replace('_', '-') if name is None else name
         k = self.k
         if self.type not in ['gcp']:
@@ -1320,7 +1320,7 @@ class Kconfig(Kbaseconfig):
         else:
             common.pprint("Creating loadbalancer %s" % name, color='green')
             vms = vms.split(',') if vms is not None else []
-            k.create_loadbalancer(name, port=port, checkpath=checkpath, vms=vms)
+            k.create_loadbalancer(name, port=port, checkpath=checkpath, vms=vms, domain=domain)
 
     def list_loadbalancer(self):
         if self.type not in ['gcp']:

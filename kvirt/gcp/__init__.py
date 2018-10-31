@@ -1091,7 +1091,6 @@ class Kgcp(object):
         :param force:
         :return:
         """
-        net = nets[0]
         project = self.project
         zone = self.zone
         client = dns.Client(project)
@@ -1109,6 +1108,7 @@ class Kgcp(object):
         #    return {'result': 'failure', 'reason': "Domain not found"}
         entry = "%s.%s." % (name, domain)
         if ip is None:
+            net = nets[0]
             if isinstance(net, dict):
                 ip = net.get('ip')
             if ip is None:
@@ -1212,7 +1212,7 @@ class Kgcp(object):
         conn.images().insert(project=project, body=body).execute()
         return {'result': 'success'}
 
-    def create_loadbalancer(self, name, port=443, checkpath='/', vms=[]):
+    def create_loadbalancer(self, name, port=443, checkpath='/', vms=[], domain=None):
         protocols = {80: 'HTTP', 8080: 'HTTP', 443: 'HTTPS'}
         protocol = protocols[port] if port in protocols else 'TCP'
         conn = self.conn
@@ -1265,6 +1265,8 @@ class Kgcp(object):
                 self._wait_for_operation(operation)
         if protocol == 'TCP':
             address_body = {"name": name, "ipVersion": "IPV4"}
+            if domain is not None:
+                address_body["description"] = domain
             operation = conn.globalAddresses().insert(project=project, body=address_body).execute()
             ipurl = operation['targetLink']
             self._wait_for_operation(operation)
@@ -1275,6 +1277,8 @@ class Kgcp(object):
             operation = conn.globalForwardingRules().insert(project=project, body=forwarding_rule_body).execute()
         else:
             address_body = {"name": name}
+            if domain is not None:
+                address_body["description"] = domain
             operation = conn.addresses().insert(project=project, region=region, body=address_body).execute()
             ipurl = operation['targetLink']
             self._wait_for_operation(operation)
@@ -1288,6 +1292,8 @@ class Kgcp(object):
         firewall_body = {"name": name, "direction": "INGRESS", "allowed": [{"IPProtocol": "tcp", "ports": [port]}]}
         operation = conn.firewalls().insert(project=project, body=firewall_body).execute()
         self._wait_for_operation(operation)
+        if domain is not None:
+            self.reserve_dns(name, ip=ip, domain=domain)
         return {'result': 'success'}
 
     def delete_loadbalancer(self, name):
@@ -1351,6 +1357,10 @@ class Kgcp(object):
                 print(e)
             pass
         try:
+            address = conn.forwardingRules().get(project=project, region=region, forwardingRule=name).execute()
+            if '.' in address["description"]:
+                domain = address["description"]
+                self.delete_dns(name, domain=domain)
             operation = conn.forwardingRules().delete(project=project, region=region, forwardingRule=name).execute()
             self._wait_for_operation(operation)
         except Exception as e:

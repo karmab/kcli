@@ -645,12 +645,16 @@ def export(args):
 def lb(args):
     """Create/Delete loadbalancer"""
     checkpath = args.checkpath
+    yes = args.yes
     delete = args.delete
     port = args.port
+    domain = args.domain
     vms = args.vms
     name = nameutils.get_random_name().replace('_', '-') if args.name is None else args.name
+    if delete and not yes:
+        common.confirm("Are you sure?")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
-    config.handle_loadbalancer(name, port=port, checkpath=checkpath, vms=vms, delete=delete)
+    config.handle_loadbalancer(name, port=port, checkpath=checkpath, vms=vms, delete=delete, domain=domain)
     return 0
 
 
@@ -1142,8 +1146,10 @@ def cli():
     lb_parser = subparsers.add_parser('lb', description=lb_info, help=lb_info)
     lb_parser.add_argument('--checkpath', default='/', help="Path to check. Defaults to /healthz")
     lb_parser.add_argument('-d', '--delete', action='store_true')
+    lb_parser.add_argument('--domain', help='Domain to create a dns entry associated to the load balancer')
     lb_parser.add_argument('-p', '--port', type=int, default=443, help='Load Balancer Port. Defaults to 443')
     lb_parser.add_argument('-v', '--vms', help='Vms to add to the pool')
+    lb_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     lb_parser.add_argument('name', metavar='NAME', nargs='?')
     lb_parser.set_defaults(func=lb)
 
