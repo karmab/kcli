@@ -1317,6 +1317,42 @@ class Kgcp(object):
                 print(e)
             pass
         try:
+            operation = conn.globalForwardingRules().delete(project=project, forwardingRule=name).execute()
+            self._wait_for_operation(operation)
+        except Exception as e:
+            if self.debug:
+                print(e)
+            pass
+        try:
+            operation = conn.forwardingRules().delete(project=project, region=region, forwardingRule=name).execute()
+            self._wait_for_operation(operation)
+        except Exception as e:
+            if self.debug:
+                print(e)
+            pass
+        try:
+            address = conn.globalAddresses().get(project=project, address=name).execute()
+            if '.' in address["description"]:
+                domain = address["description"]
+                self.delete_dns(name, domain=domain)
+            operation = conn.globalAddresses().delete(project=project, address=name).execute()
+            self._wait_for_operation(operation)
+        except Exception as e:
+            if self.debug:
+                print(e)
+            pass
+        try:
+            address = conn.addresses().get(project=project, region=region, address=name).execute()
+            if '.' in address["description"]:
+                domain = address["description"]
+                self.delete_dns(name, domain=domain)
+            operation = conn.addresses().delete(project=project, region=region, address=name).execute()
+            self._wait_for_operation(operation)
+        except Exception as e:
+            if self.debug:
+                print(e)
+            pass
+        try:
             operation = conn.targetTcpProxies().delete(project=project, targetTcpProxy=name).execute()
             self._wait_for_operation(operation)
         except Exception as e:
@@ -1357,38 +1393,6 @@ class Kgcp(object):
         except Exception as e:
             if self.debug:
                 print(e)
-        try:
-            operation = conn.globalForwardingRules().delete(project=project, forwardingRule=name).execute()
-            self._wait_for_operation(operation)
-        except Exception as e:
-            if self.debug:
-                print(e)
-            pass
-        try:
-            address = conn.forwardingRules().get(project=project, region=region, forwardingRule=name).execute()
-            if '.' in address["description"]:
-                domain = address["description"]
-                self.delete_dns(name, domain=domain)
-            operation = conn.forwardingRules().delete(project=project, region=region, forwardingRule=name).execute()
-            self._wait_for_operation(operation)
-        except Exception as e:
-            if self.debug:
-                print(e)
-            pass
-        try:
-            operation = conn.globalAddresses().delete(project=project, address=name).execute()
-            self._wait_for_operation(operation)
-        except Exception as e:
-            if self.debug:
-                print(e)
-            pass
-        try:
-            operation = conn.addresses().delete(project=project, region=region, address=name).execute()
-            self._wait_for_operation(operation)
-        except Exception as e:
-            if self.debug:
-                print(e)
-            pass
         return {'result': 'success'}
 
     def list_loadbalancers(self):

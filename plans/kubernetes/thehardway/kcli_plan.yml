@@ -1,4 +1,5 @@
 parameters:
+ kubernetes_version: v1.12.0
  domain: cnvlab.gce.sysdeseng.com
 
 custom:
@@ -6,7 +7,7 @@ custom:
  cidr: 10.240.0.0/24
  dhcp: True
 
-lbhardway:
+kubernetes-the-hard-way:
  type: loadbalancer
  port: 80
  domain: [[ domain ]]
@@ -24,20 +25,36 @@ controller-[[ i ]]:
  disks:
   - size: 200
  nets:
-  - custom
+  - name: custom
+    ip: 10.240.0.1[[ i ]]
  tags:
   - kubernetes-the-hard-way
   - controller
  files:
-  - ca-config.json
-  - ca-csr.json
-  - admin-csr.json
-  - instance-csr.json
-  - kube-controller-manager-csr.json
-  - kube-scheduler-csr.json
-  - kubernetes-csr.json
-  - service-account-csr.json
-  - launch.sh
+  - path: ca-config.json
+    origin: ca-config.json
+  - origin: ca-csr.json
+    path: ca-csr.json
+  - origin: admin-csr.json
+    path: admin-csr.json
+  - origin: instance-csr.json
+    path: instance-csr.json
+  - origin: kube-controller-manager-csr.json
+    path: kube-controller-manager-csr.json
+  - origin: kube-proxy-csr.json
+    path: kube-proxy-csr.json
+  - origin: kube-scheduler-csr.json
+    path: kube-scheduler-csr.json
+  - origin: kubernetes-csr.json
+    path: kubernetes-csr.json 
+  - origin: service-account-csr.json
+    path: service-account-csr.json
+  - origin: encryption-config.yaml
+    path: encryption-config.yaml
+  - origin: etcd.service
+    path: etcd.service
+  - origin: launch.sh
+    path: launch.sh
 [% endfor %]
 
 
@@ -49,7 +66,8 @@ worker-[[ i ]]:
  disks:
   - size: 200
  nets:
-  - custom
+  - name: custom
+    ip: 10.240.0.2[[ i ]]
  tags:
   - kubernetes-the-hard-way
   - controller
