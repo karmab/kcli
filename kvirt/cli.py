@@ -1184,7 +1184,7 @@ def cli():
     network_parser.add_argument('--nodhcp', action='store_true', help='Disable dhcp on the net')
     network_parser.add_argument('--domain', help='DNS domain. Defaults to network name')
     network_parser.add_argument('-p', '--pxe', help='Ip of a Pxe Server', metavar='PXE')
-    network_parser.add_argument('-v', '--vlan', help='Vlan', metavar='VLAN. only used on Ovirt and Kubevirt')
+    network_parser.add_argument('-v', '--vlan', help='VLAN. only used on Ovirt and Kubevirt', metavar='VLAN')
     network_parser.add_argument('name', metavar='NETWORK')
     network_parser.set_defaults(func=network)
 
