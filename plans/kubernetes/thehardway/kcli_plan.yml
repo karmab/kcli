@@ -30,33 +30,42 @@ controller-[[ i ]]:
  tags:
   - kubernetes-the-hard-way
   - controller
+[% if i == 0 %] 
  files:
-  - path: ca-config.json
+  - path: /root/ca-config.json
     origin: ca-config.json
   - origin: ca-csr.json
-    path: ca-csr.json
+    path: /root/ca-csr.json
   - origin: admin-csr.json
-    path: admin-csr.json
+    path: /root/admin-csr.json
   - origin: instance-csr.json
-    path: instance-csr.json
+    path: /root/instance-csr.json
   - origin: kube-controller-manager-csr.json
-    path: kube-controller-manager-csr.json
+    path: /root/kube-controller-manager-csr.json
   - origin: kube-proxy-csr.json
-    path: kube-proxy-csr.json
+    path: /root/kube-proxy-csr.json
   - origin: kube-scheduler-csr.json
-    path: kube-scheduler-csr.json
+    path: /root/kube-scheduler-csr.json
   - origin: kubernetes-csr.json
-    path: kubernetes-csr.json 
+    path: /root/kubernetes-csr.json 
   - origin: service-account-csr.json
-    path: service-account-csr.json
+    path: /root/service-account-csr.json
   - origin: encryption-config.yaml
-    path: encryption-config.yaml
+    path: /root/encryption-config.yaml
   - origin: etcd.service
-    path: etcd.service
-  - origin: launch.sh
-    path: launch.sh
+    path: /root/etcd.service
+  - origin: lab2.sh
+    path: /root/lab2.sh
+  - origin: lab4.sh
+    path: /root/lab4.sh
+  - origin: lab5.sh
+    path: /root/lab5.sh
+  - origin: lab6.sh
+    path: /root/lab6.sh
+  - origin: lab7.sh
+    path: /root/lab7.sh
+[% endif %]
 [% endfor %]
-
 
 [% for i in range(0, 2) %]
 worker-[[ i ]]:
