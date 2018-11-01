@@ -9,6 +9,7 @@ from kvirt.defaults import TEMPLATES, TEMPLATESCOMMANDS
 from kvirt import ansibleutils
 from kvirt import nameutils
 from kvirt import common
+from kvirt.internalplans import haproxy as haproxyplan
 from kvirt.baseconfig import Kbaseconfig
 from distutils.spawn import find_executable
 import glob
@@ -697,7 +698,8 @@ class Kconfig(Kbaseconfig):
         return {'result': 'success', 'plan': plan}
 
     def plan(self, plan, ansible=False, get=None, path=None, autostart=False, container=False, noautostart=False,
-             inputfile=None, start=False, stop=False, delete=False, delay=0, force=True, overrides={}, info=False):
+             inputfile=None, inputstring=None, start=False, stop=False, delete=False, delay=0, force=True, overrides={},
+             info=False):
         """Create/Delete/Stop/Start vms from plan file"""
         k = self.k
         no_overrides = not overrides
@@ -843,6 +845,10 @@ class Kconfig(Kbaseconfig):
                 os.mkdir(path)
                 common.fetch(get, path)
             # os.chdir(path)
+        if inputstring is not None:
+            with open("/tmp/plan.yml", "w") as f:
+                f.write(inputstring)
+            inputfile = "/tmp/plan.yml"
         if inputfile is None:
             inputfile = 'kcli_plan.yml'
             common.pprint("using default input file kcli_plan.yml", color='green')
@@ -1335,16 +1341,21 @@ class Kconfig(Kbaseconfig):
     def handle_loadbalancer(self, name, port=443, checkpath='/', vms=[], delete=False, domain=None):
         name = nameutils.get_random_name().replace('_', '-') if name is None else name
         k = self.k
-        if self.type not in ['gcp']:
-            common.pprint("Not available on this provider at the moment", color='blue')
+        vms = vms.split(',') if vms is not None else []
+        if self.type in ['gcp']:
+            if delete:
+                common.pprint("Deleting loadbalancer %s" % name, color='green')
+                k.delete_loadbalancer(name)
+                return
+            else:
+                common.pprint("Creating loadbalancer %s" % name, color='green')
+                k.create_loadbalancer(name, port=port, checkpath=checkpath, vms=vms, domain=domain)
+        elif delete:
+            common.pprint("Not implemented yet on %s" % self.type, color='red')
             return
-        if delete:
-            common.pprint("Deleting loadbalancer %s" % name, color='green')
-            k.delete_loadbalancer(name)
         else:
-            common.pprint("Creating loadbalancer %s" % name, color='green')
-            vms = vms.split(',') if vms is not None else []
-            k.create_loadbalancer(name, port=port, checkpath=checkpath, vms=vms, domain=domain)
+            overrides = {'name': 'haproxy_%s' % name, 'vms': vms, 'port': port, 'checkpath': checkpath, 'vms': vms}
+            self.plan(name, inputstring=haproxyplan, overrides=overrides)
 
     def list_loadbalancer(self):
         if self.type not in ['gcp']:

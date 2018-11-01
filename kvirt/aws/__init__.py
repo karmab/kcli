@@ -558,7 +558,16 @@ class Kaws(object):
         :param metavalue:
         :return:
         """
-        print("not implemented")
+        conn = self.conn
+        try:
+            Filters = {'Name': "tag:Name", 'Values': [name]}
+            vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
+        except:
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        instanceid = vm['InstanceId']
+        newtags = [{"Key": metatype, "Value": metavalue}]
+        conn.create_tags(Resources=[instanceid], Tags=newtags)
+        # vm.add_tag(metatype, value=metavalue)
         return
 
     def update_memory(self, name, memory):
@@ -598,7 +607,7 @@ class Kaws(object):
         :param information:
         :return:
         """
-        print("not implemented")
+        self.update_metadata(name, 'information', information)
         return
 
     def update_iso(self, name, iso):

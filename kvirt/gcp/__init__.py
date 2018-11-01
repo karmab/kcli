@@ -665,8 +665,25 @@ class Kgcp(object):
         :param metavalue:
         :return:
         """
-        print("not implemented")
-        return
+        conn = self.conn
+        project = self.project
+        zone = self.zone
+        try:
+            vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
+        except Exception as e:
+            common.pprint("VM %s not found" % name)
+            return
+        metadata = vm['metadata']['items'] if 'items' in vm['metadata'] else []
+        found = False
+        for entry in metadata:
+            if entry['key'] == metatype:
+                entry['value'] = metavalue
+                found = True
+                break
+        if not found:
+            metadata.append({"key": metatype, "value": metavalue})
+        metadata_body = {"fingerprint": vm['metadata']['fingerprint'], "items": metadata}
+        conn.instances().setMetadata(project=project, zone=zone, instance=name, body=metadata_body).execute()
 
     def update_memory(self, name, memory):
         """
@@ -705,7 +722,7 @@ class Kgcp(object):
         :param information:
         :return:
         """
-        print("not implemented")
+        self.update_metadata(name, 'information', information)
         return
 
     def update_iso(self, name, iso):
