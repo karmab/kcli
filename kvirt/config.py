@@ -1340,7 +1340,7 @@ class Kconfig(Kbaseconfig):
     def handle_loadbalancer(self, name, port=443, checkpath='/', vms=[], delete=False, domain=None, plan=None):
         name = nameutils.get_random_name().replace('_', '-') if name is None else name
         k = self.k
-        if self.type in ['gcp']:
+        if self.type in ['aws', 'gcp']:
             if delete:
                 common.pprint("Deleting loadbalancer %s" % name, color='green')
                 k.delete_loadbalancer(name)
@@ -1367,7 +1367,7 @@ class Kconfig(Kbaseconfig):
             self.plan(plan, inputstring=haproxyplan, overrides=overrides)
 
     def list_loadbalancer(self):
-        if self.type not in ['gcp']:
+        if self.type not in ['aws', 'gcp']:
             common.pprint("Not available on this provider at the moment", color='blue')
             return []
         else:

@@ -24,7 +24,7 @@ class Kaws(object):
 
     """
     def __init__(self, access_key_id=None, access_key_secret=None, debug=False,
-                 region='us-west-1'):
+                 region='eu-west-3'):
         self.debug = debug
         self.conn = boto3.client('ec2', aws_access_key_id=access_key_id, aws_secret_access_key=access_key_secret,
                                  region_name=region)
@@ -32,6 +32,9 @@ class Kaws(object):
                                        region_name=region)
         self.dns = boto3.client('route53', aws_access_key_id=access_key_id, aws_secret_access_key=access_key_secret,
                                 region_name=region)
+        self.elb = boto3.client('elb', aws_access_key_id=access_key_id, aws_secret_access_key=access_key_secret,
+                                region_name=region)
+        self.region = region
         return
 
     def close(self):
@@ -1017,3 +1020,31 @@ class Kaws(object):
         Description = "template based on %s" % name
         conn.create_image(InstanceId=InstanceId, Name=Name, Description=Description, NoReboot=True)
         return {'result': 'success'}
+
+    def create_loadbalancer(self, name, port=443, checkpath='/', vms=[], domain=None):
+        protocols = {80: 'HTTP', 8080: 'HTTP', 443: 'HTTPS'}
+        protocol = protocols[port] if port in protocols else 'TCP'
+        elb = self.elb
+        Listeners = [{'Protocol': protocol, 'LoadBalancerPort': port, 'InstanceProtocol': protocol,
+                      'InstancePort': port}]
+        AvailabilityZones = ["%s%s" % (self.region, i) for i in ['a', 'b', 'c']]
+        lb = elb.create_load_balancer(LoadBalancerName=name, Listeners=Listeners, AvailabilityZones=AvailabilityZones)
+        common.pprint("Reserved dns name %s" % lb['DNSName'], color='green')
+        return
+
+    def delete_loadbalancer(self, name):
+        elb = self.elb
+        elb.delete_load_balancer(LoadBalancerName=name)
+
+    def list_loadbalancers(self):
+        results = []
+        elb = self.elb
+        lbs = elb.describe_load_balancers()
+        for lb in lbs['LoadBalancerDescriptions']:
+            name = lb['LoadBalancerName']
+            ip = lb['DNSName']
+            protocol = lb['ListenerDescriptions'][0]['Listener']['Protocol']
+            port = lb['ListenerDescriptions'][0]['Listener']['LoadBalancerPort']
+            target = ''
+            results.append([name, ip, protocol, port, target])
+        return results
