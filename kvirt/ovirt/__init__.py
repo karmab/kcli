@@ -581,7 +581,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         :return:
         """
         conn = self.conn
-        if vm is not None:
+        if vm is None:
             vmsearch = self.vms_service.list(search='name=%s' % name)
             if not vmsearch:
                 common.pprint("VM %s not found" % name, color='red')
@@ -596,7 +596,6 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                 yamlinfo['host'] = host.name
         except:
             pass
-        description = vm.description.split(',')
         for description in vm.description.split(','):
             desc = description.split('=')
             if len(desc) == 2:
@@ -735,7 +734,26 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         :param metavalue:
         :return:
         """
-        print("not implemented")
+        vmsearch = self.vms_service.list(search='name=%s' % name)
+        if not vmsearch:
+            common.pprint("VM %s not found" % name, color='red')
+            return
+        vminfo = vmsearch[0]
+        found = False
+        newdescription = []
+        olddescription = vminfo.description.split(',')
+        for index, description in enumerate(olddescription):
+            desc = description.split('=')
+            if len(desc) == 2 and desc[0] == metatype:
+                found = True
+                newdescription.append("%s=%s" % (metatype, metavalue))
+            else:
+                newdescription.append(description)
+        if not found:
+            newdescription.append("%s=%s" % (metatype, metavalue))
+        description = ','.join(newdescription)
+        vm = self.vms_service.vm_service(vmsearch[0].id)
+        vm.update(vm=types.Vm(description=description))
         return
 
     def update_memory(self, name, memory):
