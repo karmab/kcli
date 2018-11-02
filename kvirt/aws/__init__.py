@@ -24,7 +24,7 @@ class Kaws(object):
 
     """
     def __init__(self, access_key_id=None, access_key_secret=None, debug=False,
-                 region='eu-west-3'):
+                 region='eu-west-3', keypair=None):
         self.debug = debug
         self.conn = boto3.client('ec2', aws_access_key_id=access_key_id, aws_secret_access_key=access_key_secret,
                                  region_name=region)
@@ -35,6 +35,7 @@ class Kaws(object):
         self.elb = boto3.client('elb', aws_access_key_id=access_key_id, aws_secret_access_key=access_key_secret,
                                 region_name=region)
         self.region = region
+        self.keypair = keypair
         return
 
     def close(self):
@@ -128,6 +129,7 @@ class Kaws(object):
         :return:
         """
         template = self.__evaluate_template(template)
+        keypair = self.keypair
         if template is not None and not template.startswith('ami-'):
                 return {'result': 'failure', 'reason': 'Invalid template %s' % template}
         defaultsubnetid = None
@@ -143,9 +145,11 @@ class Kaws(object):
         tags = [{'ResourceType': 'instance',
                  'Tags': [{'Key': 'Name', 'Value': name}, {'Key': 'plan', 'Value': plan},
                           {'Key': 'hostname', 'Value': name}, {'Key': 'profile', 'Value': profile}]}]
-        keypairs = [k for k in conn.describe_key_pairs()['KeyPairs'] if k['KeyName'] == 'kvirt']
+        if keypair is None:
+            keypair = 'kvirt_%s' % self.access_key_id
+        keypairs = [k for k in conn.describe_key_pairs()['KeyPairs'] if k['KeyName'] == keypair]
         if not keypairs:
-            common.pprint("Importing your public key as kvirt keyname", color='green')
+            common.pprint("Importing your public key as %s" % keypair, color='green')
             if not os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME'])\
                     and not os.path.exists("%s/.ssh/id_dsa.pub" % os.environ['HOME'])\
                     and not os.path.exists("%s/.kcli/id_rsa.pub" % os.environ['HOME'])\
@@ -160,7 +164,7 @@ class Kaws(object):
                 homekey = open("%s/.kcli/id_rsa.pub" % os.environ['HOME']).read()
             else:
                 homekey = open("%s/.kcli/id_dsa.pub" % os.environ['HOME']).read()
-            conn.import_key_pair(KeyName='kvirt', PublicKeyMaterial=homekey)
+            conn.import_key_pair(KeyName=keypair, PublicKeyMaterial=homekey)
         if cloudinit:
             if template is not None and (template.startswith('coreos') or template.startswith('rhcos')):
                 etcd = None
@@ -238,7 +242,7 @@ class Kaws(object):
         if dnshost is not None:
             tags[0]['Tags'].append({'Key': 'dnshost', 'Value': dnshost})
         conn.run_instances(ImageId=template, MinCount=1, MaxCount=1, InstanceType=flavor,
-                           KeyName='kvirt', BlockDeviceMappings=blockdevicemappings,
+                           KeyName=keypair, BlockDeviceMappings=blockdevicemappings,
                            UserData=userdata, TagSpecifications=tags)
         common.pprint("%s created on aws" % name, color='green')
         if reservedns and domain is not None:
@@ -395,6 +399,23 @@ class Kaws(object):
                 if tag['Key'] == 'domain':
                     domain = tag['Value']
         return dnshost, domain
+
+    def get_id(self, name):
+        """
+
+        :param name:
+        :return:
+        """
+        conn = self.conn
+        try:
+            if name.startswith('i-'):
+                vm = conn.describe_instances(InstanceIds=[name])['Reservations'][0]['Instances'][0]
+            else:
+                Filters = {'Name': "tag:Name", 'Values': [name]}
+                vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
+        except:
+            return None
+        return vm['InstanceId']
 
     def info(self, name, vm=None):
         """
@@ -693,17 +714,19 @@ class Kaws(object):
 
     def _ssh_credentials(self, name):
         conn = self.conn
+        resource = self.resource
         try:
             Filters = {'Name': "tag:Name", 'Values': [name]}
             vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
         except:
             print("VM %s not found" % name)
             return '', ''
-        vm = [v for v in self.list() if v[0] == name][0]
-        template = vm[3]
+        amid = vm['ImageId']
+        image = resource.Image(amid)
+        template = os.path.basename(image.image_location)
         if template != '':
             user = common.get_user(template)
-        ip = vm[2]
+        ip = vm['PublicIpAddress'] if 'PublicIpAddress' in vm else ''
         if ip == '':
             print("No ip found. Cannot ssh...")
         return user, ip
@@ -1029,7 +1052,19 @@ class Kaws(object):
                       'InstancePort': port}]
         AvailabilityZones = ["%s%s" % (self.region, i) for i in ['a', 'b', 'c']]
         lb = elb.create_load_balancer(LoadBalancerName=name, Listeners=Listeners, AvailabilityZones=AvailabilityZones)
+        # hc = boto3.ec2.elb.HealthCheck('healthCheck', interval=20, target='%s:%s%s' % (protocol, port, checkpath),
+        #                                timeout=3)
+        # lb.configure_health_check(hc)
         common.pprint("Reserved dns name %s" % lb['DNSName'], color='green')
+        if vms:
+                Instances = []
+                for vm in vms:
+                    update = self.update_metadata(name, 'loadbalancer', name)
+                    instanceid = self.get_id(name)
+                    if update == 0 and instanceid is not None:
+                        Instances.append({"InstanceId": instanceid})
+                if Instances:
+                    elb.register_instances_with_load_balancer(LoadBalancerName=name, Instances=Instances)
         return
 
     def delete_loadbalancer(self, name):
