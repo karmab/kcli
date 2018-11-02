@@ -56,6 +56,7 @@ TEMPLATES = {'': None, 'arch': 'https://linuximages.de/openstack/arch/arch-opens
              'rhel73': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.3/x86_64/product-software',
              'rhel74': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.4/x86_64/product-software',
              'rhel75': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.5/x86_64/product-software',
+             'rhel76': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.6/x86_64/product-software',
              'rhel72atomic': 'https://access.redhat.com/downloads/content/271/ver=/rhel---7/7.2.6-1/x86_64/'
              'product-software',
              'rhel73atomic': 'https://access.redhat.com/downloads/content/271/ver=/rhel---7/7.3.6/x86_64/'
