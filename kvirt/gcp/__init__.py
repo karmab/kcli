@@ -573,6 +573,8 @@ class Kgcp(object):
                     yamlinfo['plan'] = data['value']
                 if data['key'] == 'profile':
                     yamlinfo['profile'] = data['value']
+                if data['key'] == 'loadbalancer':
+                    yamlinfo['loadbalancer'] = data['value']
         if 'tags' in vm and 'items' in vm['tags']:
             yamlinfo['tags'] = ','.join(vm['tags']['items'])
         return yamlinfo

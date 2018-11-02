@@ -603,6 +603,8 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                     yamlinfo['plan'] = desc[1]
                 elif desc[0] == 'profile':
                     yamlinfo['profile'] = desc[1]
+                elif desc[0] == 'loadbalancer':
+                    yamlinfo['loadbalancer'] = desc[1]
         template = conn.follow_link(vm.template)
         source = template.name
         yamlinfo['template'] = source

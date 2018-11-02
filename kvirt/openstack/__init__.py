@@ -475,6 +475,8 @@ class Kopenstack(object):
                 yamlinfo['plan'] = metadata['plan']
             if 'profile' in metadata:
                 yamlinfo['profile'] = metadata['profile']
+            if 'loadbalancer' in metadata:
+                yamlinfo['loadbalancer'] = metadata['loadbalancer']
         return yamlinfo
 
 # should return ip string

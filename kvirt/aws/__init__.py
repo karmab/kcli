@@ -417,6 +417,23 @@ class Kaws(object):
             return None
         return vm['InstanceId']
 
+    def get_security_groups(self, name):
+        """
+
+        :param name:
+        :return:
+        """
+        conn = self.conn
+        try:
+            if name.startswith('i-'):
+                vm = conn.describe_instances(InstanceIds=[name])['Reservations'][0]['Instances'][0]
+            else:
+                Filters = {'Name': "tag:Name", 'Values': [name]}
+                vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
+        except:
+            return None
+        return vm['SecurityGroups']
+
     def info(self, name, vm=None):
         """
 
@@ -448,6 +465,7 @@ class Kaws(object):
         source = os.path.basename(image.image_location)
         plan = ''
         profile = ''
+        loadbalancer = None
         if 'Tags' in vm:
             for tag in vm['Tags']:
                 if tag['Key'] == 'plan':
@@ -456,6 +474,10 @@ class Kaws(object):
                     profile = tag['Value']
                 if tag['Key'] == 'Name':
                     name = tag['Value']
+                if tag['Key'] == 'loadbalancer':
+                    loadbalancer = tag['Value']
+        if loadbalancer is not None:
+            yamlinfo['loadbalancer'] = loadbalancer
         yamlinfo['name'] = name
         yamlinfo['status'] = state
         yamlinfo['ip'] = ip
@@ -587,12 +609,11 @@ class Kaws(object):
             Filters = {'Name': "tag:Name", 'Values': [name]}
             vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
         except:
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            return 1
         instanceid = vm['InstanceId']
         newtags = [{"Key": metatype, "Value": metavalue}]
         conn.create_tags(Resources=[instanceid], Tags=newtags)
-        # vm.add_tag(metatype, value=metavalue)
-        return
+        return 0
 
     def update_memory(self, name, memory):
         """
@@ -1045,31 +1066,56 @@ class Kaws(object):
         return {'result': 'success'}
 
     def create_loadbalancer(self, name, port=443, checkpath='/', vms=[], domain=None):
+        resource = self.resource
+        conn = self.conn
+        elb = self.elb
         protocols = {80: 'HTTP', 8080: 'HTTP', 443: 'HTTPS'}
         protocol = protocols[port] if port in protocols else 'TCP'
-        elb = self.elb
         Listeners = [{'Protocol': protocol, 'LoadBalancerPort': port, 'InstanceProtocol': protocol,
                       'InstancePort': port}]
         AvailabilityZones = ["%s%s" % (self.region, i) for i in ['a', 'b', 'c']]
         lb = elb.create_load_balancer(LoadBalancerName=name, Listeners=Listeners, AvailabilityZones=AvailabilityZones)
+        sg = resource.create_security_group(GroupName=name, Description=name)
+        sgid = sg.id
+        sgtags = [{"Key": "Name", "Value": name}]
+        sg.create_tags(Tags=sgtags)
+        sg.authorize_ingress(GroupName=name, FromPort=port, ToPort=port, IpProtocol='tcp', CidrIp="0.0.0.0/0")
         # hc = boto3.ec2.elb.HealthCheck('healthCheck', interval=20, target='%s:%s%s' % (protocol, port, checkpath),
         #                                timeout=3)
         # lb.configure_health_check(hc)
         common.pprint("Reserved dns name %s" % lb['DNSName'], color='green')
         if vms:
-                Instances = []
-                for vm in vms:
-                    update = self.update_metadata(name, 'loadbalancer', name)
-                    instanceid = self.get_id(name)
-                    if update == 0 and instanceid is not None:
-                        Instances.append({"InstanceId": instanceid})
-                if Instances:
-                    elb.register_instances_with_load_balancer(LoadBalancerName=name, Instances=Instances)
+            Instances = []
+            for vm in vms:
+                update = self.update_metadata(vm, 'loadbalancer', name)
+                instanceid = self.get_id(vm)
+                if update == 0 and instanceid is not None:
+                    Instances.append({"InstanceId": instanceid})
+                sgs = self.get_security_groups(vm)
+                sgnames = [x['GroupName'] for x in sgs]
+                if name not in sgnames:
+                    sgids = [x['GroupId'] for x in sgs]
+                    sgids.append(sgid)
+                    conn.modify_instance_attribute(InstanceId=instanceid, Groups=sgids)
+            if Instances:
+                elb.register_instances_with_load_balancer(LoadBalancerName=name, Instances=Instances)
         return
 
     def delete_loadbalancer(self, name):
         elb = self.elb
+        conn = self.conn
         elb.delete_load_balancer(LoadBalancerName=name)
+        vms = [v['name'] for v in self.list() if 'loadbalancer' in v and v['loadbalancer'] == name]
+        for vm in vms:
+            instanceid = self.get_id(vm)
+            sgs = self.get_security_groups(vm)
+            sgids = []
+            for sg in sgs:
+                if sg['GroupName'] != name:
+                    sgids.append(sg['GroupId'])
+            if sgids:
+                conn.modify_instance_attribute(InstanceId=instanceid, Groups=sgids)
+        conn.delete_security_group(GroupName=name)
 
     def list_loadbalancers(self):
         results = []
