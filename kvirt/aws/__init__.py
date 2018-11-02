@@ -384,7 +384,7 @@ class Kaws(object):
         except:
             common.pprint("VM %s not found" % name, color='red')
             return None, None
-        dnshost, domain = None
+        dnshost, domain = None, None
         if 'Tags' in vm:
             for tag in vm['Tags']:
                 if tag['Key'] == 'dnshost':

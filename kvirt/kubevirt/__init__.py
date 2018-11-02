@@ -523,7 +523,7 @@ class Kubevirt(object):
             return None, None
         if self.debug:
             pretty_print(vm)
-        dnshost, domain = None
+        dnshost, domain = None, None
         metadata = vm.get("metadata")
         annotations = metadata.get("annotations")
         if annotations is not None:
