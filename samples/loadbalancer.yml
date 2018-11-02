@@ -14,7 +14,6 @@ lb2:
 
 vm1:
  template: CentOS-7-x86_64-GenericCloud.qcow2
- reservedns: true
  cmds:
  - yum -y install httpd
  - systemctl start httpd
@@ -23,7 +22,6 @@ vm1:
 
 vm2:
  template: CentOS-7-x86_64-GenericCloud.qcow2
- reservedns: true
  cmds:
  - yum -y install httpd
  - systemctl start httpd

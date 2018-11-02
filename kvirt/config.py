@@ -1351,7 +1351,19 @@ class Kconfig(Kbaseconfig):
         elif delete:
             return
         else:
-            overrides = {'name': name, 'vms': vms, 'port': port, 'checkpath': checkpath, 'vms': vms}
+            vminfo = []
+            for vm in vms:
+                counter = 0
+                while counter != 100:
+                    ip = k.ip(vm)
+                    if ip is None:
+                        sleep(5)
+                        print("Waiting 5 seconds to grab ip for vm %s..." % vm)
+                        counter += 5
+                    else:
+                        break
+                vminfo.append({'name': vm, 'ip': ip})
+            overrides = {'name': name, 'vms': vminfo, 'port': port, 'checkpath': checkpath}
             self.plan(plan, inputstring=haproxyplan, overrides=overrides)
 
     def list_loadbalancer(self):

@@ -1439,7 +1439,7 @@ class Kvirt(object):
                     if ip is None:
                         time.sleep(5)
                         print("Waiting 5 seconds to grab ip and create DNS record...")
-                        counter += 10
+                        counter += 5
                     else:
                         break
         if ip is None:

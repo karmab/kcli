@@ -43,7 +43,7 @@ parameters:
         option forwardfor
         option httpchk HEAD [[ checkpath ]] HTTP/1.0
         [% for vm in vms -%]
-        server [[ vm ]] [[ vm ]]:[[ port ]] cookie A check
+        server [[ vm.name ]] [[ vm.ip ]]:[[ port ]] cookie A check
         [% endfor %]
  cmds:
   - yum -y install haproxy
