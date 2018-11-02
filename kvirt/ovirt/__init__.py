@@ -790,7 +790,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         :param information:
         :return:
         """
-        print("not implemented")
+        self.update_metadata(name, 'information', information)
         return
 
     def update_iso(self, name, iso):

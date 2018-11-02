@@ -555,7 +555,15 @@ class Kopenstack(object):
         :param metavalue:
         :return:
         """
-        print("not implemented")
+        nova = self.nova
+        try:
+            vm = nova.servers.find(name=name)
+        except:
+            common.pprint("VM %s not found" % name, color='red')
+            return
+        metadata = vm.metadata
+        metadata[metatype] = metavalue
+        nova.servers.set_meta(vm.id, metadata)
         return
 
     def update_memory(self, name, memory):
@@ -595,7 +603,7 @@ class Kopenstack(object):
         :param information:
         :return:
         """
-        print("not implemented")
+        self.update_metadata(name, 'information', information)
         return
 
     def update_iso(self, name, iso):
