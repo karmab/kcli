@@ -1211,7 +1211,7 @@ class Kconfig(Kbaseconfig):
                 return
         if lbentries:
                 common.pprint("Deploying Loadbalancers...", color='green')
-                for lbentry in lbentries:
+                for index, lbentry in enumerate(lbentries):
                     details = entries[lbentry]
                     port = details.get('port', 443)
                     if not port.isdigit():
@@ -1224,7 +1224,8 @@ class Kconfig(Kbaseconfig):
                     if name is None:
                         common.pprint("Missing Name for loadbalancer. Not creating it...", color='red')
                         continue
-                    self.handle_loadbalancer(name, port=port, checkpath=checkpath, vms=lbvms, domain=domain)
+                    self.handle_loadbalancer(name, port=port, checkpath=checkpath, vms=lbvms, domain=domain,
+                                             index=index)
         returndata = {'result': 'success', 'plan': plan}
         if newvms:
             returndata['newvms'] = newvms
@@ -1338,7 +1339,7 @@ class Kconfig(Kbaseconfig):
                 dest.add_image(url, pool, cmd=cmd)
         return {'result': 'success'}
 
-    def handle_loadbalancer(self, name, port=443, checkpath='/', vms=[], delete=False, domain=None):
+    def handle_loadbalancer(self, name, port=443, checkpath='/', vms=[], delete=False, domain=None, index=1):
         name = nameutils.get_random_name().replace('_', '-') if name is None else name
         k = self.k
         vms = vms.split(',') if vms is not None else []
@@ -1351,10 +1352,10 @@ class Kconfig(Kbaseconfig):
                 common.pprint("Creating loadbalancer %s" % name, color='green')
                 k.create_loadbalancer(name, port=port, checkpath=checkpath, vms=vms, domain=domain)
         elif delete:
-            common.pprint("Not implemented yet on %s" % self.type, color='red')
             return
         else:
-            overrides = {'name': 'haproxy_%s' % name, 'vms': vms, 'port': port, 'checkpath': checkpath, 'vms': vms}
+            haproxy_name = 'haproxy_%s_%0.2d' % (name, index)
+            overrides = {'name': haproxy_name, 'vms': vms, 'port': port, 'checkpath': checkpath, 'vms': vms}
             self.plan(name, inputstring=haproxyplan, overrides=overrides)
 
     def list_loadbalancer(self):

@@ -672,7 +672,7 @@ class Kgcp(object):
             vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
         except Exception as e:
             common.pprint("VM %s not found" % name)
-            return
+            return 1
         metadata = vm['metadata']['items'] if 'items' in vm['metadata'] else []
         found = False
         for entry in metadata:
@@ -684,6 +684,7 @@ class Kgcp(object):
             metadata.append({"key": metatype, "value": metavalue})
         metadata_body = {"fingerprint": vm['metadata']['fingerprint'], "items": metadata}
         conn.instances().setMetadata(project=project, zone=zone, instance=name, body=metadata_body).execute()
+        return 0
 
     def update_memory(self, name, memory):
         """
@@ -1257,11 +1258,17 @@ class Kgcp(object):
             instancegroupurl = operation['targetLink']
             self._wait_for_operation(operation)
             if vms:
+                instances = []
                 path = "https://www.googleapis.com/compute/v1/projects/%s/zones/%s/instances" % (project, zone)
-                instances_body = {"instances": [{"instance": "%s/%s" % (path, vm)} for vm in vms]}
-                operation = conn.instanceGroups().addInstances(project=project, zone=zone, instanceGroup=name,
-                                                               body=instances_body).execute()
-                self._wait_for_operation(operation)
+                for vm in vms:
+                    update = self.update_metadata(name, 'loadbalancer', name)
+                    if update == 0:
+                        instances.append({"instance": "%s/%s" % (path, vm)})
+                if instances:
+                    instances_body = {"instances": instances}
+                    operation = conn.instanceGroups().addInstances(project=project, zone=zone, instanceGroup=name,
+                                                                   body=instances_body).execute()
+                    self._wait_for_operation(operation)
             backend_body = {"healthChecks": [healthurl], "sessionAffinity": 'CLIENT_IP', "protocol": protocol,
                             "port-name": "%s-%d" % (name, port), "name": name,
                             "backends": [{"group": instancegroupurl}]}
@@ -1283,11 +1290,17 @@ class Kgcp(object):
             targeturl = operation['targetLink']
             self._wait_for_operation(operation)
             if vms:
+                instances = []
                 path = "https://www.googleapis.com/compute/v1/projects/%s/zones/%s/instances" % (project, zone)
-                instances_body = {"instances": [{"instance": "%s/%s" % (path, vm)} for vm in vms]}
-                operation = conn.targetPools().addInstance(project=project, region=region, targetPool=name,
-                                                           body=instances_body).execute()
-                self._wait_for_operation(operation)
+                for vm in vms:
+                    update = self.update_metadata(name, 'loadbalancer', name)
+                    if update == 0:
+                        instances.append({"instance": "%s/%s" % (path, vm)})
+                if instances:
+                    instances_body = {"instances": instances}
+                    operation = conn.targetPools().addInstance(project=project, region=region, targetPool=name,
+                                                               body=instances_body).execute()
+                    self._wait_for_operation(operation)
         if protocol == 'TCP':
             address_body = {"name": name, "ipVersion": "IPV4"}
             if domain is not None:

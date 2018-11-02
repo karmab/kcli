@@ -1,0 +1,13 @@
+vm1:
+ template: CentOS-7-x86_64-GenericCloud.qcow2
+ nets: 
+  - default
+  - name: testbrk
+    ovs: true
+
+vm2:
+ template: CentOS-7-x86_64-GenericCloud.qcow2
+ nets: 
+  - default
+  - name: testbrk
+    ovs: true
