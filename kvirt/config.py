@@ -1214,18 +1214,16 @@ class Kconfig(Kbaseconfig):
                 for index, lbentry in enumerate(lbentries):
                     details = entries[lbentry]
                     port = details.get('port', 443)
-                    if not port.isdigit():
+                    if isinstance(port, str) and not port.isdigit():
                         common.pprint("Wrong Port %s for loadbalancer. Not creating it..." % port, color='red')
                         continue
+                    else:
+                        port = int(port)
                     checkpath = details.get('checkpath', '/')
                     domain = details.get('domain')
                     lbvms = details.get('vms', [])
-                    name = details.get('name')
-                    if name is None:
-                        common.pprint("Missing Name for loadbalancer. Not creating it...", color='red')
-                        continue
-                    self.handle_loadbalancer(name, port=port, checkpath=checkpath, vms=lbvms, domain=domain,
-                                             index=index)
+                    self.handle_loadbalancer(lbentry, port=port, checkpath=checkpath, vms=lbvms, domain=domain,
+                                             plan=plan)
         returndata = {'result': 'success', 'plan': plan}
         if newvms:
             returndata['newvms'] = newvms
@@ -1339,10 +1337,9 @@ class Kconfig(Kbaseconfig):
                 dest.add_image(url, pool, cmd=cmd)
         return {'result': 'success'}
 
-    def handle_loadbalancer(self, name, port=443, checkpath='/', vms=[], delete=False, domain=None, index=1):
+    def handle_loadbalancer(self, name, port=443, checkpath='/', vms=[], delete=False, domain=None, plan=None):
         name = nameutils.get_random_name().replace('_', '-') if name is None else name
         k = self.k
-        vms = vms.split(',') if vms is not None else []
         if self.type in ['gcp']:
             if delete:
                 common.pprint("Deleting loadbalancer %s" % name, color='green')
@@ -1354,9 +1351,8 @@ class Kconfig(Kbaseconfig):
         elif delete:
             return
         else:
-            haproxy_name = 'haproxy_%s_%0.2d' % (name, index)
-            overrides = {'name': haproxy_name, 'vms': vms, 'port': port, 'checkpath': checkpath, 'vms': vms}
-            self.plan(name, inputstring=haproxyplan, overrides=overrides)
+            overrides = {'name': name, 'vms': vms, 'port': port, 'checkpath': checkpath, 'vms': vms}
+            self.plan(plan, inputstring=haproxyplan, overrides=overrides)
 
     def list_loadbalancer(self):
         if self.type not in ['gcp']:

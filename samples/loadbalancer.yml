@@ -1,0 +1,31 @@
+lb1:
+ type: loadbalancer
+ port: 80
+ vms:
+  - vm1
+  - vm2
+
+lb2:
+ type: loadbalancer
+ port: 2000
+ vms:
+  - vm1
+  - vm2
+
+vm1:
+ template: CentOS-7-x86_64-GenericCloud.qcow2
+ reservedns: true
+ cmds:
+ - yum -y install httpd
+ - systemctl start httpd
+ - systemctl enable httpd
+ - echo i am vm1 > /var/www/html/index.html
+
+vm2:
+ template: CentOS-7-x86_64-GenericCloud.qcow2
+ reservedns: true
+ cmds:
+ - yum -y install httpd
+ - systemctl start httpd
+ - systemctl enable httpd
+ - echo i am vm2 > /var/www/html/index.html

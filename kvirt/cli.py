@@ -649,7 +649,7 @@ def lb(args):
     delete = args.delete
     port = args.port
     domain = args.domain
-    vms = args.vms
+    vms = args.vms.split(',') if args.vms is not None else []
     name = nameutils.get_random_name().replace('_', '-') if args.name is None else args.name
     if delete and not yes:
         common.confirm("Are you sure?")
