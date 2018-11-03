@@ -1368,9 +1368,13 @@ class Kconfig(Kbaseconfig):
             self.plan(plan, inputstring=haproxyplan, overrides=overrides)
 
     def list_loadbalancer(self):
+        k = self.k
         if self.type not in ['aws', 'gcp']:
-            common.pprint("Not available on this provider at the moment", color='blue')
-            return []
+            results = []
+            for vm in k.list():
+                if vm['profile'].startswith('loadbalancer') and len(vm['profile'].split('_')) == 2:
+                    port = vm['profile'].split('_')[1]
+                    results.append([vm['name'], vm['ip'], 'tcp', port, ''])
+            return results
         else:
-            k = self.k
             return k.list_loadbalancers()

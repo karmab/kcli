@@ -4,8 +4,12 @@ parameters:
  name: haproxy
  vms: []
 
-[[ name ]]:
+loadbalancer_[[ port ]]:
+ type: profile
  template: [[ template ]]
+
+[[ name ]]:
+ profile: loadbalancer_[[ port ]]
  files:
   - path: /root/haproxy.cfg
     content:   |
