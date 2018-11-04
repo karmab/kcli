@@ -268,6 +268,14 @@ class Kgcp(object):
                     startup_script += "cat <<'EOF' >%s\n%s\nEOF\n" % (path, newfile)
             elif content is None:
                 continue
+        if enableroot and template is not None:
+            user = common.get_user(template)
+            enablerootcmds = ['sed -i "s/.*PermitRootLogin.*/PermitRootLogin yes/" /etc/ssh/sshd_config',
+                              'systemctl restart sshd']
+            if not cmds:
+                cmds.extend(enablerootcmds)
+            else:
+                cmds = enablerootcmds
         if cmds:
             for cmd in cmds:
                 if cmd.startswith('#'):
@@ -303,8 +311,10 @@ class Kgcp(object):
             user = common.get_user(template)
             if user == 'root':
                 user = getuser()
-            keys = ["%s: %s" % (user, x) for x in keys]
-            keys = '\n'.join(keys)
+            finalkeys = ["%s: %s" % (user, x) for x in keys]
+            if enableroot:
+                finalkeys.extend(["root: %s" % x for x in keys])
+            keys = '\n'.join(finalkeys)
             newval = {'key': 'ssh-keys', 'value': keys}
             body['metadata']['items'].append(newval)
         newval = {'key': 'plan', 'value': plan}
@@ -880,13 +890,12 @@ class Kgcp(object):
         :param D:
         :return:
         """
-        if user == 'root':
-            common.pprint("Cant access instance using root user", color='red')
-            os._exit(1)
         u, ip = self._ssh_credentials(name)
         if ip is None:
             return None
-        sshcommand = common.ssh(name, ip=ip, host=None, hostuser=None, user=u,
+        if user is None:
+            user = u
+        sshcommand = common.ssh(name, ip=ip, host=None, hostuser=None, user=user,
                                 local=local, remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, Y=Y, D=D,
                                 debug=self.debug)
         return sshcommand
@@ -1240,13 +1249,23 @@ class Kgcp(object):
         conn.images().insert(project=project, body=body).execute()
         return {'result': 'success'}
 
-    def create_loadbalancer(self, name, port=443, checkpath='/', vms=[], domain=None):
+    def create_loadbalancer(self, name, ports=[], checkpath='/index.html', vms=[], domain=None):
+        port = int(ports[0])
+        if len(ports) > 1:
+            common.pprint("Only deploying for first port %s of the list" % port, color='blue')
         protocols = {80: 'HTTP', 8080: 'HTTP', 443: 'HTTPS'}
         protocol = protocols[port] if port in protocols else 'TCP'
         conn = self.conn
         project = self.project
         zone = self.zone
         region = self.region
+        instances = []
+        vmpath = "https://www.googleapis.com/compute/v1/projects/%s/zones/%s/instances" % (project, zone)
+        if vms:
+            for vm in vms:
+                update = self.update_metadata(vm, 'loadbalancer', name)
+                if update == 0:
+                    instances.append({"instance": "%s/%s" % (vmpath, vm)})
         health_check_body = {"checkIntervalSec": "10", "timeoutSec": "10", "unhealthyThreshold": 3,
                              "healthyThreshold": 3, "type": protocol, "name": name}
         newcheck = {"port": port}
@@ -1259,21 +1278,16 @@ class Kgcp(object):
             operation = conn.instanceGroups().insert(project=project, zone=zone, body=instance_group_body).execute()
             instancegroupurl = operation['targetLink']
             self._wait_for_operation(operation)
-            if vms:
-                instances = []
-                path = "https://www.googleapis.com/compute/v1/projects/%s/zones/%s/instances" % (project, zone)
-                for vm in vms:
-                    update = self.update_metadata(name, 'loadbalancer', name)
-                    if update == 0:
-                        instances.append({"instance": "%s/%s" % (path, vm)})
-                if instances:
-                    instances_body = {"instances": instances}
-                    operation = conn.instanceGroups().addInstances(project=project, zone=zone, instanceGroup=name,
-                                                                   body=instances_body).execute()
-                    self._wait_for_operation(operation)
+            if instances:
+                instances_body = {"instances": instances}
+                operation = conn.instanceGroups().addInstances(project=project, zone=zone, instanceGroup=name,
+                                                               body=instances_body).execute()
+                self._wait_for_operation(operation)
             backend_body = {"healthChecks": [healthurl], "sessionAffinity": 'CLIENT_IP', "protocol": protocol,
                             "port-name": "%s-%d" % (name, port), "name": name,
                             "backends": [{"group": instancegroupurl}]}
+            for port in ports:
+                backend_body
             operation = conn.backendServices().insert(project=project, body=backend_body).execute()
             backendurl = operation['targetLink']
             self._wait_for_operation(operation)
@@ -1291,18 +1305,11 @@ class Kgcp(object):
             operation = conn.targetPools().insert(project=project, region=region, body=target_pool_body).execute()
             targeturl = operation['targetLink']
             self._wait_for_operation(operation)
-            if vms:
-                instances = []
-                path = "https://www.googleapis.com/compute/v1/projects/%s/zones/%s/instances" % (project, zone)
-                for vm in vms:
-                    update = self.update_metadata(name, 'loadbalancer', name)
-                    if update == 0:
-                        instances.append({"instance": "%s/%s" % (path, vm)})
-                if instances:
-                    instances_body = {"instances": instances}
-                    operation = conn.targetPools().addInstance(project=project, region=region, targetPool=name,
-                                                               body=instances_body).execute()
-                    self._wait_for_operation(operation)
+            if instances:
+                instances_body = {"instances": instances}
+                operation = conn.targetPools().addInstance(project=project, region=region, targetPool=name,
+                                                           body=instances_body).execute()
+                self._wait_for_operation(operation)
         if protocol == 'TCP':
             address_body = {"name": name, "ipVersion": "IPV4"}
             if domain is not None:

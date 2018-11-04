@@ -1065,24 +1065,34 @@ class Kaws(object):
         conn.create_image(InstanceId=InstanceId, Name=Name, Description=Description, NoReboot=True)
         return {'result': 'success'}
 
-    def create_loadbalancer(self, name, port=443, checkpath='/', vms=[], domain=None):
+    def create_loadbalancer(self, name, ports=[], checkpath='/index.html', vms=[], domain=None):
+        ports = [int(port) for port in ports]
         resource = self.resource
         conn = self.conn
         elb = self.elb
         protocols = {80: 'HTTP', 8080: 'HTTP', 443: 'HTTPS'}
-        protocol = protocols[port] if port in protocols else 'TCP'
-        Listeners = [{'Protocol': protocol, 'LoadBalancerPort': port, 'InstanceProtocol': protocol,
-                      'InstancePort': port}]
+        Listeners = []
+        for port in ports:
+            protocol = protocols[port] if port in protocols else 'TCP'
+            Listener = {'Protocol': protocol, 'LoadBalancerPort': port, 'InstanceProtocol': protocol,
+                        'InstancePort': port}
+            Listeners.append(Listener)
         AvailabilityZones = ["%s%s" % (self.region, i) for i in ['a', 'b', 'c']]
         lb = elb.create_load_balancer(LoadBalancerName=name, Listeners=Listeners, AvailabilityZones=AvailabilityZones)
         sg = resource.create_security_group(GroupName=name, Description=name)
         sgid = sg.id
         sgtags = [{"Key": "Name", "Value": name}]
         sg.create_tags(Tags=sgtags)
-        sg.authorize_ingress(GroupName=name, FromPort=port, ToPort=port, IpProtocol='tcp', CidrIp="0.0.0.0/0")
-        # hc = boto3.ec2.elb.HealthCheck('healthCheck', interval=20, target='%s:%s%s' % (protocol, port, checkpath),
-        #                                timeout=3)
-        # lb.configure_health_check(hc)
+        for port in ports:
+            sg.authorize_ingress(GroupName=name, FromPort=port, ToPort=port, IpProtocol='tcp',
+                                 CidrIp="0.0.0.0/0")
+        if 80 in ports:
+            HealthTarget = 'HTTP:80%s' % checkpath
+        else:
+            HealthTarget = '%s:%s' % (protocol, port)
+        HealthCheck = {'Interval': 20, 'Target': HealthTarget, 'Timeout': 3, 'UnhealthyThreshold': 10,
+                       'HealthyThreshold': 2}
+        elb.configure_health_check(LoadBalancerName=name, HealthCheck=HealthCheck)
         common.pprint("Reserved dns name %s" % lb['DNSName'], color='green')
         if vms:
             Instances = []
@@ -1121,11 +1131,14 @@ class Kaws(object):
         results = []
         elb = self.elb
         lbs = elb.describe_load_balancers()
+        ports = []
         for lb in lbs['LoadBalancerDescriptions']:
             name = lb['LoadBalancerName']
             ip = lb['DNSName']
-            protocol = lb['ListenerDescriptions'][0]['Listener']['Protocol']
-            port = lb['ListenerDescriptions'][0]['Listener']['LoadBalancerPort']
+            for listener in lb['ListenerDescriptions']:
+                protocol = listener['Listener']['Protocol']
+                ports.append(str(listener['Listener']['LoadBalancerPort']))
+            ports = '+'.join(ports)
             target = ''
-            results.append([name, ip, protocol, port, target])
+            results.append([name, ip, protocol, ports, target])
         return results

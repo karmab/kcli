@@ -356,7 +356,7 @@ def _list(args):
             for lb in sorted(loadbalancers):
                 flavorstable.add_row([lb])
         else:
-            loadbalancerstable = PrettyTable(["LoadBalancer", "IPAddress", "IPProtocol", "Port", "Target"])
+            loadbalancerstable = PrettyTable(["LoadBalancer", "IPAddress", "IPProtocol", "Ports", "Target"])
             for lb in sorted(loadbalancers):
                     loadbalancerstable.add_row(lb)
         loadbalancerstable.align["Loadbalancer"] = "l"
@@ -647,14 +647,15 @@ def lb(args):
     checkpath = args.checkpath
     yes = args.yes
     delete = args.delete
-    port = args.port
+    ports = args.ports
     domain = args.domain
     vms = args.vms.split(',') if args.vms is not None else []
+    ports = args.ports.split(',') if args.ports is not None else []
     name = nameutils.get_random_name().replace('_', '-') if args.name is None else args.name
     if delete and not yes:
         common.confirm("Are you sure?")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
-    config.handle_loadbalancer(name, port=port, checkpath=checkpath, vms=vms, delete=delete, domain=domain)
+    config.handle_loadbalancer(name, ports=ports, checkpath=checkpath, vms=vms, delete=delete, domain=domain)
     return 0
 
 
@@ -1144,10 +1145,10 @@ def cli():
 
     lb_info = 'Create/Delete loadbalancer'
     lb_parser = subparsers.add_parser('lb', description=lb_info, help=lb_info)
-    lb_parser.add_argument('--checkpath', default='/', help="Path to check. Defaults to /healthz")
+    lb_parser.add_argument('--checkpath', default='/index.html', help="Path to check. Defaults to /index.html")
     lb_parser.add_argument('-d', '--delete', action='store_true')
     lb_parser.add_argument('--domain', help='Domain to create a dns entry associated to the load balancer')
-    lb_parser.add_argument('-p', '--port', type=int, default=443, help='Load Balancer Port. Defaults to 443')
+    lb_parser.add_argument('-p', '--ports', default='443', help='Load Balancer Ports. Defaults to 443')
     lb_parser.add_argument('-v', '--vms', help='Vms to add to the pool')
     lb_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     lb_parser.add_argument('name', metavar='NAME', nargs='?')

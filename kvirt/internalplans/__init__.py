@@ -4,12 +4,12 @@ parameters:
  name: haproxy
  vms: []
 
-loadbalancer_[[ port ]]:
+loadbalancer_[[ ports | join('+') ]]:
  type: profile
  template: [[ template ]]
 
 [[ name ]]:
- profile: loadbalancer_[[ port ]]
+ profile: loadbalancer_[[ ports | join('+') ]]
  files:
   - path: /root/haproxy.cfg
     content:   |
@@ -35,6 +35,7 @@ loadbalancer_[[ port ]]:
         timeout server 300000
         maxconn     60000
         retries     3
+      [% for port in ports -%]
       listen [[ name ]] *:[[ port ]]
         mode http
         stats enable
@@ -49,6 +50,7 @@ loadbalancer_[[ port ]]:
         [% for vm in vms -%]
         server [[ vm.name ]] [[ vm.ip ]]:[[ port ]] cookie A check
         [% endfor %]
+       [% endfor %]
  cmds:
   - yum -y install haproxy
   - cp /root/haproxy.cfg /etc/haproxy

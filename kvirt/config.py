@@ -1214,16 +1214,14 @@ class Kconfig(Kbaseconfig):
                 common.pprint("Deploying Loadbalancers...", color='green')
                 for index, lbentry in enumerate(lbentries):
                     details = entries[lbentry]
-                    port = details.get('port', 443)
-                    if isinstance(port, str) and not port.isdigit():
-                        common.pprint("Wrong Port %s for loadbalancer. Not creating it..." % port, color='red')
-                        continue
-                    else:
-                        port = int(port)
+                    ports = details.get('ports', [])
+                    if not ports:
+                        common.pprint("Missing Ports for loadbalancer. Not creating it...", color='red')
+                        return
                     checkpath = details.get('checkpath', '/')
                     domain = details.get('domain')
                     lbvms = details.get('vms', [])
-                    self.handle_loadbalancer(lbentry, port=port, checkpath=checkpath, vms=lbvms, domain=domain,
+                    self.handle_loadbalancer(lbentry, ports=ports, checkpath=checkpath, vms=lbvms, domain=domain,
                                              plan=plan)
         returndata = {'result': 'success', 'plan': plan}
         if newvms:
@@ -1338,7 +1336,7 @@ class Kconfig(Kbaseconfig):
                 dest.add_image(url, pool, cmd=cmd)
         return {'result': 'success'}
 
-    def handle_loadbalancer(self, name, port=443, checkpath='/', vms=[], delete=False, domain=None, plan=None):
+    def handle_loadbalancer(self, name, ports=[], checkpath='/', vms=[], delete=False, domain=None, plan=None):
         name = nameutils.get_random_name().replace('_', '-') if name is None else name
         k = self.k
         if self.type in ['aws', 'gcp']:
@@ -1348,7 +1346,7 @@ class Kconfig(Kbaseconfig):
                 return
             else:
                 common.pprint("Creating loadbalancer %s" % name, color='green')
-                k.create_loadbalancer(name, port=port, checkpath=checkpath, vms=vms, domain=domain)
+                k.create_loadbalancer(name, ports=ports, checkpath=checkpath, vms=vms, domain=domain)
         elif delete:
             return
         else:
@@ -1364,7 +1362,7 @@ class Kconfig(Kbaseconfig):
                     else:
                         break
                 vminfo.append({'name': vm, 'ip': ip})
-            overrides = {'name': name, 'vms': vminfo, 'port': port, 'checkpath': checkpath}
+            overrides = {'name': name, 'vms': vminfo, 'ports': ports, 'checkpath': checkpath}
             self.plan(plan, inputstring=haproxyplan, overrides=overrides)
 
     def list_loadbalancer(self):
@@ -1373,8 +1371,8 @@ class Kconfig(Kbaseconfig):
             results = []
             for vm in k.list():
                 if vm['profile'].startswith('loadbalancer') and len(vm['profile'].split('_')) == 2:
-                    port = vm['profile'].split('_')[1]
-                    results.append([vm['name'], vm['ip'], 'tcp', port, ''])
+                    ports = vm['profile'].split('_')[1]
+                    results.append([vm['name'], vm['ip'], 'tcp', ports, ''])
             return results
         else:
             return k.list_loadbalancers()
