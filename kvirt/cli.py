@@ -127,7 +127,7 @@ def delete(args):
             if result['result'] == 'success':
                 common.pprint("vm %s deleted on %s" % (name, config.client), color='green')
                 codes.append(0)
-                common.set_lastvm(name, args.client, delete=True)
+                common.set_lastvm(name, config.client, delete=True)
             else:
                 reason = result['reason']
                 common.pprint("Could not delete vm %s because %s" % (name, reason), color='red')
