@@ -309,29 +309,35 @@ class Kconfig(Kbaseconfig):
         files = profile.get('files', default_files)
         if files:
             for index, fil in enumerate(files):
-                if not isinstance(fil, dict):
-                    common.pprint("Incorrect file entry.Leaving...", color='red')
-                    os._exit(1)
-                else:
+                if isinstance(fil, str):
+                    common.pprint("Using /root/%s as path for file entry" % fil, color='blue')
+                    path = "/root/%s" % fil
+                    origin = fil
+                    content = None
+                    files[index] = {'path': path, 'origin': origin}
+                elif isinstance(fil, dict):
                     path = fil.get('path')
                     origin = fil.get('origin')
                     content = fil.get('content')
-                    if path is None:
-                            common.pprint("Missing path in files of %s.Leaving..." % name, color='red')
-                            os._exit(1)
-                    if origin is not None:
-                        origin = os.path.expanduser(origin)
-                        if basedir != '.':
-                            origin = "%s/%s" % (basedir, origin)
-                            files[index]['origin'] = origin
-                        if not os.path.exists(origin):
-                            common.pprint("File %s not found in %s.Leaving..." % (origin, name),
-                                          color='red')
-                            os._exit(1)
-                    elif content is None:
-                            common.pprint("Content of file %s not found in %s.Ignoring..." % (path, name),
-                                          color='red')
-                            os._exit(1)
+                else:
+                    common.pprint("Incorrect file entry.Leaving...", color='red')
+                    os._exit(1)
+                if path is None:
+                        common.pprint("Missing path in files of %s.Leaving..." % name, color='red')
+                        os._exit(1)
+                if origin is not None:
+                    origin = os.path.expanduser(origin)
+                    if basedir != '.':
+                        origin = "%s/%s" % (basedir, origin)
+                        files[index]['origin'] = origin
+                    if not os.path.exists(origin):
+                        common.pprint("File %s not found in %s.Leaving..." % (origin, name),
+                                      color='red')
+                        os._exit(1)
+                elif content is None:
+                    common.pprint("Content of file %s not found in %s.Ignoring..." % (path, name),
+                                  color='red')
+                    os._exit(1)
         enableroot = profile.get('enableroot', default_enableroot)
         tags = None
         if default_tags is not None:
