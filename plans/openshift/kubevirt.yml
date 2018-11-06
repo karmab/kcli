@@ -11,7 +11,6 @@ kubevirt:
   - default
  disks:
   - size: 60
-  - size: [[ docker_disk_size ]] 
  pool: default
  scripts: 
   - requirements.sh
