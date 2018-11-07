@@ -1,9 +1,7 @@
 VERSION="[[ kubevirt_version ]]"
 yum -y install xorg-x11-xauth virt-viewer
 oc project kube-system
-[% if emulation %]
-oc create configmap -n kube-system kubevirt-config --from-literal debug.useEmulation=true
-[% endif %]
+grep -q vmx /proc/cpuinfo || oc create configmap -n kube-system kubevirt-config --from-literal debug.useEmulation=true
 wget https://github.com/kubevirt/kubevirt/releases/download/${VERSION}/kubevirt.yaml
 oc adm policy add-scc-to-user privileged -z kubevirt-privileged
 oc adm policy add-scc-to-user privileged -z kubevirt-controller

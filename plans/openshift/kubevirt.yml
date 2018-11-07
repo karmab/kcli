@@ -1,7 +1,6 @@
 parameters:
    baseplan: upstream.yml
    kubevirt_version: v0.9.1
-   emulation: false
 
 kubevirt:
  template: CentOS-7-x86_64-GenericCloud.qcow2

@@ -13,10 +13,12 @@ export DNS=`ip a l  eth0 | grep 'inet ' | cut -d' ' -f6 | awk -F'/' '{ print $1}
 [% endif %]
 [% if openshift_version == 'v3.9' %]
 oc cluster up --public-hostname ${DNS} --routing-suffix ${DNS}
-[% elif asb %]
-oc cluster up --public-hostname ${DNS} --routing-suffix ${DNS} --enable=service-catalog,router,registry,web-console,persistent-volumes,rhel-imagestreams,automation-service-broker --write-config=true
 [% else %]
 oc cluster up --public-hostname ${DNS} --routing-suffix ${DNS} --enable=router,registry,web-console,persistent-volumes,rhel-imagestreams
+[% if asb %]
+oc cluster add service-catalog
+oc cluster add automation-service-broker
+[% endif %]
 [% endif %]
 oc login -u system:admin
 oc adm policy add-cluster-role-to-user cluster-admin [[ admin_user ]]
