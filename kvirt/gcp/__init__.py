@@ -547,7 +547,7 @@ class Kgcp(object):
         if 'custom' in machinetype:
             yamlinfo['cpus'], yamlinfo['memory'] = machinetype.split('-')[1:]
         yamlinfo['autostart'] = vm['scheduling']['automaticRestart']
-        if 'natIP'in vm['networkInterfaces'][0]['accessConfigs'][0]:
+        if 'accessConfigs' in vm['networkInterfaces'][0] and 'natIP'in vm['networkInterfaces'][0]['accessConfigs'][0]:
             yamlinfo['ip'] = vm['networkInterfaces'][0]['accessConfigs'][0]['natIP']
         source = os.path.basename(vm['disks'][0]['source'])
         source = conn.disks().get(zone=zone, project=self.project, disk=source).execute()

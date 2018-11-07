@@ -781,9 +781,9 @@ class Kconfig(Kbaseconfig):
             for keyfile in glob.glob("%s.key*" % plan):
                 common.pprint("file %s from %s deleted!" % (keyfile, plan), color='green')
                 os.remove(keyfile)
-            if deletedlbs and self.type in ['gcp']:
+            if deletedlbs and self.type in ['aws', 'gcp']:
                 for lb in deletedlbs:
-                    self.delete_loadbalancer(lb)
+                    self.k.delete_loadbalancer(lb)
             if found:
                 common.pprint("Plan %s deleted!" % plan, color='green')
             else:

@@ -9,14 +9,15 @@ custom:
 
 kubernetes-the-hard-way:
  type: loadbalancer
- port: 80
+ ports:
+ - 80
  domain: [[ domain ]]
  vms:
-  - controller1
+  - controller-0
+  - controller-1
   - controller-2
-  - controller-3
 
-[% for i in range(0, 2) %]
+[% for i in range(0, 3) %]
 controller-[[ i ]]:
  template: ubuntu-1804-lts
  flavor: n1-standard-1
@@ -67,7 +68,7 @@ controller-[[ i ]]:
 [% endif %]
 [% endfor %]
 
-[% for i in range(0, 2) %]
+[% for i in range(0, 3) %]
 worker-[[ i ]]:
  template: ubuntu-1804-lts
  flavor: n1-standard-1
