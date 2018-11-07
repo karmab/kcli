@@ -239,14 +239,20 @@ class Kgcp(object):
                                                'https://www.googleapis.com/auth/logging.write']}]
         body['metadata'] = {'items': []}
         startup_script = ''
+        sshdircreated = False
         for fil in files:
             if not isinstance(fil, dict):
                 continue
             origin = fil.get('origin')
             path = fil.get('path')
             content = fil.get('content')
+            mode = fil.get('mode', '0600')
+            permissions = fil.get('permissions', mode)
             if path is None:
                 continue
+            if path.startswith('/root/.ssh/') and not sshdircreated:
+                startup_script += 'mkdir -p /root/.ssh\nchmod 700 /root/.ssh\n'
+                sshdircreated = True
             if origin is not None:
                 origin = os.path.expanduser(origin)
                 if not os.path.exists(origin):
@@ -263,12 +269,12 @@ class Kgcp(object):
                                       loader=FileSystemLoader(basedir))
                     templ = env.get_template(os.path.basename(origin))
                     newfile = templ.render(overrides)
-                    startup_script += "cat <<'EOF' >%s\n%s\nEOF\n" % (path, newfile)
+                    startup_script += "cat <<'EOF' >%s\n%s\nEOF\nchmod %s %s\n" % (path, newfile, permissions, path)
                 else:
                     newfile = open(origin, 'r').read()
-                    startup_script += "cat <<'EOF' >%s\n%s\nEOF\n" % (path, newfile)
+                    startup_script += "cat <<'EOF' >%s\n%s\nEOF\nchmod %s %s\n" % (path, newfile, permissions, path)
             elif content is not None:
-                    startup_script += "cat <<'EOF' >%s\n%s\nEOF\n" % (path, content)
+                    startup_script += "cat <<'EOF' >%s\n%s\nEOF\nchmod %s %s\n" % (path, content, permissions, path)
         if enableroot and template is not None:
             user = common.get_user(template)
             enablerootcmds = ['sed -i "s/.*PermitRootLogin.*/PermitRootLogin yes/" /etc/ssh/sshd_config',
