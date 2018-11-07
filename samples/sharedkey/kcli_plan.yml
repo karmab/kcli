@@ -1,4 +1,4 @@
-vm1:
+vm4:
  template: CentOS-7-x86_64-GenericCloud.qcow2
  memory: 1024
  numcpus: 2
@@ -11,7 +11,7 @@ vm1:
  cmds:
   - echo unix1234 | passwd --stdin root
 
-vm4:
+vm5:
  template: CentOS-7-x86_64-GenericCloud.qcow2
  memory: 1024
  numcpus: 2

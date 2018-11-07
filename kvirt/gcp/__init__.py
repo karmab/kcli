@@ -245,6 +245,8 @@ class Kgcp(object):
             origin = fil.get('origin')
             path = fil.get('path')
             content = fil.get('content')
+            if path is None:
+                continue
             if origin is not None:
                 origin = os.path.expanduser(origin)
                 if not os.path.exists(origin):
@@ -265,8 +267,8 @@ class Kgcp(object):
                 else:
                     newfile = open(origin, 'r').read()
                     startup_script += "cat <<'EOF' >%s\n%s\nEOF\n" % (path, newfile)
-            elif content is None:
-                continue
+            elif content is not None:
+                    startup_script += "cat <<'EOF' >%s\n%s\nEOF\n" % (path, content)
         if enableroot and template is not None:
             user = common.get_user(template)
             enablerootcmds = ['sed -i "s/.*PermitRootLogin.*/PermitRootLogin yes/" /etc/ssh/sshd_config',
@@ -340,13 +342,6 @@ class Kgcp(object):
         if self.debug:
             print(body)
         conn.instances().insert(project=project, zone=zone, body=body).execute()
-        # if customnet is not None:
-        # address_body = {"name": name "subnet": }
-        # operation = conn.addresses().insert(project=project, region=region, body=address_body).execute()
-        # firewall_body = {"name": "ssh-%s" % name, "direction": "INGRESS",
-        #                 "allowed": [{"IPProtocol": "tcp", "ports": [22]}]}
-        # operation = conn.firewalls().insert(project=project, body=firewall_body).execute()
-        # self._wait_for_operation(operation)
         if reservedns and domain is not None:
             self.reserve_dns(name, nets=nets, domain=domain, alias=alias)
         return {'result': 'success'}
