@@ -188,9 +188,8 @@ class Kgcp(object):
             else:
                 foundnets.append(netname)
             newnet = {'network': 'global/networks/%s' % netname}
-            if netname == 'default':
-                newnet['accessConfigs'] = [{'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}]
-            else:
+            newnet['accessConfigs'] = [{'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}]
+            if netname != 'default':
                 newnet['subnetwork'] = 'projects/%s/regions/%s/subnetworks/%s' % (project, region, netname)
             if ip is not None:
                 newnet['networkIP'] = ip
@@ -273,9 +272,9 @@ class Kgcp(object):
             enablerootcmds = ['sed -i "s/.*PermitRootLogin.*/PermitRootLogin yes/" /etc/ssh/sshd_config',
                               'systemctl restart sshd']
             if not cmds:
-                cmds.extend(enablerootcmds)
-            else:
                 cmds = enablerootcmds
+            else:
+                cmds.extend(enablerootcmds)
         if cmds:
             for cmd in cmds:
                 if cmd.startswith('#'):
@@ -341,7 +340,14 @@ class Kgcp(object):
         if self.debug:
             print(body)
         conn.instances().insert(project=project, zone=zone, body=body).execute()
-        if reservedns:
+        # if customnet is not None:
+        # address_body = {"name": name "subnet": }
+        # operation = conn.addresses().insert(project=project, region=region, body=address_body).execute()
+        # firewall_body = {"name": "ssh-%s" % name, "direction": "INGRESS",
+        #                 "allowed": [{"IPProtocol": "tcp", "ports": [22]}]}
+        # operation = conn.firewalls().insert(project=project, body=firewall_body).execute()
+        # self._wait_for_operation(operation)
+        if reservedns and domain is not None:
             self.reserve_dns(name, nets=nets, domain=domain, alias=alias)
         return {'result': 'success'}
 
@@ -655,6 +661,12 @@ class Kgcp(object):
         if domain is not None:
             self.delete_dns(name, domain)
         conn.instances().delete(zone=zone, project=project, instance=name).execute()
+        # try:
+        #     firewall_name = "ssh-%s" % name
+        #     operation = conn.firewalls().delete(project=project, firewall=firewall_name).execute()
+        #     self._wait_for_operation(operation)
+        # except Exception as e:
+        #     pass
         return {'result': 'success'}
 
     def clone(self, old, new, full=False, start=False):
