@@ -182,20 +182,18 @@ class Kaws(object):
         blockdevicemappings = []
         privateips = []
         for index, net in enumerate(nets):
-            networkinterface = {'AssociatePublicIpAddress': False, 'DeleteOnTermination': True,
-                                'Description': "eth%s" % index, 'DeviceIndex': index, 'Groups': ['string'],
-                                'SubnetId': 'string'}
-            if index == 0:
-                networkinterface['AssociatePublicIpAddress'] = True
+            networkinterface = {'DeleteOnTermination': True, 'Description': "eth%s" % index, 'DeviceIndex': index,
+                                'Groups': ['string'], 'SubnetId': 'string'}
             ip = None
             if isinstance(net, str):
                 netname = net
+                netpublic = True
             elif isinstance(net, dict) and 'name' in net:
                 netname = net['name']
-                if 'ip' in net:
-                    ip = net['ip']
-                if 'alias' in net:
-                    alias = net['alias']
+                ip = net.get('ip')
+                alias = net.get('alias')
+                netpublic = net.get('public', True)
+            networkinterface['AssociatePublicIpAddress'] = netpublic if index == 0 else False
             if netname == 'default':
                 if defaultsubnetid is not None:
                     netname = defaultsubnetid

@@ -930,7 +930,7 @@ Basic testing can be run with pytest. If using a remote host/client, you ll want
 - *diskthin* Defaults to True
 - *disks* Array of disks to define. For each of them, you can specify pool, size, thin (as boolean), interface (either ide or virtio) and a wwn.If you omit parameters, default values will be used from config or profile file (You can actually let the entire entry blank or just indicate a size number directly)
 - *iso* (optional)
-- *nets* (optional)
+- *nets* Array of networks to define. For each of them, you can specify just a string for the name, or a dict containing name, public and alias and ip, mask and gateway
 - *gateway* (optional)
 - *dns* (optional) Dns servers
 - *domain* (optional) Dns search domain

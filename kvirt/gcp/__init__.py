@@ -172,15 +172,15 @@ class Kgcp(object):
         body = {'name': name, 'machineType': machine_type, 'networkInterfaces': []}
         foundnets = []
         for index, net in enumerate(nets):
-            ip = None
             if isinstance(net, str):
                 netname = net
+                netpublic = True
+                ip = None
             elif isinstance(net, dict) and 'name' in net:
                 netname = net['name']
-                if 'ip' in net:
-                    ip = net['ip']
-                if 'alias' in net:
-                    alias = net['alias']
+                ip = net.get('ip')
+                alias = net.get('alias')
+                netpublic = net.get('public', True)
             if ips and len(ips) > index and ips[index] is not None:
                 ip = ips[index]
             if netname in foundnets:
@@ -188,7 +188,8 @@ class Kgcp(object):
             else:
                 foundnets.append(netname)
             newnet = {'network': 'global/networks/%s' % netname}
-            newnet['accessConfigs'] = [{'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}]
+            if netpublic and index == 0:
+                newnet['accessConfigs'] = [{'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}]
             if netname != 'default':
                 newnet['subnetwork'] = 'projects/%s/regions/%s/subnetworks/%s' % (project, region, netname)
             if ip is not None:

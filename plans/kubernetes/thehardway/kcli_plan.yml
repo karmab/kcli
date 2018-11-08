@@ -53,8 +53,51 @@ controller-[[ i ]]:
     path: /root/service-account-csr.json
   - origin: encryption-config.yaml
     path: /root/encryption-config.yaml
+  - origin: kube-apiserver.service
+    path: /root/kube-apiserver.service
+  - origin: kube-controller-manager.service
+    path: /root/kube-controller-manager.service
+  - origin: kube-scheduler.yaml
+    path: /root/kube-scheduler.yaml
   - origin: etcd.service
     path: /root/etcd.service
+  - origin: kube-scheduler.service
+    path: /root/kube-scheduler.service
+  - origin: kubernetes.default.svc.cluster.local
+    path: /root/kubernetes.default.svc.cluster.local
+  - origin: kubelet_cluster_role.yml
+    path: /root/kubelet_cluster_role.yml
+  - origin: kubelet_cluster_role_bind.yml
+    path: /root/kubelet_cluster_role_bind.yml
+  - origin: lab2.sh
+    path: /root/lab2.sh
+  - origin: lab4.sh
+    path: /root/lab4.sh
+  - origin: lab5.sh
+    path: /root/lab5.sh
+  - origin: lab6.sh
+    path: /root/lab6.sh
+  - origin: lab7.sh
+    path: /root/lab7.sh
+  - origin: lab8.sh
+    path: /root/lab8.sh
+[% endif %]
+[% endfor %]
+
+[% for i in range(0, 3) %]
+worker-[[ i ]]:
+ template: ubuntu-1804-lts
+ flavor: n1-standard-1
+ sharedkey: true
+ disks:
+  - size: 200
+ nets:
+  - name: custom
+    ip: 10.240.0.2[[ i ]]
+ tags:
+  - kubernetes-the-hard-way
+  - controller
+[% endfor %]
   - origin: lab2.sh
     path: /root/lab2.sh
   - origin: lab4.sh

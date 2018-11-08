@@ -1215,7 +1215,9 @@ Available parameters for client/profile/plan files
    or profile file (You can actually let the entire entry blank or just
    indicate a size number directly)
 -  *iso* (optional)
--  *nets* (optional)
+-  *nets* Array of networks to define. For each of them, you can specify
+   just a string for the name, or a dict containing name, public and
+   alias and ip, mask and gateway
 -  *gateway* (optional)
 -  *dns* (optional) Dns servers
 -  *domain* (optional) Dns search domain
