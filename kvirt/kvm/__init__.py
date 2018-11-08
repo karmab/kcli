@@ -2384,6 +2384,9 @@ class Kvirt(object):
                 continue
             netxml = interface.XMLDesc(0)
             root = ET.fromstring(netxml)
+            bridge = list(root.getiterator('bridge'))
+            if not bridge:
+                continue
             ip = list(root.getiterator('ip'))
             if ip:
                 attributes = ip[0].attrib
