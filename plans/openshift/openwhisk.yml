@@ -1,8 +1,7 @@
 parameters:
   template: CentOS-7-x86_64-GenericCloud.qcow2
   memory: 10144
-  docker_disk_size: 60
-  openshift_version: 3.7
+  openshift_version: v3.11
   persistent: true
   large: false
 
@@ -13,7 +12,6 @@ openwhisk:
  nets:
   - default
  disks:
-  - size: 10
   - size: 60
  pool: default
  files:
@@ -23,5 +21,5 @@ openwhisk:
     origin: larger.env
  scripts: 
   - requirements.sh
-  - upstream.sh
+  - origin.sh
   - openwhisk.sh

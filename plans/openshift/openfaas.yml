@@ -1,6 +1,6 @@
 parameters:
  docker_disk_size: 60
- openshift_version: 3.7
+ openshift_version: v3.11
 
 openfaas:
  template: CentOS-7-x86_64-GenericCloud.qcow2
@@ -24,5 +24,5 @@ openfaas:
     origin: openfaas_profile.sh
  scripts: 
   - requirements.sh
-  - upstream.sh
+  - origin.sh
   - openfaas.sh

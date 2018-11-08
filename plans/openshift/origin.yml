@@ -9,6 +9,8 @@ parameters:
   reservedns: false
   disk_size: 30
   skydive: false
+  istio: false
+  knative: false
 
 origin:
  template: [[ template ]]
@@ -23,7 +25,15 @@ origin:
  pool: default
  scripts: 
   - requirements.sh
-  - upstream.sh
+  - origin.sh
 [% if skydive %]
   - skydive.sh
+[% endif %]
+[% if istio %]
+  - istio_knative.sh
+[% if knative %]
+  - knative.sh
+[% endif %]
+ files:
+  - istio_knative.yml
 [% endif %]

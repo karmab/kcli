@@ -1,5 +1,5 @@
 parameters:
-  baseplan: upstream.yml
+  baseplan: origin.yml
   helm_version: 2.9.1
 
 helm:
@@ -14,5 +14,5 @@ helm:
  pool: default
  scripts: 
   - requirements.sh
-  - upstream.sh
+  - origin.sh
   - helm.sh

@@ -223,7 +223,7 @@
 - name: origin
   group: openshift
   url: github.com/karmab/kcli/plans/openshift
-  file: upstream.yml
+  file: origin.yml
   description: Upstream Openshift based on oc cluster up
   numvms: 1
   memory: 6144
@@ -231,15 +231,21 @@
   template: CentOS-7-x86_64-GenericCloud.qcow2
   parameters:
    memory: 6144
-   docker_disk_size: 60
-   initializer: false
-   openshift_version: '3.10'
+   openshift_version: v3.11
    asb: False
+   admin_user: admin
+   admin_password: admin
+   domain: default
+   reservedns: false
+   disk_size: 30
+   skydive: false
+   istio: false
+   knative: false
 
-- name: okd
+- name: installer
   group: openshift
   url: github.com/karmab/kcli/plans/openshift
-  file: okd.yml
+  file: installer.yml
   description: Upstream Compilation of openshift new installer
   numvms: 1
   memory: 16384
@@ -331,20 +337,6 @@
    initializer: false
    openshift_version: '3.9'
    helm_version: 2.9.1
-
-- name: monocular
-  group: openshift
-  url: github.com/karmab/kcli/plans/openshift
-  file: monocular.yml
-  description: Monocular based on oc cluster up (and helm)
-  numvms: 1
-  memory: 6144
-  template: CentOS-7-x86_64-GenericCloud.qcow2
-  parameters:
-   docker_disk_size: 60
-   initializer: false
-   openshift_version: 3.7
-   helm_version: 2.6.0
 
 - name: istio
   group: openshift

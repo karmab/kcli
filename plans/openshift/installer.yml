@@ -10,7 +10,7 @@ parameters:
   password: password
   use_kcli: false
 
-okd:
+installer:
  template: [[ template ]]
  numcpus: 2
  memory: [[ memory ]]
@@ -22,13 +22,13 @@ okd:
  pool: default
  files:
  - path: /root/env.sh
-   origin: okd_env.sh
+   origin: installer_env.sh
  - path: /root/cleanup.sh
-   origin: okd_cleanup.sh
+   origin: installer_cleanup.sh
  - path: /root/coreos_pull.json
    origin: ~/coreos_pull.json
  - path: /root/kcli_plan.yml
-   origin: okd_kcli_plan.yml
+   origin: installer_kcli_plan.yml
    render: false
  scripts:
- - okd.sh
+ - installer.sh
