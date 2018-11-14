@@ -34,6 +34,7 @@ origin:
 [% if knative %]
   - knative.sh
 [% endif %]
+[% endif %]
  files:
   - istio_knative.yml
-[% endif %]
+  - skydive.yml

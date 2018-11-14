@@ -3,7 +3,7 @@ parameters:
  template: CentOS-7-x86_64-GenericCloud.qcow2
  nfs: false
  sdn: flannel
- version: 1.10.5
+ version: 1.11.0
  multus: false
 
 kubernetes:

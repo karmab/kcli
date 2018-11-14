@@ -1,0 +1,53 @@
+---
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: ovs-vsctl-amd64
+  namespace: kube-system
+  labels:
+    tier: node
+    app: ovs-cni-plugin
+spec:
+  template:
+    metadata:
+      labels:
+        tier: node
+        app: ovs-cni-plugin
+    spec:
+      nodeSelector:
+        beta.kubernetes.io/arch: amd64
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
+      containers:
+      - name: ovs-vsctl
+        command:
+        - /bin/bash
+        - -c
+        - |
+          if [ ! -f /host/usr/bin/ovs-vsctl ]; then
+            cp /usr/bin/ovs-vsctl /host/usr/bin/_ovs-vsctl
+            echo '#!/usr/bin/bash
+            _ovs-vsctl --db unix:///run/openvswitch/db.sock $@
+            ' > /host/usr/bin/ovs-vsctl
+            chmod +x /host/usr/bin/ovs-vsctl
+          fi
+          sleep infinity
+        image: docker.io/openshift/origin-node:latest
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "50Mi"
+          limits:
+            cpu: "100m"
+            memory: "50Mi"
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: usrbin
+          mountPath: /host/usr/bin
+      volumes:
+        - name: usrbin
+          hostPath:
+            path: /usr/bin

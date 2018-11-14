@@ -1,6 +1,6 @@
 parameters:
- baseplan: upstream.yml
- minishift_version: '1.25.0'
+ baseplan: origin.yml
+ minishift_version: '1.26.0'
  openshift_version: 'v3.11'
  minishift_memory: 4096
  driver: generic

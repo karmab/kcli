@@ -1,6 +1,11 @@
 parameters:
-   baseplan: upstream.yml
-   kubevirt_version: v0.9.1
+   baseplan: origin.yml
+   kubevirt_version: v0.10.0
+   cdi_version: v1.3.0
+   cdi: true
+   multus: true
+   ui: true
+   ui_version: v1.3-9
 
 kubevirt:
  template: CentOS-7-x86_64-GenericCloud.qcow2
@@ -13,5 +18,24 @@ kubevirt:
  pool: default
  scripts: 
   - requirements.sh
-  - upstream.sh
+  - origin.sh
   - kubevirt.sh
+[% if cdi %]
+  - cdi.sh
+[% endif %]
+[% if multus %]
+  - multus.sh
+[% endif %]
+[% if ui %]
+  - kubevirt_ui.sh
+[% endif %]
+ files:
+[% if multus %]
+  - multus.yml
+  - cni-plugins.yml
+  - ovs-cni.yml
+  - ovs-vsctl.yml
+[% endif %]
+[% if ui %]
+  - kubevirt_ui.yml
+[% endif %]

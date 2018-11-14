@@ -1,0 +1,200 @@
+---
+apiVersion: v1
+kind: Template
+metadata:
+  name: skydive
+objects:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app: skydive-analyzer
+    name: skydive-analyzer
+  spec:
+    ports:
+    - name: api
+      port: 8082
+      protocol: TCP
+      targetPort: 8082
+    - name: protobuf
+      port: 8082
+      protocol: UDP
+      targetPort: 8082
+    - name: etcd
+      port: 12379
+      protocol: TCP
+      targetPort: 12379
+    - name: etcd-cluster
+      port: 12380
+      protocol: TCP
+      targetPort: 12380
+    - name: es
+      port: 9200
+      protocol: TCP
+      targetPort: 9200
+    selector:
+      app: skydive
+      tier: analyzer
+    sessionAffinity: None
+    type: NodePort
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    name: skydive-analyzer
+  spec:
+    replicas: 1
+    selector:
+      app: skydive
+      tier: analyzer
+    strategy:
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 600
+        updatePeriodSeconds: 1
+      type: Rolling
+    template:
+      metadata:
+        labels:
+          app: skydive
+          tier: analyzer
+      spec:
+        containers:
+        - args:
+          - analyzer
+          - --listen=0.0.0.0:8082
+          env:
+          - name: SKYDIVE_ANALYZER_STORAGE_BACKEND
+            value: elasticsearch
+          - name: SKYDIVE_GRAPH_BACKEND
+            value: elasticsearch
+          - name: SKYDIVE_ETCD_LISTEN
+            value: 0.0.0.0:12379
+          image: skydive/skydive
+          imagePullPolicy: Always
+          livenessProbe:
+            failureThreshold: 3
+            tcpSocket:
+              port: 8082
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          name: skydive-analyzer
+          ports:
+          - containerPort: 8082
+            protocol: TCP
+          - containerPort: 8082
+            protocol: UDP
+          - containerPort: 12379
+            protocol: TCP
+          - containerPort: 12380
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 1
+            tcpSocket:
+              port: 8082
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+        - image: elasticsearch:5
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            tcpSocket:
+              port: 9200
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          name: skydive-elasticsearch
+          ports:
+          - containerPort: 9200
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 1
+            tcpSocket:
+              port: 9200
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          securityContext:
+            privileged: true
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        terminationGracePeriodSeconds: 30
+    test: false
+    triggers:
+    - type: ConfigChange
+- apiVersion: extensions/v1beta1
+  kind: DaemonSet
+  metadata:
+    labels:
+      app: skydive
+      tier: agent
+    name: skydive-agent
+  spec:
+    selector:
+      matchLabels:
+        app: skydive
+        tier: agent
+    template:
+      metadata:
+        labels:
+          app: skydive
+          tier: agent
+      spec:
+        containers:
+        - args:
+          - agent
+          env:
+          - name: SKYDIVE_ANALYZERS
+            value: $(SKYDIVE_ANALYZER_SERVICE_HOST):$(SKYDIVE_ANALYZER_SERVICE_PORT_API)
+          image: skydive/skydive
+          imagePullPolicy: Always
+          name: skydive-agent
+          ports:
+          - containerPort: 8081
+            hostPort: 8081
+            protocol: TCP
+          securityContext:
+            privileged: true
+          volumeMounts:
+          - mountPath: /var/run/docker.sock
+            name: docker
+          - mountPath: /host/run
+            name: run
+          - mountPath: /var/run/openvswitch/db.sock
+            name: ovsdb
+        dnsPolicy: ClusterFirst
+        hostNetwork: true
+        hostPID: true
+        restartPolicy: Always
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - hostPath:
+            path: /var/run/docker.sock
+          name: docker
+        - hostPath:
+            path: /var/run/netns
+          name: run
+        - hostPath:
+            path: /var/run/openvswitch/db.sock
+          name: ovsdb
+- apiVersion: v1
+  kind: Route
+  metadata:
+    labels:
+      app: skydive-analyzer
+    name: skydive-analyzer
+  spec:
+    port:
+      targetPort: api
+    to:
+      kind: Service
+      name: skydive-analyzer
+      weight: 100
+    wildcardPolicy: None

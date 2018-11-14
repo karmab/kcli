@@ -1,0 +1,42 @@
+---
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: kube-ovs-cni-plugin-amd64
+  namespace: kube-system
+  labels:
+    tier: node
+    app: ovs-cni-plugin
+spec:
+  template:
+    metadata:
+      labels:
+        tier: node
+        app: ovs-cni-plugin
+    spec:
+      hostNetwork: true
+      nodeSelector:
+        beta.kubernetes.io/arch: amd64
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
+      containers:
+      - name:  kube-ovs-cni-plugin-amd64
+        image: quay.io/kubevirt/ovs-cni-plugin:latest
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "50Mi"
+          limits:
+            cpu: "100m"
+            memory: "50Mi"
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: cnibin
+          mountPath: /host/opt/cni/bin
+      volumes:
+      - name: cnibin
+        hostPath:
+          path: /opt/cni/bin
