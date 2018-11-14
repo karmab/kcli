@@ -1,11 +1,14 @@
 parameters:
    baseplan: origin.yml
+   pool: default
    kubevirt_version: v0.10.0
    cdi_version: v1.3.0
+   disk_size: 60
    cdi: true
    multus: true
    ui: true
    ui_version: v1.3-9
+   pxe_network: default
 
 kubevirt:
  template: CentOS-7-x86_64-GenericCloud.qcow2
@@ -13,9 +16,10 @@ kubevirt:
  memory: [[ memory ]]
  nets:
   - default
+  - [[ pxe_network ]]
  disks:
-  - size: 60
- pool: default
+  - size: [[ disk_size ]]
+ pool: [[ pool ]]
  scripts: 
   - requirements.sh
   - origin.sh
@@ -34,7 +38,8 @@ kubevirt:
   - multus.yml
   - cni-plugins.yml
   - ovs-cni.yml
-  - ovs-vsctl.yml
+  - nad_br1.yml
+  - cdi-controller.yaml
 [% endif %]
 [% if ui %]
   - kubevirt_ui.yml
