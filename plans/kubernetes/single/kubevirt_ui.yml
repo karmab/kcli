@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  labels:
+    app: kubevirt-web-ui
+    openshift.io/deployment-config.name: kubevirt-web-ui
+  name: kubevirt-web-ui
+spec:
+  replicas: 1
+  selector:
+    app: kubevirt-web-ui
+    deployment: kubevirt-web-ui
+    deploymentconfig: kubevirt-web-ui
+  template:
+    metadata:
+      labels:
+        app: kubevirt-web-ui
+        deployment: kubevirt-web-ui
+        deploymentconfig: kubevirt-web-ui
+    spec:
+      containers:
+        - image: docker.io/mareklibra/kubevirt-web-ui:[[ ui_version ]]
+          imagePullPolicy: IfNotPresent
+          name: kubevirt-web-ui
+          resources: {}
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: kubevirt-web-ui
+  name: kubevirt-web-ui
+spec:
+  ports:
+    - name: https
+      port: 9000
+      protocol: TCP
+      targetPort: 9000
+  selector:
+    deploymentconfig: kubevirt-web-ui
+  sessionAffinity: None
+  type: ClusterIP

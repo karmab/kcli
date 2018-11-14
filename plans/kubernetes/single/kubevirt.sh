@@ -3,6 +3,7 @@ yum -y install xorg-x11-xauth virt-viewer wget
 sed -i "s/SELINUX=enforcing/SELINUX=permissive/" /etc/selinux/config
 setenforce 0
 kubectl config set-context `kubectl config current-context` --namespace=kube-system
+grep -q vmx /proc/cpuinfo || oc create configmap -n kube-system kubevirt-config --from-literal debug.useEmulation=true
 wget https://github.com/kubevirt/kubevirt/releases/download/${VERSION}/kubevirt.yaml
 kubectl create -f kubevirt.yaml --validate=false
 wget https://github.com/kubevirt/kubevirt/releases/download/${VERSION}/virtctl-${VERSION}-linux-amd64

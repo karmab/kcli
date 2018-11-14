@@ -5,7 +5,6 @@ parameters:
    cdi_version: v1.3.0
    disk_size: 60
    cdi: true
-   multus: true
    ui: true
    ui_version: v1.3-9
    pxe_network: default
@@ -27,20 +26,10 @@ kubevirt:
 [% if cdi %]
   - cdi.sh
 [% endif %]
-[% if multus %]
-  - multus.sh
-[% endif %]
 [% if ui %]
   - kubevirt_ui.sh
 [% endif %]
  files:
-[% if multus %]
-  - multus.yml
-  - cni-plugins.yml
-  - ovs-cni.yml
-  - nad_br1.yml
-  - cdi-controller.yaml
-[% endif %]
 [% if ui %]
   - kubevirt_ui.yml
 [% endif %]
