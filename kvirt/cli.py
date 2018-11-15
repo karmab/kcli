@@ -874,19 +874,16 @@ def scp(args):
     k = config.k
     tunnel = config.tunnel
     if len(source.split(':')) == 2:
-        name = source.split(':')[0]
-        source = source.split(':')[1]
+        name, source = source.split(':')
         download = True
     elif len(destination.split(':')) == 2:
-        name = destination.split(':')[0]
-        destination = destination.split(':')[1]
+        name, destination = destination.split(':')
         download = False
     else:
         common.pprint("Couldn't run scp", color='red')
         return
     if '@' in name and len(name.split('@')) == 2:
-        user = name.split('@')[0]
-        name = name.split('@')[1]
+        user, name = name.split('@')
     else:
         user = None
     scpcommand = k.scp(name, user=user, source=source, destination=destination,
