@@ -263,7 +263,6 @@ class Kubevirt(object):
             existingpvc = False
             diskname = "disk%s" % index
             volname = "%s-vol%s" % (name, index)
-            letter = chr(index + ord('a'))
             if disk is None:
                 disksize = default_disksize
                 diskpool = default_pool
@@ -292,7 +291,7 @@ class Kubevirt(object):
                     myvolume['persistentVolumeClaim'] = {'claimName': volname}
             if index > 0 or template is None:
                 myvolume['persistentVolumeClaim'] = {'claimName': volname}
-            newdisk = {'volumeName': volname, 'disk': {'dev': 'vd%s' % letter, 'bus': diskinterface}, 'name': diskname}
+            newdisk = {'volumeName': volname, 'disk': {'bus': diskinterface}, 'name': diskname}
             vm['spec']['template']['spec']['domain']['devices']['disks'].append(newdisk)
             vm['spec']['template']['spec']['volumes'].append(myvolume)
             if index == 0 and template in REGISTRYDISKS:
@@ -313,7 +312,7 @@ class Kubevirt(object):
                              reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides,
                              iso=False)
             cloudinitdata = open('/tmp/user-data', 'r').read().strip()
-            cloudinitdisk = {'volumeName': 'cloudinitvolume', 'cdrom': {'readOnly': True, 'bus': 'sata'},
+            cloudinitdisk = {'volumeName': 'cloudinitvolume', 'cdrom': {'bus': 'sata'},
                              'name': 'cloudinitdisk'}
             vm['spec']['template']['spec']['domain']['devices']['disks'].append(cloudinitdisk)
             cloudinitvolume = {'cloudInitNoCloud': {'userData': cloudinitdata}, 'name': 'cloudinitvolume'}
