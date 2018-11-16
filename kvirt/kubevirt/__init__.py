@@ -213,9 +213,9 @@ class Kubevirt(object):
         if domain is not None:
             vm['metadata']['annotations']['kcli/domain'] = domain
             if reservedns:
-                vm['spec']['hostname'] = name
-                vm['spec']['subdomain'] = domain
-                vm['metadata']['annotations']['labels']['subdomain'] = domain
+                vm['spec']['template']['spec']['hostname'] = name
+                vm['spec']['template']['spec']['subdomain'] = domain
+                vm['spec']['template']['metadata']['labels']['subdomain'] = domain
         vm['spec']['template']['spec']['domain']['machine'] = {'type': 'q35'}
         features = {}
         for flag in cpuflags:
