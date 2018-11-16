@@ -44,9 +44,24 @@ class Kconfig(Kbaseconfig):
                 context = self.options.get('context')
                 cdi = self.options.get('cdi', False)
                 multus = self.options.get('multus', True)
+                ca_file = self.options.get('ca_file')
+                if ca_file is not None:
+                    ca_file = os.path.expanduser(ca_file)
+                    if not os.path.exists(ca_file):
+                        common.pprint("Ca file path doesn't exist. Leaving", color='red')
+                        os._exit(1)
+                token = self.options.get('token')
+                token_file = self.options.get('token_file')
+                if token_file is not None:
+                    token_file = os.path.expanduser(token_file)
+                    if not os.path.exists(token_file):
+                        common.pprint("Token file path doesn't exist. Leaving", color='red')
+                        os._exit(1)
+                    else:
+                        token = open(token_file).read()
                 from kvirt.kubevirt import Kubevirt
-                k = Kubevirt(context=context, cdi=cdi, multus=multus, host=self.host, port=self.port,
-                             user=self.user, debug=debug)
+                k = Kubevirt(context=context, token=token, ca_file=ca_file, cdi=cdi, multus=multus, host=self.host,
+                             port=self.port, user=self.user, debug=debug)
                 self.host = k.host
             elif self.type == 'gcp':
                 credentials = self.options.get('credentials')

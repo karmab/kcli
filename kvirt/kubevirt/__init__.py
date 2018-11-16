@@ -41,8 +41,8 @@ class Kubevirt(object):
     """
 
     """
-    def __init__(self, context=None, cdi=False, multus=True, host='127.0.0.1', port=22, user='root', debug=False,
-                 tags=None):
+    def __init__(self, token=None, ca_file=None, context=None, cdi=False, multus=True, host='127.0.0.1', port=443,
+                 user='root', debug=False, tags=None):
         self.host = host
         self.port = port
         self.user = user
@@ -50,31 +50,35 @@ class Kubevirt(object):
         self.multus = multus
         self.conn = 'OK'
         self.tags = tags
+        self.namespace = 'default'
         contexts, current = config.list_kube_config_contexts()
-        if context is not None:
-            contexts = [entry for entry in contexts if entry['name'] == context]
-            if contexts:
-                context = contexts[0]
-                contextname = context['name']
+        api_client = None
+        if host is not None and port is not None and token is not None:
+            configuration = client.Configuration()
+            configuration.host = "https://%s:%s" % (host, port)
+            configuration.api_key = {"authorization": "Bearer " + token}
+            if ca_file is not None:
+                configuration.ssl_ca_cert = ca_file
             else:
-                self.conn = None
+                configuration.verify_ssl = False
+            api_client = client.ApiClient(configuration)
         else:
-            context = current
-            contextname = current['name']
-        config.load_kube_config(context=contextname)
-        if 'namespace' in context['context']:
-            self.namespace = context['context']['namespace']
-        else:
-            self.namespace = 'default'
-        self.crds = client.CustomObjectsApi()
-        self.core = client.CoreV1Api()
+            if context is not None:
+                contexts = [entry for entry in contexts if entry['name'] == context]
+                if contexts:
+                    context = contexts[0]
+                    contextname = context['name']
+                else:
+                    self.conn = None
+            else:
+                context = current
+                contextname = current['name']
+            config.load_kube_config(context=contextname)
+            if 'namespace' in context['context']:
+                self.namespace = context['context']['namespace']
+        self.crds = client.CustomObjectsApi(api_client=api_client)
+        self.core = client.CoreV1Api(api_client=api_client)
         self.debug = debug
-        # try:
-        #    hosts = [node.metadata.name for node in self.core.list_node().items]
-        # except client.rest.ApiException as e:
-        #    common.pprint("Couldn't connect, got %s" % (e.reason), color='red')
-        #    os._exit(1)
-        # self.host = hosts[0]
         return
 
     def close(self):
@@ -473,8 +477,7 @@ class Kubevirt(object):
         else:
             common.pprint("Tunneling virtctl through remote host %s. Make sure virtctl is installed there" % self.host,
                           color='blue')
-            command = "ssh -o LogLevel=QUIET -Xtp %s %s@%s virtctl vnc %s -n %s" % (self.port, self.user, self.host,
-                                                                                    name, namespace)
+            command = "ssh -o LogLevel=QUIET -Xt %s@%s virtctl vnc %s -n %s" % (self.user, self.host, name, namespace)
         if self.debug:
             print(command)
         os.system(command)
@@ -499,8 +502,8 @@ class Kubevirt(object):
             command = "virtctl console --kubeconfig=%s/.kube/config %s -n %s" % (home, name, namespace)
         else:
             common.pprint("Tunneling virtctl through remote host. Make sure virtctl is installed there", color='blue')
-            command = "ssh -o LogLevel=QUIET -tp %s %s@%s virtctl console --kubeconfig=.kube/config %s -n %s"\
-                % (self.port, self.user, self.host, name, namespace)
+            command = "ssh -o LogLevel=QUIET -t %s@%s virtctl console --kubeconfig=.kube/config %s -n %s"\
+                % (self.user, self.host, name, namespace)
         if self.debug:
             print(command)
         os.system(command)
@@ -1018,7 +1021,7 @@ class Kubevirt(object):
         if user is None:
             user = u
         # tunnel = True if 'TUNNEL' in os.environ and os.environ('TUNNEL').lower() == 'true' else False
-        sshcommand = common.ssh(name, ip=ip, host=self.host, port=self.port, hostuser=self.user, user=user, local=local,
+        sshcommand = common.ssh(name, ip=ip, host=self.host, port=22, hostuser=self.user, user=user, local=local,
                                 remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, Y=Y, D=D,
                                 debug=self.debug)
         return sshcommand
@@ -1039,7 +1042,7 @@ class Kubevirt(object):
         if user is None:
             user = u
         tunnel = True if 'TUNNEL' in os.environ and os.environ('TUNNEL').lower() == 'true' else False
-        scpcommand = common.scp(name, ip=ip, host=self.host, port=self.port, hostuser=self.user, user=user,
+        scpcommand = common.scp(name, ip=ip, host=self.host, port=22, hostuser=self.user, user=user,
                                 source=source, destination=destination, recursive=recursive, tunnel=tunnel,
                                 debug=self.debug, download=download)
         return scpcommand
