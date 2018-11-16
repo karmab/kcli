@@ -41,12 +41,11 @@ class Kubevirt(object):
     """
 
     """
-    def __init__(self, token=None, ca_file=None, context=None, cdi=False, multus=True, host='127.0.0.1', port=443,
+    def __init__(self, token=None, ca_file=None, context=None, multus=True, host='127.0.0.1', port=443,
                  user='root', debug=False, tags=None):
         self.host = host
         self.port = port
         self.user = user
-        self.cdi = cdi
         self.multus = multus
         self.conn = 'OK'
         self.tags = tags
@@ -80,6 +79,11 @@ class Kubevirt(object):
         self.core = client.CoreV1Api(api_client=api_client)
         self.storageapi = client.StorageV1Api(api_client=api_client)
         self.debug = debug
+        self.cdi = False
+        cdipods = self.core.list_pod_for_all_namespaces(label_selector='app=containerized-data-importer').items
+        if cdipods:
+            self.cdi = True
+            self.cdinamespace = cdipods[0].metadata.namespace
         return
 
     def close(self):

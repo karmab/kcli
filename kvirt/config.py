@@ -42,7 +42,6 @@ class Kconfig(Kbaseconfig):
                 k = Kbox()
             elif self.type == 'kubevirt':
                 context = self.options.get('context')
-                cdi = self.options.get('cdi', False)
                 multus = self.options.get('multus', True)
                 ca_file = self.options.get('ca_file')
                 if ca_file is not None:
@@ -60,7 +59,7 @@ class Kconfig(Kbaseconfig):
                     else:
                         token = open(token_file).read()
                 from kvirt.kubevirt import Kubevirt
-                k = Kubevirt(context=context, token=token, ca_file=ca_file, cdi=cdi, multus=multus, host=self.host,
+                k = Kubevirt(context=context, token=token, ca_file=ca_file, multus=multus, host=self.host,
                              port=self.port, user=self.user, debug=debug)
                 self.host = k.host
             elif self.type == 'gcp':

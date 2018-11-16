@@ -326,9 +326,6 @@ You can use additional parameters for the kubevirt section:
 -  port: k8s api port
 -  ca_file: optional certificate path
 -  token: token, either from user or service account.
--  cdi: whether pvcs for templates will be cloned by cdi component.
-   Defaults to False, so pvcs are manually copied under the hood
-   launching a specific copy pod.
 -  tags: additional tags to put to all created vms in their
    *nodeSelector*. Can be further indicated at profile or plan level in
    which case values are combined. This provides an easy way to force
