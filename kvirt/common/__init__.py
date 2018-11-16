@@ -699,17 +699,19 @@ def ssh(name, ip='', host=None, port=22, hostuser=None, user=None, local=None, r
             if cmd:
                 sshcommand = "%s %s" % (sshcommand, cmd)
             if host is not None and host not in ['localhost', '127.0.0.1'] and tunnel and hostuser is not None:
+                tunnelcommand = "-qp %s -W %%h:%%p %s@%s" % (port, hostuser, host)
                 if identityfile is not None:
-                    sshcommand = "-o ProxyCommand='ssh -i %s -qp %s -W %%h:%%p %s@%s' %s" % (identityfile, port,
-                                                                                             hostuser, host, sshcommand)
-                else:
-                    sshcommand = "-o ProxyCommand='ssh -qp %s -W %%h:%%p %s@%s' %s" % (port, hostuser, host, sshcommand)
+                    tunnelcommand = "-i %s %s" % (identityfile, tunnelcommand)
+                if insecure:
+                    tunnelcommand = "-o LogLevel=quiet -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no %s"\
+                        % tunnelcommand
+                sshcommand = "-o ProxyCommand='ssh %s' %s" % (tunnelcommand, sshcommand)
             if local is not None:
                 sshcommand = "-L %s %s" % (local, sshcommand)
             if remote is not None:
                 sshcommand = "-R %s %s" % (remote, sshcommand)
             if insecure:
-                sshcommand = "ssh -o LogLevel=quiet -o 'UserKnownHostsFile=/dev/null' -o 'StrictHostKeyChecking=no' %s"\
+                sshcommand = "ssh -o LogLevel=quiet -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no %s"\
                     % sshcommand
             else:
                 sshcommand = "ssh %s" % sshcommand

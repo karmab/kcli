@@ -78,6 +78,7 @@ class Kubevirt(object):
                 self.namespace = context['context']['namespace']
         self.crds = client.CustomObjectsApi(api_client=api_client)
         self.core = client.CoreV1Api(api_client=api_client)
+        self.storageapi = client.StorageV1Api(api_client=api_client)
         self.debug = debug
         return
 
@@ -211,6 +212,10 @@ class Kubevirt(object):
             vm['metadata']['annotations']['kcli/dnshost'] = dnshost
         if domain is not None:
             vm['metadata']['annotations']['kcli/domain'] = domain
+            if reservedns:
+                vm['spec']['hostname'] = name
+                vm['spec']['subdomain'] = domain
+                vm['metadata']['annotations']['labels']['subdomain'] = domain
         vm['spec']['template']['spec']['domain']['machine'] = {'type': 'q35'}
         features = {}
         for flag in cpuflags:
@@ -356,8 +361,14 @@ class Kubevirt(object):
                 reason = prepare['reason']
                 return {'result': 'failure', 'reason': reason}
         crds.create_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', vm)
-        # except Exception as err:
-        #    return {'result': 'failure', 'reason': err}
+        if reservedns and domain is not None:
+            try:
+                core.read_namespaced_service(domain, namespace)
+            except:
+                dnsspec = {'apiVersion': 'v1', 'kind': 'Service', 'metadata': {'name': domain},
+                           'spec': {'selector': {'subdomain': domain}, 'clusterIP': 'None',
+                                    'ports': [{'name': 'foo', 'port': 1234, 'targetPort': 1234}]}}
+                core.create_namespaced_service(namespace, dnsspec)
         return {'result': 'success'}
 
     def start(self, name):
@@ -1229,7 +1240,7 @@ class Kubevirt(object):
 
         :return:
         """
-        storageapi = client.StorageV1Api()
+        storageapi = self.storageapi
         pools = [x.metadata.name for x in storageapi.list_storage_class().items]
         return pools
 
@@ -1297,7 +1308,7 @@ class Kubevirt(object):
         :param pool:
         :return:
         """
-        storageapi = client.StorageV1Api()
+        storageapi = self.storageapi
         storageclass = storageapi.read_storage_class(pool)
         return storageclass.provisioner
 
@@ -1399,8 +1410,8 @@ class Kubevirt(object):
         :param pool:
         :return:
         """
-        storage = client.StorageV1Api()
-        storageclasses = storage.list_storage_class().items
+        storageapi = self.storageapi
+        storageclasses = storageapi.list_storage_class().items
         if storageclasses:
             storageclasses = [s.metadata.name for s in storageclasses]
             if pool in storageclasses:

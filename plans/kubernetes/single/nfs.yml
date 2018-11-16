@@ -9,5 +9,5 @@ spec:
   - ReadWriteOnce
   nfs:
     path: /pv001
-    server: kumaster
+    server: 10.244.0.1
   persistentVolumeReclaimPolicy: Recycle
