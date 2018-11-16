@@ -1108,6 +1108,7 @@ class Kubevirt(object):
                'apiVersion': 'v1', 'metadata': {'name': volname, 'annotations': {'kcli/template': shortimage}}}
         if self.cdi:
                 pvc['metadata']['annotations'] = {'cdi.kubevirt.io/storage.import.endpoint': image}
+                namespace = self.cdinamespace
         else:
             pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'Never',
                                            'containers': [{'image': 'kubevirtci/disk-importer',
@@ -1130,7 +1131,7 @@ class Kubevirt(object):
             if not bound:
                 return {'result': 'failure', 'reason': 'timeout waiting for pvc to get bound'}
         if self.cdi:
-            completed = self.import_completed(self, volname, namespace)
+            completed = self.import_completed(volname, namespace)
             if completed is None:
                 common.pprint("Issue with cdi import", color='red')
                 return {'result': 'failure', 'reason': 'timeout waiting for cdi importer pod to complete'}
