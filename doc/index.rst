@@ -304,9 +304,9 @@ Kubevirt
 for kubevirt, you will need to define one ( or several !) sections with
 the type kubevirt in your *~/.kcli/config.yml*
 
-authentication is handled by your local ~/.kubeconfig, which means that
-by default, kcli will try to connect to your current
-kubernetes/openshift context. For instance,
+authentication is either handled by your local ~/.kubeconfig (kcli will
+try to connect to your current kubernetes/openshift context or with
+specific token
 
 ::
 
@@ -319,16 +319,13 @@ kubernetes/openshift context. For instance,
 
 You can use additional parameters for the kubevirt section:
 
--  context: the context to use . You can use the following command to
-   list the context at your disposal
-
-::
-
-    kubectl config view -o jsonpath='{.contexts[*].name}'
-
+-  context: the k8s context to use
 -  pool: your default storageclass. can also be set as blank, if no
    storage class should try to bind pvcs
--  host: the node to use for tunneling to reach ssh (and consoles)
+-  host: k8s api node .Also used for tunneling ssh (and consoles)
+-  port: k8s api port
+-  ca_file: optional certificate path
+-  token: token, either from user or service account.
 -  cdi: whether pvcs for templates will be cloned by cdi component.
    Defaults to False, so pvcs are manually copied under the hood
    launching a specific copy pod.
@@ -336,6 +333,37 @@ You can use additional parameters for the kubevirt section:
    *nodeSelector*. Can be further indicated at profile or plan level in
    which case values are combined. This provides an easy way to force
    vms to run on specific nodes, by matching labels.
+
+You can use the following indications to gather context, create a
+suitable service account and retrieve its associated token
+
+To list the context at your disposal
+
+::
+
+    kubectl config view -o jsonpath='{.contexts[*].name}'
+
+To create a service account and give it privileges to handle vms,
+
+::
+
+    SERVICEACCOUNT=xxx
+    kubectl create serviceaccount $SERVICEACCOUNT
+    kubectl create clusterrolebinding $SERVICEACCOUNT --clusterrole=cluster-admin --user=system:serviceaccount:default:$SERVICEACCOUNT
+
+To gather a token ( in /tmp/token)
+
+::
+
+    SERVICEACCOUNT=xxx
+    SECRET=`kubectl get sa $SERVICEACCOUNT -o jsonpath={.secrets[0].name}`
+    kubectl get secret $SECRET -o jsonpath={.data.token} | base64 -d
+
+on openshift, you can simply use
+
+::
+
+    oc whoami -t
 
 *virtctl* is a hard requirement for consoles. If present on your local
 machine, this will be used. otherwise, it s expected that the host node
