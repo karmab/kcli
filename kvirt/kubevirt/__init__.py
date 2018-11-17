@@ -42,15 +42,15 @@ class Kubevirt(object):
 
     """
     def __init__(self, token=None, ca_file=None, context=None, multus=True, host='127.0.0.1', port=443,
-                 user='root', debug=False, tags=None):
+                 user='root', debug=False, tags=None, namespace='default'):
         self.host = host
         self.port = port
         self.user = user
         self.multus = multus
         self.conn = 'OK'
         self.tags = tags
-        self.namespace = 'default'
-        contexts, current = config.list_kube_config_contexts()
+        self.namespace = namespace
+        self.token = token
         api_client = None
         if host is not None and port is not None and token is not None:
             configuration = client.Configuration()
@@ -62,6 +62,7 @@ class Kubevirt(object):
                 configuration.verify_ssl = False
             api_client = client.ApiClient(configuration)
         else:
+            contexts, current = config.list_kube_config_contexts()
             if context is not None:
                 contexts = [entry for entry in contexts if entry['name'] == context]
                 if contexts:
@@ -72,8 +73,9 @@ class Kubevirt(object):
             else:
                 context = current
                 contextname = current['name']
+            self.contextname = contextname
             config.load_kube_config(context=contextname)
-            if 'namespace' in context['context']:
+            if namespace is None and 'namespace' in context['context']:
                 self.namespace = context['context']['namespace']
         self.crds = client.CustomObjectsApi(api_client=api_client)
         self.core = client.CoreV1Api(api_client=api_client)
@@ -436,7 +438,14 @@ class Kubevirt(object):
 
         :return:
         """
-        print("not implemented")
+        if self.token is not None:
+            print("Connection: https://%s:%s" % (self.host, self.port))
+        else:
+            print("Context: %s" % self.contextname)
+        print("Namespace: %s" % self.namespace)
+        print("Cdi: %s" % self.cdi)
+        if self.cdi:
+            print("Cdi Namespace: %s" % self.cdinamespace)
         return
 
     def status(self, name):
