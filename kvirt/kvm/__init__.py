@@ -2172,10 +2172,10 @@ class Kvirt(object):
         if shortimage in volumes:
             return {'result': 'failure', 'reason': "Template %s already exists in pool %s" % (shortimage, poolname)}
         if self.host == 'localhost' or self.host == '127.0.0.1':
-            downloadcmd = 'curl -Lo %s/%s -f %s' % (downloadpath, shortimage, image)
+            downloadcmd = "curl -Lo %s/%s -f '%s'" % (downloadpath, shortimage, image)
         elif self.protocol == 'ssh':
-            downloadcmd = 'ssh %s -p %s %s@%s "curl -Lo %s/%s -f %s"' % (self.identitycommand, self.port, self.user,
-                                                                         self.host, downloadpath, shortimage, image)
+            downloadcmd = 'ssh %s -p %s %s@%s "curl -Lo %s/%s -f \'%s\'"' % (self.identitycommand, self.port, self.user,
+                                                                             self.host, downloadpath, shortimage, image)
         code = os.system(downloadcmd)
         if code != 0:
             return {'result': 'failure', 'reason': "Unable to download indicated template"}
