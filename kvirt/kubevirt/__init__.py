@@ -1354,7 +1354,7 @@ class Kubevirt(object):
                 return None
             pvc = core.read_namespaced_persistent_volume_claim(volname, namespace)
             pod = pvc.metadata.annotations['cdi.kubevirt.io/storage.import.importPodName']
-            phase = pvc.metadata.annotations['cdi.kubevirt.io/storage.import.pod.phase']
+            phase = pvc.metadata.annotations['cdi.kubevirt.io/storage.pod.phase']
             time.sleep(2)
             common.pprint("Waiting for import to complete...")
             pvcruntime += 2

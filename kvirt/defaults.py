@@ -63,6 +63,8 @@ TEMPLATES = {'': None, 'arch': 'https://linuximages.de/openstack/arch/arch-opens
              'product-software',
              'rhel74atomic': 'https://access.redhat.com/downloads/content/271/ver=/rhel---7/7.4.5/x86_64/'
              'product-software',
+             'rhel8beta': 'https://access.redhat.com/downloads/content/486/ver=/rhel---8/8.0%20Beta/x86_64/'
+             'product-software',
              'ubuntu1404': 'https://cloud-images.ubuntu.com/trusty/current/trusty-server-cloudimg-amd64-disk1.img',
              'ubuntu1604': 'https://cloud-images.ubuntu.com/xenial/current/xenial-server-cloudimg-amd64-disk1.img',
              'ubuntu1610': 'https://cloud-images.ubuntu.com/yakkety/current/yakkety-server-cloudimg-amd64-disk1.img',
