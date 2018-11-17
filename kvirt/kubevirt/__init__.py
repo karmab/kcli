@@ -198,9 +198,18 @@ class Kubevirt(object):
         crds = self.crds
         core = self.core
         namespace = self.namespace
-        allpvc = core.list_namespaced_persistent_volume_claim(namespace)
-        templates = {p.metadata.annotations['kcli/template']: p.metadata.name for p in allpvc.items
-                     if p.metadata.annotations is not None and 'kcli/template' in p.metadata.annotations}
+        if self.cdi:
+            allpvc = core.list_namespaced_persistent_volume_claim(self.cdinamespace)
+            templates = {}
+            for p in core.list_namespaced_persistent_volume_claim(self.cdinamespace).items:
+                if p.metadata.annotations is not None\
+                        and 'cdi.kubevirt.io/storage.import.endpoint' in p.metadata.annotations:
+                    cdiname = self.get_template_name(p.metadata.annotations['cdi.kubevirt.io/storage.import.endpoint'])
+                    templates[cdiname] = p.metadata.name
+        else:
+            allpvc = core.list_namespaced_persistent_volume_claim(namespace)
+            templates = {p.metadata.annotations['kcli/template']: p.metadata.name for p in allpvc.items
+                         if p.metadata.annotations is not None and 'kcli/template' in p.metadata.annotations}
         vm = {'kind': 'VirtualMachine', 'spec': {'running': start, 'template':
                                                  {'metadata': {'labels': {'kubevirt.io/provider': 'kcli',
                                                                           'kubevirt.io/domain': name}},
@@ -319,7 +328,9 @@ class Kubevirt(object):
                                                              'resources': {'requests': {'storage': '%sGi' % disksize}}},
                    'apiVersion': 'v1', 'metadata': {'name': volname}}
             if template is not None and index == 0 and template not in REGISTRYDISKS and self.cdi:
-                pvc['metadata']['annotations'] = {'k8s.io/CloneRequest': templates[template]}
+                annotation = "%s/%s" % (self.cdinamespace, templates[template])
+                pvc['metadata']['annotations'] = {'k8s.io/CloneRequest': annotation}
+                pvc['metadata']['labels'] = {'app': 'Host-Assisted-Cloning'}
             pvcs.append(pvc)
             sizes.append(disksize)
         if cloudinit:
@@ -344,12 +355,10 @@ class Kubevirt(object):
                     bound = self.pvc_bound(pvcname, namespace)
                     if not bound:
                         return {'result': 'failure', 'reason': 'timeout waiting for pvc %s to get bound' % pvcname}
-                    completed = self.import_completed(self, pvc, namespace)
-                    if completed is None:
+                    completed = self.import_completed(pvcname, namespace)
+                    if not completed:
                         common.pprint("Issue with cdi import", color='red')
                         return {'result': 'failure', 'reason': 'timeout waiting for cdi importer pod to complete'}
-                    else:
-                        core.delete_namespaced_pod(completed, namespace, client.V1DeleteOptions())
                     continue
                 else:
                     volname = "%s-vol0" % name
@@ -1147,11 +1156,9 @@ class Kubevirt(object):
                 return {'result': 'failure', 'reason': 'timeout waiting for pvc to get bound'}
         if self.cdi:
             completed = self.import_completed(volname, namespace)
-            if completed is None:
+            if not completed:
                 common.pprint("Issue with cdi import", color='red')
                 return {'result': 'failure', 'reason': 'timeout waiting for cdi importer pod to complete'}
-            else:
-                core.delete_namespaced_pod(completed, namespace, client.V1DeleteOptions())
         else:
             core.create_namespaced_pod(namespace, pod)
             completed = self.pod_completed(podname, namespace)
@@ -1361,19 +1368,22 @@ class Kubevirt(object):
         :return:
         """
         core = self.core
-        pvctimeout = 40
+        pvctimeout = 400
         pvcruntime = 0
         phase = ''
         while phase != 'Succeeded':
             if pvcruntime >= pvctimeout:
-                return None
+                return False
             pvc = core.read_namespaced_persistent_volume_claim(volname, namespace)
-            pod = pvc.metadata.annotations['cdi.kubevirt.io/storage.import.importPodName']
-            phase = pvc.metadata.annotations['cdi.kubevirt.io/storage.pod.phase']
-            time.sleep(2)
+            # pod = pvc.metadata.annotations['cdi.kubevirt.io/storage.import.importPodName']
+            if 'cdi.kubevirt.io/storage.pod.phase' not in pvc.metadata.annotations:
+                phase = 'Pending'
+            else:
+                phase = pvc.metadata.annotations['cdi.kubevirt.io/storage.pod.phase']
+            time.sleep(5)
             common.pprint("Waiting for import to complete...")
-            pvcruntime += 2
-        return pod
+            pvcruntime += 5
+        return True
 
     def pod_completed(self, podname, namespace):
         """
