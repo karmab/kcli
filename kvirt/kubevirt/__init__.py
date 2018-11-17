@@ -708,9 +708,15 @@ class Kubevirt(object):
         namespace = self.namespace
         if iso:
             return []
-        pvc = core.list_namespaced_persistent_volume_claim(namespace)
-        templates = [p.metadata.annotations['kcli/template'] for p in pvc.items
-                     if p.metadata.annotations is not None and 'kcli/template' in p.metadata.annotations]
+        if self.cdi:
+            pvc = core.list_namespaced_persistent_volume_claim(self.cdinamespace)
+            templates = [self.get_template_name(p.metadata.annotations['cdi.kubevirt.io/storage.import.endpoint'])
+                         for p in pvc.items if p.metadata.annotations is not None and
+                         'cdi.kubevirt.io/storage.import.endpoint' in p.metadata.annotations]
+        else:
+            pvc = core.list_namespaced_persistent_volume_claim(namespace)
+            templates = [p.metadata.annotations['kcli/template'] for p in pvc.items
+                         if p.metadata.annotations is not None and 'kcli/template' in p.metadata.annotations]
         if templates:
             return sorted(templates)
         else:
@@ -1439,3 +1445,14 @@ class Kubevirt(object):
         :return:
         """
         return []
+
+    def get_template_name(self, name):
+        """
+
+        :param name:
+        :return:
+        """
+        if '?' in name:
+            return os.path.basename(name).split('?')[0]
+        else:
+            return os.path.basename(name)
