@@ -270,7 +270,7 @@ class Kubevirt(object):
                     newnet['name'] = netname
                 if 'mac' in net:
                     newif['macAddress'] = net['mac']
-            if index > 0:
+            if netname != 'default':
                 if self.multus:
                     newnet['multus'] = {'networkName': netname}
                 else:
