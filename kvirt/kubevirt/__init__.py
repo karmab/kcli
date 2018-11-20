@@ -1260,6 +1260,10 @@ class Kubevirt(object):
         apiversion = "%s/%s" % (MULTUSDOMAIN, MULTUSVERSION)
         vlanconfig = '"vlan": %s' % vlan if vlan is not None else ''
         config = '{ "cniVersion": "0.3.1", "type": "ovs", "bridge": "%s" %s}' % (bridge, vlanconfig)
+        if cidr is not None and dhcp:
+            ipam = '"ipam": { "type": "host-local", "subnet": "%s" }' % cidr
+            details = '"isDefaultGateway": true, "forceAddress": false, "ipMasq": true, "hairpinMode": true, %s' % ipam
+            config = '{ "type": "bridge", "bridge": "%s", %s}' % (bridge, details)
         network = {'kind': 'NetworkAttachmentDefinition', 'spec': {'config': config}, 'apiVersion': apiversion,
                    'metadata': {'name': name}}
         crds.create_namespaced_custom_object(MULTUSDOMAIN, MULTUSVERSION, namespace, 'network-attachment-definitions',
