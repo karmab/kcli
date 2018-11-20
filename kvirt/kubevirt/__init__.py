@@ -4,7 +4,6 @@
 Kubevirt Provider Class
 """
 
-from ast import literal_eval
 from kubernetes import client, config
 from kvirt import common
 from kvirt.defaults import TEMPLATES
@@ -1298,22 +1297,29 @@ class Kubevirt(object):
 
         :return:
         """
-        networks = {}
+        core = self.core
+        cidr = 'N/A'
+        for node in core.list_node().items:
+            cidr = node.spec.pod_cidr
+        networks = {'default': {'cidr': cidr, 'dhcp': True, 'type': 'bridge', 'mode': 'N/A'}}
         if self.multus:
             crds = self.crds
             namespace = self.namespace
             nafs = crds.list_namespaced_custom_object(MULTUSDOMAIN, MULTUSVERSION, namespace,
                                                       'network-attachment-definitions')["items"]
             for naf in nafs:
-                config = literal_eval(naf['spec']['config'])
+                config = yaml.load(naf['spec']['config'])
                 name = naf['metadata']['name']
                 _type = config['type']
                 bridge = config['bridge']
                 vlan = config.get('vlan', 'N/A')
-                networks[name] = {'cidr': bridge, 'dhcp': 'N/A', 'type': _type, 'mode': vlan}
+                dhcp = False
+                cidr = bridge
+                if 'ipam' in config:
+                    dhcp = True
+                    cidr = config['ipam'].get('subnet', bridge)
+                networks[name] = {'cidr': cidr, 'dhcp': dhcp, 'type': _type, 'mode': vlan}
             return networks
-        else:
-            return {'default': {'cidr': 'N/A', 'dhcp': 'N/A', 'type': 'bridged', 'mode': 'N/A'}}
 
     def list_subnets(self):
         """
