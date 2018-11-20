@@ -196,11 +196,13 @@ class Kubevirt(object):
         default_pool = pool
         crds = self.crds
         core = self.core
+        cdi = self.cdi
+        cdinamespace = self.cdinamespace
         namespace = self.namespace
-        if self.cdi:
-            allpvc = core.list_namespaced_persistent_volume_claim(self.cdinamespace)
+        if cdi:
+            allpvc = core.list_namespaced_persistent_volume_claim(cdinamespace)
             templates = {}
-            for p in core.list_namespaced_persistent_volume_claim(self.cdinamespace).items:
+            for p in core.list_namespaced_persistent_volume_claim(cdinamespace).items:
                 if p.metadata.annotations is not None\
                         and 'cdi.kubevirt.io/storage.import.endpoint' in p.metadata.annotations:
                     cdiname = self.get_template_name(p.metadata.annotations['cdi.kubevirt.io/storage.import.endpoint'])
@@ -326,8 +328,8 @@ class Kubevirt(object):
                                                              'accessModes': ['ReadWriteOnce'],
                                                              'resources': {'requests': {'storage': '%sGi' % disksize}}},
                    'apiVersion': 'v1', 'metadata': {'name': volname}}
-            if template is not None and index == 0 and template not in REGISTRYDISKS and self.cdi:
-                annotation = "%s/%s" % (self.cdinamespace, templates[template])
+            if template is not None and index == 0 and template not in REGISTRYDISKS and cdi:
+                annotation = "%s/%s" % (cdinamespace, templates[template])
                 pvc['metadata']['annotations'] = {'k8s.io/CloneRequest': annotation}
                 pvc['metadata']['labels'] = {'app': 'Host-Assisted-Cloning'}
             pvcs.append(pvc)
@@ -348,7 +350,7 @@ class Kubevirt(object):
             pvcname = pvc['metadata']['name']
             pvcsize = pvc['spec']['resources']['requests']['storage'].replace('Gi', '')
             if template not in REGISTRYDISKS and index == 0:
-                if self.cdi:
+                if cdi:
                     # NOTE: we should also check that cloning finished in this case
                     core.create_namespaced_persistent_volume_claim(namespace, pvc)
                     bound = self.pvc_bound(pvcname, namespace)
@@ -459,14 +461,16 @@ class Kubevirt(object):
 
         :return:
         """
+        cdi = self.cdi
+        cdinamespace = self.cdinamespace
         if self.token is not None:
             print("Connection: https://%s:%s" % (self.host, self.port))
         else:
             print("Context: %s" % self.contextname)
         print("Namespace: %s" % self.namespace)
-        print("Cdi: %s" % self.cdi)
-        if self.cdi:
-            print("Cdi Namespace: %s" % self.cdinamespace)
+        print("Cdi: %s" % cdi)
+        if cdi:
+            print("Cdi Namespace: %s" % cdinamespace)
         return
 
     def status(self, name):
@@ -732,10 +736,12 @@ class Kubevirt(object):
         """
         core = self.core
         namespace = self.namespace
+        cdi = self.cdi
+        cdinamespace = self.cdinamespace
         if iso:
             return []
-        if self.cdi:
-            pvc = core.list_namespaced_persistent_volume_claim(self.cdinamespace)
+        if cdi:
+            pvc = core.list_namespaced_persistent_volume_claim(cdinamespace)
             templates = [self.get_template_name(p.metadata.annotations['cdi.kubevirt.io/storage.import.endpoint'])
                          for p in pvc.items if p.metadata.annotations is not None and
                          'cdi.kubevirt.io/storage.import.endpoint' in p.metadata.annotations]
@@ -1136,6 +1142,8 @@ class Kubevirt(object):
         core = self.core
         pool = self.check_pool(pool)
         namespace = self.namespace
+        cdi = self.cdi
+        cdinamespace = self.cdinamespace
         shortimage = os.path.basename(image).split('?')[0]
         if name is None:
             volname = [k for k in TEMPLATES if TEMPLATES[k] == image][0]
@@ -1151,9 +1159,9 @@ class Kubevirt(object):
                                                          'accessModes': ['ReadWriteOnce'],
                                                          'resources': {'requests': {'storage': '%sGi' % size}}},
                'apiVersion': 'v1', 'metadata': {'name': volname, 'annotations': {'kcli/template': shortimage}}}
-        if self.cdi:
+        if cdi:
                 pvc['metadata']['annotations'] = {'cdi.kubevirt.io/storage.import.endpoint': image}
-                namespace = self.cdinamespace
+                namespace = cdinamespace
         else:
             pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'Never',
                                            'containers': [{'image': 'kubevirtci/disk-importer',
@@ -1175,7 +1183,7 @@ class Kubevirt(object):
             bound = self.pvc_bound(volname, namespace)
             if not bound:
                 return {'result': 'failure', 'reason': 'timeout waiting for pvc to get bound'}
-        if self.cdi:
+        if cdi:
             completed = self.import_completed(volname, namespace)
             if not completed:
                 common.pprint("Issue with cdi import", color='red')
@@ -1304,6 +1312,7 @@ class Kubevirt(object):
         core = self.core
         cidr = 'N/A'
         for node in core.list_node().items:
+            # nodeip = node.status.addresses[0].address
             cidr = node.spec.pod_cidr
         networks = {'default': {'cidr': cidr, 'dhcp': True, 'type': 'bridge', 'mode': 'N/A'}}
         if self.multus:
