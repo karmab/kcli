@@ -253,6 +253,7 @@ class Kubevirt(object):
         interfaces = []
         networks = []
         for index, net in enumerate(nets):
+            netpublic = False
             newif = {'bridge': {}}
             # newnet = {'pod': {}}
             newnet = {}
@@ -260,6 +261,8 @@ class Kubevirt(object):
                 netname = net
                 newif['name'] = netname
                 newnet['name'] = netname
+                if index == 0 and netname == 'default':
+                    netpublic = True
             elif isinstance(net, dict):
                 if 'noconf' in net and net['noconf']:
                     vm['spec']['template']['spec']['domain']['devices']['autoattachPodInterface'] = False
@@ -270,7 +273,11 @@ class Kubevirt(object):
                     newnet['name'] = netname
                 if 'mac' in net:
                     newif['macAddress'] = net['mac']
+                if index == 0:
+                    netpublic = net.get('public', True)
             if netname != 'default':
+                if index == 0:
+                    netpublic = False
                 if self.multus:
                     newnet['multus'] = {'networkName': netname}
                 else:
@@ -385,8 +392,7 @@ class Kubevirt(object):
                            'spec': {'selector': {'subdomain': domain}, 'clusterIP': 'None',
                                     'ports': [{'name': 'foo', 'port': 1234, 'targetPort': 1234}]}}
                 core.create_namespaced_service(namespace, dnsspec)
-        public = True
-        if public:
+        if netpublic:
             try:
                 core.read_namespaced_service('%s-ssh' % name, namespace)
             except:
@@ -1264,14 +1270,13 @@ class Kubevirt(object):
         """
         crds = self.crds
         namespace = self.namespace
-        bridge = cidr
         apiversion = "%s/%s" % (MULTUSDOMAIN, MULTUSVERSION)
         vlanconfig = '"vlan": %s' % vlan if vlan is not None else ''
-        config = '{ "cniVersion": "0.3.1", "type": "ovs", "bridge": "%s" %s}' % (bridge, vlanconfig)
+        config = '{ "cniVersion": "0.3.1", "type": "ovs", "bridge": "%s" %s}' % (name, vlanconfig)
         if cidr is not None and dhcp:
             ipam = '"ipam": { "type": "host-local", "subnet": "%s" }' % cidr
             details = '"isDefaultGateway": true, "forceAddress": false, "ipMasq": true, "hairpinMode": true, %s' % ipam
-            config = '{ "type": "bridge", "bridge": "%s", %s}' % (bridge, details)
+            config = '{ "type": "bridge", "bridge": "%s", %s}' % (name, details)
         network = {'kind': 'NetworkAttachmentDefinition', 'spec': {'config': config}, 'apiVersion': apiversion,
                    'metadata': {'name': name}}
         crds.create_namespaced_custom_object(MULTUSDOMAIN, MULTUSVERSION, namespace, 'network-attachment-definitions',
