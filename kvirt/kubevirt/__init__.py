@@ -384,6 +384,19 @@ class Kubevirt(object):
                            'spec': {'selector': {'subdomain': domain}, 'clusterIP': 'None',
                                     'ports': [{'name': 'foo', 'port': 1234, 'targetPort': 1234}]}}
                 core.create_namespaced_service(namespace, dnsspec)
+        public = True
+        if public:
+            try:
+                core.read_namespaced_service('%s-ssh' % name, namespace)
+            except:
+                localport = common.get_free_nodeport()
+                sshspec = {'kind': 'Service', 'apiVersion': 'v1',
+                           'metadata': {'namespace': namespace, 'name': '%s-ssh' % name},
+                           'spec': {'externalTrafficPolicy': 'Cluster', 'sessionAffinity': 'None',
+                                    'type': 'NodePort', 'ports':
+                                    [{'protocol': 'TCP', 'targetPort': 22, 'nodePort': localport, 'port': 22}],
+                                    'selector': {'kubevirt.io/provider': 'kcli', 'kubevirt.io/domain': name}}}
+                core.create_namespaced_service(namespace, sshspec)
         return {'result': 'success'}
 
     def start(self, name):
@@ -681,6 +694,11 @@ class Kubevirt(object):
                 network = 'default'
                 network_type = 'pod'
             yamlinfo['nets'].append({'device': device, 'mac': mac, 'net': network, 'type': network_type})
+        try:
+            sshservice = core.read_namespaced_service('%s-ssh' % name, namespace)
+            yamlinfo['nodeport'] = sshservice.spec.ports[0].node_port
+        except Exception as e:
+            pass
         return yamlinfo
 
     def ip(self, name):
@@ -760,6 +778,10 @@ class Kubevirt(object):
             pvcname = p.metadata.name
             print("Deleting pvc %s" % pvcname)
             core.delete_namespaced_persistent_volume_claim(pvcname, namespace, client.V1DeleteOptions())
+        try:
+            core.delete_namespaced_service('%s-ssh' % name, namespace)
+        except:
+            pass
         return {'result': 'success'}
 
     def clone(self, old, new, full=False, start=False):

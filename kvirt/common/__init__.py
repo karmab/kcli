@@ -6,6 +6,7 @@ from jinja2 import Environment, FileSystemLoader
 from distutils.spawn import find_executable
 import errno
 from netaddr import IPAddress
+import random
 import socket
 from urllib.parse import quote
 from urllib.request import urlopen
@@ -424,6 +425,21 @@ def get_free_port():
     return port
 
 
+def get_free_nodeport():
+    """
+    :return:
+    """
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    while True:
+        port = random.randint(30000, 32767)
+        try:
+            s.bind(('', port))
+            s.close()
+            return port
+        except Exception:
+            continue
+
+
 def pprint(text, color=None):
     """
 
@@ -619,7 +635,7 @@ def print_info(yamlinfo, output='plain', fields=[], values=False, pretty=True):
             if not fields:
                 fields = ['name', 'instanceid', 'creationdate', 'host', 'status', 'description', 'autostart',
                           'template', 'plan', 'profile', 'flavor', 'cpus', 'memory', 'nets', 'ip', 'disks', 'snapshots',
-                          'tags']
+                          'tags', 'nodeport']
             for key in fields:
                 if key not in yamlinfo:
                     continue
