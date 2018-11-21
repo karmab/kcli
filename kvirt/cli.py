@@ -420,13 +420,19 @@ def _list(args):
             vms = PrettyTable(["Name", "Host", "Status", "Ips", "Source", "Plan", "Profile", customcolumn])
             for cli in sorted(allclients):
                 for vm in allclients[cli].list():
-                    vm.insert(1, cli)
+                    name = vm.get('name')
+                    status = vm.get('status')
+                    ip = vm.get('ip', '')
+                    source = vm.get('template', '')
+                    plan = vm.get('plan', '')
+                    profile = vm.get('profile', '')
+                    report = vm.get('report', '')
+                    vminfo = [name, cli, status, ip, source, plan, profile, report]
                     if filters:
-                        status = vm[2]
                         if status == filters:
-                            vms.add_row(vm)
+                            vms.add_row(vminfo)
                     else:
-                        vms.add_row(vm)
+                        vms.add_row(vminfo)
             print(vms)
         else:
             vms = PrettyTable(["Name", "Status", "Ips", "Source", "Plan", "Profile", customcolumn])
