@@ -261,7 +261,7 @@ def list_containers(self):
     else:
         containers = []
         dockercommand = "docker ps -a --format \"'{{.Names}}?{{.Status}}?{{.Image}}?{{.Command}}?{{.Ports}}?{{.Label "
-        "\\\"plan\\\"}}'\""
+        dockercommand += "\\\"plan\\\"}}'\""
         command = "ssh -p %s %s@%s %s" % (self.port, self.user, self.host, dockercommand)
         results = os.popen(command).readlines()
         for container in results:
