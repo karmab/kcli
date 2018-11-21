@@ -91,7 +91,8 @@ class Kubevirt(object):
             if self.cdi and datavolumes:
                 try:
                     cm = self.core.read_namespaced_config_map('kubevirt-config', KUBEVIRTNAMESPACE)
-                    print(cm)
+                    if 'feature-gates' in cm.data and 'DataVolumes' in cm.data['feature-gates']:
+                        self.datavolumes = True
                 except:
                     pass
         return
@@ -206,6 +207,7 @@ class Kubevirt(object):
         crds = self.crds
         core = self.core
         cdi = self.cdi
+        datavolumes = self.datavolumes
         cdinamespace = self.cdinamespace
         namespace = self.namespace
         if cdi:
@@ -323,11 +325,12 @@ class Kubevirt(object):
                 if 'name' in disk:
                     volname = disk['name']
                     existingpvc = True
-            # myvolume = {'volumeName': volname, 'name': volname}
             myvolume = {'name': volname}
             if template is not None and index == 0:
                 if template in REGISTRYDISKS:
                     myvolume['registryDisk'] = {'image': template}
+                elif cdi and datavolumes:
+                    myvolume['dataVolume'] = {'name': volname}
                 else:
                     myvolume['persistentVolumeClaim'] = {'claimName': volname}
             if index > 0 or template is None:
@@ -367,16 +370,25 @@ class Kubevirt(object):
             pvcsize = pvc['spec']['resources']['requests']['storage'].replace('Gi', '')
             if template not in REGISTRYDISKS and index == 0:
                 if cdi:
-                    # NOTE: we should also check that cloning finished in this case
-                    core.create_namespaced_persistent_volume_claim(namespace, pvc)
-                    bound = self.pvc_bound(pvcname, namespace)
-                    if not bound:
-                        return {'result': 'failure', 'reason': 'timeout waiting for pvc %s to get bound' % pvcname}
-                    completed = self.import_completed(pvcname, namespace)
-                    if not completed:
-                        common.pprint("Issue with cdi import", color='red')
-                        return {'result': 'failure', 'reason': 'timeout waiting for cdi importer pod to complete'}
-                    continue
+                    if datavolumes:
+                        dvt = {'metadata': {'name': volname},
+                               'spec': {'pvc': {'accessModes': ['ReadWriteOnce'],
+                                                'resources':
+                                                {'requests': {'storage': '%sGi' % pvcsize}}},
+                                        'source': {'pvc': {'name': template, 'namespace': self.cdinamespace}}},
+                               'status': {}}
+                        vm['spec']['dataVolumeTemplates'] = [dvt]
+                        continue
+                    else:
+                        core.create_namespaced_persistent_volume_claim(namespace, pvc)
+                        bound = self.pvc_bound(pvcname, namespace)
+                        if not bound:
+                            return {'result': 'failure', 'reason': 'timeout waiting for pvc %s to get bound' % pvcname}
+                        completed = self.import_completed(pvcname, namespace)
+                        if not completed:
+                            common.pprint("Issue with cdi import", color='red')
+                            return {'result': 'failure', 'reason': 'timeout waiting for cdi importer pod to complete'}
+                        continue
                 else:
                     volname = "%s-vol0" % name
                     copy = self.copy_image(diskpool, template, volname)
@@ -644,22 +656,22 @@ class Kubevirt(object):
             template = annotations['kcli/template'] if 'kcli/template' in annotations else 'N/A'
         ip = None
         host = None
+        state = 'down'
         if running:
             try:
                 runvm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachineinstances', name)
+                status = runvm.get('status')
+                if status:
+                    state = status.get('phase').replace('Running', 'up')
+                    host = status['nodeName'] if 'nodeName' in status else None
+                    if 'interfaces' in status:
+                        interfaces = runvm['status']['interfaces']
+                        for interface in interfaces:
+                            if 'ipAddress' in interface:
+                                ip = interface['ipAddress']
+                                break
             except:
-                common.pprint("underlying VM %s not found" % name, color='red')
-                return {'result': 'failure', 'reason': "underlying VM %s not found" % name}
-            status = runvm.get('status')
-            if status:
-                state = status.get('phase').replace('Running', 'up')
-                host = status['nodeName'] if 'nodeName' in status else None
-                if 'interfaces' in status:
-                    interfaces = runvm['status']['interfaces']
-                    for interface in interfaces:
-                        if 'ipAddress' in interface:
-                            ip = interface['ipAddress']
-                            break
+                pass
         else:
             state = 'down'
         yamlinfo = {'name': name, 'nets': [], 'disks': [], 'state': state, 'creationdate': creationdate, 'host': host,
