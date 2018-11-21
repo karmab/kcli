@@ -534,6 +534,10 @@ class Kubevirt(object):
             common.pprint("Tunneling virtctl through remote host %s. Make sure virtctl is installed there" % self.host,
                           color='blue')
             command = "ssh -o LogLevel=QUIET -Xt %s@%s virtctl vnc %s -n %s" % (self.user, self.host, name, namespace)
+        if self.token is not None:
+            command += " --insecure-skip-tls-verify -s https://%s:%s --token %s" % (self.host, self.port, self.token)
+        else:
+            command += " --insecure-skip-tls-verify --context %s" % (self.contextname)
         if self.debug:
             print(command)
         os.system(command)
@@ -757,10 +761,7 @@ class Kubevirt(object):
             templates = [p.metadata.annotations['kcli/template'] for p in pvc.items
                          if p.metadata.annotations is not None and 'kcli/template' in p.metadata.annotations]
         if templates:
-            return sorted(templates)
-        else:
-            common.pprint("No pvc based templates found, defaulting to registry disks", color='blue')
-            return REGISTRYDISKS
+            return sorted(templates + REGISTRYDISKS)
 
     def delete(self, name, snapshots=False):
         """
