@@ -175,7 +175,7 @@ class Kconfig(Kbaseconfig):
         self.overrides.update({'type': self.type})
 
     def create_vm(self, name, profile, overrides={}, customprofile={}, k=None,
-                  plan='kvirt', basedir='.'):
+                  plan='kvirt', basedir='.', client=None):
         """
 
         :param k:
@@ -528,7 +528,8 @@ class Kconfig(Kbaseconfig):
                 print("Running: %s -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
                 os.system("%s -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
         if os.access(os.path.expanduser('~/.kcli'), os.W_OK):
-            common.set_lastvm(name, self.client)
+            client = client if client is not None else self.client
+            common.set_lastvm(name, client)
         return {'result': 'success', 'vm': name}
 
     def list_plans(self):
@@ -1108,12 +1109,12 @@ class Kconfig(Kbaseconfig):
                         if vmcounter >= len(vmentries):
                             os.remove("%s.key.pub" % plan)
                             os.remove("%s.key" % plan)
+                    currenthost = host if host is not None else self.client
                     result = self.create_vm(name, profilename, overrides=overrides, customprofile=profile, k=z,
-                                            plan=plan, basedir=basedir)
+                                            plan=plan, basedir=basedir, client=currenthost)
                     common.handle_response(result, name)
                     if result['result'] == 'success':
                         newvms.append(name)
-                        common.set_lastvm(name, self.client)
                     _ansible = next((e for e in [profile.get('ansible'), customprofile.get('ansible')]
                                      if e is not None), None)
                     if _ansible is not None:

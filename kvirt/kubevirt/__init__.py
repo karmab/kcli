@@ -423,7 +423,6 @@ class Kubevirt(object):
         """
         crds = self.crds
         namespace = self.namespace
-        common.pprint("Using current namespace %s" % namespace, color='green')
         try:
             vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
         except:
@@ -440,7 +439,6 @@ class Kubevirt(object):
         """
         crds = self.crds
         namespace = self.namespace
-        common.pprint("Using current namespace %s" % namespace, color='green')
         try:
             vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
         except:
@@ -597,7 +595,6 @@ class Kubevirt(object):
         try:
             vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
         except:
-            common.pprint("VM %s not found" % name, color='red')
             return None, None
         if self.debug:
             pretty_print(vm)
@@ -789,12 +786,8 @@ class Kubevirt(object):
         crds = self.crds
         core = self.core
         namespace = self.namespace
-        common.pprint("Using current namespace %s" % namespace, color='green')
         try:
             vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
-        except Exception as e:
-            return {'result': 'failure', 'reason': e}
-        try:
             crds.delete_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name,
                                                  client.V1DeleteOptions())
         except:

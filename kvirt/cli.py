@@ -110,32 +110,43 @@ def delete(args):
     snapshots = args.snapshots
     yes = args.yes
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
-    names = [common.get_lastvm(config.client)] if not args.names else args.names
-    k = config.k
-    if not yes:
-        common.confirm("Are you sure?")
-    if container:
-        from kvirt import dockerutils
-        for name in names:
-            common.pprint("Deleting container %s" % name, color='red')
-            dockerutils.delete_container(k, name)
+    if config.extraclients:
+        allclients = config.extraclients.copy()
+        allclients.update({config.client: config.k})
+        names = args.names
+        if not names:
+            common.pprint("Can't delete vms on multiple hosts without specifying their names", color='red')
+            os._exit(1)
     else:
-        codes = []
-        for name in names:
-            dnshost, domain = k.dnsinfo(name)
-            result = k.delete(name, snapshots=snapshots)
-            if result['result'] == 'success':
-                common.pprint("vm %s deleted on %s" % (name, config.client), color='green')
-                codes.append(0)
-                common.set_lastvm(name, config.client, delete=True)
-            else:
-                reason = result['reason']
-                common.pprint("Could not delete vm %s because %s" % (name, reason), color='red')
-                codes.append(1)
-            if dnshost is not None and domain is not None:
-                z = Kconfig(client=dnshost).k
-                z.delete_dns(dnshost, domain)
-        os._exit(1 if 1 in codes else 0)
+        allclients = {config.client: config.k}
+        names = [common.get_lastvm(config.client)] if not args.names else args.names
+    for cli in sorted(allclients):
+        k = allclients[cli]
+        common.pprint("Deleting on %s" % cli, color='green')
+        if not yes:
+            common.confirm("Are you sure?")
+        if container:
+            from kvirt import dockerutils
+            for name in names:
+                common.pprint("Deleting container %s" % name, color='green')
+                dockerutils.delete_container(k, name)
+        else:
+            codes = []
+            for name in names:
+                dnshost, domain = k.dnsinfo(name)
+                result = k.delete(name, snapshots=snapshots)
+                if result['result'] == 'success':
+                    common.pprint("%s deleted" % name, color='green')
+                    codes.append(0)
+                    common.set_lastvm(name, cli, delete=True)
+                else:
+                    reason = result['reason']
+                    common.pprint("Could not delete %s because %s" % (name, reason), color='red')
+                    codes.append(1)
+                if dnshost is not None and domain is not None:
+                    z = Kconfig(client=dnshost).k
+                    z.delete_dns(dnshost, domain)
+    os._exit(1 if 1 in codes else 0)
 
 
 def download(args):

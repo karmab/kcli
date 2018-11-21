@@ -518,7 +518,6 @@ class Kgcp(object):
         try:
             vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
         except:
-            common.pprint("VM %s not found" % name, color='red')
             return None, None
         dnshost, domain = None, None
         if 'items' in vm['metadata']:

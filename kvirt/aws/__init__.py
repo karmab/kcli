@@ -387,7 +387,6 @@ class Kaws(object):
             Filters = {'Name': "tag:Name", 'Values': [name]}
             vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
         except:
-            common.pprint("VM %s not found" % name, color='red')
             return None, None
         dnshost, domain = None, None
         if 'Tags' in vm:

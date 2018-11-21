@@ -559,7 +559,6 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         """
         vmsearch = self.vms_service.list(search='name=%s' % name)
         if not vmsearch:
-            common.pprint("VM %s not found" % name, color='red')
             return None, None
         vm = vmsearch[0]
         dnshost, domain = None, None

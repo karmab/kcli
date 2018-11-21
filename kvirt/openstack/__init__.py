@@ -413,7 +413,6 @@ class Kopenstack(object):
         try:
             vm = nova.servers.find(name=name)
         except:
-            common.pprint("VM %s not found" % name, color='red')
             return None, None
         dnshost, domain = None
         metadata = vm.metadata
