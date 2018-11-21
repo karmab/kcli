@@ -16,6 +16,7 @@ import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 DOMAIN = "kubevirt.io"
+CDIDOMAIN = "cdi.kubevirt.io"
 KUBEVIRTNAMESPACE = "kube-system"
 VERSION = 'v1alpha2'
 MULTUSDOMAIN = 'k8s.cni.cncf.io'
@@ -804,14 +805,20 @@ class Kubevirt(object):
                                                  client.V1DeleteOptions())
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        volumes = [d['volumeName'] for d in vm['spec']['template']['spec']['domain']['devices']['disks']
-                   if d['volumeName'] != 'cloudinitdisk']
+        # volumes = [d['volumeName'] for d in vm['spec']['template']['spec']['domain']['devices']['disks']
+        #           if d['volumeName'] != 'cloudinitdisk']
+        pvcvolumes = [v['claimName'] for v in vm['spec']['template']['spec']['volumes'] if 'claimName' in v]
         pvcs = [pvc for pvc in core.list_namespaced_persistent_volume_claim(namespace).items
-                if pvc.metadata.name in volumes]
+                if pvc.metadata.name in pvcvolumes]
         for p in sorted(pvcs):
             pvcname = p.metadata.name
             print("Deleting pvc %s" % pvcname)
             core.delete_namespaced_persistent_volume_claim(pvcname, namespace, client.V1DeleteOptions())
+        datavolumes = [v.metadata.name for v in vm['spec']['template']['spec']['volumes'] if 'dataVolume' in v]
+        for datavolume in sorted(datavolumes):
+            print("Deleting datavolume %s" % datavolume)
+            crds.delete_namespaced_custom_object(CDIDOMAIN, VERSION, namespace, 'datavolumes', datavolume,
+                                                 client.V1DeleteOptions())
         try:
             core.delete_namespaced_service('%s-ssh' % name, namespace)
         except:

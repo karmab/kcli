@@ -396,7 +396,6 @@ class Kvirt(object):
         netxml = ''
         alias = []
         etcd = None
-        ip = None
         guestagent = False
         for index, net in enumerate(nets):
             ovs = False
@@ -412,19 +411,17 @@ class Kvirt(object):
                     macxml = "<mac address='%s'/>" % mac
                 if 'type' in nets[index]:
                     nettype = nets[index]['type']
-                if index == 0 and ip is not None:
-                    metadata = """%s<kvirt:ip >%s</kvirt:ip>""" % (metadata, ip)
                 if reservedns and index == 0 and 'alias' in nets[index] and isinstance(nets[index]['alias'], list):
                     alias = nets[index]['alias']
                 if 'etcd' in nets[index] and nets[index]['etcd']:
                     etcd = "eth%s" % index
                 if 'ovs' in nets[index] and nets[index]['ovs']:
                     ovs = True
+                if 'ip' in nets[index] and index == 0:
+                        metadata = """%s<kvirt:ip >%s</kvirt:ip>""" % (metadata, nets[index]['ip'])
             if ips and len(ips) > index and ips[index] is not None and\
                     netmasks and len(netmasks) > index and netmasks[index] is not None and gateway is not None:
                 nets[index]['ip'] = ips[index]
-                if index == 0:
-                    ip = ips[index]
                 nets[index]['netmask'] = netmasks[index]
             if netname in bridges or ovs:
                 sourcenet = 'bridge'

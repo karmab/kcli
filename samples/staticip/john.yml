@@ -5,7 +5,7 @@ john:
  nat: true
 
 john02:
- template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+ template: CentOS-7-x86_64-GenericCloud.qcow2
  memory: 512
  numcpus: 1
  disks:
