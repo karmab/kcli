@@ -814,11 +814,6 @@ class Kubevirt(object):
             pvcname = p.metadata.name
             print("Deleting pvc %s" % pvcname)
             core.delete_namespaced_persistent_volume_claim(pvcname, namespace, client.V1DeleteOptions())
-        datavolumes = [v.metadata.name for v in vm['spec']['template']['spec']['volumes'] if 'dataVolume' in v]
-        for datavolume in sorted(datavolumes):
-            print("Deleting datavolume %s" % datavolume)
-            crds.delete_namespaced_custom_object(CDIDOMAIN, VERSION, namespace, 'datavolumes', datavolume,
-                                                 client.V1DeleteOptions())
         try:
             core.delete_namespaced_service('%s-ssh' % name, namespace)
         except:
