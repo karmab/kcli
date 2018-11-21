@@ -959,7 +959,7 @@ class Kvirt(object):
         if vm.isActive():
             status = 'up'
         yamlinfo = {'name': name, 'autostart': autostart, 'nets': [], 'disks': [], 'snapshots': [], 'status': status}
-        plan, profile, template, ip, creationdate, report = None, None, None, None, None, None
+        plan, profile, template, ip, creationdate, report = '', None, None, None, None, None
         for element in list(root.getiterator('{kvirt}info')):
             e = element.find('{kvirt}plan')
             if e is not None:
@@ -982,8 +982,7 @@ class Kvirt(object):
                 creationdate = e.text
         if template is not None:
             yamlinfo['template'] = template
-        if plan is not None:
-            yamlinfo['plan'] = plan
+        yamlinfo['plan'] = plan
         if profile is not None:
             yamlinfo['profile'] = profile
         if report is not None:

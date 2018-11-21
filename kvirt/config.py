@@ -540,9 +540,9 @@ class Kconfig(Kbaseconfig):
         k = self.k
         vms = {}
         plans = []
-        for vm in sorted(k.list(), key=lambda x: x['plan']):
+        for vm in sorted(k.list(), key=lambda x: x.get('plan', 'kvirt')):
                 vmname = vm['name']
-                plan = vm['plan']
+                plan = vm.get('plan')
                 if plan in vms:
                     vms[plan].append(vmname)
                 else:
@@ -762,7 +762,7 @@ class Kconfig(Kbaseconfig):
                 c = deleteclients[hypervisor]
                 for vm in sorted(c.list(), key=lambda x: x['name']):
                     name = vm['name']
-                    description = vm['plan']
+                    description = vm.get('plan')
                     if description == plan:
                         if 'loadbalancer' in vm and vm['loadbalancer'] not in deletedlbs:
                             deletedlbs.append(vm['loadbalancer'])
