@@ -529,15 +529,18 @@ class Kubevirt(object):
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if find_executable('virtctl') is not None:
             common.pprint("Using local virtctl")
-            command = "virtctl vnc %s -n %s" % (name, namespace)
+            command = "virtctl vnc %s -n %s --insecure-skip-tls-verify" % (name, namespace)
         else:
             common.pprint("Tunneling virtctl through remote host %s. Make sure virtctl is installed there" % self.host,
                           color='blue')
-            command = "ssh -o LogLevel=QUIET -Xt %s@%s virtctl vnc %s -n %s" % (self.user, self.host, name, namespace)
+            command = "ssh -o LogLevel=QUIET -Xt %s@%s virtctl vnc %s -n %s --insecure-skip-tls-verify" % (self.user,
+                                                                                                           self.host,
+                                                                                                           name,
+                                                                                                           namespace)
         if self.token is not None:
-            command += " --insecure-skip-tls-verify -s https://%s:%s --token %s" % (self.host, self.port, self.token)
+            command += " -s https://%s:%s --token %s" % (self.host, self.port, self.token)
         else:
-            command += " --insecure-skip-tls-verify --context %s" % (self.contextname)
+            command += " --context %s" % (self.contextname)
         if self.debug:
             print(command)
         os.system(command)
@@ -558,12 +561,17 @@ class Kubevirt(object):
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if find_executable('virtctl') is not None:
             common.pprint("Using local virtctl")
-            home = os.path.expanduser('~')
-            command = "virtctl console --kubeconfig=%s/.kube/config %s -n %s" % (home, name, namespace)
+            command = "virtctl console %s -n %s --insecure-skip-tls-verify" % (name, namespace)
         else:
             common.pprint("Tunneling virtctl through remote host. Make sure virtctl is installed there", color='blue')
-            command = "ssh -o LogLevel=QUIET -t %s@%s virtctl console --kubeconfig=.kube/config %s -n %s"\
-                % (self.user, self.host, name, namespace)
+            command = "ssh -o LogLevel=QUIET -t %s@%s virtctl console %s -n %s --insecure-skip-tls-verify" % (self.user,
+                                                                                                              self.host,
+                                                                                                              name,
+                                                                                                              namespace)
+        if self.token is not None:
+            command += " -s https://%s:%s --token %s" % (self.host, self.port, self.token)
+        else:
+            command += " --context %s" % (self.contextname)
         if self.debug:
             print(command)
         os.system(command)
