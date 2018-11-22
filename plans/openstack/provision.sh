@@ -16,22 +16,22 @@ openstack project create [[ project ]]
 openstack user create  --project [[ project ]] --password [[ password ]] [[ user ]]
 openstack role add --user=[[ user ]] --project=[[ project ]] admin
 grep -q 'type_drivers = vxlan' /etc/neutron/plugin.ini && sed -i 's/type_drivers =.*/type_drivers = vxlan,flat/' /etc/neutron/plugin.ini && systemctl restart neutron-server
-neutron net-create external --provider:network_type flat --provider:physical_network extnet --router:external || neutron net-create external --router:external
-neutron subnet-create --name ${EXTERNAL_SUBNET} --allocation-pool start=${EXTERNAL_START},end=${EXTERNAL_END} --disable-dhcp --gateway ${EXTERNAL_GATEWAY} external ${EXTERNAL_SUBNET}
+neutron net-create extnet --provider:network_type flat --provider:physical_network extnet --router:external || neutron net-create extnet --router:external
+neutron subnet-create --name ${EXTERNAL_SUBNET} --allocation-pool start=${EXTERNAL_START},end=${EXTERNAL_END} --disable-dhcp --gateway ${EXTERNAL_GATEWAY} extnet ${EXTERNAL_SUBNET}
 OLD_PASSWORD=`grep PASSWORD /root/keystonerc_admin | cut -f2 -d'='`
 openstack user password set  --original-password ${OLD_PASSWORD} --password ${ADMIN_PASSWORD} || openstack user set --password ${ADMIN_PASSWORD} admin || keystone password-update --new-password ${ADMIN_PASSWORD}
 sed -i "s/OS_PASSWORD=.*/OS_PASSWORD=$ADMIN_PASSWORD/" ~/keystonerc_admin
 source ~/keystonerc_[[ user ]]
-curl http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img > /tmp/c.img
+curl [[ cirros_image ]] > /tmp/c.img
 glance image-create --name "cirros" --disk-format qcow2 --container-format bare --file /tmp/c.img
 tail -1 /root/.ssh/authorized_keys > ~/[[ user ]].pub
 nova keypair-add --pub-key ~/[[ user ]].pub [[ user ]]
 neutron net-create private
 neutron subnet-create --name 10.0.0.0/24 --allocation-pool start=10.0.0.2,end=10.0.0.254 --gateway 10.0.0.1 private 10.0.0.0/24
 neutron router-create router
-neutron router-gateway-set router external
+neutron router-gateway-set router extnet
 neutron router-interface-add router 10.0.0.0/24
-seq 5 | xargs -I -- neutron floatingip-create external
+seq 5 | xargs -I -- neutron floatingip-create extnet
 neutron security-group-create [[ user ]]
 neutron security-group-rule-create --direction ingress --protocol tcp --port_range_min 22 --port_range_max 22 --remote-ip-prefix 0.0.0.0/0 [[ user ]]
 neutron security-group-rule-create --protocol icmp --direction ingress  --remote-ip-prefix 0.0.0.0/0 [[ user ]]

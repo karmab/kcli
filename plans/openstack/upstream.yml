@@ -1,10 +1,22 @@
 parameters:
- version: queens
+ version: rocky
  user: testk
  password: testk
  project: testk
  admin_password: unix1234
  ovn: false
+ cirros_image: http://download.cirros-cloud.net/0.4.0/cirros-0.4.0-x86_64-disk.img
+ ironic: true
+ lbaas: true
+ manila: false
+ ceilometer: false
+ aodh: false
+ panko: false
+ swift: false
+ sahara: false
+ magnum: false
+ trove: false
+
 
 [[ version ]]:
  template: CentOS-7-x86_64-GenericCloud.qcow2
