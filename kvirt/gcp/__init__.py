@@ -881,8 +881,10 @@ class Kgcp(object):
             os._exit(1)
         if 'natIP' in vm['networkInterfaces'][0]['accessConfigs'][0]:
             ip = vm['networkInterfaces'][0]['accessConfigs'][0]['natIP']
-        template = os.path.basename(vm['disks'][0]['licenses'][-1])
-        user = common.get_user(template)
+        user = 'root'
+        if 'licenses' in vm['disks'][0]:
+            template = os.path.basename(vm['disks'][0]['licenses'][-1])
+            user = common.get_user(template)
         if user == 'root':
             user = getuser()
         return user, ip
