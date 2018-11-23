@@ -416,11 +416,22 @@ def _list(args):
         print(images)
     elif plans:
         vms = {}
-        plans = PrettyTable(["Name", "Vms"])
-        for plan in config.list_plans():
-            planname = plan[0]
-            planvms = plan[1]
-            plans.add_row([planname, planvms])
+        if config.extraclients:
+            plans = PrettyTable(["Name", "Host", "Vms"])
+            allclients = config.extraclients.copy()
+            allclients.update({config.client: config.k})
+            for cli in sorted(allclients):
+                currentconfig = Kconfig(client=cli, debug=args.debug, region=args.region, zone=args.zone)
+                for plan in currentconfig.list_plans():
+                    planname = plan[0]
+                    planvms = plan[1]
+                    plans.add_row([planname, cli, planvms])
+        else:
+            plans = PrettyTable(["Name", "Vms"])
+            for plan in config.list_plans():
+                planname = plan[0]
+                planvms = plan[1]
+                plans.add_row([planname, planvms])
         print(plans)
     else:
         customcolumns = {'kubevirt': 'Namespace', 'aws': 'InstanceId', 'openstack': 'Project'}
