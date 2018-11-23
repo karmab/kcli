@@ -1059,7 +1059,7 @@ class Kvirt(object):
                 current = True
             else:
                 current = False
-            yamlinfo['snapshots'].append({'snapshot': snapshot, current: current})
+            yamlinfo['snapshots'].append({'snapshot': snapshot, 'current': current})
         return yamlinfo
 
     def ip(self, name):

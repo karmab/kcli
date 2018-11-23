@@ -1,5 +1,8 @@
 VERSION="[[ kubevirt_version ]]"
 yum -y install xorg-x11-xauth virt-viewer
+if [ "$VERSION" == "latest" ] ; then
+VERSION=`curl -s https://api.github.com/repos/kubevirt/kubevirt/releases/latest | python -c 'import sys, json; print(json.load(sys.stdin)["tag_name"])'`
+fi
 oc project kube-system
 grep -q vmx /proc/cpuinfo || oc create configmap -n kube-system kubevirt-config --from-literal debug.useEmulation=true
 wget https://github.com/kubevirt/kubevirt/releases/download/${VERSION}/kubevirt.yaml
