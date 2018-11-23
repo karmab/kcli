@@ -87,8 +87,10 @@ class Kubevirt(object):
         if cdi:
             cdipods = self.core.list_pod_for_all_namespaces(label_selector='app=containerized-data-importer').items
             if cdipods:
-                self.cdinamespace = cdipods[0].metadata.namespace
-                self.cdi = True
+                for pod in cdipods:
+                    if pod.metadata.name.startswith('cdi-deployment'):
+                        self.cdinamespace = pod.metadata.namespace
+                        self.cdi = True
             if self.cdi and datavolumes:
                 try:
                     cm = self.core.read_namespaced_config_map('kubevirt-config', KUBEVIRTNAMESPACE)
@@ -777,6 +779,7 @@ class Kubevirt(object):
         cdinamespace = self.cdinamespace
         if iso:
             return []
+        templates = []
         if cdi:
             pvc = core.list_namespaced_persistent_volume_claim(cdinamespace)
             templates = [self.get_template_name(p.metadata.annotations['cdi.kubevirt.io/storage.import.endpoint'])
@@ -786,8 +789,7 @@ class Kubevirt(object):
             pvc = core.list_namespaced_persistent_volume_claim(namespace)
             templates = [p.metadata.annotations['kcli/template'] for p in pvc.items
                          if p.metadata.annotations is not None and 'kcli/template' in p.metadata.annotations]
-        if templates:
-            return sorted(templates + REGISTRYDISKS)
+        return sorted(templates + REGISTRYDISKS)
 
     def delete(self, name, snapshots=False):
         """
