@@ -277,7 +277,6 @@ class Kgcp(object):
             elif content is not None:
                     startup_script += "cat <<'EOF' >%s\n%s\nEOF\nchmod %s %s\n" % (path, content, permissions, path)
         if enableroot and template is not None:
-            user = common.get_user(template)
             enablerootcmds = ['sed -i "s/.*PermitRootLogin.*/PermitRootLogin yes/" /etc/ssh/sshd_config',
                               'systemctl restart sshd']
             if not cmds:
@@ -882,7 +881,12 @@ class Kgcp(object):
         if 'natIP' in vm['networkInterfaces'][0]['accessConfigs'][0]:
             ip = vm['networkInterfaces'][0]['accessConfigs'][0]['natIP']
         user = 'root'
-        if 'licenses' in vm['disks'][0]:
+        source = os.path.basename(vm['disks'][0]['source'])
+        source = conn.disks().get(zone=zone, project=self.project, disk=source).execute()
+        if self.project in source['sourceImage']:
+            template = os.path.basename(source['sourceImage'])
+            user = common.get_user(template)
+        elif 'licenses' in vm['disks'][0]:
             template = os.path.basename(vm['disks'][0]['licenses'][-1])
             user = common.get_user(template)
         if user == 'root':
