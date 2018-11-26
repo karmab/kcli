@@ -378,7 +378,7 @@ class Kconfig(Kbaseconfig):
         dnshost = profile.get('dnshost', default_dnshost)
         scriptcmds = []
         skip_rhnregister_script = False
-        if rhnregister:
+        if rhnregister and template is not None and template.lower().startswith('rhel'):
             if rhnuser is not None and rhnpassword is not None:
                 skip_rhnregister_script = True
                 overrides['rhnuser'] = rhnuser

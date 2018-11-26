@@ -347,6 +347,13 @@ class Kgcp(object):
             body['metadata']['items'].append(newval)
         if self.debug:
             print(body)
+        if overrides:
+            # body['labels'] = {k: overrides[k].replace('.', '-') for k in overrides}
+            for key in overrides:
+                if key in ['plan', 'profile', 'ssh-keys']:
+                    continue
+                newval = {'key': key, 'value': overrides[key]}
+                body['metadata']['items'].append(newval)
         conn.instances().insert(project=project, zone=zone, body=body).execute()
         if reservedns and domain is not None:
             self.reserve_dns(name, nets=nets, domain=domain, alias=alias)
