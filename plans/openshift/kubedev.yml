@@ -2,6 +2,8 @@ parameters:
   template: Fedora-Cloud-Base-28-1.1.x86_64.qcow2
   memory: 8192
   disk_size: 50
+  github_user: karmab
+  github_mail: karimboumedhel@gmail.com
 
 kubedev:
  template: [[ template ]]
