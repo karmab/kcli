@@ -4,7 +4,7 @@ parameters:
   go_version: 1.11.1
   uri: qemu+tcp://192.168.122.1/system
   cluster: testk
-  domain: tt.testing
+  domain: openshift.testing
   email_address: admin@magnifico.es
   password: password
 
