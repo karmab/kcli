@@ -3,12 +3,10 @@ parameters:
   memory: 16384
   go_version: 1.11.1
   uri: qemu+tcp://192.168.122.1/system
-  rhcos_path: /var/lib/libvirt/images/rhcos-qemu.qcow2
   cluster: testk
   domain: tt.testing
   email_address: admin@magnifico.es
   password: password
-  use_kcli: false
 
 installer:
  template: [[ template ]]
@@ -27,8 +25,5 @@ installer:
    origin: installer_cleanup.sh
  - path: /root/coreos_pull.json
    origin: ~/coreos_pull.json
- - path: /root/kcli_plan.yml
-   origin: installer_kcli_plan.yml
-   render: false
  scripts:
  - installer.sh

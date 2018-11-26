@@ -1,6 +1,9 @@
-yum -y install libvirt-client libvirt-devel gcc-c++ git unzip wget
+yum -y install libvirt-client libvirt-devel gcc-c++ git unzip wget jq
 ssh-keyscan -H 192.168.122.1 >> ~/.ssh/known_hosts
-scp root@192.168.122.1:[[ rhcos_path ]] /root/rhcos.qcow2
+build=`curl -s https://releases-rhcos.svc.ci.openshift.org/storage/releases/maipo/builds.json | jq -r '.builds[0]'`
+image=`curl -s https://releases-rhcos.svc.ci.openshift.org/storage/releases/maipo/$build/meta.json | jq -r '.images["qemu"].path'`
+url="https://releases-rhcos.svc.ci.openshift.org/storage/releases/maipo/$build/$image"
+curl --compressed -L -o rhcos-qemu.qcow2 $url
 wget https://dl.google.com/go/go[[ go_version ]].linux-amd64.tar.gz
 tar -C /usr/local -xzf go[[ go_version ]].linux-amd64.tar.gz
 export GOPATH=/root/go
