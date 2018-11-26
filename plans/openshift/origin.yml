@@ -36,5 +36,9 @@ origin:
 [% endif %]
 [% endif %]
  files:
+[% if istio and knative %]
   - istio_knative.yml
+[% endif %]
+[% if skydive %]
   - skydive.yml
+[% endif %]
