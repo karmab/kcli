@@ -2140,6 +2140,24 @@ class Kvirt(object):
         pool.create()
         return {'result': 'success'}
 
+    def delete_image(self, image, pool=None):
+        common.pprint("Deleting image %s" % image, color='green')
+        conn = self.conn
+        shortname = os.path.basename(image)
+        for poolname in conn.listStoragePools():
+            if self.get_pool_path(poolname) == os.path.dirname(image):
+                try:
+                    pool = conn.storagePoolLookupByName(poolname)
+                    volume = pool.storageVolLookupByName(shortname)
+                except:
+                    common.print("Image %s not found" % image)
+                    return {'result': 'failure', 'reason': 'pool not found'}
+            volume.delete(0)
+            pool.refresh(0)
+            return {'result': 'success'}
+        common.pprint("Image %s not found" % image, color='red')
+        return {'result': 'failure', 'reason': 'Image %s not found' % image}
+
     def add_image(self, image, pool, cmd=None, name=None, size=1):
         """
 
