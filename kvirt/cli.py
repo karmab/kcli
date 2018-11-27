@@ -155,8 +155,16 @@ def download(args):
     templates = args.templates
     cmd = args.cmd
     url = args.url
+    delete = args.delete
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
-    result = config.handle_host(pool=pool, templates=templates, download=True, cmd=cmd, url=url)
+    if delete:
+        k = config.k
+        for template in templates:
+            # shortname = os.path.basename(url)
+            # template = os.path.basename(template)
+            result = k.delete_image(pool=pool, template=template)
+    else:
+        result = config.handle_host(pool=pool, templates=templates, download=True, cmd=cmd, url=url)
     if result['result'] == 'success':
         os._exit(0)
     else:
@@ -1133,6 +1141,7 @@ def cli():
     download_help = "Image to download. Choose between \n%s" % '\n'.join(TEMPLATES.keys())
     download_parser = subparsers.add_parser('download', description=download_info, help=download_info)
     download_parser.add_argument('-c', '--cmd', help='Extra command to launch after downloading', metavar='CMD')
+    download_parser.add_argument('-d', '--delete', action='store_true')
     download_parser.add_argument('-p', '--pool', help='Pool to use. Defaults to default', metavar='POOL')
     download_parser.add_argument('-u', '--url', help='Url to use', metavar='URL')
     # download_parser.add_argument('templates', choices=sorted(TEMPLATES.keys()),

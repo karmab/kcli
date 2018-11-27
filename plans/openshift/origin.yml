@@ -30,14 +30,15 @@ origin:
   - skydive.sh
 [% endif %]
 [% if istio %]
-  - istio_knative.sh
+  - istio.sh
 [% if knative %]
   - knative.sh
 [% endif %]
 [% endif %]
  files:
-[% if istio and knative %]
-  - istio_knative.yml
+[% if istio %]
+  - istio_patch.sh
+  - istio_fix_sidecar.sh
 [% endif %]
 [% if skydive %]
   - skydive.yml
