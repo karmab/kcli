@@ -812,6 +812,15 @@ class Kopenstack(object):
         print("not implemented")
         return
 
+    def delete_image(self, image):
+        common.pprint("Deleting image %s" % image, color='green')
+        glance = self.glance
+        for img in glance.images.list():
+            if img.name == image:
+                glance.images.delete(img.id)
+                return {'result': 'success'}
+        return {'result': 'failure', 'reason': "Image %s not found" % image}
+
     def add_image(self, image, pool, short=None, cmd=None, name=None, size=1):
         """
 
