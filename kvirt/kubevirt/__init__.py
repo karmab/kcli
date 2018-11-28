@@ -1160,8 +1160,8 @@ class Kubevirt(object):
         return
 
     def delete_image(self, image):
-        core = self.core
         common.print("Deleting image %s" % image, color='green')
+        core = self.core
         if self.cdi:
             cdinamespace = self.cdinamespace
             pvc = core.list_namespaced_persistent_volume_claim(cdinamespace)
