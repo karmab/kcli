@@ -1160,23 +1160,25 @@ class Kubevirt(object):
         return
 
     def delete_image(self, image):
-        common.print("Deleting image %s" % image, color='green')
+        common.pprint("Deleting image %s" % image, color='green')
         core = self.core
         if self.cdi:
             cdinamespace = self.cdinamespace
             pvc = core.list_namespaced_persistent_volume_claim(cdinamespace)
-            templates = [self.get_template_name(p.metadata.annotations['cdi.kubevirt.io/storage.import.endpoint'])
-                         for p in pvc.items if p.metadata.annotations is not None and
-                         'cdi.kubevirt.io/storage.import.endpoint' in p.metadata.annotations]
-            if image in templates:
-                core.delete_namespaced_persistent_volume_claim(image, cdinamespace, client.V1DeleteOptions())
+            templates = [p.metadata.name for p in pvc.items if p.metadata.annotations is not None and
+                         'cdi.kubevirt.io/storage.import.endpoint' in p.metadata.annotations and
+                         self.get_template_name(p.metadata.annotations['cdi.kubevirt.io/storage.import.endpoint']) ==
+                         image]
+            if templates:
+                core.delete_namespaced_persistent_volume_claim(templates[0], cdinamespace, client.V1DeleteOptions())
                 return {'result': 'success'}
         else:
             pvc = core.list_namespaced_persistent_volume_claim(self.namespace)
-            templates = [p.metadata.annotations['kcli/template'] for p in pvc.items
-                         if p.metadata.annotations is not None and 'kcli/template' in p.metadata.annotations]
-            if image in templates:
-                core.delete_namespaced_persistent_volume_claim(image, self.namespace, client.V1DeleteOptions())
+            templates = [p.metadata.name for p in pvc.items
+                         if p.metadata.annotations is not None and 'kcli/template' in p.metadata.annotations and
+                         p.metadata.annotations['kcli/template'] == image]
+            if templates:
+                core.delete_namespaced_persistent_volume_claim(templates[0], self.namespace, client.V1DeleteOptions())
                 return {'result': 'success'}
         return {'result': 'failure', 'reason': 'image %s not found' % image}
 

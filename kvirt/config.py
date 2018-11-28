@@ -492,7 +492,7 @@ class Kconfig(Kbaseconfig):
                         else:
                             break
                 if ip is None:
-                    common.print("Couldn't assign DNS", color='red')
+                    common.pprint("Couldn't assign DNS", color='red')
                 else:
                     z.reserve_dns(name=name, nets=[domain], domain=domain, ip=ip, force=True)
             else:
