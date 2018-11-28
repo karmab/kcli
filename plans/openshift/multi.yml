@@ -15,7 +15,7 @@ parameters:
  asb: true
  metrics: false
  gluster: false
- version: "3.11"
+ version: '3.11'
  deploy: false
 
 [% for master in range(0, masters) %]
@@ -46,8 +46,8 @@ m0[[ master + 1 ]]:
     origin: multi/install.sh
     mode: 700
  scripts: 
-  - subscription.sh
-  - pre.sh
+  - multi/subscription.sh
+  - multi/pre.sh
 [% if deploy and master == 0 %]
   - multi/install.sh
 [% endif %]
@@ -70,8 +70,8 @@ n[[ node + 1 ]]:
   - size: [[ gluster_disk_size ]]
  pool: default
  scripts: 
-  - subscription.sh
-  - pre.sh
+  - multi/subscription.sh
+  - multi/pre.sh
 [% endfor %]
 
 [% for infra in range(0, infras) %]
@@ -91,6 +91,6 @@ i0[[ infra + 1 ]]:
   - size: [[ gluster_disk_size ]]
  pool: default
  scripts: 
-  - subscription.sh
-  - pre.sh
+  - multi/subscription.sh
+  - multi/pre.sh
 [% endfor %]
