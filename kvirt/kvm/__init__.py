@@ -2140,7 +2140,7 @@ class Kvirt(object):
         pool.create()
         return {'result': 'success'}
 
-    def delete_image(self, image, pool=None):
+    def delete_image(self, image):
         common.pprint("Deleting image %s" % image, color='green')
         conn = self.conn
         shortname = os.path.basename(image)
