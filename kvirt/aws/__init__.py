@@ -802,6 +802,12 @@ class Kaws(object):
         print("not implemented")
         return
 
+    def delete_image(self, image):
+        conn = self.conn
+        print(dir(conn))
+        return {'result': 'success'}
+        # conn.create_image(InstanceId=InstanceId, Name=Name, Description=Description, NoReboot=True)
+
     def add_image(self, image, pool, short=None, cmd=None, name=None, size=1):
         """
 
