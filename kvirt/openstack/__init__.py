@@ -738,19 +738,28 @@ class Kopenstack(object):
 
     def _ssh_credentials(self, name):
         user = 'root'
+        ip = None
         nova = self.nova
         try:
             vm = nova.servers.find(name=name)
         except:
             return None, None
-        vm = [v for v in self.list() if v[0] == name][0]
-        template = vm[3]
-        if template != '':
+        try:
+            vm = nova.servers.find(name=name)
+        except:
+            common.pprint("VM %s not found" % name, color='red')
+            return None, None
+        if 'id' in vm.image:
+            template = self.glance.images.get(vm.image['id']).name
             user = common.get_user(template)
-        ip = vm[2]
-        if ip == '':
+        for key in list(vm.addresses):
+            entry1 = vm.addresses[key]
+            for entry2 in entry1:
+                if entry2['OS-EXT-IPS:type'] == 'floating':
+                    ip = entry2['addr']
+        if ip is None:
             print("No ip found. Cannot ssh...")
-        user = common.get_user(template)
+            return None, None
         return user, ip
 
     def ssh(self, name, user=None, local=None, remote=None, tunnel=False,
