@@ -67,40 +67,40 @@ ansible_service_broker_registry_tag=latest
 # host group for masters
 [masters]
 [% for master in range(0, masters) -%]
-master0[[ master +1 ]].[[ domain ]] ansible_connection=local openshift_node_group_name="master"
+m0[[ master +1 ]].[[ domain ]] ansible_connection=local openshift_node_group_name="master"
 [%- endfor %]
 
 # host group for etcd
 [etcd]
 [% for master in range(0, masters) -%]
-master0[[ master +1 ]].[[ domain ]] ansible_connection=local
+m0[[ master +1 ]].[[ domain ]] ansible_connection=local
 [%- endfor %]
 
 [% if gluster %]
 [glusterfs]
 [% if infras == 2 %]
-master01.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
-infra01.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
-infra02.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
+m01.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
+i01.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
+i02.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
 [% elif infras > 2 %]
-infra01.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
-infra02.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
-infra03.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
+i01.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
+i02.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
+i03.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
 [% else %]
-master01.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
-infra01.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
-node01.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
+m01.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
+i01.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
+n01.[[ domain ]] glusterfs_devices='[ "/dev/vdb" ]'
 [% endif %]
 [% endif %]
 
 # host group for nodes, includes region info
 [nodes]
 [% for master in range(0, masters) %]
-master0[[ master +1 ]].[[ domain ]] openshift_node_group_name="master" ansible_connection=local
+m0[[ master +1 ]].[[ domain ]] openshift_node_group_name="master" ansible_connection=local
 [% endfor %]
 [% for node in range(0, nodes) %]
-node0[[ node +1 ]].[[ domain ]] openshift_node_group_name="compute"
+n0[[ node +1 ]].[[ domain ]] openshift_node_group_name="compute"
 [% endfor %]
 [% for infra in range(0, infras) %]
-infra0[[ infra +1 ]].[[ domain ]] openshift_node_group_name="infra"
+i0[[ infra +1 ]].[[ domain ]] openshift_node_group_name="infra"
 [% endfor %]

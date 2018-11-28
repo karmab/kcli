@@ -1,2 +1,1 @@
 sed -i -e 's/pluginConfig:/pluginConfig:\n    ValidatingAdmissionWebhook:\n      configuration:\n       apiVersion: v1\n       kind: DefaultAdmissionConfig\n       disable: "false"\n    MutatingAdmissionWebhook:\n      configuration:\n       apiVersion: v1\n       kind: DefaultAdmissionConfig\n       disable: "false"/' /root/openshift.local.clusterup/kube-apiserver/master-config.yaml
-docker restart origin

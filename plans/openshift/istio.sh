@@ -11,4 +11,6 @@ oc adm policy add-scc-to-user anyuid -z istio-pilot-service-account -n istio-sys
 oc adm policy add-scc-to-user anyuid -z istio-sidecar-injector-service-account -n istio-system
 oc adm policy add-cluster-role-to-user cluster-admin -z istio-galley-service-account -n istio-system
 curl -L https://storage.googleapis.com/knative-releases/serving/latest/istio.yaml | sed 's/LoadBalancer/NodePort/' | oc apply -f -
+oc adm policy add-scc-to-user privileged -z default -n default
+oc label namespace default istio-injection=enabled
 sh /root/istio_fix_sidecar.sh
