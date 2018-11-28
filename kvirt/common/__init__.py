@@ -138,7 +138,7 @@ def fetch(url, path, syms=None):
 
 
 def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[],
-              enableroot=True, overrides={}, iso=True, fqdn=False, store=False):
+              enableroot=True, overrides={}, iso=True, fqdn=False, storemetadata=True):
     """
 
     :param name:
@@ -246,7 +246,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                     userdata.write(data)
         userdata.write('ssh_pwauth: True\n')
         userdata.write('disable_root: false\n')
-        if store and overrides:
+        if storemetadata and overrides:
             storedata = {'path': '/root/.metadata', 'content': yaml.dump(overrides, default_flow_style=False, indent=2)}
             if files:
                 files.append(storedata)

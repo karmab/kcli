@@ -14,6 +14,7 @@ from google.cloud import dns
 from netaddr import IPNetwork
 import os
 from time import sleep
+import yaml
 
 binary_types = ['bz2', 'deb', 'jpg', 'gz', 'jpeg', 'iso', 'png', 'rpm', 'tgz', 'zip']
 
@@ -108,7 +109,7 @@ class Kgcp(object):
                disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False,
                cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[],
                ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[],
-               enableroot=True, alias=[], overrides={}, tags={}, dnshost=None):
+               enableroot=True, alias=[], overrides={}, tags={}, dnshost=None, storemetadata=False):
         """
 
         :param name:
@@ -242,6 +243,12 @@ class Kgcp(object):
         body['metadata'] = {'items': []}
         startup_script = ''
         sshdircreated = False
+        if storemetadata and overrides:
+            storedata = {'path': '/root/.metadata', 'content': yaml.dump(overrides, default_flow_style=False, indent=2)}
+            if files:
+                files.append(storedata)
+            else:
+                files = [storedata]
         for fil in files:
             if not isinstance(fil, dict):
                 continue
@@ -349,7 +356,7 @@ class Kgcp(object):
             body['metadata']['items'].append(newval)
         if self.debug:
             print(body)
-        if overrides:
+        if storemetadata and overrides:
             # body['labels'] = {k: overrides[k].replace('.', '-') for k in overrides}
             for key in overrides:
                 if key in ['plan', 'profile', 'ssh-keys']:

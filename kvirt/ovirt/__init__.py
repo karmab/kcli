@@ -13,6 +13,7 @@ import ovirtsdk4.types as types
 import os
 from subprocess import call
 from time import sleep
+import yaml
 
 
 class KOvirt(object):
@@ -99,7 +100,7 @@ class KOvirt(object):
                reservehost=False, start=True, keys=None, cmds=[], ips=None,
                netmasks=None, gateway=None, nested=True, dns=None, domain=None,
                tunnel=False, files=[], enableroot=True, alias=[], overrides={},
-               tags=None, dnshost=None):
+               tags=None, dnshost=None, storemetadata=False):
         """
 
         :param name:
@@ -250,6 +251,13 @@ class KOvirt(object):
         initialization = None
         if cloudinit:
             custom_script = ''
+            if storemetadata and overrides:
+                storedata = {'path': '/root/.metadata',
+                             'content': yaml.dump(overrides, default_flow_style=False, indent=2)}
+                if files:
+                    files.append(storedata)
+                else:
+                    files = [storedata]
             if files:
                 data = common.process_files(files=files, overrides=overrides)
                 if data != '':

@@ -66,7 +66,7 @@ class Kbase(object):
                reservehost=False, start=True, keys=None, cmds=[], ips=None,
                netmasks=None, gateway=None, nested=True, dns=None, domain=None,
                tunnel=False, files=[], enableroot=True, alias=[], overrides={},
-               tags=None):
+               tags=None, storemetadata=False):
         """
 
         :param name:
@@ -477,6 +477,15 @@ class Kbase(object):
         """
         print("not implemented")
         return
+
+    def delete_image(self, image):
+        """
+
+        :param image:
+        :return:
+        """
+        print("not implemented")
+        return {'result': 'success'}
 
     def add_image(self, image, pool, short=None, cmd=None, name=None, size=1):
         """

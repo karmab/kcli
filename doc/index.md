@@ -988,6 +988,8 @@ Basic testing can be run with pytest. If using a remote host/client, you ll want
 - *rhnactivationkey* (optional). Red Hat network activation key
 - *rhnorg* (optional). Red Hat network organization
 - *rhnpool* (optional). Red Hat network pool
+- *enableroot* (optional). Defaults to true. Allows ssh access as root user
+- *storemetadata* (optional). Defaults to false. creates a /root/.metadata yaml file whith all the overrides applied. On gcp, those overrides are also stored as extra metadata
 
 ## Overriding parameters
 

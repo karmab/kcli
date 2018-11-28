@@ -30,9 +30,6 @@ def pretty_print(o):
 
     :param o:
     """
-    # print(yaml.dump(o, default_flow_style=False, indent=2, allow_unicode=True,
-    #                encoding='utf-8').replace('!!python/unicode ', '').replace("'", '').replace('\n\n', '\n').
-    #      replace('#cloud-config', '|\n            #cloud-config'))
     print(yaml.dump(o, default_flow_style=False, indent=2,
                     allow_unicode=True).replace('!!python/unicode ', '').replace("'", '').replace('\n\n', '\n').
           replace('#cloud-config', '|\n            #cloud-config'))
@@ -151,7 +148,7 @@ class Kubevirt(object):
                disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False,
                cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[],
                ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[],
-               enableroot=True, alias=[], overrides={}, tags=None, dnshost=None):
+               enableroot=True, alias=[], overrides={}, tags=None, dnshost=None, storemetadata=False):
         """
 
         :param name:
@@ -359,7 +356,7 @@ class Kubevirt(object):
         if cloudinit:
             common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
                              reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides,
-                             iso=False)
+                             iso=False, storemetadata=storemetadata)
             cloudinitdata = open('/tmp/user-data', 'r').read().strip()
             cloudinitdisk = {'volumeName': 'cloudinitvolume', 'cdrom': {'bus': 'sata'},
                              'name': 'cloudinitdisk'}

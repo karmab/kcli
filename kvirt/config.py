@@ -249,6 +249,7 @@ class Kconfig(Kbaseconfig):
             default_cmds = common.remove_duplicates(self.cmds + father.get('cmds', []))
             default_scripts = common.remove_duplicates(self.scripts + father.get('scripts', []))
             default_dnshost = father.get('dnshost', self.dnshost)
+            default_storemetadata = father.get('storemetadata', self.storemetadata)
         else:
             default_numcpus = self.numcpus
             default_memory = self.memory
@@ -291,6 +292,7 @@ class Kconfig(Kbaseconfig):
             default_cmds = self.cmds
             default_scripts = self.scripts
             default_dnshost = self.dnshost
+            default_storemetadata = self.storemetadata
         plan = profile.get('plan', plan)
         template = profile.get('template', default_template)
         nets = profile.get('nets', default_nets)
@@ -377,6 +379,7 @@ class Kconfig(Kbaseconfig):
         rhnpool = profile.get('rhnpool', default_rhnpool)
         flavor = profile.get('flavor', default_flavor)
         dnshost = profile.get('dnshost', default_dnshost)
+        storemetadata = profile.get('storemetadata', default_storemetadata)
         scriptcmds = []
         skip_rhnregister_script = False
         if rhnregister and template is not None and template.lower().startswith('rhel'):
@@ -475,7 +478,7 @@ class Kconfig(Kbaseconfig):
                           reserveip=bool(reserveip), reservedns=bool(reservedns), reservehost=bool(reservehost),
                           start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns,
                           domain=domain, nested=bool(nested), tunnel=tunnel, files=files, enableroot=enableroot,
-                          overrides=overrides, tags=tags, dnshost=dnshost)
+                          overrides=overrides, tags=tags, dnshost=dnshost, storemetadata=storemetadata)
         if result['result'] != 'success':
             return result
         if dnshost is not None and domain is not None:

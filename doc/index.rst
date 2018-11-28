@@ -330,6 +330,10 @@ You can use additional parameters for the kubevirt section:
    *nodeSelector*. Can be further indicated at profile or plan level in
    which case values are combined. This provides an easy way to force
    vms to run on specific nodes, by matching labels.
+-  multus: whether to create vms on multus backed networks. Defaults to
+   true
+-  cdi: whether to use cdi. Defaults to true. A check on whether cdi is
+   actually present will be performed
 
 You can use the following indications to gather context, create a
 suitable service account and retrieve its associated token
@@ -1285,12 +1289,17 @@ Available parameters for client/profile/plan files
    vms to be scheduled on a matching host)
 -  \ *rhnregister*\  (optional). Auto registers vms whose template
    starts with rhel Defaults to false. Requires to either rhnuser and
-   rhnpassword, or rhnactivationkey and rhnorg, and an optional pool
+   rhnpassword, or rhnactivationkey and rhnorg, and an optional rhnpool
 -  *rhnuser* (optional). Red Hat network user
 -  *rhnpassword* (optional). Red Hat network password
 -  *rhnactivationkey* (optional). Red Hat network activation key
 -  *rhnorg* (optional). Red Hat network organization
 -  *rhnpool* (optional). Red Hat network pool
+-  *enableroot* (optional). Defaults to true. Allows ssh access as root
+   user
+-  *storemetadata* (optional). Defaults to false. creates a
+   /root/.metadata yaml file whith all the overrides applied. On gcp,
+   those overrides are also stored as extra metadata
 
 Overriding parameters
 ---------------------

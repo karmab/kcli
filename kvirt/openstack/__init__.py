@@ -83,7 +83,7 @@ class Kopenstack(object):
                reservehost=False, start=True, keys=None, cmds=[], ips=None,
                netmasks=None, gateway=None, nested=True, dns=None, domain=None,
                tunnel=False, files=[], enableroot=True, alias=[], overrides={},
-               tags=None, dnshost=None):
+               tags=None, dnshost=None, storemetadata=False):
         """
 
         :param name:
@@ -222,7 +222,7 @@ class Kopenstack(object):
             else:
                 common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
                                  reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides,
-                                 iso=False)
+                                 iso=False, storemetadata=storemetadata)
             userdata = open('/tmp/user-data', 'r').read().strip()
         instance = nova.servers.create(name=name, image=image, flavor=flavor, key_name=key_name, nics=nics, meta=meta,
                                        userdata=userdata, block_device_mapping=block_dev_mapping)
@@ -414,7 +414,7 @@ class Kopenstack(object):
             vm = nova.servers.find(name=name)
         except:
             return None, None
-        dnshost, domain = None
+        dnshost, domain = None, None
         metadata = vm.metadata
         if metadata is not None:
             if 'dnshost' in metadata:

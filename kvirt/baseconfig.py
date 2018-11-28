@@ -12,7 +12,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             DOMAIN, SCRIPTS, FILES, ISO,
                             NETMASKS, GATEWAY, SHAREDKEY, TEMPLATE, ENABLEROOT,
                             PLANVIEW, PRIVATEKEY, TAGS, RHNREGISTER, RHNUSER, RHNPASSWORD, RHNAK, RHNORG, RHNPOOL,
-                            FLAVOR, KEEP_NETWORKS, DNSHOST)
+                            FLAVOR, KEEP_NETWORKS, DNSHOST, STORE_METADATA)
 from kvirt import common
 import os
 from shutil import copyfile, rmtree
@@ -113,6 +113,7 @@ class Kbaseconfig:
         defaults['flavor'] = default.get('flavor', FLAVOR)
         defaults['keep_networks'] = default.get('keep_networks', KEEP_NETWORKS)
         defaults['dnhost'] = default.get('dnhost', DNSHOST)
+        defaults['storemetadata'] = default.get('storemetadata', STORE_METADATA)
         currentplanfile = "%s/.kcli/plan" % os.environ.get('HOME')
         if os.path.exists(currentplanfile):
             self.currentplan = open(currentplanfile).read().strip()
@@ -213,6 +214,7 @@ class Kbaseconfig:
         self.tags = options.get('tags', self.default['tags'])
         self.flavor = options.get('flavor', self.default['flavor'])
         self.dnshost = options.get('dnhost', self.default['dnhost'])
+        self.storemetadata = options.get('storemetadata', self.default['storemetadata'])
         self.keep_networks = options.get('keep_networks', self.default['keep_networks'])
 
     def switch_host(self, client):

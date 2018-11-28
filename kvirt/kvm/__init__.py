@@ -153,7 +153,7 @@ class Kvirt(object):
                disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None,
                vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None,
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
-               files=[], enableroot=True, overrides={}, tags=None, dnshost=None):
+               files=[], enableroot=True, overrides={}, tags=None, dnshost=None, storemetadata=False):
         """
 
         :param name:
@@ -622,7 +622,8 @@ class Kvirt(object):
         if cloudinit and template is not None and not template.startswith('coreos') and\
                 not template.startswith('rhcos'):
             common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
-                             reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides, store=True)
+                             reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides,
+                             storemetadata=storemetadata)
             self._uploadimage(name, pool=default_storagepool)
         if reserveip:
             xml = vm.XMLDesc(0)
