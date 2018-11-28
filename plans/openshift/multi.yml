@@ -64,7 +64,7 @@ n[[ node + 1 ]]:
  domain: [[ domain ]]
  dns: [[ domain ]]
  nets:
-  - [[ domain ]]
+  - default
  disks:
   - size: [[ base_disk_size ]]
   - size: [[ gluster_disk_size ]]
