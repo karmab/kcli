@@ -12,6 +12,9 @@
 -%]
 sleep 30
 yum -y install wget docker git
+wget -O /root/ https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64
+mv /root/jq-linux64 /usr/bin/jq
+chmod u+x /usr/bin/jq
 systemctl enable docker
 sed -i "s@# INSECURE_REGISTRY=.*@INSECURE_REGISTRY='--insecure-registry 172.30.0.0/16'@" /etc/sysconfig/docker
 # echo -e "DEVS=/dev/vdb\nVG=dockervg" > /etc/sysconfig/docker-storage-setup

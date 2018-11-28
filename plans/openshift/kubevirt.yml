@@ -7,7 +7,6 @@ parameters:
    cdi: true
    ui: true
    ui_version: v1.3-9
-   pxe_network: default
 
 kubevirt:
  template: CentOS-7-x86_64-GenericCloud.qcow2
@@ -15,7 +14,6 @@ kubevirt:
  memory: [[ memory ]]
  nets:
   - default
-  - [[ pxe_network ]]
  disks:
   - size: [[ disk_size ]]
  pool: [[ pool ]]
