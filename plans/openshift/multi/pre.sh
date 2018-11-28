@@ -1,12 +1,12 @@
 yum -y install NetworkManager wget nc
-[% if not crio %]
+{% if not crio %}
 yum -y install docker
 systemctl enable docker
 systemctl start docker
-[% endif %]
+{% endif %}
 systemctl enable NetworkManager
 systemctl start NetworkManager
 yum -y update
-[% if not deploy %]
+{% if not deploy %}
 reboot
-[% endif %]
+{% endif %}

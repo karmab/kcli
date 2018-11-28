@@ -18,79 +18,79 @@ parameters:
  version: '3.11'
  deploy: false
 
-[% for master in range(0, masters) %]
-m0[[ master + 1 ]]:
- template: [[ template ]]
+{% for master in range(0, masters) %}
+m0{{ master + 1 }}:
+ template: {{ template }}
  numcpus: 2
- memory: [[ master_memory ]]
+ memory: {{ master_memory }}
  rhnregister: true
  reservedns: true
  sharedkey: true
- domain: [[ domain ]]
- dns: [[ domain ]]
+ domain: {{ domain }}
+ dns: {{ domain }}
  nets:
   - default
  disks:
-  - size: [[ base_disk_size ]]
-  - size: [[ gluster_disk_size ]]
+  - size: {{ base_disk_size }}
+  - size: {{ gluster_disk_size }}
  pool: default
  files:
   - path: /root/inventory
     origin: multi/inventory
-[% if type == 'ovirt' %]
+{% if type == 'ovirt' %}
   - path: /root/fix_inventory.sh
     origin: multi/ovirt_fix_inventory.sh
     mode: 700
-[% endif %]
+{% endif %}
   - path: /root/install.sh
     origin: multi/install.sh
     mode: 700
  scripts: 
   - multi/subscription.sh
   - multi/pre.sh
-[% if deploy and master == 0 %]
+{% if deploy and master == 0 %}
   - multi/install.sh
-[% endif %]
-[% endfor %]
+{% endif %}
+{% endfor %}
 
-[% for node in range(0, nodes) %]
-n[[ node + 1 ]]:
- template: [[ template ]]
+{% for node in range(0, nodes) %}
+n0{{ node + 1 }}:
+ template: {{ template }}
  numcpus: 2
- memory: [[ node_memory ]]
+ memory: {{ node_memory }}
  rhnregister: true
  reservedns: true
  sharedkey: true
- domain: [[ domain ]]
- dns: [[ domain ]]
+ domain: {{ domain }}
+ dns: {{ domain }}
  nets:
   - default
  disks:
-  - size: [[ base_disk_size ]]
-  - size: [[ gluster_disk_size ]]
+  - size: {{ base_disk_size }}
+  - size: {{ gluster_disk_size }}
  pool: default
  scripts: 
   - multi/subscription.sh
   - multi/pre.sh
-[% endfor %]
+{% endfor %}
 
-[% for infra in range(0, infras) %]
-i0[[ infra + 1 ]]:
- template: [[ template ]]
+{% for infra in range(0, infras) %}
+i0{{ infra + 1 }}:
+ template: {{ template }}
  numcpus: 2
- memory: [[ infra_memory ]]
+ memory: {{ infra_memory }}
  rhnregister: true
  reservedns: true
  sharedkey: true
- domain: [[ domain ]]
- dns: [[ domain ]]
+ domain: {{ domain }}
+ dns: {{ domain }}
  nets:
   - default
  disks:
-  - size: [[ base_disk_size ]]
-  - size: [[ gluster_disk_size ]]
+  - size: {{ base_disk_size }}
+  - size: {{ gluster_disk_size }}
  pool: default
  scripts: 
   - multi/subscription.sh
   - multi/pre.sh
-[% endfor %]
+{% endfor %}

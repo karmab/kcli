@@ -38,7 +38,7 @@ external1:
  dhcp: False
 
 under12:
- template: [[ template ]]
+ template: {{ template }}
  rhnregister: true
  memory: 12192
  numcpus: 4
@@ -57,7 +57,7 @@ under12:
     mask: 255.255.255.0
  pool: default
  cmds:
-  - echo [[ admin_password ]] | passwd --stdin root
+  - echo {{ admin_password }} | passwd --stdin root
   - echo under12.example.com > /etc/hostname
   - echo 10.10.16.2 under12.example.com under12 under >> /etc/hosts
   - echo GATEWAY=10.10.16.1 >> /etc/sysconfig/network

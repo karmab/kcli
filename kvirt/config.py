@@ -5,6 +5,7 @@ Kvirt config class
 """
 
 from jinja2 import Environment, FileSystemLoader
+from jinja2.exceptions import TemplateSyntaxError
 from kvirt.defaults import TEMPLATES, TEMPLATESCOMMANDS
 from kvirt import ansibleutils
 from kvirt import nameutils
@@ -402,10 +403,13 @@ class Kconfig(Kbaseconfig):
                     os._exit(1)
                 else:
                     scriptbasedir = os.path.dirname(script) if os.path.dirname(script) != '' else '.'
-                    env = Environment(block_start_string='[%', block_end_string='%]',
-                                      variable_start_string='[[', variable_end_string=']]',
-                                      loader=FileSystemLoader(scriptbasedir))
-                    templ = env.get_template(os.path.basename(script))
+                    env = Environment(loader=FileSystemLoader(scriptbasedir))
+                    try:
+                        templ = env.get_template(os.path.basename(script))
+                    except TemplateSyntaxError as e:
+                        common.pprint("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message),
+                                      color='red')
+                        os._exit(1)
                     scriptentries = templ.render(overrides)
                     scriptlines = [line.strip() for line in scriptentries.split('\n') if line.strip() != '']
                     if scriptlines:
@@ -892,9 +896,13 @@ class Kconfig(Kbaseconfig):
             return {'result': 'success'}
         # basedir = os.path.dirname(inputfile)
         basedir = os.path.dirname(inputfile) if os.path.dirname(inputfile) != '' else '.'
-        env = Environment(block_start_string='[%', block_end_string='%]', variable_start_string='[[',
-                          variable_end_string=']]', loader=FileSystemLoader(basedir))
-        templ = env.get_template(os.path.basename(inputfile))
+        env = Environment(loader=FileSystemLoader(basedir))
+        try:
+            templ = env.get_template(os.path.basename(inputfile))
+        except TemplateSyntaxError as e:
+            common.pprint("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message),
+                          color='red')
+            os._exit(1)
         parameters = common.get_parameters(inputfile)
         basefile = None
         if parameters is not None:

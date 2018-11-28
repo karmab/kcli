@@ -7,21 +7,21 @@ parameters:
     template: Fedora-Cloud-Base-28-1.1.x86_64.qcow2
 
 copr:
- teaplate: [[ template ]]
- numcpus: [[ numcpus ]]
- memory: [[ memory ]]
+ teaplate: {{ template }}
+ numcpus: {{ numcpus }}
+ memory: {{ memory }}
  nets:
   - default
  files:
   - path: /root/copr
     origin: ~/copr
   - path: /root/package.spec
-    origin: ~/[[ package ]].spec
+    origin: ~/{{ package }}.spec
   - path: /root/copr.sh
     origin: copr.sh
-[% if debian %]
+{% if debian %}
   - path: /root/.packagecloud
     origin: ~/packagecloud
-[% endif %]
+{% endif %}
  cmds:
   - sh /root/copr.sh

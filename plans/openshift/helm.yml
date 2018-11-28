@@ -10,7 +10,7 @@ helm:
   - default
  disks:
   - size: 10
-  - size: [[ docker_disk_size ]]
+  - size: {{ docker_disk_size }}
  pool: default
  scripts: 
   - requirements.sh

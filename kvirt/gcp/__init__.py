@@ -5,6 +5,7 @@ Gcp Provider Class
 """
 
 from jinja2 import Environment, FileSystemLoader
+from jinja2.exceptions import TemplateSyntaxError
 from kvirt import common
 from dateutil import parser as dateparser
 from getpass import getuser
@@ -265,10 +266,13 @@ class Kgcp(object):
                         content = f.read().encode("base64")
                 elif overrides:
                     basedir = os.path.dirname(origin) if os.path.dirname(origin) != '' else '.'
-                    env = Environment(block_start_string='[%', block_end_string='%]',
-                                      variable_start_string='[[', variable_end_string=']]',
-                                      loader=FileSystemLoader(basedir))
-                    templ = env.get_template(os.path.basename(origin))
+                    env = Environment(loader=FileSystemLoader(basedir))
+                    try:
+                        templ = env.get_template(os.path.basename(origin))
+                    except TemplateSyntaxError as e:
+                        common.pprint("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message),
+                                      color='red')
+                        os._exit(1)
                     newfile = templ.render(overrides)
                     startup_script += "cat <<'EOF' >%s\n%s\nEOF\nchmod %s %s\n" % (path, newfile, permissions, path)
                 else:
@@ -288,9 +292,7 @@ class Kgcp(object):
                 if cmd.startswith('#'):
                     continue
                 else:
-                    newcmd = Environment(block_start_string='[%', block_end_string='%]',
-                                         variable_start_string='[[',
-                                         variable_end_string=']]').from_string(cmd).render(overrides)
+                    newcmd = Environment().from_string(cmd).render(overrides)
                 startup_script += '%s\n' % newcmd
         if startup_script != '':
             beginningcmd = 'test -f /root/.kcli_startup && exit 0\n'

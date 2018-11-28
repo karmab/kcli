@@ -5,10 +5,10 @@ import json
 import requests
 
 user = "admin"
-password = "[[ password ]]"
+password = "{{ password }}"
 oshiftuser = "admin@internal"
-oshiftpassword = "[[ openshift_password ]]"
-oshifthost = "[[ openshift_host ]]"
+oshiftpassword = "{{ openshift_password }}"
+oshifthost = "{{ openshift_host }}"
 oshiftkey = "XXX"
 headers = {'content-type': 'application/json', 'Accept': 'application/json'}
 postdata = {

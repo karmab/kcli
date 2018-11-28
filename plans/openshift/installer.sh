@@ -1,4 +1,4 @@
-echo 192.168.126.11 [[ cluster ]]-api.[[ domain ]] >> /etc/hosts
+echo 192.168.126.11 {{ cluster }}-api.{{ domain }} >> /etc/hosts
 yum -y install libvirt-client libvirt-devel gcc-c++ git unzip wget jq
 curl -OL https://github.com/openshift/origin/releases/download/v3.11.0/openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz
 tar -zxf openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz
@@ -8,8 +8,8 @@ build=`curl -s https://releases-rhcos.svc.ci.openshift.org/storage/releases/maip
 image=`curl -s https://releases-rhcos.svc.ci.openshift.org/storage/releases/maipo/$build/meta.json | jq -r '.images["qemu"].path'`
 url="https://releases-rhcos.svc.ci.openshift.org/storage/releases/maipo/$build/$image"
 curl --compressed -L -o /root/rhcos-qemu.qcow2 $url
-wget https://dl.google.com/go/go[[ go_version ]].linux-amd64.tar.gz
-tar -C /usr/local -xzf go[[ go_version ]].linux-amd64.tar.gz
+wget https://dl.google.com/go/go{{ go_version }}.linux-amd64.tar.gz
+tar -C /usr/local -xzf go{{ go_version }}.linux-amd64.tar.gz
 export GOPATH=/root/go
 export PATH=$PATH:/usr/local/go/bin:${GOPATH}/bin:${GOPATH}/src/github/openshift/installer/bin
 export KUBECONFIG=$HOME/clusters/nested/auth/kubeconfig

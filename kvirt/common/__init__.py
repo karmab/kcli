@@ -3,6 +3,7 @@
 
 import base64
 from jinja2 import Environment, FileSystemLoader
+from jinja2.exceptions import TemplateSyntaxError
 from distutils.spawn import find_executable
 import errno
 from netaddr import IPAddress
@@ -243,14 +244,6 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 if data != '':
                     userdata.write("runcmd:\n")
                     userdata.write(data)
-                # for cmd in cmds:
-                #     if cmd.startswith('#'):
-                #         continue
-                #     else:
-                #         newcmd = Environment(block_start_string='[%', block_end_string='%]',
-                #                              variable_start_string='[[',
-                #                              variable_end_string=']]').from_string(cmd).render(overrides)
-                #         userdata.write("- %s\n" % newcmd)
         userdata.write('ssh_pwauth: True\n')
         userdata.write('disable_root: false\n')
         if files:
@@ -294,10 +287,13 @@ def process_files(files=[], overrides={}):
                     content = base64.b64encode(f.read())
             elif overrides and render:
                 basedir = os.path.dirname(origin) if os.path.dirname(origin) != '' else '.'
-                env = Environment(block_start_string='[%', block_end_string='%]',
-                                  variable_start_string='[[', variable_end_string=']]',
-                                  loader=FileSystemLoader(basedir))
-                templ = env.get_template(os.path.basename(origin))
+                env = Environment(loader=FileSystemLoader(basedir))
+                try:
+                    templ = env.get_template(os.path.basename(origin))
+                except TemplateSyntaxError as e:
+                    pprint("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message),
+                           color='red')
+                    os._exit(1)
                 fileentries = templ.render(overrides)
                 # content = [line.rstrip() for line in fileentries.split('\n') if line.rstrip() != '']
                 content = [line.rstrip() for line in fileentries.split('\n')]
@@ -351,10 +347,13 @@ def process_ignition_files(files=[], overrides={}):
                     content = f.read().encode("base64")
             elif overrides:
                 basedir = os.path.dirname(origin) if os.path.dirname(origin) != '' else '.'
-                env = Environment(block_start_string='[%', block_end_string='%]',
-                                  variable_start_string='[[', variable_end_string=']]',
-                                  loader=FileSystemLoader(basedir))
-                templ = env.get_template(os.path.basename(origin))
+                env = Environment(loader=FileSystemLoader(basedir))
+                try:
+                    templ = env.get_template(os.path.basename(origin))
+                except TemplateSyntaxError as e:
+                    pprint("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message),
+                           color='red')
+                    os._exit(1)
                 fileentries = templ.render(overrides)
                 # content = [line.rstrip() for line in fileentries.split('\n') if line.rstrip() != '']
                 content = [line for line in fileentries.split('\n')]
@@ -382,8 +381,7 @@ def process_cmds(cmds, overrides):
         if cmd.startswith('#'):
             continue
         else:
-            newcmd = Environment(block_start_string='[%', block_end_string='%]', variable_start_string='[[',
-                                 variable_end_string=']]').from_string(cmd).render(overrides)
+            newcmd = Environment().from_string(cmd).render(overrides)
             data += "- %s\n" % newcmd
     return data
 
@@ -399,8 +397,7 @@ def process_ignition_cmds(cmds, overrides):
     permissions = '700'
     content = ''
     for cmd in cmds:
-        newcmd = Environment(block_start_string='[%', block_end_string='%]', variable_start_string='[[',
-                             variable_end_string=']]').from_string(cmd).render(overrides)
+        newcmd = Environment().from_string(cmd).render(overrides)
         content += "%s\n" % newcmd
     if content == '':
         return content

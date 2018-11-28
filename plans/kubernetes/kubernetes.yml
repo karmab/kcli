@@ -9,12 +9,12 @@ parameters:
  sdn: flannel
 
 kumaster:
- template: [[ template ]]
+ template: {{ template }}
  numcpus: 2
  memory: 4096
  reservedns: true
  sharedkey: true
- domain: [[ domain ]]
+ domain: {{ domain }}
  nets:
   - default
  disks:
@@ -27,35 +27,35 @@ kumaster:
     origin: kube-flannel.yml
   - path: /root/kube-flannel-rbac.yml
     origin: kube-flannel-rbac.yml
-[% if nfs %]
+{% if nfs %}
   - path: /root/nfs.yml
     origin: nfs.yml
   - path: /root/nfs.sh
     origin: nfs.sh
-[% endif %]
+{% endif %}
  scripts: 
   - pre.sh
   - master.sh
-[% if deploy_app %]
+{% if deploy_app %}
   - app.sh
-[% endif %]
+{% endif %}
   - heapster.sh
-[% if dashboard %]
+{% if dashboard %}
   - dashboard.sh
-[% endif %]
-[% if skydive %]
+{% endif %}
+{% if skydive %}
   - skydive.sh
-[% endif %]
+{% endif %}
 
-[% if nodes > 0 %]
-[% for number in range(0, nodes) %]
-kunode0[[ number + 1 ]]:
- template: [[ template ]]
+{% if nodes > 0 %}
+{% for number in range(0, nodes) %}
+kunode0{{ number + 1 }}:
+ template: {{ template }}
  numcpus: 2
  memory: 4096
  reservedns: true
  sharedkey: true
- domain: [[ domain ]]
+ domain: {{ domain }}
  nets:
   - default
  disks:
@@ -66,5 +66,5 @@ kunode0[[ number + 1 ]]:
     origin: kubernetes.repo
  scripts: 
   - pre.sh
-[% endfor %]
-[% endif %]
+{% endfor %}
+{% endif %}

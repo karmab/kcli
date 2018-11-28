@@ -4,6 +4,6 @@ cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
 deb http://apt.kubernetes.io/ kubernetes-xenial main
 EOF
 apt-get update
-apt-get install -y docker.io kubelet=[[ version ]]-00 kubectl=[[ version ]]-00 kubeadm=[[ version ]]-00
+apt-get install -y docker.io kubelet={{ version }}-00 kubectl={{ version }}-00 kubeadm={{ version }}-00
 systemctl enable docker && systemctl start docker
 systemctl enable kubelet && systemctl start kubelet

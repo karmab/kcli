@@ -12,8 +12,8 @@ cd /root
 git clone https://github.com/karmab/kubevirt
 cd kubevirt
 git remote add upstream https://github.com/kubevirt/kubevirt
-git config --global user.name [[ github_user ]]
-git config --global user.email [[ github_mail ]]
+git config --global user.name {{ github_user }}
+git config --global user.email {{ github_mail }}
 export KUBEVIRT_PROVIDER=k8s-1.11.0
 make cluster-up
 make cluster-sync

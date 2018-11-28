@@ -79,16 +79,16 @@ spec:
       serviceAccountName: cdi-sa
       containers:
       - name: cdi-controller
-        image: kubevirt/cdi-controller:[[ cdi_version ]]
+        image: kubevirt/cdi-controller:{{ cdi_version }}
         imagePullPolicy: IfNotPresent
         args: ["-v=1"] # default verbosity; change to 2 or 3 for more detailed logging
         env:
         - name: IMPORTER_IMAGE
-          value: kubevirt/cdi-importer:[[ cdi_version ]]
+          value: kubevirt/cdi-importer:{{ cdi_version }}
         - name: CLONER_IMAGE
-          value: kubevirt/cdi-cloner:[[ cdi_version ]]
+          value: kubevirt/cdi-cloner:{{ cdi_version }}
         - name: UPLOADSERVER_IMAGE
-          value: kubevirt/cdi-uploadserver:[[ cdi_version ]]  
+          value: kubevirt/cdi-uploadserver:{{ cdi_version }}  
         - name: PULL_POLICY
           value: IfNotPresent
         - name: UPLOADPROXY_SERVICE
@@ -248,7 +248,7 @@ spec:
       serviceAccountName: cdi-apiserver
       containers:
       - name: cdi-apiserver-api
-        image: kubevirt/cdi-apiserver:[[ cdi_version ]]
+        image: kubevirt/cdi-apiserver:{{ cdi_version }}
         imagePullPolicy: IfNotPresent
         args: ["-v=1"] # default verbosity; change to 2 or 3 for more detailed logging
 ---
@@ -286,7 +286,7 @@ spec:
     spec:
       containers:
       - name: cdi-uploadproxy
-        image: kubevirt/cdi-uploadproxy:[[ cdi_version ]]
+        image: kubevirt/cdi-uploadproxy:{{ cdi_version }}
         imagePullPolicy: IfNotPresent
         args: ["-v=1"] # default verbosity; change to 2 or 3 for more detailed logging
         env:

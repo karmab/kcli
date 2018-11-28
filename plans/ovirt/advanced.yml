@@ -3,7 +3,7 @@ parameters:
  template: rhel-server-7.5-x86_64-kvm.qcow2
 
 rhvengine:
- template: [[ template ]]
+ template: {{ template }}
  rhnregister: true
  memory: 8192
  numcpus: 2
@@ -21,7 +21,7 @@ rhvengine:
   - advanced/provision.sh
 
 rhvnode01:
- template: [[ template ]]
+ template: {{ template }}
  rhnregister: true
  memory: 8192
  cpumodel: host-model
@@ -43,7 +43,7 @@ rhvnode01:
   - advanced/node.sh
 
 rhvnode02:
- template: [[ template ]]
+ template: {{ template }}
  rhnregister: true
  memory: 8192
  cpumodel: host-model

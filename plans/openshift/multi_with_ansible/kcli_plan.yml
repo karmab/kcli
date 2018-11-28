@@ -19,64 +19,64 @@ parameters:
  version: "3.11"
  deploy: false
 
-[% for master in range(0, masters) %]
-m0[[ master + 1 ]]:
- template: [[ template ]]
- numcpus: [[ numcpus ]]
- memory: [[ master_memory ]]
+{% for master in range(0, masters) %}
+m0{{ master + 1 }}:
+ template: {{ template }}
+ numcpus: {{ numcpus }}
+ memory: {{ master_memory }}
  rhnregister: true
  reservedns: true
  sharedkey: true
- domain: [[ domain ]]
- dns: [[ domain ]]
+ domain: {{ domain }}
+ dns: {{ domain }}
  nets:
   - default
  disks:
-  - size: [[ base_disk_size ]]
-  - size: [[ gluster_disk_size ]]
+  - size: {{ base_disk_size }}
+  - size: {{ gluster_disk_size }}
  pool: default
  files:
   - path: /root/inventory
     origin: inventory
-[% if type == 'ovirt' %]
+{% if type == 'ovirt' %}
   - path: /root/fix_inventory.sh
     origin: ovirt_fix_inventory.sh
     mode: 700
-[% endif %]
-[% endfor %]
+{% endif %}
+{% endfor %}
 
-[% for node in range(0, nodes) %]
-n0[[ node + 1 ]]:
- template: [[ template ]]
- numcpus: [[ numcpus ]]
- memory: [[ node_memory ]]
+{% for node in range(0, nodes) %}
+n0{{ node + 1 }}:
+ template: {{ template }}
+ numcpus: {{ numcpus }}
+ memory: {{ node_memory }}
  rhnregister: true
  reservedns: true
  sharedkey: true
- domain: [[ domain ]]
- dns: [[ domain ]]
+ domain: {{ domain }}
+ dns: {{ domain }}
  nets:
-  - [[ domain ]]
+  - {{ domain }}
  disks:
-  - size: [[ base_disk_size ]]
-  - size: [[ gluster_disk_size ]]
+  - size: {{ base_disk_size }}
+  - size: {{ gluster_disk_size }}
  pool: default
-[% endfor %]
+{% endfor %}
 
-[% for infra in range(0, infras) %]
-i0[[ infra + 1 ]]:
- template: [[ template ]]
- numcpus: [[ numcpus ]]
- memory: [[ infra_memory ]]
+{% for infra in range(0, infras) %}
+i0{{ infra + 1 }}:
+ template: {{ template }}
+ numcpus: {{ numcpus }}
+ memory: {{ infra_memory }}
  rhnregister: true
  reservedns: true
  sharedkey: true
- domain: [[ domain ]]
- dns: [[ domain ]]
+ domain: {{ domain }}
+ dns: {{ domain }}
  nets:
   - default
  disks:
-  - size: [[ base_disk_size ]]
-  - size: [[ gluster_disk_size ]]
+  - size: {{ base_disk_size }}
+  - size: {{ gluster_disk_size }}
  pool: default
-[% endfor %]
+{% endfor %}

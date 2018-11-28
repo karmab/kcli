@@ -9,10 +9,10 @@ parameters:
 minishift:
  template: Fedora-Cloud-Base-28-1.1.x86_64.qcow2
  numcpus: 2
- memory: [[ memory ]]
-[% if driver == 'generic' %]
+ memory: {{ memory }}
+{% if driver == 'generic' %}
  sharedkey: true
-[% endif %]
+{% endif %}
  nets:
   - default
  disks:
@@ -21,9 +21,9 @@ minishift:
  pool: default
  scripts: 
   - minishift_requirements.sh
-[% if deploy %]
+{% if deploy %}
   - minishift_deploy.sh
-[% endif %]
+{% endif %}
  files:
    - path: /root/minishift_deploy.sh
      origin: minishift_deploy.sh

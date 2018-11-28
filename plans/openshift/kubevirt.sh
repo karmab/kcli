@@ -1,4 +1,4 @@
-VERSION="[[ kubevirt_version ]]"
+VERSION="{{ kubevirt_version }}"
 yum -y install xorg-x11-xauth virt-viewer
 if [ "$VERSION" == "latest" ] ; then
 VERSION=`curl -s https://api.github.com/repos/kubevirt/kubevirt/releases/latest | jq -r .tag_name`
@@ -16,5 +16,5 @@ chmod u+x /usr/bin/virtctl
 docker pull karmab/kcli
 echo alias kcli=\'docker run --security-opt label:disable -it --rm -v ~/.kube:/root/.kube -v ~/.ssh:/root/.ssh -v ~/.kcli:/root/.kcli -v \$PWD:/workdir karmab/kcli\' >> /root/.bashrc
 ssh-keygen -t rsa -N '' -f /root/.ssh/id_rsa
-oc login --insecure-skip-tls-verify=true  `hostname -I | cut -f1 -d' '`:8443 -u [[ admin_user  ]] -p [[ admin_password ]]
+oc login --insecure-skip-tls-verify=true  `hostname -I | cut -f1 -d' '`:8443 -u {{ admin_user  }} -p {{ admin_password }}
 setfacl -m user:107:rwx /root/openshift.local.clusterup/openshift.local.pv/pv*

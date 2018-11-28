@@ -1,5 +1,5 @@
 yum -y install httpd xinetd syslinux tftp-server wget
-wget -O distro.iso [[ url ]]
+wget -O distro.iso {{ url }}
 mount -o loop distro.iso /mnt/
 cp -a /mnt/* /var/www/html
 cp /root/default.ks /var/www/html

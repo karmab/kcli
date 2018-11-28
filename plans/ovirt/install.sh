@@ -8,7 +8,7 @@ sed -i 's@ExecStart=.*@ExecStart=/sbin/rngd -f -r /dev/urandom@' /usr/lib/system
 systemctl start rngd
 engine-setup --config-append=/root/answers.txt
 yum -y install vdsm
-[% if nested %]
+{% if nested %}
 echo "options kvm-intel nested=Y" > /etc/modprobe.d/kvm-intel.conf
 yum -y install vdsm-hook-nestedvt vdsm-hook-macspoof
-[% endif %]
+{% endif %}

@@ -19,7 +19,7 @@ spec:
         deploymentconfig: kubevirt-web-ui
     spec:
       containers:
-        - image: docker.io/mareklibra/kubevirt-web-ui:[[ ui_version ]]
+        - image: docker.io/mareklibra/kubevirt-web-ui:{{ ui_version }}
           imagePullPolicy: IfNotPresent
           name: kubevirt-web-ui
           resources: {}

@@ -1,4 +1,4 @@
-export PASSWORD="[[ password ]]"
+export PASSWORD="{{ password }}"
 sed -i "s/username =.*/username = admin@internal/" /root/.ovirtshellrc
 sed -i "s/password =.*/password = $PASSWORD/" /root/.ovirtshellrc
 sed -i "s/insecure = False/insecure = True/" /root/.ovirtshellrc
@@ -12,6 +12,6 @@ ovirt-shell -E "add storagedomain --name vms --host-name rhvnode01.default --typ
 ovirt-shell -E "add storagedomain --name vms --parent-datacenter-name Default"
 ovirt-shell -E "add storagedomain --name isos --host-name rhvnode01.default --type iso --storage-type nfs --storage-address rhvengine.default --storage-path /isos"
 ovirt-shell -E "add storagedomain --name isos --parent-datacenter-name Default"
-ovirt-shell -E "add openstackimageprovider --name glance --url http://192.168.122.162:9292 --authentication_url http://192.168.122.162:5000/v2.0 --username admin --password [[ password ]] --tenant_name admin --requires_authentication True"
-ovirt-shell -E "add openstackvolumeprovider --name cinder --url http://192.168.122.162:8776 --authentication_url http://192.168.122.162:5000/v2.0 --username admin --password [[ password ]] --tenant_name admin --requires_authentication True"
+ovirt-shell -E "add openstackimageprovider --name glance --url http://192.168.122.162:9292 --authentication_url http://192.168.122.162:5000/v2.0 --username admin --password {{ password }} --tenant_name admin --requires_authentication True"
+ovirt-shell -E "add openstackvolumeprovider --name cinder --url http://192.168.122.162:8776 --authentication_url http://192.168.122.162:5000/v2.0 --username admin --password {{ password }} --tenant_name admin --requires_authentication True"
 ovirt

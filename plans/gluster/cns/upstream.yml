@@ -5,8 +5,8 @@ parameters:
  admin_password: admin
 
 gluster01:
- template: [[ template ]]
- memory: [[ memory ]]
+ template: {{ template }}
+ memory: {{ memory }}
  numcpus: 4
  disks: 
   - size: 30
@@ -29,8 +29,8 @@ gluster01:
   - heketi.sh
 
 gluster02:
- template: [[ template ]]
- memory: [[ memory ]]
+ template: {{ template }}
+ memory: {{ memory }}
  numcpus: 4
  disks:
   - size: 30
@@ -45,8 +45,8 @@ gluster02:
   - requisites.sh
 
 gluster03:
- template: [[ template ]]
- memory: [[ memory ]]
+ template: {{ template }}
+ memory: {{ memory }}
  numcpus: 4
  disks:
   - size: 30

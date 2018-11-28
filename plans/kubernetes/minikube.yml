@@ -12,7 +12,7 @@ minikube:
     enable: false
   - name: clflushopt
     enable: false
- memory: [[ memory ]]
+ memory: {{ memory }}
  reservedns: true
  nets:
   - default

@@ -13,33 +13,33 @@ parameters:
   knative: false
 
 origin:
- template: [[ template ]]
+ template: {{ template }}
  numcpus: 2
- memory: [[ memory ]]
+ memory: {{ memory }}
  domain: default
- reservedns: [[ reservedns ]]
+ reservedns: {{ reservedns }}
  nets:
   - default
  disks:
-  - size: [[ disk_size ]]
+  - size: {{ disk_size }}
  pool: default
  scripts: 
   - requirements.sh
   - origin.sh
-[% if skydive %]
+{% if skydive %}
   - skydive.sh
-[% endif %]
-[% if istio %]
+{% endif %}
+{% if istio %}
   - istio.sh
-[% if knative %]
+{% if knative %}
   - knative.sh
-[% endif %]
-[% endif %]
+{% endif %}
+{% endif %}
  files:
-[% if istio %]
+{% if istio %}
   - istio_patch.sh
   - istio_fix_sidecar.sh
-[% endif %]
-[% if skydive %]
+{% endif %}
+{% if skydive %}
   - skydive.yml
-[% endif %]
+{% endif %}

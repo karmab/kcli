@@ -1,4 +1,4 @@
-export ADMIN_PASSWORD="[[ password ]]"
+export ADMIN_PASSWORD="{{ password }}"
 echo `hostname -I` `hostname -s` >> /etc/hosts
 yum update -y
 yum install -y openstack-packstack wget vim screen

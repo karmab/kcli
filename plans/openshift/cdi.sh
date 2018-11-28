@@ -1,4 +1,4 @@
-VERSION="[[ cdi_version ]]"
+VERSION="{{ cdi_version }}"
 if [ "$VERSION" == "latest" ] ; then
 VERSION=`curl -s https://api.github.com/repos/kubevirt/containerized-data-importer/releases/latest | jq -r .tag_name`
 fi

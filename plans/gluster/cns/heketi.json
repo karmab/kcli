@@ -9,11 +9,11 @@
   "jwt": {
     "_admin": "Admin has access to all APIs",
     "admin": {
-      "key": "[[ admin_password ]]"
+      "key": "{{ admin_password }}"
     },
     "_user": "User only has access to /volumes endpoint",
     "user": {
-      "key": "[[ user_password ]]"
+      "key": "{{ user_password }}"
     }
   },
 

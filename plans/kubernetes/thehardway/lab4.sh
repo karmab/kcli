@@ -1,9 +1,9 @@
-KUBERNETES_PUBLIC_ADDRESS=$(dig +short kubernetes-the-hard-way.[[ domain ]])
+KUBERNETES_PUBLIC_ADDRESS=$(dig +short kubernetes-the-hard-way.{{ domain }})
 cfssl gencert -initca ca-csr.json | cfssljson -bare ca
 cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=kubernetes admin-csr.json | cfssljson -bare admin
 for instance in worker-0 worker-1 worker-2; do
  sed "s/instance/$instance/" instance-csr.json > ${instance}-csr.json
- EXTERNAL_IP=$(dig + short ${instance}.[[ domain ]])
+ EXTERNAL_IP=$(dig + short ${instance}.{{ domain }})
  INTERNAL_IP=$( dig +short ${instance})
  cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -hostname=${instance},${EXTERNAL_IP},${INTERNAL_IP} -profile=kubernetes ${instance}-csr.json | cfssljson -bare ${instance}
 done

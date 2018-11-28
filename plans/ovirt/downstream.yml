@@ -6,9 +6,9 @@ parameters:
  template: rhel-server-7.5-x86_64-kvm.qcow2
 
 rhv:
- template: [[ template ]]
+ template: {{ template }}
  rhnregister: true
- memory: [[ memory ]]
+ memory: {{ memory }}
  numcpus: 2
  cpumodel: host-model
  reservehost: true

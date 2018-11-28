@@ -6,8 +6,8 @@ parameters:
  admin_password: unix1234
  version: queen
 
-[[ version ]]:
- template: [[ template ]]
+{{ version }}:
+ template: {{ template }}
  memory: 8096
  rhnregister: true
  numcpus: 2

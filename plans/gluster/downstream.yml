@@ -6,8 +6,8 @@ parameters:
  memory: 8144
 
 gluster01:
- template: [[ template ]]
- memory: [[ memory ]]
+ template: {{ template }}
+ memory: {{ memory }}
  rhnregister: true
  numcpus: 4
  disks: 
@@ -24,9 +24,9 @@ gluster01:
   - provision.sh
 
 gluster02:
- template: [[ template ]]
+ template: {{ template }}
  rhnregister: true
- memory: [[ memory ]]
+ memory: {{ memory }}
  numcpus: 4
  disks:
   - size: 30

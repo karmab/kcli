@@ -6,7 +6,7 @@ parameters:
  version: 6.3
 
 satellite:
- template: [[ template ]]
+ template: {{ template }}
  rhnregister: true
  memory: 8192
  numcpus: 2

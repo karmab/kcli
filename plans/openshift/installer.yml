@@ -9,9 +9,9 @@ parameters:
   password: password
 
 installer:
- template: [[ template ]]
+ template: {{ template }}
  numcpus: 2
- memory: [[ memory ]]
+ memory: {{ memory }}
  privatekey: True
  nets:
   - default

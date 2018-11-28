@@ -9,11 +9,11 @@ label 1
 menu label Install Distro
 menu default
 kernel distro/vmlinuz
-[% if kickstart %]
+{% if kickstart %}
 append initrd=distro/initrd.img method=http://192.168.127.2 devfs=nomount ks=http://192.168.127.2/default.ks
-[% else %]
+{% else %}
 append initrd=distro/initrd.img method=http://192.168.127.2 devfs=nomount
-[% endif %]
+{% endif %}
 
 label 2
 menu label Boot from local drive

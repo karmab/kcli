@@ -14,7 +14,7 @@ tripleopublic:
  dhcp: True
 
 undercloud:
- template: [[ template ]]
+ template: {{ template }}
  rhnregister: true
  memory: 8192
  numcpus: 2

@@ -7,11 +7,11 @@ parameters:
  ui_version: v1.3-9
 
 kubevirt:
- template: [[ template ]]
+ template: {{ template }}
  numcpus: 2
  memory: 8192
  reservedns: true
- domain: [[ domain ]]
+ domain: {{ domain }}
  nets:
   - default
  disks:
@@ -22,20 +22,20 @@ kubevirt:
     origin: kubernetes.repo
   - kubevirt_ui.yml
   - cdi-controller.yaml
-[% if nfs %]
+{% if nfs %}
   - path: /root/nfs.yml
     origin: nfs.yml
   - path: /root/nfs.sh
     origin: nfs.sh
-[% endif %]
+{% endif %}
  scripts: 
   - pre.sh
   - master.sh
   - dashboard.sh
   - kubevirt.sh
-[% if cdi %]
+{% if cdi %}
   - cdi.sh
-[% endif %]
-[% if ui %]
+{% endif %}
+{% if ui %}
   - kubevirt_ui.sh
-[% endif %]
+{% endif %}

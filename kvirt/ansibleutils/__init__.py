@@ -4,7 +4,6 @@
 interact with a local/remote libvirt daemon
 """
 
-# from jinja2 import Environment
 import os
 import time
 

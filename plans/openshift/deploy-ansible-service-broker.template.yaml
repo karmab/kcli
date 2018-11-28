@@ -310,15 +310,15 @@ objects:
           tag: "${TAG}"
           white_list:
             - ".*-apb$"
-        [% if org is defined %]
+        {% if org is defined %}
         - type: "${REGISTRY_TYPE}"
-          name: "[[ org ]]"
+          name: "{{ org }}"
           url: "${REGISTRY_URL}"
-          org: "[[ org ]]"
+          org: "{{ org }}"
           tag: "${TAG}"
           white_list:
             - ".*-apb$"
-        [% endif %]
+        {% endif %}
         - type: local_openshift
           name: localregistry
           namespaces: ['openshift']

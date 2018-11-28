@@ -11,14 +11,14 @@ kubernetes-the-hard-way:
  type: loadbalancer
  ports:
  - 80
- domain: [[ domain ]]
+ domain: {{ domain }}
  vms:
   - controller-0
   - controller-1
   - controller-2
 
-[% for i in range(0, 3) %]
-controller-[[ i ]]:
+{% for i in range(0, 3) %}
+controller-{{ i }}:
  template: ubuntu-1804-lts
  flavor: n1-standard-1
  reservedns: true
@@ -27,11 +27,11 @@ controller-[[ i ]]:
   - size: 200
  nets:
   - name: custom
-    ip: 10.240.0.1[[ i ]]
+    ip: 10.240.0.1{{ i }}
  tags:
   - kubernetes-the-hard-way
   - controller
-[% if i == 0 %] 
+{% if i == 0 %} 
  files:
   - path: /root/ca-config.json
     origin: ca-config.json
@@ -81,11 +81,11 @@ controller-[[ i ]]:
     path: /root/lab7.sh
   - origin: lab8.sh
     path: /root/lab8.sh
-[% endif %]
-[% endfor %]
+{% endif %}
+{% endfor %}
 
-[% for i in range(0, 3) %]
-worker-[[ i ]]:
+{% for i in range(0, 3) %}
+worker-{{ i }}:
  template: ubuntu-1804-lts
  flavor: n1-standard-1
  sharedkey: true
@@ -93,11 +93,11 @@ worker-[[ i ]]:
   - size: 200
  nets:
   - name: custom
-    ip: 10.240.0.2[[ i ]]
+    ip: 10.240.0.2{{ i }}
  tags:
   - kubernetes-the-hard-way
   - controller
-[% endfor %]
+{% endfor %}
   - origin: lab2.sh
     path: /root/lab2.sh
   - origin: lab4.sh
@@ -108,11 +108,11 @@ worker-[[ i ]]:
     path: /root/lab6.sh
   - origin: lab7.sh
     path: /root/lab7.sh
-[% endif %]
-[% endfor %]
+{% endif %}
+{% endfor %}
 
-[% for i in range(0, 3) %]
-worker-[[ i ]]:
+{% for i in range(0, 3) %}
+worker-{{ i }}:
  template: ubuntu-1804-lts
  flavor: n1-standard-1
  sharedkey: true
@@ -120,8 +120,8 @@ worker-[[ i ]]:
   - size: 200
  nets:
   - name: custom
-    ip: 10.240.0.2[[ i ]]
+    ip: 10.240.0.2{{ i }}
  tags:
   - kubernetes-the-hard-way
   - controller
-[% endfor %]
+{% endfor %}

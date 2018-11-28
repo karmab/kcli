@@ -1,4 +1,4 @@
-VERSION=v[[ helm_version ]]
+VERSION=v{{ helm_version }}
 oc login -u system:admin
 oc new-project helm
 oc create serviceaccount helm --namespace=helm

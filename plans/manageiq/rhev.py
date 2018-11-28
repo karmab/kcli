@@ -5,10 +5,10 @@ import json
 import requests
 
 user = "admin"
-password = "[[ password ]]"
+password = "{{ password }}"
 rhevuser = "admin@internal"
-rhevpassword = "[[ rhev_password ]]"
-rhevhost = "[[ rhev_host ]]"
+rhevpassword = "{{ rhev_password }}"
+rhevhost = "{{ rhev_host }}"
 headers = {'content-type': 'application/json', 'Accept': 'application/json'}
 postdata = {
     "type": "ManageIQ::Providers::Redhat::InfraManager",

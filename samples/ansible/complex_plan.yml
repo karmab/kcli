@@ -9,7 +9,7 @@ parameters:
  type: ansible
  verbose: false
  playbook: openshift.yaml
- groups: [[ groups ]]
+ groups: {{ groups }}
  vms:
   - master
   - nodes
@@ -18,7 +18,7 @@ parameters:
  type: ansible
  verbose: false
  playbook: storage.yaml
- groups: [[ groups ]]
+ groups: {{ groups }}
  vms:
   - master
 
@@ -26,7 +26,7 @@ parameters:
  type: ansible
  verbose: false
  playbook: kubevirt.yaml
- groups: [[ groups ]]
+ groups: {{ groups }}
  vms:
   - master
 

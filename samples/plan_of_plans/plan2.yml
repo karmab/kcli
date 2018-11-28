@@ -8,7 +8,7 @@ vm3:
   pool: default
   template: CentOS-7-x86_64-GenericCloud.qcow2
   cmds:
-   - echo [[ password ]] | passwd --stdin root
+   - echo {{ password }} | passwd --stdin root
 vm4:
   memory: 512
   numcpus: 1

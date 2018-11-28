@@ -6,7 +6,7 @@ parameters:
  template: rhel-server-7.5-x86_64-kvm.qcow2
 
 rhvengine:
- template: [[ template ]]
+ template: {{ template }}
  rhnregister: true
  memory: 8192
  numcpus: 2
@@ -24,7 +24,7 @@ rhvengine:
   - provision.sh
 
 rhvnode01:
- template: [[ template
+ template: {{ template
  rhnregister: true
  memory: 8192
  numcpus: 2
@@ -40,7 +40,7 @@ rhvnode01:
   - advanced/node.sh
 
 rhvnode02:
- template: [[ template ]]
+ template: {{ template }}
  rhnregister: true
  memory: 8192
  numcpus: 2
@@ -59,8 +59,8 @@ rhvldap:
  type: container
  image: nickstenning/slapd
  environment:
-  - LDAP_DOMAIN: [[ ldap_domain ]]
-  - LDAP_ORGANIZATION: [[ ldap_organization ]]
-  - LDAP_ROOTPASS: [[ ldap_password ]]
+  - LDAP_DOMAIN: {{ ldap_domain }}
+  - LDAP_ORGANIZATION: {{ ldap_organization }}
+  - LDAP_ROOTPASS: {{ ldap_password }}
  ports:
   - 389

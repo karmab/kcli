@@ -1,7 +1,7 @@
  install
  firewall --disabled
  url --url="http://192.168.127.2/"
- rootpw [[ password ]]
+ rootpw {{ password }}
  auth  useshadow  passalgo=sha512
  text
  firstboot disable
@@ -10,7 +10,7 @@
  selinux --permissive
  timezone Europe/Madrid
  reboot
- user --name=[[ user ]] --plaintext --password [[ password ]] --groups=wheel
+ user --name={{ user }} --plaintext --password {{ password }} --groups=wheel
  bootloader location=mbr
  clearpart --all --initlabel
  part swap --asprimary --fstype="swap" --size=1024

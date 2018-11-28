@@ -3,7 +3,7 @@ source ~/keystonerc_testk
 openstack project create rally_project
 for i in 1 2 3
 do
-openstack user create --project rally_project --password [[ password ]] test${i}
+openstack user create --project rally_project --password {{ password }} test${i}
 done
 openstack image delete cirros
 glance image-create --name "cirros" --disk-format qcow2 --container-format bare --visibility public --file cirros-0.3.4-x86_64-disk.img

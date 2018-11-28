@@ -8,12 +8,12 @@ parameters:
  sdn: flannel
 
 kumaster:
- template: [[ template ]]
+ template: {{ template }}
  numcpus: 2
  memory: 4096
  reservedns: true
  sharedkey: true
- domain: [[ domain ]]
+ domain: {{ domain }}
  nets:
   - default
  disks:
@@ -28,30 +28,30 @@ kumaster:
     origin: kube-flannel-rbac.yml
   - path: /root/vm.yml
     origin: vm.yml
-[% if nfs %]
+{% if nfs %}
   - path: /root/nfs.yml
     origin: nfs.yml
   - path: /root/nfs.sh
     origin: nfs.sh
-[% endif %]
+{% endif %}
  scripts: 
   - pre.sh
   - master.sh
-[% if deploy_app %]
+{% if deploy_app %}
   - app.sh
-[% endif %]
+{% endif %}
   - heapster.sh
   - dashboard.sh
   - kubevirt.sh
 
-[% for number in range(1,nodes+1) %]
-kunode0[[ number ]]:
- template: [[ template ]]
+{% for number in range(1,nodes+1) %}
+kunode0{{ number }}:
+ template: {{ template }}
  numcpus: 2
  memory: 4096
  reservedns: true
  sharedkey: true
- domain: [[ domain ]]
+ domain: {{ domain }}
  nets:
   - default
  disks:
@@ -62,4 +62,4 @@ kunode0[[ number ]]:
     origin: kubernetes.repo
  scripts: 
   - pre.sh
-[% endfor %]
+{% endfor %}

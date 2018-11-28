@@ -18,7 +18,7 @@ parameters:
  trove: false
 
 
-[[ version ]]:
+{{ version }}:
  template: CentOS-7-x86_64-GenericCloud.qcow2
  memory: 10240
  numcpus: 2

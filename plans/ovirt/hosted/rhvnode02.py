@@ -4,11 +4,11 @@
 import requests
 
 user = "admin@internal"
-password = "[[ password ]]"
+password = "{{ password }}"
 engine = "rhvengine.default"
 headers = {'content-type': 'application/xml', 'Accept': 'application/xml'}
 hostname = "rhvnode02.default"
-hostpassword = "[[ password ]]"
+hostpassword = "{{ password }}"
 
 data = """<host>
   <name>%s</name>

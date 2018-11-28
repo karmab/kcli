@@ -9,7 +9,7 @@ parameters:
  template: rhel-server-7.5-x86_64-kvm.qcow2
 
 ospcontroller:
- template: [[ template ]]
+ template: {{ template }}
  memory: 6144
  numcpus: 2
  rhnregister: true
@@ -26,13 +26,13 @@ ospcontroller:
   - subscription.sh
   - advanced/install.sh
   - provision.sh
-[% if livemigration %]
+{% if livemigration %}
   - advanced/nfs_livemigration.sh
   - advanced/rally.sh
-[% endif %]
+{% endif %}
 
-[% for number in range(1,computes+1) %]
-ospcompute0[[ number ]]:
+{% for number in range(1,computes+1) %}
+ospcompute0{{ number }}:
  template: rhel-guest-image-7.3-35.x86_64.qcow2
  rhnregister: true
  memory: 6144
@@ -47,4 +47,4 @@ ospcompute0[[ number ]]:
  reservedns: true
  scripts: 
   - subscription.sh
-[% endfor %]
+{% endfor %}
