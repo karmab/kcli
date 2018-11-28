@@ -1122,7 +1122,7 @@ def cli():
     delete_parser = subparsers.add_parser('delete', description=delete_info, help=delete_info)
     delete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     delete_parser.add_argument('--container', action='store_true')
-    delete_parser.add_argument('-t', '--template', action='store_true')
+    delete_parser.add_argument('-t', '--template', action='store_true', help='delete template instead')
     delete_parser.add_argument('--snapshots', action='store_true', help='Remove snapshots if needed')
     delete_parser.add_argument('names', metavar='VMNAMES', nargs='*')
     delete_parser.set_defaults(func=delete)
