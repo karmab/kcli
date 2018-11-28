@@ -804,9 +804,8 @@ class Kaws(object):
 
     def delete_image(self, image):
         conn = self.conn
-        print(dir(conn))
+        conn.deregister_image(ImageId=image)
         return {'result': 'success'}
-        # conn.create_image(InstanceId=InstanceId, Name=Name, Description=Description, NoReboot=True)
 
     def add_image(self, image, pool, short=None, cmd=None, name=None, size=1):
         """
