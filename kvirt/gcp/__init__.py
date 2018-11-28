@@ -960,13 +960,15 @@ class Kgcp(object):
         return
 
     def delete_image(self, image):
+        common.pprint("Deleting image %s" % image, color='green')
         conn = self.conn
         project = self.project
-        common.pprint("Deleting image %s" % image, color='green')
-        operation = conn.images().delete(project=project, image=image).execute()
-        self._wait_for_operation(operation)
-        return {'result': 'success'}
-        # return {'result': 'failure', 'reason': 'Image %s not found' % image}
+        try:
+            operation = conn.images().delete(project=project, image=image).execute()
+            self._wait_for_operation(operation)
+            return {'result': 'success'}
+        except:
+            return {'result': 'failure', 'reason': 'Image %s not found' % image}
 
     def add_image(self, image, pool, short=None, cmd=None, name=None, size=1):
         """

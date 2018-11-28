@@ -2150,12 +2150,10 @@ class Kvirt(object):
                     pool = conn.storagePoolLookupByName(poolname)
                     volume = pool.storageVolLookupByName(shortname)
                 except:
-                    common.print("Image %s not found" % image)
                     return {'result': 'failure', 'reason': 'pool not found'}
             volume.delete(0)
             pool.refresh(0)
             return {'result': 'success'}
-        common.pprint("Image %s not found" % image, color='red')
         return {'result': 'failure', 'reason': 'Image %s not found' % image}
 
     def add_image(self, image, pool, cmd=None, name=None, size=1):

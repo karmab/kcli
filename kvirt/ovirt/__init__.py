@@ -1034,6 +1034,17 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         print("not implemented")
         return
 
+    def delete_image(self, image):
+        common.pprint("Deleting image %s" % image, color='green')
+        templates_service = self.templates_service
+        templateslist = templates_service.list()
+        for template in templateslist:
+            if template.name == image:
+                template_service = templates_service.template_service(template.id)
+                template_service.remove()
+                return {'result': 'success'}
+        return {'result': 'failure', 'reason': "Image %s not found" % image}
+
     def add_image(self, image, pool, short=None, cmd=None, name=None, size=1):
         """
 

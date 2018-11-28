@@ -803,9 +803,13 @@ class Kaws(object):
         return
 
     def delete_image(self, image):
+        common.pprint("Deleting image %s" % image, color='green')
         conn = self.conn
-        conn.deregister_image(ImageId=image)
-        return {'result': 'success'}
+        try:
+            conn.deregister_image(ImageId=image)
+            return {'result': 'success'}
+        except:
+            return {'result': 'failure', 'reason': "Image %s not found" % image}
 
     def add_image(self, image, pool, short=None, cmd=None, name=None, size=1):
         """
