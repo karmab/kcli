@@ -209,9 +209,9 @@ class Kopenstack(object):
             return {'result': 'failure', 'reason': "No usable keypair found"}
         meta = {'plan': plan, 'profile': profile}
         if dnshost is not None:
-            meta['dnshost'] == dnshost
+            meta['dnshost'] = dnshost
         if domain is not None:
-            meta['domain'] == domain
+            meta['domain'] = domain
         userdata = None
         if cloudinit:
             if template is not None and (template.startswith('coreos') or template.startswith('rhcos')):
@@ -979,7 +979,7 @@ class Kopenstack(object):
         networks = {}
         neutron = self.neutron
         for subnet in neutron.list_subnets()['subnets']:
-            networkname = subnet['name']
+            subnetname = subnet['name']
             subnet_id = subnet['id']
             cidr = subnet['cidr']
             dhcp = subnet['enable_dhcp']
@@ -987,14 +987,14 @@ class Kopenstack(object):
             network = neutron.show_network(network_id)
             mode = 'external' if network['network']['router:external'] else 'isolated'
             # networks = [n for n in neutron.list_networks()['networks'] if n['router:external']]
-            domainname = neutron.show_network(network_id)['network']['name']
+            networkname = neutron.show_network(network_id)['network']['name']
             ports = [p for p in neutron.list_ports()['ports']
                      if p['device_owner'] == 'network:router_interface' and network_id == network_id]
             for port in ports:
                 if 'fixed_ips' in port and subnet_id in port['fixed_ips'][0].values():
                     mode = 'nat'
                     break
-            networks[networkname] = {'cidr': cidr, 'dhcp': dhcp, 'domain': domainname, 'type': 'routed', 'mode': mode}
+            networks[networkname] = {'cidr': cidr, 'dhcp': dhcp, 'domain': subnetname, 'type': 'routed', 'mode': mode}
         return networks
 
     def list_subnets(self):
