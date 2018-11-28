@@ -994,7 +994,11 @@ class Kopenstack(object):
                 if 'fixed_ips' in port and subnet_id in port['fixed_ips'][0].values():
                     mode = 'nat'
                     break
-            networks[networkname] = {'cidr': cidr, 'dhcp': dhcp, 'domain': subnetname, 'type': 'routed', 'mode': mode}
+            if networkname in networks:
+                networks[networkname]['domain'] = "%s, %s" % (networks[networkname]['domain'], subnetname)
+            else:
+                networks[networkname] = {'cidr': cidr, 'dhcp': dhcp, 'domain': subnetname, 'type': 'routed',
+                                         'mode': mode}
         return networks
 
     def list_subnets(self):
