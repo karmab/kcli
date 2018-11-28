@@ -622,7 +622,7 @@ class Kvirt(object):
         if cloudinit and template is not None and not template.startswith('coreos') and\
                 not template.startswith('rhcos'):
             common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
-                             reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides)
+                             reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides, store=True)
             self._uploadimage(name, pool=default_storagepool)
         if reserveip:
             xml = vm.XMLDesc(0)
