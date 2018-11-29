@@ -845,7 +845,7 @@ class Kopenstack(object):
         if [i for i in self.glance.images.list() if i['name'] == shortimage]:
             return {'result': 'success'}
         if not os.path.exists('/tmp/%s' % shortimage):
-            downloadcmd = 'curl -Lo /tmp/%s -f %s' % (shortimage, image)
+            downloadcmd = "curl -Lo /tmp/%s -f '%s'" % (shortimage, image)
             code = os.system(downloadcmd)
             if code != 0:
                 return {'result': 'failure', 'reason': "Unable to download indicated template"}

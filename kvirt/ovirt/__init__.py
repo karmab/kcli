@@ -1077,7 +1077,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         if shortimage not in otemplates:
             shortimage = os.path.basename(image).split('?')[0]
             if not os.path.exists('/tmp/%s' % shortimage):
-                downloadcmd = 'curl -Lo /tmp/%s -f %s' % (shortimage, image)
+                downloadcmd = "curl -Lo /tmp/%s -f '%s'" % (shortimage, image)
                 code = os.system(downloadcmd)
                 if code != 0:
                     return {'result': 'failure', 'reason': "Unable to download indicated template"}
@@ -1138,9 +1138,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             transfer_service.finalize()
             proxy_connection.close()
             _format = types.DiskFormat.COW
-            attachments = [types.DiskAttachment(disk=types.Disk(id=disk_id, format=_format))]
-            tempvm = types.Vm(disk_attachments=attachments)
-            clone = False
+            disk_attachments = [types.DiskAttachment(disk=types.Disk(id=disk_id, format=_format))]
             _template = types.Template(name='Blank')
             _os = types.OperatingSystem(boot=types.Boot(devices=[types.BootDevice.HD, types.BootDevice.CDROM]))
             console = types.Console(enabled=True)
@@ -1148,8 +1146,9 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             memory = 1024 * 1024 * 1024
             tempname = 'kcli_import' + ''.join(choice(ascii_lowercase) for _ in range(5))
             tempvm = self.vms_service.add(types.Vm(name=tempname, cluster=types.Cluster(name=self.cluster),
+                                                   disk_attachments=disk_attachments,
                                                    memory=memory, cpu=cpu, template=_template, console=console, os=_os),
-                                          clone=clone)
+                                          clone=True)
             template = self.templates_service.add(template=types.Template(name=shortimage, vm=tempvm))
             template_service = self.templates_service.template_service(template.id)
             while True:
@@ -1157,7 +1156,9 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                 template = template_service.get()
                 if template.status == types.TemplateStatus.OK:
                     break
-            tempvm = self.vms_service.vm_service(tempvm.id)
+            tempvmsearch = self.vms_service.list(search='name=%s' % tempname)
+            tempvminfo = tempvmsearch[0]
+            tempvm = self.vms_service.vm_service(tempvminfo.id)
             tempvm.remove()
             os.remove('/tmp/%s' % shortimage)
             return {'result': 'success'}
