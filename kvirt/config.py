@@ -51,7 +51,7 @@ class Kconfig(Kbaseconfig):
                 if ca_file is not None:
                     ca_file = os.path.expanduser(ca_file)
                     if not os.path.exists(ca_file):
-                        common.pprint("Ca file path doesn't exist. Leaving", color='red')
+                        common.pprint("Ca file %s doesn't exist. Leaving" % ca_file, color='red')
                         os._exit(1)
                 token = self.options.get('token')
                 token_file = self.options.get('token_file')
