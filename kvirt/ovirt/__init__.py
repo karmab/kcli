@@ -29,7 +29,7 @@ class KOvirt(object):
     def __init__(self, host='127.0.0.1', port=22, user='admin@internal',
                  password=None, insecure=True, ca_file=None, org=None, debug=False,
                  cluster='Default', datacenter='Default', ssh_user='root', imagerepository='ovirt-image-repository',
-                 filtervms=True, filteruser=None):
+                 filtervms=False, filteruser=None):
         try:
             url = "https://%s/ovirt-engine/api" % host
             self.conn = sdk.Connection(url=url, username=user,
