@@ -11,9 +11,15 @@ import ovirtsdk4 as sdk
 from ovirtsdk4 import Error as oerror
 import ovirtsdk4.types as types
 import os
-from subprocess import call
-from time import sleep
+from subprocess import call, check_output
+import json
+from time import sleep, time
 import yaml
+from http.client import HTTPSConnection
+import ssl
+from urllib.parse import urlparse
+from random import choice
+from string import ascii_lowercase
 
 
 class KOvirt(object):
@@ -1064,37 +1070,118 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         :param size:
         :return:
         """
-        image = os.path.basename(image)
-        if image not in otemplates:
-            return {'result': 'failure', 'reason': "Image not supported"}
-        if image in self.volumes():
-            common.pprint("Image %s already there" % image)
+        shortimage = os.path.basename(image).split('?')[0]
+        if shortimage in self.volumes():
+            common.pprint("Image %s already there" % shortimage)
             return {'result': 'success'}
-        system_service = self.conn.system_service()
-        sds_service = system_service.storage_domains_service()
-        poolcheck = sds_service.list(search='name=%s' % pool)
-        if not poolcheck:
-            return {'result': 'failure', 'reason': "Pool %s not found" % pool}
-        sd = sds_service.list(search='name=%s' % self.imagerepository)
-        common.pprint("Using %s glance repository" % self.imagerepository, color='green')
-        if not sd:
-            common.confirm("No glance repo found. Do you want public glance repo to be installed?")
-            providers_service = system_service.openstack_image_providers_service()
-            sd_service = providers_service.add(provider=types.OpenStackImageProvider(name='ovirt-image-repository',
-                                                                                     url='http://glance.ovirt.org:9292',
-                                                                                     requires_authentication=False))
-            common.pprint("Relaunch kcli download now", color='green')
+        if shortimage not in otemplates:
+            shortimage = os.path.basename(image).split('?')[0]
+            if not os.path.exists('/tmp/%s' % shortimage):
+                downloadcmd = 'curl -Lo /tmp/%s -f %s' % (shortimage, image)
+                code = os.system(downloadcmd)
+                if code != 0:
+                    return {'result': 'failure', 'reason': "Unable to download indicated template"}
+            BUF_SIZE = 128 * 1024
+            image_path = '/tmp/%s' % shortimage
+            out = check_output(["qemu-img", "info", "--output", "json", image_path])
+            image_info = json.loads(out)
+            image_size = os.path.getsize(image_path)
+            content_type = types.DiskContentType.DATA
+            disk_format = types.DiskFormat.COW
+            disks_service = self.conn.system_service().disks_service()
+            disk = disks_service.add(disk=types.Disk(name=os.path.basename(image_path), content_type=content_type,
+                                                     description='Uploaded disk', format=disk_format,
+                                                     initial_size=image_size,
+                                                     provisioned_size=image_info["virtual-size"],
+                                                     sparse=disk_format == types.DiskFormat.COW,
+                                                     storage_domains=[types.StorageDomain(name=pool)]))
+            disk_service = disks_service.disk_service(disk.id)
+            disk_id = disk.id
+            while True:
+                sleep(5)
+                disk = disk_service.get()
+                if disk.status == types.DiskStatus.OK:
+                    break
+            transfers_service = self.conn.system_service().image_transfers_service()
+            transfer = transfers_service.add(types.ImageTransfer(image=types.Image(id=disk.id)))
+            transfer_service = transfers_service.image_transfer_service(transfer.id)
+            while transfer.phase == types.ImageTransferPhase.INITIALIZING:
+                sleep(1)
+                transfer = transfer_service.get()
+            destination_url = urlparse(transfer.proxy_url)
+            context = ssl.create_default_context()
+            context.load_verify_locations(cafile=self.ca_file)
+            proxy_connection = HTTPSConnection(destination_url.hostname, destination_url.port, context=context)
+            proxy_connection.putrequest("PUT", destination_url.path)
+            proxy_connection.putheader('Content-Length', "%d" % (image_size,))
+            proxy_connection.endheaders()
+            last_progress = time()
+            common.pprint("Uploading image %s" % shortimage)
+            with open(image_path, "rb") as disk:
+                pos = 0
+                while pos < image_size:
+                    to_read = min(image_size - pos, BUF_SIZE)
+                    chunk = disk.read(to_read)
+                    if not chunk:
+                        transfer_service.pause()
+                        raise RuntimeError("Unexpected end of file at pos=%d" % pos)
+                    proxy_connection.send(chunk)
+                    pos += len(chunk)
+                    now = time()
+                    if now - last_progress > 10:
+                        print("Uploaded %.2f%%" % (float(pos) / image_size * 100))
+                        last_progress = now
+            response = proxy_connection.getresponse()
+            if response.status != 200:
+                transfer_service.pause()
+                return {'result': 'failure', 'reason': "Upload failed: %s %s" % (response.status, response.reason)}
+            transfer_service.finalize()
+            proxy_connection.close()
+            _format = types.DiskFormat.COW
+            attachments = [types.DiskAttachment(disk=types.Disk(id=disk_id, format=_format))]
+            tempvm = types.Vm(disk_attachments=attachments)
+            clone = False
+            _template = types.Template(name='Blank')
+            _os = types.OperatingSystem(boot=types.Boot(devices=[types.BootDevice.HD, types.BootDevice.CDROM]))
+            console = types.Console(enabled=True)
+            cpu = types.Cpu(topology=types.CpuTopology(cores=2, sockets=1))
+            memory = 1024 * 1024 * 1024
+            tempname = 'kcli_import' + ''.join(choice(ascii_lowercase) for _ in range(5))
+            tempvm = self.vms_service.add(types.Vm(name=tempname, cluster=types.Cluster(name=self.cluster),
+                                                   memory=memory, cpu=cpu, template=_template, console=console, os=_os),
+                                          clone=clone)
+            template = self.templates_service.add(template=types.Template(name=shortimage, vm=tempvm))
+            template_service = self.templates_service.template_service(template.id)
+            while True:
+                sleep(5)
+                template = template_service.get()
+                if template.status == types.TemplateStatus.OK:
+                    break
+            tempvm = self.vms_service.vm_service(tempvm.id)
+            tempvm.remove()
+            os.remove('/tmp/%s' % shortimage)
             return {'result': 'success'}
         else:
-            sd_service = sds_service.storage_domain_service(sd[0].id)
-        images_service = sd_service.images_service()
-        images = images_service.list()
-        imageobject = next((i for i in images if i.name == otemplates[image]), None)
-        image_service = images_service.image_service(imageobject.id)
-        image_service.import_(import_as_template=True, template=types.Template(name=image),
-                              cluster=types.Cluster(name=self.cluster),
-                              storage_domain=types.StorageDomain(name=pool))
-        return {'result': 'success'}
+            system_service = self.conn.system_service()
+            sds_service = system_service.storage_domains_service()
+            poolcheck = sds_service.list(search='name=%s' % pool)
+            if not poolcheck:
+                return {'result': 'failure', 'reason': "Pool %s not found" % pool}
+            sd = sds_service.list(search='name=%s' % self.imagerepository)
+            if not sd:
+                common.confirm("No glance repo found", color='red')
+                return {'result': 'failure', 'reason': "Glance repository %s not found" % self.imagerepository}
+            else:
+                common.pprint("Using %s glance repository" % self.imagerepository, color='green')
+                sd_service = sds_service.storage_domain_service(sd[0].id)
+                images_service = sd_service.images_service()
+                images = images_service.list()
+                imageobject = next((i for i in images if i.name == otemplates[shortimage]), None)
+                image_service = images_service.image_service(imageobject.id)
+                image_service.import_(import_as_template=True, template=types.Template(name=shortimage),
+                                      cluster=types.Cluster(name=self.cluster),
+                                      storage_domain=types.StorageDomain(name=pool))
+                return {'result': 'success'}
 
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None,
                        plan='kvirt', pxe=None, vlan=None):

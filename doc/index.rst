@@ -1319,18 +1319,15 @@ parameters:
 -  –paramfile - In this case, you provide a yaml file ( and as such can
    provide more complex structures )
 
-The indicated objects are then rendered using jinja. The delimiters ‘[[’
-and ’]]’ are used instead of the commonly used ‘{{’ and ‘}}’ so that
-this rendering doesn’t get in the way when providing j2 files for
-instance
+The indicated objects are then rendered using jinja.
 
 ::
 
     centos:
      template: CentOS-7-x86_64-GenericCloud.qcow2
      cmds:
-      - echo x=[[ x ]] y=[[ y ]] >> /tmp/cocorico.txt
-      - echo [[ password | default('unix1234') ]] | passwd --stdin root
+      - echo x={{ x }} y={{ y }} >> /tmp/cocorico.txt
+      - echo {{ password | default('unix1234') }} | passwd --stdin root
 
 You can make the previous example cleaner by using the special key
 parameters in your plans and define there variables
@@ -1344,8 +1341,8 @@ parameters in your plans and define there variables
     centos:
      template: CentOS-7-x86_64-GenericCloud.qcow2
      cmds:
-      - echo x=[[ x ]] y=[[ y ]] >> /tmp/cocorico.txt
-      - echo [[ password  ]] | passwd --stdin root
+      - echo x={{ x }} y={{ y }} >> /tmp/cocorico.txt
+      - echo {{ password  }} | passwd --stdin root
 
 Finally note that you can also use advanced jinja constructs like
 conditionals and so on. For instance:
@@ -1357,9 +1354,9 @@ conditionals and so on. For instance:
     vm4:
       template: CentOS-7-x86_64-GenericCloud.qcow2
       nets:
-        - [[ net1 ]]
+        - {{ net1 }}
     {% if net2 is defined %}
-        - [[ net2 ]]
+        - {{ net2 }}
     {% endif %}
 
 Also, you can reference a *baseplan* file in the *parameters* section,
