@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: fed001
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+  - ReadWriteOnce
+  nfs:
+    path: /pv001
+    server: nfs.default
+  persistentVolumeReclaimPolicy: Recycle
