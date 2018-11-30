@@ -36,12 +36,9 @@ m0{{ master + 1 }}:
   - size: {{ gluster_disk_size }}
  pool: default
  files:
-  - path: /root/inventory
-    origin: inventory
+  - inventory
 {% if type == 'ovirt' %}
-  - path: /root/fix_inventory.sh
-    origin: ovirt_fix_inventory.sh
-    mode: 700
+  - ovirt_fix_inventory.sh
 {% endif %}
 {% endfor %}
 

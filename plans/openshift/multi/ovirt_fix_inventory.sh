@@ -7,7 +7,7 @@ VMIDS=`curl -sk -H "Accept: application/xml" -u  "${user}:${password}" "${url}/v
 
 for vmid in $VMIDS ; do
   name=`curl -sk -H "Accept: application/xml" -u  "${user}:${password}" "${url}/vms/${vmid}" |  grep -m1 '<name>'| sed 's@.*<name>\(.*\)</name>@\1@'`
-  ip=`curl -sk -H "Accept: application/xml" -u  "${user}:${password}" "${url}/vms/${vmid}/reporteddevices" | grep -m1 address | sed 's@.*<address>\(.*\)</address>@\1@'`
+  ip=`curl -sk -H "Accept: application/xml" -u  "${user}:${password}" "${url}/vms/${vmid}/reporteddevices" | grep -v : | grep -m1 address | sed 's@.*<address>\(.*\)</address>@\1@'`
   echo "Substituting ${name} for ${ip} in inventory"
   sed -i "s/${name}\.{{ domain }}/${ip}.xip.io/g" /root/inventory
   echo ${name} | grep -q master && ip_master=$ip
