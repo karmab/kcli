@@ -894,14 +894,11 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         diskindex = currentdisk + 1
         diskname = '%s_Disk%s' % (name, diskindex)
         _format = types.DiskFormat.COW if thin else types.DiskFormat.RAW
-        disk_attachment = disk_attachments_service.add(types.DiskAttachment(disk=types.Disk(name=diskname,
-                                                                                            format=_format,
-                                                                                            provisioned_size=size,
-                                                                                            storage_domains=[
-                                                                                                types.StorageDomain(
-                                                                                                    name=pool)]),
-                                                                            interface=types.DiskInterface.VIRTIO,
-                                                                            bootable=False, active=True))
+        storagedomain = types.StorageDomain(name=pool)
+        disk_attachment = types.DiskAttachment(disk=types.Disk(name=diskname, format=_format, provisioned_size=size,
+                                                               storage_domains=[storagedomain]),
+                                               interface=types.DiskInterface.VIRTIO, bootable=False, active=True)
+        disk_attachment = disk_attachments_service.add(disk_attachment)
         disks_service = self.conn.system_service().disks_service()
         disk_service = disks_service.disk_service(disk_attachment.disk.id)
         timeout = 0
@@ -1049,7 +1046,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         return
 
     def delete_image(self, image):
-        common.pprint("Deleting image %s" % image, color='green')
+        common.pprint("Deleting Template %s" % image, color='green')
         templates_service = self.templates_service
         templateslist = templates_service.list()
         for template in templateslist:
@@ -1057,7 +1054,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                 template_service = templates_service.template_service(template.id)
                 template_service.remove()
                 return {'result': 'success'}
-        return {'result': 'failure', 'reason': "Image %s not found" % image}
+        return {'result': 'failure', 'reason': "Template %s not found" % image}
 
     def add_image(self, image, pool, short=None, cmd=None, name=None, size=1):
         """
@@ -1072,27 +1069,58 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         """
         shortimage = os.path.basename(image).split('?')[0]
         if shortimage in self.volumes():
-            common.pprint("Image %s already there" % shortimage)
+            common.pprint("Template %s already there" % shortimage, color='blue')
             return {'result': 'success'}
-        if shortimage not in otemplates:
-            shortimage = os.path.basename(image).split('?')[0]
+        system_service = self.conn.system_service()
+        sds_service = system_service.storage_domains_service()
+        poolcheck = sds_service.list(search='name=%s' % pool)
+        if not poolcheck:
+            return {'result': 'failure', 'reason': "Pool %s not found" % pool}
+        sd = sds_service.list(search='name=%s' % self.imagerepository)
+        if sd:
+            common.pprint("Using glance repository %s" % self.imagerepository, color='green')
+            sd_service = sds_service.storage_domain_service(sd[0].id)
+            images_service = sd_service.images_service()
+            images = images_service.list()
+            if self.imagerepository != 'ovirt-image-repository':
+                xtemplates = {i.name: i.name for i in images}
+            else:
+                xtemplates = otemplates
+            if shortimage in xtemplates:
+                imageobject = next((i for i in images if i.name == xtemplates[shortimage]), None)
+                image_service = images_service.image_service(imageobject.id)
+                image_service.import_(import_as_template=True, template=types.Template(name=shortimage),
+                                      cluster=types.Cluster(name=self.cluster),
+                                      storage_domain=types.StorageDomain(name=pool))
+                return {'result': 'success'}
+            else:
+                common.pprint("Image not found in %s. Manually downloading" % self.imagerepository, color='blue')
+        else:
+            common.pprint("No glance repository found. Manually downloading", color='green')
+        disks_service = self.conn.system_service().disks_service()
+        disksearch = disks_service.list(search='alias=%s' % shortimage)
+        if not disksearch:
             if not os.path.exists('/tmp/%s' % shortimage):
+                common.pprint("Downloading locally %s" % shortimage, color='green')
                 downloadcmd = "curl -Lo /tmp/%s -f '%s'" % (shortimage, image)
                 code = os.system(downloadcmd)
                 if code != 0:
                     return {'result': 'failure', 'reason': "Unable to download indicated template"}
+            else:
+                common.pprint("Using found /tmp/%s" % shortimage, color='blue')
             BUF_SIZE = 128 * 1024
             image_path = '/tmp/%s' % shortimage
             out = check_output(["qemu-img", "info", "--output", "json", image_path])
             image_info = json.loads(out)
             image_size = os.path.getsize(image_path)
+            virtual_size = image_info["virtual-size"]
             content_type = types.DiskContentType.DATA
             disk_format = types.DiskFormat.COW
             disks_service = self.conn.system_service().disks_service()
-            disk = disks_service.add(disk=types.Disk(name=os.path.basename(image_path), content_type=content_type,
-                                                     description='Uploaded disk', format=disk_format,
+            disk = disks_service.add(disk=types.Disk(name=os.path.basename(shortimage), content_type=content_type,
+                                                     description='Kcli Uploaded disk', format=disk_format,
                                                      initial_size=image_size,
-                                                     provisioned_size=image_info["virtual-size"],
+                                                     provisioned_size=virtual_size,
                                                      sparse=disk_format == types.DiskFormat.COW,
                                                      storage_domains=[types.StorageDomain(name=pool)]))
             disk_service = disks_service.disk_service(disk.id)
@@ -1137,52 +1165,45 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                 return {'result': 'failure', 'reason': "Upload failed: %s %s" % (response.status, response.reason)}
             transfer_service.finalize()
             proxy_connection.close()
-            _format = types.DiskFormat.COW
-            disk_attachments = [types.DiskAttachment(disk=types.Disk(id=disk_id, format=_format))]
-            _template = types.Template(name='Blank')
-            _os = types.OperatingSystem(boot=types.Boot(devices=[types.BootDevice.HD, types.BootDevice.CDROM]))
-            console = types.Console(enabled=True)
-            cpu = types.Cpu(topology=types.CpuTopology(cores=2, sockets=1))
-            memory = 1024 * 1024 * 1024
-            tempname = 'kcli_import' + ''.join(choice(ascii_lowercase) for _ in range(5))
-            tempvm = self.vms_service.add(types.Vm(name=tempname, cluster=types.Cluster(name=self.cluster),
-                                                   disk_attachments=disk_attachments,
-                                                   memory=memory, cpu=cpu, template=_template, console=console, os=_os),
-                                          clone=True)
-            template = self.templates_service.add(template=types.Template(name=shortimage, vm=tempvm))
-            template_service = self.templates_service.template_service(template.id)
-            while True:
-                sleep(5)
-                template = template_service.get()
-                if template.status == types.TemplateStatus.OK:
-                    break
-            tempvmsearch = self.vms_service.list(search='name=%s' % tempname)
-            tempvminfo = tempvmsearch[0]
-            tempvm = self.vms_service.vm_service(tempvminfo.id)
-            tempvm.remove()
-            os.remove('/tmp/%s' % shortimage)
-            return {'result': 'success'}
         else:
-            system_service = self.conn.system_service()
-            sds_service = system_service.storage_domains_service()
-            poolcheck = sds_service.list(search='name=%s' % pool)
-            if not poolcheck:
-                return {'result': 'failure', 'reason': "Pool %s not found" % pool}
-            sd = sds_service.list(search='name=%s' % self.imagerepository)
-            if not sd:
-                common.confirm("No glance repo found", color='red')
-                return {'result': 'failure', 'reason': "Glance repository %s not found" % self.imagerepository}
-            else:
-                common.pprint("Using %s glance repository" % self.imagerepository, color='green')
-                sd_service = sds_service.storage_domain_service(sd[0].id)
-                images_service = sd_service.images_service()
-                images = images_service.list()
-                imageobject = next((i for i in images if i.name == otemplates[shortimage]), None)
-                image_service = images_service.image_service(imageobject.id)
-                image_service.import_(import_as_template=True, template=types.Template(name=shortimage),
-                                      cluster=types.Cluster(name=self.cluster),
-                                      storage_domain=types.StorageDomain(name=pool))
-                return {'result': 'success'}
+            disk_id = disksearch[0].id
+            disk_service = disks_service.disk_service(disk_id)
+        _template = types.Template(name='Blank')
+        _os = types.OperatingSystem(boot=types.Boot(devices=[types.BootDevice.HD, types.BootDevice.CDROM]))
+        console = types.Console(enabled=True)
+        cpu = types.Cpu(topology=types.CpuTopology(cores=2, sockets=1))
+        memory = 1024 * 1024 * 1024
+        tempname = 'kcli_import' + ''.join(choice(ascii_lowercase) for _ in range(5))
+        tempvm = self.vms_service.add(types.Vm(name=tempname, cluster=types.Cluster(name=self.cluster),
+                                               memory=memory, cpu=cpu, template=_template, console=console, os=_os),
+                                      clone=False)
+        while True:
+            sleep(5)
+            disk = disk_service.get()
+            if disk.status == types.DiskStatus.OK:
+                break
+        tempvm_service = self.vms_service.vm_service(tempvm.id)
+        _format = types.DiskFormat.COW
+        storagedomain = types.StorageDomain(name=pool)
+        disk_attachments = types.DiskAttachment(disk=types.Disk(id=disk_id, format=_format,
+                                                                storage_domains=[storagedomain]),
+                                                interface=types.DiskInterface.VIRTIO,
+                                                bootable=True, active=True)
+        disk_attachments_service = tempvm_service.disk_attachments_service()
+        disk_attachments_service.add(disk_attachments)
+        template = self.templates_service.add_from_vm(template=types.Template(name=shortimage, vm=tempvm))
+        template_service = self.templates_service.template_service(template.id)
+        while True:
+            sleep(5)
+            template = template_service.get()
+            if template.status == types.TemplateStatus.OK:
+                break
+        tempvmsearch = self.vms_service.list(search='name=%s' % tempname)
+        tempvminfo = tempvmsearch[0]
+        tempvm = self.vms_service.vm_service(tempvminfo.id)
+        tempvm.remove()
+        os.remove('/tmp/%s' % shortimage)
+        return {'result': 'success'}
 
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None,
                        plan='kvirt', pxe=None, vlan=None):

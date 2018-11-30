@@ -1288,7 +1288,7 @@ class Kconfig(Kbaseconfig):
             k = self.k
             if pool is None:
                 pool = self.pool
-                common.pprint("Using pool %s" % pool, color='red')
+                common.pprint("Using pool %s" % pool, color='blue')
             if url is None and not templates:
                 common.pprint("Missing template or url.Leaving...", color='red')
                 return {'result': 'failure', 'reason': "Missing template"}
