@@ -60,7 +60,7 @@ federer2:
  numcpus: 2
  memory: {{ memory }}
  domain: default
- reservedns: {{ reservedns }}
+ reservedns: true
  nets:
   - default
  disks:

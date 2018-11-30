@@ -4,8 +4,10 @@ echo function contextswitch { >> /root/.bashrc
 echo oc config use-context \$1 >> /root/.bashrc
 echo } >> /root/.bashrc
 echo alias contextlist=\"oc config get-contexts\" >> /root/.bashrc
-export CLUSTER1=`dig +short federer.default`.xip.io
-export CLUSTER2=`dig +short federer.default`.xip.io
+echo alias oc1=\"oc --context=cluster1\" >> /root/.bashrc
+echo alias oc2=\"oc --context=cluster2\" >> /root/.bashrc
+export CLUSTER1=`dig +short federer1.default`.xip.io
+export CLUSTER2=`dig +short federer2.default`.xip.io
 oc login --insecure-skip-tls-verify=true -u admin -p admin https://$CLUSTER2:8443
 oc config rename-context `oc config current-context` cluster2
 oc login --insecure-skip-tls-verify=true -u admin -p admin https://$CLUSTER1:8443
@@ -21,4 +23,4 @@ oc create -f federation.yaml
 oc project federation-system
 oc create -n federation-system -f federatedtypes/
 kubefed2 join cluster1 --host-cluster-context cluster1 --add-to-registry --v=2
-kubefed2 join cluster2 --host-cluster-context cluster2 --add-to-registry --v=2
+kubefed2 join cluster2 --host-cluster-context cluster1 --add-to-registry --v=2

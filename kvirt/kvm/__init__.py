@@ -636,9 +636,9 @@ class Kvirt(object):
         if start:
             vm.create()
         if reservedns and not guestagent:
-            self.reserve_dns(name, nets=nets, domain=domain, alias=alias)
+            self.reserve_dns(name, nets=nets, domain=domain, alias=alias, force=True)
         if reservehost:
-            self.reserve_host(name, nets, domain)
+            self.reserve_host(name, nets, domain, force=True)
         return {'result': 'success'}
 
     def start(self, name):
@@ -1244,7 +1244,7 @@ class Kvirt(object):
                     if hostname is not None and hostname.text == name:
                         hostentry = '<host ip="%s"><hostname>%s</hostname></host>' % (iphost, name)
                         network.update(2, 10, 0, hostentry, 1)
-                for host in list(root.getiterator('host')):
+                for host in list(netroot.getiterator('host')):
                     iphost = host.get('ip')
                     hostname = host.find('hostname')
                     if hostname is not None and hostname.text == name:
