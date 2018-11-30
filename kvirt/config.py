@@ -331,8 +331,9 @@ class Kconfig(Kbaseconfig):
         if files:
             for index, fil in enumerate(files):
                 if isinstance(fil, str):
-                    common.pprint("Using /root/%s as path for file entry" % fil, color='blue')
                     path = "/root/%s" % fil
+                    if basedir != '.':
+                        origin = "%s/%s" % (basedir, path)
                     origin = fil
                     content = None
                     files[index] = {'path': path, 'origin': origin}
