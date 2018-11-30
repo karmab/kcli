@@ -20,7 +20,7 @@ nfs:
  scripts: 
   - nfs.sh
 
-origin1:
+federer1:
  template: {{ template }}
  numcpus: 2
  memory: {{ memory }}
@@ -34,6 +34,8 @@ origin1:
  scripts: 
   - requirements.sh
   - origin.sh
+  - nfs_federation.sh
+  - federation.sh
 {% if skydive %}
   - skydive.sh
 {% endif %}
@@ -53,7 +55,7 @@ origin1:
   - skydive.yml
 {% endif %}
 
-origin2:
+federer2:
  template: {{ template }}
  numcpus: 2
  memory: {{ memory }}
