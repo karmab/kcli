@@ -42,7 +42,6 @@ mkdir -p %{buildroot}/%{_mandir}/man1
 #cp doc/*md %{buildroot}/%{_docdir}/kcli
 #cp doc/*rst %{buildroot}/%{_docdir}/kcli
 cp -r extras %{buildroot}/%{_docdir}/kcli
-cp -r plans %{buildroot}/%{_docdir}/kcli
 cp -r samples %{buildroot}/%{_docdir}/kcli
 LANG=en_US.UTF-8 ronn -r README.md
 mv README kcli.1
