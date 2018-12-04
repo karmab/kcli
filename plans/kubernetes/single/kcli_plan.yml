@@ -3,9 +3,9 @@ parameters:
  template: CentOS-7-x86_64-GenericCloud.qcow2
  nfs: false
  sdn: flannel
- version: 1.11.0
+ k8s_version: latest
+ flannel_version: latest
  multus: false
- skydive: false
 
 kubernetes:
  template: {{ template }}
@@ -19,7 +19,6 @@ kubernetes:
   - size: 50
  pool: default
  files:
-  - skydive.yml
   - path: /etc/yum.repos.d/kubernetes.repo
     origin: kubernetes.repo
 {% if nfs %}
@@ -37,11 +36,8 @@ kubernetes:
 {% else %}
   - pre.sh
 {% endif %}
-  - master.sh
+  - kubernetes.sh
   - dashboard.sh
 {% if multus %}
   - multus.sh
-{% endif %}
-{% if skydive %}
-  - skydive.sh
 {% endif %}

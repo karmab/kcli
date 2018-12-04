@@ -1,4 +1,4 @@
-KUBEFED_VERSION="v0.0.2"
+KUBEFED_VERSION="v0.0.3"
 yum -y install git bind-utils
 echo function contextswitch { >> /root/.bashrc
 echo oc config use-context \$1 >> /root/.bashrc
@@ -6,6 +6,7 @@ echo } >> /root/.bashrc
 echo alias contextlist=\"oc config get-contexts\" >> /root/.bashrc
 echo alias oc1=\"oc --context=cluster1\" >> /root/.bashrc
 echo alias oc2=\"oc --context=cluster2\" >> /root/.bashrc
+echo alias oclogin=\"oc config use cluster2 && oc login -u admin -p admin ; oc config use cluster1 && oc login -u admin -p admin\" >> /root/.bashrc
 export CLUSTER1=`dig +short federer1.default`.xip.io
 export CLUSTER2=`dig +short federer2.default`.xip.io
 oc login --insecure-skip-tls-verify=true -u admin -p admin https://$CLUSTER2:8443

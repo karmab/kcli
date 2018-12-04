@@ -9,8 +9,12 @@ chown root:root /root/admin.conf
 export KUBECONFIG=/root/admin.conf
 echo "export KUBECONFIG=/root/admin.conf" >>/root/.bashrc
 kubectl taint nodes --all node-role.kubernetes.io/master-
-{% if sdn == 'flannel' %} 
-kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/v0.10.0/Documentation/kube-flannel.yml
+{% if sdn == 'flannel' %}
+FLANNEL={{ flannel_version }}
+if [ "FLANNEL" == 'latest' ] ; then
+  FLANNEL=`curl -s https://api.github.com/repos/coreos/flannel/releases/latest| jq -r .tag_name`
+fi
+kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/$FLANNEL/Documentation/kube-flannel.yml
 #kubectl create -f /root/kube-flannel-rbac.yml
 #kubectl apply -f /root/kube-flannel.yml
 {% elif sdn == 'weavenet' %}

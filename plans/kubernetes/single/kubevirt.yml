@@ -1,10 +1,10 @@
 parameters:
  baseplan: kcli_plan.yml
- kubevirt_version: v0.10.0
+ kubevirt_version: latest
  cdi: true
- cdi_version: v1.3.0
+ cdi_version: latest
  ui: true
- ui_version: v1.3-9
+ ui_version: latest
 
 kubevirt:
  template: {{ template }}
@@ -21,7 +21,6 @@ kubevirt:
   - path: /etc/yum.repos.d/kubernetes.repo
     origin: kubernetes.repo
   - kubevirt_ui.yml
-  - cdi-controller.yaml
 {% if nfs %}
   - path: /root/nfs.yml
     origin: nfs.yml
@@ -30,7 +29,7 @@ kubevirt:
 {% endif %}
  scripts: 
   - pre.sh
-  - master.sh
+  - kubernetes.sh
   - dashboard.sh
   - kubevirt.sh
 {% if cdi %}
