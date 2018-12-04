@@ -55,7 +55,7 @@ limitations under the License.
 
 ## Problems?
 
-Send me a mail at [karimboumedhel@gmail.com](mailto:karimboumedhel@gmail.com) !
+Open an issue !
 Or drop by #kcli channel on IRC
 
 Mc Fly!!!
