@@ -35,11 +35,10 @@ class KcliInventory(object):
 
         # Called with `--list`.
         if self.args.list:
-            self.inventory = self.get()
+            self.inventory = self._list()
         # Called with `--host [hostname]`.
         elif self.args.host:
-            # Not implemented, since we return _meta info `--list`.
-            self.inventory = empty()
+            self.inventory = self.get(self.args.host)
         # If no groups or vars are present, return an empty inventory.
         else:
             self.inventory = empty()
@@ -55,7 +54,7 @@ class KcliInventory(object):
         parser.add_argument('--host', action='store')
         self.args = parser.parse_args()
 
-    def get(self):
+    def _list(self):
         """
 
         :return:
@@ -69,12 +68,14 @@ class KcliInventory(object):
             status = vm.get('status')
             ip = vm.get('ip', '')
             template = vm.get('template')
-            description = vm.get('plan', 'kvirt')
+            plan = vm.get('plan', 'kvirt')
+            if plan == '':
+                plan = 'kvirt'
             profile = vm.get('profile', '')
-            if description not in metadata:
-                metadata[description] = {"hosts": [name], "vars": {"plan": description, "profile": profile}}
+            if plan not in metadata:
+                metadata[plan] = {"hosts": [name], "vars": {"plan": plan, "profile": profile}}
             else:
-                metadata[description]["hosts"].append(name)
+                metadata[plan]["hosts"].append(name)
             hostvalues[name] = {'status': status}
             if tunnel and self.type in ['kvm', 'kubevirt']:
                 hostvalues[name]['ansible_ssh_common_args'] = \
@@ -88,6 +89,35 @@ class KcliInventory(object):
                 if template != '':
                     user = get_user(template)
                     hostvalues[name]['ansible_user'] = user
+        return metadata
+
+    def get(self, name):
+        """
+
+        :return:
+        """
+        k = self.k
+        tunnel = self.tunnel
+        metadata = {}
+        vm = k.info(name)
+        for entry in ['name', 'template', 'plan', 'profile', 'ip']:
+            metadata[entry] = vm.get(entry)
+        if metadata['plan'] == '':
+            metadata['plan'] = 'kvirt'
+        if tunnel and self.type in ['kvm', 'kubevirt']:
+            metadata['ansible_ssh_common_args'] = \
+                "-o ProxyCommand='ssh -p %s -W %%h:%%p %s@%s'" % (self.port, self.user, self.host)
+        ip = metadata['ip']
+        if ip != '':
+            if self.type == 'vbox':
+                metadata['ansible_host'] = '127.0.0.1'
+                metadata['ansible_port'] = ip
+            else:
+                metadata['ansible_host'] = ip
+            template = metadata['template']
+            if template != '':
+                user = get_user(template)
+                metadata['ansible_user'] = user
         return metadata
 
 
