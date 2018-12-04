@@ -65,14 +65,12 @@ class KcliInventory(object):
         metadata = {'_meta': {'hostvars': {}}}
         hostvalues = metadata['_meta']['hostvars']
         for vm in k.list():
-            name = vm[0]
-            status = vm[1]
-            ip = vm[2]
-            template = vm[3]
-            description = vm[4]
-            profile = vm[5]
-            if description == '':
-                description = 'kvirt'
+            name = vm.get('name')
+            status = vm.get('status')
+            ip = vm.get('ip', '')
+            template = vm.get('template')
+            description = vm.get('plan', 'kvirt')
+            profile = vm.get('profile', '')
             if description not in metadata:
                 metadata[description] = {"hosts": [name], "vars": {"plan": description, "profile": profile}}
             else:
