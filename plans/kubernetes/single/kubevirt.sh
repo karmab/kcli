@@ -21,6 +21,7 @@ if [ "$KUBEVIRT" == 'master' ] || [ "$KUBEVIRT" -eq "$KUBEVIRT" ] ; then
   source hack/config-default.sh
   sed -i "s/\$docker_prefix/kubevirt/" hack/*sh
   sed -i "s/\${docker_prefix}/kubevirt/" hack/*sh
+  make cluster-up
   make docker manifests
   sed -i "s/latest/devel/" _out/manifests/release/kubevirt.yaml
   kubectl create -f _out/manifests/release/kubevirt.yaml

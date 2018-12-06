@@ -602,9 +602,10 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             vm = vmsearch[0]
         if self.debug:
             print(vars(vm))
-        yamlinfo = {'name': vm.name, 'disks': [], 'nets': [], 'status': vm.status, 'instanceid': vm.id}
+        status = str(vm.status)
+        yamlinfo = {'name': vm.name, 'disks': [], 'nets': [], 'status': status, 'instanceid': vm.id}
         try:
-            if str(vm.status) == 'up':
+            if status == 'up':
                 host = conn.follow_link(vm.host)
                 yamlinfo['host'] = host.name
         except:
