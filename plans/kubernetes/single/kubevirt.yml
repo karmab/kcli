@@ -5,6 +5,7 @@ parameters:
  cdi_version: latest
  ui: true
  ui_version: latest
+ install_kcli: false
 
 kubevirt:
  template: {{ template }}
@@ -37,4 +38,7 @@ kubevirt:
 {% endif %}
 {% if ui %}
   - kubevirt_ui.sh
+{% endif %}
+{% if install_kcli %}
+  - install_kcli.sh
 {% endif %}
