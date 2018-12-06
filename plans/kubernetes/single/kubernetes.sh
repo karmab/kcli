@@ -11,7 +11,7 @@ echo "export KUBECONFIG=/root/admin.conf" >>/root/.bashrc
 kubectl taint nodes --all node-role.kubernetes.io/master-
 {% if sdn == 'flannel' %}
 FLANNEL={{ flannel_version }}
-if [ "FLANNEL" == 'latest' ] ; then
+if [ "$FLANNEL" == "latest" ] ; then
   FLANNEL=`curl -s https://api.github.com/repos/coreos/flannel/releases/latest| jq -r .tag_name`
 fi
 kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/$FLANNEL/Documentation/kube-flannel.yml
