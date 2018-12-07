@@ -22,7 +22,8 @@ VERSION = 'v1alpha2'
 MULTUSDOMAIN = 'k8s.cni.cncf.io'
 MULTUSVERSION = 'v1'
 CONTAINERDISKS = ['kubevirt/alpine-container-disk-demo', 'kubevirt/cirros-container-disk-demo',
-                  'kubevirt/fedora-cloud-container-disk-demo']
+                  'kubevirt/fedora-cloud-container-disk-demo', 'karmab/debian-container-disk-demo',
+                  'karmab/gentoo-container-disk-demo', 'ubuntu-container-disk-demo']
 
 
 def pretty_print(o):
@@ -194,8 +195,11 @@ class Kubevirt(object):
         if self.exists(name):
             return {'result': 'failure', 'reason': "VM %s already exists" % name}
         if template is not None and template not in self.volumes():
-            if template in ['alpine, cirros', 'fedora-cloud']:
-                template = "kubevirt/%s-registry-disk-demo" % template
+            if template in ['alpine', 'cirros', 'fedora-cloud']:
+                template = "kubevirt/%s-container-disk-demo" % template
+                common.pprint("Using container disk %s as template" % template)
+            elif template in ['debian', 'gentoo', 'ubuntu']:
+                template = "karmab/%s-container-disk-demo" % template
                 common.pprint("Using container disk %s as template" % template)
             elif template not in CONTAINERDISKS:
                 return {'result': 'failure', 'reason': "you don't have template %s" % template}
