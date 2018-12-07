@@ -338,20 +338,6 @@
    openshift_version: '3.9'
    helm_version: 2.9.1
 
-- name: istio
-  group: openshift
-  url: github.com/karmab/kcli/plans/openshift
-  file: istio.yml
-  description: Istio Latest Stable based on oc cluster up with addons and optional bookinfo app
-  numvms: 1
-  memory: 6144
-  template: CentOS-7-x86_64-GenericCloud.qcow2
-  parameters:
-   docker_disk_size: 60
-   deploy_book_info: false
-   initializer: true
-   openshift_version: 3.7
-
 - name: minishift
   group: openshift
   url: github.com/karmab/kcli/plans/openshift

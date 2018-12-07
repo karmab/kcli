@@ -1,12 +1,18 @@
-jenkins:
+parameters:
  template: CentOS-7-x86_64-GenericCloud.qcow2
  memory: 8192
+ network: default
+ pool: default
+
+jenkins:
+ template: {{ template }}
+ memory: {{ memory }}
  numcpus: 2
  nets:
-  - default
+  - {{ network }}
  disks:
   - size: 40
- pool: default
+ pool: {{ pool }}
  reservedns: true
  cmds: 
   - yum -y install wget
