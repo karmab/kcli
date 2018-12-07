@@ -268,8 +268,9 @@ class KOvirt(object):
         if cloudinit:
             custom_script = ''
             if storemetadata and overrides:
+                storeoverrides = {k: overrides[k] for k in overrides if k not in ['password', 'rhnpassword', 'rhnak']}
                 storedata = {'path': '/root/.metadata',
-                             'content': yaml.dump(overrides, default_flow_style=False, indent=2)}
+                             'content': yaml.dump(storeoverrides, default_flow_style=False, indent=2)}
                 if files:
                     files.append(storedata)
                 else:

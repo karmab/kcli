@@ -23,7 +23,7 @@ installer:
    origin: installer_env.sh
  - path: /root/cleanup.sh
    origin: installer_cleanup.sh
- - path: /root/coreos_pull.json
-   origin: ~/coreos_pull.json
+ - path: /root/openshift_pull.json
+   origin: ~/openshift_pull.json
  scripts:
  - installer.sh
