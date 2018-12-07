@@ -82,7 +82,8 @@ class KOvirt(object):
         profiles_service = self.conn.system_service().vnic_profiles_service()
         netprofiles = {}
         for prof in profiles_service.list():
-            netdatacenter = self.conn.follow_link(self.conn.follow_link(prof.network).data_center)
+            networkinfo = self.conn.follow_link(prof.network)
+            netdatacenter = self.conn.follow_link(networkinfo.data_center)
             if netdatacenter.name == self.datacenter:
                 netprofiles[prof.name] = prof.id
         if 'default' not in netprofiles:
@@ -162,7 +163,8 @@ class KOvirt(object):
         profiles_service = self.conn.system_service().vnic_profiles_service()
         netprofiles = {}
         for prof in profiles_service.list():
-            netdatacenter = self.conn.follow_link(self.conn.follow_link(prof.network).data_center)
+            networkinfo = self.conn.follow_link(prof.network)
+            netdatacenter = self.conn.follow_link(networkinfo.data_center)
             if netdatacenter.name == self.datacenter:
                 netprofiles[prof.name] = prof.id
         if self.filtervms and self.filteruser is not None:
@@ -214,8 +216,11 @@ class KOvirt(object):
             elif 'rhevm' in netprofiles:
                 netprofiles['default'] = netprofiles['rhevm']
         nics_service = self.vms_service.vm_service(vm.id).nics_service()
+        currentnics = len(nics_service.list())
         nic_configurations = []
         for index, net in enumerate(nets):
+            if index < currentnics:
+                continue
             netname = None
             netmask = None
             mac = None
@@ -235,14 +240,14 @@ class KOvirt(object):
                 if not noconf and ips and len(ips) > index and ips[index] is not None:
                     ip = ips[index]
                 if not noconf and ip is not None and netmask is not None and gateway is not None:
-                    nic_configuration = types.NicConfiguration(name='nic%s' % index + 1, on_boot=True,
+                    nic_configuration = types.NicConfiguration(name='eth%s' % index + 1, on_boot=True,
                                                                boot_protocol=types.BootProtocol.STATIC,
                                                                ip=types.Ip(version=types.IpVersion.V4, address=ip,
                                                                            netmask=netmask, gateway=gateway))
                     nic_configurations.append(nic_configuration)
             if netname is not None and netname in netprofiles:
                 profile_id = netprofiles[netname]
-                nics_service.add(types.Nic(name='if%s' % index, mac=mac,
+                nics_service.add(types.Nic(name='eth%s' % index, mac=mac,
                                            vnic_profile=types.VnicProfile(id=profile_id)))
         # disk_attachments_service = self.vms_service.vm_service(vm.id).disk_attachments_service()
         for index, disk in enumerate(disks):
@@ -714,6 +719,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             templates_service = self.templates_service
             templateslist = templates_service.list()
             for template in templateslist:
+                print(vars(template))
                 if template.name != 'Blank':
                     templates.append(template.name)
             return templates
@@ -958,8 +964,31 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         :param network:
         :return:
         """
-        print("not implemented")
-        return
+        vmsearch = self.vms_service.list(search='name=%s' % name)
+        if not vmsearch:
+            common.pprint("VM %s not found" % name, color='red')
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        vm = vmsearch[0]
+        nics_service = self.vms_service.vm_service(vm.id).nics_service()
+        index = len(nics_service.list())
+        profiles_service = self.conn.system_service().vnic_profiles_service()
+        netprofiles = {}
+        for prof in profiles_service.list():
+            networkinfo = self.conn.follow_link(prof.network)
+            netdatacenter = self.conn.follow_link(networkinfo.data_center)
+            if netdatacenter.name == self.datacenter:
+                netprofiles[prof.name] = prof.id
+        if 'default' not in netprofiles:
+            if 'ovirtmgmt' in netprofiles:
+                netprofiles['default'] = netprofiles['ovirtmgmt']
+            elif 'rhevm' in netprofiles:
+                netprofiles['default'] = netprofiles['rhevm']
+        if network in netprofiles:
+            profile_id = netprofiles[network]
+            nics_service.add(types.Nic(name='eth%s' % index, vnic_profile=types.VnicProfile(id=profile_id)))
+        else:
+            return {'result': 'failure', 'reason': "Network %s not found" % network}
+        return {'result': 'success'}
 
     def delete_nic(self, name, interface):
         """
