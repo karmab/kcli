@@ -82,9 +82,14 @@ class KOvirt(object):
         profiles_service = self.conn.system_service().vnic_profiles_service()
         netprofiles = {}
         for prof in profiles_service.list():
+            netdatacenter = self.conn.follow_link(self.conn.follow_link(prof.network).data_center)
+            if netdatacenter.name == self.datacenter:
                 netprofiles[prof.name] = prof.id
-        if 'default' not in netprofiles and 'ovirtmgmt' in netprofiles:
-            netprofiles['default'] = netprofiles['ovirtmgmt']
+        if 'default' not in netprofiles:
+            if 'ovirtmgmt' in netprofiles:
+                netprofiles['default'] = netprofiles['ovirtmgmt']
+            elif 'rhevm' in netprofiles:
+                netprofiles['default'] = netprofiles['rhevm']
         if name in netprofiles:
             return True
         return False
@@ -154,6 +159,12 @@ class KOvirt(object):
         _os = types.OperatingSystem(boot=types.Boot(devices=[types.BootDevice.HD, types.BootDevice.CDROM]))
         console = types.Console(enabled=True)
         description = "plan=%s,profile=%s" % (plan, profile)
+        profiles_service = self.conn.system_service().vnic_profiles_service()
+        netprofiles = {}
+        for prof in profiles_service.list():
+            netdatacenter = self.conn.follow_link(self.conn.follow_link(prof.network).data_center)
+            if netdatacenter.name == self.datacenter:
+                netprofiles[prof.name] = prof.id
         if self.filtervms and self.filteruser is not None:
             description += ',user=%s' % self.filteruser
         if dnshost is not None:
@@ -197,10 +208,6 @@ class KOvirt(object):
                 common.pprint("Waiting for vm to be ready", color='green')
             if timeout > 60:
                 return {'result': 'failure', 'reason': 'timeout waiting for vm to be ready'}
-        profiles_service = self.conn.system_service().vnic_profiles_service()
-        netprofiles = {}
-        for prof in profiles_service.list():
-                netprofiles[prof.name] = prof.id
         if 'default' not in netprofiles:
             if 'ovirtmgmt' in netprofiles:
                 netprofiles['default'] = netprofiles['ovirtmgmt']
@@ -235,7 +242,7 @@ class KOvirt(object):
                     nic_configurations.append(nic_configuration)
             if netname is not None and netname in netprofiles:
                 profile_id = netprofiles[netname]
-                nics_service.add(types.Nic(name='eth%s' % index, mac=mac,
+                nics_service.add(types.Nic(name='if%s' % index, mac=mac,
                                            vnic_profile=types.VnicProfile(id=profile_id)))
         # disk_attachments_service = self.vms_service.vm_service(vm.id).disk_attachments_service()
         for index, disk in enumerate(disks):
