@@ -21,8 +21,8 @@ KUBEVIRTNAMESPACE = "kube-system"
 VERSION = 'v1alpha2'
 MULTUSDOMAIN = 'k8s.cni.cncf.io'
 MULTUSVERSION = 'v1'
-REGISTRYDISKS = ['kubevirt/alpine-registry-disk-demo', 'kubevirt/cirros-registry-disk-demo',
-                 'kubevirt/fedora-cloud-registry-disk-demo']
+CONTAINERDISKS = ['kubevirt/alpine-container-disk-demo', 'kubevirt/cirros-container-disk-demo',
+                  'kubevirt/fedora-cloud-container-disk-demo']
 
 
 def pretty_print(o):
@@ -196,8 +196,8 @@ class Kubevirt(object):
         if template is not None and template not in self.volumes():
             if template in ['alpine, cirros', 'fedora-cloud']:
                 template = "kubevirt/%s-registry-disk-demo" % template
-                common.pprint("Using registry disk %s as template" % template)
-            elif template not in REGISTRYDISKS:
+                common.pprint("Using container disk %s as template" % template)
+            elif template not in CONTAINERDISKS:
                 return {'result': 'failure', 'reason': "you don't have template %s" % template}
             if template == 'kubevirt/fedora-cloud-registry-disk-demo' and memory <= 512:
                 memory = 1024
@@ -327,8 +327,8 @@ class Kubevirt(object):
                     existingpvc = True
             myvolume = {'name': volname}
             if template is not None and index == 0:
-                if template in REGISTRYDISKS:
-                    myvolume['registryDisk'] = {'image': template}
+                if template in CONTAINERDISKS:
+                    myvolume['containerDisk'] = {'image': template}
                 elif cdi and datavolumes:
                     myvolume['dataVolume'] = {'name': volname}
                 else:
@@ -338,7 +338,7 @@ class Kubevirt(object):
             newdisk = {'volumeName': volname, 'disk': {'bus': diskinterface}, 'name': diskname}
             vm['spec']['template']['spec']['domain']['devices']['disks'].append(newdisk)
             vm['spec']['template']['spec']['volumes'].append(myvolume)
-            if index == 0 and template in REGISTRYDISKS:
+            if index == 0 and template in CONTAINERDISKS:
                 continue
             if existingpvc:
                 continue
@@ -347,7 +347,7 @@ class Kubevirt(object):
                                                              'accessModes': ['ReadWriteOnce'],
                                                              'resources': {'requests': {'storage': '%sGi' % disksize}}},
                    'apiVersion': 'v1', 'metadata': {'name': volname}}
-            if template is not None and index == 0 and template not in REGISTRYDISKS and cdi:
+            if template is not None and index == 0 and template not in CONTAINERDISKS and cdi:
                 annotation = "%s/%s" % (cdinamespace, templates[template])
                 pvc['metadata']['annotations'] = {'k8s.io/CloneRequest': annotation}
                 pvc['metadata']['labels'] = {'app': 'Host-Assisted-Cloning'}
@@ -368,7 +368,7 @@ class Kubevirt(object):
         for pvc in pvcs:
             pvcname = pvc['metadata']['name']
             pvcsize = pvc['spec']['resources']['requests']['storage'].replace('Gi', '')
-            if template not in REGISTRYDISKS and index == 0:
+            if template not in CONTAINERDISKS and index == 0:
                 if cdi:
                     if datavolumes:
                         dvt = {'metadata': {'name': volname},
@@ -710,8 +710,8 @@ class Kubevirt(object):
                     size = 'N/A'
             elif 'cloudInitNoCloud' in volumeinfo:
                 continue
-            elif 'registryDisk' in volumeinfo:
-                _type = 'registrydisk'
+            elif 'containerDisk' in volumeinfo:
+                _type = 'containerdisk'
             else:
                 _type = 'other'
             disk = {'device': d['name'], 'size': size, 'format': bus, 'type': _type, 'path': volumename}
@@ -786,7 +786,7 @@ class Kubevirt(object):
             pvc = core.list_namespaced_persistent_volume_claim(namespace)
             templates = [p.metadata.annotations['kcli/template'] for p in pvc.items
                          if p.metadata.annotations is not None and 'kcli/template' in p.metadata.annotations]
-        return sorted(templates + REGISTRYDISKS)
+        return sorted(templates + CONTAINERDISKS)
 
     def delete(self, name, snapshots=False):
         """
