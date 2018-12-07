@@ -7,9 +7,10 @@ parameters:
    cdi: true
    ui: true
    ui_version: v1.3-9
+   template: Fedora-Cloud-Base-28-1.1.x86_64.qcow2
 
 kubevirt:
- template: CentOS-7-x86_64-GenericCloud.qcow2
+ template: {{ template }}
  numcpus: 2
  memory: {{ memory }}
  nets:

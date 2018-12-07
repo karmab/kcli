@@ -201,8 +201,11 @@ class KOvirt(object):
         netprofiles = {}
         for prof in profiles_service.list():
                 netprofiles[prof.name] = prof.id
-        if 'default' not in netprofiles and 'ovirtmgmt' in netprofiles:
-            netprofiles['default'] = netprofiles['ovirtmgmt']
+        if 'default' not in netprofiles:
+            if 'ovirtmgmt' in netprofiles:
+                netprofiles['default'] = netprofiles['ovirtmgmt']
+            elif 'rhevm' in netprofiles:
+                netprofiles['default'] = netprofiles['rhevm']
         nics_service = self.vms_service.vm_service(vm.id).nics_service()
         nic_configurations = []
         for index, net in enumerate(nets):
@@ -1073,6 +1076,17 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             common.pprint("Template %s already there" % shortimage, color='blue')
             return {'result': 'success'}
         system_service = self.conn.system_service()
+        profile_id = None
+        profiles_service = system_service().vnic_profiles_service()
+        for prof in profiles_service.list():
+            if prof.name == 'ovirtmgmt':
+                profile_id = prof.id
+                break
+            elif prof.name == 'rhevm':
+                profile_id = prof.id
+                break
+        if profile_id is None:
+            return {'result': 'failure', 'reason': "Couldnt find ovirtmgmt nor rhevm network!!!"}
         sds_service = system_service.storage_domains_service()
         poolcheck = sds_service.list(search='name=%s' % pool)
         if not poolcheck:
@@ -1192,6 +1206,8 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                                                 bootable=True, active=True)
         disk_attachments_service = tempvm_service.disk_attachments_service()
         disk_attachments_service.add(disk_attachments)
+        nics_service = self.vms_service.vm_service(tempvm.id).nics_service()
+        nics_service.add(types.Nic(name='eth0', vnic_profile=types.VnicProfile(id=profile_id)))
         template = self.templates_service.add_from_vm(template=types.Template(name=shortimage, vm=tempvm))
         template_service = self.templates_service.template_service(template.id)
         while True:
