@@ -22,8 +22,8 @@ VERSION = 'v1alpha2'
 MULTUSDOMAIN = 'k8s.cni.cncf.io'
 MULTUSVERSION = 'v1'
 CONTAINERDISKS = ['kubevirt/alpine-container-disk-demo', 'kubevirt/cirros-container-disk-demo',
-                  'kubevirt/fedora-cloud-container-disk-demo', 'karmab/debian-container-disk-demo',
-                  'karmab/gentoo-container-disk-demo', 'ubuntu-container-disk-demo']
+                  'karmab/debian-container-disk-demo', 'kubevirt/fedora-cloud-container-disk-demo',
+                  'karmab/gentoo-container-disk-demo', 'karmab/ubuntu-container-disk-demo']
 
 
 def pretty_print(o):
