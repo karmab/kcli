@@ -41,7 +41,7 @@ class Kubevirt(object):
 
     """
     def __init__(self, token=None, ca_file=None, context=None, multus=True, host='127.0.0.1', port=443,
-                 user='root', debug=False, tags=None, namespace='default', cdi=True, datavolumes=True):
+                 user='root', debug=False, tags=None, namespace=None, cdi=True, datavolumes=True):
         self.host = host
         self.port = port
         self.user = user
@@ -96,6 +96,8 @@ class Kubevirt(object):
                         self.datavolumes = True
                 except:
                     pass
+        if namespace is None:
+            self.namespace = 'default'
         return
 
     def close(self):
