@@ -250,6 +250,9 @@ class Kconfig(Kbaseconfig):
             default_scripts = common.remove_duplicates(self.scripts + father.get('scripts', []))
             default_dnshost = father.get('dnshost', self.dnshost)
             default_storemetadata = father.get('storemetadata', self.storemetadata)
+            default_notify = father.get('notify', self.notify)
+            default_notifytoken = father.get('notifytoken', self.notifytoken)
+            default_notifycmd = father.get('notifycmd', self.notifycmd)
         else:
             default_numcpus = self.numcpus
             default_memory = self.memory
@@ -293,6 +296,9 @@ class Kconfig(Kbaseconfig):
             default_scripts = self.scripts
             default_dnshost = self.dnshost
             default_storemetadata = self.storemetadata
+            default_notify = self.notify
+            default_notifytoken = self.notifytoken
+            default_notifycmd = self.notifycmd
         plan = profile.get('plan', plan)
         template = profile.get('template', default_template)
         nets = profile.get('nets', default_nets)
@@ -381,6 +387,9 @@ class Kconfig(Kbaseconfig):
         flavor = profile.get('flavor', default_flavor)
         dnshost = profile.get('dnshost', default_dnshost)
         storemetadata = profile.get('storemetadata', default_storemetadata)
+        notify = profile.get('notify', default_notify)
+        notifytoken = profile.get('notifytoken', default_notifytoken)
+        notifycmd = profile.get('notifycmd', default_notifycmd)
         scriptcmds = []
         skip_rhnregister_script = False
         if rhnregister and template is not None and template.lower().startswith('rhel'):
@@ -458,6 +467,14 @@ class Kconfig(Kbaseconfig):
             reportcmd = ['curl -s -X POST -d "name=%s&status=OK&report=`cat /var/log/cloud-init.log`" %s/report '
                          '/dev/null' % (name, self.reporturl)]
             cmds = cmds + reportcmd
+        if notify and notifytoken is not None:
+            title = "Vm %s report" % name
+            notifycmd = 'curl -su "%s:" -d type="note" -d body="`%s`" -d title="%s" ' % (notifytoken, notifycmd, title)
+            notifycmd += 'https://api.pushbullet.com/v2/pushes'
+            if not cmds:
+                cmds = [notifycmd]
+            else:
+                cmds.append(notifycmd)
         ips = [overrides[key] for key in overrides if key.startswith('ip')]
         netmasks = [overrides[key] for key in overrides if key.startswith('netmask')]
         if privatekey:

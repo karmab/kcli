@@ -105,3 +105,6 @@ FLAVOR = None
 KEEP_NETWORKS = False
 DNSHOST = None
 STORE_METADATA = False
+NOTIFY = False
+NOTIFYTOKEN = None
+NOTIFYCMD = "cat /var/log/messages"
