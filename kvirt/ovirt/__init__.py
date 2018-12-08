@@ -719,7 +719,6 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             templates_service = self.templates_service
             templateslist = templates_service.list()
             for template in templateslist:
-                print(vars(template))
                 if template.name != 'Blank':
                     templates.append(template.name)
             return templates
