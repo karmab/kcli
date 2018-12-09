@@ -467,14 +467,18 @@ class Kconfig(Kbaseconfig):
             reportcmd = ['curl -s -X POST -d "name=%s&status=OK&report=`cat /var/log/cloud-init.log`" %s/report '
                          '/dev/null' % (name, self.reporturl)]
             cmds = cmds + reportcmd
-        if notify and notifytoken is not None:
-            title = "Vm %s report" % name
-            notifycmd = 'curl -su "%s:" -d type="note" -d body="`%s`" -d title="%s" ' % (notifytoken, notifycmd, title)
-            notifycmd += 'https://api.pushbullet.com/v2/pushes'
-            if not cmds:
-                cmds = [notifycmd]
+        if notify:
+            if notifytoken is not None:
+                title = "Vm %s report" % name
+                notifycmd = 'curl -su "%s:" -d type="note" -d body="`%s`" -d title="%s" ' % (notifytoken, notifycmd,
+                                                                                             title)
+                notifycmd += 'https://api.pushbullet.com/v2/pushes'
+                if not cmds:
+                    cmds = [notifycmd]
+                else:
+                    cmds.append(notifycmd)
             else:
-                cmds.append(notifycmd)
+                common.pprint("Notification required but missing notifytoken. Get it a pushbullet.com", color='blue')
         ips = [overrides[key] for key in overrides if key.startswith('ip')]
         netmasks = [overrides[key] for key in overrides if key.startswith('netmask')]
         if privatekey:
