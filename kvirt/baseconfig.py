@@ -26,6 +26,17 @@ class Kbaseconfig:
     """
     def __init__(self, client=None, debug=False, quiet=False):
         inifile = "%s/.kcli/config.yml" % os.environ.get('HOME')
+        secretsfile = "%s/.kcli/secrets.yml" % os.environ.get('HOME')
+        if not os.path.exists(secretsfile):
+            secrets = {}
+        else:
+            with open(secretsfile, 'r') as entries:
+                try:
+                    secrets = yaml.load(entries)
+                except yaml.scanner.ScannerError as err:
+                    common.pprint("Couldn't parse yaml in .kcli/secrets.yml. Leaving...", color='red')
+                    common.pprint(err, color='red')
+                    os._exit(1)
         if not os.path.exists(inifile):
             client = 'local'
             if os.path.exists('/Users'):
@@ -51,6 +62,14 @@ class Kbaseconfig:
                 except:
                     self.host = None
                     return
+            for key1 in self.ini:
+                for key2 in self.ini[key1]:
+                    if isinstance(self.ini[key1][key2], str) and self.ini[key1][key2] == '?secret':
+                        if key1 in secrets and key2 in secrets[key1]:
+                            self.ini[key1][key2] = secrets[key1][key2]
+                        else:
+                            common.pprint("Missing secret for %s/%s" % (key1, key2), color='red')
+                            os._exit(1)
             if 'default' not in self.ini:
                 if len(self.ini) == 1:
                     client = list(self.ini.keys())[0]
@@ -138,7 +157,12 @@ class Kbaseconfig:
             self.flavors = {}
         else:
             with open(flavorsfile, 'r') as entries:
-                self.flavors = yaml.load(entries)
+                try:
+                    self.flavors = yaml.load(entries)
+                except yaml.scanner.ScannerError as err:
+                    common.pprint("Couldn't parse yaml in .kcli/flavors.yml. Leaving...", color='red')
+                    common.pprint(err, color='red')
+                    os._exit(1)
         self.extraclients = {}
         self._extraclients = []
         if client == 'all':
