@@ -23,5 +23,6 @@ oc create -f cluster-registry.yaml
 oc create -f federation.yaml
 oc project federation-system
 oc create -n federation-system -f federatedtypes/
+sleep 60
 kubefed2 join cluster1 --host-cluster-context cluster1 --add-to-registry --v=2
 kubefed2 join cluster2 --host-cluster-context cluster1 --add-to-registry --v=2

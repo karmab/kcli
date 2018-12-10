@@ -26,6 +26,8 @@ federer1:
  memory: {{ memory }}
  domain: default
  reservedns: true
+ notify: true
+ notifycmd: kubectl -n federation-system describe federatedclusters
  nets:
   - default
  disks:
