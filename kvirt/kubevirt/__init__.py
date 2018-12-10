@@ -214,9 +214,9 @@ class Kubevirt(object):
         core = self.core
         cdi = self.cdi
         datavolumes = self.datavolumes
-        cdinamespace = self.cdinamespace
         namespace = self.namespace
         if cdi:
+            cdinamespace = self.cdinamespace
             allpvc = core.list_namespaced_persistent_volume_claim(cdinamespace)
             templates = {}
             for p in core.list_namespaced_persistent_volume_claim(cdinamespace).items:
@@ -493,7 +493,6 @@ class Kubevirt(object):
         :return:
         """
         cdi = self.cdi
-        cdinamespace = self.cdinamespace
         if self.token is not None:
             print("Connection: https://%s:%s" % (self.host, self.port))
         else:
@@ -501,6 +500,7 @@ class Kubevirt(object):
         print("Namespace: %s" % self.namespace)
         print("Cdi: %s" % cdi)
         if cdi:
+            cdinamespace = self.cdinamespace
             print("Cdi Namespace: %s" % cdinamespace)
         return
 
@@ -779,11 +779,11 @@ class Kubevirt(object):
         core = self.core
         namespace = self.namespace
         cdi = self.cdi
-        cdinamespace = self.cdinamespace
         if iso:
             return []
         templates = []
         if cdi:
+            cdinamespace = self.cdinamespace
             pvc = core.list_namespaced_persistent_volume_claim(cdinamespace)
             templates = [self.get_template_name(p.metadata.annotations['cdi.kubevirt.io/storage.import.endpoint'])
                          for p in pvc.items if p.metadata.annotations is not None and
@@ -1202,7 +1202,6 @@ class Kubevirt(object):
         pool = self.check_pool(pool)
         namespace = self.namespace
         cdi = self.cdi
-        cdinamespace = self.cdinamespace
         shortimage = os.path.basename(image).split('?')[0]
         if name is None:
             volname = [k for k in TEMPLATES if TEMPLATES[k] == image][0]
@@ -1219,6 +1218,7 @@ class Kubevirt(object):
                                                          'resources': {'requests': {'storage': '%sGi' % size}}},
                'apiVersion': 'v1', 'metadata': {'name': volname, 'annotations': {'kcli/template': shortimage}}}
         if cdi:
+                cdinamespace = self.cdinamespace
                 pvc['metadata']['annotations'] = {'cdi.kubevirt.io/storage.import.endpoint': image}
                 namespace = cdinamespace
         else:
