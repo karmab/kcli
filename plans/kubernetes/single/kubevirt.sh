@@ -8,6 +8,7 @@ setenforce 0
 kubectl config set-context `kubectl config current-context` --namespace=kube-system
 grep -q vmx /proc/cpuinfo || oc create configmap -n kube-system kubevirt-config --from-literal debug.useEmulation=true
 if [ "$KUBEVIRT" == 'master' ] || [ "$KUBEVIRT" -eq "$KUBEVIRT" ] ; then
+  kubectl create ns kubevirt
   yum -y install git make
   cd /root
   git clone https://github.com/kubevirt/kubevirt

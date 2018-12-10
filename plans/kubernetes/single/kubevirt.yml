@@ -4,14 +4,13 @@ parameters:
  cdi: true
  cdi_version: latest
  ui: true
- ui_version: latest
+ ui_version: v1.3-9
  install_kcli: false
 
 kubevirt:
  template: {{ template }}
  numcpus: 2
  memory: 8192
- reservedns: true
  domain: {{ domain }}
  nets:
   - default
