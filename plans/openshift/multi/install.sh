@@ -2,6 +2,9 @@
 yum -y install openshift-ansible screen bind-utils
 sed -i "s/#host_key_checking/host_key_checking = True/" /etc/ansible/ansible.cfg
 sed -i "s/#log_path/log_path/" /etc/ansible/ansible.cfg
+{% if deploy %}
+sleep 360
+{% endif %}
 export MASTERIP=`dig +short m01.{{ domain }}`
 {% if infras > 0 -%}
 export ROUTERIP=`dig +short i01.{{ domain }}`

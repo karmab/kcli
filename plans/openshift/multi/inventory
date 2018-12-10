@@ -2,7 +2,7 @@
 masters
 nodes
 etcd
-{% if gluster %}
+{% if glusterfs %}
 glusterfs
 {% endif %}
 
@@ -41,7 +41,7 @@ openshift_registry_selector="node-role.kubernetes.io/master=true"
 
 openshift_master_identity_providers=[{'name': 'allow_all', 'login': 'true', 'challenge': 'true', 'kind': 'AllowAllPasswordIdentityProvider'}]
 
-{% if gluster -%}
+{% if glusterfs -%}
 openshift_storage_glusterfs_namespace=app-storage
 openshift_storage_glusterfs_storageclass=true
 openshift_storageclass_default=false
@@ -76,20 +76,20 @@ m0{{ master +1 }}.{{ domain }} ansible_connection=local openshift_node_group_nam
 m0{{ master +1 }}.{{ domain }} ansible_connection=local
 {%- endfor %}
 
-{% if gluster %}
+{% if glusterfs %}
 [glusterfs]
 {% if infras == 2 %}
-m01.{{ domain }} glusterfs_devices='[ "/dev/vdb" ]'
-i01.{{ domain }} glusterfs_devices='[ "/dev/vdb" ]'
-i02.{{ domain }} glusterfs_devices='[ "/dev/vdb" ]'
+m01.{{ domain }} glusterfs_devices='[ "/dev/{{ glusterfs_disk }}" ]'
+i01.{{ domain }} glusterfs_devices='[ "/dev/{{ glusterfs_disk }}" ]'
+i02.{{ domain }} glusterfs_devices='[ "/dev/{{ glusterfs_disk }}" ]'
 {% elif infras > 2 %}
-i01.{{ domain }} glusterfs_devices='[ "/dev/vdb" ]'
-i02.{{ domain }} glusterfs_devices='[ "/dev/vdb" ]'
-i03.{{ domain }} glusterfs_devices='[ "/dev/vdb" ]'
+i01.{{ domain }} glusterfs_devices='[ "/dev/{{ glusterfs_disk }}" ]'
+i02.{{ domain }} glusterfs_devices='[ "/dev/{{ glusterfs_disk }}" ]'
+i03.{{ domain }} glusterfs_devices='[ "/dev/{{ glusterfs_disk }}" ]'
 {% else %}
-m01.{{ domain }} glusterfs_devices='[ "/dev/vdb" ]'
-i01.{{ domain }} glusterfs_devices='[ "/dev/vdb" ]'
-n01.{{ domain }} glusterfs_devices='[ "/dev/vdb" ]'
+m01.{{ domain }} glusterfs_devices='[ "/dev/{{ glusterfs_disk }}" ]'
+i01.{{ domain }} glusterfs_devices='[ "/dev/{{ glusterfs_disk }}" ]'
+n01.{{ domain }} glusterfs_devices='[ "/dev/{{ glusterfs_disk }}" ]'
 {% endif %}
 {% endif %}
 

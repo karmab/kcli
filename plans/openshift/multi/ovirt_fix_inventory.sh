@@ -8,11 +8,12 @@ VMIDS=`curl -sk -H "Accept: application/xml" -u  "${user}:${password}" "${url}/v
 for vmid in $VMIDS ; do
   name=`curl -sk -H "Accept: application/xml" -u  "${user}:${password}" "${url}/vms/${vmid}" |  grep -m1 '<name>'| sed 's@.*<name>\(.*\)</name>@\1@'`
   ip=`curl -sk -H "Accept: application/xml" -u  "${user}:${password}" "${url}/vms/${vmid}/reporteddevices" | grep -v : | grep -m1 address | sed 's@.*<address>\(.*\)</address>@\1@'`
-  echo "Substituting ${name} for ${ip} in inventory"
-  sed -i "s/${name}\.{{ domain }}/${ip}.xip.io/g" /root/inventory
+  newname=${name}.${ip}.xip.io
+  echo "Substituting ${name} for ${newname} in inventory"
+  sed -i "s/${name}\.{{ domain }}/${newname}.xip.io/g" /root/inventory
   echo ${name} | grep -q master && ip_master=$ip
   echo ${name} | grep -q infra && ip_infra=$ip
-  ssh-keyscan -H ${ip}.xip.io >> ~/.ssh/known_hosts
+  ssh -o 'StrictHostKeyChecking=no' root@${ip} hostnamectl set-hostname ${newname}
 done
 
 {% if infras > 0 -%}
@@ -23,4 +24,3 @@ default_subdomain=${ip_master}.xip.io
 sed -i "s/##openshift_master_default_subdomain=.*/#openshift_master_default_subdomain=${default_subdomain}/" /root/inventory
 sed -i "s/#openshift_master_cluster_hostname=.*/openshift_master_cluster_hostname=${ip_master}.xip.io/" /root/inventory
 sed -i "s/#openshift_master_cluster_public_hostname=.*/openshift_master_cluster_public_hostname=${ip_master}.xip.io/" /root/inventory
-

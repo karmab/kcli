@@ -7,6 +7,4 @@ systemctl start docker
 systemctl enable NetworkManager
 systemctl start NetworkManager
 yum -y update
-{% if not deploy %}
-reboot
-{% endif %}
+hostname | grep -q m01 || reboot

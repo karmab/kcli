@@ -156,7 +156,18 @@ class KOvirt(object):
         :return:
         """
         clone = not diskthin
-        _template = types.Template(name=template) if template is not None else types.Template(name='Blank')
+        if template is not None:
+            templates_service = self.templates_service
+            templateslist = templates_service.list()
+            found = False
+            for temp in templateslist:
+                if temp.name == template:
+                    _template = types.Template(name=template)
+                    found = True
+            if not found:
+                return {'result': 'failure', 'reason': "template %s not found" % template}
+        else:
+            _template = types.Template(name='Blank')
         _os = types.OperatingSystem(boot=types.Boot(devices=[types.BootDevice.HD, types.BootDevice.CDROM]))
         console = types.Console(enabled=True)
         description = "plan=%s,profile=%s" % (plan, profile)

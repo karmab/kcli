@@ -1,22 +1,23 @@
 parameters:
- template: rhel-server-7.5-x86_64-kvm.qcow2
- domain: default
+ template: rhel-server-7.6-x86_64-kvm.qcow2
  base_disk_size: 60
- gluster_disk_size: 100
+ glusterfs_disk_size: 60
+ glusterfs_disk: vdb
  master_memory: 8144
  infra_memory: 4096
  node_memory: 4096
+ domain: default
+ pool: default
  masters: 1
  infras: 1
  nodes: 1
  registry: registry.redhat.io
- cidr: 192.168.122.0/24
  crio: true
  asb: true
  metrics: false
- gluster: false
+ glusterfs: false
  version: '3.11'
- deploy: false
+ deploy: true
 
 {% for master in range(0, masters) %}
 m0{{ master + 1 }}:
@@ -32,8 +33,8 @@ m0{{ master + 1 }}:
   - default
  disks:
   - size: {{ base_disk_size }}
-  - size: {{ gluster_disk_size }}
- pool: default
+  - size: {{ glusterfs_disk_size }}
+ pool: {{ pool }}
  files:
   - path: /root/inventory
     origin: multi/inventory
@@ -48,6 +49,8 @@ m0{{ master + 1 }}:
   - multi/pre.sh
 {% if deploy and master == 0 %}
   - multi/install.sh
+ notify: true
+ notifycmd: "oc get pod --all-namespaces"
 {% endif %}
 {% endfor %}
 
@@ -65,8 +68,8 @@ n0{{ node + 1 }}:
   - default
  disks:
   - size: {{ base_disk_size }}
-  - size: {{ gluster_disk_size }}
- pool: default
+  - size: {{ glusterfs_disk_size }}
+ pool: {{ pool }}
  scripts: 
   - multi/subscription.sh
   - multi/pre.sh
@@ -86,8 +89,8 @@ i0{{ infra + 1 }}:
   - default
  disks:
   - size: {{ base_disk_size }}
-  - size: {{ gluster_disk_size }}
- pool: default
+  - size: {{ glusterfs_disk_size }}
+ pool: {{ pool }}
  scripts: 
   - multi/subscription.sh
   - multi/pre.sh
