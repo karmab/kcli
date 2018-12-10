@@ -15,6 +15,7 @@ openshift_hosted_modify_imagestreams=true
 #openshift_master_cluster_public_hostname=
 openshift_use_openshift_sdn=true
 openshift_use_crio = {{ crio }}
+openshift_use_crio_only = {{ crio }}
 openshift_install_examples=false
 ansible_ssh_user=cloud-user
 ansible_become=True

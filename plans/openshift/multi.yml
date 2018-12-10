@@ -28,7 +28,6 @@ m0{{ master + 1 }}:
  reservedns: true
  sharedkey: true
  domain: {{ domain }}
- dns: {{ domain }}
  nets:
   - default
  disks:
@@ -63,7 +62,6 @@ n0{{ node + 1 }}:
  reservedns: true
  sharedkey: true
  domain: {{ domain }}
- dns: {{ domain }}
  nets:
   - default
  disks:
@@ -84,7 +82,6 @@ i0{{ infra + 1 }}:
  reservedns: true
  sharedkey: true
  domain: {{ domain }}
- dns: {{ domain }}
  nets:
   - default
  disks:
