@@ -5,7 +5,7 @@ parameters:
  sdn: flannel
  k8s_version: latest
  flannel_version: master
- multus: false
+ multus: true
 
 kubernetes:
  template: {{ template }}

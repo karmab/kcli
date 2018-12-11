@@ -6,7 +6,7 @@ parameters:
    disk_size: 60
    cdi: true
    ui: true
-   ui_version: v1.3-9
+   ui_version: latest
    template: Fedora-Cloud-Base-28-1.1.x86_64.qcow2
 
 kubevirt:
