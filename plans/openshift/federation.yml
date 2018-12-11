@@ -10,6 +10,7 @@ parameters:
   skydive: false
   istio: false
   knative: false
+  notifycmd: kubectl -n federation-system describe federatedclusters
 
 nfs:
  template: {{ template }}
@@ -27,7 +28,7 @@ federer1:
  domain: default
  reservedns: true
  notify: true
- notifycmd: kubectl -n federation-system describe federatedclusters
+ notifycmd: {{ notifycmd }}
  nets:
   - default
  disks:

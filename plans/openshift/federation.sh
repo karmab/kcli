@@ -9,6 +9,7 @@ echo alias oc2=\"oc --context=cluster2\" >> /root/.bashrc
 echo alias oclogin=\"oc config use cluster2 && oc login -u admin -p admin ; oc config use cluster1 && oc login -u admin -p admin\" >> /root/.bashrc
 export CLUSTER1=`dig +short federer1.default`.xip.io
 export CLUSTER2=`dig +short federer2.default`.xip.io
+sleep 120
 oc login --insecure-skip-tls-verify=true -u admin -p admin https://$CLUSTER2:8443
 oc config rename-context `oc config current-context` cluster2
 oc login --insecure-skip-tls-verify=true -u admin -p admin https://$CLUSTER1:8443
