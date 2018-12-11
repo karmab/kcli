@@ -470,8 +470,9 @@ class Kconfig(Kbaseconfig):
         if notify:
             if notifytoken is not None:
                 title = "Vm %s report" % name
-                notifycmd = 'curl -su "%s:" -d type="note" -d body="`%s`" -d title="%s" ' % (notifytoken, notifycmd,
-                                                                                             title)
+                notifycmd = 'curl -su "%s:" -d type="note" -d body="`%s 2>&1`" -d title="%s" ' % (notifytoken,
+                                                                                                  notifycmd,
+                                                                                                  title)
                 notifycmd += 'https://api.pushbullet.com/v2/pushes'
                 if not cmds:
                     cmds = [notifycmd]
