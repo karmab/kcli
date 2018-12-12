@@ -6,9 +6,9 @@ fi
 oc project kube-system
 grep -q vmx /proc/cpuinfo || oc create configmap -n kube-system kubevirt-config --from-literal debug.useEmulation=true
 wget https://github.com/kubevirt/kubevirt/releases/download/${VERSION}/kubevirt.yaml
-oc adm policy add-scc-to-user privileged -z kubevirt-privileged
-oc adm policy add-scc-to-user privileged -z kubevirt-controller
-oc adm policy add-scc-to-user privileged -z kubevirt-apiserver
+oc adm policy add-scc-to-user privileged -z kubevirt-privileged -n kube-system
+oc adm policy add-scc-to-user privileged -z kubevirt-controller -n kube-system
+oc adm policy add-scc-to-user privileged -z kubevirt-apiserver -n kube-system
 oc create -f kubevirt.yaml --validate=false
 wget https://github.com/kubevirt/kubevirt/releases/download/${VERSION}/virtctl-${VERSION}-linux-amd64
 mv virtctl-${VERSION}-linux-amd64 /usr/bin/virtctl
