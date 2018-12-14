@@ -198,6 +198,8 @@ class Kvirt(object):
         namespace = ''
         if self.exists(name):
             return {'result': 'failure', 'reason': "VM %s already exists" % name}
+        # if start and self.no_memory(memory):
+        #    return {'result': 'failure', 'reason': "Not enough memory to run this vm"}
         default_diskinterface = diskinterface
         default_diskthin = diskthin
         default_disksize = disksize
@@ -742,6 +744,27 @@ class Kvirt(object):
         else:
             vm.reboot()
             return {'result': 'success'}
+
+    def no_memory(self, memory):
+        """
+
+        """
+        conn = self.conn
+        totalmemory = conn.getInfo()[1]
+        usedmemory = 0
+        for vm in conn.listAllDomains(0):
+            if vm.isActive() == 0:
+                continue
+            xml = vm.XMLDesc(0)
+            root = ET.fromstring(xml)
+            mem = list(root.getiterator('memory'))[0]
+            unit = mem.attrib['unit']
+            mem = mem.text
+            if unit == 'KiB':
+                mem = float(mem) / 1024
+                mem = int(mem)
+            usedmemory += mem
+        return True if usedmemory + memory > totalmemory else False
 
     def report(self):
         """
