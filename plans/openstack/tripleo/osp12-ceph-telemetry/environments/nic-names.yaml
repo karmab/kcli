@@ -1,4 +1,0 @@
-parameter_defaults:
-  NetConfigDataLookup:
-      node1:
-         nic1: 'aa:bb:cc:dd:ee:01'

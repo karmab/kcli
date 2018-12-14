@@ -639,7 +639,7 @@ Look at the docker section for details on the parameters
 ```YAML
 ovirt:
   type: plan
-  url: github.com/karmab/kcli/plans/ovirt
+  url: github.com/karmab/kcli-plans/ovirt
   file: upstream.yml
   run: true
 ```
@@ -691,7 +691,7 @@ For an advanced use of plans along with scripts, check the [plans](plans/README.
 You can use the following to retrieve plans from a github repo:
 
 ```YAML
-kcli plan --get github.com/karmab/kcli/plans -p karmab_plans
+kcli plan --get github.com/karmab/kcli-plans -p karmab_plans
 ```
 The url can also be in:
 
@@ -870,7 +870,7 @@ If plans seem too  complex, you can make use of the products feature which lever
 You first add a repo containing a KMETA file with yaml info about products you want to expose. For instance, mine
 
 ```
-kcli repo -u github.com/karmab/kcli/plans karmab
+kcli repo -u github.com/karmab/kcli-plans karmab
 ```
 
 You can also update later a given repo, to refresh its KMETA file ( or all the repos, if not specifying any)

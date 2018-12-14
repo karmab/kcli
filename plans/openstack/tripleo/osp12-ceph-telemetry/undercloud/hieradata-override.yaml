@@ -1,2 +1,0 @@
-neutron::dns_domain: example.com
-nova::network::neutron::dhcp_domain: example.com

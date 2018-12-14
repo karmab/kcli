@@ -1,7 +1,0 @@
-resource_registry:
-  OS::TripleO::NodeExtraConfigPost: /home/stack/templates/postconfig/postconfig.yaml
-
-parameter_defaults:
-  username: openstack
-  passwd: openstack
-  storageid: 480041

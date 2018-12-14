@@ -1,2 +1,0 @@
-resource_registry:
-  OS::TripleO::NodeExtraConfig: rhel-registration.yaml
