@@ -658,7 +658,10 @@ class Kvirt(object):
         if status[vm.isActive()] == "up":
             return {'result': 'success'}
         else:
-            vm.create()
+            try:
+                vm.create()
+            except Exception as e:
+                return {'result': 'failure', 'reason': e}
             return {'result': 'success'}
 
     def stop(self, name):
