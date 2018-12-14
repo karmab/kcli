@@ -70,7 +70,7 @@ TEMPLATES = {'': None, 'arch': 'https://linuximages.de/openstack/arch/arch-opens
              'ubuntu1610': 'https://cloud-images.ubuntu.com/yakkety/current/yakkety-server-cloudimg-amd64-disk1.img',
              'ubuntu1704': 'https://cloud-images.ubuntu.com/zesty/current/zesty-server-cloudimg-amd64.img',
              'ubuntu1710': 'https://cloud-images.ubuntu.com/artful/current/artful-server-cloudimg-amd64.img',
-             'ubuntu1804': 'https://cloud-images.ubuntu.com/bionis/current/bionic-server-cloudimg-amd64.img',
+             'ubuntu1804': 'https://cloud-images.ubuntu.com/bionic/current/bionic-server-cloudimg-amd64.img',
              'ubuntu1810': 'https://cloud-images.ubuntu.com/cosmic/current/cosmic-server-cloudimg-amd64.img'}
 TEMPLATESCOMMANDS = {'cloudforms': 'rm -f /etc/cloud/cloud.cfg.d/30_miq_datasources.cfg',
                      'debian8': 'echo datasource_list: [NoCloud, ConfigDrive, Openstack, Ec2] > /etc/cloud/cloud.cfg.d/'
