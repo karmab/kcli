@@ -490,7 +490,9 @@ class Kbaseconfig:
                     common.pprint("Updating url for repo %s" % name,
                                   color='green')
             repodir = "%s/.kcli/repo_%s" % (os.environ.get('HOME'), name)
-            if find_executable('git') is None:
+            if not url.startswith('http') and not url.startswith('git'):
+                os.symlink(url, repodir)
+            elif find_executable('git') is None:
                 return {'result': 'failure', 'reason': 'repo operations require git'}
             else:
                 os.system("git clone %s %s" % (url, repodir))
