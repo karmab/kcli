@@ -4,6 +4,7 @@
 Kvirt config class
 """
 
+from distutils.spawn import find_executable
 from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID,
                             VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, RESERVEHOST,
@@ -444,10 +445,12 @@ class Kbaseconfig:
                             repoproducts = yaml.load(entries)
                             for repoproduct in repoproducts:
                                 repoproduct['repo'] = rep
-                                if 'group' not in repoproduct:
-                                    repoproduct['group'] = 'notavailable'
                                 if 'file' not in repoproduct:
                                     repoproduct['file'] = 'kcli_plan.yml'
+                                if '/' in repoproduct['file']:
+                                    repoproduct['group'] = repoproduct['file'].split('/')[0]
+                                else:
+                                    repoproduct['group'] = 'notavailable'
                                 products.append(repoproduct)
                         except yaml.scanner.ScannerError:
                             common.pprint("Couldn't properly parse .kcli/repo. Leaving...", color='red')
@@ -467,7 +470,6 @@ class Kbaseconfig:
         :param url:
         :return:
         """
-        self.update_repo(name, url=url)
         reposfile = "%s/.kcli/repos.yml" % os.environ.get('HOME')
         if not os.path.exists(reposfile) or os.path.getsize(reposfile) == 0:
             entry = "%s: %s" % (name, url)
@@ -487,6 +489,11 @@ class Kbaseconfig:
                 else:
                     common.pprint("Updating url for repo %s" % name,
                                   color='green')
+            repodir = "%s/.kcli/repo_%s" % (os.environ.get('HOME'), name)
+            if find_executable('git') is None:
+                return {'result': 'failure', 'reason': 'repo operations require git'}
+            else:
+                os.system("git clone %s %s" % (url, repodir))
             repos[name] = url
             with open(reposfile, 'w') as reposfile:
                 for repo in sorted(repos):
@@ -521,26 +528,16 @@ class Kbaseconfig:
                     common.pprint("Entry for name already there. Leaving...",
                                   color='red')
                     os._exit(1)
-            url = "%s/KMETA" % repos[name]
-        elif 'KMETA' not in url:
-            url = "%s/KMETA" % url
-        common.fetch(url, repodir)
+            url = repos[name]
+        if find_executable('git') is None:
+            return {'result': 'failure', 'reason': 'repo operations require git'}
+        elif not os.path.exists(repodir):
+            os.system("git clone %s %s" % (url, repodir))
+        else:
+            os.chdir(repodir)
+            if os.path.exists('.git'):
+                os.system("git pull --rebase")
         return {'result': 'success'}
-
-    def download_repo(self, name):
-        """
-
-        :param name:
-        """
-        repodir = "%s/.kcli/repo_%s" % (os.environ.get('HOME'), name)
-        products = [(i['name'], i['group'], i['url']) for i in
-                    self.list_products(repo=name)]
-        os.chdir(repodir)
-        for (product, group, url) in products:
-            common.pprint("Downloading product %s in directory %s" % (product,
-                                                                      group),
-                          color='green')
-            common.fetch(url, group)
 
     def delete_repo(self, name):
         """
@@ -628,15 +625,18 @@ class Kbaseconfig:
         else:
             product = products[0]
             repo = product['repo']
+            repodir = "%s/.kcli/repo_%s" % (os.environ.get('HOME'), repo)
             group = product['group']
+            _file = product['file']
+            inputfile = "%s/%s" % (repodir, _file)
             description = product.get('description')
             numvms = product.get('numvms')
             template = product.get('template')
             comments = product.get('comments')
-            parameters = product.get('parameters')
             if not verbose:
                 return {'product': product, 'comments': comments,
-                        'description': description, 'parameters': parameters}
+                        'description': description}
+            # 'description': description, 'parameters': parameters}
             if description is not None:
                 print("description: %s" % description)
             if group is not None:
@@ -650,7 +650,4 @@ class Kbaseconfig:
                 print("template: %s" % template)
             if comments is not None:
                 print("Comments : %s" % comments)
-            if parameters is not None:
-                print("Available parameters:")
-                for parameter in sorted(parameters):
-                    print(" %s: %s" % (parameter, parameters[parameter]))
+            self.info_plan(inputfile, quiet=True)

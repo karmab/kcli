@@ -795,7 +795,6 @@ def repo(args):
     delete = args.delete
     url = args.url
     update = args.update
-    download = args.download
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     if update:
         if repo is None:
@@ -816,12 +815,8 @@ def repo(args):
         baseconfig.delete_repo(repo)
         return
     if update:
-        common.pprint("Deleting repo %s..." % repo, color='green')
+        common.pprint("Updating repo %s..." % repo, color='green')
         baseconfig.delete_repo(repo)
-        return
-    if download:
-        common.pprint("Downloading repo %s..." % repo, color='green')
-        baseconfig.download_repo(repo)
         return
     if url is None:
         common.pprint("Missing url. Leaving...", color='red')
@@ -1300,8 +1295,7 @@ def cli():
     repo_parser = subparsers.add_parser('repo', description=repo_info, help=repo_info)
     repo_parser.add_argument('-d', '--delete', action='store_true')
     repo_parser.add_argument('-u', '--url', help='URL of the repo', metavar='URL')
-    repo_parser.add_argument('-U', '--update', action='store_true', help='Update metadata of the repo')
-    repo_parser.add_argument('-D', '--download', action='store_true', help='Download all content of the repo')
+    repo_parser.add_argument('-U', '--update', action='store_true', help='Update repo')
     repo_parser.add_argument('repo')
     repo_parser.set_defaults(func=repo)
 

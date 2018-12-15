@@ -16,7 +16,6 @@ from distutils.spawn import find_executable
 import glob
 import os
 import re
-import shutil
 import sys
 from time import sleep
 import webbrowser
@@ -745,15 +744,11 @@ class Kconfig(Kbaseconfig):
                 self.plan(plan, path=productdir, inputfile=inputfile, overrides=overrides)
             elif os.path.exists("%s/%s" % (repodir, group)) and latest:
                 productdir = "%s/%s" % (repodir, group)
-                shutil.rmtree(productdir)
-                self.plan(plan, get=url, path=productdir, inputfile=inputfile, overrides=overrides)
+                self.update_repo(repo)
+                self.plan(plan, path=productdir, inputfile=inputfile, overrides=overrides)
             else:
                 productdir = "%s/%s" % (repodir, group)
                 self.plan(plan, get=url, path=productdir, inputfile=inputfile, overrides=overrides)
-            # os.chdir(productdir)
-            # common.pprint("Running: kcli plan -f %s %s" % (inputfile, plan), color='green')
-            # self.plan(plan, inputfile=inputfile, overrides=overrides)
-            # os.chdir('..')
             common.pprint("Product can be deleted with: kcli plan -d %s" % plan, color='green')
         return {'result': 'success', 'plan': plan}
 

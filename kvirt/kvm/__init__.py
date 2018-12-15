@@ -640,7 +640,7 @@ class Kvirt(object):
         if reservedns and not guestagent:
             self.reserve_dns(name, nets=nets, domain=domain, alias=alias, force=True)
         if reservehost:
-            self.reserve_host(name, nets, domain, force=True)
+            self.reserve_host(name, nets, domain)
         return {'result': 'success'}
 
     def start(self, name):
