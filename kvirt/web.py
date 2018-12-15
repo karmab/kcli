@@ -412,7 +412,7 @@ def planaction():
             if plan == '':
                 plan = nameutils.get_random_name()
             # path = request.form['path']
-            result = config.plan(plan, get=url, path=plan, inputfile=planfile)
+            result = config.plan(plan, url=url, path=plan, inputfile=planfile)
             if deploy:
                 result = config.plan(plan, inputfile="%s/%s" % (plan, planfile))
         else:

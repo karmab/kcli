@@ -746,7 +746,7 @@ def plan(args):
     """Create/Delete/Stop/Start vms from plan file"""
     plan = args.plan
     ansible = args.ansible
-    get = args.get
+    url = args.url
     path = args.path
     autostart = args.autostart
     noautostart = args.noautostart
@@ -756,34 +756,23 @@ def plan(args):
     stop = args.stop
     delete = args.delete
     delay = args.delay
-    use = args.use
     yes = args.yes
     info = args.info
     volumepath = args.volumepath
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
     if os.path.exists("/i_am_a_container"):
         inputfile = "%s/%s" % (volumepath, inputfile) if inputfile is not None else "%s/kcli_plan.yml" % volumepath
-    if info and get is None:
+    if info and url is None:
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
         baseconfig.info_plan(inputfile)
         os._exit(0)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
-    if use is not None:
-        rootdir = os.path.expanduser('~/.kcli')
-        if not os.path.exists(rootdir):
-            os.makedirs(rootdir)
-        with open('%s/plan' % rootdir, 'w') as p:
-            p.write('%s\n' % use)
-        return
     if plan is None:
-        if config.planview:
-            plan = config.currentplan
-        else:
-            plan = nameutils.get_random_name()
-            common.pprint("Using %s as name of the plan" % plan, color='green')
+        plan = nameutils.get_random_name()
+        common.pprint("Using %s as name of the plan" % plan, color='green')
     if delete and not yes:
         common.confirm("Are you sure?")
-    config.plan(plan, ansible=ansible, get=get, path=path, autostart=autostart,
+    config.plan(plan, ansible=ansible, url=url, path=path, autostart=autostart,
                 container=container, noautostart=noautostart, inputfile=inputfile,
                 start=start, stop=stop, delete=delete, delay=delay, overrides=overrides, info=info)
     return 0
@@ -1237,8 +1226,7 @@ def cli():
     plan_parser = subparsers.add_parser('plan', description=plan_info, help=plan_info)
     plan_parser.add_argument('-A', '--ansible', help='Generate ansible inventory', action='store_true')
     plan_parser.add_argument('-d', '--delete', action='store_true')
-    plan_parser.add_argument('-g', '--get', help='Download specific plan(s).'
-                             ' Use --path for specific directory', metavar='URL')
+    plan_parser.add_argument('-u', '--url', help='Url for plan', metavar='URL')
     plan_parser.add_argument('-i', '--info', action='store_true', help='Provide information on the given plan')
     plan_parser.add_argument('-p', '--path', help='Path where to download plans. Defaults to plan', metavar='PATH')
     plan_parser.add_argument('-a', '--autostart', action='store_true', help='Set all vms from plan to autostart')
@@ -1247,9 +1235,6 @@ def cli():
     plan_parser.add_argument('-f', '--inputfile', help='Input Plan file')
     plan_parser.add_argument('-s', '--start', action='store_true', help='start all vms from plan')
     plan_parser.add_argument('-w', '--stop', action='store_true')
-    plan_parser.add_argument('-u', '--use', nargs='?', const='kvirt',
-                             help='Plan to set as current. Defaults to kvirt',
-                             metavar='USE')
     plan_parser.add_argument('-v', '--volumepath', help='Volume Path (only used with kcli container)',
                              default='/workdir', metavar='VOLUMEPATH')
     plan_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')

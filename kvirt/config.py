@@ -175,7 +175,7 @@ class Kconfig(Kbaseconfig):
         self.overrides.update({'type': self.type})
 
     def create_vm(self, name, profile, overrides={}, customprofile={}, k=None,
-                  plan='kvirt', basedir='.', client=None):
+                  plan='kvirt', basedir='.', client=None, onfly=None):
         """
 
         :param k:
@@ -353,6 +353,12 @@ class Kconfig(Kbaseconfig):
                         common.pprint("Missing path in files of %s.Leaving..." % name, color='red')
                         os._exit(1)
                 if origin is not None:
+                    if onfly is not None and '~' not in origin:
+                        destdir = basedir
+                        if '/' in origin:
+                            destdir = os.path.dirname(origin)
+                            os.makedirs(destdir, exist_ok=True)
+                        common.fetch("%s/%s" % (onfly, origin), destdir)
                     origin = os.path.expanduser(origin)
                     if basedir != '.':
                         origin = "%s/%s" % (basedir, origin)
@@ -406,6 +412,12 @@ class Kconfig(Kbaseconfig):
                 os._exit(1)
         if scripts:
             for script in scripts:
+                if onfly is not None and '~' not in script:
+                    destdir = basedir
+                    if '/' in script:
+                        destdir = os.path.dirname(script)
+                        os.makedirs(destdir, exist_ok=True)
+                    common.fetch("%s/%s" % (onfly, script), destdir)
                 script = os.path.expanduser(script)
                 if basedir != '.':
                     script = '%s/%s' % (basedir, script)
@@ -752,7 +764,7 @@ class Kconfig(Kbaseconfig):
             common.pprint("Product can be deleted with: kcli plan -d %s" % plan, color='green')
         return {'result': 'success', 'plan': plan}
 
-    def plan(self, plan, ansible=False, get=None, path=None, autostart=False, container=False, noautostart=False,
+    def plan(self, plan, ansible=False, url=None, path=None, autostart=False, container=False, noautostart=False,
              inputfile=None, inputstring=None, start=False, stop=False, delete=False, delay=0, force=True, overrides={},
              info=False):
         """Create/Delete/Stop/Start vms from plan file"""
@@ -760,6 +772,7 @@ class Kconfig(Kbaseconfig):
         no_overrides = not overrides
         newvms = []
         existingvms = []
+        onfly = None
         vmprofiles = {key: value for key, value in self.profiles.items()
                       if 'type' not in value or value['type'] == 'vm'}
         containerprofiles = {key: value for key, value in self.profiles.items()
@@ -892,14 +905,17 @@ class Kconfig(Kbaseconfig):
                         common.pprint("Container %s stopped!" % name, color='green')
             common.pprint("Plan %s stopped!" % plan, color='green')
             return {'result': 'success'}
-        if get is not None:
-            # path = '.' if path is None else path
+        if url is not None:
+            if not url.endswith('.yml'):
+                url = "%s/kcli_plan.yml" % url
+                common.pprint("Trying to retrieve %s" % url, color='blue')
+            inputfile = os.path.basename(url)
+            onfly = os.path.dirname(url)
             path = plan if path is None else path
-            common.pprint("Retrieving specified plan from %s to %s" % (get, path), color='green')
+            common.pprint("Retrieving specified plan from %s to %s" % (url, path), color='green')
             if not os.path.exists(path):
                 os.mkdir(path)
-                common.fetch(get, path)
-            # os.chdir(path)
+                common.fetch(url, path)
         if inputstring is not None:
             with open("/tmp/plan.yml", "w") as f:
                 f.write(inputstring)
@@ -970,18 +986,19 @@ class Kconfig(Kbaseconfig):
                 common.pprint("Deploying Plans...", color='green')
                 for planentry in planentries:
                     details = entries[planentry]
-                    url = details.get('url')
+                    planurl = details.get('url')
                     path = details.get('path', planentry)
                     inputfile = details.get('file', 'kcli_plan.yml')
                     run = details.get('run', False)
-                    if url is None:
+                    if planurl is None:
                         common.pprint("Missing Url for plan %s. Not creating it..." % planentry, color='blue')
                         continue
                     else:
                         common.pprint("Grabbing Plan %s!" % planentry, color='green')
                         if not os.path.exists(planentry):
                             os.mkdir(planentry)
-                            common.fetch(url, path)
+                            onfly = os.path.dirname(planurl)
+                            common.fetch(planurl, path)
                         if run:
                             os.chdir(path)
                             if no_overrides and parameters:
@@ -1037,21 +1054,22 @@ class Kconfig(Kbaseconfig):
                     else:
                         templateprofile = entries[template]
                         pool = templateprofile.get('pool', self.pool)
-                        url = templateprofile.get('url')
+                        templateurl = templateprofile.get('url')
                         cmd = templateprofile.get('cmd')
-                        if url is None:
+                        if templateurl is None:
                             common.pprint("Template %s skipped as url is missing!" % template, color='blue')
                             continue
-                        if not url.endswith('qcow2') and not url.endswith('img') and not url.endswith('qc2')\
-                                and not url.endswith('qcow2.xz'):
-                            common.pprint("Opening url %s for you to grab complete url for %s" % (url, template),
+                        if not templateurl.endswith('qcow2') and not templateurl.endswith('img')\
+                                and not templateurl.endswith('qc2') and not templateurl.endswith('qcow2.xz'):
+                            common.pprint("Opening url %s for you to grab complete url for %s" % (templateurl,
+                                                                                                  template),
                                           color='blue')
-                            webbrowser.open(url, new=2, autoraise=True)
-                            url = input("Copy Url:\n")
-                            if url.strip() == '':
+                            webbrowser.open(templateurl, new=2, autoraise=True)
+                            templateurl = input("Copy Url:\n")
+                            if templateurl.strip() == '':
                                 common.pprint("Template %s skipped as url is empty!" % template, color='blue')
                                 continue
-                        result = k.add_image(url, pool, cmd=cmd)
+                        result = k.add_image(templateurl, pool, cmd=cmd)
                         common.handle_response(result, template, element='Template ', action='Added')
             if dnsentries:
                 common.pprint("Deploying Dns Entry...", color='green')
@@ -1141,7 +1159,7 @@ class Kconfig(Kbaseconfig):
                             os.remove("%s.key" % plan)
                     currenthost = host if host is not None else self.client
                     result = self.create_vm(name, profilename, overrides=overrides, customprofile=profile, k=z,
-                                            plan=plan, basedir=basedir, client=currenthost)
+                                            plan=plan, basedir=basedir, client=currenthost, onfly=onfly)
                     common.handle_response(result, name)
                     if result['result'] == 'success':
                         newvms.append(name)

@@ -5,136 +5,26 @@ import base64
 from jinja2 import Environment, FileSystemLoader
 from jinja2.exceptions import TemplateSyntaxError
 from distutils.spawn import find_executable
-import errno
 from netaddr import IPAddress
 import random
 import socket
 from urllib.parse import quote
-from urllib.request import urlopen
-import urllib.error
+from urllib.request import urlretrieve
 import json
 import os
 import yaml
-# from scapy.all import Ether, ARP, srp
 
 binary_types = ['bz2', 'deb', 'jpg', 'gz', 'jpeg', 'iso', 'png', 'rpm', 'tgz', 'zip', 'ks']
 ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety', 'zesty', 'artful', 'bionic', 'cosmic']
 
 
-def symlinks(user, repo):
-    """
-
-    :param user:
-    :param repo:
-    :return:
-    """
-    mappings = []
-    url1 = 'https://api.github.com/repos/%s/%s/git/refs/heads/master' % (user, repo)
-    try:
-        r = urlopen(url1)
-    except urllib.error.HTTPError as e:
-        print("Couldn't access url %s, got %s.Leaving..." % (url1, e))
-        os._exit(1)
-    base = json.load(r)
-    sha = base['object']['sha']
-    url2 = 'https://api.github.com/repos/%s/%s/git/trees/%s?recursive=1' % (user, repo, sha)
-    r = urlopen(url2)
-    try:
-        base = json.load(r)
-    except:
-        return []
-    for e in base['tree']:
-        if e['mode'] == '120000':
-            mappings.append(e['path'])
-    return mappings
-
-
-def download(url, path, debug=False):
-    """
-
-    :param url:
-    :param path:
-    :param debug:
-    """
-    filename = os.path.basename(url)
-    if debug:
-        print("Fetching %s" % filename)
-    url = urlopen(url)
-    with open("%s/%s" % (path, filename), 'wb') as output:
-        output.write(url.read())
-
-
-def makelink(url, path, debug=False):
-    """
-
-    :param url:
-    :param path:
-    :param debug:
-    """
-    filename = os.path.basename(url)
-    url = urlopen(url)
-    target = url.read()
-    if debug:
-        print("Creating symlink for %s pointing to %s" % (filename, target))
-    os.symlink(target, "%s/%s" % (path, filename))
-
-
-def fetch(url, path, syms=None):
-    """
-
-    :param url:
-    :param path:
-    :param syms:
-    :return:
-    """
-    if not url.startswith('http'):
-        url = "https://%s" % url
-    if 'github.com' not in url or 'raw.githubusercontent.com' in url:
-        download(url, path)
-        return
-    elif 'api.github.com' not in url:
-        url = url.replace('github.com/', 'api.github.com/repos/').replace('tree/master', '')
-        url = url.replace('blob/master', '')
-    if 'contents' not in url:
-        tempurl = url.replace('https://api.github.com/repos/', '')
-        user = tempurl.split('/')[0]
-        repo = tempurl.split('/')[1]
-        syms = symlinks(user, repo)
-        url = url.replace("%s/%s" % (user, repo), "%s/%s/contents" % (user, repo))
+def fetch(url, path):
+    if 'raw.githubusercontent.com' not in url:
+        url = url.replace('github.com', 'raw.githubusercontent.com').replace('blob/master', 'master')
+    shortname = os.path.basename(url)
     if not os.path.exists(path):
-        try:
-            os.makedirs(path)
-        except OSError as exc:  # Python >2.5
-            if exc.errno == errno.EEXIST and os.path.isdir(path):
-                pass
-            else:
-                raise
-    try:
-        r = urlopen(url)
-    except urllib.error.HTTPError:
-        print("Invalid url %s.Leaving..." % url)
-        os._exit(1)
-    try:
-        base = json.load(r)
-    except:
-        print("Couldnt load json data from url %s.Leaving..." % url)
-        os._exit(1)
-    if not isinstance(base, list):
-        base = [base]
-    for b in base:
-        if 'name' not in b or 'type' not in b or 'download_url' not in b:
-            print("Missing data in url %s.Leaving..." % url)
-            os._exit(1)
-        filename = b['name']
-        filetype = b['type']
-        filepath = b['path']
-        download_url = b['download_url']
-        if filepath in syms:
-            makelink(download_url, path)
-        elif filetype == 'file':
-            download(download_url, path)
-        elif filetype == 'dir':
-            fetch("%s/%s" % (url, filename), "%s/%s" % (path, filename), syms=syms)
+        os.mkdir(path)
+    urlretrieve(url, "%s/%s" % (path, shortname))
 
 
 def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[],
@@ -951,13 +841,3 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
         else:
             data['systemd']['units'] = [metadrop, etcddrop]
     return json.dumps(data, sort_keys=True, indent=4, separators=(',', ': '))
-
-
-# def get_ip_from_mac(interface, cidr, mac):
-#         packet = Ether(dst=mac) / ARP(pdst=cidr)
-#         ans, unans = srp(packet, timeout=2, iface=interface, verbose=False)
-#         for s, r in ans:
-#                 currentmac = r.sprintf("%Ether.src%")
-#                 if currentmac == mac:
-#                     return r.sprintf("%ARP.psrc%")
-#         return None
