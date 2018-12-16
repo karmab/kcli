@@ -16,6 +16,7 @@ from distutils.spawn import find_executable
 import glob
 import os
 import re
+from shutil import rmtree
 import sys
 from time import sleep
 import webbrowser
@@ -773,6 +774,7 @@ class Kconfig(Kbaseconfig):
         newvms = []
         existingvms = []
         onfly = None
+        toclean = False
         vmprofiles = {key: value for key, value in self.profiles.items()
                       if 'type' not in value or value['type'] == 'vm'}
         containerprofiles = {key: value for key, value in self.profiles.items()
@@ -912,6 +914,7 @@ class Kconfig(Kbaseconfig):
             path = plan if path is None else path
             common.pprint("Retrieving specified plan from %s to %s" % (url, path), color='green')
             if not os.path.exists(path):
+                toclean = True
                 os.mkdir(path)
                 common.fetch(url, path)
         if inputstring is not None:
@@ -999,7 +1002,8 @@ class Kconfig(Kbaseconfig):
                         self.plan(plan, ansible=False, url=planurl, path=path, autostart=False, container=False,
                                   noautostart=False, inputfile=inputfile, start=False, stop=False, delete=False,
                                   delay=delay, overrides=overrides)
-                        os.chdir('..')
+                os.chdir('..')
+                rmtree(plan)
                 return {'result': 'success'}
             if networkentries:
                 common.pprint("Deploying Networks...", color='green')
@@ -1295,6 +1299,9 @@ class Kconfig(Kbaseconfig):
             returndata['existingvms'] = existingvms
         allvms = newvms + existingvms
         returndata['vms'] = allvms if allvms else []
+        if toclean:
+            os.chdir('..')
+            rmtree(path)
         return returndata
 
     def handle_host(self, pool=None, templates=[], switch=None, download=False,
