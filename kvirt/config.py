@@ -730,11 +730,13 @@ class Kconfig(Kbaseconfig):
         else:
             product = products[0]
             plan = nameutils.get_random_name() if plan is None else plan
-            url = product['url']
-            inputfile = product['file']
             repo = product['repo']
-            repodir = "%s/.kcli/repo_%s" % (os.environ.get('HOME'), repo)
-            group = product['group']
+            repodir = "%s/.kcli/plans/%s" % (os.environ.get('HOME'), repo)
+            if '/' in product['file']:
+                inputfile = os.path.basename(product['file'])
+                repodir += "/%s" % os.path.dirname(product['file'])
+            else:
+                inputfile = product['file']
             template = product.get('template')
             parameters = product.get('parameters')
             if template is not None:
@@ -746,22 +748,12 @@ class Kconfig(Kbaseconfig):
             extraparameters = list(set(overrides) - set(parameters)) if parameters is not None else overrides
             for parameter in extraparameters:
                 print("Using parameter %s: %s" % (parameter, overrides[parameter]))
-            common.pprint("Gathering all from group %s" % group, color='green')
-            if os.path.exists(group):
-                common.pprint("Using current directory %s. Make sure it contains kcli content" % group, color='green')
-                productdir = group
-                self.plan(plan, path=productdir, inputfile=inputfile, overrides=overrides)
-            elif os.path.exists("%s/%s" % (repodir, group)) and not latest:
-                common.pprint("Using cached directory %s/%s" % (repodir, group), color='green')
-                productdir = "%s/%s" % (repodir, group)
-                self.plan(plan, path=productdir, inputfile=inputfile, overrides=overrides)
-            elif os.path.exists("%s/%s" % (repodir, group)) and latest:
-                productdir = "%s/%s" % (repodir, group)
-                self.update_repo(repo)
-                self.plan(plan, path=productdir, inputfile=inputfile, overrides=overrides)
+            if not latest:
+                common.pprint("Using directory %s" % (repodir), color='green')
+                self.plan(plan, path=repodir, inputfile=inputfile, overrides=overrides)
             else:
-                productdir = "%s/%s" % (repodir, group)
-                self.plan(plan, get=url, path=productdir, inputfile=inputfile, overrides=overrides)
+                self.update_repo(repo)
+                self.plan(plan, path=repodir, inputfile=inputfile, overrides=overrides)
             common.pprint("Product can be deleted with: kcli plan -d %s" % plan, color='green')
         return {'result': 'success', 'plan': plan}
 

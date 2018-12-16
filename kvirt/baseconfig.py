@@ -408,16 +408,18 @@ class Kbaseconfig:
 
         :return:
         """
-        reposfile = "%s/.kcli/repos.yml" % os.environ.get('HOME')
-        if not os.path.exists(reposfile) or os.path.getsize(reposfile) == 0:
-            repos = {}
+        repos = {}
+        plansdir = "%s/.kcli/plans" % os.environ.get('HOME')
+        if not os.path.exists(plansdir):
+            return {}
         else:
-            with open(reposfile, 'r') as entries:
-                try:
-                    repos = yaml.load(entries)
-                except yaml.scanner.ScannerError:
-                    common.pprint("Couldn't properly parse .kcli/repos.yml. Leaving...", color='red')
-                    os._exit(1)
+            repodirs = [d for d in os.listdir(plansdir) if os.path.isdir("%s/%s" % (plansdir, d))]
+            for d in repodirs:
+                repos[d] = None
+                if os.path.exists("%s/%s/.git/config" % (plansdir, d)) and find_executable('git') is not None:
+                    gitcmd = "git config -f %s/%s/.git/config  --get remote.origin.url" % (plansdir, d)
+                    giturl = os.popen(gitcmd).read().strip()
+                    repos[d] = giturl
         return repos
 
     def list_products(self, group=None, repo=None):
@@ -427,16 +429,14 @@ class Kbaseconfig:
         :param repo:
         :return:
         """
-        configdir = "%s/.kcli" % os.environ.get('HOME')
-        if not os.path.exists(configdir):
+        plansdir = "%s/.kcli/plans" % os.environ.get('HOME')
+        if not os.path.exists(plansdir):
             return []
         else:
             products = []
-            repodirs = [d.replace('repo_', '') for d in os.listdir(configdir)
-                        if os.path.isdir("%s/%s" % (configdir, d)) and
-                        d.startswith('repo_')]
+            repodirs = [d for d in os.listdir(plansdir) if os.path.isdir("%s/%s" % (plansdir, d))]
             for rep in repodirs:
-                repometa = "%s/repo_%s/KMETA" % (configdir, rep)
+                repometa = "%s/%s/KMETA" % (plansdir, rep)
                 if not os.path.exists(repometa):
                     continue
                 else:
@@ -470,38 +470,16 @@ class Kbaseconfig:
         :param url:
         :return:
         """
-        reposfile = "%s/.kcli/repos.yml" % os.environ.get('HOME')
-        if not os.path.exists(reposfile) or os.path.getsize(reposfile) == 0:
-            entry = "%s: %s" % (name, url)
-            open(reposfile, 'w').write(entry)
+        reponame = name if name is not None else os.path.basename(url)
+        repodir = "%s/.kcli/plans/%s" % (os.environ.get('HOME'), reponame)
+        if not os.path.exists(repodir):
+            os.makedirs(repodir, exist_ok=True)
+        if not url.startswith('http') and not url.startswith('git'):
+            os.symlink(url, repodir)
+        elif find_executable('git') is None:
+            return {'result': 'failure', 'reason': 'repo operations require git'}
         else:
-            with open(reposfile, 'r') as entries:
-                try:
-                    repos = yaml.load(entries)
-                except yaml.scanner.ScannerError:
-                    common.pprint("Couldn't properly parse .kcli/repos.yml. Leaving...", color='red')
-                    os._exit(1)
-            if name in repos:
-                if repos[name] == url:
-                    common.pprint("Entry for name already there. Leaving...",
-                                  color='blue')
-                    return {'result': 'success'}
-                else:
-                    common.pprint("Updating url for repo %s" % name,
-                                  color='green')
-            repodir = "%s/.kcli/repo_%s" % (os.environ.get('HOME'), name)
-            if not url.startswith('http') and not url.startswith('git'):
-                os.symlink(url, repodir)
-            elif find_executable('git') is None:
-                return {'result': 'failure', 'reason': 'repo operations require git'}
-            else:
-                os.system("git clone %s %s" % (url, repodir))
-            repos[name] = url
-            with open(reposfile, 'w') as reposfile:
-                for repo in sorted(repos):
-                    url = repos[repo]
-                    entry = "%s: %s\n" % (repo, url)
-                    reposfile.write(entry)
+            os.system("git clone %s %s" % (url, repodir))
         return {'result': 'success'}
 
     def update_repo(self, name, url=None):
@@ -511,30 +489,11 @@ class Kbaseconfig:
         :param url:
         :return:
         """
-        reposfile = "%s/.kcli/repos.yml" % os.environ.get('HOME')
-        repodir = "%s/.kcli/repo_%s" % (os.environ.get('HOME'), name)
-        if url is None:
-            if not os.path.exists(reposfile)\
-                    or os.path.getsize(reposfile) == 0:
-                common.pprint("Empty .kcli/repos.yml. Leaving...", color='red')
-                os._exit(1)
-            else:
-                with open(reposfile, 'r') as entries:
-                    try:
-                        repos = yaml.load(entries)
-                    except yaml.scanner.ScannerError:
-                        common.pprint("Couldn't properly parse .kcli/repos.yml. Leaving...",
-                                      color='red')
-                        os._exit(1)
-                if name not in repos:
-                    common.pprint("Entry for name already there. Leaving...",
-                                  color='red')
-                    os._exit(1)
-            url = repos[name]
-        if find_executable('git') is None:
+        repodir = "%s/.kcli/plans/%s" % (os.environ.get('HOME'), name)
+        if not os.path.exists(repodir):
+            return {'result': 'failure', 'reason': 'repo %s not found' % name}
+        elif find_executable('git') is None:
             return {'result': 'failure', 'reason': 'repo operations require git'}
-        elif not os.path.exists(repodir):
-            os.system("git clone %s %s" % (url, repodir))
         else:
             os.chdir(repodir)
             if os.path.exists('.git'):
@@ -547,32 +506,9 @@ class Kbaseconfig:
         :param name:
         :return:
         """
-        reposfile = "%s/.kcli/repos.yml" % os.environ.get('HOME')
-        repodir = "%s/.kcli/repo_%s" % (os.environ.get('HOME'), name)
-        if not os.path.exists(reposfile):
-            common.pprint("Repo %s not found. Leaving..." % name, color='blue')
-            return {'result': 'success'}
-        else:
-            with open(reposfile, 'r') as entries:
-                try:
-                    repos = yaml.load(entries)
-                except yaml.scanner.ScannerError:
-                    common.pprint("Couldn't properly parse .kcli/repos.yml. Leaving...", color='red')
-                    os._exit(1)
-            if name in repos:
-                del repos[name]
-            else:
-                common.pprint("Repo %s not found. Leaving..." % name,
-                              color='blue')
-            if not repos:
-                os.remove(reposfile)
-            with open(reposfile, 'w') as reposfile:
-                for repo in sorted(repos):
-                    url = repos[repo]
-                    entry = "%s: %s\n" % (repo, url)
-                    reposfile.write(entry)
-            if os.path.isdir(repodir):
-                rmtree(repodir)
+        repodir = "%s/.kcli/plans/%s" % (os.environ.get('HOME'), name)
+        if os.path.exists(repodir) and os.path.isdir(repodir):
+            rmtree(repodir)
             return {'result': 'success'}
 
     def info_plan(self, inputfile, quiet=False):
@@ -627,7 +563,7 @@ class Kbaseconfig:
         else:
             product = products[0]
             repo = product['repo']
-            repodir = "%s/.kcli/repo_%s" % (os.environ.get('HOME'), repo)
+            repodir = "%s/.kcli/plans/%s" % (os.environ.get('HOME'), repo)
             group = product['group']
             _file = product['file']
             inputfile = "%s/%s" % (repodir, _file)
