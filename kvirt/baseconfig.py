@@ -440,6 +440,7 @@ class Kbaseconfig:
                 if not os.path.exists(repometa):
                     continue
                 else:
+                    realdir = os.path.dirname(os.readlink(repometa)) if os.path.islink(repometa) else None
                     with open(repometa, 'r') as entries:
                         try:
                             repoproducts = yaml.load(entries)
@@ -451,6 +452,8 @@ class Kbaseconfig:
                                     repoproduct['group'] = repoproduct['file'].split('/')[0]
                                 else:
                                     repoproduct['group'] = 'notavailable'
+                                if realdir is not None:
+                                    repoproduct['realdir'] = realdir
                                 products.append(repoproduct)
                         except yaml.scanner.ScannerError:
                             common.pprint("Couldn't properly parse .kcli/repo. Leaving...", color='red')
@@ -480,6 +483,13 @@ class Kbaseconfig:
             return {'result': 'failure', 'reason': 'repo operations require git'}
         else:
             os.system("git clone %s %s" % (url, repodir))
+        for root, dirs, files in os.walk(repodir):
+            for name in files:
+                if name == 'KMETA':
+                    dst = "%s/KMETA" % repodir
+                    src = "%s/KMETA" % root.replace("%s/" % repodir, '')
+                    os.symlink(src, dst)
+                    break
         return {'result': 'success'}
 
     def update_repo(self, name, url=None):
@@ -566,7 +576,6 @@ class Kbaseconfig:
             repodir = "%s/.kcli/plans/%s" % (os.environ.get('HOME'), repo)
             group = product['group']
             _file = product['file']
-            inputfile = "%s/%s" % (repodir, _file)
             description = product.get('description')
             numvms = product.get('numvms')
             template = product.get('template')
@@ -588,4 +597,5 @@ class Kbaseconfig:
                 print("template: %s" % template)
             if comments is not None:
                 print("Comments : %s" % comments)
-            self.info_plan(inputfile, quiet=True)
+            inputfile = "%s/%s" % (product['realdir'], _file) if 'realdir' in product else _file
+            self.info_plan("%s/%s" % (repodir, inputfile), quiet=True)

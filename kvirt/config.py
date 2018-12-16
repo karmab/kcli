@@ -731,7 +731,10 @@ class Kconfig(Kbaseconfig):
             product = products[0]
             plan = nameutils.get_random_name() if plan is None else plan
             repo = product['repo']
-            repodir = "%s/.kcli/plans/%s" % (os.environ.get('HOME'), repo)
+            if 'realdir' in product:
+                repodir = "%s/.kcli/plans/%s/%s" % (os.environ.get('HOME'), repo, product['realdir'])
+            else:
+                repodir = "%s/.kcli/plans/%s" % (os.environ.get('HOME'), repo)
             if '/' in product['file']:
                 inputfile = os.path.basename(product['file'])
                 repodir += "/%s" % os.path.dirname(product['file'])
