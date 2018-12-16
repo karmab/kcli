@@ -12,33 +12,41 @@
         </thead>
         <tbody>
             {% for vm in vms %}
-            {% if 'rhel' in vm.template.lower()%}
-                {% set logo = 'Redhat.png' %}
-            {% elif 'cfme' in vm.template.lower() %}
-                {% set logo = 'Centos.png' %}
-            {% elif 'centos' in vm.template.lower() %}
-                {% set logo = 'Centos.png' %}
-            {% elif 'fedora' in vm.template.lower() %}
-                {% set logo = 'Fedora.png' %}
-            {% elif vm.template.startswith('debian') %}
-                {% set logo = 'Debian.png' %}
-            {% elif vm.template.startswith('utopic') %}
-                {% set logo = 'Ubuntu.png' %}
-            {% elif vm.template.startswith('vivid') %}
-                {% set logo = 'Ubuntu.png' %}
-            {% elif vm.template.startswith('wily') %}
-                {% set logo = 'Ubuntu.png' %}
-            {% elif vm.template.startswith('xenial') %}
-                {% set logo = 'Ubuntu.png' %}
-            {% elif vm.template.startswith('yakkety') %}
-                {% set logo = 'Ubuntu.png' %}
-            {% elif vm.template.startswith('zesty') %}
-                {% set logo = 'Ubuntu.png' %}
-            {% elif vm.template.startswith('artful') %}
-                {% set logo = 'Ubuntu.png' %}
+            {% if vm.template is defined %}
+                {% if 'rhel' in vm.template.lower()%}
+                    {% set logo = 'Redhat.png' %}
+                {% elif 'cfme' in vm.template.lower() %}
+                    {% set logo = 'Centos.png' %}
+                {% elif 'centos' in vm.template.lower() %}
+                    {% set logo = 'Centos.png' %}
+                {% elif 'fedora' in vm.template.lower() %}
+                    {% set logo = 'Fedora.png' %}
+                {% elif vm.template.startswith('debian') %}
+                    {% set logo = 'Debian.png' %}
+                {% elif vm.template.startswith('utopic') %}
+                    {% set logo = 'Ubuntu.png' %}
+                {% elif vm.template.startswith('vivid') %}
+                    {% set logo = 'Ubuntu.png' %}
+                {% elif vm.template.startswith('wily') %}
+                    {% set logo = 'Ubuntu.png' %}
+                {% elif vm.template.startswith('xenial') %}
+                    {% set logo = 'Ubuntu.png' %}
+                {% elif vm.template.startswith('yakkety') %}
+                    {% set logo = 'Ubuntu.png' %}
+                {% elif vm.template.startswith('zesty') %}
+                    {% set logo = 'Ubuntu.png' %}
+                {% elif vm.template.startswith('artful') %}
+                    {% set logo = 'Ubuntu.png' %}
+                {% elif vm.template.startswith('bionic') %}
+                    {% set logo = 'Ubuntu.png' %}
+                {% elif vm.template.startswith('cosmic') %}
+                    {% set logo = 'Ubuntu.png' %}
+                {% else %}
+                    {% set logo = 'Tux.png' %}
+                {% endif %}
             {% else %}
                 {% set logo = 'Tux.png' %}
-                {% endif %}
+            {% endif %}
             {% if vm.report == 'OK' %}
                 {% set report = 'glyphicon glyphicon-ok-circle green' %}
             {% elif vm.report == 'Running' %}

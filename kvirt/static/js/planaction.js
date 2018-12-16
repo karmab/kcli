@@ -59,7 +59,7 @@ function plandelete(plan){
 
 function plancreate(name, url, planfile, deploy){
   $("#wheel").show();
-  data = {'action': 'create', 'name': name, 'url': url, 'planfile': planfile, 'deploy': deploy};
+  data = {'action': 'create', 'name': name, 'url': url};
   $.ajax({
        type: "POST",
         url: '/planaction',

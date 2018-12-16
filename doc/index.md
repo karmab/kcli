@@ -334,7 +334,7 @@ The following parameters are specific to ovirt:
 - org Organization 
 - ca_file Points to a local path with the cert of the ovirt engine host. It can be retrieved with 
 `wget http://$HOST/ovirt-engine/services/pki-resource?resource=ca-certificate&format=X509-PEM-CA`
-- imagerepository. A Glance image provider repository. Defaults to `ovirt-image-repository`. You can get default one created for you with kcli download
+- imagerepository. A Glance image provider repository. Defaults to `ovirt-image-repository`.
 - cluster  Defaults to Default
 - datacenter Defaults to Default
 - filtervms Defaults to True. Only list vms created by kcli. Useful for environments when you are superadmin and have a ton of vms
@@ -643,6 +643,8 @@ ovirt:
   run: true
 ```
 
+You can alternatively provide a file attribute instead of url pointing to a local plan file
+
 ### dns
 
 ```YAML
@@ -690,7 +692,7 @@ For an advanced use of plans along with scripts, check the [plans](plans/README.
 You can use the following to execute a plan from a remote url :
 
 ```YAML
-kcli plan --url github.com/karmab/kcli-plans -p karmab_plans
+kcli plan --url https://github.com/karmab/kcli-plans/blob/master/ovirt/upstream.yml
 ```
 
 ## Disk parameters
@@ -857,14 +859,14 @@ When leveraging ansible this way, an inventory file will be generated on the fly
 
 ## Using products
 
-If plans seem too  complex, you can make use of the products feature which leverages them
+To easily share plans, you can make use of the products feature which leverages them
 
 ### Repos
 
 You first add a repo containing a KMETA file with yaml info about products you want to expose. For instance, mine
 
 ```
-kcli repo -u github.com/karmab/kcli-plans karmab
+kcli repo -u https://github.com/karmab/kcli-plans karmab
 ```
 
 You can also update later a given repo, to refresh its KMETA file ( or all the repos, if not specifying any)

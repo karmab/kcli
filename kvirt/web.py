@@ -285,7 +285,7 @@ def plancreate():
     create plan
     """
     config = Kconfig()
-    return render_template('plancreate.html', title='CreateNetwork', client=config.client)
+    return render_template('plancreate.html', title='CreatePlan', client=config.client)
 
 
 @app.route("/vmaction", methods=['POST'])
@@ -400,21 +400,9 @@ def planaction():
             result = config.plan(plan, delete=True)
         elif action == 'create':
             url = request.form['url']
-            planfile = request.form['planfile']
-            if url.endswith('.yml'):
-                planfile = os.path.basename(url)
-                url = os.path.dirname(url)
-            deploy = request.form['deploy']
-            if deploy == 'on':
-                deploy = True
-            else:
-                deploy = False
             if plan == '':
                 plan = nameutils.get_random_name()
-            # path = request.form['path']
-            result = config.plan(plan, url=url, path=plan, inputfile=planfile)
-            if deploy:
-                result = config.plan(plan, inputfile="%s/%s" % (plan, planfile))
+            result = config.plan(plan, url=url)
         else:
             result = "Nothing to do"
         print(result)
@@ -565,10 +553,10 @@ def productstable():
     products = []
     for product in baseconfig.list_products():
         repo = product['repo']
-        group = product['group']
+        group = product.get('group', 'None')
         name = product['name']
-        description = product['description']
-        numvms = product['numvms']
+        description = product.get('description', 'N/A')
+        numvms = product.get('numvms', 'N/A')
         products.append([repo, group, name, description, numvms])
     return render_template('productstable.html', products=products)
 
@@ -589,7 +577,7 @@ def productcreate(prod):
     product form
     """
     config = Kbaseconfig()
-    info = config.info_product(prod, verbose=False)
+    info = config.info_product(prod, web=True)
     parameters = info['parameters']
     description = info['description']
     comments = info['comments']

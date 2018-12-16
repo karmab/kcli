@@ -770,6 +770,7 @@ class Kconfig(Kbaseconfig):
         existingvms = []
         onfly = None
         toclean = False
+        getback = False
         vmprofiles = {key: value for key, value in self.profiles.items()
                       if 'type' not in value or value['type'] == 'vm'}
         containerprofiles = {key: value for key, value in self.profiles.items()
@@ -912,6 +913,8 @@ class Kconfig(Kbaseconfig):
                 toclean = True
                 os.mkdir(path)
                 common.fetch(url, path)
+            else:
+                common.pprint("Using existing directory %s" % (path), color='blue')
         if inputstring is not None:
             with open("/tmp/plan.yml", "w") as f:
                 f.write(inputstring)
@@ -921,6 +924,7 @@ class Kconfig(Kbaseconfig):
             common.pprint("using default input file kcli_plan.yml", color='green')
         if path is not None:
             os.chdir(path)
+            getback = True
         inputfile = os.path.expanduser(inputfile)
         if not os.path.exists(inputfile):
             common.pprint("No input file found nor default kcli_plan.yml.Leaving....", color='red')
@@ -983,22 +987,27 @@ class Kconfig(Kbaseconfig):
                 for planentry in planentries:
                     details = entries[planentry]
                     planurl = details.get('url')
-                    path = details.get('path', planentry)
-                    if planurl is None:
-                        common.pprint("Missing Url for plan %s. Not creating it..." % planentry, color='blue')
+                    planfile = details.get('file')
+                    if planurl is None and planfile is None:
+                        common.pprint("Missing Url/File for plan %s. Not creating it..." % planentry, color='blue')
                         continue
-                    else:
+                    elif planurl is not None:
+                        path = planentry
                         if not planurl.endswith('yml'):
                             planurl = "%s/kcli_plan.yml" % planurl
-                        if no_overrides and parameters:
-                            common.pprint("Using parameters from master plan in child ones", color='blue')
-                            for override in overrides:
-                                print("Using parameter %s: %s" % (override, overrides[override]))
-                        self.plan(plan, ansible=False, url=planurl, path=path, autostart=False, container=False,
-                                  noautostart=False, inputfile=inputfile, start=False, stop=False, delete=False,
-                                  delay=delay, overrides=overrides)
-                os.chdir('..')
-                rmtree(plan)
+                    elif '/' in planfile:
+                        path = os.path.dirname(planfile)
+                        inputfile = os.path.basename(planfile)
+                    else:
+                        path = '.'
+                        inputfile = planentry
+                    if no_overrides and parameters:
+                        common.pprint("Using parameters from master plan in child ones", color='blue')
+                        for override in overrides:
+                            print("Using parameter %s: %s" % (override, overrides[override]))
+                    self.plan(plan, ansible=False, url=planurl, path=path, autostart=False, container=False,
+                              noautostart=False, inputfile=inputfile, start=False, stop=False, delete=False,
+                              delay=delay, overrides=overrides)
                 return {'result': 'success'}
             if networkentries:
                 common.pprint("Deploying Networks...", color='green')
@@ -1294,8 +1303,9 @@ class Kconfig(Kbaseconfig):
             returndata['existingvms'] = existingvms
         allvms = newvms + existingvms
         returndata['vms'] = allvms if allvms else []
-        if toclean:
+        if getback or toclean:
             os.chdir('..')
+        if toclean:
             rmtree(path)
         return returndata
 

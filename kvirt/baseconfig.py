@@ -521,7 +521,7 @@ class Kbaseconfig:
             rmtree(repodir)
             return {'result': 'success'}
 
-    def info_plan(self, inputfile, quiet=False):
+    def info_plan(self, inputfile, quiet=False, web=False):
         """
 
         :param inputfile:
@@ -538,6 +538,8 @@ class Kbaseconfig:
         parameters = common.get_parameters(inputfile)
         if parameters is not None:
             parameters = yaml.load(parameters)['parameters']
+            if web:
+                return parameters
             for parameter in parameters:
                 print("%s: %s" % (parameter, parameters[parameter]))
                 if parameter == 'baseplan':
@@ -547,7 +549,7 @@ class Kbaseconfig:
             common.pprint("No parameters found. Leaving...", color='blue')
         return {'result': 'success'}
 
-    def info_product(self, name, repo=None, group=None, verbose=True):
+    def info_product(self, name, repo=None, group=None, web=False):
         """Info product"""
         if repo is not None and group is not None:
             products = [product for product in self.list_products
@@ -580,22 +582,24 @@ class Kbaseconfig:
             numvms = product.get('numvms')
             template = product.get('template')
             comments = product.get('comments')
-            if not verbose:
-                return {'product': product, 'comments': comments,
-                        'description': description}
-            # 'description': description, 'parameters': parameters}
-            if description is not None:
-                print("description: %s" % description)
-            if group is not None:
-                print("group: %s" % group)
-            if numvms is not None:
-                numvmsinfo = "numvms: %s" % numvms
-                if numvms == 1:
-                    numvmsinfo += " (Vm name can be overriden)"
-                print(numvmsinfo)
-            if template is not None:
-                print("template: %s" % template)
-            if comments is not None:
-                print("Comments : %s" % comments)
+            if not web:
+                if description is not None:
+                    print("description: %s" % description)
+                if group is not None:
+                    print("group: %s" % group)
+                if numvms is not None:
+                    numvmsinfo = "numvms: %s" % numvms
+                    if numvms == 1:
+                        numvmsinfo += " (Vm name can be overriden)"
+                    print(numvmsinfo)
+                if template is not None:
+                    print("template: %s" % template)
+                if comments is not None:
+                    print("Comments : %s" % comments)
             inputfile = "%s/%s" % (product['realdir'], _file) if 'realdir' in product else _file
-            self.info_plan("%s/%s" % (repodir, inputfile), quiet=True)
+            parameters = self.info_plan("%s/%s" % (repodir, inputfile), quiet=True, web=web)
+            if not web:
+                print(parameters)
+                return
+            else:
+                return {'product': product, 'comments': comments, 'description': description, 'parameters': parameters}

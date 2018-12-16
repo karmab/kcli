@@ -398,8 +398,7 @@ The following parameters are specific to ovirt:
    host. It can be retrieved with
    ``wget http://$HOST/ovirt-engine/services/pki-resource?resource=ca-certificate&format=X509-PEM-CA``
 -  imagerepository. A Glance image provider repository. Defaults to
-   ``ovirt-image-repository``. You can get default one created for you
-   with kcli download
+   ``ovirt-image-repository``.
 -  cluster Defaults to Default
 -  datacenter Defaults to Default
 -  filtervms Defaults to True. Only list vms created by kcli. Useful for
@@ -814,6 +813,9 @@ plan’s plan ( Also known as inception style)
       url: github.com/karmab/kcli-plans/ovirt/upstream.yml
       run: true
 
+You can alternatively provide a file attribute instead of url pointing
+to a local plan file
+
 dns
 ~~~
 
@@ -879,7 +881,7 @@ You can use the following to execute a plan from a remote url :
 
 .. code:: yaml
 
-    kcli plan --url github.com/karmab/kcli-plans -p karmab_plans
+    kcli plan --url https://github.com/karmab/kcli-plans/blob/master/ovirt/upstream.yml
 
 Disk parameters
 ---------------
@@ -1104,8 +1106,8 @@ the fly for you and let in */tmp/$PLAN.inv*
 Using products
 --------------
 
-If plans seem too complex, you can make use of the products feature
-which leverages them
+To easily share plans, you can make use of the products feature which
+leverages them
 
 Repos
 ~~~~~
@@ -1115,7 +1117,7 @@ products you want to expose. For instance, mine
 
 ::
 
-    kcli repo -u github.com/karmab/kcli-plans karmab
+    kcli repo -u https://github.com/karmab/kcli-plans karmab
 
 You can also update later a given repo, to refresh its KMETA file ( or
 all the repos, if not specifying any)
