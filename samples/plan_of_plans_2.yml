@@ -3,12 +3,8 @@ parameters:
 
 plan1:
   type: plan
-  url: github.com/karmab/kcli/samples/plan_of_plans
-  file: plan1.yml
-  run: true
+  url: https://github.com/karmab/kcli/blob/master/samples/plan_of_plans/plan1.yml
 
 plan2:
   type: plan
-  url: github.com/karmab/kcli/samples/plan_of_plans
-  file: plan2.yml
-  run: true
+  url: https://github.com/karmab/kcli/blob/master/samples/plan_of_plans/plan2.yml

@@ -1,11 +1,10 @@
 ovirt:
   type: plan
-  url: github.com/karmab/kcli-plans/ovirt
-  file: upstream.yml
+  url: https://github.com/karmab/kcli-plans/blob/master/ovirt/upstream.yml
   run: true
 
 manageiq:
   type: plan
-  url: github.com/karmab/kcli-plans/manageiq
+  url: https://github.com/karmab/kcli-plans/blob/master/manageiq/upstream.yml
   file: upstream.yml
   run: true

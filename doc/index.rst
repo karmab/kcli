@@ -811,8 +811,7 @@ plan’s plan ( Also known as inception style)
 
     ovirt:
       type: plan
-      url: github.com/karmab/kcli/plans/ovirt
-      file: upstream.yml
+      url: github.com/karmab/kcli-plans/ovirt/upstream.yml
       run: true
 
 dns
@@ -873,20 +872,14 @@ For an advanced use of plans along with scripts, check the
 associated with Red Hat Cloud Infrastructure products (or downstream
 versions too).
 
-Sharing plans
--------------
+Remote plans
+------------
 
-You can use the following to retrieve plans from a github repo:
+You can use the following to execute a plan from a remote url :
 
 .. code:: yaml
 
-    kcli plan --get github.com/karmab/kcli/plans -p karmab_plans
-
-The url can also be in:
-
--  an arbitary url ( github api is not used in this case)
--  raw github format to retrieve a single file
--  a github link
+    kcli plan --url github.com/karmab/kcli-plans -p karmab_plans
 
 Disk parameters
 ---------------
@@ -1122,7 +1115,7 @@ products you want to expose. For instance, mine
 
 ::
 
-    kcli repo -u github.com/karmab/kcli/plans karmab
+    kcli repo -u github.com/karmab/kcli-plans karmab
 
 You can also update later a given repo, to refresh its KMETA file ( or
 all the repos, if not specifying any)

@@ -779,8 +779,6 @@ class Kconfig(Kbaseconfig):
                              if 'type' in value and value['type'] == 'container'}
         if plan is None:
             plan = nameutils.get_random_name()
-        # if path is None:
-        #    path = plan
         if delete:
             deletedvms = []
             deletedlbs = []
@@ -988,28 +986,20 @@ class Kconfig(Kbaseconfig):
                     details = entries[planentry]
                     planurl = details.get('url')
                     path = details.get('path', planentry)
-                    inputfile = details.get('file', 'kcli_plan.yml')
-                    run = details.get('run', False)
                     if planurl is None:
                         common.pprint("Missing Url for plan %s. Not creating it..." % planentry, color='blue')
                         continue
                     else:
-                        common.pprint("Grabbing Plan %s!" % planentry, color='green')
-                        if not os.path.exists(planentry):
-                            os.mkdir(planentry)
-                            onfly = os.path.dirname(planurl)
-                            common.fetch(planurl, path)
-                        if run:
-                            os.chdir(path)
-                            if no_overrides and parameters:
-                                common.pprint("Using parameters from master plan in child ones", color='blue')
-                                for override in overrides:
-                                    print("Using parameter %s: %s" % (override, overrides[override]))
-                            common.pprint("Running kcli plan -f %s %s" % (inputfile, plan), color='green')
-                            self.plan(plan, ansible=False, get=None, path=path, autostart=False, container=False,
-                                      noautostart=False, inputfile=inputfile, start=False, stop=False, delete=False,
-                                      delay=delay, overrides=overrides)
-                            os.chdir('..')
+                        if not planurl.endswith('yml'):
+                            planurl = "%s/kcli_plan.yml" % planurl
+                        if no_overrides and parameters:
+                            common.pprint("Using parameters from master plan in child ones", color='blue')
+                            for override in overrides:
+                                print("Using parameter %s: %s" % (override, overrides[override]))
+                        self.plan(plan, ansible=False, url=planurl, path=path, autostart=False, container=False,
+                                  noautostart=False, inputfile=inputfile, start=False, stop=False, delete=False,
+                                  delay=delay, overrides=overrides)
+                        os.chdir('..')
                 return {'result': 'success'}
             if networkentries:
                 common.pprint("Deploying Networks...", color='green')

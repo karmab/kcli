@@ -639,8 +639,7 @@ Look at the docker section for details on the parameters
 ```YAML
 ovirt:
   type: plan
-  url: github.com/karmab/kcli-plans/ovirt
-  file: upstream.yml
+  url: github.com/karmab/kcli-plans/ovirt/upstream.yml
   run: true
 ```
 
@@ -686,18 +685,13 @@ When deleting a plan, the network of the vms will also be deleted if no other vm
 
 For an advanced use of plans along with scripts, check the [plans](plans/README.md) page to deploy all upstream projects associated with Red Hat Cloud Infrastructure products (or downstream versions too).
 
-## Sharing plans
+## Remote plans
 
-You can use the following to retrieve plans from a github repo:
+You can use the following to execute a plan from a remote url :
 
 ```YAML
-kcli plan --get github.com/karmab/kcli-plans -p karmab_plans
+kcli plan --url github.com/karmab/kcli-plans -p karmab_plans
 ```
-The url can also be in:
-
-- an arbitary url ( github api is not used in this case)
-- raw github format to retrieve a single file
-- a github link
 
 ## Disk parameters
 
