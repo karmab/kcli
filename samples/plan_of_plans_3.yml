@@ -1,0 +1,10 @@
+parameters:
+  password: prout12345  
+
+plan1:
+  type: plan
+  file: plan_of_plans/plan1.yml
+
+plan2:
+  type: plan
+  file: plan_of_plans/plan2.yml

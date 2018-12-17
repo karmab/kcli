@@ -61,8 +61,25 @@ def vmcreate():
     create vm
     """
     config = Kconfig()
+    templates = [os.path.basename(v) for v in config.k.volumes()]
     profiles = config.list_profiles()
-    return render_template('vmcreate.html', title='CreateVm', profiles=profiles, client=config.client)
+    disks = []
+    for disk in config.disks:
+        if isinstance(disk, int):
+            disks.append(str(disk))
+        else:
+            disks.append(str(disk['size']))
+    disks = ','.join(disks)
+    nets = []
+    for net in config.nets:
+        if isinstance(net, str):
+            nets.append(net)
+        else:
+            nets.append(net['name'])
+    nets = ','.join(nets)
+    parameters = {'memory': config.memory, 'numcpus': config.numcpus, 'disks': disks, 'nets': nets}
+    return render_template('vmcreate.html', title='CreateVm', profiles=profiles, templates=templates,
+                           parameters=parameters, client=config.client)
 
 
 @app.route('/vmprofilestable')
@@ -306,7 +323,17 @@ def vmaction():
             result = k.delete(name)
         elif action == 'create' and 'profile' in request.form:
             profile = request.form['profile']
-            result = config.create_vm(name, profile)
+            parameters = {}
+            for p in request.form:
+                if p.startswith('parameters'):
+                    value = request.form[p]
+                    key = p.replace('parameters[', '').replace(']', '')
+                    parameters[key] = value
+            parameters['nets'] = parameters['nets'].split(',')
+            parameters['disks'] = [int(disk) for disk in parameters['disks'].split(',')]
+            if name == '':
+                name = nameutils.get_random_name()
+            result = config.create_vm(name, profile, overrides=parameters)
         else:
             result = "Nothing to do"
         print(result)
@@ -399,6 +426,7 @@ def planaction():
         elif action == 'delete':
             result = config.plan(plan, delete=True)
         elif action == 'create':
+            print(request.form)
             url = request.form['url']
             if plan == '':
                 plan = nameutils.get_random_name()
@@ -602,7 +630,6 @@ def productaction():
                     value = request.form[p]
                     key = p.replace('parameters[', '').replace(']', '')
                     parameters[key] = value
-            print(parameters)
             if plan == '':
                 plan = None
             result = config.create_product(product, plan=plan, overrides=parameters)

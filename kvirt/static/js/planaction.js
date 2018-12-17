@@ -57,7 +57,13 @@ function plandelete(plan){
     });
 }
 
-function plancreate(name, url, planfile, deploy){
+function plancreate(name, url){
+  if (name === undefined) {
+  name = $("#name").val();
+  }
+  if (url === undefined) {
+  url = $("#planurl").val();
+  }
   $("#wheel").show();
   data = {'action': 'create', 'name': name, 'url': url};
   $.ajax({
@@ -67,16 +73,13 @@ function plancreate(name, url, planfile, deploy){
         success: function(data) {
             $("#wheel").hide();
             if (data.result == 'success') {
+                if ( name == '' ) {
+                  name = data.plan
+                }
                 $('.top-right').notify({message: { text: "Plan "+name+" created!!!" }, type: 'success'}).show();
             } else {
                 $('.top-right').notify({message: { text: "Plan "+name+" Failed to Create because "+data.reason }, type: 'danger'}).show();
             };
         }
     });
-}
-
-function plancreate2(){
-var name = $("#name").val();
-var url = $("#planurl").val();
-plancreate(name, url);
 }

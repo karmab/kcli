@@ -60,14 +60,21 @@ function vmdelete(vm){
 }
 
 function vmcreate(name, profile){
-  if (name == '') {
-    var name = prompt("Enter vm name");
-    if (name == null) {
-        return ;
-    }
-  }
+ if (name === undefined) {
+  name = $("#name").val();
+ }
+ else if (name == '') {
+    var name = prompt("Enter vm name or leave blank to autogenerate one");
+ }
+ if (profile === undefined) {
+  profile = $("#profile").val();
+ }
+ var parameters = {};
+ $.each($('#createvmform').serializeArray(), function() {
+    parameters[this.name] = this.value;
+ });
   $("#wheel").show();
-  data = {'name': name, 'action': 'create', 'profile': profile};
+  data = {'name': name, 'action': 'create', 'profile': profile, 'parameters': parameters};
   $.ajax({
        type: "POST",
         url: '/vmaction',
@@ -75,17 +82,13 @@ function vmcreate(name, profile){
         success: function(data) {
             $("#wheel").hide();
             if (data.result == 'success') {
+                if ( name == '' ) {
+                name = data.vm
+                }
                 $('.top-right').notify({message: { text: "Vm "+name+" created!!!" }, type: 'success'}).show();
             } else {
                 $('.top-right').notify({message: { text: "VM "+name+" not created because "+data.reason }, type: 'danger'}).show();
             };
         }
     });
-}
-
-
-function vmcreate2(){
- var name = $("#name").val();
- var profile = $("#profile").val();
- vmcreate(name, profile);
 }

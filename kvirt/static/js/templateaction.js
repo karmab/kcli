@@ -1,4 +1,16 @@
 function templatecreate(template, pool, url, cmd){
+  if ( template === undefined ) {
+    template = $("#template").val();
+  }
+  if ( pool === undefined ) {
+    pool = $("#pool").val();
+  }
+  if ( url === undefined ) {
+    url = $("#url").val();
+  }
+  if ( cmd === undefined ) {
+    cmd = $("#cmd").val();
+  }
   $("#wheel").show();
   data = {'template': template, 'action': 'create', 'pool': pool, 'url': url, 'cmd': cmd};
   $.ajax({
@@ -26,12 +38,4 @@ function templateurl(){
     url = $( "#template option:selected" ).attr("url");
     window.open(url, "_blank");
     }
-}
-
-function templatecreate2(){
-var template = $("#template").val();
-var pool = $("#pool").val();
-var url = $("#url").val();
-var cmd = $("#cmd").val();
-templatecreate(template, pool, url, cmd);
 }

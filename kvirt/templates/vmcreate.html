@@ -6,17 +6,26 @@
 <form id="createvmform">
     <div class="form-group">
         <label for="inputName">Name</label>
-        <input required="true" type="name" class="form-control" id="name" placeholder="Name">
+        <input type="name" class="form-control" id="name" placeholder="Name">
     </div>
     <div class="form-group">
     <label for="profile">Select Profile:</label>
     <select class="form-control" id="profile">
+      {% for template in templates %}
+      <option>{{ template }}</option>
+      {% endfor %}
       {% for profile in profiles %}
       <option>{{ profile[0] }}</option>
       {% endfor %}
     </select>
     </div>
+    {% for parameter in parameters %}
+    <div class="form-group">
+        <label for="inputName">{{ parameter }}</label>
+        <input required="true" class="form-control" name="{{ parameter }}" id="{{ parameter }}" value="{{ parameters[parameter] }}">
+    </div>
+    {% endfor %}
 </form>
-    <button type="submit" id="createvmbutton" class="btn btn-primary" onclick="vmcreate2();">Create</button>
+    <button type="submit" id="createvmbutton" class="btn btn-primary" onclick="vmcreate();">Create</button>
 
 {% endblock %}
