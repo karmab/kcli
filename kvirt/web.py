@@ -62,7 +62,6 @@ def vmcreate():
     """
     config = Kconfig()
     templates = [os.path.basename(v) for v in config.k.volumes()]
-    profiles = config.list_profiles()
     disks = []
     for disk in config.disks:
         if isinstance(disk, int):
@@ -78,7 +77,7 @@ def vmcreate():
             nets.append(net['name'])
     nets = ','.join(nets)
     parameters = {'memory': config.memory, 'numcpus': config.numcpus, 'disks': disks, 'nets': nets}
-    return render_template('vmcreate.html', title='CreateVm', profiles=profiles, templates=templates,
+    return render_template('vmcreate.html', title='CreateVm', templates=templates,
                            parameters=parameters, client=config.client)
 
 
