@@ -12,18 +12,8 @@
         <label for="inputName">Url</label>
         <input class="form-control" id="planurl" placeholder="Enter Url">
     </div>
-    <button type="submit" class="btn btn-primary">Create</button>
 </form>
+    <button type="submit" class="btn btn-primary" onclick="plancreate2();">Create</button>
 <p><p>Don't know which plans to use? Start <a href="https://github.com/karmab/kcli-plans/tree/master">here!</a>
 
-<script>
-$(document).ready(function() {
-$("#createplanform").submit(function() {
-var name = $("#name").val();
-var url = $("#planurl").val();
-plancreate(name, url);
-return ;
-});
-});
-</script>
 {% endblock %}

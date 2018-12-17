@@ -16,17 +16,7 @@
       {% endfor %}
     </select>
     </div>
-    <button type="submit" id="createcontainerbutton" class="btn btn-primary">Create</button>
+    <button type="submit" id="createcontainerbutton" class="btn btn-primary" onclick="containercreate2();">Create</button>
 </form>
 
-<script>
-$(document).ready(function() {
-$("#createcontainerform").submit(function() {
-var name = $("#name").val();
-var profile = $("#profile").val();
-containercreate(name, profile);
-return ;
-});
-});
-</script>
 {% endblock %}

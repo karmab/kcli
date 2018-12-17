@@ -309,8 +309,8 @@ def vmaction():
             result = config.create_vm(name, profile)
         else:
             result = "Nothing to do"
+        print(result)
         response = jsonify(result)
-        print(response)
         response.status_code = 200
         return response
     else:
@@ -743,12 +743,11 @@ def templateaction():
                 url = None
             if cmd == '':
                 cmd = None
-            result = config.handle_host(pool=pool, template=template, download=True, url=url, cmd=cmd)
+            result = config.handle_host(pool=pool, templates=[template], download=True, url=url, cmd=cmd)
         else:
             result = "Nothing to do"
         print(result)
         response = jsonify(result)
-        print(response)
         response.status_code = 200
         return response
     else:

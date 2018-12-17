@@ -74,3 +74,9 @@ function plancreate(name, url, planfile, deploy){
         }
     });
 }
+
+function plancreate2(){
+var name = $("#name").val();
+var url = $("#planurl").val();
+plancreate(name, url);
+}

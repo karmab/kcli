@@ -27,3 +27,11 @@ function templateurl(){
     window.open(url, "_blank");
     }
 }
+
+function templatecreate2(){
+var template = $("#template").val();
+var pool = $("#pool").val();
+var url = $("#url").val();
+var cmd = $("#cmd").val();
+templatecreate(template, pool, url, cmd);
+}

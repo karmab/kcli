@@ -82,3 +82,10 @@ function vmcreate(name, profile){
         }
     });
 }
+
+
+function vmcreate2(){
+ var name = $("#name").val();
+ var profile = $("#profile").val();
+ vmcreate(name, profile);
+}

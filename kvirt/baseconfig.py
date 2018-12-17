@@ -483,13 +483,14 @@ class Kbaseconfig:
             return {'result': 'failure', 'reason': 'repo operations require git'}
         else:
             os.system("git clone %s %s" % (url, repodir))
-        for root, dirs, files in os.walk(repodir):
-            for name in files:
-                if name == 'KMETA':
-                    dst = "%s/KMETA" % repodir
-                    src = "%s/KMETA" % root.replace("%s/" % repodir, '')
-                    os.symlink(src, dst)
-                    break
+        if not os.path.exists("%s/KMETA" % repodir):
+            for root, dirs, files in os.walk(repodir):
+                for name in files:
+                    if name == 'KMETA':
+                        dst = "%s/KMETA" % repodir
+                        src = "%s/KMETA" % root.replace("%s/" % repodir, '')
+                        os.symlink(src, dst)
+                        break
         return {'result': 'success'}
 
     def update_repo(self, name, url=None):

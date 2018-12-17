@@ -28,19 +28,7 @@
     <label for="inputName" id="cmd" >Cmd to launch on the image</label>
     <input type="text" class="form-control" id="cmd" placeholder="Cmd"/>
     </div>
-    <button type="submit" class="btn btn-primary">Create</button>
 </form>
+    <button type="submit" class="btn btn-primary" onclick="templatecreate2();">Create</button>
 
-<script>
-$(document).ready(function() {
-$("#createtemplateform").submit(function() {
-var template = $("#template").val();
-var pool = $("#pool").val();
-var url = $("#url").val();
-var cmd = $("#cmd").val();
-templatecreate(template, pool, url, cmd);
-return ;
-});
-});
-</script>
 {% endblock %}

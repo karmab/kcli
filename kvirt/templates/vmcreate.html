@@ -16,17 +16,7 @@
       {% endfor %}
     </select>
     </div>
-    <button type="submit" id="createvmbutton" class="btn btn-primary">Create</button>
 </form>
+    <button type="submit" id="createvmbutton" class="btn btn-primary" onclick="vmcreate2();">Create</button>
 
-<script>
-$(document).ready(function() {
-$("#createvmform").submit(function() {
-var name = $("#name").val();
-var profile = $("#profile").val();
-vmcreate(name, profile);
-return ;
-});
-});
-</script>
 {% endblock %}
