@@ -413,7 +413,8 @@ class Kvirt(object):
                     macxml = "<mac address='%s'/>" % mac
                 if 'type' in nets[index]:
                     nettype = nets[index]['type']
-                if reservedns and index == 0 and 'alias' in nets[index] and isinstance(nets[index]['alias'], list):
+                if index == 0 and 'alias' in nets[index] and isinstance(nets[index]['alias'], list):
+                    reservedns = True
                     alias = nets[index]['alias']
                 if 'etcd' in nets[index] and nets[index]['etcd']:
                     etcd = "eth%s" % index

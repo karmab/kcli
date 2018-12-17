@@ -1156,6 +1156,7 @@ class Kconfig(Kbaseconfig):
                             os.remove("%s.key.pub" % plan)
                             os.remove("%s.key" % plan)
                     currenthost = host if host is not None else self.client
+                    print(overrides)
                     result = self.create_vm(name, profilename, overrides=overrides, customprofile=profile, k=z,
                                             plan=plan, basedir=basedir, client=currenthost, onfly=onfly)
                     common.handle_response(result, name)
