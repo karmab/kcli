@@ -338,7 +338,8 @@ The following parameters are specific to ovirt:
 - cluster  Defaults to Default
 - datacenter Defaults to Default
 - filtervms Defaults to True. Only list vms created by kcli. Useful for environments when you are superadmin and have a ton of vms
-- filteruser Defaults to None. Only list vms created by kcli and by specified user. Useful for environments when you share the same ovirt user
+- filteruser Defaults to False. Only list vms created by own user
+- filtertag Defaults to None. Only list vms created by kcli with the corresponding filter=filtertag in their description. Useful for environments when you share the same user
 
 To use this provider with kcli rpm, you'll need to install (from pip) *ovirt-engine-sdk-python*
 

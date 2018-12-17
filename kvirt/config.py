@@ -122,11 +122,13 @@ class Kconfig(Kbaseconfig):
                     os._exit(1)
                 imagerepository = self.options.get('imagerepository', 'ovirt-image-repository')
                 filtervms = self.options.get('filtervms', False)
-                filteruser = self.options.get('filteruser')
+                filteruser = self.options.get('filteruser', False)
+                filtertag = self.options.get('filtertag')
                 from kvirt.ovirt import KOvirt
                 k = KOvirt(host=self.host, port=self.port, user=user, password=password,
                            debug=debug, datacenter=datacenter, cluster=cluster, ca_file=ca_file, org=org,
-                           imagerepository=imagerepository, filtervms=filtervms, filteruser=filteruser)
+                           imagerepository=imagerepository, filtervms=filtervms, filteruser=filteruser,
+                           filtertag=filtertag)
                 self.overrides.update({'host': self.host, 'user': user, 'password': password})
             elif self.type == 'openstack':
                 version = self.options.get('version', '2')
@@ -1156,7 +1158,6 @@ class Kconfig(Kbaseconfig):
                             os.remove("%s.key.pub" % plan)
                             os.remove("%s.key" % plan)
                     currenthost = host if host is not None else self.client
-                    print(overrides)
                     result = self.create_vm(name, profilename, overrides=overrides, customprofile=profile, k=z,
                                             plan=plan, basedir=basedir, client=currenthost, onfly=onfly)
                     common.handle_response(result, name)

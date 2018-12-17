@@ -1,4 +1,5 @@
 haproxy = """
+#jinja2: lstrip_blocks: True
 parameters:
  template: CentOS-7-x86_64-GenericCloud.qcow2
  name: haproxy
@@ -26,33 +27,37 @@ loadbalancer_{{ ports | join('+') }}:
         mode        http
         log         global
         option      dontlognull
-        option      httpclose
-        option      httplog
-        option      forwardfor
-        option      redispatch
+        # option      httpclose
+        # option      httplog
+        # option      forwardfor
+        # option      redispatch
         timeout connect 10000
         timeout client 300000
         timeout server 300000
         maxconn     60000
         retries     3
-      {% for port in ports -%}
-      listen {{ name }} *:{{ port }}
+      {%- for port in ports %}
+      listen {{ name }}_{{ port }} *:{{ port }}
+      {%- if port in [80, 443] %}
         mode http
         stats enable
         stats uri /stats
         stats realm HAProxy\ Statistics
-        stats auth admin:decret
+        stats auth admin:password
+        option httpchk HEAD {{ checkpath }} HTTP/1.0
+      {%- else %}
+        mode tcp
+      {%- endif %}
         balance roundrobin
         cookie JSESSIONID prefix
-        option httpclose
-        option forwardfor
-        option httpchk HEAD {{ checkpath }} HTTP/1.0
-        {% for vm in vms -%}
+        {%- for vm in vms %}
         server {{ vm.name }} {{ vm.ip }}:{{ port }} cookie A check
-        {% endfor %}
-       {% endfor %}
+        {%- endfor %}
+       {%- endfor %}
  cmds:
   - yum -y install haproxy
+  - sed -i "s/SELINUX=enforcing/SELINUX=permissive/" /etc/selinux/config
+  - setenforce 0
   - cp /root/haproxy.cfg /etc/haproxy
   - systemctl start haproxy
   - systemctl enable haproxy

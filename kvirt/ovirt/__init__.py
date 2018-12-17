@@ -29,7 +29,7 @@ class KOvirt(object):
     def __init__(self, host='127.0.0.1', port=22, user='admin@internal',
                  password=None, insecure=True, ca_file=None, org=None, debug=False,
                  cluster='Default', datacenter='Default', ssh_user='root', imagerepository='ovirt-image-repository',
-                 filtervms=False, filteruser=None):
+                 filtervms=False, filteruser=False, filtertag=None):
         try:
             url = "https://%s/ovirt-engine/api" % host
             self.conn = sdk.Connection(url=url, username=user,
@@ -53,6 +53,7 @@ class KOvirt(object):
         self.imagerepository = imagerepository
         self.filtervms = filtervms
         self.filteruser = filteruser
+        self.filtertag = filtertag
 
     def close(self):
         """
@@ -170,7 +171,10 @@ class KOvirt(object):
             _template = types.Template(name='Blank')
         _os = types.OperatingSystem(boot=types.Boot(devices=[types.BootDevice.HD, types.BootDevice.CDROM]))
         console = types.Console(enabled=True)
-        description = "plan=%s,profile=%s" % (plan, profile)
+        if self.filtertag is not None:
+            description = "plan=%s,profile=%s,filter=%s" % (plan, profile, self.filtertag)
+        else:
+            description = "plan=%s,profile=%s" % (plan, profile)
         profiles_service = self.conn.system_service().vnic_profiles_service()
         netprofiles = {}
         for prof in profiles_service.list():
@@ -178,8 +182,6 @@ class KOvirt(object):
             netdatacenter = self.conn.follow_link(networkinfo.data_center)
             if netdatacenter.name == self.datacenter:
                 netprofiles[prof.name] = prof.id
-        if self.filtervms and self.filteruser is not None:
-            description += ',user=%s' % self.filteruser
         if dnshost is not None:
             description += ',dnshost=%s' % dnshost
         if domain is not None:
@@ -457,11 +459,16 @@ class KOvirt(object):
         :return:
         """
         vms = []
-        if self.filtervms:
-            if self.filteruser:
-                vmslist = self.vms_service.list(search='description=plan*,user=%s*' % self.filteruser)
-            else:
-                vmslist = self.vms_service.list(search='description=plan=*,profile=*')
+        system_service = self.conn.system_service()
+        if self.filtertag is not None:
+            vmslist = self.vms_service.list(search='description=plan*,filter=%s*' % self.filtertag)
+        elif self.filteruser:
+            users_service = system_service.users_service()
+            user_name = '%s-authz' % self.user if '@internal' in self.user else self.user
+            userid = [u.id for u in users_service.list() if u.user_name == user_name][0]
+            vmslist = self.vms_service.list(search='created_by_user_id=%s' % userid)
+        elif self.filtervms:
+            vmslist = self.vms_service.list(search='description=plan=*,profile=*')
         else:
             vmslist = self.vms_service.list()
         for vm in vmslist:
