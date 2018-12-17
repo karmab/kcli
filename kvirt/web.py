@@ -707,6 +707,14 @@ def containeraction():
             result = dockerutils.stop_container(k, name)
         elif action == 'delete':
             result = dockerutils.delete_container(k, name)
+        elif action == 'create' and 'profile' in request.form:
+            profile = [prof for prof in config.list_containerprofiles() if prof[0] == request.form['profile']][0]
+            if name is None:
+                name = nameutils.get_random_name()
+            image, nets, ports, volumes, cmd = profile[1:]
+            result = dockerutils.create_container(k, name=name, image=image, nets=nets, cmd=cmd, ports=ports,
+                                                  volumes=volumes)
+            result = dockerutils.create_container(k, name, profile)
         else:
             result = "Nothing to do"
         print(result)
