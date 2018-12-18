@@ -190,7 +190,6 @@ class Kconfig(Kbaseconfig):
         :return:
         """
         overrides.update(self.overrides)
-        overrides.update({'plan': plan})
         k = self.k if k is None else k
         tunnel = self.tunnel
         if profile is None:
@@ -960,6 +959,7 @@ class Kconfig(Kbaseconfig):
                     overrides[parameter] = parameters[parameter]
         with open(inputfile, 'r') as entries:
             overrides.update(self.overrides)
+            overrides.update({'plan': plan})
             entries = templ.render(overrides)
             entries = yaml.load(entries)
             parameters = entries.get('parameters')
