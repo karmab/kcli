@@ -1133,13 +1133,11 @@ class Kconfig(Kbaseconfig):
                         customprofile = {}
                         profilename = 'kvirt'
                     if customprofile:
-                        temp = profile.copy()
-                        profile.update(customprofile)
-                        profile.update(temp)
+                        customprofile.update(profile)
+                        profile = customprofile
                     # cmds = default_cmds + customprofile.get('cmds', []) + profile.get('cmds', [])
                     # ips = profile.get('ips')
-                    sharedkey = next((e for e in [profile.get('sharedkey'), customprofile.get('sharedkey'),
-                                                  self.sharedkey] if e is not None))
+                    sharedkey = profile.get('sharedkey', self.sharedkey)
                     if sharedkey:
                         vmcounter += 1
                         if not os.path.exists("%s.key" % plan) or not os.path.exists("%s.key.pub" % plan):
@@ -1165,8 +1163,7 @@ class Kconfig(Kbaseconfig):
                     common.handle_response(result, name)
                     if result['result'] == 'success':
                         newvms.append(name)
-                    _ansible = next((e for e in [profile.get('ansible'), customprofile.get('ansible')]
-                                     if e is not None), None)
+                    _ansible = profile.get('ansible')
                     if _ansible is not None:
                         for element in _ansible:
                             if 'playbook' not in element:
