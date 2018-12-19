@@ -357,12 +357,11 @@ class Kgcp(object):
         if self.debug:
             print(body)
         if storemetadata and overrides:
-            # body['labels'] = {k: overrides[k].replace('.', '-') for k in overrides}
+            existingkeys = [entry['key'] for entry in body['metadata']['items']]
             for key in overrides:
-                if key in ['plan', 'profile', 'ssh-keys']:
-                    continue
-                newval = {'key': key, 'value': overrides[key]}
-                body['metadata']['items'].append(newval)
+                if key not in existingkeys:
+                    newval = {'key': key, 'value': overrides[key]}
+                    body['metadata']['items'].append(newval)
         conn.instances().insert(project=project, zone=zone, body=body).execute()
         if reservedns and domain is not None:
             self.reserve_dns(name, nets=nets, domain=domain, alias=alias)
