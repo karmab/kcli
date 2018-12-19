@@ -1133,7 +1133,9 @@ class Kconfig(Kbaseconfig):
                         customprofile = {}
                         profilename = 'kvirt'
                     if customprofile:
+                        temp = profile.copy()
                         profile.update(customprofile)
+                        profile.update(temp)
                     # cmds = default_cmds + customprofile.get('cmds', []) + profile.get('cmds', [])
                     # ips = profile.get('ips')
                     sharedkey = next((e for e in [profile.get('sharedkey'), customprofile.get('sharedkey'),
