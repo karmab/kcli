@@ -206,7 +206,7 @@ class Kconfig(Kbaseconfig):
             vmprofiles[profile] = {'template': profile}
         profilename = profile
         profile = vmprofiles[profile]
-        profile.update(overrides)
+        # profile.update(overrides)
         if 'base' in profile:
             father = vmprofiles[profile['base']]
             default_numcpus = father.get('numcpus', self.numcpus)
