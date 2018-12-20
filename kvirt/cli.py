@@ -763,6 +763,7 @@ def plan(args):
     if os.path.exists("/i_am_a_container"):
         inputfile = "%s/%s" % (volumepath, inputfile) if inputfile is not None else "%s/kcli_plan.yml" % volumepath
     if info and url is None:
+        inputfile = plan if inputfile is None and plan is not None else inputfile
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
         baseconfig.info_plan(inputfile)
         os._exit(0)
