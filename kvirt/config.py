@@ -489,6 +489,9 @@ class Kconfig(Kbaseconfig):
                 notifycmd += 'https://api.pushbullet.com/v2/pushes'
                 if not cmds:
                     cmds = [notifycmd]
+                elif 'reboot' in cmds:
+                    rebootindex = cmds.index('reboot')
+                    cmds.insert(rebootindex, notifycmd)
                 else:
                     cmds.append(notifycmd)
             else:
