@@ -766,7 +766,7 @@ class Kconfig(Kbaseconfig):
 
     def plan(self, plan, ansible=False, url=None, path=None, autostart=False, container=False, noautostart=False,
              inputfile=None, inputstring=None, start=False, stop=False, delete=False, delay=0, force=True, overrides={},
-             info=False):
+             info=False, snapshot=False, revert=False):
         """Create/Delete/Stop/Start vms from plan file"""
         k = self.k
         no_overrides = not overrides
@@ -810,7 +810,7 @@ class Kconfig(Kbaseconfig):
                             if network != 'default' and network not in networks:
                                 networks.append(network)
                         dnshost, domain = c.dnsinfo(name)
-                        c.delete(name)
+                        c.delete(name, snapshots=True)
                         if dnshost is not None and domain is not None and dnshost in self.clients:
                             if dnshost in dnsclients:
                                 z = dnsclients[dnshost]
@@ -904,6 +904,29 @@ class Kconfig(Kbaseconfig):
                         dockerutils.stop_container(k, name)
                         common.pprint("Container %s stopped!" % name, color='green')
             common.pprint("Plan %s stopped!" % plan, color='green')
+            return {'result': 'success'}
+        if snapshot:
+            if revert:
+                common.pprint("Can't revert and snapshot plan at the same time", color='red')
+                os._exit(1)
+            common.pprint("Snapshotting vms from plan %s" % plan, color='green')
+            for vm in sorted(k.list(), key=lambda x: x['name']):
+                name = vm['name']
+                description = vm['plan']
+                if description == plan:
+                    k.snapshot(plan, name)
+                    common.pprint("%s snapshotted!" % name, color='green')
+            common.pprint("Plan %s snapshotted!" % plan, color='green')
+            return {'result': 'success'}
+        if revert:
+            common.pprint("Reverting snapshots of vms from plan %s" % plan, color='green')
+            for vm in sorted(k.list(), key=lambda x: x['name']):
+                name = vm['name']
+                description = vm['plan']
+                if description == plan:
+                    k.snapshot(plan, name, revert=True)
+                    common.pprint("snapshot of %s reverted!" % name, color='green')
+            common.pprint("Plan %s snapshot reverted!" % plan, color='green')
             return {'result': 'success'}
         if url is not None:
             if not url.endswith('.yml'):
