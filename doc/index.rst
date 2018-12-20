@@ -97,6 +97,7 @@ the are several flags you’ll want to pass depending on your use case
 -  ``-v $HOME:/root`` to share your entire home directory, useful if you
    want to share secret files, ``~/register.sh`` for instance)
 -  ``-e HTTP_PROXY=your_proxy -e HTTPS_PROXY=your_proxy``
+-  ``-v ~/.kube:/root/.kube`` to share your kubeconfig.
 
 As a bonus, you can alias kcli and run it as if it was installed
 locally:
