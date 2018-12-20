@@ -237,7 +237,8 @@ class Kubevirt(object):
                                                                       'cpu': {'cores': numcpus},
                                                                       'devices': {'disks': []}}, 'volumes': []}}},
               'apiVersion': 'kubevirt.io/%s' % VERSION, 'metadata': {'name': name, 'namespace': namespace,
-                                                                     'labels': {'kubevirt.io/os': 'linux'},
+                                                                     'labels': {'kubevirt.io/os': 'linux',
+                                                                                'special': 'vmi-migratable'},
                                                                      'annotations': {'kcli/plan': plan,
                                                                                      'kcli/profile': profile,
                                                                                      'kcli/template': template}}}
