@@ -480,7 +480,8 @@ class Kbaseconfig:
         if not url.startswith('http') and not url.startswith('git'):
             os.symlink(url, repodir)
         elif find_executable('git') is None:
-            return {'result': 'failure', 'reason': 'repo operations require git'}
+            common.pprint('repo operations require git', color='red')
+            os._exit(1)
         else:
             os.system("git clone %s %s" % (url, repodir))
         if not os.path.exists("%s/KMETA" % repodir):
@@ -491,7 +492,7 @@ class Kbaseconfig:
                         src = "%s/KMETA" % root.replace("%s/" % repodir, '')
                         os.symlink(src, dst)
                         break
-        return {'result': 'success'}
+        os._exit(1)
 
     def update_repo(self, name, url=None):
         """

@@ -409,8 +409,8 @@ class Kconfig(Kbaseconfig):
                 overrides['rhnak'] = rhnak
                 overrides['rhnorg'] = rhnorg
             else:
-                common.pprint("Rhn registration required but missing credentials.\
-                              Define rhnuser/rhnpassword or rhnak/rhnorg", color='red')
+                msg = "Rhn registration required but missing credentials. Define rhnuser/rhnpassword or rhnak/rhnorg"
+                common.pprint(msg, color='red')
                 os._exit(1)
         if scripts:
             for script in scripts:

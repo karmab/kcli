@@ -1,12 +1,12 @@
 #
 # spec file for package kcli
 #
-# Copyright (c) 2017 Karim Boumedhel/ Miguel P.C
+# Copyright (c) 2017 Karim Boumedhel
 #
 
 Name:           kcli
-Version:        12.6
-Release:        1
+Version:        14.1
+Release:        2
 Url:            http://github.com/karmab/kcli
 Summary:        Wapper for libvirt,gcp,aws,ovirt and openstack
 License:        ASL 2.0
@@ -39,8 +39,6 @@ sed -i.bak '/libvirt/d' setup.py
 %{__python} setup.py install --prefix=%{_prefix} --root=%{buildroot}
 mkdir -p %{buildroot}/%{_docdir}/kcli
 mkdir -p %{buildroot}/%{_mandir}/man1
-#cp doc/*md %{buildroot}/%{_docdir}/kcli
-#cp doc/*rst %{buildroot}/%{_docdir}/kcli
 cp -r extras %{buildroot}/%{_docdir}/kcli
 cp -r samples %{buildroot}/%{_docdir}/kcli
 LANG=en_US.UTF-8 ronn -r README.md
@@ -60,6 +58,8 @@ rm -rf %{buildroot}
 %attr(0755,root,root) %{_bindir}/kweb
 
 %changelog
+* Wed Dec 20 2018 Karim Boumedhel <karimboumedhel@gmail.com> 14.1
+- 14.1 Release with a bunch of goodies
 * Wed Jul 11 2018 Karim Boumedhel <karimboumedhel@gmail.com> 12.1
 - 12.1 Release switching to python3
 * Tue Mar 20 2018 Karim Boumedhel <karimboumedhel@gmail.com> 11.0
