@@ -956,7 +956,7 @@ class Kconfig(Kbaseconfig):
                     if baseparameters is not None:
                         baseparameters = yaml.load(baseparameters)['parameters']
                         for baseparameter in baseparameters:
-                            if baseparameter not in overrides:
+                            if baseparameter not in overrides and baseparameter not in parameters:
                                 overrides[baseparameter] = baseparameters[baseparameter]
                 elif parameter not in overrides:
                     overrides[parameter] = parameters[parameter]
