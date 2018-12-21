@@ -959,11 +959,10 @@ class Kconfig(Kbaseconfig):
         if info:
             self.info_plan(inputfile)
             return {'result': 'success'}
-        basedir = os.path.dirname(inputfile) if os.path.dirname(inputfile) != '' else '.'
         baseentries = {}
-        entries, overrides, basefile = self.process_inputfile(plan, basedir, inputfile, overrides=overrides)
+        entries, overrides, basefile, basedir = self.process_inputfile(plan, inputfile, overrides=overrides)
         if basefile is not None:
-            baseinfo = self.process_inputfile(plan, basedir, basefile, overrides=overrides)
+            baseinfo = self.process_inputfile(plan, basefile, overrides=overrides)
             baseentries, baseoverrides = baseinfo[0], baseinfo[1]
             if baseoverrides:
                 overrides.update({key: baseoverrides[key] for key in baseoverrides if key not in overrides})
@@ -1110,15 +1109,26 @@ class Kconfig(Kbaseconfig):
             vmcounter = 0
             hosts = {}
             for name in vmentries:
+                currentplandir = basedir
                 if len(vmentries) == 1 and 'name' in overrides:
                     newname = overrides['name']
                     profile = entries[name]
                     name = newname
                 else:
                     profile = entries[name]
-                if 'basevm' in profile and profile['basevm'] in baseentries:
+                if 'basevm' in profile or 'baseplan' in profile:
+                    baseprofile = {}
                     appendkeys = ['disks', 'nets', 'files', 'scripts', 'cmds']
-                    baseprofile = baseentries[profile['basevm']]
+                    if 'baseplan' in profile:
+                        basevm = profile['basevm'] if 'basevm' in profile else name
+                        baseinfo = self.process_inputfile(plan, profile['baseplan'], overrides=overrides)
+                        baseprofile = baseinfo[0][basevm]
+                        currentplandir = baseinfo[3]
+                    elif 'basevm' in profile and profile['basevm'] in baseentries:
+                        baseprofile = baseentries[profile['basevm']]
+                    else:
+                        common.pprint("Incorrect base entry for VM %s. skipping..." % name, color='blue')
+                        continue
                     for key in baseprofile:
                         if key not in profile:
                             profile[key] = baseprofile[key]
@@ -1172,7 +1182,7 @@ class Kconfig(Kbaseconfig):
                         os.remove("%s.key" % plan)
                 currenthost = host if host is not None else self.client
                 result = self.create_vm(name, profilename, overrides=overrides, customprofile=profile, k=z,
-                                        plan=plan, basedir=basedir, client=currenthost, onfly=onfly)
+                                        plan=plan, basedir=currentplandir, client=currenthost, onfly=onfly)
                 common.handle_response(result, name)
                 if result['result'] == 'success':
                     newvms.append(name)
@@ -1470,7 +1480,8 @@ class Kconfig(Kbaseconfig):
         else:
             return k.list_loadbalancers()
 
-    def process_inputfile(self, plan, basedir, inputfile, overrides={}):
+    def process_inputfile(self, plan, inputfile, overrides={}):
+        basedir = os.path.dirname(inputfile) if os.path.dirname(inputfile) != '' else '.'
         basefile = None
         env = Environment(loader=FileSystemLoader(basedir))
         try:
@@ -1498,4 +1509,4 @@ class Kconfig(Kbaseconfig):
             overrides.update({'plan': plan})
             entries = templ.render(overrides)
             entries = yaml.load(entries)
-        return entries, overrides, basefile
+        return entries, overrides, basefile, basedir
