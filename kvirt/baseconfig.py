@@ -549,7 +549,7 @@ class Kbaseconfig:
                     print()
         else:
             common.pprint("No parameters found. Leaving...", color='blue')
-        return {'result': 'success'}
+        # return {'result': 'success'}
 
     def info_product(self, name, repo=None, group=None, web=False):
         """Info product"""
@@ -600,8 +600,5 @@ class Kbaseconfig:
                     print("Comments : %s" % comments)
             inputfile = "%s/%s" % (product['realdir'], _file) if 'realdir' in product else _file
             parameters = self.info_plan("%s/%s" % (repodir, inputfile), quiet=True, web=web)
-            if not web:
-                print(parameters)
-                return
-            else:
+            if web:
                 return {'product': product, 'comments': comments, 'description': description, 'parameters': parameters}
