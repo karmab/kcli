@@ -3,11 +3,14 @@ haproxy = """
 parameters:
  template: CentOS-7-x86_64-GenericCloud.qcow2
  name: haproxy
+ nets:
+ - default
  vms: []
 
 loadbalancer_{{ ports | join('+') }}:
  type: profile
  template: {{ template }}
+ nets: {{ nets }}
 
 {{ name }}:
  profile: loadbalancer_{{ ports | join('+') }}
@@ -31,6 +34,10 @@ loadbalancer_{{ ports | join('+') }}:
         # option      httplog
         # option      forwardfor
         # option      redispatch
+        stats enable
+        stats uri /stats
+        stats realm HAProxy\ Statistics
+        stats auth admin:password
         timeout connect 10000
         timeout client 300000
         timeout server 300000
@@ -40,11 +47,7 @@ loadbalancer_{{ ports | join('+') }}:
       listen {{ name }}_{{ port }} *:{{ port }}
       {%- if port in [80, 443] %}
         mode http
-        stats enable
-        stats uri /stats
-        stats realm HAProxy\ Statistics
-        stats auth admin:password
-        option httpchk HEAD {{ checkpath }} HTTP/1.0
+        # option httpchk HEAD {{ checkpath }} HTTP/1.0
       {%- else %}
         mode tcp
       {%- endif %}

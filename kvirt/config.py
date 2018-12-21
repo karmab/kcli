@@ -959,343 +959,330 @@ class Kconfig(Kbaseconfig):
         if info:
             self.info_plan(inputfile)
             return {'result': 'success'}
-        # basedir = os.path.dirname(inputfile)
         basedir = os.path.dirname(inputfile) if os.path.dirname(inputfile) != '' else '.'
-        env = Environment(loader=FileSystemLoader(basedir))
-        try:
-            templ = env.get_template(os.path.basename(inputfile))
-        except TemplateSyntaxError as e:
-            common.pprint("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message),
-                          color='red')
-            os._exit(1)
-        parameters = common.get_parameters(inputfile)
-        basefile = None
+        baseentries = {}
+        entries, overrides, basefile = self.process_inputfile(plan, basedir, inputfile, overrides=overrides)
+        if basefile is not None:
+            baseinfo = self.process_inputfile(plan, basedir, basefile, overrides=overrides)
+            baseentries, baseoverrides = baseinfo[0], baseinfo[1]
+            if baseoverrides:
+                overrides.update({key: baseoverrides[key] for key in baseoverrides if key not in overrides})
+        parameters = entries.get('parameters')
         if parameters is not None:
-            parameters = yaml.load(parameters)['parameters']
-            for parameter in parameters:
-                if parameter == 'baseplan':
-                    basefile = parameters['baseplan']
-                    baseparameters = common.get_parameters(basefile)
-                    if baseparameters is not None:
-                        baseparameters = yaml.load(baseparameters)['parameters']
-                        for baseparameter in baseparameters:
-                            if baseparameter not in overrides and baseparameter not in parameters:
-                                overrides[baseparameter] = baseparameters[baseparameter]
-                elif parameter not in overrides:
-                    overrides[parameter] = parameters[parameter]
-        with open(inputfile, 'r') as entries:
-            overrides.update(self.overrides)
-            overrides.update({'plan': plan})
-            entries = templ.render(overrides)
-            entries = yaml.load(entries)
-            parameters = entries.get('parameters')
-            if parameters is not None:
-                del entries['parameters']
-            vmentries = [entry for entry in entries if 'type' not in entries[entry] or entries[entry]['type'] == 'vm']
-            diskentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'disk']
-            networkentries = [entry for entry in entries
-                              if 'type' in entries[entry] and entries[entry]['type'] == 'network']
-            containerentries = [entry for entry in entries
-                                if 'type' in entries[entry] and entries[entry]['type'] == 'container']
-            ansibleentries = [entry for entry in entries
-                              if 'type' in entries[entry] and entries[entry]['type'] == 'ansible']
-            profileentries = [entry for entry in entries
-                              if 'type' in entries[entry] and entries[entry]['type'] == 'profile']
-            templateentries = [entry for entry in entries
-                               if 'type' in entries[entry] and entries[entry]['type'] == 'template']
-            poolentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'pool']
-            planentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'plan']
-            dnsentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'dns']
-            lbentries = [entry for entry in entries if 'type' in entries[entry] and
-                         entries[entry]['type'] == 'loadbalancer']
-            for p in profileentries:
-                vmprofiles[p] = entries[p]
-            if planentries:
-                common.pprint("Deploying Plans...", color='green')
-                for planentry in planentries:
-                    details = entries[planentry]
-                    planurl = details.get('url')
-                    planfile = details.get('file')
-                    if planurl is None and planfile is None:
-                        common.pprint("Missing Url/File for plan %s. Not creating it..." % planentry, color='blue')
-                        continue
-                    elif planurl is not None:
-                        path = planentry
-                        if not planurl.endswith('yml'):
-                            planurl = "%s/kcli_plan.yml" % planurl
-                    elif '/' in planfile:
-                        path = os.path.dirname(planfile)
-                        inputfile = os.path.basename(planfile)
-                    else:
-                        path = '.'
-                        inputfile = planentry
-                    if no_overrides and parameters:
-                        common.pprint("Using parameters from master plan in child ones", color='blue')
-                        for override in overrides:
-                            print("Using parameter %s: %s" % (override, overrides[override]))
-                    self.plan(plan, ansible=False, url=planurl, path=path, autostart=False, container=False,
-                              noautostart=False, inputfile=inputfile, start=False, stop=False, delete=False,
-                              delay=delay, overrides=overrides)
-                return {'result': 'success'}
-            if networkentries:
-                common.pprint("Deploying Networks...", color='green')
-                for net in networkentries:
-                    netprofile = entries[net]
-                    if k.net_exists(net):
-                        common.pprint("Network %s skipped!" % net, color='blue')
-                        continue
-                    cidr = netprofile.get('cidr')
-                    nat = bool(netprofile.get('nat', True))
-                    if cidr is None:
-                        common.pprint("Missing Cidr for network %s. Not creating it..." % net, color='blue')
-                        continue
-                    dhcp = netprofile.get('dhcp', True)
-                    domain = netprofile.get('domain')
-                    pxe = netprofile.get('pxe')
-                    vlan = netprofile.get('vlan')
-                    result = k.create_network(name=net, cidr=cidr, dhcp=dhcp, nat=nat, domain=domain, plan=plan,
-                                              pxe=pxe, vlan=vlan)
-                    common.handle_response(result, net, element='Network ')
-            if poolentries:
-                common.pprint("Deploying Pool...", color='green')
-                pools = k.list_pools()
-                for pool in poolentries:
-                    if pool in pools:
-                        common.pprint("Pool %s skipped!" % pool, color='blue')
-                        continue
-                    else:
-                        poolprofile = entries[pool]
-                        poolpath = poolprofile.get('path')
-                        if poolpath is None:
-                            common.pprint("Pool %s skipped as path is missing!" % pool, color='blue')
-                            continue
-                        k.create_pool(pool, poolpath)
-            if templateentries:
-                common.pprint("Deploying Templates...", color='green')
-                templates = [os.path.basename(t) for t in k.volumes()]
-                for template in templateentries:
-                    if template in templates:
-                        common.pprint("Template %s skipped!" % template, color='blue')
-                        continue
-                    else:
-                        templateprofile = entries[template]
-                        pool = templateprofile.get('pool', self.pool)
-                        templateurl = templateprofile.get('url')
-                        cmd = templateprofile.get('cmd')
-                        if templateurl is None:
-                            common.pprint("Template %s skipped as url is missing!" % template, color='blue')
-                            continue
-                        if not templateurl.endswith('qcow2') and not templateurl.endswith('img')\
-                                and not templateurl.endswith('qc2') and not templateurl.endswith('qcow2.xz'):
-                            common.pprint("Opening url %s for you to grab complete url for %s" % (templateurl,
-                                                                                                  template),
-                                          color='blue')
-                            webbrowser.open(templateurl, new=2, autoraise=True)
-                            templateurl = input("Copy Url:\n")
-                            if templateurl.strip() == '':
-                                common.pprint("Template %s skipped as url is empty!" % template, color='blue')
-                                continue
-                        result = k.add_image(templateurl, pool, cmd=cmd)
-                        common.handle_response(result, template, element='Template ', action='Added')
-            if dnsentries:
-                common.pprint("Deploying Dns Entry...", color='green')
-                dnsclients = {}
-                for dnsentry in dnsentries:
-                    dnsprofile = entries[dnsentry]
-                    dnsdomain = dnsprofile.get('domain')
-                    dnsnet = dnsprofile.get('net')
-                    dnsdomain = dnsprofile.get('domain', dnsnet)
-                    dnsip = dnsprofile.get('ip')
-                    dnsalias = dnsprofile.get('alias', [])
-                    host = dnsprofile.get('host')
-                    if host is None:
-                        z = k
-                    elif host in dnsclients:
-                        z = dnsclients[host]
-                    elif host in self.clients:
-                        # z = Kconfig(client=host, debug=args.debug, region=args.region, zone=args.zone)
-                        z = Kconfig(client=host).k
-                        dnsclients[host] = z
-                    else:
-                        common.pprint("Host %s not found. Skipping" % host, color='blue')
-                        return
-                    if dnsip is None:
-                        common.pprint("Missing ip. Skipping!", color='blue')
-                        return
-                    if dnsnet is None:
-                        common.pprint("Missing net. Skipping!", color='blue')
-                        return
-                    z.reserve_dns(name=dnsentry, nets=[dnsnet], domain=dnsdomain, ip=dnsip, alias=dnsalias, force=True)
-            if vmentries:
-                common.pprint("Deploying Vms...", color='green')
-                vmcounter = 0
-                hosts = {}
-                for name in vmentries:
-                    if len(vmentries) == 1 and 'name' in overrides:
-                        newname = overrides['name']
-                        profile = entries[name]
-                        name = newname
-                    else:
-                        profile = entries[name]
-                    host = profile.get('host')
-                    if host is None:
-                        z = k
-                    elif host in hosts:
-                        z = hosts[host]
-                    elif host in self.clients:
-                        z = Kconfig(client=host).k
-                        hosts[host] = z
-                    else:
-                        common.pprint("Host %s not found. Using default one" % host, color='blue')
-                        z = k
-                    if z.exists(name):
-                        common.pprint("VM %s skipped!" % name, color='blue')
-                        existingvms.append(name)
-                        continue
-                    if 'profile' in profile and profile['profile'] in vmprofiles:
-                        customprofile = vmprofiles[profile['profile']]
-                        profilename = profile['profile']
-                    else:
-                        customprofile = {}
-                        profilename = 'kvirt'
-                    if customprofile:
-                        customprofile.update(profile)
-                        profile = customprofile
-                    # cmds = default_cmds + customprofile.get('cmds', []) + profile.get('cmds', [])
-                    # ips = profile.get('ips')
-                    sharedkey = profile.get('sharedkey', self.sharedkey)
-                    if sharedkey:
-                        vmcounter += 1
-                        if not os.path.exists("%s.key" % plan) or not os.path.exists("%s.key.pub" % plan):
-                            os.system("ssh-keygen -qt rsa -N '' -f %s.key" % plan)
-                        publickey = open("%s.key.pub" % plan).read().strip()
-                        privatekey = open("%s.key" % plan).read().strip()
-                        if 'keys' not in profile:
-                            profile['keys'] = [publickey]
-                        else:
-                            profile['keys'].append(publickey)
-                        if 'files' in profile:
-                            profile['files'].append({'path': '/root/.ssh/id_rsa', 'content': privatekey})
-                            profile['files'].append({'path': '/root/.ssh/id_rsa.pub', 'content': publickey})
-                        else:
-                            profile['files'] = [{'path': '/root/.ssh/id_rsa', 'content': privatekey},
-                                                {'path': '/root/.ssh/id_rsa.pub', 'content': publickey}]
-                        if vmcounter >= len(vmentries):
-                            os.remove("%s.key.pub" % plan)
-                            os.remove("%s.key" % plan)
-                    currenthost = host if host is not None else self.client
-                    result = self.create_vm(name, profilename, overrides=overrides, customprofile=profile, k=z,
-                                            plan=plan, basedir=basedir, client=currenthost, onfly=onfly)
-                    common.handle_response(result, name)
-                    if result['result'] == 'success':
-                        newvms.append(name)
-                    _ansible = profile.get('ansible')
-                    if _ansible is not None:
-                        for element in _ansible:
-                            if 'playbook' not in element:
-                                continue
-                            playbook = element['playbook']
-                            if 'variables' in element:
-                                variables = element['variables']
-                            else:
-                                variables = None
-                            if 'verbose' in element:
-                                verbose = element['verbose']
-                            else:
-                                verbose = False
-                            ansibleutils.play(z, name, playbook=playbook, variables=variables, verbose=verbose)
-                    if delay > 0:
-                        sleep(delay)
-            if diskentries:
-                common.pprint("Deploying Disks...", color='green')
-            for disk in diskentries:
-                profile = entries[disk]
-                pool = profile.get('pool')
-                vms = profile.get('vms')
-                template = profile.get('template')
-                size = int(profile.get('size', 10))
-                if pool is None:
-                    common.pprint("Missing Key Pool for disk section %s. Not creating it..." % disk, color='red')
+            del entries['parameters']
+        vmentries = [entry for entry in entries if 'type' not in entries[entry] or entries[entry]['type'] == 'vm']
+        diskentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'disk']
+        networkentries = [entry for entry in entries
+                          if 'type' in entries[entry] and entries[entry]['type'] == 'network']
+        containerentries = [entry for entry in entries
+                            if 'type' in entries[entry] and entries[entry]['type'] == 'container']
+        ansibleentries = [entry for entry in entries
+                          if 'type' in entries[entry] and entries[entry]['type'] == 'ansible']
+        profileentries = [entry for entry in entries
+                          if 'type' in entries[entry] and entries[entry]['type'] == 'profile']
+        templateentries = [entry for entry in entries
+                           if 'type' in entries[entry] and entries[entry]['type'] == 'template']
+        poolentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'pool']
+        planentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'plan']
+        dnsentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'dns']
+        lbentries = [entry for entry in entries if 'type' in entries[entry] and
+                     entries[entry]['type'] == 'loadbalancer']
+        for p in profileentries:
+            vmprofiles[p] = entries[p]
+        if planentries:
+            common.pprint("Deploying Plans...", color='green')
+            for planentry in planentries:
+                details = entries[planentry]
+                planurl = details.get('url')
+                planfile = details.get('file')
+                if planurl is None and planfile is None:
+                    common.pprint("Missing Url/File for plan %s. Not creating it..." % planentry, color='blue')
                     continue
-                if vms is None:
-                    common.pprint("Missing or Incorrect Key Vms for disk section %s. Not creating it..." % disk,
-                                  color='red')
-                    continue
-                if k.disk_exists(pool, disk):
-                    common.pprint("Disk %s skipped!" % disk, color='blue')
-                    continue
-                if len(vms) > 1:
-                    shareable = True
+                elif planurl is not None:
+                    path = planentry
+                    if not planurl.endswith('yml'):
+                        planurl = "%s/kcli_plan.yml" % planurl
+                elif '/' in planfile:
+                    path = os.path.dirname(planfile)
+                    inputfile = os.path.basename(planfile)
                 else:
-                    shareable = False
-                newdisk = k.create_disk(disk, size=size, pool=pool, template=template, thin=False)
-                common.pprint("Disk %s deployed!" % disk, color='green')
-                for vm in vms:
-                    k.add_disk(name=vm, size=size, pool=pool, template=template, shareable=shareable, existing=newdisk,
-                               thin=False)
-            if containerentries:
-                common.pprint("Deploying Containers...", color='green')
-                label = "plan=%s" % plan
-                for container in containerentries:
-                    if dockerutils.exists_container(k, container):
-                        common.pprint("Container %s skipped!" % container, color='blue')
+                    path = '.'
+                    inputfile = planentry
+                if no_overrides and parameters:
+                    common.pprint("Using parameters from master plan in child ones", color='blue')
+                    for override in overrides:
+                        print("Using parameter %s: %s" % (override, overrides[override]))
+                self.plan(plan, ansible=False, url=planurl, path=path, autostart=False, container=False,
+                          noautostart=False, inputfile=inputfile, start=False, stop=False, delete=False,
+                          delay=delay, overrides=overrides)
+            return {'result': 'success'}
+        if networkentries:
+            common.pprint("Deploying Networks...", color='green')
+            for net in networkentries:
+                netprofile = entries[net]
+                if k.net_exists(net):
+                    common.pprint("Network %s skipped!" % net, color='blue')
+                    continue
+                cidr = netprofile.get('cidr')
+                nat = bool(netprofile.get('nat', True))
+                if cidr is None:
+                    common.pprint("Missing Cidr for network %s. Not creating it..." % net, color='blue')
+                    continue
+                dhcp = netprofile.get('dhcp', True)
+                domain = netprofile.get('domain')
+                pxe = netprofile.get('pxe')
+                vlan = netprofile.get('vlan')
+                result = k.create_network(name=net, cidr=cidr, dhcp=dhcp, nat=nat, domain=domain, plan=plan,
+                                          pxe=pxe, vlan=vlan)
+                common.handle_response(result, net, element='Network ')
+        if poolentries:
+            common.pprint("Deploying Pool...", color='green')
+            pools = k.list_pools()
+            for pool in poolentries:
+                if pool in pools:
+                    common.pprint("Pool %s skipped!" % pool, color='blue')
+                    continue
+                else:
+                    poolprofile = entries[pool]
+                    poolpath = poolprofile.get('path')
+                    if poolpath is None:
+                        common.pprint("Pool %s skipped as path is missing!" % pool, color='blue')
                         continue
-                    profile = entries[container]
-                    if 'profile' in profile and profile['profile'] in containerprofiles:
-                        customprofile = containerprofiles[profile['profile']]
+                    k.create_pool(pool, poolpath)
+        if templateentries:
+            common.pprint("Deploying Templates...", color='green')
+            templates = [os.path.basename(t) for t in k.volumes()]
+            for template in templateentries:
+                if template in templates:
+                    common.pprint("Template %s skipped!" % template, color='blue')
+                    continue
+                else:
+                    templateprofile = entries[template]
+                    pool = templateprofile.get('pool', self.pool)
+                    templateurl = templateprofile.get('url')
+                    cmd = templateprofile.get('cmd')
+                    if templateurl is None:
+                        common.pprint("Template %s skipped as url is missing!" % template, color='blue')
+                        continue
+                    if not templateurl.endswith('qcow2') and not templateurl.endswith('img')\
+                            and not templateurl.endswith('qc2') and not templateurl.endswith('qcow2.xz'):
+                        common.pprint("Opening url %s for you to grab complete url for %s" % (templateurl,
+                                                                                              template),
+                                      color='blue')
+                        webbrowser.open(templateurl, new=2, autoraise=True)
+                        templateurl = input("Copy Url:\n")
+                        if templateurl.strip() == '':
+                            common.pprint("Template %s skipped as url is empty!" % template, color='blue')
+                            continue
+                    result = k.add_image(templateurl, pool, cmd=cmd)
+                    common.handle_response(result, template, element='Template ', action='Added')
+        if dnsentries:
+            common.pprint("Deploying Dns Entry...", color='green')
+            dnsclients = {}
+            for dnsentry in dnsentries:
+                dnsprofile = entries[dnsentry]
+                dnsdomain = dnsprofile.get('domain')
+                dnsnet = dnsprofile.get('net')
+                dnsdomain = dnsprofile.get('domain', dnsnet)
+                dnsip = dnsprofile.get('ip')
+                dnsalias = dnsprofile.get('alias', [])
+                host = dnsprofile.get('host')
+                if host is None:
+                    z = k
+                elif host in dnsclients:
+                    z = dnsclients[host]
+                elif host in self.clients:
+                    # z = Kconfig(client=host, debug=args.debug, region=args.region, zone=args.zone)
+                    z = Kconfig(client=host).k
+                    dnsclients[host] = z
+                else:
+                    common.pprint("Host %s not found. Skipping" % host, color='blue')
+                    return
+                if dnsip is None:
+                    common.pprint("Missing ip. Skipping!", color='blue')
+                    return
+                if dnsnet is None:
+                    common.pprint("Missing net. Skipping!", color='blue')
+                    return
+                z.reserve_dns(name=dnsentry, nets=[dnsnet], domain=dnsdomain, ip=dnsip, alias=dnsalias, force=True)
+        if vmentries:
+            common.pprint("Deploying Vms...", color='green')
+            vmcounter = 0
+            hosts = {}
+            for name in vmentries:
+                if len(vmentries) == 1 and 'name' in overrides:
+                    newname = overrides['name']
+                    profile = entries[name]
+                    name = newname
+                else:
+                    profile = entries[name]
+                if 'basevm' in profile and profile['basevm'] in baseentries:
+                    appendkeys = ['disks', 'nets', 'files', 'scripts', 'cmds']
+                    baseprofile = baseentries[profile['basevm']]
+                    for key in baseprofile:
+                        if key not in profile:
+                            profile[key] = baseprofile[key]
+                        elif key in baseprofile and key in profile and key in appendkeys:
+                            profile[key] = baseprofile[key] + profile[key]
+                host = profile.get('host')
+                if host is None:
+                    z = k
+                elif host in hosts:
+                    z = hosts[host]
+                elif host in self.clients:
+                    z = Kconfig(client=host).k
+                    hosts[host] = z
+                else:
+                    common.pprint("Host %s not found. Using default one" % host, color='blue')
+                    z = k
+                if z.exists(name):
+                    common.pprint("VM %s skipped!" % name, color='blue')
+                    existingvms.append(name)
+                    continue
+                if 'profile' in profile and profile['profile'] in vmprofiles:
+                    customprofile = vmprofiles[profile['profile']]
+                    profilename = profile['profile']
+                else:
+                    customprofile = {}
+                    profilename = 'kvirt'
+                if customprofile:
+                    customprofile.update(profile)
+                    profile = customprofile
+                # cmds = default_cmds + customprofile.get('cmds', []) + profile.get('cmds', [])
+                # ips = profile.get('ips')
+                sharedkey = profile.get('sharedkey', self.sharedkey)
+                if sharedkey:
+                    vmcounter += 1
+                    if not os.path.exists("%s.key" % plan) or not os.path.exists("%s.key.pub" % plan):
+                        os.system("ssh-keygen -qt rsa -N '' -f %s.key" % plan)
+                    publickey = open("%s.key.pub" % plan).read().strip()
+                    privatekey = open("%s.key" % plan).read().strip()
+                    if 'keys' not in profile:
+                        profile['keys'] = [publickey]
                     else:
-                        customprofile = {}
-                    image = next((e for e in [profile.get('image'), profile.get('template'), customprofile.get('image'),
-                                              customprofile.get('template')] if e is not None), None)
-                    nets = next((e for e in [profile.get('nets'), customprofile.get('nets')] if e is not None), None)
-                    ports = next((e for e in [profile.get('ports'), customprofile.get('ports')] if e is not None), None)
-                    volumes = next((e for e in [profile.get('volumes'), profile.get('disks'),
-                                                customprofile.get('volumes'), customprofile.get('disks')]
+                        profile['keys'].append(publickey)
+                    if 'files' in profile:
+                        profile['files'].append({'path': '/root/.ssh/id_rsa', 'content': privatekey})
+                        profile['files'].append({'path': '/root/.ssh/id_rsa.pub', 'content': publickey})
+                    else:
+                        profile['files'] = [{'path': '/root/.ssh/id_rsa', 'content': privatekey},
+                                            {'path': '/root/.ssh/id_rsa.pub', 'content': publickey}]
+                    if vmcounter >= len(vmentries):
+                        os.remove("%s.key.pub" % plan)
+                        os.remove("%s.key" % plan)
+                currenthost = host if host is not None else self.client
+                result = self.create_vm(name, profilename, overrides=overrides, customprofile=profile, k=z,
+                                        plan=plan, basedir=basedir, client=currenthost, onfly=onfly)
+                common.handle_response(result, name)
+                if result['result'] == 'success':
+                    newvms.append(name)
+                _ansible = profile.get('ansible')
+                if _ansible is not None:
+                    for element in _ansible:
+                        if 'playbook' not in element:
+                            continue
+                        playbook = element['playbook']
+                        if 'variables' in element:
+                            variables = element['variables']
+                        else:
+                            variables = None
+                        if 'verbose' in element:
+                            verbose = element['verbose']
+                        else:
+                            verbose = False
+                        ansibleutils.play(z, name, playbook=playbook, variables=variables, verbose=verbose)
+                if delay > 0:
+                    sleep(delay)
+        if diskentries:
+            common.pprint("Deploying Disks...", color='green')
+        for disk in diskentries:
+            profile = entries[disk]
+            pool = profile.get('pool')
+            vms = profile.get('vms')
+            template = profile.get('template')
+            size = int(profile.get('size', 10))
+            if pool is None:
+                common.pprint("Missing Key Pool for disk section %s. Not creating it..." % disk, color='red')
+                continue
+            if vms is None:
+                common.pprint("Missing or Incorrect Key Vms for disk section %s. Not creating it..." % disk,
+                              color='red')
+                continue
+            if k.disk_exists(pool, disk):
+                common.pprint("Disk %s skipped!" % disk, color='blue')
+                continue
+            if len(vms) > 1:
+                shareable = True
+            else:
+                shareable = False
+            newdisk = k.create_disk(disk, size=size, pool=pool, template=template, thin=False)
+            common.pprint("Disk %s deployed!" % disk, color='green')
+            for vm in vms:
+                k.add_disk(name=vm, size=size, pool=pool, template=template, shareable=shareable, existing=newdisk,
+                           thin=False)
+        if containerentries:
+            common.pprint("Deploying Containers...", color='green')
+            label = "plan=%s" % plan
+            for container in containerentries:
+                if dockerutils.exists_container(k, container):
+                    common.pprint("Container %s skipped!" % container, color='blue')
+                    continue
+                profile = entries[container]
+                if 'profile' in profile and profile['profile'] in containerprofiles:
+                    customprofile = containerprofiles[profile['profile']]
+                else:
+                    customprofile = {}
+                image = next((e for e in [profile.get('image'), profile.get('template'), customprofile.get('image'),
+                                          customprofile.get('template')] if e is not None), None)
+                nets = next((e for e in [profile.get('nets'), customprofile.get('nets')] if e is not None), None)
+                ports = next((e for e in [profile.get('ports'), customprofile.get('ports')] if e is not None), None)
+                volumes = next((e for e in [profile.get('volumes'), profile.get('disks'),
+                                            customprofile.get('volumes'), customprofile.get('disks')]
+                                if e is not None), None)
+                environment = next((e for e in [profile.get('environment'), customprofile.get('environment')]
                                     if e is not None), None)
-                    environment = next((e for e in [profile.get('environment'), customprofile.get('environment')]
-                                        if e is not None), None)
-                    cmd = next((e for e in [profile.get('cmd'), customprofile.get('cmd')] if e is not None), None)
-                    common.pprint("Container %s deployed!" % container, color='green')
-                    dockerutils.create_container(k, name=container, image=image, nets=nets, cmd=cmd, ports=ports,
-                                                 volumes=volumes, environment=environment, label=label)
-            if ansibleentries:
-                if not newvms:
+                cmd = next((e for e in [profile.get('cmd'), customprofile.get('cmd')] if e is not None), None)
+                common.pprint("Container %s deployed!" % container, color='green')
+                dockerutils.create_container(k, name=container, image=image, nets=nets, cmd=cmd, ports=ports,
+                                             volumes=volumes, environment=environment, label=label)
+        if ansibleentries:
+            if not newvms:
+                common.pprint("Ansible skipped as no new vm within playbook provisioned", color='blue')
+                return
+            for entry in sorted(ansibleentries):
+                _ansible = entries[entry]
+                if 'playbook' not in _ansible:
+                    common.pprint("Missing Playbook for ansible.Ignoring...", color='red')
+                    os._exit(1)
+                playbook = _ansible['playbook']
+                if 'verbose' in _ansible:
+                    verbose = _ansible['verbose']
+                else:
+                    verbose = False
+                if 'groups' in _ansible:
+                    groups = _ansible['groups']
+                else:
+                    groups = {}
+                vms = []
+                if 'vms' in _ansible:
+                    vms = _ansible['vms']
+                    for vm in vms:
+                        if vm not in newvms:
+                            vms.remove(vm)
+                else:
+                    vms = newvms
+                if not vms:
                     common.pprint("Ansible skipped as no new vm within playbook provisioned", color='blue')
                     return
-                for entry in sorted(ansibleentries):
-                    _ansible = entries[entry]
-                    if 'playbook' not in _ansible:
-                        common.pprint("Missing Playbook for ansible.Ignoring...", color='red')
-                        os._exit(1)
-                    playbook = _ansible['playbook']
-                    if 'verbose' in _ansible:
-                        verbose = _ansible['verbose']
-                    else:
-                        verbose = False
-                    if 'groups' in _ansible:
-                        groups = _ansible['groups']
-                    else:
-                        groups = {}
-                    vms = []
-                    if 'vms' in _ansible:
-                        vms = _ansible['vms']
-                        for vm in vms:
-                            if vm not in newvms:
-                                vms.remove(vm)
-                    else:
-                        vms = newvms
-                    if not vms:
-                        common.pprint("Ansible skipped as no new vm within playbook provisioned", color='blue')
-                        return
-                    ansibleutils.make_inventory(k, plan, newvms, tunnel=self.tunnel, groups=groups)
-                    ansiblecommand = "ansible-playbook"
-                    if verbose:
-                        ansiblecommand = "%s -vvv" % ansiblecommand
-                    ansibleconfig = os.path.expanduser('~/.ansible.cfg')
-                    with open(ansibleconfig, "w") as f:
-                        f.write("[ssh_connection]\nretries=10\n")
-                    print("Running: %s -i /tmp/%s.inv %s" % (ansiblecommand, plan, playbook))
-                    os.system("%s -i /tmp/%s.inv %s" % (ansiblecommand, plan, playbook))
+                ansibleutils.make_inventory(k, plan, newvms, tunnel=self.tunnel, groups=groups)
+                ansiblecommand = "ansible-playbook"
+                if verbose:
+                    ansiblecommand = "%s -vvv" % ansiblecommand
+                ansibleconfig = os.path.expanduser('~/.ansible.cfg')
+                with open(ansibleconfig, "w") as f:
+                    f.write("[ssh_connection]\nretries=10\n")
+                print("Running: %s -i /tmp/%s.inv %s" % (ansiblecommand, plan, playbook))
+                os.system("%s -i /tmp/%s.inv %s" % (ansiblecommand, plan, playbook))
         if ansible:
             common.pprint("Deploying Ansible Inventory...", color='green')
             if os.path.exists("/tmp/%s.inv" % plan):
@@ -1321,8 +1308,9 @@ class Kconfig(Kbaseconfig):
                     checkpath = details.get('checkpath', '/')
                     domain = details.get('domain')
                     lbvms = details.get('vms', [])
-                    self.handle_loadbalancer(lbentry, ports=ports, checkpath=checkpath, vms=lbvms, domain=domain,
-                                             plan=plan)
+                    lbnets = details.get('nets', ['default'])
+                    self.handle_loadbalancer(lbentry, nets=lbnets, ports=ports, checkpath=checkpath, vms=lbvms,
+                                             domain=domain, plan=plan)
         returndata = {'result': 'success', 'plan': plan}
         if newvms:
             returndata['newvms'] = newvms
@@ -1440,7 +1428,8 @@ class Kconfig(Kbaseconfig):
                 dest.add_image(url, pool, cmd=cmd)
         return {'result': 'success'}
 
-    def handle_loadbalancer(self, name, ports=[], checkpath='/', vms=[], delete=False, domain=None, plan=None):
+    def handle_loadbalancer(self, name, nets=['default'], ports=[], checkpath='/', vms=[], delete=False, domain=None,
+                            plan=None):
         name = nameutils.get_random_name().replace('_', '-') if name is None else name
         k = self.k
         if self.type in ['aws', 'gcp']:
@@ -1466,7 +1455,7 @@ class Kconfig(Kbaseconfig):
                     else:
                         break
                 vminfo.append({'name': vm, 'ip': ip})
-            overrides = {'name': name, 'vms': vminfo, 'ports': ports, 'checkpath': checkpath}
+            overrides = {'name': name, 'vms': vminfo, 'nets': nets, 'ports': ports, 'checkpath': checkpath}
             self.plan(plan, inputstring=haproxyplan, overrides=overrides)
 
     def list_loadbalancer(self):
@@ -1480,3 +1469,33 @@ class Kconfig(Kbaseconfig):
             return results
         else:
             return k.list_loadbalancers()
+
+    def process_inputfile(self, plan, basedir, inputfile, overrides={}):
+        basefile = None
+        env = Environment(loader=FileSystemLoader(basedir))
+        try:
+            templ = env.get_template(os.path.basename(inputfile))
+        except TemplateSyntaxError as e:
+            common.pprint("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message),
+                          color='red')
+            os._exit(1)
+        parameters = common.get_parameters(inputfile)
+        if parameters is not None:
+            parameters = yaml.load(parameters)['parameters']
+            for parameter in parameters:
+                if parameter == 'baseplan':
+                    basefile = parameters['baseplan']
+                    baseparameters = common.get_parameters(basefile)
+                    if baseparameters is not None:
+                        baseparameters = yaml.load(baseparameters)['parameters']
+                        for baseparameter in baseparameters:
+                            if baseparameter not in overrides and baseparameter not in parameters:
+                                overrides[baseparameter] = baseparameters[baseparameter]
+                elif parameter not in overrides:
+                    overrides[parameter] = parameters[parameter]
+        with open(inputfile, 'r') as entries:
+            overrides.update(self.overrides)
+            overrides.update({'plan': plan})
+            entries = templ.render(overrides)
+            entries = yaml.load(entries)
+        return entries, overrides, basefile
