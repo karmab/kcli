@@ -608,8 +608,8 @@ class Kvirt(object):
                   </devices>
                     %s
                     %s
-                    </domain>""" % (virttype, namespace, name, metadata, memory, numcpus, machine, disksxml, netxml,
-                                    isoxml, displayxml, serialxml, guestxml, cpuxml, qemuextraxml)
+                    </domain>""" % (virttype, namespace, name, metadata, memory, numcpus, machine,
+                                    disksxml, netxml, isoxml, displayxml, serialxml, guestxml, cpuxml, qemuextraxml)
         if self.debug:
             print(vmxml)
         conn.defineXML(vmxml)
@@ -775,6 +775,7 @@ class Kvirt(object):
 
         """
         conn = self.conn
+        print(dir(conn))
         status = {0: 'down', 1: 'up'}
         hostname = conn.getHostname()
         cpus = conn.getCPUMap()[0]
@@ -1645,22 +1646,27 @@ class Kvirt(object):
         :param memory:
         :return:
         """
-        common.pprint("Note it will only be effective upon next start", color='blue')
         conn = self.conn
         memory = str(int(memory) * 1024)
         try:
             vm = conn.lookupByName(name)
-            xml = vm.XMLDesc(0)
-            root = ET.fromstring(xml)
         except:
             print("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
+        xml = vm.XMLDesc(0)
+        root = ET.fromstring(xml)
         memorynode = list(root.getiterator('memory'))[0]
         memorynode.text = memory
         currentmemory = list(root.getiterator('currentMemory'))[0]
+        if vm.isActive():
+            common.pprint("Note it will only be effective upon next start", color='blue')
         currentmemory.text = memory
         newxml = ET.tostring(root)
         conn.defineXML(newxml.decode("utf-8"))
+        # diff = int(memory) - int(currentmemory.text)
+        # elif diff > 0:
+        #    xml = "<memory model='dimm'><target><size unit='KiB'>%s</size><node>0</node></target></memory>" % diff
+        #    vm.attachDeviceFlags(xml, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
         return {'result': 'success'}
 
     def update_iso(self, name, iso):
@@ -1767,6 +1773,13 @@ class Kvirt(object):
         if not thin:
             diskformat = 'raw'
         if pool is not None:
+            if '/' in pool:
+                pools = [p for p in conn.listStoragePools() if self.get_pool_path(p) == pool]
+                if not pools:
+                    print("Pool not found. Leaving....")
+                    return
+                else:
+                    pool = pools[0]
             pool = conn.storagePoolLookupByName(pool)
             poolxml = pool.XMLDesc(0)
             poolroot = ET.fromstring(poolxml)

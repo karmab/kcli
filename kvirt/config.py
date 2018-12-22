@@ -1169,25 +1169,62 @@ class Kconfig(Kbaseconfig):
                         currentdisks = currentvm['disks']
                         if 'template' in currentvm:
                             if 'template' in profile and currenttemplate != profile['template']:
-                                common.pprint("existing VM %s has a different template. skipped!" % name, color='blue')
+                                common.pprint("Existing VM %s has a different template. skipped!" % name, color='blue')
                                 continue
                         elif 'template' in profile:
-                            common.pprint("existing VM %s has a different template. skipped!" % name, color='blue')
+                            common.pprint("Existing VM %s has a different template. skipped!" % name, color='blue')
                             continue
                         if 'autostart' in profile and currentstart != profile['autostart']:
                             updated = True
-                            common.pprint("Updating auostart of %s" % name, color='green')
+                            common.pprint("Updating autostart of %s to %s" % (name, profile['autostart']),
+                                          color='green')
                             z.update_start(name, profile['autostart'])
                         if 'memory' in profile and currentmemory != profile['memory']:
                             updated = True
-                            common.pprint("Updating memory of %s" % name, color='green')
+                            common.pprint("Updating memory of %s to %s" % (name, profile['memory']), color='green')
                             z.update_memory(name, profile['memory'])
-                        if 'disks' in profile and len(currentdisks) != len(profile['disks']):
-                            updated = True
-                            common.pprint("Updating disks of %s" % name, color='green')
-                        if 'nets' in profile and len(currentnets) != len(profile['nets']):
-                            updated = True
-                            common.pprint("Updating nets of %s" % name, color='green')
+                        if 'disks' in profile:
+                            if len(currentdisks) < len(profile['disks']):
+                                updated = True
+                                common.pprint("Adding Disks to %s" % name, color='green')
+                                for disk in profile['disks'][len(currentdisks):]:
+                                    if isinstance(disk, int):
+                                        size = disk
+                                        pool = self.pool
+                                    elif isinstance(disk, str) and disk.isdigit():
+                                        size = int(disk)
+                                        pool = self.pool
+                                    elif isinstance(disk, dict):
+                                        size = disk.get('size', self.disksize)
+                                        diskpool = disk.get('pool', self.pool)
+                                    else:
+                                        continue
+                                    z.add_disk(name=name, size=size, pool=pool)
+                            if len(currentdisks) > len(profile['disks']):
+                                updated = True
+                                common.pprint("Removing Disks of %s" % name, color='green')
+                                for disk in currentdisks[len(currentdisks) - len(profile['disks']):]:
+                                    diskname = os.path.basename(disk['path'])
+                                    diskpool = os.path.dirname(disk['path'])
+                                    z.delete_disk(name=name, diskname=diskname, pool=diskpool)
+                        if 'nets' in profile:
+                            if len(currentnets) < len(profile['nets']):
+                                updated = True
+                                common.pprint("Adding Nics to %s" % name, color='green')
+                                for net in profile['nets'][len(currentnets):]:
+                                    if isinstance(net, str):
+                                        network = net
+                                    elif isinstance(net, dict):
+                                        network = net.get('name', self.network)
+                                    else:
+                                        continue
+                                    z.add_nic(name, network)
+                            if len(currentnets) > len(profile['nets']):
+                                updated = True
+                                common.pprint("Removing Nics of %s" % name, color='green')
+                                for net in range(len(currentnets) - len(profile['nets']), len(currentnets)):
+                                    interface = "eth%s" % net
+                                    z.delete_nic(name, interface)
                         if not updated:
                             common.pprint("VM %s skipped!" % name, color='blue')
                     existingvms.append(name)
