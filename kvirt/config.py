@@ -767,7 +767,7 @@ class Kconfig(Kbaseconfig):
 
     def plan(self, plan, ansible=False, url=None, path=None, autostart=False, container=False, noautostart=False,
              inputfile=None, inputstring=None, start=False, stop=False, delete=False, delay=0, force=True, overrides={},
-             info=False, snapshot=False, revert=False):
+             info=False, snapshot=False, revert=False, update=False):
         """Create/Delete/Stop/Start vms from plan file"""
         k = self.k
         no_overrides = not overrides
@@ -1146,10 +1146,6 @@ class Kconfig(Kbaseconfig):
                 else:
                     common.pprint("Host %s not found. Using default one" % host, color='blue')
                     z = k
-                if z.exists(name):
-                    common.pprint("VM %s skipped!" % name, color='blue')
-                    existingvms.append(name)
-                    continue
                 if 'profile' in profile and profile['profile'] in vmprofiles:
                     customprofile = vmprofiles[profile['profile']]
                     profilename = profile['profile']
@@ -1159,6 +1155,43 @@ class Kconfig(Kbaseconfig):
                 if customprofile:
                     customprofile.update(profile)
                     profile = customprofile
+                if z.exists(name):
+                    if not update:
+                        common.pprint("VM %s skipped!" % name, color='blue')
+                    else:
+                        updated = False
+                        currentvm = z.info(name)
+                        currentstart = currentvm['autostart']
+                        currentmemory = currentvm['memory']
+                        currenttemplate = currentvm.get('template')
+                        # currentnumcpus = currentvm['cpus']
+                        currentnets = currentvm['nets']
+                        currentdisks = currentvm['disks']
+                        if 'template' in currentvm:
+                            if 'template' in profile and currenttemplate != profile['template']:
+                                common.pprint("existing VM %s has a different template. skipped!" % name, color='blue')
+                                continue
+                        elif 'template' in profile:
+                            common.pprint("existing VM %s has a different template. skipped!" % name, color='blue')
+                            continue
+                        if 'autostart' in profile and currentstart != profile['autostart']:
+                            updated = True
+                            common.pprint("Updating auostart of %s" % name, color='green')
+                            z.update_start(name, profile['autostart'])
+                        if 'memory' in profile and currentmemory != profile['memory']:
+                            updated = True
+                            common.pprint("Updating memory of %s" % name, color='green')
+                            z.update_memory(name, profile['memory'])
+                        if 'disks' in profile and len(currentdisks) != len(profile['disks']):
+                            updated = True
+                            common.pprint("Updating disks of %s" % name, color='green')
+                        if 'nets' in profile and len(currentnets) != len(profile['nets']):
+                            updated = True
+                            common.pprint("Updating nets of %s" % name, color='green')
+                        if not updated:
+                            common.pprint("VM %s skipped!" % name, color='blue')
+                    existingvms.append(name)
+                    continue
                 # cmds = default_cmds + customprofile.get('cmds', []) + profile.get('cmds', [])
                 # ips = profile.get('ips')
                 sharedkey = profile.get('sharedkey', self.sharedkey)

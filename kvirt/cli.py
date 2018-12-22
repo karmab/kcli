@@ -760,6 +760,7 @@ def plan(args):
     delay = args.delay
     yes = args.yes
     info = args.info
+    update = args.update
     volumepath = args.volumepath
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
     if os.path.exists("/i_am_a_container"):
@@ -778,7 +779,7 @@ def plan(args):
     config.plan(plan, ansible=ansible, url=url, path=path, autostart=autostart,
                 container=container, noautostart=noautostart, inputfile=inputfile,
                 start=start, stop=stop, delete=delete, delay=delay, overrides=overrides, info=info, snapshot=snapshot,
-                revert=revert)
+                revert=revert, update=update)
     return 0
 
 
@@ -1240,7 +1241,8 @@ def cli():
     plan_parser.add_argument('--snapshot', action='store_true', help='snapshot all vms from plan')
     plan_parser.add_argument('-r', '--revert', action='store_true', help='revert snapshot of all vms from plan')
     plan_parser.add_argument('-s', '--start', action='store_true', help='start all vms from plan')
-    plan_parser.add_argument('-w', '--stop', action='store_true')
+    plan_parser.add_argument('--update', action='store_true', help='update existing vms of the plan')
+    plan_parser.add_argument('-w', '--stop', action='store_true', help='stop all vms from plan')
     plan_parser.add_argument('-v', '--volumepath', help='Volume Path (only used with kcli container)',
                              default='/workdir', metavar='VOLUMEPATH')
     plan_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')

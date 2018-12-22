@@ -957,7 +957,7 @@ class Kvirt(object):
         :param name:
         :return:
         """
-        starts = {0: 'no', 1: 'yes'}
+        starts = {0: False, 1: True}
         conn = self.conn
         if vm is None:
             try:
@@ -1645,6 +1645,7 @@ class Kvirt(object):
         :param memory:
         :return:
         """
+        common.pprint("Note it will only be effective upon next start", color='blue')
         conn = self.conn
         memory = str(int(memory) * 1024)
         try:
