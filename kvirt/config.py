@@ -489,9 +489,6 @@ class Kconfig(Kbaseconfig):
                 notifycmd += 'https://api.pushbullet.com/v2/pushes'
                 if not cmds:
                     cmds = [notifycmd]
-                elif 'reboot' in cmds:
-                    rebootindex = cmds.index('reboot')
-                    cmds.insert(rebootindex, notifycmd)
                 else:
                     cmds.append(notifycmd)
             else:
@@ -510,6 +507,10 @@ class Kconfig(Kbaseconfig):
                     files.append({'path': '/root/.ssh/id_rsa', 'content': privatekey})
                 else:
                     files = [{'path': '/root/.ssh/id_rsa', 'content': privatekey}]
+        if cmds and 'reboot' in cmds:
+            while 'reboot' in cmds:
+                cmds.remove('reboot')
+            cmds.append('reboot')
         result = k.create(name=name, plan=plan, profile=profilename, flavor=flavor, cpumodel=cpumodel,
                           cpuflags=cpuflags, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool,
                           template=template, disks=disks, disksize=disksize, diskthin=diskthin,
