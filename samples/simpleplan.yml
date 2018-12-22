@@ -9,7 +9,7 @@ vm1:
   reservehost: False
 vm2:
   memory: 512
-  numcpus: 1
+  numcpus: 2
   cloudinit: false
   nets: 
    - default
@@ -22,5 +22,5 @@ vm2:
    - echo this stuff works > /tmp/result.txt
 vm3:
   memory: 2048
-  numcpus: 1
+  numcpus: 6
   cloudinit: false

@@ -578,11 +578,13 @@ class Kvirt(object):
                       <source mode='bind'/>
                       <target type='virtio' name='org.qemu.guest_agent.0'/>
                       </channel>"""
+        # vcpuxml = "<vcpu>%d</vcpu>" % numcpus
+        vcpuxml = "<vcpu  placement='static' current='%d'>64</vcpu>" % (numcpus)
         vmxml = """<domain type='%s' %s>
                   <name>%s</name>
                   %s
                   <memory unit='MiB'>%d</memory>
-                  <vcpu>%d</vcpu>
+                  %s
                   <os>
                     <type arch='x86_64' machine='%s'>hvm</type>
                     <boot dev='hd'/>
@@ -608,7 +610,7 @@ class Kvirt(object):
                   </devices>
                     %s
                     %s
-                    </domain>""" % (virttype, namespace, name, metadata, memory, numcpus, machine,
+                    </domain>""" % (virttype, namespace, name, metadata, memory, vcpuxml, machine,
                                     disksxml, netxml, isoxml, displayxml, serialxml, guestxml, cpuxml, qemuextraxml)
         if self.debug:
             print(vmxml)
@@ -979,7 +981,11 @@ class Kvirt(object):
             memory = float(memory) / 1024
             memory = int(memory)
         numcpus = list(root.getiterator('vcpu'))[0]
-        numcpus = numcpus.text
+        cpuattributes = numcpus.attrib
+        if 'current' in cpuattributes:
+            numcpus = cpuattributes['current']
+        else:
+            numcpus = numcpus.text
         description = list(root.getiterator('description'))
         if description:
             description = description[0].text
@@ -1635,6 +1641,33 @@ class Kvirt(object):
             root.append(description)
         else:
             description.text = information
+        newxml = ET.tostring(root)
+        conn.defineXML(newxml.decode("utf-8"))
+        return {'result': 'success'}
+
+    def update_cpus(self, name, numcpus):
+        """
+
+        :param name:
+        :param numcpus:
+        :return:
+        """
+        conn = self.conn
+        try:
+            vm = conn.lookupByName(name)
+        except:
+            print("VM %s not found" % name)
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        xml = vm.XMLDesc(0)
+        root = ET.fromstring(xml)
+        cpunode = list(root.getiterator('vcpu'))[0]
+        cpuattributes = cpunode.attrib
+        if 'current' in cpuattributes and cpuattributes['current'] != numcpus and numcpus < int(cpunode.text):
+            vm.setVcpus(numcpus)
+            return {'result': 'success'}
+        cpunode.text = str(numcpus)
+        if vm.isActive():
+            common.pprint("Note it will only be effective upon next start", color='blue')
         newxml = ET.tostring(root)
         conn.defineXML(newxml.decode("utf-8"))
         return {'result': 'success'}

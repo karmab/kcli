@@ -1164,7 +1164,7 @@ class Kconfig(Kbaseconfig):
                         currentstart = currentvm['autostart']
                         currentmemory = currentvm['memory']
                         currenttemplate = currentvm.get('template')
-                        # currentnumcpus = currentvm['cpus']
+                        currentcpus = int(currentvm['cpus'])
                         currentnets = currentvm['nets']
                         currentdisks = currentvm['disks']
                         if 'template' in currentvm:
@@ -1183,6 +1183,10 @@ class Kconfig(Kbaseconfig):
                             updated = True
                             common.pprint("Updating memory of %s to %s" % (name, profile['memory']), color='green')
                             z.update_memory(name, profile['memory'])
+                        if 'numcpus' in profile and currentcpus != profile['numcpus']:
+                            updated = True
+                            common.pprint("Updating cpus of %s to %s" % (name, profile['numcpus']), color='green')
+                            z.update_cpus(name, profile['numcpus'])
                         if 'disks' in profile:
                             if len(currentdisks) < len(profile['disks']):
                                 updated = True
