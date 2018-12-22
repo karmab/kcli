@@ -509,7 +509,7 @@ class Kvirt(object):
                                   <qemu:arg value='-fw_cfg' />
                                   <qemu:arg value='name=opt/com.coreos/config,file=/tmp/ignition' />
                                   </qemu:commandline>"""
-            else:
+            elif template is not None:
                 cloudinitiso = "%s/%s.ISO" % (default_poolpath, name)
                 dtype = 'block' if '/dev' in diskpath else 'file'
                 dsource = 'dev' if '/dev' in diskpath else 'file'
