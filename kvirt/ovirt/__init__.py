@@ -822,7 +822,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         vm.update(vm=types.Vm(memory=memory))
         return {'result': 'success'}
 
-    def update_cpu(self, name, numcpus):
+    def update_cpus(self, name, numcpus):
         """
 
         :param name:

@@ -753,7 +753,7 @@ class Kbox(object):
         session.unlock_machine()
         return {'result': 'success'}
 
-    def update_cpu(self, name, numcpus):
+    def update_cpus(self, name, numcpus):
         """
 
         :param name:

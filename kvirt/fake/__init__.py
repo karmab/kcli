@@ -332,7 +332,7 @@ class Kfake(object):
         print("not implemented")
         return
 
-    def update_cpu(self, name, numcpus):
+    def update_cpus(self, name, numcpus):
         """
 
         :param name:

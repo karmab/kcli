@@ -593,7 +593,7 @@ def update(args):
         k.update_memory(name, memory)
     elif numcpus is not None:
         common.pprint("Updating numcpus of vm %s to %s..." % (name, numcpus), color='green')
-        k.update_cpu(name, numcpus)
+        k.update_cpus(name, numcpus)
     elif autostart:
         common.pprint("Setting autostart for vm %s..." % name, color='green')
         k.update_start(name, start=True)
