@@ -818,6 +818,8 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         vminfo = vmsearch[0]
         vm = self.vms_service.vm_service(vminfo.id)
+        if str(vm.status) == 'up':
+            common.pprint("Note it will only be effective upon next start", color='blue')
         memory = int(memory) * 1024 * 1024
         vm.update(vm=types.Vm(memory=memory))
         return {'result': 'success'}
@@ -829,15 +831,16 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         :param numcpus:
         :return:
         """
-        print("not implemented")
-        return {'result': 'success'}
         vmsearch = self.vms_service.list(search='name=%s' % name)
         if not vmsearch:
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         vminfo = vmsearch[0]
+        if str(vminfo.status) == 'up':
+            common.pprint("Note it will only be effective upon next start", color='blue')
         vm = self.vms_service.vm_service(vminfo.id)
-        vm.update(vm=types.Vm(types.Cpu(topology=types.CpuTopology(cores=int(numcpus)))))
+        cpu = types.Cpu(topology=types.CpuTopology(cores=numcpus, sockets=1))
+        vm.update(vm=types.Vm(cpu=cpu))
         return {'result': 'success'}
 
     def update_start(self, name, start=True):
