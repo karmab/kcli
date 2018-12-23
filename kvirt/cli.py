@@ -546,7 +546,6 @@ def clone(args):
 
 def update(args):
     """Update ip, memory or numcpus"""
-    name = args.name
     ip1 = args.ip1
     numcpus = args.numcpus
     memory = args.memory
@@ -563,57 +562,59 @@ def update(args):
     iso = args.iso
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone)
     k = config.k
-    if dns:
-        common.pprint("Creating Dns entry for %s..." % name, color='green')
-        if net is not None:
-            nets = [net]
-        else:
+    names = [common.get_lastvm(config.client)] if not args.names else args.names
+    for name in names:
+        if dns:
+            common.pprint("Creating Dns entry for %s..." % name, color='green')
+            if net is not None:
+                nets = [net]
+            else:
+                nets = k.vm_ports(name)
+            if nets and domain is None:
+                domain = nets[0]
+            if not nets:
+                return
+            else:
+                k.reserve_dns(name=name, nets=nets, domain=domain, ip=ip1)
+        elif ip1 is not None:
+            common.pprint("Updating ip of vm %s to %s..." % (name, ip1), color='green')
+            k.update_metadata(name, 'ip', ip1)
+        elif cloudinit:
+            common.pprint("Removing cloudinit information of vm %s" % name, color='green')
+            k.remove_cloudinit(name)
+            return
+        elif plan is not None:
+            common.pprint("Updating plan of vm %s to %s..." % (name, plan), color='green')
+            k.update_metadata(name, 'plan', plan)
+        elif template is not None:
+            common.pprint("Updating template of vm %s to %s..." % (name, template), color='green')
+            k.update_metadata(name, 'template', template)
+        elif memory is not None:
+            common.pprint("Updating memory of vm %s to %s..." % (name, memory), color='green')
+            k.update_memory(name, memory)
+        elif numcpus is not None:
+            common.pprint("Updating numcpus of vm %s to %s..." % (name, numcpus), color='green')
+            k.update_cpus(name, numcpus)
+        elif autostart:
+            common.pprint("Setting autostart for vm %s..." % name, color='green')
+            k.update_start(name, start=True)
+        elif noautostart:
+            common.pprint("Removing autostart for vm %s..." % name, color='green')
+            k.update_start(name, start=False)
+        elif information:
+            common.pprint("Setting information for vm %s..." % name, color='green')
+            k.update_information(name, information)
+        elif iso is not None:
+            common.pprint("Switching iso for vm %s to %s..." % (name, iso), color='green')
+            k.update_iso(name, iso)
+        elif host:
+            common.pprint("Creating Host entry for vm %s..." % name, color='green')
             nets = k.vm_ports(name)
-        if nets and domain is None:
-            domain = nets[0]
-        if not nets:
-            return
-        else:
-            k.reserve_dns(name=name, nets=nets, domain=domain, ip=ip1)
-    elif ip1 is not None:
-        common.pprint("Updating ip of vm %s to %s..." % (name, ip1), color='green')
-        k.update_metadata(name, 'ip', ip1)
-    elif cloudinit:
-        common.pprint("Removing cloudinit information of vm %s" % name, color='green')
-        k.remove_cloudinit(name)
-        return
-    elif plan is not None:
-        common.pprint("Updating plan of vm %s to %s..." % (name, plan), color='green')
-        k.update_metadata(name, 'plan', plan)
-    elif template is not None:
-        common.pprint("Updating template of vm %s to %s..." % (name, template), color='green')
-        k.update_metadata(name, 'template', template)
-    elif memory is not None:
-        common.pprint("Updating memory of vm %s to %s..." % (name, memory), color='green')
-        k.update_memory(name, memory)
-    elif numcpus is not None:
-        common.pprint("Updating numcpus of vm %s to %s..." % (name, numcpus), color='green')
-        k.update_cpus(name, numcpus)
-    elif autostart:
-        common.pprint("Setting autostart for vm %s..." % name, color='green')
-        k.update_start(name, start=True)
-    elif noautostart:
-        common.pprint("Removing autostart for vm %s..." % name, color='green')
-        k.update_start(name, start=False)
-    elif information:
-        common.pprint("Setting information for vm %s..." % name, color='green')
-        k.update_information(name, information)
-    elif iso is not None:
-        common.pprint("Switching iso for vm %s to %s..." % (name, iso), color='green')
-        k.update_iso(name, iso)
-    elif host:
-        common.pprint("Creating Host entry for vm %s..." % name, color='green')
-        nets = k.vm_ports(name)
-        if not nets:
-            return
-        if domain is None:
-            domain = nets[0]
-        k.reserve_host(name, nets, domain)
+            if not nets:
+                return
+            if domain is None:
+                domain = nets[0]
+            k.reserve_host(name, nets, domain)
 
 
 def disk(args):
@@ -1365,7 +1366,7 @@ def cli():
     update_parser.add_argument('-t', '--template', help='Template to set', metavar='TEMPLATE')
     update_parser.add_argument('--iso', help='Iso to set', metavar='ISO')
     update_parser.add_argument('--cloudinit', action='store_true', help='Remove Cloudinit Information from vm')
-    update_parser.add_argument('name', metavar='VMNAME')
+    update_parser.add_argument('names', help='VMNAMES', nargs='*')
     update_parser.set_defaults(func=update)
 
     vm_info = 'Create vm'

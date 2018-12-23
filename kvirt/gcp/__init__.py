@@ -732,8 +732,29 @@ class Kgcp(object):
         :param memory:
         :return:
         """
-        print("not implemented")
-        return
+        conn = self.conn
+        project = self.project
+        zone = self.zone
+        try:
+            vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
+        except Exception as e:
+            common.pprint("VM %s not found" % name, color='red')
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        if vm['status'] in ['RUNNING', 'STOPPING']:
+            common.pprint("Can't update memory of VM %s while up" % name, color='red')
+            return {'result': 'failure', 'reason': "VM %s up" % name}
+        machinetype = os.path.basename(vm['machineType'])
+        if 'custom' in machinetype:
+            currentcpus, currentmemory = machinetype.split('-')[1:]
+            if memory == currentmemory:
+                return {'result': 'success'}
+            url = "https://www.googleapis.com/compute/v1/projects/%s/zones/%s/machineTypes" % (project, zone)
+            newmachinetype = "%s/custom-%s-%s" % (url, currentcpus, memory)
+            body = {"machineType": newmachinetype}
+            conn.instances().setMachineType(project=project, zone=zone, instance=name, body=body).execute()
+        else:
+            common.pprint("No custom machine type found. Not updating memory of %s" % name, color='blue')
+        return {'result': 'success'}
 
     def update_cpus(self, name, numcpus):
         """
@@ -742,8 +763,29 @@ class Kgcp(object):
         :param numcpus:
         :return:
         """
-        print("not implemented")
-        return
+        conn = self.conn
+        project = self.project
+        zone = self.zone
+        try:
+            vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
+        except Exception as e:
+            common.pprint("VM %s not found" % name, color='red')
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        if vm['status'] in ['RUNNING', 'STOPPING']:
+            common.pprint("Can't update cpus of VM %s while up" % name, color='red')
+            return {'result': 'failure', 'reason': "VM %s up" % name}
+        machinetype = os.path.basename(vm['machineType'])
+        if 'custom' in machinetype:
+            currentcpus, currentmemory = machinetype.split('-')[1:]
+            if numcpus == currentcpus:
+                return {'result': 'success'}
+            url = "https://www.googleapis.com/compute/v1/projects/%s/zones/%s/machineTypes" % (project, zone)
+            newmachinetype = "%s/custom-%s-%s" % (url, numcpus, currentmemory)
+            body = {"machineType": newmachinetype}
+            conn.instances().setMachineType(project=project, zone=zone, instance=name, body=body).execute()
+        else:
+            common.pprint("No custom machine type found. Not updating memory of %s" % name)
+        return {'result': 'success'}
 
     def update_start(self, name, start=True):
         """
