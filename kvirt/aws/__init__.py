@@ -638,8 +638,8 @@ class Kaws(object):
                                            DryRun=False)
             return {'result': 'success'}
         else:
-            common.pprint("Couldnt find matching flavor for this amount of memory", color='red')
-            return {'result': 'failure', 'reason': "Couldnt find matching flavor for this amount of memory"}
+            common.pprint("Couldn't find matching flavor for this amount of memory", color='red')
+            return {'result': 'failure', 'reason': "Couldn't find matching flavor for this amount of memory"}
 
     def update_cpus(self, name, numcpus):
         """
@@ -667,8 +667,8 @@ class Kaws(object):
                                            DryRun=False)
             return {'result': 'success'}
         else:
-            common.pprint("Couldnt find matching flavor for this number of cpus", color='red')
-            return {'result': 'failure', 'reason': "Couldnt find matching flavor for this amount of memory"}
+            common.pprint("Couldn't find matching flavor for this number of cpus", color='red')
+            return {'result': 'failure', 'reason': "Couldn't find matching flavor for this number of cpus"}
 
     def update_start(self, name, start=True):
         """

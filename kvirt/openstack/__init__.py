@@ -565,7 +565,7 @@ class Kopenstack(object):
         metadata = vm.metadata
         metadata[metatype] = metavalue
         nova.servers.set_meta(vm.id, metadata)
-        return
+        return {'result': 'success'}
 
     def update_memory(self, name, memory):
         """
@@ -574,8 +574,39 @@ class Kopenstack(object):
         :param memory:
         :return:
         """
-        print("not implemented")
-        return
+        nova = self.nova
+        try:
+            vm = nova.servers.find(name=name)
+        except:
+            common.pprint("VM %s not found" % name, color='red')
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        currentflavor = nova.flavors.get(vm.flavor['id'])
+        if currentflavor.ram >= int(memory):
+            common.pprint("No need to resize", color='blue')
+            return {'result': 'success'}
+        allflavors = [f for f in nova.flavors.list() if f != currentflavor]
+        flavors = [flavor for flavor in allflavors if flavor.ram >= int(memory) and flavor.vcpus >= currentflavor.vcpus]
+        if flavors:
+            flavor = flavors[0]
+            common.pprint("Using flavor %s" % flavor.name)
+            vm.resize(flavor.id)
+            resizetimeout = 40
+            resizeruntime = 0
+            vmstatus = ''
+            while vmstatus != 'VERIFY_RESIZE':
+                if resizeruntime >= resizetimeout:
+                    common.pprint("Time out waiting for resize to finish", color='red')
+                    return {'result': 'failure', 'reason': "Time out waiting for resize to finish"}
+                vm = nova.servers.find(name=name)
+                vmstatus = vm.status
+                sleep(2)
+                common.pprint("Waiting for vm %s to be in verify_resize" % name)
+                resizeruntime += 2
+            vm.confirm_resize()
+            return {'result': 'success'}
+        else:
+            common.pprint("Couldn't find matching flavor for this amount of memory", color='red')
+            return {'result': 'failure', 'reason': "Couldn't find matching flavor for this amount of memory"}
 
     def update_cpus(self, name, numcpus):
         """
@@ -584,8 +615,39 @@ class Kopenstack(object):
         :param numcpus:
         :return:
         """
-        print("not implemented")
-        return
+        nova = self.nova
+        try:
+            vm = nova.servers.find(name=name)
+        except:
+            common.pprint("VM %s not found" % name, color='red')
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        currentflavor = nova.flavors.get(vm.flavor['id'])
+        if currentflavor.vcpus >= numcpus:
+            common.pprint("No need to resize", color='blue')
+            return {'result': 'success'}
+        allflavors = [f for f in nova.flavors.list() if f != currentflavor]
+        flavors = [flavor for flavor in allflavors if flavor.ram >= currentflavor.ram and flavor.vcpus >= numcpus]
+        if flavors:
+            flavor = flavors[0]
+            common.pprint("Using flavor %s" % flavor.name)
+            vm.resize(flavor.id)
+            resizetimeout = 40
+            resizeruntime = 0
+            vmstatus = ''
+            while vmstatus != 'VERIFY_RESIZE':
+                if resizeruntime >= resizetimeout:
+                    common.pprint("Time out waiting for resize to finish", color='red')
+                    return {'result': 'failure', 'reason': "Time out waiting for resize to finish"}
+                vm = nova.servers.find(name=name)
+                vmstatus = vm.status
+                sleep(2)
+                common.pprint("Waiting for vm %s to be in verify_resize" % name)
+                resizeruntime += 2
+            vm.confirm_resize()
+            return {'result': 'success'}
+        else:
+            common.pprint("Couldn't find matching flavor for this number of cpus", color='red')
+            return {'result': 'failure', 'reason': "Couldn't find matching flavor for this number of cpus"}
 
     def update_start(self, name, start=True):
         """
