@@ -1656,21 +1656,30 @@ class Kvirt(object):
         try:
             vm = conn.lookupByName(name)
         except:
-            print("VM %s not found" % name)
+            common.print("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         xml = vm.XMLDesc(0)
         root = ET.fromstring(xml)
         cpunode = list(root.getiterator('vcpu'))[0]
         cpuattributes = cpunode.attrib
-        if 'current' in cpuattributes and cpuattributes['current'] != numcpus and numcpus < int(cpunode.text):
-            vm.setVcpus(numcpus)
+        if not vm.isActive():
+            cpunode.text = str(numcpus)
+            newxml = ET.tostring(root)
+            conn.defineXML(newxml.decode("utf-8"))
             return {'result': 'success'}
-        cpunode.text = str(numcpus)
-        if vm.isActive():
+        elif 'current' in cpuattributes and cpuattributes['current'] != numcpus:
+            if numcpus < int(cpunode.text):
+                common.pprint("Can't remove cpus while vm is up", color='red')
+                return {'result': 'failure', 'reason': "VM %s not found" % name}
+            else:
+                vm.setVcpus(numcpus)
+                return {'result': 'success'}
+        else:
             common.pprint("Note it will only be effective upon next start", color='blue')
-        newxml = ET.tostring(root)
-        conn.defineXML(newxml.decode("utf-8"))
-        return {'result': 'success'}
+            cpunode.text = str(numcpus)
+            newxml = ET.tostring(root)
+            conn.defineXML(newxml.decode("utf-8"))
+            return {'result': 'success'}
 
     def update_memory(self, name, memory):
         """
