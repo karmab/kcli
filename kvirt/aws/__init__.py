@@ -619,8 +619,27 @@ class Kaws(object):
         :param memory:
         :return:
         """
-        print("not implemented")
-        return
+        conn = self.conn
+        try:
+            Filters = {'Name': "tag:Name", 'Values': [name]}
+            vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
+        except:
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        state = vm['State']['Name']
+        if state != 'stopped':
+            common.pprint("Can't update memory of VM %s while up" % name, color='red')
+            return {'result': 'failure', 'reason': "VM %s up" % name}
+        instanceid = vm['InstanceId']
+        instancetype = [f for f in static_flavors if static_flavors[f]['memory'] >= int(memory)]
+        if instancetype:
+            flavor = instancetype[0]
+            common.pprint("Using flavor %s" % flavor)
+            conn.modify_instance_attribute(InstanceId=instanceid, Attribute='instanceType', Value=flavor,
+                                           DryRun=False)
+            return {'result': 'success'}
+        else:
+            common.pprint("Couldnt find matching flavor for this amount of memory", color='red')
+            return {'result': 'failure', 'reason': "Couldnt find matching flavor for this amount of memory"}
 
     def update_cpus(self, name, numcpus):
         """
@@ -629,8 +648,27 @@ class Kaws(object):
         :param numcpus:
         :return:
         """
-        print("not implemented")
-        return
+        conn = self.conn
+        try:
+            Filters = {'Name': "tag:Name", 'Values': [name]}
+            vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
+        except:
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        instanceid = vm['InstanceId']
+        state = vm['State']['Name']
+        if state != 'stopped':
+            common.pprint("Can't update cpus of VM %s while up" % name, color='red')
+            return {'result': 'failure', 'reason': "VM %s up" % name}
+        instancetype = [f for f in static_flavors if static_flavors[f]['cpus'] >= numcpus]
+        if instancetype:
+            flavor = instancetype[0]
+            common.pprint("Using flavor %s" % flavor)
+            conn.modify_instance_attribute(InstanceId=instanceid, Attribute='instanceType', Value=flavor,
+                                           DryRun=False)
+            return {'result': 'success'}
+        else:
+            common.pprint("Couldnt find matching flavor for this number of cpus", color='red')
+            return {'result': 'failure', 'reason': "Couldnt find matching flavor for this amount of memory"}
 
     def update_start(self, name, start=True):
         """
