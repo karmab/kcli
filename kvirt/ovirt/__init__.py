@@ -434,6 +434,7 @@ class KOvirt(object):
 
         """
         api = self.conn.system_service().get()
+        system_service = self.conn.system_service()
         # vmslist = self.vms_service.list()
         # print("Vms Running: %s" % len(vmslist))
         print("Version: %s" % api.product_info.version.full_version)
@@ -441,8 +442,14 @@ class KOvirt(object):
             print("Vms Running: %s" % api.summary.vms.total)
         if api.summary.hosts is not None:
             print("Hosts: %d" % api.summary.hosts.total)
+        hosts_service = self.conn.system_service().hosts_service()
+        for host in hosts_service.list():
+            print("Host: %s" % host.name)
         if api.summary.storage_domains is not None:
             print("Storage Domains: %d" % api.summary.storage_domains.total)
+        sds_service = system_service.storage_domains_service()
+        for sd in sds_service.list():
+            print("Storage Domain: %s" % sd.name)
 
     def status(self, name):
         """
@@ -682,6 +689,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         attachments = self.vms_service.vm_service(vm.id).disk_attachments_service().list()
         for attachment in attachments:
             disk = conn.follow_link(attachment.disk)
+            # sds = disk.storage_domains
             device = disk.name
             disksize = int(disk.provisioned_size / 2**30)
             diskformat = disk.format
@@ -930,6 +938,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         sds_service = system_service.storage_domains_service()
         poolcheck = sds_service.list(search='name=%s' % pool)
         if not poolcheck:
+            common.pprint("Pool %s not found" % pool, color='red')
             return {'result': 'failure', 'reason': "Pool %s not found" % pool}
         vmsearch = self.vms_service.list(search='name=%s' % name)
         if not vmsearch:
@@ -969,8 +978,28 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         :param pool:
         :return:
         """
-        print("not implemented")
-        return
+        vmsearch = self.vms_service.list(search='name=%s' % name)
+        if not vmsearch:
+            common.pprint("VM %s not found" % name, color='red')
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        vm = self.vms_service.vm_service(vmsearch[0].id)
+        disk_attachments_service = vm.disk_attachments_service()
+        for disk in disk_attachments_service.list():
+            if disk.id == diskname:
+                disk_attachment_service = disk_attachments_service.attachment_service(disk.id)
+                disk_attachment_service.update(types.DiskAttachment(active=False))
+                while True:
+                    sleep(5)
+                    disk_attachment = disk_attachment_service.get()
+                    if not disk_attachment.active:
+                        break
+                disks_service = self.conn.system_service().disks_service()
+                my_disk = disks_service.list(search='id=%s' % disk.disk.id)[0]
+                disk_service = disks_service.disk_service(my_disk.id)
+                disk_service.remove()
+                return {'result': 'success'}
+        common.pprint("Disk %s not found" % diskname, color='red')
+        return {'result': 'failure', 'reason': "Disk %s not found" % diskname}
 
     def list_disks(self):
         """
@@ -1265,7 +1294,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                 break
         tempvm_service = self.vms_service.vm_service(tempvm.id)
         _format = types.DiskFormat.COW
-        storagedomain = types.StorageDomain(name=pool)
+        storagedomain = types.Storaggetain(name=pool)
         disk_attachments = types.DiskAttachment(disk=types.Disk(id=disk_id, format=_format,
                                                                 storage_domains=[storagedomain]),
                                                 interface=types.DiskInterface.VIRTIO,
