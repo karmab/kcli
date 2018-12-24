@@ -1751,6 +1751,16 @@ class Kvirt(object):
         conn.defineXML(newxml.decode("utf-8"))
         return {'result': 'success'}
 
+    def update_flavor(self, name, flavor):
+        """
+
+        :param name:
+        :param flavor:
+        :return:
+        """
+        common.pprint("Not implemented", color='blue')
+        return {'result': 'success'}
+
     def remove_cloudinit(self, name):
         """
 

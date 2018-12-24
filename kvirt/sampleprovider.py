@@ -342,6 +342,16 @@ class Kbase(object):
         print("not implemented")
         return
 
+    def update_flavor(self, name, flavor):
+        """
+
+        :param name:
+        :param flavor:
+        :return:
+        """
+        print("Not implemented")
+        return {'result': 'success'}
+
     def create_disk(self, name, size, pool=None, thin=True, template=None):
         """
 

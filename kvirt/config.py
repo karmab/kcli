@@ -1167,6 +1167,7 @@ class Kconfig(Kbaseconfig):
                         currentcpus = int(currentvm['cpus'])
                         currentnets = currentvm['nets']
                         currentdisks = currentvm['disks']
+                        currentflavor = currentvm.get('flavor')
                         if 'template' in currentvm:
                             if 'template' in profile and currenttemplate != profile['template']:
                                 common.pprint("Existing VM %s has a different template. skipped!" % name, color='blue')
@@ -1179,14 +1180,19 @@ class Kconfig(Kbaseconfig):
                             common.pprint("Updating autostart of %s to %s" % (name, profile['autostart']),
                                           color='green')
                             z.update_start(name, profile['autostart'])
-                        if 'memory' in profile and currentmemory != profile['memory']:
+                        if 'flavor' in profile and currentflavor != profile['flavor']:
                             updated = True
-                            common.pprint("Updating memory of %s to %s" % (name, profile['memory']), color='green')
-                            z.update_memory(name, profile['memory'])
-                        if 'numcpus' in profile and currentcpus != profile['numcpus']:
-                            updated = True
-                            common.pprint("Updating cpus of %s to %s" % (name, profile['numcpus']), color='green')
-                            z.update_cpus(name, profile['numcpus'])
+                            common.pprint("Updating flavor of %s to %s" % (name, profile['flavor']), color='green')
+                            z.update_flavor(name, profile['flavor'])
+                        else:
+                            if 'memory' in profile and currentmemory != profile['memory']:
+                                updated = True
+                                common.pprint("Updating memory of %s to %s" % (name, profile['memory']), color='green')
+                                z.update_memory(name, profile['memory'])
+                            if 'numcpus' in profile and currentcpus != profile['numcpus']:
+                                updated = True
+                                common.pprint("Updating cpus of %s to %s" % (name, profile['numcpus']), color='green')
+                                z.update_cpus(name, profile['numcpus'])
                         if 'disks' in profile:
                             if len(currentdisks) < len(profile['disks']):
                                 updated = True

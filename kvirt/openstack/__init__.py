@@ -608,6 +608,44 @@ class Kopenstack(object):
             common.pprint("Couldn't find matching flavor for this amount of memory", color='red')
             return {'result': 'failure', 'reason': "Couldn't find matching flavor for this amount of memory"}
 
+    def update_flavor(self, name, flavor):
+        """
+
+        :param name:
+        :param flavor:
+        :return:
+        """
+        nova = self.nova
+        try:
+            vm = nova.servers.find(name=name)
+        except:
+            common.pprint("VM %s not found" % name, color='red')
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        currentflavor = nova.flavors.get(vm.flavor['id'])
+        if currentflavor == flavor:
+            return {'result': 'success'}
+        flavors = [f for f in nova.flavors.list() if f.name == flavor]
+        if not flavors:
+            common.pprint("Flavor %s doesn't exist" % flavor, color='red')
+            return {'result': 'failure', 'reason': "Flavor %s doesn't exist" % flavor}
+        else:
+            flavorid = flavors[0].id
+            vm.resize(flavorid)
+            resizetimeout = 40
+            resizeruntime = 0
+            vmstatus = ''
+            while vmstatus != 'VERIFY_RESIZE':
+                if resizeruntime >= resizetimeout:
+                    common.pprint("Time out waiting for resize to finish", color='red')
+                    return {'result': 'failure', 'reason': "Time out waiting for resize to finish"}
+                vm = nova.servers.find(name=name)
+                vmstatus = vm.status
+                sleep(2)
+                common.pprint("Waiting for vm %s to be in verify_resize" % name)
+                resizeruntime += 2
+            vm.confirm_resize()
+            return {'result': 'success'}
+
     def update_cpus(self, name, numcpus):
         """
 

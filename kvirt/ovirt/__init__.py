@@ -889,6 +889,16 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             return {'result': 'failure', 'reason': "Iso %s not found" % iso}
         return {'result': 'success'}
 
+    def update_flavor(self, name, flavor):
+        """
+
+        :param name:
+        :param flavor:
+        :return:
+        """
+        print("Not implemented")
+        return {'result': 'success'}
+
     def create_disk(self, name, size, pool=None, thin=True, template=None):
         """
 

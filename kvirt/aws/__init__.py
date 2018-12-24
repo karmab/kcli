@@ -641,6 +641,30 @@ class Kaws(object):
             common.pprint("Couldn't find matching flavor for this amount of memory", color='red')
             return {'result': 'failure', 'reason': "Couldn't find matching flavor for this amount of memory"}
 
+    def update_flavor(self, name, flavor):
+        """
+
+        :param name:
+        :param flavor:
+        :return:
+        """
+        conn = self.conn
+        try:
+            Filters = {'Name': "tag:Name", 'Values': [name]}
+            vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
+        except:
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        instanceid = vm['InstanceId']
+        instancetype = vm['InstanceType']
+        state = vm['State']['Name']
+        if state != 'stopped':
+            common.pprint("Can't update cpus of VM %s while up" % name, color='red')
+            return {'result': 'failure', 'reason': "VM %s up" % name}
+        if instancetype != flavor:
+            conn.modify_instance_attribute(InstanceId=instanceid, Attribute='instanceType', Value=flavor,
+                                           DryRun=False)
+        return {'result': 'success'}
+
     def update_cpus(self, name, numcpus):
         """
 

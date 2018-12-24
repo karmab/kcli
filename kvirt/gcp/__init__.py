@@ -725,6 +725,33 @@ class Kgcp(object):
         conn.instances().setMetadata(project=project, zone=zone, instance=name, body=metadata_body).execute()
         return 0
 
+    def update_flavor(self, name, flavor):
+        """
+
+        :param name:
+        :param memory:
+        :return:
+        """
+        conn = self.conn
+        project = self.project
+        zone = self.zone
+        try:
+            vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
+        except Exception as e:
+            common.pprint("VM %s not found" % name, color='red')
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        if vm['status'] in ['RUNNING', 'STOPPING']:
+            common.pprint("Can't update flavor of VM %s while up" % name, color='red')
+            return {'result': 'failure', 'reason': "VM %s up" % name}
+        machinetype = os.path.basename(vm['machineType'])
+        if machinetype == flavor:
+            return {'result': 'success'}
+        else:
+            url = "https://www.googleapis.com/compute/v1/projects/%s/zones/%s/machineTypes/%s" % (project, zone, flavor)
+            body = {"machineType": url}
+            conn.instances().setMachineType(project=project, zone=zone, instance=name, body=body).execute()
+        return {'result': 'success'}
+
     def update_memory(self, name, memory):
         """
 

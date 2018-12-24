@@ -547,6 +547,7 @@ def clone(args):
 def update(args):
     """Update ip, memory or numcpus"""
     ip1 = args.ip1
+    flavor = args.flavor
     numcpus = args.numcpus
     memory = args.memory
     plan = args.plan
@@ -607,6 +608,9 @@ def update(args):
         elif iso is not None:
             common.pprint("Switching iso for vm %s to %s..." % (name, iso), color='green')
             k.update_iso(name, iso)
+        elif flavor is not None:
+            common.pprint("Updating flavor of vm %s to %s..." % (name, flavor), color='green')
+            k.update_flavor(name, flavor)
         elif host:
             common.pprint("Creating Host entry for vm %s..." % name, color='green')
             nets = k.vm_ports(name)
@@ -1355,6 +1359,7 @@ def cli():
     update_parser.add_argument('-1', '--ip1', help='Ip to set', metavar='IP1')
     update_parser.add_argument('-i', '--information', '--info', help='Information to set', metavar='INFORMATION')
     update_parser.add_argument('--network', '--net', help='Network to update', metavar='NETWORK')
+    update_parser.add_argument('-f', '--flavor', help='Flavor to set', metavar='Flavor')
     update_parser.add_argument('-m', '--memory', help='Memory to set', metavar='MEMORY')
     update_parser.add_argument('-c', '--numcpus', type=int, help='Number of cpus to set', metavar='NUMCPUS')
     update_parser.add_argument('-p', '--plan', help='Plan Name to set', metavar='PLAN')
