@@ -994,8 +994,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                     if not disk_attachment.active:
                         break
                 disks_service = self.conn.system_service().disks_service()
-                my_disk = disks_service.list(search='id=%s' % disk.disk.id)[0]
-                disk_service = disks_service.disk_service(my_disk.id)
+                disk_service = disks_service.disk_service(disk.disk.id)
                 disk_service.remove()
                 return {'result': 'success'}
         common.pprint("Disk %s not found" % diskname, color='red')
@@ -1055,8 +1054,20 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         :param interface:
         :return:
         """
-        print("not implemented")
-        return
+        vmsearch = self.vms_service.list(search='name=%s' % name)
+        if not vmsearch:
+            common.pprint("VM %s not found" % name, color='red')
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        vmid = vmsearch[0].id
+        for nic in self.vms_service.vm_service(vmid).nics_service().list():
+            if nic.name == interface:
+                nics_service = self.vms_service.vm_service(vmid).nics_service()
+                nic_service = nics_service.nic_service(nic.id)
+                nic_service.remove()
+                return {'result': 'success'}
+        common.pprint("VM %s not found" % name, color='red')
+        return {'result': 'failure', 'reason': "VM %s not found" % name}
+
 
 # should return (user, ip)
     def _ssh_credentials(self, name):
