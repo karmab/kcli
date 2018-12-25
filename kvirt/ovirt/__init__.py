@@ -689,14 +689,14 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         attachments = self.vms_service.vm_service(vm.id).disk_attachments_service().list()
         for attachment in attachments:
             disk = conn.follow_link(attachment.disk)
-            # sds = disk.storage_domains
+            storagedomain = conn.follow_link(disk.storage_domains[0]).name if disk.storage_domains else ''
             device = disk.name
             disksize = int(disk.provisioned_size / 2**30)
             diskformat = disk.format
             drivertype = disk.content_type
             path = disk.id
             yamlinfo['disks'].append({'device': device, 'size': disksize, 'format': diskformat, 'type': drivertype,
-                                      'path': path})
+                                      'path': "%s/%s" % (storagedomain, path)})
 
         return yamlinfo
 

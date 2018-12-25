@@ -777,7 +777,6 @@ class Kvirt(object):
 
         """
         conn = self.conn
-        print(dir(conn))
         status = {0: 'down', 1: 'up'}
         hostname = conn.getHostname()
         cpus = conn.getCPUMap()[0]
