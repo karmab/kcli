@@ -57,16 +57,19 @@ class Kvirt(object):
     """
 
     """
-    def __init__(self, host='127.0.0.1', port=None, user='root', protocol='ssh', url=None, debug=False, insecure=False):
+    def __init__(self, host='127.0.0.1', port=None, user='root', protocol='ssh', url=None, debug=False, insecure=False,
+                 session=False):
         if url is None:
+            socketf = '/var/run/libvirt/libvirt-sock' if not session else '/home/%s/.cache/libvirt/libvirt-sock' % user
+            conntype = 'system' if not session else 'session'
             if host == '127.0.0.1' or host == 'localhost':
-                url = "qemu:///system"
+                url = "qemu:///%s" % conntype
             elif port:
-                url = "qemu+%s://%s@%s:%s/system?socket=/var/run/libvirt/libvirt-sock" % (protocol, user, host, port)
+                url = "qemu+%s://%s@%s:%s/%s?socket=%s" % (protocol, user, host, port, conntype, socketf)
             elif protocol == 'ssh':
-                url = "qemu+%s://%s@%s/system?socket=/var/run/libvirt/libvirt-sock" % (protocol, user, host)
+                url = "qemu+%s://%s@%s/%s?socket=%s" % (protocol, user, host, conntype, socketf)
             else:
-                url = "qemu:///system"
+                url = "qemu:///%s" % conntype
             if url.startswith('qemu+ssh'):
                 if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
                     url = "%s&no_verify=1&keyfile=%s" % (url, os.path.expanduser("~/.kcli/id_rsa"))
@@ -196,6 +199,11 @@ class Kvirt(object):
         :return:
         """
         namespace = ''
+        ignition = False
+        usermode = False
+        if 'session' in self.url:
+            usermode = True
+            userport = common.get_free_port()
         if self.exists(name):
             return {'result': 'failure', 'reason': "VM %s already exists" % name}
         # if start and self.no_memory(memory):
@@ -214,6 +222,8 @@ class Kvirt(object):
         <kvirt:info xmlns:kvirt="kvirt">
         <kvirt:creationdate>%s</kvirt:creationdate>
         <kvirt:profile>%s</kvirt:profile>""" % (creationdate, profile)
+        if usermode:
+            metadata = """%s<kvirt:ip >%s</kvirt:ip>""" % (metadata, userport)
         if domain is not None:
             metadata = """%s
                         <kvirt:domain>%s</kvirt:domain>""" % (metadata, domain)
@@ -400,6 +410,8 @@ class Kvirt(object):
         etcd = None
         guestagent = False
         for index, net in enumerate(nets):
+            if usermode:
+                continue
             ovs = False
             macxml = ''
             nettype = 'virtio'
@@ -427,20 +439,22 @@ class Kvirt(object):
                 nets[index]['ip'] = ips[index]
                 nets[index]['netmask'] = netmasks[index]
             if netname in bridges or ovs:
-                sourcenet = 'bridge'
+                iftype = 'bridge'
+                sourcexml = "<source bridge='%s'/>" % netname
                 guestagent = True
             elif netname in networks:
-                sourcenet = 'network'
+                iftype = 'network'
+                sourcexml = "<source network='%s'/>" % netname
             else:
                 return {'result': 'failure', 'reason': "Invalid network %s" % netname}
             ovsxml = "<virtualport type='openvswitch'/>" if ovs else ''
             netxml = """%s
                      <interface type='%s'>
                      %s
-                     <source %s='%s'/>
+                     %s
                      %s
                      <model type='%s'/>
-                     </interface>""" % (netxml, sourcenet, macxml, sourcenet, netname, ovsxml, nettype)
+                     </interface>""" % (netxml, iftype, macxml, sourcexml, ovsxml, nettype)
         metadata = """%s
                     <kvirt:plan>%s</kvirt:plan>
                     </kvirt:info>
@@ -464,7 +478,6 @@ class Kvirt(object):
                 if subindex:
                     index = subindex.pop() + 1
             cmds = cmds[:index] + gcmds + cmds[index:]
-        qemuextraxml = ''
         isoxml = ''
         if iso is not None:
             try:
@@ -484,7 +497,7 @@ class Kvirt(object):
                     </disk>""" % iso
         if cloudinit:
             if template is not None and (template.startswith('coreos') or template.startswith('rhcos')):
-                namespace = "xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'"
+                ignition = True
                 ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                                domain=domain, reserveip=reserveip, files=files,
                                                enableroot=enableroot, overrides=overrides, etcd=etcd)
@@ -505,10 +518,6 @@ class Kvirt(object):
                     code = os.system(ignitioncmd)
                     if code != 0:
                         return {'result': 'failure', 'reason': "Unable to creation ignition data file in hypervisor"}
-                qemuextraxml = """<qemu:commandline>
-                                  <qemu:arg value='-fw_cfg' />
-                                  <qemu:arg value='name=opt/com.coreos/config,file=/tmp/ignition' />
-                                  </qemu:commandline>"""
             elif template is not None:
                 cloudinitiso = "%s/%s.ISO" % (default_poolpath, name)
                 dtype = 'block' if '/dev' in diskpath else 'file'
@@ -580,6 +589,23 @@ class Kvirt(object):
                       </channel>"""
         # vcpuxml = "<vcpu>%d</vcpu>" % numcpus
         vcpuxml = "<vcpu  placement='static' current='%d'>64</vcpu>" % (numcpus)
+        qemuextraxml = ''
+        if ignition or usermode:
+            namespace = "xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'"
+            ignitionxml = ""
+            if ignition:
+                ignitionxml = """<qemu:arg value='-fw_cfg' />
+                                  <qemu:arg value='name=opt/com.coreos/config,file=/tmp/ignition' />"""
+            usermodexml = ""
+            if usermode:
+                usermodexml = """<qemu:arg value='-netdev'/>
+                                 <qemu:arg value='user,id=mynet.0,net=10.0.10.0/24,hostfwd=tcp::%s-:22'/>
+                                 <qemu:arg value='-device'/>
+                                 <qemu:arg value='virtio-net-pci,netdev=mynet.0'/>""" % userport
+            qemuextraxml = """<qemu:commandline>
+                              %s
+                              %s
+                              </qemu:commandline>""" % (ignitionxml, usermodexml)
         vmxml = """<domain type='%s' %s>
                   <name>%s</name>
                   %s
@@ -1042,6 +1068,9 @@ class Kvirt(object):
             if networktype == 'bridge':
                 network = element.find('source').get('bridge')
                 network_type = 'bridge'
+            elif networktype == 'user':
+                network = 'user'
+                network_type = 'user'
             else:
                 network = element.find('source').get('network')
                 network_type = 'routed'
@@ -1061,12 +1090,12 @@ class Kvirt(object):
                             ip = matchip
                             break
             yamlinfo['nets'].append({'device': device, 'mac': mac, 'net': network, 'type': network_type})
-            # if vm.isActive():
-            #    if mac in leases:
-            #        yamlinfo['ip'] = leases[mac]
             nicnumber = nicnumber + 1
         if ip is not None:
             yamlinfo['ip'] = ip
+            if '.' not in ip:
+                usernetinfo = {'device': 'eth%s' % len(yamlinfo['nets']), 'mac': 'N/A', 'net': 'user', 'type': 'user'}
+                yamlinfo['nets'].append(usernetinfo)
         for element in list(root.getiterator('disk')):
             disktype = element.get('device')
             if disktype == 'cdrom':
@@ -1119,12 +1148,16 @@ class Kvirt(object):
             e = element.find('{kvirt}ip')
             if e is not None:
                 return e.text
-        nic = list(root.getiterator('interface'))[0]
-        mac = nic.find('mac').get('address')
-        if vm.isActive() and mac in leases:
-            return leases[mac]
-        else:
+        nics = list(root.getiterator('interface'))
+        if not nics:
             return None
+        else:
+            nic = nics[0]
+            mac = nic.find('mac').get('address')
+            if vm.isActive() and mac in leases:
+                return leases[mac]
+            else:
+                return None
 
     def volumes(self, iso=False):
         """
@@ -1261,7 +1294,7 @@ class Kvirt(object):
         for element in list(root.getiterator('interface')):
             mac = element.find('mac').get('address')
             networktype = element.get('type')
-            if networktype != 'bridge':
+            if networktype != 'bridge' and networktype != 'user':
                 network = element.find('source').get('network')
                 network = conn.networkLookupByName(network)
                 netxml = network.XMLDesc(0)
@@ -2086,22 +2119,24 @@ class Kvirt(object):
                 template = e.text
                 if template != '':
                     user = common.get_user(template)
-        nic = list(root.getiterator('interface'))[0]
-        mac = nic.find('mac').get('address')
-        if vm.isActive():
-            networktypes = [element.get('type') for element in list(root.getiterator('interface'))]
-            guestagent = vir_src_agent if 'bridge' in networktypes else vir_src_lease
-            try:
-                ifaces = vm.interfaceAddresses(guestagent, 0)
-                matches = [ifaces[x]['addrs'] for x in ifaces if ifaces[x]['hwaddr'] == mac]
-                if matches:
-                    for match in matches[0]:
-                        matchip = match['addr']
-                        if IPAddress(matchip).version == 4:
-                            ip = matchip
-                            break
-            except:
-                pass
+        nics = list(root.getiterator('interface'))
+        if nics:
+            nic = nics[0]
+            mac = nic.find('mac').get('address')
+            if vm.isActive():
+                networktypes = [element.get('type') for element in list(root.getiterator('interface'))]
+                guestagent = vir_src_agent if 'bridge' in networktypes else vir_src_lease
+                try:
+                    ifaces = vm.interfaceAddresses(guestagent, 0)
+                    matches = [ifaces[x]['addrs'] for x in ifaces if ifaces[x]['hwaddr'] == mac]
+                    if matches:
+                        for match in matches[0]:
+                            matchip = match['addr']
+                            if IPAddress(matchip).version == 4:
+                                ip = matchip
+                                break
+                except:
+                    pass
         if ip is None:
             print("No ip found. Cannot ssh...")
         return user, ip
@@ -2127,9 +2162,13 @@ class Kvirt(object):
             return None
         if user is None:
             user = u
+        vmport = None
+        if '.' not in ip:
+            vmport = ip
+            ip = self.host
         sshcommand = common.ssh(name, ip=ip, host=self.host, port=self.port, hostuser=self.user, user=user,
                                 local=local, remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, Y=Y, D=D,
-                                debug=self.debug)
+                                debug=self.debug, vmport=vmport)
         return sshcommand
 
     def scp(self, name, user=None, source=None, destination=None, tunnel=False, download=False, recursive=False):
@@ -2147,9 +2186,13 @@ class Kvirt(object):
         u, ip = self._ssh_credentials(name)
         if user is None:
             user = u
+        vmport = None
+        if '.' not in ip:
+            vmport = ip
+            ip = '127.0.0.1'
         scpcommand = common.scp(name, ip=ip, host=self.host, port=self.port, hostuser=self.user, user=user,
                                 source=source, destination=destination, recursive=recursive, tunnel=tunnel,
-                                debug=self.debug, download=download)
+                                debug=self.debug, download=download, vmport=vmport)
         return scpcommand
 
     def create_pool(self, name, poolpath, pooltype='dir', user='qemu', thinpool=None):

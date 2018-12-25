@@ -570,7 +570,7 @@ def print_info(yamlinfo, output='plain', fields=[], values=False, pretty=True):
 
 
 def ssh(name, ip='', host=None, port=22, hostuser=None, user=None, local=None, remote=None, tunnel=False,
-        insecure=False, cmd=None, X=False, Y=False, debug=False, D=None):
+        insecure=False, cmd=None, X=False, Y=False, debug=False, D=None, vmport=None):
         """
 
         :param name:
@@ -588,6 +588,7 @@ def ssh(name, ip='', host=None, port=22, hostuser=None, user=None, local=None, r
         :param Y:
         :param debug:
         :param D:
+        :param vmport:
         :return:
         """
         if ip == '':
@@ -621,6 +622,8 @@ def ssh(name, ip='', host=None, port=22, hostuser=None, user=None, local=None, r
                 sshcommand = "-L %s %s" % (local, sshcommand)
             if remote is not None:
                 sshcommand = "-R %s %s" % (remote, sshcommand)
+            if vmport is not None:
+                sshcommand = "-p %s %s" % (vmport, sshcommand)
             if insecure:
                 sshcommand = "ssh -o LogLevel=quiet -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no %s"\
                     % sshcommand
@@ -632,7 +635,7 @@ def ssh(name, ip='', host=None, port=22, hostuser=None, user=None, local=None, r
 
 
 def scp(name, ip='', host=None, port=22, hostuser=None, user=None, source=None, destination=None, recursive=None,
-        tunnel=False, debug=False, download=False):
+        tunnel=False, debug=False, download=False, vmport=None):
         """
 
         :param name:
@@ -647,6 +650,7 @@ def scp(name, ip='', host=None, port=22, hostuser=None, user=None, source=None, 
         :param tunnel:
         :param debug:
         :param download:
+        :param vmport:
         :return:
         """
         if ip == '':
@@ -666,6 +670,8 @@ def scp(name, ip='', host=None, port=22, hostuser=None, user=None, source=None, 
                 scpcommand = "%s -i %s" % (scpcommand, identityfile)
             if recursive:
                 scpcommand = "%s -r" % scpcommand
+            if vmport is not None and host == '127.0.0.1':
+                scpcommand = "%s -P %s" % (scpcommand, vmport)
             if download:
                 scpcommand = "%s %s %s@%s:%s %s" % (scpcommand, arguments, user, ip, source, destination)
             else:

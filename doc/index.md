@@ -191,6 +191,22 @@ kcli bootstrap -n twix -H 192.168.0.6 --pool vms --poolpath /home/vms
 
 # Provider specifics
 
+## Libvirt
+
+```
+twix:
+ enabled: true
+ host: 192.168.1.6
+ insecure: true
+ pool: default
+ tunnel: true
+```
+
+Default connection is done over ssh, or using qemu:///system if host is unset
+The following parameters are specific to libvirt:
+- url: custom qemu uri, if you want to access a remote libvirt instance over tcp for instance
+- session Defaults to False. If you want ro use qemu:///session ( locally or remotely). Not recommended as it complicates access to the vm and is supposed to have lower performance
+
 ## Gcp
 
 ```

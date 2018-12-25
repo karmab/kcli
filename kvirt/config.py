@@ -158,9 +158,10 @@ class Kconfig(Kbaseconfig):
                 if self.host is None:
                     common.pprint("Problem parsing your configuration file", color='red')
                     os._exit(1)
+                session = self.options.get('session', False)
                 from kvirt.kvm import Kvirt
                 k = Kvirt(host=self.host, port=self.port, user=self.user, protocol=self.protocol, url=self.url,
-                          debug=debug, insecure=self.insecure)
+                          debug=debug, insecure=self.insecure, session=session)
             if k.conn is None:
                 common.pprint("Couldn't connect to client %s. Leaving..." % self.client, color='red')
                 os._exit(1)
