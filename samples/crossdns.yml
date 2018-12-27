@@ -8,4 +8,4 @@ vm1:
   reservedns: False
   reservehost: False
   domain: cnvlab.gce.sysdeseng.com
-  dnshost: gcp_cnvlab
+  dnsclient: gcp_cnvlab

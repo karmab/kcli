@@ -250,7 +250,7 @@ class Kconfig(Kbaseconfig):
             default_flavor = father.get('flavor', self.flavor)
             default_cmds = common.remove_duplicates(self.cmds + father.get('cmds', []))
             default_scripts = common.remove_duplicates(self.scripts + father.get('scripts', []))
-            default_dnshost = father.get('dnshost', self.dnshost)
+            default_dnsclient = father.get('dnsclient', self.dnsclient)
             default_storemetadata = father.get('storemetadata', self.storemetadata)
             default_notify = father.get('notify', self.notify)
             default_notifytoken = father.get('notifytoken', self.notifytoken)
@@ -296,7 +296,7 @@ class Kconfig(Kbaseconfig):
             default_rhnpool = self.rhnpool
             default_cmds = self.cmds
             default_scripts = self.scripts
-            default_dnshost = self.dnshost
+            default_dnsclient = self.dnsclient
             default_storemetadata = self.storemetadata
             default_notify = self.notify
             default_notifytoken = self.notifytoken
@@ -393,7 +393,7 @@ class Kconfig(Kbaseconfig):
         rhnorg = profile.get('rhnorg', default_rhnorg)
         rhnpool = profile.get('rhnpool', default_rhnpool)
         flavor = profile.get('flavor', default_flavor)
-        dnshost = profile.get('dnshost', default_dnshost)
+        dnsclient = profile.get('dnsclient', default_dnsclient)
         storemetadata = profile.get('storemetadata', default_storemetadata)
         notify = profile.get('notify', default_notify)
         notifytoken = profile.get('notifytoken', default_notifytoken)
@@ -519,12 +519,12 @@ class Kconfig(Kbaseconfig):
                           reserveip=bool(reserveip), reservedns=bool(reservedns), reservehost=bool(reservehost),
                           start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns,
                           domain=domain, nested=bool(nested), tunnel=tunnel, files=files, enableroot=enableroot,
-                          overrides=overrides, tags=tags, dnshost=dnshost, storemetadata=storemetadata)
+                          overrides=overrides, tags=tags, dnsclient=dnsclient, storemetadata=storemetadata)
         if result['result'] != 'success':
             return result
-        if dnshost is not None and domain is not None:
-            if dnshost in self.clients:
-                z = Kconfig(client=dnshost).k
+        if dnsclient is not None and domain is not None:
+            if dnsclient in self.clients:
+                z = Kconfig(client=dnsclient).k
                 ip = None
                 if ip is None:
                     counter = 0
@@ -541,7 +541,7 @@ class Kconfig(Kbaseconfig):
                 else:
                     z.reserve_dns(name=name, nets=[domain], domain=domain, ip=ip, force=True)
             else:
-                common.pprint("Host %s not found. Skipping" % dnshost, color='blue')
+                common.pprint("Client %s not found. Skipping" % dnsclient, color='blue')
         ansible = profile.get('ansible')
         if ansible is not None:
             for element in ansible:
@@ -811,15 +811,15 @@ class Kconfig(Kbaseconfig):
                         for network in vmnetworks:
                             if network != 'default' and network not in networks:
                                 networks.append(network)
-                        dnshost, domain = c.dnsinfo(name)
+                        dnsclient, domain = c.dnsinfo(name)
                         c.delete(name, snapshots=True)
-                        if dnshost is not None and domain is not None and dnshost in self.clients:
-                            if dnshost in dnsclients:
-                                z = dnsclients[dnshost]
-                            elif dnshost in self.clients:
-                                z = Kconfig(client=dnshost).k
-                                dnsclients[dnshost] = z
-                            z.delete_dns(dnshost, domain)
+                        if dnsclient is not None and domain is not None and dnsclient in self.clients:
+                            if dnsclient in dnsclients:
+                                z = dnsclients[dnsclient]
+                            elif dnsclient in self.clients:
+                                z = Kconfig(client=dnsclient).k
+                                dnsclients[dnsclient] = z
+                            z.delete_dns(dnsclient, domain)
                         common.set_lastvm(name, self.client, delete=True)
                         common.pprint("VM %s deleted on %s!" % (name, hypervisor), color='green')
                         deletedvms.append(name)
@@ -1087,17 +1087,16 @@ class Kconfig(Kbaseconfig):
                 dnsdomain = dnsprofile.get('domain', dnsnet)
                 dnsip = dnsprofile.get('ip')
                 dnsalias = dnsprofile.get('alias', [])
-                host = dnsprofile.get('host')
-                if host is None:
+                dnsclient = dnsprofile.get('client')
+                if dnsclient is None:
                     z = k
-                elif host in dnsclients:
-                    z = dnsclients[host]
-                elif host in self.clients:
-                    # z = Kconfig(client=host, debug=args.debug, region=args.region, zone=args.zone)
-                    z = Kconfig(client=host).k
-                    dnsclients[host] = z
+                elif dnsclient in dnsclients:
+                    z = dnsclients[dnsclient]
+                elif dnsclient in self.clients:
+                    z = Kconfig(client=dnsclient).k
+                    dnsclients[dnsclient] = z
                 else:
-                    common.pprint("Host %s not found. Skipping" % host, color='blue')
+                    common.pprint("Client %s not found. Skipping" % dnsclient, color='blue')
                     return
                 if dnsip is None:
                     common.pprint("Missing ip. Skipping!", color='blue')
@@ -1118,6 +1117,8 @@ class Kconfig(Kbaseconfig):
                     name = newname
                 else:
                     profile = entries[name]
+                if 'name' in profile:
+                    name = profile['name']
                 if 'basevm' in profile or 'baseplan' in profile:
                     baseprofile = {}
                     appendkeys = ['disks', 'nets', 'files', 'scripts', 'cmds']
@@ -1136,16 +1137,17 @@ class Kconfig(Kbaseconfig):
                             profile[key] = baseprofile[key]
                         elif key in baseprofile and key in profile and key in appendkeys:
                             profile[key] = baseprofile[key] + profile[key]
-                host = profile.get('host')
-                if host is None:
+                vmclient = profile.get('client')
+                if vmclient is None:
                     z = k
-                elif host in hosts:
-                    z = hosts[host]
-                elif host in self.clients:
-                    z = Kconfig(client=host).k
-                    hosts[host] = z
+                    vmclient = self.client
+                elif vmclient in hosts:
+                    z = hosts[vmclient]
+                elif vmclient in self.clients:
+                    z = Kconfig(client=vmclient).k
+                    hosts[vmclient] = z
                 else:
-                    common.pprint("Host %s not found. Using default one" % host, color='blue')
+                    common.pprint("Client %s not found. Using default one" % vmclient, color='blue')
                     z = k
                 if 'profile' in profile and profile['profile'] in vmprofiles:
                     customprofile = vmprofiles[profile['profile']]
@@ -1158,7 +1160,7 @@ class Kconfig(Kbaseconfig):
                     profile = customprofile
                 if z.exists(name):
                     if not update:
-                        common.pprint("VM %s skipped!" % name, color='blue')
+                        common.pprint("VM %s skipped on %s!" % (name, vmclient), color='blue')
                     else:
                         updated = False
                         currentvm = z.info(name)
@@ -1237,7 +1239,7 @@ class Kconfig(Kbaseconfig):
                                     interface = "eth%s" % net
                                     z.delete_nic(name, interface)
                         if not updated:
-                            common.pprint("VM %s skipped!" % name, color='blue')
+                            common.pprint("VM %s skipped on %s!" % (name, vmclient), color='blue')
                     existingvms.append(name)
                     continue
                 # cmds = default_cmds + customprofile.get('cmds', []) + profile.get('cmds', [])
@@ -1262,10 +1264,9 @@ class Kconfig(Kbaseconfig):
                     if vmcounter >= len(vmentries):
                         os.remove("%s.key.pub" % plan)
                         os.remove("%s.key" % plan)
-                currenthost = host if host is not None else self.client
                 result = self.create_vm(name, profilename, overrides=overrides, customprofile=profile, k=z,
-                                        plan=plan, basedir=currentplandir, client=currenthost, onfly=onfly)
-                common.handle_response(result, name)
+                                        plan=plan, basedir=currentplandir, client=vmclient, onfly=onfly)
+                common.handle_response(result, name, client=vmclient)
                 if result['result'] == 'success':
                     newvms.append(name)
                 _ansible = profile.get('ansible')

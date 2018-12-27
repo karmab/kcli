@@ -156,7 +156,7 @@ class Kvirt(object):
                disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None,
                vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None,
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
-               files=[], enableroot=True, overrides={}, tags=None, dnshost=None, storemetadata=False):
+               files=[], enableroot=True, overrides={}, tags=None, dnsclient=None, storemetadata=False):
         """
 
         :param name:
@@ -230,9 +230,9 @@ class Kvirt(object):
         if template is not None:
             metadata = """%s
                         <kvirt:template>%s</kvirt:template>""" % (metadata, template)
-        if dnshost is not None:
+        if dnsclient is not None:
             metadata = """%s
-                        <kvirt:dnshost>%s</kvirt:dnshost>""" % (metadata, dnshost)
+                        <kvirt:dnsclient>%s</kvirt:dnsclient>""" % (metadata, dnsclient)
         default_poolxml = default_storagepool.XMLDesc(0)
         root = ET.fromstring(default_poolxml)
         default_pooltype = list(root.getiterator('pool'))[0].get('type')
@@ -1210,15 +1210,15 @@ class Kvirt(object):
             return None, None
         vmxml = vm.XMLDesc(0)
         root = ET.fromstring(vmxml)
-        dnshost, domain = None, None
+        dnsclient, domain = None, None
         for element in list(root.getiterator('{kvirt}info')):
-            e = element.find('{kvirt}dnshost')
+            e = element.find('{kvirt}dnsclient')
             if e is not None:
-                dnshost = e.text
+                dnsclient = e.text
             e = element.find('{kvirt}domain')
             if e is not None:
                 domain = e.text
-        return dnshost, domain
+        return dnsclient, domain
 
     def delete(self, name, snapshots=False):
         """

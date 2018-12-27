@@ -66,7 +66,7 @@ class Kbase(object):
                reservehost=False, start=True, keys=None, cmds=[], ips=None,
                netmasks=None, gateway=None, nested=True, dns=None, domain=None,
                tunnel=False, files=[], enableroot=True, alias=[], overrides={},
-               tags=None, storemetadata=False):
+               tags=None, dnsclient=None, storemetadata=False):
         """
 
         :param name:
@@ -260,7 +260,7 @@ class Kbase(object):
         print("not implemented")
         return {'result': 'success'}
 
-# should return dnshost, domain for the given vm
+# should return dnsclient, domain for the given vm
     def dnsinfo(self, name):
         """
 

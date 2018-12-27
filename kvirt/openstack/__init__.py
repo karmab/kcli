@@ -83,7 +83,7 @@ class Kopenstack(object):
                reservehost=False, start=True, keys=None, cmds=[], ips=None,
                netmasks=None, gateway=None, nested=True, dns=None, domain=None,
                tunnel=False, files=[], enableroot=True, alias=[], overrides={},
-               tags=None, dnshost=None, storemetadata=False):
+               tags=None, dnsclient=None, storemetadata=False):
         """
 
         :param name:
@@ -208,8 +208,8 @@ class Kopenstack(object):
             common.pprint('Couldnt locate or create keypair for use. Leaving...', color='red')
             return {'result': 'failure', 'reason': "No usable keypair found"}
         meta = {'plan': plan, 'profile': profile}
-        if dnshost is not None:
-            meta['dnshost'] = dnshost
+        if dnsclient is not None:
+            meta['dnsclient'] = dnsclient
         if domain is not None:
             meta['domain'] = domain
         userdata = None
@@ -414,14 +414,14 @@ class Kopenstack(object):
             vm = nova.servers.find(name=name)
         except:
             return None, None
-        dnshost, domain = None, None
+        dnsclient, domain = None, None
         metadata = vm.metadata
         if metadata is not None:
-            if 'dnshost' in metadata:
-                dnshost = metadata['dnshost']
+            if 'dnsclient' in metadata:
+                dnsclient = metadata['dnsclient']
             if 'domain' in metadata:
-                dnshost = metadata['domain']
-        return dnshost, domain
+                domain = metadata['domain']
+        return dnsclient, domain
 
     def info(self, name, vm=None):
         """

@@ -85,7 +85,7 @@ class Kaws(object):
                disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False,
                cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[],
                ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[],
-               enableroot=True, alias=[], overrides={}, tags=None, dnshost=None, storemetadata=False):
+               enableroot=True, alias=[], overrides={}, tags=None, dnsclient=None, storemetadata=False):
         """
 
         :param name:
@@ -237,8 +237,8 @@ class Kaws(object):
             blockdevicemappings.append(blockdevicemapping)
         if reservedns and domain is not None:
             tags[0]['Tags'].append({'Key': 'domain', 'Value': domain})
-        if dnshost is not None:
-            tags[0]['Tags'].append({'Key': 'dnshost', 'Value': dnshost})
+        if dnsclient is not None:
+            tags[0]['Tags'].append({'Key': 'dnsclient', 'Value': dnsclient})
         conn.run_instances(ImageId=template, MinCount=1, MaxCount=1, InstanceType=flavor,
                            KeyName=keypair, BlockDeviceMappings=blockdevicemappings,
                            UserData=userdata, TagSpecifications=tags)
@@ -388,14 +388,14 @@ class Kaws(object):
             vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
         except:
             return None, None
-        dnshost, domain = None, None
+        dnsclient, domain = None, None
         if 'Tags' in vm:
             for tag in vm['Tags']:
-                if tag['Key'] == 'dnshost':
-                    dnshost = tag['Value']
+                if tag['Key'] == 'dnsclient':
+                    dnsclient = tag['Value']
                 if tag['Key'] == 'domain':
                     domain = tag['Value']
-        return dnshost, domain
+        return dnsclient, domain
 
     def get_id(self, name):
         """

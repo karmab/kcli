@@ -109,7 +109,7 @@ class Kgcp(object):
                disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False,
                cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[],
                ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[],
-               enableroot=True, alias=[], overrides={}, tags={}, dnshost=None, storemetadata=False):
+               enableroot=True, alias=[], overrides={}, tags={}, dnsclient=None, storemetadata=False):
         """
 
         :param name:
@@ -351,8 +351,8 @@ class Kgcp(object):
             body['metadata']['items'].append(newval)
         newval = {'key': 'serial-port-enable', 'value': 1}
         body['metadata']['items'].append(newval)
-        if dnshost is not None:
-            newval = {'key': 'dnshost', 'value': dnshost}
+        if dnsclient is not None:
+            newval = {'key': 'dnsclient', 'value': dnsclient}
             body['metadata']['items'].append(newval)
         if self.debug:
             print(body)
@@ -533,14 +533,14 @@ class Kgcp(object):
             vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
         except:
             return None, None
-        dnshost, domain = None, None
+        dnsclient, domain = None, None
         if 'items' in vm['metadata']:
             for data in vm['metadata']['items']:
-                if data['key'] == 'dnshost':
-                    dnshost = data['value']
+                if data['key'] == 'dnsclient':
+                    dnsclient = data['value']
                 if data['key'] == 'domain':
                     domain = data['value']
-        return dnshost, domain
+        return dnsclient, domain
 
     def info(self, name, vm=None):
         """

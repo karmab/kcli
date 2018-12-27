@@ -2,4 +2,4 @@ yyy:
  type: dns
  net: cnvlab.gce.sysdeseng.com
  ip: 192.168.1.35
- host: gcp_cnvlab
+ client: gcp_cnvlab

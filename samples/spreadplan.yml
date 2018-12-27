@@ -5,7 +5,7 @@ vm1:
    - default
   pool: default
   template: CentOS-7-x86_64-GenericCloud.qcow2
-  host: bumblefoot
+  client: bumblefoot
 vm2:
   memory: 512
   numcpus: 1
@@ -14,4 +14,4 @@ vm2:
    - default
   pool: default
   template: CentOS-7-x86_64-GenericCloud.qcow2
-  host: twix
+  client: twix

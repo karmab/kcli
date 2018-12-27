@@ -151,7 +151,7 @@ class Kubevirt(object):
                disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False,
                cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[],
                ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[],
-               enableroot=True, alias=[], overrides={}, tags=None, dnshost=None, storemetadata=False):
+               enableroot=True, alias=[], overrides={}, tags=None, dnsclient=None, storemetadata=False):
         """
 
         :param name:
@@ -242,8 +242,8 @@ class Kubevirt(object):
                                                                      'annotations': {'kcli/plan': plan,
                                                                                      'kcli/profile': profile,
                                                                                      'kcli/template': template}}}
-        if dnshost is not None:
-            vm['metadata']['annotations']['kcli/dnshost'] = dnshost
+        if dnsclient is not None:
+            vm['metadata']['annotations']['kcli/dnsclient'] = dnsclient
         if domain is not None:
             vm['metadata']['annotations']['kcli/domain'] = domain
             if reservedns:
@@ -617,15 +617,15 @@ class Kubevirt(object):
             return None, None
         if self.debug:
             pretty_print(vm)
-        dnshost, domain = None, None
+        dnsclient, domain = None, None
         metadata = vm.get("metadata")
         annotations = metadata.get("annotations")
         if annotations is not None:
-            if 'kcli/dnshost' in annotations:
-                dnshost = annotations['kcli/dnshost']
+            if 'kcli/dnsclient' in annotations:
+                dnsclient = annotations['kcli/dnsclient']
             if 'kcli/domain' in annotations:
                 domain = annotations['kcli/domain']
-        return dnshost, domain
+        return dnsclient, domain
 
     def info(self, name, vm=None):
         """

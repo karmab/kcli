@@ -21,8 +21,8 @@ Installation
 Requisites
 ----------
 
-If you dont have kvm installed on the target host, you can also use the
-following command to get you going
+If you dont have kvm installed on the target hypervisor, you can also
+use the following command to get you going
 
 .. code:: bash
 
@@ -51,7 +51,7 @@ If not running as root, you’ll have to add your user to those groups
     sudo usermod -aG qemu,libvirt YOUR_USER
 
 for *macosx*, you’ll want to check the docker installation section ( if
-planning to go against a remote kvm host)
+planning to go against a remote kvm hypervisor)
 
 RPM install method
 ------------------
@@ -87,7 +87,7 @@ To run it
 the are several flags you’ll want to pass depending on your use case
 
 -  ``-v /var/run/libvirt:/var/run/libvirt -v /var/lib/libvirt/images:/var/lib/libvirt/images``
-   if running against a local client/host
+   if running against a local client
 -  ``~/.kcli:/root/.kcli`` to use your kcli configuration (also profiles
    and repositories) stored locally
 -  ``-v ~/.ssh:/root/.ssh`` to share your ssh keys. Alternatively, you
@@ -169,17 +169,16 @@ You can also create a default network
 kcli configuration is done in ~/.kcli directory that you need to
 manually create. It will contain:
 
--  config.yml generic configuration where you declare hosts ( we also
-   use the term *client*)
--  profiles.yml hosts your profiles where you combine things like
+-  config.yml generic configuration where you declare clients
+-  profiles.yml stores your profiles where you combine things like
    memory, numcpus and all supported parameters into named profiles to
    create vms from
 -  id_rsa/id_rsa.pub/id_dsa/id_dsa.pub You can also choose to store your
    default public and private keys in *kcli* directory which will be the
-   first place to look at them when connecting to a remote kvm host,
-   virtual machine or when injecting your public key. This is useful
-   when using kcli container and not wanting to share your entire ~/.ssh
-   directory in your container
+   first place to look at them when connecting to a remote kvm
+   hpervisor, virtual machine or when injecting your public key. This is
+   useful when using kcli container and not wanting to share your entire
+   ~/.ssh directory in your container
 
 For instance, here ’s a sample ``~/.kcli/config.yml``
 
@@ -210,10 +209,10 @@ Replace with your own client in default section and indicate host and
 protocol in the corresponding client section.
 
 Most of the parameters are actually optional, and can be overridden in
-the default, host or profile section (or in a plan file)
+the default, client or profile section (or in a plan file)
 
 Alternatively, you can generate this settings file ( for tweaking or to
-add remote hosts):
+add remote hypervisors):
 
 .. code:: shell
 
@@ -607,14 +606,15 @@ Typical commands
 
 -  Switch active client to bumblefoot
 
-   -  ``kcli host --switch bumblefoot``
+   -  ``kcli switch bumblefoot``
 
 -  Get remote-viewer console
 
    -  ``kcli console vm1``
 
 -  Get serial console (over TCP). It will only work with vms created
-   with kcli and will require netcat client to be installed on host
+   with kcli and will require netcat client to be installed on
+   hypervisor
 
    -  ``kcli console -s vm1``
 
@@ -966,12 +966,12 @@ If you set *reserveip* to True, a reservation will be made if the
 corresponding network has dhcp and when the provided IP belongs to the
 network range.
 
-You can set *reservedns* to True to create a DNS entry for the host in
-the corresponding network ( only done for the first nic)
+You can set *reservedns* to True to create a dns entry for the vm in the
+corresponding network ( only done for the first nic)
 
-You can set *reservehost* to True to create a HOST entry for the host in
+You can set *reservehost* to True to create an entry for the host in
 /etc/hosts ( only done for the first nic). It’s done with sudo and the
-entry gets removed when you delete the host. On macosx, you should use
+entry gets removed when you delete the vm. On macosx, you should use
 gnu-sed ( from brew ) instead of regular sed for proper deletion.
 
 If you dont want to be asked for your sudo password each time, here are
@@ -1025,13 +1025,13 @@ Additionally, basic commands ( start, stop, console, plan, list) accept
 a *–container* flag.
 
 Also note that while python sdk is used when connecting locally,
-commands are rather proxied other ssh when using a remote host ( reasons
-beeing to prevent mismatch of version between local and remote docker
-and because enabling remote access for docker is considered insecure and
-needs some uncommon additional steps )
+commands are rather proxied other ssh when using a remote hypervisor (
+reasons beeing to prevent mismatch of version between local and remote
+docker and because enabling remote access for docker is considered
+insecure and needs some uncommon additional steps )
 
 Finally, note that if using the docker version of kcli against your
-local host , you’ll need to pass a docker socket:
+local hypervisor , you’ll need to pass a docker socket:
 
 ``docker run --rm -v /var/run/libvirt:/var/run/libvirt -v ~/.ssh:/root/.ssh -v /var/run/docker.sock:/var/run/docker.sock karmab/kcli``
 
@@ -1210,12 +1210,12 @@ library
 Testing
 -------
 
-Basic testing can be run with pytest. If using a remote host/client, you
-ll want to set the *KVIRT_HOST* and *KVIRT_USER* environment variables
-so that it points to your host with the corresponding user.
+Basic testing can be run with pytest. If using a remote client, you ll
+want to set the *KVIRT_HOST* and *KVIRT_USER* environment variables so
+that it points to your client with the corresponding user.
 
-Specific parameters for a host/client
-=====================================
+Specific parameters for a client
+================================
 
 -  *host* Defaults to 127.0.0.1
 -  *port*
@@ -1292,7 +1292,7 @@ Available parameters for client/profile/plan files
    content data directly or from specified origin
 -  *insecure* (optional) Handles all the ssh option details so you dont
    get any warnings about man in the middle
--  *host* (optional) Allows you to create the vm on a specific client.
+-  *client* (optional) Allows you to create the vm on a specific client.
    This field is not used for other types like network, so expect to use
    this in relatively simple plans only
 -  *base* (optional) Allows you to point to a parent profile so that
@@ -1302,7 +1302,7 @@ Available parameters for client/profile/plan files
 -  *tags* (optional) Array of tags to apply to gcp instances (usefull
    when matched in a firewall rule). In the case of kubevirt, it s
    rather a dict of key=value used as node selector (allowing to force
-   vms to be scheduled on a matching host)
+   vms to be scheduled on a matching node)
 -  \ *rhnregister*\  (optional). Auto registers vms whose template
    starts with rhel Defaults to false. Requires to either rhnuser and
    rhnpassword, or rhnactivationkey and rhnorg, and an optional rhnpool

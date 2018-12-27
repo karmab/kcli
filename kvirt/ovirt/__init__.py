@@ -113,7 +113,7 @@ class KOvirt(object):
                reservehost=False, start=True, keys=None, cmds=[], ips=None,
                netmasks=None, gateway=None, nested=True, dns=None, domain=None,
                tunnel=False, files=[], enableroot=True, alias=[], overrides={},
-               tags=None, dnshost=None, storemetadata=False):
+               tags=None, dnsclient=None, storemetadata=False):
         """
 
         :param name:
@@ -182,8 +182,8 @@ class KOvirt(object):
             netdatacenter = self.conn.follow_link(networkinfo.data_center)
             if netdatacenter.name == self.datacenter:
                 netprofiles[prof.name] = prof.id
-        if dnshost is not None:
-            description += ',dnshost=%s' % dnshost
+        if dnsclient is not None:
+            description += ',dnsclient=%s' % dnsclient
         if domain is not None:
             description += ',domain=%s' % domain
         memory = memory * 1024 * 1024
@@ -615,16 +615,16 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         if not vmsearch:
             return None, None
         vm = vmsearch[0]
-        dnshost, domain = None, None
+        dnsclient, domain = None, None
         description = vm.description.split(',')
         for description in vm.description.split(','):
             desc = description.split('=')
             if len(desc) == 2:
-                if desc[0] == 'dnshost':
-                    dnshost = desc[1]
+                if desc[0] == 'dnsclient':
+                    dnsclient = desc[1]
                 if desc[0] == 'domain':
                     domain = desc[1]
-        return dnshost, domain
+        return dnsclient, domain
 
     def info(self, name, vm=None):
         """
