@@ -313,7 +313,7 @@ class Kaws(object):
 
         :return:
         """
-        print("not implemented")
+        print("Region: %s" % self.region)
         return
 
     def status(self, name):
