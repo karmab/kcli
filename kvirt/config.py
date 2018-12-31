@@ -962,7 +962,8 @@ class Kconfig(Kbaseconfig):
             self.info_plan(inputfile)
             return {'result': 'success'}
         baseentries = {}
-        entries, overrides, basefile, basedir = self.process_inputfile(plan, inputfile, overrides=overrides)
+        entries, overrides, basefile, basedir = self.process_inputfile(plan, inputfile, overrides=overrides,
+                                                                       onfly=onfly)
         if basefile is not None:
             baseinfo = self.process_inputfile(plan, basefile, overrides=overrides)
             baseentries, baseoverrides = baseinfo[0], baseinfo[1]
@@ -1563,7 +1564,7 @@ class Kconfig(Kbaseconfig):
         else:
             return k.list_loadbalancers()
 
-    def process_inputfile(self, plan, inputfile, overrides={}):
+    def process_inputfile(self, plan, inputfile, overrides={}, onfly=None):
         basedir = os.path.dirname(inputfile) if os.path.dirname(inputfile) != '' else '.'
         basefile = None
         env = Environment(loader=FileSystemLoader(basedir))
@@ -1579,6 +1580,8 @@ class Kconfig(Kbaseconfig):
             for parameter in parameters:
                 if parameter == 'baseplan':
                     basefile = parameters['baseplan']
+                    if onfly is not None:
+                        common.fetch("%s/%s" % (onfly, basefile), '.')
                     baseparameters = common.get_parameters(basefile)
                     if baseparameters is not None:
                         baseparameters = yaml.load(baseparameters)['parameters']

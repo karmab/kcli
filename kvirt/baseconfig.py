@@ -13,7 +13,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             DOMAIN, SCRIPTS, FILES, ISO,
                             NETMASKS, GATEWAY, SHAREDKEY, TEMPLATE, ENABLEROOT,
                             PLANVIEW, PRIVATEKEY, TAGS, RHNREGISTER, RHNUSER, RHNPASSWORD, RHNAK, RHNORG, RHNPOOL,
-                            FLAVOR, KEEP_NETWORKS, DNSHOST, STORE_METADATA, NOTIFY, NOTIFYTOKEN, NOTIFYCMD)
+                            FLAVOR, KEEP_NETWORKS, DNSCLIENT, STORE_METADATA, NOTIFY, NOTIFYTOKEN, NOTIFYCMD)
 from kvirt import common
 import os
 from shutil import copyfile, rmtree
@@ -132,7 +132,7 @@ class Kbaseconfig:
         defaults['tags'] = default.get('tags', TAGS)
         defaults['flavor'] = default.get('flavor', FLAVOR)
         defaults['keep_networks'] = default.get('keep_networks', KEEP_NETWORKS)
-        defaults['dnhost'] = default.get('dnhost', DNSHOST)
+        defaults['dnsclient'] = default.get('dnsclient', DNSCLIENT)
         defaults['storemetadata'] = default.get('storemetadata', STORE_METADATA)
         defaults['notify'] = default.get('notify', NOTIFY)
         defaults['notifytoken'] = default.get('notifytoken', NOTIFYTOKEN)
@@ -241,7 +241,7 @@ class Kbaseconfig:
         self.rhnpool = options.get('rhnpool', self.default['rhnpool'])
         self.tags = options.get('tags', self.default['tags'])
         self.flavor = options.get('flavor', self.default['flavor'])
-        self.dnshost = options.get('dnhost', self.default['dnhost'])
+        self.dnsclient = options.get('dnsclient', self.default['dnsclient'])
         self.storemetadata = options.get('storemetadata', self.default['storemetadata'])
         self.notify = options.get('notify', self.default['notify'])
         self.notifytoken = options.get('notifytoken', self.default['notifytoken'])
