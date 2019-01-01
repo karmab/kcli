@@ -959,7 +959,10 @@ class Kconfig(Kbaseconfig):
             common.pprint("No input file found nor default kcli_plan.yml.Leaving....", color='red')
             os._exit(1)
         if info:
-            self.info_plan(inputfile)
+            self.info_plan(inputfile, onfly=onfly)
+            if toclean:
+                os.chdir('..')
+                rmtree(path)
             return {'result': 'success'}
         baseentries = {}
         entries, overrides, basefile, basedir = self.process_inputfile(plan, inputfile, overrides=overrides,

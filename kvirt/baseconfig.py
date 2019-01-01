@@ -523,7 +523,7 @@ class Kbaseconfig:
             rmtree(repodir)
             return {'result': 'success'}
 
-    def info_plan(self, inputfile, quiet=False, web=False):
+    def info_plan(self, inputfile, quiet=False, web=False, onfly=None):
         """
 
         :param inputfile:
@@ -545,7 +545,10 @@ class Kbaseconfig:
             for parameter in parameters:
                 print("%s: %s" % (parameter, parameters[parameter]))
                 if parameter == 'baseplan':
-                    self.info_plan(parameters[parameter], quiet=True)
+                    if onfly is not None:
+                        common.fetch("%s/%s" % (onfly, parameters[parameter]), '.')
+                    baseplan = parameters[parameter]
+                    self.info_plan(baseplan, quiet=True)
                     print()
         else:
             common.pprint("No parameters found. Leaving...", color='blue')
