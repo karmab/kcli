@@ -1,7 +1,0 @@
----
-- name: Test playbook for alfredo
-  hosts: testansible
-  gather_facts: true
-  tasks:
-    - name: do whatever
-      shell: "echo {{ x }} {{ z }} >/tmp/x"

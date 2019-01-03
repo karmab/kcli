@@ -451,7 +451,7 @@ class Kbaseconfig:
                                 if '/' in repoproduct['file']:
                                     repoproduct['group'] = repoproduct['file'].split('/')[0]
                                 else:
-                                    repoproduct['group'] = 'notavailable'
+                                    repoproduct['group'] = ''
                                 if realdir is not None:
                                     repoproduct['realdir'] = realdir
                                 products.append(repoproduct)
