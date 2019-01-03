@@ -770,7 +770,7 @@ class Kaws(object):
         while currentvolume['State'] == 'creating':
             currentvolume = conn.describe_volumes(VolumeIds=[volumeid])['Volumes'][0]
             sleep(2)
-        device = "sd%s" % ascii_lowercase[numdisks]
+        device = "/dev/sd%s" % ascii_lowercase[numdisks - 1]
         conn.attach_volume(VolumeId=volumeid, InstanceId=instanceid, Device=device)
         return
 
@@ -782,7 +782,20 @@ class Kaws(object):
         :param pool:
         :return:
         """
-        print("not implemented")
+        conn = self.conn
+        volumeid = diskname
+        try:
+            volume = conn.describe_volumes(VolumeIds=[volumeid])['Volumes'][0]
+        except:
+            return {'result': 'failure', 'reason': "Disk %s not found" % diskname}
+        for attachment in volume['Attachments']:
+            instanceid = attachment['InstanceId']
+            conn.detach_volume(VolumeId=volumeid, InstanceId=instanceid)
+            currentvolume = conn.describe_volumes(VolumeIds=[volumeid])['Volumes'][0]
+            while currentvolume['State'] == 'in-use':
+                currentvolume = conn.describe_volumes(VolumeIds=[volumeid])['Volumes'][0]
+                sleep(2)
+        conn.delete_volume(VolumeId=volumeid)
         return
 
 # should return a dict of {'pool': poolname, 'path': name}
