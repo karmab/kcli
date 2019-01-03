@@ -9,7 +9,8 @@ from kvirt import common
 import boto3
 from netaddr import IPNetwork
 import os
-import time
+from string import ascii_lowercase
+from time import sleep
 
 static_flavors = {'t2.nano': {'cpus': 1, 'memory': 512}, 't2.micro': {'cpus': 1, 'memory': 1024},
                   't2.small': {'cpus': 1, 'memory': 2048}, 't2.medium': {'cpus': 2, 'memory': 4096},
@@ -458,6 +459,7 @@ class Kaws(object):
         state = vm['State']['Name']
         ip = vm['PublicIpAddress'] if 'PublicIpAddress' in vm else ''
         amid = vm['ImageId']
+        az = vm['Placement']['AvailabilityZone']
         image = resource.Image(amid)
         source = os.path.basename(image.image_location)
         plan = ''
@@ -477,6 +479,7 @@ class Kaws(object):
             yamlinfo['loadbalancer'] = loadbalancer
         yamlinfo['name'] = name
         yamlinfo['status'] = state
+        yamlinfo['az'] = az
         yamlinfo['ip'] = ip
         machinetype = vm['InstanceType']
         yamlinfo['flavor'] = machinetype
@@ -501,12 +504,12 @@ class Kaws(object):
         disks = []
         for index, disk in enumerate(vm['BlockDeviceMappings']):
             devname = disk['DeviceName']
-            volname = disk['Ebs']['VolumeId']
-            volume = conn.describe_volumes(VolumeIds=[volname])['Volumes'][0]
+            volumeid = disk['Ebs']['VolumeId']
+            volume = conn.describe_volumes(VolumeIds=[volumeid])['Volumes'][0]
             disksize = volume['Size']
-            diskformat = ''
+            diskformat = volume['AvailabilityZone']
             drivertype = volume['VolumeType']
-            path = volume['AvailabilityZone']
+            path = volumeid
             disks.append({'device': devname, 'size': disksize, 'format': diskformat, 'type': drivertype, 'path': path})
         if disks:
             yamlinfo['disks'] = disks
@@ -749,7 +752,26 @@ class Kaws(object):
         :param existing:
         :return:
         """
-        print("not implemented")
+        conn = self.conn
+        try:
+            Filters = {'Name': "tag:Name", 'Values': [name]}
+            vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
+        except:
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        instanceid = vm['InstanceId']
+        AvailabilityZone = vm['Placement']['AvailabilityZone']
+        volume = conn.create_volume(Size=size, AvailabilityZone=AvailabilityZone)
+        volumeid = volume['VolumeId']
+        numdisks = len(vm['BlockDeviceMappings']) + 1
+        diskname = "%s-disk%s" % (name, numdisks)
+        newtags = [{"Key": "Name", "Value": diskname}]
+        conn.create_tags(Resources=[volumeid], Tags=newtags)
+        currentvolume = conn.describe_volumes(VolumeIds=[volumeid])['Volumes'][0]
+        while currentvolume['State'] == 'creating':
+            currentvolume = conn.describe_volumes(VolumeIds=[volumeid])['Volumes'][0]
+            sleep(2)
+        device = "sd%s" % ascii_lowercase[numdisks]
+        conn.attach_volume(VolumeId=volumeid, InstanceId=instanceid, Device=device)
         return
 
     def delete_disk(self, name=None, diskname=None, pool=None):
@@ -1049,7 +1071,7 @@ class Kaws(object):
                 while counter != 100:
                     ip = self.ip(instanceid)
                     if ip is None:
-                        time.sleep(5)
+                        sleep(5)
                         print("Waiting 5 seconds to grab ip and create DNS record...")
                         counter += 10
                     else:
