@@ -1,5 +1,9 @@
 lb1:
  type: loadbalancer
+ nets:
+ - name: default
+   alias:
+   - vm3.default
  ports:
  - 80
  - 2000

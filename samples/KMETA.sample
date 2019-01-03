@@ -1,6 +1,0 @@
-- name: xxx
-  group: your_group
-  url: github.com/karmab/kcli-plans/whatever
-  file: upstream.yml
-  description: XXX
-  numvms: 1
