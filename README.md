@@ -8,10 +8,11 @@
 
 ![Screenshot](kcli-small.png)
 
-This tool is meant to interact with a local/remote libvirt daemon and to easily deploy from templates (using cloudinit).
-It will also report IPS for any vm connected to a dhcp-enabled libvirt network and generally for every vm deployed from this client.
-Futhermore, you can deploy vms using defined profiles or several at once using plans
-There is support for gcp, aws, kubevirt and ovirt 
+This tool is meant to interact with existing virtualization providers (libvirt, kubevirt, ovirt, openstack, gcp and aws) and to easily deploy and customize vms from cloud images.
+
+You can also interact with those vms (list, info, ssh, start, stop, delete, console, serialconsole, add/delete disk, add/delete nic,...)
+
+Futhermore, you can deploy vms using predefined profiles, several at once using plan files or entire products for which plans were already created for you
 
 Refer to the [documentation](https://kcli.readthedocs.io) for more information
 
@@ -19,15 +20,21 @@ Refer to the [documentation](https://kcli.readthedocs.io) for more information
 
 ##  What you can do
 
-- Interact with libvirt without XML
-- Declare all your objects(vm, containers, networks, ansible,...) in a single yaml file!
-- Easily grab and share those files from github
-- Easily Test all Red Hat Infrastructure products, and their upstream counterparts
+- Interact with all the virtualization providers using a single tool
+- Declare all your objects(vm, containers, networks, ansible playbooks,...) in a single yaml plan file with a simple syntax
+- Customize a plan deployment using parameters and jinja templating
+- Adjust vms from a plan (memory, cpu, flavor, disks and nics) to match what's defined in the plans
+- Inject all configuration with cloudinit/ignition or the equivalent in cloud providers
+- Use profiles to launch vms with same hardware characteristics
+- Launch a plan from an url
+- Share your plan or use existing ones from github repo as products
+- Use the existing plans to deploy kubernetes, openshift, openstack, ovirt, kubevirt, ....
+- Use the existing cloud images for each distribution
 - Easily share private keys between your vms
-- Inject all configuration with cloudinit
-- Use the default cloud images
-- Use a web UI to do it too
-- Do all of this in additional providers(gcp, aws, kubevirt, ovirt) using same commands and files
+- Handle dns entries for the vms
+- Automatically subscribe your rhel vms
+- Get a push button notification when a vm has finished its deployment
+- Alternatively use web UI to do the same
 
 ## Demo!
 
