@@ -358,6 +358,8 @@ The following parameters are specific to ovirt:
 - filteruser Defaults to False. Only list vms created by own user
 - filtertag Defaults to None. Only list vms created by kcli with the corresponding filter=filtertag in their description. Useful for environments when you share the same user
 
+Note that pool refers to storage domain
+
 To use this provider with kcli rpm, you'll need to install (from pip) *ovirt-engine-sdk-python*
 
 On fedora, for instance, you can run the following
