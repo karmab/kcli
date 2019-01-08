@@ -41,11 +41,12 @@ class Kubevirt(object):
 
     """
     def __init__(self, token=None, ca_file=None, context=None, multus=True, host='127.0.0.1', port=443,
-                 user='root', debug=False, tags=None, namespace=None, cdi=True, datavolumes=True):
+                 user='root', debug=False, tags=None, namespace=None, cdi=True, datavolumes=True, readwritemany=False):
         self.host = host
         self.port = port
         self.user = user
         self.multus = multus
+        self.accessmode = 'ReadWriteMany' if readwritemany else 'ReadWriteOnce'
         self.conn = 'OK'
         self.tags = tags
         self.namespace = namespace
@@ -351,7 +352,7 @@ class Kubevirt(object):
                 continue
             diskpool = self.check_pool(pool)
             pvc = {'kind': 'PersistentVolumeClaim', 'spec': {'storageClassName': diskpool,
-                                                             'accessModes': ['ReadWriteOnce'],
+                                                             'accessModes': [self.accessmode],
                                                              'resources': {'requests': {'storage': '%sGi' % disksize}}},
                    'apiVersion': 'v1', 'metadata': {'name': volname}}
             if template is not None and index == 0 and template not in CONTAINERDISKS and cdi:
@@ -379,7 +380,7 @@ class Kubevirt(object):
                 if cdi:
                     if datavolumes:
                         dvt = {'metadata': {'name': volname},
-                               'spec': {'pvc': {'accessModes': ['ReadWriteOnce'],
+                               'spec': {'pvc': {'accessModes': [self.accessmode],
                                                 'resources':
                                                 {'requests': {'storage': '%sGi' % pvcsize}}},
                                         'source': {'pvc': {'name': template, 'namespace': self.cdinamespace}}},
@@ -959,7 +960,7 @@ class Kubevirt(object):
         except:
             pass
         pvc = {'kind': 'PersistentVolumeClaim', 'spec': {'storageClassName': pool,
-                                                         'accessModes': ['ReadWriteOnce'],
+                                                         'accessModes': [self.accessmode],
                                                          'resources': {'requests': {'storage': '%sGi' % size}}},
                'apiVersion': 'v1', 'metadata': {'name': name}}
         if template is not None:
@@ -1225,7 +1226,7 @@ class Kubevirt(object):
         now = datetime.datetime.now().strftime("%Y%M%d%H%M")
         podname = '%s-%s-importer' % (now, volname)
         pvc = {'kind': 'PersistentVolumeClaim', 'spec': {'storageClassName': pool,
-                                                         'accessModes': ['ReadWriteOnce'],
+                                                         'accessModes': [self.accessmode],
                                                          'resources': {'requests': {'storage': '%sGi' % size}}},
                'apiVersion': 'v1', 'metadata': {'name': volname, 'annotations': {'kcli/template': shortimage}}}
         if cdi:
@@ -1289,7 +1290,7 @@ class Kubevirt(object):
         size = 1024 * int(size) + 100
         now = datetime.datetime.now().strftime("%Y%M%d%H%M")
         podname = '%s-%s-copy' % (now, dest)
-        pvc = {'kind': 'PersistentVolumeClaim', 'spec': {'storageClassName': pool, 'accessModes': ['ReadWriteOnce'],
+        pvc = {'kind': 'PersistentVolumeClaim', 'spec': {'storageClassName': pool, 'accessModes': [self.accessmode],
                                                          'resources': {'requests': {'storage': '%sMi' % size}}},
                'apiVersion': 'v1', 'metadata': {'name': dest}}
         pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'Never',

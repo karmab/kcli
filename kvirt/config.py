@@ -47,6 +47,7 @@ class Kconfig(Kbaseconfig):
                 cdi = self.options.get('cdi', True)
                 datavolumes = self.options.get('cdi', True)
                 multus = self.options.get('multus', True)
+                readwritemany = self.options.get('readwritemany', False)
                 ca_file = self.options.get('ca_file')
                 if ca_file is not None:
                     ca_file = os.path.expanduser(ca_file)
@@ -65,7 +66,7 @@ class Kconfig(Kbaseconfig):
                 from kvirt.kubevirt import Kubevirt
                 k = Kubevirt(context=context, token=token, ca_file=ca_file, multus=multus, host=self.host,
                              port=self.port, user=self.user, debug=debug, namespace=namespace, cdi=cdi,
-                             datavolumes=datavolumes)
+                             datavolumes=datavolumes, readwritemany=readwritemany)
                 self.host = k.host
             elif self.type == 'gcp':
                 credentials = self.options.get('credentials')
