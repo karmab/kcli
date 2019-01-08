@@ -42,7 +42,7 @@ class Kconfig(Kbaseconfig):
                 from kvirt.vbox import Kbox
                 k = Kbox()
             elif self.type == 'kubevirt':
-                namespace = self.options.get('namespace', 'default')
+                namespace = self.options.get('namespace')
                 context = self.options.get('context')
                 cdi = self.options.get('cdi', True)
                 datavolumes = self.options.get('cdi', True)
