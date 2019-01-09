@@ -209,6 +209,9 @@ class Kconfig(Kbaseconfig):
         profilename = profile
         profile = vmprofiles[profile]
         # profile.update(overrides)
+        for key in overrides:
+            if key not in profile:
+                profile[key] = overrides[key]
         if 'base' in profile:
             father = vmprofiles[profile['base']]
             default_numcpus = father.get('numcpus', self.numcpus)
@@ -484,7 +487,7 @@ class Kconfig(Kbaseconfig):
             cmds = cmds + reportcmd
         if notify:
             if notifytoken is not None:
-                title = "Vm %s report" % name
+                title = "Vm %s on %s report" % (self.client, name)
                 notifycmd = 'curl -su "%s:" -d type="note" -d body="`%s 2>&1`" -d title="%s" ' % (notifytoken,
                                                                                                   notifycmd,
                                                                                                   title)
@@ -1581,6 +1584,9 @@ class Kconfig(Kbaseconfig):
         parameters = common.get_parameters(inputfile)
         if parameters is not None:
             parameters = yaml.load(parameters)['parameters']
+            if not isinstance(parameters, dict):
+                common.pprint("Error rendering parameters section of file %s" % inputfile, color='red')
+                os._exit(1)
             for parameter in parameters:
                 if parameter == 'baseplan':
                     basefile = parameters['baseplan']

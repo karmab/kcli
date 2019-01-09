@@ -193,7 +193,6 @@ def process_files(files=[], overrides={}):
                            color='red')
                     os._exit(1)
                 fileentries = templ.render(overrides)
-                # content = [line.rstrip() for line in fileentries.split('\n') if line.rstrip() != '']
                 content = [line.rstrip() for line in fileentries.split('\n')]
                 with open("/tmp/%s" % os.path.basename(path), 'w') as f:
                     for line in fileentries.split('\n'):
@@ -457,15 +456,14 @@ def get_overrides(paramfile=None, param=[]):
     :param param:
     :return:
     """
+    overrides = {}
     if paramfile is not None and os.path.exists(os.path.expanduser(paramfile)):
         with open(os.path.expanduser(paramfile)) as f:
             try:
                 overrides = yaml.load(f)
             except:
                 pprint("Couldnt parse your parameters file %s. Not using it" % paramfile, color='blue')
-                overrides = {}
     if param is not None:
-        overrides = {}
         for x in param:
             if len(x.split('=')) != 2:
                 continue
@@ -480,8 +478,6 @@ def get_overrides(paramfile=None, param=[]):
                 elif value.startswith('[') and value.endswith(']'):
                     value = value[1:-1].split(',')
                 overrides[key] = value
-    else:
-        overrides = {}
     return overrides
 
 
