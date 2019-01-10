@@ -342,6 +342,7 @@ class Kgcp(object):
         if reservedns:
             newval = {'key': 'domain', 'value': domain}
             body['metadata']['items'].append(newval)
+            # body['hostname'] = "%s.%s" % (name, domain)
         if template is not None and (template.startswith('coreos') or template.startswith('rhcos')):
             etcd = None
             userdata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
@@ -1015,7 +1016,11 @@ class Kgcp(object):
         :return:
         """
         u, ip = self._ssh_credentials(name)
-        scpcommand = common.scp(name, ip=ip, host=None, hostuser=None, user=u,
+        if ip is None:
+            return None
+        if user is None:
+            user = u
+        scpcommand = common.scp(name, ip=ip, host=None, hostuser=None, user=user,
                                 source=source, destination=destination, recursive=recursive, tunnel=tunnel,
                                 debug=self.debug, download=False)
         return scpcommand

@@ -84,6 +84,7 @@ class Kconfig(Kbaseconfig):
                 region = zone[:-2] if region is None else region
                 from kvirt.gcp import Kgcp
                 k = Kgcp(region=region, zone=zone, project=project, debug=debug)
+                self.overrides.update({'project': project})
             elif self.type == 'aws':
                 region = self.options.get('region') if region is None else region
                 if region is None:
