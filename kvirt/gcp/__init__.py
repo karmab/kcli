@@ -255,6 +255,7 @@ class Kgcp(object):
             origin = fil.get('origin')
             path = fil.get('path')
             content = fil.get('content')
+            render = fil.get('render', True)
             mode = fil.get('mode', '0600')
             permissions = fil.get('permissions', mode)
             if path is None:
@@ -271,7 +272,7 @@ class Kgcp(object):
                 if binary:
                     with open(origin, "rb") as f:
                         content = f.read().encode("base64")
-                elif overrides:
+                elif overrides and render:
                     basedir = os.path.dirname(origin) if os.path.dirname(origin) != '' else '.'
                     env = Environment(loader=FileSystemLoader(basedir))
                     try:
