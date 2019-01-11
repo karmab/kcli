@@ -97,7 +97,7 @@ class Kubevirt(object):
                         self.datavolumes = True
                 except:
                     pass
-        if namespace is None:
+        if self.namespace is None:
             self.namespace = 'default'
         return
 
