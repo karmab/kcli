@@ -193,6 +193,7 @@ class Kconfig(Kbaseconfig):
         :return:
         """
         overrides.update(self.overrides)
+        overrides['name'] = name
         k = self.k if k is None else k
         tunnel = self.tunnel
         if profile is None:
