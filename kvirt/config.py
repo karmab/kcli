@@ -29,7 +29,7 @@ class Kconfig(Kbaseconfig):
     """
 
     """
-    def __init__(self, client=None, debug=False, quiet=False, region=None, zone=None):
+    def __init__(self, client=None, debug=False, quiet=False, region=None, zone=None, namespace=None):
         Kbaseconfig.__init__(self, client=client, debug=debug, quiet=quiet)
         self.overrides = {}
         if not self.enabled:
@@ -42,7 +42,7 @@ class Kconfig(Kbaseconfig):
                 from kvirt.vbox import Kbox
                 k = Kbox()
             elif self.type == 'kubevirt':
-                namespace = self.options.get('namespace')
+                namespace = self.options.get('namespace') if namespace is None else namespace
                 context = self.options.get('context')
                 cdi = self.options.get('cdi', True)
                 datavolumes = self.options.get('cdi', True)
