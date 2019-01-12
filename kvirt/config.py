@@ -12,6 +12,7 @@ from kvirt import nameutils
 from kvirt import common
 from kvirt.internalplans import haproxy as haproxyplan
 from kvirt.baseconfig import Kbaseconfig
+from kvirt.containerconfig import Kcontainerconfig
 from distutils.spawn import find_executable
 import glob
 import os
@@ -831,12 +832,12 @@ class Kconfig(Kbaseconfig):
                         deletedvms.append(name)
                         found = True
             if container:
-                from kvirt import dockerutils
-                for cont in sorted(dockerutils.list_containers(k)):
-                    name = cont[0]
-                    container_plan = cont[3]
+                cont = Kcontainerconfig(_type=self.type, k=self.k).cont
+                for conta in sorted(cont.list_containers(k)):
+                    name = conta[0]
+                    container_plan = conta[3]
                     if container_plan == plan:
-                        dockerutils.delete_container(k, name)
+                        cont.delete_container(name)
                         common.pprint("Container %s deleted!" % name, color='green')
                         found = True
             # for network in k.list_networks():
@@ -886,12 +887,12 @@ class Kconfig(Kbaseconfig):
                     k.start(name)
                     common.pprint("VM %s started!" % name, color='green')
             if container:
-                from kvirt import dockerutils
-                for cont in sorted(dockerutils.list_containers(k)):
-                    name = cont[0]
-                    containerplan = cont[3]
+                cont = Kcontainerconfig(_type=self.type, k=self.k).cont
+                for conta in sorted(cont.list_containers(k)):
+                    name = conta[0]
+                    containerplan = conta[3]
                     if containerplan == plan:
-                        dockerutils.start_container(k, name)
+                        cont.start_container(name)
                         common.pprint("Container %s started!" % name, color='green')
             common.pprint("Plan %s started!" % plan, color='green')
             return {'result': 'success'}
@@ -904,12 +905,12 @@ class Kconfig(Kbaseconfig):
                     k.stop(name)
                     common.pprint("%s stopped!" % name, color='green')
             if container:
-                from kvirt import dockerutils
-                for cont in sorted(dockerutils.list_containers(k)):
-                    name = cont[0]
-                    containerplan = cont[3]
+                cont = Kcontainerconfig(_type=self.type, k=self.k).cont
+                for conta in sorted(cont.list_containers()):
+                    name = conta[0]
+                    containerplan = conta[3]
                     if containerplan == plan:
-                        dockerutils.stop_container(k, name)
+                        cont.stop_container(name)
                         common.pprint("Container %s stopped!" % name, color='green')
             common.pprint("Plan %s stopped!" % plan, color='green')
             return {'result': 'success'}
@@ -1324,10 +1325,11 @@ class Kconfig(Kbaseconfig):
                 k.add_disk(name=vm, size=size, pool=pool, template=template, shareable=shareable, existing=newdisk,
                            thin=False)
         if containerentries:
+            cont = Kcontainerconfig(_type=self.type, k=self.k).cont
             common.pprint("Deploying Containers...", color='green')
             label = "plan=%s" % plan
             for container in containerentries:
-                if dockerutils.exists_container(k, container):
+                if cont.exists_container(container):
                     common.pprint("Container %s skipped!" % container, color='blue')
                     continue
                 profile = entries[container]
@@ -1346,8 +1348,8 @@ class Kconfig(Kbaseconfig):
                                     if e is not None), None)
                 cmd = next((e for e in [profile.get('cmd'), customprofile.get('cmd')] if e is not None), None)
                 common.pprint("Container %s deployed!" % container, color='green')
-                dockerutils.create_container(k, name=container, image=image, nets=nets, cmd=cmd, ports=ports,
-                                             volumes=volumes, environment=environment, label=label)
+                cont.create_container(name=container, image=image, nets=nets, cmd=cmd, ports=ports,
+                                      volumes=volumes, environment=environment, label=label)
         if ansibleentries:
             if not newvms:
                 common.pprint("Ansible skipped as no new vm within playbook provisioned", color='blue')

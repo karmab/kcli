@@ -4,7 +4,8 @@
 Kubevirt Provider Class
 """
 
-from kubernetes import client, config
+from kubernetes import client
+from kvirt.kubecommon import Kubecommon, pretty_print
 from kvirt import common
 from kvirt.defaults import TEMPLATES
 import datetime
@@ -26,61 +27,17 @@ CONTAINERDISKS = ['kubevirt/alpine-container-disk-demo', 'kubevirt/cirros-contai
                   'karmab/gentoo-container-disk-demo', 'karmab/ubuntu-container-disk-demo']
 
 
-def pretty_print(o):
-    """
-
-    :param o:
-    """
-    print(yaml.dump(o, default_flow_style=False, indent=2,
-                    allow_unicode=True).replace('!!python/unicode ', '').replace("'", '').replace('\n\n', '\n').
-          replace('#cloud-config', '|\n            #cloud-config'))
-
-
-class Kubevirt(object):
+class Kubevirt(Kubecommon):
     """
 
     """
     def __init__(self, token=None, ca_file=None, context=None, multus=True, host='127.0.0.1', port=443,
                  user='root', debug=False, tags=None, namespace=None, cdi=True, datavolumes=True, readwritemany=False):
-        self.host = host
-        self.port = port
-        self.user = user
+        Kubecommon.__init__(self, token=token, ca_file=ca_file, context=context, host=host, port=port,
+                            namespace=namespace, readwritemany=readwritemany)
+        self.crds = client.CustomObjectsApi(api_client=self.api_client)
         self.multus = multus
-        self.accessmode = 'ReadWriteMany' if readwritemany else 'ReadWriteOnce'
-        self.conn = 'OK'
         self.tags = tags
-        self.namespace = namespace
-        self.token = token
-        api_client = None
-        if host is not None and port is not None and token is not None:
-            configuration = client.Configuration()
-            configuration.host = "https://%s:%s" % (host, port)
-            configuration.api_key = {"authorization": "Bearer " + token}
-            if ca_file is not None:
-                configuration.ssl_ca_cert = ca_file
-            else:
-                configuration.verify_ssl = False
-            api_client = client.ApiClient(configuration)
-        else:
-            contexts, current = config.list_kube_config_contexts()
-            if context is not None:
-                contexts = [entry for entry in contexts if entry['name'] == context]
-                if contexts:
-                    context = contexts[0]
-                    contextname = context['name']
-                else:
-                    self.conn = None
-            else:
-                context = current
-                contextname = current['name']
-            self.contextname = contextname
-            config.load_kube_config(context=contextname)
-            if namespace is None and 'namespace' in context['context']:
-                self.namespace = context['context']['namespace']
-        self.crds = client.CustomObjectsApi(api_client=api_client)
-        self.core = client.CoreV1Api(api_client=api_client)
-        self.storageapi = client.StorageV1Api(api_client=api_client)
-        self.debug = debug
         self.cdi = False
         self.datavolumes = False
         if cdi:
@@ -97,8 +54,6 @@ class Kubevirt(object):
                         self.datavolumes = True
                 except:
                     pass
-        if self.namespace is None:
-            self.namespace = 'default'
         return
 
     def close(self):
