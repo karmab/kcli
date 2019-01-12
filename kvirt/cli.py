@@ -128,6 +128,7 @@ def delete(args):
         if not yes:
             common.confirm("Are you sure?")
         if container:
+            codes = [0]
             cont = Kcontainerconfig(_type=config.type, k=k).cont
             for name in names:
                 common.pprint("Deleting container %s" % name, color='green')
