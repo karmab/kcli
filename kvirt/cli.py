@@ -4,6 +4,7 @@
 from distutils.spawn import find_executable
 from kvirt.config import Kconfig
 from kvirt.baseconfig import Kbaseconfig
+from kvirt.containerconfig import Kcontainerconfig
 from kvirt.config import __version__
 from kvirt.defaults import TEMPLATES
 from prettytable import PrettyTable
@@ -23,10 +24,10 @@ def start(args):
     names = [common.get_lastvm(config.client)] if not args.names else args.names
     k = config.k
     if container:
-        from kvirt import dockerutils
+        cont = Kcontainerconfig(_type=config.type, k=k).cont
         for name in names:
             common.pprint("Starting container %s..." % name, color='green')
-            dockerutils.start_container(k, name)
+            cont.start_container(name)
     else:
         codes = []
         for name in names:
@@ -51,10 +52,10 @@ def stop(args):
     for cli in ks:
         k = ks[cli]
         if container:
-            from kvirt import dockerutils
+            cont = Kcontainerconfig(_type=config.type, k=k).cont
             for name in names:
                 common.pprint("Stopping container %s in %s..." % (name, cli), color='green')
-                dockerutils.stop_container(k, name)
+                cont.stop_container(name)
         else:
             for name in names:
                 common.pprint("Stopping vm %s in %s..." % (name, cli), color='green')
@@ -71,11 +72,11 @@ def restart(args):
     names = [common.get_lastvm(config.client)] if not args.names else args.names
     k = config.k
     if container:
-        from kvirt import dockerutils
+        cont = Kcontainerconfig(_type=config.type, k=k).cont
         for name in names:
             common.pprint("Restarting container %s..." % name, color='green')
-            dockerutils.stop_container(k, name)
-            dockerutils.start_container(k, name)
+            cont.stop_container(name)
+            cont.start_container(name)
     else:
         codes = []
         for name in names:
@@ -95,8 +96,8 @@ def console(args):
     k = config.k
     tunnel = config.tunnel
     if container:
-        from kvirt import dockerutils
-        dockerutils.console_container(k, name)
+        cont = Kcontainerconfig(_type=config.type, k=k).cont
+        cont.console_container(name)
         return
     elif serial:
         k.serialconsole(name)
@@ -127,10 +128,10 @@ def delete(args):
         if not yes:
             common.confirm("Are you sure?")
         if container:
-            from kvirt import dockerutils
+            cont = Kcontainerconfig(_type=config.type, k=k).cont
             for name in names:
                 common.pprint("Deleting container %s" % name, color='green')
-                dockerutils.delete_container(k, name)
+                cont.delete_container(name)
         elif template:
             # k = config.k
             codes = []
@@ -412,10 +413,10 @@ def _list(args):
             diskstable.add_row([disk, pool, path])
         print(diskstable)
     elif containers:
-        from kvirt import dockerutils
+        cont = Kcontainerconfig(_type=config.type, k=config.k).cont
         common.pprint("Listing containers...", color='green')
         containers = PrettyTable(["Name", "Status", "Image", "Plan", "Command", "Ports"])
-        for container in dockerutils.list_containers(k):
+        for container in cont.list_containers():
             if filters:
                 status = container[1]
                 if status == filters:
@@ -424,10 +425,10 @@ def _list(args):
                 containers.add_row(container)
         print(containers)
     elif images:
-        from kvirt import dockerutils
+        cont = Kcontainerconfig(_type=config.type, k=config.k).cont
         common.pprint("Listing images...", color='green')
         images = PrettyTable(["Name"])
-        for image in dockerutils.list_images(k):
+        for image in cont.list_images(k):
             images.add_row([image])
         print(images)
     elif plans:
@@ -981,11 +982,10 @@ def bootstrap(args):
 
 def container(args):
     """Create container"""
-    from kvirt import dockerutils
     name = args.name
     profile = args.profile
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    k = config.k
+    cont = Kcontainerconfig(_type=config.type, k=config.k).cont
     if name is None:
         name = nameutils.get_random_name()
         if config.type == 'kubevirt':
@@ -997,9 +997,9 @@ def container(args):
     if profile not in containerprofiles:
         common.pprint("profile %s not found. Trying to use the profile as image"
                       "and default values..." % profile, color='blue')
-        dockerutils.create_container(k, name, profile)
+        cont.create_container(name, profile)
     else:
-        common.pprint("Deploying vm %s from profile %s..." % (name, profile), color='green')
+        common.pprint("Deploying container %s from profile %s..." % (name, profile), color='green')
         profile = containerprofiles[profile]
         image = next((e for e in [profile.get('image'), profile.get('template')] if e is not None), None)
         if image is None:
@@ -1009,9 +1009,7 @@ def container(args):
         ports = profile.get('ports', None)
         environment = profile.get('environment', None)
         volumes = next((e for e in [profile.get('volumes'), profile.get('disks')] if e is not None), None)
-        dockerutils.create_container(k, name, image, nets=None, cmd=cmd,
-                                     ports=ports, volumes=volumes,
-                                     environment=environment)
+        cont.create_container(name, image, nets=None, cmd=cmd, ports=ports, volumes=volumes, environment=environment)
     common.pprint("container %s created" % name, color='green')
     return
 

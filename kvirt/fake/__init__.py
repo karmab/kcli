@@ -18,6 +18,7 @@ class Kfake(object):
     """
     def __init__(self, host='127.0.0.1', port=None, user='root', debug=False):
         self.conn = 'fake'
+        self.host = host
         templates = [os.path.basename(t) for t in list(TEMPLATES.values()) if t is not None and (t.endswith('qcow2') or
                                                                                                  t.endswith('img'))]
         rheltemplates = ['rhel-guest-image-7.2-20160302.0.x86_64.qcow2', 'rhel-guest-image-7.3-35.x86_64.qcow2',
