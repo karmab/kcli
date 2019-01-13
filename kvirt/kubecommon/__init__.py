@@ -22,8 +22,8 @@ class Kubecommon(object):
     """
 
     """
-    def __init__(self, token=None, ca_file=None, context=None, multus=True, host='127.0.0.1', port=443,
-                 user='root', debug=False, tags=None, namespace=None, cdi=True, datavolumes=True, readwritemany=False):
+    def __init__(self, token=None, ca_file=None, context=None, host='127.0.0.1', port=443, user='root', debug=False,
+                 namespace=None, readwritemany=False):
         self.host = host
         self.port = port
         self.user = user
@@ -32,7 +32,6 @@ class Kubecommon(object):
         self.context = context
         self.accessmode = 'ReadWriteMany' if readwritemany else 'ReadWriteOnce'
         self.conn = 'OK'
-        self.tags = tags
         self.namespace = namespace
         self.token = token
         api_client = None
