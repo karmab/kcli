@@ -150,7 +150,7 @@ def delete(args):
         else:
             codes = []
             for name in names:
-                dnshost, domain = k.dnsinfo(name)
+                dnsclient, domain = k.dnsinfo(name)
                 result = k.delete(name, snapshots=snapshots)
                 if result['result'] == 'success':
                     common.pprint("%s deleted" % name, color='green')
@@ -160,9 +160,9 @@ def delete(args):
                     reason = result['reason']
                     common.pprint("Could not delete %s because %s" % (name, reason), color='red')
                     codes.append(1)
-                if dnshost is not None and domain is not None:
-                    z = Kconfig(client=dnshost).k
-                    z.delete_dns(dnshost, domain)
+                if dnsclient is not None and domain is not None:
+                    z = Kconfig(client=dnsclient).k
+                    z.delete_dns(name, domain)
     os._exit(1 if 1 in codes else 0)
 
 
