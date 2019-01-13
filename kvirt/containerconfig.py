@@ -16,19 +16,24 @@ class Kcontainerconfig():
             k8s = False
             currentconfig = config.ini[config.client]
             if 'containerclient' in currentconfig:
-                if currentconfig['containerclient'] not in config.ini:
+                if currentconfig['containerclient'] == 'local':
+                    currentconfig = {'host': '127.0.0.1'}
+                elif currentconfig['containerclient'] not in config.ini:
                     pprint("No section found for containerclient %s. Leaving" % currentconfig['containerclient'],
                            color='red')
                     os._exit(1)
                 else:
                     currentconfig = config.ini[currentconfig['containerclient']]
-                    k8s = True
+            default_k8s = False
+            if 'type' in currentconfig and currentconfig['type'] == 'kubevirt':
+                default_k8s = True
+            k8s = currentconfig.get('k8s', default_k8s)
             host = currentconfig.get('host')
             port = currentconfig.get('port')
             user = currentconfig.get('user')
-            if config.type in ['kvm', 'fake'] and not k8s:
+            if not k8s:
                 from kvirt.docker import Kdocker
-                cont = Kdocker(config.host)
+                cont = Kdocker(host)
             else:
                 ca_file = currentconfig.get('ca_file')
                 namespace = currentconfig.get('namespace') if namespace is None else namespace

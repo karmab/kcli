@@ -429,7 +429,7 @@ def _list(args):
         cont = Kcontainerconfig(config).cont
         common.pprint("Listing images...", color='green')
         images = PrettyTable(["Name"])
-        for image in cont.list_images(k):
+        for image in cont.list_images():
             images.add_row([image])
         print(images)
     elif plans:
