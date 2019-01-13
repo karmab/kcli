@@ -7,6 +7,8 @@ kubernetes utilites
 import os
 from kvirt.kubecommon import Kubecommon
 from kubernetes import client
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 class Kubernetes():
