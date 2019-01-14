@@ -119,14 +119,29 @@ class Kubernetes():
         :return:
         """
         try:
-            self.v1beta.delete_namespaced_deployment(name, self.namespace, client.V1DeleteOptions())
+            pods = []
+            rsname = None
             for rs in self.v1beta.list_namespaced_replica_set(self.namespace).items:
-                if 'kcli/deploy' in rs.metadata.labels and rs.metadata.labels['kcli/deploy'] == name:
-                    self.v1beta.delete_namespaced_replica_set(rs.metadata.name, self.namespace,
-                                                              client.V1DeleteOptions())
-            for pod in self.core.list_namespaced_pod(self.namespace).items:
-                if 'kcli/deploy' in pod.metadata.labels and pod.metadata.labels['kcli/deploy'] == name:
-                    self.core.delete_namespaced_pod(pod.metadata.name, self.namespace, client.V1DeleteOptions())
+                owner_references = rs.metadata.owner_references
+                if owner_references is None:
+                    continue
+                ownerkind = owner_references[0].kind
+                ownername = owner_references[0].name
+                if ownerkind == 'Deployment' and ownername == name:
+                    rsname = rs.metadata.name
+                    for pod in self.core.list_namespaced_pod(self.namespace).items:
+                        owner_references = pod.metadata.owner_references
+                        if owner_references is None:
+                            continue
+                        ownerkind = owner_references[0].kind
+                        ownername = owner_references[0].name
+                        if ownerkind == 'ReplicaSet' and ownername == rsname:
+                            pods.append(pod.metadata.name)
+            self.v1beta.delete_namespaced_deployment(name, self.namespace, client.V1DeleteOptions())
+            if rsname is not None:
+                self.v1beta.delete_namespaced_replica_set(rs.metadata.name, self.namespace, client.V1DeleteOptions())
+            for pod in pods:
+                self.core.delete_namespaced_pod(pod, self.namespace, client.V1DeleteOptions())
         except client.rest.ApiException:
             try:
                 self.core.delete_namespaced_pod(name, self.namespace, client.V1DeleteOptions())
@@ -178,7 +193,20 @@ class Kubernetes():
             if command is not None:
                 command = ' '.join(command)
             portinfo = pod.spec.node_name
-            containers.append([name, state, source, plan, command, portinfo])
+            owner_references = pod.metadata.owner_references
+            deploy = ''
+            if owner_references is not None:
+                ownerkind = owner_references[0].kind
+                ownername = owner_references[0].name
+                if ownerkind == 'ReplicaSet':
+                    rs = self.v1beta.read_namespaced_replica_set(ownername, self.namespace)
+                    owner_references = rs.metadata.owner_references
+                    if owner_references is not None:
+                        ownerkind = owner_references[0].kind
+                        ownername = owner_references[0].name
+                        if ownerkind == 'Deployment':
+                            deploy = ownername
+            containers.append([name, state, source, plan, command, portinfo, deploy])
         return containers
 
     def exists_container(self, name):
