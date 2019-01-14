@@ -256,7 +256,7 @@ class Kdocker():
                     portinfo = ','.join(portinfo)
                 else:
                     portinfo = ''
-                containers.append([name, state, source, plan, command, portinfo])
+                containers.append([name, state, source, plan, command, portinfo, ''])
         else:
             containers = []
             dockercommand = "docker ps -a --format \"'{{.Names}}?{{.Status}}?{{.Image}}?{{.Command}}?{{.Ports}}?"
@@ -270,7 +270,7 @@ class Kdocker():
                 else:
                     state = 'down'
                 command = command.strip().replace('"', '')
-                containers.append([name, state, source, plan, command, ports])
+                containers.append([name, state, source, plan, command, ports, ''])
         return containers
 
     def exists_container(self, name):

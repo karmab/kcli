@@ -416,7 +416,7 @@ def _list(args):
     elif containers:
         cont = Kcontainerconfig(config, client=args.containerclient).cont
         common.pprint("Listing containers...", color='green')
-        containers = PrettyTable(["Name", "Status", "Image", "Plan", "Command", "Ports"])
+        containers = PrettyTable(["Name", "Status", "Image", "Plan", "Command", "Ports", "Deploy"])
         for container in cont.list_containers():
             if filters:
                 status = container[1]

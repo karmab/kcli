@@ -6,6 +6,7 @@ kubernetes utilites
 
 import os
 from kvirt.kubecommon import Kubecommon
+from kvirt.common import pprint
 from kubernetes import client
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -40,27 +41,23 @@ class Kubernetes():
         namespace = self.namespace
         if ':' not in image:
             image = '%s:latest' % image
-        # replicas = 2
+        replicas = 2
         annotations = {'kcli/plan': 'kvirt'}
-        pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'Never', 'containers': [{'image': image,
-                                                                                 'volumeMounts': [],
-                                                                                 'name': name,
-                                                                                 'env': []}],
-                                       'volumes': []}, 'apiVersion': 'v1', 'metadata': {'name': name,
-                                                                                        'annotations': annotations}}
-        # ports = [{'containerPort': 8443, 'name': 'virt-api', 'protocol': 'TCP'}]
-        # containers = [{'image': image, 'command': [cmd], 'volumeMounts': [], 'name': name, 'env': [],
-        #               'imagePullPolicy': 'IfNotPresent', 'ports': ports}]
-        # deploy = {'apiVersion': 'extensions/v1beta1', 'kind': 'Deployment', 'metadata': annotations, 'labels': label,
-        #          'name': name, 'namespace': self.namespace,
-        #          'spec': {'replicas': replicas,
-        #                   'selector': {'matchLabels': label},
-        # 'strategy': {'rollingUpdate': {'maxSurge': 1, 'maxUnavailable': 1}, 'type': 'RollingUpdate'},
-        #                   'template': {'metadata': {'labels': label}, 'spec': {'containers': [containers],
-        #                                                                        'dnsPolicy': 'ClusterFirst',
-        #                                                                        'restartPolicy': 'Always'}}}}
-        # print(deploy)
-        if volumes is not None:
+        if label is not None:
+            if isinstance(label, str) and len(label.split('=')) == 2:
+                key, value = label.split('=')
+                labels = {key: value}
+            elif isinstance(label, dict):
+                labels = label
+        else:
+            labels = {}
+        labels = {'kcli/deploy': name}
+        containers = [{'image': image, 'name': name, 'imagePullPolicy': 'IfNotPresent', 'ports': ports}]
+        if cmd is not None:
+            containers[0]['command'] = cmd.split(' ')
+        if volumes:
+            vols = []
+            containers[0]['volumeMounts'] = []
             for i, volume in enumerate(volumes):
                 if isinstance(volume, str):
                     if len(volume.split(':')) == 2:
@@ -76,16 +73,17 @@ class Kubernetes():
                     # mode = volume.get('mode', 'rw')
                     if (origin is None or destination is None) and path is None:
                         continue
-                newvol = {'name': origin, 'persistentVolumeClaim': {'claimName': origin}}
                 newvolmount = {'mountPath': destination, 'name': origin}
-                pod['spec']['volumes'].append(newvol)
-                pod['spec']['containers'][0]['volumeMounts'].append(newvolmount)
-        # if ports is not None:
-        #    ports = {'%s/tcp' % k: k for k in ports}
-        if label is not None and isinstance(label, str) and len(label.split('=')) == 2:
-            key, value = label.split('=')
-            pod['metadata'][key] = value
-        if environment is not None:
+                containers[0]['volumeMounts'].append(newvolmount)
+                newvol = {'name': origin, 'persistentVolumeClaim': {'claimName': origin}}
+                vols.append(newvol)
+        if ports:
+            finalports = []
+            for port in ports:
+                finalports.append({'containerPort': port, 'name': 'port-%s' % port, 'protocol': 'TCP'})
+            ports = finalports
+        if environment:
+            containers[0]['env'] = []
             for env in enumerate(environment):
                 if isinstance(env, str):
                     if len(env.split(':')) == 2:
@@ -99,8 +97,19 @@ class Kubernetes():
                     else:
                         continue
                 newenv = {'name': key, 'value': value}
-                pod['spec']['containers'][0]['env'].append(newenv)
-        self.core.create_namespaced_pod(namespace, pod)
+                containers[0]['env'].append(newenv)
+        deploy = {'apiVersion': 'extensions/v1beta1', 'kind': 'Deployment', 'metadata': {'annotations': annotations,
+                                                                                         'labels': labels,
+                                                                                         'name': name,
+                                                                                         'namespace': self.namespace},
+                  'spec': {'replicas': replicas, 'selector': {'matchLabels': labels},
+                           'strategy': {'rollingUpdate': {'maxSurge': 1, 'maxUnavailable': 1}, 'type': 'RollingUpdate'},
+                           'template': {'metadata': {'labels': labels}, 'spec': {'containers': containers,
+                                                                                 'dnsPolicy': 'ClusterFirst',
+                                                                                 'restartPolicy': 'Always'}}}}
+        if volumes:
+            deploy['spec']['template']['spec']['volumes'] = vols
+        self.v1beta.create_namespaced_deployment(namespace=namespace, body=deploy)
         return {'result': 'success'}
 
     def delete_container(self, name):
@@ -110,15 +119,27 @@ class Kubernetes():
         :return:
         """
         try:
-            self.core.delete_namespaced_pod(name, self.namespace, client.V1DeleteOptions())
-        except client.rest.ApiException as e:
-            print(e)
+            self.v1beta.delete_namespaced_deployment(name, self.namespace, client.V1DeleteOptions())
+            for rs in self.v1beta.list_namespaced_replica_set(self.namespace).items:
+                if 'kcli/deploy' in rs.metadata.labels and rs.metadata.labels['kcli/deploy'] == name:
+                    self.v1beta.delete_namespaced_replica_set(rs.metadata.name, self.namespace,
+                                                              client.V1DeleteOptions())
+            for pod in self.core.list_namespaced_pod(self.namespace).items:
+                if 'kcli/deploy' in pod.metadata.labels and pod.metadata.labels['kcli/deploy'] == name:
+                    self.core.delete_namespaced_pod(pod.metadata.name, self.namespace, client.V1DeleteOptions())
+        except client.rest.ApiException:
+            try:
+                self.core.delete_namespaced_pod(name, self.namespace, client.V1DeleteOptions())
+            except client.rest.ApiException:
+                pprint("Container %s not found" % name)
+                return {'result': 'failure', 'reason': "Missing template"}
         return {'result': 'success'}
 
     def start_container(self, name):
         """
         :param self:
         :param name:
+
         :return:
         """
         return {'result': 'success'}
