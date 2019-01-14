@@ -176,7 +176,8 @@ bumblefoot:
 
 Replace with your own client in default section and indicate host and protocol in the corresponding client section.
 
-Most of the parameters are actually optional, and can be overridden in the default, client or profile section (or in a plan file)
+Most of the parameters are actually optional, and can be overridden in the default, client or profile section (or in a plan file).
+You can find a fully detailed config.yml sample [here](https://github.com/karmab/kcli/tree/master/samples/config.yml)
 
 Alternatively, you can generate this settings file ( for tweaking or to add remote hypervisors):
 

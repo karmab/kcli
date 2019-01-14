@@ -1,0 +1,202 @@
+# This is a sample of Kcli configuration file with each option commented
+
+###############################################################################
+#  Default Section
+###############################################################################
+# In default section, you can set default client and default parameters.
+# All those parameters can be redefined in the specific client section ( and later on within a profile or plan file)
+default:
+ # Allows you to create the vm on a specific client. This field is not used for other types like network, so expect to use this in relatively simple plans only
+ # It can be overriden in command line with kcli --client
+ client: localhost
+ # number of virtual cpus
+ numcpus: 2
+ # amount of memory, in Mb
+ memory: 512
+ # inject a cloudinit iso file to vm ( or ignition for vm starting with cos or rhcos)
+ cloudinit: true
+ # Array of networks to define. For each of them, you can specify just a string for the name, or a dict containing name, public and alias and ip, mask and gateway
+ nets:
+ - default
+ # Array of disks to define. For each of them, you can specify pool, size, thin (as boolean), interface (either ide or virtio) and a wwn.If you omit parameters, default values will be used from config or profile file (You can actually let the entire entry blank or just indicate a size number directly)
+ disks:
+  - size: 10
+ # Should point to a base cloud image (that can be downloaded with kcli download) You can either specify short name or complete path. If you omit the full path and your image lives in several pools, the one from last (alphabetical) pool will be used.
+ template:
+ # Disk size of primary disk
+ disksize: 10
+ # You can set it to ide if using legacy operating systems
+ diskinterface: virtio
+ # Diskthin. This can also be set on a disk per basis
+ diskthin: true
+ # Creates a dns entry
+ reservedns: false
+ # Creates a /etc/hosts entry when creating a vm and where you re launching kcli from. Note you might be asked to sudo
+ reservehost: false
+ # create a libvirt reservation for the given vm
+ reserveip: false
+ # use ssh tunnels for console and for ssh access. You want that if you only open ssh port to your client!
+ tunnel: false
+ # Auto registers vms whose template starts with rhel  false. Requires to either rhnuser and rhnpassword, or rhnactivationkey and rhnorg, and an optional rhnpool
+ rhnregister: True
+ # Red Hat network user
+ rhnuser:
+ # Red Hat network password
+ rhnpassword:
+ # Red Hat network activation key
+ rhnactivationkey:
+ # Red Hat network organization
+ rhnorg:
+ # Red Hat network pool
+ rhnpool:
+ # Handles all the ssh option details so you dont get any warnings about man in the middle
+ insecure: false
+ # For gcp, aws and openstack, You can specify an existing flavor so that cpu and memory is derived from it
+ flavor: 
+ # Iso Name to present to the vm
+ iso:
+ # default gateway
+ gateway:
+ # Dns Servers
+ dns: 
+ # Dns search domain
+ domain: default
+ # 
+ start: true
+ # Graphical connection to use for libvirt.
+ vnc: true
+ # Array of ssh public keys to inject to th vm
+ keys:
+ # Array of commands to run through cloudinit
+ cmds:
+ # array of paths of custom script to inject with cloudinit. It will be merged with cmds parameter. You can either specify full paths or relative to where you're running kcli. Only checked in profile or plan file
+ scripts:
+ # name of one of your profiles. Only checked in plan file
+ profile: 
+ # Nested virtualization
+ nested: true
+ # Set it to true so that a private/public key gets shared between all the nodes of your plan. Additionally, root access will be allowed
+ sharedkey: false
+ # Set it to true so that your private key is passed to the nodes of your plan. If you need this, you know why :)
+ privatekey: false
+ # Array of files to inject to the vm. For ecach of the them , you can specify path, owner ( root by default) , permissions (600 by default ) and either origin or content to gather content data directly or from specified origin
+ files:
+ # Allows you to point to a parent profile so that values are taken from parent when not found in the current profile. Scripts and commands are rather concatenated between default, father and children ( so you have a happy family...)
+ base:
+ # Array of tags to apply to gcp instances (usefull when matched in a firewall rule). In the case of kubevirt, it s rather a dict of key=value used as node selector (allowing to force vms to be scheduled on a matching node)
+ tags:
+ # Allows ssh access as root user on the vm
+ enableroot: True
+ # creates a /root/.metadata yaml file whith all the overrides applied. On gcp, those overrides are also stored as extra metadata
+ storemetadata: false
+ # keeps networks when deleting plan
+ keep_networks: false
+ # use the value specified in *~/.kcli/plan* as default plan upon starting and stopping plan. Additionally, vms not belonging to the set plan wont show up when listing
+ planview: false
+ # Cpu Model
+ cpumodel: host-model
+ # You can specify a list of strings with features to enable or use dict entries with name of the feature and enable either set to True or false. The value for vmx is ignored, as it s handled by the nested flag
+ cpuflags:
+ # guestrhel764
+ guestid:  guestrhel764
+
+###############################################################################
+#  Clients Section
+###############################################################################
+
+localhost:
+ # when no type is specified, we default to kvm
+ # indicates the type of the client. valid types are kvm(default, used when no type is indicated), ovirt, gcp, aws, openstack, kubevirt and fake
+ type: kvm
+ # how to connect to libvirt, can be ssh or tcp
+ protocol: ssh
+ # whether this client can be used or not. useful when wanting to list all vms of all 
+ # kcli switch $host will also refuse to change to a disabled client
+ enabled: true
+ # fadn/ip of the hypervisor for libvirt
+ host: 127.0.0.1
+ # storage pool
+ pool: default
+ # custom qemu uri, if you want to access a remote libvirt instance over tcp for instance
+ url: qemu+ssh:///root@192.168.1.20/system
+ # If you want to use qemu:///session ( locally or remotely). Not recommended as it complicates access to the vm and is supposed to have lower performance
+ session: false
+
+# the fake provider is the one used when using kcli in container mode without additional conf ( like when not using a config.yml nor exposing libvirt socket or .kubeconfig)
+# it will uses random names for most commands
+fake:
+ type: fake
+
+gcp1:
+ type: gcp
+ # credentials (pointing to a json service account file). if not specified, the environment variable GOOGLE_APPLICATION_CREDENTIALS will be used
+ credentials: ~/myproject.json
+ project: myproject
+ zone: europe-west1-b
+
+aws:
+ type: aws
+ access_key_id: AKAAAAAAAAAAAAA
+ access_key_secret: xxxxxxxxxxyyyyyyyy
+ region: eu-west-3
+ keypair: mykey
+
+kubevirt:
+ type: kubevirt
+ # the k8s context to use
+ context: xxx
+ # your default storageclass. can also be set as blank, if no storage class should try to bind pvcs
+ pool: storageclass1
+ # k8s api node .Also used for tunneling ssh (and consoles)
+ host: kubevirt.default
+ # k8s api port
+ port: 6443
+ # optional certificate path
+ ca_file: ~/.kcli/xxx.pem
+ # kubernetes token, either from user or service account
+ token: XXXXXXXX
+ # additional dict of kubernetes tags to put to all created vms in their nodeSelector. Can be further indicated at profile or plan level in which case values are combined. This provides an easy way to force vms to run on specific nodes, by matching labels
+ tags:
+   region: master
+ # whether to create vms on multus backed networks.  true
+ multus: True
+ # whether to use cdi.  true when cdi is found. A check on whether cdi is actually present will be performed
+ cdi: True
+
+myovirt:
+ type: ovirt
+ # ovirt engine api host/fqdn
+ host: ovirt.default
+ # ovirt engine user
+ user: admin@internal
+ # ovirt engine password
+ password: prout
+ # ovirt datacenter
+ datacenter: Default
+ # ovirt cluster
+ cluster: Default
+ # storage domain
+ pool: Default
+ tunnel: false
+ # Organization
+ org: Karmalabs
+ # Points to a local path with the cert of the ovirt engine host. It can be retrieved with wget http://$HOST/ovirt-engine/services/pki-resource?resource=ca-certificate&format=X509-PEM-CA
+ ca_file: ~/ovirt.pem
+ # Glance image provider repository.  `ovirt-image-repository`.
+ imagerepository: ovirt-image-repository
+ # Only list vms created by kcli. Useful for environments when you are superadmin and have a ton of vms
+ filtervms: True
+ # Only list vms created by own user
+ filtervms : false
+ # Only list vms created by kcli with the corresponding filter=filtertag in their description. Useful for ovirt environments when you share the same user
+ filtertags: None
+
+myopenstack:
+ type: openstack
+ user: testk
+ password: testk
+ # keystone project
+ project: testk
+ # Keystone Domain
+ domain: Default
+ auth_url: http://openstack:5000/v3

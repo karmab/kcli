@@ -209,7 +209,9 @@ Replace with your own client in default section and indicate host and
 protocol in the corresponding client section.
 
 Most of the parameters are actually optional, and can be overridden in
-the default, client or profile section (or in a plan file)
+the default, client or profile section (or in a plan file). You can find
+a fully detailed config.yml sample
+`here <https://github.com/karmab/kcli/tree/master/samples/config.yml>`__
 
 Alternatively, you can generate this settings file ( for tweaking or to
 add remote hypervisors):
@@ -241,11 +243,15 @@ Libvirt
      tunnel: true
 
 Default connection is done over ssh, or using qemu:///system if host is
-unset The following parameters are specific to libvirt: - url: custom
-qemu uri, if you want to access a remote libvirt instance over tcp for
-instance - session Defaults to False. If you want ro use qemu:///session
-( locally or remotely). Not recommended as it complicates access to the
-vm and is supposed to have lower performance
+unset.
+
+The following parameters are specific to libvirt:
+
+-  url: custom qemu uri, if you want to access a remote libvirt instance
+   over tcp for instance
+-  session Defaults to False. If you want to use qemu:///session (
+   locally or remotely). Not recommended as it complicates access to the
+   vm and is supposed to have lower performance
 
 Gcp
 ---
@@ -426,6 +432,8 @@ The following parameters are specific to ovirt:
 -  filtertag Defaults to None. Only list vms created by kcli with the
    corresponding filter=filtertag in their description. Useful for
    environments when you share the same user
+
+Note that pool refers to storage domain
 
 To use this provider with kcli rpm, you’ll need to install (from pip)
 *ovirt-engine-sdk-python*
