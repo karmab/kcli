@@ -18,7 +18,8 @@ class Kdocker():
         self.user = user
         self.port = port
 
-    def create_container(self, name, image, nets=None, cmd=None, ports=[], volumes=[], environment=[], label=None):
+    def create_container(self, name, image, nets=None, cmd=None, ports=[], volumes=[], environment=[], label=None,
+                         overrides={}):
         """
         :param self:
         :param name:
@@ -29,6 +30,7 @@ class Kdocker():
         :param volumes:
         :param environment:
         :param label:
+        :param overrides:
         :return:
         """
         if self.host == '127.0.0.1':

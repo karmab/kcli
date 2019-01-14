@@ -25,7 +25,8 @@ class Kubernetes():
         self.user = user
         self.port = port
 
-    def create_container(self, name, image, nets=None, cmd=None, ports=[], volumes=[], environment=[], label=None):
+    def create_container(self, name, image, nets=None, cmd=None, ports=[], volumes=[], environment=[], label=None,
+                         overrides={}):
         """
         :param self:
         :param name:
@@ -36,12 +37,13 @@ class Kubernetes():
         :param volumes:
         :param environment:
         :param label:
+        :param overrides:
         :return:
         """
         namespace = self.namespace
         if ':' not in image:
             image = '%s:latest' % image
-        replicas = 2
+        replicas = overrides.get('replicas', 2)
         annotations = {'kcli/plan': 'kvirt'}
         if label is not None:
             if isinstance(label, str) and len(label.split('=')) == 2:

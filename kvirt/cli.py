@@ -985,6 +985,7 @@ def container(args):
     """Create container"""
     name = args.name
     profile = args.profile
+    overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     cont = Kcontainerconfig(config, client=args.containerclient).cont
     if name is None:
@@ -998,7 +999,7 @@ def container(args):
     if profile not in containerprofiles:
         common.pprint("profile %s not found. Trying to use the profile as image"
                       "and default values..." % profile, color='blue')
-        cont.create_container(name, profile)
+        cont.create_container(name, profile, overrides=overrides)
     else:
         common.pprint("Deploying container %s from profile %s..." % (name, profile), color='green')
         profile = containerprofiles[profile]
@@ -1114,6 +1115,10 @@ def cli():
     container_info = 'Create container'
     container_parser = subparsers.add_parser('container', description=container_info, help=container_info)
     container_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
+    container_parser.add_argument('-P', '--param', action='append',
+                                  help='specify parameter or keyword for rendering (can specify multiple)',
+                                  metavar='PARAM')
+    container_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
     container_parser.add_argument('name', metavar='NAME', nargs='?')
     container_parser.set_defaults(func=container)
 
