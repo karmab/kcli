@@ -202,10 +202,12 @@ twix:
  tunnel: true
 ```
 
-Default connection is done over ssh, or using qemu:///system if host is unset
+Default connection is done over ssh, or using qemu:///system if host is unset.
+
 The following parameters are specific to libvirt:
+
 - url: custom qemu uri, if you want to access a remote libvirt instance over tcp for instance
-- session Defaults to False. If you want ro use qemu:///session ( locally or remotely). Not recommended as it complicates access to the vm and is supposed to have lower performance
+- session Defaults to False. If you want to use qemu:///session ( locally or remotely). Not recommended as it complicates access to the vm and is supposed to have lower performance
 
 ## Gcp
 

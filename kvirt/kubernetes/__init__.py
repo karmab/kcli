@@ -40,6 +40,7 @@ class Kubernetes():
         namespace = self.namespace
         if ':' not in image:
             image = '%s:latest' % image
+        # replicas = 2
         annotations = {'kcli/plan': 'kvirt'}
         pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'Never', 'containers': [{'image': image,
                                                                                  'volumeMounts': [],
@@ -47,6 +48,18 @@ class Kubernetes():
                                                                                  'env': []}],
                                        'volumes': []}, 'apiVersion': 'v1', 'metadata': {'name': name,
                                                                                         'annotations': annotations}}
+        # ports = [{'containerPort': 8443, 'name': 'virt-api', 'protocol': 'TCP'}]
+        # containers = [{'image': image, 'command': [cmd], 'volumeMounts': [], 'name': name, 'env': [],
+        #               'imagePullPolicy': 'IfNotPresent', 'ports': ports}]
+        # deploy = {'apiVersion': 'extensions/v1beta1', 'kind': 'Deployment', 'metadata': annotations, 'labels': label,
+        #          'name': name, 'namespace': self.namespace,
+        #          'spec': {'replicas': replicas,
+        #                   'selector': {'matchLabels': label},
+        # 'strategy': {'rollingUpdate': {'maxSurge': 1, 'maxUnavailable': 1}, 'type': 'RollingUpdate'},
+        #                   'template': {'metadata': {'labels': label}, 'spec': {'containers': [containers],
+        #                                                                        'dnsPolicy': 'ClusterFirst',
+        #                                                                        'restartPolicy': 'Always'}}}}
+        # print(deploy)
         if volumes is not None:
             for i, volume in enumerate(volumes):
                 if isinstance(volume, str):
