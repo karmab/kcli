@@ -3,17 +3,16 @@
 About
 =====
 
-This tool is meant to interact with a local/remote libvirt daemon and to
-easily deploy from templates (using cloudinit). It will also report ips
-for any vm connected to a dhcp-enabled libvirt network.
+This tool is meant to interact with existing virtualization providers
+(libvirt, kubevirt, ovirt, openstack, gcp and aws) and to easily deploy
+and customize vms from cloud images.
 
-There is also support for:
+You can also interact with those vms (list, info, ssh, start, stop,
+delete, console, serialconsole, add/delete disk, add/delete nic,…)
 
--  gcp
--  aws
--  kubevirt
--  ovirt
--  openstack
+Futhermore, you can deploy vms using predefined profiles, several at
+once using plan files or entire products for which plans were already
+created for you
 
 Installation
 ============
@@ -236,19 +235,29 @@ Libvirt
 ::
 
     twix:
-     enabled: true
+     type: kvm
      host: 192.168.1.6
-     insecure: true
-     pool: default
-     tunnel: true
 
-Default connection is done over ssh, or using qemu:///system if host is
-unset.
+Without configuration, libvirt provider tries to connect locally using
+qemu:///system
+
+Additionally, remote libvirt hypervisors can be configured by indicating
+either a host, a port and protocol or a custom qemu uri.
+
+When using the host, port and protocol combination, default protocol
+uses ssh and as such assumes you are able to connect without password to
+your remote libvirt instance by mean of your public/private ssh key.
+
+If using tcp protocol instead, you will need to configure libvirtd in
+your remote libvirt hypervisor to accept insecure remote connections
+
+You will also likely want to indicate default libvirt pool to use
+(although as with most parameters, it can be done in the default
+section)
 
 The following parameters are specific to libvirt:
 
--  url: custom qemu uri, if you want to access a remote libvirt instance
-   over tcp for instance
+-  url custom qemu uri
 -  session Defaults to False. If you want to use qemu:///session (
    locally or remotely). Not recommended as it complicates access to the
    vm and is supposed to have lower performance
@@ -261,7 +270,6 @@ Gcp
     gcp1:
      type: gcp
      credentials: ~/myproject.json
-     enabled: true
      project: myproject
      zone: europe-west1-b
 
@@ -309,7 +317,6 @@ Aws
      type: aws
      access_key_id: AKAAAAAAAAAAAAA
      access_key_secret: xxxxxxxxxxyyyyyyyy
-     enabled: true
      region: eu-west-3
      keypair: mykey
 
@@ -337,10 +344,6 @@ specific token
 
     kubevirt:
      type: kubevirt
-     enabled: true
-     pool: glusterfs-storage
-     tags:
-       region: master
 
 You can use additional parameters for the kubevirt section:
 
@@ -410,9 +413,8 @@ Ovirt
      password: prout
      datacenter: Default
      cluster: Default
-     pool: vms
-     tunnel: false
-     org: Karmalabs
+     pool: Default
+     org: YourOrg
      ca_file: ~/ovirt.pem
      imagerepository: ovirt-image-repository
 
@@ -454,7 +456,6 @@ Openstack
 
     myopenstack:
      type: openstack
-     enabled: true
      user: testk
      password: testk
      project: testk
@@ -486,7 +487,6 @@ generate the cloudinit scripts)
 
     fake:
      type: fake
-     enabled: true
 
 Usage
 =====
