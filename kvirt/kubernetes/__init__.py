@@ -43,8 +43,7 @@ class Kubernetes():
         namespace = self.namespace
         if ':' not in image:
             image = '%s:latest' % image
-        replicas = overrides.get('replicas', 2)
-        annotations = {'kcli/plan': 'kvirt'}
+        replicas = overrides.get('replicas', 1)
         if label is not None:
             if isinstance(label, str) and len(label.split('=')) == 2:
                 key, value = label.split('=')
@@ -53,7 +52,7 @@ class Kubernetes():
                 labels = label
         else:
             labels = {}
-        labels = {'kcli/deploy': name}
+        labels['kcli/plan'] = overrides.get('plan', 'kvirt')
         containers = [{'image': image, 'name': name, 'imagePullPolicy': 'IfNotPresent', 'ports': ports}]
         if cmd is not None:
             containers[0]['command'] = cmd.split(' ')
@@ -100,8 +99,7 @@ class Kubernetes():
                         continue
                 newenv = {'name': key, 'value': value}
                 containers[0]['env'].append(newenv)
-        deploy = {'apiVersion': 'extensions/v1beta1', 'kind': 'Deployment', 'metadata': {'annotations': annotations,
-                                                                                         'labels': labels,
+        deploy = {'apiVersion': 'extensions/v1beta1', 'kind': 'Deployment', 'metadata': {'labels': labels,
                                                                                          'name': name,
                                                                                          'namespace': self.namespace},
                   'spec': {'replicas': replicas, 'selector': {'matchLabels': labels},
@@ -191,6 +189,8 @@ class Kubernetes():
             state = pod.status.phase
             source = pod.spec.containers[0].image
             plan = ''
+            if 'kcli/plan' in pod.metadata.labels:
+                plan = pod.metadata.labels['kcli/plan']
             command = pod.spec.containers[0].command
             if command is not None:
                 command = ' '.join(command)
