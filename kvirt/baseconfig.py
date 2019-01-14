@@ -25,7 +25,7 @@ class Kbaseconfig:
     """
 
     """
-    def __init__(self, client=None, debug=False, quiet=False):
+    def __init__(self, client=None, containerclient=None, debug=False, quiet=False):
         inifile = "%s/.kcli/config.yml" % os.environ.get('HOME')
         secretsfile = "%s/.kcli/secrets.yml" % os.environ.get('HOME')
         if not os.path.exists(secretsfile):
@@ -247,6 +247,7 @@ class Kbaseconfig:
         self.notifytoken = options.get('notifytoken', self.default['notifytoken'])
         self.notifycmd = options.get('notifycmd', self.default['notifycmd'])
         self.keep_networks = options.get('keep_networks', self.default['keep_networks'])
+        self.containerclient = containerclient
 
     def switch_host(self, client):
         """

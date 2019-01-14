@@ -24,7 +24,7 @@ def start(args):
     names = [common.get_lastvm(config.client)] if not args.names else args.names
     k = config.k
     if container:
-        cont = Kcontainerconfig(config).cont
+        cont = Kcontainerconfig(config, client=args.containerclient).cont
         for name in names:
             common.pprint("Starting container %s..." % name, color='green')
             cont.start_container(name)
@@ -52,7 +52,7 @@ def stop(args):
     for cli in ks:
         k = ks[cli]
         if container:
-            cont = Kcontainerconfig(config).cont
+            cont = Kcontainerconfig(config, client=args.containerclient).cont
             for name in names:
                 common.pprint("Stopping container %s in %s..." % (name, cli), color='green')
                 cont.stop_container(name)
@@ -72,7 +72,7 @@ def restart(args):
     names = [common.get_lastvm(config.client)] if not args.names else args.names
     k = config.k
     if container:
-        cont = Kcontainerconfig(config).cont
+        cont = Kcontainerconfig(config, client=args.containerclient).cont
         for name in names:
             common.pprint("Restarting container %s..." % name, color='green')
             cont.stop_container(name)
@@ -96,7 +96,7 @@ def console(args):
     k = config.k
     tunnel = config.tunnel
     if container:
-        cont = Kcontainerconfig(config).cont
+        cont = Kcontainerconfig(config, client=args.containerclient).cont
         cont.console_container(name)
         return
     elif serial:
@@ -129,7 +129,7 @@ def delete(args):
             common.confirm("Are you sure?")
         if container:
             codes = [0]
-            cont = Kcontainerconfig(config).cont
+            cont = Kcontainerconfig(config, client=args.containerclient).cont
             for name in names:
                 common.pprint("Deleting container %s" % name, color='green')
                 cont.delete_container(name)
@@ -414,7 +414,7 @@ def _list(args):
             diskstable.add_row([disk, pool, path])
         print(diskstable)
     elif containers:
-        cont = Kcontainerconfig(config).cont
+        cont = Kcontainerconfig(config, client=args.containerclient).cont
         common.pprint("Listing containers...", color='green')
         containers = PrettyTable(["Name", "Status", "Image", "Plan", "Command", "Ports"])
         for container in cont.list_containers():
@@ -426,7 +426,7 @@ def _list(args):
                 containers.add_row(container)
         print(containers)
     elif images:
-        cont = Kcontainerconfig(config).cont
+        cont = Kcontainerconfig(config, client=args.containerclient).cont
         common.pprint("Listing images...", color='green')
         images = PrettyTable(["Name"])
         for image in cont.list_images():
@@ -986,7 +986,7 @@ def container(args):
     name = args.name
     profile = args.profile
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    cont = Kcontainerconfig(config).cont
+    cont = Kcontainerconfig(config, client=args.containerclient).cont
     if name is None:
         name = nameutils.get_random_name()
         if config.type == 'kubevirt':
@@ -1074,6 +1074,8 @@ def cli():
                                      'wrapper on steroids. Check out '
                                      'https://github.com/karmab/kcli!')
     parser.add_argument('-C', '--client')
+    parser.add_argument('--containerclient', help='Containerclient to use')
+    parser.add_argument('--dnsclient', help='Dnsclient to use')
     parser.add_argument('-d', '--debug', action='store_true')
     parser.add_argument('-n', '--namespace', help='Namespace to use. specific to kubevirt')
     parser.add_argument('-r', '--region', help='Region to use. specific to aws/gcp')

@@ -832,7 +832,7 @@ class Kconfig(Kbaseconfig):
                         deletedvms.append(name)
                         found = True
             if container:
-                cont = Kcontainerconfig(self).cont
+                cont = Kcontainerconfig(self, client=self.containerclient).cont
                 for conta in sorted(cont.list_containers(k)):
                     name = conta[0]
                     container_plan = conta[3]
@@ -887,7 +887,7 @@ class Kconfig(Kbaseconfig):
                     k.start(name)
                     common.pprint("VM %s started!" % name, color='green')
             if container:
-                cont = Kcontainerconfig(self.type).cont
+                cont = Kcontainerconfig(self, client=self.containerclient).cont
                 for conta in sorted(cont.list_containers(k)):
                     name = conta[0]
                     containerplan = conta[3]
@@ -905,7 +905,7 @@ class Kconfig(Kbaseconfig):
                     k.stop(name)
                     common.pprint("%s stopped!" % name, color='green')
             if container:
-                cont = Kcontainerconfig(self.type).cont
+                cont = Kcontainerconfig(self, client=self.containerclient).cont
                 for conta in sorted(cont.list_containers()):
                     name = conta[0]
                     containerplan = conta[3]
@@ -1325,7 +1325,7 @@ class Kconfig(Kbaseconfig):
                 k.add_disk(name=vm, size=size, pool=pool, template=template, shareable=shareable, existing=newdisk,
                            thin=False)
         if containerentries:
-            cont = Kcontainerconfig(self.type).cont
+            cont = Kcontainerconfig(self, client=self.containerclient).cont
             common.pprint("Deploying Containers...", color='green')
             label = "plan=%s" % plan
             for container in containerentries:

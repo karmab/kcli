@@ -12,22 +12,24 @@ class Kcontainerconfig():
     """
 
     """
-    def __init__(self, config, namespace=None):
+    def __init__(self, config, client=None, namespace=None):
             k8s = False
             default_k8s = False
-            currentconfig = config.ini[config.client]
-            if 'containerclient' in currentconfig:
-                if currentconfig['containerclient'] == 'local':
-                    currentconfig = {'host': '127.0.0.1'}
-                if currentconfig['containerclient'] == 'kubernetes':
-                    currentconfig = {}
-                    default_k8s = True
-                elif currentconfig['containerclient'] not in config.ini:
-                    pprint("No section found for containerclient %s. Leaving" % currentconfig['containerclient'],
-                           color='red')
-                    os._exit(1)
-                else:
-                    currentconfig = config.ini[currentconfig['containerclient']]
+            client = config.client if client is None else client
+            if client == 'local':
+                currentconfig = {'host': '127.0.0.1'}
+            elif client == 'kubernetes':
+                currentconfig = {}
+                default_k8s = True
+            else:
+                currentconfig = config.ini[client]
+                if 'containerclient' in currentconfig:
+                    if currentconfig['containerclient'] not in config.ini:
+                        pprint("No section found for containerclient %s. Leaving" % currentconfig['containerclient'],
+                               color='red')
+                        os._exit(1)
+                    else:
+                        currentconfig = config.ini[currentconfig['containerclient']]
             if 'type' in currentconfig and currentconfig['type'] == 'kubevirt':
                 default_k8s = True
             k8s = currentconfig.get('k8s', default_k8s)

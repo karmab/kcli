@@ -40,11 +40,13 @@ class Kubernetes():
         namespace = self.namespace
         if ':' not in image:
             image = '%s:latest' % image
+        annotations = {'kcli/plan': 'kvirt'}
         pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'Never', 'containers': [{'image': image,
                                                                                  'volumeMounts': [],
                                                                                  'name': name,
                                                                                  'env': []}],
-                                       'volumes': []}, 'apiVersion': 'v1', 'metadata': {'name': name}}
+                                       'volumes': []}, 'apiVersion': 'v1', 'metadata': {'name': name,
+                                                                                        'annotations': annotations}}
         if volumes is not None:
             for i, volume in enumerate(volumes):
                 if isinstance(volume, str):
