@@ -5,7 +5,8 @@ Gcp Provider Class
 """
 
 from jinja2 import Environment, FileSystemLoader
-from jinja2.exceptions import TemplateSyntaxError
+from jinja2 import StrictUndefined as undefined
+from jinja2.exceptions import TemplateSyntaxError, TemplateError
 from kvirt import common
 from dateutil import parser as dateparser
 from getpass import getuser
@@ -274,14 +275,17 @@ class Kgcp(object):
                         content = f.read().encode("base64")
                 elif overrides and render:
                     basedir = os.path.dirname(origin) if os.path.dirname(origin) != '' else '.'
-                    env = Environment(loader=FileSystemLoader(basedir))
+                    env = Environment(loader=FileSystemLoader(basedir), undefined=undefined)
                     try:
                         templ = env.get_template(os.path.basename(origin))
+                        newfile = templ.render(overrides)
                     except TemplateSyntaxError as e:
                         common.pprint("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message),
                                       color='red')
                         os._exit(1)
-                    newfile = templ.render(overrides)
+                    except TemplateError as e:
+                        common.pprint("Error rendering file %s. Got: %s" % (origin, e.message), color='red')
+                        os._exit(1)
                     startup_script += "cat <<'EOF' >%s\n%s\nEOF\nchmod %s %s\n" % (path, newfile, permissions, path)
                 else:
                     newfile = open(origin, 'r').read()
@@ -300,7 +304,11 @@ class Kgcp(object):
                 if cmd.startswith('#'):
                     continue
                 else:
-                    newcmd = Environment().from_string(cmd).render(overrides)
+                    try:
+                        newcmd = Environment(undefined=undefined).from_string(cmd).render(overrides)
+                    except TemplateError as e:
+                        common.pprint("Error rendering cmd %s. Got: %s" % (cmd, e.message), color='red')
+                        os._exit(1)
                 startup_script += '%s\n' % newcmd
         if startup_script != '':
             beginningcmd = 'test -f /root/.kcli_startup && exit 0\n'

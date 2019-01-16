@@ -19,7 +19,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 DOMAIN = "kubevirt.io"
 CDIDOMAIN = "cdi.kubevirt.io"
 KUBEVIRTNAMESPACE = "kube-system"
-VERSION = 'v1alpha2'
+VERSION = 'v1alpha3'
 MULTUSDOMAIN = 'k8s.cni.cncf.io'
 MULTUSVERSION = 'v1'
 CONTAINERDISKS = ['kubevirt/alpine-container-disk-demo', 'kubevirt/cirros-container-disk-demo',
@@ -267,8 +267,7 @@ class Kubevirt(Kubecommon):
         sizes = []
         for index, disk in enumerate(disks):
             existingpvc = False
-            diskname = "disk%s" % index
-            volname = "%s-vol%s" % (name, index)
+            diskname = '%s-disk%d' % (name, index)
             if disk is None:
                 disksize = default_disksize
                 diskpool = default_pool
@@ -286,19 +285,18 @@ class Kubevirt(Kubecommon):
                 diskpool = disk.get('pool', default_pool)
                 diskinterface = disk.get('interface', default_diskinterface)
                 if 'name' in disk:
-                    volname = disk['name']
                     existingpvc = True
-            myvolume = {'name': volname}
+            myvolume = {'name': diskname}
             if template is not None and index == 0:
                 if template in CONTAINERDISKS:
                     myvolume['containerDisk'] = {'image': template}
                 elif cdi and datavolumes:
-                    myvolume['dataVolume'] = {'name': volname}
+                    myvolume['dataVolume'] = {'name': diskname}
                 else:
-                    myvolume['persistentVolumeClaim'] = {'claimName': volname}
+                    myvolume['persistentVolumeClaim'] = {'claimName': diskname}
             if index > 0 or template is None:
-                myvolume['persistentVolumeClaim'] = {'claimName': volname}
-            newdisk = {'volumeName': volname, 'disk': {'bus': diskinterface}, 'name': diskname}
+                myvolume['persistentVolumeClaim'] = {'claimName': diskname}
+            newdisk = {'disk': {'bus': diskinterface}, 'name': diskname}
             vm['spec']['template']['spec']['domain']['devices']['disks'].append(newdisk)
             vm['spec']['template']['spec']['volumes'].append(myvolume)
             if index == 0 and template in CONTAINERDISKS:
@@ -309,7 +307,7 @@ class Kubevirt(Kubecommon):
             pvc = {'kind': 'PersistentVolumeClaim', 'spec': {'storageClassName': diskpool,
                                                              'accessModes': [self.accessmode],
                                                              'resources': {'requests': {'storage': '%sGi' % disksize}}},
-                   'apiVersion': 'v1', 'metadata': {'name': volname}}
+                   'apiVersion': 'v1', 'metadata': {'name': diskname}}
             if template is not None and index == 0 and template not in CONTAINERDISKS and cdi:
                 annotation = "%s/%s" % (cdinamespace, templates[template])
                 pvc['metadata']['annotations'] = {'k8s.io/CloneRequest': annotation}
@@ -321,10 +319,9 @@ class Kubevirt(Kubecommon):
                              reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides,
                              iso=False, storemetadata=storemetadata)
             cloudinitdata = open('/tmp/user-data', 'r').read().strip()
-            cloudinitdisk = {'volumeName': 'cloudinitvolume', 'cdrom': {'bus': 'sata'},
-                             'name': 'cloudinitdisk'}
+            cloudinitdisk = {'cdrom': {'bus': 'sata'}, 'name': 'cloudinitdisk'}
             vm['spec']['template']['spec']['domain']['devices']['disks'].append(cloudinitdisk)
-            cloudinitvolume = {'cloudInitNoCloud': {'userData': cloudinitdata}, 'name': 'cloudinitvolume'}
+            cloudinitvolume = {'cloudInitNoCloud': {'userData': cloudinitdata}, 'name': 'cloudinitdisk'}
             vm['spec']['template']['spec']['volumes'].append(cloudinitvolume)
         if self.debug:
             pretty_print(vm)
@@ -334,7 +331,7 @@ class Kubevirt(Kubecommon):
             if template not in CONTAINERDISKS and index == 0:
                 if cdi:
                     if datavolumes:
-                        dvt = {'metadata': {'name': volname},
+                        dvt = {'metadata': {'name': diskname},
                                'spec': {'pvc': {'accessModes': [self.accessmode],
                                                 'resources':
                                                 {'requests': {'storage': '%sGi' % pvcsize}}},
@@ -353,8 +350,7 @@ class Kubevirt(Kubecommon):
                             return {'result': 'failure', 'reason': 'timeout waiting for cdi importer pod to complete'}
                         continue
                 else:
-                    volname = "%s-vol0" % name
-                    copy = self.copy_image(diskpool, template, volname)
+                    copy = self.copy_image(diskpool, template, diskname)
                     if copy['result'] == 'failure':
                         reason = copy['reason']
                         return {'result': 'failure', 'reason': reason}
@@ -659,7 +655,7 @@ class Kubevirt(Kubecommon):
             bus = 'N/A'
             if 'disk' in d:
                 bus = d['disk'].get('bus', 'N/A')
-            volumename = d['volumeName']
+            volumename = d['name']
             volumeinfo = [volume for volume in volumes if volume['name'] == volumename][0]
             size = '0'
             if 'persistentVolumeClaim' in volumeinfo:
@@ -767,8 +763,6 @@ class Kubevirt(Kubecommon):
                                                  client.V1DeleteOptions())
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        # volumes = [d['volumeName'] for d in vm['spec']['template']['spec']['domain']['devices']['disks']
-        #           if d['volumeName'] != 'cloudinitdisk']
         pvcvolumes = [v['claimName'] for v in vm['spec']['template']['spec']['volumes'] if 'claimName' in v]
         pvcs = [pvc for pvc in core.list_namespaced_persistent_volume_claim(namespace).items
                 if pvc.metadata.name in pvcvolumes]
@@ -946,18 +940,17 @@ class Kubevirt(Kubecommon):
         currentdisks = [disk for disk in vm['spec'][t]['spec']['domain']['devices']['disks']
                         if disk['name'] != 'cloudinitdisk']
         index = len(currentdisks)
-        volname = '%s-vol%d' % (name, index)
-        diskname = 'disk%d' % index
-        self.create_disk(volname, size=size, pool=pool, thin=thin, template=template)
-        bound = self.pvc_bound(volname, namespace)
+        diskname = '%s-disk%d' % (name, index)
+        self.create_disk(diskname, size=size, pool=pool, thin=thin, template=template)
+        bound = self.pvc_bound(diskname, namespace)
         if not bound:
-            return {'result': 'failure', 'reason': 'timeout waiting for pvc %s to get bound' % volname}
-        prepare = self.prepare_pvc(volname, size=size)
+            return {'result': 'failure', 'reason': 'timeout waiting for pvc %s to get bound' % diskname}
+        prepare = self.prepare_pvc(diskname, size=size)
         if prepare['result'] == 'failure':
             reason = prepare['reason']
             return {'result': 'failure', 'reason': reason}
-        myvolume = {'name': volname, 'persistentVolumeClaim': {'claimName': volname}}
-        newdisk = {'volumeName': volname, 'name': diskname}
+        myvolume = {'name': diskname, 'persistentVolumeClaim': {'claimName': diskname}}
+        newdisk = {'name': diskname}
         vm['spec'][t]['spec']['domain']['devices']['disks'].append(newdisk)
         vm['spec'][t]['spec']['volumes'].append(myvolume)
         crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
@@ -985,7 +978,7 @@ class Kubevirt(Kubecommon):
             common.pprint("Disk %s not found" % diskname, color='red')
             return {'result': 'failure', 'reason': "disk %s not found in VM" % diskname}
         diskindex = diskindex[0]
-        volname = vm['spec'][t]['spec']['domain']['devices']['disks'][diskindex]['volumeName']
+        volname = vm['spec'][t]['spec']['domain']['devices']['disks'][diskindex]['name']
         volindex = [i for i, vol in enumerate(vm['spec'][t]['spec']['volumes']) if vol['name'] == volname]
         if volindex:
             volindex = volindex[0]

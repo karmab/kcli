@@ -5,7 +5,8 @@ Kvirt config class
 """
 
 from jinja2 import Environment, FileSystemLoader
-from jinja2.exceptions import TemplateSyntaxError
+from jinja2 import StrictUndefined as undefined
+from jinja2.exceptions import TemplateSyntaxError, TemplateError
 from kvirt.defaults import TEMPLATES, TEMPLATESCOMMANDS
 from kvirt import ansibleutils
 from kvirt import nameutils
@@ -438,14 +439,17 @@ class Kconfig(Kbaseconfig):
                     os._exit(1)
                 else:
                     scriptbasedir = os.path.dirname(script) if os.path.dirname(script) != '' else '.'
-                    env = Environment(loader=FileSystemLoader(scriptbasedir))
+                    env = Environment(loader=FileSystemLoader(scriptbasedir), undefined=undefined)
                     try:
                         templ = env.get_template(os.path.basename(script))
+                        scriptentries = templ.render(overrides)
                     except TemplateSyntaxError as e:
                         common.pprint("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message),
                                       color='red')
                         os._exit(1)
-                    scriptentries = templ.render(overrides)
+                    except TemplateError as e:
+                        common.pprint("Error rendering script %s. Got: %s" % (script, e.message), color='red')
+                        os._exit(1)
                     scriptlines = [line.strip() for line in scriptentries.split('\n') if line.strip() != '']
                     if scriptlines:
                         scriptcmds.extend(scriptlines)
@@ -1578,12 +1582,15 @@ class Kconfig(Kbaseconfig):
     def process_inputfile(self, plan, inputfile, overrides={}, onfly=None):
         basedir = os.path.dirname(inputfile) if os.path.dirname(inputfile) != '' else '.'
         basefile = None
-        env = Environment(loader=FileSystemLoader(basedir))
+        env = Environment(loader=FileSystemLoader(basedir), undefined=undefined)
         try:
             templ = env.get_template(os.path.basename(inputfile))
         except TemplateSyntaxError as e:
             common.pprint("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message),
                           color='red')
+            os._exit(1)
+        except TemplateError as e:
+            common.pprint("Error rendering file %s. Got: %s" % (inputfile, e.message), color='red')
             os._exit(1)
         parameters = common.get_parameters(inputfile)
         if parameters is not None:
@@ -1607,6 +1614,10 @@ class Kconfig(Kbaseconfig):
         with open(inputfile, 'r') as entries:
             overrides.update(self.overrides)
             overrides.update({'plan': plan})
-            entries = templ.render(overrides)
+            try:
+                entries = templ.render(overrides)
+            except TemplateError as e:
+                common.pprint("Error rendering inputfile %s. Got: %s" % (inputfile, e.message), color='red')
+                os._exit(1)
             entries = yaml.load(entries)
         return entries, overrides, basefile, basedir

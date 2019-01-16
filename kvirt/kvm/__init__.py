@@ -1475,6 +1475,7 @@ class Kvirt(object):
         :param force:
         :return:
         """
+        print("prout")
         conn = self.conn
         net = nets[0]
         if isinstance(net, dict):

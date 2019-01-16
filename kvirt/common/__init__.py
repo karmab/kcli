@@ -3,7 +3,8 @@
 
 import base64
 from jinja2 import Environment, FileSystemLoader
-from jinja2.exceptions import TemplateSyntaxError
+from jinja2 import StrictUndefined as undefined
+from jinja2.exceptions import TemplateSyntaxError, TemplateError
 from distutils.spawn import find_executable
 from netaddr import IPAddress
 import random
@@ -185,14 +186,17 @@ def process_files(files=[], overrides={}):
                     content = base64.b64encode(f.read())
             elif overrides and render:
                 basedir = os.path.dirname(origin) if os.path.dirname(origin) != '' else '.'
-                env = Environment(loader=FileSystemLoader(basedir))
+                env = Environment(loader=FileSystemLoader(basedir), undefined=undefined)
                 try:
                     templ = env.get_template(os.path.basename(origin))
+                    fileentries = templ.render(overrides)
                 except TemplateSyntaxError as e:
                     pprint("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message),
                            color='red')
                     os._exit(1)
-                fileentries = templ.render(overrides)
+                except TemplateError as e:
+                    pprint("Error rendering file %s. Got: %s" % (origin, e.message), color='red')
+                    os._exit(1)
                 content = [line.rstrip() for line in fileentries.split('\n')]
                 with open("/tmp/%s" % os.path.basename(path), 'w') as f:
                     for line in fileentries.split('\n'):
@@ -244,14 +248,17 @@ def process_ignition_files(files=[], overrides={}):
                     content = f.read().encode("base64")
             elif overrides:
                 basedir = os.path.dirname(origin) if os.path.dirname(origin) != '' else '.'
-                env = Environment(loader=FileSystemLoader(basedir))
+                env = Environment(loader=FileSystemLoader(basedir), undefined=undefined)
                 try:
                     templ = env.get_template(os.path.basename(origin))
+                    fileentries = templ.render(overrides)
                 except TemplateSyntaxError as e:
                     pprint("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message),
                            color='red')
                     os._exit(1)
-                fileentries = templ.render(overrides)
+                except TemplateError as e:
+                    pprint("Error rendering file %s. Got: %s" % (origin, e.message), color='red')
+                    os._exit(1)
                 # content = [line.rstrip() for line in fileentries.split('\n') if line.rstrip() != '']
                 content = [line for line in fileentries.split('\n')]
             else:
@@ -278,8 +285,12 @@ def process_cmds(cmds, overrides):
         if cmd.startswith('#'):
             continue
         else:
-            newcmd = Environment().from_string(cmd).render(overrides)
-            data += "- %s\n" % newcmd
+            try:
+                newcmd = Environment(undefined=undefined).from_string(cmd).render(overrides)
+                data += "- %s\n" % newcmd
+            except TemplateError as e:
+                pprint("Error rendering cmd %s. Got: %s" % (cmd, e.message), color='red')
+                os._exit(1)
     return data
 
 
@@ -294,8 +305,12 @@ def process_ignition_cmds(cmds, overrides):
     permissions = '700'
     content = ''
     for cmd in cmds:
-        newcmd = Environment().from_string(cmd).render(overrides)
-        content += "%s\n" % newcmd
+        try:
+            newcmd = Environment(undefined=undefined).from_string(cmd).render(overrides)
+            content += "%s\n" % newcmd
+        except TemplateError as e:
+            pprint("Error rendering cmd %s. Got: %s" % (cmd, e.message), color='red')
+            os._exit(1)
     if content == '':
         return content
     else:
