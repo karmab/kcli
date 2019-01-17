@@ -549,6 +549,7 @@ class Kbaseconfig:
                     if onfly is not None:
                         common.fetch("%s/%s" % (onfly, parameters[parameter]), '.')
                     baseplan = parameters[parameter]
+                    baseplan = "%s/%s" % (os.path.dirname(inputfile), baseplan)
                     self.info_plan(baseplan, quiet=True)
                     print()
         else:
