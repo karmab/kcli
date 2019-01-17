@@ -1126,7 +1126,7 @@ def cli():
     delete_parser = subparsers.add_parser('delete', description=delete_info, help=delete_info)
     delete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     delete_parser.add_argument('--container', action='store_true')
-    delete_parser.add_argument('-t', '--template', action='store_true', help='delete template instead')
+    delete_parser.add_argument('-t', '--template', action='store_true', help='delete template')
     delete_parser.add_argument('--snapshots', action='store_true', help='Remove snapshots if needed')
     delete_parser.add_argument('names', metavar='VMNAMES', nargs='*')
     delete_parser.set_defaults(func=delete)
@@ -1149,15 +1149,12 @@ def cli():
     dns_parser.add_argument('name', metavar='NAME', nargs='?')
     dns_parser.set_defaults(func=dns)
 
-    download_info = 'Download image'
-    download_help = "Image to download. Choose between \n%s" % '\n'.join(TEMPLATES.keys())
+    download_info = 'Download template'
+    download_help = "Template to download. Choose between \n%s" % '\n'.join(TEMPLATES.keys())
     download_parser = subparsers.add_parser('download', description=download_info, help=download_info)
     download_parser.add_argument('-c', '--cmd', help='Extra command to launch after downloading', metavar='CMD')
     download_parser.add_argument('-p', '--pool', help='Pool to use. Defaults to default', metavar='POOL')
     download_parser.add_argument('-u', '--url', help='Url to use', metavar='URL')
-    # download_parser.add_argument('templates', choices=sorted(TEMPLATES.keys()),
-    #                             default='', help='Template/Image to download',
-    #                             nargs='*')
     download_parser.add_argument('templates', choices=sorted(TEMPLATES.keys()),
                                  default='', help=download_help, nargs='*', metavar='')
     download_parser.set_defaults(func=download)
