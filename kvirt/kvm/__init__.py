@@ -1475,7 +1475,6 @@ class Kvirt(object):
         :param force:
         :return:
         """
-        print("prout")
         conn = self.conn
         net = nets[0]
         if isinstance(net, dict):
@@ -2276,15 +2275,14 @@ class Kvirt(object):
         conn = self.conn
         shortname = os.path.basename(image)
         for poolname in conn.listStoragePools():
-            if self.get_pool_path(poolname) == os.path.dirname(image):
-                try:
-                    pool = conn.storagePoolLookupByName(poolname)
-                    volume = pool.storageVolLookupByName(shortname)
-                except:
-                    return {'result': 'failure', 'reason': 'pool not found'}
-            volume.delete(0)
-            pool.refresh(0)
-            return {'result': 'success'}
+            try:
+                pool = conn.storagePoolLookupByName(poolname)
+                volume = pool.storageVolLookupByName(shortname)
+                volume.delete(0)
+                pool.refresh(0)
+                return {'result': 'success'}
+            except:
+                continue
         return {'result': 'failure', 'reason': 'Image %s not found' % image}
 
     def add_image(self, image, pool, cmd=None, name=None, size=1):
