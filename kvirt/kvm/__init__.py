@@ -528,10 +528,7 @@ class Kvirt(object):
                         <target dev='hdd' bus='ide'/>
                         <readonly/>
                         </disk>""" % (isoxml, dtype, dsource, cloudinitiso)
-        if tunnel:
-            listen = '127.0.0.1'
-        else:
-            listen = '0.0.0.0'
+        listen = '0.0.0.0'
         displayxml = """<input type='tablet' bus='usb'/>
                         <input type='mouse' bus='ps2'/>
                         <graphics type='%s' port='-1' autoport='yes' listen='%s'>
@@ -922,6 +919,7 @@ class Kvirt(object):
                 attributes = element.attrib
                 if attributes['listen'] == '127.0.0.1' or tunnel:
                     host = '127.0.0.1'
+                    tunnel = True
                 else:
                     host = self.host
                 protocol = attributes['type']
@@ -930,16 +928,12 @@ class Kvirt(object):
                 consolecommand = ''
                 if tunnel:
                     localport = common.get_free_port()
-                    consolecommand += "ssh %s -o LogLevel=QUIET -f -p %s -L %s:127.0.0.1:%s %s@%s sleep 10"\
+                    consolecommand += "ssh %s -o LogLevel=QUIET -f -p %s -L %s:127.0.0.1:%s %s@%s sleep 10;"\
                         % (self.identitycommand, self.port, localport, port, self.user, self.host)
-                    if self.debug:
-                        print(consolecommand)
-                    # os.system(consolecommand)
                 url = "%s://%s:%s" % (protocol, host, localport)
-                if self.debug:
-                    print(url)
                 consolecommand += "remote-viewer %s &" % url
-                # os.popen("remote-viewer %s &" % url)
+                if self.debug:
+                    print(consolecommand)
                 os.popen(consolecommand)
 
     def serialconsole(self, name):
