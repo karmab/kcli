@@ -938,7 +938,10 @@ class Kvirt(object):
                 url = "%s://%s:%s" % (protocol, host, localport)
                 if self.debug:
                     print(url)
-                consolecommand += "remote-viewer %s &" % url
+                if tunnel:
+                    consolecommand += "; remote-viewer %s &" % url
+                else:
+                    consolecommand += "remote-viewer %s &" % url
                 # os.popen("remote-viewer %s &" % url)
                 os.popen(consolecommand)
 
