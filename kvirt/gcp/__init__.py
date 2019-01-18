@@ -1257,19 +1257,16 @@ class Kgcp(object):
         """
         project = self.project
         zone = self.zone
+        region = self.region
         client = dns.Client(project)
         domain_name = domain.replace('.', '-')
         common.pprint("Assuming Domain name is %s..." % domain_name, color='green')
-        zones = [z for z in client.list_zones() if z.name == domain_name]
-        if not zones:
+        dnszones = [z for z in client.list_zones() if z.name == domain_name]
+        if not dnszones:
             common.pprint("Domain %s not found" % domain_name, color='red')
             return {'result': 'failure', 'reason': "Domain not found"}
         else:
-            zone = zones[0]
-        # zone = client.zone(domain_name)
-        # if not zone.exists():
-        #     common.pprint("Domain %s not found" % domain_name, color='red')
-        #    return {'result': 'failure', 'reason': "Domain not found"}
+            dnszone = dnszones[0]
         entry = "%s.%s." % (name, domain)
         if ip is None:
             net = nets[0]
@@ -1288,17 +1285,23 @@ class Kgcp(object):
         if ip is None:
             print("Couldn't assign DNS")
             return
-        changes = zone.changes()
-        record_set = zone.resource_record_set(entry, 'A', 300, [ip])
+        address_body = {"name": name, "address": ip}
+        self.conn.addresses().insert(project=project, region=region, body=address_body).execute()
+        network_interface = "nic0"
+        access_config_body = {"natIP": ip}
+        self.conn.instances().updateAccessConfig(project=project, zone=zone, instance=name,
+                                                 networkInterface=network_interface, body=access_config_body).execute()
+        changes = dnszone.changes()
+        record_set = dnszone.resource_record_set(entry, 'A', 300, [ip])
         changes.add_record_set(record_set)
         if alias:
             for a in alias:
                 if a == '*':
                     new = '*.%s.%s.' % (name, domain)
-                    record_set = zone.resource_record_set(new, 'A', 300, [ip])
+                    record_set = dnszone.resource_record_set(new, 'A', 300, [ip])
                 else:
                     new = '%s.%s.' % (a, domain) if '.' not in a else '%s.' % a
-                    record_set = zone.resource_record_set(new, 'CNAME', 300, [entry])
+                    record_set = dnszone.resource_record_set(new, 'CNAME', 300, [entry])
                 changes.add_record_set(record_set)
         changes.create()
         return {'result': 'success'}
@@ -1311,26 +1314,26 @@ class Kgcp(object):
         :return:
         """
         project = self.project
-        zone = self.zone
+        region = self.region
         client = dns.Client(project)
         domain_name = domain.replace('.', '-')
-        zones = [z for z in client.list_zones() if z.name == domain_name]
-        if not zones:
+        dnszones = [z for z in client.list_zones() if z.name == domain_name]
+        if not dnszones:
             return
         else:
-            zone = zones[0]
-        # zone = client.zone(domain_name)
-        #
-        # if not zone.exists():
-        #    return
+            dnszone = dnszones[0]
         entry = "%s.%s." % (name, domain)
-        changes = zone.changes()
-        records = [record for record in zone.list_resource_record_sets() if entry in record.name]
+        changes = dnszone.changes()
+        records = [record for record in dnszone.list_resource_record_sets() if entry in record.name]
         if records:
             for record in records:
-                record_set = zone.resource_record_set(record.name, record.record_type, record.ttl, record.rrdatas)
+                record_set = dnszone.resource_record_set(record.name, record.record_type, record.ttl, record.rrdatas)
                 changes.delete_record_set(record_set)
             changes.create()
+        try:
+            self.conn.addresses().delete(project=project, region=region, address=name).execute()
+        except:
+            pass
         return {'result': 'success'}
 
     def flavors(self):
