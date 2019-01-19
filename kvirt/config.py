@@ -24,7 +24,7 @@ from time import sleep
 import webbrowser
 import yaml
 
-__version__ = '14.1'
+__version__ = '14.2'
 
 
 class Kconfig(Kbaseconfig):
@@ -970,7 +970,6 @@ class Kconfig(Kbaseconfig):
         if path is not None:
             os.chdir(path)
             getback = True
-        print("biloute")
         inputfile = os.path.expanduser(inputfile)
         if not os.path.exists(inputfile):
             common.pprint("No input file found nor default kcli_plan.yml.Leaving....", color='red')
