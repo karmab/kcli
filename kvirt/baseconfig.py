@@ -82,7 +82,7 @@ class Kbaseconfig:
                 common.pprint("Using local hypervisor as no client was specified...", color='green')
                 self.ini['default']['client'] = 'local'
                 self.ini['local'] = {}
-        if "fake" not in self.ini:
+        if "fake" not in self.ini and client != 'all':
             self.ini["fake"] = {"type": "fake"}
         self.clients = [e for e in self.ini if e != 'default']
         defaults = {}
@@ -382,6 +382,7 @@ class Kbaseconfig:
         else:
             if name is None:
                 name = host
+            ini['default']['client'] = name
             ini[name] = {'host': host, 'pool': pool, 'nets': ['default']}
             if protocol is not None:
                 ini[name]['protocol'] = protocol
