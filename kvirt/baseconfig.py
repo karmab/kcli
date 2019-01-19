@@ -17,7 +17,6 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
 from kvirt import common
 import os
 from shutil import copyfile, rmtree
-import sys
 import yaml
 
 
@@ -370,23 +369,20 @@ class Kbaseconfig:
             pool = 'default'
         if poolpath is None:
             poolpath = '/var/lib/libvirt/images'
+        default = {}
+        for key in self.default:
+            if self.default[key] is None or (isinstance(self.default[key], list) and not self.default[key]):
+                continue
+            else:
+                default[key] = self.default[key]
+        ini = {'default': default}
         if host == '127.0.0.1':
-            ini = {'default': {'client': 'local', 'cloudinit': True,
-                               'tunnel': False, 'insecure': True, 'enableroot': True,
-                               'reserveip': False, 'reservedns': False,
-                               'nested': True, 'reservehost': False,
-                               'start': True},
-                   'local': {'pool': pool, 'nets': ['default']}}
-            if not sys.platform.startswith('linux'):
-                ini['local']['type'] = 'vbox'
+            ini['default']['client'] = 'local'
+            ini['local'] = {'host': host, 'pool': pool, 'nets': ['default']}
         else:
             if name is None:
                 name = host
-            ini = {'default': {'client': name, 'cloudinit': True,
-                               'tunnel': True, 'insecure': True, 'enableroot': True,
-                               'reserveip': False, 'reservedns': False,
-                               'nested': True, 'reservehost': False,
-                               'start': True}, name: {'host': host, 'pool': pool, 'nets': ['default']}}
+            ini[name] = {'host': host, 'pool': pool, 'nets': ['default']}
             if protocol is not None:
                 ini[name]['protocol'] = protocol
             if user is not None:
