@@ -111,6 +111,7 @@ class Kfake(object):
         plandir = "/tmp/%s" % plan
         namedir = "%s/%s" % (plandir, name)
         if not os.path.exists(plandir):
+            common.pprint("Generating assets in %s" % plandir)
             os.mkdir(plandir)
         if os.path.exists(namedir):
             rmtree(namedir)
