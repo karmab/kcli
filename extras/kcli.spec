@@ -5,8 +5,8 @@
 #
 
 Name:           kcli
-Version:        14.1
-Release:        2
+Version:        14.3
+Release:        1
 Url:            http://github.com/karmab/kcli
 Summary:        Wapper for libvirt,gcp,aws,ovirt and openstack
 License:        ASL 2.0
@@ -58,7 +58,9 @@ rm -rf %{buildroot}
 %attr(0755,root,root) %{_bindir}/kweb
 
 %changelog
-* Wed Dec 20 2018 Karim Boumedhel <karimboumedhel@gmail.com> 14.1
+* Sat Jan 19 2018 Karim Boumedhel <karimboumedhel@gmail.com> 14.3
+- 14.3 Release with remediation, baseplans and kubernetes support
+* Thu Dec 20 2018 Karim Boumedhel <karimboumedhel@gmail.com> 14.1
 - 14.1 Release with a bunch of goodies
 * Wed Jul 11 2018 Karim Boumedhel <karimboumedhel@gmail.com> 12.1
 - 12.1 Release switching to python3
