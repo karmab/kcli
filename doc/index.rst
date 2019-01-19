@@ -720,8 +720,9 @@ with kcli plan. The following type can be used within a plan:
 -  vm ( this is the type used when none is specified )
 
 Here are some examples of each type ( additional ones can be found in
-the `samples
-directory <https://github.com/karmab/kcli/tree/master/samples>`__ ):
+this `samples
+directory <https://github.com/karmab/kcli-plans/tree/master/samples>`__
+):
 
 network
 ~~~~~~~
@@ -882,7 +883,9 @@ the same plan:
 Specific scripts and IPS arrays can be used directly in the plan file
 (or in profiles one).
 
-The samples directory contains examples to get you started.
+The `kcli-plans repo <https://github.com/karmab/kcli-plans>`__ contains
+samples to get you started, along with plans for projects i often use
+(openshift, kubevirt,openstack, ovirt, …) .
 
 The description of the vm will automatically be set to the plan name,
 and this value will be used when deleting the entire plan as a way to

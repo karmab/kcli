@@ -1,5 +1,0 @@
-yyy:
- type: dns
- net: cnvlab.gce.sysdeseng.com
- ip: 192.168.1.35
- client: gcp_cnvlab

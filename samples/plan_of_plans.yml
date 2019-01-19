@@ -1,7 +1,0 @@
-ovirt:
-  type: plan
-  url: https://github.com/karmab/kcli-plans/blob/master/ovirt/upstream.yml
-
-manageiq:
-  type: plan
-  url: https://github.com/karmab/kcli-plans/blob/master/manageiq/upstream.yml
