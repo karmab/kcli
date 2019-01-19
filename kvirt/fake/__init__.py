@@ -8,6 +8,8 @@ from kvirt.defaults import TEMPLATES
 from kvirt.nameutils import get_random_name, random_ip, right
 import os
 import random
+from shutil import rmtree
+import yaml
 
 
 # your base class __init__ needs to define the conn attribute and set it to None when backend cannot be reached
@@ -106,9 +108,30 @@ class Kfake(object):
         :param tags:
         :return:
         """
+        plandir = "/tmp/%s" % plan
+        namedir = "%s/%s" % (plandir, name)
+        if not os.path.exists(plandir):
+            os.mkdir(plandir)
+        if os.path.exists(namedir):
+            rmtree(namedir)
+        os.mkdir(namedir)
         if cloudinit:
-            common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
-                             reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides, iso=False)
+            _files = yaml.load(common.process_files(files=files, overrides=overrides))
+            cmds = common.process_cmds(cmds, overrides).replace('- ', '')
+            filescmds = ""
+            if _files is not None:
+                for entry in _files:
+                    owner = entry["owner"]
+                    path = entry["path"]
+                    permissions = entry["permissions"]
+                    content = entry["content"]
+                    filescmds += "chown %s %s\n" % (owner, path)
+                    filescmds += "chmod %s %s\n" % (permissions, path)
+                    with open("%s/%s" % (namedir, os.path.basename(path)), "w") as f:
+                        f.write(content)
+            with open("%s/cmds.sh" % namedir, "w") as f:
+                f.write(filescmds)
+                f.write(cmds)
         return {'result': 'success'}
 
     def start(self, name):

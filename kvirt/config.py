@@ -779,8 +779,13 @@ class Kconfig(Kbaseconfig):
 
     def plan(self, plan, ansible=False, url=None, path=None, autostart=False, container=False, noautostart=False,
              inputfile=None, inputstring=None, start=False, stop=False, delete=False, delay=0, force=True, overrides={},
-             info=False, snapshot=False, revert=False, update=False):
+             info=False, snapshot=False, revert=False, update=False, embedded=False):
         """Create/Delete/Stop/Start vms from plan file"""
+        if self.type == 'fake' and os.path.exists("/tmp/%s" % plan) and not embedded:
+            rmtree("/tmp/%s" % plan)
+            common.pprint("Deleted /tmp/%s" % plan, color='green')
+            if delete:
+                return {'result': 'success'}
         k = self.k
         no_overrides = not overrides
         newvms = []
@@ -1030,7 +1035,7 @@ class Kconfig(Kbaseconfig):
                         print("Using parameter %s: %s" % (override, overrides[override]))
                 self.plan(plan, ansible=False, url=planurl, path=path, autostart=False, container=False,
                           noautostart=False, inputfile=inputfile, start=False, stop=False, delete=False,
-                          delay=delay, overrides=overrides)
+                          delay=delay, overrides=overrides, embedded=embedded)
             return {'result': 'success'}
         if networkentries:
             common.pprint("Deploying Networks...", color='green')
