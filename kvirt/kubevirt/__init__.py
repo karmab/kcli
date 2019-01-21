@@ -36,6 +36,7 @@ class Kubevirt(Kubecommon):
         Kubecommon.__init__(self, token=token, ca_file=ca_file, context=context, host=host, port=port,
                             namespace=namespace, readwritemany=readwritemany)
         self.crds = client.CustomObjectsApi(api_client=self.api_client)
+        self.debug = debug
         self.multus = multus
         self.tags = tags
         self.cdi = False
@@ -692,11 +693,9 @@ class Kubevirt(Kubecommon):
                 network = 'default'
                 network_type = 'pod'
             yamlinfo['nets'].append({'device': device, 'mac': mac, 'net': network, 'type': network_type})
-        try:
-            sshservice = core.read_namespaced_service('%s-ssh' % name, namespace)
-            yamlinfo['nodeport'] = sshservice.spec.ports[0].node_port
-        except Exception as e:
-            pass
+        nodeport = self._node_port(name, namespace)
+        if nodeport is not None:
+            yamlinfo['nodeport'] = nodeport
         return yamlinfo
 
     def ip(self, name):
@@ -1080,12 +1079,20 @@ class Kubevirt(Kubecommon):
         :return:
         """
         u, ip = self._ssh_credentials(name)
+        host = self.host
+        vmport = None
         if user is None:
             user = u
-        # tunnel = True if 'TUNNEL' in os.environ and os.environ('TUNNEL').lower() == 'true' else False
-        sshcommand = common.ssh(name, ip=ip, host=self.host, port=22, hostuser=self.user, user=user, local=local,
-                                remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, Y=Y, D=D,
-                                debug=self.debug)
+        if self.host == '127.0.0.1':
+            tunnel = False
+        elif not tunnel:
+            nodeport = self._node_port(name, self.namespace)
+            if nodeport is not None:
+                ip = self.host
+                vmport = nodeport
+        sshcommand = common.ssh(name, ip=ip, host=host, hostuser=self.user, user=user, local=local,
+                                remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, Y=Y,
+                                debug=self.debug, D=D, vmport=vmport)
         return sshcommand
 
     def scp(self, name, user=None, source=None, destination=None, tunnel=False, download=False, recursive=False):
@@ -1525,3 +1532,10 @@ class Kubevirt(Kubecommon):
             return os.path.basename(name).split('?')[0]
         else:
             return os.path.basename(name)
+
+    def _node_port(self, name, namespace):
+        try:
+            sshservice = self.core.read_namespaced_service('%s-ssh' % name, namespace)
+        except:
+            return None
+        return sshservice.spec.ports[0].node_port

@@ -60,6 +60,8 @@ class Kubecommon(object):
             config.load_kube_config(context=contextname)
             if namespace is None and 'namespace' in context['context']:
                 self.namespace = context['context']['namespace']
+            if 'cluster' in context['context'] and ':' in context['context']['cluster']:
+                self.host = context['context']['cluster'].split(':')[0].replace('-', '.')
         self.core = client.CoreV1Api(api_client=api_client)
         self.v1beta = client.ExtensionsV1beta1Api(api_client=api_client)
         self.storageapi = client.StorageV1Api(api_client=api_client)
