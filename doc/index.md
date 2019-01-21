@@ -88,7 +88,7 @@ the are several flags you'll want to pass depending on your use case
 As a bonus, you can alias kcli and run it as if it was installed locally:
 
 ```Shell
-alias kcli='docker run -it --rm --security-opt label:disable -v ~/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir karmab/kcli'
+alias kcli='docker run -it --rm --net=host --security-opt label:disable -v ~/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir karmab/kcli'
 ```
 
 For web access, you can switch with `-p 9000:9000 --entrypoint=/usr/bin/kweb` and thus accessing to port 9000
@@ -99,7 +99,7 @@ Use podman!
 Remember to store your public and private key in the ~/.kcli directory so you dont need to share your entire .ssh directory as a volume (kcli container is based on alpine, and as such uses a ssh client which doesnt support gssapi)
 
 ```
-alias kcli='podman run -it --rm --security-opt label=disable -v ~/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir karmab/kcli'
+alias kcli='podman run -it --rm --net=host --security-opt label=disable -v ~/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir karmab/kcli'
 ```
 
 ## Dev installation from pip
