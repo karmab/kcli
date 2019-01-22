@@ -1183,7 +1183,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             return {'result': 'success'}
         system_service = self.conn.system_service()
         profile_id = None
-        profiles_service = system_service().vnic_profiles_service()
+        profiles_service = system_service.vnic_profiles_service()
         for prof in profiles_service.list():
             if prof.name == 'ovirtmgmt':
                 profile_id = prof.id
