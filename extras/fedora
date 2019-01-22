@@ -1,4 +1,4 @@
-FROM alpine:3.8
+FROM registry.fedoraproject.org/fedora-minimal:30
 
 MAINTAINER Karim Boumedhel <karimboumedhel@gmail.com>
 
@@ -7,16 +7,17 @@ LABEL name="karmab/kcli" \
       vendor="Karmalabs" \
       version="latest" \
       release="0" \
-      summary="Virtualization wrapper" \
+      summary="Virtualization wrapper on steroids" \
       description="Virtualization wrapper on steroids"
 
 EXPOSE 9000
 
-RUN apk add --update --no-cache g++ gcc libvirt libvirt-dev py-pip python3-dev openssh-client curl curl-dev libressl-dev libxml2-dev git linux-headers libffi-dev cdrkit xauth
+RUN microdnf -y install gcc-c++ gcc libvirt libvirt-devel python3-devel openssh-clients curl curl-devel openssl-devel libxml2-devel git libffi-devel genisoimage xauth kernel-headers genisoimage && microdnf clean all
 
 # Group the pip installation
 RUN pip3 install -U --no-cache-dir setuptools pip
-RUN pip3 install --no-cache-dir -e git+https://github.com/karmab/kcli.git#egg=kcli[all]
+RUN PYCURL_SSL_LIBRARY=openssl pip3 install --no-cache-dir -e git+https://github.com/karmab/kcli.git#egg=kcli[all]
+RUN microdnf clean all
 
 ADD klist.py /usr/bin
 RUN chmod o+x /usr/bin/klist.py
