@@ -377,12 +377,12 @@ class Kbaseconfig:
         ini = {'default': default}
         if host == '127.0.0.1':
             ini['default']['client'] = 'local'
-            ini['local'] = {'host': host, 'pool': pool, 'nets': ['default']}
+            ini['local'] = {'host': host, 'type': 'kvm', 'pool': pool, 'nets': ['default']}
         else:
             if name is None:
                 name = host
             ini['default']['client'] = name
-            ini[name] = {'host': host, 'pool': pool, 'nets': ['default']}
+            ini[name] = {'host': host, 'type': 'kvm', 'tunnel': True, 'pool': pool, 'nets': ['default']}
             if protocol is not None:
                 ini[name]['protocol'] = protocol
             if user is not None:
