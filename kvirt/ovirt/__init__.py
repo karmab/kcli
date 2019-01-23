@@ -386,7 +386,7 @@ class KOvirt(object):
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         vminfo = vmsearch[0]
-        if str(vminfo.status) == 'up':
+        if str(vminfo.status) != 'down':
             vm = self.vms_service.vm_service(vmsearch[0].id)
             vm.stop()
         return {'result': 'success'}
@@ -756,7 +756,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         vminfo = vmsearch[0]
         vm = self.vms_service.vm_service(vminfo.id)
-        if str(vminfo.status) == 'up':
+        if str(vminfo.status) != 'down':
             vm.stop()
             while True:
                 sleep(5)
