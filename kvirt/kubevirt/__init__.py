@@ -1130,7 +1130,7 @@ class Kubevirt(Kubecommon):
         return
 
     def delete_image(self, image):
-        common.pprint("Deleting image %s" % image, color='green')
+        common.pprint("Deleting image %s" % image)
         core = self.core
         if self.cdi:
             cdinamespace = self.cdinamespace

@@ -349,7 +349,7 @@ def get_free_nodeport():
             continue
 
 
-def pprint(text, color=None):
+def pprint(text, color='green'):
     """
 
     :param text:

@@ -139,7 +139,7 @@ class Kaws(object):
                                static_flavors[f]['memory'] >= memory]
             if matchingflavors:
                 flavor = matchingflavors[0]
-                common.pprint("Using instance type %s" % flavor, color='green')
+                common.pprint("Using instance type %s" % flavor)
             else:
                 return {'result': 'failure', 'reason': 'Couldnt find instance type matching requirements'}
         conn = self.conn
@@ -150,7 +150,7 @@ class Kaws(object):
             keypair = 'kvirt_%s' % self.access_key_id
         keypairs = [k for k in conn.describe_key_pairs()['KeyPairs'] if k['KeyName'] == keypair]
         if not keypairs:
-            common.pprint("Importing your public key as %s" % keypair, color='green')
+            common.pprint("Importing your public key as %s" % keypair)
             if not os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME'])\
                     and not os.path.exists("%s/.ssh/id_dsa.pub" % os.environ['HOME'])\
                     and not os.path.exists("%s/.kcli/id_rsa.pub" % os.environ['HOME'])\
@@ -209,7 +209,7 @@ class Kaws(object):
                                 if subnet['DefaultForAz'] and subnet['VpcId'] == vpcid][0]
                     netname = subnetid
                     defaultsubnetid = netname
-                    common.pprint("Using subnet %s as default" % defaultsubnetid, color='green')
+                    common.pprint("Using subnet %s as default" % defaultsubnetid)
             if ips and len(ips) > index and ips[index] is not None:
                 ip = ips[index]
                 if index == 0:
@@ -243,7 +243,7 @@ class Kaws(object):
         conn.run_instances(ImageId=template, MinCount=1, MaxCount=1, InstanceType=flavor,
                            KeyName=keypair, BlockDeviceMappings=blockdevicemappings,
                            UserData=userdata, TagSpecifications=tags)
-        common.pprint("%s created on aws" % name, color='green')
+        common.pprint("%s created on aws" % name)
         if reservedns and domain is not None:
             self.reserve_dns(name, nets=nets, domain=domain, alias=alias, instanceid=name)
         return {'result': 'success'}
@@ -900,7 +900,7 @@ class Kaws(object):
         return
 
     def delete_image(self, image):
-        common.pprint("Deleting image %s" % image, color='green')
+        common.pprint("Deleting image %s" % image)
         conn = self.conn
         try:
             conn.deregister_image(ImageId=image)
@@ -1048,7 +1048,7 @@ class Kaws(object):
     def __evaluate_template(self, template):
         if template.lower().startswith('centos'):
             amiid = 'ami-8352e3fe'
-            common.pprint("Using ami %s" % amiid, color='green')
+            common.pprint("Using ami %s" % amiid)
             return 'ami-8352e3fe'
         else:
             return template
@@ -1066,7 +1066,7 @@ class Kaws(object):
         :param instanceid:
         :return:
         """
-        common.pprint("Using domain %s..." % domain, color='green')
+        common.pprint("Using domain %s..." % domain)
         dns = self.dns
         net = nets[0]
         zone = [z['Id'].split('/')[2] for z in dns.list_hosted_zones_by_name()['HostedZones']
@@ -1196,7 +1196,7 @@ class Kaws(object):
         HealthCheck = {'Interval': 20, 'Target': HealthTarget, 'Timeout': 3, 'UnhealthyThreshold': 10,
                        'HealthyThreshold': 2}
         elb.configure_health_check(LoadBalancerName=name, HealthCheck=HealthCheck)
-        common.pprint("Reserved dns name %s" % lb['DNSName'], color='green')
+        common.pprint("Reserved dns name %s" % lb['DNSName'])
         if vms:
             Instances = []
             for vm in vms:

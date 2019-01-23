@@ -26,12 +26,12 @@ def start(args):
     if container:
         cont = Kcontainerconfig(config, client=args.containerclient).cont
         for name in names:
-            common.pprint("Starting container %s..." % name, color='green')
+            common.pprint("Starting container %s..." % name)
             cont.start_container(name)
     else:
         codes = []
         for name in names:
-            common.pprint("Starting vm %s..." % name, color='green')
+            common.pprint("Starting vm %s..." % name)
             result = k.start(name)
             code = common.handle_response(result, name, element='', action='started')
             codes.append(code)
@@ -54,11 +54,11 @@ def stop(args):
         if container:
             cont = Kcontainerconfig(config, client=args.containerclient).cont
             for name in names:
-                common.pprint("Stopping container %s in %s..." % (name, cli), color='green')
+                common.pprint("Stopping container %s in %s..." % (name, cli))
                 cont.stop_container(name)
         else:
             for name in names:
-                common.pprint("Stopping vm %s in %s..." % (name, cli), color='green')
+                common.pprint("Stopping vm %s in %s..." % (name, cli))
                 result = k.stop(name)
                 code = common.handle_response(result, name, element='', action='stopped')
                 codes.append(code)
@@ -74,13 +74,13 @@ def restart(args):
     if container:
         cont = Kcontainerconfig(config, client=args.containerclient).cont
         for name in names:
-            common.pprint("Restarting container %s..." % name, color='green')
+            common.pprint("Restarting container %s..." % name)
             cont.stop_container(name)
             cont.start_container(name)
     else:
         codes = []
         for name in names:
-            common.pprint("Restarting vm %s..." % name, color='green')
+            common.pprint("Restarting vm %s..." % name)
             result = k.restart(name)
             code = common.handle_response(result, name, element='', action='restarted')
             codes.append(code)
@@ -124,14 +124,14 @@ def delete(args):
         names = [common.get_lastvm(config.client)] if not args.names else args.names
     for cli in sorted(allclients):
         k = allclients[cli]
-        common.pprint("Deleting on %s" % cli, color='green')
+        common.pprint("Deleting on %s" % cli)
         if not yes:
             common.confirm("Are you sure?")
         if container:
             codes = [0]
             cont = Kcontainerconfig(config, client=args.containerclient).cont
             for name in names:
-                common.pprint("Deleting container %s" % name, color='green')
+                common.pprint("Deleting container %s" % name)
                 cont.delete_container(name)
         elif template:
             # k = config.k
@@ -141,7 +141,7 @@ def delete(args):
                 # template = os.path.basename(template)
                 result = k.delete_image(name)
                 if result['result'] == 'success':
-                    common.pprint("%s deleted" % name, color='green')
+                    common.pprint("%s deleted" % name)
                     codes.append(0)
                 else:
                     reason = result['reason']
@@ -153,7 +153,7 @@ def delete(args):
                 dnsclient, domain = k.dnsinfo(name)
                 result = k.delete(name, snapshots=snapshots)
                 if result['result'] == 'success':
-                    common.pprint("%s deleted" % name, color='green')
+                    common.pprint("%s deleted" % name)
                     codes.append(0)
                     common.set_lastvm(name, cli, delete=True)
                 else:
@@ -293,7 +293,7 @@ def _list(args):
         return
     if networks:
         networks = k.list_networks()
-        common.pprint("Listing Networks...", color='green')
+        common.pprint("Listing Networks...")
         if short:
             networkstable = PrettyTable(["Network"])
             for network in sorted(networks):
@@ -315,7 +315,7 @@ def _list(args):
         return
     if subnets:
         subnets = k.list_subnets()
-        common.pprint("Listing Subnets...", color='green')
+        common.pprint("Listing Subnets...")
         if short:
             subnetstable = PrettyTable(["Subnets"])
             for subnet in sorted(subnets):
@@ -404,7 +404,7 @@ def _list(args):
                 isostable.add_row([iso])
         print(isostable)
     elif disks:
-        common.pprint("Listing disks...", color='green')
+        common.pprint("Listing disks...")
         diskstable = PrettyTable(["Name", "Pool", "Path"])
         diskstable.align["Name"] = "l"
         disks = k.list_disks()
@@ -415,7 +415,7 @@ def _list(args):
         print(diskstable)
     elif containers:
         cont = Kcontainerconfig(config, client=args.containerclient).cont
-        common.pprint("Listing containers...", color='green')
+        common.pprint("Listing containers...")
         containers = PrettyTable(["Name", "Status", "Image", "Plan", "Command", "Ports", "Deploy"])
         for container in cont.list_containers():
             if filters:
@@ -427,7 +427,7 @@ def _list(args):
         print(containers)
     elif images:
         cont = Kcontainerconfig(config, client=args.containerclient).cont
-        common.pprint("Listing images...", color='green')
+        common.pprint("Listing images...")
         images = PrettyTable(["Name"])
         for image in cont.list_images():
             images.add_row([image])
@@ -511,7 +511,7 @@ def vm(args):
         if config.type in ['gcp', 'kubevirt']:
             name = name.replace('_', '-')
         if config.type != 'aws':
-            common.pprint("Using %s as name of the vm" % name, color='green')
+            common.pprint("Using %s as name of the vm" % name)
     if profile is not None and profile.endswith('.yml'):
         profilefile = profile
         profile = None
@@ -542,7 +542,7 @@ def clone(args):
     base = args.base
     full = args.full
     start = args.start
-    common.pprint("Cloning vm %s from vm %s..." % (name, base), color='green')
+    common.pprint("Cloning vm %s from vm %s..." % (name, base))
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     k.clone(base, name, full=full, start=start)
@@ -570,7 +570,7 @@ def update(args):
     names = [common.get_lastvm(config.client)] if not args.names else args.names
     for name in names:
         if dns:
-            common.pprint("Creating Dns entry for %s..." % name, color='green')
+            common.pprint("Creating Dns entry for %s..." % name)
             if net is not None:
                 nets = [net]
             else:
@@ -582,41 +582,41 @@ def update(args):
             else:
                 k.reserve_dns(name=name, nets=nets, domain=domain, ip=ip1)
         elif ip1 is not None:
-            common.pprint("Updating ip of vm %s to %s..." % (name, ip1), color='green')
+            common.pprint("Updating ip of vm %s to %s..." % (name, ip1))
             k.update_metadata(name, 'ip', ip1)
         elif cloudinit:
-            common.pprint("Removing cloudinit information of vm %s" % name, color='green')
+            common.pprint("Removing cloudinit information of vm %s" % name)
             k.remove_cloudinit(name)
             return
         elif plan is not None:
-            common.pprint("Updating plan of vm %s to %s..." % (name, plan), color='green')
+            common.pprint("Updating plan of vm %s to %s..." % (name, plan))
             k.update_metadata(name, 'plan', plan)
         elif template is not None:
-            common.pprint("Updating template of vm %s to %s..." % (name, template), color='green')
+            common.pprint("Updating template of vm %s to %s..." % (name, template))
             k.update_metadata(name, 'template', template)
         elif memory is not None:
-            common.pprint("Updating memory of vm %s to %s..." % (name, memory), color='green')
+            common.pprint("Updating memory of vm %s to %s..." % (name, memory))
             k.update_memory(name, memory)
         elif numcpus is not None:
-            common.pprint("Updating numcpus of vm %s to %s..." % (name, numcpus), color='green')
+            common.pprint("Updating numcpus of vm %s to %s..." % (name, numcpus))
             k.update_cpus(name, numcpus)
         elif autostart:
-            common.pprint("Setting autostart for vm %s..." % name, color='green')
+            common.pprint("Setting autostart for vm %s..." % name)
             k.update_start(name, start=True)
         elif noautostart:
-            common.pprint("Removing autostart for vm %s..." % name, color='green')
+            common.pprint("Removing autostart for vm %s..." % name)
             k.update_start(name, start=False)
         elif information:
-            common.pprint("Setting information for vm %s..." % name, color='green')
+            common.pprint("Setting information for vm %s..." % name)
             k.update_information(name, information)
         elif iso is not None:
-            common.pprint("Switching iso for vm %s to %s..." % (name, iso), color='green')
+            common.pprint("Switching iso for vm %s to %s..." % (name, iso))
             k.update_iso(name, iso)
         elif flavor is not None:
-            common.pprint("Updating flavor of vm %s to %s..." % (name, flavor), color='green')
+            common.pprint("Updating flavor of vm %s to %s..." % (name, flavor))
             k.update_flavor(name, flavor)
         elif host:
-            common.pprint("Creating Host entry for vm %s..." % name, color='green')
+            common.pprint("Creating Host entry for vm %s..." % name)
             nets = k.vm_ports(name)
             if not nets:
                 return
@@ -639,7 +639,7 @@ def disk(args):
         if diskname is None:
             common.pprint("Missing diskname. Leaving...", color='red')
             os._exit(1)
-        common.pprint("Deleting disk %s" % diskname, color='green')
+        common.pprint("Deleting disk %s" % diskname)
         k.delete_disk(name=name, diskname=diskname, pool=pool)
         return
     if size is None:
@@ -651,7 +651,7 @@ def disk(args):
     if name is None:
         common.pprint("Missing name. Leaving...", color='red')
         os._exit(1)
-    common.pprint("Adding disk to %s..." % name, color='green')
+    common.pprint("Adding disk to %s..." % name)
     k.add_disk(name=name, size=size, pool=pool, template=template)
 
 
@@ -668,10 +668,10 @@ def dns(args):
         if config.type == 'kvm':
             common.pprint("No deletion on kvm yet" % name, color='blue')
         else:
-            common.pprint("Deleting Dns entry for %s..." % name, color='green')
+            common.pprint("Deleting Dns entry for %s..." % name)
             k.delete_dns(name, domain)
     else:
-        common.pprint("Creating Dns entry for %s..." % name, color='green')
+        common.pprint("Creating Dns entry for %s..." % name)
         k.reserve_dns(name=name, nets=[net], domain=domain, ip=ip)
 
 
@@ -685,7 +685,7 @@ def export(args):
     for name in names:
         result = k.export(name=name, template=template)
         if result['result'] == 'success':
-            common.pprint("Exporting vm %s" % name, color='green')
+            common.pprint("Exporting vm %s" % name)
             codes.append(0)
         else:
             reason = result['reason']
@@ -720,13 +720,13 @@ def nic(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     if delete:
-        common.pprint("Deleting nic from %s..." % name, color='green')
+        common.pprint("Deleting nic from %s..." % name)
         k.delete_nic(name, interface)
         return
     if network is None:
         common.pprint("Missing network. Leaving...", color='red')
         os._exit(1)
-    common.pprint("Adding Nic %s..." % name, color='green')
+    common.pprint("Adding Nic %s..." % name)
     k.add_nic(name=name, network=network)
 
 
@@ -741,13 +741,13 @@ def pool(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     if delete:
-        common.pprint("Deleting pool %s..." % pool, color='green')
+        common.pprint("Deleting pool %s..." % pool)
         k.delete_pool(name=pool, full=full)
         return
     if path is None:
         common.pprint("Missing path. Leaving...", color='red')
         os._exit(1)
-    common.pprint("Adding pool %s..." % pool, color='green')
+    common.pprint("Adding pool %s..." % pool)
     k.create_pool(name=pool, poolpath=path, pooltype=pooltype, thinpool=thinpool)
 
 
@@ -782,7 +782,7 @@ def plan(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if plan is None:
         plan = nameutils.get_random_name()
-        common.pprint("Using %s as name of the plan" % plan, color='green')
+        common.pprint("Using %s as name of the plan" % plan)
     if delete and not yes:
         common.confirm("Are you sure?")
     config.plan(plan, ansible=ansible, url=url, path=path, autostart=autostart,
@@ -804,27 +804,27 @@ def repo(args):
             common.pprint("Updating all repos...", color='blue')
             repos = baseconfig.list_repos()
             for repo in repos:
-                common.pprint("Updating repo %s..." % repo, color='green')
+                common.pprint("Updating repo %s..." % repo)
                 baseconfig.update_repo(repo)
         else:
-            common.pprint("Updating repo %s..." % repo, color='green')
+            common.pprint("Updating repo %s..." % repo)
             baseconfig.update_repo(repo)
         return
     if repo is None:
         common.pprint("Missing repo. Leaving...", color='red')
         os._exit(1)
     if delete:
-        common.pprint("Deleting repo %s..." % repo, color='green')
+        common.pprint("Deleting repo %s..." % repo)
         baseconfig.delete_repo(repo)
         return
     if update:
-        common.pprint("Updating repo %s..." % repo, color='green')
+        common.pprint("Updating repo %s..." % repo)
         baseconfig.delete_repo(repo)
         return
     if url is None:
         common.pprint("Missing url. Leaving...", color='red')
         os._exit(1)
-    common.pprint("Adding repo %s..." % repo, color='green')
+    common.pprint("Adding repo %s..." % repo)
     baseconfig.create_repo(repo, url)
     return 0
 
@@ -841,7 +841,7 @@ def product(args):
     search = args.search
     if info:
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-        common.pprint("Providing information on product %s..." % product, color='green')
+        common.pprint("Providing information on product %s..." % product)
         baseconfig.info_product(product, repo, group)
     elif search:
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
@@ -865,7 +865,7 @@ def product(args):
     else:
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
-        common.pprint("Creating product %s..." % product, color='green')
+        common.pprint("Creating product %s..." % product)
         config.create_product(product, repo=repo, group=group, plan=plan, latest=latest, overrides=overrides)
     return 0
 
@@ -1001,7 +1001,7 @@ def container(args):
                       "and default values..." % profile, color='blue')
         cont.create_container(name, profile, overrides=overrides)
     else:
-        common.pprint("Deploying container %s from profile %s..." % (name, profile), color='green')
+        common.pprint("Deploying container %s from profile %s..." % (name, profile))
         profile = containerprofiles[profile]
         image = next((e for e in [profile.get('image'), profile.get('template')] if e is not None), None)
         if image is None:
@@ -1012,7 +1012,7 @@ def container(args):
         environment = profile.get('environment', None)
         volumes = next((e for e in [profile.get('volumes'), profile.get('disks')] if e is not None), None)
         cont.create_container(name, image, nets=None, cmd=cmd, ports=ports, volumes=volumes, environment=environment)
-    common.pprint("container %s created" % name, color='green')
+    common.pprint("container %s created" % name)
     return
 
 
@@ -1026,11 +1026,11 @@ def snapshot(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     if revert:
-        common.pprint("Reverting snapshot of %s named %s..." % (name, snapshot), color='green')
+        common.pprint("Reverting snapshot of %s named %s..." % (name, snapshot))
     elif delete:
-        common.pprint("Deleting snapshot of %s named %s..." % (name, snapshot), color='green')
+        common.pprint("Deleting snapshot of %s named %s..." % (name, snapshot))
     elif listing:
-        common.pprint("Listing snapshots of %s..." % name, color='green')
+        common.pprint("Listing snapshots of %s..." % name)
         snapshots = k.snapshot(snapshot, name, listing=True)
         if isinstance(snapshots, dict):
             common.pprint("Vm %s not found" % name, color='red')
@@ -1043,7 +1043,7 @@ def snapshot(args):
         common.pprint("Missing snapshot name", color='red')
         return {'result': 'success'}
     else:
-        common.pprint("Creating snapshot of %s named %s..." % (name, snapshot), color='green')
+        common.pprint("Creating snapshot of %s named %s..." % (name, snapshot))
     result = k.snapshot(snapshot, name, revert=revert, delete=delete)
     code = common.handle_response(result, name, element='', action='snapshotted')
     return code
@@ -1396,7 +1396,7 @@ def cli():
     args = parser.parse_args()
     if args.func.__name__ == 'vm' and args.client is not None and ',' in args.client:
             args.client = random.choice(args.client.split(','))
-            common.pprint("Selecting %s for creation" % args.client, color='green')
+            common.pprint("Selecting %s for creation" % args.client)
     args.func(args)
 
 

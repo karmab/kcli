@@ -6,6 +6,7 @@ interact with a local/remote libvirt daemon
 
 import os
 import time
+from kvirt.common import pprint
 
 
 def play(self, name, playbook, variables=[], verbose=False):
@@ -22,7 +23,7 @@ def play(self, name, playbook, variables=[], verbose=False):
         ip = self.ip(name)
         if ip is None:
             time.sleep(5)
-            print("Retrieving ip of %s..." % name)
+            pprint("Retrieving ip of %s..." % name)
             counter += 10
         else:
             break
@@ -43,8 +44,8 @@ def play(self, name, playbook, variables=[], verbose=False):
                 inventory = "%s %s=%s" % (inventory, key, value)
     with open("/tmp/%s.inv" % name, 'w') as f:
         f.write("%s\n" % inventory)
-    print("Ansible Command run:")
-    print("%s -T 20 -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
+    pprint("Ansible Command run:")
+    pprint("%s -T 20 -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
     os.system("%s -T 20 -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
 
 
@@ -60,7 +61,7 @@ def inventory(self, name):
         ip = self.ip(name)
         if ip is None:
             time.sleep(5)
-            print("Retrieving ip of %s..." % name)
+            pprint("Retrieving ip of %s..." % name)
             counter += 10
         else:
             break

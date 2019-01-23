@@ -235,7 +235,7 @@ class Kgcp(object):
                     else:
                         timeout += 5
                         sleep(5)
-                        common.pprint("Waiting for disk %s to be ready" % diskname, color='green')
+                        common.pprint("Waiting for disk %s to be ready" % diskname)
                 newdisk['source'] = diskpath
             body['disks'].append(newdisk)
         body['serviceAccounts'] = [{'email': 'default',
@@ -900,7 +900,7 @@ class Kgcp(object):
             else:
                 timeout += 5
                 sleep(5)
-                common.pprint("Waiting for disk to be ready", color='green')
+                common.pprint("Waiting for disk to be ready")
         body = {'source': '/compute/v1/projects/%s/zones/%s/disks/%s' % (project, zone, diskname), 'autoDelete': True}
         conn.instances().attachDisk(zone=zone, project=project, instance=name, body=body).execute()
         return {'result': 'success'}
@@ -1048,7 +1048,7 @@ class Kgcp(object):
         return
 
     def delete_image(self, image):
-        common.pprint("Deleting image %s" % image, color='green')
+        common.pprint("Deleting image %s" % image)
         conn = self.conn
         project = self.project
         try:
@@ -1260,7 +1260,7 @@ class Kgcp(object):
         region = self.region
         client = dns.Client(project)
         domain_name = domain.replace('.', '-')
-        common.pprint("Assuming Domain name is %s..." % domain_name, color='green')
+        common.pprint("Assuming Domain name is %s..." % domain_name)
         dnszones = [z for z in client.list_zones() if z.name == domain_name]
         if not dnszones:
             common.pprint("Domain %s not found" % domain_name, color='red')
@@ -1448,7 +1448,7 @@ class Kgcp(object):
             ipurl = operation['targetLink']
             self._wait_for_operation(operation)
             ip = conn.globalAddresses().get(project=project, address=name).execute()['address']
-            common.pprint("Using load balancer ip %s" % ip, color='green')
+            common.pprint("Using load balancer ip %s" % ip)
             self._wait_for_operation(operation)
             forwarding_rule_body = {"IPAddress": ipurl, "target": targeturl, "portRange": port, "name": name}
             operation = conn.globalForwardingRules().insert(project=project, body=forwarding_rule_body).execute()
@@ -1460,7 +1460,7 @@ class Kgcp(object):
             ipurl = operation['targetLink']
             self._wait_for_operation(operation)
             ip = conn.addresses().get(project=project, region=region, address=name).execute()['address']
-            common.pprint("Using load balancer ip %s" % ip, color='green')
+            common.pprint("Using load balancer ip %s" % ip)
             self._wait_for_operation(operation)
             forwarding_rule_body = {"IPAddress": ipurl, "target": targeturl, "portRange": port, "name": name}
             operation = conn.forwardingRules().insert(project=project, region=region,

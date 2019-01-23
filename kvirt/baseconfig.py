@@ -79,7 +79,7 @@ class Kbaseconfig:
                     self.host = None
                     return
             if 'client' not in self.ini['default']:
-                common.pprint("Using local hypervisor as no client was specified...", color='green')
+                common.pprint("Using local hypervisor as no client was specified...")
                 self.ini['default']['client'] = 'local'
                 self.ini['local'] = {}
         if "fake" not in self.ini and client != 'all':
@@ -267,7 +267,7 @@ class Kbaseconfig:
                           color='red')
             return {'result': 'failure', 'reason': "Client %s is disabled" %
                     client}
-        common.pprint("Switching to client %s..." % client, color='green')
+        common.pprint("Switching to client %s..." % client)
         inifile = "%s/.kcli/config.yml" % os.environ.get('HOME')
         if os.path.exists(inifile):
             newini = ''
@@ -286,10 +286,9 @@ class Kbaseconfig:
         :return:
         """
         if client not in self.clients:
-            common.pprint("Client %s not found in config.Leaving...." % client,
-                          color='green')
+            common.pprint("Client %s not found in config.Leaving...." % client)
             return {'result': 'failure', 'reason': "Client %s not found in config" % client}
-        common.pprint("Enabling client %s..." % client, color='green')
+        common.pprint("Enabling client %s..." % client)
         inifile = "%s/.kcli/config.yml" % os.environ.get('HOME')
         if os.path.exists(inifile):
             newini = ''
@@ -326,7 +325,7 @@ class Kbaseconfig:
             common.pprint("Client %s currently default.Leaving...." % client,
                           color='red')
             return {'result': 'failure', 'reason': "Client %s currently default" % client}
-        common.pprint("Disabling client %s..." % client, color='green')
+        common.pprint("Disabling client %s..." % client)
         inifile = "%s/.kcli/config.yml" % os.environ.get('HOME')
         if os.path.exists(inifile):
             newini = ''
@@ -361,7 +360,7 @@ class Kbaseconfig:
         :param pool:
         :param poolpath:
         """
-        common.pprint("Bootstrapping env", color='green')
+        common.pprint("Bootstrapping env")
         if host is None and url is None:
             url = 'qemu:///system'
             host = '127.0.0.1'
@@ -401,7 +400,7 @@ class Kbaseconfig:
         with open(path, 'w') as conf_file:
             yaml.safe_dump(ini, conf_file, default_flow_style=False,
                            encoding='utf-8', allow_unicode=True)
-        common.pprint("Environment bootstrapped!", color='green')
+        common.pprint("Environment bootstrapped!")
 
     def list_repos(self):
         """
@@ -532,8 +531,7 @@ class Kbaseconfig:
         """
         inputfile = os.path.expanduser(inputfile) if inputfile is not None else 'kcli_plan.yml'
         if not quiet:
-            common.pprint("Providing information on parameters of plan %s..." %
-                          inputfile, color='green')
+            common.pprint("Providing information on parameters of plan %s..." % inputfile)
         if not os.path.exists(inputfile):
             common.pprint("No input file found nor default kcli_plan.yml. Leaving....", color='red')
             os._exit(1)

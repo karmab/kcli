@@ -140,7 +140,7 @@ class Kopenstack(object):
         if flavor is None:
             flavors = [flavor for flavor in allflavors if flavor.ram >= memory and flavor.vcpus == numcpus]
             flavor = flavors[0] if flavors else nova.flavors.find(name="m1.tiny")
-            common.pprint("Using flavor %s" % flavor.name, color='green')
+            common.pprint("Using flavor %s" % flavor.name)
         elif flavor not in allflavornames:
             return {'result': 'failure', 'reason': "Flavor %s not found" % flavor}
         else:
@@ -203,7 +203,7 @@ class Kopenstack(object):
         elif keypairs:
             key_name = keypairs[0]
             if key_name != 'kvirt':
-                common.pprint('Using keypair %s' % key_name, color='green')
+                common.pprint('Using keypair %s' % key_name)
         else:
             common.pprint('Couldnt locate or create keypair for use. Leaving...', color='red')
             return {'result': 'failure', 'reason': "No usable keypair found"}
@@ -239,13 +239,13 @@ class Kopenstack(object):
                 floating_ip = neutron.create_floatingip(body={'floatingip': args})
                 floatingip_id = floating_ip['floatingip']['id']
                 floatingip_ip = floating_ip['floatingip']['floating_ip_address']
-                common.pprint('Assigning new floating ip %s for this vm' % floatingip_ip, color='green')
+                common.pprint('Assigning new floating ip %s for this vm' % floatingip_ip)
         else:
             floatingip_id = floating_ips[0]
         fixed_ip = None
         timeout = 0
         while fixed_ip is None:
-            common.pprint("Waiting 5 seconds for vm to get an ip", color='green')
+            common.pprint("Waiting 5 seconds for vm to get an ip")
             sleep(5)
             timeout += 5
             if timeout >= 80:
@@ -922,7 +922,7 @@ class Kopenstack(object):
         return
 
     def delete_image(self, image):
-        common.pprint("Deleting image %s" % image, color='green')
+        common.pprint("Deleting image %s" % image)
         glance = self.glance
         for img in glance.images.list():
             if img.name == image:
@@ -1067,7 +1067,7 @@ class Kopenstack(object):
         if routerports == 0:
             if router['external_gateway_info']:
                 neutron.remove_gateway_router(router_id)
-            common.pprint("Removing unused router kvirt", color="green")
+            common.pprint("Removing unused router kvirt")
             neutron.delete_router(router_id)
         return {'result': 'success'}
 
@@ -1188,7 +1188,7 @@ class Kopenstack(object):
                 timeout = 0
                 while status != 'available':
                     status = cinder.volumes.get(disk['id']).status
-                    common.pprint("Waiting 5 seconds for export to complete", color='green')
+                    common.pprint("Waiting 5 seconds for export to complete")
                     sleep(5)
                     timeout += 5
                     if timeout >= 90:

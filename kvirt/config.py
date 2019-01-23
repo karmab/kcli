@@ -205,7 +205,7 @@ class Kconfig(Kbaseconfig):
         if customprofile:
             vmprofiles[profile] = customprofile
         else:
-            common.pprint("Deploying vm %s from profile %s..." % (name, profile), color='green')
+            common.pprint("Deploying vm %s from profile %s..." % (name, profile))
         if profile not in vmprofiles:
             common.pprint("profile %s not found. Trying to use the profile as template and default values..." % profile,
                           color='blue')
@@ -769,12 +769,12 @@ class Kconfig(Kbaseconfig):
             for parameter in extraparameters:
                 print("Using parameter %s: %s" % (parameter, overrides[parameter]))
             if not latest:
-                common.pprint("Using directory %s" % (repodir), color='green')
+                common.pprint("Using directory %s" % (repodir))
                 self.plan(plan, path=repodir, inputfile=inputfile, overrides=overrides)
             else:
                 self.update_repo(repo)
                 self.plan(plan, path=repodir, inputfile=inputfile, overrides=overrides)
-            common.pprint("Product can be deleted with: kcli plan -d %s" % plan, color='green')
+            common.pprint("Product can be deleted with: kcli plan -d %s" % plan)
         return {'result': 'success', 'plan': plan}
 
     def plan(self, plan, ansible=False, url=None, path=None, autostart=False, container=False, noautostart=False,
@@ -783,7 +783,7 @@ class Kconfig(Kbaseconfig):
         """Create/Delete/Stop/Start vms from plan file"""
         if self.type == 'fake' and os.path.exists("/tmp/%s" % plan) and not embedded:
             rmtree("/tmp/%s" % plan)
-            common.pprint("Deleted /tmp/%s" % plan, color='green')
+            common.pprint("Deleted /tmp/%s" % plan)
             if delete:
                 return {'result': 'success'}
         k = self.k
@@ -837,7 +837,7 @@ class Kconfig(Kbaseconfig):
                                 dnsclients[dnsclient] = z
                             z.delete_dns(dnsclient, domain)
                         common.set_lastvm(name, self.client, delete=True)
-                        common.pprint("VM %s deleted on %s!" % (name, hypervisor), color='green')
+                        common.pprint("VM %s deleted on %s!" % (name, hypervisor))
                         deletedvms.append(name)
                         found = True
             if container:
@@ -847,7 +847,7 @@ class Kconfig(Kbaseconfig):
                     container_plan = conta[3]
                     if container_plan == plan:
                         cont.delete_container(name)
-                        common.pprint("Container %s deleted!" % name, color='green')
+                        common.pprint("Container %s deleted!" % name)
                         found = True
             # for network in k.list_networks():
             #    if 'plan' in network and network['plan'] == plan:
@@ -856,45 +856,45 @@ class Kconfig(Kbaseconfig):
                 for network in networks:
                     networkresult = k.delete_network(network)
                     if networkresult['result'] == 'success':
-                        common.pprint("Unused network %s deleted!" % network, color='green')
+                        common.pprint("Unused network %s deleted!" % network)
             for keyfile in glob.glob("%s.key*" % plan):
-                common.pprint("file %s from %s deleted!" % (keyfile, plan), color='green')
+                common.pprint("file %s from %s deleted!" % (keyfile, plan))
                 os.remove(keyfile)
             if deletedlbs and self.type in ['aws', 'gcp']:
                 for lb in deletedlbs:
                     self.k.delete_loadbalancer(lb)
             if found:
-                common.pprint("Plan %s deleted!" % plan, color='green')
+                common.pprint("Plan %s deleted!" % plan)
             else:
                 common.pprint("Nothing to do for plan %s" % plan, color='red')
                 os._exit(1)
             return {'result': 'success', 'deletedvm': deletedvms}
         if autostart:
-            common.pprint("Set vms from plan %s to autostart" % plan, color='green')
+            common.pprint("Set vms from plan %s to autostart" % plan)
             for vm in sorted(k.list(), key=lambda x: x['name']):
                 name = vm['name']
                 description = vm['plan']
                 if description == plan:
                     k.update_start(name, start=True)
-                    common.pprint("%s set to autostart!" % name, color='green')
+                    common.pprint("%s set to autostart!" % name)
             return {'result': 'success'}
         if noautostart:
-            common.pprint("Preventing vms from plan %s to autostart" % plan, color='green')
+            common.pprint("Preventing vms from plan %s to autostart" % plan)
             for vm in sorted(k.list(), key=lambda x: x['name']):
                 name = vm['name']
                 description = vm['plan']
                 if description == plan:
                     k.update_start(name, start=False)
-                    common.pprint("%s prevented to autostart!" % name, color='green')
+                    common.pprint("%s prevented to autostart!" % name)
             return {'result': 'success'}
         if start:
-            common.pprint("Starting vms from plan %s" % plan, color='green')
+            common.pprint("Starting vms from plan %s" % plan)
             for vm in sorted(k.list(), key=lambda x: x['name']):
                 name = vm['name']
                 description = vm['plan']
                 if description == plan:
                     k.start(name)
-                    common.pprint("VM %s started!" % name, color='green')
+                    common.pprint("VM %s started!" % name)
             if container:
                 cont = Kcontainerconfig(self, client=self.containerclient).cont
                 for conta in sorted(cont.list_containers(k)):
@@ -902,17 +902,17 @@ class Kconfig(Kbaseconfig):
                     containerplan = conta[3]
                     if containerplan == plan:
                         cont.start_container(name)
-                        common.pprint("Container %s started!" % name, color='green')
-            common.pprint("Plan %s started!" % plan, color='green')
+                        common.pprint("Container %s started!" % name)
+            common.pprint("Plan %s started!" % plan)
             return {'result': 'success'}
         if stop:
-            common.pprint("Stopping vms from plan %s" % plan, color='green')
+            common.pprint("Stopping vms from plan %s" % plan)
             for vm in sorted(k.list(), key=lambda x: x['name']):
                 name = vm['name']
                 description = vm['plan']
                 if description == plan:
                     k.stop(name)
-                    common.pprint("%s stopped!" % name, color='green')
+                    common.pprint("%s stopped!" % name)
             if container:
                 cont = Kcontainerconfig(self, client=self.containerclient).cont
                 for conta in sorted(cont.list_containers()):
@@ -920,31 +920,31 @@ class Kconfig(Kbaseconfig):
                     containerplan = conta[3]
                     if containerplan == plan:
                         cont.stop_container(name)
-                        common.pprint("Container %s stopped!" % name, color='green')
-            common.pprint("Plan %s stopped!" % plan, color='green')
+                        common.pprint("Container %s stopped!" % name)
+            common.pprint("Plan %s stopped!" % plan)
             return {'result': 'success'}
         if snapshot:
             if revert:
                 common.pprint("Can't revert and snapshot plan at the same time", color='red')
                 os._exit(1)
-            common.pprint("Snapshotting vms from plan %s" % plan, color='green')
+            common.pprint("Snapshotting vms from plan %s" % plan)
             for vm in sorted(k.list(), key=lambda x: x['name']):
                 name = vm['name']
                 description = vm['plan']
                 if description == plan:
                     k.snapshot(plan, name)
-                    common.pprint("%s snapshotted!" % name, color='green')
-            common.pprint("Plan %s snapshotted!" % plan, color='green')
+                    common.pprint("%s snapshotted!" % name)
+            common.pprint("Plan %s snapshotted!" % plan)
             return {'result': 'success'}
         if revert:
-            common.pprint("Reverting snapshots of vms from plan %s" % plan, color='green')
+            common.pprint("Reverting snapshots of vms from plan %s" % plan)
             for vm in sorted(k.list(), key=lambda x: x['name']):
                 name = vm['name']
                 description = vm['plan']
                 if description == plan:
                     k.snapshot(plan, name, revert=True)
-                    common.pprint("snapshot of %s reverted!" % name, color='green')
-            common.pprint("Plan %s snapshot reverted!" % plan, color='green')
+                    common.pprint("snapshot of %s reverted!" % name)
+            common.pprint("Plan %s snapshot reverted!" % plan)
             return {'result': 'success'}
         if url is not None:
             if not url.endswith('.yml'):
@@ -953,7 +953,7 @@ class Kconfig(Kbaseconfig):
             inputfile = os.path.basename(url)
             onfly = os.path.dirname(url)
             path = plan if path is None else path
-            common.pprint("Retrieving specified plan from %s to %s" % (url, path), color='green')
+            common.pprint("Retrieving specified plan from %s to %s" % (url, path))
             if not os.path.exists(path):
                 toclean = True
                 os.mkdir(path)
@@ -966,7 +966,7 @@ class Kconfig(Kbaseconfig):
             inputfile = "/tmp/plan.yml"
         if inputfile is None:
             inputfile = 'kcli_plan.yml'
-            common.pprint("using default input file kcli_plan.yml", color='green')
+            common.pprint("using default input file kcli_plan.yml")
         if path is not None:
             os.chdir(path)
             getback = True
@@ -1011,7 +1011,7 @@ class Kconfig(Kbaseconfig):
         for p in profileentries:
             vmprofiles[p] = entries[p]
         if planentries:
-            common.pprint("Deploying Plans...", color='green')
+            common.pprint("Deploying Plans...")
             for planentry in planentries:
                 details = entries[planentry]
                 planurl = details.get('url')
@@ -1038,7 +1038,7 @@ class Kconfig(Kbaseconfig):
                           delay=delay, overrides=overrides, embedded=embedded)
             return {'result': 'success'}
         if networkentries:
-            common.pprint("Deploying Networks...", color='green')
+            common.pprint("Deploying Networks...")
             for net in networkentries:
                 netprofile = entries[net]
                 if k.net_exists(net):
@@ -1057,7 +1057,7 @@ class Kconfig(Kbaseconfig):
                                           pxe=pxe, vlan=vlan)
                 common.handle_response(result, net, element='Network ')
         if poolentries:
-            common.pprint("Deploying Pool...", color='green')
+            common.pprint("Deploying Pool...")
             pools = k.list_pools()
             for pool in poolentries:
                 if pool in pools:
@@ -1071,7 +1071,7 @@ class Kconfig(Kbaseconfig):
                         continue
                     k.create_pool(pool, poolpath)
         if templateentries:
-            common.pprint("Deploying Templates...", color='green')
+            common.pprint("Deploying Templates...")
             templates = [os.path.basename(t) for t in k.volumes()]
             for template in templateentries:
                 if template in templates:
@@ -1098,7 +1098,7 @@ class Kconfig(Kbaseconfig):
                     result = k.add_image(templateurl, pool, cmd=cmd)
                     common.handle_response(result, template, element='Template ', action='Added')
         if dnsentries:
-            common.pprint("Deploying Dns Entry...", color='green')
+            common.pprint("Deploying Dns Entry...")
             dnsclients = {}
             for dnsentry in dnsentries:
                 dnsprofile = entries[dnsentry]
@@ -1126,7 +1126,7 @@ class Kconfig(Kbaseconfig):
                     return
                 z.reserve_dns(name=dnsentry, nets=[dnsnet], domain=dnsdomain, ip=dnsip, alias=dnsalias, force=True)
         if vmentries:
-            common.pprint("Deploying Vms...", color='green')
+            common.pprint("Deploying Vms...")
             vmcounter = 0
             hosts = {}
             for name in vmentries:
@@ -1200,26 +1200,25 @@ class Kconfig(Kbaseconfig):
                             continue
                         if 'autostart' in profile and currentstart != profile['autostart']:
                             updated = True
-                            common.pprint("Updating autostart of %s to %s" % (name, profile['autostart']),
-                                          color='green')
+                            common.pprint("Updating autostart of %s to %s" % (name, profile['autostart']))
                             z.update_start(name, profile['autostart'])
                         if 'flavor' in profile and currentflavor != profile['flavor']:
                             updated = True
-                            common.pprint("Updating flavor of %s to %s" % (name, profile['flavor']), color='green')
+                            common.pprint("Updating flavor of %s to %s" % (name, profile['flavor']))
                             z.update_flavor(name, profile['flavor'])
                         else:
                             if 'memory' in profile and currentmemory != profile['memory']:
                                 updated = True
-                                common.pprint("Updating memory of %s to %s" % (name, profile['memory']), color='green')
+                                common.pprint("Updating memory of %s to %s" % (name, profile['memory']))
                                 z.update_memory(name, profile['memory'])
                             if 'numcpus' in profile and currentcpus != profile['numcpus']:
                                 updated = True
-                                common.pprint("Updating cpus of %s to %s" % (name, profile['numcpus']), color='green')
+                                common.pprint("Updating cpus of %s to %s" % (name, profile['numcpus']))
                                 z.update_cpus(name, profile['numcpus'])
                         if 'disks' in profile:
                             if len(currentdisks) < len(profile['disks']):
                                 updated = True
-                                common.pprint("Adding Disks to %s" % name, color='green')
+                                common.pprint("Adding Disks to %s" % name)
                                 for disk in profile['disks'][len(currentdisks):]:
                                     if isinstance(disk, int):
                                         size = disk
@@ -1235,7 +1234,7 @@ class Kconfig(Kbaseconfig):
                                     z.add_disk(name=name, size=size, pool=pool)
                             if len(currentdisks) > len(profile['disks']):
                                 updated = True
-                                common.pprint("Removing Disks of %s" % name, color='green')
+                                common.pprint("Removing Disks of %s" % name)
                                 for disk in currentdisks[len(currentdisks) - len(profile['disks']):]:
                                     diskname = os.path.basename(disk['path'])
                                     diskpool = os.path.dirname(disk['path'])
@@ -1243,7 +1242,7 @@ class Kconfig(Kbaseconfig):
                         if 'nets' in profile:
                             if len(currentnets) < len(profile['nets']):
                                 updated = True
-                                common.pprint("Adding Nics to %s" % name, color='green')
+                                common.pprint("Adding Nics to %s" % name)
                                 for net in profile['nets'][len(currentnets):]:
                                     if isinstance(net, str):
                                         network = net
@@ -1254,7 +1253,7 @@ class Kconfig(Kbaseconfig):
                                     z.add_nic(name, network)
                             if len(currentnets) > len(profile['nets']):
                                 updated = True
-                                common.pprint("Removing Nics of %s" % name, color='green')
+                                common.pprint("Removing Nics of %s" % name)
                                 for net in range(len(currentnets) - len(profile['nets']), len(currentnets)):
                                     interface = "eth%s" % net
                                     z.delete_nic(name, interface)
@@ -1307,7 +1306,7 @@ class Kconfig(Kbaseconfig):
                 if delay > 0:
                     sleep(delay)
         if diskentries:
-            common.pprint("Deploying Disks...", color='green')
+            common.pprint("Deploying Disks...")
         for disk in diskentries:
             profile = entries[disk]
             pool = profile.get('pool')
@@ -1329,13 +1328,13 @@ class Kconfig(Kbaseconfig):
             else:
                 shareable = False
             newdisk = k.create_disk(disk, size=size, pool=pool, template=template, thin=False)
-            common.pprint("Disk %s deployed!" % disk, color='green')
+            common.pprint("Disk %s deployed!" % disk)
             for vm in vms:
                 k.add_disk(name=vm, size=size, pool=pool, template=template, shareable=shareable, existing=newdisk,
                            thin=False)
         if containerentries:
             cont = Kcontainerconfig(self, client=self.containerclient).cont
-            common.pprint("Deploying Containers...", color='green')
+            common.pprint("Deploying Containers...")
             label = "plan=%s" % plan
             for container in containerentries:
                 if cont.exists_container(container):
@@ -1356,7 +1355,7 @@ class Kconfig(Kbaseconfig):
                 environment = next((e for e in [profile.get('environment'), customprofile.get('environment')]
                                     if e is not None), None)
                 cmd = next((e for e in [profile.get('cmd'), customprofile.get('cmd')] if e is not None), None)
-                common.pprint("Container %s deployed!" % container, color='green')
+                common.pprint("Container %s deployed!" % container)
                 cont.create_container(name=container, image=image, nets=nets, cmd=cmd, ports=ports,
                                       volumes=volumes, environment=environment, label=label)
         if ansibleentries:
@@ -1398,11 +1397,11 @@ class Kconfig(Kbaseconfig):
                 print("Running: %s -i /tmp/%s.inv %s" % (ansiblecommand, plan, playbook))
                 os.system("%s -i /tmp/%s.inv %s" % (ansiblecommand, plan, playbook))
         if ansible:
-            common.pprint("Deploying Ansible Inventory...", color='green')
+            common.pprint("Deploying Ansible Inventory...")
             if os.path.exists("/tmp/%s.inv" % plan):
                 common.pprint("Inventory in /tmp/%s.inv skipped!" % plan, color='blue')
             else:
-                common.pprint("Creating ansible inventory for plan %s in /tmp/%s.inv" % (plan, plan), color='green')
+                common.pprint("Creating ansible inventory for plan %s in /tmp/%s.inv" % (plan, plan))
                 vms = []
                 for vm in sorted(k.list(), key=lambda x: x['name']):
                     name = vm['name']
@@ -1412,7 +1411,7 @@ class Kconfig(Kbaseconfig):
                 ansibleutils.make_inventory(k, plan, vms, tunnel=self.tunnel)
                 return
         if lbentries:
-                common.pprint("Deploying Loadbalancers...", color='green')
+                common.pprint("Deploying Loadbalancers...")
                 for index, lbentry in enumerate(lbentries):
                     details = entries[lbentry]
                     ports = details.get('ports', [])
@@ -1481,7 +1480,7 @@ class Kconfig(Kbaseconfig):
                     shortname = os.path.basename(url)
                 if cmd is None and template != '' and template in TEMPLATESCOMMANDS:
                     cmd = TEMPLATESCOMMANDS[template]
-                common.pprint("Grabbing template %s..." % shortname, color='green')
+                common.pprint("Grabbing template %s..." % shortname)
                 result = k.add_image(url, pool, cmd=cmd, name=shortname)
                 common.handle_response(result, shortname, element='Template ', action='Added')
             return {'result': 'success'}
@@ -1493,7 +1492,7 @@ class Kconfig(Kbaseconfig):
             if not enabled:
                 common.pprint("Client %s is disabled.Leaving...." % switch, color='red')
                 return {'result': 'failure', 'reason': "Client %s is disabled" % switch}
-            common.pprint("Switching to client %s..." % switch, color='green')
+            common.pprint("Switching to client %s..." % switch)
             inifile = "%s/.kcli/config.yml" % os.environ.get('HOME')
             if os.path.exists(inifile):
                 newini = ''
@@ -1511,8 +1510,8 @@ class Kconfig(Kbaseconfig):
                 return {'result': 'success'}
             for cli in self.extraclients:
                 dest = self.extraclients[cli]
-                common.pprint("syncing client templates from %s to %s" % (self.client, cli), color='green')
-                common.pprint("Note rhel templates are currently not synced", color='green')
+                common.pprint("syncing client templates from %s to %s" % (self.client, cli))
+                common.pprint("Note rhel templates are currently not synced")
             for vol in k.volumes():
                 template = os.path.basename(vol)
                 if template in [os.path.basename(v) for v in dest.volumes()]:
@@ -1538,7 +1537,7 @@ class Kconfig(Kbaseconfig):
                 cmd = None
                 if vol in TEMPLATESCOMMANDS:
                     cmd = TEMPLATESCOMMANDS[template]
-                common.pprint("Grabbing template %s..." % template, color='green')
+                common.pprint("Grabbing template %s..." % template)
                 dest.add_image(url, pool, cmd=cmd)
         return {'result': 'success'}
 
@@ -1548,11 +1547,11 @@ class Kconfig(Kbaseconfig):
         k = self.k
         if self.type in ['aws', 'gcp']:
             if delete:
-                common.pprint("Deleting loadbalancer %s" % name, color='green')
+                common.pprint("Deleting loadbalancer %s" % name)
                 k.delete_loadbalancer(name)
                 return
             else:
-                common.pprint("Creating loadbalancer %s" % name, color='green')
+                common.pprint("Creating loadbalancer %s" % name)
                 k.create_loadbalancer(name, ports=ports, checkpath=checkpath, vms=vms, domain=domain)
         elif delete:
             return

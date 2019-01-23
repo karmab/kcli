@@ -220,7 +220,7 @@ class KOvirt(object):
             else:
                 timeout += 5
                 sleep(5)
-                common.pprint("Waiting for vm to be ready", color='green')
+                common.pprint("Waiting for vm to be ready")
             if timeout > 60:
                 return {'result': 'failure', 'reason': 'timeout waiting for vm to be ready'}
         if 'default' not in netprofiles:
@@ -584,11 +584,6 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         vm = vmsearch[0]
-        # if not vm.console.enabled:
-        #    vm_service = self.vms_service.vm_service(vm.id)
-        #    vm_service.update(types.Vm(console=types.Console(enabled=True)))
-        #    common.pprint("Enabling Serial Console. You will need to reboot VM" % name, color='green')
-        #    return
         permissions_service = self.vms_service.vm_service(vm.id).permissions_service()
         permissions_service.add(types.Permission(user=types.User(id=user.id), role=types.Role(name='UserVmManager')))
         keys_service = user_service.ssh_public_keys_service()
@@ -965,7 +960,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             else:
                 timeout += 5
                 sleep(5)
-                common.pprint("Waiting for disk %s to be ready" % diskname, color='green')
+                common.pprint("Waiting for disk %s to be ready" % diskname)
             if timeout > 40:
                 return {'result': 'failure', 'reason': 'timeout waiting for disk %s to be ready' % diskname}
         return {'result': 'success'}
@@ -1156,7 +1151,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         return
 
     def delete_image(self, image):
-        common.pprint("Deleting Template %s" % image, color='green')
+        common.pprint("Deleting Template %s" % image)
         templates_service = self.templates_service
         templateslist = templates_service.list()
         for template in templateslist:
@@ -1199,7 +1194,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             return {'result': 'failure', 'reason': "Pool %s not found" % pool}
         sd = sds_service.list(search='name=%s' % self.imagerepository)
         if sd:
-            common.pprint("Using glance repository %s" % self.imagerepository, color='green')
+            common.pprint("Using glance repository %s" % self.imagerepository)
             sd_service = sds_service.storage_domain_service(sd[0].id)
             images_service = sd_service.images_service()
             images = images_service.list()
@@ -1217,12 +1212,12 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             else:
                 common.pprint("Image not found in %s. Manually downloading" % self.imagerepository, color='blue')
         else:
-            common.pprint("No glance repository found. Manually downloading", color='green')
+            common.pprint("No glance repository found. Manually downloading")
         disks_service = self.conn.system_service().disks_service()
         disksearch = disks_service.list(search='alias=%s' % shortimage)
         if not disksearch:
             if not os.path.exists('/tmp/%s' % shortimage):
-                common.pprint("Downloading locally %s" % shortimage, color='green')
+                common.pprint("Downloading locally %s" % shortimage)
                 downloadcmd = "curl -Lo /tmp/%s -f '%s'" % (shortimage, image)
                 code = os.system(downloadcmd)
                 if code != 0:
