@@ -16,7 +16,8 @@ RUN apk add --update --no-cache g++ gcc libvirt libvirt-dev py-pip python3-dev o
 
 # Group the pip installation
 RUN pip3 install -U --no-cache-dir setuptools pip
-RUN pip3 install --no-cache-dir -e git+https://github.com/karmab/kcli.git#egg=kcli[all]
+#RUN pip3 install --no-cache-dir -e git+https://github.com/karmab/kcli.git#egg=kcli[all]
+RUN pip3 install -e git+https://github.com/karmab/kcli.git#egg=kcli[all]
 
 ADD klist.py /usr/bin
 RUN chmod o+x /usr/bin/klist.py

@@ -16,7 +16,8 @@ RUN microdnf --nodocs -y install gcc-c++ gcc libvirt libvirt-devel python3-devel
 
 # Group the pip installation
 RUN pip3 install -U --no-cache-dir setuptools pip
-RUN PYCURL_SSL_LIBRARY=openssl pip3 install --no-cache-dir -e git+https://github.com/karmab/kcli.git#egg=kcli[all]
+#RUN PYCURL_SSL_LIBRARY=openssl pip3 install --no-cache-dir -e git+https://github.com/karmab/kcli.git#egg=kcli[all]
+RUN PYCURL_SSL_LIBRARY=openssl pip3 install -e git+https://github.com/karmab/kcli.git#egg=kcli[all]
 RUN microdnf clean all
 
 ADD klist.py /usr/bin
