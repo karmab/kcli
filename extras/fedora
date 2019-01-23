@@ -12,7 +12,7 @@ LABEL name="karmab/kcli" \
 
 EXPOSE 9000
 
-RUN microdnf -y install gcc-c++ gcc libvirt libvirt-devel python3-devel openssh-clients curl curl-devel openssl-devel libxml2-devel git libffi-devel genisoimage xauth kernel-headers genisoimage && microdnf clean all
+RUN microdnf --nodocs -y install gcc-c++ gcc libvirt libvirt-devel python3-devel openssh-clients curl curl-devel openssl-devel libxml2-devel git libffi-devel genisoimage xauth kernel-headers genisoimage && microdnf clean all
 
 # Group the pip installation
 RUN pip3 install -U --no-cache-dir setuptools pip
