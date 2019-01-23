@@ -207,8 +207,7 @@ class Kconfig(Kbaseconfig):
         else:
             common.pprint("Deploying vm %s from profile %s..." % (name, profile))
         if profile not in vmprofiles:
-            common.pprint("profile %s not found. Trying to use the profile as template and default values..." % profile,
-                          color='blue')
+            common.pprint("profile %s not found. Using the template as profile..." % profile, color='blue')
             vmprofiles[profile] = {'template': profile}
         profilename = profile
         profile = vmprofiles[profile]
