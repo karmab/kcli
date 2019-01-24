@@ -2179,6 +2179,8 @@ class Kvirt(object):
         :return:
         """
         u, ip = self._ssh_credentials(name)
+        if ip is None:
+            return None
         if user is None:
             user = u
         vmport = None
