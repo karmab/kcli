@@ -932,9 +932,10 @@ class Kvirt(object):
                         % (self.identitycommand, self.port, localport, port, self.user, self.host)
                 url = "%s://%s:%s" % (protocol, host, localport)
                 consolecommand += "remote-viewer %s &" % url
-                if self.debug:
+                if self.debug or os.path.exists("/i_am_a_container"):
                     print(consolecommand)
-                os.popen(consolecommand)
+                if not os.path.exists("/i_am_a_container"):
+                    os.popen(consolecommand)
 
     def serialconsole(self, name):
         """
