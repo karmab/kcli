@@ -25,6 +25,7 @@ MULTUSVERSION = 'v1'
 CONTAINERDISKS = ['kubevirt/alpine-container-disk-demo', 'kubevirt/cirros-container-disk-demo',
                   'karmab/debian-container-disk-demo', 'kubevirt/fedora-cloud-container-disk-demo',
                   'karmab/gentoo-container-disk-demo', 'karmab/ubuntu-container-disk-demo']
+ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety', 'zesty', 'artful', 'bionic', 'cosmic']
 
 
 class Kubevirt(Kubecommon):
@@ -151,6 +152,7 @@ class Kubevirt(Kubecommon):
         :param tags:
         :return:
         """
+        guestagent = False
         if self.exists(name):
             return {'result': 'failure', 'reason': "VM %s already exists" % name}
         if template is not None and template not in self.volumes():
@@ -255,6 +257,7 @@ class Kubevirt(Kubecommon):
                     netpublic = False
                 if self.multus:
                     newnet['multus'] = {'networkName': netname}
+                    guestagent = True
                 else:
                     newnet['hostBridge'] = {'bridgeName': netname}
             else:
@@ -315,6 +318,25 @@ class Kubevirt(Kubecommon):
                 pvc['metadata']['labels'] = {'app': 'Host-Assisted-Cloning'}
             pvcs.append(pvc)
             sizes.append(disksize)
+        if guestagent:
+            gcmds = []
+            if template is not None:
+                if (template.lower().startswith('centos') or template.lower().startswith('fedora') or
+                        template.lower().startswith('rhel')):
+                    gcmds.append('yum -y install qemu-guest-agent')
+                    gcmds.append('systemctl enable qemu-guest-agent')
+                    gcmds.append('systemctl restart qemu-guest-agent')
+                elif template.lower().startswith('debian'):
+                    gcmds.append('apt-get -f install qemu-guest-agent')
+                elif [x for x in ubuntus if x in template.lower()]:
+                    gcmds.append('apt-get update')
+                    gcmds.append('apt-get -f install qemu-guest-agent')
+            index = 1
+            if template is not None and template.startswith('rhel'):
+                subindex = [i for i, value in enumerate(cmds) if value.startswith('subscription-manager')]
+                if subindex:
+                    index = subindex.pop() + 1
+            cmds = cmds[:index] + gcmds + cmds[index:]
         if cloudinit:
             common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
                              reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides,
