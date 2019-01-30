@@ -54,10 +54,10 @@ If using *fedora*, you can use this:
 dnf -y copr enable karmab/kcli ; dnf -y install kcli
 ```
 
-If using a debian based distribution, you can use this( example is for ubuntu zesty):
+If using a debian based distribution, you can use this (example is for ubuntu cosmic):
 
 ```bash
-echo deb [trusted=yes] https://packagecloud.io/karmab/kcli/ubuntu/ zesty main > /etc/apt/sources.list.d/kcli.list ; apt-get update ; apt-get -y install kcli-all
+echo deb [trusted=yes] https://packagecloud.io/karmab/kcli/ubuntu/ cosmic main > /etc/apt/sources.list.d/kcli.list ; apt-get update ; apt-get -y install python3-kcli
 ```
 
 ## Container install method
