@@ -129,6 +129,8 @@ class Kaws(object):
         :param tags:
         :return:
         """
+        if self.exists(name):
+            return {'result': 'failure', 'reason': "VM %s already exists" % name}
         template = self.__evaluate_template(template)
         keypair = self.keypair
         if template is not None and not template.startswith('ami-'):

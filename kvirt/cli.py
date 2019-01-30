@@ -529,11 +529,8 @@ def vm(args):
             common.pprint("Missing profile", color='red')
             os._exit(1)
     result = config.create_vm(name, profile, overrides=overrides)
-    if config.type != 'aws':
-        code = common.handle_response(result, name, element='', action='created', client=config.client)
-        return code
-    else:
-        return 0
+    code = common.handle_response(result, name, element='', action='created', client=config.client)
+    return code
 
 
 def clone(args):
