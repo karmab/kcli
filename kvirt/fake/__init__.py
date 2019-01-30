@@ -186,7 +186,7 @@ class Kfake(object):
         :param name:
         :return:
         """
-        return random.choice(['up', 'down'])
+        return 'up'
 
 # should return a list of name, state, ip, source, plan, profile, report
     def list(self):
