@@ -321,8 +321,7 @@ class Kfake(object):
         :param snapshots:
         :return:
         """
-        print("not implemented")
-        return
+        return {'result': 'success'}
 
     def clone(self, old, new, full=False, start=False):
         """
@@ -637,3 +636,6 @@ class Kfake(object):
         :return:
         """
         return []
+
+    def delete_image(self, image):
+        return {'result': 'success'}

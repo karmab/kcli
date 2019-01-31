@@ -27,7 +27,6 @@ class TestK:
     def test_create_pool(self):
         k = self.k
         k.create_pool(name=self.name, poolpath=self.poolpath)
-        print("prout")
         assert True
 
     def test_download_template(self):
@@ -56,21 +55,18 @@ class TestK:
 
     def test_stop_vm(self):
         k = self.k
-        k.stop(self.name)
-        status = k.status(self.name)
-        assert status == 'down'
+        result = k.stop(self.name)
+        assert result["result"] == "success"
 
     def test_start_vm(self):
         k = self.k
-        k.start(self.name)
-        status = k.status(self.name)
-        assert status == 'up'
+        result = k.start(self.name)
+        assert result["result"] == "success"
 
     def test_delete_vm(self):
         k = self.k
-        k.delete(self.name)
-        status = k.status(self.name)
-        assert status is None
+        result = k.delete(self.name)
+        assert result["result"] == "success"
 
     @classmethod
     def teardown_class(self):
