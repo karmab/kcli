@@ -1,9 +1,9 @@
 # coding=utf-8
-import os
 import random
 import string
 import time
 from kvirt.config import Kconfig
+from kvirt.defaults import TEMPLATES
 
 
 class TestK:
@@ -12,28 +12,33 @@ class TestK:
         """
 
         """
-        # self.host = os.environ.get('KVIRT_HOST', '127.0.0.1')
-        # self.user = os.environ.get('KVIRT_USER', 'root')
-        self.path = os.environ.get('KVIRT_PATH', '')
+        self.template = "cirros"
         self.config = Kconfig()
         self.k = self.config.k
         name = "test_%s" % ''.join(random.choice(string.ascii_lowercase) for i in range(5))
+        self.poolpath = "/var/lib/libvirt/%s" % name
         self.name = name
 
     def test_list(self):
         k = self.k
-        klist = k.list()
-        assert klist is not None
+        result = k.list()
+        assert result is not None
+
+    def test_create_pool(self):
+        k = self.k
+        k.create_pool(name=self.name, poolpath=self.poolpath)
+        print("prout")
+        assert True
+
+    def test_download_template(self):
+        config = self.config
+        result = config.handle_host(pool=self.name, templates=[self.template], download=True)
+        assert result["result"] == "success"
 
     def test_create_network(self):
         k = self.k
         counter = random.randint(1, 254)
         k.create_network(name=self.name, cidr='10.0.%s.0/24' % counter, dhcp=True)
-        assert True
-
-    def test_create_pool(self):
-        k = self.k
-        k.create_pool(name=self.name, poolpath='%s/%s' % (self.path, self.name))
         assert True
 
     def test_create_vm(self):
@@ -76,4 +81,5 @@ class TestK:
         k = self.k
         time.sleep(10)
         k.delete_network(self.name)
+        k.delete_image(TEMPLATES[self.template])
         k.delete_pool(self.name, full=True)

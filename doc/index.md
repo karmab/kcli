@@ -46,7 +46,7 @@ sudo usermod -aG qemu,libvirt YOUR_USER
 
 for *macosx*, you'll want to check the docker installation section ( if planning to go against a remote kvm hypervisor)
 
-## RPM install method
+## Package install method
 
 If using *fedora*, you can use this:
 
@@ -943,7 +943,7 @@ alternatively, look at [https://github.com/karmab/kcli-controller](https://githu
 
 ## Testing
 
-Basic testing can be run with pytest. If using a remote client, you ll want to set the *KVIRT_HOST* and *KVIRT_USER* environment variables so that it points to your client with the corresponding user.
+Basic testing can be run with pytest, which leverages your existing kcli config
 
 # Specific parameters for a client
 
