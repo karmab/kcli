@@ -784,7 +784,8 @@ class Kubevirt(Kubecommon):
                                                  client.V1DeleteOptions())
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        pvcvolumes = [v['claimName'] for v in vm['spec']['template']['spec']['volumes'] if 'claimName' in v]
+        pvcvolumes = [v['persistentVolumeClaim']['claimName'] for v in vm['spec']['template']['spec']['volumes'] if
+                      'persistentVolumeClaim' in v]
         pvcs = [pvc for pvc in core.list_namespaced_persistent_volume_claim(namespace).items
                 if pvc.metadata.name in pvcvolumes]
         for p in sorted(pvcs):
