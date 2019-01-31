@@ -1185,8 +1185,8 @@ class Kubevirt(Kubecommon):
         :param size:
         :return:
         """
-        sizes = {'debian': 2, 'centos': 8, 'fedora': 4, 'rhel': 10, 'trusty': 2.2, 'xenial': 2.2, 'yakkety': 2.2,
-                 'zesty': 2.2, 'artful': 2.2}
+        sizes = {'debian': 2, 'centos': 8, 'centos7': 8, 'fedora': 4, 'rhel': 10, 'trusty': 2.2, 'xenial': 2.2,
+                 'yakkety': 2.2, 'zesty': 2.2, 'artful': 2.2, 'bionic': 2.2, 'cosmic': 2.2}
         core = self.core
         pool = self.check_pool(pool)
         namespace = self.namespace
