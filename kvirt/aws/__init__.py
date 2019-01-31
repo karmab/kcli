@@ -245,7 +245,6 @@ class Kaws(object):
         conn.run_instances(ImageId=template, MinCount=1, MaxCount=1, InstanceType=flavor,
                            KeyName=keypair, BlockDeviceMappings=blockdevicemappings,
                            UserData=userdata, TagSpecifications=tags)
-        common.pprint("%s created on aws" % name)
         if reservedns and domain is not None:
             self.reserve_dns(name, nets=nets, domain=domain, alias=alias, instanceid=name)
         return {'result': 'success'}

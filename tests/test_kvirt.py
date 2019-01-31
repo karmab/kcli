@@ -3,7 +3,7 @@ import random
 import string
 import time
 from kvirt.config import Kconfig
-from kvirt.defaults import TEMPLATES
+# from kvirt.defaults import TEMPLATES
 
 
 class TestK:
@@ -12,10 +12,10 @@ class TestK:
         """
 
         """
-        self.template = "cirros"
+        self.template = "centos7"
         self.config = Kconfig()
         self.k = self.config.k
-        name = "test_%s" % ''.join(random.choice(string.ascii_lowercase) for i in range(5))
+        name = "test-%s" % ''.join(random.choice(string.ascii_lowercase) for i in range(5))
         self.poolpath = "/var/lib/libvirt/%s" % name
         self.name = name
 
@@ -41,12 +41,15 @@ class TestK:
         assert True
 
     def test_create_vm(self):
+        config = self.config
         k = self.k
         time.sleep(10)
-        k.create(self.name, numcpus=1, memory=512, pool=self.name, nets=[self.name])
-        status = k.status(self.name)
-        print(status)
-        assert status is not None
+        result = config.create_vm(self.name, 'CentOS-7-x86_64-GenericCloud.qcow2', overrides={}, k=k)
+        assert result["result"] == "success"
+        # k.create(self.name, numcpus=1, memory=512, pool=self.name, nets=[self.name])
+        # status = k.status(self.name)
+        # print(status)
+        # assert status is not None
 
     def test_add_disk(self):
         k = self.k
@@ -77,5 +80,5 @@ class TestK:
         k = self.k
         time.sleep(10)
         k.delete_network(self.name)
-        k.delete_image(TEMPLATES[self.template])
+        # k.delete_image(TEMPLATES[self.template])
         k.delete_pool(self.name, full=True)
