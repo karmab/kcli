@@ -707,7 +707,7 @@ For an advanced use of plans along with scripts, check the [plans](plans/README.
 You can use the following to execute a plan from a remote url :
 
 ```YAML
-kcli plan --url https://github.com/karmab/kcli-plans/blob/master/ovirt/upstream.yml
+kcli plan --url https://raw.githubusercontent.com/karmab/kcli-plans/master/ovirt/upstream.yml
 ```
 
 ## Disk parameters
