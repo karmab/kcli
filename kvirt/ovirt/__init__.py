@@ -1177,15 +1177,19 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             common.pprint("Template %s already there" % shortimage, color='blue')
             return {'result': 'success'}
         system_service = self.conn.system_service()
+        profiles_service = self.conn.system_service().vnic_profiles_service()
         profile_id = None
-        profiles_service = system_service.vnic_profiles_service()
+        netprofiles = {}
         for prof in profiles_service.list():
-            if prof.name == 'ovirtmgmt':
-                profile_id = prof.id
-                break
-            elif prof.name == 'rhevm':
-                profile_id = prof.id
-                break
+            networkinfo = self.conn.follow_link(prof.network)
+            netdatacenter = self.conn.follow_link(networkinfo.data_center)
+            if netdatacenter.name == self.datacenter:
+                netprofiles[prof.name] = prof.id
+        if 'default' not in netprofiles:
+            if 'ovirtmgmt' in netprofiles:
+                profile_id = netprofiles['ovirtmgmt']
+            elif 'rhevm' in netprofiles:
+                profile_id = netprofiles['rhevm']
         if profile_id is None:
             return {'result': 'failure', 'reason': "Couldnt find ovirtmgmt nor rhevm network!!!"}
         sds_service = system_service.storage_domains_service()
@@ -1300,7 +1304,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                 break
         tempvm_service = self.vms_service.vm_service(tempvm.id)
         _format = types.DiskFormat.COW
-        storagedomain = types.Storaggetain(name=pool)
+        storagedomain = types.StorageDomain(name=pool)
         disk_attachments = types.DiskAttachment(disk=types.Disk(id=disk_id, format=_format,
                                                                 storage_domains=[storagedomain]),
                                                 interface=types.DiskInterface.VIRTIO,
