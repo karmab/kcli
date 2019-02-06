@@ -1069,13 +1069,16 @@ class Kvirt(object):
             else:
                 network = element.find('source').get('network')
                 network_type = 'routed'
-                networkdata = conn.networkLookupByName(network)
-                netxml = networkdata.XMLDesc()
-                netroot = ET.fromstring(netxml)
-                hostentries = list(netroot.getiterator('host'))
-                for host in hostentries:
-                    if host.get('mac') == mac:
-                        ip = host.get('ip')
+                try:
+                    networkdata = conn.networkLookupByName(network)
+                    netxml = networkdata.XMLDesc()
+                    netroot = ET.fromstring(netxml)
+                    hostentries = list(netroot.getiterator('host'))
+                    for host in hostentries:
+                        if host.get('mac') == mac:
+                            ip = host.get('ip')
+                except:
+                    network_type = 'Not Found'
             if ifaces:
                 matches = [ifaces[x]['addrs'] for x in ifaces if ifaces[x]['hwaddr'] == mac]
                 if matches:
@@ -1291,7 +1294,10 @@ class Kvirt(object):
             networktype = element.get('type')
             if networktype != 'bridge' and networktype != 'user':
                 network = element.find('source').get('network')
-                network = conn.networkLookupByName(network)
+                try:
+                    network = conn.networkLookupByName(network)
+                except:
+                    continue
                 netxml = network.XMLDesc(0)
                 netroot = ET.fromstring(netxml)
                 for host in list(netroot.getiterator('host')):
