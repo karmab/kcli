@@ -1001,6 +1001,7 @@ Basic testing can be run with pytest, which leverages your existing kcli config
 - *rhnpool* (optional). Red Hat network pool
 - *enableroot* (optional). Defaults to true. Allows ssh access as root user
 - *storemetadata* (optional). Defaults to false. creates a /root/.metadata yaml file whith all the overrides applied. On gcp, those overrides are also stored as extra metadata
+- *sharedfolders* (optional). Defaults to a blank array. List of paths to share between a kvm hypervisor and vm. You will also make sure that the path is accessible as qemu user (typically with id 107) and use an hypervisor and a guest with 9p support (centos/rhel lack it)
 
 ## Overriding parameters
 

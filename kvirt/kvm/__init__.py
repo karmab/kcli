@@ -156,7 +156,8 @@ class Kvirt(object):
                disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None,
                vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None,
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
-               files=[], enableroot=True, overrides={}, tags=None, dnsclient=None, storemetadata=False):
+               files=[], enableroot=True, overrides={}, tags=None, dnsclient=None, storemetadata=False,
+               sharedfolders=[]):
         """
 
         :param name:
@@ -603,6 +604,12 @@ class Kvirt(object):
                               %s
                               %s
                               </qemu:commandline>""" % (ignitionxml, usermodexml)
+        sharedxml = ""
+        if sharedfolders:
+            for folder in sharedfolders:
+                sharedxml += "<filesystem type='mount' accessmode='passthrough'>"
+                sharedxml += "<source dir='%s'/><target dir='%s'/>" % (folder, os.path.basename(folder))
+                sharedxml += "</filesystem>"
         vmxml = """<domain type='%s' %s>
                   <name>%s</name>
                   %s
@@ -630,11 +637,13 @@ class Kvirt(object):
                     %s
                     %s
                     %s
+                    %s
                   </devices>
                     %s
                     %s
                     </domain>""" % (virttype, namespace, name, metadata, memory, vcpuxml, machine,
-                                    disksxml, netxml, isoxml, displayxml, serialxml, guestxml, cpuxml, qemuextraxml)
+                                    disksxml, netxml, isoxml, displayxml, serialxml, sharedxml, guestxml, cpuxml,
+                                    qemuextraxml)
         if self.debug:
             print(vmxml)
         conn.defineXML(vmxml)

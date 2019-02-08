@@ -65,7 +65,8 @@ class Kfake(object):
                disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False,
                cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[],
                ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[],
-               enableroot=True, alias=[], overrides={}, tags=None, dnsclient=None, storemetadata=False):
+               enableroot=True, alias=[], overrides={}, tags=None, dnsclient=None, storemetadata=False,
+               sharedfolders=[]):
         """
 
         :param name:
