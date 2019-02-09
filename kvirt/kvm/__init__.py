@@ -671,7 +671,10 @@ class Kvirt(object):
                 macs.append(mac)
             self._reserve_ip(name, nets, macs)
         if start:
-            vm.create()
+            try:
+                vm.create()
+            except Exception as e:
+                return {'result': 'failure', 'reason': e}
         if reservedns and not guestagent:
             self.reserve_dns(name, nets=nets, domain=domain, alias=alias, force=True)
         if reservehost:

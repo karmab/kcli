@@ -226,6 +226,27 @@ pool with a path, and have centos cloud image downloaded
 
     kcli bootstrap -n twix -H 192.168.0.6 --pool vms --poolpath /home/vms
 
+Storing secrets
+===============
+
+You can hide your secrets in *~/.kcli/config.yml* by replacing any value
+by *?secret*. You can then place the real value in *~/.kcli/secrets.yml*
+by using the same yaml hierarchy.
+
+For instance, if you have the following in your config file:
+
+::
+
+    xxx:
+     password: ?secret
+
+You will put the real password in your secrets file this way:
+
+::
+
+    xxx:
+     password: mypassword
+
 Provider specifics
 ==================
 
