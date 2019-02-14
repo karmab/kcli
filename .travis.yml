@@ -6,7 +6,7 @@ notifications:
 sudo: required
 
 python:
-- 2.7
+- 3.6
 
 before_install:
 - pip install pep8
@@ -29,3 +29,10 @@ script:
 #    secure: "F2gTWXDrOLmf7JglF1mgIdr9imjc0lL/y0K+xDDdcY4yXX9pl/aG8uoS9UhO5IZMsUrgp8xV7XqlYhNyPt61XO8wui52cKZxVfJU1IiYP3PoN382r2iNW4OfrMtzJXcwOoroXRKzZuQpz1HHI5G5EGQPGnlIZHTPBbHBvqyCqlhU7TS3hwPZ4V2bBOjc0l8PToTL9r//8wRIUxhmmHoAMOq7SiAGy/sqQMZn0G8OCU2+B3sncU15chQKb6BpI3ImaL/WL/YHnkLmSThIVFtRu3z2cZAGW49x69aj2cfM65BgJsJa6dJr+cC3SQSQJtWyDsqdHiB43EdgBJqyF3MWS72OY/cMGstr8OaurYqjvySHF6s1SevQD5dmYpmca4Qc6HavfWgB0P1Q1Ai0P8Sl4wgRlI4AmVyY3AHOGYJJVxk5sT+wwUmEq7FmRFFIUtiDV4cDVGwzeLTvfxCtZtZ0aG4fKoCPHyf0eeDfBMNF9eowPmTXa4C0LkSV+B6iSMj+rUEHOd3d/b4UgdsBTikLqdxiKmgoHgx4s2Mf0WZiE/AyVTTaxPVGHuyw8ajVw70xSjyk50eOKqra8yMc/4IPGw05qoprOAt/Qj+JTHdVoWzD0MM8VB92h8Sm17ibZ53dwaU2FHIzEVFDvZtPknII9K5DEAp62hm2yDFwArcFzTY="
 #  on:
 #    branch: master
+
+notifications:
+  irc:
+    channels:
+      - "chat.freenode.net#kcli"
+    on_success: change
+    on_failure: always
