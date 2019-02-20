@@ -157,6 +157,7 @@ class KOvirt(object):
         :param tags:
         :return:
         """
+        memory = memory * 1024 * 1024
         clone = not diskthin
         if template is not None:
             templates_service = self.templates_service
@@ -164,6 +165,10 @@ class KOvirt(object):
             found = False
             for temp in templateslist:
                 if temp.name == template:
+                    if temp.memory > memory:
+                        mem = int(temp.memory / 1024 / 1024)
+                        return {'result': 'failure', 'reason': "Minimal memory for template %s is %sMb" % (template,
+                                                                                                           mem)}
                     _template = types.Template(name=template)
                     found = True
             if not found:
@@ -187,7 +192,6 @@ class KOvirt(object):
             description += ',dnsclient=%s' % dnsclient
         if domain is not None:
             description += ',domain=%s' % domain
-        memory = memory * 1024 * 1024
         cpu = types.Cpu(topology=types.CpuTopology(cores=numcpus, sockets=1))
         try:
             vm = self.vms_service.add(types.Vm(name=name, cluster=types.Cluster(name=self.cluster), memory=memory,
