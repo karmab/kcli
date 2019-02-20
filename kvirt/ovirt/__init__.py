@@ -54,6 +54,7 @@ class KOvirt(object):
         self.filtervms = filtervms
         self.filteruser = filteruser
         self.filtertag = filtertag
+        self.netprofiles = {}
 
     def close(self):
         """
@@ -81,18 +82,18 @@ class KOvirt(object):
         :return:
         """
         profiles_service = self.conn.system_service().vnic_profiles_service()
-        netprofiles = {}
-        for prof in profiles_service.list():
-            networkinfo = self.conn.follow_link(prof.network)
-            netdatacenter = self.conn.follow_link(networkinfo.data_center)
-            if netdatacenter.name == self.datacenter:
-                netprofiles[prof.name] = prof.id
-        if 'default' not in netprofiles:
-            if 'ovirtmgmt' in netprofiles:
-                netprofiles['default'] = netprofiles['ovirtmgmt']
-            elif 'rhevm' in netprofiles:
-                netprofiles['default'] = netprofiles['rhevm']
-        if name in netprofiles:
+        if not self.netprofiles:
+            for prof in profiles_service.list():
+                networkinfo = self.conn.follow_link(prof.network)
+                netdatacenter = self.conn.follow_link(networkinfo.data_center)
+                if netdatacenter.name == self.datacenter:
+                    self.netprofiles[prof.name] = prof.id
+            if 'default' not in self.netprofiles:
+                if 'ovirtmgmt' in self.netprofiles:
+                    self.netprofiles['default'] = self.netprofiles['ovirtmgmt']
+                elif 'rhevm' in self.netprofiles:
+                    self.netprofiles['default'] = self.netprofiles['rhevm']
+        if name in self.netprofiles:
             return True
         return False
 
@@ -176,12 +177,12 @@ class KOvirt(object):
         else:
             description = "plan=%s,profile=%s" % (plan, profile)
         profiles_service = self.conn.system_service().vnic_profiles_service()
-        netprofiles = {}
-        for prof in profiles_service.list():
-            networkinfo = self.conn.follow_link(prof.network)
-            netdatacenter = self.conn.follow_link(networkinfo.data_center)
-            if netdatacenter.name == self.datacenter:
-                netprofiles[prof.name] = prof.id
+        if not self.netprofiles:
+            for prof in profiles_service.list():
+                networkinfo = self.conn.follow_link(prof.network)
+                netdatacenter = self.conn.follow_link(networkinfo.data_center)
+                if netdatacenter.name == self.datacenter:
+                    self.netprofiles[prof.name] = prof.id
         if dnsclient is not None:
             description += ',dnsclient=%s' % dnsclient
         if domain is not None:
@@ -223,11 +224,11 @@ class KOvirt(object):
                 common.pprint("Waiting for vm to be ready")
             if timeout > 60:
                 return {'result': 'failure', 'reason': 'timeout waiting for vm to be ready'}
-        if 'default' not in netprofiles:
-            if 'ovirtmgmt' in netprofiles:
-                netprofiles['default'] = netprofiles['ovirtmgmt']
-            elif 'rhevm' in netprofiles:
-                netprofiles['default'] = netprofiles['rhevm']
+        if 'default' not in self.netprofiles:
+            if 'ovirtmgmt' in self.netprofiles:
+                self.netprofiles['default'] = self.netprofiles['ovirtmgmt']
+            elif 'rhevm' in self.netprofiles:
+                self.netprofiles['default'] = self.netprofiles['rhevm']
         nics_service = self.vms_service.vm_service(vm.id).nics_service()
         currentnics = len(nics_service.list())
         nic_configurations = []
@@ -258,8 +259,8 @@ class KOvirt(object):
                                                                ip=types.Ip(version=types.IpVersion.V4, address=ip,
                                                                            netmask=netmask, gateway=gateway))
                     nic_configurations.append(nic_configuration)
-            if netname is not None and netname in netprofiles:
-                profile_id = netprofiles[netname]
+            if netname is not None and netname in self.netprofiles:
+                profile_id = self.netprofiles[netname]
                 nics_service.add(types.Nic(name='eth%s' % index, mac=mac,
                                            vnic_profile=types.VnicProfile(id=profile_id)))
         # disk_attachments_service = self.vms_service.vm_service(vm.id).disk_attachments_service()
@@ -670,15 +671,16 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                         ips.append(ip.address)
         nics = self.vms_service.vm_service(vm.id).nics_service().list()
         profiles_service = self.conn.system_service().vnic_profiles_service()
-        netprofiles = {}
         if ips:
             yamlinfo['ip'] = ips[-1]
-        for profile in profiles_service.list():
-                netprofiles[profile.id] = profile.name
+        if not self.netprofiles:
+            self.netprofiles = {}
+            for profile in profiles_service.list():
+                self.netprofiles[profile.id] = profile.name
         for nic in nics:
             device = nic.name
             mac = nic.mac.address
-            network = netprofiles[nic.vnic_profile.id]
+            network = self.netprofiles[nic.vnic_profile.id] if nic.vnic_profile is not None else 'N/A'
             network_type = nic.interface
             yamlinfo['nets'].append({'device': device, 'mac': mac, 'net': network, 'type': network_type})
         attachments = self.vms_service.vm_service(vm.id).disk_attachments_service().list()

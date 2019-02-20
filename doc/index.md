@@ -368,7 +368,7 @@ The following parameters are specific to ovirt:
 `wget http://$HOST/ovirt-engine/services/pki-resource?resource=ca-certificate&format=X509-PEM-CA`
 - cluster  Defaults to Default
 - datacenter Defaults to Default
-- filtervms Defaults to True. Only list vms created by kcli. Useful for environments when you are superadmin and have a ton of vms
+- filtervms Defaults to True. Only list vms created by kcli. Useful for environments when you are superadmin and have a ton of vms!!!
 - filteruser Defaults to False. Only list vms created by own user
 - filtertag Defaults to None. Only list vms created by kcli with the corresponding filter=filtertag in their description. Useful for environments when you share the same user
 - imagerepository (Optional). A Glance image provider repository to use to retrieve images. Defaults to `ovirt-image-repository`.
