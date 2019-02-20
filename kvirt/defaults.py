@@ -30,7 +30,8 @@ TEMPLATES = {'': None, 'arch': 'https://linuximages.de/openstack/arch/arch-opens
              'cloudforms45': 'https://access.redhat.com/downloads/content/167/ver=/cf-me---4.5/4.5/x86_64/'
              'product-software',
              'coreos': 'https://stable.release.core-os.net/amd64-usr/current/coreos_production_qemu_image.img.bz2',
-             'debian8': 'https://cdimage.debian.org/cdimage/openstack/current-8/debian-8-openstack-amd64.qcow2',
+             'debian8': 'https://cdimage.debian.org/cdimage/openstack/archive/8.11.0/'
+             'debian-8.11.0-openstack-amd64.qcow2',
              'debian9': 'https://cdimage.debian.org/cdimage/openstack/current-9/debian-9-openstack-amd64.qcow2',
              'fedora24': 'https://download.fedoraproject.org/pub/fedora/linux/releases/24/CloudImages/x86_64/images/'
              'Fedora-Cloud-Base-24-1.2.x86_64.qcow2',
@@ -44,6 +45,8 @@ TEMPLATES = {'': None, 'arch': 'https://linuximages.de/openstack/arch/arch-opens
              'Fedora-Cloud-Base-28-1.1.x86_64.qcow2',
              'fedora29': 'https://download.fedoraproject.org/pub/fedora/linux/releases/29/Cloud/x86_64/images/'
              'Fedora-Cloud-Base-29-1.2.x86_64.qcow2',
+             'fedoracoreos': 'https://ci.centos.org/artifacts/fedora-coreos/prod/builds/latest/'
+             'fedora-coreos-qemu.qcow2.gz',
              'gentoo': 'https://gentoo.osuosl.org/experimental/amd64/openstack/gentoo-openstack-amd64-default-20180621.'
              'qcow2',
              'manageiq57': 'http://releases.manageiq.org/manageiq-openstack-euwe-3.qc2',

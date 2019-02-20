@@ -497,7 +497,7 @@ class Kvirt(object):
                       <readonly/>
                     </disk>""" % iso
         if cloudinit:
-            if template is not None and (template.startswith('coreos') or template.startswith('rhcos')):
+            if template is not None and ('coreos' in template or template.startswith('rhcos')):
                 ignition = True
                 ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                                domain=domain, reserveip=reserveip, files=files,
@@ -2359,16 +2359,17 @@ class Kvirt(object):
                                                                        self.host, poolpath, shortimage)
                 os.system(uncompresscmd)
             shortimage = shortimage.replace('.gz', '')
-        if shortimage.endswith('xz'):
+        if shortimage.endswith('xz') or shortimage.endswith('gz'):
+            executable = 'unxz' if shortimage.endswith('xz') else 'gunzip'
             if self.host == 'localhost' or self.host == '127.0.0.1':
-                if find_executable('unxz') is not None:
-                    uncompresscmd = "unxz %s/%s" % (poolpath, shortimage)
+                if find_executable(executable) is not None:
+                    uncompresscmd = "%s %s/%s" % (executable, poolpath, shortimage)
                     os.system(uncompresscmd)
                 else:
-                    common.pprint("unxz not found. Can't uncompress image", color="blue")
+                    common.pprint("%s not found. Can't uncompress image" % executable, color="blue")
             elif self.protocol == 'ssh':
-                uncompresscmd = 'ssh -p %s %s@%s "unxz %s/%s"' % (self.identitycommand, self.port, self.user, self.host,
-                                                                  poolpath, shortimage)
+                uncompresscmd = 'ssh -p %s %s@%s "%s %s/%s"' % (self.identitycommand, self.port, self.user, self.host,
+                                                                executable, poolpath, shortimage)
                 os.system(uncompresscmd)
             shortimage = shortimage.replace('.xz', '')
         if cmd is not None:

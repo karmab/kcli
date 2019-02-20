@@ -1198,7 +1198,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             return {'result': 'failure', 'reason': "Pool %s not found" % pool}
         sd = sds_service.list(search='name=%s' % self.imagerepository)
         if sd:
-            common.pprint("Using glance repository %s" % self.imagerepository)
+            common.pprint("Trying to use glance repository %s" % self.imagerepository)
             sd_service = sds_service.storage_domain_service(sd[0].id)
             images_service = sd_service.images_service()
             images = images_service.list()

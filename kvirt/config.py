@@ -1089,7 +1089,8 @@ class Kconfig(Kbaseconfig):
                         common.pprint("Template %s skipped as url is missing!" % template, color='blue')
                         continue
                     if not templateurl.endswith('qcow2') and not templateurl.endswith('img')\
-                            and not templateurl.endswith('qc2') and not templateurl.endswith('qcow2.xz'):
+                            and not templateurl.endswith('qc2') and not templateurl.endswith('qcow2.xz')\
+                            and not templateurl.endswith('qcow2.gz'):
                         common.pprint("Opening url %s for you to grab complete url for %s" % (templateurl,
                                                                                               template),
                                       color='blue')
@@ -1467,7 +1468,7 @@ class Kconfig(Kbaseconfig):
                     shortname = os.path.basename(url)
                     template = os.path.basename(template)
                     if not url.endswith('qcow2') and not url.endswith('img') and not url.endswith('qc2')\
-                            and not url.endswith('qcow2.xz'):
+                            and not url.endswith('qcow2.xz') and not url.endswith('qcow2.gz'):
                         if 'web' in sys.argv[0]:
                             return {'result': 'failure', 'reason': "Missing url"}
                         common.pprint("Opening url %s for you to grab complete url for %s" % (url, template), 'blue')

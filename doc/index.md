@@ -366,18 +366,18 @@ The following parameters are specific to ovirt:
 - org Organization 
 - ca_file Points to a local path with the cert of the ovirt engine host. It can be retrieved with 
 `wget http://$HOST/ovirt-engine/services/pki-resource?resource=ca-certificate&format=X509-PEM-CA`
-- imagerepository. A Glance image provider repository. Defaults to `ovirt-image-repository`.
 - cluster  Defaults to Default
 - datacenter Defaults to Default
 - filtervms Defaults to True. Only list vms created by kcli. Useful for environments when you are superadmin and have a ton of vms
 - filteruser Defaults to False. Only list vms created by own user
 - filtertag Defaults to None. Only list vms created by kcli with the corresponding filter=filtertag in their description. Useful for environments when you share the same user
+- imagerepository (Optional). A Glance image provider repository to use to retrieve images. Defaults to `ovirt-image-repository`.
 
-Note that pool refers to storage domain
+Note that pool in Ovirt context refers to storage domain.
 
 To use this provider with kcli rpm, you'll need to install (from pip) *ovirt-engine-sdk-python*
 
-On fedora, for instance, you can run the following
+On fedora, for instance, you can run the following:
 
 ```
 dnf -y copr enable karmab/kcli
@@ -385,6 +385,8 @@ yum -y install kcli gcc redhat-rpm-config python3-devel openssl-devel libxml2-de
 export PYCURL_SSL_LIBRARY=openssl
 pip3 install ovirt-engine-sdk-python
 ```
+
+On rhel, set PYCURL_SSL_LIBRARY to nss instead
 
 ## Openstack
 
