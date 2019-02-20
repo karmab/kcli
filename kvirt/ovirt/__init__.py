@@ -746,7 +746,8 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             templateslist = templates_service.list()
             for template in templateslist:
                 if template.name != 'Blank':
-                    templates.append(template.name)
+                    memory = int(template.memory / 1024 / 1024)
+                    templates.append("%s (%sMb)" % (template.name, memory))
             return templates
 
     def delete(self, name, snapshots=False):
@@ -1185,17 +1186,17 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         system_service = self.conn.system_service()
         profiles_service = self.conn.system_service().vnic_profiles_service()
         profile_id = None
-        netprofiles = {}
-        for prof in profiles_service.list():
-            networkinfo = self.conn.follow_link(prof.network)
-            netdatacenter = self.conn.follow_link(networkinfo.data_center)
-            if netdatacenter.name == self.datacenter:
-                netprofiles[prof.name] = prof.id
-        if 'default' not in netprofiles:
-            if 'ovirtmgmt' in netprofiles:
-                profile_id = netprofiles['ovirtmgmt']
-            elif 'rhevm' in netprofiles:
-                profile_id = netprofiles['rhevm']
+        if not self.netprofiles:
+            for prof in profiles_service.list():
+                networkinfo = self.conn.follow_link(prof.network)
+                netdatacenter = self.conn.follow_link(networkinfo.data_center)
+                if netdatacenter.name == self.datacenter:
+                    self.netprofiles[prof.name] = prof.id
+        if 'default' not in self.netprofiles:
+            if 'ovirtmgmt' in self.netprofiles:
+                profile_id = self.netprofiles['ovirtmgmt']
+            elif 'rhevm' in self.netprofiles:
+                profile_id = self.netprofiles['rhevm']
         if profile_id is None:
             return {'result': 'failure', 'reason': "Couldnt find ovirtmgmt nor rhevm network!!!"}
         sds_service = system_service.storage_domains_service()
