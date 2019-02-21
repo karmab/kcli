@@ -166,9 +166,9 @@ class KOvirt(object):
             for temp in templateslist:
                 if temp.name == template:
                     if temp.memory > memory:
-                        mem = int(temp.memory / 1024 / 1024)
-                        return {'result': 'failure', 'reason': "Minimal memory for template %s is %sMb" % (template,
-                                                                                                           mem)}
+                        memory = temp.memory
+                        common.pprint("Using %sMb for memory as defined in template %s" % (memory, template),
+                                      color='blue')
                     _template = types.Template(name=template)
                     found = True
             if not found:
@@ -746,8 +746,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             templateslist = templates_service.list()
             for template in templateslist:
                 if template.name != 'Blank':
-                    memory = int(template.memory / 1024 / 1024)
-                    templates.append("%s (%sMb)" % (template.name, memory))
+                    templates.append(template.name)
             return templates
 
     def delete(self, name, snapshots=False):
