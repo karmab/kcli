@@ -24,7 +24,8 @@ MULTUSDOMAIN = 'k8s.cni.cncf.io'
 MULTUSVERSION = 'v1'
 CONTAINERDISKS = ['kubevirt/alpine-container-disk-demo', 'kubevirt/cirros-container-disk-demo',
                   'karmab/debian-container-disk-demo', 'kubevirt/fedora-cloud-container-disk-demo',
-                  'karmab/gentoo-container-disk-demo', 'karmab/ubuntu-container-disk-demo']
+                  'karmab/fedora-coreos-container-disk-demo', 'karmab/gentoo-container-disk-demo',
+                  'karmab/ubuntu-container-disk-demo']
 ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety', 'zesty', 'artful', 'bionic', 'cosmic']
 
 
@@ -230,6 +231,7 @@ class Kubevirt(Kubecommon):
             vm['spec']['template']['spec']['nodeSelector'] = tags
         interfaces = []
         networks = []
+        etcd = None
         for index, net in enumerate(nets):
             netpublic = False
             newif = {'bridge': {}}
@@ -251,6 +253,8 @@ class Kubevirt(Kubecommon):
                     newnet['name'] = netname
                 if 'mac' in net:
                     newif['macAddress'] = net['mac']
+                if 'etcd' in nets[index] and nets[index]['etcd']:
+                    etcd = "eth%s" % index
                 if index == 0:
                     netpublic = net.get('public', True)
             if netname != 'default':
@@ -339,14 +343,20 @@ class Kubevirt(Kubecommon):
                     index = subindex.pop() + 1
             cmds = cmds[:index] + gcmds + cmds[index:]
         if cloudinit:
-            common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
-                             reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides,
-                             iso=False, storemetadata=storemetadata)
-            cloudinitdata = open('/tmp/user-data', 'r').read().strip()
-            cloudinitdisk = {'cdrom': {'bus': 'sata'}, 'name': 'cloudinitdisk'}
-            vm['spec']['template']['spec']['domain']['devices']['disks'].append(cloudinitdisk)
-            cloudinitvolume = {'cloudInitNoCloud': {'userData': cloudinitdata}, 'name': 'cloudinitdisk'}
-            vm['spec']['template']['spec']['volumes'].append(cloudinitvolume)
+            if template is not None and ('coreos' in template or template.startswith('rhcos')):
+                ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
+                                               domain=domain, reserveip=reserveip, files=files,
+                                               enableroot=enableroot, overrides=overrides, etcd=etcd)
+                vm['spec']['template']['metadata']['labels']['kubevirt.io/ignitiondata'] = ignitiondata
+            else:
+                common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
+                                 reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides,
+                                 iso=False, storemetadata=storemetadata)
+                cloudinitdata = open('/tmp/user-data', 'r').read().strip()
+                cloudinitdisk = {'cdrom': {'bus': 'sata'}, 'name': 'cloudinitdisk'}
+                vm['spec']['template']['spec']['domain']['devices']['disks'].append(cloudinitdisk)
+                cloudinitvolume = {'cloudInitNoCloud': {'userData': cloudinitdata}, 'name': 'cloudinitdisk'}
+                vm['spec']['template']['spec']['volumes'].append(cloudinitvolume)
         if self.debug:
             pretty_print(vm)
         for pvc in pvcs:
