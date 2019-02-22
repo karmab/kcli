@@ -157,7 +157,7 @@ class Kvirt(object):
                vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None,
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
                files=[], enableroot=True, overrides={}, tags=None, dnsclient=None, storemetadata=False,
-               sharedfolders=[]):
+               sharedfolders=[], kernel=None, initrd=None, cmdline=None):
         """
 
         :param name:
@@ -610,6 +610,9 @@ class Kvirt(object):
                 sharedxml += "<filesystem type='mount' accessmode='passthrough'>"
                 sharedxml += "<source dir='%s'/><target dir='%s'/>" % (folder, os.path.basename(folder))
                 sharedxml += "</filesystem>"
+        kernelxml = ""
+        if kernel is not None and initrd is not None and cmdline is not None:
+            kernelxml = "<kernel>%s</kernel><initrd>%s</initrd><cmdline>%s</cmdline>" % (kernel, initrd, cmdline)
         vmxml = """<domain type='%s' %s>
                   <name>%s</name>
                   %s
@@ -619,6 +622,7 @@ class Kvirt(object):
                     <type arch='x86_64' machine='%s'>hvm</type>
                     <boot dev='hd'/>
                     <boot dev='cdrom'/>
+                    %s
                     <bootmenu enable='yes'/>
                   </os>
                   <features>
@@ -641,7 +645,7 @@ class Kvirt(object):
                   </devices>
                     %s
                     %s
-                    </domain>""" % (virttype, namespace, name, metadata, memory, vcpuxml, machine,
+                    </domain>""" % (virttype, namespace, name, metadata, memory, vcpuxml, machine, kernelxml,
                                     disksxml, netxml, isoxml, displayxml, serialxml, sharedxml, guestxml, cpuxml,
                                     qemuextraxml)
         if self.debug:

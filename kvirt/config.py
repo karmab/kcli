@@ -262,7 +262,10 @@ class Kconfig(Kbaseconfig):
             default_notify = father.get('notify', self.notify)
             default_notifytoken = father.get('notifytoken', self.notifytoken)
             default_notifycmd = father.get('notifycmd', self.notifycmd)
-            default_sharedfolders = father.get('notifytoken', self.sharedfolders)
+            default_sharedfolders = father.get('sharedfolders', self.sharedfolders)
+            default_kernel = father.get('kernel', self.kernel)
+            default_initrd = father.get('initrd', self.initrd)
+            default_cmdline = father.get('cmdline', self.cmdline)
         else:
             default_numcpus = self.numcpus
             default_memory = self.memory
@@ -310,6 +313,9 @@ class Kconfig(Kbaseconfig):
             default_notifytoken = self.notifytoken
             default_notifycmd = self.notifycmd
             default_sharedfolders = self.sharedfolders
+            default_kernel = self.kernel
+            default_initrd = self.initrd
+            default_cmdline = self.cmdline
         plan = profile.get('plan', plan)
         template = profile.get('template', default_template)
         nets = profile.get('nets', default_nets)
@@ -408,6 +414,9 @@ class Kconfig(Kbaseconfig):
         notifytoken = profile.get('notifytoken', default_notifytoken)
         notifycmd = profile.get('notifycmd', default_notifycmd)
         sharedfolders = profile.get('sharedfolders', default_sharedfolders)
+        kernel = profile.get('kernel', default_kernel)
+        initrd = profile.get('initrd', default_initrd)
+        cmdline = profile.get('cmdline', default_cmdline)
         scriptcmds = []
         skip_rhnregister_script = False
         if rhnregister and template is not None and template.lower().startswith('rhel'):
@@ -533,7 +542,7 @@ class Kconfig(Kbaseconfig):
                           start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns,
                           domain=domain, nested=bool(nested), tunnel=tunnel, files=files, enableroot=enableroot,
                           overrides=overrides, tags=tags, dnsclient=dnsclient, storemetadata=storemetadata,
-                          sharedfolders=sharedfolders)
+                          sharedfolders=sharedfolders, kernel=kernel, initrd=initrd, cmdline=cmdline)
         if result['result'] != 'success':
             return result
         if dnsclient is not None and domain is not None:

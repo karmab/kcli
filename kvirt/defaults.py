@@ -112,3 +112,6 @@ NOTIFY = False
 NOTIFYTOKEN = None
 NOTIFYCMD = "cat /var/log/cloud-init.log"
 SHAREDFOLDERS = []
+KERNEL = None
+INITRD = None
+CMDLINE = None
