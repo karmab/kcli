@@ -5,6 +5,8 @@ Kvm Provider class
 """
 
 from distutils.spawn import find_executable
+# from urllib.request import urlopen, urlretrieve
+from urllib.request import urlopen
 from kvirt import defaults
 from kvirt import common
 from netaddr import IPAddress, IPNetwork
@@ -611,8 +613,55 @@ class Kvirt(object):
                 sharedxml += "<source dir='%s'/><target dir='%s'/>" % (folder, os.path.basename(folder))
                 sharedxml += "</filesystem>"
         kernelxml = ""
-        if kernel is not None and initrd is not None and cmdline is not None:
-            kernelxml = "<kernel>%s</kernel><initrd>%s</initrd><cmdline>%s</cmdline>" % (kernel, initrd, cmdline)
+        if kernel is not None:
+            if kernel.startswith('http') or kernel.startswith('ftp'):
+                locationdir = kernel.replace('http://', '').replace('ftp://', '').replace('/', '_')
+                locationdir = "%s/%s" % (default_poolpath, locationdir)
+                if os.path.exists(locationdir):
+                    common.pprint("Reusing existing dir for kernel", color='blue')
+                else:
+                    if self.host == 'localhost' or self.host == '127.0.0.1':
+                        os.mkdir(locationdir)
+                    elif self.protocol == 'ssh':
+                        locationcmd = 'ssh %s -p %s %s@%s "mkdir %s"' % (self.identitycommand, self.port, self.user,
+                                                                         self.host, locationdir)
+                        code = os.system(locationcmd)
+                    else:
+                        return {'result': 'failure', 'reason': "Couldn't create dir to hold kernel and initrd"}
+                    try:
+                        location = urlopen(kernel).readlines()
+                    except Exception as e:
+                        return {'result': 'failure', 'reason': e}
+                    for line in location:
+                        if 'init' in str(line):
+                            p = re.compile(r'.*<a href="(.*)">\1.*')
+                            m = p.match(str(line))
+                            if m is not None and initrd is None:
+                                initrdfile = m.group(1)
+                                initrdurl = "%s/%s" % (kernel, initrdfile)
+                                initrd = "%s/initrd" % locationdir
+                                if self.host == 'localhost' or self.host == '127.0.0.1':
+                                    initrdcmd = "curl -Lo %s -f '%s'" % (initrd, initrdurl)
+                                elif self.protocol == 'ssh':
+                                    initrdcmd = 'ssh %s -p %s %s@%s "curl -Lo %s -f \'%s\'"' % (self.identitycommand,
+                                                                                                self.port, self.user,
+                                                                                                self.host, initrd,
+                                                                                                initrdurl)
+                                code = os.system(initrdcmd)
+                    kernelurl = '%s/vmlinuz' % kernel
+                    kernel = "%s/vmlinuz" % locationdir
+                    if self.host == 'localhost' or self.host == '127.0.0.1':
+                        kernelcmd = "curl -Lo %s -f '%s'" % (kernel, kernelurl)
+                    elif self.protocol == 'ssh':
+                        kernelcmd = 'ssh %s -p %s %s@%s "curl -Lo %s -f \'%s\'"' % (self.identitycommand,
+                                                                                    self.port, self.user, self.host,
+                                                                                    kernel, kernelurl)
+                    code = os.system(kernelcmd)
+            elif initrd is None:
+                return {'result': 'failure', 'reason': "Missing initrd"}
+            kernelxml = "<kernel>%s</kernel><initrd>%s</initrd>" % (kernel, initrd)
+            if cmdline is not None:
+                kernelxml += "<cmdline>%s</cmdline>" % cmdline
         vmxml = """<domain type='%s' %s>
                   <name>%s</name>
                   %s
