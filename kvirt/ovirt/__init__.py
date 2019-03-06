@@ -1141,7 +1141,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             return None
         scpcommand = common.scp(name, ip=ip, host=self.host, port=self.port,
                                 hostuser=self.user, user=user, source=source, destination=destination,
-                                recursive=recursive, tunnel=tunnel, debug=self.debug, download=False)
+                                recursive=recursive, tunnel=tunnel, debug=self.debug, download=download)
         return scpcommand
 
     def create_pool(self, name, poolpath, pooltype='dir', user='qemu', thinpool=None):

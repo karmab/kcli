@@ -287,7 +287,7 @@ def process_cmds(cmds, overrides):
         else:
             try:
                 newcmd = Environment(undefined=undefined).from_string(cmd).render(overrides)
-                data += "- %s\n" % newcmd
+                data += "- %s\n" % newcmd.replace(": ", "':' ")
             except TemplateError as e:
                 pprint("Error rendering cmd %s. Got: %s" % (cmd, e.message), color='red')
                 os._exit(1)
