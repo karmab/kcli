@@ -306,6 +306,7 @@ class KOvirt(object):
                     custom_script += data
             cmds.insert(0, 'sed -i /192.168.122.1/d /etc/resolv.conf')
             cmds.insert(1, 'sleep 10')
+            ignorednics = "docker0 tun0 tun1 cni0 flannel.1"
             gcmds = []
             if template is not None and template.lower().startswith('centos'):
                 gcmds.append('yum -y install centos-release-ovirt42')
@@ -313,7 +314,7 @@ class KOvirt(object):
                                          template.lower().startswith('fedora') or
                                          template.lower().startswith('rhel')):
                 gcmds.append('yum -y install ovirt-guest-agent-common')
-                gcmds.append('sed -i "s/# ignored_nic.*/ignored_nics = docker0 tun0 tun1/" /etc/ovirt-guest-agent.conf')
+                gcmds.append('sed -i "s/# ignored_nic.*/ignored_nics = %s/" /etc/ovirt-guest-agent.conf' % ignorednics)
                 gcmds.append('systemctl enable ovirt-guest-agent')
                 gcmds.append('systemctl restart ovirt-guest-agent')
             if template is not None and template.lower().startswith('debian'):
@@ -324,7 +325,7 @@ class KOvirt(object):
                 gcmds.append('gpg --export --armor 73A1A299 | apt-key add -')
                 gcmds.append('apt-get update')
                 gcmds.append('apt-get -Y install ovirt-guest-agent')
-                gcmds.append('sed -i "s/# ignored_nics.*/ignored_nics = docker0,tun0/" /etc/ovirt-guest-agent.conf')
+                gcmds.append('sed -i "s/# ignored_nics.*/ignored_nics = %s/" /etc/ovirt-guest-agent.conf' % ignorednics)
                 gcmds.append('service ovirt-guest-agent enable')
                 gcmds.append('service ovirt-guest-agent restart')
             if template is not None and [x for x in common.ubuntus if x in template.lower()]:
