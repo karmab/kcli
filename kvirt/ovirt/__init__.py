@@ -226,8 +226,8 @@ class KOvirt(object):
             else:
                 timeout += 5
                 sleep(5)
-                common.pprint("Waiting for vm to be ready")
-            if timeout > 60:
+                common.pprint("Waiting for vm %s to be ready" % name)
+            if timeout > 80:
                 return {'result': 'failure', 'reason': 'timeout waiting for vm to be ready'}
         if 'default' not in self.netprofiles:
             if 'ovirtmgmt' in self.netprofiles:
