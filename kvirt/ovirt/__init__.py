@@ -829,7 +829,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         vminfo = vmsearch[0]
         vm = self.vms_service.vm_service(vminfo.id)
-        if str(vm.status) == 'up':
+        if str(vminfo.status) == 'up':
             common.pprint("Note it will only be effective upon next start", color='blue')
         memory = int(memory) * 1024 * 1024
         vm.update(vm=types.Vm(memory=memory))
