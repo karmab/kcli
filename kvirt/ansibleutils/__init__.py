@@ -9,7 +9,7 @@ import time
 from kvirt.common import pprint
 
 
-def play(self, name, playbook, variables=[], verbose=False):
+def play(self, name, playbook, variables=[], verbose=False, user=None):
     """
 
     :param self:
@@ -27,7 +27,7 @@ def play(self, name, playbook, variables=[], verbose=False):
             counter += 10
         else:
             break
-    login = self._ssh_credentials(name)[0]
+    login = self._ssh_credentials(name)[0] if user is None else user
     if '.' in ip:
         inventory = "%s ansible_host=%s ansible_user=%s" % (name, ip, login)
     else:
@@ -75,7 +75,7 @@ def inventory(self, name):
         return None
 
 
-def make_inventory(k, plan, vms, tunnel=True, groups={}):
+def make_inventory(k, plan, vms, tunnel=True, groups={}, user=None):
     """
 
     :param k:

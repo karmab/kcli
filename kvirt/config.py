@@ -1315,7 +1315,8 @@ class Kconfig(Kbaseconfig):
                             verbose = element['verbose']
                         else:
                             verbose = False
-                        ansibleutils.play(z, name, playbook=playbook, variables=variables, verbose=verbose)
+                        user = element if 'user' in element else None
+                        ansibleutils.play(z, name, playbook=playbook, variables=variables, verbose=verbose, user=user)
                 if delay > 0:
                     sleep(delay)
         if diskentries:
