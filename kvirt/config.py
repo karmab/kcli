@@ -565,40 +565,17 @@ class Kconfig(Kbaseconfig):
                     z.reserve_dns(name=name, nets=[domain], domain=domain, ip=ip, force=True)
             else:
                 common.pprint("Client %s not found. Skipping" % dnsclient, color='blue')
-        ansible = profile.get('ansible')
-        if ansible is not None:
-            for element in ansible:
+        ansibleprofile = profile.get('ansible')
+        if ansibleprofile is not None:
+            for element in ansibleprofile:
                 if 'playbook' not in element:
                     continue
                 playbook = element['playbook']
-                if 'variables' in element:
-                    variables = element['variables']
-                if 'verbose' in element:
-                    verbose = element['verbose']
-                else:
-                    verbose = False
-                with open("/tmp/%s.inv" % name, "w") as f:
-                    inventory = ansibleutils.inventory(k, name)
-                    if inventory is not None:
-                        if variables is not None:
-                            for variable in variables:
-                                if not isinstance(variable, dict) or len(list(variable)) != 1:
-                                    continue
-                                else:
-                                    key, value = list(variable)[0], variable[list(variable)[0]]
-                                    inventory = "%s %s=%s" % (inventory, key, value)
-                    if self.tunnel:
-                        inventory = "%s ansible_ssh_common_args='-o ProxyCommand=\"ssh -p %s -W %%h:%%p %s@%s\""
-                        "'\n" % (inventory, self.port, self.user, self.host)
-                    f.write("%s\n" % inventory)
-                ansiblecommand = "ansible-playbook"
-                if verbose:
-                    ansiblecommand = "%s -vvv" % ansiblecommand
-                ansibleconfig = os.path.expanduser('~/.ansible.cfg')
-                with open(ansibleconfig, "w") as f:
-                    f.write("[ssh_connection]\nretries=10\n")
-                print("Running: %s -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
-                os.system("%s -i /tmp/%s.inv %s" % (ansiblecommand, name, playbook))
+                variables = element.get('variables', {})
+                verbose = element.get('verbose', False)
+                user = element.get('user')
+                ansibleutils.play(k, name, playbook=playbook, variables=variables, verbose=verbose, user=user,
+                                  tunnel=self.tunnel, tunnelhost=self.host, tunnelport=self.port, tunneluser=self.user)
         if os.access(os.path.expanduser('~/.kcli'), os.W_OK):
             client = client if client is not None else self.client
             common.set_lastvm(name, client)
@@ -1301,22 +1278,6 @@ class Kconfig(Kbaseconfig):
                 common.handle_response(result, name, client=vmclient)
                 if result['result'] == 'success':
                     newvms.append(name)
-                _ansible = profile.get('ansible')
-                if _ansible is not None:
-                    for element in _ansible:
-                        if 'playbook' not in element:
-                            continue
-                        playbook = element['playbook']
-                        if 'variables' in element:
-                            variables = element['variables']
-                        else:
-                            variables = None
-                        if 'verbose' in element:
-                            verbose = element['verbose']
-                        else:
-                            verbose = False
-                        user = element if 'user' in element else None
-                        ansibleutils.play(z, name, playbook=playbook, variables=variables, verbose=verbose, user=user)
                 if delay > 0:
                     sleep(delay)
         if diskentries:
@@ -1382,14 +1343,9 @@ class Kconfig(Kbaseconfig):
                     common.pprint("Missing Playbook for ansible.Ignoring...", color='red')
                     os._exit(1)
                 playbook = _ansible['playbook']
-                if 'verbose' in _ansible:
-                    verbose = _ansible['verbose']
-                else:
-                    verbose = False
-                if 'groups' in _ansible:
-                    groups = _ansible['groups']
-                else:
-                    groups = {}
+                verbose = _ansible['verbose'] if 'verbose' in _ansible else False
+                groups = _ansible.get('groups', {})
+                user = _ansible.get('user')
                 vms = []
                 if 'vms' in _ansible:
                     vms = _ansible['vms']
@@ -1401,7 +1357,8 @@ class Kconfig(Kbaseconfig):
                 if not vms:
                     common.pprint("Ansible skipped as no new vm within playbook provisioned", color='blue')
                     return
-                ansibleutils.make_inventory(k, plan, newvms, tunnel=self.tunnel, groups=groups)
+                ansibleutils.make_plan_inventory(k, plan, newvms, groups=groups, user=user, tunnel=self.tunnel,
+                                                 tunnelhost=self.host, tunnelport=self.port, tunneluser=self.user)
                 ansiblecommand = "ansible-playbook"
                 if verbose:
                     ansiblecommand = "%s -vvv" % ansiblecommand
@@ -1422,7 +1379,7 @@ class Kconfig(Kbaseconfig):
                     description = vm['plan']
                     if description == plan:
                         vms.append(name)
-                ansibleutils.make_inventory(k, plan, vms, tunnel=self.tunnel)
+                ansibleutils.make_plan_inventory(k, plan, vms, tunnel=self.tunnel)
                 return
         if lbentries:
                 common.pprint("Deploying Loadbalancers...")
