@@ -115,7 +115,7 @@ class KOvirt(object):
                netmasks=None, gateway=None, nested=True, dns=None, domain=None,
                tunnel=False, files=[], enableroot=True, alias=[], overrides={},
                tags=None, dnsclient=None, storemetadata=False, sharedfolders=[], kernel=None, initrd=None,
-               cmdline=None):
+               cmdline=None, placement=[]):
         """
 
         :param name:
@@ -195,9 +195,19 @@ class KOvirt(object):
             description += ',domain=%s' % domain
         cpu = types.Cpu(topology=types.CpuTopology(cores=numcpus, sockets=1))
         try:
+            if placement:
+                # placement_hosts = [types.Host(name=h) for h in placement]
+                # placement_policy = types.VmPlacementPolicy(hosts=placement_hosts, affinity=types.VmAffinity.PINNED)
+                # placement_policy = types.VmPlacementPolicy(hosts=placement_hosts)
+                placement_policy = None
+                print(choice(placement))
+                vmhost = types.Host(name=choice(placement))
+            else:
+                placement_policy = None
+                vmhost = None
             vm = self.vms_service.add(types.Vm(name=name, cluster=types.Cluster(name=self.cluster), memory=memory,
                                                cpu=cpu, description=description, template=_template, console=console,
-                                               os=_os), clone=clone)
+                                               os=_os, placement_policy=placement_policy), clone=clone)
             vm_service = self.vms_service.vm_service(vm.id)
         except Exception as e:
             if self.debug:
@@ -363,7 +373,7 @@ class KOvirt(object):
                                                   authorized_ssh_keys=keys, host_name=host_name,
                                                   nic_configurations=nic_configurations, dns_servers=dns,
                                                   dns_search=domain, custom_script=custom_script)
-        vm_service.start(use_cloud_init=cloudinit, vm=types.Vm(initialization=initialization))
+        vm_service.start(use_cloud_init=cloudinit, vm=types.Vm(initialization=initialization, host=vmhost))
         return {'result': 'success'}
 
     def start(self, name):

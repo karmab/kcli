@@ -14,7 +14,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             NETMASKS, GATEWAY, SHAREDKEY, TEMPLATE, ENABLEROOT,
                             PLANVIEW, PRIVATEKEY, TAGS, RHNREGISTER, RHNUSER, RHNPASSWORD, RHNAK, RHNORG, RHNPOOL,
                             FLAVOR, KEEP_NETWORKS, DNSCLIENT, STORE_METADATA, NOTIFY, NOTIFYTOKEN, NOTIFYCMD,
-                            SHAREDFOLDERS, KERNEL, INITRD, CMDLINE)
+                            SHAREDFOLDERS, KERNEL, INITRD, CMDLINE, PLACEMENT)
 from kvirt import common
 import os
 from shutil import copyfile, rmtree
@@ -143,6 +143,7 @@ class Kbaseconfig:
         defaults['kernel'] = default.get('kernel', KERNEL)
         defaults['initrd'] = default.get('initrd', INITRD)
         defaults['cmdline'] = default.get('cmdline', CMDLINE)
+        defaults['placement'] = default.get('placement', PLACEMENT)
         currentplanfile = "%s/.kcli/plan" % os.environ.get('HOME')
         if os.path.exists(currentplanfile):
             self.currentplan = open(currentplanfile).read().strip()
@@ -256,7 +257,8 @@ class Kbaseconfig:
         self.sharedfolders = options.get('sharedfolders', self.default['sharedfolders'])
         self.kernel = options.get('kernel', self.default['kernel'])
         self.initrd = options.get('initrd', self.default['initrd'])
-        self.cmdline = options.get('sharedfolders', self.default['cmdline'])
+        self.cmdline = options.get('cmdline', self.default['cmdline'])
+        self.placement = options.get('placement', self.default['placement'])
         self.containerclient = containerclient
 
     def switch_host(self, client):

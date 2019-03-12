@@ -266,6 +266,7 @@ class Kconfig(Kbaseconfig):
             default_kernel = father.get('kernel', self.kernel)
             default_initrd = father.get('initrd', self.initrd)
             default_cmdline = father.get('cmdline', self.cmdline)
+            default_cmdline = father.get('placement', self.placement)
         else:
             default_numcpus = self.numcpus
             default_memory = self.memory
@@ -316,6 +317,7 @@ class Kconfig(Kbaseconfig):
             default_kernel = self.kernel
             default_initrd = self.initrd
             default_cmdline = self.cmdline
+            default_placement = self.placement
         plan = profile.get('plan', plan)
         template = profile.get('template', default_template)
         nets = profile.get('nets', default_nets)
@@ -417,6 +419,7 @@ class Kconfig(Kbaseconfig):
         kernel = profile.get('kernel', default_kernel)
         initrd = profile.get('initrd', default_initrd)
         cmdline = profile.get('cmdline', default_cmdline)
+        placement = profile.get('placement', default_placement)
         scriptcmds = []
         skip_rhnregister_script = False
         if rhnregister and template is not None and template.lower().startswith('rhel'):
@@ -542,7 +545,8 @@ class Kconfig(Kbaseconfig):
                           start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns,
                           domain=domain, nested=bool(nested), tunnel=tunnel, files=files, enableroot=enableroot,
                           overrides=overrides, tags=tags, dnsclient=dnsclient, storemetadata=storemetadata,
-                          sharedfolders=sharedfolders, kernel=kernel, initrd=initrd, cmdline=cmdline)
+                          sharedfolders=sharedfolders, kernel=kernel, initrd=initrd, cmdline=cmdline,
+                          placement=placement)
         if result['result'] != 'success':
             return result
         if dnsclient is not None and domain is not None:
