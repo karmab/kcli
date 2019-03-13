@@ -515,7 +515,7 @@ class Kvirt(object):
                     identitycommand = "-i %s" % identityfile
                 else:
                     identitycommand = ""
-                if self.protocol == 'ssh':
+                if self.protocol == 'ssh' and self.host not in ['localhost', '127.0.0.1']:
                     ignitioncmd = 'scp %s -qP %s /tmp/ignition %s@%s:/tmp' % (identitycommand, self.port, self.user,
                                                                               self.host)
                     code = os.system(ignitioncmd)
