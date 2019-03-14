@@ -1145,7 +1145,8 @@ class Kvirt(object):
                 except:
                     network_type = 'Not Found'
             if ifaces:
-                matches = [ifaces[x]['addrs'] for x in ifaces if ifaces[x]['hwaddr'] == mac]
+                matches = [ifaces[x]['addrs'] for x in ifaces if ifaces[x]['hwaddr'] == mac and
+                           ifaces[x]['addrs'] is not None]
                 if matches:
                     for match in matches[0]:
                         matchip = match['addr']
@@ -2051,7 +2052,7 @@ class Kvirt(object):
                 continue
             diskpath = element.find('source').get('file')
             volume = self.conn.storageVolLookupByPath(diskpath)
-            if volume.name() == diskname or volume.path() == diskname:
+            if volume.name() == diskname or volume.path() == diskname or diskdev == diskname:
                 diskxml = self._xmldisk(diskpath=diskpath, diskdev=diskdev, diskbus=diskbus, diskformat=diskformat)
                 vm.detachDevice(diskxml)
                 volume.delete(0)
