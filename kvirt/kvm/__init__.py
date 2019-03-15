@@ -451,6 +451,10 @@ class Kvirt(object):
                 iftype = 'bridge'
                 sourcexml = "<source bridge='%s'/>" % netname
                 guestagent = True
+                if reservedns:
+                    dnscmdhost = dns if dns is not None else self.host
+                    dnscmd = "sed -i 's/nameserver .*/nameserver %s/' /etc/resolv.conf" % dnscmdhost
+                    cmds = cmds[:index] + [dnscmd] + cmds[index:]
             elif netname in networks:
                 iftype = 'network'
                 sourcexml = "<source network='%s'/>" % netname
@@ -734,7 +738,7 @@ class Kvirt(object):
                 vm.create()
             except Exception as e:
                 return {'result': 'failure', 'reason': e}
-        if reservedns and not guestagent:
+        if reservedns:
             self.reserve_dns(name, nets=nets, domain=domain, alias=alias, force=True)
         if reservehost:
             self.reserve_host(name, nets, domain)
@@ -1204,33 +1208,54 @@ class Kvirt(object):
         :param name:
         :return:
         """
-        leases = {}
+        ip = None
+        ifaces = []
         conn = self.conn
-        for network in conn.listAllNetworks():
-            for lease in network.DHCPLeases():
-                ip = lease['ipaddr']
-                mac = lease['mac']
-                leases[mac] = ip
         try:
             vm = conn.lookupByName(name)
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
         except:
             return None
-        for element in list(root.getiterator('{kvirt}info')):
-            e = element.find('{kvirt}ip')
-            if e is not None:
-                return e.text
-        nics = list(root.getiterator('interface'))
-        if not nics:
+        if not vm.isActive():
             return None
         else:
-            nic = nics[0]
-            mac = nic.find('mac').get('address')
-            if vm.isActive() and mac in leases:
-                return leases[mac]
+            networktypes = [element.get('type') for element in list(root.getiterator('interface'))]
+            guestagent = vir_src_agent if 'bridge' in networktypes else vir_src_lease
+            try:
+                gfaces = vm.interfaceAddresses(guestagent, 0)
+                ifaces = gfaces
+            except:
+                pass
+        for element in list(root.getiterator('interface')):
+            networktype = element.get('type')
+            mac = element.find('mac').get('address')
+            if networktype == 'user':
+                continue
+            if networktype == 'bridge':
+                network = element.find('source').get('bridge')
             else:
-                return None
+                network = element.find('source').get('network')
+                try:
+                    networkdata = conn.networkLookupByName(network)
+                    netxml = networkdata.XMLDesc()
+                    netroot = ET.fromstring(netxml)
+                    hostentries = list(netroot.getiterator('host'))
+                    for host in hostentries:
+                        if host.get('mac') == mac:
+                            ip = host.get('ip')
+                except:
+                    continue
+            if ifaces:
+                matches = [ifaces[x]['addrs'] for x in ifaces if ifaces[x]['hwaddr'] == mac and
+                           ifaces[x]['addrs'] is not None]
+                if matches:
+                    for match in matches[0]:
+                        matchip = match['addr']
+                        if IPAddress(matchip).version == 4:
+                            ip = matchip
+                            break
+            return ip
 
     def volumes(self, iso=False):
         """
@@ -1386,6 +1411,8 @@ class Kvirt(object):
                     if hostname is not None and hostname.text == name:
                         hostentry = '<host ip="%s"><hostname>%s</hostname></host>' % (iphost, name)
                         network.update(2, 10, 0, hostentry, 1)
+            elif networktype == 'bridge':
+                bridged = True
         if ip is not None:
             os.system("ssh-keygen -q -R %s >/dev/null 2>&1" % ip)
             # delete hosts entry
@@ -1396,8 +1423,30 @@ class Kvirt(object):
                     found = True
                     break
             if found:
-                print("Deleting hosts entry. sudo password might be asked")
+                print("Deleting host entry. sudo password might be asked")
                 call("sudo sed -i '/%s/d' /etc/hosts" % hostentry, shell=True)
+                if bridged and self.host in ['localhost', '127.0.0.1']:
+                    try:
+                        call("sudo /usr/bin/systemctl restart dnsmasq", shell=True)
+                    except:
+                        pass
+            if bridged and self.protocol == 'ssh' and self.host not in ['localhost', '127.0.0.1']:
+                deletecmd = "sed -i '/%s/d' /etc/hosts" % hostentry
+                if self.user != 'root':
+                    deletecmd = "sudo %s" % deletecmd
+                deletecmd = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host,
+                                                           deletecmd)
+                print("Deleting remote host entry. sudo password for remote user %s might be asked" % self.user)
+                call(deletecmd, shell=True)
+                try:
+                    dnsmasqcmd = "/usr/bin/systemctl restart dnsmasq"
+                    if self.user != 'root':
+                        dnsmasqcmd = "sudo %s" % dnsmasqcmd
+                    dnsmasqcmd = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host,
+                                                                dnsmasqcmd)
+                    call(dnsmasqcmd, shell=True)
+                except:
+                    pass
         return {'result': 'success'}
 
     def _xmldisk(self, diskpath, diskdev, diskbus='virtio', diskformat='qcow2', shareable=False):
@@ -1552,6 +1601,7 @@ class Kvirt(object):
         :return:
         """
         conn = self.conn
+        bridged = False
         net = nets[0]
         if isinstance(net, dict):
             network = net.get('name')
@@ -1560,8 +1610,7 @@ class Kvirt(object):
         try:
             network = conn.networkLookupByName(network)
         except:
-            print("Skipping DNS reservation on bridged network %s" % network)
-            return
+            bridged = True
         if ip is None:
             if isinstance(net, dict):
                 ip = net.get('ip')
@@ -1578,41 +1627,45 @@ class Kvirt(object):
         if ip is None:
             print("Couldn't assign DNS")
             return
-        oldnetxml = network.XMLDesc()
-        root = ET.fromstring(oldnetxml)
-        dns = list(root.getiterator('dns'))
-        if not dns:
-            base = list(root.getiterator('network'))[0]
-            dns = ET.Element("dns")
-            base.append(dns)
-            newxml = ET.tostring(root)
-            conn.networkDefineXML(newxml.decode("utf-8"))
-        dnsentry = '<host ip="%s"><hostname>%s</hostname>' % (ip, name)
-        if domain is not None:
-            dnsentry = '%s<hostname>%s.%s</hostname>' % (dnsentry, name, domain)
-        for entry in alias:
-            dnsentry = "%s<hostname>%s</hostname>" % (dnsentry, entry)
-        dnsentry = "%s</host>" % dnsentry
-        if force:
-            for host in list(root.getiterator('host')):
-                iphost = host.get('ip')
-                if iphost == ip:
-                    existing = []
-                    for hostname in list(host.getiterator('hostname')):
-                        existing.append(hostname.text)
-                    if name in existing:
-                        print("Entry already found for %s" % name)
-                        return {'result': 'failure', 'reason': "Entry already found found for %s" % name}
-                    oldentry = '<host ip="%s"></host>' % iphost
-                    print("Removing old dns entry for ip %s" % ip)
-                    network.update(2, 10, 0, oldentry, 1)
-        try:
-            network.update(4, 10, 0, dnsentry, 1)
-            # network.update(4, 10, 0, dnsentry, 2)
+        if bridged:
+            self._create_host_entry(name, ip, network, domain, dnsmasq=True)
             return 0
-        except:
-            print("Entry already found for %s" % name)
-            return {'result': 'failure', 'reason': "Entry already found found for %s" % name}
+        else:
+            oldnetxml = network.XMLDesc()
+            root = ET.fromstring(oldnetxml)
+            dns = list(root.getiterator('dns'))
+            if not dns:
+                base = list(root.getiterator('network'))[0]
+                dns = ET.Element("dns")
+                base.append(dns)
+                newxml = ET.tostring(root)
+                conn.networkDefineXML(newxml.decode("utf-8"))
+            dnsentry = '<host ip="%s"><hostname>%s</hostname>' % (ip, name)
+            if domain is not None:
+                dnsentry = '%s<hostname>%s.%s</hostname>' % (dnsentry, name, domain)
+            for entry in alias:
+                dnsentry = "%s<hostname>%s</hostname>" % (dnsentry, entry)
+            dnsentry = "%s</host>" % dnsentry
+            if force:
+                for host in list(root.getiterator('host')):
+                    iphost = host.get('ip')
+                    if iphost == ip:
+                        existing = []
+                        for hostname in list(host.getiterator('hostname')):
+                            existing.append(hostname.text)
+                        if name in existing:
+                            print("Entry already found for %s" % name)
+                            return {'result': 'failure', 'reason': "Entry already found found for %s" % name}
+                        oldentry = '<host ip="%s"></host>' % iphost
+                        print("Removing old dns entry for ip %s" % ip)
+                        network.update(2, 10, 0, oldentry, 1)
+            try:
+                network.update(4, 10, 0, dnsentry, 1)
+                # network.update(4, 10, 0, dnsentry, 2)
+                return 0
+            except:
+                print("Entry already found for %s" % name)
+                return {'result': 'failure', 'reason': "Entry already found found for %s" % name}
 
     def reserve_host(self, name, nets, domain):
         """
@@ -1642,18 +1695,7 @@ class Kvirt(object):
         if ip is None:
             print("Couldn't assign Host")
             return
-        hosts = "%s %s %s.%s" % (ip, name, name, netname)
-        if domain is not None and domain != netname:
-            hosts = "%s %s.%s" % (hosts, name, domain)
-        hosts = '"%s # KVIRT"' % hosts
-        oldentry = "%s %s.* # KVIRT" % (ip, name)
-        for line in open('/etc/hosts'):
-            if re.findall(oldentry, line):
-                common.pprint("Old entry found.Leaving...", color='blue')
-                return
-        hostscmd = "sudo sh -c 'echo %s >>/etc/hosts'" % hosts
-        print("Creating hosts entry. sudo password might be asked")
-        call(hostscmd, shell=True)
+        self._create_host_entry(name, ip, netname, domain)
 
     def handler(self, stream, data, file_):
         """
@@ -2848,3 +2890,32 @@ class Kvirt(object):
             pool.createXMLFrom(newvolumexml, oldvolume, 0)
             break
         return {'result': 'success'}
+
+    def _create_host_entry(self, name, ip, netname, domain, dnsmasq=False):
+        hosts = "%s %s %s.%s" % (ip, name, name, netname)
+        if domain is not None and domain != netname:
+            hosts = "%s %s.%s" % (hosts, name, domain)
+        hosts = '"%s # KVIRT"' % hosts
+        oldentry = "%s %s.* # KVIRT" % (ip, name)
+        for line in open('/etc/hosts'):
+            if re.findall(oldentry, line):
+                common.pprint("Old entry found.Leaving...", color='blue')
+                return
+        if not dnsmasq:
+            hostscmd = "sh -c 'echo %s >>/etc/hosts'" % hosts
+        else:
+            hostscmd = "sh -c 'echo %s >>/etc/hosts'" % hosts.replace('"', '\\"')
+        print("Creating hosts entry. Password for sudo might be asked")
+        if not dnsmasq or self.user != 'root':
+            hostscmd = "sudo %s" % hostscmd
+        elif self.protocol == 'ssh' and self.host not in ['localhost', '127.0.0.1']:
+                hostscmd = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host,
+                                                          hostscmd)
+        call(hostscmd, shell=True)
+        if dnsmasq:
+            dnsmasqcmd = "/usr/bin/systemctl restart dnsmasq"
+            if self.user != 'root':
+                dnsmasqcmd = "sudo %s" % dnsmasqcmd
+            dnsmasqcmd = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host,
+                                                        dnsmasqcmd)
+            call(dnsmasqcmd, shell=True)
