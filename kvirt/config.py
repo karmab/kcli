@@ -842,14 +842,21 @@ class Kconfig(Kbaseconfig):
                         cont.delete_container(name)
                         common.pprint("Container %s deleted!" % name)
                         found = True
-            # for network in k.list_networks():
-            #    if 'plan' in network and network['plan'] == plan:
-            if not self.keep_networks and networks:
-                found = True
-                for network in networks:
-                    networkresult = k.delete_network(network)
-                    if networkresult['result'] == 'success':
-                        common.pprint("Unused network %s deleted!" % network)
+            if not self.keep_networks:
+                if self.type == 'kvm':
+                    networks = k.list_networks()
+                    for network in k.list_networks():
+                        if 'plan' in networks[network] and networks[network]['plan'] == plan:
+                            networkresult = k.delete_network(network)
+                            if networkresult['result'] == 'success':
+                                common.pprint("network %s deleted!" % network)
+                                found = True
+                elif networks:
+                    found = True
+                    for network in networks:
+                        networkresult = k.delete_network(network)
+                        if networkresult['result'] == 'success':
+                            common.pprint("Unused network %s deleted!" % network)
             for keyfile in glob.glob("%s.key*" % plan):
                 common.pprint("file %s from %s deleted!" % (keyfile, plan))
                 os.remove(keyfile)

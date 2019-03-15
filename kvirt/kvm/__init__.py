@@ -14,6 +14,8 @@ from libvirt import open as libvirtopen, registerErrorHandler
 from libvirt import VIR_DOMAIN_AFFECT_LIVE, VIR_DOMAIN_AFFECT_CONFIG
 from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_AGENT as vir_src_agent
 from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE as vir_src_lease
+from libvirt import (VIR_DOMAIN_NOSTATE, VIR_DOMAIN_RUNNING, VIR_DOMAIN_BLOCKED, VIR_DOMAIN_PAUSED,
+                     VIR_DOMAIN_SHUTDOWN, VIR_DOMAIN_SHUTOFF, VIR_DOMAIN_CRASHED)
 import json
 import os
 from subprocess import call
@@ -40,6 +42,10 @@ guestwindows200364 = "windows_2003x64"
 guestwindows2008 = "windows_2008"
 guestwindows200864 = "windows_2008x64"
 ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety', 'zesty', 'artful', 'bionic', 'cosmic']
+states = {VIR_DOMAIN_NOSTATE: 'nostate', VIR_DOMAIN_RUNNING: 'up',
+          VIR_DOMAIN_BLOCKED: 'blocked', VIR_DOMAIN_PAUSED: 'paused',
+          VIR_DOMAIN_SHUTDOWN: 'shuttingdown', VIR_DOMAIN_SHUTOFF: 'down',
+          VIR_DOMAIN_CRASHED: 'crashed'}
 
 
 def libvirt_callback(ignore, err):
@@ -1059,25 +1065,28 @@ class Kvirt(object):
         root = ET.fromstring(xml)
         status = 'down'
         autostart = starts[vm.autostart()]
-        memory = list(root.getiterator('memory'))[0]
-        unit = memory.attrib['unit']
-        memory = memory.text
-        if unit == 'KiB':
-            memory = float(memory) / 1024
-            memory = int(memory)
-        numcpus = list(root.getiterator('vcpu'))[0]
-        cpuattributes = numcpus.attrib
-        if 'current' in cpuattributes:
-            numcpus = cpuattributes['current']
-        else:
-            numcpus = numcpus.text
+        # memory = list(root.getiterator('memory'))[0]
+        # unit = memory.attrib['unit']
+        # memory = memory.text
+        # if unit == 'KiB':
+        #    memory = float(memory) / 1024
+        #    memory = int(memory)
+        # numcpus = list(root.getiterator('vcpu'))[0]
+        # cpuattributes = numcpus.attrib
+        # if 'current' in cpuattributes:
+        #    numcpus = cpuattributes['current']
+        # else:
+        #    numcpus = numcpus.text
         description = list(root.getiterator('description'))
         if description:
             description = description[0].text
         else:
             description = ''
-        if vm.isActive():
-            status = 'up'
+        # if vm.isActive():
+        #    status = 'up'
+        [state, maxmem, memory, numcpus, cputime] = vm.info()
+        status = states.get(state)
+        memory = int(float(memory) / 1024)
         yamlinfo = {'name': name, 'autostart': autostart, 'nets': [], 'disks': [], 'snapshots': [], 'status': status}
         plan, profile, template, ip, creationdate, report = '', None, None, None, None, None
         for element in list(root.getiterator('{kvirt}info')):
