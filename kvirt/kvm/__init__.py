@@ -1325,6 +1325,7 @@ class Kvirt(object):
         :param snapshots:
         :return:
         """
+        bridged = True
         conn = self.conn
         try:
             vm = conn.lookupByName(name)
