@@ -625,9 +625,6 @@ def ssh(name, ip='', host=None, port=22, hostuser=None, user=None, local=None, r
                 tunnelcommand = "-qp %s -W %%h:%%p %s@%s" % (port, hostuser, host)
                 if identityfile is not None:
                     tunnelcommand = "-i %s %s" % (identityfile, tunnelcommand)
-                if insecure:
-                    tunnelcommand = "-o LogLevel=quiet -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no %s"\
-                        % tunnelcommand
                 sshcommand = "-o ProxyCommand='ssh %s' %s" % (tunnelcommand, sshcommand)
             if local is not None:
                 sshcommand = "-L %s %s" % (local, sshcommand)
