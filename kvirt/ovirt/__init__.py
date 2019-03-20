@@ -1022,9 +1022,10 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         disks_service = self.conn.system_service().disks_service()
         for disk in disks_service.list():
             diskname = disk._id
-            pool = self.conn.follow_link(disk._storage_domains[0])._name
-            path = disk._alias
-            volumes[diskname] = {'pool': pool, 'path': path}
+            if disk._storage_domains:
+                pool = self.conn.follow_link(disk._storage_domains[0])._name
+                path = disk._alias
+                volumes[diskname] = {'pool': pool, 'path': path}
         return volumes
 
     def add_nic(self, name, network):
