@@ -1075,12 +1075,6 @@ class Kvirt(object):
         # if unit == 'KiB':
         #    memory = float(memory) / 1024
         #    memory = int(memory)
-        # numcpus = list(root.getiterator('vcpu'))[0]
-        # cpuattributes = numcpus.attrib
-        # if 'current' in cpuattributes:
-        #    numcpus = cpuattributes['current']
-        # else:
-        #    numcpus = numcpus.text
         description = list(root.getiterator('description'))
         if description:
             description = description[0].text
@@ -1091,6 +1085,12 @@ class Kvirt(object):
         [state, maxmem, memory, numcpus, cputime] = vm.info()
         status = states.get(state)
         memory = int(float(memory) / 1024)
+        numcpus = list(root.getiterator('vcpu'))[0]
+        cpuattributes = numcpus.attrib
+        if 'current' in cpuattributes:
+            numcpus = cpuattributes['current']
+        else:
+            numcpus = numcpus.text
         yamlinfo = {'name': name, 'autostart': autostart, 'nets': [], 'disks': [], 'snapshots': [], 'status': status}
         plan, profile, template, ip, creationdate, report = '', None, None, None, None, None
         for element in list(root.getiterator('{kvirt}info')):
@@ -2054,7 +2054,11 @@ class Kvirt(object):
             diskpath = existing
         diskxml = self._xmldisk(diskpath=diskpath, diskdev=diskdev, diskbus=diskbus, diskformat=diskformat,
                                 shareable=shareable)
-        vm.attachDevice(diskxml)
+        if vm.isActive() == 1:
+            vm.attachDeviceFlags(diskxml, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
+        else:
+            vm.attachDeviceFlags(diskxml, VIR_DOMAIN_AFFECT_CONFIG)
+        # vm.attachDevice(diskxml)
         vm = conn.lookupByName(name)
         vmxml = vm.XMLDesc(0)
         conn.defineXML(vmxml)
