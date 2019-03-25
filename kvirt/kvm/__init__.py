@@ -1085,12 +1085,12 @@ class Kvirt(object):
         [state, maxmem, memory, numcpus, cputime] = vm.info()
         status = states.get(state)
         memory = int(float(memory) / 1024)
-        numcpus = list(root.getiterator('vcpu'))[0]
-        cpuattributes = numcpus.attrib
-        if 'current' in cpuattributes:
-            numcpus = cpuattributes['current']
-        else:
-            numcpus = numcpus.text
+        # numcpus = list(root.getiterator('vcpu'))[0]
+        # cpuattributes = numcpus.attrib
+        # if 'current' in cpuattributes:
+        #    numcpus = cpuattributes['current']
+        # else:
+        #    numcpus = numcpus.text
         yamlinfo = {'name': name, 'autostart': autostart, 'nets': [], 'disks': [], 'snapshots': [], 'status': status}
         plan, profile, template, ip, creationdate, report = '', None, None, None, None, None
         for element in list(root.getiterator('{kvirt}info')):
