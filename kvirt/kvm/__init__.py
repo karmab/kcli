@@ -531,7 +531,7 @@ class Kvirt(object):
                     code = os.system(ignitioncmd)
                     if code != 0:
                         return {'result': 'failure', 'reason': "Unable to creation ignition data file in hypervisor"}
-            elif template is not None:
+            elif template is not None and not ignition:
                 cloudinitiso = "%s/%s.ISO" % (default_poolpath, name)
                 dtype = 'block' if '/dev' in diskpath else 'file'
                 dsource = 'dev' if '/dev' in diskpath else 'file'
@@ -672,6 +672,9 @@ class Kvirt(object):
             kernelxml = "<kernel>%s</kernel><initrd>%s</initrd>" % (kernel, initrd)
             if cmdline is not None:
                 kernelxml += "<cmdline>%s</cmdline>" % cmdline
+        bootdev = "<boot dev='hd'/>"
+        if iso:
+            bootdev += "<boot dev='cdrom'/>"
         vmxml = """<domain type='%s' %s>
                   <name>%s</name>
                   %s
@@ -679,8 +682,7 @@ class Kvirt(object):
                   %s
                   <os>
                     <type arch='x86_64' machine='%s'>hvm</type>
-                    <boot dev='hd'/>
-                    <boot dev='cdrom'/>
+                    %s
                     %s
                     <bootmenu enable='yes'/>
                   </os>
@@ -704,7 +706,7 @@ class Kvirt(object):
                   </devices>
                     %s
                     %s
-                    </domain>""" % (virttype, namespace, name, metadata, memory, vcpuxml, machine, kernelxml,
+                    </domain>""" % (virttype, namespace, name, metadata, memory, vcpuxml, machine, bootdev, kernelxml,
                                     disksxml, netxml, isoxml, displayxml, serialxml, sharedxml, guestxml, cpuxml,
                                     qemuextraxml)
         if self.debug:
