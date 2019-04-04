@@ -301,7 +301,7 @@ def process_ignition_cmds(cmds, overrides):
     :param overrides:
     :return:
     """
-    path = '/usr/sbin//first.sh'
+    path = '/tmp/first.sh'
     permissions = '700'
     content = ''
     for cmd in cmds:
@@ -773,7 +773,8 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     if cmds:
         cmdsdata = process_ignition_cmds(cmds, overrides)
         storage["files"].append(cmdsdata)
-        content = "[Service]\nType=oneshot\nExecStart=/usr/sbin/first.sh\n[Install]\nWantedBy=multi-user.target\n"
+        firstpath = "/tmp/first.sh"
+        content = "[Service]\nType=oneshot\nExecStart=%s\n[Install]\nWantedBy=multi-user.target\n" % firstpath
         cmdunit = {"contents": content, "name": "first-boot.service", "enabled": True}
     if cmdunit is not None:
         systemd = {"units": [cmdunit]}
