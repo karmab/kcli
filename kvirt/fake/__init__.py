@@ -118,7 +118,7 @@ class Kfake(object):
             rmtree(namedir)
         os.mkdir(namedir)
         if cloudinit:
-            _files = yaml.load(common.process_files(files=files, overrides=overrides))
+            _files = yaml.safe_load(common.process_files(files=files, overrides=overrides))
             cmds = common.process_cmds(cmds, overrides).replace('- ', '')
             filescmds = ""
             if _files is not None:

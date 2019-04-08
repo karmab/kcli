@@ -1380,7 +1380,7 @@ class Kubevirt(Kubecommon):
             nafs = crds.list_namespaced_custom_object(MULTUSDOMAIN, MULTUSVERSION, namespace,
                                                       'network-attachment-definitions')["items"]
             for naf in nafs:
-                config = yaml.load(naf['spec']['config'])
+                config = yaml.safe_load(naf['spec']['config'])
                 name = naf['metadata']['name']
                 _type = config['type']
                 bridge = config['bridge']

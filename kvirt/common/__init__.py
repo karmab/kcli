@@ -475,7 +475,7 @@ def get_overrides(paramfile=None, param=[]):
     if paramfile is not None and os.path.exists(os.path.expanduser(paramfile)):
         with open(os.path.expanduser(paramfile)) as f:
             try:
-                overrides = yaml.load(f)
+                overrides = yaml.safe_load(f)
             except:
                 pprint("Couldnt parse your parameters file %s. Not using it" % paramfile, color='blue')
     if param is not None:

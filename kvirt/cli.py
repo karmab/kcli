@@ -521,7 +521,7 @@ def vm(args):
             os._exit(1)
         else:
             with open(profilefile, 'r') as entries:
-                config.profiles = yaml.load(entries)
+                config.profiles = yaml.safe_load(entries)
     if profile is None:
         if len(config.profiles) == 1:
             profile = list(config.profiles)[0]

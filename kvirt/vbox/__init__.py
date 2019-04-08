@@ -1226,7 +1226,7 @@ class Kbox(object):
         if not os.path.exists(poolfile):
             return {}
         with open(poolfile, 'r') as entries:
-            poolinfo = yaml.load(entries)
+            poolinfo = yaml.safe_load(entries)
         return poolinfo
 
     def list_pools(self):

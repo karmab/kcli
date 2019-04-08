@@ -33,7 +33,7 @@ class Kbaseconfig:
         else:
             with open(secretsfile, 'r') as entries:
                 try:
-                    secrets = yaml.load(entries)
+                    secrets = yaml.safe_load(entries)
                 except yaml.scanner.ScannerError as err:
                     common.pprint("Couldn't parse yaml in .kcli/secrets.yml. Leaving...", color='red')
                     common.pprint(err, color='red')
@@ -55,7 +55,7 @@ class Kbaseconfig:
         else:
             with open(inifile, 'r') as entries:
                 try:
-                    self.ini = yaml.load(entries)
+                    self.ini = yaml.safe_load(entries)
                 except yaml.scanner.ScannerError as err:
                     common.pprint("Couldn't parse yaml in .kcli/config.yml. Leaving...", color='red')
                     common.pprint(err, color='red')
@@ -157,7 +157,7 @@ class Kbaseconfig:
             self.profiles = {}
         else:
             with open(profilefile, 'r') as entries:
-                self.profiles = yaml.load(entries)
+                self.profiles = yaml.safe_load(entries)
         flavorsfile = default.get('flavors', "%s/.kcli/flavors.yml" %
                                   os.environ.get('HOME'))
         flavorsfile = os.path.expanduser(flavorsfile)
@@ -166,7 +166,7 @@ class Kbaseconfig:
         else:
             with open(flavorsfile, 'r') as entries:
                 try:
-                    self.flavors = yaml.load(entries)
+                    self.flavors = yaml.safe_load(entries)
                 except yaml.scanner.ScannerError as err:
                     common.pprint("Couldn't parse yaml in .kcli/flavors.yml. Leaving...", color='red')
                     common.pprint(err, color='red')
@@ -453,7 +453,7 @@ class Kbaseconfig:
                     realdir = os.path.dirname(os.readlink(repometa)) if os.path.islink(repometa) else None
                     with open(repometa, 'r') as entries:
                         try:
-                            repoproducts = yaml.load(entries)
+                            repoproducts = yaml.safe_load(entries)
                             for repoproduct in repoproducts:
                                 repoproduct['repo'] = rep
                                 if 'file' not in repoproduct:
@@ -548,7 +548,7 @@ class Kbaseconfig:
             os._exit(1)
         parameters = common.get_parameters(inputfile)
         if parameters is not None:
-            parameters = yaml.load(parameters)['parameters']
+            parameters = yaml.safe_load(parameters)['parameters']
             if web:
                 return parameters
             for parameter in parameters:

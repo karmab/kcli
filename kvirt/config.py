@@ -1580,7 +1580,7 @@ class Kconfig(Kbaseconfig):
             os._exit(1)
         parameters = common.get_parameters(inputfile)
         if parameters is not None:
-            parameters = yaml.load(parameters)['parameters']
+            parameters = yaml.safe_load(parameters)['parameters']
             if not isinstance(parameters, dict):
                 common.pprint("Error rendering parameters section of file %s" % inputfile, color='red')
                 os._exit(1)
@@ -1591,7 +1591,7 @@ class Kconfig(Kbaseconfig):
                         common.fetch("%s/%s" % (onfly, basefile), '.')
                     baseparameters = common.get_parameters(basefile)
                     if baseparameters is not None:
-                        baseparameters = yaml.load(baseparameters)['parameters']
+                        baseparameters = yaml.safe_load(baseparameters)['parameters']
                         for baseparameter in baseparameters:
                             if baseparameter not in overrides and baseparameter not in parameters:
                                 overrides[baseparameter] = baseparameters[baseparameter]
@@ -1605,5 +1605,5 @@ class Kconfig(Kbaseconfig):
             except TemplateError as e:
                 common.pprint("Error rendering inputfile %s. Got: %s" % (inputfile, e.message), color='red')
                 os._exit(1)
-            entries = yaml.load(entries)
+            entries = yaml.safe_load(entries)
         return entries, overrides, basefile, basedir
