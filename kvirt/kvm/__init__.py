@@ -2244,15 +2244,20 @@ class Kvirt(object):
                 template = e.text
                 if template != '':
                     user = common.get_user(template)
-        nics = list(root.getiterator('interface'))
-        if nics:
-            nic = nics[0]
+        networktypes = [element.get('type') for element in list(root.getiterator('interface'))]
+        nics = [n for n in list(root.getiterator('interface'))]
+        networktypes = [element.get('type') for element in nics]
+        for nic in nics:
             mac = nic.find('mac').get('address')
+            ifaces = []
             if vm.isActive():
-                networktypes = [element.get('type') for element in list(root.getiterator('interface'))]
                 guestagent = vir_src_agent if 'bridge' in networktypes else vir_src_lease
                 try:
-                    ifaces = vm.interfaceAddresses(guestagent, 0)
+                    gfaces = vm.interfaceAddresses(guestagent, 0)
+                    ifaces = gfaces
+                except:
+                    pass
+                if ifaces:
                     matches = [ifaces[x]['addrs'] for x in ifaces if ifaces[x]['hwaddr'] == mac]
                     if matches:
                         for match in matches[0]:
@@ -2260,8 +2265,6 @@ class Kvirt(object):
                             if IPAddress(matchip).version == 4:
                                 ip = matchip
                                 break
-                except:
-                    pass
         if ip is None:
             print("No ip found. Cannot ssh...")
         return user, ip

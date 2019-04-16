@@ -772,7 +772,7 @@ class Kconfig(Kbaseconfig):
 
     def plan(self, plan, ansible=False, url=None, path=None, autostart=False, container=False, noautostart=False,
              inputfile=None, inputstring=None, start=False, stop=False, delete=False, delay=0, force=True, overrides={},
-             info=False, snapshot=False, revert=False, update=False, embedded=False):
+             info=False, snapshot=False, revert=False, update=False, embedded=False, restart=False):
         """Create/Delete/Stop/Start vms from plan file"""
         if self.type == 'fake' and os.path.exists("/tmp/%s" % plan) and not embedded:
             rmtree("/tmp/%s" % plan)
@@ -887,25 +887,7 @@ class Kconfig(Kbaseconfig):
                     k.update_start(name, start=False)
                     common.pprint("%s prevented to autostart!" % name)
             return {'result': 'success'}
-        if start:
-            common.pprint("Starting vms from plan %s" % plan)
-            for vm in sorted(k.list(), key=lambda x: x['name']):
-                name = vm['name']
-                description = vm['plan']
-                if description == plan:
-                    k.start(name)
-                    common.pprint("VM %s started!" % name)
-            if container:
-                cont = Kcontainerconfig(self, client=self.containerclient).cont
-                for conta in sorted(cont.list_containers(k)):
-                    name = conta[0]
-                    containerplan = conta[3]
-                    if containerplan == plan:
-                        cont.start_container(name)
-                        common.pprint("Container %s started!" % name)
-            common.pprint("Plan %s started!" % plan)
-            return {'result': 'success'}
-        if stop:
+        if stop or restart:
             common.pprint("Stopping vms from plan %s" % plan)
             for vm in sorted(k.list(), key=lambda x: x['name']):
                 name = vm['name']
@@ -922,6 +904,25 @@ class Kconfig(Kbaseconfig):
                         cont.stop_container(name)
                         common.pprint("Container %s stopped!" % name)
             common.pprint("Plan %s stopped!" % plan)
+            if not restart:
+                return {'result': 'success'}
+        if start or restart:
+            common.pprint("Starting vms from plan %s" % plan)
+            for vm in sorted(k.list(), key=lambda x: x['name']):
+                name = vm['name']
+                description = vm['plan']
+                if description == plan:
+                    k.start(name)
+                    common.pprint("VM %s started!" % name)
+            if container:
+                cont = Kcontainerconfig(self, client=self.containerclient).cont
+                for conta in sorted(cont.list_containers(k)):
+                    name = conta[0]
+                    containerplan = conta[3]
+                    if containerplan == plan:
+                        cont.start_container(name)
+                        common.pprint("Container %s started!" % name)
+            common.pprint("Plan %s started!" % plan)
             return {'result': 'success'}
         if snapshot:
             if revert:

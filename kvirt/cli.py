@@ -762,6 +762,7 @@ def plan(args):
     snapshot = args.snapshot
     start = args.start
     stop = args.stop
+    restart = args.restart
     delete = args.delete
     delay = args.delay
     yes = args.yes
@@ -785,7 +786,7 @@ def plan(args):
     config.plan(plan, ansible=ansible, url=url, path=path, autostart=autostart,
                 container=container, noautostart=noautostart, inputfile=inputfile,
                 start=start, stop=stop, delete=delete, delay=delay, overrides=overrides, info=info, snapshot=snapshot,
-                revert=revert, update=update)
+                revert=revert, update=update, restart=restart)
     return 0
 
 
@@ -1249,6 +1250,7 @@ def cli():
     plan_parser.add_argument('-f', '--inputfile', help='Input Plan file')
     plan_parser.add_argument('--snapshot', action='store_true', help='snapshot all vms from plan')
     plan_parser.add_argument('-r', '--revert', action='store_true', help='revert snapshot of all vms from plan')
+    plan_parser.add_argument('--restart', action='store_true', help='restart all vms from plan')
     plan_parser.add_argument('-s', '--start', action='store_true', help='start all vms from plan')
     plan_parser.add_argument('--update', action='store_true', help='update existing vms of the plan')
     plan_parser.add_argument('-w', '--stop', action='store_true', help='stop all vms from plan')
