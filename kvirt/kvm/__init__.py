@@ -541,7 +541,7 @@ class Kvirt(object):
                         <target dev='hdd' bus='ide'/>
                         <readonly/>
                         </disk>""" % (isoxml, dtype, dsource, cloudinitiso)
-        listen = '0.0.0.0'
+        listen = '0.0.0.0' if self.host not in ['localhost', '127.0.0.1'] else '127.0.0.1'
         displayxml = """<input type='tablet' bus='usb'/>
                         <input type='mouse' bus='ps2'/>
                         <graphics type='%s' port='-1' autoport='yes' listen='%s'>
