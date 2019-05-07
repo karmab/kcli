@@ -25,10 +25,6 @@ TEMPLATES = {'': None, 'arch': 'https://linuximages.de/openstack/arch/arch-opens
              'centos7': 'https://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2',
              'centos7atomic': 'http://cloud.centos.org/centos/7/atomic/images/CentOS-Atomic-Host-GenericCloud.qcow2',
              'cirros': 'http://download.cirros-cloud.net/0.4.0/cirros-0.4.0-x86_64-disk.img',
-             'cloudforms42': 'https://access.redhat.com/downloads/content/167/ver=/cf-me---4.2/4.2/x86_64/'
-             'product-software',
-             'cloudforms45': 'https://access.redhat.com/downloads/content/167/ver=/cf-me---4.5/4.5/x86_64/'
-             'product-software',
              'coreos': 'https://stable.release.core-os.net/amd64-usr/current/coreos_production_qemu_image.img.bz2',
              'debian8': 'https://cdimage.debian.org/cdimage/openstack/archive/8.11.0/'
              'debian-8.11.0-openstack-amd64.qcow2',
@@ -49,25 +45,14 @@ TEMPLATES = {'': None, 'arch': 'https://linuximages.de/openstack/arch/arch-opens
              'fedora-coreos-qemu.qcow2.gz',
              'gentoo': 'https://gentoo.osuosl.org/experimental/amd64/openstack/gentoo-openstack-amd64-default-20180621.'
              'qcow2',
-             'manageiq57': 'http://releases.manageiq.org/manageiq-openstack-euwe-3.qc2',
-             'manageiq58': 'http://releases.manageiq.org/manageiq-openstack-fine-3.qc2',
              'opensuse': 'http://download.opensuse.org/pub/opensuse/repositories/Cloud:/Images:/Leap_42.3/images/'
              'openSUSE-Leap-42.3-OpenStack.x86_64.qcow2',
-             'rhel66': 'https://access.redhat.com/downloads/content/69/ver=/rhel---6/6.6/x86_64/product-software',
-             'rhel69': 'https://access.redhat.com/downloads/content/69/ver=/rhel---6/6.9/x86_64/product-software',
              'rhel72': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.2/x86_64/product-software',
              'rhel73': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.3/x86_64/product-software',
              'rhel74': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.4/x86_64/product-software',
              'rhel75': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.5/x86_64/product-software',
              'rhel76': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.6/x86_64/product-software',
-             'rhel72atomic': 'https://access.redhat.com/downloads/content/271/ver=/rhel---7/7.2.6-1/x86_64/'
-             'product-software',
-             'rhel73atomic': 'https://access.redhat.com/downloads/content/271/ver=/rhel---7/7.3.6/x86_64/'
-             'product-software',
-             'rhel74atomic': 'https://access.redhat.com/downloads/content/271/ver=/rhel---7/7.4.5/x86_64/'
-             'product-software',
-             'rhel8beta': 'https://access.redhat.com/downloads/content/486/ver=/rhel---8/8.0%20Beta/x86_64/'
-             'product-software',
+             'rhel80': 'https://access.redhat.com/downloads/content/479/ver=/rhel---8/8.0/x86_64/product-software',
              'ubuntu1404': 'https://cloud-images.ubuntu.com/trusty/current/trusty-server-cloudimg-amd64-disk1.img',
              'ubuntu1604': 'https://cloud-images.ubuntu.com/xenial/current/xenial-server-cloudimg-amd64-disk1.img',
              'ubuntu1610': 'https://cloud-images.ubuntu.com/yakkety/current/yakkety-server-cloudimg-amd64-disk1.img',
