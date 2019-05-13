@@ -42,7 +42,7 @@ TEMPLATES = {'': None, 'arch': 'https://linuximages.de/openstack/arch/arch-opens
              'fedora29': 'https://download.fedoraproject.org/pub/fedora/linux/releases/29/Cloud/x86_64/images/'
              'Fedora-Cloud-Base-29-1.2.x86_64.qcow2',
              'fedoracoreos': 'https://ci.centos.org/artifacts/fedora-coreos/prod/builds/latest/'
-             'fedora-coreos-qemu.qcow2.gz',
+             'fedora-coreos-30.118-qemu.qcow2.gz',
              'gentoo': 'https://gentoo.osuosl.org/experimental/amd64/openstack/gentoo-openstack-amd64-default-20180621.'
              'qcow2',
              'opensuse': 'http://download.opensuse.org/pub/opensuse/repositories/Cloud:/Images:/Leap_42.3/images/'

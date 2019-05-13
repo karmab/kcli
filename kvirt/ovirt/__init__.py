@@ -774,7 +774,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         vminfo = vmsearch[0]
         vm = self.vms_service.vm_service(vminfo.id)
-        if str(vminfo.status) != 'down':
+        if str(vminfo.status) not in ['down', 'unknown']:
             vm.stop()
             while True:
                 sleep(5)
