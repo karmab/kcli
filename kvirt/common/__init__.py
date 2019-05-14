@@ -268,7 +268,7 @@ def process_ignition_files(files=[], overrides={}):
         if not isinstance(content, str):
             content = '\n'.join(content) + '\n'
         content = quote(content)
-        data.append({'filesystem': 'root', 'path': path, 'mode': permissions,
+        data.append({'filesystem': 'root', 'path': path, 'mode': permissions, 'overwrite': True,
                      "contents": {"source": "data:,%s" % content, "verification": {}}})
     return data
 
@@ -717,7 +717,7 @@ def get_user(template):
 
 
 def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[],
-             enableroot=True, overrides={}, iso=True, fqdn=False, etcd=None):
+             enableroot=True, overrides={}, iso=True, fqdn=False, etcd=None, version='3.0.0'):
     """
 
     :param name:
@@ -763,7 +763,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
         pprint("neither id_rsa or id_dsa public keys found in your .ssh or .kcli directory, you might have trouble "
                "accessing the vm", color='red')
     storage = {"files": []}
-    storage["files"].append({"filesystem": "root", "path": "/etc/hostname",
+    storage["files"].append({"filesystem": "root", "path": "/etc/hostname", "overwrite": True,
                              "contents": {"source": "data:,%s" % localhostname, "verification": {}}, "mode": 420})
     if files:
         filesdata = process_ignition_files(files=files, overrides=overrides)
@@ -824,7 +824,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
         networkd = {"units": networkunits}
     else:
         networkd = {}
-    data = {'ignition': {'version': '2.2.0', 'config': {}}, 'storage': storage, 'systemd': systemd,
+    data = {'ignition': {'version': version, 'config': {}}, 'storage': storage, 'systemd': systemd,
             'networkd': networkd, 'passwd': {'users': [{'name': 'core', 'sshAuthorizedKeys': publickeys}]}}
     if enableroot:
         rootdata = {'name': 'root', 'sshAuthorizedKeys': publickeys}

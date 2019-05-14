@@ -511,9 +511,10 @@ class Kvirt(object):
         if cloudinit:
             if template is not None and ('coreos' in template or template.startswith('rhcos')):
                 ignition = True
+                version = '3.0.0' if template.starstwith('fedora-coreos') else '2.2.0'
                 ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                                domain=domain, reserveip=reserveip, files=files,
-                                               enableroot=enableroot, overrides=overrides, etcd=etcd)
+                                               enableroot=enableroot, overrides=overrides, etcd=etcd, version=version)
                 with open('/tmp/ignition', 'w') as ignitionfile:
                     ignitionfile.write(ignitiondata)
                     identityfile = None
