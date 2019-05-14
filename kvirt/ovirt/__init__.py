@@ -4,6 +4,7 @@
 Ovirt Provider Class
 """
 
+from distutils.spawn import find_executable
 from kvirt import common
 from kvirt.ovirt.helpers import TEMPLATES as otemplates
 from kvirt.ovirt.helpers import get_home_ssh_key
@@ -160,6 +161,7 @@ class KOvirt(object):
         """
         memory = memory * 1024 * 1024
         clone = not diskthin
+        custom_properties = []
         if template is not None:
             templates_service = self.templates_service
             templateslist = templates_service.list()
@@ -174,6 +176,15 @@ class KOvirt(object):
                     found = True
             if not found:
                 return {'result': 'failure', 'reason': "template %s not found" % template}
+            if 'coreos' in template or template.startswith('rhcos'):
+                ignitiondata = ''
+                version = '3.0.0' if template.startswith('fedora-coreos') else '2.2.0'
+                ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
+                                               domain=domain, reserveip=reserveip, files=files,
+                                               enableroot=enableroot, overrides=overrides, version=version)
+                ignitiondata = ignitiondata.replace('\n', '')
+                custom_property = types.CustomProperty(name='ignitiondata', value=ignitiondata)
+                custom_properties.append(custom_property)
         else:
             _template = types.Template(name='Blank')
         _os = types.OperatingSystem(boot=types.Boot(devices=[types.BootDevice.HD, types.BootDevice.CDROM]))
@@ -207,7 +218,8 @@ class KOvirt(object):
                 vmhost = None
             vm = self.vms_service.add(types.Vm(name=name, cluster=types.Cluster(name=self.cluster), memory=memory,
                                                cpu=cpu, description=description, template=_template, console=console,
-                                               os=_os, placement_policy=placement_policy), clone=clone)
+                                               os=_os, placement_policy=placement_policy,
+                                               custom_properties=custom_properties), clone=clone)
             vm_service = self.vms_service.vm_service(vm.id)
         except Exception as e:
             if self.debug:
@@ -299,7 +311,7 @@ class KOvirt(object):
                 # common.pprint(newdisk['reason'], color='red')
                 return {'result': 'failure', 'reason': newdisk['reason']}
         initialization = None
-        if cloudinit:
+        if cloudinit and not custom_properties:
             custom_script = ''
             if storemetadata and overrides:
                 storeoverrides = {k: overrides[k] for k in overrides if k not in ['password', 'rhnpassword', 'rhnak']}
@@ -1249,6 +1261,19 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                 common.pprint("Using found /tmp/%s" % shortimage, color='blue')
             BUF_SIZE = 128 * 1024
             image_path = '/tmp/%s' % shortimage
+            extensions = {'bz2': 'bunzip2', 'gz': 'gunzip', 'xz': 'unxz'}
+            for extension in extensions:
+                if shortimage.endswith(extension):
+                    executable = extensions[extension]
+                    if find_executable(executable) is None:
+                        common.pprint("%s not found. Can't uncompress image" % executable, color="blue")
+                        os._exit(1)
+                    else:
+                        uncompresscmd = "%s %s" % (executable, image_path)
+                        os.system(uncompresscmd)
+                        shortimage = shortimage.replace(".%s" % extension, '')
+                        image_path = '/tmp/%s' % shortimage
+                        break
             out = check_output(["qemu-img", "info", "--output", "json", image_path])
             image_info = json.loads(out)
             image_size = os.path.getsize(image_path)
