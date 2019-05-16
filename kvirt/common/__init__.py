@@ -10,7 +10,7 @@ from netaddr import IPAddress
 import random
 import socket
 from urllib.parse import quote
-from urllib.request import urlretrieve
+from urllib.request import urlretrieve, urlopen
 import json
 import os
 import yaml
@@ -856,3 +856,22 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
         else:
             data['systemd']['units'] = [metadrop, etcddrop]
     return json.dumps(data, sort_keys=True, indent=4, separators=(',', ': '))
+
+
+def get_latest_fcos(url):
+    metaurl = '%s/meta.json' % url
+    with urlopen(metaurl) as u:
+        data = json.loads(u.read().decode())
+        return "%s/%s" % (url, data['images']['qemu']['path'])
+
+
+def get_latest_rhcos(url):
+    buildurl = '%s/builds.json' % url
+    with urlopen(buildurl) as b:
+        data = json.loads(b.read().decode())
+        for build in data['builds']:
+            metaurl = '%s/%s/meta.json' % (url, build)
+            with urlopen(metaurl) as m:
+                data = json.loads(m.read().decode())
+                if 'qemu' in data['images']:
+                    return "%s/%s/%s" % (url, build, data['images']['qemu']['path'])

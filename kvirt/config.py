@@ -1444,6 +1444,10 @@ class Kconfig(Kbaseconfig):
             for template in templates:
                 if url is None:
                     url = TEMPLATES[template]
+                    if 'coreos' in template:
+                        url = common.get_latest_fcos(url)
+                    elif 'rhcos' in template:
+                        url = common.get_latest_rhcos(url)
                     shortname = os.path.basename(url)
                     template = os.path.basename(template)
                     if not url.endswith('qcow2') and not url.endswith('img') and not url.endswith('qc2')\
