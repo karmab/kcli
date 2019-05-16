@@ -1566,7 +1566,7 @@ class Kvirt(object):
             vm.setAutostart(1)
             vm.create()
 
-    def _reserve_ip(self, name, nets, macs):
+    def _reserve_ip(self, name, nets, macs, force=True):
         conn = self.conn
         for index, net in enumerate(nets):
             if not isinstance(net, dict):
@@ -1579,6 +1579,14 @@ class Kvirt(object):
             network = conn.networkLookupByName(network)
             oldnetxml = network.XMLDesc()
             root = ET.fromstring(oldnetxml)
+            if force:
+                for host in list(root.getiterator('host')):
+                    iphost = host.get('ip')
+                    machost = host.get('mac')
+                    if iphost == ip and machost is not None and machost != mac:
+                        oldentry = '<host mac=%s ip="%s"></host>' % (machost, iphost)
+                        print("Removing old reserveip entry for ip %s" % ip)
+                        network.update(2, 10, 0, oldentry, 1)
             ipentry = list(root.getiterator('ip'))
             if ipentry:
                 attributes = ipentry[0].attrib
@@ -1591,7 +1599,6 @@ class Kvirt(object):
             if not IPAddress(ip) in netip:
                 continue
             network.update(4, 4, 0, '<host mac="%s" name="%s" ip="%s" />' % (mac, name, ip), 1)
-            # network.update(4, 4, 0, '<host mac="%s" name="%s" ip="%s" />' % (mac, name, ip), 2)
 
     def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False):
         """
@@ -1653,7 +1660,8 @@ class Kvirt(object):
             if force:
                 for host in list(root.getiterator('host')):
                     iphost = host.get('ip')
-                    if iphost == ip:
+                    machost = host.get('mac')
+                    if iphost == ip and machost is None:
                         existing = []
                         for hostname in list(host.getiterator('hostname')):
                             existing.append(hostname.text)

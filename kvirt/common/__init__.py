@@ -787,14 +787,14 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
             if isinstance(net, str):
                 if index == 0:
                     continue
-                nicname = "eth%d" % index
+                nicname = "ens%d" % (index + 3)
                 ip = None
                 netmask = None
                 cidr = None
                 noconf = None
                 vips = []
             elif isinstance(net, dict):
-                nicname = net.get('nic', "eth%d" % index)
+                nicname = net.get('nic', "ens%d" % (index + 3))
                 ip = net.get('ip')
                 gateway = net.get('gateway')
                 netmask = next((e for e in [net.get('mask'), net.get('netmask')] if e is not None), None)
