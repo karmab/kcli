@@ -448,7 +448,7 @@ The following parameters are specific to ovirt:
 -  cluster Defaults to Default
 -  datacenter Defaults to Default
 -  filtervms Defaults to True. Only list vms created by kcli. Useful for
-   environments when you are superadmin and have a ton of vms
+   environments when you are superadmin and have a ton of vms!!!
 -  filteruser Defaults to False. Only list vms created by own user
 -  filtertag Defaults to None. Only list vms created by kcli with the
    corresponding filter=filtertag in their description. Useful for
@@ -594,8 +594,12 @@ cloudinit is enabled by default and handles static networking
 configuration, hostname setting, injecting ssh keys and running specific
 commands and entire scripts, and copying entire files.
 
-For kvm vms based on coreos, ignition is used instead of cloudinit
-although the syntax is the same.
+For vms based on coreos, ignition is used instead of cloudinit although
+the syntax is the same. If a $name.ign is found in the current
+directory, it will be used instead
+
+For ovirt, you will need to install an `additional
+hook <https://gerrit.ovirt.org/#/c/100008>`__ for ignition support
 
 A similar mechanism allows customization for other providers.
 
