@@ -736,18 +736,18 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     :param etcd:
     :return:
     """
+    ignitionpath = None
     if os.path.exists("%s.ign" % name):
-        pprint("Using existing %s.ign for %s" % (name, name), color="blue")
-        return open("%s.ign" % name).read()
-    elif 'master' in name and os.path.exists("master.ign"):
-        pprint("Using existing master.ign for %s" % (name), color="blue")
-        return open("master.ign").read()
-    elif 'worker' in name and os.path.exists("worker.ign"):
-        pprint("Using existing worker.ign for %s" % (name), color="blue")
-        return open("worker.ign").read()
-    elif 'bootstrap' in name and os.path.exists("bootstrap.ign"):
-        pprint("Using existing bootstrap.ign for %s" % (name), color="blue")
-        return open("bootstrap.ign").read()
+        ignitionpath = "%s.ign" % name
+    elif 'master' in name:
+        ignitionpath = find_ignition_files('master')
+    elif 'worker' in name:
+        ignitionpath = find_ignition_files('worker')
+    elif 'bootstrap' in name:
+        ignitionpath = find_ignition_files('bootstrap')
+    if ignitionpath is not None:
+        pprint("Using existing %s for %s" % (ignitionpath, name), color="blue")
+        return open(ignitionpath).read()
     default_gateway = gateway
     publickeys = []
     if domain is not None:
@@ -884,3 +884,10 @@ def get_latest_rhcos(url):
                 data = json.loads(m.read().decode())
                 if 'qemu' in data['images']:
                     return "%s/%s/%s" % (url, build, data['images']['qemu']['path'])
+
+
+def find_ignition_files(role):
+    for r, d, f in os.walk('.'):
+        if f == '%s.ign' % role:
+            return "%s/%s" % (r, f)
+    return None
