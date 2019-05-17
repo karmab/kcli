@@ -1114,18 +1114,24 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         vm = vmsearch[0]
         template = self.conn.follow_link(vm.template)
         user = common.get_user(template.name)
-        ips = []
-        devices = self.vms_service.vm_service(vm.id).reported_devices_service().list()
-        for device in devices:
-            if device.ips:
-                for i in device.ips:
-                    if str(i.version) == 'v4' and i.address not in ['172.17.0.1', '127.0.0.1']:
-                        ips.append(i.address)
-        if not ips:
-            common.pprint("No ip found. Cannot ssh...", color='red')
-            return 'root', None
-        else:
-            ip = ips[-1]
+        for description in vm.description.split(','):
+            desc = description.split('=')
+            if len(desc) == 2:
+                if desc[0] == 'ip':
+                    ip = desc[1]
+        if ip == '':
+            ips = []
+            devices = self.vms_service.vm_service(vm.id).reported_devices_service().list()
+            for device in devices:
+                if device.ips:
+                    for i in device.ips:
+                        if str(i.version) == 'v4' and i.address not in ['172.17.0.1', '127.0.0.1']:
+                            ips.append(i.address)
+            if not ips:
+                common.pprint("No ip found. Cannot ssh...", color='red')
+                return 'root', None
+            else:
+                ip = ips[-1]
         return user, ip
 
     def ssh(self, name, user=None, local=None, remote=None, tunnel=False,
