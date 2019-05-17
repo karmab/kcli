@@ -159,6 +159,7 @@ class KOvirt(object):
         :param tags:
         :return:
         """
+        ip = None
         memory = memory * 1024 * 1024
         clone = not diskthin
         custom_properties = []
@@ -260,8 +261,6 @@ class KOvirt(object):
         currentnics = len(nics_service.list())
         nic_configurations = []
         for index, net in enumerate(nets):
-            if index < currentnics:
-                continue
             netname = None
             netmask = None
             mac = None
@@ -288,8 +287,14 @@ class KOvirt(object):
                     nic_configurations.append(nic_configuration)
             if netname is not None and netname in self.netprofiles:
                 profile_id = self.netprofiles[netname]
-                nics_service.add(types.Nic(name='eth%s' % index, mac=mac,
-                                           vnic_profile=types.VnicProfile(id=profile_id)))
+                mac = types.Mac(address=mac)
+                nic = types.Nic(name='eth%s' % index, mac=mac, vnic_profile=types.VnicProfile(id=profile_id))
+                if index < currentnics:
+                    currentnic = nics_service.list()[index]
+                    currentnic_service = nics_service.nic_service(currentnic.id)
+                    currentnic_service.update(nic=nic)
+                else:
+                    nics_service.add(nic)
         # disk_attachments_service = self.vms_service.vm_service(vm.id).disk_attachments_service()
         for index, disk in enumerate(disks):
             diskpool = pool
@@ -386,6 +391,8 @@ class KOvirt(object):
                                                   nic_configurations=nic_configurations, dns_servers=dns,
                                                   dns_search=domain, custom_script=custom_script)
         vm_service.start(use_cloud_init=cloudinit, vm=types.Vm(initialization=initialization, host=vmhost))
+        if ip is not None:
+            self.update_metadata(name, 'ip', ip)
         return {'result': 'success'}
 
     def start(self, name):
@@ -683,6 +690,8 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                     yamlinfo['profile'] = desc[1]
                 elif desc[0] == 'loadbalancer':
                     yamlinfo['loadbalancer'] = desc[1]
+                elif desc[0] == 'ip':
+                    yamlinfo['ip'] = desc[1]
         template = conn.follow_link(vm.template)
         source = template.name
         yamlinfo['template'] = source
