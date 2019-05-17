@@ -1238,7 +1238,10 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             else:
                 xtemplates = otemplates
             if shortimage in xtemplates:
-                imageobject = next((i for i in images if i.name == xtemplates[shortimage]), None)
+                imageobject = next((i for i in images if xtemplates[shortimage] in i.name), None)
+                if imageobject is None:
+                    common.pprint("Unable to locate the image in glance repository", color='red')
+                    return {'result': 'failure', 'reason': "Unable to locate the image in glance repository"}
                 image_service = images_service.image_service(imageobject.id)
                 image_service.import_(import_as_template=True, template=types.Template(name=shortimage),
                                       cluster=types.Cluster(name=self.cluster),
@@ -1344,6 +1347,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                                       clone=False)
         while True:
             sleep(5)
+            disk_service = disks_service.disk_service(disk_id)
             disk = disk_service.get()
             if disk.status == types.DiskStatus.OK:
                 break
