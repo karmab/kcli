@@ -739,6 +739,15 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     if os.path.exists("%s.ign" % name):
         pprint("Using existing %s.ign for %s" % (name, name), color="blue")
         return open("%s.ign" % name).read()
+    elif 'master' in name and os.path.exists("master.ign"):
+        pprint("Using existing master.ign for %s" % (name), color="blue")
+        return open("master.ign").read()
+    elif 'worker' in name and os.path.exists("worker.ign"):
+        pprint("Using existing worker.ign for %s" % (name), color="blue")
+        return open("worker.ign").read()
+    elif 'bootstrap' in name and os.path.exists("bootstrap.ign"):
+        pprint("Using existing bootstrap.ign for %s" % (name), color="blue")
+        return open("bootstrap.ign").read()
     default_gateway = gateway
     publickeys = []
     if domain is not None:
