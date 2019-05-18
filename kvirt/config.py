@@ -266,7 +266,8 @@ class Kconfig(Kbaseconfig):
             default_kernel = father.get('kernel', self.kernel)
             default_initrd = father.get('initrd', self.initrd)
             default_cmdline = father.get('cmdline', self.cmdline)
-            default_cmdline = father.get('placement', self.placement)
+            default_placement = father.get('placement', self.placement)
+            default_yamlinventory = father.get('yamlinventory', self.yamlinventory)
         else:
             default_numcpus = self.numcpus
             default_memory = self.memory
@@ -318,6 +319,7 @@ class Kconfig(Kbaseconfig):
             default_initrd = self.initrd
             default_cmdline = self.cmdline
             default_placement = self.placement
+            default_yamlinventory = self.yamlinventory
         plan = profile.get('plan', plan)
         template = profile.get('template', default_template)
         nets = profile.get('nets', default_nets)
@@ -420,6 +422,7 @@ class Kconfig(Kbaseconfig):
         initrd = profile.get('initrd', default_initrd)
         cmdline = profile.get('cmdline', default_cmdline)
         placement = profile.get('placement', default_placement)
+        yamlinventory = profile.get('yamlinventory', default_yamlinventory)
         scriptcmds = []
         skip_rhnregister_script = False
         if rhnregister and template is not None and template.lower().startswith('rhel'):
@@ -579,7 +582,8 @@ class Kconfig(Kbaseconfig):
                 verbose = element.get('verbose', False)
                 user = element.get('user')
                 ansibleutils.play(k, name, playbook=playbook, variables=variables, verbose=verbose, user=user,
-                                  tunnel=self.tunnel, tunnelhost=self.host, tunnelport=self.port, tunneluser=self.user)
+                                  tunnel=self.tunnel, tunnelhost=self.host, tunnelport=self.port, tunneluser=self.user,
+                                  yamlinventory=yamlinventory)
         if os.access(os.path.expanduser('~/.kcli'), os.W_OK):
             client = client if client is not None else self.client
             common.set_lastvm(name, client)
@@ -1370,15 +1374,17 @@ class Kconfig(Kbaseconfig):
                     common.pprint("Ansible skipped as no new vm within playbook provisioned", color='blue')
                     return
                 ansibleutils.make_plan_inventory(k, plan, newvms, groups=groups, user=user, tunnel=self.tunnel,
-                                                 tunnelhost=self.host, tunnelport=self.port, tunneluser=self.user)
+                                                 tunnelhost=self.host, tunnelport=self.port, tunneluser=self.user,
+                                                 yamlinventory=self.yamlinventory)
                 ansiblecommand = "ansible-playbook"
                 if verbose:
                     ansiblecommand = "%s -vvv" % ansiblecommand
                 ansibleconfig = os.path.expanduser('~/.ansible.cfg')
                 with open(ansibleconfig, "w") as f:
                     f.write("[ssh_connection]\nretries=10\n")
-                print("Running: %s -i /tmp/%s.inv %s" % (ansiblecommand, plan, playbook))
-                os.system("%s -i /tmp/%s.inv %s" % (ansiblecommand, plan, playbook))
+                inventoryfile = "/tmp/%s.inv.yaml" % plan if self.yamlinventory else "/tmp/%s.inv" % plan
+                print("Running: %s -i %s %s" % (ansiblecommand, inventoryfile, playbook))
+                os.system("%s -i %s %s" % (ansiblecommand, inventoryfile, playbook))
         if ansible:
             common.pprint("Deploying Ansible Inventory...")
             if os.path.exists("/tmp/%s.inv" % plan):
@@ -1391,7 +1397,7 @@ class Kconfig(Kbaseconfig):
                     description = vm['plan']
                     if description == plan:
                         vms.append(name)
-                ansibleutils.make_plan_inventory(k, plan, vms, tunnel=self.tunnel)
+                ansibleutils.make_plan_inventory(k, plan, vms, tunnel=self.tunnel, yamlinventory=self.yamlinventory)
                 return
         if lbentries:
                 common.pprint("Deploying Loadbalancers...")

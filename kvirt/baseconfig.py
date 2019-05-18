@@ -14,7 +14,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             NETMASKS, GATEWAY, SHAREDKEY, TEMPLATE, ENABLEROOT,
                             PLANVIEW, PRIVATEKEY, TAGS, RHNREGISTER, RHNUSER, RHNPASSWORD, RHNAK, RHNORG, RHNPOOL,
                             FLAVOR, KEEP_NETWORKS, DNSCLIENT, STORE_METADATA, NOTIFY, NOTIFYTOKEN, NOTIFYCMD,
-                            SHAREDFOLDERS, KERNEL, INITRD, CMDLINE, PLACEMENT)
+                            SHAREDFOLDERS, KERNEL, INITRD, CMDLINE, PLACEMENT, YAMLINVENTORY)
 from kvirt import common
 import os
 from shutil import copyfile, rmtree
@@ -144,6 +144,7 @@ class Kbaseconfig:
         defaults['initrd'] = default.get('initrd', INITRD)
         defaults['cmdline'] = default.get('cmdline', CMDLINE)
         defaults['placement'] = default.get('placement', PLACEMENT)
+        defaults['yamlinventory'] = default.get('yamlinventory', YAMLINVENTORY)
         currentplanfile = "%s/.kcli/plan" % os.environ.get('HOME')
         if os.path.exists(currentplanfile):
             self.currentplan = open(currentplanfile).read().strip()
@@ -259,6 +260,7 @@ class Kbaseconfig:
         self.initrd = options.get('initrd', self.default['initrd'])
         self.cmdline = options.get('cmdline', self.default['cmdline'])
         self.placement = options.get('placement', self.default['placement'])
+        self.yamlinventory = options.get('yamlinventory', self.default['yamlinventory'])
         self.containerclient = containerclient
 
     def switch_host(self, client):

@@ -894,6 +894,8 @@ myplay:
 
 When leveraging ansible this way, an inventory file will be generated on the fly for you and let in */tmp/$PLAN.inv* 
 
+You can set the variable yamlinventory to True at default, host or profile level if you want the generated file to be yaml based. In this case, it will be named */tmp/$PLAN.inv.yaml*
+
 ## Using products
 
 To easily share plans, you can make use of the products feature which leverages them
@@ -1024,6 +1026,7 @@ Basic testing can be run with pytest, which leverages your existing kcli config
 - *enableroot* (optional). Defaults to true. Allows ssh access as root user
 - *storemetadata* (optional). Defaults to false. creates a /root/.metadata yaml file whith all the overrides applied. On gcp, those overrides are also stored as extra metadata
 - *sharedfolders* (optional). Defaults to a blank array. List of paths to share between a kvm hypervisor and vm. You will also make sure that the path is accessible as qemu user (typically with id 107) and use an hypervisor and a guest with 9p support (centos/rhel lack it)
+- *yamlinventory* (optional). Defaults to false. If set to true, ansible generated inventory for single vms or for plans containing ansible entries will be yaml based.
 
 ## Overriding parameters
 
