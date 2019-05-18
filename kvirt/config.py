@@ -1444,7 +1444,7 @@ class Kconfig(Kbaseconfig):
             for template in templates:
                 if url is None:
                     url = TEMPLATES[template]
-                    if 'coreos' in template:
+                    if 'fedoracoreos' in template:
                         url = common.get_latest_fcos(url)
                     elif 'rhcos' in template:
                         url = common.get_latest_rhcos(url)
