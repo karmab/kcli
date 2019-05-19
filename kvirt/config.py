@@ -1373,24 +1373,29 @@ class Kconfig(Kbaseconfig):
                 if not vms:
                     common.pprint("Ansible skipped as no new vm within playbook provisioned", color='blue')
                     return
-                ansibleutils.make_plan_inventory(k, plan, newvms, groups=groups, user=user, tunnel=self.tunnel,
-                                                 tunnelhost=self.host, tunnelport=self.port, tunneluser=self.user,
-                                                 yamlinventory=self.yamlinventory)
                 ansiblecommand = "ansible-playbook"
                 if verbose:
                     ansiblecommand = "%s -vvv" % ansiblecommand
-                ansibleconfig = os.path.expanduser('~/.ansible.cfg')
-                with open(ansibleconfig, "w") as f:
-                    f.write("[ssh_connection]\nretries=10\n")
                 inventoryfile = "/tmp/%s.inv.yaml" % plan if self.yamlinventory else "/tmp/%s.inv" % plan
+                if os.path.exists(inventoryfile):
+                    common.pprint("Inventory in %s skipped!" % inventoryfile, color='blue')
+                else:
+                    ansibleutils.make_plan_inventory(k, plan, newvms, groups=groups, user=user, tunnel=self.tunnel,
+                                                     tunnelhost=self.host, tunnelport=self.port, tunneluser=self.user,
+                                                     yamlinventory=self.yamlinventory)
+                if not os.path.exists('~/.ansible.cfg'):
+                    ansibleconfig = os.path.expanduser('~/.ansible.cfg')
+                    with open(ansibleconfig, "w") as f:
+                        f.write("[ssh_connection]\nretries=10\n")
                 print("Running: %s -i %s %s" % (ansiblecommand, inventoryfile, playbook))
                 os.system("%s -i %s %s" % (ansiblecommand, inventoryfile, playbook))
         if ansible:
             common.pprint("Deploying Ansible Inventory...")
-            if os.path.exists("/tmp/%s.inv" % plan):
-                common.pprint("Inventory in /tmp/%s.inv skipped!" % plan, color='blue')
+            inventoryfile = "/tmp/%s.inv.yaml" % plan if self.yamlinventory else "/tmp/%s.inv" % plan
+            if os.path.exists(inventoryfile):
+                common.pprint("Inventory in %s skipped!" % inventoryfile, color='blue')
             else:
-                common.pprint("Creating ansible inventory for plan %s in /tmp/%s.inv" % (plan, plan))
+                common.pprint("Creating ansible inventory for plan %s in %s" % (plan, inventoryfile))
                 vms = []
                 for vm in sorted(k.list(), key=lambda x: x['name']):
                     name = vm['name']
