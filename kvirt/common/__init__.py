@@ -736,18 +736,6 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     :param etcd:
     :return:
     """
-    ignitionpath = None
-    if os.path.exists("%s.ign" % name):
-        ignitionpath = "%s.ign" % name
-    elif 'master' in name:
-        ignitionpath = find_ignition_files('master')
-    elif 'worker' in name:
-        ignitionpath = find_ignition_files('worker')
-    elif 'bootstrap' in name:
-        ignitionpath = find_ignition_files('bootstrap')
-    if ignitionpath is not None:
-        pprint("Using existing %s for %s" % (ignitionpath, name), color="blue")
-        return open(ignitionpath).read()
     default_gateway = gateway
     publickeys = []
     if domain is not None:
@@ -870,6 +858,28 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
             data['systemd']['units'].append(etcddrop)
         else:
             data['systemd']['units'] = [metadrop, etcddrop]
+    ignitionextrapath = None
+    if os.path.exists("%s.ign" % name):
+        ignitionextrapath = "%s.ign" % name
+    elif 'master' in name:
+        ignitionextrapath = find_ignition_files('master')
+    elif 'worker' in name:
+        ignitionextrapath = find_ignition_files('worker')
+    elif 'bootstrap' in name:
+        ignitionextrapath = find_ignition_files('bootstrap')
+    if ignitionextrapath is not None:
+        pprint("Merging ignition data from existing %s for %s" % (ignitionextrapath, name), color="blue")
+        with open(ignitionextrapath, 'r') as extra:
+            ignitionextra = json.load(extra)
+            children = {'storage': 'files', 'passwd': 'users', 'systemd': 'units'}
+            for key in children:
+                childrenkey2 = 'path' if key == 'storage' else 'name'
+                if key in data and key in ignitionextra and\
+                        children[key] in data[key] and children[key] in ignitionextra[key]:
+                    for entry in data[key][children[key]]:
+                        if entry[childrenkey2] not in [x[childrenkey2] for x in ignitionextra[key][children[key]]]:
+                            ignitionextra[key][children[key]].append(entry)
+        data = ignitionextra
     return json.dumps(data, sort_keys=True, indent=4, separators=(',', ': '))
 
 
