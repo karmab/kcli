@@ -772,8 +772,14 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
         pprint("neither id_rsa or id_dsa public keys found in your .ssh or .kcli directory, you might have trouble "
                "accessing the vm", color='red')
     storage = {"files": []}
+    hostnameline = quote("%s\n" % localhostname)
     storage["files"].append({"filesystem": "root", "path": "/etc/hostname", "overwrite": True,
-                             "contents": {"source": "data:,%s" % localhostname, "verification": {}}, "mode": 420})
+                             "contents": {"source": "data:,%s" % hostnameline, "verification": {}}, "mode": 420})
+    if dns is not None:
+        dnsline = quote("prepend domain-name-servers %s;\n" % dns)
+        storage["files"].append({"filesystem": "root", "path": "/etc/dhcp/dhclient.conf",
+                                 "overwrite": True,
+                                 "contents": {"source": "data:,%s" % dnsline, "verification": {}}, "mode": 420})
     if files:
         filesdata = process_ignition_files(files=files, overrides=overrides)
         if filesdata:
