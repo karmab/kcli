@@ -904,8 +904,9 @@ def get_latest_rhcos(url):
 
 def find_ignition_files(role):
     for r, d, f in os.walk('.'):
-        if r.count('/') > 1:
-            return None
-        elif f[0] == '%s.ign' % role:
-            return "%s/%s" % (r, f[0])
+        # if r.count('/') > 1:
+        #    return None
+        # if f[0] == '%s.ign' % role:
+        if '%s.ign' % role in f:
+            return "%s/%s.ign" % (r, role)
     return None

@@ -232,7 +232,6 @@ def _list(args):
     containers = args.containers
     images = args.images
     plans = args.plans
-    plan = args.plan
     filters = args.filters
     short = args.short
     group = args.group
@@ -466,11 +465,7 @@ def _list(args):
                     status = vm.get('status')
                     ip = vm.get('ip', '')
                     source = vm.get('template', '')
-                    vmplan = vm.get('plan', '')
-                    if plan is not None and vmplan != plan:
-                        continue
-                    else:
-                        plan = vmplan
+                    plan = vm.get('plan', '')
                     profile = vm.get('profile', '')
                     report = vm.get('report', '')
                     vminfo = [name, cli, status, ip, source, plan, profile, report]
@@ -487,11 +482,7 @@ def _list(args):
                 status = vm.get('status')
                 ip = vm.get('ip', '')
                 source = vm.get('template', '')
-                vmplan = vm.get('plan', '')
-                if plan is not None and vmplan != plan:
-                    continue
-                else:
-                    plan = vmplan
+                plan = vm.get('plan', '')
                 profile = vm.get('profile', '')
                 report = vm.get('report', '')
                 vminfo = [name, status, ip, source, plan, profile, report]
@@ -1222,7 +1213,6 @@ def cli():
     list_parser.add_argument('--repos', action='store_true')
     list_parser.add_argument('--products', action='store_true')
     list_parser.add_argument('-g', '--group', help='Only Display products of the indicated group', metavar='GROUP')
-    list_parser.add_argument('--plan', help='Only Display vms of the indicated plan', metavar='PLAN')
     list_parser.add_argument('-r', '--repo', help='Only Display products of the indicated repository', metavar='REPO')
     list_parser.add_argument('--filters', choices=('up', 'down'))
     list_parser.set_defaults(func=_list)
