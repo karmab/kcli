@@ -515,7 +515,7 @@ class Kvirt(object):
                 ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                                domain=domain, reserveip=reserveip, files=files,
                                                enableroot=enableroot, overrides=overrides, etcd=etcd, version=version)
-                with open('/tmp/ignition', 'w') as ignitionfile:
+                with open('/tmp/%s.ign' % name, 'w') as ignitionfile:
                     ignitionfile.write(ignitiondata)
                     identityfile = None
                 if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
@@ -527,8 +527,8 @@ class Kvirt(object):
                 else:
                     identitycommand = ""
                 if self.protocol == 'ssh' and self.host not in ['localhost', '127.0.0.1']:
-                    ignitioncmd = 'scp %s -qP %s /tmp/ignition %s@%s:/tmp' % (identitycommand, self.port, self.user,
-                                                                              self.host)
+                    ignitioncmd = 'scp %s -qP %s /tmp/%s.ign %s@%s:/tmp' % (identitycommand, self.port, name,
+                                                                            self.user, self.host)
                     code = os.system(ignitioncmd)
                     if code != 0:
                         return {'result': 'failure', 'reason': "Unable to creation ignition data file in hypervisor"}
@@ -606,7 +606,7 @@ class Kvirt(object):
             ignitionxml = ""
             if ignition:
                 ignitionxml = """<qemu:arg value='-fw_cfg' />
-                                  <qemu:arg value='name=opt/com.coreos/config,file=/tmp/ignition' />"""
+                                  <qemu:arg value='name=opt/com.coreos/config,file=/tmp/%s.ign' />""" % name
             usermodexml = ""
             if usermode:
                 usermodexml = """<qemu:arg value='-netdev'/>

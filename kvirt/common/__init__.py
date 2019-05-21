@@ -874,11 +874,13 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
             children = {'storage': 'files', 'passwd': 'users', 'systemd': 'units'}
             for key in children:
                 childrenkey2 = 'path' if key == 'storage' else 'name'
-                if key in data and key in ignitionextra and\
-                        children[key] in data[key] and children[key] in ignitionextra[key]:
-                    for entry in data[key][children[key]]:
-                        if entry[childrenkey2] not in [x[childrenkey2] for x in ignitionextra[key][children[key]]]:
-                            ignitionextra[key][children[key]].append(entry)
+                if key in data and key in ignitionextra:
+                    if children[key] in data[key] and children[key] in ignitionextra[key]:
+                        for entry in data[key][children[key]]:
+                            if entry[childrenkey2] not in [x[childrenkey2] for x in ignitionextra[key][children[key]]]:
+                                ignitionextra[key][children[key]].append(entry)
+                    elif children[key] in data[key] and children[key] not in ignitionextra[key]:
+                        ignitionextra[key][children[key]] = data[key][children[key]]
         data = ignitionextra
     return json.dumps(data, sort_keys=True, indent=4, separators=(',', ': '))
 
