@@ -2451,6 +2451,8 @@ class Kvirt(object):
         downloadpath = poolpath if pooltype == 'dir' else '/tmp'
         if shortimage in volumes:
             return {'result': 'failure', 'reason': "Template %s already exists in pool %s" % (shortimage, poolname)}
+        if 'rhcos' in shortimage:
+            shortimage += ".gz"
         if self.host == 'localhost' or self.host == '127.0.0.1':
             downloadcmd = "curl -Lo %s/%s -f '%s'" % (downloadpath, shortimage, image)
         elif self.protocol == 'ssh':
