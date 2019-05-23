@@ -1439,7 +1439,8 @@ class Kvirt(object):
                     deletecmd = "sudo %s" % deletecmd
                 deletecmd = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host,
                                                            deletecmd)
-                print("Deleting remote host entry. sudo password for remote user %s might be asked" % self.user)
+                common.pprint("Checking if a remote host entry exists. sudo password for remote user %s might be asked"
+                              % self.user, color='blue')
                 call(deletecmd, shell=True)
                 try:
                     dnsmasqcmd = "/usr/bin/systemctl restart dnsmasq"

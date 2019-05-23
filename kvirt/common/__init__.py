@@ -235,7 +235,7 @@ def process_ignition_files(files=[], overrides={}):
         origin = fil.get('origin')
         content = fil.get('content')
         path = fil.get('path')
-        mode = int(fil.get('mode', '644'), 8)
+        mode = int(str(fil.get('mode', '644')), 8)
         permissions = fil.get('permissions', mode)
         if origin is not None:
             origin = os.path.expanduser(origin)
@@ -355,7 +355,7 @@ def pprint(text, color='green'):
     :param text:
     :param color:
     """
-    colors = {'blue': '34', 'red': '31', 'green': '32', 'yellow': '33', 'pink': '35', 'white': '37'}
+    colors = {'blue': '36', 'red': '31', 'green': '32', 'yellow': '33', 'pink': '35', 'white': '37'}
     if color is not None and color in colors:
         color = colors[color]
         print('\033[1;%sm%s\033[0;0m' % (color, text))
@@ -764,10 +764,19 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     storage["files"].append({"filesystem": "root", "path": "/etc/hostname", "overwrite": True,
                              "contents": {"source": "data:,%s" % hostnameline, "verification": {}}, "mode": 420})
     if dns is not None:
-        dnsline = quote("prepend domain-name-servers %s;\n" % dns)
-        storage["files"].append({"filesystem": "root", "path": "/etc/dhcp/dhclient.conf",
-                                 "overwrite": True,
+        # dnsline = quote("prepend domain-name-servers %s;\n" % dns)
+        # storage["files"].append({"filesystem": "root", "path": "/etc/dhcp/dhclient.conf",
+        #                        "overwrite": True,
+        #                         "contents": {"source": "data:,%s" % dnsline, "verification": {}}, "mode": 420})
+        resolvconf = "search %s\nnameserver %s\n" % (domain, dns) if domain is not None else "nameserver %s\n" % dns
+        dnsline = quote(resolvconf)
+        storage["files"].append({"filesystem": "root", "path": "/etc/resolv.conf",
+                                "overwrite": True,
                                  "contents": {"source": "data:,%s" % dnsline, "verification": {}}, "mode": 420})
+        nmline = quote("[main]\ndns=none\n")
+        storage["files"].append({"filesystem": "root", "path": "/etc/NetworkManager/NetworkManager.conf",
+                                "overwrite": True,
+                                 "contents": {"source": "data:,%s" % nmline, "verification": {}}, "mode": 420})
     if files:
         filesdata = process_ignition_files(files=files, overrides=overrides)
         if filesdata:
@@ -872,6 +881,9 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
         with open(ignitionextrapath, 'r') as extra:
             ignitionextra = json.load(extra)
             children = {'storage': 'files', 'passwd': 'users', 'systemd': 'units'}
+            # if 'ignition' in ignitionextra and 'config' in ignitionextra['ignition']\
+            #        and 'append' in ignitionextra['ignition']['config']:
+            #    del ignitionextra['ignition']['config']['append']
             for key in children:
                 childrenkey2 = 'path' if key == 'storage' else 'name'
                 if key in data and key in ignitionextra:
