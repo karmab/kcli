@@ -1234,7 +1234,7 @@ class Kconfig(Kbaseconfig):
                                         pool = self.pool
                                     elif isinstance(disk, dict):
                                         size = disk.get('size', self.disksize)
-                                        diskpool = disk.get('pool', self.pool)
+                                        pool = disk.get('pool', self.pool)
                                     else:
                                         continue
                                     z.add_disk(name=name, size=size, pool=pool)
