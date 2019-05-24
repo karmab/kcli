@@ -177,12 +177,11 @@ def make_plan_inventory(vms_to_host, plan, vms, groups={}, user=None, yamlinvent
             else:
                 inventorystr += "[%s]\n" % plan
                 for name in inventory[plan]['hosts']:
-                    inventorystr += "%s\n" % inventory[plan]['hosts'][name]
-            for cli in clientinventory:
-                inventorystr += "[%s]\n" % cli
-                for name in clientinventory[client]['hosts']:
-                    inventorystr += "%s\n" % clientinventory[client]['hosts'][name]
-                inventorystr += "[%s:vars]\n" % cli
-                tunnelinfo = clientinventory[cli]['vars']['ansible_ssh_common_args']
-                inventorystr += "ansible_ssh_common_args='%s'\n" % tunnelinfo
+                    inventorystr += "%s" % inventory[plan]['hosts'][name]
+                    for client in clientinventory:
+                        if name in clientinventory[client]['hosts']:
+                            tunnelinfo = clientinventory[client]['vars']['ansible_ssh_common_args']
+                            inventorystr += " ansible_ssh_common_args='%s'\n" % tunnelinfo
+                            break
+                    inventorystr += "\n"
             f.write("%s\n" % inventorystr)
