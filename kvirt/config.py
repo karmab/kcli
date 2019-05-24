@@ -1135,6 +1135,7 @@ class Kconfig(Kbaseconfig):
             common.pprint("Deploying Vms...")
             vmcounter = 0
             hosts = {}
+            vms_to_host = {}
             for name in vmentries:
                 currentplandir = basedir
                 if len(vmentries) == 1 and 'name' in overrides:
@@ -1167,14 +1168,18 @@ class Kconfig(Kbaseconfig):
                 if vmclient is None:
                     z = k
                     vmclient = self.client
+                    if vmclient not in hosts:
+                        hosts[vmclient] = self
                 elif vmclient in hosts:
-                    z = hosts[vmclient]
+                    z = hosts[vmclient].k
                 elif vmclient in self.clients:
-                    z = Kconfig(client=vmclient).k
-                    hosts[vmclient] = z
+                    newclient = Kconfig(client=vmclient)
+                    z = newclient.k
+                    hosts[vmclient] = newclient
                 else:
                     common.pprint("Client %s not found. Using default one" % vmclient, color='blue')
                     z = k
+                vms_to_host[name] = hosts[vmclient]
                 if 'profile' in profile and profile['profile'] in vmprofiles:
                     customprofile = vmprofiles[profile['profile']]
                     profilename = profile['profile']
@@ -1380,8 +1385,7 @@ class Kconfig(Kbaseconfig):
                 if os.path.exists(inventoryfile):
                     common.pprint("Inventory in %s skipped!" % inventoryfile, color='blue')
                 else:
-                    ansibleutils.make_plan_inventory(k, plan, newvms, groups=groups, user=user, tunnel=self.tunnel,
-                                                     tunnelhost=self.host, tunnelport=self.port, tunneluser=self.user,
+                    ansibleutils.make_plan_inventory(vms_to_host, plan, newvms, groups=groups, user=user,
                                                      yamlinventory=self.yamlinventory)
                 if not os.path.exists('~/.ansible.cfg'):
                     ansibleconfig = os.path.expanduser('~/.ansible.cfg')
