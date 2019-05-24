@@ -864,6 +864,9 @@ class Kconfig(Kbaseconfig):
             for keyfile in glob.glob("%s.key*" % plan):
                 common.pprint("file %s from %s deleted!" % (keyfile, plan))
                 os.remove(keyfile)
+            for ansiblefile in glob.glob("/tmp/%s*" % plan):
+                common.pprint("file %s from %s deleted!" % (ansiblefile, plan))
+                os.remove(ansiblefile)
             if deletedlbs and self.type in ['aws', 'gcp']:
                 for lb in deletedlbs:
                     self.k.delete_loadbalancer(lb)
@@ -1370,6 +1373,7 @@ class Kconfig(Kbaseconfig):
                 verbose = _ansible['verbose'] if 'verbose' in _ansible else False
                 groups = _ansible.get('groups', {})
                 user = _ansible.get('user')
+                variables = _ansible.get('variables', {})
                 vms = []
                 if 'vms' in _ansible:
                     vms = _ansible['vms']
@@ -1383,7 +1387,7 @@ class Kconfig(Kbaseconfig):
                     return
                 ansiblecommand = "ansible-playbook"
                 if verbose:
-                    ansiblecommand = "%s -vvv" % ansiblecommand
+                    ansiblecommand += " -vvv"
                 inventoryfile = "/tmp/%s.inv.yaml" % plan if self.yamlinventory else "/tmp/%s.inv" % plan
                 if os.path.exists(inventoryfile):
                     common.pprint("Inventory in %s skipped!" % inventoryfile, color='blue')
@@ -1394,8 +1398,14 @@ class Kconfig(Kbaseconfig):
                     ansibleconfig = os.path.expanduser('~/.ansible.cfg')
                     with open(ansibleconfig, "w") as f:
                         f.write("[ssh_connection]\nretries=10\n")
-                print("Running: %s -i %s %s" % (ansiblecommand, inventoryfile, playbook))
-                os.system("%s -i %s %s" % (ansiblecommand, inventoryfile, playbook))
+                if variables:
+                    varsfile = "/tmp/%s.vars.yml" % plan
+                    with open(varsfile, 'w') as f:
+                        yaml.dump(variables, f, default_flow_style=False)
+                    ansiblecommand += " --extra-vars @%s" % (varsfile)
+                ansiblecommand += " -i  %s %s" % (inventoryfile, playbook)
+                print("Running: %s" % (ansiblecommand))
+                os.system(ansiblecommand)
         if ansible:
             common.pprint("Deploying Ansible Inventory...")
             inventoryfile = "/tmp/%s.inv.yaml" % plan if self.yamlinventory else "/tmp/%s.inv" % plan
