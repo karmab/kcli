@@ -357,7 +357,7 @@ class Kgcp(object):
             etcd = None
             userdata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                        domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
-                                       overrides=overrides, etcd=etcd)
+                                       overrides=overrides, etcd=etcd, plan=plan)
             newval = {'key': 'user-data', 'value': userdata}
             body['metadata']['items'].append(newval)
         newval = {'key': 'serial-port-enable', 'value': 1}

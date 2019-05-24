@@ -346,7 +346,7 @@ class Kubevirt(Kubecommon):
             if template is not None and ('coreos' in template or template.startswith('rhcos')):
                 ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                                domain=domain, reserveip=reserveip, files=files,
-                                               enableroot=enableroot, overrides=overrides, etcd=etcd)
+                                               enableroot=enableroot, overrides=overrides, etcd=etcd, plan=plan)
                 vm['spec']['template']['metadata']['labels']['kubevirt.io/ignitiondata'] = ignitiondata
             else:
                 common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,

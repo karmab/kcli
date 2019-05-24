@@ -219,7 +219,7 @@ class Kopenstack(object):
                 etcd = None
                 userdata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                            domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
-                                           overrides=overrides, etcd=etcd)
+                                           overrides=overrides, etcd=etcd, plan=plan)
             else:
                 common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
                                  reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides,

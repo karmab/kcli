@@ -514,7 +514,8 @@ class Kvirt(object):
                 version = '3.0.0' if template.startswith('fedora-coreos') else '2.2.0'
                 ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                                domain=domain, reserveip=reserveip, files=files,
-                                               enableroot=enableroot, overrides=overrides, etcd=etcd, version=version)
+                                               enableroot=enableroot, overrides=overrides, etcd=etcd, version=version,
+                                               plan=plan)
                 with open('/tmp/%s.ign' % name, 'w') as ignitionfile:
                     ignitionfile.write(ignitiondata)
                     identityfile = None
@@ -1700,7 +1701,7 @@ class Kvirt(object):
                 ip = self.ip(name)
                 if ip is None:
                     time.sleep(5)
-                    print("Waiting 5 seconds to grab ip and create HOST record...")
+                    print("Waiting 5 seconds to grab ip and create Host record...")
                     counter += 10
                 else:
                     break

@@ -717,7 +717,7 @@ def get_user(template):
 
 
 def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[],
-             enableroot=True, overrides={}, iso=True, fqdn=False, etcd=None, version='3.0.0'):
+             enableroot=True, overrides={}, iso=True, fqdn=False, etcd=None, version='3.0.0', plan=None):
     """
 
     :param name:
@@ -871,11 +871,11 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     if os.path.exists("%s.ign" % name):
         ignitionextrapath = "%s.ign" % name
     elif 'master' in name:
-        ignitionextrapath = find_ignition_files('master')
+        ignitionextrapath = find_ignition_files('master', plan=plan)
     elif 'worker' in name:
-        ignitionextrapath = find_ignition_files('worker')
+        ignitionextrapath = find_ignition_files('worker', plan=plan)
     elif 'bootstrap' in name:
-        ignitionextrapath = find_ignition_files('bootstrap')
+        ignitionextrapath = find_ignition_files('bootstrap', plan=plan)
     if ignitionextrapath is not None:
         pprint("Merging ignition data from existing %s for %s" % (ignitionextrapath, name), color="blue")
         with open(ignitionextrapath, 'r') as extra:
@@ -916,7 +916,9 @@ def get_latest_rhcos(url):
                     return "%s/%s/%s" % (url, build, data['images']['qemu']['path'])
 
 
-def find_ignition_files(role):
+def find_ignition_files(role, plan=None):
+    if plan is not None and os.path.exists("./%s/%s" % (plan, role)):
+        return "%s/%s.ign" % (plan, role)
     for r, d, f in os.walk('.'):
         # if r.count('/') > 1:
         #    return None
