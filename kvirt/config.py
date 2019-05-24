@@ -1179,6 +1179,9 @@ class Kconfig(Kbaseconfig):
                 else:
                     common.pprint("Client %s not found. Using default one" % vmclient, color='blue')
                     z = k
+                    vmclient = self.client
+                    if vmclient not in hosts:
+                        hosts[vmclient] = self
                 vms_to_host[name] = hosts[vmclient]
                 if 'profile' in profile and profile['profile'] in vmprofiles:
                     customprofile = vmprofiles[profile['profile']]
