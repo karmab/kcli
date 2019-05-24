@@ -122,26 +122,17 @@ def make_plan_inventory(vms_to_host, plan, vms, groups={}, user=None, yamlinvent
     :param user:
     :param yamlinventory:
     """
-    inventory = {} if yamlinventory else ''
+    inventory = {}
     clientinventory = {}
     inventoryfile = "/tmp/%s.inv.yaml" % plan if yamlinventory else "/tmp/%s.inv" % plan
     pprint("Generating inventory %s" % inventoryfile, color='blue')
     if groups:
-        if yamlinventory:
-            inventory[plan] = {'children': {}}
-        else:
-            inventory += "[%s:children]\n" % plan
+        inventory[plan] = {'children': {}}
         for group in groups:
-            if yamlinventory:
-                inventory[plan]['children'][group] = {}
-            else:
-                inventory += "%s\n" % group
+            inventory[plan]['children'][group] = {}
         for group in groups:
             nodes = groups[group]
-            if yamlinventory:
-                inventory[plan]['children'][group]['hosts'] = {}
-            else:
-                inventory += "[%s]\n" % group
+            inventory[plan]['children'][group]['hosts'] = {}
             for name in nodes:
                 k = vms_to_host[name].k
                 client = vms_to_host[name].client
@@ -149,16 +140,10 @@ def make_plan_inventory(vms_to_host, plan, vms, groups={}, user=None, yamlinvent
                     clientinventory[client] = {'hosts': {}}
                 inv = vm_inventory(k, name, user=user, yamlinventory=yamlinventory)
                 if inv is not None:
-                    if yamlinventory:
-                        inventory[plan]['children'][group]['hosts'][name] = inv
-                        clientinventory[client]['hosts'][name] = inv
-                    else:
-                        inventory += "%s\n" % inv
+                    clientinventory[client]['hosts'][name] = inv
+                    inventory[plan]['children'][group]['hosts'][name] = inv
     else:
-        if yamlinventory:
-            inventory[plan] = {'hosts': {}}
-        else:
-            inventory += "[%s]\n" % plan
+        inventory[plan] = {'hosts': {}}
         for name in vms:
             k = vms_to_host[name].k
             client = vms_to_host[name].client
@@ -166,11 +151,8 @@ def make_plan_inventory(vms_to_host, plan, vms, groups={}, user=None, yamlinvent
                 clientinventory[client] = {'hosts': {}}
             inv = vm_inventory(k, name, user=user, yamlinventory=yamlinventory)
             if inv is not None:
-                if yamlinventory:
-                    inventory[plan]['hosts'][name] = {}
-                    clientinventory[client]['hosts'][name] = inv
-                else:
-                    inventory += "%s\n" % inv
+                inventory[plan]['hosts'][name] = {} if yamlinventory else inv
+                clientinventory[client]['hosts'][name] = inv
     for entry in vms_to_host.values():
         client = entry.client
         tunnel = entry.tunnel
@@ -179,14 +161,28 @@ def make_plan_inventory(vms_to_host, plan, vms, groups={}, user=None, yamlinvent
         tunnelhost = entry.host
         if tunnel:
             tunnelinfo = "-o ProxyCommand=\"ssh -p %s -W %%h:%%p %s@%s\"" % (tunnelport, tunneluser, tunnelhost)
-            if yamlinventory and 'vars' not in clientinventory[client]:
+            if client in clientinventory and 'vars' not in clientinventory[client]:
                 clientinventory[client]['vars'] = {'ansible_ssh_common_args': tunnelinfo}
-            else:
-                inventory += "[%s:vars]\n" % plan
-                inventory += "ansible_ssh_common_args='%s'" % tunnelinfo
     with open(inventoryfile, "w") as f:
         if yamlinventory:
             inventory.update(clientinventory)
             dump({'all': {'children': inventory}}, f, default_flow_style=False)
         else:
-            f.write("%s\n" % inventory)
+            inventorystr = ''
+            if groups:
+                for group in inventory[plan]['children']:
+                    inventorystr += "[%s]\n" % group
+                    for name in inventory[plan]['children'][group]['hosts']:
+                        inventorystr += "%s\n" % inventory[plan]['children'][group]['hosts'][name]
+            else:
+                inventorystr += "[%s]\n" % plan
+                for name in inventory[plan]['hosts']:
+                    inventorystr += "%s\n" % inventory[plan]['hosts'][name]
+            for cli in clientinventory:
+                inventorystr += "[%s]\n" % cli
+                for name in clientinventory[client]['hosts']:
+                    inventorystr += "%s\n" % clientinventory[client]['hosts'][name]
+                inventorystr += "[%s:vars]\n" % cli
+                tunnelinfo = clientinventory[cli]['vars']['ansible_ssh_common_args']
+                inventorystr += "ansible_ssh_common_args='%s'\n" % tunnelinfo
+            f.write("%s\n" % inventorystr)

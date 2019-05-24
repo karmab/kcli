@@ -1406,7 +1406,7 @@ class Kconfig(Kbaseconfig):
                     description = vm['plan']
                     if description == plan:
                         vms.append(name)
-                ansibleutils.make_plan_inventory(k, plan, vms, tunnel=self.tunnel, yamlinventory=self.yamlinventory)
+                ansibleutils.make_plan_inventory(vms_to_host, plan, vms, yamlinventory=self.yamlinventory)
                 return
         if lbentries:
                 common.pprint("Deploying Loadbalancers...")
