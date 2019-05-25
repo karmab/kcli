@@ -896,12 +896,19 @@ class Kconfig(Kbaseconfig):
             return {'result': 'success'}
         if stop or restart:
             common.pprint("Stopping vms from plan %s" % plan)
-            for vm in sorted(k.list(), key=lambda x: x['name']):
-                name = vm['name']
-                description = vm['plan']
-                if description == plan:
-                    k.stop(name)
-                    common.pprint("%s stopped!" % name)
+            if not self.extraclients:
+                stopclients = {self.client: k}
+            else:
+                stopclients = self.extraclients
+                stopclients.update({self.client: k})
+            for hypervisor in stopclients:
+                c = stopclients[hypervisor]
+                for vm in sorted(c.list(), key=lambda x: x['name']):
+                    name = vm['name']
+                    description = vm.get('plan')
+                    if description == plan:
+                        c.stop(name)
+                        common.pprint("%s stopped on %s!" % (name, hypervisor))
             if container:
                 cont = Kcontainerconfig(self, client=self.containerclient).cont
                 for conta in sorted(cont.list_containers()):
@@ -915,12 +922,19 @@ class Kconfig(Kbaseconfig):
                 return {'result': 'success'}
         if start or restart:
             common.pprint("Starting vms from plan %s" % plan)
-            for vm in sorted(k.list(), key=lambda x: x['name']):
-                name = vm['name']
-                description = vm['plan']
-                if description == plan:
-                    k.start(name)
-                    common.pprint("VM %s started!" % name)
+            if not self.extraclients:
+                startclients = {self.client: k}
+            else:
+                startclients = self.extraclients
+                startclients.update({self.client: k})
+            for hypervisor in startclients:
+                c = startclients[hypervisor]
+                for vm in sorted(c.list(), key=lambda x: x['name']):
+                    name = vm['name']
+                    description = vm.get('plan')
+                    if description == plan:
+                        c.start(name)
+                        common.pprint("%s started on %s!" % (name, hypervisor))
             if container:
                 cont = Kcontainerconfig(self, client=self.containerclient).cont
                 for conta in sorted(cont.list_containers(k)):
