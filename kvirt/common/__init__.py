@@ -717,7 +717,7 @@ def get_user(template):
 
 
 def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[],
-             enableroot=True, overrides={}, iso=True, fqdn=False, etcd=None, version='3.0.0', plan=None):
+             enableroot=True, overrides={}, iso=True, fqdn=False, etcd=None, version='3.0.0', plan=None, compact=False):
     """
 
     :param name:
@@ -894,7 +894,9 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
                     elif children[key] in data[key] and children[key] not in ignitionextra[key]:
                         ignitionextra[key][children[key]] = data[key][children[key]]
         data = ignitionextra
-    return json.dumps(data, sort_keys=True, indent=4, separators=(',', ': '))
+    separators = (',', ':') if compact else (',', ': ')
+    indent = 0 if compact else 4
+    return json.dumps(data, sort_keys=True, indent=indent, separators=separators)
 
 
 def get_latest_fcos(url):

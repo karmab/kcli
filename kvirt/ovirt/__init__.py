@@ -182,7 +182,8 @@ class KOvirt(object):
                 version = '3.0.0' if template.startswith('fedora-coreos') else '2.2.0'
                 ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                                domain=domain, reserveip=reserveip, files=files,
-                                               enableroot=enableroot, overrides=overrides, version=version, plan=plan)
+                                               enableroot=enableroot, overrides=overrides, version=version, plan=plan,
+                                               compact=True)
                 ignitiondata = ignitiondata.replace('\n', '')
                 custom_property = types.CustomProperty(name='ignitiondata', value=ignitiondata)
                 custom_properties.append(custom_property)
