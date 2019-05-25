@@ -717,7 +717,8 @@ def get_user(template):
 
 
 def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[],
-             enableroot=True, overrides={}, iso=True, fqdn=False, etcd=None, version='3.0.0', plan=None, compact=False):
+             enableroot=True, overrides={}, iso=True, fqdn=False, etcd=None, version='3.0.0', plan=None, compact=False,
+             removetls=False):
     """
 
     :param name:
@@ -881,9 +882,6 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
         with open(ignitionextrapath, 'r') as extra:
             ignitionextra = json.load(extra)
             children = {'storage': 'files', 'passwd': 'users', 'systemd': 'units'}
-            # if 'ignition' in ignitionextra and 'config' in ignitionextra['ignition']\
-            #        and 'append' in ignitionextra['ignition']['config']:
-            #    del ignitionextra['ignition']['config']['append']
             for key in children:
                 childrenkey2 = 'path' if key == 'storage' else 'name'
                 if key in data and key in ignitionextra:
@@ -893,6 +891,8 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
                                 ignitionextra[key][children[key]].append(entry)
                     elif children[key] in data[key] and children[key] not in ignitionextra[key]:
                         ignitionextra[key][children[key]] = data[key][children[key]]
+        if removetls and ignitionextra['ignition']['config']['append'][0]['source'].startswith("http://"):
+            del ignitionextra['ignition']['security']['tls']['certificateAuthorities']
         data = ignitionextra
     separators = (',', ':') if compact else (',', ': ')
     indent = 0 if compact else 4

@@ -183,7 +183,7 @@ class KOvirt(object):
                 ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                                domain=domain, reserveip=reserveip, files=files,
                                                enableroot=enableroot, overrides=overrides, version=version, plan=plan,
-                                               compact=True)
+                                               compact=True, removetls=True)
                 ignitiondata = ignitiondata.replace('\n', '')
                 custom_property = types.CustomProperty(name='ignitiondata', value=ignitiondata)
                 custom_properties.append(custom_property)
