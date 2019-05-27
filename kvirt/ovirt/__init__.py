@@ -1344,7 +1344,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                     pos += len(chunk)
                     now = time()
                     if now - last_progress > 10:
-                        print("Uploaded %.2f%%" % (float(pos) / image_size * 100))
+                        common.pprint("Uploaded %.2f%%" % (float(pos) / image_size * 100), color='blue')
                         last_progress = now
             response = proxy_connection.getresponse()
             if response.status != 200:
@@ -1365,6 +1365,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                                                memory=memory, cpu=cpu, template=_template, console=console, os=_os),
                                       clone=False)
         while True:
+            common.pprint("Preparing temporary vm %s" % tempname, color='blue')
             sleep(5)
             disk_service = disks_service.disk_service(disk_id)
             disk = disk_service.get()
@@ -1384,6 +1385,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         template = self.templates_service.add_from_vm(template=types.Template(name=shortimage, vm=tempvm))
         template_service = self.templates_service.template_service(template.id)
         while True:
+            common.pprint("Converting temporary vm to template", color='blue')
             sleep(5)
             template = template_service.get()
             if template.status == types.TemplateStatus.OK:
