@@ -527,6 +527,7 @@ class KOvirt(object):
         :param tunnel:
         :return:
         """
+        connectiondetails = None
         vmsearch = self.vms_service.list(search='name=%s' % name)
         if not vmsearch:
             common.pprint("VM %s not found" % name, color='red')
@@ -598,6 +599,9 @@ title={name}:%d
 delete-this-file=1
 toggle-fullscreen=shift+f11
 release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.value, name=name)
+        if connectiondetails is None:
+            common.pprint("Couldn't retrieve connection details for %s" % name)
+            os._exit(1)
         with open("/tmp/console.vv", "w") as f:
             f.write(connectiondetails)
         os.popen("remote-viewer /tmp/console.vv &")
