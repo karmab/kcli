@@ -891,7 +891,8 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
                                 ignitionextra[key][children[key]].append(entry)
                     elif children[key] in data[key] and children[key] not in ignitionextra[key]:
                         ignitionextra[key][children[key]] = data[key][children[key]]
-        if removetls and ignitionextra['ignition']['config']['append'][0]['source'].startswith("http://"):
+        if removetls and 'append' in ignitionextra['ignition']['config'] and\
+                ignitionextra['ignition']['config']['append'][0]['source'].startswith("http://"):
             del ignitionextra['ignition']['security']['tls']['certificateAuthorities']
         data = ignitionextra
     separators = (',', ':') if compact else (',', ': ')

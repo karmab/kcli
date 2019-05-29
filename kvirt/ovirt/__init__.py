@@ -321,7 +321,7 @@ class KOvirt(object):
             if newdisk['result'] == 'failure':
                 # common.pprint(newdisk['reason'], color='red')
                 return {'result': 'failure', 'reason': newdisk['reason']}
-        if cloudinit and not custom_properties:
+        if cloudinit and not custom_properties and initialization is None:
             custom_script = ''
             if storemetadata and overrides:
                 storeoverrides = {k: overrides[k] for k in overrides if k not in ['password', 'rhnpassword', 'rhnak']}
