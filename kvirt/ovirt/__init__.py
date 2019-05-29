@@ -30,7 +30,7 @@ class KOvirt(object):
     def __init__(self, host='127.0.0.1', port=22, user='admin@internal',
                  password=None, insecure=True, ca_file=None, org=None, debug=False,
                  cluster='Default', datacenter='Default', ssh_user='root', imagerepository='ovirt-image-repository',
-                 filtervms=False, filteruser=False, filtertag=None):
+                 filtervms=False, filteruser=False, filtertag=None, ignitionhook=False):
         try:
             url = "https://%s/ovirt-engine/api" % host
             self.conn = sdk.Connection(url=url, username=user,
@@ -55,6 +55,7 @@ class KOvirt(object):
         self.filtervms = filtervms
         self.filteruser = filteruser
         self.filtertag = filtertag
+        self.ignitionhook = ignitionhook
         self.netprofiles = {}
 
     def close(self):
@@ -160,6 +161,7 @@ class KOvirt(object):
         :return:
         """
         ip = None
+        initialization = None
         memory = memory * 1024 * 1024
         clone = not diskthin
         custom_properties = []
@@ -185,8 +187,11 @@ class KOvirt(object):
                                                enableroot=enableroot, overrides=overrides, version=version, plan=plan,
                                                compact=True, removetls=True)
                 ignitiondata = ignitiondata.replace('\n', '')
-                custom_property = types.CustomProperty(name='ignitiondata', value=ignitiondata)
-                custom_properties.append(custom_property)
+                if self.ignitionhook:
+                    custom_property = types.CustomProperty(name='ignitiondata', value=ignitiondata)
+                    custom_properties.append(custom_property)
+                else:
+                    initialization = types.Initialization(custom_script=ignitiondata)
         else:
             _template = types.Template(name='Blank')
         _os = types.OperatingSystem(boot=types.Boot(devices=[types.BootDevice.HD, types.BootDevice.CDROM]))
@@ -316,7 +321,6 @@ class KOvirt(object):
             if newdisk['result'] == 'failure':
                 # common.pprint(newdisk['reason'], color='red')
                 return {'result': 'failure', 'reason': newdisk['reason']}
-        initialization = None
         if cloudinit and not custom_properties:
             custom_script = ''
             if storemetadata and overrides:

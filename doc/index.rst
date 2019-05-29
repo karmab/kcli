@@ -455,6 +455,11 @@ The following parameters are specific to ovirt:
    environments when you share the same user
 -  imagerepository (Optional). A Glance image provider repository to use
    to retrieve images. Defaults to ``ovirt-image-repository``.
+-  ignitionhook Defaults to False. Whether to inject ignition data for
+   rhcos/fcos vms by using the custom property ignitiondata, which
+   requires the ignition hook to be installed on ovirt server side.
+   Useful for environments which lack support for ignition through
+   cloudinit (that is, older than ovirt 4.3.4)
 
 Note that pool in Ovirt context refers to storage domain.
 
@@ -598,8 +603,10 @@ For vms based on coreos, ignition is used instead of cloudinit although
 the syntax is the same. If a $name.ign is found in the current
 directory, it will be used instead
 
-For ovirt, you will need to install an `additional
-hook <https://gerrit.ovirt.org/#/c/100008>`__ for ignition support
+For ignition support on ovirt, you will either need a version of ovirt
+>= 4.3.4 or to install an `additional
+hook <https://gerrit.ovirt.org/#/c/100008>`__ and set ignitionhook to
+True for the given ovirt client
 
 A similar mechanism allows customization for other providers.
 
