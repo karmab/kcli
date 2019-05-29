@@ -900,14 +900,16 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     return json.dumps(data, sort_keys=True, indent=indent, separators=separators)
 
 
-def get_latest_fcos(url):
+def get_latest_fcos(url, openstack=False):
+    key = 'openstack' if openstack else 'qemu'
     metaurl = '%s/meta.json' % url
     with urlopen(metaurl) as u:
         data = json.loads(u.read().decode())
-        return "%s/%s" % (url, data['images']['qemu']['path'])
+        return "%s/%s" % (url, data['images'][key]['path'])
 
 
-def get_latest_rhcos(url):
+def get_latest_rhcos(url, openstack=False):
+    key = 'openstack' if openstack else 'qemu'
     buildurl = '%s/builds.json' % url
     with urlopen(buildurl) as b:
         data = json.loads(b.read().decode())
@@ -915,8 +917,8 @@ def get_latest_rhcos(url):
             metaurl = '%s/%s/meta.json' % (url, build)
             with urlopen(metaurl) as m:
                 data = json.loads(m.read().decode())
-                if 'qemu' in data['images']:
-                    return "%s/%s/%s" % (url, build, data['images']['qemu']['path'])
+                if key in data['images']:
+                    return "%s/%s/%s" % (url, build, data['images'][key]['path'])
 
 
 def find_ignition_files(role, plan=None):
