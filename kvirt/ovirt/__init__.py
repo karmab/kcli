@@ -184,7 +184,7 @@ class KOvirt(object):
                 ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                                domain=domain, reserveip=reserveip, files=files,
                                                enableroot=enableroot, overrides=overrides, version=version, plan=plan,
-                                               compact=True, removetls=True)
+                                               compact=False, removetls=True)
                 ignitiondata = ignitiondata.replace('\n', '')
                 if 'qemu' in template:
                     common.pprint("Relying on ignition hook, make sure it's installed", color='blue')
