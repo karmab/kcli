@@ -128,12 +128,11 @@ class Kconfig(Kbaseconfig):
                 filtervms = self.options.get('filtervms', False)
                 filteruser = self.options.get('filteruser', False)
                 filtertag = self.options.get('filtertag')
-                ignitionhook = self.options.get('ignitionhook', False)
                 from kvirt.ovirt import KOvirt
                 k = KOvirt(host=self.host, port=self.port, user=user, password=password,
                            debug=debug, datacenter=datacenter, cluster=cluster, ca_file=ca_file, org=org,
                            imagerepository=imagerepository, filtervms=filtervms, filteruser=filteruser,
-                           filtertag=filtertag, ignitionhook=ignitionhook)
+                           filtertag=filtertag)
                 self.overrides.update({'host': self.host, 'user': user, 'password': password})
             elif self.type == 'openstack':
                 version = self.options.get('version', '2')

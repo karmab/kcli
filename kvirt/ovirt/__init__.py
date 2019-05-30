@@ -30,7 +30,7 @@ class KOvirt(object):
     def __init__(self, host='127.0.0.1', port=22, user='admin@internal',
                  password=None, insecure=True, ca_file=None, org=None, debug=False,
                  cluster='Default', datacenter='Default', ssh_user='root', imagerepository='ovirt-image-repository',
-                 filtervms=False, filteruser=False, filtertag=None, ignitionhook=False):
+                 filtervms=False, filteruser=False, filtertag=None):
         try:
             url = "https://%s/ovirt-engine/api" % host
             self.conn = sdk.Connection(url=url, username=user,
@@ -55,7 +55,6 @@ class KOvirt(object):
         self.filtervms = filtervms
         self.filteruser = filteruser
         self.filtertag = filtertag
-        self.ignitionhook = ignitionhook
         self.netprofiles = {}
 
     def close(self):
@@ -187,7 +186,8 @@ class KOvirt(object):
                                                enableroot=enableroot, overrides=overrides, version=version, plan=plan,
                                                compact=True, removetls=True)
                 ignitiondata = ignitiondata.replace('\n', '')
-                if self.ignitionhook:
+                if 'qemu' in template:
+                    common.pprint("Relying on ignition hook, make sure it's installed", color='blue')
                     custom_property = types.CustomProperty(name='ignitiondata', value=ignitiondata)
                     custom_properties.append(custom_property)
                 else:
