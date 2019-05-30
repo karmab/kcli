@@ -6,7 +6,6 @@ from jinja2 import Environment, FileSystemLoader
 from jinja2 import StrictUndefined as undefined
 from jinja2.exceptions import TemplateSyntaxError, TemplateError
 from distutils.spawn import find_executable
-from netaddr import IPAddress
 import random
 import socket
 from urllib.parse import quote
@@ -17,6 +16,12 @@ import yaml
 
 binary_types = ['bz2', 'deb', 'jpg', 'gz', 'jpeg', 'iso', 'png', 'rpm', 'tgz', 'zip', 'ks']
 ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety', 'zesty', 'artful', 'bionic', 'cosmic']
+static_nic = """#!/usr/bin/env bash
+if [ ! -f /etc/sysconfig/network-scripts/.{nicname} ] ; then
+nmcli con down {nicname}
+touch /etc/sysconfig/network-scripts/.{nicname}
+nmcli con up {nicname}
+fi"""
 
 
 def fetch(url, path):
@@ -778,6 +783,47 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
         storage["files"].append({"filesystem": "root", "path": "/etc/NetworkManager/NetworkManager.conf",
                                 "overwrite": True,
                                  "contents": {"source": "data:,%s" % nmline, "verification": {}}, "mode": 420})
+    if nets:
+        for index, net in enumerate(nets):
+            netdata = ''
+            if isinstance(net, str):
+                if index == 0:
+                    continue
+                nicname = "ens%d" % (index + 3)
+                ip = None
+                netmask = None
+                noconf = None
+                vips = []
+            elif isinstance(net, dict):
+                nicname = net.get('nic', "ens%d" % (index + 3))
+                ip = net.get('ip')
+                gateway = net.get('gateway')
+                netmask = next((e for e in [net.get('mask'), net.get('netmask')] if e is not None), None)
+                noconf = net.get('noconf')
+                vips = net.get('vips')
+            if noconf is not None:
+                netdata = "DEVICE=%s\nNAME=%s\nONBOOT=no" % (nicname, nicname)
+            elif ip is not None and netmask is not None and not reserveip and gateway is not None:
+                if index == 0 and default_gateway is not None:
+                    gateway = default_gateway
+                netdata = "DEVICE=%s\nNAME=%s\nONBOOT=yes\nNM_CONTROLLED=yes\n" % (nicname, nicname)
+                netdata += "BOOTPROTO=static\nIPADDR=%s\nNETMASK=%s\nGATEWAY=%s" % (ip, netmask, gateway)
+                dns = net.get('dns')
+                if dns is not None:
+                    netdata += "\nDNS1=%s\n" % dns
+                if isinstance(vips, list) and vips:
+                    for vip in vips:
+                        netdata += "[Network]\nAddress=%s/%s\nGateway=%s\n" % (vip, netmask, gateway)
+            if netdata != '':
+                netdata = quote(netdata)
+                storage["files"].append({"filesystem": "root",
+                                         "path": "/etc/sysconfig/network-scripts/ifcfg-%s" % nicname,
+                                         "contents": {"source": "data:,%s" % netdata, "verification": {}}, "mode": 420})
+                static = quote(static_nic.format(nicname=nicname))
+                storage["files"].append({"filesystem": "root",
+                                         "path": "/etc/NetworkManager/dispatcher.d/static_%s" % nicname,
+                                         "contents": {"source": "data:,%s" % static, "verification": {}},
+                                         "mode": int('700', 8)})
     if files:
         filesdata = process_ignition_files(files=files, overrides=overrides)
         if filesdata:
@@ -793,52 +839,8 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
         systemd = {"units": [cmdunit]}
     else:
         systemd = {}
-    networkunits = []
-    if nets:
-        for index, net in enumerate(nets):
-            netdata = ''
-            if isinstance(net, str):
-                if index == 0:
-                    continue
-                nicname = "ens%d" % (index + 3)
-                ip = None
-                netmask = None
-                cidr = None
-                noconf = None
-                vips = []
-            elif isinstance(net, dict):
-                nicname = net.get('nic', "ens%d" % (index + 3))
-                ip = net.get('ip')
-                gateway = net.get('gateway')
-                netmask = next((e for e in [net.get('mask'), net.get('netmask')] if e is not None), None)
-                noconf = net.get('noconf')
-                vips = net.get('vips')
-            if noconf is not None:
-                netdata += "[Match]\nName=%s\n\n[Network]\nDHCP=no\n" % nicname
-            elif ip is not None and netmask is not None and not reserveip and gateway is not None:
-                cidr = IPAddress(netmask).netmask_bits()
-                netdata += "[Match]\nName=%s\n\n" % nicname
-                if index == 0 and default_gateway is not None:
-                    gateway = default_gateway
-                netdata += "[Network]\nAddress=%s/%s\nGateway=%s\n" % (ip, cidr, gateway)
-                dns = net.get('dns')
-                if dns is not None:
-                    netdata += "DNS=%s\n" % dns
-                # domain = net.get('domain')
-                # if domain is not None:
-                #    netdata += "  dns-search %s\n" % domain
-                if isinstance(vips, list) and vips:
-                    for vip in vips:
-                        netdata += "[Network]\nAddress=%s/%s\nGateway=%s\n" % (vip, netmask, gateway)
-            if netdata != '':
-                # networkunits.append({"contents": netdata, "name": "static.network"})
-                networkunits.append({"contents": netdata, "name": "%s.network" % nicname})
-    if networkunits:
-        networkd = {"units": networkunits}
-    else:
-        networkd = {}
     data = {'ignition': {'version': version, 'config': {}}, 'storage': storage, 'systemd': systemd,
-            'networkd': networkd, 'passwd': {'users': [{'name': 'core', 'sshAuthorizedKeys': publickeys}]}}
+            'networkd': {}, 'passwd': {'users': [{'name': 'core', 'sshAuthorizedKeys': publickeys}]}}
     if enableroot:
         rootdata = {'name': 'root', 'sshAuthorizedKeys': publickeys}
         data['passwd']['users'].append(rootdata)
