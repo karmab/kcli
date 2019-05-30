@@ -17,10 +17,9 @@ import yaml
 binary_types = ['bz2', 'deb', 'jpg', 'gz', 'jpeg', 'iso', 'png', 'rpm', 'tgz', 'zip', 'ks']
 ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety', 'zesty', 'artful', 'bionic', 'cosmic']
 static_nic = """#!/usr/bin/env bash
-if [ ! -f /etc/sysconfig/network-scripts/.{nicname} ] ; then
-nmcli con down {nicname}
-touch /etc/sysconfig/network-scripts/.{nicname}
-nmcli con up {nicname}
+if [ ! -f /etc/sysconfig/network-scripts/ifcfg-{nicname} ] ; then
+echo -e \"\"\"{data}\"\"\" > /etc/sysconfig/network-scripts/ifcfg-{nicname}
+systemctl restart NetworkManager
 fi"""
 
 
@@ -815,15 +814,11 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
                     for vip in vips:
                         netdata += "[Network]\nAddress=%s/%s\nGateway=%s\n" % (vip, netmask, gateway)
             if netdata != '':
-                netdata = quote(netdata)
-                storage["files"].append({"filesystem": "root",
-                                         "path": "/etc/sysconfig/network-scripts/ifcfg-%s" % nicname,
-                                         "contents": {"source": "data:,%s" % netdata, "verification": {}}, "mode": 420})
-                static = quote(static_nic.format(nicname=nicname))
+                static = quote(static_nic.format(nicname=nicname, data=netdata))
                 storage["files"].append({"filesystem": "root",
                                          "path": "/etc/NetworkManager/dispatcher.d/static_%s" % nicname,
                                          "contents": {"source": "data:,%s" % static, "verification": {}},
-                                         "mode": int('700', 8)})
+                                         "mode": int('755', 8)})
     if files:
         filesdata = process_ignition_files(files=files, overrides=overrides)
         if filesdata:

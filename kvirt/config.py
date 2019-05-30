@@ -371,9 +371,6 @@ class Kconfig(Kbaseconfig):
                 else:
                     common.pprint("Incorrect file entry.Leaving...", color='red')
                     os._exit(1)
-                if path is None:
-                        common.pprint("Missing path in files of %s.Leaving..." % name, color='red')
-                        os._exit(1)
                 if origin is not None:
                     if onfly is not None and '~' not in origin:
                         destdir = basedir
@@ -393,6 +390,9 @@ class Kconfig(Kbaseconfig):
                     common.pprint("Content of file %s not found in %s.Ignoring..." % (path, name),
                                   color='red')
                     os._exit(1)
+                if path is None:
+                    common.pprint("Using current directory for path in files of %s" % name, color='blue')
+                    path = os.path.basename(origin)
         enableroot = profile.get('enableroot', default_enableroot)
         tags = None
         if default_tags is not None:
@@ -834,7 +834,7 @@ class Kconfig(Kbaseconfig):
                                 dnsclients[dnsclient] = z
                             z.delete_dns(dnsclient, domain)
                         common.set_lastvm(name, self.client, delete=True)
-                        common.pprint("VM %s deleted on %s!" % (name, hypervisor))
+                        common.pprint("%s deleted on %s!" % (name, hypervisor))
                         deletedvms.append(name)
                         found = True
             if container:
@@ -1174,7 +1174,7 @@ class Kconfig(Kbaseconfig):
                     elif 'basevm' in profile and profile['basevm'] in baseentries:
                         baseprofile = baseentries[profile['basevm']]
                     else:
-                        common.pprint("Incorrect base entry for VM %s. skipping..." % name, color='blue')
+                        common.pprint("Incorrect base entry for %s. skipping..." % name, color='blue')
                         continue
                     for key in baseprofile:
                         if key not in profile:
@@ -1211,7 +1211,7 @@ class Kconfig(Kbaseconfig):
                     profile = customprofile
                 if z.exists(name):
                     if not update:
-                        common.pprint("VM %s skipped on %s!" % (name, vmclient), color='blue')
+                        common.pprint("%s skipped on %s!" % (name, vmclient), color='blue')
                     else:
                         updated = False
                         currentvm = z.info(name)
@@ -1224,10 +1224,10 @@ class Kconfig(Kbaseconfig):
                         currentflavor = currentvm.get('flavor')
                         if 'template' in currentvm:
                             if 'template' in profile and currenttemplate != profile['template']:
-                                common.pprint("Existing VM %s has a different template. skipped!" % name, color='blue')
+                                common.pprint("Existing %s has a different template. skipped!" % name, color='blue')
                                 continue
                         elif 'template' in profile:
-                            common.pprint("Existing VM %s has a different template. skipped!" % name, color='blue')
+                            common.pprint("Existing %s has a different template. skipped!" % name, color='blue')
                             continue
                         if 'autostart' in profile and currentstart != profile['autostart']:
                             updated = True
@@ -1289,7 +1289,7 @@ class Kconfig(Kbaseconfig):
                                     interface = "eth%s" % net
                                     z.delete_nic(name, interface)
                         if not updated:
-                            common.pprint("VM %s skipped on %s!" % (name, vmclient), color='blue')
+                            common.pprint("%s skipped on %s!" % (name, vmclient), color='blue')
                     existingvms.append(name)
                     continue
                 # cmds = default_cmds + customprofile.get('cmds', []) + profile.get('cmds', [])
