@@ -1109,7 +1109,6 @@ class Kvirt(object):
             e = element.find('{kvirt}report')
             if e is not None:
                 report = e.text
-            e = element.find('{kvirt}report')
             e = element.find('{kvirt}ip')
             if e is not None:
                 ip = e.text
@@ -1150,17 +1149,18 @@ class Kvirt(object):
             else:
                 network = element.find('source').get('network')
                 network_type = 'routed'
-                try:
-                    networkdata = conn.networkLookupByName(network)
-                    netxml = networkdata.XMLDesc()
-                    netroot = ET.fromstring(netxml)
-                    hostentries = list(netroot.getiterator('host'))
-                    for host in hostentries:
-                        if host.get('mac') == mac:
-                            ip = host.get('ip')
-                except:
-                    network_type = 'Not Found'
-            if ifaces:
+                if ip is None:
+                    try:
+                        networkdata = conn.networkLookupByName(network)
+                        netxml = networkdata.XMLDesc()
+                        netroot = ET.fromstring(netxml)
+                        hostentries = list(netroot.getiterator('host'))
+                        for host in hostentries:
+                            if host.get('mac') == mac:
+                                ip = host.get('ip')
+                    except:
+                        network_type = 'Not Found'
+            if ifaces and ip is None:
                 matches = [ifaces[x]['addrs'] for x in ifaces if ifaces[x]['hwaddr'] == mac and
                            ifaces[x]['addrs'] is not None]
                 if matches:
@@ -2254,6 +2254,8 @@ class Kvirt(object):
                 template = e.text
                 if template != '':
                     user = common.get_user(template)
+        if ip is not None:
+            return user, ip
         networktypes = [element.get('type') for element in list(root.getiterator('interface'))]
         nics = [n for n in list(root.getiterator('interface'))]
         networktypes = [element.get('type') for element in nics]
