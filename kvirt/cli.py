@@ -426,6 +426,9 @@ def _list(args):
                 containers.add_row(container)
         print(containers)
     elif images:
+        if config.type != 'kvm':
+            common.pprint("Operation not supported on this kind of client.Leaving...", color='red')
+            os._exit(1)
         cont = Kcontainerconfig(config, client=args.containerclient).cont
         common.pprint("Listing images...")
         images = PrettyTable(["Name"])
