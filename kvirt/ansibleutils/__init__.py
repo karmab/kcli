@@ -123,9 +123,9 @@ def make_plan_inventory(vms_to_host, plan, vms, groups={}, user=None, yamlinvent
     :param yamlinventory:
     """
     inventory = {}
-    clientinventory = {}
     inventoryfile = "/tmp/%s.inv.yaml" % plan if yamlinventory else "/tmp/%s.inv" % plan
     pprint("Generating inventory %s" % inventoryfile, color='blue')
+    all = vms
     if groups:
         inventory[plan] = {'children': {}}
         for group in groups:
@@ -134,47 +134,38 @@ def make_plan_inventory(vms_to_host, plan, vms, groups={}, user=None, yamlinvent
             nodes = groups[group]
             inventory[plan]['children'][group]['hosts'] = {}
             for name in nodes:
+                all.remove(name)
                 k = vms_to_host[name].k
-                client = vms_to_host[name].client
-                if client not in clientinventory:
-                    clientinventory[client] = {'hosts': {}}
                 inv = vm_inventory(k, name, user=user, yamlinventory=yamlinventory)
                 if inv is not None:
-                    clientinventory[client]['hosts'][name] = inv
                     inventory[plan]['children'][group]['hosts'][name] = inv
-    else:
-        inventory[plan] = {'hosts': {}}
-        for name in vms:
-            k = vms_to_host[name].k
-            client = vms_to_host[name].client
-            if client not in clientinventory:
-                clientinventory[client] = {'hosts': {}}
-            inv = vm_inventory(k, name, user=user, yamlinventory=yamlinventory)
-            if inv is not None:
-                inventory[plan]['hosts'][name] = inv
-                clientinventory[client]['hosts'][name] = inv
-    for entry in vms_to_host.values():
-        client = entry.client
-        tunnel = entry.tunnel
-        tunneluser = entry.user
-        tunnelport = entry.port
-        tunnelhost = entry.host
-        if tunnel:
-            tunnelinfo = "-o ProxyCommand=\"ssh -p %s -W %%h:%%p %s@%s\"" % (tunnelport, tunneluser, tunnelhost)
-            if client in clientinventory and 'vars' not in clientinventory[client]:
-                clientinventory[client]['vars'] = {'ansible_ssh_common_args': tunnelinfo}
-    for name in inventory[plan]['hosts']:
-        for client in clientinventory:
-            if name in clientinventory[client]['hosts']:
-                tunnelinfo = clientinventory[client]['vars']['ansible_ssh_common_args']
-                if yamlinventory:
-                    inventory[plan]['hosts'][name]['ansible_ssh_common_args'] = tunnelinfo
-                else:
-                    inventory[plan]['hosts'][name] += " ansible_ssh_common_args='%s'" % tunnelinfo
-                break
+                if vms_to_host[name].tunnel:
+                    tunnelinfo = "-o ProxyCommand=\"ssh -p %s -W %%h:%%p %s@%s\"" % (
+                        vms_to_host[name].port,
+                        vms_to_host[name].user,
+                        vms_to_host[name].host)
+                    if yamlinventory:
+                        inventory[plan]['children'][group]['hosts'][name]['ansible_ssh_common_args'] = tunnelinfo
+                    else:
+                        inventory[plan]['hosts'][name] += " ansible_ssh_common_args='%s'" % tunnelinfo
+
+    inventory[plan]['hosts'] = {}
+    for name in all:
+        k = vms_to_host[name].k
+        inv = vm_inventory(k, name, user=user, yamlinventory=yamlinventory)
+        if inv is not None:
+            inventory[plan]['hosts'][name] = inv
+        if vms_to_host[name].tunnel:
+            tunnelinfo = "-o ProxyCommand=\"ssh -p %s -W %%h:%%p %s@%s\"" % (
+                vms_to_host[name].port,
+                vms_to_host[name].user,
+                vms_to_host[name].host)
+            if yamlinventory:
+                inventory[plan]['hosts'][name]['ansible_ssh_common_args'] = tunnelinfo
+            else:
+                inventory[plan]['hosts'][name] += " ansible_ssh_common_args='%s'" % tunnelinfo
     with open(inventoryfile, "w") as f:
         if yamlinventory:
-            # inventory.update(clientinventory)
             dump({'all': {'children': inventory}}, f, default_flow_style=False)
         else:
             inventorystr = ''
