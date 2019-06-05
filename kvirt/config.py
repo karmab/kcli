@@ -864,7 +864,7 @@ class Kconfig(Kbaseconfig):
             for keyfile in glob.glob("%s.key*" % plan):
                 common.pprint("file %s from %s deleted!" % (keyfile, plan))
                 os.remove(keyfile)
-            for ansiblefile in glob.glob("/tmp/%s*" % plan):
+            for ansiblefile in glob.glob("/tmp/%s*inv*" % plan):
                 common.pprint("file %s from %s deleted!" % (ansiblefile, plan))
                 os.remove(ansiblefile)
             if deletedlbs and self.type in ['aws', 'gcp']:

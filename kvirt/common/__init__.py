@@ -769,19 +769,19 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     storage["files"].append({"filesystem": "root", "path": "/etc/hostname", "overwrite": True,
                              "contents": {"source": "data:,%s" % hostnameline, "verification": {}}, "mode": 420})
     if dns is not None:
-        # dnsline = quote("prepend domain-name-servers %s;\n" % dns)
-        # storage["files"].append({"filesystem": "root", "path": "/etc/dhcp/dhclient.conf",
-        #                        "overwrite": True,
-        #                         "contents": {"source": "data:,%s" % dnsline, "verification": {}}, "mode": 420})
+        dnsline = quote("prepend domain-name-servers %s;\n" % dns)
+        storage["files"].append({"filesystem": "root", "path": "/etc/dhcp/dhclient.conf",
+                                 "overwrite": True,
+                                 "contents": {"source": "data:,%s" % dnsline, "verification": {}}, "mode": 420})
         resolvconf = "search %s\nnameserver %s\n" % (domain, dns) if domain is not None else "nameserver %s\n" % dns
         dnsline = quote(resolvconf)
-        storage["files"].append({"filesystem": "root", "path": "/etc/resolv.conf",
-                                "overwrite": True,
-                                 "contents": {"source": "data:,%s" % dnsline, "verification": {}}, "mode": 420})
-        nmline = quote("[main]\ndns=none\n")
-        storage["files"].append({"filesystem": "root", "path": "/etc/NetworkManager/NetworkManager.conf",
-                                "overwrite": True,
-                                 "contents": {"source": "data:,%s" % nmline, "verification": {}}, "mode": 420})
+        # storage["files"].append({"filesystem": "root", "path": "/etc/resolv.conf",
+        #                         "overwrite": True,
+        #                          "contents": {"source": "data:,%s" % dnsline, "verification": {}}, "mode": 420})
+        # nmline = quote("[main]\ndns=none\n")
+        # storage["files"].append({"filesystem": "root", "path": "/etc/NetworkManager/NetworkManager.conf",
+        #                         "overwrite": True,
+        #                          "contents": {"source": "data:,%s" % nmline, "verification": {}}, "mode": 420})
     if nets:
         for index, net in enumerate(nets):
             netdata = ''
