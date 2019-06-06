@@ -624,7 +624,7 @@ def ssh(name, ip='', host=None, port=22, hostuser=None, user=None, local=None, r
             if Y:
                 sshcommand = "-Y %s" % sshcommand
             if cmd:
-                sshcommand = "%s %s" % (sshcommand, cmd)
+                sshcommand = "%s '%s'" % (sshcommand, cmd)
             if host is not None and host not in ['localhost', '127.0.0.1'] and tunnel and hostuser is not None:
                 tunnelcommand = "-qp %s -W %%h:%%p %s@%s" % (port, hostuser, host)
                 if identityfile is not None:
@@ -769,7 +769,11 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     storage["files"].append({"filesystem": "root", "path": "/etc/hostname", "overwrite": True,
                              "contents": {"source": "data:,%s" % hostnameline, "verification": {}}, "mode": 420})
     if dns is not None:
-        dnsline = quote("prepend domain-name-servers %s;\n" % dns)
+        nmline = quote("[main]\ndhcp=dhclient\n")
+        storage["files"].append({"filesystem": "root", "path": "/etc/NetworkManager/conf.d/dhcp-client.conf",
+                                 "overwrite": True,
+                                 "contents": {"source": "data:,%s" % nmline, "verification": {}}, "mode": 420})
+        dnsline = quote("prepend domain-name-servers %s;\nsend dhcp-client-identifier = hardware;\n" % dns)
         storage["files"].append({"filesystem": "root", "path": "/etc/dhcp/dhclient.conf",
                                  "overwrite": True,
                                  "contents": {"source": "data:,%s" % dnsline, "verification": {}}, "mode": 420})
