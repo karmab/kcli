@@ -159,6 +159,21 @@ class Kvirt(object):
         except:
             return False
 
+    def disk_path(self, pool, name):
+        """
+
+        :param pool:
+        :param name:
+        :return:
+        """
+        conn = self.conn
+        try:
+            storage = conn.storagePoolLookupByName(pool)
+            storage.refresh()
+            return storage.storageVolLookupByName(stor).path()
+        except:
+            return None
+
     def create(self, name, virttype='kvm', profile='kvirt', flavor=None, plan='kvirt', cpumodel='host-model',
                cpuflags=[], numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None,
                disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None,
