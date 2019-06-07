@@ -172,9 +172,10 @@ class Kaws(object):
         if cloudinit:
             if template is not None and (template.startswith('coreos') or template.startswith('rhcos')):
                 etcd = None
+                version = '3.0.0' if template.startswith('fedora-coreos') else '2.2.0'
                 userdata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                            domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
-                                           overrides=overrides, etcd=etcd, plan=plan)
+                                           overrides=overrides, etcd=etcd, version=version, plan=plan)
             else:
                 common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
                                  reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides,
