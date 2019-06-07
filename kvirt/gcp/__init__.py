@@ -593,7 +593,7 @@ class Kgcp(object):
         for interface in vm['networkInterfaces']:
             network = os.path.basename(interface['network'])
             device = interface['name']
-            mac = interface['networkIP']
+            mac = interface['networkIP'] if 'networkIP' in interface else 'N/A'
             network_type = ''
             nets.append({'device': device, 'mac': mac, 'net': network, 'type': network_type})
         if nets:
