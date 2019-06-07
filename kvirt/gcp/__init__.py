@@ -1260,6 +1260,12 @@ class Kgcp(object):
         zone = self.zone
         region = self.region
         client = dns.Client(project)
+        cluster = None
+        fqdn = "%s.%s" % (name, domain)
+        if fqdn.split('-')[0] == fqdn.split('.')[1]:
+            cluster = fqdn.split('-')[0]
+            name = '.'.join(fqdn.split('.')[:1])
+            domain = fqdn.replace("%s." % name, '').replace("%s." % cluster, '')
         domain_name = domain.replace('.', '-')
         common.pprint("Assuming Domain name is %s..." % domain_name)
         dnszones = [z for z in client.list_zones() if z.name == domain_name]
@@ -1268,7 +1274,8 @@ class Kgcp(object):
             return {'result': 'failure', 'reason': "Domain not found"}
         else:
             dnszone = dnszones[0]
-        entry = "%s.%s." % (name, domain)
+        dnsentry = name if cluster is None else "%s.%s" % (name, cluster)
+        entry = "%s.%s." % (dnsentry, domain)
         if ip is None:
             net = nets[0]
             if isinstance(net, dict):
@@ -1279,12 +1286,12 @@ class Kgcp(object):
                     ip = self.ip(name)
                     if ip is None:
                         sleep(5)
-                        print("Waiting 5 seconds to grab ip and create DNS record...")
+                        common.pprint("Waiting 5 seconds to grab ip and create DNS record...", color='blue')
                         counter += 10
                     else:
                         break
         if ip is None:
-            print("Couldn't assign DNS")
+            common.pprint("Couldn't assign DNS", color='red')
             return
         address_body = {"name": name, "address": ip}
         self.conn.addresses().insert(project=project, region=region, body=address_body).execute()
@@ -1317,13 +1324,20 @@ class Kgcp(object):
         project = self.project
         region = self.region
         client = dns.Client(project)
+        cluster = None
+        fqdn = "%s.%s" % (name, domain)
+        if fqdn.split('-')[0] == fqdn.split('.')[1]:
+            cluster = fqdn.split('-')[0]
+            name = '.'.join(fqdn.split('.')[:1])
+            domain = fqdn.replace("%s." % name, '').replace("%s." % cluster, '')
         domain_name = domain.replace('.', '-')
         dnszones = [z for z in client.list_zones() if z.name == domain_name]
         if not dnszones:
             return
         else:
             dnszone = dnszones[0]
-        entry = "%s.%s." % (name, domain)
+        dnsentry = name if cluster is None else "%s.%s" % (name, cluster)
+        entry = "%s.%s." % (dnsentry, domain)
         changes = dnszone.changes()
         records = [record for record in dnszone.list_resource_record_sets() if entry in record.name]
         if records:

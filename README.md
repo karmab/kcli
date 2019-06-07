@@ -1,5 +1,6 @@
 # kcli repository
 
+[![](https://dockerbuildbadges.quelltext.eu/status.svg?organization=karmab&repository=kcli)](https://hub.docker.com/r/karmab/kcli/builds/)
 [![Build Status](https://travis-ci.org/karmab/kcli.svg?branch=master)](https://travis-ci.org/karmab/kcli)
 [![Pypi](http://img.shields.io/pypi/v/kcli.svg)](https://pypi.python.org/pypi/kcli/)
 [![Copr](https://copr.fedorainfracloud.org/coprs/karmab/kcli/package/kcli/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/karmab/kcli/package/kcli)
