@@ -643,6 +643,27 @@ class Kgcp(object):
             ip = vm['networkInterfaces'][0]['accessConfigs'][0]['natIP']
         return ip
 
+    def internalip(self, name):
+        """
+
+        :param name:
+        :return:
+        """
+        ip = None
+        conn = self.conn
+        project = self.project
+        zone = self.zone
+        try:
+            vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
+        except:
+            common.pprint("Vm %s not found" % name, color='red')
+            return None
+        if 'networkIP' not in vm['networkInterfaces'][0]:
+            return None
+        else:
+            ip = vm['networkInterfaces'][0]['networkIP']
+        return ip
+
 # should return a list of available templates, or isos ( if iso is set to True
     def volumes(self, iso=False):
         """
@@ -1257,6 +1278,7 @@ class Kgcp(object):
         :param force:
         :return:
         """
+        internalip = None
         project = self.project
         zone = self.zone
         region = self.region
@@ -1277,6 +1299,17 @@ class Kgcp(object):
             dnszone = dnszones[0]
         dnsentry = name if cluster is None else "%s.%s" % (name, cluster)
         entry = "%s.%s." % (dnsentry, domain)
+        if cluster is not None and ('master' in name or 'worker' in name):
+            counter = 0
+            while counter != 100:
+                internalip = self.internalip(name)
+                if internalip is None:
+                    sleep(5)
+                    common.pprint("Waiting 5 seconds to grab internal ip and create DNS record for %s..." % name,
+                                  color='blue')
+                    counter += 10
+                else:
+                    break
         if ip is None:
             net = nets[0]
             if isinstance(net, dict):
@@ -1287,31 +1320,45 @@ class Kgcp(object):
                     ip = self.ip(name)
                     if ip is None:
                         sleep(5)
-                        common.pprint("Waiting 5 seconds to grab ip and create DNS record...", color='blue')
+                        common.pprint("Waiting 5 seconds to grab ip and create DNS record for %s..." % name,
+                                      color='blue')
                         counter += 10
                     else:
+                        address_body = {"name": name, "address": ip}
+                        self.conn.addresses().insert(project=project, region=region, body=address_body).execute()
+                        network_interface = "nic0"
+                        access_config_body = {"natIP": ip}
+                        self.conn.instances().updateAccessConfig(project=project, zone=zone, instance=name,
+                                                                 networkInterface=network_interface,
+                                                                 body=access_config_body).execute()
                         break
         if ip is None:
-            common.pprint("Couldn't assign DNS", color='red')
+            common.pprint("Couldn't assign DNS for %s" % name, color='red')
             return
-        address_body = {"name": name, "address": ip}
-        self.conn.addresses().insert(project=project, region=region, body=address_body).execute()
-        network_interface = "nic0"
-        access_config_body = {"natIP": ip}
-        self.conn.instances().updateAccessConfig(project=project, zone=zone, instance=name,
-                                                 networkInterface=network_interface, body=access_config_body).execute()
         changes = dnszone.changes()
-        record_set = dnszone.resource_record_set(entry, 'A', 300, [ip])
+        dnsip = ip if internalip is None else internalip
+        record_set = dnszone.resource_record_set(entry, 'A', 300, [dnsip])
         changes.add_record_set(record_set)
         if alias:
             for a in alias:
                 if a == '*':
-                    new = '*.%s.%s.' % (name, domain)
-                    record_set = dnszone.resource_record_set(new, 'A', 300, [ip])
+                    if cluster is not None and ('master' in name or 'worker' in name):
+                        new = '*.apps.%s.%s.' % (cluster, domain)
+                    else:
+                        new = '*.%s.%s.' % (name, domain)
+                    alias_record_set = dnszone.resource_record_set(new, 'A', 300, [ip])
                 else:
                     new = '%s.%s.' % (a, domain) if '.' not in a else '%s.' % a
-                    record_set = dnszone.resource_record_set(new, 'CNAME', 300, [entry])
-                changes.add_record_set(record_set)
+                    alias_record_set = dnszone.resource_record_set(new, 'CNAME', 300, [entry])
+                changes.add_record_set(alias_record_set)
+        if cluster is not None and 'master' in name and internalip is not None:
+            etcd1 = "_etcd-server-ssl._tcp.%s.%s." % (cluster, domain)
+            etcd2 = "etcd-%s.%s.%s." % (name[-1], cluster, domain)
+            srventry = "0 10 2380 %s" % (etcd2)
+            record_set = dnszone.resource_record_set(etcd2, 'A', 300, [internalip])
+            changes.add_record_set(record_set)
+            record_set = dnszone.resource_record_set(etcd1, 'SRV', 300, [srventry])
+            changes.add_record_set(record_set)
         changes.create()
         return {'result': 'success'}
 
@@ -1396,6 +1443,7 @@ class Kgcp(object):
         return {'result': 'success'}
 
     def create_loadbalancer(self, name, ports=[], checkpath='/index.html', vms=[], domain=None):
+        sane_name = name.replace('.', '-')
         port = int(ports[0])
         if len(ports) > 1:
             common.pprint("Only deploying for first port %s of the list" % port, color='blue')
@@ -1413,31 +1461,32 @@ class Kgcp(object):
                 if update == 0:
                     instances.append({"instance": "%s/%s" % (vmpath, vm)})
         health_check_body = {"checkIntervalSec": "10", "timeoutSec": "10", "unhealthyThreshold": 3,
-                             "healthyThreshold": 3, "type": protocol, "name": name}
+                             "healthyThreshold": 3, "type": protocol, "name": sane_name}
         newcheck = {"port": port}
         if protocol == 'TCP':
             health_check_body["tcpHealthCheck"] = newcheck
             operation = conn.healthChecks().insert(project=project, body=health_check_body).execute()
             healthurl = operation['targetLink']
             self._wait_for_operation(operation)
-            instance_group_body = {"name": name, "namedPorts": [{"name": "%s-%d" % (name, port), "port": port}]}
+            instance_group_body = {"name": sane_name, "namedPorts": [{"name": "%s-%d" % (sane_name, port),
+                                                                      "port": port}]}
             operation = conn.instanceGroups().insert(project=project, zone=zone, body=instance_group_body).execute()
             instancegroupurl = operation['targetLink']
             self._wait_for_operation(operation)
             if instances:
                 instances_body = {"instances": instances}
-                operation = conn.instanceGroups().addInstances(project=project, zone=zone, instanceGroup=name,
+                operation = conn.instanceGroups().addInstances(project=project, zone=zone, instanceGroup=sane_name,
                                                                body=instances_body).execute()
                 self._wait_for_operation(operation)
             backend_body = {"healthChecks": [healthurl], "sessionAffinity": 'CLIENT_IP', "protocol": protocol,
-                            "port-name": "%s-%d" % (name, port), "name": name,
+                            "port-name": "%s-%d" % (sane_name, port), "name": sane_name,
                             "backends": [{"group": instancegroupurl}]}
             for port in ports:
                 backend_body
             operation = conn.backendServices().insert(project=project, body=backend_body).execute()
             backendurl = operation['targetLink']
             self._wait_for_operation(operation)
-            target_tcp_proxy_body = {"service": backendurl, "proxyHeader": "NONE", "name": name}
+            target_tcp_proxy_body = {"service": backendurl, "proxyHeader": "NONE", "name": sane_name}
             operation = conn.targetTcpProxies().insert(project=project, body=target_tcp_proxy_body).execute()
             targeturl = operation['targetLink']
             self._wait_for_operation(operation)
@@ -1447,42 +1496,43 @@ class Kgcp(object):
             operation = conn.httpHealthChecks().insert(project=project, body=health_check_body).execute()
             healthurl = operation['targetLink']
             self._wait_for_operation(operation)
-            target_pool_body = {"name": name, "healthChecks": [healthurl]}
+            sane_name = name.replace('.', '-')
+            target_pool_body = {"name": sane_name, "healthChecks": [healthurl]}
             operation = conn.targetPools().insert(project=project, region=region, body=target_pool_body).execute()
             targeturl = operation['targetLink']
             self._wait_for_operation(operation)
             if instances:
                 instances_body = {"instances": instances}
-                operation = conn.targetPools().addInstance(project=project, region=region, targetPool=name,
+                operation = conn.targetPools().addInstance(project=project, region=region, targetPool=sane_name,
                                                            body=instances_body).execute()
                 self._wait_for_operation(operation)
         if protocol == 'TCP':
-            address_body = {"name": name, "ipVersion": "IPV4"}
+            address_body = {"name": sane_name, "ipVersion": "IPV4"}
             if domain is not None:
                 address_body["description"] = domain
             operation = conn.globalAddresses().insert(project=project, body=address_body).execute()
             ipurl = operation['targetLink']
             self._wait_for_operation(operation)
-            ip = conn.globalAddresses().get(project=project, address=name).execute()['address']
+            ip = conn.globalAddresses().get(project=project, address=sane_name).execute()['address']
             common.pprint("Using load balancer ip %s" % ip)
             self._wait_for_operation(operation)
-            forwarding_rule_body = {"IPAddress": ipurl, "target": targeturl, "portRange": port, "name": name}
+            forwarding_rule_body = {"IPAddress": ipurl, "target": targeturl, "portRange": port, "name": sane_name}
             operation = conn.globalForwardingRules().insert(project=project, body=forwarding_rule_body).execute()
         else:
-            address_body = {"name": name}
+            address_body = {"name": sane_name}
             if domain is not None:
                 address_body["description"] = domain
             operation = conn.addresses().insert(project=project, region=region, body=address_body).execute()
             ipurl = operation['targetLink']
             self._wait_for_operation(operation)
-            ip = conn.addresses().get(project=project, region=region, address=name).execute()['address']
+            ip = conn.addresses().get(project=project, region=region, address=sane_name).execute()['address']
             common.pprint("Using load balancer ip %s" % ip)
             self._wait_for_operation(operation)
-            forwarding_rule_body = {"IPAddress": ipurl, "target": targeturl, "portRange": port, "name": name}
+            forwarding_rule_body = {"IPAddress": ipurl, "target": targeturl, "portRange": port, "name": sane_name}
             operation = conn.forwardingRules().insert(project=project, region=region,
                                                       body=forwarding_rule_body).execute()
         self._wait_for_operation(operation)
-        firewall_body = {"name": name, "direction": "INGRESS", "allowed": [{"IPProtocol": "tcp", "ports": [port]}]}
+        firewall_body = {"name": sane_name, "direction": "INGRESS", "allowed": [{"IPProtocol": "tcp", "ports": [port]}]}
         operation = conn.firewalls().insert(project=project, body=firewall_body).execute()
         self._wait_for_operation(operation)
         if domain is not None:
@@ -1490,6 +1540,7 @@ class Kgcp(object):
         return {'result': 'success'}
 
     def delete_loadbalancer(self, name):
+        name = name.replace('.', '-')
         conn = self.conn
         project = self.project
         zone = self.zone
