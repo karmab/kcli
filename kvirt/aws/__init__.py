@@ -26,6 +26,7 @@ class Kaws(object):
     """
     def __init__(self, access_key_id=None, access_key_secret=None, debug=False,
                  region='eu-west-3', keypair=None):
+        self.ami_date = 20195
         self.debug = debug
         self.conn = boto3.client('ec2', aws_access_key_id=access_key_id, aws_secret_access_key=access_key_secret,
                                  region_name=region)
@@ -545,22 +546,57 @@ class Kaws(object):
         conn = self.conn
         images = {}
         finalimages = []
-        oses = ['amzn*', 'CentOS Linux 7 x86_64*', 'RHEL-7.*GA*', 'suse-sles-1?-*', 'ubuntu-*-server-*', 'kcli*',
-                'CoreOS-stable*']
+        oses = ['CentOS Linux 7 x86_64*', 'RHEL-7.*GA*', 'ubuntu-xenial-*Standard*', 'kcli*',
+                'CoreOS-stable*', 'RHEL-8.0.0_HVM-*', 'rhcos-4*']
         Filters = [{'Name': 'name', 'Values': oses}]
         allimages = conn.describe_images(Filters=Filters)
+        rhcos = {}
+        rhels = {}
+        coreosname, coreosid, coreosversion = None, None, 0
+        centosname, centosid, centosversion = None, None, 0
         for image in allimages['Images']:
             name = image['Name']
             amiid = image['ImageId']
             date = datetime.strptime(image['CreationDate'], '%Y-%m-%dT%H:%M:%S.000Z')
-            if 'ProductCodes' in image:
-                codeid = image['ProductCodes'][0]['ProductCodeId']
-                if codeid not in images or date > images[codeid]['date']:
-                    images[codeid] = {'name': name, 'date': date, 'id': amiid}
+            if int("%s%s" % (date.year, date.month)) < self.ami_date:
+                continue
+            if name.startswith('CentOS'):
+                index = 8 if 'ENA' in name else 6
+                newcentosversion = int(name.split(' ')[index].split('_')[0])
+                if newcentosversion > centosversion:
+                    centosversion = newcentosversion
+                    centosname = name
+                    centosid = amiid
+                continue
+            if name.startswith('rhcos'):
+                rhcosversion = '.'.join(name.split('.')[:1])
+                date = datetime.strptime(name.split('.')[2], '%Y%m%d')
+                if rhcosversion not in images or date > rhcos[rhcosversion]['date']:
+                    rhcos[rhcosversion] = {'name': name, 'date': date, 'id': amiid}
+                continue
+            elif name.startswith('RHEL'):
+                rhelversion = name.split('_')[0]
+                date = datetime.strptime(name.split('-')[2], '%Y%m%d')
+                if rhelversion not in images or date > rhels[rhelversion]['date']:
+                    rhels[rhelversion] = {'name': name, 'date': date, 'id': amiid}
+                continue
+            elif name.startswith('CoreOS-stable-'):
+                newcoreosversion = int(name.split('-')[2].replace('.', ''))
+                if newcoreosversion > coreosversion:
+                    coreosversion = newcoreosversion
+                    coreosname = name
+                    coreosid = amiid
+                continue
             else:
                 finalimages.append("%s - %s" % (name, amiid))
         for image in images:
             finalimages.append("%s - %s" % (images[image]['name'], images[image]['id']))
+        for version in rhcos:
+            finalimages.append("%s - %s" % (rhcos[version]['name'], rhcos[version]['id']))
+        for version in rhels:
+            finalimages.append("%s - %s" % (rhels[version]['name'], rhels[version]['id']))
+        finalimages.append("%s - %s" % (coreosname, coreosid))
+        finalimages.append("%s - %s" % (centosname, centosid))
         return sorted(finalimages, key=str.lower)
 
     def delete(self, name, snapshots=False):
