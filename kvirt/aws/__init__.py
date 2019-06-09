@@ -131,12 +131,21 @@ class Kaws(object):
         :param tags:
         :return:
         """
+        conn = self.conn
         if self.exists(name):
             return {'result': 'failure', 'reason': "VM %s already exists" % name}
         template = self.__evaluate_template(template)
         keypair = self.keypair
         if template is not None and not template.startswith('ami-'):
+            Filters = [{'Name': 'name', 'Values': [template]}]
+            templates = conn.describe_images(Filters=Filters)
+            if 'Images' in templates:
+                imageid = templates['Images'][0]['ImageId']
+                common.pprint("Using ami %s" % template)
+            else:
                 return {'result': 'failure', 'reason': 'Invalid template %s' % template}
+        else:
+                imageid = template
         defaultsubnetid = None
         if flavor is None:
             matchingflavors = [f for f in static_flavors if static_flavors[f]['cpus'] >= numcpus and
@@ -146,7 +155,6 @@ class Kaws(object):
                 common.pprint("Using instance type %s" % flavor)
             else:
                 return {'result': 'failure', 'reason': 'Couldnt find instance type matching requirements'}
-        conn = self.conn
         tags = [{'ResourceType': 'instance',
                  'Tags': [{'Key': 'Name', 'Value': name}, {'Key': 'plan', 'Value': plan},
                           {'Key': 'hostname', 'Value': name}, {'Key': 'profile', 'Value': profile}]}]
@@ -228,8 +236,11 @@ class Kaws(object):
         if len(privateips) > 1:
             networkinterface['PrivateIpAddresses'] = privateips
         for index, disk in enumerate(disks):
+            if template is not None and index == 0:
+                continue
             letter = chr(index + ord('a'))
-            devicename = '/dev/sd%s1' % letter if index == 0 else '/dev/sd%s' % letter
+            # devicename = '/dev/sd%s1' % letter if index == 0 else '/dev/sd%s' % letter
+            devicename = '/dev/xvd%s' % letter
             blockdevicemapping = {'DeviceName': devicename, 'Ebs': {'DeleteOnTermination': True,
                                                                     'VolumeType': 'standard'}}
             if isinstance(disk, int):
@@ -245,7 +256,7 @@ class Kaws(object):
             tags[0]['Tags'].append({'Key': 'domain', 'Value': domain})
         if dnsclient is not None:
             tags[0]['Tags'].append({'Key': 'dnsclient', 'Value': dnsclient})
-        conn.run_instances(ImageId=template, MinCount=1, MaxCount=1, InstanceType=flavor,
+        conn.run_instances(ImageId=imageid, MinCount=1, MaxCount=1, InstanceType=flavor,
                            KeyName=keypair, BlockDeviceMappings=blockdevicemappings,
                            UserData=userdata, TagSpecifications=tags)
         if reservedns and domain is not None:
@@ -535,6 +546,23 @@ class Kaws(object):
         if self.debug:
             print(vm)
         ip = vm['PublicIpAddress'] if 'PublicIpAddress' in vm else ''
+        return ip
+
+    def internalip(self, name):
+        """
+
+        :param name:
+        :return:
+        """
+        ip = None
+        conn = self.conn
+        try:
+            Filters = {'Name': "tag:Name", 'Values': [name]}
+            vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
+        except:
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        if vm['NetworkInterfaces'] and 'PrivateIpAddresses' in vm['NetworkInterfaces']:
+            ip = vm['NetworkInterfaces'][0]['PrivateIpAddresses'][0]['PrivateIpAddress']
         return ip
 
     def volumes(self, iso=False):
