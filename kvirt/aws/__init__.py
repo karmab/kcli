@@ -561,7 +561,7 @@ class Kaws(object):
             vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        if vm['NetworkInterfaces'] and 'PrivateIpAddresses' in vm['NetworkInterfaces']:
+        if vm['NetworkInterfaces'] and 'PrivateIpAddresses' in vm['NetworkInterfaces'][0]:
             ip = vm['NetworkInterfaces'][0]['PrivateIpAddresses'][0]['PrivateIpAddress']
         return ip
 
@@ -1133,16 +1133,35 @@ class Kaws(object):
         :param instanceid:
         :return:
         """
+        internalip = None
         common.pprint("Using domain %s..." % domain)
         dns = self.dns
         net = nets[0]
+        cluster = None
+        fqdn = "%s.%s" % (name, domain)
+        if fqdn.split('-')[0] == fqdn.split('.')[1]:
+            cluster = fqdn.split('-')[0]
+            name = '.'.join(fqdn.split('.')[:1])
+            domain = fqdn.replace("%s." % name, '').replace("%s." % cluster, '')
         zone = [z['Id'].split('/')[2] for z in dns.list_hosted_zones_by_name()['HostedZones']
                 if z['Name'] == '%s.' % domain]
         if not zone:
             common.pprint("Domain %s not found" % domain, color='red')
             return {'result': 'failure', 'reason': "Domain not found"}
         zoneid = zone[0]
-        entry = "%s.%s." % (name, domain)
+        dnsentry = name if cluster is None else "%s.%s" % (name, cluster)
+        entry = "%s.%s." % (dnsentry, domain)
+        if cluster is not None and ('master' in name or 'worker' in name):
+            counter = 0
+            while counter != 100:
+                internalip = self.internalip(name)
+                if internalip is None:
+                    sleep(5)
+                    common.pprint("Waiting 5 seconds to grab internal ip and create DNS record for %s..." % name,
+                                  color='blue')
+                    counter += 10
+                else:
+                    break
         if ip is None:
             if isinstance(net, dict):
                 ip = net.get('ip')
@@ -1157,20 +1176,34 @@ class Kaws(object):
                     else:
                         break
         if ip is None:
-            print("Couldn't assign DNS")
+            common.pprint("Couldn't assign DNS for %s" % name, color='red')
             return
+        dnsip = ip if internalip is None else internalip
         changes = [{'Action': 'CREATE', 'ResourceRecordSet':
-                   {'Name': entry, 'Type': 'A', 'TTL': 300, 'ResourceRecords': [{'Value': ip}]}}]
+                   {'Name': entry, 'Type': 'A', 'TTL': 300, 'ResourceRecords': [{'Value': dnsip}]}}]
         if alias:
             for a in alias:
                 if a == '*':
-                    new = '*.%s.%s.' % (name, domain)
+                    if cluster is not None and ('master' in name or 'worker' in name):
+                        new = '*.apps.%s.%s.' % (cluster, domain)
+                    else:
+                        new = '*.%s.%s.' % (name, domain)
                     changes.append({'Action': 'CREATE', 'ResourceRecordSet':
                                     {'Name': new, 'Type': 'A', 'TTL': 300, 'ResourceRecords': [{'Value': ip}]}})
                 else:
                     new = '%s.%s.' % (a, domain) if '.' not in a else '%s.' % a
                     changes.append({'Action': 'CREATE', 'ResourceRecordSet':
                                     {'Name': new, 'Type': 'CNAME', 'TTL': 300, 'ResourceRecords': [{'Value': entry}]}})
+        if cluster is not None and 'master' in name and internalip is not None:
+            etcd1 = "_etcd-server-ssl._tcp.%s.%s." % (cluster, domain)
+            etcd2 = "etcd-%s.%s.%s." % (name[-1], cluster, domain)
+            srventry = "0 10 2380 %s" % (etcd2)
+            changes.append({'Action': 'CREATE', 'ResourceRecordSet':
+                            {'Name': etcd2, 'Type': 'A', 'TTL': 300,
+                             'ResourceRecords': [{'Value': internalip}]}})
+            changes.append({'Action': 'CREATE', 'ResourceRecordSet':
+                            {'Name': etcd1, 'Type': 'SRV', 'TTL': 300,
+                             'ResourceRecords': [{'Value': srventry}]}})
         dns.change_resource_record_sets(HostedZoneId=zoneid, ChangeBatch={'Changes': changes})
         return {'result': 'success'}
 
@@ -1183,24 +1216,32 @@ class Kaws(object):
         :return:
         """
         dns = self.dns
+        cluster = None
+        fqdn = "%s.%s" % (name, domain)
+        if fqdn.split('-')[0] == fqdn.split('.')[1]:
+            cluster = fqdn.split('-')[0]
+            name = '.'.join(fqdn.split('.')[:1])
+            domain = fqdn.replace("%s." % name, '').replace("%s." % cluster, '')
         zone = [z['Id'].split('/')[2] for z in dns.list_hosted_zones_by_name()['HostedZones']
                 if z['Name'] == '%s.' % domain]
         if not zone:
             common.pprint("Domain not found", color='red')
             return {'result': 'failure', 'reason': "Domain not found"}
         zoneid = zone[0]
-        entry = "%s.%s." % (name, domain)
+        dnsentry = name if cluster is None else "%s.%s" % (name, cluster)
+        entry = "%s.%s." % (dnsentry, domain)
         ip = self.ip(instanceid)
         if ip is None:
-            print("Couldn't Get DNS Ip")
+            common.pprint("Couldn't Get DNS Ip for %s" % name, color='red')
             return
-        for entry in ["%s.%s." % (name, domain), "*.%s.%s." % (name, domain)]:
-            changes = [{'Action': 'DELETE', 'ResourceRecordSet':
-                        {'Name': entry, 'Type': 'A', 'TTL': 300, 'ResourceRecords': [{'Value': ip}]}}]
-            try:
-                dns.change_resource_record_sets(HostedZoneId=zoneid, ChangeBatch={'Changes': changes})
-            except:
-                pass
+        records = [record for record in dns.list_resource_record_sets(HostedZoneId=zoneid)['ResourceRecordSets']
+                   if entry in record['Name'] or ('master-0' in name and
+                                                  record['Name'].endswith("%s.%s." % (cluster, domain)))]
+        changes = [{'Action': 'DELETE', 'ResourceRecordSet': record} for record in records]
+        try:
+            dns.change_resource_record_sets(HostedZoneId=zoneid, ChangeBatch={'Changes': changes})
+        except:
+            pass
         return {'result': 'success'}
 
     def flavors(self):
