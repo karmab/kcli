@@ -1388,9 +1388,16 @@ class Kgcp(object):
         entry = "%s.%s." % (dnsentry, domain)
         changes = dnszone.changes()
         records = []
-        # records = [record for record in dnszone.list_resource_record_sets() if entry in record.name]
-        records = [record for record in dnszone.list_resource_record_sets() if entry in record.name or
-                   ('master-0' in name and record.name.endswith("%s.%s." % (cluster, domain)))]
+        # records = [record for record in dnszone.list_resource_record_sets() if entry in record.name
+        #           or name in record.rrdata
+        #           ('master-0' in name and record.name.endswith("%s.%s." % (cluster, domain)))]
+        for record in dnszone.list_resource_record_sets():
+            if entry in record.name or ('master-0' in name and record.name.endswith("%s.%s." % (cluster, domain))):
+                records.append(record)
+            else:
+                for rrdata in record.rrdatas:
+                    if name in rrdata:
+                        records.append(record)
         if records:
             for record in records:
                 record_set = dnszone.resource_record_set(record.name, record.record_type, record.ttl, record.rrdatas)

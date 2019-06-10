@@ -139,7 +139,7 @@ class Kaws(object):
         if template is not None and not template.startswith('ami-'):
             Filters = [{'Name': 'name', 'Values': [template]}]
             templates = conn.describe_images(Filters=Filters)
-            if 'Images' in templates:
+            if 'Images' in templates and templates['Images']:
                 imageid = templates['Images'][0]['ImageId']
                 common.pprint("Using ami %s" % template)
             else:
@@ -543,8 +543,6 @@ class Kaws(object):
             vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        if self.debug:
-            print(vm)
         ip = vm['PublicIpAddress'] if 'PublicIpAddress' in vm else ''
         return ip
 
@@ -908,6 +906,8 @@ class Kaws(object):
         template = os.path.basename(image.image_location)
         if template != '':
             user = common.get_user(template)
+            if template.lower().startswith('centos'):
+                user = 'root'
         ip = vm['PublicIpAddress'] if 'PublicIpAddress' in vm else ''
         if ip == '':
             print("No ip found. Cannot ssh...")
@@ -949,7 +949,11 @@ class Kaws(object):
         :return:
         """
         u, ip = self._ssh_credentials(name)
-        scpcommand = common.scp(name, ip='', user=user, source=source, destination=destination, recursive=recursive,
+        if ip is None:
+            return None
+        if user is None:
+            user = u
+        scpcommand = common.scp(name, ip=ip, user=user, source=source, destination=destination, recursive=recursive,
                                 tunnel=tunnel, debug=self.debug, download=False)
         return scpcommand
 
@@ -1234,9 +1238,18 @@ class Kaws(object):
         if ip is None:
             common.pprint("Couldn't Get DNS Ip for %s" % name, color='red')
             return
-        records = [record for record in dns.list_resource_record_sets(HostedZoneId=zoneid)['ResourceRecordSets']
-                   if entry in record['Name'] or ('master-0' in name and
-                                                  record['Name'].endswith("%s.%s." % (cluster, domain)))]
+        records = []
+        # records = [record for record in dns.list_resource_record_sets(HostedZoneId=zoneid)['ResourceRecordSets']
+        #           if entry in record['Name'] or ('master-0' in name and
+        #                                          record['Name'].endswith("%s.%s." % (cluster, domain)))]
+        for record in dns.list_resource_record_sets(HostedZoneId=zoneid)['ResourceRecordSets']:
+            if entry in record['Name'] or ('master-0' in name and
+                                           record['Name'].endswith("%s.%s." % (cluster, domain))):
+                records.append(record)
+            else:
+                for rrdata in record['ResourceRecords']:
+                    if name in rrdata['Value']:
+                        records.append(record)
         changes = [{'Action': 'DELETE', 'ResourceRecordSet': record} for record in records]
         try:
             dns.change_resource_record_sets(HostedZoneId=zoneid, ChangeBatch={'Changes': changes})
