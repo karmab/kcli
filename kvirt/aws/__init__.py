@@ -155,9 +155,9 @@ class Kaws(object):
                 common.pprint("Using instance type %s" % flavor)
             else:
                 return {'result': 'failure', 'reason': 'Couldnt find instance type matching requirements'}
-        tags = [{'ResourceType': 'instance',
-                 'Tags': [{'Key': 'Name', 'Value': name}, {'Key': 'plan', 'Value': plan},
-                          {'Key': 'hostname', 'Value': name}, {'Key': 'profile', 'Value': profile}]}]
+        vmtags = [{'ResourceType': 'instance',
+                   'Tags': [{'Key': 'Name', 'Value': name}, {'Key': 'plan', 'Value': plan},
+                            {'Key': 'hostname', 'Value': name}, {'Key': 'profile', 'Value': profile}]}]
         if keypair is None:
             keypair = 'kvirt_%s' % self.access_key_id
         keypairs = [k for k in conn.describe_key_pairs()['KeyPairs'] if k['KeyName'] == keypair]
@@ -212,11 +212,8 @@ class Kaws(object):
                 if defaultsubnetid is not None:
                     netname = defaultsubnetid
                 else:
-                    # Filters = [{'Name': 'isDefault', 'Values': ['True']}]
-                    # vpcs = conn.describe_vpcs(Filters=Filters)
                     vpcs = conn.describe_vpcs()
                     vpcid = [vpc['VpcId'] for vpc in vpcs['Vpcs'] if vpc['IsDefault']][0]
-                    # Filters = [{'Name': 'vpc-id', 'Values': [vpcid]}, {'Name': 'default-for-az', 'Values': ['True']}]
                     subnets = conn.describe_subnets()
                     subnetid = [subnet['SubnetId'] for subnet in subnets['Subnets']
                                 if subnet['DefaultForAz'] and subnet['VpcId'] == vpcid][0]
@@ -253,12 +250,17 @@ class Kaws(object):
             blockdevicemapping['Ebs']['VolumeSize'] = disksize
             blockdevicemappings.append(blockdevicemapping)
         if reservedns and domain is not None:
-            tags[0]['Tags'].append({'Key': 'domain', 'Value': domain})
+            vmtags[0]['Tags'].append({'Key': 'domain', 'Value': domain})
         if dnsclient is not None:
-            tags[0]['Tags'].append({'Key': 'dnsclient', 'Value': dnsclient})
+            vmtags[0]['Tags'].append({'Key': 'dnsclient', 'Value': dnsclient})
+        SecurityGroupIds = []
+        for tag in tags:
+            sgid = self.get_security_group_id(tag, vpcid)
+            if sgid is not None:
+                SecurityGroupIds.append(sgid)
         conn.run_instances(ImageId=imageid, MinCount=1, MaxCount=1, InstanceType=flavor,
                            KeyName=keypair, BlockDeviceMappings=blockdevicemappings,
-                           UserData=userdata, TagSpecifications=tags)
+                           UserData=userdata, TagSpecifications=vmtags, SecurityGroupIds=SecurityGroupIds)
         if reservedns and domain is not None:
             self.reserve_dns(name, nets=nets, domain=domain, alias=alias, instanceid=name)
         return {'result': 'success'}
@@ -446,6 +448,17 @@ class Kaws(object):
         except:
             return None
         return vm['SecurityGroups']
+
+    def get_security_group_id(self, name, vpcid):
+        """
+
+        :return:
+        """
+        conn = self.conn
+        for sg in conn.describe_security_groups()['SecurityGroups']:
+            if sg['GroupName'] == name and sg['VpcId'] == vpcid:
+                return sg['GroupId']
+        return None
 
     def info(self, name, vm=None):
         """
