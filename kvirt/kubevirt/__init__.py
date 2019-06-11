@@ -232,10 +232,10 @@ class Kubevirt(Kubecommon):
         interfaces = []
         networks = []
         etcd = None
+        allnetworks = {}
         for index, net in enumerate(nets):
             netpublic = False
             newif = {'bridge': {}}
-            # newnet = {'pod': {}}
             newnet = {}
             if isinstance(net, str):
                 netname = net
@@ -258,13 +258,14 @@ class Kubevirt(Kubecommon):
                 if index == 0:
                     netpublic = net.get('public', True)
             if netname != 'default':
+                if not allnetworks:
+                    allnetworks = self.list_networks()
+                if netname not in allnetworks:
+                    return {'result': 'failure', 'reason': "network %s not found" % netname}
                 if index == 0:
                     netpublic = False
-                if self.multus:
                     newnet['multus'] = {'networkName': netname}
                     guestagent = True
-                else:
-                    newnet['hostBridge'] = {'bridgeName': netname}
             else:
                 newnet['pod'] = {}
             interfaces.append(newif)
@@ -336,12 +337,12 @@ class Kubevirt(Kubecommon):
                 elif [x for x in ubuntus if x in template.lower()]:
                     gcmds.append('apt-get update')
                     gcmds.append('apt-get -f install qemu-guest-agent')
-            index = 1
+            idx = 1
             if template is not None and template.startswith('rhel'):
                 subindex = [i for i, value in enumerate(cmds) if value.startswith('subscription-manager')]
                 if subindex:
-                    index = subindex.pop() + 1
-            cmds = cmds[:index] + gcmds + cmds[index:]
+                    idx = subindex.pop() + 1
+            cmds = cmds[:idx] + gcmds + cmds[idx:]
         if cloudinit:
             if template is not None and ('coreos' in template or template.startswith('rhcos')):
                 version = '3.0.0' if template.startswith('fedora-coreos') else '2.2.0'
@@ -663,7 +664,7 @@ class Kubevirt(Kubecommon):
                         interfaces = runvm['status']['interfaces']
                         for interface in interfaces:
                             if 'ipAddress' in interface:
-                                ip = interface['ipAddress']
+                                ip = interface['ipAddress'].split('/')[0]
                                 break
             except:
                 pass
@@ -721,9 +722,6 @@ class Kubevirt(Kubecommon):
             if 'multus' in net:
                 network = net['multus']['networkName']
                 network_type = 'multus'
-            elif 'hostBridge' in net:
-                network = net['hostBridge']['bridgeName']
-                network_type = 'hostbridge'
             else:
                 network = 'default'
                 network_type = 'pod'
@@ -749,7 +747,7 @@ class Kubevirt(Kubecommon):
                 interfaces = vm['status']['interfaces']
                 for interface in interfaces:
                     if 'ipAddress' in interface:
-                        ip = interface['ipAddress']
+                        ip = interface['ipAddress'].split('/')[0]
                         break
         except Exception:
             common.pprint("VM %s not found" % name, color='red')
