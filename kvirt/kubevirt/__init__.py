@@ -6,6 +6,7 @@ Kubevirt Provider Class
 
 from kubernetes import client
 from kvirt.kubecommon import Kubecommon, pretty_print
+from netaddr import IPAddress
 from kvirt import common
 from kvirt.defaults import TEMPLATES
 import datetime
@@ -256,7 +257,7 @@ class Kubevirt(Kubecommon):
                 if 'etcd' in nets[index] and nets[index]['etcd']:
                     etcd = "eth%s" % index
                 if index == 0:
-                    netpublic = net.get('public', True)
+                    netpublic = net.get('public', False)
             if netname != 'default':
                 if not allnetworks:
                     allnetworks = self.list_networks()
@@ -349,7 +350,7 @@ class Kubevirt(Kubecommon):
                 ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                                domain=domain, reserveip=reserveip, files=files,
                                                enableroot=enableroot, overrides=overrides, etcd=etcd, version=version,
-                                               plan=plan)
+                                               plan=plan, compact=True)
                 vm['spec']['template']['metadata']['annotations'] = {'kubevirt.io/ignitiondata': ignitiondata}
             else:
                 common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
@@ -653,6 +654,7 @@ class Kubevirt(Kubecommon):
         ip = None
         host = None
         state = 'down'
+        foundmacs = {}
         if running:
             try:
                 runvm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachineinstances', name)
@@ -662,10 +664,13 @@ class Kubevirt(Kubecommon):
                     host = status['nodeName'] if 'nodeName' in status else None
                     if 'interfaces' in status:
                         interfaces = runvm['status']['interfaces']
-                        for interface in interfaces:
-                            if 'ipAddress' in interface:
+                        for index, interface in enumerate(interfaces):
+                            if 'ipAddress' in interface\
+                                    and IPAddress(interface['ipAddress'].split('/')[0]).version == 4:
                                 ip = interface['ipAddress'].split('/')[0]
-                                break
+                            if 'mac' in interface:
+                                foundmacs[index] = interface['mac']
+
             except:
                 pass
         else:
@@ -718,7 +723,7 @@ class Kubevirt(Kubecommon):
         for index, interface in enumerate(interfaces):
             device = 'eth%s' % index
             net = networks[index]
-            mac = interface['macAddress'] = interface['mac'] if 'mac' in interface else 'N/A'
+            mac = interface['macAddress'] = interface['mac'] if 'mac' in interface else foundmacs.get(index, 'N/A')
             if 'multus' in net:
                 network = net['multus']['networkName']
                 network_type = 'multus'
@@ -746,7 +751,7 @@ class Kubevirt(Kubecommon):
             if 'interfaces' in status:
                 interfaces = vm['status']['interfaces']
                 for interface in interfaces:
-                    if 'ipAddress' in interface:
+                    if 'ipAddress' in interface and IPAddress(interface['ipAddress'].split('/')[0]).version == 4:
                         ip = interface['ipAddress'].split('/')[0]
                         break
         except Exception:
@@ -801,7 +806,7 @@ class Kubevirt(Kubecommon):
                 if pvc.metadata.name in pvcvolumes]
         for p in sorted(pvcs):
             pvcname = p.metadata.name
-            print("Deleting pvc %s" % pvcname)
+            common.pprint("Deleting pvc %s" % pvcname, color='blue')
             core.delete_namespaced_persistent_volume_claim(pvcname, namespace, client.V1DeleteOptions())
         try:
             core.delete_namespaced_service('%s-ssh' % name, namespace)
@@ -1129,9 +1134,10 @@ class Kubevirt(Kubecommon):
         :return:
         """
         u, ip = self._ssh_credentials(name)
+        if ip is None:
+            return None
         if user is None:
             user = u
-        tunnel = True if 'TUNNEL' in os.environ and os.environ('TUNNEL').lower() == 'true' else False
         scpcommand = common.scp(name, ip=ip, host=self.host, port=22, hostuser=self.user, user=user,
                                 source=source, destination=destination, recursive=recursive, tunnel=tunnel,
                                 debug=self.debug, download=download)
@@ -1413,8 +1419,7 @@ class Kubevirt(Kubecommon):
         :param name:
         :return:
         """
-        print("not implemented")
-        return
+        return []
 
     def get_pool_path(self, pool):
         """

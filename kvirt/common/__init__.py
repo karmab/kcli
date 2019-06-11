@@ -563,11 +563,13 @@ def print_info(yamlinfo, output='plain', fields=[], values=False, pretty=True):
                         for disk in value:
                             device = disk['device']
                             disksize = disk['size']
+                            unit = 'GB' if str(disksize).isdigit() else ''
                             diskformat = disk['format']
                             drivertype = disk['type']
                             path = disk['path']
-                            result += "diskname: %s disksize: %sGB diskformat: %s type: %s path: %s\n" % (device,
+                            result += "diskname: %s disksize: %s%s diskformat: %s type: %s path: %s\n" % (device,
                                                                                                           disksize,
+                                                                                                          unit,
                                                                                                           diskformat,
                                                                                                           drivertype,
                                                                                                           path)
