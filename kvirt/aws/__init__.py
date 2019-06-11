@@ -258,10 +258,17 @@ class Kaws(object):
             sgid = self.get_security_group_id(tag, vpcid)
             if sgid is not None:
                 SecurityGroupIds.append(sgid)
+        # reservation = conn.run_instances(ImageId=imageid, MinCount=1, MaxCount=1, InstanceType=flavor,
+        #                   KeyName=keypair, BlockDeviceMappings=blockdevicemappings,
+        #                   UserData=userdata, TagSpecifications=vmtags, SecurityGroupIds=SecurityGroupIds)
         conn.run_instances(ImageId=imageid, MinCount=1, MaxCount=1, InstanceType=flavor,
                            KeyName=keypair, BlockDeviceMappings=blockdevicemappings,
                            UserData=userdata, TagSpecifications=vmtags, SecurityGroupIds=SecurityGroupIds)
         if reservedns and domain is not None:
+            # eip = conn.allocate_address(Domain='vpc')
+            # vmid = reservation.instances[0].id
+            # conn.associate_address(InstanceId=vmid, AllocationId=eip["AllocationId"])
+            # self.reserve_dns(name, nets=nets, domain=domain, alias=alias, instanceid=name, ip=eip["PublicIp"])
             self.reserve_dns(name, nets=nets, domain=domain, alias=alias, instanceid=name)
         return {'result': 'success'}
 
@@ -659,6 +666,7 @@ class Kaws(object):
         instanceid = vm['InstanceId']
         vm = conn.terminate_instances(InstanceIds=[instanceid])
         if domain is not None:
+            # conn.release_address(AllocationId='ALLOCATION_ID')
             self.delete_dns(name, domain, name)
         return {'result': 'success'}
 

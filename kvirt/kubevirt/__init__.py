@@ -349,7 +349,7 @@ class Kubevirt(Kubecommon):
                                                domain=domain, reserveip=reserveip, files=files,
                                                enableroot=enableroot, overrides=overrides, etcd=etcd, version=version,
                                                plan=plan)
-                vm['spec']['template']['metadata']['labels']['kubevirt.io/ignitiondata'] = ignitiondata
+                vm['spec']['template']['metadata']['annotations'] = {'kubevirt.io/ignitiondata': ignitiondata}
             else:
                 common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
                                  reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides,
@@ -1082,20 +1082,7 @@ class Kubevirt(Kubecommon):
         user = 'root'
         ip = self.ip(name)
         if template is not None:
-            if 'centos' in template.lower():
-                user = 'centos'
-            elif 'cirros' in template.lower():
-                user = 'cirros'
-            elif [x for x in common.ubuntus if x in template.lower()]:
-                user = 'ubuntu'
-            elif 'fedora' in template.lower():
-                user = 'fedora'
-            elif 'rhel' in template.lower():
-                user = 'cloud-user'
-            elif 'debian' in template.lower():
-                user = 'debian'
-            elif 'arch' in template.lower():
-                user = 'arch'
+            user = common.get_user(template)
         return user, ip
 
     def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, Y=False,
