@@ -258,6 +258,8 @@ class Kubevirt(Kubecommon):
                     etcd = "eth%s" % index
                 if index == 0:
                     netpublic = net.get('public', False)
+                    if 'ip' in nets[index]:
+                        vm['metadata']['annotations']['kcli/ip'] = nets[index]['ip']
             if netname != 'default':
                 if not allnetworks:
                     allnetworks = self.list_networks()
@@ -647,11 +649,12 @@ class Kubevirt(Kubecommon):
         # creationdate = metadata["creationTimestamp"].strftime("%d-%m-%Y %H:%M")
         creationdate = metadata["creationTimestamp"]
         profile, plan, template = 'N/A', 'N/A', 'N/A'
+        ip = None
         if annotations is not None:
             profile = annotations['kcli/profile'] if 'kcli/profile' in annotations else 'N/A'
             plan = annotations['kcli/plan'] if 'kcli/plan' in annotations else 'N/A'
             template = annotations['kcli/template'] if 'kcli/template' in annotations else 'N/A'
-        ip = None
+            ip = vm['metadata']['annotations']['kcli/ip'] if 'kcli/ip' in annotations else None
         host = None
         state = 'down'
         foundmacs = {}
@@ -746,17 +749,24 @@ class Kubevirt(Kubecommon):
         namespace = self.namespace
         ip = None
         try:
-            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachineinstances', name)
-            status = vm['status']
+            vmi = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachineinstances', name)
+            try:
+                vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
+                metadata = vm.get("metadata")
+                annotations = metadata.get("annotations")
+                if annotations is not None and 'kcli/ip' in annotations:
+                    return vm['metadata']['annotations']['kcli/ip']
+            except:
+                pass
+            status = vmi['status']
             if 'interfaces' in status:
-                interfaces = vm['status']['interfaces']
+                interfaces = vmi['status']['interfaces']
                 for interface in interfaces:
                     if 'ipAddress' in interface and IPAddress(interface['ipAddress'].split('/')[0]).version == 4:
                         ip = interface['ipAddress'].split('/')[0]
                         break
         except Exception:
             common.pprint("VM %s not found" % name, color='red')
-            # return {'result': 'failure', 'reason': "VM %s not found" % name}
             os._exit(1)
         return ip
 
