@@ -916,12 +916,12 @@ def get_latest_rhcos(url, openstack=False):
 
 
 def find_ignition_files(role, plan=None):
-    if plan is not None and os.path.exists("./%s/%s.ign" % (plan, role)):
-        return "%s/%s.ign" % (plan, role)
+    if plan is not None:
+        if os.path.exists("clusters/%s/%s.ign" % (plan, role)):
+            return "clusters/%s/%s.ign" % (plan, role)
+        elif os.path.exists("./%s/%s.ign" % (plan, role)):
+            return "%s/%s.ign" % (plan, role)
     for r, d, f in os.walk('.'):
-        # if r.count('/') > 1:
-        #    return None
-        # if f[0] == '%s.ign' % role:
         if '%s.ign' % role in f:
             return "%s/%s.ign" % (r, role)
     return None

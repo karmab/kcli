@@ -331,11 +331,11 @@ class Kubevirt(Kubecommon):
             gcmds = []
             if template is not None:
                 if (template.lower().startswith('centos') or template.lower().startswith('fedora') or
-                        template.lower().startswith('rhel')):
+                        template.lower().startswith('rhel') or 'fedora-cloud' in template.lower()):
                     gcmds.append('yum -y install qemu-guest-agent')
                     gcmds.append('systemctl enable qemu-guest-agent')
                     gcmds.append('systemctl restart qemu-guest-agent')
-                elif template.lower().startswith('debian'):
+                elif template.lower().startswith('debian') or 'debian-' in template.lower():
                     gcmds.append('apt-get -f install qemu-guest-agent')
                 elif [x for x in ubuntus if x in template.lower()]:
                     gcmds.append('apt-get update')
@@ -548,7 +548,8 @@ class Kubevirt(Kubecommon):
             common.pprint("Using local virtctl")
             command = "virtctl vnc %s -n %s --insecure-skip-tls-verify" % (name, namespace)
         else:
-            common.pprint("Tunneling virtctl through remote host %s. Make sure virtctl is installed there" % self.host,
+            common.pprint("Tunneling virtctl through remote host %s. Make sure virtctl and remote-viewer are \
+                          installed there" % self.host,
                           color='blue')
             command = "ssh -o LogLevel=QUIET -Xt %s@%s virtctl vnc %s -n %s --insecure-skip-tls-verify" % (self.user,
                                                                                                            self.host,
@@ -1290,7 +1291,8 @@ class Kubevirt(Kubecommon):
                                                                                             'name': 'storage1'},
                                                                                            {'mountPath': '/storage2',
                                                                                             'name': 'storage2'}],
-                                                       'name': 'copy', 'command': ['cp'], 'args': ['/storage1/disk.img',
+                                                       'name': 'copy', 'command': ['cp'], 'args': ['-u',
+                                                                                                   '/storage1/disk.img',
                                                                                                    '/storage2']}],
                                        'volumes': [{'name': 'storage1', 'persistentVolumeClaim': {'claimName': ori}},
                                                    {'name': 'storage2', 'persistentVolumeClaim': {'claimName': dest}}]},

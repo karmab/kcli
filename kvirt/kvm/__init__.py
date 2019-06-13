@@ -708,9 +708,9 @@ class Kvirt(object):
                   </devices>
                     %s
                     %s
-                    </domain>""" % (virttype, namespace, name, metadata, memory, vcpuxml, machine, bootdev, kernelxml,
-                                    disksxml, netxml, isoxml, displayxml, serialxml, sharedxml, guestxml, cpuxml,
-                                    qemuextraxml)
+                    </domain>""" % (virttype, namespace, name, metadata, memory, vcpuxml, machine, bootdev,
+                                    kernelxml, disksxml, netxml, isoxml, displayxml, serialxml, sharedxml, guestxml,
+                                    cpuxml, qemuextraxml)
         if self.debug:
             print(vmxml)
         conn.defineXML(vmxml)
