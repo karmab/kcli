@@ -605,8 +605,8 @@ directory, it will be used instead
 
 For ignition support on ovirt, you will either need a version of ovirt
 >= 4.3.4 or to install an `additional
-hook <https://gerrit.ovirt.org/#/c/100008>`__ and set ignitionhook to
-True for the given ovirt client
+hook <https://gerrit.ovirt.org/#/c/100008>`__. Note that the first
+method requires to use an openstack rhcos image
 
 A similar mechanism allows customization for other providers.
 
