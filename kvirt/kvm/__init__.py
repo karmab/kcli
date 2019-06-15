@@ -2470,7 +2470,8 @@ class Kvirt(object):
                     uncompresscmd = "bunzip2 %s/%s" % (poolpath, shortimage)
                     os.system(uncompresscmd)
                 else:
-                    common.pprint("bunzip2 not found. Can't uncompress image", color="blue")
+                    common.pprint("bunzip2 not found. Can't uncompress image", color="red")
+                    return {'result': 'failure', 'reason': "bunzip2 not found. Can't uncompress image"}
             elif self.protocol == 'ssh':
                 uncompresscmd = 'ssh %s -p %s %s@%s "bunzip2 %s/%s"' % (self.identitycommand, self.port, self.user,
                                                                         self.host, poolpath, shortimage)
@@ -2482,7 +2483,8 @@ class Kvirt(object):
                     uncompresscmd = "gunzip %s/%s" % (poolpath, shortimage)
                     os.system(uncompresscmd)
                 else:
-                    common.pprint("gunzip not found. Can't uncompress image", color="blue")
+                    common.pprint("gunzip not found. Can't uncompress image", color="red")
+                    return {'result': 'failure', 'reason': "gunzip not found. Can't uncompress image"}
             elif self.protocol == 'ssh':
                 uncompresscmd = 'ssh %s -p %s %s@%s "gunzip %s/%s"' % (self.identitycommand, self.port, self.user,
                                                                        self.host, poolpath, shortimage)
@@ -2495,7 +2497,8 @@ class Kvirt(object):
                     uncompresscmd = "%s %s/%s" % (executable, poolpath, shortimage)
                     os.system(uncompresscmd)
                 else:
-                    common.pprint("%s not found. Can't uncompress image" % executable, color="blue")
+                    common.pprint("%s not found. Can't uncompress image" % executable, color="red")
+                    return {'result': 'failure', 'reason': "%snot found. Can't uncompress image" % executable}
             elif self.protocol == 'ssh':
                 uncompresscmd = 'ssh -p %s %s@%s "%s %s/%s"' % (self.identitycommand, self.port, self.user, self.host,
                                                                 executable, poolpath, shortimage)

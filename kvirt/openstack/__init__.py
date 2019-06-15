@@ -4,6 +4,7 @@
 Openstack Provider Class
 """
 
+from distutils.spawn import find_executable
 from netaddr import IPNetwork
 from kvirt import common
 from keystoneauth1 import loading
@@ -225,7 +226,7 @@ class Kopenstack(object):
                 common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
                                  reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides,
                                  iso=False, storemetadata=storemetadata)
-            userdata = open('/tmp/user-data', 'r').read().strip()
+                userdata = open('/tmp/user-data', 'r').read().strip()
         instance = nova.servers.create(name=name, image=image, flavor=flavor, key_name=key_name, nics=nics, meta=meta,
                                        userdata=userdata, block_device_mapping=block_dev_mapping)
         tenant_id = instance.tenant_id
@@ -946,11 +947,21 @@ class Kopenstack(object):
         shortimage = os.path.basename(image).split('?')[0]
         if [i for i in self.glance.images.list() if i['name'] == shortimage]:
             return {'result': 'success'}
+        if 'rhcos' in shortimage:
+            shortimage += ".gz"
         if not os.path.exists('/tmp/%s' % shortimage):
             downloadcmd = "curl -Lo /tmp/%s -f '%s'" % (shortimage, image)
             code = os.system(downloadcmd)
             if code != 0:
                 return {'result': 'failure', 'reason': "Unable to download indicated template"}
+        if shortimage.endswith('gz'):
+            if find_executable('gunzip') is not None:
+                uncompresscmd = "gunzip /tmp/%s" % (shortimage)
+                os.system(uncompresscmd)
+            else:
+                common.pprint("gunzip not found. Can't uncompress image", color="red")
+                return {'result': 'failure', 'reason': "gunzip not found. Can't uncompress image"}
+            shortimage = shortimage.replace('.gz', '')
         image = self.glance.images.create(name=shortimage, disk_format='qcow2', container_format='bare')
         self.glance.images.upload(image.id, open('/tmp/%s' % shortimage, 'rb'))
         os.remove('/tmp/%s' % shortimage)
