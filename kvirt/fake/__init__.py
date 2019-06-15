@@ -129,21 +129,29 @@ class Kfake(object):
                     ignitionfile.write(ignitiondata)
             else:
                 _files = yaml.safe_load(common.process_files(files=files, overrides=overrides))
-                cmds = common.process_cmds(cmds, overrides).replace('- ', '')
+                cmds = common.process_cmds(cmds, overrides)
+                finalcmds = []
+                for cmd in cmds.split('\n')[:-1]:
+                    cmd = 'ssh $host "%s"' % cmd.replace('- ', '').replace('"', '\\"')
+                    finalcmds.append(cmd)
+                finalcmds = '\n'.join(finalcmds)
                 filescmds = ""
                 if _files is not None:
                     for entry in _files:
-                        owner = entry["owner"]
+                        owner = entry.get("owner", 'root')
                         path = entry["path"]
-                        permissions = entry["permissions"]
+                        origin = os.path.basename(entry["path"])
+                        permissions = entry.get("permissions", "0700")
                         content = entry["content"]
-                        filescmds += "chown %s %s\n" % (owner, path)
-                        filescmds += "chmod %s %s\n" % (permissions, path)
+                        filescmds += "scp %s $host:%s\n" % (origin, path)
+                        filescmds += "ssh $host chown %s %s\n" % (owner, path)
+                        filescmds += "ssh $host chmod %s %s\n" % (permissions, path)
                         with open("%s/%s" % (namedir, os.path.basename(path)), "w") as f:
                             f.write(content)
                 with open("%s/cmds.sh" % namedir, "w") as f:
+                    f.write("#!/bin/bash\nhost=\n")
                     f.write(filescmds)
-                    f.write(cmds)
+                    f.write(finalcmds)
         return {'result': 'success'}
 
     def start(self, name):
