@@ -118,22 +118,32 @@ class Kfake(object):
             rmtree(namedir)
         os.mkdir(namedir)
         if cloudinit:
-            _files = yaml.safe_load(common.process_files(files=files, overrides=overrides))
-            cmds = common.process_cmds(cmds, overrides).replace('- ', '')
-            filescmds = ""
-            if _files is not None:
-                for entry in _files:
-                    owner = entry["owner"]
-                    path = entry["path"]
-                    permissions = entry["permissions"]
-                    content = entry["content"]
-                    filescmds += "chown %s %s\n" % (owner, path)
-                    filescmds += "chmod %s %s\n" % (permissions, path)
-                    with open("%s/%s" % (namedir, os.path.basename(path)), "w") as f:
-                        f.write(content)
-            with open("%s/cmds.sh" % namedir, "w") as f:
-                f.write(filescmds)
-                f.write(cmds)
+            if template is not None and ('coreos' in template or template.startswith('rhcos')):
+                version = '3.0.0' if template.startswith('fedora-coreos') else '2.2.0'
+                etcd = None
+                ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
+                                               domain=domain, reserveip=reserveip, files=files,
+                                               enableroot=enableroot, overrides=overrides, etcd=etcd, version=version,
+                                               plan=plan)
+                with open('%s/%s.ign' % (namedir, name), 'w') as ignitionfile:
+                    ignitionfile.write(ignitiondata)
+            else:
+                _files = yaml.safe_load(common.process_files(files=files, overrides=overrides))
+                cmds = common.process_cmds(cmds, overrides).replace('- ', '')
+                filescmds = ""
+                if _files is not None:
+                    for entry in _files:
+                        owner = entry["owner"]
+                        path = entry["path"]
+                        permissions = entry["permissions"]
+                        content = entry["content"]
+                        filescmds += "chown %s %s\n" % (owner, path)
+                        filescmds += "chmod %s %s\n" % (permissions, path)
+                        with open("%s/%s" % (namedir, os.path.basename(path)), "w") as f:
+                            f.write(content)
+                with open("%s/cmds.sh" % namedir, "w") as f:
+                    f.write(filescmds)
+                    f.write(cmds)
         return {'result': 'success'}
 
     def start(self, name):
