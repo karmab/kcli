@@ -133,14 +133,13 @@ class Kopenstack(object):
         neutron = self.neutron
         try:
             nova.servers.find(name=name)
-            common.pprint("VM %s already exists" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s already exists" % name}
         except:
             pass
         allflavors = [f for f in nova.flavors.list()]
         allflavornames = [flavor.name for flavor in allflavors]
         if flavor is None:
-            flavors = [flavor for flavor in allflavors if flavor.ram >= memory and flavor.vcpus == numcpus]
+            flavors = [flavor for flavor in allflavors if flavor.ram >= memory and flavor.vcpus >= numcpus]
             flavor = flavors[0] if flavors else nova.flavors.find(name="m1.tiny")
             common.pprint("Using flavor %s" % flavor.name)
         elif flavor not in allflavornames:
@@ -255,6 +254,9 @@ class Kopenstack(object):
                 common.pprint("Time out waiting for vm to get an ip", color='red')
                 break
             vm = nova.servers.get(instance.id)
+            if vm.status == 'ERROR':
+                msg = "Vm reports error status"
+                return {'result': 'failure', 'reason': msg}
             for key in list(vm.addresses):
                 entry1 = vm.addresses[key]
                 for entry2 in entry1:
@@ -882,8 +884,10 @@ class Kopenstack(object):
         :return:
         """
         u, ip = self._ssh_credentials(name)
+        if user is None:
+            user = u
         tunnel = False
-        sshcommand = common.ssh(name, ip=ip, host=self.host, user=u, local=local, remote=remote,
+        sshcommand = common.ssh(name, ip=ip, host=self.host, user=user, local=local, remote=remote,
                                 tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, Y=Y, debug=self.debug)
         if self.debug:
             print(sshcommand)
@@ -904,9 +908,11 @@ class Kopenstack(object):
         """
         tunnel = False
         u, ip = self._ssh_credentials(name)
-        scpcommand = common.scp(name, ip=ip, host=self.host, user=u, source=source,
+        if user is None:
+            user = u
+        scpcommand = common.scp(name, ip=ip, host=self.host, user=user, source=source,
                                 destination=destination, recursive=recursive, tunnel=tunnel,
-                                debug=self.debug, download=False)
+                                debug=self.debug, download=download)
         if self.debug:
             print(scpcommand)
         return scpcommand
