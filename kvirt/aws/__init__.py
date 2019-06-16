@@ -532,8 +532,10 @@ class Kaws(object):
             network = interface['VpcId']
             device = interface['NetworkInterfaceId']
             mac = interface['MacAddress']
-            network_type = interface['PrivateIpAddresses'][0]['PrivateIpAddress']
-            nets.append({'device': device, 'mac': mac, 'net': network, 'type': network_type})
+            private_ip = interface['PrivateIpAddresses'][0]['PrivateIpAddress']
+            nets.append({'device': device, 'mac': mac, 'net': network, 'type': private_ip})
+            yamlinfo['privateip'] = private_ip
+
         if nets:
             yamlinfo['nets'] = nets
         disks = []

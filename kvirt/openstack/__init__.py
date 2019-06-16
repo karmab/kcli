@@ -462,6 +462,8 @@ class Kopenstack(object):
                     yamlinfo['ip'] = entry2['addr']
                 else:
                     net = {'device': 'eth%s' % index, 'mac': mac, 'net': key, 'type': entry2['addr']}
+                    if index == 0:
+                        yamlinfo['privateip'] = entry2['addr']
                     yamlinfo['nets'].append(net)
                     index += 1
         disks = []

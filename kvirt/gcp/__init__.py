@@ -593,9 +593,10 @@ class Kgcp(object):
         for interface in vm['networkInterfaces']:
             network = os.path.basename(interface['network'])
             device = interface['name']
-            mac = interface['networkIP'] if 'networkIP' in interface else 'N/A'
+            private_ip = interface['networkIP'] if 'networkIP' in interface else 'N/A'
+            yamlinfo['private_ip'] = private_ip
             network_type = ''
-            nets.append({'device': device, 'mac': mac, 'net': network, 'type': network_type})
+            nets.append({'device': device, 'mac': private_ip, 'net': network, 'type': network_type})
         if nets:
             yamlinfo['nets'] = nets
         disks = []
