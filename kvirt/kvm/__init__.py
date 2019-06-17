@@ -170,7 +170,7 @@ class Kvirt(object):
         try:
             storage = conn.storagePoolLookupByName(pool)
             storage.refresh()
-            return storage.storageVolLookupByName(stor).path()
+            return storage.storageVolLookupByName(name).path()
         except:
             return None
 

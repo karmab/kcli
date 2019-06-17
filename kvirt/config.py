@@ -1329,7 +1329,7 @@ class Kconfig(Kbaseconfig):
             vms = profile.get('vms')
             template = profile.get('template')
             size = int(profile.get('size', 10))
-            disk_exists_on_client = False
+            existing_disk = False
             if pool is None:
                 common.pprint("Missing Key Pool for disk section %s. Not creating it..." % disk, color='red')
                 continue
@@ -1339,13 +1339,16 @@ class Kconfig(Kbaseconfig):
                 continue
             if k.disk_exists(pool, disk):
                 common.pprint("Disk %s skipped!" % disk, color='blue')
-                disk_exists_on_client = True
+                existing_disk = True
             if len(vms) > 1:
                 shareable = True
             else:
                 shareable = False
-            if disk_exists_on_client:
-                disk_to_add = k.disk_path(pool, disk)
+            if existing_disk:
+                if self.type == 'kvm':
+                    disk_to_add = k.disk_path(pool, disk)
+                else:
+                    continue
             else:
                 disk_to_add = k.create_disk(disk, size=size, pool=pool, template=template, thin=False)
             common.pprint("Disk %s deployed!" % disk)
