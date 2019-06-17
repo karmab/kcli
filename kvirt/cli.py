@@ -947,10 +947,8 @@ def network(args):
     delete = args.delete
     isolated = args.isolated
     cidr = args.cidr
-    vlan = args.vlan
     nodhcp = args.nodhcp
     domain = args.domain
-    pxe = args.pxe
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     if name is None:
@@ -965,8 +963,7 @@ def network(args):
         else:
             nat = True
         dhcp = not nodhcp
-        result = k.create_network(name=name, cidr=cidr, dhcp=dhcp, nat=nat, domain=domain, pxe=pxe, vlan=vlan,
-                                  overrides=overrides)
+        result = k.create_network(name=name, cidr=cidr, dhcp=dhcp, nat=nat, domain=domain, overrides=overrides)
         common.handle_response(result, name, element='Network ')
 
 
