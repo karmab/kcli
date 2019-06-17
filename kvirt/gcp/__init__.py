@@ -1263,6 +1263,8 @@ class Kgcp(object):
             return 'debian-9'
         elif 'rhel-guest-image-7' in template.lower() or 'rhel-server-7' in template.lower():
             return 'rhel-7'
+        elif 'rhel-guest-image-8' in template.lower() or 'rhel-server-8' in template.lower():
+            return 'rhel-8'
         elif [x for x in common.ubuntus if x in template.lower()]:
             return 'ubuntu-1804-lts'
         else:
