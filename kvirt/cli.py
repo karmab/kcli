@@ -835,9 +835,9 @@ def product(args):
     repo = args.repo
     product = args.product
     latest = args.latest
-    plan = args.plan
     group = args.group
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
+    plan = overrides['plan'] if 'plan' in overrides else None
     info = args.info
     search = args.search
     if info:
@@ -1284,8 +1284,6 @@ def cli():
     product_parser.add_argument('-g', '--group', help='Group to use as a name during deployment', metavar='GROUP')
     product_parser.add_argument('-i', '--info', action='store_true', help='Provide information on the given product')
     product_parser.add_argument('-l', '--latest', action='store_true', help='Grab latest version of the plans')
-    product_parser.add_argument('-p', '--plan', help='Plan to use as a name '
-                                'during deployment', metavar='PLAN')
     product_parser.add_argument('-P', '--param', action='append',
                                 help='Define parameter for rendering within '
                                 'scripts. Can be repeated several times',
