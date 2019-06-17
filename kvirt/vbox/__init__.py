@@ -1176,7 +1176,7 @@ class Kbox(object):
             os.system(cmd)
         return {'result': 'success'}
 
-    def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', pxe=None, vlan=None):
+    def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
         """
 
         :param name:
@@ -1185,8 +1185,7 @@ class Kbox(object):
         :param nat:
         :param domain:
         :param plan:
-        :param pxe:
-        :param vlan:
+        :param overrides:
         :return:
         """
         if cidr is None:

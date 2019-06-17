@@ -980,8 +980,7 @@ class Kopenstack(object):
         os.remove('/tmp/%s' % shortimage)
         return {'result': 'success'}
 
-    def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None,
-                       plan='kvirt', pxe=None, vlan=None):
+    def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
         """
 
         :param name:
@@ -990,8 +989,7 @@ class Kopenstack(object):
         :param nat:
         :param domain:
         :param plan:
-        :param pxe:
-        :param vlan:
+        :param overrides:
         :return:
         """
         if nat:
@@ -1008,6 +1006,8 @@ class Kopenstack(object):
         networks = {net['name']: net['id'] for net in neutron.list_networks()['networks']}
         if name not in networks:
             network = {'name': name, 'admin_state_up': True}
+            if 'port_security_enabled' in overrides:
+                network['port_security_enabled'] = bool(overrides['port_security_enabled'])
             network = neutron.create_network({'network': network})
             network_id = network['network']['id']
             tenant_id = network['network']['tenant_id']

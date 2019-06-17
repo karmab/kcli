@@ -1314,7 +1314,7 @@ class Kubevirt(Kubecommon):
             core.delete_namespaced_pod(podname, namespace, client.V1DeleteOptions())
         return {'result': 'success'}
 
-    def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', pxe=None, vlan=None):
+    def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
         """
 
         :param name:
@@ -1323,14 +1323,13 @@ class Kubevirt(Kubecommon):
         :param nat:
         :param domain:
         :param plan:
-        :param pxe:
-        :param vlan:
+        :param overrides:
         :return:
         """
         crds = self.crds
         namespace = self.namespace
         apiversion = "%s/%s" % (MULTUSDOMAIN, MULTUSVERSION)
-        vlanconfig = '"vlan": %s' % vlan if vlan is not None else ''
+        vlanconfig = '"vlan": %s' % overrides['vlan'] if 'vlan' in overrides is not None else ''
         config = '{ "cniVersion": "0.3.1", "type": "ovs", "bridge": "%s" %s}' % (name, vlanconfig)
         if cidr is not None and dhcp:
             ipam = '"ipam": { "type": "host-local", "subnet": "%s" }' % cidr

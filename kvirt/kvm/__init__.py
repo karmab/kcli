@@ -2526,7 +2526,7 @@ class Kvirt(object):
         pool.refresh()
         return {'result': 'success'}
 
-    def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', pxe=None, vlan=None):
+    def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
         """
 
         :param name:
@@ -2535,8 +2535,7 @@ class Kvirt(object):
         :param nat:
         :param domain:
         :param plan:
-        :param pxe:
-        :param vlan:
+        :param overrides:
         :return:
         """
         conn = self.conn
@@ -2559,7 +2558,8 @@ class Kvirt(object):
             end = str(range[-2])
             dhcpxml = """<dhcp>
                     <range start='%s' end='%s'/>""" % (start, end)
-            if pxe is not None:
+            if 'pxe' in overrides:
+                pxe = overrides['pxe']
                 dhcpxml = """%s
                           <bootp file='pxelinux.0' server='%s'/>""" % (dhcpxml, pxe)
             dhcpxml = "%s</dhcp>" % dhcpxml

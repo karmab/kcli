@@ -1016,7 +1016,7 @@ class Kaws(object):
         print("not implemented")
         return {'result': 'success'}
 
-    def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', pxe=None, vlan=None):
+    def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
         """
 
         :param name:
@@ -1025,8 +1025,7 @@ class Kaws(object):
         :param nat:
         :param domain:
         :param plan:
-        :param pxe:
-        :param vlan:
+        :param overrides:
         :return:
         """
         conn = self.conn

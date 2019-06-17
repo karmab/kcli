@@ -1405,8 +1405,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         os.remove('/tmp/%s' % shortimage)
         return {'result': 'success'}
 
-    def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None,
-                       plan='kvirt', pxe=None, vlan=None):
+    def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
         """
 
         :param name:
@@ -1415,12 +1414,12 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         :param nat:
         :param domain:
         :param plan:
-        :param pxe:
-        :param vlan:
+        :param overrides:
         :return:
         """
-        if vlan is None:
+        if 'vlan' not in overrides:
             return {'result': 'failure', 'reason': "Missing Vlan"}
+        vlan = overrides['vlan']
         networks_service = self.conn.system_service().networks_service()
         networks_service.add(network=types.Network(name=name, data_center=types.DataCenter(name=self.datacenter),
                                                    vlan=types.Vlan(vlan), usages=[types.NetworkUsage.VM], mtu=1500))

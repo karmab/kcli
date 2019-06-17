@@ -943,6 +943,7 @@ def scp(args):
 def network(args):
     """Create/Delete/List Network"""
     name = args.name
+    overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
     delete = args.delete
     isolated = args.isolated
     cidr = args.cidr
@@ -964,7 +965,8 @@ def network(args):
         else:
             nat = True
         dhcp = not nodhcp
-        result = k.create_network(name=name, cidr=cidr, dhcp=dhcp, nat=nat, domain=domain, pxe=pxe, vlan=vlan)
+        result = k.create_network(name=name, cidr=cidr, dhcp=dhcp, nat=nat, domain=domain, pxe=pxe, vlan=vlan,
+                                  overrides=overrides)
         common.handle_response(result, name, element='Network ')
 
 
@@ -1227,8 +1229,10 @@ def cli():
     network_parser.add_argument('-c', '--cidr', help='Cidr of the net', metavar='CIDR')
     network_parser.add_argument('--nodhcp', action='store_true', help='Disable dhcp on the net')
     network_parser.add_argument('--domain', help='DNS domain. Defaults to network name')
-    network_parser.add_argument('-p', '--pxe', help='Ip of a Pxe Server', metavar='PXE')
-    network_parser.add_argument('-v', '--vlan', help='VLAN. only used on Ovirt and Kubevirt', metavar='VLAN')
+    network_parser.add_argument('-P', '--param', action='append',
+                                help='specify parameter or keyword for rendering (can specify multiple)',
+                                metavar='PARAM')
+    network_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
     network_parser.add_argument('name', metavar='NETWORK')
     network_parser.set_defaults(func=network)
 
