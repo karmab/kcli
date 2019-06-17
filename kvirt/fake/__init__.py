@@ -130,6 +130,9 @@ class Kfake(object):
             else:
                 _files = yaml.safe_load(common.process_files(files=files, overrides=overrides))
                 cmds = common.process_cmds(cmds, overrides).replace('- ', '')
+                if cmds != "":
+                    with open("%s/cmds.sh" % (namedir), "w") as f:
+                        f.write(cmds)
                 copycmds = ""
                 permissioncmds = ""
                 if _files is not None:
@@ -146,14 +149,19 @@ class Kfake(object):
                             permissioncmds += "chown %s %s\n" % (owner, path)
                         if permissions is not None and permissions != '0600':
                             permissioncmds += "chmod %s %s\n" % (permissions, path)
-                if copycmds != "":
-                    with open("%s/01_copycmds.sh" % namedir, "w") as f:
-                        common.pprint("Set host in 01_copycmds.sh", color="blue")
-                        f.write("#!/bin/bash\nhost=\n")
-                        f.write(copycmds)
-                with open("%s/02_cmds.sh" % namedir, "w") as f:
+                with open("%s/launch.sh" % namedir, "w") as f:
+                    if 'host' in overrides:
+                        host = overrides["host"]
+                    else:
+                        common.pprint("Set host in launch.sh", color="blue")
+                        host = ""
+                    user = "%s@" % overrides["user"] if "user" in overrides else "root"
+                    f.write("#!/bin/bash\nhost=\"%s%s\"\n" % (user, host))
+                    f.write(copycmds)
                     f.write(permissioncmds)
-                    f.write(cmds)
+                    if cmds != "":
+                        f.write("scp cmds.sh $host:\n")
+                        f.write("ssh $host bash cmds.sh")
         return {'result': 'success'}
 
     def start(self, name):
