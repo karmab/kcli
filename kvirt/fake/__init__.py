@@ -129,29 +129,31 @@ class Kfake(object):
                     ignitionfile.write(ignitiondata)
             else:
                 _files = yaml.safe_load(common.process_files(files=files, overrides=overrides))
-                cmds = common.process_cmds(cmds, overrides)
-                finalcmds = []
-                for cmd in cmds.split('\n')[:-1]:
-                    cmd = 'ssh $host "%s"' % cmd.replace('- ', '').replace('"', '\\"')
-                    finalcmds.append(cmd)
-                finalcmds = '\n'.join(finalcmds)
-                filescmds = ""
+                cmds = common.process_cmds(cmds, overrides).replace('- ', '')
+                copycmds = ""
+                permissioncmds = ""
                 if _files is not None:
                     for entry in _files:
                         owner = entry.get("owner", 'root')
                         path = entry["path"]
                         origin = os.path.basename(entry["path"])
-                        permissions = entry.get("permissions", "0700")
+                        permissions = entry.get("permissions")
                         content = entry["content"]
-                        filescmds += "scp %s $host:%s\n" % (origin, path)
-                        filescmds += "ssh $host chown %s %s\n" % (owner, path)
-                        filescmds += "ssh $host chmod %s %s\n" % (permissions, path)
                         with open("%s/%s" % (namedir, os.path.basename(path)), "w") as f:
                             f.write(content)
-                with open("%s/cmds.sh" % namedir, "w") as f:
-                    f.write("#!/bin/bash\nhost=\n")
-                    f.write(filescmds)
-                    f.write(finalcmds)
+                        copycmds += "scp %s $host:%s\n" % (origin, path)
+                        if owner != "root:root":
+                            permissioncmds += "chown %s %s\n" % (owner, path)
+                        if permissions is not None and permissions != '0600':
+                            permissioncmds += "chmod %s %s\n" % (permissions, path)
+                if copycmds != "":
+                    with open("%s/01_copycmds.sh" % namedir, "w") as f:
+                        common.pprint("Set host in 01_copycmds.sh", color="blue")
+                        f.write("#!/bin/bash\nhost=\n")
+                        f.write(copycmds)
+                with open("%s/02_cmds.sh" % namedir, "w") as f:
+                    f.write(permissioncmds)
+                    f.write(cmds)
         return {'result': 'success'}
 
     def start(self, name):
