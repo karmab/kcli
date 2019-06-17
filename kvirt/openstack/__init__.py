@@ -254,7 +254,7 @@ class Kopenstack(object):
                 common.pprint("Time out waiting for vm to get an ip", color='red')
                 break
             vm = nova.servers.get(instance.id)
-            if vm.status == 'ERROR':
+            if vm.status.lower() == 'error':
                 msg = "Vm reports error status"
                 return {'result': 'failure', 'reason': msg}
             for key in list(vm.addresses):
@@ -446,6 +446,8 @@ class Kopenstack(object):
         if self.debug:
             print(vars(vm))
         yamlinfo = {'name': vm.name, 'status': vm.status, 'report': self.project}
+        # if vm.status.lower() == 'error':
+        #    yamlinfo['status'] += " (%s)" % vm.fault['message']
         source = self.glance.images.get(vm.image['id']).name if 'id' in vm.image else ''
         yamlinfo['template'] = source
         flavor = nova.flavors.get(vm.flavor['id'])
