@@ -126,6 +126,7 @@ def make_plan_inventory(vms_to_host, plan, vms, groups={}, user=None, yamlinvent
     inventoryfile = "/tmp/%s.inv.yaml" % plan if yamlinventory else "/tmp/%s.inv" % plan
     pprint("Generating inventory %s" % inventoryfile, color='blue')
     all = vms
+    inventory[plan] = {}
     if groups:
         inventory[plan] = {'children': {}}
         for group in groups:
