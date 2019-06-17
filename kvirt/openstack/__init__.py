@@ -445,9 +445,12 @@ class Kopenstack(object):
                 return {}
         if self.debug:
             print(vars(vm))
-        yamlinfo = {'name': vm.name, 'status': vm.status, 'report': self.project}
-        # if vm.status.lower() == 'error':
-        #    yamlinfo['status'] += " (%s)" % vm.fault['message']
+        yamlinfo = {'name': vm.name, 'status': vm.status, 'project': self.project}
+        if vm.status.lower() == 'error':
+            try:
+                yamlinfo['error'] = vm.fault['message']
+            except:
+                pass
         source = self.glance.images.get(vm.image['id']).name if 'id' in vm.image else ''
         yamlinfo['template'] = source
         flavor = nova.flavors.get(vm.flavor['id'])

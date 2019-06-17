@@ -542,12 +542,12 @@ def print_info(yamlinfo, output='plain', fields=[], values=False, pretty=True):
                 return yamlinfo
         else:
             result = ''
-            if not fields:
-                fields = ['name', 'instanceid', 'creationdate', 'host', 'status', 'description', 'autostart',
-                          'template', 'plan', 'profile', 'flavor', 'cpus', 'memory', 'nets', 'ip', 'disks', 'snapshots',
-                          'tags', 'nodeport']
-            for key in fields:
-                if key not in yamlinfo:
+            orderedfields = ['name', 'project', 'namespace', 'instanceid', 'creationdate', 'host', 'status',
+                             'description', 'autostart', 'template', 'plan', 'profile', 'flavor', 'cpus', 'memory',
+                             'nets', 'ip', 'disks', 'snapshots']
+            otherfields = [key for key in yamlinfo if key not in orderedfields]
+            for key in orderedfields + sorted(otherfields):
+                if key not in yamlinfo or (fields and key not in fields):
                     continue
                 else:
                     value = yamlinfo[key]
@@ -557,8 +557,7 @@ def print_info(yamlinfo, output='plain', fields=[], values=False, pretty=True):
                             mac = net['mac']
                             network = net['net']
                             network_type = net['type']
-                            result += "net interface: %s mac: %s net: %s type: %s\n" % (device, mac, network,
-                                                                                        network_type)
+                            value = "net interface: %s mac: %s net: %s type: %s" % (device, mac, network, network_type)
                     elif key == 'disks':
                         for disk in value:
                             device = disk['device']
@@ -567,22 +566,18 @@ def print_info(yamlinfo, output='plain', fields=[], values=False, pretty=True):
                             diskformat = disk['format']
                             drivertype = disk['type']
                             path = disk['path']
-                            result += "diskname: %s disksize: %s%s diskformat: %s type: %s path: %s\n" % (device,
-                                                                                                          disksize,
-                                                                                                          unit,
-                                                                                                          diskformat,
-                                                                                                          drivertype,
-                                                                                                          path)
+                            value = "diskname: %s disksize: %s%s diskformat: %s type: %s path: %s" % (device,
+                                                                                                      disksize,
+                                                                                                      unit,
+                                                                                                      diskformat,
+                                                                                                      drivertype,
+                                                                                                      path)
                     elif key == 'snapshots':
                         for snap in value:
                             snapshot = snap['snapshot']
                             current = snap['current']
-                            result += "snapshot: %s current: %s\n" % (snapshot, current)
-                    else:
-                        if values:
-                            result += "%s\n" % value
-                        else:
-                            result += "%s: %s\n" % (key, value)
+                            value += "snapshot: %s current: %s" % (snapshot, current)
+                    result += "%s\n" % value if values else "%s: %s\n" % (key, value)
             return result.rstrip()
 
 
