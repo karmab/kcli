@@ -40,9 +40,7 @@ class Kbaseconfig:
                     os._exit(1)
         if not os.path.exists(inifile):
             client = 'local'
-            if os.path.exists('/Users'):
-                _type = 'vbox'
-            elif os.path.exists('/var/run/libvirt/libvirt-sock'):
+            if os.path.exists('/var/run/libvirt/libvirt-sock'):
                 _type = 'kvm'
             elif os.path.exists(os.path.expanduser('~/.kube')):
                 _type = 'kubevirt'
@@ -83,8 +81,11 @@ class Kbaseconfig:
                 common.pprint("Using local hypervisor as no client was specified...")
                 self.ini['default']['client'] = 'local'
                 self.ini['local'] = {}
-        if "fake" not in self.ini and client != 'all':
-            self.ini["fake"] = {"type": "fake"}
+        if client != 'all':
+            if "fake" not in self.ini:
+                self.ini["fake"] = {"type": "fake"}
+            if "kubevirt" not in self.ini and os.path.exists(os.path.expanduser('~/.kube')):
+                self.ini['kubevirt'] = {'type': 'kubevirt'}
         self.clients = [e for e in self.ini if e != 'default']
         defaults = {}
         default = self.ini['default']
