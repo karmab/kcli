@@ -62,6 +62,8 @@ echo deb [trusted=yes] https://packagecloud.io/karmab/kcli/ubuntu/ cosmic main >
 
 ## Container install method
 
+In the commands below, use either docker or podman (if you don't want a big fat daemon)
+
 Pull the latest image:
 
 ```Shell
@@ -79,7 +81,7 @@ the are several flags you'll want to pass depending on your use case
 - `-v /var/run/libvirt:/var/run/libvirt -v /var/lib/libvirt/images:/var/lib/libvirt/images` if running against a local client
 - ` ~/.kcli:/root/.kcli` to use your kcli configuration (also profiles and repositories) stored locally
 - `-v ~/.ssh:/root/.ssh` to share your ssh keys. Alternatively, you can store your public and private key in the ~/.kcli directory
-- `--security-opt label:disable` if running with selinux
+- `--security-opt label=disable` if running with selinux
 - `-v $PWD:/workdir` to access plans below your current directory
 - `-v $HOME:/root` to share your entire home directory, useful if you want to share secret files, `~/register.sh` for instance)
 - `-e HTTP_PROXY=your_proxy -e HTTPS_PROXY=your_proxy`
@@ -88,19 +90,12 @@ the are several flags you'll want to pass depending on your use case
 As a bonus, you can alias kcli and run it as if it was installed locally:
 
 ```Shell
-alias kcli='docker run -it --rm --security-opt label:disable -v ~/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir karmab/kcli'
+alias kcli='docker run -it --rm --security-opt label=disable -v ~/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir karmab/kcli'
 ```
 
 For web access, you can switch with `-p 9000:9000 --entrypoint=/usr/bin/kweb` and thus accessing to port 9000
 
-## I don't want a big fat daemon
-
-Use podman!
-Remember to store your public and private key in the ~/.kcli directory so you dont need to share your entire .ssh directory as a volume (kcli container is based on alpine, and as such uses a ssh client which doesnt support gssapi)
-
-```
-alias kcli='podman run -it --rm --security-opt label=disable -v ~/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir karmab/kcli'
-```
+Remember you can store your public and private key in the ~/.kcli directory so you dont need to share your entire .ssh directory as a volume (kcli container is based on alpine, and as such uses a ssh client which doesnt support gssapi)
 
 ## Dev installation from pip
 
