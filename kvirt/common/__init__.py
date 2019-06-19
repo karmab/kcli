@@ -907,7 +907,6 @@ def get_latest_rhcos(url, openstack=False):
             with urlopen(metaurl) as m:
                 data = json.loads(m.read().decode())
                 if key in data['images']:
-                    print("%s/%s/%s" % (url, build, data['images'][key]['path']))
                     return "%s/%s/%s" % (url, build, data['images'][key]['path'])
 
 
