@@ -2453,7 +2453,8 @@ class Kvirt(object):
         poolpath = list(root.getiterator('path'))[0].text
         downloadpath = poolpath if pooltype == 'dir' else '/tmp'
         if shortimage in volumes:
-            return {'result': 'failure', 'reason': "Template %s already exists in pool %s" % (shortimage, poolname)}
+            common.pprint("Template %s already there.Leaving..." % shortimage, color="blue")
+            return {'result': 'success'}
         if 'rhcos' in shortimage:
             shortimage += ".gz"
         if self.host == 'localhost' or self.host == '127.0.0.1':

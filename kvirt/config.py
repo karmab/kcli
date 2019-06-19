@@ -1487,7 +1487,7 @@ class Kconfig(Kbaseconfig):
                     openstack = True if self.type in ['ovirt', 'openstack'] else False
                     if 'fedoracoreos' in template:
                         url = common.get_latest_fcos(url, openstack=openstack)
-                    elif 'rhcos' in template:
+                    elif 'rhcos' in template and 'latest' in template:
                         url = common.get_latest_rhcos(url, openstack=openstack)
                     shortname = os.path.basename(url)
                     template = os.path.basename(template)
