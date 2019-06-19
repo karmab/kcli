@@ -71,6 +71,9 @@ ubuntu cosmic):
 Container install method
 ------------------------
 
+In the commands below, use either docker or podman (if you don’t want a
+big fat daemon)
+
 Pull the latest image:
 
 .. code:: shell
@@ -91,7 +94,7 @@ the are several flags you’ll want to pass depending on your use case
    and repositories) stored locally
 -  ``-v ~/.ssh:/root/.ssh`` to share your ssh keys. Alternatively, you
    can store your public and private key in the ~/.kcli directory
--  ``--security-opt label:disable`` if running with selinux
+-  ``--security-opt label=disable`` if running with selinux
 -  ``-v $PWD:/workdir`` to access plans below your current directory
 -  ``-v $HOME:/root`` to share your entire home directory, useful if you
    want to share secret files, ``~/register.sh`` for instance)
@@ -103,23 +106,16 @@ locally:
 
 .. code:: shell
 
-    alias kcli='docker run -it --rm --security-opt label:disable -v ~/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir karmab/kcli'
+    alias kcli="docker run -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir karmab/kcli"
 
 For web access, you can switch with
 ``-p 9000:9000 --entrypoint=/usr/bin/kweb`` and thus accessing to port
 9000
 
-I don’t want a big fat daemon
------------------------------
-
-Use podman! Remember to store your public and private key in the ~/.kcli
+Remember you can store your public and private key in the ~/.kcli
 directory so you dont need to share your entire .ssh directory as a
 volume (kcli container is based on alpine, and as such uses a ssh client
 which doesnt support gssapi)
-
-::
-
-    alias kcli='podman run -it --rm --security-opt label=disable -v ~/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir karmab/kcli'
 
 Dev installation from pip
 -------------------------
@@ -224,7 +220,7 @@ pool with a path, and have centos cloud image downloaded
 
 .. code:: shell
 
-    kcli bootstrap -n twix -H 192.168.0.6 --pool vms --poolpath /home/vms
+    kcli bootstrap -n host1 -H 192.168.0.6 --pool default --poolpath /var/lib/libvirt/images
 
 Storing secrets
 ===============

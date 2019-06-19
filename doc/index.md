@@ -90,7 +90,7 @@ the are several flags you'll want to pass depending on your use case
 As a bonus, you can alias kcli and run it as if it was installed locally:
 
 ```Shell
-alias kcli='docker run -it --rm --security-opt label=disable -v ~/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir karmab/kcli'
+alias kcli="docker run -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir karmab/kcli"
 ```
 
 For web access, you can switch with `-p 9000:9000 --entrypoint=/usr/bin/kweb` and thus accessing to port 9000
@@ -178,7 +178,7 @@ kcli bootstrap
 And for advanced bootstrapping, you can specify a target name, host, a pool with a path, and have centos cloud image downloaded
 
 ```Shell
-kcli bootstrap -n twix -H 192.168.0.6 --pool vms --poolpath /home/vms
+kcli bootstrap -n host1 -H 192.168.0.6 --pool default --poolpath /var/lib/libvirt/images
 ```
 
 # Storing secrets
