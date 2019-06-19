@@ -2350,16 +2350,17 @@ class Kvirt(object):
         conn = self.conn
         for pool in conn.listStoragePools():
             if pool == name:
-                print("Pool %s already there.Leaving..." % name)
-                return
+                common.pprint("Pool %s already there.Leaving..." % name, color='blue')
+                return {'result': 'success'}
         if pooltype == 'dir':
             if self.host == 'localhost' or self.host == '127.0.0.1':
                 if not os.path.exists(poolpath):
                     try:
                         os.makedirs(poolpath)
                     except OSError:
-                        print("Couldn't create directory %s.Leaving..." % poolpath)
-                        return 1
+                        reason = "Couldn't create directory %s.Leaving..." % poolpath
+                        common.pprint(reason, color='red')
+                        return {'result': 'failure', 'reason': reason}
             elif self.protocol == 'ssh':
                 cmd1 = 'ssh %s -p %s %s@%s "test -d %s || mkdir %s"' % (self.identitycommand, self.port, self.user,
                                                                         self.host, poolpath, poolpath)
@@ -2367,13 +2368,18 @@ class Kvirt(object):
                                                                      self.host, user, poolpath)
                 return1 = os.system(cmd1)
                 if return1 > 0:
-                    print("Couldn't create directory %s.Leaving..." % poolpath)
-                    return
+                    reason = "Couldn't create directory %s.Leaving..." % poolpath
+                    common.pprint(reason, color='red')
+                    return {'result': 'failure', 'reason': reason}
                 return2 = os.system(cmd2)
                 if return2 > 0:
-                    print("Couldn't change permission of directory %s to qemu" % poolpath)
+                    reason = "Couldn't change permission of directory %s to qemu" % poolpath
+                    common.pprint(reason, color='red')
+                    return {'result': 'failure', 'reason': reason}
             else:
-                print("Make sur %s directory exists on hypervisor" % name)
+                reason = "Make sure %s directory exists on hypervisor" % name
+                common.pprint(reason, color='red')
+                return {'result': 'failure', 'reason': reason}
             poolxml = """<pool type='dir'>
                          <name>%s</name>
                          <source>
@@ -2403,8 +2409,9 @@ class Kvirt(object):
                          </source>
                          </pool>""" % (name, poolpath)
         else:
-            print("Invalid pool type %s.Leaving..." % pooltype)
-            return {'result': 'failure', 'reason': "Invalid pool type %s" % pooltype}
+            reason = "Invalid pool type %s.Leaving..." % pooltype
+            common.pprint(reason, color='red')
+            return {'result': 'failure', 'reason': reason}
         pool = conn.storagePoolDefineXML(poolxml, 0)
         pool.setAutostart(True)
         # if pooltype == 'lvm':
@@ -2545,7 +2552,8 @@ class Kvirt(object):
             return {'result': 'failure', 'reason': "Missing Cidr"}
         cidrs = [network['cidr'] for network in list(networks.values())]
         if name in networks:
-            return {'result': 'failure', 'reason': "Network %s already exists" % name}
+            common.pprint("Network %s already exists" % name, color='blue')
+            return {'result': 'success'}
         try:
             range = IPNetwork(cidr)
         except:
