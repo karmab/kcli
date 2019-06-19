@@ -2243,7 +2243,7 @@ class Kvirt(object):
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
         except:
-            print("VM %s not found" % name)
+            common.pprint("VM %s not found" % name, color='red')
             return None, None
         for element in list(root.getiterator('{kvirt}info')):
             e = element.find('{kvirt}ip')
@@ -2278,7 +2278,7 @@ class Kvirt(object):
                                 ip = matchip
                                 break
         if ip is None:
-            print("No ip found. Cannot ssh...")
+            common.pprint("No ip found. Cannot ssh...", color='red')
         return user, ip
 
     def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, Y=False,
