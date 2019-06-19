@@ -772,9 +772,12 @@ def plan(args):
     info = args.info
     update = args.update
     volumepath = args.volumepath
-    overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
+    paramfile = args.paramfile
     if os.path.exists("/i_am_a_container"):
         inputfile = "%s/%s" % (volumepath, inputfile) if inputfile is not None else "%s/kcli_plan.yml" % volumepath
+        if paramfile is not None:
+            paramfile = "%s/%s" % (volumepath, paramfile)
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     if info and url is None:
         inputfile = plan if inputfile is None and plan is not None else inputfile
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
