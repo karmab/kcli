@@ -895,6 +895,7 @@ class Kconfig(Kbaseconfig):
                     common.pprint("%s prevented to autostart!" % name)
             return {'result': 'success'}
         if stop or restart:
+            stopfound = True
             common.pprint("Stopping vms from plan %s" % plan)
             if not self.extraclients:
                 stopclients = {self.client: k}
@@ -907,6 +908,7 @@ class Kconfig(Kbaseconfig):
                     name = vm['name']
                     description = vm.get('plan')
                     if description == plan:
+                        stopfound = True
                         c.stop(name)
                         common.pprint("%s stopped on %s!" % (name, hypervisor))
             if container:
@@ -915,12 +917,17 @@ class Kconfig(Kbaseconfig):
                     name = conta[0]
                     containerplan = conta[3]
                     if containerplan == plan:
+                        stopfound = True
                         cont.stop_container(name)
                         common.pprint("Container %s stopped!" % name)
-            common.pprint("Plan %s stopped!" % plan)
+            if stopfound:
+                common.pprint("Plan %s stopped!" % plan)
+            else:
+                common.pprint("No matching objects found", color='blue')
             if not restart:
                 return {'result': 'success'}
         if start or restart:
+            startfound = False
             common.pprint("Starting vms from plan %s" % plan)
             if not self.extraclients:
                 startclients = {self.client: k}
@@ -933,6 +940,7 @@ class Kconfig(Kbaseconfig):
                     name = vm['name']
                     description = vm.get('plan')
                     if description == plan:
+                        startfound = True
                         c.start(name)
                         common.pprint("%s started on %s!" % (name, hypervisor))
             if container:
@@ -941,11 +949,16 @@ class Kconfig(Kbaseconfig):
                     name = conta[0]
                     containerplan = conta[3]
                     if containerplan == plan:
+                        startfound = True
                         cont.start_container(name)
                         common.pprint("Container %s started!" % name)
-            common.pprint("Plan %s started!" % plan)
+            if startfound:
+                common.pprint("Plan %s started!" % plan)
+            else:
+                common.pprint("No matching objects found", color='blue')
             return {'result': 'success'}
         if snapshot:
+            snapshotfound = False
             if revert:
                 common.pprint("Can't revert and snapshot plan at the same time", color='red')
                 os._exit(1)
@@ -954,19 +967,28 @@ class Kconfig(Kbaseconfig):
                 name = vm['name']
                 description = vm['plan']
                 if description == plan:
+                    snapshotfound = True
                     k.snapshot(plan, name)
                     common.pprint("%s snapshotted!" % name)
-            common.pprint("Plan %s snapshotted!" % plan)
+            if snapshotfound:
+                common.pprint("Plan %s snapshotted!" % plan)
+            else:
+                common.pprint("No matching vms found", color='blue')
             return {'result': 'success'}
         if revert:
+            revertfound = False
             common.pprint("Reverting snapshots of vms from plan %s" % plan)
             for vm in sorted(k.list(), key=lambda x: x['name']):
                 name = vm['name']
                 description = vm['plan']
                 if description == plan:
+                    revertfound = True
                     k.snapshot(plan, name, revert=True)
                     common.pprint("snapshot of %s reverted!" % name)
-            common.pprint("Plan %s snapshot reverted!" % plan)
+            if revertfound:
+                common.pprint("Plan %s snapshot reverted!" % plan)
+            else:
+                common.pprint("No matching vms found", color='blue')
             return {'result': 'success'}
         if url is not None:
             if not url.endswith('.yml'):
