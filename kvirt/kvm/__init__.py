@@ -1755,7 +1755,7 @@ class Kvirt(object):
             print("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if vm.isActive() == 1:
-            print("Machine up. Change will only appear upon next reboot")
+            common.pprint("Machine up. Change will only appear upon next reboot", color='blue')
         metadata = root.find('metadata')
         kroot, kmeta = None, None
         for element in list(root.getiterator('{kvirt}info')):
