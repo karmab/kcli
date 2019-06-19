@@ -227,7 +227,7 @@ class Kfake(object):
         vms = []
         number = random.randint(1, 10)
         for i in range(number):
-            name = random.choice(right)
+            name = get_random_name()
             vms.append(self.info(name))
         return sorted(vms, key=lambda x: x['name'])
 
