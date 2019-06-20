@@ -39,16 +39,16 @@ class Kbaseconfig:
                     common.pprint(err, color='red')
                     os._exit(1)
         if not os.path.exists(inifile):
-            client = 'local'
+            defaultclient = 'local'
             if os.path.exists('/var/run/libvirt/libvirt-sock'):
                 _type = 'kvm'
-            elif os.path.exists(os.path.expanduser('~/.kube')):
+            elif os.path.exists(os.path.expanduser('~/.kube')) or 'KUBECONFIG' in os.environ:
                 _type = 'kubevirt'
-                client = 'kubevirt'
+                defaultclient = 'kubevirt'
             else:
                 _type = 'fake'
-                client = 'fake'
-            self.ini = {'default': {'client': client}, client:
+                defaultclient = 'fake'
+            self.ini = {'default': {'client': defaultclient}, defaultclient:
                         {'pool': 'default', 'type': _type}}
         else:
             with open(inifile, 'r') as entries:
@@ -84,7 +84,8 @@ class Kbaseconfig:
         if client != 'all':
             if "fake" not in self.ini:
                 self.ini["fake"] = {"type": "fake"}
-            if "kubevirt" not in self.ini and os.path.exists(os.path.expanduser('~/.kube')):
+            if "kubevirt" not in self.ini and (os.path.exists(os.path.expanduser('~/.kube')) or
+                                               'KUBECONFIG' in os.environ):
                 self.ini['kubevirt'] = {'type': 'kubevirt'}
         self.clients = [e for e in self.ini if e != 'default']
         defaults = {}
