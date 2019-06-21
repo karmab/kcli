@@ -2,7 +2,16 @@
 from setuptools import setup, find_packages
 
 import os
-description = 'Libvirt/VirtualBox wrapper on steroids'
+INSTALL = ['netaddr', 'PyYAML', 'prettytable', 'jinja2', 'flask', 'libvirt-python>=2.0.0']
+AWS = ['boto3']
+GCP = ['google-api-python-client', 'google-auth-httplib2', 'google-cloud-dns']
+KUBEVIRT = ['kubernetes']
+OPENSTACK = ['python-cinderclient', 'python-neutronclient', 'python-glanceclient', 'python-keystoneclient',
+             'python-novaclient']
+OVIRT = ['ovirt-engine-sdk-python']
+ALL = ['docker>=2.0'] + AWS + GCP + KUBEVIRT + OPENSTACK + OVIRT
+
+description = 'Provisioner/Manager for Libvirt/Ovirt/Gcp/Aws/Openstack/Kubevirt and containers'
 long_description = description
 if os.path.exists('README.rst'):
     long_description = open('README.rst').read()
@@ -19,29 +28,15 @@ setup(
     author='Karim Boumedhel',
     author_email='karimboumedhel@gmail.com',
     license='ASL',
-    install_requires=[
-        'netaddr',
-        'PyYAML',
-        'prettytable',
-        'jinja2',
-        'flask',
-        'libvirt-python>=2.0.0',
-    ],
+    install_requires=INSTALL,
     extras_require={
-        'all': [
-            'docker>=2.0',
-            'kubernetes',
-            'boto3',
-            'google-api-python-client',
-            'google-auth-httplib2',
-            'google-cloud-dns',
-            'ovirt-engine-sdk-python',
-            'python-cinderclient',
-            'python-neutronclient',
-            'python-glanceclient',
-            'python-keystoneclient',
-            'python-novaclient',
-        ]},
+        'all': ALL,
+        'aws': AWS,
+        'gcp': GCP,
+        'kubevirt': KUBEVIRT,
+        'openstack': OPENSTACK,
+        'ovirt': OVIRT,
+    },
     entry_points='''
         [console_scripts]
         kcli=kvirt.cli:cli
