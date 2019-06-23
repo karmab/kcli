@@ -16,12 +16,33 @@ Base Kvirt serving as interface for the virtualisation providers
 # your base class __init__ needs to define conn attribute and set it to None
 # when backend cannot be reached
 # it should also set debug from the debug variable passed in kcli client
-class Kbase(object):
+
+import json
+from kvirt import common
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+import requests
+
+
+class Kforeman(object):
     """
 
     """
-    def __init__(self, host='127.0.0.1', port=None, user='root', debug=False):
-        self.conn = 'base'
+    def __init__(self, host='127.0.0.1', port=443, user='root', password=None, debug=False, secure=True,
+                 filtervms=False, filteruser=False):
+        self.conn = 'foreman'
+        self.debug = debug
+        self.user = user
+        self.password = password
+        self.host = host.encode
+        self.port = str(port)
+        if port == 443 and secure:
+            self.url = "https://%s/api" % (host)
+        else:
+            protocol = 'https' if secure else 'http'
+            self.url = "%s://%s:%s/api" % (protocol, host, port)
+        self.filteruser = filteruser
+        self.filtervms = filtervms
         return
 
 # should cleanly close your connection, if needed
@@ -39,7 +60,15 @@ class Kbase(object):
         :param name:
         :return:
         """
-        return
+        dns = None
+        if dns:
+            name = "%s.%s" % (name, dns)
+        res = self.self._foremando()
+        for r in res['results']:
+            currentname = r['name']
+            if currentname == name:
+                return True
+        return False
 
     def net_exists(self, name):
         """
@@ -112,6 +141,79 @@ class Kbase(object):
         :return:
         """
         print("not implemented")
+        ip = None
+        mac = None
+        operatingsystem = None
+        environment = None
+        arch = "x86_64"
+        ptable = None
+        powerup = None
+        memory = None
+        core = None
+        compute = None
+        hostgroup = None
+        host, port, user, password, protocol = self.host, self.port, self.user, self.password, self.protocol
+        name = name.encode('ascii')
+        dns = dns.encode('ascii')
+        if environment is None:
+            environment = "production"
+        if ip:
+            ip = ip.encode('ascii')
+        if mac:
+            mac = mac.encode('ascii')
+        if operatingsystem:
+            operatingsystem = operatingsystem.encode('ascii')
+        if environment:
+            environment = environment.encode('ascii')
+        if arch:
+            arch = arch.encode('ascii')
+        if ptable:
+            ptable = ptable.encode('ascii')
+        if powerup:
+            powerup = powerup.encode('ascii')
+        if memory:
+            memory = memory.encode('ascii')
+        if core:
+            core = core.encode('ascii')
+        if compute:
+            compute = compute.encode('ascii')
+        if hostgroup:
+            hostgroup = hostgroup.encode('ascii')
+        postdata = {}
+        if dns:
+            name = "%s.%s" % (name, dns)
+        postdata['host'] = {'name': name}
+        if operatingsystem:
+            osid = self._foremangetid(protocol, host, port, user, password, 'operatingsystems', operatingsystem)
+            postdata['host']['operatingsystem_id'] = osid
+        envid = self._foremangetid(protocol, host, port, user, password, 'environments', environment)
+        postdata['host']['environment_id'] = envid
+        if arch:
+            archid = self._foremangetid(protocol, host, port, user, password, 'architectures', arch)
+            postdata['host']['architecture_id'] = archid
+        if ptable:
+            ptableid = self._foremangetid(protocol, host, port, user, password, 'partitiontables', ptable)
+            postdata['host']['partitiontable_id'] = ptableid
+        if not ip or not mac or not ptableid or not osid:
+            postdata['host']['managed'] = False
+        if ip:
+            postdata['host']['ip'] = ip
+        if mac:
+            postdata['host']['mac'] = mac
+        if compute:
+            computeid = self._foremangetid(protocol, host, port, user, password, 'compute_resources', compute)
+            postdata['host']['compute_resource_id'] = computeid
+        if hostgroup:
+            hostgroupid = self._foremangetid(protocol, host, port, user, password, 'hostgroups', hostgroup)
+            postdata['host']['hostgroup_id'] = hostgroupid
+        if ptable:
+            ptableid = self._foremangetid(protocol, host, port, user, password, 'ptables', ptable)
+            postdata['host']['ptable_id'] = ptableid
+        result = self._foremando(where='hosts', actiontype="POST", postdata=postdata)
+        if 'errors' not in result:
+            print("%s created in Foreman" % name)
+        else:
+            print("%s not created in Foreman because %s" % (name, result["errors"][0]))
         return {'result': 'success'}
 
     def start(self, name):
@@ -177,8 +279,13 @@ class Kbase(object):
 
         :return:
         """
-        print("not implemented")
-        return []
+        vms = []
+        _filter = "owner_name=%" % self.user if self.filteruser else None
+        res = self._foremando(_filter=_filter)
+        for vm in res['results']:
+            name = vm['name']
+            vms.append(self.info(name, vm=vm))
+        return vms
 
     def console(self, name, tunnel=False):
         """
@@ -229,8 +336,34 @@ class Kbase(object):
         :param values:
         :return:
         """
-        print("not implemented")
-        return {'result': 'success'}
+        if vm is None:
+            vm = self._foremando(who=name)
+        if self.debug:
+            print(vars(vm))
+        yamlinfo = {'name': name}
+        plan, profile = 'N/A', 'N/A'
+        state = 'up'
+        cpus = 2
+        memory = 1024
+        template = vm['hostgroup_name']
+        yamlinfo = {'name': name, 'template': template, 'plan': plan, 'profile': profile, 'status': state, 'cpus': cpus,
+                    'memory': memory}
+        yamlinfo['created_at'] = vm['created_at']
+        yamlinfo['owner_name'] = vm['owner_name']
+        yamlinfo['id'] = vm['id']
+        nets = []
+        if 'interfaces' in vm:
+            for interface in vm['interfaces']:
+                device = interface['identifier']
+                mac = interface['mac']
+                network = interface.get('subnet_name', 'N/A')
+                network_type = interface.get('type', 'N/A')
+                if 'ip' in interface:
+                    yamlinfo['ip'] = vm['ip']
+                nets.append({'device': device, 'mac': mac, 'net': network, 'type': network_type})
+        if nets:
+            yamlinfo['nets'] = nets
+        return yamlinfo
 
 # should return ip string
     def ip(self, name):
@@ -260,6 +393,16 @@ class Kbase(object):
         :return:
         """
         print("not implemented")
+        dns = None
+        name = name.encode('ascii')
+        if dns:
+            dns = dns.encode('ascii')
+            name = "%s.%s" % (name, dns)
+        result = self._foremando(who=name, actiontype='DELETE')
+        if result:
+            print("%s deleted in Foreman" % name)
+        else:
+            print("Nothing to do in foreman")
         return {'result': 'success'}
 
 # should return dnsclient, domain for the given vm
@@ -425,16 +568,17 @@ class Kbase(object):
 
 # should return (user, ip)
     def _ssh_credentials(self, name):
-        print("not implemented")
-        return
+        ip, user = None, 'root'
+        vm = self._foremando(who=name)
+        template = vm['hostgroup_name']
+        if template is not None:
+            user = common.get_user(template)
+        for interface in vm['interfaces']:
+            if 'ip' in interface:
+                ip = vm['ip']
+                break
+        return user, ip
 
-# should leverage if possible
-# should return a sshcommand string
-# u, ip = self._ssh_credentials(name)
-# sshcommand = common.ssh(name, ip=ip, host=self.host, port=self.port,
-# hostuser=self.user, user=u, local=local,
-# remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X,
-# debug=self.debug)
     def ssh(self, name, user=None, local=None, remote=None, tunnel=False,
             insecure=False, cmd=None, X=False, Y=False, D=None):
         """
@@ -451,16 +595,13 @@ class Kbase(object):
         :param D:
         :return:
         """
-        print("not implemented")
-        return
+        u, ip = self._ssh_credentials(name)
+        if user is None:
+            user = u
+        sshcommand = common.ssh(name, ip=ip, user=user, local=local, remote=remote, tunnel=tunnel, insecure=insecure,
+                                cmd=cmd, X=X, Y=Y, D=D, debug=self.debug)
+        return sshcommand
 
-# should leverage if possible
-# should return a scpcommand string
-# u, ip = self._ssh_credentials(name)
-# scpcommand = common.scp(name, ip='', host=self.host, port=self.port,
-# hostuser=self.user, user=user,
-# source=source, destination=destination, recursive=recursive, tunnel=tunnel,
-# debug=self.debug, download=False)
     def scp(self, name, user=None, source=None, destination=None, tunnel=False,
             download=False, recursive=False):
         """
@@ -474,8 +615,14 @@ class Kbase(object):
         :param recursive:
         :return:
         """
-        print("not implemented")
-        return
+        u, ip = self._ssh_credentials(name)
+        if ip is None:
+            return None
+        if user is None:
+            user = u
+        scpcommand = common.scp(name, ip=ip, user=user, source=source, destination=destination, recursive=recursive,
+                                tunnel=tunnel, debug=self.debug, download=False)
+        return scpcommand
 
     def create_pool(self, name, poolpath, pooltype='dir', user='qemu', thinpool=None):
         """
@@ -618,3 +765,50 @@ class Kbase(object):
         :return:
         """
         return
+
+    def _foremando(self, where='hosts', who=None, actiontype=None, postdata=None, _filter=None):
+        # url = "%s://%s:%s/api/v2/puppetclasses?search=environment+=+%s" % (protocol, host, port, environment)
+        url = "%s/%s" % (self.url, where)
+        url += "/%s" % who if who is not None else "?per_page=10000"
+        if _filter is not None:
+            url += _filter
+        user = self.user
+        password = self.password
+        headers = {'content-type': 'application/json', 'Accept': 'application/json'}
+        # get environments
+        # if user and password:
+        #    user = user.encode('ascii')
+        #    password = password.encode('ascii')
+        if actiontype == 'POST':
+            r = requests.post(url, verify=False, headers=headers, auth=(user, password), data=json.dumps(postdata))
+        elif actiontype == 'DELETE':
+            r = requests.delete(url, verify=False, headers=headers, auth=(user, password), data=postdata)
+        elif actiontype == 'PUT':
+            r = requests.put(url, verify=False, headers=headers, auth=(user, password), data=postdata)
+        else:
+            r = requests.get(url, verify=False, headers=headers, auth=(user, password))
+        try:
+            result = r.json()
+            result = eval(str(result))
+            return result
+        except:
+            return None
+
+    def _foremangetid(self, searchtype, searchname):
+        if searchtype == 'puppet':
+            # url = "%s/apismart_proxies?type=%s" % (url, searchtype)
+            result = self._foremando(where='apismart_proxies', searchtype=searchtype)
+            return result[0]['smart_proxy']['id']
+        else:
+            # url = "%s/api/v2/%s/%s" % (url, searchtype, searchname)
+            result = self._foremando(where=searchtype, who=searchname)
+        if searchtype == 'ptables':
+            shortname = 'ptable'
+        elif searchtype.endswith('es') and searchtype != 'architectures':
+            shortname = searchtype[:-2]
+        else:
+            shortname = searchtype[:-1]
+        try:
+            return str(result[shortname]['id'])
+        except:
+            return str(result['id'])
