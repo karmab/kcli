@@ -552,13 +552,17 @@ def print_info(yamlinfo, output='plain', fields=[], values=False, pretty=True):
                 else:
                     value = yamlinfo[key]
                     if key == 'nets':
+                        nets = ''
                         for net in value:
                             device = net['device']
                             mac = net['mac']
                             network = net['net']
                             network_type = net['type']
-                            value = "net interface: %s mac: %s net: %s type: %s" % (device, mac, network, network_type)
+                            nets += "net interface: %s mac: %s net: %s type: %s\n" % (device, mac, network,
+                                                                                      network_type)
+                        value = nets.rstrip()
                     elif key == 'disks':
+                        disks = ''
                         for disk in value:
                             device = disk['device']
                             disksize = disk['size']
@@ -566,18 +570,22 @@ def print_info(yamlinfo, output='plain', fields=[], values=False, pretty=True):
                             diskformat = disk['format']
                             drivertype = disk['type']
                             path = disk['path']
-                            value = "diskname: %s disksize: %s%s diskformat: %s type: %s path: %s" % (device,
-                                                                                                      disksize,
-                                                                                                      unit,
-                                                                                                      diskformat,
-                                                                                                      drivertype,
-                                                                                                      path)
+                            disks += "diskname: %s disksize: %s%s diskformat: %s type: %s path: %s\n" % (device,
+                                                                                                         disksize,
+                                                                                                         unit,
+                                                                                                         diskformat,
+                                                                                                         drivertype,
+                                                                                                         path)
+                            value = disks.rstrip()
                     elif key == 'snapshots':
                         for snap in value:
                             snapshot = snap['snapshot']
                             current = snap['current']
                             value += "snapshot: %s current: %s" % (snapshot, current)
-                    result += "%s\n" % value if values else "%s: %s\n" % (key, value)
+                    if values or key in ['disks', 'nets']:
+                        result += "%s\n" % value
+                    else:
+                        result += "%s: %s\n" % (key, value)
             return result.rstrip()
 
 
