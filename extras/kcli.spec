@@ -5,7 +5,7 @@
 #
 
 Name:           kcli
-Version:        14.3
+Version:        14.13
 Release:        1
 Url:            http://github.com/karmab/kcli
 Summary:        Wapper for libvirt,gcp,aws,ovirt and openstack
@@ -32,7 +32,10 @@ and generally for every vm deployed from this client.
 %setup -q -n kcli-%{version}
 
 %build
-sed -i.bak '/libvirt/d' setup.py
+sed -i '/libvirt/d' setup.py
+INSTALL=$(grep -m 1 INSTALL setup.py  | sed 's/INSTALL = //')
+sed -i "s/install_requires=INSTALL/install_requires=$INSTALL/" setup.py
+sed -i '/INSTALL/d' setup.py
 %{__python} setup.py build
 
 %install
@@ -58,20 +61,5 @@ rm -rf %{buildroot}
 %attr(0755,root,root) %{_bindir}/kweb
 
 %changelog
-* Sat Jan 19 2018 Karim Boumedhel <karimboumedhel@gmail.com> 14.3
-- 14.3 Release with remediation, baseplans and kubernetes support
-* Thu Dec 20 2018 Karim Boumedhel <karimboumedhel@gmail.com> 14.1
-- 14.1 Release with a bunch of goodies
-* Wed Jul 11 2018 Karim Boumedhel <karimboumedhel@gmail.com> 12.1
-- 12.1 Release switching to python3
-* Tue Mar 20 2018 Karim Boumedhel <karimboumedhel@gmail.com> 11.0
-- 11.0 Release
-* Fri Jul 14 2017 Karim Boumedhel <karimboumedhel@gmail.com> 8.2
-- Remove kcli ssh print
-* Wed May 24 2017 Karim Boumedhel <karimboumedhel@gmail.com> 7.18-1
-* Fri Jul 14 2017 Karim Boumedhel <karimboumedhel@gmail.com> 8.0
-- 8.0 Release
-* Wed May 24 2017 Karim Boumedhel <karimboumedhel@gmail.com> 7.18-1
-- Fix dynamic inventory
-* Thu May 11 2017 Karim Boumedhel <karimboumedhel@gmail.com> 7.13-2
-- Doc, Sample, Plan and inventory files included
+* Mon Jun 24 2019 Karim Boumedhel <karimboumedhel@gmail.com> 14.13
+- 14.13 Fix print info
