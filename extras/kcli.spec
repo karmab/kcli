@@ -6,7 +6,7 @@
 
 Name:           kcli
 Version:        14.13
-Release:        1
+Release:        2
 Url:            http://github.com/karmab/kcli
 Summary:        Wapper for libvirt,gcp,aws,ovirt and openstack
 License:        ASL 2.0
@@ -32,7 +32,7 @@ and generally for every vm deployed from this client.
 %setup -q -n kcli-%{version}
 
 %build
-sed -i '/libvirt/d' setup.py
+sed -i "s/, 'libvirt.*/\]/" setup.py
 INSTALL=$(grep -m 1 INSTALL setup.py  | sed 's/INSTALL = //')
 sed -i "s/install_requires=INSTALL/install_requires=$INSTALL/" setup.py
 sed -i '/INSTALL/d' setup.py

@@ -1519,10 +1519,10 @@ class Kconfig(Kbaseconfig):
                 if url is None:
                     url = TEMPLATES[template]
                     openstack = True if self.type in ['ovirt', 'openstack'] else False
-                    if 'fedoracoreos' in template and 'latest' in template:
-                        url = common.get_latest_fcos(url, openstack=openstack)
-                    elif 'rhcos' in template and 'latest' in template:
+                    if 'rhcos' in template and 'latest' in template:
                         url = common.get_latest_rhcos(url, openstack=openstack)
+                    # elif 'fedoracoreos' in template and 'latest' in template:
+                    #    url = common.get_latest_fcos(url, openstack=openstack)
                     shortname = os.path.basename(url)
                     template = os.path.basename(template)
                     if not url.endswith('qcow2') and not url.endswith('img') and not url.endswith('qc2')\
