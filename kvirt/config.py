@@ -378,6 +378,9 @@ class Kconfig(Kbaseconfig):
                     files[index] = {'path': path, 'origin': origin}
                 elif isinstance(fil, dict):
                     path = fil.get('path')
+                    if not path.startswith('/'):
+                        common.pprint("Incorrect path %s.Leaving..." % path, color='red')
+                        os._exit(1)
                     origin = fil.get('origin')
                     content = fil.get('content')
                 else:
