@@ -318,7 +318,7 @@ To create a service account and give it privileges to handle vms,
 
 ```
 SERVICEACCOUNT=xxx
-kubectl create serviceaccount $SERVICEACCOUNT
+kubectl create serviceaccount $SERVICEACCOUNT -n default
 kubectl create clusterrolebinding $SERVICEACCOUNT --clusterrole=cluster-admin --user=system:serviceaccount:default:$SERVICEACCOUNT
 ```
 

@@ -165,10 +165,11 @@ class Kubevirt(Kubecommon):
             elif template in ['debian', 'gentoo', 'ubuntu']:
                 template = "karmab/%s-container-disk-demo" % template
                 common.pprint("Using container disk %s as template" % template)
-            elif template not in CONTAINERDISKS:
+            elif '/' not in template:
                 return {'result': 'failure', 'reason': "you don't have template %s" % template}
             if template == 'kubevirt/fedora-cloud-registry-disk-demo' and memory <= 512:
                 memory = 1024
+            containerdisk = True if '/' in template else False
         default_disksize = disksize
         default_diskinterface = diskinterface
         default_pool = pool
@@ -301,7 +302,7 @@ class Kubevirt(Kubecommon):
                     existingpvc = True
             myvolume = {'name': diskname}
             if template is not None and index == 0:
-                if template in CONTAINERDISKS:
+                if template in CONTAINERDISKS or '/' in template:
                     myvolume['containerDisk'] = {'image': template}
                 elif cdi and datavolumes:
                     myvolume['dataVolume'] = {'name': diskname}
@@ -312,7 +313,7 @@ class Kubevirt(Kubecommon):
             newdisk = {'disk': {'bus': diskinterface}, 'name': diskname}
             vm['spec']['template']['spec']['domain']['devices']['disks'].append(newdisk)
             vm['spec']['template']['spec']['volumes'].append(myvolume)
-            if index == 0 and template in CONTAINERDISKS:
+            if index == 0 and containerdisk:
                 continue
             if existingpvc:
                 continue
@@ -399,10 +400,10 @@ class Kubevirt(Kubecommon):
             bound = self.pvc_bound(pvcname, namespace)
             if not bound:
                 return {'result': 'failure', 'reason': 'timeout waiting for pvc %s to get bound' % pvcname}
-            prepare = self.prepare_pvc(pvcname, size=pvcsize)
-            if prepare['result'] == 'failure':
-                reason = prepare['reason']
-                return {'result': 'failure', 'reason': reason}
+            # prepare = self.prepare_pvc(pvcname, size=pvcsize)
+            # if prepare['result'] == 'failure':
+            #    reason = prepare['reason']
+            #    return {'result': 'failure', 'reason': reason}
         crds.create_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', vm)
         if reservedns and domain is not None:
             try:
@@ -581,7 +582,8 @@ class Kubevirt(Kubecommon):
             common.pprint("Using local virtctl")
             command = "virtctl console %s -n %s --insecure-skip-tls-verify" % (name, namespace)
         else:
-            common.pprint("Tunneling virtctl through remote host. Make sure virtctl is installed there", color='blue')
+            common.pprint("Tunneling virtctl through remote host %s. Make sure virtctl is installed there" % self.host,
+                          color='blue')
             command = "ssh -o LogLevel=QUIET -t %s@%s virtctl console %s -n %s --insecure-skip-tls-verify" % (self.user,
                                                                                                               self.host,
                                                                                                               name,
