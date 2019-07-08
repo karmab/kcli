@@ -1,6 +1,6 @@
 #!/bin/bash
 
-yum -y install epel-release libxml2-devel openssl-devel python34-virtualenv.noarch
+yum -y install epel-release libxml2-devel openssl-devel python36-virtualenv
 virtualenv-3 venv
 source venv/bin/activate
 pip install libvirt-python

@@ -29,6 +29,7 @@ TEMPLATES = {'': None, 'arch': 'https://linuximages.de/openstack/arch/arch-opens
              'debian8': 'https://cdimage.debian.org/cdimage/openstack/archive/8.11.0/'
              'debian-8.11.0-openstack-amd64.qcow2',
              'debian9': 'https://cdimage.debian.org/cdimage/openstack/current-9/debian-9-openstack-amd64.qcow2',
+             'debian10': 'https://cdimage.debian.org/cdimage/openstack/current-10/debian-10-openstack-amd64.qcow2',
              'fedora24': 'https://download.fedoraproject.org/pub/fedora/linux/releases/24/CloudImages/x86_64/images/'
              'Fedora-Cloud-Base-24-1.2.x86_64.qcow2',
              'fedora25': 'https://download.fedoraproject.org/pub/fedora/linux/releases/25/CloudImages/x86_64/images/'

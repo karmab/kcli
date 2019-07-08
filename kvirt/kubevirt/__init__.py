@@ -4,6 +4,7 @@
 Kubevirt Provider Class
 """
 
+# import base64
 from kubernetes import client
 from kvirt.kubecommon import Kubecommon, pretty_print
 from netaddr import IPAddress
