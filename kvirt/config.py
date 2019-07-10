@@ -7,6 +7,7 @@ Kvirt config class
 from jinja2 import Environment, FileSystemLoader
 from jinja2 import StrictUndefined as undefined
 from jinja2.exceptions import TemplateSyntaxError, TemplateError
+from kvirt.kubecommon import pretty_print
 from kvirt.defaults import TEMPLATES, TEMPLATESCOMMANDS
 from kvirt import ansibleutils
 from kvirt import nameutils
@@ -1042,6 +1043,15 @@ class Kconfig(Kbaseconfig):
         baseentries = {}
         entries, overrides, basefile, basedir = self.process_inputfile(plan, inputfile, overrides=overrides,
                                                                        onfly=onfly)
+        if self.type == 'fake':
+            fakeentries = {key: entries[key] for key in entries if key != 'parameters'}
+            plandir = "/tmp/%s" % plan
+            if not os.path.exists(plandir):
+                common.pprint("Generating assets in %s" % plandir)
+                os.mkdir(plandir)
+            with open("%s/%s" % (plandir, inputfile), "w") as f:
+                fakestuff = pretty_print(fakeentries, value=True)
+                f.write(fakestuff)
         if basefile is not None:
             baseinfo = self.process_inputfile(plan, basefile, overrides=overrides)
             baseentries, baseoverrides = baseinfo[0], baseinfo[1]
