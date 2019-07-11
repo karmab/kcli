@@ -6,7 +6,7 @@ Kubevirt Provider Class
 
 # import base64
 from kubernetes import client
-from kvirt.kubecommon import Kubecommon, pretty_print
+from kvirt.kubecommon import Kubecommon
 from netaddr import IPAddress
 from kvirt import common
 from kvirt.defaults import TEMPLATES
@@ -366,7 +366,7 @@ class Kubevirt(Kubecommon):
                 cloudinitvolume = {'cloudInitNoCloud': {'userData': cloudinitdata}, 'name': 'cloudinitdisk'}
                 vm['spec']['template']['spec']['volumes'].append(cloudinitvolume)
         if self.debug:
-            pretty_print(vm)
+            common.pretty_print(vm)
         for pvc in pvcs:
             pvcname = pvc['metadata']['name']
             pvcsize = pvc['spec']['resources']['requests']['storage'].replace('Gi', '')
@@ -612,7 +612,7 @@ class Kubevirt(Kubecommon):
         except:
             return None, None
         if self.debug:
-            pretty_print(vm)
+            common.pretty_print(vm)
         dnsclient, domain = None, None
         metadata = vm.get("metadata")
         annotations = metadata.get("annotations")
@@ -642,7 +642,7 @@ class Kubevirt(Kubecommon):
                 common.pprint("VM %s not found" % name, color='red')
                 return {}
         if self.debug:
-            pretty_print(vm)
+            common.pretty_print(vm)
         metadata = vm.get("metadata")
         spec = vm.get("spec")
         running = spec.get("running")

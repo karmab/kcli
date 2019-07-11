@@ -928,3 +928,16 @@ def find_ignition_files(role, plan=None):
         if '%s.ign' % role in f:
             return "%s/%s.ign" % (r, role)
     return None
+
+
+def pretty_print(o, value=False):
+    """
+
+    :param o:
+    """
+    data = yaml.dump(o, default_flow_style=False, indent=2, allow_unicode=True)
+    data = data.replace("'", '').replace('\n\n', '\n').replace('#cloud-config', '|\n            #cloud-config')
+    if not value:
+        print(data)
+    else:
+        return data

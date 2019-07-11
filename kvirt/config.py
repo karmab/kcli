@@ -7,7 +7,7 @@ Kvirt config class
 from jinja2 import Environment, FileSystemLoader
 from jinja2 import StrictUndefined as undefined
 from jinja2.exceptions import TemplateSyntaxError, TemplateError
-from kvirt.kubecommon import pretty_print
+from kvirt.common import pretty_print
 from kvirt.defaults import TEMPLATES, TEMPLATESCOMMANDS
 from kvirt import ansibleutils
 from kvirt import nameutils

@@ -5,20 +5,6 @@ Kubecommon Base Class
 """
 
 from kubernetes import client, config
-import yaml
-
-
-def pretty_print(o, value=False):
-    """
-
-    :param o:
-    """
-    data = yaml.dump(o, default_flow_style=False, indent=2, allow_unicode=True)
-    data = data.replace("'", '').replace('\n\n', '\n').replace('#cloud-config', '|\n            #cloud-config')
-    if not value:
-        print(data)
-    else:
-        return data
 
 
 class Kubecommon(object):
