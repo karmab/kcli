@@ -286,7 +286,7 @@ class KOvirt(object):
                 if not noconf and ips and len(ips) > index and ips[index] is not None:
                     ip = ips[index]
                 if not noconf and ip is not None and netmask is not None and gateway is not None:
-                    nic_configuration = types.NicConfiguration(name='eth%s' % index + 1, on_boot=True,
+                    nic_configuration = types.NicConfiguration(name='eth%d' % index, on_boot=True,
                                                                boot_protocol=types.BootProtocol.STATIC,
                                                                ip=types.Ip(version=types.IpVersion.V4, address=ip,
                                                                            netmask=netmask, gateway=gateway))
