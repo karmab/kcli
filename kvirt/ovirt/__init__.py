@@ -675,22 +675,22 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         :return:
         """
         conn = self.conn
+        minimal = False
         if vm is None:
             vmsearch = self.vms_service.list(search='name=%s' % name)
             if not vmsearch:
                 common.pprint("VM %s not found" % name, color='red')
                 return {}
             vm = vmsearch[0]
+        else:
+            minimal = True
         if self.debug:
             print(vars(vm))
         status = str(vm.status)
         yamlinfo = {'name': vm.name, 'disks': [], 'nets': [], 'status': status, 'instanceid': vm.id}
-        try:
-            if status == 'up':
-                host = conn.follow_link(vm.host)
-                yamlinfo['host'] = host.name
-        except:
-            pass
+        template = conn.follow_link(vm.template)
+        source = template.name
+        yamlinfo['template'] = source
         for description in vm.description.split(','):
             desc = description.split('=')
             if len(desc) == 2:
@@ -702,9 +702,14 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                     yamlinfo['loadbalancer'] = desc[1]
                 elif desc[0] == 'ip':
                     yamlinfo['ip'] = desc[1]
-        template = conn.follow_link(vm.template)
-        source = template.name
-        yamlinfo['template'] = source
+                    if minimal:
+                        return yamlinfo
+        try:
+            if status == 'up':
+                host = conn.follow_link(vm.host)
+                yamlinfo['host'] = host.name
+        except:
+            pass
         yamlinfo['memory'] = int(vm._memory / 1024 / 1024)
         cpus = vm.cpu.topology.cores * vm.cpu.topology.sockets
         yamlinfo['cpus'] = cpus
@@ -720,6 +725,8 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         profiles_service = self.conn.system_service().vnic_profiles_service()
         if ips:
             yamlinfo['ip'] = ips[-1]
+        if minimal:
+            return yamlinfo
         if not self.netprofiles:
             self.netprofiles = {}
             for profile in profiles_service.list():
@@ -1452,7 +1459,10 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         networks_service = self.conn.system_service().networks_service()
         for network in networks_service.list():
             networkname = network._name
-            cidr = network._vlan
+            cidr = 'N/A'
+            vlan = network._vlan
+            if vlan is not None:
+                cidr = vlan
             dhcp = network._id
             domainname = network._data_center
             domainname = self.conn.follow_link(network._data_center).name
