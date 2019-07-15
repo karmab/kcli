@@ -1094,7 +1094,7 @@ class Kvirt(object):
         #    numcpus = cpuattributes['current']
         # else:
         #    numcpus = numcpus.text
-        yamlinfo = {'name': name, 'autostart': autostart, 'nets': [], 'disks': [], 'snapshots': [], 'status': status}
+        yamlinfo = {'name': name, 'autostart': autostart, 'nets': [], 'disks': [], 'status': status}
         plan, profile, template, ip, creationdate, report = '', None, None, None, None, None
         for element in list(root.getiterator('{kvirt}info')):
             e = element.find('{kvirt}plan')
@@ -1137,18 +1137,16 @@ class Kvirt(object):
             except:
                 pass
         for element in list(root.getiterator('interface')):
-            networktype = element.get('type')
+            networktype = element.get('type').replace('network', 'routed')
             device = "eth%s" % nicnumber
             mac = element.find('mac').get('address')
-            if networktype == 'bridge':
-                network = element.find('source').get('bridge')
-                network_type = 'bridge'
-            elif networktype == 'user':
+            if networktype == 'user':
                 network = 'user'
-                network_type = 'user'
             else:
-                network = element.find('source').get('network')
-                network_type = 'routed'
+                if networktype == 'bridge':
+                    network = element.find('source').get('bridge')
+                else:
+                    network = element.find('source').get('network')
                 if ip is None:
                     try:
                         networkdata = conn.networkLookupByName(network)
@@ -1159,7 +1157,7 @@ class Kvirt(object):
                             if host.get('mac') == mac:
                                 ip = host.get('ip')
                     except:
-                        network_type = 'Not Found'
+                        pass
             if ifaces and ip is None:
                 matches = [ifaces[x]['addrs'] for x in ifaces if ifaces[x]['hwaddr'] == mac and
                            ifaces[x]['addrs'] is not None]
@@ -1169,7 +1167,7 @@ class Kvirt(object):
                         if IPAddress(matchip).version == 4:
                             ip = matchip
                             break
-            yamlinfo['nets'].append({'device': device, 'mac': mac, 'net': network, 'type': network_type})
+            yamlinfo['nets'].append({'device': device, 'mac': mac, 'net': network, 'type': networktype})
             nicnumber = nicnumber + 1
         if ip is not None:
             yamlinfo['ip'] = ip
@@ -1197,12 +1195,15 @@ class Kvirt(object):
             currentsnapshot = vm.snapshotCurrent().getName()
         else:
             currentsnapshot = ''
+        snapshots = []
         for snapshot in vm.snapshotListNames():
             if snapshot == currentsnapshot:
                 current = True
             else:
                 current = False
-            yamlinfo['snapshots'].append({'snapshot': snapshot, 'current': current})
+            snapshots.append({'snapshot': snapshot, 'current': current})
+        if snapshots:
+            yamlinfo['snapshots'] = snapshots
         return yamlinfo
 
     def ip(self, name):
