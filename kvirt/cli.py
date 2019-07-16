@@ -666,7 +666,7 @@ def dns(args):
     k = config.k
     if delete:
         if config.type == 'kvm':
-            common.pprint("No deletion on kvm yet" % name, color='blue')
+            common.pprint("No deletion on kvm yet", color='blue')
         else:
             common.pprint("Deleting Dns entry for %s..." % name)
             k.delete_dns(name, domain)
