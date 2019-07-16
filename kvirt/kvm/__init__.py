@@ -2956,3 +2956,27 @@ class Kvirt(object):
             dnsmasqcmd = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host,
                                                         dnsmasqcmd)
             call(dnsmasqcmd, shell=True)
+
+    def delete_dns(self, name, domain):
+        """
+
+        :param name:
+        :param domain:
+        :return:
+        """
+        conn = self.conn
+        try:
+            network = conn.networkLookupByName(domain)
+        except:
+            return {'result': 'failure', 'reason': "Network %s not found" % domain}
+        netxml = network.XMLDesc()
+        netroot = ET.fromstring(netxml)
+        for host in list(netroot.getiterator('host')):
+            iphost = host.get('ip')
+            for host in list(netroot.getiterator('host')):
+                iphost = host.get('ip')
+                hostname = host.find('hostname')
+                if hostname is not None and hostname.text == name:
+                    hostentry = '<host ip="%s"><hostname>%s</hostname></host>' % (iphost, name)
+                    network.update(2, 10, 0, hostentry, 1)
+                return {'result': 'success'}

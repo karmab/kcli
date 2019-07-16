@@ -665,11 +665,8 @@ def dns(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     if delete:
-        if config.type == 'kvm':
-            common.pprint("No deletion on kvm yet", color='blue')
-        else:
-            common.pprint("Deleting Dns entry for %s..." % name)
-            k.delete_dns(name, domain)
+        common.pprint("Deleting Dns entry for %s..." % name)
+        k.delete_dns(name, domain)
     else:
         common.pprint("Creating Dns entry for %s..." % name)
         k.reserve_dns(name=name, nets=[net], domain=domain, ip=ip)
