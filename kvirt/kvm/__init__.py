@@ -2509,8 +2509,8 @@ class Kvirt(object):
                     common.pprint("%s not found. Can't uncompress image" % executable, color="red")
                     return {'result': 'failure', 'reason': "%snot found. Can't uncompress image" % executable}
             elif self.protocol == 'ssh':
-                uncompresscmd = 'ssh -p %s %s@%s "%s %s/%s"' % (self.identitycommand, self.port, self.user, self.host,
-                                                                executable, poolpath, shortimage)
+                uncompresscmd = 'ssh %s -p %s %s@%s "%s %s/%s"' % (self.identitycommand, self.port, self.user,
+                                                                   self.host, executable, poolpath, shortimage)
                 os.system(uncompresscmd)
             shortimage = shortimage.replace('.xz', '')
         if cmd is not None:
