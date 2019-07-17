@@ -23,7 +23,7 @@ right = ["albattani", "almeida", "amazigh", "archimedes", "ardinghelli", "babbag
          "satriani", "selen", "shockley", "sinoussi", "silversurfer", "spitzer", "stallman", "tesla", "thompson",
          "torvalds", "turing", "wilson", "wozniak", "wright", "yonath", "rulo", "tudela", "tdurdeen", "korsani",
          "karmab", "gotrunks", "xhamster", "minwii", "djokovic", "federer", "nadal", "sampras", "tgb", "valadas", "vai",
-         "vegeta", "ivanisevic", "muster", "agassi"]
+         "vegeta", "ivanisevic", "muster", "agassi", "targaryen", "lannister", "stark", "jsnow", "superduper"]
 
 
 def get_random_name(sep='_'):
