@@ -394,7 +394,7 @@ To create a service account and give it privileges to handle vms,
 ::
 
     SERVICEACCOUNT=xxx
-    kubectl create serviceaccount $SERVICEACCOUNT
+    kubectl create serviceaccount $SERVICEACCOUNT -n default
     kubectl create clusterrolebinding $SERVICEACCOUNT --clusterrole=cluster-admin --user=system:serviceaccount:default:$SERVICEACCOUNT
 
 To gather a token ( in /tmp/token)
@@ -1367,6 +1367,8 @@ Available parameters for client/profile/plan files
 -  *yamlinventory* (optional). Defaults to false. If set to true,
    ansible generated inventory for single vms or for plans containing
    ansible entries will be yaml based.
+-  *autostart* (optional). Defaults to false. Autostarts vm (only
+   applies for libvirt)
 
 Overriding parameters
 ---------------------

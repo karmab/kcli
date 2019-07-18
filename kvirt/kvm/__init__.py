@@ -165,7 +165,7 @@ class Kvirt(object):
                vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None,
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
                files=[], enableroot=True, overrides={}, tags=None, dnsclient=None, storemetadata=False,
-               sharedfolders=[], kernel=None, initrd=None, cmdline=None, placement=[]):
+               sharedfolders=[], kernel=None, initrd=None, cmdline=None, placement=[], autostart=False):
         """
 
         :param name:
@@ -715,7 +715,8 @@ class Kvirt(object):
             print(vmxml)
         conn.defineXML(vmxml)
         vm = conn.lookupByName(name)
-        vm.setAutostart(0)
+        autostart = 1 if autostart else 0
+        vm.setAutostart(autostart)
         for pool in volsxml:
             storagepool = conn.storagePoolLookupByName(pool)
             storagepool.refresh(0)

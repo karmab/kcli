@@ -17,6 +17,7 @@ RESERVEDNS = False
 RESERVEHOST = False
 NESTED = True
 START = True
+AUTOSTART = False
 TUNNEL = False
 TEMPLATES = {'': None, 'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-image-bootstrap.qcow2',
              'atomic': 'https://download.fedoraproject.org/pub/alt/atomic/stable/Fedora-Atomic-26-20170905.0/'

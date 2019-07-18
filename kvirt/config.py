@@ -250,6 +250,7 @@ class Kconfig(Kbaseconfig):
             default_vnc = father.get('vnc', self.vnc)
             default_reserveip = father.get('reserveip', self.reserveip)
             default_start = father.get('start', self.start)
+            default_autostart = father.get('autostart', self.autostart)
             default_report = father.get('report', self.report)
             default_reportall = father.get('reportall', self.reportall)
             default_keys = father.get('keys', self.keys)
@@ -302,6 +303,7 @@ class Kconfig(Kbaseconfig):
             default_vnc = self.vnc
             default_reserveip = self.reserveip
             default_start = self.start
+            default_autostart = self.autostart
             default_report = self.report
             default_reportall = self.reportall
             default_keys = self.keys
@@ -358,6 +360,7 @@ class Kconfig(Kbaseconfig):
         reservehost = profile.get('reservehost', default_reservehost)
         nested = profile.get('nested', default_nested)
         start = profile.get('start', default_start)
+        autostart = profile.get('autostart', default_autostart)
         report = profile.get('report', default_report)
         reportall = profile.get('reportall', default_reportall)
         keys = profile.get('keys', default_keys)
@@ -565,7 +568,7 @@ class Kconfig(Kbaseconfig):
                           domain=domain, nested=bool(nested), tunnel=tunnel, files=files, enableroot=enableroot,
                           overrides=overrides, tags=tags, dnsclient=dnsclient, storemetadata=storemetadata,
                           sharedfolders=sharedfolders, kernel=kernel, initrd=initrd, cmdline=cmdline,
-                          placement=placement)
+                          placement=placement, autostart=autostart)
         if result['result'] != 'success':
             return result
         if dnsclient is not None and domain is not None:

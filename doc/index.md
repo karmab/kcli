@@ -1023,6 +1023,7 @@ Basic testing can be run with pytest, which leverages your existing kcli config
 - *storemetadata* (optional). Defaults to false. creates a /root/.metadata yaml file whith all the overrides applied. On gcp, those overrides are also stored as extra metadata
 - *sharedfolders* (optional). Defaults to a blank array. List of paths to share between a kvm hypervisor and vm. You will also make sure that the path is accessible as qemu user (typically with id 107) and use an hypervisor and a guest with 9p support (centos/rhel lack it)
 - *yamlinventory* (optional). Defaults to false. If set to true, ansible generated inventory for single vms or for plans containing ansible entries will be yaml based.
+- *autostart* (optional). Defaults to false. Autostarts vm (only applies for libvirt)
 
 ## Overriding parameters
 

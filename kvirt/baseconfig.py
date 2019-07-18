@@ -8,7 +8,7 @@ from distutils.spawn import find_executable
 from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID,
                             VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, RESERVEHOST,
-                            START, NESTED, TUNNEL, REPORTURL, REPORTDIR,
+                            START, AUTOSTART, NESTED, TUNNEL, REPORTURL, REPORTDIR,
                             REPORT, REPORTALL, INSECURE, KEYS, CMDS, DNS,
                             DOMAIN, SCRIPTS, FILES, ISO,
                             NETMASKS, GATEWAY, SHAREDKEY, TEMPLATE, ENABLEROOT,
@@ -108,6 +108,7 @@ class Kbaseconfig:
         defaults['reservehost'] = bool(default.get('reservehost', RESERVEHOST))
         defaults['nested'] = bool(default.get('nested', NESTED))
         defaults['start'] = bool(default.get('start', START))
+        defaults['autostart'] = bool(default.get('autostart', AUTOSTART))
         defaults['tunnel'] = bool(default.get('tunnel', TUNNEL))
         defaults['insecure'] = bool(default.get('insecure', INSECURE))
         defaults['reporturl'] = default.get('reporturl', REPORTURL)
@@ -230,6 +231,7 @@ class Kbaseconfig:
                                        self.default['reservehost'])
         self.nested = options.get('nested', self.default['nested'])
         self.start = options.get('start', self.default['start'])
+        self.autostart = options.get('autostart', self.default['autostart'])
         self.iso = options.get('iso', self.default['iso'])
         self.keys = options.get('keys', self.default['keys'])
         self.cmds = options.get('cmds', self.default['cmds'])

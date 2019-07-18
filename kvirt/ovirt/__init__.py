@@ -116,7 +116,7 @@ class KOvirt(object):
                netmasks=None, gateway=None, nested=True, dns=None, domain=None,
                tunnel=False, files=[], enableroot=True, alias=[], overrides={},
                tags=None, dnsclient=None, storemetadata=False, sharedfolders=[], kernel=None, initrd=None,
-               cmdline=None, placement=[]):
+               cmdline=None, placement=[], autostart=False):
         """
 
         :param name:
