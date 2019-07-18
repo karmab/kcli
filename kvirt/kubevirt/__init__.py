@@ -159,18 +159,19 @@ class Kubevirt(Kubecommon):
         guestagent = False
         if self.exists(name):
             return {'result': 'failure', 'reason': "VM %s already exists" % name}
-        if template is not None and template not in self.volumes():
-            if template in ['alpine', 'cirros', 'fedora-cloud']:
-                template = "kubevirt/%s-container-disk-demo" % template
-                common.pprint("Using container disk %s as template" % template)
-            elif template in ['debian', 'gentoo', 'ubuntu']:
-                template = "karmab/%s-container-disk-demo" % template
-                common.pprint("Using container disk %s as template" % template)
+        if template is not None:
+            containerdisk = True if '/' in template else False
+            if template not in self.volumes():
+                if template in ['alpine', 'cirros', 'fedora-cloud']:
+                    template = "kubevirt/%s-container-disk-demo" % template
+                    common.pprint("Using container disk %s as template" % template)
+                elif template in ['debian', 'gentoo', 'ubuntu']:
+                    template = "karmab/%s-container-disk-demo" % template
+                    common.pprint("Using container disk %s as template" % template)
             elif '/' not in template:
                 return {'result': 'failure', 'reason': "you don't have template %s" % template}
-            if template == 'kubevirt/fedora-cloud-registry-disk-demo' and memory <= 512:
+            if template.startswith('kubevirt/fedora-cloud-registry-disk-demo') and memory <= 512:
                 memory = 1024
-            containerdisk = True if '/' in template else False
         default_disksize = disksize
         default_diskinterface = diskinterface
         default_pool = pool
