@@ -305,10 +305,8 @@ class KOvirt(object):
         for index, disk in enumerate(disks):
             diskpool = pool
             diskthin = True
-            disksize = '10'
+            disksize = 10
             # diskname = "%s_disk%s" % (name, index)
-            if index == 0 and template is not None:
-                continue
             if isinstance(disk, int):
                 disksize = disk
             elif isinstance(disk, str) and disk.isdigit():
@@ -317,6 +315,9 @@ class KOvirt(object):
                 disksize = disk.get('size', disksize)
                 diskpool = disk.get('pool', pool)
                 diskthin = disk.get('thin', diskthin)
+            if index == 0 and template is not None and disksize != 10:
+                self.update_template_size(vm.id, disksize)
+                continue
             newdisk = self.add_disk(name, disksize, pool=diskpool, thin=diskthin)
             if newdisk['result'] == 'failure':
                 # common.pprint(newdisk['reason'], color='red')
@@ -1019,6 +1020,30 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                 common.pprint("Waiting for disk %s to be ready" % diskname)
             if timeout > 40:
                 return {'result': 'failure', 'reason': 'timeout waiting for disk %s to be ready' % diskname}
+        return {'result': 'success'}
+
+    def update_template_size(self, vmid, size):
+        size *= 2**30
+        vm = self.vms_service.vm_service(vmid)
+        disk_attachments_service = vm.disk_attachments_service()
+        diskid = disk_attachments_service.list()[0].id
+        disk_attachment_service = disk_attachments_service.attachment_service(diskid)
+        disk_attachment = types.DiskAttachment(disk=types.Disk(provisioned_size=size))
+        disk_attachment_service.update(disk_attachment)
+        disks_service = self.conn.system_service().disks_service()
+        disk_service = disks_service.disk_service(diskid)
+        timeout = 0
+        while True:
+            disk = disk_service.get()
+            diskname = disk.name
+            if disk.status == types.DiskStatus.OK:
+                break
+            else:
+                timeout += 5
+                sleep(5)
+                common.pprint("Waiting for template disk %s to be resized" % diskname)
+            if timeout > 40:
+                return {'result': 'failure', 'reason': 'timeout waiting for template disk %s to be resized' % diskname}
         return {'result': 'success'}
 
     def delete_disk(self, name=None, diskname=None, pool=None):
