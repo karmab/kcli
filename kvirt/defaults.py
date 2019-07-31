@@ -60,11 +60,17 @@ TEMPLATES = {'': None, 'arch': 'https://linuximages.de/openstack/arch/arch-opens
              'rhel80': 'https://access.redhat.com/downloads/content/479/ver=/rhel---8/8.0/x86_64/product-software',
              'ubuntu1404': 'https://cloud-images.ubuntu.com/trusty/current/trusty-server-cloudimg-amd64-disk1.img',
              'ubuntu1604': 'https://cloud-images.ubuntu.com/xenial/current/xenial-server-cloudimg-amd64-disk1.img',
-             'ubuntu1610': 'https://cloud-images.ubuntu.com/yakkety/current/yakkety-server-cloudimg-amd64-disk1.img',
-             'ubuntu1704': 'https://cloud-images.ubuntu.com/zesty/current/zesty-server-cloudimg-amd64.img',
-             'ubuntu1710': 'https://cloud-images.ubuntu.com/artful/current/artful-server-cloudimg-amd64.img',
+             'ubuntu1610': 'http://cloud-images-archive.ubuntu.com/releases/yakkety/release-20170719/'
+             'ubuntu-16.10-server-cloudimg-amd64.img',
+             'ubuntu1704': 'http://cloud-images-archive.ubuntu.com/releases/zesty/release-20171208/'
+             'ubuntu-17.04-server-cloudimg-amd64.img',
+             'ubuntu1710': 'http://cloud-images-archive.ubuntu.com/releases/artful/release-20180706/'
+             'ubuntu-17.10-server-cloudimg-amd64.img',
              'ubuntu1804': 'https://cloud-images.ubuntu.com/bionic/current/bionic-server-cloudimg-amd64.img',
-             'ubuntu1810': 'https://cloud-images.ubuntu.com/cosmic/current/cosmic-server-cloudimg-amd64.img'}
+             'ubuntu1810': 'https://cloud-images.ubuntu.com/releases/cosmic/release-20190628/'
+             'ubuntu-18.10-server-cloudimg-amd64.img',
+             'ubuntu1904': 'https://cloud-images.ubuntu.com/releases/disco/release/'
+             'ubuntu-19.04-server-cloudimg-amd64.img'}
 TEMPLATESCOMMANDS = {'cloudforms': 'rm -f /etc/cloud/cloud.cfg.d/30_miq_datasources.cfg',
                      'debian8': 'echo datasource_list: [NoCloud, ConfigDrive, Openstack, Ec2] > /etc/cloud/cloud.cfg.d/'
                      '90_dpkg.cfg',
