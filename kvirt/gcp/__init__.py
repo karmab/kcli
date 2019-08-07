@@ -1456,11 +1456,8 @@ class Kgcp(object):
 
     def create_loadbalancer(self, name, ports=[], checkpath='/index.html', vms=[], domain=None):
         sane_name = name.replace('.', '-')
-        port = int(ports[0])
-        if len(ports) > 1:
-            common.pprint("Only deploying for first port %s of the list" % port, color='blue')
+        ports = [int(port) for port in ports]
         protocols = {80: 'HTTP', 8080: 'HTTP', 443: 'HTTPS'}
-        protocol = protocols[port] if port in protocols else 'TCP'
         conn = self.conn
         project = self.project
         zone = self.zone
@@ -1472,9 +1469,11 @@ class Kgcp(object):
                 update = self.update_metadata(vm, 'loadbalancer', name)
                 if update == 0:
                     instances.append({"instance": "%s/%s" % (vmpath, vm)})
+        firstport = ports[0]
+        firstprotocol = protocols[firstport] if firstport in protocols else 'TCP'
         health_check_body = {"checkIntervalSec": "10", "timeoutSec": "10", "unhealthyThreshold": 3,
-                             "healthyThreshold": 3, "type": protocol, "name": sane_name}
-        newcheck = {"port": port}
+                             "healthyThreshold": 3, "type": firstprotocol, "name": sane_name}
+        newcheck = {"port": firstport}
         newcheck["requestPath"] = checkpath
         health_check_body["httpHealthCheck"] = newcheck
         operation = conn.httpHealthChecks().insert(project=project, body=health_check_body).execute()
@@ -1499,10 +1498,14 @@ class Kgcp(object):
         ip = conn.addresses().get(project=project, region=region, address=sane_name).execute()['address']
         common.pprint("Using load balancer ip %s" % ip)
         self._wait_for_operation(operation)
-        forwarding_rule_body = {"IPAddress": ipurl, "target": targeturl, "portRange": port, "name": sane_name}
-        operation = conn.forwardingRules().insert(project=project, region=region, body=forwarding_rule_body).execute()
-        self._wait_for_operation(operation)
-        firewall_body = {"name": sane_name, "direction": "INGRESS", "allowed": [{"IPProtocol": "tcp", "ports": [port]}]}
+        for port in ports:
+            forwarding_name = "%s-%s" % (sane_name, port)
+            forwarding_rule_body = {"IPAddress": ipurl, "target": targeturl, "portRange": [port],
+                                    "name": forwarding_name}
+            operation = conn.forwardingRules().insert(project=project, region=region,
+                                                      body=forwarding_rule_body).execute()
+            self._wait_for_operation(operation)
+        firewall_body = {"name": sane_name, "direction": "INGRESS", "allowed": [{"IPProtocol": "tcp", "ports": ports}]}
         operation = conn.firewalls().insert(project=project, body=firewall_body).execute()
         self._wait_for_operation(operation)
         if domain is not None:
@@ -1529,13 +1532,14 @@ class Kgcp(object):
             if self.debug:
                 print(e)
             pass
-        try:
-            operation = conn.forwardingRules().delete(project=project, region=region, forwardingRule=name).execute()
-            self._wait_for_operation(operation)
-        except Exception as e:
-            if self.debug:
-                print(e)
-            pass
+        forwarding_rules = conn.forwardingRules().list(project=project, region=region).execute()
+        if 'items' in forwarding_rules:
+            for forwarding_rule in forwarding_rules['items']:
+                forwarding_rule_name = forwarding_rule['name']
+                if forwarding_rule_name == name or forwarding_rule_name.startswith('%s-' % name):
+                    operation = conn.forwardingRules().delete(project=project, region=region,
+                                                              forwardingRule=forwarding_rule_name).execute()
+                    self._wait_for_operation(operation)
         try:
             address = conn.globalAddresses().get(project=project, address=name).execute()
             if '.' in address["description"]:
@@ -1579,20 +1583,21 @@ class Kgcp(object):
             if self.debug:
                 print(e)
             pass
-        try:
+        targetpool = conn.targetPools().get(project=project, region=region, targetPool=name).execute()
+        if targetpool:
+            if 'healthChecks' in targetpool:
+                healtchecks = [{'healthCheck': healthcheck} for healthcheck in targetpool['healthChecks']]
+                healtchecks_body = {"healthChecks": healtchecks}
+                if healtchecks:
+                    operation = conn.targetPools().removeHealthCheck(project=project, region=region, targetPool=name,
+                                                                     body=healtchecks_body).execute()
+                    self._wait_for_operation(operation)
+                    for healthcheck in targetpool['healthChecks']:
+                        healthcheck_short = os.path.basename(healthcheck)
+                        operation = conn.healthChecks().delete(project=project, healthCheck=healthcheck_short).execute()
+                        self._wait_for_operation(operation)
             operation = conn.targetPools().delete(project=project, region=region, targetPool=name).execute()
             self._wait_for_operation(operation)
-        except Exception as e:
-            if self.debug:
-                print(e)
-            pass
-        try:
-            operation = conn.healthChecks().delete(project=project, healthCheck=name).execute()
-            self._wait_for_operation(operation)
-        except Exception as e:
-            if self.debug:
-                print(e)
-            pass
         try:
             operation = conn.httpHealthChecks().delete(project=project, httpHealthCheck=name).execute()
             self._wait_for_operation(operation)
