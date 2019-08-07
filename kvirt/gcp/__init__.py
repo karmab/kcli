@@ -1475,74 +1475,32 @@ class Kgcp(object):
         health_check_body = {"checkIntervalSec": "10", "timeoutSec": "10", "unhealthyThreshold": 3,
                              "healthyThreshold": 3, "type": protocol, "name": sane_name}
         newcheck = {"port": port}
-        if protocol == 'TCP':
-            health_check_body["tcpHealthCheck"] = newcheck
-            operation = conn.healthChecks().insert(project=project, body=health_check_body).execute()
-            healthurl = operation['targetLink']
+        newcheck["requestPath"] = checkpath
+        health_check_body["httpHealthCheck"] = newcheck
+        operation = conn.httpHealthChecks().insert(project=project, body=health_check_body).execute()
+        healthurl = operation['targetLink']
+        self._wait_for_operation(operation)
+        sane_name = name.replace('.', '-')
+        target_pool_body = {"name": sane_name, "healthChecks": [healthurl]}
+        operation = conn.targetPools().insert(project=project, region=region, body=target_pool_body).execute()
+        targeturl = operation['targetLink']
+        self._wait_for_operation(operation)
+        if instances:
+            instances_body = {"instances": instances}
+            operation = conn.targetPools().addInstance(project=project, region=region, targetPool=sane_name,
+                                                       body=instances_body).execute()
             self._wait_for_operation(operation)
-            instance_group_body = {"name": sane_name, "namedPorts": [{"name": "%s-%d" % (sane_name, port),
-                                                                      "port": port}]}
-            operation = conn.instanceGroups().insert(project=project, zone=zone, body=instance_group_body).execute()
-            instancegroupurl = operation['targetLink']
-            self._wait_for_operation(operation)
-            if instances:
-                instances_body = {"instances": instances}
-                operation = conn.instanceGroups().addInstances(project=project, zone=zone, instanceGroup=sane_name,
-                                                               body=instances_body).execute()
-                self._wait_for_operation(operation)
-            backend_body = {"healthChecks": [healthurl], "sessionAffinity": 'CLIENT_IP', "protocol": protocol,
-                            "port-name": "%s-%d" % (sane_name, port), "name": sane_name,
-                            "backends": [{"group": instancegroupurl}]}
-            for port in ports:
-                backend_body
-            operation = conn.backendServices().insert(project=project, body=backend_body).execute()
-            backendurl = operation['targetLink']
-            self._wait_for_operation(operation)
-            target_tcp_proxy_body = {"service": backendurl, "proxyHeader": "NONE", "name": sane_name}
-            operation = conn.targetTcpProxies().insert(project=project, body=target_tcp_proxy_body).execute()
-            targeturl = operation['targetLink']
-            self._wait_for_operation(operation)
-        else:
-            newcheck["requestPath"] = checkpath
-            health_check_body["httpHealthCheck"] = newcheck
-            operation = conn.httpHealthChecks().insert(project=project, body=health_check_body).execute()
-            healthurl = operation['targetLink']
-            self._wait_for_operation(operation)
-            sane_name = name.replace('.', '-')
-            target_pool_body = {"name": sane_name, "healthChecks": [healthurl]}
-            operation = conn.targetPools().insert(project=project, region=region, body=target_pool_body).execute()
-            targeturl = operation['targetLink']
-            self._wait_for_operation(operation)
-            if instances:
-                instances_body = {"instances": instances}
-                operation = conn.targetPools().addInstance(project=project, region=region, targetPool=sane_name,
-                                                           body=instances_body).execute()
-                self._wait_for_operation(operation)
-        if protocol == 'TCP':
-            address_body = {"name": sane_name, "ipVersion": "IPV4"}
-            if domain is not None:
-                address_body["description"] = domain
-            operation = conn.globalAddresses().insert(project=project, body=address_body).execute()
-            ipurl = operation['targetLink']
-            self._wait_for_operation(operation)
-            ip = conn.globalAddresses().get(project=project, address=sane_name).execute()['address']
-            common.pprint("Using load balancer ip %s" % ip)
-            self._wait_for_operation(operation)
-            forwarding_rule_body = {"IPAddress": ipurl, "target": targeturl, "portRange": port, "name": sane_name}
-            operation = conn.globalForwardingRules().insert(project=project, body=forwarding_rule_body).execute()
-        else:
-            address_body = {"name": sane_name}
-            if domain is not None:
-                address_body["description"] = domain
-            operation = conn.addresses().insert(project=project, region=region, body=address_body).execute()
-            ipurl = operation['targetLink']
-            self._wait_for_operation(operation)
-            ip = conn.addresses().get(project=project, region=region, address=sane_name).execute()['address']
-            common.pprint("Using load balancer ip %s" % ip)
-            self._wait_for_operation(operation)
-            forwarding_rule_body = {"IPAddress": ipurl, "target": targeturl, "portRange": port, "name": sane_name}
-            operation = conn.forwardingRules().insert(project=project, region=region,
-                                                      body=forwarding_rule_body).execute()
+        address_body = {"name": sane_name}
+        if domain is not None:
+            address_body["description"] = domain
+        operation = conn.addresses().insert(project=project, region=region, body=address_body).execute()
+        ipurl = operation['targetLink']
+        self._wait_for_operation(operation)
+        ip = conn.addresses().get(project=project, region=region, address=sane_name).execute()['address']
+        common.pprint("Using load balancer ip %s" % ip)
+        self._wait_for_operation(operation)
+        forwarding_rule_body = {"IPAddress": ipurl, "target": targeturl, "portRange": port, "name": sane_name}
+        operation = conn.forwardingRules().insert(project=project, region=region, body=forwarding_rule_body).execute()
         self._wait_for_operation(operation)
         firewall_body = {"name": sane_name, "direction": "INGRESS", "allowed": [{"IPProtocol": "tcp", "ports": [port]}]}
         operation = conn.firewalls().insert(project=project, body=firewall_body).execute()
