@@ -112,7 +112,7 @@ class Kubevirt(Kubecommon):
                disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False,
                cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[],
                ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[],
-               enableroot=True, alias=[], overrides={}, tags=None, dnsclient=None, storemetadata=False,
+               enableroot=True, alias=[], overrides={}, tags={}, dnsclient=None, storemetadata=False,
                sharedfolders=[], kernel=None, initrd=None, cmdline=None, placement=[], autostart=False):
         """
 
@@ -231,7 +231,7 @@ class Kubevirt(Kubecommon):
                 features[feature] = {'enabled': enable}
         if features:
             vm['spec']['template']['spec']['domain']['features'] = features
-        if tags is not None and isinstance(tags, dict):
+        if tags:
             vm['spec']['template']['spec']['nodeSelector'] = tags
         interfaces = []
         networks = []
