@@ -1476,22 +1476,26 @@ class Kgcp(object):
         newcheck = {"port": firstport}
         newcheck["requestPath"] = checkpath
         health_check_body["httpHealthCheck"] = newcheck
+        common.pprint("Creating healthcheck %s" % name)
         operation = conn.httpHealthChecks().insert(project=project, body=health_check_body).execute()
         healthurl = operation['targetLink']
         self._wait_for_operation(operation)
         sane_name = name.replace('.', '-')
         target_pool_body = {"name": sane_name, "healthChecks": [healthurl]}
+        common.pprint("Creating target pool %s" % sane_name)
         operation = conn.targetPools().insert(project=project, region=region, body=target_pool_body).execute()
         targeturl = operation['targetLink']
         self._wait_for_operation(operation)
         if instances:
             instances_body = {"instances": instances}
+            common.pprint("Adding vms to target pool %s" % sane_name)
             operation = conn.targetPools().addInstance(project=project, region=region, targetPool=sane_name,
                                                        body=instances_body).execute()
             self._wait_for_operation(operation)
         address_body = {"name": sane_name}
         if domain is not None:
             address_body["description"] = domain
+        common.pprint("Creating address %s" % sane_name)
         operation = conn.addresses().insert(project=project, region=region, body=address_body).execute()
         ipurl = operation['targetLink']
         self._wait_for_operation(operation)
@@ -1502,10 +1506,12 @@ class Kgcp(object):
             forwarding_name = "%s-%s" % (sane_name, port)
             forwarding_rule_body = {"IPAddress": ipurl, "target": targeturl, "portRange": [port],
                                     "name": forwarding_name}
+            common.pprint("Creating forwarding rule %s" % forwarding_name)
             operation = conn.forwardingRules().insert(project=project, region=region,
                                                       body=forwarding_rule_body).execute()
             self._wait_for_operation(operation)
         firewall_body = {"name": sane_name, "direction": "INGRESS", "allowed": [{"IPProtocol": "tcp", "ports": ports}]}
+        common.pprint("Creating firewall rule %s" % sane_name)
         operation = conn.firewalls().insert(project=project, body=firewall_body).execute()
         self._wait_for_operation(operation)
         if domain is not None:
@@ -1516,9 +1522,9 @@ class Kgcp(object):
         name = name.replace('.', '-')
         conn = self.conn
         project = self.project
-        zone = self.zone
         region = self.region
         try:
+            common.pprint("Deleting firewall rule %s" % name)
             operation = conn.firewalls().delete(project=project, firewall=name).execute()
             self._wait_for_operation(operation)
         except Exception as e:
@@ -1526,6 +1532,7 @@ class Kgcp(object):
                 print(e)
             pass
         try:
+            common.pprint("Deleting global forwarding rule %s" % name)
             operation = conn.globalForwardingRules().delete(project=project, forwardingRule=name).execute()
             self._wait_for_operation(operation)
         except Exception as e:
@@ -1537,6 +1544,7 @@ class Kgcp(object):
             for forwarding_rule in forwarding_rules['items']:
                 forwarding_rule_name = forwarding_rule['name']
                 if forwarding_rule_name == name or forwarding_rule_name.startswith('%s-' % name):
+                    common.pprint("Deleting forwarding rule %s" % forwarding_rule_name)
                     operation = conn.forwardingRules().delete(project=project, region=region,
                                                               forwardingRule=forwarding_rule_name).execute()
                     self._wait_for_operation(operation)
@@ -1545,6 +1553,7 @@ class Kgcp(object):
             if '.' in address["description"]:
                 domain = address["description"]
                 self.delete_dns(name, domain=domain)
+            common.pprint("Deleting global address %s" % name)
             operation = conn.globalAddresses().delete(project=project, address=name).execute()
             self._wait_for_operation(operation)
         except Exception as e:
@@ -1556,28 +1565,8 @@ class Kgcp(object):
             if '.' in address["description"]:
                 domain = address["description"]
                 self.delete_dns(name, domain=domain)
+            common.pprint("Deleting address %s" % name)
             operation = conn.addresses().delete(project=project, region=region, address=name).execute()
-            self._wait_for_operation(operation)
-        except Exception as e:
-            if self.debug:
-                print(e)
-            pass
-        try:
-            operation = conn.targetTcpProxies().delete(project=project, targetTcpProxy=name).execute()
-            self._wait_for_operation(operation)
-        except Exception as e:
-            if self.debug:
-                print(e)
-            pass
-        try:
-            operation = conn.backendServices().delete(project=project, backendService=name).execute()
-            self._wait_for_operation(operation)
-        except Exception as e:
-            if self.debug:
-                print(e)
-            pass
-        try:
-            operation = conn.instanceGroups().delete(project=project, zone=zone, instanceGroup=name).execute()
             self._wait_for_operation(operation)
         except Exception as e:
             if self.debug:
@@ -1594,11 +1583,14 @@ class Kgcp(object):
                     self._wait_for_operation(operation)
                     for healthcheck in targetpool['healthChecks']:
                         healthcheck_short = os.path.basename(healthcheck)
+                        common.pprint("Deleting healthcheck %s" % healthcheck_short)
                         operation = conn.healthChecks().delete(project=project, healthCheck=healthcheck_short).execute()
                         self._wait_for_operation(operation)
+            common.pprint("Deleting targetPool %s" % name)
             operation = conn.targetPools().delete(project=project, region=region, targetPool=name).execute()
             self._wait_for_operation(operation)
         try:
+            common.pprint("Deleting httpHealthCheck %s" % name)
             operation = conn.httpHealthChecks().delete(project=project, httpHealthCheck=name).execute()
             self._wait_for_operation(operation)
         except Exception as e:

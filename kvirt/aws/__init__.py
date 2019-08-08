@@ -1377,8 +1377,8 @@ class Kaws(object):
         results = []
         elb = self.elb
         lbs = elb.describe_load_balancers()
-        ports = []
         for lb in lbs['LoadBalancerDescriptions']:
+            ports = []
             name = lb['LoadBalancerName']
             ip = lb['DNSName']
             for listener in lb['ListenerDescriptions']:
