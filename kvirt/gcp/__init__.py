@@ -375,7 +375,10 @@ class Kgcp(object):
                 if key not in existingkeys:
                     newval = {'key': key, 'value': overrides[key]}
                     body['metadata']['items'].append(newval)
-        conn.instances().insert(project=project, zone=zone, body=body).execute()
+        try:
+            conn.instances().insert(project=project, zone=zone, body=body).execute()
+        except Exception as e:
+            return {'result': 'failure', 'reason': str(e)}
         if reservedns and domain is not None:
             self.reserve_dns(name, nets=nets, domain=domain, alias=alias)
         return {'result': 'success'}

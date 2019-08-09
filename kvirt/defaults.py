@@ -51,7 +51,7 @@ TEMPLATES = {'': None, 'arch': 'https://linuximages.de/openstack/arch/arch-opens
              'openSUSE-Leap-42.3-OpenStack.x86_64.qcow2',
              'rhcosootpa': 'https://releases-rhcos.svc.ci.openshift.org/storage/releases/ootpa/420.8.20190611.0/'
              'rhcos-420.8.20190611.0-qemu.qcow2',
-             'rhcoslatest': 'https://releases-rhcos.svc.ci.openshift.org/storage/releases/ootpa',
+             'rhcos42': 'https://releases-rhcos.svc.ci.openshift.org/storage/releases/rhcos-4.2',
              'rhel72': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.2/x86_64/product-software',
              'rhel73': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.3/x86_64/product-software',
              'rhel74': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.4/x86_64/product-software',
