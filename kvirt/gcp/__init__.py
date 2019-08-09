@@ -1498,7 +1498,7 @@ class Kgcp(object):
         # health_check_body["httpHealthCheck"] = newcheck
         # health_check_body["type"] = 'HTTP'
         health_check_body = {"checkIntervalSec": "10", "timeoutSec": "10", "unhealthyThreshold": 3,
-                             "healthyThreshold": 3, "name": sane_name, "port": checkport}
+                             "healthyThreshold": 3, "name": sane_name, "port": checkport, "requestPath": checkpath}
         common.pprint("Creating http healthcheck %s" % name)
         operation = conn.httpHealthChecks().insert(project=project, body=health_check_body).execute()
         healthurl = operation['targetLink']
