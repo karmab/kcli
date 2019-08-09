@@ -414,7 +414,7 @@ class Kconfig(Kbaseconfig):
                     path = os.path.basename(origin)
         enableroot = profile.get('enableroot', default_enableroot)
         tags = None
-        if default_tags is not None:
+        if default_tags:
             if isinstance(default_tags, dict):
                 tags = default_tags.copy()
                 tags.update(profile.get('tags', {}))
@@ -1492,11 +1492,13 @@ class Kconfig(Kbaseconfig):
                         common.pprint("Missing Ports for loadbalancer. Not creating it...", color='red')
                         return
                     checkpath = details.get('checkpath', '/')
+                    checkport = details.get('checkport', 80)
+                    alias = details.get('alias', [])
                     domain = details.get('domain')
                     lbvms = details.get('vms', [])
                     lbnets = details.get('nets', ['default'])
                     self.handle_loadbalancer(lbentry, nets=lbnets, ports=ports, checkpath=checkpath, vms=lbvms,
-                                             domain=domain, plan=plan)
+                                             domain=domain, plan=plan, checkport=checkport, alias=alias)
         returndata = {'result': 'success', 'plan': plan}
         if newvms:
             returndata['newvms'] = newvms
@@ -1620,7 +1622,7 @@ class Kconfig(Kbaseconfig):
         return {'result': 'success'}
 
     def handle_loadbalancer(self, name, nets=['default'], ports=[], checkpath='/', vms=[], delete=False, domain=None,
-                            plan=None):
+                            plan=None, checkport=80, alias=[]):
         name = nameutils.get_random_name().replace('_', '-') if name is None else name
         k = self.k
         if self.type in ['aws', 'gcp']:
@@ -1630,7 +1632,8 @@ class Kconfig(Kbaseconfig):
                 return
             else:
                 common.pprint("Creating loadbalancer %s" % name)
-                k.create_loadbalancer(name, ports=ports, checkpath=checkpath, vms=vms, domain=domain)
+                k.create_loadbalancer(name, ports=ports, checkpath=checkpath, vms=vms, domain=domain,
+                                      checkport=checkport, alias=alias)
         elif delete:
             return
         else:

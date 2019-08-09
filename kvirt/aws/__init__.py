@@ -1311,7 +1311,7 @@ class Kaws(object):
         conn.create_image(InstanceId=InstanceId, Name=Name, Description=Description, NoReboot=True)
         return {'result': 'success'}
 
-    def create_loadbalancer(self, name, ports=[], checkpath='/index.html', vms=[], domain=None):
+    def create_loadbalancer(self, name, ports=[], checkpath='/index.html', vms=[], domain=None, checkport=80, alias=[]):
         ports = [int(port) for port in ports]
         resource = self.resource
         conn = self.conn

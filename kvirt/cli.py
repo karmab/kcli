@@ -694,6 +694,7 @@ def export(args):
 def lb(args):
     """Create/Delete loadbalancer"""
     checkpath = args.checkpath
+    checkport = args.checkport
     yes = args.yes
     delete = args.delete
     ports = args.ports
@@ -704,7 +705,8 @@ def lb(args):
     if delete and not yes:
         common.confirm("Are you sure?")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.handle_loadbalancer(name, ports=ports, checkpath=checkpath, vms=vms, delete=delete, domain=domain)
+    config.handle_loadbalancer(name, ports=ports, checkpath=checkpath, vms=vms, delete=delete, domain=domain,
+                               checkport=checkport)
     return 0
 
 
@@ -1188,6 +1190,7 @@ def cli():
     lb_info = 'Create/Delete loadbalancer'
     lb_parser = subparsers.add_parser('lb', description=lb_info, help=lb_info)
     lb_parser.add_argument('--checkpath', default='/index.html', help="Path to check. Defaults to /index.html")
+    lb_parser.add_argument('--checkport', default=80, help="Port to check. Defaults to 80")
     lb_parser.add_argument('-d', '--delete', action='store_true')
     lb_parser.add_argument('--domain', help='Domain to create a dns entry associated to the load balancer')
     lb_parser.add_argument('-p', '--ports', default='443', help='Load Balancer Ports. Defaults to 443')

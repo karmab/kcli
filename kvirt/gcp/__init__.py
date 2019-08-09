@@ -15,6 +15,7 @@ from google.cloud import dns
 from netaddr import IPNetwork
 import os
 from time import sleep
+import webbrowser
 import yaml
 
 binary_types = ['bz2', 'deb', 'jpg', 'gz', 'jpeg', 'iso', 'png', 'rpm', 'tgz', 'zip']
@@ -457,12 +458,13 @@ class Kgcp(object):
 
         :return:
         """
-        # conn = self.conn
+        resource = googleapiclient.discovery.build('cloudresourcemanager', 'v1')
         project = self.project
         zone = self.zone
-        # resource = googleapiclient.discovery.build('cloudresourcemanager', 'v1')
-        # print(dir(resource.projects()))
         print("Project: %s" % project)
+        projectinfo = resource.projects().get(projectId=project).execute()
+        print("ProjectNumber: %s" % projectinfo['projectNumber'])
+        print("Creation Time: %s" % projectinfo['createTime'])
         print("Zone: %s" % zone)
         return
 
@@ -506,7 +508,16 @@ class Kgcp(object):
         :param tunnel:
         :return:
         """
-        print("not implemented")
+        project = self.project
+        zone = self.zone
+        resource = googleapiclient.discovery.build('cloudresourcemanager', 'v1')
+        projectinfo = resource.projects().get(projectId=project).execute()
+        projectnumber = projectinfo['projectNumber']
+        url = "%s/zones/%s/instances/%s?authuser=1&hl=en_US&projectNumber=%s" % (project, zone, name, projectnumber)
+        url = "https://ssh.cloud.google.com/projects/%s" % url
+        if self.debug or os.path.exists("/i_am_a_container"):
+            common.pprint("Opening url %s" % url)
+        webbrowser.open(url, new=2, autoraise=True)
         return
 
     def serialconsole(self, name):
@@ -1356,10 +1367,20 @@ class Kgcp(object):
         if cluster is not None and 'master' in name and internalip is not None:
             etcd1 = "_etcd-server-ssl._tcp.%s.%s." % (cluster, domain)
             etcd2 = "etcd-%s.%s.%s." % (name[-1], cluster, domain)
-            srventry = "0 10 2380 %s" % (etcd2)
+            srventries = ["0 10 2380 %s" % (etcd2)]
+            srvexist = False
+            for entry in dnszone.list_resource_record_sets():
+                if entry.name == etcd1:
+                    srvexist = True
+                    oldentry = entry
+                    srventries = oldentry.rrdatas + srventries
             record_set = dnszone.resource_record_set(etcd2, 'A', 300, [internalip])
             changes.add_record_set(record_set)
-            record_set = dnszone.resource_record_set(etcd1, 'SRV', 300, [srventry])
+            if srvexist:
+                old_record_set = dnszone.resource_record_set(oldentry.name, oldentry.record_type, oldentry.ttl,
+                                                             oldentry.rrdatas)
+                changes.delete_record_set(old_record_set)
+            record_set = dnszone.resource_record_set(etcd1, 'SRV', 300, srventries)
             changes.add_record_set(record_set)
         changes.create()
         return {'result': 'success'}
@@ -1454,10 +1475,9 @@ class Kgcp(object):
         conn.images().insert(project=project, body=body).execute()
         return {'result': 'success'}
 
-    def create_loadbalancer(self, name, ports=[], checkpath='/index.html', vms=[], domain=None):
+    def create_loadbalancer(self, name, ports=[], checkpath='/index.html', vms=[], domain=None, checkport=80, alias=[]):
         sane_name = name.replace('.', '-')
         ports = [int(port) for port in ports]
-        protocols = {80: 'HTTP', 8080: 'HTTP', 443: 'HTTPS'}
         conn = self.conn
         project = self.project
         zone = self.zone
@@ -1469,14 +1489,14 @@ class Kgcp(object):
                 update = self.update_metadata(vm, 'loadbalancer', name)
                 if update == 0:
                     instances.append({"instance": "%s/%s" % (vmpath, vm)})
-        firstport = ports[0]
-        firstprotocol = protocols[firstport] if firstport in protocols else 'TCP'
+        # health_check_body = {"checkIntervalSec": "10", "timeoutSec": "10", "unhealthyThreshold": 3,
+        #                     "healthyThreshold": 3, "name": sane_name}
+        # newcheck = {"port": checkport}
+        # health_check_body["httpHealthCheck"] = newcheck
+        # health_check_body["type"] = 'HTTP'
         health_check_body = {"checkIntervalSec": "10", "timeoutSec": "10", "unhealthyThreshold": 3,
-                             "healthyThreshold": 3, "type": firstprotocol, "name": sane_name}
-        newcheck = {"port": firstport}
-        newcheck["requestPath"] = checkpath
-        health_check_body["httpHealthCheck"] = newcheck
-        common.pprint("Creating healthcheck %s" % name)
+                             "healthyThreshold": 3, "name": sane_name, "port": checkport}
+        common.pprint("Creating http healthcheck %s" % name)
         operation = conn.httpHealthChecks().insert(project=project, body=health_check_body).execute()
         healthurl = operation['targetLink']
         self._wait_for_operation(operation)
@@ -1488,7 +1508,6 @@ class Kgcp(object):
         self._wait_for_operation(operation)
         if instances:
             instances_body = {"instances": instances}
-            common.pprint("Adding vms to target pool %s" % sane_name)
             operation = conn.targetPools().addInstance(project=project, region=region, targetPool=sane_name,
                                                        body=instances_body).execute()
             self._wait_for_operation(operation)
@@ -1515,7 +1534,7 @@ class Kgcp(object):
         operation = conn.firewalls().insert(project=project, body=firewall_body).execute()
         self._wait_for_operation(operation)
         if domain is not None:
-            self.reserve_dns(name, ip=ip, domain=domain)
+            self.reserve_dns(name, ip=ip, domain=domain, alias=alias)
         return {'result': 'success'}
 
     def delete_loadbalancer(self, name):
@@ -1531,14 +1550,6 @@ class Kgcp(object):
             if self.debug:
                 print(e)
             pass
-        try:
-            common.pprint("Deleting global forwarding rule %s" % name)
-            operation = conn.globalForwardingRules().delete(project=project, forwardingRule=name).execute()
-            self._wait_for_operation(operation)
-        except Exception as e:
-            if self.debug:
-                print(e)
-            pass
         forwarding_rules = conn.forwardingRules().list(project=project, region=region).execute()
         if 'items' in forwarding_rules:
             for forwarding_rule in forwarding_rules['items']:
@@ -1548,18 +1559,6 @@ class Kgcp(object):
                     operation = conn.forwardingRules().delete(project=project, region=region,
                                                               forwardingRule=forwarding_rule_name).execute()
                     self._wait_for_operation(operation)
-        try:
-            address = conn.globalAddresses().get(project=project, address=name).execute()
-            if '.' in address["description"]:
-                domain = address["description"]
-                self.delete_dns(name, domain=domain)
-            common.pprint("Deleting global address %s" % name)
-            operation = conn.globalAddresses().delete(project=project, address=name).execute()
-            self._wait_for_operation(operation)
-        except Exception as e:
-            if self.debug:
-                print(e)
-            pass
         try:
             address = conn.addresses().get(project=project, region=region, address=name).execute()
             if '.' in address["description"]:
@@ -1583,19 +1582,13 @@ class Kgcp(object):
                     self._wait_for_operation(operation)
                     for healthcheck in targetpool['healthChecks']:
                         healthcheck_short = os.path.basename(healthcheck)
-                        common.pprint("Deleting healthcheck %s" % healthcheck_short)
-                        operation = conn.healthChecks().delete(project=project, healthCheck=healthcheck_short).execute()
+                        common.pprint("Deleting http healthcheck %s" % healthcheck_short)
+                        operation = conn.httpHealthChecks().delete(project=project,
+                                                                   httpHealthCheck=healthcheck_short).execute()
                         self._wait_for_operation(operation)
             common.pprint("Deleting targetPool %s" % name)
             operation = conn.targetPools().delete(project=project, region=region, targetPool=name).execute()
             self._wait_for_operation(operation)
-        try:
-            common.pprint("Deleting httpHealthCheck %s" % name)
-            operation = conn.httpHealthChecks().delete(project=project, httpHealthCheck=name).execute()
-            self._wait_for_operation(operation)
-        except Exception as e:
-            if self.debug:
-                print(e)
         return {'result': 'success'}
 
     def list_loadbalancers(self):
