@@ -1107,7 +1107,17 @@ class Kgcp(object):
         :param size:
         :return:
         """
-        print("not implemented")
+        conn = self.conn
+        project = self.project
+        shortimage = os.path.basename(image).split('?')[0].replace('.tar.gz', '').replace('.', '-')
+        if 'rhcos' in image:
+            shortimage = "rhcos-%s" % shortimage
+        common.pprint("Adding image %s" % shortimage)
+        image_body = {'name': shortimage}
+        if image.endswith('tar.gz'):
+            image_body['rawDisk'] = {'source': image}
+        operation = conn.images().insert(project=project, body=image_body).execute()
+        self._wait_for_operation(operation)
         return {'result': 'success'}
 
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
