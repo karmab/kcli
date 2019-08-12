@@ -1497,8 +1497,10 @@ class Kconfig(Kbaseconfig):
                     domain = details.get('domain')
                     lbvms = details.get('vms', [])
                     lbnets = details.get('nets', ['default'])
+                    internal = details.get('internal')
                     self.handle_loadbalancer(lbentry, nets=lbnets, ports=ports, checkpath=checkpath, vms=lbvms,
-                                             domain=domain, plan=plan, checkport=checkport, alias=alias)
+                                             domain=domain, plan=plan, checkport=checkport, alias=alias,
+                                             internal=internal)
         returndata = {'result': 'success', 'plan': plan}
         if newvms:
             returndata['newvms'] = newvms
@@ -1622,7 +1624,7 @@ class Kconfig(Kbaseconfig):
         return {'result': 'success'}
 
     def handle_loadbalancer(self, name, nets=['default'], ports=[], checkpath='/', vms=[], delete=False, domain=None,
-                            plan=None, checkport=80, alias=[]):
+                            plan=None, checkport=80, alias=[], internal=False):
         name = nameutils.get_random_name().replace('_', '-') if name is None else name
         k = self.k
         if self.type in ['aws', 'gcp']:
@@ -1633,7 +1635,7 @@ class Kconfig(Kbaseconfig):
             else:
                 common.pprint("Creating loadbalancer %s" % name)
                 k.create_loadbalancer(name, ports=ports, checkpath=checkpath, vms=vms, domain=domain,
-                                      checkport=checkport, alias=alias)
+                                      checkport=checkport, alias=alias, internal=internal)
         elif delete:
             return
         else:

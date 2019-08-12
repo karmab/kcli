@@ -699,6 +699,7 @@ def lb(args):
     delete = args.delete
     ports = args.ports
     domain = args.domain
+    internal = args.internal
     vms = args.vms.split(',') if args.vms is not None else []
     ports = args.ports.split(',') if args.ports is not None else []
     name = nameutils.get_random_name().replace('_', '-') if args.name is None else args.name
@@ -706,7 +707,7 @@ def lb(args):
         common.confirm("Are you sure?")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     config.handle_loadbalancer(name, ports=ports, checkpath=checkpath, vms=vms, delete=delete, domain=domain,
-                               checkport=checkport)
+                               checkport=checkport, internal=internal)
     return 0
 
 
@@ -1193,6 +1194,7 @@ def cli():
     lb_parser.add_argument('--checkport', default=80, help="Port to check. Defaults to 80")
     lb_parser.add_argument('-d', '--delete', action='store_true')
     lb_parser.add_argument('--domain', help='Domain to create a dns entry associated to the load balancer')
+    lb_parser.add_argument('-i', '--internal', action='store_true')
     lb_parser.add_argument('-p', '--ports', default='443', help='Load Balancer Ports. Defaults to 443')
     lb_parser.add_argument('-v', '--vms', help='Vms to add to the pool')
     lb_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')

@@ -1488,7 +1488,8 @@ class Kgcp(object):
         conn.images().insert(project=project, body=body).execute()
         return {'result': 'success'}
 
-    def create_loadbalancer(self, name, ports=[], checkpath='/index.html', vms=[], domain=None, checkport=80, alias=[]):
+    def create_loadbalancer(self, name, ports=[], checkpath='/index.html', vms=[], domain=None, checkport=80, alias=[],
+                            internal=False):
         sane_name = name.replace('.', '-')
         ports = [int(port) for port in ports]
         conn = self.conn
@@ -1502,31 +1503,56 @@ class Kgcp(object):
                 update = self.update_metadata(vm, 'loadbalancer', name)
                 if update == 0:
                     instances.append({"instance": "%s/%s" % (vmpath, vm)})
-        # health_check_body = {"checkIntervalSec": "10", "timeoutSec": "10", "unhealthyThreshold": 3,
-        #                     "healthyThreshold": 3, "name": sane_name}
-        # newcheck = {"port": checkport}
-        # health_check_body["httpHealthCheck"] = newcheck
-        # health_check_body["type"] = 'HTTP'
-        health_check_body = {"checkIntervalSec": "10", "timeoutSec": "10", "unhealthyThreshold": 3,
-                             "healthyThreshold": 3, "name": sane_name, "port": checkport, "requestPath": checkpath}
-        common.pprint("Creating http healthcheck %s" % name)
-        operation = conn.httpHealthChecks().insert(project=project, body=health_check_body).execute()
-        healthurl = operation['targetLink']
-        self._wait_for_operation(operation)
-        sane_name = name.replace('.', '-')
-        target_pool_body = {"name": sane_name, "healthChecks": [healthurl]}
-        common.pprint("Creating target pool %s" % sane_name)
-        operation = conn.targetPools().insert(project=project, region=region, body=target_pool_body).execute()
-        targeturl = operation['targetLink']
-        self._wait_for_operation(operation)
-        if instances:
-            instances_body = {"instances": instances}
-            operation = conn.targetPools().addInstance(project=project, region=region, targetPool=sane_name,
-                                                       body=instances_body).execute()
+        if internal:
+            health_check_body = {"checkIntervalSec": "10", "timeoutSec": "10", "unhealthyThreshold": 3,
+                                 "healthyThreshold": 3, "name": sane_name, "type": "TCP"}
+            health_check_body["tcpHealthCheck"] = {"port": checkport}
+            common.pprint("Creating healthcheck %s" % name)
+            operation = conn.healthChecks().insert(project=project, body=health_check_body).execute()
+            healthurl = operation['targetLink']
             self._wait_for_operation(operation)
+        else:
+            health_check_body = {"checkIntervalSec": "10", "timeoutSec": "10", "unhealthyThreshold": 3,
+                                 "healthyThreshold": 3, "name": sane_name, "port": checkport, "requestPath": checkpath}
+            common.pprint("Creating http healthcheck %s" % name)
+            operation = conn.httpHealthChecks().insert(project=project, body=health_check_body).execute()
+            healthurl = operation['targetLink']
+            self._wait_for_operation(operation)
+        sane_name = name.replace('.', '-')
+        if internal:
+            instances_group_body = {"name": sane_name, "healthChecks": [healthurl]}
+            common.pprint("Creating instances group %s" % sane_name)
+            operation = conn.instanceGroups().insert(project=project, zone=zone, body=instances_group_body).execute()
+            instances_group_url = operation['targetLink']
+            self._wait_for_operation(operation)
+            if instances:
+                instances_body = {"instances": instances}
+                operation = conn.instanceGroups().addInstances(project=project, zone=zone, instanceGroup=sane_name,
+                                                               body=instances_body).execute()
+                self._wait_for_operation(operation)
+            backend_body = {"name": sane_name, "loadBalancingScheme": "INTERNAL",
+                            "backends": [{"group": instances_group_url}],
+                            "protocol": "TCP", "healthChecks": [healthurl]}
+            common.pprint("Creating backend service %s" % sane_name)
+            operation = conn.regionBackendServices().insert(project=project, region=region, body=backend_body).execute()
+            backendurl = operation['targetLink']
+            self._wait_for_operation(operation)
+        else:
+            target_pool_body = {"name": sane_name, "healthChecks": [healthurl]}
+            common.pprint("Creating target pool %s" % sane_name)
+            operation = conn.targetPools().insert(project=project, region=region, body=target_pool_body).execute()
+            targeturl = operation['targetLink']
+            self._wait_for_operation(operation)
+            if instances:
+                instances_body = {"instances": instances}
+                operation = conn.targetPools().addInstance(project=project, region=region, targetPool=sane_name,
+                                                           body=instances_body).execute()
+                self._wait_for_operation(operation)
         address_body = {"name": sane_name}
         if domain is not None:
             address_body["description"] = domain
+        if internal:
+            address_body["addressType"] = 'INTERNAL'
         common.pprint("Creating address %s" % sane_name)
         operation = conn.addresses().insert(project=project, region=region, body=address_body).execute()
         ipurl = operation['targetLink']
@@ -1534,18 +1560,33 @@ class Kgcp(object):
         ip = conn.addresses().get(project=project, region=region, address=sane_name).execute()['address']
         common.pprint("Using load balancer ip %s" % ip)
         self._wait_for_operation(operation)
-        for port in ports:
-            forwarding_name = "%s-%s" % (sane_name, port)
-            forwarding_rule_body = {"IPAddress": ipurl, "target": targeturl, "portRange": [port],
-                                    "name": forwarding_name}
+        if internal:
+            forwarding_name = sane_name
+            forwarding_rule_body = {"IPAddress": ipurl, "name": forwarding_name}
+            forwarding_rule_body["loadBalancingScheme"] = "INTERNAL"
+            forwarding_rule_body["backendService"] = backendurl
+            forwarding_rule_body["IPProtocol"] = "TCP"
+            forwarding_rule_body["ports"] = ports
             common.pprint("Creating forwarding rule %s" % forwarding_name)
             operation = conn.forwardingRules().insert(project=project, region=region,
                                                       body=forwarding_rule_body).execute()
             self._wait_for_operation(operation)
-        firewall_body = {"name": sane_name, "direction": "INGRESS", "allowed": [{"IPProtocol": "tcp", "ports": ports}]}
-        common.pprint("Creating firewall rule %s" % sane_name)
-        operation = conn.firewalls().insert(project=project, body=firewall_body).execute()
-        self._wait_for_operation(operation)
+        else:
+            for port in ports:
+                forwarding_name = "%s-%s" % (sane_name, port)
+                forwarding_rule_body = {"IPAddress": ipurl, "name": forwarding_name}
+                forwarding_rule_body["target"] = targeturl
+                forwarding_rule_body["portRange"] = [port]
+                common.pprint("Creating forwarding rule %s" % forwarding_name)
+                operation = conn.forwardingRules().insert(project=project, region=region,
+                                                          body=forwarding_rule_body).execute()
+                self._wait_for_operation(operation)
+        if not internal:
+            firewall_body = {"name": sane_name, "direction": "INGRESS",
+                             "allowed": [{"IPProtocol": "tcp", "ports": ports}]}
+            common.pprint("Creating firewall rule %s" % sane_name)
+            operation = conn.firewalls().insert(project=project, body=firewall_body).execute()
+            self._wait_for_operation(operation)
         if domain is not None:
             self.reserve_dns(name, ip=ip, domain=domain, alias=alias)
         return {'result': 'success'}
@@ -1554,6 +1595,7 @@ class Kgcp(object):
         name = name.replace('.', '-')
         conn = self.conn
         project = self.project
+        zone = self.zone
         region = self.region
         try:
             common.pprint("Deleting firewall rule %s" % name)
@@ -1584,24 +1626,55 @@ class Kgcp(object):
             if self.debug:
                 print(e)
             pass
-        targetpool = conn.targetPools().get(project=project, region=region, targetPool=name).execute()
-        if targetpool:
-            if 'healthChecks' in targetpool:
-                healtchecks = [{'healthCheck': healthcheck} for healthcheck in targetpool['healthChecks']]
-                healtchecks_body = {"healthChecks": healtchecks}
-                if healtchecks:
-                    operation = conn.targetPools().removeHealthCheck(project=project, region=region, targetPool=name,
-                                                                     body=healtchecks_body).execute()
+        targetpools = conn.targetPools().list(project=project, region=region).execute()
+        if 'items' in targetpools:
+            for targetpool in targetpools['items']:
+                targetpool_name = targetpool['name']
+                if targetpool_name == name:
+                    if 'healthChecks' in targetpool:
+                        healtchecks = [{'healthCheck': healthcheck} for healthcheck in targetpool['healthChecks']]
+                        healtchecks_body = {"healthChecks": healtchecks}
+                        if healtchecks:
+                            operation = conn.targetPools().removeHealthCheck(project=project, region=region,
+                                                                             targetPool=name,
+                                                                             body=healtchecks_body).execute()
+                            self._wait_for_operation(operation)
+                            for healthcheck in targetpool['healthChecks']:
+                                healthcheck_short = os.path.basename(healthcheck)
+                                common.pprint("Deleting http healthcheck %s" % healthcheck_short)
+                                operation = conn.httpHealthChecks().delete(project=project,
+                                                                           httpHealthCheck=healthcheck_short).execute()
+                                self._wait_for_operation(operation)
+                    common.pprint("Deleting target pool %s" % name)
+                    operation = conn.targetPools().delete(project=project, region=region, targetPool=name).execute()
                     self._wait_for_operation(operation)
-                    for healthcheck in targetpool['healthChecks']:
+        backendservices = conn.regionBackendServices().list(project=project, region=region).execute()
+        healthchecks = []
+        if 'items' in backendservices:
+            for backendservice in backendservices['items']:
+                backendservice_name = backendservice['name']
+                if backendservice_name == name:
+                    if 'healthChecks' in backendservice:
+                        healtchecks = [{'healthCheck': healthcheck} for healthcheck in backendservice['healthChecks']]
+                        healtchecks_body = {"healthChecks": healtchecks}
+                        healthchecks = backendservice['healthChecks']
+                    common.pprint("Deleting backend service %s" % name)
+                    operation = conn.regionBackendServices().delete(project=project, region=region,
+                                                                    backendService=name).execute()
+                    self._wait_for_operation(operation)
+                    for healthcheck in healthchecks:
                         healthcheck_short = os.path.basename(healthcheck)
-                        common.pprint("Deleting http healthcheck %s" % healthcheck_short)
-                        operation = conn.httpHealthChecks().delete(project=project,
-                                                                   httpHealthCheck=healthcheck_short).execute()
+                        common.pprint("Deleting healthcheck %s" % healthcheck_short)
+                        operation = conn.healthChecks().delete(project=project, healthCheck=healthcheck_short).execute()
                         self._wait_for_operation(operation)
-            common.pprint("Deleting targetPool %s" % name)
-            operation = conn.targetPools().delete(project=project, region=region, targetPool=name).execute()
-            self._wait_for_operation(operation)
+        instancegroups = conn.instanceGroups().list(project=project, zone=zone).execute()
+        if 'items' in instancegroups:
+            for instancegroup in instancegroups['items']:
+                instancegroup_name = instancegroup['name']
+                if instancegroup_name == name:
+                    common.pprint("Deleting instance group %s" % name)
+                    operation = conn.instanceGroups().delete(project=project, zone=zone, instanceGroup=name).execute()
+                    self._wait_for_operation(operation)
         return {'result': 'success'}
 
     def list_loadbalancers(self):
