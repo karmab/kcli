@@ -701,7 +701,7 @@ class Kbox(object):
             vm.setAutostart(1)
         vm.create()
 
-    def update_metadata(self, name, metatype, metavalue):
+    def update_metadata(self, name, metatype, metavalue, append=False):
         """
 
         :param name:

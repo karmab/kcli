@@ -841,7 +841,7 @@ class Kubevirt(Kubecommon):
         print("not implemented")
         return
 
-    def update_metadata(self, name, metatype, metavalue):
+    def update_metadata(self, name, metatype, metavalue, append=False):
         """
 
         :param name:
@@ -856,6 +856,9 @@ class Kubevirt(Kubecommon):
         except:
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
+        if append and "kcli/%s" % metatype in vm["metadata"]["annotations"]:
+            oldvalue = vm["metadata"]["annotations"]["kcli/%s" % metatype]
+            metavalue = "%s,%s" % (oldvalue, metavalue)
         vm["metadata"]["annotations"]["kcli/%s" % metatype] = metavalue
         crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
         return

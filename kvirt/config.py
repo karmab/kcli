@@ -837,8 +837,11 @@ class Kconfig(Kbaseconfig):
                     name = vm['name']
                     description = vm.get('plan')
                     if description == plan:
-                        if 'loadbalancer' in vm and vm['loadbalancer'] not in deletedlbs:
-                            deletedlbs.append(vm['loadbalancer'])
+                        if 'loadbalancer' in vm:
+                            lbs = vm['loadbalancer'].split(',')
+                            for lb in lbs:
+                                if lb not in deletedlbs:
+                                    deletedlbs.append(lb)
                         vmnetworks = c.vm_ports(name)
                         for network in vmnetworks:
                             if network != 'default' and network not in networks:

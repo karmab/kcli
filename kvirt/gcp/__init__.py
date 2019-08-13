@@ -744,7 +744,7 @@ class Kgcp(object):
         print("not implemented")
         return
 
-    def update_metadata(self, name, metatype, metavalue):
+    def update_metadata(self, name, metatype, metavalue, append=False):
         """
 
         :param name:
@@ -764,7 +764,10 @@ class Kgcp(object):
         found = False
         for entry in metadata:
             if entry['key'] == metatype:
-                entry['value'] = metavalue
+                if append:
+                    entry['value'] += ",%s" % metavalue
+                else:
+                    entry['value'] = metavalue
                 found = True
                 break
         if not found:
@@ -1500,7 +1503,7 @@ class Kgcp(object):
         vmpath = "https://www.googleapis.com/compute/v1/projects/%s/zones/%s/instances" % (project, zone)
         if vms:
             for vm in vms:
-                update = self.update_metadata(vm, 'loadbalancer', name)
+                update = self.update_metadata(vm, 'loadbalancer', name, append=True)
                 if update == 0:
                     instances.append({"instance": "%s/%s" % (vmpath, vm)})
         if internal:
@@ -1597,14 +1600,14 @@ class Kgcp(object):
         project = self.project
         zone = self.zone
         region = self.region
-        try:
-            common.pprint("Deleting firewall rule %s" % name)
-            operation = conn.firewalls().delete(project=project, firewall=name).execute()
-            self._wait_for_operation(operation)
-        except Exception as e:
-            if self.debug:
-                print(e)
-            pass
+        firewall_rules = conn.firewalls().list(project=project).execute()
+        if 'items' in firewall_rules:
+            for firewall_rule in firewall_rules['items']:
+                firewall_rule_name = firewall_rule['name']
+                if firewall_rule_name == name:
+                    common.pprint("Deleting firewall rule %s" % name)
+                    operation = conn.firewalls().delete(project=project, firewall=name).execute()
+                    self._wait_for_operation(operation)
         forwarding_rules = conn.forwardingRules().list(project=project, region=region).execute()
         if 'items' in forwarding_rules:
             for forwarding_rule in forwarding_rules['items']:
@@ -1614,6 +1617,17 @@ class Kgcp(object):
                     operation = conn.forwardingRules().delete(project=project, region=region,
                                                               forwardingRule=forwarding_rule_name).execute()
                     self._wait_for_operation(operation)
+        # addresses = conn.addresses().list(project=project, region=region).execute()
+        # if 'items' in addresses:
+        #     for address in addresses['items']:
+        #         address_name = address['name']
+        #         if address_name == name:
+        #             common.pprint("Deleting address %s" % name)
+        #             if '.' in address["description"]:
+        #                 domain = address["description"]
+        #                 self.delete_dns(name, domain=domain)
+        #             operation = conn.addresses().delete(project=project, region=region, address=name).execute()
+        #             self._wait_for_operation(operation)
         try:
             address = conn.addresses().get(project=project, region=region, address=name).execute()
             if '.' in address["description"]:
@@ -1658,6 +1672,8 @@ class Kgcp(object):
                         healtchecks = [{'healthCheck': healthcheck} for healthcheck in backendservice['healthChecks']]
                         healtchecks_body = {"healthChecks": healtchecks}
                         healthchecks = backendservice['healthChecks']
+                    common.pprint("Waiting to make sure forwarding rule is gone")
+                    sleep(10)
                     common.pprint("Deleting backend service %s" % name)
                     operation = conn.regionBackendServices().delete(project=project, region=region,
                                                                     backendService=name).execute()

@@ -684,7 +684,7 @@ class Kaws(object):
         print("not implemented")
         return
 
-    def update_metadata(self, name, metatype, metavalue):
+    def update_metadata(self, name, metatype, metavalue, append=False):
         """
 
         :param name:
@@ -699,6 +699,14 @@ class Kaws(object):
         except:
             return 1
         instanceid = vm['InstanceId']
+        if 'Tags' in vm:
+            for tag in vm['Tags']:
+                if tag['Key'] == metatype:
+                    oldvalue = tag['Value']
+                    oldtags = [{"Key": metatype, "Value": oldvalue}]
+                    conn.delete_tags(Resources=[instanceid], Tags=oldtags)
+                    if append:
+                        metavalue = "%s,%s" % (oldvalue, metavalue)
         newtags = [{"Key": metatype, "Value": metavalue}]
         conn.create_tags(Resources=[instanceid], Tags=newtags)
         return 0
@@ -1344,7 +1352,7 @@ class Kaws(object):
         if vms:
             Instances = []
             for vm in vms:
-                update = self.update_metadata(vm, 'loadbalancer', name)
+                update = self.update_metadata(vm, 'loadbalancer', name, append=True)
                 instanceid = self.get_id(vm)
                 if update == 0 and instanceid is not None:
                     Instances.append({"InstanceId": instanceid})

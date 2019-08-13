@@ -835,7 +835,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         print("not implemented")
         return
 
-    def update_metadata(self, name, metatype, metavalue):
+    def update_metadata(self, name, metatype, metavalue, append=False):
         """
 
         :param name:
@@ -855,6 +855,9 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             desc = description.split('=')
             if len(desc) == 2 and desc[0] == metatype:
                 found = True
+                if append:
+                    oldvalue = desc[1]
+                    metavalue = "%s+%s" % (oldvalue, metavalue)
                 newdescription.append("%s=%s" % (metatype, metavalue))
             else:
                 newdescription.append(description)

@@ -283,7 +283,7 @@ class Kbase(object):
         print("not implemented")
         return
 
-    def update_metadata(self, name, metatype, metavalue):
+    def update_metadata(self, name, metatype, metavalue, append=False):
         """
 
         :param name:

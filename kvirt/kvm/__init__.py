@@ -1740,7 +1740,7 @@ class Kvirt(object):
             stream.sendAll(self.handler, ori)
             stream.finish()
 
-    def update_metadata(self, name, metatype, metavalue):
+    def update_metadata(self, name, metatype, metavalue, append=False):
         """
 
         :param name:
@@ -1783,7 +1783,10 @@ class Kvirt(object):
         elif kmeta is None:
             kmeta = ET.Element("kvirt:%s" % metatype)
             kroot.append(kmeta)
-        kmeta.text = metavalue
+        if append and kmeta.text is not None:
+            kmeta.text += ",%s" % metavalue
+        else:
+            kmeta.text = metavalue
         newxml = ET.tostring(root)
         conn.defineXML(newxml.decode("utf-8"))
         return {'result': 'success'}

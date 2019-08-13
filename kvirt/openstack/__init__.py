@@ -560,7 +560,7 @@ class Kopenstack(object):
         print("not implemented")
         return
 
-    def update_metadata(self, name, metatype, metavalue):
+    def update_metadata(self, name, metatype, metavalue, append=False):
         """
 
         :param name:
@@ -575,7 +575,10 @@ class Kopenstack(object):
             common.pprint("VM %s not found" % name, color='red')
             return
         metadata = vm.metadata
-        metadata[metatype] = metavalue
+        if append and metatype in metadata:
+            metadata[metatype] += ",%s" % metavalue
+        else:
+            metadata[metatype] = metavalue
         nova.servers.set_meta(vm.id, metadata)
         return {'result': 'success'}
 
