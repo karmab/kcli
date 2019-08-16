@@ -184,8 +184,9 @@ class Kconfig(Kbaseconfig):
                 os._exit(1)
             for extraclient in self._extraclients:
                 if extraclient not in self.ini:
-                    common.pprint("Missing section for client %s in config file. Leaving..." % extraclient, color='red')
-                    os._exit(1)
+                    common.pprint("Missing section for client %s in config file. Using ssh with them..." % extraclient,
+                                  color='blue')
+                    self.ini[extraclient] = {'host': extraclient}
                 c = Kconfig(client=extraclient)
                 e = c.k
                 self.extraclients[extraclient] = e

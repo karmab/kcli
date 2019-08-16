@@ -190,8 +190,9 @@ class Kbaseconfig:
         else:
             self.client = client
         if self.client not in self.ini:
-            common.pprint("Missing section for client %s in config file. Leaving..." % self.client, color='red')
-            os._exit(1)
+            common.pprint("Missing section for client %s in config file. Using ssh with it..." % self.client,
+                          color='blue')
+            self.ini[client] = {'host': self.client}
         self.options = self.ini[self.client]
         options = self.options
         self.enabled = options.get('enabled', True)
