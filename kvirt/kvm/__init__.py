@@ -260,6 +260,7 @@ class Kvirt(object):
             display = 'spice'
         volumes = {}
         volumespaths = {}
+        ignitiondir = default_poolpath
         for p in conn.listStoragePools():
             poo = conn.storagePoolLookupByName(p)
             poo.refresh(0)
@@ -327,6 +328,8 @@ class Kvirt(object):
                 for element in list(root.getiterator('path')):
                     diskpoolpath = element.text
                     break
+                if index == 0:
+                    ignitiondir = diskpoolpath
                 product = list(root.getiterator('product'))
                 if product:
                     diskthinpool = list(root.getiterator('product'))[0].get('name')
@@ -516,7 +519,10 @@ class Kvirt(object):
                                                domain=domain, reserveip=reserveip, files=files,
                                                enableroot=enableroot, overrides=overrides, etcd=etcd, version=version,
                                                plan=plan)
-                with open('/tmp/%s.ign' % name, 'w') as ignitionfile:
+
+                localhosts = ['localhost', '127.0.0.1']
+                ignitionsrcdir = '/tmp' if self.protocol == 'ssh' and self.host not in localhosts else ignitiondir
+                with open('%s/%s.ign' % (ignitionsrcdir, name), 'w') as ignitionfile:
                     ignitionfile.write(ignitiondata)
                     identityfile = None
                 if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
@@ -527,9 +533,9 @@ class Kvirt(object):
                     identitycommand = "-i %s" % identityfile
                 else:
                     identitycommand = ""
-                if self.protocol == 'ssh' and self.host not in ['localhost', '127.0.0.1']:
-                    ignitioncmd = 'scp %s -qP %s /tmp/%s.ign %s@%s:/tmp' % (identitycommand, self.port, name,
-                                                                            self.user, self.host)
+                if self.protocol == 'ssh' and self.host not in localhosts:
+                    ignitioncmd = 'scp %s -qP %s %s/%s.ign %s@%s:%s' % (identitycommand, self.port, ignitionsrcdir,
+                                                                        name, self.user, self.host, ignitiondir)
                     code = os.system(ignitioncmd)
                     if code != 0:
                         return {'result': 'failure', 'reason': "Unable to creation ignition data file in hypervisor"}
@@ -607,7 +613,8 @@ class Kvirt(object):
             ignitionxml = ""
             if ignition:
                 ignitionxml = """<qemu:arg value='-fw_cfg' />
-                                  <qemu:arg value='name=opt/com.coreos/config,file=/tmp/%s.ign' />""" % name
+                                  <qemu:arg value='name=opt/com.coreos/config,file=%s/%s.ign' />""" % (ignitiondir,
+                                                                                                       name)
             usermodexml = ""
             if usermode:
                 usermodexml = """<qemu:arg value='-netdev'/>
