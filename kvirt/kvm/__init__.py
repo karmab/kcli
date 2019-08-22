@@ -21,6 +21,7 @@ import os
 from subprocess import call
 import re
 import string
+from shutil import move
 import time
 import xml.etree.ElementTree as ET
 
@@ -521,8 +522,7 @@ class Kvirt(object):
                                                plan=plan)
 
                 localhosts = ['localhost', '127.0.0.1']
-                ignitionsrcdir = '/tmp' if self.protocol == 'ssh' and self.host not in localhosts else ignitiondir
-                with open('%s/%s.ign' % (ignitionsrcdir, name), 'w') as ignitionfile:
+                with open('/tmp/%s.ign' % name, 'w') as ignitionfile:
                     ignitionfile.write(ignitiondata)
                     identityfile = None
                 if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
@@ -534,12 +534,18 @@ class Kvirt(object):
                 else:
                     identitycommand = ""
                 if self.protocol == 'ssh' and self.host not in localhosts:
-                    ignitiondir = '/tmp'
-                    ignitioncmd = 'scp %s -qP %s %s/%s.ign %s@%s:/tmp' % (identitycommand, self.port, ignitionsrcdir,
-                                                                          name, self.user, self.host)
-                    code = os.system(ignitioncmd)
+                    ignitioncmd1 = 'scp %s -qP %s /tmp/%s.ign %s@%s:/tmp' % (identitycommand, self.port, name,
+                                                                             self.user, self.host)
+                    code = os.system(ignitioncmd1)
                     if code != 0:
-                        return {'result': 'failure', 'reason': "Unable to create ignition data file in hypervisor"}
+                        return {'result': 'failure', 'reason': "Unable to create ignition data file in /tmp"}
+                    ignitioncmd2 = 'ssh %s -qp %s %s@%s mv /tmp/%s.ign %s' % (identitycommand, self.port, self.user,
+                                                                              self.host, name, ignitiondir)
+                    code = os.system(ignitioncmd2)
+                    if code != 0:
+                        return {'result': 'failure', 'reason': "Unable to move ignition data file to %s" % ignitiondir}
+                else:
+                    move("/tmp/%s.ign" % name, "%s/%s.ign" % (ignitiondir, name))
             elif template is not None and not ignition:
                 cloudinitiso = "%s/%s.ISO" % (default_poolpath, name)
                 dtype = 'block' if '/dev' in diskpath else 'file'
