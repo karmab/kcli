@@ -750,6 +750,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     indent = 0 if compact else 4
     default_gateway = gateway
     publickeys = []
+    publickeyfile = None
     if domain is not None:
         localhostname = "%s.%s" % (name, domain)
     else:
