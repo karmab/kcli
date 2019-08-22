@@ -534,11 +534,11 @@ class Kvirt(object):
                 else:
                     identitycommand = ""
                 if self.protocol == 'ssh' and self.host not in localhosts:
-                    ignitioncmd = 'scp %s -qP %s %s/%s.ign %s@%s:%s' % (identitycommand, self.port, ignitionsrcdir,
+                    ignitioncmd = 'scp %s -qP %s %s/%s.ISO %s@%s:%s' % (identitycommand, self.port, ignitionsrcdir,
                                                                         name, self.user, self.host, ignitiondir)
                     code = os.system(ignitioncmd)
                     if code != 0:
-                        return {'result': 'failure', 'reason': "Unable to creation ignition data file in hypervisor"}
+                        return {'result': 'failure', 'reason': "Unable to create ignition data file in hypervisor"}
             elif template is not None and not ignition:
                 cloudinitiso = "%s/%s.ISO" % (default_poolpath, name)
                 dtype = 'block' if '/dev' in diskpath else 'file'
