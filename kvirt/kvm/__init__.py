@@ -610,8 +610,7 @@ class Kvirt(object):
             ignitionxml = ""
             if ignition:
                 ignitionxml = """<qemu:arg value='-fw_cfg' />
-                                  <qemu:arg value='name=opt/com.coreos/config,file=%s/%s.ign' />""" % (ignitiondir,
-                                                                                                       name)
+                                  <qemu:arg value='name=opt/com.coreos/config,file=/tmp/%s.ign' />""" % name
             usermodexml = ""
             if usermode:
                 usermodexml = """<qemu:arg value='-netdev'/>

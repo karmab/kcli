@@ -76,21 +76,24 @@ To run it
 docker run --rm karmab/kcli
 ```
 
-the are several flags you'll want to pass depending on your use case 
+the are several flags you'll likely want to use:
 
+- `--net host` for kcli ssh
 - `-v /var/run/libvirt:/var/run/libvirt -v /var/lib/libvirt/images:/var/lib/libvirt/images` if running against a local client
-- ` ~/.kcli:/root/.kcli` to use your kcli configuration (also profiles and repositories) stored locally
+- `-v  ~/.kcli:/root/.kcli` to use your kcli configuration (also profiles and repositories) stored locally
 - `-v ~/.ssh:/root/.ssh` to share your ssh keys. Alternatively, you can store your public and private key in the ~/.kcli directory
 - `--security-opt label=disable` if running with selinux
 - `-v $PWD:/workdir` to access plans below your current directory
 - `-v $HOME:/root` to share your entire home directory, useful if you want to share secret files, `~/register.sh` for instance)
 - `-e HTTP_PROXY=your_proxy -e HTTPS_PROXY=your_proxy`
 - `-v ~/.kube:/root/.kube` to share your kubeconfig.
+- `-v /tmp:/ignitiondir` for ignition files to be properly processed
 
-As a bonus, you can alias kcli and run it as if it was installed locally:
+As a bonus, you can use the following aliases:
 
 ```Shell
-alias kcli="docker run -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir karmab/kcli"
+alias kcli="docker run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir -v /tmp:/ignitiondir karmab/kcli"
+alias kclishell="docker run --net host -it --rm --security-opt label=disable -v ~/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir -v /tmp:/ignitiondir --entrypoint=/bin/sh karmab/kcli"
 ```
 
 For web access, you can switch with `-p 9000:9000 --entrypoint=/usr/bin/kweb` and thus accessing to port 9000
