@@ -21,7 +21,6 @@ import os
 from subprocess import call
 import re
 import string
-from shutil import move
 import time
 import xml.etree.ElementTree as ET
 
@@ -261,7 +260,6 @@ class Kvirt(object):
             display = 'spice'
         volumes = {}
         volumespaths = {}
-        ignitiondir = default_poolpath
         for p in conn.listStoragePools():
             poo = conn.storagePoolLookupByName(p)
             poo.refresh(0)
@@ -329,8 +327,6 @@ class Kvirt(object):
                 for element in list(root.getiterator('path')):
                     diskpoolpath = element.text
                     break
-                if index == 0:
-                    ignitiondir = diskpoolpath
                 product = list(root.getiterator('product'))
                 if product:
                     diskthinpool = list(root.getiterator('product'))[0].get('name')
@@ -522,7 +518,8 @@ class Kvirt(object):
                                                plan=plan)
 
                 localhosts = ['localhost', '127.0.0.1']
-                with open('/tmp/%s.ign' % name, 'w') as ignitionfile:
+                ignitiondir = '/ignitiondir' if os.path.exists("/i_am_a_container") else '/tmp'
+                with open('%s/%s.ign' % (ignitiondir, name), 'w') as ignitionfile:
                     ignitionfile.write(ignitiondata)
                     identityfile = None
                 if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
@@ -539,13 +536,6 @@ class Kvirt(object):
                     code = os.system(ignitioncmd1)
                     if code != 0:
                         return {'result': 'failure', 'reason': "Unable to create ignition data file in /tmp"}
-                    ignitioncmd2 = 'ssh %s -qp %s %s@%s mv /tmp/%s.ign %s' % (identitycommand, self.port, self.user,
-                                                                              self.host, name, ignitiondir)
-                    code = os.system(ignitioncmd2)
-                    if code != 0:
-                        return {'result': 'failure', 'reason': "Unable to move ignition data file to %s" % ignitiondir}
-                else:
-                    move("/tmp/%s.ign" % name, "%s/%s.ign" % (ignitiondir, name))
             elif template is not None and not ignition:
                 cloudinitiso = "%s/%s.ISO" % (default_poolpath, name)
                 dtype = 'block' if '/dev' in diskpath else 'file'
