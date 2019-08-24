@@ -519,6 +519,8 @@ class Kvirt(object):
 
                 localhosts = ['localhost', '127.0.0.1']
                 ignitiondir = '/ignitiondir' if os.path.exists("/i_am_a_container") else '/tmp'
+                if os.path.exists("/i_am_a_container") and not os.path.exists(ignitiondir):
+                    return {'result': 'failure', 'reason': "You need to add -v /tmp:/ignitiondir to container alias"}
                 with open('%s/%s.ign' % (ignitiondir, name), 'w') as ignitionfile:
                     ignitionfile.write(ignitiondata)
                     identityfile = None
