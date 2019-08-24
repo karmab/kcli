@@ -171,6 +171,10 @@ class Kconfig(Kbaseconfig):
                 from kvirt.foreman import Kforeman
                 k = Kforeman(host=self.host, port=port, user=user, password=password, debug=debug, filtervms=filtervms,
                              filteruser=filteruser)
+            elif os.path.exists('/Users'):
+                common.pprint("Defaulting to fake driver for vms on macosx", color='blue')
+                from kvirt.fake import Kfake
+                k = Kfake()
             else:
                 if self.host is None:
                     common.pprint("Problem parsing your configuration file", color='red')
@@ -184,7 +188,7 @@ class Kconfig(Kbaseconfig):
                 os._exit(1)
             for extraclient in self._extraclients:
                 if extraclient not in self.ini:
-                    common.pprint("Missing section for client %s in config file. Using ssh with them..." % extraclient,
+                    common.pprint("Missing section for client %s in config file. Trying to connect..." % extraclient,
                                   color='blue')
                     self.ini[extraclient] = {'host': extraclient}
                 c = Kconfig(client=extraclient)

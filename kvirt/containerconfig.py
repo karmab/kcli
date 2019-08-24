@@ -36,9 +36,11 @@ class Kcontainerconfig():
             host = currentconfig.get('host', '127.0.0.1')
             port = currentconfig.get('port', 22)
             user = currentconfig.get('user', 'root')
+            default_engine = 'docker' if host in ['127.0.0.1', 'localhost'] and os.path.exists('/Users') else 'podman'
+            engine = currentconfig.get('engine', default_engine)
             if not k8s:
-                from kvirt.docker import Kdocker
-                cont = Kdocker(host)
+                from kvirt.container import Kcontainer
+                cont = Kcontainer(host, engine=engine)
             else:
                 ca_file = currentconfig.get('ca_file')
                 namespace = currentconfig.get('namespace') if namespace is None else namespace

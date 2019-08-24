@@ -863,7 +863,7 @@ container
       volumes:
        - /root/coco
 
-Look at the docker section for details on the parameters
+Look at the container section for details on the parameters
 
 plan’s plan ( Also known as inception style)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1025,13 +1025,13 @@ the commands that are escalated:
      - echo .... # KVIRT >> /etc/hosts
      - sed -i '/.... # KVIRT/d' /etc/hosts
 
-Docker support
---------------
+Docker/Podman support
+---------------------
 
-Docker support is mainly enabled as a commodity to launch some
-containers along vms in plan files. Of course, you will need docker
-installed on the client. So the following can be used in a plan file to
-launch a container:
+Docker/Podman support is mainly enabled as a commodity to launch some
+containers along vms in plan files. Of course, you will need docker or
+podman installed on the client. So the following can be used in a plan
+file to launch a container:
 
 .. code:: yaml
 

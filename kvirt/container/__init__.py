@@ -1,22 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-docker utilites
+container utilites
 """
 
-import docker
+from docker import DockerClient as client
 import os
 
 
-class Kdocker():
+class Kcontainer():
     """
 
     """
 
-    def __init__(self, host='127.0.0.1', user='root', port=22):
+    def __init__(self, host='127.0.0.1', user='root', port=22, engine='podman'):
         self.host = host
         self.user = user
         self.port = port
+        self.engine = engine
 
     def create_container(self, name, image, nets=None, cmd=None, ports=[], volumes=[], environment=[], label=None,
                          overrides={}):
@@ -33,7 +34,8 @@ class Kdocker():
         :param overrides:
         :return:
         """
-        if self.host == '127.0.0.1':
+        engine = self.engine
+        if self.host == '127.0.0.1' and engine != 'podman':
             finalvolumes = {}
             if volumes is not None:
                 for i, volume in enumerate(volumes):
@@ -61,7 +63,6 @@ class Kdocker():
                 labels = {key: value}
             else:
                 labels = None
-            base_url = 'unix://var/run/docker.sock'
             finalenv = {}
             if environment is not None:
                 for env in enumerate(environment):
@@ -78,7 +79,8 @@ class Kdocker():
                             finalenv[key] = value
                         else:
                             continue
-            d = docker.DockerClient(base_url=base_url, version='1.22')
+            base_url = 'unix://var/run/docker.sock'
+            d = client(base_url=base_url, version='1.22')
             if ':' not in image:
                 image = '%s:latest' % image
             d.containers.run(image, name=name, command=cmd, detach=True, ports=ports, volumes=finalvolumes,
@@ -136,12 +138,13 @@ class Kdocker():
                         else:
                             continue
                     envinfo = "%s -e %s=%s" % (envinfo, key, value)
-            dockercommand = "docker run -it %s %s %s --name %s -l %s -d %s" % (volumeinfo, envinfo, portinfo, name,
-                                                                               label, image)
+            runcommand = "%s run -it %s %s %s --name %s -l %s -d %s" % (engine, volumeinfo, envinfo, portinfo, name,
+                                                                        label, image)
             if cmd is not None:
-                dockercommand = "%s %s" % (dockercommand, cmd)
-            command = "ssh -p %s %s@%s %s" % (self.port, self.user, self.host, dockercommand)
-            os.system(command)
+                runcommand = "%s %s" % (runcommand, cmd)
+            if self.host != '127.0.0.1':
+                runcommand = "ssh -p %s %s@%s %s" % (self.port, self.user, self.host, runcommand)
+            os.system(runcommand)
         return {'result': 'success'}
 
     def delete_container(self, name):
@@ -150,17 +153,19 @@ class Kdocker():
         :param name:
         :return:
         """
-        if self.host == '127.0.0.1':
+        engine = self.engine
+        if self.host == '127.0.0.1' and engine != 'podman':
             base_url = 'unix://var/run/docker.sock'
-            d = docker.DockerClient(base_url=base_url, version='1.22')
+            d = client(base_url=base_url, version='1.22')
             containers = [container for container in d.containers.list() if container.name == name]
             if containers:
                 for container in containers:
                     container.remove(force=True)
         else:
-            dockercommand = "docker rm -f %s" % name
-            command = "ssh -p %s %s@%s %s" % (self.port, self.user, self.host, dockercommand)
-            os.system(command)
+            rmcommand = "%s rm -f %s" % (engine, name)
+            if self.host != '127.0.0.1':
+                rmcommand = "ssh -p %s %s@%s %s" % (self.port, self.user, self.host, rmcommand)
+            os.system(rmcommand)
         return {'result': 'success'}
 
     def start_container(self, name):
@@ -169,17 +174,19 @@ class Kdocker():
         :param name:
         :return:
         """
-        if self.host == '127.0.0.1':
+        engine = self.engine
+        if self.host == '127.0.0.1' and engine != 'podman':
             base_url = 'unix://var/run/docker.sock'
-            d = docker.DockerClient(base_url=base_url, version='1.22')
+            d = client(base_url=base_url, version='1.22')
             containers = [container for container in d.containers.list(all=True) if container.name == name]
             if containers:
                 for container in containers:
                     container.start()
         else:
-            dockercommand = "docker start %s" % name
-            command = "ssh -p %s %s@%s %s" % (self.port, self.user, self.host, dockercommand)
-            os.system(command)
+            startcommand = "%s start %s" % (engine, name)
+            if self.host != '127.0.0.1':
+                startcommand = "ssh -p %s %s@%s %s" % (self.port, self.user, self.host, startcommand)
+            os.system(startcommand)
         return {'result': 'success'}
 
     def stop_container(self, name):
@@ -188,17 +195,19 @@ class Kdocker():
         :param name:
         :return:
         """
-        if self.host == '127.0.0.1':
+        engine = self.engine
+        if self.host == '127.0.0.1' and engine != 'podman':
             base_url = 'unix://var/run/docker.sock'
-            d = docker.DockerClient(base_url=base_url, version='1.22')
+            d = client(base_url=base_url, version='1.22')
             containers = [container for container in d.containers.list() if container.name == name]
             if containers:
                 for container in containers:
                     container.stop()
         else:
-            dockercommand = "docker stop %s" % name
-            command = "ssh -p %s %s@%s %s" % (self.port, self.user, self.host, dockercommand)
-            os.system(command)
+            stopcommand = "%s stop %s" % (engine, name)
+            if self.host != '127.0.0.1':
+                stopcommand = "ssh -p %s %s@%s %s" % (self.port, self.user, self.host, stopcommand)
+            os.system(stopcommand)
         return {'result': 'success'}
 
     def console_container(self, name):
@@ -207,13 +216,15 @@ class Kdocker():
         :param name:
         :return:
         """
-        if self.host == '127.0.0.1':
-            dockercommand = "docker attach %s" % name
-            os.system(dockercommand)
+        engine = self.engine
+        if self.host == '127.0.0.1' and engine != 'podman':
+            attachcommand = "docker attach %s" % name
+            os.system(attachcommand)
         else:
-            dockercommand = "docker attach %s" % name
-            command = "ssh -t -p %s %s@%s %s" % (self.port, self.user, self.host, dockercommand)
-            os.system(command)
+            attachcommand = "%s attach %s" % (engine, name)
+            if self.host != '127.0.0.1':
+                attachcommand = "ssh -t -p %s %s@%s %s" % (self.port, self.user, self.host, attachcommand)
+            os.system(attachcommand)
         return {'result': 'success'}
 
     def list_containers(self):
@@ -221,10 +232,11 @@ class Kdocker():
         :param self:
         :return:
         """
+        engine = self.engine
         containers = []
-        if self.host == '127.0.0.1':
+        if self.host == '127.0.0.1' and engine != 'podman':
             base_url = 'unix://var/run/docker.sock'
-            d = docker.DockerClient(base_url=base_url, version='1.22')
+            d = client(base_url=base_url, version='1.22')
             for container in d.containers.list(all=True):
                 name = container.name
                 state = container.status
@@ -261,10 +273,11 @@ class Kdocker():
                 containers.append([name, state, source, plan, command, portinfo, ''])
         else:
             containers = []
-            dockercommand = "docker ps -a --format \"'{{.Names}}?{{.Status}}?{{.Image}}?{{.Command}}?{{.Ports}}?"
-            dockercommand += "{{.Label \\\"plan\\\"}}'\""
-            command = "ssh -p %s %s@%s %s" % (self.port, self.user, self.host, dockercommand)
-            results = os.popen(command).readlines()
+            lscommand = "%s ps -a --format \"'{{.Names}}?{{.Status}}?{{.Image}}?{{.Command}}?{{.Ports}}?" % engine
+            lscommand += "{{.Label \\\"plan\\\"}}'\""
+            if self.host != '127.0.0.1':
+                lscommand = "ssh -p %s %s@%s %s" % (self.port, self.user, self.host, lscommand)
+            results = os.popen(lscommand).readlines()
             for container in results:
                 name, state, source, command, ports, plan = container.split('?')
                 if state.startswith('Up'):
@@ -281,16 +294,18 @@ class Kdocker():
         :param name:
         :return:
         """
-        if self.host == '127.0.0.1':
+        engine = self.engine
+        if self.host == '127.0.0.1' and engine != 'podman':
             base_url = 'unix://var/run/docker.sock'
-            d = docker.DockerClient(base_url=base_url, version='1.22')
+            d = client(base_url=base_url, version='1.22')
             containers = [container.id for container in d.containers.list(all=True) if container.name == name]
             if containers:
                 return True
         else:
-            dockercommand = "docker ps -a --format '{{.Names}}'"
-            command = "ssh -p %s %s@%s %s" % (self.port, self.user, self.host, dockercommand)
-            results = os.popen(command).readlines()
+            existcommand = "%s ps -a --format '{{.Names}}'" % engine
+            if self.host != '127.0.0.1':
+                existcommand = "ssh -p %s %s@%s %s" % (self.port, self.user, self.host, existcommand)
+            results = os.popen(existcommand).readlines()
             for container in results:
                 containername = container.strip()
                 if containername == name:
@@ -302,15 +317,17 @@ class Kdocker():
         :param self:
         :return:
         """
-        if self.host == '127.0.0.1':
+        engine = self.engine
+        if self.host == '127.0.0.1' and engine != 'podman':
             base_url = 'unix://var/run/docker.sock'
-            d = docker.DockerClient(base_url=base_url, version='1.22')
+            d = client(base_url=base_url, version='1.22')
             images = []
             for i in d.images.list():
                 for tag in i.tags:
                     images.append(tag)
         else:
-            dockercommand = "docker images --format '{{.Repository}}:{{.Tag}}'"
-            command = "ssh -p %s %s@%s %s" % (self.port, self.user, self.host, dockercommand)
-            images = [image.strip() for image in os.popen(command).readlines()]
+            lsicommand = "%s images --format '{{.Repository}}:{{.Tag}}'" % engine
+            if self.host != '127.0.0.1':
+                lsicommand = "ssh -p %s %s@%s %s" % (self.port, self.user, self.host, lsicommand)
+            images = [image.strip() for image in os.popen(lsicommand).readlines()]
         return sorted(images)
