@@ -18,6 +18,10 @@ class Kcontainer():
         self.user = user
         self.port = port
         self.engine = engine
+        if self.host == '127.0.0.1' and engine != 'podman' and os.path.exists("/i_am_a_container")\
+                and not os.path.exists("/var/run/docker.sock"):
+            reason = "You need to add -v /var/run/docker.sock:/var/run/docker.sock to container alias"
+            return {'result': 'failure', 'reason': reason}
 
     def create_container(self, name, image, nets=None, cmd=None, ports=[], volumes=[], environment=[], label=None,
                          overrides={}):

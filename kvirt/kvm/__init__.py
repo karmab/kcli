@@ -72,6 +72,9 @@ class Kvirt(object):
             conntype = 'system' if not session else 'session'
             if host == '127.0.0.1' or host == 'localhost':
                 url = "qemu:///%s" % conntype
+                if os.path.exists("/i_am_a_container") and not os.path.exists(socketf):
+                    reason = "You need to add /var/run/libvirt:/var/run/libvirt to container alias"
+                    return {'result': 'failure', 'reason': reason}
             elif port:
                 url = "qemu+%s://%s@%s:%s/%s?socket=%s" % (protocol, user, host, port, conntype, socketf)
             elif protocol == 'ssh':
@@ -511,6 +514,9 @@ class Kvirt(object):
         if cloudinit:
             if template is not None and ('coreos' in template or template.startswith('rhcos')):
                 ignition = True
+                ignitiondir = '/ignitiondir' if os.path.exists("/i_am_a_container") else '/tmp'
+                if os.path.exists("/i_am_a_container") and not os.path.exists(ignitiondir):
+                    return {'result': 'failure', 'reason': "You need to add -v /tmp:/ignitiondir to container alias"}
                 version = '3.0.0' if template.startswith('fedora-coreos') else '2.2.0'
                 ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                                domain=domain, reserveip=reserveip, files=files,
@@ -518,9 +524,6 @@ class Kvirt(object):
                                                plan=plan)
 
                 localhosts = ['localhost', '127.0.0.1']
-                ignitiondir = '/ignitiondir' if os.path.exists("/i_am_a_container") else '/tmp'
-                if os.path.exists("/i_am_a_container") and not os.path.exists(ignitiondir):
-                    return {'result': 'failure', 'reason': "You need to add -v /tmp:/ignitiondir to container alias"}
                 with open('%s/%s.ign' % (ignitiondir, name), 'w') as ignitionfile:
                     ignitionfile.write(ignitiondata)
                     identityfile = None
