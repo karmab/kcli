@@ -4,7 +4,7 @@
 container utilites
 """
 
-from docker import DockerClient as client
+from distutils.spawn import find_executable
 import os
 
 
@@ -13,15 +13,30 @@ class Kcontainer():
 
     """
 
-    def __init__(self, host='127.0.0.1', user='root', port=22, engine='podman'):
+    def __init__(self, host='127.0.0.1', user='root', port=22):
         self.host = host
         self.user = user
         self.port = port
-        self.engine = engine
-        if self.host == '127.0.0.1' and engine != 'podman' and os.path.exists("/i_am_a_container")\
-                and not os.path.exists("/var/run/docker.sock"):
-            reason = "You need to add -v /var/run/docker.sock:/var/run/docker.sock to container alias"
-            return {'result': 'failure', 'reason': reason}
+        self.containermode = False
+        self.engine = 'podman' if find_executable('podman') else 'docker'
+        if self.host == '127.0.0.1' and os.path.exists("/i_am_a_container"):
+            if os.path.exists("/run/podman/io.podman"):
+                self.engine = 'podman'
+            elif os.path.exists("/var/run/docker.sock"):
+                self.engine = 'docker'
+            self.containermode = True
+            if self.engine == 'podman':
+                if not os.path.exists("/run/podman/io.podman"):
+                    reason = "You need to add -v /run/podman/io.podman:/run/podman/io.podman to container alias"
+                    return {'result': 'failure', 'reason': reason}
+                from podman import Client as podmanclient
+                self.d = podmanclient(uri='unix:/run/podman/io.podman')
+            else:
+                if not os.path.exists("/var/run/docker.sock"):
+                    reason = "You need to add -v /var/run/docker.sock:/var/run/docker.sock to container alias"
+                    return {'result': 'failure', 'reason': reason}
+                from docker import DockerClient as dockerclient
+                self.d = dockerclient(base_url='unix://var/run/docker.sock', version='1.22')
 
     def create_container(self, name, image, nets=None, cmd=None, ports=[], volumes=[], environment=[], label=None,
                          overrides={}):
@@ -39,7 +54,7 @@ class Kcontainer():
         :return:
         """
         engine = self.engine
-        if self.host == '127.0.0.1' and engine != 'podman':
+        if self.containermode:
             finalvolumes = {}
             if volumes is not None:
                 for i, volume in enumerate(volumes):
@@ -83,12 +98,10 @@ class Kcontainer():
                             finalenv[key] = value
                         else:
                             continue
-            base_url = 'unix://var/run/docker.sock'
-            d = client(base_url=base_url, version='1.22')
             if ':' not in image:
                 image = '%s:latest' % image
-            d.containers.run(image, name=name, command=cmd, detach=True, ports=ports, volumes=finalvolumes,
-                             stdin_open=True, tty=True, labels=labels, environment=finalenv, stdout=True)
+            self.d.containers.run(image, name=name, command=cmd, detach=True, ports=ports, volumes=finalvolumes,
+                                  stdin_open=True, tty=True, labels=labels, environment=finalenv, stdout=True)
         else:
             portinfo = ''
             if ports is not None:
@@ -158,10 +171,8 @@ class Kcontainer():
         :return:
         """
         engine = self.engine
-        if self.host == '127.0.0.1' and engine != 'podman':
-            base_url = 'unix://var/run/docker.sock'
-            d = client(base_url=base_url, version='1.22')
-            containers = [container for container in d.containers.list() if container.name == name]
+        if self.containermode:
+            containers = [container for container in self.d.containers.list() if container.name == name]
             if containers:
                 for container in containers:
                     container.remove(force=True)
@@ -179,10 +190,8 @@ class Kcontainer():
         :return:
         """
         engine = self.engine
-        if self.host == '127.0.0.1' and engine != 'podman':
-            base_url = 'unix://var/run/docker.sock'
-            d = client(base_url=base_url, version='1.22')
-            containers = [container for container in d.containers.list(all=True) if container.name == name]
+        if self.containermode:
+            containers = [container for container in self.d.containers.list(all=True) if container.name == name]
             if containers:
                 for container in containers:
                     container.start()
@@ -200,10 +209,8 @@ class Kcontainer():
         :return:
         """
         engine = self.engine
-        if self.host == '127.0.0.1' and engine != 'podman':
-            base_url = 'unix://var/run/docker.sock'
-            d = client(base_url=base_url, version='1.22')
-            containers = [container for container in d.containers.list() if container.name == name]
+        if self.containermode:
+            containers = [container for container in self.d.containers.list() if container.name == name]
             if containers:
                 for container in containers:
                     container.stop()
@@ -221,8 +228,8 @@ class Kcontainer():
         :return:
         """
         engine = self.engine
-        if self.host == '127.0.0.1' and engine != 'podman':
-            attachcommand = "docker attach %s" % name
+        if self.containermode:
+            attachcommand = "%s attach %s" % (engine, name)
             os.system(attachcommand)
         else:
             attachcommand = "%s attach %s" % (engine, name)
@@ -238,10 +245,8 @@ class Kcontainer():
         """
         engine = self.engine
         containers = []
-        if self.host == '127.0.0.1' and engine != 'podman':
-            base_url = 'unix://var/run/docker.sock'
-            d = client(base_url=base_url, version='1.22')
-            for container in d.containers.list(all=True):
+        if self.containermode:
+            for container in self.d.containers.list(all=True):
                 name = container.name
                 state = container.status
                 state = state.split(' ')[0]
@@ -299,10 +304,8 @@ class Kcontainer():
         :return:
         """
         engine = self.engine
-        if self.host == '127.0.0.1' and engine != 'podman':
-            base_url = 'unix://var/run/docker.sock'
-            d = client(base_url=base_url, version='1.22')
-            containers = [container.id for container in d.containers.list(all=True) if container.name == name]
+        if self.containermode:
+            containers = [container.id for container in self.d.containers.list(all=True) if container.name == name]
             if containers:
                 return True
         else:
@@ -322,11 +325,9 @@ class Kcontainer():
         :return:
         """
         engine = self.engine
-        if self.host == '127.0.0.1' and engine != 'podman':
-            base_url = 'unix://var/run/docker.sock'
-            d = client(base_url=base_url, version='1.22')
+        if self.containermode:
             images = []
-            for i in d.images.list():
+            for i in self.d.images.list():
                 for tag in i.tags:
                     images.append(tag)
         else:
