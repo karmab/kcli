@@ -496,19 +496,27 @@ class Kvirt(object):
             cmds = cmds[:index] + gcmds + cmds[index:]
         isoxml = ''
         if iso is not None:
-            try:
-                iso = os.path.abspath(iso)
-                if os.path.exists(iso):
-                    isoxml = """<disk type='file' device='cdrom'>
-                              <driver name='qemu' type='raw'/>
-                              <source file='%s'/>
-                              <target dev='hdc' bus='ide'/>
-                              <readonly/>
-                            </disk>""" % iso
+            if os.path.isabs(iso):
+                if self.protocol == 'ssh' and self.host not in ['localhost', '127.0.0.1']:
+                    isocheckcmd = 'ssh %s -p %s %s@%s "ls %s >/dev/null 2>&1"' % (self.identitycommand, self.port,
+                                                                                  self.user, self.host, iso)
+                    code = os.system(isocheckcmd)
+                    if code != 0:
+                        return {'result': 'failure', 'reason': "Iso %s not found" % iso}
+                elif not os.path.exists(iso):
+                    return {'result': 'failure', 'reason': "Iso %s not found" % iso}
+            else:
+                if iso not in volumes:
+                    return {'result': 'failure', 'reason': "Iso %s not found" % iso}
                 else:
-                    return {'result': 'failure', 'reason': "Iso not existant %s" % iso}
-            except:
-                return {'result': 'failure', 'reason': "Invalid iso %s" % iso}
+                    isovolume = volumes[iso]['object']
+                    iso = isovolume.path()
+            isoxml = """<disk type='file' device='cdrom'>
+                        <driver name='qemu' type='raw'/>
+                        <source file='%s'/>
+                        <target dev='hdc' bus='ide'/>
+                        <readonly/>
+                        </disk>""" % iso
         if cloudinit:
             if template is not None and ('coreos' in template or template.startswith('rhcos')):
                 ignition = True
