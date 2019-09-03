@@ -497,20 +497,18 @@ class Kvirt(object):
         isoxml = ''
         if iso is not None:
             try:
-                if os.path.isabs(iso):
-                    shortiso = os.path.basename(iso)
+                iso = os.path.abspath(iso)
+                if os.path.exists(iso):
+                    isoxml = """<disk type='file' device='cdrom'>
+                              <driver name='qemu' type='raw'/>
+                              <source file='%s'/>
+                              <target dev='hdc' bus='ide'/>
+                              <readonly/>
+                            </disk>""" % iso
                 else:
-                    shortiso = iso
-                isovolume = volumes[shortiso]['object']
-                iso = isovolume.path()
+                    return {'result': 'failure', 'reason': "Iso not existant %s" % iso}
             except:
                 return {'result': 'failure', 'reason': "Invalid iso %s" % iso}
-            isoxml = """<disk type='file' device='cdrom'>
-                      <driver name='qemu' type='raw'/>
-                      <source file='%s'/>
-                      <target dev='hdc' bus='ide'/>
-                      <readonly/>
-                    </disk>""" % iso
         if cloudinit:
             if template is not None and ('coreos' in template or template.startswith('rhcos')):
                 ignition = True
