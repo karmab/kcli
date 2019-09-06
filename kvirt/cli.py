@@ -5,7 +5,7 @@ from distutils.spawn import find_executable
 from kvirt.config import Kconfig
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
-from kvirt.config import __version__
+from kvirt.version import __version__
 from kvirt.defaults import TEMPLATES
 from prettytable import PrettyTable
 import argparse
@@ -1084,7 +1084,7 @@ def cli():
     parser.add_argument('-n', '--namespace', help='Namespace to use. specific to kubevirt')
     parser.add_argument('-r', '--region', help='Region to use. specific to aws/gcp')
     parser.add_argument('-z', '--zone', help='Zone to use. specific to gcp')
-    parser.add_argument('-v', '--version', action='version', version=__version__)
+    parser.add_argument('-v', '--version', action='version', version="%s" % __version__)
 
     subparsers = parser.add_subparsers(metavar='')
 
