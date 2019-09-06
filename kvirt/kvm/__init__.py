@@ -344,7 +344,7 @@ class Kvirt(object):
             diskformat = 'qcow2'
             if not diskthin:
                 diskformat = 'raw'
-            storagename = "%s_%d.img" % (name, index + 1)
+            storagename = "%s_%d.img" % (name, index)
             diskpath = "%s/%s" % (diskpoolpath, storagename)
             if template is not None and index == 0:
                 disktemplate = template
@@ -396,10 +396,13 @@ class Kvirt(object):
             if diskpooltype == 'logical' and diskthinpool is not None:
                 thinsource = template if index == 0 and template is not None else None
                 self._createthinlvm(storagename, diskpoolpath, diskthinpool, backing=thinsource, size=disksize)
-            elif diskpool in volsxml:
-                volsxml[diskpool].append(volxml)
+            elif not self.disk_exists(pool, storagename):
+                if diskpool in volsxml:
+                    volsxml[diskpool].append(volxml)
+                else:
+                    volsxml[diskpool] = [volxml]
             else:
-                volsxml[diskpool] = [volxml]
+                common.pprint("Using existing disk %s..." % storagename, color='blue')
             if diskwwn is not None and diskbus == 'ide':
                 diskwwn = '0x%016x' % diskwwn
                 diskwwn = "<wwn>%s</wwn>" % diskwwn
