@@ -5,8 +5,8 @@
 #
 
 Name:           kcli
-Version:        14.13
-Release:        2
+Version:        15.0
+Release:        1
 Url:            http://github.com/karmab/kcli
 Summary:        Wapper for libvirt,gcp,aws,ovirt and openstack
 License:        ASL 2.0
