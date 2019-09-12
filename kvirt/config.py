@@ -169,6 +169,23 @@ class Kconfig(Kbaseconfig):
                 from kvirt.foreman import Kforeman
                 k = Kforeman(host=self.host, port=port, user=user, password=password, debug=debug, filtervms=filtervms,
                              filteruser=filteruser)
+            elif self.type == 'vsphere':
+                user = self.options.get('user')
+                if user is None:
+                    common.pprint("Missing user in the configuration. Leaving", color='red')
+                    os._exit(1)
+                password = self.options.get('password')
+                if password is None:
+                    common.pprint("Missing password in the configuration. Leaving", color='red')
+                    os._exit(1)
+                cluster = self.options.get('cluster')
+                if cluster is None:
+                    common.pprint("Missing cluster in the configuration. Leaving", color='red')
+                datacenter = self.options.get('datacenter')
+                if datacenter is None:
+                    common.pprint("Missing datacenter in the configuration. Leaving", color='red')
+                from kvirt.vsphere import Ksphere
+                k = Ksphere(self.host, user, password, datacenter, cluster, debug=debug)
             else:
                 if self.host is None:
                     common.pprint("Problem parsing your configuration file", color='red')
