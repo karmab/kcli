@@ -9,7 +9,8 @@ KUBEVIRT = ['kubernetes']
 OPENSTACK = ['python-cinderclient', 'python-neutronclient', 'python-glanceclient', 'python-keystoneclient',
              'python-novaclient']
 OVIRT = ['ovirt-engine-sdk-python']
-ALL = ['docker>=2.0'] + ['podman'] + AWS + GCP + KUBEVIRT + OPENSTACK + OVIRT
+VSPHERE = ['pyvmomi']
+ALL = ['docker>=2.0'] + ['podman'] + AWS + GCP + KUBEVIRT + OPENSTACK + OVIRT + VSPHERE
 
 description = 'Provisioner/Manager for Libvirt/Ovirt/Gcp/Aws/Openstack/Kubevirt and containers'
 long_description = description
@@ -36,6 +37,7 @@ setup(
         'kubevirt': KUBEVIRT,
         'openstack': OPENSTACK,
         'ovirt': OVIRT,
+        'vsphere': VSPHERE,
     },
     entry_points='''
         [console_scripts]

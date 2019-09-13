@@ -714,3 +714,11 @@ class Ksphere:
         configspec.extraConfig = [opt]
         t = vm.ReconfigVM_Task(configspec)
         waitForMe(t)
+
+    def dnsinfo(self, name):
+        """
+
+        :param name:
+        :return:
+        """
+        return None, None
