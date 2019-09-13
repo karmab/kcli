@@ -405,7 +405,7 @@ class Ksphere:
             t = template.CloneVM_Task(folder=template.parent, name=name, spec=clonespec)
             waitForMe(t)
             if cloudinitiso is not None:
-                self._uploadimage(default_pool, name)
+                self._handleimage(default_pool, name, action='upload')
                 vm = findvm(si, vmFolder, name)
                 c = changecd(self.conn, vm, cloudinitiso)
                 waitForMe(c)
@@ -576,11 +576,19 @@ class Ksphere:
         vm = findvm(si, vmFolder, name)
         if vm is None:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
+        template = None
+        vmpath = vm.summary.config.vmPathName.replace('/%s.vmx' % name, '')
+        for entry in vm.config.extraConfig:
+            if entry.key == 'template':
+                template = entry.value
         if vm.runtime.powerState == "poweredOn":
             t = vm.PowerOffVM_Task()
             waitForMe(t)
         t = vm.Destroy_Task()
         waitForMe(t)
+        if template is not None and 'coreos' not in template and not template.startswith('rhcos') and\
+                vmpath.endswith(name):
+            self._deletefolder(vmpath)
         return {'result': 'success'}
 
     def console(self, name, tunnel=False):
@@ -791,7 +799,7 @@ class Ksphere:
         """
         return None, None
 
-    def _uploadimage(self, pool, name, origin='/tmp', suffix='.ISO'):
+    def _handleimage(self, pool, name, origin='/tmp', suffix='.ISO', action='upload'):
         si = self.conn
         rootFolder = self.rootFolder
         datastore = find(si, rootFolder, vim.Datastore, pool)
@@ -805,10 +813,19 @@ class Ksphere:
         cookie_text = " " + cookie_value + "; $" + cookie_path
         cookie = {cookie_name: cookie_text}
         headers = {'Content-Type': 'application/octet-stream'}
+        if action == 'delete':
+            requests.delete(url, headers=headers, cookies=cookie, verify=False)
+            return
         with open("%s/%s%s" % (origin, name, suffix), "rb") as f:
             if hasattr(requests.packages.urllib3, 'disable_warnings'):
                 requests.packages.urllib3.disable_warnings()
                 requests.put(url, data=f, headers=headers, cookies=cookie, verify=False)
+
+    def _deletefolder(self, path):
+        dc = self.dc
+        si = self.conn
+        d = si.content.fileManager.DeleteFile(path, dc)
+        waitForMe(d)
 
     def get_pool_path(self, pool):
         return pool
