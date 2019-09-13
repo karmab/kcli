@@ -815,3 +815,68 @@ class Ksphere:
 
     def get_pool_path(self, pool):
         return pool
+
+    def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, Y=False,
+            D=None):
+        """
+
+        :param name:
+        :param user:
+        :param local:
+        :param remote:
+        :param tunnel:
+        :param insecure:
+        :param cmd:
+        :param X:
+        :param Y:
+        :param D:
+        :return:
+        """
+        u, ip = self._ssh_credentials(name)
+        if ip is None:
+            return None
+        if user is None:
+            user = u
+        sshcommand = common.ssh(name, ip=ip, host=None, hostuser=None, user=user,
+                                local=local, remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, Y=Y, D=D,
+                                debug=self.debug)
+        return sshcommand
+
+    def scp(self, name, user=None, source=None, destination=None, tunnel=False, download=False, recursive=False):
+        """
+
+        :param name:
+        :param user:
+        :param source:
+        :param destination:
+        :param tunnel:
+        :param download:
+        :param recursive:
+        :return:
+        """
+        u, ip = self._ssh_credentials(name)
+        if ip is None:
+            return None
+        if user is None:
+            user = u
+        scpcommand = common.scp(name, ip=ip, host=None, hostuser=None, user=user,
+                                source=source, destination=destination, recursive=recursive, tunnel=tunnel,
+                                debug=self.debug, download=False)
+        return scpcommand
+
+    def _ssh_credentials(self, name):
+        user = None
+        si = self.conn
+        dc = self.dc
+        vmFolder = dc.vmFolder
+        vm = findvm(si, vmFolder, name)
+        if vm is None:
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        if vm.runtime.powerState == "poweredOff":
+            return {'result': 'failure', 'reason': "VM %s down" % name}
+        for entry in vm.config.extraConfig:
+            if entry.key == 'template':
+                user = common.get_user(entry.value)
+        summary = vm.summary
+        ip = summary.guest.ipAddress if summary.guest is not None else None
+        return user, ip
