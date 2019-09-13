@@ -33,7 +33,7 @@ def fetch(url, path):
 
 
 def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[],
-              enableroot=True, overrides={}, iso=True, fqdn=False, storemetadata=True):
+              enableroot=True, overrides={}, iso=True, fqdn=False, storemetadata=True, txt=False):
     """
 
     :param name:
@@ -101,7 +101,8 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             if netdata:
                 metadata["network-interfaces"] = netdata
             metadatafile.write(json.dumps(metadata))
-    with open('/tmp/user-data', 'w') as userdata:
+    userdatafile = '/tmp/user-data' if not txt else '/tmp/user-data.txt'
+    with open(userdatafile, 'w') as userdata:
         userdata.write('#cloud-config\nhostname: %s\n' % name)
         if fqdn:
             fqdn = "%s.%s" % (name, domain) if domain is not None else name

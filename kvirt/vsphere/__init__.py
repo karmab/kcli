@@ -256,32 +256,29 @@ def filter_results(results):
     return vms
 
 
-def changecd(si, vm, iso, cdrom_number=0):
-    cdrom_prefix_label = 'CD/DVD drive '
-    cdrom_label = cdrom_prefix_label + str(cdrom_number)
+def changecd(si, vm, iso):
     virtual_cdrom_device = None
     for dev in vm.config.hardware.device:
         if isinstance(dev, vim.vm.device.VirtualCdrom):
             virtual_cdrom_device = dev
-    if virtual_cdrom_device is None:
-        raise RuntimeError('Virtual {} could not be found.'.format(cdrom_label))
-    cdromspec = vim.vm.device.VirtualDeviceSpec()
-    cdromspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
-    cdromspec.device = vim.vm.device.VirtualCdrom()
-    cdromspec.device.controllerKey = virtual_cdrom_device.controllerKey
-    cdromspec.device.key = virtual_cdrom_device.key
-    cdromspec.device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
-    cdromspec.device.backing = vim.vm.device.VirtualCdrom.IsoBackingInfo()
-    cdromspec.device.backing.fileName = iso
-    cdromspec.device.connectable.connected = True
-    cdromspec.device.connectable.startConnected = True
-    cdromspec.device.connectable.allowGuestControl = True
-    dev_changes = []
-    dev_changes.append(cdromspec)
-    spec = vim.vm.ConfigSpec()
-    spec.deviceChange = dev_changes
-    task = vm.ReconfigVM_Task(spec=spec)
-    return task
+            cdromspec = vim.vm.device.VirtualDeviceSpec()
+            cdromspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
+            cdromspec.device = vim.vm.device.VirtualCdrom()
+            cdromspec.device.controllerKey = virtual_cdrom_device.controllerKey
+            cdromspec.device.key = virtual_cdrom_device.key
+            cdromspec.device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
+            cdromspec.device.backing = vim.vm.device.VirtualCdrom.IsoBackingInfo()
+            cdromspec.device.backing.fileName = iso
+            cdromspec.device.connectable.connected = True
+            cdromspec.device.connectable.startConnected = True
+            cdromspec.device.connectable.allowGuestControl = True
+            dev_changes = []
+            dev_changes.append(cdromspec)
+            spec = vim.vm.ConfigSpec()
+            spec.deviceChange = dev_changes
+            task = vm.ReconfigVM_Task(spec=spec)
+            return task
+    raise RuntimeError("No cdrom found")
 
 
 guestid532 = 'rhel5guest'
@@ -392,7 +389,6 @@ class Ksphere:
                                                    version=version, plan=plan)
                     ignitionopt = vim.option.OptionValue()
                     ignitionopt.key = 'guestinfo.ignition.config.data'
-                    # ignitionopt.value = base64.b64encode(ignitiondata.encode('utf-8'))
                     ignitionopt.value = base64.b64encode(ignitiondata.encode()).decode()
                     encodingopt = vim.option.OptionValue()
                     encodingopt.key = 'guestinfo.ignition.config.data.encoding'
@@ -404,7 +400,7 @@ class Ksphere:
                     cloudinitiso = "[%s]/%s/%s.ISO" % (default_pool, name, name)
                     common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                      domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
-                                     overrides=overrides, storemetadata=storemetadata)
+                                     overrides=overrides, storemetadata=storemetadata, txt=True)
             confspec.extraConfig = extraconfig
             t = template.CloneVM_Task(folder=template.parent, name=name, spec=clonespec)
             waitForMe(t)
@@ -653,8 +649,13 @@ class Ksphere:
         yamlinfo['id'] = summary.config.instanceUuid
         yamlinfo['cpus'] = vm.config.hardware.numCPU
         yamlinfo['memory'] = vm.config.hardware.memoryMB
-        if summary.guest is not None:
-            yamlinfo['ip'] = summary.guest.ipAddress
+        for nic in vm.guest.net:
+            for addr in nic.ipConfig.ipAddress:
+                if not addr.ipAddress.startswith('192.168') and ':' not in addr.ipAddress:
+                    yamlinfo['ip'] = addr.ipAddress
+                    break
+        # if summary.guest is not None:
+        #     yamlinfo['ip'] = summary.guest.ipAddress
         yamlinfo['status'] = translation[vm.runtime.powerState]
         yamlinfo['nets'] = []
         devices = vm.config.hardware.device
@@ -796,9 +797,6 @@ class Ksphere:
         datastore = find(si, rootFolder, vim.Datastore, pool)
         if not datastore:
             return {'result': 'failure', 'reason': "Pool %s not found" % pool}
-        # url = "https://%s:443/folder/%s" % (self.vcip, name)
-        # url = "https://%s:443/folder/%s%s?params" % (self.vcip, name, suffix)
-        # params = {"dsName": pool, "dcPath": self.dc}
         url = "https://%s:443/folder/%s/%s%s?dcPath=%s&dsName=%s" % (self.vcip, name, name, suffix, self.dc.name, pool)
         client_cookie = si._stub.cookie
         cookie_name = client_cookie.split("=", 1)[0]
@@ -810,7 +808,6 @@ class Ksphere:
         with open("%s/%s%s" % (origin, name, suffix), "rb") as f:
             if hasattr(requests.packages.urllib3, 'disable_warnings'):
                 requests.packages.urllib3.disable_warnings()
-                # requests.put(url, params=params, data=f, headers=headers, cookies=cookie, verify=False)
                 requests.put(url, data=f, headers=headers, cookies=cookie, verify=False)
 
     def get_pool_path(self, pool):
@@ -877,6 +874,12 @@ class Ksphere:
         for entry in vm.config.extraConfig:
             if entry.key == 'template':
                 user = common.get_user(entry.value)
-        summary = vm.summary
-        ip = summary.guest.ipAddress if summary.guest is not None else None
+        # summary = vm.summary
+        # ip = summary.guest.ipAddress if summary.guest is not None else None
+        ip = None
+        for nic in vm.guest.net:
+            for addr in nic.ipConfig.ipAddress:
+                if not addr.ipAddress.startswith('192.168') and ':' not in addr.ipAddress:
+                    ip = addr.ipAddress
+                    break
         return user, ip
