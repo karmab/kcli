@@ -184,8 +184,12 @@ class Kconfig(Kbaseconfig):
                 datacenter = self.options.get('datacenter')
                 if datacenter is None:
                     common.pprint("Missing datacenter in the configuration. Leaving", color='red')
+                filtervms = self.options.get('filtervms', False)
+                filteruser = self.options.get('filteruser', False)
+                filtertag = self.options.get('filtertag')
                 from kvirt.vsphere import Ksphere
-                k = Ksphere(self.host, user, password, datacenter, cluster, debug=debug)
+                k = Ksphere(self.host, user, password, datacenter, cluster, debug=debug, filtervms=filtervms,
+                            filteruser=filteruser, filtertag=filtertag)
             else:
                 if self.host is None:
                     common.pprint("Problem parsing your configuration file", color='red')

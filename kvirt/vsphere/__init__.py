@@ -3,7 +3,7 @@
 from kvirt import common
 import os
 import random
-from pyVmomi import vim
+from pyVmomi import vim, vmodl
 from pyVim import connect
 import time
 import pyVmomi
@@ -74,11 +74,9 @@ def findvm(si, folder, name):
     view = si.content.viewManager.CreateContainerView(folder, [vim.VirtualMachine], True)
     vmlist = collectproperties(si, view=view, objtype=vim.VirtualMachine, pathset=['name'], includemors=True)
     vm = list(filter(lambda v: v['name'] == name, vmlist))
-    if len(vm) == 1:
-        return vm[0]['obj']
+    if len(vm) >= 1:
+        return vm[-1]['obj']
     else:
-        if len(vm) >= 1:
-            common.pprint("Several VMS with name %s found..." % name, color='red')
         return None
 
 
@@ -234,6 +232,28 @@ def createclonespec(pool):
     return clonespec
 
 
+def create_filter_spec(pc, vms):
+    objSpecs = []
+    for vm in vms:
+        objSpec = vmodl.query.PropertyCollector.ObjectSpec(obj=vm)
+        objSpecs.append(objSpec)
+    filterSpec = vmodl.query.PropertyCollector.FilterSpec()
+    filterSpec.objectSet = objSpecs
+    propSet = vmodl.query.PropertyCollector.PropertySpec(all=False)
+    propSet.type = vim.VirtualMachine
+    propSet.pathSet = ['config.extraConfig.plan']
+    filterSpec.propSet = [propSet]
+    return filterSpec
+
+
+def filter_results(results):
+    vms = []
+    for o in results.objects:
+        if o.propSet[0].val is not None:
+            vms.append(o.obj)
+    return vms
+
+
 guestid532 = 'rhel5guest'
 guestid564 = 'rhel5_64Guest'
 guestid632 = 'rhel6guest'
@@ -244,7 +264,8 @@ guests = {'rhel_5': guestid532, 'rhel_5x64': guestid564, 'rhel_6': guestid632, '
 
 
 class Ksphere:
-    def __init__(self, host, user, password, datacenter, cluster, debug=False):
+    def __init__(self, host, user, password, datacenter, cluster, debug=False, filtervms=False, filteruser=False,
+                 filtertag=None):
         # 4-1-CONNECT
         si = connect.SmartConnect(host=host, port=443, user=user, pwd=password, sslContext=_create_unverified_context())
         self.conn = si
@@ -254,6 +275,10 @@ class Ksphere:
         self.macaddr = []
         self.clu = cluster
         self.distributed = False
+        self.filtervms = filtervms
+        self.filtervms = filtervms
+        self.filteruser = filteruser
+        self.filtertag = filtertag
         return
 
     def close(self):
@@ -543,12 +568,6 @@ class Ksphere:
             sessionmanager = si.content.sessionManager
             session = sessionmanager.AcquireCloneTicket()
             vmid = vm._moId
-            # vcconsoleport = "7343"
-            # vmurl = "http://%s:%s/console/?vmId=%s&vmName=%s&host=%s&sessionTicket=%s&thumbprint=%s" % (vcip,
-            #                                                                                            vcconsoleport,
-            #                                                                                            vmid, name,
-            #                                                                                            fqdn, session,
-            #                                                                                            sha1)
             vmurl = "https://%s/ui/webconsole.html?" % vcip
             vmurl += "vmId=%s&vmName=%s&serverGuid=%s&host=%s&sessionTicket=%s&thumbprint=%s" % (vmid, name, sgid, fqdn,
                                                                                                  session, sha1)
@@ -570,7 +589,6 @@ class Ksphere:
         yamlinfo['id'] = summary.config.instanceUuid
         yamlinfo['cpus'] = vm.config.hardware.numCPU
         yamlinfo['memory'] = vm.config.hardware.memoryMB
-        # yamlinfo['annotation'] = summary.config.annotation
         if summary.guest is not None:
             yamlinfo['ip'] = summary.guest.ipAddress
         yamlinfo['status'] = translation[vm.runtime.powerState]
@@ -600,7 +618,10 @@ class Ksphere:
         vmlist = collectproperties(si, view=view, objtype=vim.VirtualMachine, pathset=['name'], includemors=True)
         for o in vmlist:
             vm = o['obj']
-            vms.append(self.info(o['name'], vm=vm))
+            if not vm.config.template:
+                if self.filtervms and 'plan' not in [x.key for x in vm.config.extraConfig]:
+                    continue
+                vms.append(self.info(o['name'], vm=vm))
         return sorted(vms, key=lambda x: x['name'])
 
     def getstorage(self):
@@ -677,7 +698,6 @@ class Ksphere:
         o = si.content.viewManager.CreateContainerView(rootFolder, [vim.VirtualMachine], True)
         vmlist = o.view
         o.Destroy()
-        # return map(lambda v: v.name, filter(lambda v: v.config.template, vmlist))
         return [v.name for v in vmlist if v.config.template]
 
     def update_metadata(self, name, metatype, metavalue, append=False):
