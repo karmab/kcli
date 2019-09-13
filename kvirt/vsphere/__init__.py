@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import base64
 from kvirt import common
 import os
 import random
@@ -13,6 +14,7 @@ from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from binascii import hexlify
+import requests
 
 
 def waitForMe(t):
@@ -205,14 +207,14 @@ def createcdspec():
 def createisospec(iso=None):
     cdspec = vim.vm.device.VirtualDeviceSpec()
     cdspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
-    connect = vim.vm.device.VirtualDeviceConnectInfo()
+    connect = vim.vm.device.VirtualDevice.ConnectInfo()
     connect.startConnected = True
     connect.allowGuestControl = True
     connect.connected = False
     cd = vim.vm.device.VirtualCdrom()
     cd.connectable = connect
     cdbacking = vim.vm.device.VirtualCdrom.IsoBackingInfo()
-    if iso:
+    if iso is not None:
         cdbacking.fileName = iso
     cd.backing = cdbacking
     cd.controllerKey = 201
@@ -300,8 +302,6 @@ class Ksphere:
         print("not implemented")
         return
 
-#    def create(self, name, ds, numcpus=2, memory=512, guestid='', pool='default', disks=[{'size': 10}], disksize=10,
-#               diskthin=False, diskinterface='virtio', nets=['default'], distributed=False, vnc=False, iso=None):
     def create(self, name, virttype='kvm', profile='kvirt', flavor=None, plan='kvirt', cpumodel='host-model',
                cpuflags=[], numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None,
                disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None,
@@ -309,6 +309,8 @@ class Ksphere:
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
                files=[], enableroot=True, overrides={}, tags={}, dnsclient=None, storemetadata=False,
                sharedfolders=[], kernel=None, initrd=None, cmdline=None, placement=[], autostart=False):
+        dc = self.dc
+        vmFolder = dc.vmFolder
         distributed = self.distributed
         diskmode = 'persistent'
         default_diskinterface = diskinterface
@@ -333,8 +335,6 @@ class Ksphere:
             clu = find(si, rootFolder, vim.ComputeResource, self.clu)
             pool = clu.resourcePool
             clonespec = createclonespec(pool)
-            customspec = makecuspec(name, nets=nets, gateway=gateway, dns=dns, domain=domain)
-            clonespec.customization = customspec
             confspec = vim.vm.ConfigSpec()
             confspec.annotation = name
             confspec.memoryMB = memory
@@ -348,12 +348,42 @@ class Ksphere:
             templateopt = vim.option.OptionValue()
             templateopt.key = 'template'
             templateopt.value = templatename
-            confspec.extraConfig = [templateopt, planopt, profileopt]
+            extraconfig = [templateopt, planopt, profileopt]
             clonespec.config = confspec
             clonespec.powerOn = start
+            if cloudinit:
+                if templatename is not None and ('coreos' in templatename or templatename.startswith('rhcos')):
+                    version = '3.0.0' if templatename.startswith('fedora-coreos') else '2.2.0'
+                    ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
+                                                   domain=domain, reserveip=reserveip, files=files,
+                                                   enableroot=enableroot, overrides=overrides, etcd=False,
+                                                   version=version, plan=plan)
+                    ignitionopt = vim.option.OptionValue()
+                    ignitionopt.key = 'guestinfo.ignition.config.data'
+                    # ignitionopt.value = base64.b64encode(ignitiondata.encode('utf-8'))
+                    ignitionopt.value = base64.b64encode(ignitiondata.encode()).decode()
+                    encodingopt = vim.option.OptionValue()
+                    encodingopt.key = 'guestinfo.ignition.config.encoding'
+                    encodingopt.value = 'base64'
+                    extraconfig.extend([ignitionopt, encodingopt])
+                else:
+                    customspec = makecuspec(name, nets=nets, gateway=gateway, dns=dns, domain=domain)
+                    clonespec.customization = customspec
+                    cloudinitiso = "[%s]/%s/%s.ISO" % (default_pool, name, name)
+                    cdspec = createisospec(cloudinitiso)
+                    confspec.deviceChange = [cdspec]
+                    confspec.extraConfig = extraconfig
+                    common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
+                                     domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
+                                     overrides=overrides, storemetadata=storemetadata)
+                    self._uploadimage(default_pool, name)
             t = template.CloneVM_Task(folder=template.parent, name=name, spec=clonespec)
             # t = template.Clone(folder=template.parent, name=name, spec=clonespec)
             waitForMe(t)
+            if start:
+                vm = findvm(si, vmFolder, name)
+                t = vm.PowerOnVM_Task(None)
+                waitForMe(t)
             return {'result': 'success'}
         datastores = {}
         # define specifications for the VM
@@ -401,7 +431,6 @@ class Ksphere:
                     return {'result': 'failure', 'reason': "Pool %s not found" % diskpool}
                 else:
                     datastores[diskpool] = datastore
-            # scsispec1, diskspec1, filename1 = creatediskspec(disksize1, datastore, diskmode1, thin)
             if index == 0:
                 disksizeg = convert(1000 * disksize)
                 # # TODO:change this if to a test sum of all possible disks to be added to this datastore
@@ -417,9 +446,9 @@ class Ksphere:
             nicspec = createnicspec(nicname, net, guestid)
             devconfspec.append(nicspec)
         if iso:
-            # add iso
             cdspec = createisospec(iso)
             devconfspec.append(cdspec)
+            confspec.bootOptions = vim.vm.BootOptions(bootOrder=[vim.vm.BootOptions.BootableCdromDevice()])
         confspec.deviceChange = devconfspec
         vmfi = vim.vm.FileInfo()
         filename = "[" + default_pool + "]"
@@ -475,6 +504,8 @@ class Ksphere:
                                 devconfspec = [nicspec]
                                 confspec.deviceChange = devconfspec
                                 t = vm.reconfigVM_Task(confspec)
+                                waitForMe(t)
+                                t = vm.PowerOnVM_Task(None)
                                 waitForMe(t)
         return {'result': 'success'}
 
@@ -624,18 +655,19 @@ class Ksphere:
                 vms.append(self.info(o['name'], vm=vm))
         return sorted(vms, key=lambda x: x['name'])
 
-    def getstorage(self):
+    def list_pools(self):
+        pools = []
         rootFolder = self.rootFolder
         si = self.conn
-        dc = self.dc
+        # dc = self.dc
         clu = find(si, rootFolder, vim.ComputeResource, self.clu)
-        results = {}
         for dts in clu.datastore:
-            datastorename = dts.name
-            total = dssize(dts)[0].replace('GB', '')
-            available = dssize(dts)[1].replace('GB', '')
-            results[datastorename] = [float(total), float(available), dc.name]
-        return results
+            pools.append(dts.name)
+            # datastorename = dts.name
+            # total = dssize(dts)[0].replace('GB', '')
+            # available = dssize(dts)[1].replace('GB', '')
+            # results[datastorename] = [float(total), float(available), dc.name]
+        return pools
 
     def beststorage(self):
         rootFolder = self.rootFolder
@@ -722,3 +754,27 @@ class Ksphere:
         :return:
         """
         return None, None
+
+    def _uploadimage(self, pool, name, origin='/tmp', suffix='.ISO'):
+        si = self.conn
+        rootFolder = self.rootFolder
+        datastore = find(si, rootFolder, vim.Datastore, pool)
+        if not datastore:
+            return {'result': 'failure', 'reason': "Pool %s not found" % pool}
+        # url = "https://%s:443/folder/%s" % (self.vcip, name)
+        url = "https://%s:443/%s/%s%s" % (self.vcip, name, name, suffix)
+        params = {"dsName": pool, "dcPath": self.dc}
+        client_cookie = si._stub.cookie
+        cookie_name = client_cookie.split("=", 1)[0]
+        cookie_value = client_cookie.split("=", 1)[1].split(";", 1)[0]
+        cookie_path = client_cookie.split("=", 1)[1].split(";", 1)[1].split(";", 1)[0].lstrip()
+        cookie_text = " " + cookie_value + "; $" + cookie_path
+        cookie = {cookie_name: cookie_text}
+        headers = {'Content-Type': 'application/octet-stream'}
+        with open("%s/%s%s" % (origin, name, suffix), "rb") as f:
+            if hasattr(requests.packages.urllib3, 'disable_warnings'):
+                requests.packages.urllib3.disable_warnings()
+                requests.put(url, params=params, data=f, headers=headers, cookies=cookie, verify=False)
+
+    def get_pool_path(self, pool):
+        return pool
