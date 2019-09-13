@@ -8,7 +8,11 @@ from pyVim import connect
 import time
 import pyVmomi
 import webbrowser
-from ssl import _create_unverified_context
+from ssl import _create_unverified_context, get_server_certificate
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from binascii import hexlify
 
 
 def waitForMe(t):
@@ -498,8 +502,6 @@ class Ksphere:
         si = self.conn
         dc = self.dc
         vcip = self.vcip
-        sha1 = self.sha1
-        fqdn = self.fqdn
         vmFolder = dc.vmFolder
         vm = findvm(si, vmFolder, name)
         if vm is None:
@@ -526,15 +528,30 @@ class Ksphere:
             if not os.path.exists("/i_am_a_container"):
                 os.popen(consolecommand)
         else:
+            content = si.RetrieveContent()
+            sgid = content.about.instanceUuid
+            cert = get_server_certificate((self.vcip, 443))
+            cert_deserialize = x509.load_pem_x509_certificate(cert.encode(), default_backend())
+            finger_print = hexlify(cert_deserialize.fingerprint(hashes.SHA1())).decode('utf-8')
+            sha1 = ":".join([finger_print[i: i + 2] for i in range(0, len(finger_print), 2)])
+            vcenter_data = content.setting
+            vcenter_settings = vcenter_data.setting
+            for item in vcenter_settings:
+                key = getattr(item, 'key')
+                if key == 'VirtualCenter.FQDN':
+                    fqdn = getattr(item, 'value')
             sessionmanager = si.content.sessionManager
             session = sessionmanager.AcquireCloneTicket()
             vmid = vm._moId
-            vcconsoleport = "7343"
-            vmurl = "http://%s:%s/console/?vmId=%s&vmName=%s&host=%s&sessionTicket=%s&thumbprint=%s" % (vcip,
-                                                                                                        vcconsoleport,
-                                                                                                        vmid, name,
-                                                                                                        fqdn, session,
-                                                                                                        sha1)
+            # vcconsoleport = "7343"
+            # vmurl = "http://%s:%s/console/?vmId=%s&vmName=%s&host=%s&sessionTicket=%s&thumbprint=%s" % (vcip,
+            #                                                                                            vcconsoleport,
+            #                                                                                            vmid, name,
+            #                                                                                            fqdn, session,
+            #                                                                                            sha1)
+            vmurl = "https://%s/ui/webconsole.html?" % vcip
+            vmurl += "vmId=%s&vmName=%s&serverGuid=%s&host=%s&sessionTicket=%s&thumbprint=%s" % (vmid, name, sgid, fqdn,
+                                                                                                 session, sha1)
             webbrowser.open(vmurl, new=2, autoraise=True)
 
     def info(self, name, output='plain', fields=[], values=False, vm=None):
