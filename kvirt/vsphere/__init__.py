@@ -395,7 +395,7 @@ class Ksphere:
                     # ignitionopt.value = base64.b64encode(ignitiondata.encode('utf-8'))
                     ignitionopt.value = base64.b64encode(ignitiondata.encode()).decode()
                     encodingopt = vim.option.OptionValue()
-                    encodingopt.key = 'guestinfo.ignition.config.encoding'
+                    encodingopt.key = 'guestinfo.ignition.config.data.encoding'
                     encodingopt.value = 'base64'
                     extraconfig.extend([ignitionopt, encodingopt])
                 else:
