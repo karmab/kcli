@@ -87,55 +87,48 @@ def dssize(ds):
     return convert(di.capacity), convert(di.freeSpace)
 
 
-def makecuspec(name, ip1=None, netmask1=None, gateway1=None, ip2=None, netmask2=None, ip3=None, netmask3=None, ip4=None,
-               netmask4=None, dns1=None, dns2=None, domain=None):
+def makecuspec(name, nets=[], gateway=None, dns=None, domain=None):
     customspec = vim.vm.customization.Specification()
     ident = vim.vm.customization.LinuxPrep()
+    ident.hostName = vim.vm.customization.FixedName()
+    ident.hostName.name = name
+    globalip = vim.vm.customization.GlobalIPSettings()
     if domain:
         ident.domain = domain
-        ident.hostName = vim.vm.customization.FixedName()
-        ident.hostName.name = name
     customspec.identity = ident
-    if dns1 or dns2 or domain:
-        globalip = vim.vm.customization.GlobalIPSettings()
-        if dns1:
-            globalip.dnsServerList = [dns1]
-        if dns2:
-            globalip.dnsServerList.append(dns2)
-        if domain:
+    if dns is not None or domain is not None:
+        if dns is not None:
+            globalip.dnsServerList = [dns]
+        # if dns2:
+        #    globalip.dnsServerList.append(dns2)
+        if domain is not None:
             globalip.dnsSuffixList = domain
-        customspec.globalIPSettings = globalip
+    customspec.globalIPSettings = globalip
     adaptermaps = []
-    if ip1 and netmask1 and gateway1 and domain:
-        guestmap = vim.vm.customization.AdapterMapping()
-        guestmap.adapter = vim.vm.customization.IPSettings()
-        guestmap.adapter.ip = vim.vm.customization.FixedIp()
-        guestmap.adapter.ip.ipAddress = ip1
-        guestmap.adapter.subnetMask = netmask1
-        guestmap.adapter.gateway = gateway1
-        guestmap.adapter.dnsDomain = domain
-        adaptermaps.append(guestmap)
-    if ip2 and netmask2:
-        guestmap = vim.vm.customization.AdapterMapping()
-        guestmap.adapter = vim.vm.customization.IPSettings()
-        guestmap.adapter.ip = vim.vm.customization.FixedIp()
-        guestmap.adapter.ip.ipAddress = ip2
-        guestmap.adapter.subnetMask = netmask2
-        adaptermaps.append(guestmap)
-    if ip3 and netmask3:
-        guestmap = vim.vm.customization.AdapterMapping()
-        guestmap.adapter = vim.vm.customization.IPSettings()
-        guestmap.adapter.ip = vim.vm.customization.FixedIp()
-        guestmap.adapter.ip.ipAddress = ip3
-        guestmap.adapter.subnetMask = netmask3
-        adaptermaps.append(guestmap)
-    if ip4 and netmask4:
-        guestmap = vim.vm.customization.AdapterMapping()
-        guestmap.adapter = vim.vm.customization.IPSettings()
-        guestmap.adapter.ip = vim.vm.customization.FixedIp()
-        guestmap.adapter.ip.ipAddress = ip4
-        guestmap.adapter.subnetMask = netmask4
-        adaptermaps.append(guestmap)
+    for index, net in enumerate(nets):
+        if isinstance(net, str) or (len(net) == 1 and 'name' in net):
+            if index == 0:
+                continue
+            # nicname = "eth%d" % index
+            ip = None
+            netmask = None
+            # noconf = None
+            # vips = []
+        elif isinstance(net, dict):
+            # nicname = net.get('nic', "eth%d" % index)
+            ip = net.get('ip')
+            netmask = next((e for e in [net.get('mask'), net.get('netmask')] if e is not None), None)
+            # noconf = net.get('noconf')
+            # vips = net.get('vips')
+        if ip is not None and netmask is not None and gateway is not None and domain is not None:
+            guestmap = vim.vm.customization.AdapterMapping()
+            guestmap.adapter = vim.vm.customization.IPSettings()
+            guestmap.adapter.ip = vim.vm.customization.FixedIp()
+            guestmap.adapter.ip.ipAddress = ip
+            guestmap.adapter.subnetMask = netmask
+            guestmap.adapter.gateway = gateway
+            guestmap.adapter.dnsDomain = domain
+            adaptermaps.append(guestmap)
     customspec.nicSettingMap = adaptermaps
     return customspec
 
@@ -242,10 +235,6 @@ guestid564 = 'rhel5_64Guest'
 guestid632 = 'rhel6guest'
 guestid664 = 'rhel6_64Guest'
 guestid764 = 'rhel7_64Guest'
-nicname1 = 'Network Adapter 1'
-nicname2 = 'Network Adapter 2'
-nicname3 = 'Network Adapter 3'
-nicname4 = 'Network Adapter 4'
 guests = {'rhel_5': guestid532, 'rhel_5x64': guestid564, 'rhel_6': guestid632, 'rhel_6x64': guestid664,
           'rhel_7x64': guestid764}
 
@@ -260,6 +249,7 @@ class Ksphere:
         self.dc = find(si, self.rootFolder, vim.Datacenter, datacenter)
         self.macaddr = []
         self.clu = cluster
+        self.distributed = False
         return
 
     def close(self):
@@ -281,27 +271,25 @@ class Ksphere:
         print("not implemented")
         return
 
-    def create(self, name, numcpu, numinterfaces, diskmode1, disksize1, ds, memory, guestid, net1, net2=None, net3=None,
-               net4=None, thin=False, distributed=False, disksize2=None, diskmode2=None, vnc=False, iso=None):
-        nets = []
-        for net in net1, net2, net3, net4:
-            if net is not None:
-                nets.append(net)
-            else:
-                break
+#    def create(self, name, ds, numcpus=2, memory=512, guestid='', pool='default', disks=[{'size': 10}], disksize=10,
+#               diskthin=False, diskinterface='virtio', nets=['default'], distributed=False, vnc=False, iso=None):
+    def create(self, name, virttype='kvm', profile='kvirt', flavor=None, plan='kvirt', cpumodel='host-model',
+               cpuflags=[], numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None,
+               disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None,
+               vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None,
+               cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
+               files=[], enableroot=True, overrides={}, tags={}, dnsclient=None, storemetadata=False,
+               sharedfolders=[], kernel=None, initrd=None, cmdline=None, placement=[], autostart=False):
+        distributed = self.distributed
+        diskmode = 'persistent'
+        default_diskinterface = diskinterface
+        default_diskthin = diskthin
+        default_disksize = disksize
+        default_pool = pool
         memory = int(memory)
-        numcpu = int(numcpu)
-        disksize1 = int(disksize1)
-        if disksize2:
-            disksize2 = int(disksize2)
-        numinterfaces = int(numinterfaces)
+        numcpus = int(numcpus)
         if guestid in guests.keys():
             guestid = guests[guestid]
-        disksize1 = disksize1 * 1048576
-        disksizeg1 = convert(1000 * disksize1)
-        if disksize2:
-            disksize2 = disksize2 * 1048576
-            # disksizeg2 = convert(1000 * disksize2)
         si = self.conn
         dc = self.dc
         rootFolder = self.rootFolder
@@ -309,19 +297,42 @@ class Ksphere:
         si = self.conn
         clu = find(si, rootFolder, vim.ComputeResource, self.clu)
         pool = clu.resourcePool
-        # SELECT DS
-        datastore = find(si, rootFolder, vim.Datastore, ds)
-        if not datastore:
-            return "%s not found,aborting" % (ds)
-        # TODO:change this if to a test sum of all possible disks to be added to this datastore
-        if float(dssize(datastore)[1].replace("GB", "")) - float(disksizeg1.replace("GB", "")) <= 0:
-            return "New Disk too large to fit in selected Datastore,aborting..."
+        if template is not None:
+            rootFolder = self.rootFolder
+            templatename = template
+            template = findvm(si, rootFolder, template)
+            clu = find(si, rootFolder, vim.ComputeResource, self.clu)
+            pool = clu.resourcePool
+            clonespec = createclonespec(pool)
+            customspec = makecuspec(name, nets=nets, gateway=gateway, dns=dns, domain=domain)
+            clonespec.customization = customspec
+            confspec = vim.vm.ConfigSpec()
+            confspec.annotation = name
+            confspec.memoryMB = memory
+            confspec.numCPUs = numcpus
+            planopt = vim.option.OptionValue()
+            planopt.key = 'plan'
+            planopt.value = plan
+            profileopt = vim.option.OptionValue()
+            profileopt.key = 'profile'
+            profileopt.value = profile
+            templateopt = vim.option.OptionValue()
+            templateopt.key = 'template'
+            templateopt.value = templatename
+            confspec.extraConfig = [templateopt, planopt, profileopt]
+            clonespec.config = confspec
+            clonespec.powerOn = start
+            t = template.CloneVM_Task(folder=template.parent, name=name, spec=clonespec)
+            # t = template.Clone(folder=template.parent, name=name, spec=clonespec)
+            waitForMe(t)
+            return {'result': 'success'}
+        datastores = {}
         # define specifications for the VM
         confspec = vim.vm.ConfigSpec()
         confspec.name = name
         confspec.annotation = name
         confspec.memoryMB = memory
-        confspec.numCPUs = numcpu
+        confspec.numCPUs = numcpus
         confspec.guestId = guestid
         if vnc:
             # enable VNC
@@ -333,59 +344,71 @@ class Ksphere:
             opt2.key = 'RemoteDisplay.vnc.enabled'
             opt2.value = "TRUE"
             confspec.extraConfig = [opt1, opt2]
-        # scsispec1, diskspec1, filename1 = creatediskspec(disksize1, datastore, diskmode1, thin)
-        scsispec1 = createscsispec()
-        diskspec1 = creatediskspec(0, disksize1, datastore, diskmode1, thin)
-        devconfspec = [scsispec1, diskspec1]
-        if disksize2:
-            diskspec2 = creatediskspec(1, disksize2, datastore, diskmode2, thin)
-            devconfspec.append(diskspec2)
+        for index, disk in enumerate(disks):
+            if disk is None:
+                disksize = default_disksize
+                diskthin = default_diskthin
+                diskinterface = default_diskinterface
+                diskpool = default_pool
+            elif isinstance(disk, int):
+                disksize = disk
+                diskthin = default_diskthin
+                diskinterface = default_diskinterface
+                diskpool = default_pool
+            elif isinstance(disk, str) and disk.isdigit():
+                disksize = int(disk)
+                diskthin = default_diskthin
+                diskinterface = default_diskinterface
+                diskpool = default_pool
+            elif isinstance(disk, dict):
+                disksize = disk.get('size', default_disksize)
+                diskthin = disk.get('thin', default_diskthin)
+                diskinterface = disk.get('interface', default_diskinterface)
+                diskpool = disk.get('pool', default_pool)
+            disksize = disksize * 1048576
+            if diskpool not in datastores:
+                datastore = find(si, rootFolder, vim.Datastore, diskpool)
+                if not datastore:
+                    return {'result': 'failure', 'reason': "Pool %s not found" % diskpool}
+                else:
+                    datastores[diskpool] = datastore
+            # scsispec1, diskspec1, filename1 = creatediskspec(disksize1, datastore, diskmode1, thin)
+            if index == 0:
+                disksizeg = convert(1000 * disksize)
+                # # TODO:change this if to a test sum of all possible disks to be added to this datastore
+                if float(dssize(datastore)[1].replace("GB", "")) - float(disksizeg.replace("GB", "")) <= 0:
+                    return "New Disk too large to fit in selected Datastore,aborting..."
+                scsispec = createscsispec()
+                devconfspec = [scsispec]
+            diskspec = creatediskspec(index, disksize, datastore, diskmode, diskthin)
+            devconfspec.append(diskspec)
         # NICSPEC
-        if numinterfaces >= 1:
-            # NIC 1
-            nicspec1 = createnicspec(nicname1, net1, guestid)
-        if numinterfaces >= 2:
-            # NIC 2
-            nicspec2 = createnicspec(nicname2, net2, guestid)
-        if numinterfaces >= 3:
-            # NIC 3
-            nicspec3 = createnicspec(nicname3, net3, guestid)
-        if numinterfaces >= 4:
-            # NIC 4
-            nicspec4 = createnicspec(nicname4, net4, guestid)
-        if numinterfaces >= 1:
-            devconfspec.append(nicspec1)
-        if numinterfaces >= 2:
-            devconfspec.append(nicspec2)
-        if numinterfaces >= 3:
-            devconfspec.append(nicspec3)
-        if numinterfaces >= 4:
-            devconfspec.append(nicspec4)
+        for index, net in enumerate(nets):
+            nicname = 'Network Adapter %d' % index + 1
+            nicspec = createnicspec(nicname, net, guestid)
+            devconfspec.append(nicspec)
         if iso:
             # add iso
             cdspec = createisospec(iso)
             devconfspec.append(cdspec)
         confspec.deviceChange = devconfspec
         vmfi = vim.vm.FileInfo()
-        filename = "[" + ds + "]"
+        filename = "[" + default_pool + "]"
         vmfi.vmPathName = filename
         confspec.files = vmfi
         t = vmfolder.CreateVM_Task(confspec, pool, None)
         waitForMe(t)
-        return 'success'
-
-        # 2-GETMAC
-        vm = findvm(si, vmfolder, name)
-        if vm is None:
-            return "%s not found" % (name)
-        devices = vm.config.hardware.device
-        macaddr = []
-        for dev in devices:
-            if "addressType" in dir(dev):
-                macaddr.append(dev.macAddress)
-        self.macaddr = macaddr
         # HANDLE DVS
         if distributed:
+            # 2-GETMAC
+            vm = findvm(si, vmfolder, name)
+            if vm is None:
+                return "%s not found" % (name)
+            devices = vm.config.hardware.device
+            macaddr = []
+            for dev in devices:
+                if "addressType" in dir(dev):
+                    macaddr.append(dev.macAddress)
             portgs = {}
             o = si.content.viewManager.CreateContainerView(rootFolder, [vim.DistributedVirtualSwitch], True)
             dvnetworks = o.view
@@ -424,24 +447,7 @@ class Ksphere:
                                 confspec.deviceChange = devconfspec
                                 t = vm.reconfigVM_Task(confspec)
                                 waitForMe(t)
-        self.macaddr = macaddr
-        return macaddr
-
-    def getmacs(self, name):
-        si = self.conn
-        dc = self.dc
-        vmFolder = dc.vmFolder
-        vm = findvm(si, vmFolder, name)
-        if vm is None:
-            return None
-        devices = vm.config.hardware.device
-        macs = []
-        for dev in devices:
-            if "addressType" in dir(dev):
-                netname = dev.backing.deviceName
-                macaddress = dev.macAddress
-                macs.append("%s=%s" % (netname, macaddress))
-        return macs
+        return {'result': 'success'}
 
     def start(self, name):
         si = self.conn
@@ -551,6 +557,22 @@ class Ksphere:
         if summary.guest is not None:
             yamlinfo['ip'] = summary.guest.ipAddress
         yamlinfo['status'] = translation[vm.runtime.powerState]
+        yamlinfo['nets'] = []
+        devices = vm.config.hardware.device
+        for devnumber, dev in enumerate(devices):
+            if "addressType" in dir(dev):
+                network = dev.backing.deviceName
+                device = dev.deviceInfo.label
+                networktype = 'N/A'
+                mac = dev.macAddress
+                yamlinfo['nets'].append({'device': device, 'mac': mac, 'net': network, 'type': networktype})
+        for entry in vm.config.extraConfig:
+            if entry.key == 'plan':
+                yamlinfo['plan'] = entry.value
+            if entry.key == 'profile':
+                yamlinfo['profile'] = entry.value
+            if entry.key == 'template':
+                yamlinfo['template'] = entry.value
         return yamlinfo
 
     def list(self):
@@ -641,20 +663,17 @@ class Ksphere:
         # return map(lambda v: v.name, filter(lambda v: v.config.template, vmlist))
         return [v.name for v in vmlist if v.config.template]
 
-    def createfromtemplate(self, name, templatename, customisation=False, ip1=None, netmask1=None, gateway1=None,
-                           ip2=None, netmask2=None, ip3=None, netmask3=None, ip4=None, netmask4=None, dns1=None,
-                           dns2=None, domain=None):
+    def update_metadata(self, name, metatype, metavalue, append=False):
         si = self.conn
-        rootFolder = self.rootFolder
-        template = findvm(si, rootFolder, name)
-        clu = find(si, rootFolder, vim.ComputeResource, self.clu)
-        pool = clu.resourcePool
-        clonespec = createclonespec(pool)
-        if customisation:
-            customspec = makecuspec(name, ip1=ip1, netmask1=netmask1, gateway1=gateway1, ip2=ip2, netmask2=netmask2,
-                                    ip3=ip3, netmask3=netmask3, ip4=ip4, netmask4=netmask4, dns1=dns1, dns2=dns2,
-                                    domain=domain)
-            clonespec.customization = customspec
-        t = template.CloneVM_Task(template.parent, name, clonespec)
+        dc = self.dc
+        vmFolder = dc.vmFolder
+        vm = findvm(si, vmFolder, name)
+        if vm is None:
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        configspec = vim.vm.ConfigSpec()
+        opt = vim.option.OptionValue()
+        opt.key = metatype
+        opt.value = metavalue
+        configspec.extraConfig = [opt]
+        t = vm.ReconfigVM_Task(configspec)
         waitForMe(t)
-        return "%s on deploying %s from template" % ('success', name)
