@@ -309,6 +309,7 @@ class Ksphere:
         self.filtervms = filtervms
         self.filteruser = filteruser
         self.filtertag = filtertag
+        self.debug = debug
         return
 
     def close(self):
@@ -398,8 +399,8 @@ class Ksphere:
                     encodingopt.value = 'base64'
                     extraconfig.extend([ignitionopt, encodingopt])
                 else:
-                    customspec = makecuspec(name, nets=nets, gateway=gateway, dns=dns, domain=domain)
-                    clonespec.customization = customspec
+                    # customspec = makecuspec(name, nets=nets, gateway=gateway, dns=dns, domain=domain)
+                    # clonespec.customization = customspec
                     cloudinitiso = "[%s]/%s/%s.ISO" % (default_pool, name, name)
                     common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                      domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
@@ -664,6 +665,8 @@ class Ksphere:
                 networktype = 'N/A'
                 mac = dev.macAddress
                 yamlinfo['nets'].append({'device': device, 'mac': mac, 'net': network, 'type': networktype})
+        if self.debug:
+            print(vm.config.extraConfig)
         for entry in vm.config.extraConfig:
             if entry.key == 'plan':
                 yamlinfo['plan'] = entry.value
