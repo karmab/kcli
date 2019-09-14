@@ -63,14 +63,14 @@ def collectproperties(si, view, objtype, pathset=None, includemors=False):
 
 def find(si, folder, vimtype, name):
     o = si.content.viewManager.CreateContainerView(folder, [vimtype], True)
-    vmlist = o.view
+    view = o.view
     o.Destroy()
-    vm = None
-    for v in vmlist:
-        if v.name == name:
-            vm = v
+    element = None
+    for e in view:
+        if e.name == name:
+            element = e
             break
-    return vm
+    return element
 
 
 def findvm(si, folder, name):
@@ -84,7 +84,8 @@ def findvm(si, folder, name):
 
 
 def convert(octets):
-    return str(float(octets) / 1024 / 1024 / 1024) + "GB"
+    # return str(float(octets) / 1024 / 1024 / 1024) + "GB"
+    return str(ceil(float(octets) / 1024 / 1024 / 1024)) + "GB"
 
 
 def dssize(ds):
@@ -279,13 +280,13 @@ def changecd(si, vm, iso):
     raise RuntimeError("No cdrom found")
 
 
-guestid532 = 'rhel5guest'
-guestid564 = 'rhel5_64Guest'
-guestid632 = 'rhel6guest'
-guestid664 = 'rhel6_64Guest'
-guestid764 = 'rhel7_64Guest'
-guests = {'rhel_5': guestid532, 'rhel_5x64': guestid564, 'rhel_6': guestid632, 'rhel_6x64': guestid664,
-          'rhel_7x64': guestid764}
+def createfolder(dc, si, folder):
+    # if (get_obj(content, [vim.Folder], folder)):
+    if find(si, folder, vim.Folder, folder) is None:
+        dc.vmFolder.CreateFolder(folder)
+
+
+guests = {'rhel_7x64': 'rhel7_64Guest', 'rhel_8x64': 'rhel8_64Guest'}
 
 
 class Ksphere:
@@ -675,7 +676,7 @@ class Ksphere:
                 yamlinfo['nets'].append(net)
             if type(dev).__name__ == 'vim.vm.device.VirtualDisk':
                 device = "disk%s" % dev.unitNumber
-                disksize = ceil(convert(1000 * dev.capacityInKB))
+                disksize = convert(1000 * dev.capacityInKB)
                 diskformat = dev.backing.diskMode
                 drivertype = 'thin' if dev.backing.thinProvisioned else 'thick'
                 path = dev.backing.datastore.name
