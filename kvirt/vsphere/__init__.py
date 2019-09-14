@@ -280,10 +280,21 @@ def changecd(si, vm, iso):
     raise RuntimeError("No cdrom found")
 
 
-def createfolder(dc, si, folder):
-    # if (get_obj(content, [vim.Folder], folder)):
-    if find(si, folder, vim.Folder, folder) is None:
-        dc.vmFolder.CreateFolder(folder)
+def createfolder(si, parentfolder, folder):
+    if find(si, parentfolder, vim.Folder, folder) is None:
+        parentfolder.CreateFolder(folder)
+    return None
+
+
+def deletefolder(si, parentfolder, folder):
+    folder = find(si, parentfolder, vim.Folder, folder)
+    if folder is not None:
+        folder.Destroy()
+
+
+def deletedirectory(si, dc, path):
+    d = si.content.fileManager.DeleteFile(path, dc)
+    waitForMe(d)
 
 
 guests = {'rhel_7x64': 'rhel7_64Guest', 'rhel_8x64': 'rhel8_64Guest'}
@@ -349,8 +360,11 @@ class Ksphere:
         si = self.conn
         dc = self.dc
         rootFolder = self.rootFolder
-        vmfolder = dc.vmFolder
-        # vmfolder = get_obj(content, [vim.Folder], plan)
+        if plan != 'kvirt':
+            createfolder(si, dc.vmFolder, plan)
+            vmfolder = find(si, dc.vmFolder, vim.Folder, plan)
+        else:
+            vmfolder = dc.vmFolder
         si = self.conn
         clu = find(si, rootFolder, vim.ComputeResource, self.clu)
         pool = clu.resourcePool
@@ -402,7 +416,7 @@ class Ksphere:
                                      domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
                                      overrides=overrides, storemetadata=storemetadata, txt=True)
             confspec.extraConfig = extraconfig
-            t = template.CloneVM_Task(folder=template.parent, name=name, spec=clonespec)
+            t = template.CloneVM_Task(folder=vmfolder, name=name, spec=clonespec)
             waitForMe(t)
             if cloudinitiso is not None:
                 self._handleimage(default_pool, name, action='upload')
@@ -410,9 +424,7 @@ class Ksphere:
                 c = changecd(self.conn, vm, cloudinitiso)
                 waitForMe(c)
             if start:
-                vm = findvm(si, vmFolder, name)
-                t = vm.PowerOnVM_Task(None)
-                waitForMe(t)
+                self.start(name)
             return {'result': 'success'}
         datastores = {}
         # define specifications for the VM
@@ -576,11 +588,13 @@ class Ksphere:
         vm = findvm(si, vmFolder, name)
         if vm is None:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        template = None
+        plan, template = 'kvirt', None
         vmpath = vm.summary.config.vmPathName.replace('/%s.vmx' % name, '')
         for entry in vm.config.extraConfig:
             if entry.key == 'template':
                 template = entry.value
+            if entry.key == 'plan':
+                plan = entry.value
         if vm.runtime.powerState == "poweredOn":
             t = vm.PowerOffVM_Task()
             waitForMe(t)
@@ -588,7 +602,11 @@ class Ksphere:
         waitForMe(t)
         if template is not None and 'coreos' not in template and not template.startswith('rhcos') and\
                 vmpath.endswith(name):
-            self._deletefolder(vmpath)
+            deletedirectory(si, dc, vmpath)
+        if plan != 'kvirt':
+            planfolder = find(si, vmFolder, vim.Folder, plan)
+            if len(planfolder.childEntity) == 0:
+                planfolder.Destroy()
         return {'result': 'success'}
 
     def console(self, name, tunnel=False):
@@ -869,12 +887,6 @@ class Ksphere:
             if hasattr(requests.packages.urllib3, 'disable_warnings'):
                 requests.packages.urllib3.disable_warnings()
                 requests.put(url, data=f, headers=headers, cookies=cookie, verify=False)
-
-    def _deletefolder(self, path):
-        dc = self.dc
-        si = self.conn
-        d = si.content.fileManager.DeleteFile(path, dc)
-        waitForMe(d)
 
     def get_pool_path(self, pool):
         return pool
