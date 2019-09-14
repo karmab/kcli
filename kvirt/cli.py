@@ -712,7 +712,7 @@ def lb(args):
 
 
 def nic(args):
-    """Add/Delete nic of vm"""
+    """Add/Delete nic to vm"""
     name = args.name
     delete = args.delete
     interface = args.interface
@@ -726,7 +726,7 @@ def nic(args):
     if network is None:
         common.pprint("Missing network. Leaving...", color='red')
         os._exit(1)
-    common.pprint("Adding Nic %s..." % name)
+    common.pprint("Adding Nic to %s..." % name)
     k.add_nic(name=name, network=network)
 
 

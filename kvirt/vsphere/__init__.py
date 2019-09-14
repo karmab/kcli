@@ -21,6 +21,8 @@ import webbrowser
 def waitForMe(t):
     while t.info.state not in [vim.TaskInfo.State.success, vim.TaskInfo.State.error]:
         time.sleep(1)
+    if t.info.state == vim.TaskInfo.State.error:
+        common.pprint(t.info.error, color='red')
 
 
 def collectproperties(si, view, objtype, pathset=None, includemors=False):
@@ -83,9 +85,12 @@ def findvm(si, folder, name):
         return None
 
 
-def convert(octets):
+def convert(octets, GB=True):
     # return str(float(octets) / 1024 / 1024 / 1024) + "GB"
-    return str(ceil(float(octets) / 1024 / 1024 / 1024)) + "GB"
+    result = str(ceil(float(octets) / 1024 / 1024 / 1024))
+    if GB:
+        result += "GB"
+    return result
 
 
 def dssize(ds):
@@ -149,7 +154,7 @@ def createnicspec(nicname, netname):
     desc.summary = netname
     nicbacking.deviceName = netname
     nic.backing = nicbacking
-    nic.key = 0
+    # nic.key = 0
     nic.deviceInfo = desc
     nic.addressType = 'generated'
     nicspec.device = nic
@@ -297,9 +302,6 @@ def deletedirectory(si, dc, path):
     waitForMe(d)
 
 
-guests = {'rhel_7x64': 'rhel7_64Guest', 'rhel_8x64': 'rhel8_64Guest'}
-
-
 class Ksphere:
     def __init__(self, host, user, password, datacenter, cluster, debug=False, filtervms=False, filteruser=False,
                  filtertag=None):
@@ -339,7 +341,7 @@ class Ksphere:
         return
 
     def create(self, name, virttype='kvm', profile='kvirt', flavor=None, plan='kvirt', cpumodel='host-model',
-               cpuflags=[], numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None,
+               cpuflags=[], numcpus=2, memory=512, guestid='centos7_64Guest', pool='default', template=None,
                disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None,
                vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None,
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
@@ -355,8 +357,6 @@ class Ksphere:
         default_pool = pool
         memory = int(memory)
         numcpus = int(numcpus)
-        if guestid in guests.keys():
-            guestid = guests[guestid]
         si = self.conn
         dc = self.dc
         rootFolder = self.rootFolder
@@ -367,16 +367,13 @@ class Ksphere:
             vmfolder = dc.vmFolder
         si = self.conn
         clu = find(si, rootFolder, vim.ComputeResource, self.clu)
-        pool = clu.resourcePool
+        resourcepool = clu.resourcePool
         if template is not None:
             rootFolder = self.rootFolder
-            templatename = template
-            template = findvm(si, rootFolder, template)
-            if template is None:
-                return {'result': 'failure', 'reason': "Template %s not found" % templatename}
-            clu = find(si, rootFolder, vim.ComputeResource, self.clu)
-            pool = clu.resourcePool
-            clonespec = createclonespec(pool)
+            templateobj = findvm(si, rootFolder, template)
+            if templateobj is None:
+                return {'result': 'failure', 'reason': "Template %s not found" % template}
+            clonespec = createclonespec(resourcepool)
             confspec = vim.vm.ConfigSpec()
             confspec.annotation = name
             confspec.memoryMB = memory
@@ -389,14 +386,14 @@ class Ksphere:
             profileopt.value = profile
             templateopt = vim.option.OptionValue()
             templateopt.key = 'template'
-            templateopt.value = templatename
+            templateopt.value = template
             extraconfig = [templateopt, planopt, profileopt]
             clonespec.config = confspec
-            clonespec.powerOn = start
+            clonespec.powerOn = False
             cloudinitiso = None
             if cloudinit:
-                if templatename is not None and ('coreos' in templatename or templatename.startswith('rhcos')):
-                    version = '3.0.0' if templatename.startswith('fedora-coreos') else '2.2.0'
+                if template is not None and ('coreos' in template or template.startswith('rhcos')):
+                    version = '3.0.0' if template.startswith('fedora-coreos') else '2.2.0'
                     ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                                    domain=domain, reserveip=reserveip, files=files,
                                                    enableroot=enableroot, overrides=overrides, etcd=False,
@@ -416,26 +413,32 @@ class Ksphere:
                                      domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
                                      overrides=overrides, storemetadata=storemetadata, txt=True)
             confspec.extraConfig = extraconfig
-            t = template.CloneVM_Task(folder=vmfolder, name=name, spec=clonespec)
+            t = templateobj.CloneVM_Task(folder=vmfolder, name=name, spec=clonespec)
             waitForMe(t)
             if cloudinitiso is not None:
                 self._handleimage(default_pool, name, action='upload')
                 vm = findvm(si, vmFolder, name)
                 c = changecd(self.conn, vm, cloudinitiso)
                 waitForMe(c)
-            if start:
-                self.start(name)
-            return {'result': 'success'}
         datastores = {}
-        # define specifications for the VM
         confspec = vim.vm.ConfigSpec()
         confspec.name = name
         confspec.annotation = name
         confspec.memoryMB = memory
         confspec.numCPUs = numcpus
-        confspec.guestId = guestid
+        planopt = vim.option.OptionValue()
+        planopt.key = 'plan'
+        planopt.value = plan
+        profileopt = vim.option.OptionValue()
+        profileopt.key = 'profile'
+        profileopt.value = profile
+        confspec.extraConfig = [planopt, profileopt]
+        confspec.guestId = 'centos7_64Guest'
+        vmfi = vim.vm.FileInfo()
+        filename = "[" + default_pool + "]"
+        vmfi.vmPathName = filename
+        confspec.files = vmfi
         if vnc:
-            # enable VNC
             vncport = random.randint(5900, 7000)
             opt1 = vim.option.OptionValue()
             opt1.key = 'RemoteDisplay.vnc.port'
@@ -444,6 +447,15 @@ class Ksphere:
             opt2.key = 'RemoteDisplay.vnc.enabled'
             opt2.value = "TRUE"
             confspec.extraConfig = [opt1, opt2]
+        if template is None:
+            t = vmfolder.CreateVM_Task(confspec, resourcepool)
+            waitForMe(t)
+        vm = find(si, dc.vmFolder, vim.VirtualMachine, name)
+        currentdevices = vm.config.hardware.device
+        currentdisks = [d for d in currentdevices if isinstance(d, vim.vm.device.VirtualDisk)]
+        currentnics = [d for d in currentdevices if isinstance(d, vim.vm.device.VirtualEthernetCard)]
+        confspec = vim.vm.ConfigSpec()
+        devconfspec = []
         for index, disk in enumerate(disks):
             if disk is None:
                 disksize = default_disksize
@@ -465,6 +477,16 @@ class Ksphere:
                 diskthin = disk.get('thin', default_diskthin)
                 diskinterface = disk.get('interface', default_diskinterface)
                 diskpool = disk.get('pool', default_pool)
+            if index < len(currentdisks) and template is not None:
+                currentdisk = currentdisks[index]
+                currentsize = convert(1000 * currentdisk.capacityInKB, GB=False)
+                if int(currentsize) < disksize:
+                    common.pprint("Resizing disk %d" % index)
+                    currentdisk.capacityInKB = disksize * 1048576
+                    diskspec = vim.vm.ConfigSpec()
+                    diskspec = vim.vm.device.VirtualDeviceSpec(device=currentdisk, operation="edit")
+                    devconfspec.append(diskspec)
+                continue
             disksize = disksize * 1048576
             if diskpool not in datastores:
                 datastore = find(si, rootFolder, vim.Datastore, diskpool)
@@ -473,29 +495,30 @@ class Ksphere:
                 else:
                     datastores[diskpool] = datastore
             if index == 0:
-                disksizeg = convert(1000 * disksize)
-                # # TODO:change this if to a test sum of all possible disks to be added to this datastore
-                if float(dssize(datastore)[1].replace("GB", "")) - float(disksizeg.replace("GB", "")) <= 0:
-                    return "New Disk too large to fit in selected Datastore,aborting..."
                 scsispec = createscsispec()
-                devconfspec = [scsispec]
+                devconfspec.append(scsispec)
             diskspec = creatediskspec(index, disksize, datastore, diskmode, diskthin)
             devconfspec.append(diskspec)
         # NICSPEC
         for index, net in enumerate(nets):
-            nicname = 'Network Adapter %d' % index + 1
-            nicspec = createnicspec(nicname, net, guestid)
+            if index < len(currentnics):
+                continue
+            nicname = 'Network Adapter %d' % (index + 1)
+            nicspec = createnicspec(nicname, net)
             devconfspec.append(nicspec)
         if iso:
+            if '/' not in iso:
+                matchingisos = [i for i in self._getisos() if i.endswith(iso)]
+                if matchingisos:
+                    iso = matchingisos[0]
+                else:
+                    return {'result': 'failure', 'reason': "Iso %s not found" % iso}
             cdspec = createisospec(iso)
             devconfspec.append(cdspec)
-            confspec.bootOptions = vim.vm.BootOptions(bootOrder=[vim.vm.BootOptions.BootableCdromDevice()])
+            # bootoptions = vim.option.OptionValue(key='bios.bootDeviceClasses',value='allow:hd,cd,fd,net')
+            # confspec.bootOptions = vim.vm.BootOptions(bootOrder=[vim.vm.BootOptions.BootableCdromDevice()])
         confspec.deviceChange = devconfspec
-        vmfi = vim.vm.FileInfo()
-        filename = "[" + default_pool + "]"
-        vmfi.vmPathName = filename
-        confspec.files = vmfi
-        t = vmfolder.CreateVM_Task(confspec, pool, None)
+        t = vm.Reconfigure(confspec)
         waitForMe(t)
         # HANDLE DVS
         if distributed:
@@ -548,6 +571,9 @@ class Ksphere:
                                 waitForMe(t)
                                 t = vm.PowerOnVM_Task(None)
                                 waitForMe(t)
+        if start:
+            t = vm.PowerOnVM_Task(None)
+            waitForMe(t)
         return {'result': 'success'}
 
     def start(self, name):
@@ -978,7 +1004,6 @@ class Ksphere:
                     unit_number = 8
             if isinstance(dev, vim.vm.device.VirtualSCSIController):
                 controller = dev
-        dev_changes = []
         new_disk_kb = int(size) * 1024 * 1024
         disk_spec = vim.vm.device.VirtualDeviceSpec()
         disk_spec.fileOperation = "create"
@@ -990,14 +1015,30 @@ class Ksphere:
         disk_spec.device.unitNumber = unit_number
         disk_spec.device.capacityInKB = new_disk_kb
         disk_spec.device.controllerKey = controller.key
-        dev_changes.append(disk_spec)
+        dev_changes = [disk_spec]
         spec.deviceChange = dev_changes
         t = vm.ReconfigVM_Task(spec=spec)
         waitForMe(t)
         return {'result': 'success'}
 
     def delete_disk(self, name=None, diskname=None, pool=None):
-        print("prout")
+        si = self.conn
+        dc = self.dc
+        vmFolder = dc.vmFolder
+        vm = findvm(si, vmFolder, name)
+        if vm is None:
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        for dev in vm.config.hardware.device:
+            if isinstance(dev, vim.vm.device.VirtualDisk) and dev.deviceInfo.label == diskname:
+                devspec = vim.vm.device.VirtualDeviceSpec()
+                devspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.remove
+                devspec.device = dev
+                spec = vim.vm.ConfigSpec()
+                spec.deviceChange = [devspec]
+                t = vm.ReconfigVM_Task(spec=spec)
+                waitForMe(t)
+                return {'result': 'success'}
+        return {'result': 'failure', 'reason': "Disk %s not found in %s" % (diskname, name)}
 
     def add_nic(self, name, network):
         """
@@ -1031,5 +1072,20 @@ class Ksphere:
         :param interface
         :return:
         """
-        print("not implemented")
-        return
+        si = self.conn
+        dc = self.dc
+        vmFolder = dc.vmFolder
+        vm = findvm(si, vmFolder, name)
+        if vm is None:
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        for dev in vm.config.hardware.device:
+            if isinstance(dev, vim.vm.device.VirtualEthernetCard) and dev.deviceInfo.label == interface:
+                devspec = vim.vm.device.VirtualDeviceSpec()
+                devspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.remove
+                devspec.device = dev
+                spec = vim.vm.ConfigSpec()
+                spec.deviceChange = [devspec]
+                t = vm.ReconfigVM_Task(spec=spec)
+                waitForMe(t)
+                return {'result': 'success'}
+        return {'result': 'failure', 'reason': "Nic %s not found in %s" % (interface, name)}
