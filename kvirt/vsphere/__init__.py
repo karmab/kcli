@@ -1,20 +1,21 @@
 #!/usr/bin/python
 
 import base64
-from kvirt import common
-import os
-import random
-from pyVmomi import vim, vmodl
-from pyVim import connect
-import time
-import pyVmomi
-import webbrowser
-from ssl import _create_unverified_context, get_server_certificate
+from binascii import hexlify
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
-from binascii import hexlify
+from kvirt import common
+from math import ceil
+from pyVmomi import vim, vmodl
+from pyVim import connect
+import os
 import requests
+import random
+from ssl import _create_unverified_context, get_server_certificate
+import time
+import pyVmomi
+import webbrowser
 
 
 def waitForMe(t):
@@ -137,13 +138,10 @@ def makecuspec(name, nets=[], gateway=None, dns=None, domain=None):
     return customspec
 
 
-def createnicspec(nicname, netname, guestid):
+def createnicspec(nicname, netname):
     nicspec = vim.vm.device.VirtualDeviceSpec()
     nicspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
-    if guestid in ['rhel4guest', 'rhel4_64guest']:
-        nic = vim.vm.device.VirtualVmxnet()
-    else:
-        nic = vim.vm.device.VirtualVmxnet3()
+    nic = vim.vm.device.VirtualVmxnet3()
     desc = vim.Description()
     desc.label = nicname
     nicbacking = vim.vm.device.VirtualEthernetCard.NetworkBackingInfo()
@@ -351,6 +349,7 @@ class Ksphere:
         dc = self.dc
         rootFolder = self.rootFolder
         vmfolder = dc.vmFolder
+        # vmfolder = get_obj(content, [vim.Folder], plan)
         si = self.conn
         clu = find(si, rootFolder, vim.ComputeResource, self.clu)
         pool = clu.resourcePool
@@ -662,8 +661,6 @@ class Ksphere:
                 if not addr.ipAddress.startswith('192.168') and ':' not in addr.ipAddress:
                     yamlinfo['ip'] = addr.ipAddress
                     break
-        # if summary.guest is not None:
-        #     yamlinfo['ip'] = summary.guest.ipAddress
         yamlinfo['status'] = translation[vm.runtime.powerState]
         yamlinfo['nets'] = []
         yamlinfo['disks'] = []
@@ -678,7 +675,7 @@ class Ksphere:
                 yamlinfo['nets'].append(net)
             if type(dev).__name__ == 'vim.vm.device.VirtualDisk':
                 device = "disk%s" % dev.unitNumber
-                disksize = convert(1000 * dev.capacityInKB)
+                disksize = ceil(convert(1000 * dev.capacityInKB))
                 diskformat = dev.backing.diskMode
                 drivertype = 'thin' if dev.backing.thinProvisioned else 'thick'
                 path = dev.backing.datastore.name
@@ -801,8 +798,49 @@ class Ksphere:
         t = vm.ReconfigVM_Task(configspec)
         waitForMe(t)
 
+    def update_memory(self, name, memory):
+        """
+
+        :param name:
+        :param memory:
+        :return:
+        """
+        print("not implemented")
+        return
+
+    def update_cpus(self, name, numcpus):
+        """
+
+        :param name:
+        :param numcpus:
+        :return:
+        """
+        print("not implemented")
+        return
+
+    def update_start(self, name, start=True):
+        """
+
+        :param name:
+        :param start:
+        :return:
+        """
+        print("not implemented")
+        return
+
+    def update_information(self, name, information):
+        """
+
+        :param name:
+        :param information:
+        :return:
+        """
+        self.update_metadata(name, 'information', information)
+        return
+
     def dnsinfo(self, name):
         """
+
 
         :param name:
         :return:
@@ -910,3 +948,75 @@ class Ksphere:
                     ip = addr.ipAddress
                     break
         return user, ip
+
+    def add_disk(self, name, size=1, pool=None, thin=True, template=None, shareable=False, existing=None):
+        si = self.conn
+        dc = self.dc
+        vmFolder = dc.vmFolder
+        vm = findvm(si, vmFolder, name)
+        if vm is None:
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        spec = vim.vm.ConfigSpec()
+        unit_number = 0
+        for dev in vm.config.hardware.device:
+            if hasattr(dev.backing, 'fileName'):
+                unit_number = int(dev.unitNumber) + 1
+                if unit_number == 7:
+                    unit_number = 8
+            if isinstance(dev, vim.vm.device.VirtualSCSIController):
+                controller = dev
+        dev_changes = []
+        new_disk_kb = int(size) * 1024 * 1024
+        disk_spec = vim.vm.device.VirtualDeviceSpec()
+        disk_spec.fileOperation = "create"
+        disk_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
+        disk_spec.device = vim.vm.device.VirtualDisk()
+        disk_spec.device.backing = vim.vm.device.VirtualDisk.FlatVer2BackingInfo()
+        disk_spec.device.backing.thinProvisioned = thin
+        disk_spec.device.backing.diskMode = 'persistent'
+        disk_spec.device.unitNumber = unit_number
+        disk_spec.device.capacityInKB = new_disk_kb
+        disk_spec.device.controllerKey = controller.key
+        dev_changes.append(disk_spec)
+        spec.deviceChange = dev_changes
+        t = vm.ReconfigVM_Task(spec=spec)
+        waitForMe(t)
+        return {'result': 'success'}
+
+    def delete_disk(self, name=None, diskname=None, pool=None):
+        print("prout")
+
+    def add_nic(self, name, network):
+        """
+
+        :param name:
+        :param network:
+        :return:
+        """
+        if network == 'default':
+            network = 'VM Network'
+        si = self.conn
+        dc = self.dc
+        vmFolder = dc.vmFolder
+        vm = findvm(si, vmFolder, name)
+        if vm is None:
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        spec = vim.vm.ConfigSpec()
+        nicnumber = len([dev for dev in vm.config.hardware.device if "addressType" in dir(dev)])
+        nicname = 'Network adapter %d' % (nicnumber + 1)
+        nicspec = createnicspec(nicname, network)
+        nic_changes = [nicspec]
+        spec.deviceChange = nic_changes
+        t = vm.ReconfigVM_Task(spec=spec)
+        waitForMe(t)
+        return {'result': 'success'}
+
+    def delete_nic(self, name, interface):
+        """
+
+        :param name:
+        :param interface
+        :return:
+        """
+        print("not implemented")
+        return
