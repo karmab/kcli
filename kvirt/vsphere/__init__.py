@@ -666,6 +666,7 @@ class Ksphere:
         #     yamlinfo['ip'] = summary.guest.ipAddress
         yamlinfo['status'] = translation[vm.runtime.powerState]
         yamlinfo['nets'] = []
+        yamlinfo['disks'] = []
         devices = vm.config.hardware.device
         for devnumber, dev in enumerate(devices):
             if "addressType" in dir(dev):
@@ -673,7 +674,16 @@ class Ksphere:
                 device = dev.deviceInfo.label
                 networktype = 'N/A'
                 mac = dev.macAddress
-                yamlinfo['nets'].append({'device': device, 'mac': mac, 'net': network, 'type': networktype})
+                net = {'device': device, 'mac': mac, 'net': network, 'type': networktype}
+                yamlinfo['nets'].append(net)
+            if type(dev).__name__ == 'vim.vm.device.VirtualDisk':
+                device = "disk%s" % dev.unitNumber
+                disksize = convert(1000 * dev.capacityInKB)
+                diskformat = dev.backing.diskMode
+                drivertype = 'thin' if dev.backing.thinProvisioned else 'thick'
+                path = dev.backing.datastore.name
+                disk = {'device': device, 'size': disksize, 'format': diskformat, 'type': drivertype, 'path': path}
+                yamlinfo['disks'].append(disk)
         if self.debug:
             print(vm.config.extraConfig)
         for entry in vm.config.extraConfig:
