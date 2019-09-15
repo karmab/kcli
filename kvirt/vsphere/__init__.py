@@ -1089,3 +1089,18 @@ class Ksphere:
                 waitForMe(t)
                 return {'result': 'success'}
         return {'result': 'failure', 'reason': "Nic %s not found in %s" % (interface, name)}
+
+    def list_networks(self):
+        """
+
+        :return:
+        """
+        return []
+
+    def vm_ports(self, name):
+        """
+
+        :param name:
+        :return:
+        """
+        return []
