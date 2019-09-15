@@ -1095,7 +1095,24 @@ class Ksphere:
 
         :return:
         """
-        return []
+        si = self.conn
+        rootFolder = si.content.rootFolder
+        networks = {}
+        view = si.content.viewManager.CreateContainerView(rootFolder, [vim.dvs.DistributedVirtualPortgroup], True)
+        dvslist = collectproperties(si, view=view, objtype=vim.dvs.DistributedVirtualPortgroup, pathset=['name'],
+                                    includemors=True)
+        view = si.content.viewManager.CreateContainerView(rootFolder, [vim.Network], True)
+        netlist = collectproperties(si, view=view, objtype=vim.Network, pathset=['name'], includemors=True)
+        for o in netlist:
+            network = o['obj']
+            cidr, dhcp, domainname = '', '', ''
+            mode = 'accesible' if network.summary.accessible else 'notaccessible'
+            networks[network.name] = {'cidr': cidr, 'dhcp': dhcp, 'domain': domainname, 'type': 'routed', 'mode': mode}
+        for o in dvslist:
+            network = o['obj']
+            cidr, dhcp, domainname, mode = '', '', '', ''
+            networks[network.name] = {'cidr': cidr, 'dhcp': dhcp, 'domain': domainname, 'type': 'routed', 'mode': mode}
+        return networks
 
     def vm_ports(self, name):
         """
