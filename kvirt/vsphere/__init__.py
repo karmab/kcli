@@ -6,7 +6,6 @@ from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from distutils.spawn import find_executable
-from jinja2 import Template
 from kvirt import common
 from kvirt.vsphere.templates import VMTEMPLATE
 from math import ceil
@@ -1146,6 +1145,7 @@ class Ksphere:
         """
         si = self.conn
         rootFolder = self.rootFolder
+        vmFolder = self.dc.vmFolder
         shortimage = os.path.basename(image).split('?')[0]
         cleanname = Path(name).stem
         if shortimage in self.volumes():
@@ -1154,8 +1154,7 @@ class Ksphere:
         if not find(si, rootFolder, vim.Datastore, pool):
             return {'result': 'failure', 'reason': "Pool %s not found" % pool}
         template_path = "/tmp/%s.vmtx" % cleanname
-        tm = Template(VMTEMPLATE)
-        template = tm.render(name=cleanname)
+        template = VMTEMPLATE.format(name=cleanname)
         with open(template_path, 'w') as f:
             f.write(template)
         if 'rhcos' in shortimage:
@@ -1166,10 +1165,10 @@ class Ksphere:
             code = os.system(downloadcmd)
             if code != 0:
                 return {'result': 'failure', 'reason': "Unable to download indicated template"}
-        elif os.path.exists('/tmp/%s' % shortimage):
-            common.pprint("Using found /tmp/%s" % shortimage, color='blue')
-        else:
+        elif os.path.exists("/tmp/%s.vmdk" % cleanname):
             common.pprint("Using found /tmp/%s.vmdk" % cleanname, color='blue')
+        else:
+            common.pprint("Using found /tmp/%s" % shortimage, color='blue')
         image_path = '/tmp/%s' % shortimage
         extensions = {'bz2': 'bunzip2', 'gz': 'gunzip', 'xz': 'unxz'}
         for extension in extensions:
@@ -1188,13 +1187,11 @@ class Ksphere:
             os.system("qemu-img convert -f qcow2 %s -O vmdk /tmp/%s.vmdk" % (image_path, cleanname))
         image_path = '/tmp/%s.vmdk' % cleanname
         template_path = "/tmp/%s.vmtx" % cleanname
-        createfolder(si, self.dc.vmFolder, cleanname)
-        vmfolder = find(si, self.dc.vmFolder, vim.Folder, cleanname)
         self._uploadimage(pool, image_path)
         self._uploadimage(pool, template_path)
         template_path = "[%s]/%s/%s.vmtx" % (pool, cleanname, cleanname)
         host = self._getfirshost()
-        t = vmfolder.RegisterVM_Task(template_path, shortimage, asTemplate=True, host=host)
+        t = vmFolder.RegisterVM_Task(template_path, shortimage, asTemplate=True, host=host)
         waitForMe(t)
         return {'result': 'success'}
 
@@ -1212,6 +1209,7 @@ class Ksphere:
         about = si.content.about
         print("Version: %s" % about.version)
         print("Api Version: %s" % about.apiVersion)
+        print("Datacenter: %s" % self.dc.name)
         rootFolder = self.rootFolder
         o = si.content.viewManager.CreateContainerView(rootFolder, [vim.HostSystem], True)
         view = o.view
