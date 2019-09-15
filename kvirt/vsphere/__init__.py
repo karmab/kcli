@@ -5,8 +5,12 @@ from binascii import hexlify
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
+from distutils.spawn import find_executable
+from jinja2 import Template
 from kvirt import common
+from kvirt.vsphere.templates import VMTEMPLATE
 from math import ceil
+from pathlib import Path
 from pyVmomi import vim, vmodl
 from pyVim import connect
 import os
@@ -416,7 +420,8 @@ class Ksphere:
             t = templateobj.CloneVM_Task(folder=vmfolder, name=name, spec=clonespec)
             waitForMe(t)
             if cloudinitiso is not None:
-                self._handleimage(default_pool, name, action='upload')
+                cloudinitisofile = "/tmp/%s.ISO" % name
+                self._uploadimage(default_pool, cloudinitisofile)
                 vm = findvm(si, vmFolder, name)
                 c = changecd(self.conn, vm, cloudinitiso)
                 waitForMe(c)
@@ -892,13 +897,17 @@ class Ksphere:
         """
         return None, None
 
-    def _handleimage(self, pool, name, origin='/tmp', suffix='.ISO', action='upload'):
+    def _uploadimage(self, pool, origin, verbose=False):
+        if verbose:
+            common.pprint("Uploading %s to %s" % (origin, pool))
+        name = os.path.basename(origin).split('.')[0]
         si = self.conn
         rootFolder = self.rootFolder
         datastore = find(si, rootFolder, vim.Datastore, pool)
         if not datastore:
             return {'result': 'failure', 'reason': "Pool %s not found" % pool}
-        url = "https://%s:443/folder/%s/%s%s?dcPath=%s&dsName=%s" % (self.vcip, name, name, suffix, self.dc.name, pool)
+        url = "https://%s:443/folder/%s/%s?dcPath=%s&dsName=%s" % (self.vcip, name, os.path.basename(origin),
+                                                                   self.dc.name, pool)
         client_cookie = si._stub.cookie
         cookie_name = client_cookie.split("=", 1)[0]
         cookie_value = client_cookie.split("=", 1)[1].split(";", 1)[0]
@@ -906,13 +915,15 @@ class Ksphere:
         cookie_text = " " + cookie_value + "; $" + cookie_path
         cookie = {cookie_name: cookie_text}
         headers = {'Content-Type': 'application/octet-stream'}
-        if action == 'delete':
-            requests.delete(url, headers=headers, cookies=cookie, verify=False)
-            return
-        with open("%s/%s%s" % (origin, name, suffix), "rb") as f:
+        with open(origin, "rb") as f:
             if hasattr(requests.packages.urllib3, 'disable_warnings'):
                 requests.packages.urllib3.disable_warnings()
-                requests.put(url, data=f, headers=headers, cookies=cookie, verify=False)
+                r = requests.put(url, data=f, headers=headers, cookies=cookie, verify=False)
+                if verbose:
+                    if r.status_code != 200:
+                        print(r.status_code, r.text)
+                    else:
+                        common.pprint("Successfull upload of %s to %s" % (origin, pool))
 
     def get_pool_path(self, pool):
         return pool
@@ -1121,3 +1132,108 @@ class Ksphere:
         :return:
         """
         return []
+
+    def add_image(self, image, pool, short=None, cmd=None, name=None, size=1):
+        """
+
+        :param image:
+        :param pool:
+        :param short:
+        :param cmd:
+        :param name:
+        :param size:
+        :return:
+        """
+        si = self.conn
+        rootFolder = self.rootFolder
+        shortimage = os.path.basename(image).split('?')[0]
+        cleanname = Path(name).stem
+        if shortimage in self.volumes():
+            common.pprint("Template %s already there" % shortimage, color='blue')
+            return {'result': 'success'}
+        if not find(si, rootFolder, vim.Datastore, pool):
+            return {'result': 'failure', 'reason': "Pool %s not found" % pool}
+        template_path = "/tmp/%s.vmtx" % cleanname
+        tm = Template(VMTEMPLATE)
+        template = tm.render(name=cleanname)
+        with open(template_path, 'w') as f:
+            f.write(template)
+        if 'rhcos' in shortimage:
+            shortimage += ".gz"
+        if not os.path.exists('/tmp/%s' % shortimage) and not os.path.exists("/tmp/%s.vmdk" % cleanname):
+            common.pprint("Downloading locally %s" % shortimage)
+            downloadcmd = "curl -Lo /tmp/%s -f '%s'" % (shortimage, image)
+            code = os.system(downloadcmd)
+            if code != 0:
+                return {'result': 'failure', 'reason': "Unable to download indicated template"}
+        elif os.path.exists('/tmp/%s' % shortimage):
+            common.pprint("Using found /tmp/%s" % shortimage, color='blue')
+        else:
+            common.pprint("Using found /tmp/%s.vmdk" % cleanname, color='blue')
+        image_path = '/tmp/%s' % shortimage
+        extensions = {'bz2': 'bunzip2', 'gz': 'gunzip', 'xz': 'unxz'}
+        for extension in extensions:
+            if shortimage.endswith(extension):
+                executable = extensions[extension]
+                if find_executable(executable) is None:
+                    common.pprint("%s not found. Can't uncompress image" % executable, color="blue")
+                    os._exit(1)
+                else:
+                    uncompresscmd = "%s %s" % (executable, image_path)
+                    os.system(uncompresscmd)
+                    shortimage = shortimage.replace(".%s" % extension, '')
+                    image_path = '/tmp/%s' % shortimage
+                    break
+        if not os.path.exists("/tmp/%s.vmdk" % cleanname):
+            os.system("qemu-img convert -f qcow2 %s -O vmdk /tmp/%s.vmdk" % (image_path, cleanname))
+        image_path = '/tmp/%s.vmdk' % cleanname
+        template_path = "/tmp/%s.vmtx" % cleanname
+        createfolder(si, self.dc.vmFolder, cleanname)
+        vmfolder = find(si, self.dc.vmFolder, vim.Folder, cleanname)
+        self._uploadimage(pool, image_path)
+        self._uploadimage(pool, template_path)
+        template_path = "[%s]/%s/%s.vmtx" % (pool, cleanname, cleanname)
+        host = self._getfirshost()
+        t = vmfolder.RegisterVM_Task(template_path, shortimage, asTemplate=True, host=host)
+        waitForMe(t)
+        return {'result': 'success'}
+
+    def _getfirshost(self):
+        si = self.conn
+        rootFolder = self.rootFolder
+        o = si.content.viewManager.CreateContainerView(rootFolder, [vim.HostSystem], True)
+        view = o.view
+        o.Destroy()
+        host = view[0] if view else None
+        return host
+
+    def report(self):
+        si = self.conn
+        about = si.content.about
+        print("Version: %s" % about.version)
+        print("Api Version: %s" % about.apiVersion)
+        rootFolder = self.rootFolder
+        o = si.content.viewManager.CreateContainerView(rootFolder, [vim.HostSystem], True)
+        view = o.view
+        o.Destroy()
+        for h in view:
+            print("Host: %s" % h.name)
+        o = si.content.viewManager.CreateContainerView(rootFolder, [vim.ComputeResource], True)
+        view = o.view
+        o.Destroy()
+        for clu in view:
+                print("Cluster: %s" % clu.name)
+                for dts in clu.datastore:
+                    print("Pool: %s" % dts.name)
+
+    def delete_image(self, image):
+        si = self.conn
+        vmFolder = self.dc.vmFolder
+        common.pprint("Deleting image %s" % image)
+        vm = findvm(si, vmFolder, image)
+        if vm is None or not vm.config.template:
+            return {'result': 'failure', 'reason': 'Image %s not found' % image}
+        else:
+            t = vm.Destroy_Task()
+            waitForMe(t)
+            return {'result': 'success'}
