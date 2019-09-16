@@ -25,6 +25,7 @@ def waitForMe(t):
     while t.info.state not in [vim.TaskInfo.State.success, vim.TaskInfo.State.error]:
         time.sleep(1)
     if t.info.state == vim.TaskInfo.State.error:
+        common.pprint(t.info.name, color='red')
         common.pprint(t.info.error, color='red')
         os._exit(1)
 
@@ -892,6 +893,29 @@ class Ksphere:
         self.update_metadata(name, 'information', information)
         return
 
+    def update_iso(self, name, iso):
+        """
+
+        :param name:
+        :param iso:
+        :return:
+        """
+        si = self.conn
+        dc = self.dc
+        vmFolder = dc.vmFolder
+        vm = findvm(si, vmFolder, name)
+        isos = [i for i in self._getisos() if i.endswith(iso)]
+        if not isos:
+            common.pprint("Iso %s not found.Leaving..." % iso, color='red')
+            return {'result': 'failure', 'reason': "Iso %s not found" % iso}
+        else:
+            iso = isos[0]
+        if vm is None:
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        c = changecd(self.conn, vm, iso)
+        waitForMe(c)
+        return {'result': 'success'}
+
     def dnsinfo(self, name):
         """
 
@@ -1149,6 +1173,8 @@ class Ksphere:
         :return:
         """
         si = self.conn
+        # dc = self.dc
+        # disk_manager = si.content.virtualDiskManager
         rootFolder = self.rootFolder
         vmFolder = self.dc.vmFolder
         shortimage = os.path.basename(image).split('?')[0]
@@ -1189,17 +1215,27 @@ class Ksphere:
                     shortimage = shortimage.replace(".%s" % extension, '')
                     image_path = '/tmp/%s' % shortimage
                     break
+        # if not os.path.exists("/tmp/temp-%s.vmdk" % cleanname):
         if not os.path.exists("/tmp/%s.vmdk" % cleanname):
-            # options = "-o adapter_type=lsilogic,subformat=streamOptimized,compat6"
-            # options = "-o adapter_type=lsilogic"
-            options = "-o adapter_type=lsilogic,hwversion=%s" % version
+            options = "-o adapter_type=lsilogic,compat6"
             common.pprint("Converting image %s to vmdk" % cleanname)
+            # os.system("qemu-img convert -f qcow2 %s -O vmdk %s /tmp/temp-%s.vmdk" % (image_path, options, cleanname))
             os.system("qemu-img convert -f qcow2 %s -O vmdk %s /tmp/%s.vmdk" % (image_path, options, cleanname))
+        # image_path = '/tmp/temp-%s.vmdk' % cleanname
         image_path = '/tmp/%s.vmdk' % cleanname
         template_path = "/tmp/%s.vmtx" % cleanname
         self._uploadimage(pool, image_path, verbose=True, directory=cleanname)
         self._uploadimage(pool, template_path, verbose=True, directory=cleanname)
-        template_path = "[%s]/%s/%s.vmtx" % (pool, cleanname, cleanname)
+        # source = "[%s]/%s/temp-%s.vmdk" % (pool, cleanname, cleanname)
+        # dest = "[%s]/%s/%s.vmdk" % (pool, cleanname, cleanname)
+        # destspec = vim.VirtualDiskManager.VirtualDiskSpec()
+        # destspec.diskType = "eagerZeroedThick"
+        # destspec.adapterType = "busLogic"
+        # t = disk_manager.CopyVirtualDisk(sourceName=source, sourceDatacenter=dc, destName=dest, destDatacenter=dc,
+        #                                     destSpec=destspec)
+        # waitForMe(t)
+        # t = disk_manager.DeleteVirtualDisk(name=source)
+        # waitForMe(t)
         host = self._getfirshost()
         t = vmFolder.RegisterVM_Task(template_path, shortimage, asTemplate=True, host=host)
         waitForMe(t)
