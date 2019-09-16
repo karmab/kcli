@@ -25,7 +25,7 @@ def waitForMe(t):
     while t.info.state not in [vim.TaskInfo.State.success, vim.TaskInfo.State.error]:
         time.sleep(1)
     if t.info.state == vim.TaskInfo.State.error:
-        common.pprint(t.info.name, color='red')
+        common.pprint(t.info.description, color='red')
         common.pprint(t.info.error, color='red')
         os._exit(1)
 
@@ -422,7 +422,7 @@ class Ksphere:
             waitForMe(t)
             if cloudinitiso is not None:
                 cloudinitisofile = "/tmp/%s.ISO" % name
-                self._uploadimage(default_pool, cloudinitisofile)
+                self._uploadimage(default_pool, cloudinitisofile, name)
                 vm = findvm(si, vmFolder, name)
                 c = changecd(self.conn, vm, cloudinitiso)
                 waitForMe(c)
@@ -711,11 +711,13 @@ class Ksphere:
         yamlinfo['id'] = summary.config.instanceUuid
         yamlinfo['cpus'] = vm.config.hardware.numCPU
         yamlinfo['memory'] = vm.config.hardware.memoryMB
-        for nic in vm.guest.net:
-            for addr in nic.ipConfig.ipAddress:
-                if not addr.ipAddress.startswith('192.168') and ':' not in addr.ipAddress:
-                    yamlinfo['ip'] = addr.ipAddress
-                    break
+        if vm.runtime.powerState == "poweredOn":
+            for nic in vm.guest.net:
+                if nic.ipConfig is not None:
+                    for addr in nic.ipConfig.ipAddress:
+                        if not addr.ipAddress.startswith('192.168') and ':' not in addr.ipAddress:
+                            yamlinfo['ip'] = addr.ipAddress
+                            break
         yamlinfo['status'] = translation[vm.runtime.powerState]
         yamlinfo['nets'] = []
         yamlinfo['disks'] = []
@@ -925,15 +927,17 @@ class Ksphere:
         """
         return None, None
 
-    def _uploadimage(self, pool, origin, directory=None, verbose=False):
+    def _uploadimage(self, pool, origin, directory, verbose=False, temp=False):
         if verbose:
-            common.pprint("Uploading %s to %s" % (origin, pool))
-        directory = os.path.basename(origin).split('.')[0] if directory is None else directory
+            common.pprint("Uploading %s to %s/%s" % (origin, pool, directory))
         si = self.conn
         rootFolder = self.rootFolder
         datastore = find(si, rootFolder, vim.Datastore, pool)
         if not datastore:
             return {'result': 'failure', 'reason': "Pool %s not found" % pool}
+        destination = os.path.basename(origin)
+        if temp:
+            destination = "temp-%s" % destination
         url = "https://%s:443/folder/%s/%s?dcPath=%s&dsName=%s" % (self.vcip, directory, os.path.basename(origin),
                                                                    self.dc.name, pool)
         client_cookie = si._stub.cookie
@@ -1173,8 +1177,6 @@ class Ksphere:
         :return:
         """
         si = self.conn
-        # dc = self.dc
-        # disk_manager = si.content.virtualDiskManager
         rootFolder = self.rootFolder
         vmFolder = self.dc.vmFolder
         shortimage = os.path.basename(image).split('?')[0]
@@ -1215,30 +1217,23 @@ class Ksphere:
                     shortimage = shortimage.replace(".%s" % extension, '')
                     image_path = '/tmp/%s' % shortimage
                     break
-        # if not os.path.exists("/tmp/temp-%s.vmdk" % cleanname):
         if not os.path.exists("/tmp/%s.vmdk" % cleanname):
             options = "-o adapter_type=lsilogic,compat6"
             common.pprint("Converting image %s to vmdk" % cleanname)
-            # os.system("qemu-img convert -f qcow2 %s -O vmdk %s /tmp/temp-%s.vmdk" % (image_path, options, cleanname))
             os.system("qemu-img convert -f qcow2 %s -O vmdk %s /tmp/%s.vmdk" % (image_path, options, cleanname))
-        # image_path = '/tmp/temp-%s.vmdk' % cleanname
         image_path = '/tmp/%s.vmdk' % cleanname
         template_path = "/tmp/%s.vmtx" % cleanname
-        self._uploadimage(pool, image_path, verbose=True, directory=cleanname)
-        self._uploadimage(pool, template_path, verbose=True, directory=cleanname)
-        # source = "[%s]/%s/temp-%s.vmdk" % (pool, cleanname, cleanname)
-        # dest = "[%s]/%s/%s.vmdk" % (pool, cleanname, cleanname)
-        # destspec = vim.VirtualDiskManager.VirtualDiskSpec()
-        # destspec.diskType = "eagerZeroedThick"
-        # destspec.adapterType = "busLogic"
-        # t = disk_manager.CopyVirtualDisk(sourceName=source, sourceDatacenter=dc, destName=dest, destDatacenter=dc,
-        #                                     destSpec=destspec)
-        # waitForMe(t)
-        # t = disk_manager.DeleteVirtualDisk(name=source)
-        # waitForMe(t)
+        self._uploadimage(pool, image_path, cleanname, verbose=True, temp=True)
+        self._uploadimage(pool, template_path, cleanname, verbose=True)
+        template_path = "[%s]/%s/%s.vmtx" % (pool, cleanname, cleanname)
         host = self._getfirshost()
         t = vmFolder.RegisterVM_Task(template_path, shortimage, asTemplate=True, host=host)
         waitForMe(t)
+        directory = "/vmfs/volumes/%s/%s" % (self.dc.name, cleanname, cleanname)
+        cmd = 'vmkfstools -i %s/%s-temp.vmdk -d thin %s/%s.vmdk' % (directory, cleanname, directory, cleanname)
+        common.pprint("Attempting to ssh in %s to run:\n%s" % (host.name, cmd))
+        cmd = "ssh root@%s '%s'" % (host.name, cmd)
+        os.system(cmd)
         return {'result': 'success'}
 
     def _getfirshost(self):
