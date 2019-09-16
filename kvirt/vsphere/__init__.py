@@ -757,7 +757,7 @@ class Ksphere:
         vmlist = collectproperties(si, view=view, objtype=vim.VirtualMachine, pathset=['name'], includemors=True)
         for o in vmlist:
             vm = o['obj']
-            if not vm.config.template:
+            if vm.summary.runtime.connectionState != 'orphaned' and not vm.config.template:
                 if self.filtervms and 'plan' not in [x.key for x in vm.config.extraConfig]:
                     continue
                 vms.append(self.info(o['name'], vm=vm))
