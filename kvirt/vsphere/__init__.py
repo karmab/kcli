@@ -415,7 +415,7 @@ class Ksphere:
                     cloudinitiso = "[%s]/%s/%s.ISO" % (default_pool, name, name)
                     common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                      domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
-                                     overrides=overrides, storemetadata=storemetadata, txt=True)
+                                     overrides=overrides, storemetadata=storemetadata)
             confspec.extraConfig = extraconfig
             t = templateobj.CloneVM_Task(folder=vmfolder, name=name, spec=clonespec)
             waitForMe(t)
@@ -511,6 +511,8 @@ class Ksphere:
             if index < len(currentnics):
                 continue
             nicname = 'Network Adapter %d' % (index + 1)
+            if net == 'default':
+                net = 'VM Network'
             nicspec = createnicspec(nicname, net)
             devconfspec.append(nicspec)
         if iso:

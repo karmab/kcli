@@ -33,7 +33,7 @@ def fetch(url, path):
 
 
 def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[],
-              enableroot=True, overrides={}, iso=True, fqdn=False, storemetadata=True, txt=False):
+              enableroot=True, overrides={}, iso=True, fqdn=False, storemetadata=True):
     """
 
     :param name:
@@ -101,8 +101,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             if netdata:
                 metadata["network-interfaces"] = netdata
             metadatafile.write(json.dumps(metadata))
-    userdatafile = '/tmp/user-data' if not txt else '/tmp/user-data.txt'
-    with open(userdatafile, 'w') as userdata:
+    with open('/tmp/user-data', 'w') as userdata:
         userdata.write('#cloud-config\nhostname: %s\n' % name)
         if fqdn:
             fqdn = "%s.%s" % (name, domain) if domain is not None else name
@@ -159,8 +158,8 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
         isocmd = 'mkisofs'
         if find_executable('genisoimage') is not None:
             isocmd = 'genisoimage'
-        os.system("%s --quiet -o /tmp/%s.ISO --volid cidata --joliet --rock %s /tmp/meta-data" % (isocmd, name,
-                                                                                                  userdatafile))
+        os.system("%s --quiet -o /tmp/%s.ISO --volid cidata --joliet --rock /tmp/user-data /tmp/meta-data" % (isocmd,
+                                                                                                              name))
 
 
 def process_files(files=[], overrides={}):
