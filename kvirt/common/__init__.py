@@ -159,8 +159,8 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
         isocmd = 'mkisofs'
         if find_executable('genisoimage') is not None:
             isocmd = 'genisoimage'
-        os.system("%s --quiet -o /tmp/%s.ISO --volid cidata --joliet --rock /tmp/user-data /tmp/meta-data" % (isocmd,
-                                                                                                              name))
+        os.system("%s --quiet -o /tmp/%s.ISO --volid cidata --joliet --rock %s /tmp/meta-data" % (isocmd, name,
+                                                                                                  userdatafile))
 
 
 def process_files(files=[], overrides={}):

@@ -7,7 +7,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from distutils.spawn import find_executable
 from kvirt import common
-from kvirt.vsphere.templates import VMTEMPLATE
+from kvirt.vsphere.helpers import HWVERSIONS, VMTEMPLATE
 from math import ceil
 from pathlib import Path
 from pyVmomi import vim, vmodl
@@ -26,6 +26,7 @@ def waitForMe(t):
         time.sleep(1)
     if t.info.state == vim.TaskInfo.State.error:
         common.pprint(t.info.error, color='red')
+        os._exit(1)
 
 
 def collectproperties(si, view, objtype, pathset=None, includemors=False):
@@ -437,6 +438,8 @@ class Ksphere:
         profileopt.key = 'profile'
         profileopt.value = profile
         confspec.extraConfig = [planopt, profileopt]
+        if nested:
+            confspec.nestedHVEnabled = True
         confspec.guestId = 'centos7_64Guest'
         vmfi = vim.vm.FileInfo()
         filename = "[" + default_pool + "]"
@@ -896,16 +899,16 @@ class Ksphere:
         """
         return None, None
 
-    def _uploadimage(self, pool, origin, verbose=False):
+    def _uploadimage(self, pool, origin, directory=None, verbose=False):
         if verbose:
             common.pprint("Uploading %s to %s" % (origin, pool))
-        name = os.path.basename(origin).split('.')[0]
+        directory = os.path.basename(origin).split('.')[0] if directory is None else directory
         si = self.conn
         rootFolder = self.rootFolder
         datastore = find(si, rootFolder, vim.Datastore, pool)
         if not datastore:
             return {'result': 'failure', 'reason': "Pool %s not found" % pool}
-        url = "https://%s:443/folder/%s/%s?dcPath=%s&dsName=%s" % (self.vcip, name, os.path.basename(origin),
+        url = "https://%s:443/folder/%s/%s?dcPath=%s&dsName=%s" % (self.vcip, directory, os.path.basename(origin),
                                                                    self.dc.name, pool)
         client_cookie = si._stub.cookie
         cookie_name = client_cookie.split("=", 1)[0]
@@ -919,7 +922,7 @@ class Ksphere:
                 requests.packages.urllib3.disable_warnings()
                 r = requests.put(url, data=f, headers=headers, cookies=cookie, verify=False)
                 if verbose:
-                    if r.status_code != 200:
+                    if r.status_code not in [200, 201]:
                         print(r.status_code, r.text)
                     else:
                         common.pprint("Successfull upload of %s to %s" % (origin, pool))
@@ -1154,7 +1157,8 @@ class Ksphere:
         if not find(si, rootFolder, vim.Datastore, pool):
             return {'result': 'failure', 'reason': "Pool %s not found" % pool}
         template_path = "/tmp/%s.vmtx" % cleanname
-        template = VMTEMPLATE.format(name=cleanname)
+        version = HWVERSIONS.get(Path(si.content.about.version).stem, 14)
+        template = VMTEMPLATE.format(name=cleanname, version=version)
         with open(template_path, 'w') as f:
             f.write(template)
         if 'rhcos' in shortimage:
@@ -1184,11 +1188,15 @@ class Ksphere:
                     image_path = '/tmp/%s' % shortimage
                     break
         if not os.path.exists("/tmp/%s.vmdk" % cleanname):
-            os.system("qemu-img convert -f qcow2 %s -O vmdk /tmp/%s.vmdk" % (image_path, cleanname))
+            # options = "-o adapter_type=lsilogic,subformat=streamOptimized,compat6"
+            # options = "-o adapter_type=lsilogic"
+            options = "-o adapter_type=lsilogic,hwversion=%s" % version
+            common.pprint("Converting image %s to vmdk" % cleanname)
+            os.system("qemu-img convert -f qcow2 %s -O vmdk %s /tmp/%s.vmdk" % (image_path, options, cleanname))
         image_path = '/tmp/%s.vmdk' % cleanname
         template_path = "/tmp/%s.vmtx" % cleanname
-        self._uploadimage(pool, image_path)
-        self._uploadimage(pool, template_path)
+        self._uploadimage(pool, image_path, verbose=True, directory=cleanname)
+        self._uploadimage(pool, template_path, verbose=True, directory=cleanname)
         template_path = "[%s]/%s/%s.vmtx" % (pool, cleanname, cleanname)
         host = self._getfirshost()
         t = vmFolder.RegisterVM_Task(template_path, shortimage, asTemplate=True, host=host)
@@ -1235,3 +1243,24 @@ class Ksphere:
             t = vm.Destroy_Task()
             waitForMe(t)
             return {'result': 'success'}
+
+    def export(self, name, template=None):
+        """
+
+        :param name:
+        :param template:
+        :return:
+        """
+        si = self.conn
+        dc = self.dc
+        vmFolder = dc.vmFolder
+        vm = findvm(si, vmFolder, name)
+        if vm is None:
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        if vm.runtime.powerState == "poweredOn":
+            t = vm.PowerOffVM_Task()
+            waitForMe(t)
+        vm.MarkAsTemplate()
+        if template is not None:
+            vm.Rename(template)
+        return {'result': 'success'}
