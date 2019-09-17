@@ -313,6 +313,7 @@ class Ksphere:
         # 4-1-CONNECT
         si = connect.SmartConnect(host=host, port=443, user=user, pwd=password, sslContext=_create_unverified_context())
         self.conn = si
+        self.si = si
         self.vcip = host
         self.rootFolder = si.content.rootFolder
         self.dc = find(si, self.rootFolder, vim.Datacenter, datacenter)
@@ -327,10 +328,10 @@ class Ksphere:
         return
 
     def close(self):
-        self.conn.content.sessionManager.Logout()
+        self.si.content.sessionManager.Logout()
 
     def exists(self, name):
-        si = self.conn
+        si = self.si
         dc = self.dc
         vmFolder = dc.vmFolder
         vm = findvm(si, vmFolder, name)
@@ -362,7 +363,7 @@ class Ksphere:
         default_pool = pool
         memory = int(memory)
         numcpus = int(numcpus)
-        si = self.conn
+        si = self.si
         dc = self.dc
         rootFolder = self.rootFolder
         if plan != 'kvirt':
@@ -370,7 +371,7 @@ class Ksphere:
             vmfolder = find(si, dc.vmFolder, vim.Folder, plan)
         else:
             vmfolder = dc.vmFolder
-        si = self.conn
+        si = self.si
         clu = find(si, rootFolder, vim.ComputeResource, self.clu)
         resourcepool = clu.resourcePool
         if template is not None:
@@ -424,7 +425,7 @@ class Ksphere:
                 cloudinitisofile = "/tmp/%s.ISO" % name
                 self._uploadimage(default_pool, cloudinitisofile, name)
                 vm = findvm(si, vmFolder, name)
-                c = changecd(self.conn, vm, cloudinitiso)
+                c = changecd(self.si, vm, cloudinitiso)
                 waitForMe(c)
         datastores = {}
         confspec = vim.vm.ConfigSpec()
@@ -587,7 +588,7 @@ class Ksphere:
         return {'result': 'success'}
 
     def start(self, name):
-        si = self.conn
+        si = self.si
         dc = self.dc
         vmFolder = dc.vmFolder
         vm = findvm(si, vmFolder, name)
@@ -599,7 +600,7 @@ class Ksphere:
         return {'result': 'success'}
 
     def stop(self, name):
-        si = self.conn
+        si = self.si
         dc = self.dc
         vmFolder = dc.vmFolder
         vm = findvm(si, vmFolder, name)
@@ -611,14 +612,14 @@ class Ksphere:
         return {'result': 'success'}
 
     def status(self, name):
-        si = self.conn
+        si = self.si
         dc = self.dc
         vmFolder = dc.vmFolder
         vm = findvm(si, vmFolder, name)
         return vm.runtime.powerState if vm is not None else ''
 
     def delete(self, name, snapshots=False):
-        si = self.conn
+        si = self.si
         dc = self.dc
         vmFolder = dc.vmFolder
         vm = findvm(si, vmFolder, name)
@@ -646,7 +647,7 @@ class Ksphere:
         return {'result': 'success'}
 
     def console(self, name, tunnel=False):
-        si = self.conn
+        si = self.si
         dc = self.dc
         vcip = self.vcip
         vmFolder = dc.vmFolder
@@ -698,7 +699,7 @@ class Ksphere:
     def info(self, name, output='plain', fields=[], values=False, vm=None):
         translation = {'poweredOff': 'down', 'poweredOn': 'up', 'suspended': 'suspended'}
         yamlinfo = {}
-        si = self.conn
+        si = self.si
         dc = self.dc
         vmFolder = dc.vmFolder
         if vm is None:
@@ -752,7 +753,7 @@ class Ksphere:
 
     def list(self):
         rootFolder = self.rootFolder
-        si = self.conn
+        si = self.si
         vms = []
         view = si.content.viewManager.CreateContainerView(rootFolder, [vim.VirtualMachine], True)
         vmlist = collectproperties(si, view=view, objtype=vim.VirtualMachine, pathset=['name'], includemors=True)
@@ -767,7 +768,7 @@ class Ksphere:
     def list_pools(self):
         pools = []
         rootFolder = self.rootFolder
-        si = self.conn
+        si = self.si
         # dc = self.dc
         clu = find(si, rootFolder, vim.ComputeResource, self.clu)
         for dts in clu.datastore:
@@ -780,7 +781,7 @@ class Ksphere:
 
     def beststorage(self):
         rootFolder = self.rootFolder
-        si = self.conn
+        si = self.si
         clu = find(si, rootFolder, vim.ComputeResource, self.clu)
         bestds = ''
         bestsize = 0
@@ -794,7 +795,7 @@ class Ksphere:
 
     def _getisos(self):
         rootFolder = self.rootFolder
-        si = self.conn
+        si = self.si
         clu = find(si, rootFolder, vim.ComputeResource, self.clu)
         isos = []
         results = {}
@@ -834,7 +835,7 @@ class Ksphere:
     def volumes(self, iso=False):
         if iso:
             return self._getisos()
-        si = self.conn
+        si = self.si
         rootFolder = self.rootFolder
         o = si.content.viewManager.CreateContainerView(rootFolder, [vim.VirtualMachine], True)
         vmlist = o.view
@@ -842,7 +843,7 @@ class Ksphere:
         return [v.name for v in vmlist if v.config.template]
 
     def update_metadata(self, name, metatype, metavalue, append=False):
-        si = self.conn
+        si = self.si
         dc = self.dc
         vmFolder = dc.vmFolder
         vm = findvm(si, vmFolder, name)
@@ -903,7 +904,7 @@ class Ksphere:
         :param iso:
         :return:
         """
-        si = self.conn
+        si = self.si
         dc = self.dc
         vmFolder = dc.vmFolder
         vm = findvm(si, vmFolder, name)
@@ -915,7 +916,7 @@ class Ksphere:
             iso = isos[0]
         if vm is None:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        c = changecd(self.conn, vm, iso)
+        c = changecd(self.si, vm, iso)
         waitForMe(c)
         return {'result': 'success'}
 
@@ -931,7 +932,7 @@ class Ksphere:
     def _uploadimage(self, pool, origin, directory, verbose=False, temp=False):
         if verbose:
             common.pprint("Uploading %s to %s/%s" % (origin, pool, directory))
-        si = self.conn
+        si = self.si
         rootFolder = self.rootFolder
         datastore = find(si, rootFolder, vim.Datastore, pool)
         if not datastore:
@@ -939,8 +940,8 @@ class Ksphere:
         destination = os.path.basename(origin)
         if temp:
             destination = "temp-%s" % destination
-        url = "https://%s:443/folder/%s/%s?dcPath=%s&dsName=%s" % (self.vcip, directory, os.path.basename(origin),
-                                                                   self.dc.name, pool)
+        url = "https://%s:443/folder/%s/%s?dcPath=%s&dsName=%s" % (self.vcip, directory, destination, self.dc.name,
+                                                                   pool)
         client_cookie = si._stub.cookie
         cookie_name = client_cookie.split("=", 1)[0]
         cookie_value = client_cookie.split("=", 1)[1].split(";", 1)[0]
@@ -1011,7 +1012,7 @@ class Ksphere:
 
     def _ssh_credentials(self, name):
         user = None
-        si = self.conn
+        si = self.si
         dc = self.dc
         vmFolder = dc.vmFolder
         vm = findvm(si, vmFolder, name)
@@ -1033,7 +1034,7 @@ class Ksphere:
         return user, ip
 
     def add_disk(self, name, size=1, pool=None, thin=True, template=None, shareable=False, existing=None):
-        si = self.conn
+        si = self.si
         dc = self.dc
         vmFolder = dc.vmFolder
         vm = findvm(si, vmFolder, name)
@@ -1066,7 +1067,7 @@ class Ksphere:
         return {'result': 'success'}
 
     def delete_disk(self, name=None, diskname=None, pool=None):
-        si = self.conn
+        si = self.si
         dc = self.dc
         vmFolder = dc.vmFolder
         vm = findvm(si, vmFolder, name)
@@ -1093,7 +1094,7 @@ class Ksphere:
         """
         if network == 'default':
             network = 'VM Network'
-        si = self.conn
+        si = self.si
         dc = self.dc
         vmFolder = dc.vmFolder
         vm = findvm(si, vmFolder, name)
@@ -1116,7 +1117,7 @@ class Ksphere:
         :param interface
         :return:
         """
-        si = self.conn
+        si = self.si
         dc = self.dc
         vmFolder = dc.vmFolder
         vm = findvm(si, vmFolder, name)
@@ -1139,7 +1140,7 @@ class Ksphere:
 
         :return:
         """
-        si = self.conn
+        si = self.si
         rootFolder = si.content.rootFolder
         networks = {}
         view = si.content.viewManager.CreateContainerView(rootFolder, [vim.dvs.DistributedVirtualPortgroup], True)
@@ -1157,6 +1158,72 @@ class Ksphere:
             cidr, dhcp, domainname, mode = '', '', '', ''
             networks[network.name] = {'cidr': cidr, 'dhcp': dhcp, 'domain': domainname, 'type': 'routed', 'mode': mode}
         return networks
+
+    def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
+        """
+
+        :param name:
+        :param cidr:
+        :param dhcp:
+        :param nat:
+        :param domain:
+        :param plan:
+        :param pxe:
+        :param vlan:
+        :return:
+        """
+        return {'result': 'failure', 'reason': "Not implemented yet..."}
+        si = self.si
+        cluster = self.clu
+        networkFolder = self.dc.networkFolder
+        rootFolder = self.rootFolder
+        net = find(si, rootFolder, vim.Network, name)
+        if net is not None:
+            return {'result': 'failure', 'reason': "Network %s already there" % name}
+        if self.distributed:
+            pnic_specs = []
+            dvs_host_configs = []
+            uplink_port_names = []
+            dvs_create_spec = vim.DistributedVirtualSwitch.CreateSpec()
+            dvs_config_spec = vim.DistributedVirtualSwitch.ConfigSpec()
+            dvs_config_spec.name = name
+            dvs_config_spec.uplinkPortPolicy = vim.DistributedVirtualSwitch.NameArrayUplinkPortPolicy()
+            for x in range(len(cluster.host)):
+                uplink_port_names.append("dvUplink%d" % x)
+            for host in cluster.host:
+                dvs_config_spec.uplinkPortPolicy.uplinkPortName = uplink_port_names
+                dvs_config_spec.maxPorts = 2000
+                pnic_spec = vim.dvs.HostMember.PnicSpec()
+                pnic_spec.pnicDevice = 'vmnic1'
+                pnic_specs.append(pnic_spec)
+                dvs_host_config = vim.dvs.HostMember.ConfigSpec()
+                dvs_host_config.operation = vim.ConfigSpecOperation.add
+                dvs_host_config.host = host
+                dvs_host_configs.append(dvs_host_config)
+                dvs_host_config.backing = vim.dvs.HostMember.PnicBacking()
+                dvs_host_config.backing.pnicSpec = pnic_specs
+                dvs_config_spec.host = dvs_host_configs
+                dvs_create_spec.configSpec = dvs_config_spec
+            dvs_create_spec.productInfo = vim.dvs.ProductSpec(version='5.1.0')
+            networkFolder.CreateDistributedVirtualSwitch()
+        return {'result': 'success'}
+
+    def delete_network(self, name=None, cidr=None):
+        """
+
+        :param name:
+        :return:
+        """
+        si = self.si
+        rootFolder = self.rootFolder
+        if self.distributed:
+            net = find(si, rootFolder, vim.dvs.DistributedVirtualPortgroup, name)
+        else:
+            net = find(si, rootFolder, vim.Network, name)
+        if net is None:
+            return {'result': 'failure', 'reason': "Network %s not found" % name}
+        net.Destroy()
+        return {'result': 'success'}
 
     def vm_ports(self, name):
         """
@@ -1177,7 +1244,7 @@ class Ksphere:
         :param size:
         :return:
         """
-        si = self.conn
+        si = self.si
         rootFolder = self.rootFolder
         vmFolder = self.dc.vmFolder
         shortimage = os.path.basename(image).split('?')[0]
@@ -1231,14 +1298,14 @@ class Ksphere:
         t = vmFolder.RegisterVM_Task(template_path, shortimage, asTemplate=True, host=host)
         waitForMe(t)
         directory = "/vmfs/volumes/%s/%s" % (self.dc.name, cleanname, cleanname)
-        cmd = 'vmkfstools -i %s/%s-temp.vmdk -d thin %s/%s.vmdk' % (directory, cleanname, directory, cleanname)
+        cmd = 'vmkfstools -i %s/temp-%s.vmdk -d thin %s/%s.vmdk' % (directory, cleanname, directory, cleanname)
         common.pprint("Attempting to ssh in %s to run:\n%s" % (host.name, cmd))
         cmd = "ssh root@%s '%s'" % (host.name, cmd)
         os.system(cmd)
         return {'result': 'success'}
 
     def _getfirshost(self):
-        si = self.conn
+        si = self.si
         rootFolder = self.rootFolder
         o = si.content.viewManager.CreateContainerView(rootFolder, [vim.HostSystem], True)
         view = o.view
@@ -1247,7 +1314,7 @@ class Ksphere:
         return host
 
     def report(self):
-        si = self.conn
+        si = self.si
         about = si.content.about
         print("Host: %s" % self.vcip)
         print("Datacenter: %s" % self.dc.name)
@@ -1269,7 +1336,7 @@ class Ksphere:
                     print("Pool: %s" % dts.name)
 
     def delete_image(self, image):
-        si = self.conn
+        si = self.si
         vmFolder = self.dc.vmFolder
         common.pprint("Deleting image %s" % image)
         vm = findvm(si, vmFolder, image)
@@ -1287,7 +1354,7 @@ class Ksphere:
         :param template:
         :return:
         """
-        si = self.conn
+        si = self.si
         dc = self.dc
         vmFolder = dc.vmFolder
         vm = findvm(si, vmFolder, name)
