@@ -1246,7 +1246,6 @@ class Ksphere:
         """
         si = self.si
         rootFolder = self.rootFolder
-        vmFolder = self.dc.vmFolder
         shortimage = os.path.basename(image).split('?')[0]
         cleanname = Path(name).stem
         if shortimage in self.volumes():
@@ -1295,13 +1294,13 @@ class Ksphere:
         self._uploadimage(pool, template_path, cleanname, verbose=True)
         template_path = "[%s]/%s/%s.vmtx" % (pool, cleanname, cleanname)
         host = self._getfirshost()
-        t = vmFolder.RegisterVM_Task(template_path, shortimage, asTemplate=True, host=host)
-        waitForMe(t)
         directory = "/vmfs/volumes/%s/%s" % (self.dc.name, cleanname, cleanname)
         cmd = 'vmkfstools -i %s/temp-%s.vmdk -d thin %s/%s.vmdk' % (directory, cleanname, directory, cleanname)
         common.pprint("Attempting to ssh in %s to run:\n%s" % (host.name, cmd))
-        cmd = "ssh root@%s '%s'" % (host.name, cmd)
-        os.system(cmd)
+        # cmd = "ssh root@%s '%s'" % (host.name, cmd)
+        # os.system(cmd)
+        # t = self.dc.vmFolder.vmFolder.RegisterVM_Task(template_path, shortimage, asTemplate=True, host=host)
+        # waitForMe(t)
         return {'result': 'success'}
 
     def _getfirshost(self):
