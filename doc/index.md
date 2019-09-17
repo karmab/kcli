@@ -5,7 +5,7 @@
 
 # About
 
-This tool is meant to interact with existing virtualization providers (libvirt, kubevirt, ovirt, openstack, gcp and aws) and to easily deploy and customize vms from cloud images.
+This tool is meant to interact with existing virtualization providers (libvirt, kubevirt, ovirt, openstack, gcp and aws, vsphere) and to easily deploy and customize vms from cloud images.
 
 You can also interact with those vms (list, info, ssh, start, stop, delete, console, serialconsole, add/delete disk, add/delete nic,...).
 
@@ -361,7 +361,6 @@ The following parameters are specific to ovirt:
 - filteruser Defaults to False. Only list vms created by own user
 - filtertag Defaults to None. Only list vms created by kcli with the corresponding filter=filtertag in their description. Useful for environments when you share the same user
 - imagerepository (Optional). A Glance image provider repository to use to retrieve images. Defaults to `ovirt-image-repository`.
-- ignitionhook Defaults to False. Whether to inject ignition data for rhcos/fcos vms by using the custom property ignitiondata, which requires the ignition hook to be installed on ovirt server side. Useful for environments which lack support for ignition through cloudinit (that is, older than ovirt 4.3.4)
 
 Note that pool in Ovirt context refers to storage domain.
 
@@ -403,6 +402,34 @@ To use this provider with kcli rpm, you'll need to install the following rpms
 - *python3-cinderclient*
 - *python3-neutronclient*
 - *python3-novaclient*
+
+
+## Vsphere
+
+```
+myvsphere:
+ type: vsphere
+ host: xxx-vcsa67.vcenter.e2e.karmalabs.com
+ user: administrator@karmalabs.com
+ password: mypassword
+ datacenter: Madrid
+ cluster: xxx
+ filtervms: true
+ pool: mysuperdatastore
+
+```
+
+The following parameters are specific to vsphere:
+
+- cluster. 
+- datacenter Defaults to Default
+- filtervms Defaults to True. Only list vms created by kcli. Useful for environments when you are superadmin and have a ton of vms!!!
+
+Note that pool in Vsphere context refers to datastore.
+
+To use this provider with kcli rpm, you'll need to install *python3-pyvmomi*
+
+Also note that in order to use kcli download on vsphere, you will need to be able to connect by ssh to your first esx server
 
 ## Fake
 
