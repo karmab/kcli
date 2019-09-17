@@ -1250,6 +1250,7 @@ class Ksphere:
         """
         si = self.si
         rootFolder = self.rootFolder
+        vmFolder = self.dc.vmFolder
         shortimage = os.path.basename(image).split('?')[0]
         cleanname = Path(name).stem
         if shortimage in self.volumes():
@@ -1289,7 +1290,8 @@ class Ksphere:
                     image_path = '/tmp/%s' % shortimage
                     break
         if not os.path.exists("/tmp/%s.vmdk" % cleanname):
-            options = "-o adapter_type=lsilogic,compat6"
+            # options = "-o adapter_type=lsilogic,compat6"
+            options = "-o adapter_type=lsilogic,subformat=streamOptimized"
             common.pprint("Converting image %s to vmdk" % cleanname)
             os.system("qemu-img convert -f qcow2 %s -O vmdk %s /tmp/%s.vmdk" % (image_path, options, cleanname))
         image_path = '/tmp/%s.vmdk' % cleanname
@@ -1298,12 +1300,12 @@ class Ksphere:
         self._uploadimage(pool, template_path, cleanname, verbose=True)
         template_path = "[%s]/%s/%s.vmtx" % (pool, cleanname, cleanname)
         host = self._getfirshost()
-        directory = "/vmfs/volumes/%s/%s" % (self.dc.name, cleanname, cleanname)
+        directory = '/vmfs/volumes/"%s"/%s' % (pool, cleanname)
         cmd = 'vmkfstools -i %s/temp-%s.vmdk -d thin %s/%s.vmdk' % (directory, cleanname, directory, cleanname)
         common.pprint("Attempting to ssh in %s to run:\n%s" % (host.name, cmd))
-        cmd = "ssh root@%s '%s'" % (host.name, cmd)
+        cmd = "ssh root@%s %s" % (host.name, cmd)
         os.system(cmd)
-        t = self.dc.vmFolder.vmFolder.RegisterVM_Task(template_path, cleanname, asTemplate=True, host=host)
+        t = vmFolder.RegisterVM_Task(template_path, shortimage, asTemplate=True, host=host)
         waitForMe(t)
         return {'result': 'success'}
 
