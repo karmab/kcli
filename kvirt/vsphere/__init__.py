@@ -712,6 +712,7 @@ class Ksphere:
         yamlinfo['cpus'] = vm.config.hardware.numCPU
         yamlinfo['memory'] = vm.config.hardware.memoryMB
         if vm.runtime.powerState == "poweredOn":
+            yamlinfo['host'] = vm.runtime.host.name
             for nic in vm.guest.net:
                 if nic.ipConfig is not None:
                     for addr in nic.ipConfig.ipAddress:
@@ -1248,6 +1249,8 @@ class Ksphere:
     def report(self):
         si = self.conn
         about = si.content.about
+        print("Host: %s" % self.vcip)
+        print("Datacenter: %s" % self.dc.name)
         print("Version: %s" % about.version)
         print("Api Version: %s" % about.apiVersion)
         print("Datacenter: %s" % self.dc.name)

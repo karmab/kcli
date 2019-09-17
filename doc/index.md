@@ -403,7 +403,6 @@ To use this provider with kcli rpm, you'll need to install the following rpms
 - *python3-neutronclient*
 - *python3-novaclient*
 
-
 ## Vsphere
 
 ```
