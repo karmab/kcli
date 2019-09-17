@@ -9,6 +9,7 @@ from distutils.spawn import find_executable
 from kvirt import common
 from kvirt.vsphere.helpers import HWVERSIONS, VMTEMPLATE
 from math import ceil
+from netaddr import IPAddress, IPNetwork
 from pathlib import Path
 from pyVmomi import vim, vmodl
 from pyVim import connect
@@ -490,7 +491,7 @@ class Ksphere:
                 currentdisk = currentdisks[index]
                 currentsize = convert(1000 * currentdisk.capacityInKB, GB=False)
                 if int(currentsize) < disksize:
-                    common.pprint("Resizing disk %d" % index)
+                    common.pprint("Waiting for template disk %s to be resized" % index)
                     currentdisk.capacityInKB = disksize * 1048576
                     diskspec = vim.vm.ConfigSpec()
                     diskspec = vim.vm.device.VirtualDeviceSpec(device=currentdisk, operation="edit")
@@ -717,7 +718,9 @@ class Ksphere:
             for nic in vm.guest.net:
                 if nic.ipConfig is not None:
                     for addr in nic.ipConfig.ipAddress:
-                        if not addr.ipAddress.startswith('192.168') and ':' not in addr.ipAddress:
+                        ip = addr.ipAddress
+                        if IPAddress(ip) not in IPNetwork("10.132.0.0/14") and not addr.ipAddress.startswith('192.168')\
+                                and ':' not in addr.ipAddress:
                             yamlinfo['ip'] = addr.ipAddress
                             break
         yamlinfo['status'] = translation[vm.runtime.powerState]
@@ -840,7 +843,8 @@ class Ksphere:
         o = si.content.viewManager.CreateContainerView(rootFolder, [vim.VirtualMachine], True)
         vmlist = o.view
         o.Destroy()
-        return [v.name for v in vmlist if v.config.template]
+        return [v.name for v in vmlist if v.config.template and v.summary is not None and
+                v.summary.runtime.connectionState != 'orphaned']
 
     def update_metadata(self, name, metatype, metavalue, append=False):
         si = self.si
@@ -1297,10 +1301,10 @@ class Ksphere:
         directory = "/vmfs/volumes/%s/%s" % (self.dc.name, cleanname, cleanname)
         cmd = 'vmkfstools -i %s/temp-%s.vmdk -d thin %s/%s.vmdk' % (directory, cleanname, directory, cleanname)
         common.pprint("Attempting to ssh in %s to run:\n%s" % (host.name, cmd))
-        # cmd = "ssh root@%s '%s'" % (host.name, cmd)
-        # os.system(cmd)
-        # t = self.dc.vmFolder.vmFolder.RegisterVM_Task(template_path, shortimage, asTemplate=True, host=host)
-        # waitForMe(t)
+        cmd = "ssh root@%s '%s'" % (host.name, cmd)
+        os.system(cmd)
+        t = self.dc.vmFolder.vmFolder.RegisterVM_Task(template_path, cleanname, asTemplate=True, host=host)
+        waitForMe(t)
         return {'result': 'success'}
 
     def _getfirshost(self):
