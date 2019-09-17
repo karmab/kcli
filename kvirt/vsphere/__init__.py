@@ -1301,7 +1301,9 @@ class Ksphere:
         template_path = "[%s]/%s/%s.vmtx" % (pool, cleanname, cleanname)
         host = self._getfirshost()
         directory = '/vmfs/volumes/"%s"/%s' % (pool, cleanname)
-        cmd = 'vmkfstools -i %s/temp-%s.vmdk -d thin %s/%s.vmdk' % (directory, cleanname, directory, cleanname)
+        cmd = 'vmkfstools -i %s/temp-%s.vmdk -d thin %s/%s.vmdk ; rm %s/temp-%s.vmdk' % (directory, cleanname,
+                                                                                         directory, cleanname,
+                                                                                         directory, cleanname)
         common.pprint("Attempting to ssh in %s to run:\n%s" % (host.name, cmd))
         cmd = "ssh root@%s %s" % (host.name, cmd)
         os.system(cmd)
