@@ -1032,7 +1032,8 @@ class Ksphere:
         ip = None
         for nic in vm.guest.net:
             for addr in nic.ipConfig.ipAddress:
-                if not addr.ipAddress.startswith('192.168') and ':' not in addr.ipAddress:
+                if IPAddress(addr.ipAddress) not in IPNetwork("10.132.0.0/14") and\
+                        not addr.ipAddress.startswith('192.168') and ':' not in addr.ipAddress:
                     ip = addr.ipAddress
                     break
         return user, ip
