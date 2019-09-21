@@ -2604,6 +2604,8 @@ class Kvirt(object):
             domainxml = "<domain name='%s'/>" % domain
         else:
             domainxml = "<domain name='%s'/>" % name
+        # bridgexml = ''
+        bridgexml = "<bridge name='%s' stp='on' delay='0'/>" % name
         metadata = """<metadata>
         <kvirt:info xmlns:kvirt="kvirt">
         <kvirt:plan>%s</kvirt:plan>
@@ -2613,10 +2615,11 @@ class Kvirt(object):
                     %s
                     %s
                     %s
+                    %s
                     <ip address='%s' netmask='%s'>
                     %s
                     </ip>
-                    </network>""" % (name, metadata, natxml, domainxml, gateway, netmask, dhcpxml)
+                    </network>""" % (name, metadata, natxml, bridgexml, domainxml, gateway, netmask, dhcpxml)
         new_net = conn.networkDefineXML(networkxml)
         new_net.setAutostart(True)
         new_net.create()
