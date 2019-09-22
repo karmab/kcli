@@ -796,6 +796,25 @@ def plan(args):
     return 0
 
 
+def render(args):
+    """Create/Delete/Stop/Start vms from plan file"""
+    # path = args.path
+    inputfile = args.inputfile
+    volumepath = args.volumepath
+    paramfile = args.paramfile
+    if os.path.exists("/i_am_a_container"):
+        inputfile = "%s/%s" % (volumepath, inputfile) if inputfile is not None else "%s/kcli_plan.yml" % volumepath
+        if paramfile is not None:
+            paramfile = "%s/%s" % (volumepath, paramfile)
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    # baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    renderfile = config.process_inputfile(plan, inputfile, overrides=overrides, onfly=False, short=True)
+    print(renderfile)
+    # baseconfig.info_plan(inputfile)
+    return 0
+
+
 def repo(args):
     """Create/Delete repo"""
     repo = args.repo
@@ -1301,6 +1320,16 @@ def cli():
                                 help='Display matching products')
     product_parser.add_argument('product', metavar='PRODUCT')
     product_parser.set_defaults(func=product)
+
+    render_info = 'Render plans or files'
+    render_parser = subparsers.add_parser('render', description=render_info, help=render_info)
+    render_parser.add_argument('-f', '--inputfile', help='Input Plan file')
+    render_parser.add_argument('-P', '--param', action='append',
+                               help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    render_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    render_parser.add_argument('-v', '--volumepath', help='Volume Path (only used with kcli container)',
+                               default='/workdir', metavar='VOLUMEPATH')
+    render_parser.set_defaults(func=render)
 
     repo_info = 'Create/Delete repos'
     repo_parser = subparsers.add_parser('repo', description=repo_info, help=repo_info)

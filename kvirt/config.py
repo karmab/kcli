@@ -1689,7 +1689,7 @@ class Kconfig(Kbaseconfig):
         else:
             return k.list_loadbalancers()
 
-    def process_inputfile(self, plan, inputfile, overrides={}, onfly=None):
+    def process_inputfile(self, plan, inputfile, overrides={}, onfly=None, short=True):
         basedir = os.path.dirname(inputfile) if os.path.dirname(inputfile) != '' else '.'
         basefile = None
         env = Environment(loader=FileSystemLoader(basedir), undefined=undefined)
@@ -1729,5 +1729,11 @@ class Kconfig(Kbaseconfig):
             except TemplateError as e:
                 common.pprint("Error rendering inputfile %s. Got: %s" % (inputfile, e.message), color='red')
                 os._exit(1)
+            if short:
+                entrieslist = entries.split('\n')
+                if 'parameters:' in entries.split('\n'):
+                    newline = entrieslist.index('') + 1
+                    entries = '\n'.join(entrieslist[newline:])
+                return entries
             entries = yaml.safe_load(entries)
         return entries, overrides, basefile, basedir
