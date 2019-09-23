@@ -486,10 +486,15 @@ def get_overrides(paramfile=None, param=[]):
                 pprint("Couldnt parse your parameters file %s. Not using it" % paramfile, color='blue')
     if param is not None:
         for x in param:
-            if len(x.split('=')) != 2:
+            print(x)
+            if len(x.split('=')) < 2:
                 continue
             else:
-                key, value = x.split('=')
+                if len(x.split('=')) == 2:
+                    key, value = x.split('=')
+                else:
+                    split = x.split('=')
+                    key, value = split[0], ''.join(split[1:])
                 if value.isdigit():
                     value = int(value)
                 elif value.lower() == 'true':
