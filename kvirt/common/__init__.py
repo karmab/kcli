@@ -486,7 +486,6 @@ def get_overrides(paramfile=None, param=[]):
                 pprint("Couldnt parse your parameters file %s. Not using it" % paramfile, color='blue')
     if param is not None:
         for x in param:
-            print(x)
             if len(x.split('=')) < 2:
                 continue
             else:
