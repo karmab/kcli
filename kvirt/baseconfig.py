@@ -19,6 +19,10 @@ from kvirt import common
 import os
 from shutil import copyfile, rmtree
 import yaml
+from jinja2 import Environment, FileSystemLoader
+from jinja2 import StrictUndefined as undefined
+from jinja2.exceptions import TemplateSyntaxError, TemplateError
+import re
 
 
 class Kbaseconfig:
@@ -267,6 +271,7 @@ class Kbaseconfig:
         self.placement = options.get('placement', self.default['placement'])
         self.yamlinventory = options.get('yamlinventory', self.default['yamlinventory'])
         self.containerclient = containerclient
+        self.overrides = {}
 
     def switch_host(self, client):
         """
@@ -623,3 +628,54 @@ class Kbaseconfig:
             parameters = self.info_plan("%s/%s" % (repodir, inputfile), quiet=True, web=web)
             if web:
                 return {'product': product, 'comments': comments, 'description': description, 'parameters': parameters}
+
+    def process_inputfile(self, plan, inputfile, overrides={}, onfly=None, full=False):
+        basedir = os.path.dirname(inputfile) if os.path.dirname(inputfile) != '' else '.'
+        basefile = None
+        env = Environment(loader=FileSystemLoader(basedir), undefined=undefined)
+        try:
+            templ = env.get_template(os.path.basename(inputfile))
+        except TemplateSyntaxError as e:
+            common.pprint("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message),
+                          color='red')
+            os._exit(1)
+        except TemplateError as e:
+            common.pprint("Error rendering file %s. Got: %s" % (inputfile, e.message), color='red')
+            os._exit(1)
+        parameters = common.get_parameters(inputfile)
+        if parameters is not None:
+            parameters = yaml.safe_load(parameters)['parameters']
+            if not isinstance(parameters, dict):
+                common.pprint("Error rendering parameters section of file %s" % inputfile, color='red')
+                os._exit(1)
+            for parameter in parameters:
+                if parameter == 'baseplan':
+                    basefile = parameters['baseplan']
+                    if onfly is not None:
+                        common.fetch("%s/%s" % (onfly, basefile), '.')
+                    baseparameters = common.get_parameters(basefile)
+                    if baseparameters is not None:
+                        baseparameters = yaml.safe_load(baseparameters)['parameters']
+                        for baseparameter in baseparameters:
+                            if baseparameter not in overrides and baseparameter not in parameters:
+                                overrides[baseparameter] = baseparameters[baseparameter]
+                elif parameter not in overrides:
+                    overrides[parameter] = parameters[parameter]
+        with open(inputfile, 'r') as entries:
+            overrides.update(self.overrides)
+            overrides.update({'plan': plan})
+            try:
+                entries = templ.render(overrides)
+            except TemplateError as e:
+                common.pprint("Error rendering inputfile %s. Got: %s" % (inputfile, e.message), color='red')
+                os._exit(1)
+            if not full:
+                entrieslist = entries.split('\n')
+                if entrieslist[0].startswith('parameters:'):
+                    for index, line in enumerate(entrieslist[1:]):
+                        if re.match(r'\S', line):
+                            entries = '\n'.join(entrieslist[index + 1:])
+                            break
+                return entries
+            entries = yaml.safe_load(entries)
+        return entries, overrides, basefile, basedir

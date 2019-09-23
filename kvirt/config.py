@@ -32,7 +32,6 @@ class Kconfig(Kbaseconfig):
     """
     def __init__(self, client=None, debug=False, quiet=False, region=None, zone=None, namespace=None):
         Kbaseconfig.__init__(self, client=client, debug=debug, quiet=quiet)
-        self.overrides = {}
         if not self.enabled:
             k = None
         else:
@@ -1068,7 +1067,7 @@ class Kconfig(Kbaseconfig):
             return {'result': 'success'}
         baseentries = {}
         entries, overrides, basefile, basedir = self.process_inputfile(plan, inputfile, overrides=overrides,
-                                                                       onfly=onfly)
+                                                                       onfly=onfly, full=True)
         if self.type == 'fake':
             fakeentries = {key: entries[key] for key in entries if key != 'parameters'}
             plandir = "/tmp/%s" % plan
@@ -1079,7 +1078,7 @@ class Kconfig(Kbaseconfig):
                 fakestuff = pretty_print(fakeentries, value=True)
                 f.write(fakestuff)
         if basefile is not None:
-            baseinfo = self.process_inputfile(plan, basefile, overrides=overrides)
+            baseinfo = self.process_inputfile(plan, basefile, overrides=overrides, full=True)
             baseentries, baseoverrides = baseinfo[0], baseinfo[1]
             if baseoverrides:
                 overrides.update({key: baseoverrides[key] for key in baseoverrides if key not in overrides})
@@ -1239,7 +1238,7 @@ class Kconfig(Kbaseconfig):
                     appendkeys = ['disks', 'nets', 'files', 'scripts', 'cmds']
                     if 'baseplan' in profile:
                         basevm = profile['basevm'] if 'basevm' in profile else name
-                        baseinfo = self.process_inputfile(plan, profile['baseplan'], overrides=overrides)
+                        baseinfo = self.process_inputfile(plan, profile['baseplan'], overrides=overrides, full=True)
                         baseprofile = baseinfo[0][basevm]
                         currentplandir = baseinfo[3]
                     elif 'basevm' in profile and profile['basevm'] in baseentries:
@@ -1688,52 +1687,3 @@ class Kconfig(Kbaseconfig):
             return results
         else:
             return k.list_loadbalancers()
-
-    def process_inputfile(self, plan, inputfile, overrides={}, onfly=None, short=True):
-        basedir = os.path.dirname(inputfile) if os.path.dirname(inputfile) != '' else '.'
-        basefile = None
-        env = Environment(loader=FileSystemLoader(basedir), undefined=undefined)
-        try:
-            templ = env.get_template(os.path.basename(inputfile))
-        except TemplateSyntaxError as e:
-            common.pprint("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message),
-                          color='red')
-            os._exit(1)
-        except TemplateError as e:
-            common.pprint("Error rendering file %s. Got: %s" % (inputfile, e.message), color='red')
-            os._exit(1)
-        parameters = common.get_parameters(inputfile)
-        if parameters is not None:
-            parameters = yaml.safe_load(parameters)['parameters']
-            if not isinstance(parameters, dict):
-                common.pprint("Error rendering parameters section of file %s" % inputfile, color='red')
-                os._exit(1)
-            for parameter in parameters:
-                if parameter == 'baseplan':
-                    basefile = parameters['baseplan']
-                    if onfly is not None:
-                        common.fetch("%s/%s" % (onfly, basefile), '.')
-                    baseparameters = common.get_parameters(basefile)
-                    if baseparameters is not None:
-                        baseparameters = yaml.safe_load(baseparameters)['parameters']
-                        for baseparameter in baseparameters:
-                            if baseparameter not in overrides and baseparameter not in parameters:
-                                overrides[baseparameter] = baseparameters[baseparameter]
-                elif parameter not in overrides:
-                    overrides[parameter] = parameters[parameter]
-        with open(inputfile, 'r') as entries:
-            overrides.update(self.overrides)
-            overrides.update({'plan': plan})
-            try:
-                entries = templ.render(overrides)
-            except TemplateError as e:
-                common.pprint("Error rendering inputfile %s. Got: %s" % (inputfile, e.message), color='red')
-                os._exit(1)
-            if short:
-                entrieslist = entries.split('\n')
-                if 'parameters:' in entries.split('\n'):
-                    newline = entrieslist.index('') + 1
-                    entries = '\n'.join(entrieslist[newline:])
-                return entries
-            entries = yaml.safe_load(entries)
-        return entries, overrides, basefile, basedir

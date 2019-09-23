@@ -338,9 +338,12 @@ class Kvirt(object):
             else:
                 return {'result': 'failure', 'reason': "Invalid disk entry"}
             letter = chr(index + ord('a'))
-            diskdev, diskbus = 'vd%s' % letter, 'virtio'
-            if diskinterface != 'virtio':
+            if diskinterface == 'ide':
                 diskdev, diskbus = 'hd%s' % letter, 'ide'
+            elif diskinterface == 'scsi':
+                diskdev, diskbus = 'sd%s' % letter, 'scsi'
+            else:
+                diskdev, diskbus = 'vd%s' % letter, 'virtio'
             diskformat = 'qcow2'
             if not diskthin:
                 diskformat = 'raw'

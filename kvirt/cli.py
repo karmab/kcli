@@ -798,7 +798,6 @@ def plan(args):
 
 def render(args):
     """Create/Delete/Stop/Start vms from plan file"""
-    # path = args.path
     inputfile = args.inputfile
     volumepath = args.volumepath
     paramfile = args.paramfile
@@ -807,11 +806,9 @@ def render(args):
         if paramfile is not None:
             paramfile = "%s/%s" % (volumepath, paramfile)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
-    # baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    renderfile = config.process_inputfile(plan, inputfile, overrides=overrides, onfly=False, short=True)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    renderfile = baseconfig.process_inputfile(plan, inputfile, overrides=overrides, onfly=False)
     print(renderfile)
-    # baseconfig.info_plan(inputfile)
     return 0
 
 
