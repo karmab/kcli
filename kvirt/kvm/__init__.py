@@ -2601,6 +2601,8 @@ class Kvirt(object):
             dhcpxml = ''
         if nat:
             natxml = "<forward mode='nat'><nat><port start='1024' end='65535'/></nat></forward>"
+        elif dhcp:
+            natxml = "<forward mode='route'></forward>"
         else:
             natxml = ''
         if domain is not None:
