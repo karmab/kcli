@@ -2008,28 +2008,32 @@ class Kvirt(object):
         conn = self.conn
         diskformat = 'qcow2'
         if size < 1:
-            print("Incorrect size.Leaving...")
-            return
+            common.pprint("Incorrect disk size for disk %s" % name, color='red')
+            return None
         if not thin:
             diskformat = 'raw'
-        if pool is not None:
-            if '/' in pool:
-                pools = [p for p in conn.listStoragePools() if self.get_pool_path(p) == pool]
-                if not pools:
-                    print("Pool not found. Leaving....")
-                    return
-                else:
-                    pool = pools[0]
-            pool = conn.storagePoolLookupByName(pool)
-            poolxml = pool.XMLDesc(0)
-            poolroot = ET.fromstring(poolxml)
-            pooltype = list(poolroot.getiterator('pool'))[0].get('type')
-            for element in list(poolroot.getiterator('path')):
-                poolpath = element.text
-                break
+        if pool is None:
+            common.pprint("Missing Pool for disk %s" % name, color='red')
+            return None
+        elif '/' in pool:
+            pools = [p for p in conn.listStoragePools() if self.get_pool_path(p) == pool]
+            if not pools:
+                common.pprint("Pool not found for disk %s" % name, color='red')
+                return None
+            else:
+                pool = pools[0]
         else:
-            print("Pool not found. Leaving....")
-            return
+            try:
+                pool = conn.storagePoolLookupByName(pool)
+            except:
+                common.pprint("Pool %s not found for disk %s" % (pool, name), color='red')
+                return None
+        poolxml = pool.XMLDesc(0)
+        poolroot = ET.fromstring(poolxml)
+        pooltype = list(poolroot.getiterator('pool'))[0].get('type')
+        for element in list(poolroot.getiterator('path')):
+            poolpath = element.text
+            break
         if template is not None:
             volumes = {}
             for p in conn.listStoragePools():
@@ -2037,7 +2041,8 @@ class Kvirt(object):
                 for vol in poo.listAllVolumes():
                     volumes[vol.name()] = vol.path()
             if template not in volumes and template not in list(volumes.values()):
-                print("Invalid template %s.Leaving..." % template)
+                common.pprint("Invalid template %s for disk %s" % (template, name), color='red')
+                return None
             if template in volumes:
                 template = volumes[template]
         pool.refresh(0)
@@ -2074,11 +2079,16 @@ class Kvirt(object):
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
         except:
-            print("VM %s not found" % name)
+            common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         currentdisk = 0
+        diskpaths = []
         for element in list(root.getiterator('disk')):
             disktype = element.get('device')
+            imagefiles = [element.find('source').get('file'), element.find('source').get('dev'),
+                          element.find('source').get('volume')]
+            path = next(item for item in imagefiles if item is not None)
+            diskpaths.append(path)
             if disktype == 'cdrom':
                 continue
             currentdisk = currentdisk + 1
@@ -2087,6 +2097,9 @@ class Kvirt(object):
         if existing is None:
             storagename = "%s_%d.img" % (name, diskindex)
             diskpath = self.create_disk(name=storagename, size=size, pool=pool, thin=thin, template=template)
+        elif existing in diskpaths:
+            common.pprint("Disk %s already in VM %s" % (existing, name), color='blue')
+            return {'result': 'success'}
         else:
             diskpath = existing
         diskxml = self._xmldisk(diskpath=diskpath, diskdev=diskdev, diskbus=diskbus, diskformat=diskformat,
@@ -2095,7 +2108,6 @@ class Kvirt(object):
             vm.attachDeviceFlags(diskxml, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
         else:
             vm.attachDeviceFlags(diskxml, VIR_DOMAIN_AFFECT_CONFIG)
-        # vm.attachDevice(diskxml)
         vm = conn.lookupByName(name)
         vmxml = vm.XMLDesc(0)
         conn.defineXML(vmxml)

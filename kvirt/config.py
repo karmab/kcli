@@ -1406,18 +1406,25 @@ class Kconfig(Kbaseconfig):
                 common.pprint("Missing or Incorrect Key Vms for disk section %s. Not creating it..." % disk,
                               color='red')
                 continue
+            shareable = True if len(vms) > 1 else False
             if k.disk_exists(pool, disk):
-                common.pprint("Disk %s skipped!" % disk, color='blue')
-                continue
-            if len(vms) > 1:
-                shareable = True
+                common.pprint("Creation for Disk %s skipped!" % disk, color='blue')
+                poolpath = k.get_pool_path(pool)
+                newdisk = "%s/%s" % (poolpath, disk)
+                for vm in vms:
+                    common.pprint("Adding disk %s to %s" % (disk, vm))
+                    k.add_disk(name=vm, size=size, pool=pool, template=template, shareable=shareable, existing=newdisk,
+                               thin=False)
             else:
-                shareable = False
-            newdisk = k.create_disk(disk, size=size, pool=pool, template=template, thin=False)
-            common.pprint("Disk %s deployed!" % disk)
-            for vm in vms:
-                k.add_disk(name=vm, size=size, pool=pool, template=template, shareable=shareable, existing=newdisk,
-                           thin=False)
+                newdisk = k.create_disk(disk, size=size, pool=pool, template=template, thin=False)
+                if newdisk is None:
+                    common.pprint("Disk %s not deployed. It won't be added to any vm" % disk, color='red')
+                else:
+                    common.pprint("Disk %s deployed!" % disk)
+                    for vm in vms:
+                        common.pprint("Adding disk %s to %s" % (disk, vm))
+                        k.add_disk(name=vm, size=size, pool=pool, template=template, shareable=shareable,
+                                   existing=newdisk, thin=False)
         if containerentries:
             cont = Kcontainerconfig(self, client=self.containerclient).cont
             common.pprint("Deploying Containers...")
