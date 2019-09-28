@@ -231,7 +231,7 @@ class Kfake(object):
             vms.append(self.info(name))
         return sorted(vms, key=lambda x: x['name'])
 
-    def console(self, name, tunnel=False):
+    def console(self, name, tunnel=False, web=False):
         """
 
         :param name:

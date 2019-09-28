@@ -525,7 +525,7 @@ class KOvirt(object):
             vms.append(self.info(vm.name, vm=vm))
         return sorted(vms, key=lambda x: x['name'])
 
-    def console(self, name, tunnel=False):
+    def console(self, name, tunnel=False, web=False):
         """
 
         :param name:
@@ -607,6 +607,8 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         if connectiondetails is None:
             common.pprint("Couldn't retrieve connection details for %s" % name)
             os._exit(1)
+        if web:
+            return "%s://%s:%s+%s" % (c.protocol, address, sport if c.protocol == 'spice' else port, ticket.value)
         with open("/tmp/console.vv", "w") as f:
             f.write(connectiondetails)
         os.popen("remote-viewer /tmp/console.vv &")

@@ -533,7 +533,7 @@ class Kubevirt(Kubecommon):
             vms.append(self.info(name, vm=vm))
         return sorted(vms, key=lambda x: x['name'])
 
-    def console(self, name, tunnel=False):
+    def console(self, name, tunnel=False, web=False):
         """
 
         :param name:

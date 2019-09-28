@@ -10,7 +10,7 @@ OPENSTACK = ['python-cinderclient', 'python-neutronclient', 'python-glanceclient
              'python-novaclient']
 OVIRT = ['ovirt-engine-sdk-python']
 VSPHERE = ['pyvmomi']
-ALL = ['docker>=2.0'] + ['podman'] + AWS + GCP + KUBEVIRT + OPENSTACK + OVIRT + VSPHERE
+ALL = ['docker>=2.0'] + ['podman'] + ['websockify'] + AWS + GCP + KUBEVIRT + OPENSTACK + OVIRT + VSPHERE
 
 description = 'Provisioner/Manager for Libvirt/Ovirt/Gcp/Aws/Openstack/Kubevirt and containers'
 long_description = description

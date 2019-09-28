@@ -995,7 +995,7 @@ class Kvirt(object):
             vms.append(self.info(vm.name(), vm=vm))
         return sorted(vms, key=lambda x: x['name'])
 
-    def console(self, name, tunnel=False):
+    def console(self, name, tunnel=False, web=False):
         """
 
         :param name:
@@ -1030,6 +1030,8 @@ class Kvirt(object):
                     consolecommand += "ssh %s -o LogLevel=QUIET -f -p %s -L %s:127.0.0.1:%s %s@%s sleep 10;"\
                         % (self.identitycommand, self.port, localport, port, self.user, self.host)
                 url = "%s://%s:%s" % (protocol, host, localport)
+                if web:
+                    return url
                 consolecommand += "remote-viewer %s &" % url
                 if self.debug or os.path.exists("/i_am_a_container"):
                     print(consolecommand)

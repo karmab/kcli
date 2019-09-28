@@ -504,7 +504,7 @@ class Kgcp(object):
             vms.append(self.info(vm['name'], vm=vm))
         return sorted(vms, key=lambda x: x['name'])
 
-    def console(self, name, tunnel=False):
+    def console(self, name, tunnel=False, web=False):
         """
 
         :param name:
@@ -518,6 +518,8 @@ class Kgcp(object):
         projectnumber = projectinfo['projectNumber']
         url = "%s/zones/%s/instances/%s?authuser=1&hl=en_US&projectNumber=%s" % (project, zone, name, projectnumber)
         url = "https://ssh.cloud.google.com/projects/%s" % url
+        if web:
+            return url
         if self.debug or os.path.exists("/i_am_a_container"):
             common.pprint("Opening url %s" % url)
         webbrowser.open(url, new=2, autoraise=True)

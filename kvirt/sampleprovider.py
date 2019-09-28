@@ -180,7 +180,7 @@ class Kbase(object):
         print("not implemented")
         return []
 
-    def console(self, name, tunnel=False):
+    def console(self, name, tunnel=False, web=False):
         """
 
         :param name:

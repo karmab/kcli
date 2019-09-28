@@ -374,7 +374,7 @@ class Kopenstack(object):
             vms.append(self.info(vm.name, vm=vm))
         return sorted(vms, key=lambda x: x['name'])
 
-    def console(self, name, tunnel=False):
+    def console(self, name, tunnel=False, web=False):
         """
 
         :param name:
@@ -390,6 +390,8 @@ class Kopenstack(object):
         url = vm.get_vnc_console('novnc')['console']['url']
         if self.debug:
             print(url)
+        if web:
+            return url
         webbrowser.open(url, new=2, autoraise=True)
         return
 

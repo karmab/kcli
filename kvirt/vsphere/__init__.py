@@ -647,7 +647,7 @@ class Ksphere:
                 planfolder.Destroy()
         return {'result': 'success'}
 
-    def console(self, name, tunnel=False):
+    def console(self, name, tunnel=False, web=False):
         si = self.si
         dc = self.dc
         vcip = self.vcip
@@ -671,7 +671,10 @@ class Ksphere:
                 continue
         if vncfound:
             host = vm.runtime.host.name
-            consolecommand = "remote-viewer vnc://%s:%s &" % (host, vncport)
+            url = "vnc://%s:%s" % (host, vncport)
+            consolecommand = "remote-viewer %s &" % (url)
+            if web:
+                return url
             if self.debug or os.path.exists("/i_am_a_container"):
                 print(consolecommand)
             if not os.path.exists("/i_am_a_container"):
@@ -695,6 +698,8 @@ class Ksphere:
             vmurl = "https://%s/ui/webconsole.html?" % vcip
             vmurl += "vmId=%s&vmName=%s&serverGuid=%s&host=%s&sessionTicket=%s&thumbprint=%s" % (vmid, name, sgid, fqdn,
                                                                                                  session, sha1)
+            if web:
+                return vmurl
             webbrowser.open(vmurl, new=2, autoraise=True)
 
     def info(self, name, output='plain', fields=[], values=False, vm=None):

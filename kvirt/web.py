@@ -1,13 +1,15 @@
 #!/usr/bin/python
 # coding=utf-8
 
-from flask import Flask, render_template, request, jsonify
+from distutils.spawn import find_executable
+from flask import Flask, render_template, request, jsonify, redirect, Response
 from kvirt.config import Kconfig
-from kvirt.common import print_info
+from kvirt.common import print_info, get_free_port
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.defaults import TEMPLATES
 from kvirt import nameutils
 import os
+from time import sleep
 
 app = Flask(__name__)
 try:
@@ -829,6 +831,43 @@ def containerprofiles():
     """
     config = Kconfig()
     return render_template('containerprofiles.html', title='ContainerProfiles', client=config.client)
+
+
+@app.route('/vmconsole/<string:name>')
+def vmconsole(name):
+    """
+    Get url for console
+    """
+    config = Kconfig()
+    k = config.k
+    password = ''
+    scheme = 'ws://'
+    if find_executable('websockify') is None:
+        return Response(status=404)
+    consoleurl = k.console(name, web=True)
+    if consoleurl.startswith('spice') or consoleurl.startswith('vnc'):
+        protocol = 'spice' if consoleurl.startswith('spice') else 'vnc'
+        websocketport = get_free_port()
+        host, port = consoleurl.replace('%s://' % protocol, '').split(':')
+        websocketcommand = "websockify %s -D --idle-timeout=30 %s:%s" % (websocketport, host, port)
+        if config.type == 'ovirt':
+            port, password = port.split('+')
+            if protocol == 'spice':
+                scheme = 'wss://'
+                cert = config.k.ca_file
+                websocketcommand = "websockify %s -D --idle-timeout=30 --cert %s --ssl-target %s:%s" % (websocketport,
+                                                                                                        cert, host,
+                                                                                                        port)
+            else:
+                websocketcommand = "websockify %s -D --idle-timeout=30 %s:%s" % (websocketport, host, port)
+        os.popen(websocketcommand)
+        sleep(5)
+        return render_template('%s.html' % protocol, title='Vm console', port=websocketport, password=password,
+                               scheme=scheme)
+    elif consoleurl is not None:
+        return redirect(consoleurl)
+    else:
+        return Response(status=404)
 
 
 def run():

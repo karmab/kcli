@@ -287,7 +287,7 @@ class Kforeman(object):
             vms.append(self.info(name, vm=vm))
         return vms
 
-    def console(self, name, tunnel=False):
+    def console(self, name, tunnel=False, web=False):
         """
 
         :param name:
