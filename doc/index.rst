@@ -142,13 +142,13 @@ is needed.
 On most distributions, default network and storage pool are already
 defined.
 
-You can add an additional storage pool with:
+If needed, you can add an additional storage pool with:
 
 .. code:: shell
 
     kcli pool  -p /var/lib/libvirt/images default
 
-You can also create a default network:
+You can create a default network:
 
 .. code:: shell
 
@@ -166,12 +166,14 @@ manually create. It will contain:
    to look at them when connecting to a remote kvm hpervisor, virtual
    machine or when injecting your public key.
 
-For instance, here ’s a sample ``~/.kcli/config.yml``
+For instance, here’s a sample ``~/.kcli/config.yml`` with two
+hypervisors:
 
 .. code:: yaml
 
     default:
      client: mycli
+     pool: default
      numcpus: 2
      memory: 1024
      disks:
@@ -196,8 +198,10 @@ the default, client or profile section (or in a plan file). You can find
 a fully detailed config.yml sample
 `here <https://github.com/karmab/kcli/tree/master/samples/config.yml>`__
 
-Alternatively, you can generate this settings file (for tweaking or to
-add remote hypervisors):
+Bootstrap
+=========
+
+You can generate the settings file with all parameters commented with:
 
 .. code:: shell
 
@@ -209,27 +213,6 @@ pool with a path, and have centos cloud image downloaded
 .. code:: shell
 
     kcli bootstrap -n host1 -H 192.168.0.6 --pool default --poolpath /var/lib/libvirt/images
-
-Storing secrets
-===============
-
-You can hide your secrets in *~/.kcli/config.yml* by replacing any value
-by *?secret*. You can then place the real value in *~/.kcli/secrets.yml*
-by using the same yaml hierarchy.
-
-For instance, if you have the following in your config file:
-
-::
-
-    xxx:
-     password: ?secret
-
-You would then put the real password in your secrets file this way:
-
-::
-
-    xxx:
-     password: mypassword
 
 Provider specifics
 ==================
@@ -524,6 +507,27 @@ generate the cloudinit scripts)
 
     fake:
      type: fake
+
+Storing secrets
+===============
+
+You can hide your secrets in *~/.kcli/config.yml* by replacing any value
+by *?secret*. You can then place the real value in *~/.kcli/secrets.yml*
+by using the same yaml hierarchy.
+
+For instance, if you have the following in your config file:
+
+::
+
+    xxx:
+     password: ?secret
+
+You would then put the real password in your secrets file this way:
+
+::
+
+    xxx:
+     password: mypassword
 
 Usage
 =====

@@ -118,13 +118,13 @@ If you only want to use your local libvirt, *no specific configuration* is neede
 
 On most distributions, default network and storage pool are already defined.
 
-You can add an additional storage pool with:
+If needed, you can add an additional storage pool with:
 
 ```Shell
 kcli pool  -p /var/lib/libvirt/images default
 ```
 
-You can also create a default network:
+You can create a default network:
 
 ```Shell
 kcli network  -c 192.168.122.0/24 default
@@ -136,11 +136,12 @@ kcli configuration is done in ~/.kcli directory, that you need to manually creat
 - profiles.yml stores your profiles where you combine things like memory, numcpus and all supported parameters into named profiles to create vms from.
 - id_rsa/id_rsa.pub/id_dsa/id_dsa.pub You can store your default public and private keys in *.kcli* directory which will be the first place to look at them when connecting to a remote kvm hpervisor, virtual machine or when injecting your public key.
 
-For instance, here 's a sample `~/.kcli/config.yml`
+For instance, here's a sample `~/.kcli/config.yml` with two hypervisors:
 
 ```YAML
 default:
  client: mycli
+ pool: default
  numcpus: 2
  memory: 1024
  disks:
@@ -163,7 +164,9 @@ Replace with your own client in default section and indicate host and protocol i
 Most of the parameters are actually optional, and can be overridden in the default, client or profile section (or in a plan file).
 You can find a fully detailed config.yml sample [here](https://github.com/karmab/kcli/tree/master/samples/config.yml)
 
-Alternatively, you can generate this settings file (for tweaking or to add remote hypervisors):
+# Bootstrap
+
+You can generate the settings file with all parameters commented with:
     
 ```Shell
 kcli bootstrap
@@ -173,24 +176,6 @@ And for advanced bootstrapping, you can specify a target name, host, a pool with
 
 ```Shell
 kcli bootstrap -n host1 -H 192.168.0.6 --pool default --poolpath /var/lib/libvirt/images
-```
-
-# Storing secrets
-
-You can hide your secrets in *~/.kcli/config.yml* by replacing any value by *?secret*. You can then place the real value in *~/.kcli/secrets.yml* by using the same yaml hierarchy.
-
-For instance, if you have the following in your config file:
-
-```
-xxx:
- password: ?secret
-```
-
-You would then put the real password in your secrets file this way:
-
-```
-xxx:
- password: mypassword
 ```
 
 # Provider specifics
@@ -438,6 +423,25 @@ you can also use a fake provider to get a feel of how kcli works (or to generate
 fake:
  type: fake
 ```
+
+# Storing secrets
+
+You can hide your secrets in *~/.kcli/config.yml* by replacing any value by *?secret*. You can then place the real value in *~/.kcli/secrets.yml* by using the same yaml hierarchy.
+
+For instance, if you have the following in your config file:
+
+```
+xxx:
+ password: ?secret
+```
+
+You would then put the real password in your secrets file this way:
+
+```
+xxx:
+ password: mypassword
+```
+
 
 # Usage
 
