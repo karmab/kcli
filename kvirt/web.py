@@ -88,8 +88,8 @@ def vmprofilestable():
     """
     retrieves vm profiles in table
     """
-    config = Kconfig()
-    profiles = config.list_profiles()
+    baseconfig = Kbaseconfig()
+    profiles = baseconfig.list_profiles()
     return render_template('vmprofilestable.html', profiles=profiles)
 
 
@@ -99,8 +99,8 @@ def vmprofiles():
 
     :return:
     """
-    config = Kconfig()
-    return render_template('vmprofiles.html', title='VmProfiles', client=config.client)
+    baseconfig = Kbaseconfig()
+    return render_template('vmprofiles.html', title='VmProfiles', client=baseconfig.client)
 
 
 @app.route("/diskaction", methods=['POST'])
@@ -166,9 +166,9 @@ def containercreate():
     """
     create container
     """
-    config = Kconfig()
-    profiles = config.list_containerprofiles()
-    return render_template('containercreate.html', title='CreateContainer', profiles=profiles, client=config.client)
+    baseconfig = Kbaseconfig()
+    profiles = baseconfig.list_containerprofiles()
+    return render_template('containercreate.html', title='CreateContainer', profiles=profiles, client=baseconfig.client)
 
 
 # POOLS
@@ -819,8 +819,8 @@ def containerprofilestable():
     """
     retrieves container profiles in table
     """
-    config = Kconfig()
-    profiles = config.list_containerprofiles()
+    baseconfig = Kbaseconfig()
+    profiles = baseconfig.list_containerprofiles()
     return render_template('containerprofilestable.html', profiles=profiles)
 
 
@@ -829,8 +829,8 @@ def containerprofiles():
     """
     retrieves all containerprofiles
     """
-    config = Kconfig()
-    return render_template('containerprofiles.html', title='ContainerProfiles', client=config.client)
+    baseconfig = Kbaseconfig()
+    return render_template('containerprofiles.html', title='ContainerProfiles', client=baseconfig.client)
 
 
 @app.route('/vmconsole/<string:name>')

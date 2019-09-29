@@ -274,6 +274,38 @@ def _list(args):
             products.add_row([repo, group, name, description, numvms, memory])
         print(products)
         return
+    elif profiles:
+        baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+        if containers:
+            profiles = baseconfig.list_containerprofiles()
+            if short:
+                profilestable = PrettyTable(["Profile"])
+                for profile in sorted(profiles):
+                    profilename = profile[0]
+                    profilestable.add_row([profilename])
+            else:
+                profilestable = PrettyTable(["Profile", "Image", "Nets", "Ports", "Volumes", "Cmd"])
+                for profile in sorted(profiles):
+                        profilestable.add_row(profile)
+            profilestable.align["Profile"] = "l"
+            print(profilestable)
+        else:
+            profiles = baseconfig.list_profiles()
+            if short:
+                profilestable = PrettyTable(["Profile"])
+                for profile in sorted(profiles):
+                    profilename = profile[0]
+                    profilestable.add_row([profilename])
+            else:
+                profilestable = PrettyTable(["Profile", "Flavor",
+                                             "Pool", "Disks", "Template",
+                                             "Nets", "Cloudinit", "Nested",
+                                             "Reservedns", "Reservehost"])
+                for profile in sorted(profiles):
+                        profilestable.add_row(profile)
+            profilestable.align["Profile"] = "l"
+            print(profilestable)
+        return
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.client != 'all':
         k = config.k
@@ -332,37 +364,6 @@ def _list(args):
                 subnetstable.add_row([subnet, az, cidr, network])
         subnetstable.align["Network"] = "l"
         print(subnetstable)
-        return
-    elif profiles:
-        if containers:
-            profiles = config.list_containerprofiles()
-            if short:
-                profilestable = PrettyTable(["Profile"])
-                for profile in sorted(profiles):
-                    profilename = profile[0]
-                    profilestable.add_row([profilename])
-            else:
-                profilestable = PrettyTable(["Profile", "Image", "Nets", "Ports", "Volumes", "Cmd"])
-                for profile in sorted(profiles):
-                        profilestable.add_row(profile)
-            profilestable.align["Profile"] = "l"
-            print(profilestable)
-        else:
-            profiles = config.list_profiles()
-            if short:
-                profilestable = PrettyTable(["Profile"])
-                for profile in sorted(profiles):
-                    profilename = profile[0]
-                    profilestable.add_row([profilename])
-            else:
-                profilestable = PrettyTable(["Profile", "Flavor",
-                                             "Pool", "Disks", "Template",
-                                             "Nets", "Cloudinit", "Nested",
-                                             "Reservedns", "Reservehost"])
-                for profile in sorted(profiles):
-                        profilestable.add_row(profile)
-            profilestable.align["Profile"] = "l"
-            print(profilestable)
         return
     elif flavors:
         flavors = k.flavors()
