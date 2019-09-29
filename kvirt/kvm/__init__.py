@@ -1031,6 +1031,8 @@ class Kvirt(object):
                         % (self.identitycommand, self.port, localport, port, self.user, self.host)
                 url = "%s://%s:%s" % (protocol, host, localport)
                 if web:
+                    if tunnel:
+                        os.popen(consolecommand)
                     return url
                 consolecommand += "remote-viewer %s &" % url
                 if self.debug or os.path.exists("/i_am_a_container"):

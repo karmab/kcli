@@ -53,8 +53,8 @@ def vms():
 
     :return:
     """
-    config = Kconfig()
-    return render_template('vms.html', title='Home', client=config.client)
+    baseconfig = Kbaseconfig()
+    return render_template('vms.html', title='Home', client=baseconfig.client)
 
 
 @app.route('/vmcreate')
@@ -844,22 +844,22 @@ def vmconsole(name):
     scheme = 'ws://'
     if find_executable('websockify') is None:
         return Response(status=404)
-    consoleurl = k.console(name, web=True)
+    consoleurl = k.console(name, tunnel=config.tunnel, web=True)
     if consoleurl.startswith('spice') or consoleurl.startswith('vnc'):
         protocol = 'spice' if consoleurl.startswith('spice') else 'vnc'
         websocketport = get_free_port()
         host, port = consoleurl.replace('%s://' % protocol, '').split(':')
-        websocketcommand = "websockify %s -D --idle-timeout=30 %s:%s" % (websocketport, host, port)
+        websocketcommand = "websockify %s -vD --idle-timeout=30 %s:%s" % (websocketport, host, port)
         if config.type == 'ovirt':
             port, password = port.split('+')
             if protocol == 'spice':
                 scheme = 'wss://'
                 cert = config.k.ca_file
-                websocketcommand = "websockify %s -D --idle-timeout=30 --cert %s --ssl-target %s:%s" % (websocketport,
-                                                                                                        cert, host,
-                                                                                                        port)
+                websocketcommand = "websockify %s -vD --idle-timeout=30 --cert %s --ssl-target %s:%s" % (websocketport,
+                                                                                                         cert, host,
+                                                                                                         port)
             else:
-                websocketcommand = "websockify %s -D --idle-timeout=30 %s:%s" % (websocketport, host, port)
+                websocketcommand = "websockify %s -vD --idle-timeout=30 %s:%s" % (websocketport, host, port)
         os.popen(websocketcommand)
         sleep(5)
         return render_template('%s.html' % protocol, title='Vm console', port=websocketport, password=password,
