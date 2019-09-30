@@ -6,7 +6,7 @@ from flask import Flask, render_template, request, jsonify, redirect, Response
 from kvirt.config import Kconfig
 from kvirt.common import print_info, get_free_port
 from kvirt.baseconfig import Kbaseconfig
-from kvirt.defaults import TEMPLATES
+from kvirt.defaults import TEMPLATES, WEBSOCKIFYCERT
 from kvirt import nameutils
 import os
 from time import sleep
@@ -853,8 +853,11 @@ def vmconsole(name):
         if config.type == 'ovirt':
             port, password = port.split('+')
             if protocol == 'spice':
-                scheme = 'wss://'
-                cert = config.k.ca_file
+                scheme = 'ws://'
+                cert = os.path.expanduser('~/.kcli/websockify.pem')
+                if not os.path.exists(cert):
+                    with open(cert, 'w') as f:
+                        f.write(WEBSOCKIFYCERT)
                 websocketcommand = "websockify %s -vD --idle-timeout=30 --cert %s --ssl-target %s:%s" % (websocketport,
                                                                                                          cert, host,
                                                                                                          port)

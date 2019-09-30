@@ -608,7 +608,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             common.pprint("Couldn't retrieve connection details for %s" % name)
             os._exit(1)
         if web:
-            return "%s://%s:%s+%s" % (c.protocol, address, sport if c.protocol == 'spice' else port, ticket.value)
+            return "%s://%s:%s+%s" % (c.protocol, address, sport if str(c.protocol) == 'spice' else port, ticket.value)
         with open("/tmp/console.vv", "w") as f:
             f.write(connectiondetails)
         os.popen("remote-viewer /tmp/console.vv &")
