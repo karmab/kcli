@@ -4,14 +4,14 @@
 Kubevirt Provider Class
 """
 
-# import base64
+from distutils.spawn import find_executable
 from kubernetes import client
+# from kubernetes.stream import stream
 from kvirt.kubecommon import Kubecommon
 from netaddr import IPAddress
 from kvirt import common
 from kvirt.defaults import TEMPLATES
 import datetime
-from distutils.spawn import find_executable
 import os
 import time
 import yaml
@@ -540,31 +540,40 @@ class Kubevirt(Kubecommon):
         :param tunnel:
         :return:
         """
+        if find_executable('kubectl') is None:
+            common.pprint("kubectl is currently required for this functionality", color='red')
+            return
         crds = self.crds
+        core = self.core
         namespace = self.namespace
         try:
-            crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachineinstances', name)
+            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachineinstances', name)
         except:
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        if find_executable('virtctl') is not None:
-            common.pprint("Using local virtctl")
-            command = "virtctl vnc %s -n %s --insecure-skip-tls-verify" % (name, namespace)
-        else:
-            common.pprint("Tunneling virtctl through remote host %s. Make sure virtctl and remote-viewer are \
-                          installed there" % self.host,
-                          color='blue')
-            command = "ssh -o LogLevel=QUIET -Xt %s@%s virtctl vnc %s -n %s --insecure-skip-tls-verify" % (self.user,
-                                                                                                           self.host,
-                                                                                                           name,
-                                                                                                           namespace)
-        if self.token is not None:
-            command += " -s https://%s:%s --token %s" % (self.host, self.port, self.token)
-        else:
-            command += " --context %s" % (self.contextname)
-        if self.debug:
-            print(command)
-        os.system(command)
+        uid = vm.get("metadata")['uid']
+        for pod in core.list_namespaced_pod(namespace).items:
+            if pod.metadata.name.startswith("virt-launcher-%s-" % name) and pod.metadata.labels['app'] == name:
+                podname = pod.metadata.name
+                localport = common.get_free_port()
+                break
+        # exe = ['/bin/sh', '-c', 'socat -d -d TCP4-LISTEN:%s,fork UNIX-CONNECT:/var/run/kubevirt-private/%s/virt-vnc'
+        #       % (localport, uid)]
+        # stream(core.connect_get_namespaced_pod_exec, podname, namespace, command=exe, stderr=True, stdin=False,
+        #       stdout=True, tty=True, _preload_content=False)
+        socatcmd = "kubectl exec -n %s %s -- /bin/sh -c 'socat "\
+            "TCP4-LISTEN:%s,fork UNIX-CONNECT:/var/run/kubevirt-private/%s/virt-vnc' &" % (namespace, podname,
+                                                                                           localport, uid)
+        os.system(socatcmd)
+        # stream(core.connect_post_namespaced_pod_portforward, podname, namespace, ports=localport,
+        # _preload_content=False)
+        forwardcmd = "kubectl port-forward %s %s:%s &" % (podname, localport, localport)
+        os.system(forwardcmd)
+        time.sleep(15)
+        if web:
+            return "vnc://127.0.0.1:%s" % localport
+        consolecommand = "remote-viewer vnc://127.0.0.1:%s &" % localport
+        os.system(consolecommand)
         return
 
     def serialconsole(self, name):
@@ -573,30 +582,33 @@ class Kubevirt(Kubecommon):
         :param name:
         :return:
         """
+        if find_executable('kubectl') is None:
+            common.pprint("kubectl is currently required for this functionality", color='red')
+            return
         crds = self.crds
+        core = self.core
         namespace = self.namespace
         try:
-            crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachineinstances', name)
+            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachineinstances', name)
         except:
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        if find_executable('virtctl') is not None:
-            common.pprint("Using local virtctl")
-            command = "virtctl console %s -n %s --insecure-skip-tls-verify" % (name, namespace)
-        else:
-            common.pprint("Tunneling virtctl through remote host %s. Make sure virtctl is installed there" % self.host,
-                          color='blue')
-            command = "ssh -o LogLevel=QUIET -t %s@%s virtctl console %s -n %s --insecure-skip-tls-verify" % (self.user,
-                                                                                                              self.host,
-                                                                                                              name,
-                                                                                                              namespace)
-        if self.token is not None:
-            command += " -s https://%s:%s --token %s" % (self.host, self.port, self.token)
-        else:
-            command += " --context %s" % (self.contextname)
-        if self.debug:
-            print(command)
-        os.system(command)
+        uid = vm.get("metadata")['uid']
+        for pod in core.list_namespaced_pod(namespace).items:
+            if pod.metadata.name.startswith("virt-launcher-%s-" % name) and pod.metadata.labels['app'] == name:
+                podname = pod.metadata.name
+                localport = common.get_free_port()
+                break
+        socatcmd = "kubectl exec -n %s %s -- /bin/sh -c 'socat "\
+            "TCP4-LISTEN:%s,fork UNIX-CONNECT:/var/run/kubevirt-private/%s/virt-serial0' &" % (namespace, podname,
+                                                                                               localport, uid)
+        os.system(socatcmd)
+        forwardcmd = "kubectl port-forward %s %s:%s &" % (podname, localport, localport)
+        os.system(forwardcmd)
+        time.sleep(12)
+        consolecommand = "nc 127.0.0.1 %s" % localport
+        # common.pprint("Press enter to get serial console", color='blue')
+        os.system(consolecommand)
         return
 
     def dnsinfo(self, name):

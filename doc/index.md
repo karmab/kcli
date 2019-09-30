@@ -315,7 +315,7 @@ on openshift, you can simply use
 oc whoami -t
 ```
 
-*virtctl* is a hard requirement for consoles. If present on your local machine, this will be used. otherwise, it s expected that the host node has it installed.
+*kubectl* is currently a hard requirement for consoles
 
 To use this provider with kcli rpm, you'll need to install *python3-kubernetes* rpm
 
