@@ -362,6 +362,12 @@ pip3 install ovirt-engine-sdk-python
 
 On rhel, set PYCURL_SSL_LIBRARY to nss instead
 
+If you install manually from pip, you might need to install pycurl manually with the following line (and get openssl-dev headers)
+
+```
+pip install --no-cache-dir --global-option=build_ext --global-option="-L/usr/local/opt/openssl/lib" --global-option="-I/usr/local/opt/openssl/include"  pycurl
+```
+
 ## Openstack
 
 ```
