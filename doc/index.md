@@ -980,15 +980,7 @@ kcli product YOUR_PRODUCT
 
 You can run the container on those platforms and either use the web interface or log in the pod to run `kcli` commandline
 
-On kubernetes:
-
-```
-kubectl create configmap kcli-config --from-file=~/.kcli
-kubectl create configmap ssh-config --from-file=~/.ssh
-kubectl create -f https://raw.githubusercontent.com/karmab/kcli/master/extras/k8sdeploy.yml
-```
-
-On openshift, you'll need to run those extra commands:
+On openshift, you'll need to run first those extra commands:
 
 ```
 oc new-project kcli
@@ -996,9 +988,15 @@ oc adm policy add-scc-to-user anyuid system:serviceaccount:kcli:default
 oc expose svc kcli
 ```
 
-On the web interface, you won't be able to switch to a different provider. You would have to modify the configmap to point to a different provider and recreate the pod
+Then:
 
-Alternatively, look at [https://github.com/karmab/kcli-controller](https://github.com/karmab/kcli-controller) for a controller handling machines crds and creating vms with kcli/kvirt library
+```
+kubectl create configmap kcli-config --from-file=~/.kcli
+kubectl create configmap ssh-config --from-file=~/.ssh
+kubectl create -f https://raw.githubusercontent.com/karmab/kcli/master/extras/k8sdeploy.yml
+```
+
+Alternatively, look at [https://github.com/karmab/kcli-controller](https://github.com/karmab/kcli-controller) for a controller/operator handling vms and plans as crds and creating the corresponding assets with kcli/kvirt library.
 
 ## Testing
 

@@ -17,7 +17,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             SHAREDFOLDERS, KERNEL, INITRD, CMDLINE, PLACEMENT, YAMLINVENTORY)
 from kvirt import common
 import os
-from shutil import copyfile, rmtree
+from shutil import copyfile, copytree, rmtree
 import yaml
 from jinja2 import Environment, FileSystemLoader
 from jinja2 import StrictUndefined as undefined
@@ -30,8 +30,13 @@ class Kbaseconfig:
 
     """
     def __init__(self, client=None, containerclient=None, debug=False, quiet=False):
-        inifile = "%s/.kcli/config.yml" % os.environ.get('HOME')
-        secretsfile = "%s/.kcli/secrets.yml" % os.environ.get('HOME')
+        homedir = os.environ.get('HOME')
+        cmdir = "%s/.kcli_cm" % homedir
+        kclidir = "%s/.kcli" % homedir
+        if os.path.isdir(cmdir) and not os.path.isdir(kclidir):
+            copytree(cmdir, kclidir)
+        inifile = "%s/.kcli/config.yml" % homedir
+        secretsfile = "%s/.kcli/secrets.yml" % homedir
         if not os.path.exists(secretsfile):
             secrets = {}
         else:
@@ -88,8 +93,8 @@ class Kbaseconfig:
         if client != 'all':
             if "fake" not in self.ini:
                 self.ini["fake"] = {"type": "fake"}
-            if "kubevirt" not in self.ini and (os.path.exists(os.path.expanduser('~/.kube')) or
-                                               'KUBECONFIG' in os.environ):
+            if "kubevirt" not in self.ini\
+                    and (os.path.exists(os.path.expanduser('~/.kube')) or 'KUBECONFIG' in os.environ):
                 self.ini['kubevirt'] = {'type': 'kubevirt'}
         self.clients = [e for e in self.ini if e != 'default']
         defaults = {}
@@ -581,25 +586,21 @@ class Kbaseconfig:
         """Info product"""
         if repo is not None and group is not None:
             products = [product for product in self.list_products
-                        if product['name'] == name and
-                        product['repo'] == repo and
-                        product['group'] == group]
+                        if product['name'] == name and product['repo'] == repo and product['group'] == group]
         elif repo is not None:
             products = [product for product in self.list_products()
                         if product['name'] == name and product['repo'] == repo]
         if group is not None:
             products = [product for product in self.list_products()
-                        if product['name'] == name and
-                        product['group'] == group]
+                        if product['name'] == name and product['group'] == group]
         else:
-            products = [product for product in self.list_products()
-                        if product['name'] == name]
+            products = [product for product in self.list_products() if product['name'] == name]
         if len(products) == 0:
-                    common.pprint("Product not found. Leaving...", color='red')
-                    os._exit(1)
+            common.pprint("Product not found. Leaving...", color='red')
+            os._exit(1)
         elif len(products) > 1:
-                    common.pprint("Product found in several places. Specify repo or group", color='red')
-                    os._exit(1)
+            common.pprint("Product found in several places. Specify repo or group", color='red')
+            os._exit(1)
         else:
             product = products[0]
             repo = product['repo']
@@ -690,68 +691,68 @@ class Kbaseconfig:
         results = []
         for profile in [p for p in self.profiles if 'base' not in self.profiles[p]] + [p for p in self.profiles
                                                                                        if 'base' in self.profiles[p]]:
-                info = self.profiles[profile]
-                if 'base' in info:
-                    father = self.profiles[info['base']]
-                    default_numcpus = father.get('numcpus', default['numcpus'])
-                    default_memory = father.get('memory', default['memory'])
-                    default_pool = father.get('pool', default['pool'])
-                    default_disks = father.get('disks', default['disks'])
-                    default_nets = father.get('nets', default['nets'])
-                    default_template = father.get('template', '')
-                    default_cloudinit = father.get('cloudinit', default['cloudinit'])
-                    default_nested = father.get('nested', default['nested'])
-                    default_reservedns = father.get('reservedns', default['reservedns'])
-                    default_reservehost = father.get('reservehost', default['reservehost'])
-                    default_flavor = father.get('flavor', default['flavor'])
-                else:
-                    default_numcpus = default['numcpus']
-                    default_memory = default['memory']
-                    default_pool = default['pool']
-                    default_disks = default['disks']
-                    default_nets = default['nets']
-                    default_template = ''
-                    default_cloudinit = default['cloudinit']
-                    default_nested = default['nested']
-                    default_reservedns = default['reservedns']
-                    default_reservehost = default['reservehost']
-                    default_flavor = default['flavor']
-                profiletype = info.get('type', '')
-                if profiletype == 'container':
-                    continue
-                numcpus = info.get('numcpus', default_numcpus)
-                memory = info.get('memory', default_memory)
-                pool = info.get('pool', default_pool)
-                diskinfo = []
-                disks = info.get('disks', default_disks)
-                for disk in disks:
-                    if disk is None:
-                        size = default_disksize
-                    elif isinstance(disk, int):
-                        size = str(disk)
-                    elif isinstance(disk, dict):
-                        size = str(disk.get('size', default_disksize))
-                    diskinfo.append(size)
-                diskinfo = ','.join(diskinfo)
-                netinfo = []
-                nets = info.get('nets', default_nets)
-                for net in nets:
-                    if isinstance(net, str):
-                        netname = net
-                    elif isinstance(net, dict) and 'name' in net:
-                        netname = net['name']
-                    netinfo.append(netname)
-                netinfo = ','.join(netinfo)
-                template = info.get('template', default_template)
-                cloudinit = info.get('cloudinit', default_cloudinit)
-                nested = info.get('nested', default_nested)
-                reservedns = info.get('reservedns', default_reservedns)
-                reservehost = info.get('reservehost', default_reservehost)
-                flavor = info.get('flavor', default_flavor)
-                if flavor is None:
-                    flavor = "%scpus %sMb ram" % (numcpus, memory)
-                results.append([profile, flavor, pool, diskinfo, template, netinfo, cloudinit, nested,
-                                reservedns, reservehost])
+            info = self.profiles[profile]
+            if 'base' in info:
+                father = self.profiles[info['base']]
+                default_numcpus = father.get('numcpus', default['numcpus'])
+                default_memory = father.get('memory', default['memory'])
+                default_pool = father.get('pool', default['pool'])
+                default_disks = father.get('disks', default['disks'])
+                default_nets = father.get('nets', default['nets'])
+                default_template = father.get('template', '')
+                default_cloudinit = father.get('cloudinit', default['cloudinit'])
+                default_nested = father.get('nested', default['nested'])
+                default_reservedns = father.get('reservedns', default['reservedns'])
+                default_reservehost = father.get('reservehost', default['reservehost'])
+                default_flavor = father.get('flavor', default['flavor'])
+            else:
+                default_numcpus = default['numcpus']
+                default_memory = default['memory']
+                default_pool = default['pool']
+                default_disks = default['disks']
+                default_nets = default['nets']
+                default_template = ''
+                default_cloudinit = default['cloudinit']
+                default_nested = default['nested']
+                default_reservedns = default['reservedns']
+                default_reservehost = default['reservehost']
+                default_flavor = default['flavor']
+            profiletype = info.get('type', '')
+            if profiletype == 'container':
+                continue
+            numcpus = info.get('numcpus', default_numcpus)
+            memory = info.get('memory', default_memory)
+            pool = info.get('pool', default_pool)
+            diskinfo = []
+            disks = info.get('disks', default_disks)
+            for disk in disks:
+                if disk is None:
+                    size = default_disksize
+                elif isinstance(disk, int):
+                    size = str(disk)
+                elif isinstance(disk, dict):
+                    size = str(disk.get('size', default_disksize))
+                diskinfo.append(size)
+            diskinfo = ','.join(diskinfo)
+            netinfo = []
+            nets = info.get('nets', default_nets)
+            for net in nets:
+                if isinstance(net, str):
+                    netname = net
+                elif isinstance(net, dict) and 'name' in net:
+                    netname = net['name']
+                netinfo.append(netname)
+            netinfo = ','.join(netinfo)
+            template = info.get('template', default_template)
+            cloudinit = info.get('cloudinit', default_cloudinit)
+            nested = info.get('nested', default_nested)
+            reservedns = info.get('reservedns', default_reservedns)
+            reservehost = info.get('reservehost', default_reservehost)
+            flavor = info.get('flavor', default_flavor)
+            if flavor is None:
+                flavor = "%scpus %sMb ram" % (numcpus, memory)
+            results.append([profile, flavor, pool, diskinfo, template, netinfo, cloudinit, nested,
+                            reservedns, reservehost])
         return sorted(results, key=lambda x: x[0])
 
     def list_flavors(self):
@@ -776,15 +777,15 @@ class Kbaseconfig:
         """
         results = []
         for profile in sorted(self.profiles):
-                info = self.profiles[profile]
-                if 'type' not in info or info['type'] != 'container':
-                    continue
-                else:
-                    image = next((e for e in [info.get('image'), info.get('template')] if e is not None), '')
-                    nets = info.get('nets', '')
-                    ports = info.get('ports', '')
-                    volumes = next((e for e in [info.get('volumes'), info.get('disks')] if e is not None), '')
-                    # environment = profile.get('environment', '')
-                    cmd = info.get('cmd', '')
-                    results.append([profile, image, nets, ports, volumes, cmd])
+            info = self.profiles[profile]
+            if 'type' not in info or info['type'] != 'container':
+                continue
+            else:
+                image = next((e for e in [info.get('image'), info.get('template')] if e is not None), '')
+                nets = info.get('nets', '')
+                ports = info.get('ports', '')
+                volumes = next((e for e in [info.get('volumes'), info.get('disks')] if e is not None), '')
+                # environment = profile.get('environment', '')
+                cmd = info.get('cmd', '')
+                results.append([profile, image, nets, ports, volumes, cmd])
         return results

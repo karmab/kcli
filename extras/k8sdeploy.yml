@@ -23,7 +23,7 @@ spec:
         - containerPort: 9000
           protocol: TCP
         volumeMounts:
-        - mountPath: /root/.kcli
+        - mountPath: /root/.kcli_cm
           name: kcli-config
         - mountPath: /root/.ssh
           name: ssh-config
