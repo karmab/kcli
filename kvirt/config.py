@@ -636,12 +636,12 @@ class Kconfig(Kbaseconfig):
         vms = {}
         plans = []
         for vm in sorted(k.list(), key=lambda x: x.get('plan', 'kvirt')):
-                vmname = vm['name']
-                plan = vm.get('plan')
-                if plan in vms:
-                    vms[plan].append(vmname)
-                else:
-                    vms[plan] = [vmname]
+            vmname = vm['name']
+            plan = vm.get('plan')
+            if plan in vms:
+                vms[plan].append(vmname)
+            else:
+                vms[plan] = [vmname]
         for plan in sorted(vms):
             planvms = ','.join(vms[plan])
             plans.append([plan, planvms])
@@ -661,15 +661,15 @@ class Kconfig(Kbaseconfig):
         else:
             products = [product for product in self.list_products() if product['name'] == name]
         if len(products) == 0:
-                    common.pprint("Product not found. Leaving...", color='red')
-                    os._exit(1)
+            common.pprint("Product not found. Leaving...", color='red')
+            os._exit(1)
         elif len(products) > 1:
-                    common.pprint("Product found in several repos or groups. Specify one...", color='red')
-                    for product in products:
-                        group = product['group']
-                        repo = product['repo']
-                        print("repo:%s\tgroup:%s" % (repo, group))
-                    os._exit(1)
+            common.pprint("Product found in several repos or groups. Specify one...", color='red')
+            for product in products:
+                group = product['group']
+                repo = product['repo']
+                print("repo:%s\tgroup:%s" % (repo, group))
+            os._exit(1)
         else:
             product = products[0]
             plan = nameutils.get_random_name() if plan is None else plan
@@ -805,8 +805,8 @@ class Kconfig(Kbaseconfig):
             if found:
                 common.pprint("Plan %s deleted!" % plan)
             else:
-                common.pprint("Nothing to do for plan %s" % plan, color='red')
-                os._exit(1)
+                common.pprint("Nothing to do for plan %s" % plan, color='blue')
+                return {'result': 'success'}
             return {'result': 'success', 'deletedvm': deletedvms}
         if autostart:
             common.pprint("Set vms from plan %s to autostart" % plan)
@@ -991,8 +991,7 @@ class Kconfig(Kbaseconfig):
         poolentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'pool']
         planentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'plan']
         dnsentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'dns']
-        lbentries = [entry for entry in entries if 'type' in entries[entry] and
-                     entries[entry]['type'] == 'loadbalancer']
+        lbs = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'loadbalancer']
         for p in profileentries:
             vmprofiles[p] = entries[p]
         if planentries:
@@ -1403,24 +1402,24 @@ class Kconfig(Kbaseconfig):
                         vms.append(name)
                 ansibleutils.make_plan_inventory(vms_to_host, plan, vms, yamlinventory=self.yamlinventory)
                 return
-        if lbentries:
-                common.pprint("Deploying Loadbalancers...")
-                for index, lbentry in enumerate(lbentries):
-                    details = entries[lbentry]
-                    ports = details.get('ports', [])
-                    if not ports:
-                        common.pprint("Missing Ports for loadbalancer. Not creating it...", color='red')
-                        return
-                    checkpath = details.get('checkpath', '/')
-                    checkport = details.get('checkport', 80)
-                    alias = details.get('alias', [])
-                    domain = details.get('domain')
-                    lbvms = details.get('vms', [])
-                    lbnets = details.get('nets', ['default'])
-                    internal = details.get('internal')
-                    self.handle_loadbalancer(lbentry, nets=lbnets, ports=ports, checkpath=checkpath, vms=lbvms,
-                                             domain=domain, plan=plan, checkport=checkport, alias=alias,
-                                             internal=internal)
+        if lbs:
+            common.pprint("Deploying Loadbalancers...")
+            for index, lbentry in enumerate(lbs):
+                details = entries[lbentry]
+                ports = details.get('ports', [])
+                if not ports:
+                    common.pprint("Missing Ports for loadbalancer. Not creating it...", color='red')
+                    return
+                checkpath = details.get('checkpath', '/')
+                checkport = details.get('checkport', 80)
+                alias = details.get('alias', [])
+                domain = details.get('domain')
+                lbvms = details.get('vms', [])
+                lbnets = details.get('nets', ['default'])
+                internal = details.get('internal')
+                self.handle_loadbalancer(lbentry, nets=lbnets, ports=ports, checkpath=checkpath, vms=lbvms,
+                                         domain=domain, plan=plan, checkport=checkport, alias=alias,
+                                         internal=internal)
         returndata = {'result': 'success', 'plan': plan}
         if newvms:
             returndata['newvms'] = newvms
@@ -1526,7 +1525,7 @@ class Kconfig(Kbaseconfig):
                     elif n.split('/')[-1] == template:
                         url = n
                 if url is None:
-                        return {'result': 'failure', 'reason': "template not in default list"}
+                    return {'result': 'failure', 'reason': "template not in default list"}
                 if not url.endswith('qcow2') and not url.endswith('img') and not url.endswith('qc2'):
                     if 'web' in sys.argv[0]:
                         return {'result': 'failure', 'reason': "Missing url"}
