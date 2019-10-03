@@ -42,7 +42,7 @@ setup(
     entry_points='''
         [console_scripts]
         kcli=kvirt.cli:cli
-        k=kvirt.newcli:cli
+        kcliexp=kvirt.expcli:cli
         kweb=kvirt.web:run
     ''',
 )

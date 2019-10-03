@@ -228,21 +228,33 @@ def info(args):
             print(common.print_info(data, output=output, fields=fields, values=values, pretty=True))
 
 
-def host(args):
-    """Handle host"""
-    enable = args.enable
-    disable = args.disable
-    sync = args.sync
-    if enable:
-        baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-        result = baseconfig.enable_host(enable)
-    elif disable:
-        baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-        result = baseconfig.disable_host(disable)
+def hostenable(args):
+    """Enable host"""
+    host = args.host
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    result = baseconfig.enable_host(host)
+    if result['result'] == 'success':
+        os._exit(0)
     else:
-        config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
-                         namespace=args.namespace)
-        result = config.handle_host(sync=sync)
+        os._exit(1)
+
+
+def hostdisable(args):
+    """Disable host"""
+    host = args.host
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    result = baseconfig.disable_host(host)
+    if result['result'] == 'success':
+        os._exit(0)
+    else:
+        os._exit(1)
+
+
+def hostsync(args):
+    """Handle host"""
+    hosts = args.hosts
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    result = config.handle_host(sync=hosts)
     if result['result'] == 'success':
         os._exit(0)
     else:
@@ -661,22 +673,13 @@ def update(args):
 
 
 def disk(args):
-    """Add/Delete disk of vm"""
+    """Add disk to vm"""
     name = args.name
-    delete = args.delete
     size = args.size
-    diskname = args.diskname
     template = args.template
     pool = args.pool
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
-    if delete:
-        if diskname is None:
-            common.pprint("Missing diskname. Leaving...", color='red')
-            os._exit(1)
-        common.pprint("Deleting disk %s" % diskname)
-        k.delete_disk(name=name, diskname=diskname, pool=pool)
-        return
     if size is None:
         common.pprint("Missing size. Leaving...", color='red')
         os._exit(1)
@@ -688,6 +691,21 @@ def disk(args):
         os._exit(1)
     common.pprint("Adding disk to %s..." % name)
     k.add_disk(name=name, size=size, pool=pool, template=template)
+
+
+def diskd(args):
+    """Delete disk of vm"""
+    name = args.name
+    diskname = args.diskname
+    pool = args.pool
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    k = config.k
+    if diskname is None:
+        common.pprint("Missing diskname. Leaving...", color='red')
+        os._exit(1)
+    common.pprint("Deleting disk %s" % diskname)
+    k.delete_disk(name=name, diskname=diskname, pool=pool)
+    return
 
 
 def dns(args):
@@ -733,21 +751,36 @@ def export(args):
 
 
 def lb(args):
-    """Create/Delete loadbalancer"""
+    """Create loadbalancer"""
     checkpath = args.checkpath
     checkport = args.checkport
-    yes = args.yes
-    delete = args.delete
     ports = args.ports
     domain = args.domain
     internal = args.internal
     vms = args.vms.split(',') if args.vms is not None else []
     ports = args.ports.split(',') if args.ports is not None else []
     name = nameutils.get_random_name().replace('_', '-') if args.name is None else args.name
-    if delete and not yes:
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config.handle_loadbalancer(name, ports=ports, checkpath=checkpath, vms=vms, domain=domain, checkport=checkport,
+                               internal=internal)
+    return 0
+
+
+def lbd(args):
+    """Delete loadbalancer"""
+    checkpath = args.checkpath
+    checkport = args.checkport
+    yes = args.yes
+    ports = args.ports
+    domain = args.domain
+    internal = args.internal
+    vms = args.vms.split(',') if args.vms is not None else []
+    ports = args.ports.split(',') if args.ports is not None else []
+    name = nameutils.get_random_name().replace('_', '-') if args.name is None else args.name
+    if not yes:
         common.confirm("Are you sure?")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.handle_loadbalancer(name, ports=ports, checkpath=checkpath, vms=vms, delete=delete, domain=domain,
+    config.handle_loadbalancer(name, ports=ports, checkpath=checkpath, vms=vms, delete=True, domain=domain,
                                checkport=checkport, internal=internal)
     return 0
 
@@ -859,9 +892,8 @@ def render(args):
 
 
 def repo(args):
-    """Create/Delete repo"""
+    """Create/Update repo"""
     repo = args.repo
-    delete = args.delete
     url = args.url
     update = args.update
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
@@ -879,10 +911,6 @@ def repo(args):
     if repo is None:
         common.pprint("Missing repo. Leaving...", color='red')
         os._exit(1)
-    if delete:
-        common.pprint("Deleting repo %s..." % repo)
-        baseconfig.delete_repo(repo)
-        return
     if update:
         common.pprint("Updating repo %s..." % repo)
         baseconfig.delete_repo(repo)
@@ -895,7 +923,31 @@ def repo(args):
     return 0
 
 
-def product(args):
+def repod(args):
+    """Delete repo"""
+    repo = args.repo
+    update = args.update
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    if update:
+        if repo is None:
+            common.pprint("Updating all repos...", color='blue')
+            repos = baseconfig.list_repos()
+            for repo in repos:
+                common.pprint("Updating repo %s..." % repo)
+                baseconfig.update_repo(repo)
+        else:
+            common.pprint("Updating repo %s..." % repo)
+            baseconfig.update_repo(repo)
+        return
+    if repo is None:
+        common.pprint("Missing repo. Leaving...", color='red')
+        os._exit(1)
+    common.pprint("Deleting repo %s..." % repo)
+    baseconfig.delete_repo(repo)
+    return
+
+
+def productcreate(args):
     """Create product"""
     repo = args.repo
     product = args.product
@@ -1208,15 +1260,20 @@ def cli():
     deletec_parser.add_argument('names', metavar='VMNAMES', nargs='*')
     deletec_parser.set_defaults(func=deletec)
 
-    disk_info = 'Add/Delete disk of vm'
-    disk_parser = subparsers.add_parser('disk', description=disk_info, help=disk_info)
-    disk_parser.add_argument('-d', '--delete', action='store_true')
+    disk_info = 'Add disk to vm'
+    disk_parser = subparsers.add_parser('vmdiskadd', description=disk_info, help=disk_info)
     disk_parser.add_argument('-s', '--size', type=int, help='Size of the disk to add, in GB', metavar='SIZE')
-    disk_parser.add_argument('-n', '--diskname', help='Name or Path of the disk, when deleting', metavar='DISKNAME')
     disk_parser.add_argument('-t', '--template', help='Name or Path of a Template, when adding', metavar='TEMPLATE')
     disk_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
     disk_parser.add_argument('name', metavar='VMNAME', nargs='?')
     disk_parser.set_defaults(func=disk)
+
+    diskd_info = 'Delete disk to vm'
+    diskd_parser = subparsers.add_parser('vmdiskdelete', description=disk_info, help=diskd_info)
+    diskd_parser.add_argument('-n', '--diskname', help='Name or Path of the disk, when deleting', metavar='DISKNAME')
+    diskd_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
+    diskd_parser.add_argument('name', metavar='VMNAME', nargs='?')
+    diskd_parser.set_defaults(func=diskd)
 
     dns_info = 'Create dns entries'
     dns_parser = subparsers.add_parser('dnscreate', description=dns_info, help=dns_info)
@@ -1241,14 +1298,20 @@ def cli():
                                  default='', help=download_help, nargs='*', metavar='')
     download_parser.set_defaults(func=download)
 
-    host_info = 'List and Handle host'
-    host_parser = subparsers.add_parser('host', description=host_info, help=host_info)
-    host_parser.add_argument('-d', '--disable', help='Disable indicated client', metavar='CLIENT')
-    host_parser.add_argument('-e', '--enable', help='Enable indicated client', metavar='CLIENT')
-    host_parser.add_argument('-s', '--sync', action='store_true',
-                             help='sync templates between first host and other'
-                             'ones of the specified list')
-    host_parser.set_defaults(func=host)
+    hoste_info = 'Enable host'
+    hoste_parser = subparsers.add_parser('hostenable', description=hoste_info, help=hoste_info)
+    hoste_parser.add_argument('host', metavar='HOST', nargs='?')
+    hoste_parser.set_defaults(func=hostenable)
+
+    hostd_info = 'Disable host'
+    hostd_parser = subparsers.add_parser('hostdisable', description=hostd_info, help=hostd_info)
+    hostd_parser.add_argument('host', metavar='HOST', nargs='?')
+    hostd_parser.set_defaults(func=hostdisable)
+
+    hosts_info = 'Sync host'
+    hosts_parser = subparsers.add_parser('hostsync', description=hosts_info, help=hosts_info)
+    hosts_parser.add_argument('hosts', help='HOSTS', nargs='*')
+    hosts_parser.set_defaults(func=hostsync)
 
     info_info = 'Info vms'
     info_parser = subparsers.add_parser('vminfo', description=info_info, help=info_info)
@@ -1267,18 +1330,29 @@ def cli():
     export_parser.add_argument('names', metavar='VMNAMES', nargs='*')
     export_parser.set_defaults(func=export)
 
-    lb_info = 'Create/Delete loadbalancer'
-    lb_parser = subparsers.add_parser('lb', description=lb_info, help=lb_info)
+    lb_info = 'Create loadbalancer'
+    lb_parser = subparsers.add_parser('lbcreate', description=lb_info, help=lb_info)
     lb_parser.add_argument('--checkpath', default='/index.html', help="Path to check. Defaults to /index.html")
     lb_parser.add_argument('--checkport', default=80, help="Port to check. Defaults to 80")
-    lb_parser.add_argument('-d', '--delete', action='store_true')
     lb_parser.add_argument('--domain', help='Domain to create a dns entry associated to the load balancer')
     lb_parser.add_argument('-i', '--internal', action='store_true')
     lb_parser.add_argument('-p', '--ports', default='443', help='Load Balancer Ports. Defaults to 443')
     lb_parser.add_argument('-v', '--vms', help='Vms to add to the pool')
-    lb_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     lb_parser.add_argument('name', metavar='NAME', nargs='?')
     lb_parser.set_defaults(func=lb)
+
+    lbd_info = 'Delete loadbalancer'
+    lbd_parser = subparsers.add_parser('lbdelete', description=lbd_info, help=lbd_info)
+    lbd_parser.add_argument('--checkpath', default='/index.html', help="Path to check. Defaults to /index.html")
+    lbd_parser.add_argument('--checkport', default=80, help="Port to check. Defaults to 80")
+    lbd_parser.add_argument('-d', '--delete', action='store_true')
+    lbd_parser.add_argument('--domain', help='Domain to create a dns entry associated to the load balancer')
+    lbd_parser.add_argument('-i', '--internal', action='store_true')
+    lbd_parser.add_argument('-p', '--ports', default='443', help='Load Balancer Ports. Defaults to 443')
+    lbd_parser.add_argument('-v', '--vms', help='Vms to add to the pool')
+    lbd_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    lbd_parser.add_argument('name', metavar='NAME', nargs='?')
+    lbd_parser.set_defaults(func=lbd)
 
     list_info = 'List hosts, profiles, flavors, templates, isos,...'
     list_parser = subparsers.add_parser('list', description=list_info, help=list_info)
@@ -1377,7 +1451,7 @@ def cli():
     poold_parser.set_defaults(func=poold)
 
     product_info = 'Deploy Product'
-    product_parser = subparsers.add_parser('product', description=product_info, help=product_info)
+    product_parser = subparsers.add_parser('productcreate', description=product_info, help=product_info)
     product_parser.add_argument('-g', '--group', help='Group to use as a name during deployment', metavar='GROUP')
     product_parser.add_argument('-i', '--info', action='store_true', help='Provide information on the given product')
     product_parser.add_argument('-l', '--latest', action='store_true', help='Grab latest version of the plans')
@@ -1392,7 +1466,7 @@ def cli():
     product_parser.add_argument('-s', '--search', action='store_true',
                                 help='Display matching products')
     product_parser.add_argument('product', metavar='PRODUCT')
-    product_parser.set_defaults(func=product)
+    product_parser.set_defaults(func=productcreate)
 
     render_info = 'Render plans or files'
     render_parser = subparsers.add_parser('planrender', description=render_info, help=render_info)
@@ -1404,16 +1478,21 @@ def cli():
                                default='/workdir', metavar='VOLUMEPATH')
     render_parser.set_defaults(func=render)
 
-    repo_info = 'Create/Delete repos'
-    repo_parser = subparsers.add_parser('repo', description=repo_info, help=repo_info)
-    repo_parser.add_argument('-d', '--delete', action='store_true')
+    repo_info = 'Create repo'
+    repo_parser = subparsers.add_parser('repocreate', description=repo_info, help=repo_info)
     repo_parser.add_argument('-u', '--url', help='URL of the repo', metavar='URL')
     repo_parser.add_argument('-U', '--update', action='store_true', help='Update repo')
     repo_parser.add_argument('repo')
     repo_parser.set_defaults(func=repo)
 
+    repod_info = 'Delete repo'
+    repod_parser = subparsers.add_parser('repodelete', description=repod_info, help=repod_info)
+    repod_parser.add_argument('-U', '--update', action='store_true', help='Update repo')
+    repod_parser.add_argument('repo')
+    repod_parser.set_defaults(func=repod)
+
     report_info = 'Report Info about Host'
-    report_parser = subparsers.add_parser('report', description=report_info, help=report_info)
+    report_parser = subparsers.add_parser('hostreport', description=report_info, help=report_info)
     report_parser.set_defaults(func=report)
 
     scp_info = 'Scp into vm'
