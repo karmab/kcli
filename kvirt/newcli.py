@@ -18,29 +18,31 @@ import yaml
 
 
 def start(args):
-    """Start vm/container"""
-    container = args.container
+    """Start vms"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     names = [common.get_lastvm(config.client)] if not args.names else args.names
     k = config.k
-    if container:
-        cont = Kcontainerconfig(config, client=args.containerclient).cont
-        for name in names:
-            common.pprint("Starting container %s..." % name)
-            cont.start_container(name)
-    else:
-        codes = []
-        for name in names:
-            common.pprint("Starting vm %s..." % name)
-            result = k.start(name)
-            code = common.handle_response(result, name, element='', action='started')
-            codes.append(code)
-        os._exit(1 if 1 in codes else 0)
+    codes = []
+    for name in names:
+        common.pprint("Starting vm %s..." % name)
+        result = k.start(name)
+        code = common.handle_response(result, name, element='', action='started')
+        codes.append(code)
+    os._exit(1 if 1 in codes else 0)
+
+
+def startc(args):
+    """Start containers"""
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    names = [common.get_lastvm(config.client)] if not args.names else args.names
+    cont = Kcontainerconfig(config, client=args.containerclient).cont
+    for name in names:
+        common.pprint("Starting container %s..." % name)
+        cont.start_container(name)
 
 
 def stop(args):
-    """Stop vm/container"""
-    container = args.container
+    """Stop vms"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     names = [common.get_lastvm(config.client)] if not args.names else args.names
     if config.extraclients:
@@ -51,40 +53,53 @@ def stop(args):
     codes = []
     for cli in ks:
         k = ks[cli]
-        if container:
-            cont = Kcontainerconfig(config, client=args.containerclient).cont
-            for name in names:
-                common.pprint("Stopping container %s in %s..." % (name, cli))
-                cont.stop_container(name)
-        else:
-            for name in names:
-                common.pprint("Stopping vm %s in %s..." % (name, cli))
-                result = k.stop(name)
-                code = common.handle_response(result, name, element='', action='stopped')
-                codes.append(code)
+        for name in names:
+            common.pprint("Stopping vm %s in %s..." % (name, cli))
+            result = k.stop(name)
+            code = common.handle_response(result, name, element='', action='stopped')
+            codes.append(code)
     os._exit(1 if 1 in codes else 0)
 
 
+def stopc(args):
+    """Stop containers"""
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    names = [common.get_lastvm(config.client)] if not args.names else args.names
+    if config.extraclients:
+        ks = config.extraclients
+        ks.update({config.client: config.k})
+    else:
+        ks = {config.client: config.k}
+    for cli in ks:
+        cont = Kcontainerconfig(config, client=args.containerclient).cont
+        for name in names:
+            common.pprint("Stopping container %s in %s..." % (name, cli))
+            cont.stop_container(name)
+
+
 def restart(args):
-    """Restart vm/container"""
-    container = args.container
+    """Restart vms"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     names = [common.get_lastvm(config.client)] if not args.names else args.names
     k = config.k
-    if container:
-        cont = Kcontainerconfig(config, client=args.containerclient).cont
-        for name in names:
-            common.pprint("Restarting container %s..." % name)
-            cont.stop_container(name)
-            cont.start_container(name)
-    else:
-        codes = []
-        for name in names:
-            common.pprint("Restarting vm %s..." % name)
-            result = k.restart(name)
-            code = common.handle_response(result, name, element='', action='restarted')
-            codes.append(code)
-        os._exit(1 if 1 in codes else 0)
+    codes = []
+    for name in names:
+        common.pprint("Restarting vm %s..." % name)
+        result = k.restart(name)
+        code = common.handle_response(result, name, element='', action='restarted')
+        codes.append(code)
+    os._exit(1 if 1 in codes else 0)
+
+
+def restartc(args):
+    """Restart containers"""
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    names = [common.get_lastvm(config.client)] if not args.names else args.names
+    cont = Kcontainerconfig(config, client=args.containerclient).cont
+    for name in names:
+        common.pprint("Restarting container %s..." % name)
+        cont.stop_container(name)
+        cont.start_container(name)
 
 
 def console(args):
@@ -106,8 +121,7 @@ def console(args):
 
 
 def delete(args):
-    """Delete vm/container"""
-    container = args.container
+    """Delete vm"""
     template = args.template
     snapshots = args.snapshots
     yes = args.yes
@@ -127,12 +141,6 @@ def delete(args):
         common.pprint("Deleting on %s" % cli)
         if not yes:
             common.confirm("Are you sure?")
-        if container:
-            codes = [0]
-            cont = Kcontainerconfig(config, client=args.containerclient).cont
-            for name in names:
-                common.pprint("Deleting container %s" % name)
-                cont.delete_container(name)
         elif template:
             # k = config.k
             codes = []
@@ -163,6 +171,32 @@ def delete(args):
                 if dnsclient is not None and domain is not None:
                     z = Kconfig(client=dnsclient).k
                     z.delete_dns(name, domain)
+    os._exit(1 if 1 in codes else 0)
+
+
+def deletec(args):
+    """Delete container"""
+    yes = args.yes
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    if config.extraclients:
+        allclients = config.extraclients.copy()
+        allclients.update({config.client: config.k})
+        names = args.names
+        if not names:
+            common.pprint("Can't delete vms on multiple hosts without specifying their names", color='red')
+            os._exit(1)
+    else:
+        allclients = {config.client: config.k}
+        names = [common.get_lastvm(config.client)] if not args.names else args.names
+    for cli in sorted(allclients):
+        common.pprint("Deleting on %s" % cli)
+        if not yes:
+            common.confirm("Are you sure?")
+        codes = [0]
+        cont = Kcontainerconfig(config, client=args.containerclient).cont
+        for name in names:
+            common.pprint("Deleting container %s" % name)
+            cont.delete_container(name)
     os._exit(1 if 1 in codes else 0)
 
 
@@ -658,19 +692,25 @@ def disk(args):
 
 def dns(args):
     """Create/Delete dns entries"""
-    delete = args.delete
     name = args.name
     net = args.net
     domain = net
     ip = args.ip
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
-    if delete:
-        common.pprint("Deleting Dns entry for %s..." % name)
-        k.delete_dns(name, domain)
-    else:
-        common.pprint("Creating Dns entry for %s..." % name)
-        k.reserve_dns(name=name, nets=[net], domain=domain, ip=ip)
+    common.pprint("Creating Dns entry for %s..." % name)
+    k.reserve_dns(name=name, nets=[net], domain=domain, ip=ip)
+
+
+def dnsd(args):
+    """Create/Delete dns entries"""
+    name = args.name
+    net = args.net
+    domain = net
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    k = config.k
+    common.pprint("Deleting Dns entry for %s..." % name)
+    k.delete_dns(name, domain)
 
 
 def export(args):
@@ -734,22 +774,27 @@ def nic(args):
 def pool(args):
     """Create/Delete pool"""
     pool = args.pool
-    delete = args.delete
-    full = args.delete
     pooltype = args.pooltype
     path = args.path
     thinpool = args.thinpool
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
-    if delete:
-        common.pprint("Deleting pool %s..." % pool)
-        k.delete_pool(name=pool, full=full)
-        return
     if path is None:
         common.pprint("Missing path. Leaving...", color='red')
         os._exit(1)
     common.pprint("Adding pool %s..." % pool)
     k.create_pool(name=pool, poolpath=path, pooltype=pooltype, thinpool=thinpool)
+
+
+def poold(args):
+    """Delete pool"""
+    pool = args.pool
+    full = args.full
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    k = config.k
+    common.pprint("Deleting pool %s..." % pool)
+    k.delete_pool(name=pool, full=full)
+    return
 
 
 def plan(args):
@@ -960,11 +1005,10 @@ def scp(args):
         common.pprint("Couldn't run scp", color='red')
 
 
-def network(args):
-    """Create/Delete/List Network"""
+def networkc(args):
+    """Create Network"""
     name = args.name
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
-    delete = args.delete
     isolated = args.isolated
     cidr = args.cidr
     nodhcp = args.nodhcp
@@ -974,17 +1018,26 @@ def network(args):
     if name is None:
         common.pprint("Missing Network", color='red')
         os._exit(1)
-    if delete:
-        result = k.delete_network(name=name, cidr=cidr)
-        common.handle_response(result, name, element='Network ', action='deleted')
+    if isolated:
+        nat = False
     else:
-        if isolated:
-            nat = False
-        else:
-            nat = True
-        dhcp = not nodhcp
-        result = k.create_network(name=name, cidr=cidr, dhcp=dhcp, nat=nat, domain=domain, overrides=overrides)
-        common.handle_response(result, name, element='Network ')
+        nat = True
+    dhcp = not nodhcp
+    result = k.create_network(name=name, cidr=cidr, dhcp=dhcp, nat=nat, domain=domain, overrides=overrides)
+    common.handle_response(result, name, element='Network ')
+
+
+def networkd(args):
+    """Delete Network"""
+    name = args.name
+    cidr = args.cidr
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    k = config.k
+    if name is None:
+        common.pprint("Missing Network", color='red')
+        os._exit(1)
+    result = k.delete_network(name=name, cidr=cidr)
+    common.handle_response(result, name, element='Network ', action='deleted')
 
 
 def bootstrap(args):
@@ -1091,9 +1144,8 @@ def cli():
     """
 
     """
-    parser = argparse.ArgumentParser(description='Libvirt/VirtualBox/Kubevirt'
-                                     'wrapper on steroids. Check out '
-                                     'https://github.com/karmab/kcli!')
+    parser = argparse.ArgumentParser(description='Libvirt/Ovirt/Vsphere/Gcp/Aws/Openstack/Kubevirt'
+                                     ' wrapper on steroids')
     parser.add_argument('-C', '--client')
     parser.add_argument('--containerclient', help='Containerclient to use')
     parser.add_argument('--dnsclient', help='Dnsclient to use')
@@ -1106,7 +1158,7 @@ def cli():
     subparsers = parser.add_subparsers(metavar='')
 
     bootstrap_info = 'Generate basic config file'
-    bootstrap_parser = subparsers.add_parser('bootstrap', help=bootstrap_info, description=bootstrap_info)
+    bootstrap_parser = subparsers.add_parser('hostbootstrap', help=bootstrap_info, description=bootstrap_info)
     bootstrap_parser.add_argument('-n', '--name', help='Name to use', metavar='CLIENT')
     bootstrap_parser.add_argument('-H', '--host', help='Host to use', metavar='HOST')
     bootstrap_parser.add_argument('-p', '--port', help='Port to use', metavar='PORT')
@@ -1118,7 +1170,7 @@ def cli():
     bootstrap_parser.set_defaults(func=bootstrap)
 
     clone_info = 'Clone existing vm'
-    clone_parser = subparsers.add_parser('clone', description=clone_info, help=clone_info)
+    clone_parser = subparsers.add_parser('vmclone', description=clone_info, help=clone_info)
     clone_parser.add_argument('-b', '--base', help='Base VM', metavar='BASE')
     clone_parser.add_argument('-f', '--full', action='store_true', help='Full Clone')
     clone_parser.add_argument('-s', '--start', action='store_true', help='Start cloned VM')
@@ -1126,14 +1178,14 @@ def cli():
     clone_parser.set_defaults(func=clone)
 
     console_info = 'Vnc/Spice/Serial/Container console'
-    console_parser = subparsers.add_parser('console', description=console_info, help=console_info)
+    console_parser = subparsers.add_parser('vmconsole', description=console_info, help=console_info)
     console_parser.add_argument('-s', '--serial', action='store_true')
     console_parser.add_argument('--container', action='store_true')
     console_parser.add_argument('name', metavar='VMNAME', nargs='?')
     console_parser.set_defaults(func=console)
 
     container_info = 'Create container'
-    container_parser = subparsers.add_parser('container', description=container_info, help=container_info)
+    container_parser = subparsers.add_parser('containercreate', description=container_info, help=container_info)
     container_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
     container_parser.add_argument('-P', '--param', action='append',
                                   help='specify parameter or keyword for rendering (can specify multiple)',
@@ -1142,14 +1194,19 @@ def cli():
     container_parser.add_argument('name', metavar='NAME', nargs='?')
     container_parser.set_defaults(func=container)
 
-    delete_info = 'Delete vm/container'
-    delete_parser = subparsers.add_parser('delete', description=delete_info, help=delete_info)
+    delete_info = 'Delete vm'
+    delete_parser = subparsers.add_parser('vmdelete', description=delete_info, help=delete_info)
     delete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    delete_parser.add_argument('--container', action='store_true')
     delete_parser.add_argument('-t', '--template', action='store_true', help='delete template')
     delete_parser.add_argument('--snapshots', action='store_true', help='Remove snapshots if needed')
     delete_parser.add_argument('names', metavar='VMNAMES', nargs='*')
     delete_parser.set_defaults(func=delete)
+
+    deletec_info = 'Delete container'
+    deletec_parser = subparsers.add_parser('containerdelete', description=deletec_info, help=deletec_info)
+    deletec_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    deletec_parser.add_argument('names', metavar='VMNAMES', nargs='*')
+    deletec_parser.set_defaults(func=deletec)
 
     disk_info = 'Add/Delete disk of vm'
     disk_parser = subparsers.add_parser('disk', description=disk_info, help=disk_info)
@@ -1161,17 +1218,22 @@ def cli():
     disk_parser.add_argument('name', metavar='VMNAME', nargs='?')
     disk_parser.set_defaults(func=disk)
 
-    dns_info = 'Create/Delete dns entries'
-    dns_parser = subparsers.add_parser('dns', description=dns_info, help=dns_info)
-    dns_parser.add_argument('-d', '--delete', action='store_true')
+    dns_info = 'Create dns entries'
+    dns_parser = subparsers.add_parser('dnscreate', description=dns_info, help=dns_info)
     dns_parser.add_argument('-n', '--net', help='Domain where to create entry', metavar='NET')
     dns_parser.add_argument('-i', '--ip', help='Ip', metavar='IP')
     dns_parser.add_argument('name', metavar='NAME', nargs='?')
     dns_parser.set_defaults(func=dns)
 
+    dnsd_info = 'Delete dns entries'
+    dnsd_parser = subparsers.add_parser('dnsdelete', description=dnsd_info, help=dnsd_info)
+    dnsd_parser.add_argument('-n', '--net', help='Domain where to create entry', metavar='NET')
+    dnsd_parser.add_argument('name', metavar='NAME', nargs='?')
+    dnsd_parser.set_defaults(func=dnsd)
+
     download_info = 'Download template'
     download_help = "Template to download. Choose between \n%s" % '\n'.join(TEMPLATES.keys())
-    download_parser = subparsers.add_parser('download', description=download_info, help=download_info)
+    download_parser = subparsers.add_parser('templatedownload', description=download_info, help=download_info)
     download_parser.add_argument('-c', '--cmd', help='Extra command to launch after downloading', metavar='CMD')
     download_parser.add_argument('-p', '--pool', help='Pool to use. Defaults to default', metavar='POOL')
     download_parser.add_argument('-u', '--url', help='Url to use', metavar='URL')
@@ -1189,7 +1251,7 @@ def cli():
     host_parser.set_defaults(func=host)
 
     info_info = 'Info vms'
-    info_parser = subparsers.add_parser('info', description=info_info, help=info_info)
+    info_parser = subparsers.add_parser('vminfo', description=info_info, help=info_info)
     info_parser.add_argument('-f', '--fields',
                              help='Display Corresponding list of fields,'
                              'separated by a comma', metavar='FIELDS')
@@ -1199,7 +1261,7 @@ def cli():
     info_parser.set_defaults(func=info)
 
     export_info = 'Export vm'
-    export_parser = subparsers.add_parser('export', description=export_info, help=export_info)
+    export_parser = subparsers.add_parser('vmexport', description=export_info, help=export_info)
     export_parser.add_argument('-t', '--template', help='Name for the generated template. Uses the vm name otherwise',
                                metavar='TEMPLATE')
     export_parser.add_argument('names', metavar='VMNAMES', nargs='*')
@@ -1241,9 +1303,8 @@ def cli():
     list_parser.add_argument('--filters', choices=('up', 'down'))
     list_parser.set_defaults(func=_list)
 
-    network_info = 'Create/Delete Network'
-    network_parser = subparsers.add_parser('network', description=network_info, help=network_info)
-    network_parser.add_argument('-d', '--delete', action='store_true')
+    network_info = 'Create Network'
+    network_parser = subparsers.add_parser('networkcreate', description=network_info, help=network_info)
     network_parser.add_argument('-i', '--isolated', action='store_true', help='Isolated Network')
     network_parser.add_argument('-c', '--cidr', help='Cidr of the net', metavar='CIDR')
     network_parser.add_argument('--nodhcp', action='store_true', help='Disable dhcp on the net')
@@ -1253,7 +1314,13 @@ def cli():
                                 metavar='PARAM')
     network_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
     network_parser.add_argument('name', metavar='NETWORK')
-    network_parser.set_defaults(func=network)
+    network_parser.set_defaults(func=networkc)
+
+    networkd_info = 'Delete Network'
+    networkd_parser = subparsers.add_parser('networkdelete', description=networkd_info, help=networkd_info)
+    networkd_parser.add_argument('-c', '--cidr', help='Cidr of the net', metavar='CIDR')
+    networkd_parser.add_argument('name', metavar='NETWORK')
+    networkd_parser.set_defaults(func=networkd)
 
     nic_info = 'Add/Delete nic of vm'
     nic_parser = subparsers.add_parser('nic', description=nic_info, help=nic_info)
@@ -1290,9 +1357,8 @@ def cli():
     plan_parser.add_argument('plan', metavar='PLAN', nargs='?')
     plan_parser.set_defaults(func=plan)
 
-    pool_info = 'Create/Delete pool'
-    pool_parser = subparsers.add_parser('pool', description=pool_info, help=pool_info)
-    pool_parser.add_argument('-d', '--delete', action='store_true')
+    pool_info = 'Create pool'
+    pool_parser = subparsers.add_parser('poolcreate', description=pool_info, help=pool_info)
     pool_parser.add_argument('-f', '--full', action='store_true')
     pool_parser.add_argument('-t', '--pooltype', help='Type of the pool', choices=('dir', 'lvm', 'zfs'),
                              default='dir')
@@ -1300,6 +1366,15 @@ def cli():
     pool_parser.add_argument('--thinpool', help='Existing thin pool to use with lvm', metavar='THINPOOL')
     pool_parser.add_argument('pool')
     pool_parser.set_defaults(func=pool)
+
+    poold_info = 'Delete pool'
+    poold_parser = subparsers.add_parser('pooldelete', description=poold_info, help=poold_info)
+    poold_parser.add_argument('-d', '--delete', action='store_true')
+    poold_parser.add_argument('-f', '--full', action='store_true')
+    poold_parser.add_argument('-p', '--path', help='Path of the pool', metavar='PATH')
+    poold_parser.add_argument('--thinpool', help='Existing thin pool to use with lvm', metavar='THINPOOL')
+    poold_parser.add_argument('pool')
+    poold_parser.set_defaults(func=poold)
 
     product_info = 'Deploy Product'
     product_parser = subparsers.add_parser('product', description=product_info, help=product_info)
@@ -1320,7 +1395,7 @@ def cli():
     product_parser.set_defaults(func=product)
 
     render_info = 'Render plans or files'
-    render_parser = subparsers.add_parser('render', description=render_info, help=render_info)
+    render_parser = subparsers.add_parser('planrender', description=render_info, help=render_info)
     render_parser.add_argument('-f', '--inputfile', help='Input Plan file')
     render_parser.add_argument('-P', '--param', action='append',
                                help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
@@ -1342,7 +1417,7 @@ def cli():
     report_parser.set_defaults(func=report)
 
     scp_info = 'Scp into vm'
-    scp_parser = subparsers.add_parser('scp', description=scp_info, help=scp_info)
+    scp_parser = subparsers.add_parser('vmscp', description=scp_info, help=scp_info)
     scp_parser.add_argument('-r', '--recursive', help='Recursive', action='store_true')
     scp_parser.add_argument('-v', '--volumepath', help='Volume Path (only used with kcli container)',
                             default='/workdir', metavar='VOLUMEPATH')
@@ -1351,7 +1426,7 @@ def cli():
     scp_parser.set_defaults(func=scp)
 
     snapshot_info = 'Create/Delete/Revert snapshot'
-    snapshot_parser = subparsers.add_parser('snapshot', description=snapshot_info, help=snapshot_info)
+    snapshot_parser = subparsers.add_parser('vmsnapshot', description=snapshot_info, help=snapshot_info)
     snapshot_parser.add_argument('-n', '--name', help='Use vm name for creation'
                                  '/revert/delete', required=True,
                                  metavar='VMNAME')
@@ -1362,7 +1437,7 @@ def cli():
     snapshot_parser.set_defaults(func=snapshot)
 
     ssh_info = 'Ssh into vm'
-    ssh_parser = subparsers.add_parser('ssh', description=ssh_info, help=ssh_info)
+    ssh_parser = subparsers.add_parser('vmssh', description=ssh_info, help=ssh_info)
     ssh_parser.add_argument('-D', help='Dynamic Forwarding', metavar='LOCAL')
     ssh_parser.add_argument('-L', help='Local Forwarding', metavar='LOCAL')
     ssh_parser.add_argument('-R', help='Remote Forwarding', metavar='REMOTE')
@@ -1371,31 +1446,43 @@ def cli():
     ssh_parser.add_argument('name', metavar='VMNAME', nargs='*')
     ssh_parser.set_defaults(func=ssh)
 
-    start_info = 'Start vms/containers'
-    start_parser = subparsers.add_parser('start', description=start_info, help=start_info)
-    start_parser.add_argument('-c', '--container', action='store_true')
+    start_info = 'Start vms'
+    start_parser = subparsers.add_parser('vmstart', description=start_info, help=start_info)
     start_parser.add_argument('names', metavar='VMNAMES', nargs='*')
     start_parser.set_defaults(func=start)
 
-    stop_info = 'Stop vms/containers'
-    stop_parser = subparsers.add_parser('stop', description=stop_info, help=stop_info)
-    stop_parser.add_argument('-c', '--container', action='store_true')
+    startc_info = 'Start containers'
+    startc_parser = subparsers.add_parser('containerstart', description=startc_info, help=startc_info)
+    startc_parser.add_argument('names', metavar='VMNAMES', nargs='*')
+    startc_parser.set_defaults(func=startc)
+
+    stop_info = 'Stop vms'
+    stop_parser = subparsers.add_parser('vmstop', description=stop_info, help=stop_info)
     stop_parser.add_argument('names', metavar='VMNAMES', nargs='*')
     stop_parser.set_defaults(func=stop)
 
-    restart_info = 'Restart vms/containers'
-    restart_parser = subparsers.add_parser('restart', description=restart_info, help=stop_info)
-    restart_parser.add_argument('-c', '--container', action='store_true')
+    stopc_info = 'Stop containers'
+    stopc_parser = subparsers.add_parser('containerstop', description=stopc_info, help=stopc_info)
+    stopc_parser.add_argument('names', metavar='CONTAINERNAMES', nargs='*')
+    stopc_parser.set_defaults(func=stopc)
+
+    restart_info = 'Restart vms'
+    restart_parser = subparsers.add_parser('vmrestart', description=restart_info, help=restart_info)
     restart_parser.add_argument('names', metavar='VMNAMES', nargs='*')
     restart_parser.set_defaults(func=restart)
 
+    restartc_info = 'Restart containers'
+    restartc_parser = subparsers.add_parser('containerrestart', description=restartc_info, help=restartc_info)
+    restartc_parser.add_argument('names', metavar='CONTAINERNAMES', nargs='*')
+    restartc_parser.set_defaults(func=restartc)
+
     switch_info = 'Switch host'
-    switch_parser = subparsers.add_parser('switch', description=switch_info, help=switch_info)
+    switch_parser = subparsers.add_parser('hostswitch', description=switch_info, help=switch_info)
     switch_parser.add_argument('host', help='HOST')
     switch_parser.set_defaults(func=switch)
 
-    update_info = 'Update ip, memory or numcpus'
-    update_parser = subparsers.add_parser('update', description=update_info, help=update_info)
+    update_info = 'Update vm ip, memory or numcpus'
+    update_parser = subparsers.add_parser('vmupdate', description=update_info, help=update_info)
     update_parser.add_argument('-1', '--ip1', help='Ip to set', metavar='IP1')
     update_parser.add_argument('-i', '--information', '--info', help='Information to set', metavar='INFORMATION')
     update_parser.add_argument('--network', '--net', help='Network to update', metavar='NETWORK')
@@ -1415,7 +1502,7 @@ def cli():
     update_parser.set_defaults(func=update)
 
     vm_info = 'Create vm'
-    vm_parser = subparsers.add_parser('vm', description=vm_info, help=vm_info)
+    vm_parser = subparsers.add_parser('vmcreate', description=vm_info, help=vm_info)
     vm_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
     vm_parser.add_argument('--profilefile', help='File to load profiles from', metavar='PROFILEFILE')
     vm_parser.add_argument('-P', '--param', action='append',
