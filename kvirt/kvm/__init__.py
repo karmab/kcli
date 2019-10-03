@@ -451,7 +451,7 @@ class Kvirt(object):
                 if 'ovs' in nets[index] and nets[index]['ovs']:
                     ovs = True
                 if 'ip' in nets[index] and index == 0:
-                        metadata = """%s<kvirt:ip >%s</kvirt:ip>""" % (metadata, nets[index]['ip'])
+                    metadata = """%s<kvirt:ip >%s</kvirt:ip>""" % (metadata, nets[index]['ip'])
             if ips and len(ips) > index and ips[index] is not None and\
                     netmasks and len(netmasks) > index and netmasks[index] is not None and gateway is not None:
                 nets[index]['ip'] = ips[index]
@@ -484,8 +484,8 @@ class Kvirt(object):
         if guestagent:
             gcmds = []
             if template is not None:
-                if (template.lower().startswith('centos') or template.lower().startswith('fedora') or
-                        template.lower().startswith('rhel')):
+                lower = template.lower()
+                if (lower.startswith('centos') or lower.startswith('fedora') or lower().startswith('rhel')):
                     gcmds.append('yum -y install qemu-guest-agent')
                     gcmds.append('systemctl enable qemu-guest-agent')
                     gcmds.append('systemctl restart qemu-guest-agent')
@@ -1184,8 +1184,8 @@ class Kvirt(object):
                     except:
                         pass
             if ifaces and ip is None:
-                matches = [ifaces[x]['addrs'] for x in ifaces if ifaces[x]['hwaddr'] == mac and
-                           ifaces[x]['addrs'] is not None]
+                matches = [ifaces[x]['addrs'] for x in
+                           ifaces if ifaces[x]['hwaddr'] == mac and ifaces[x]['addrs'] is not None]
                 if matches:
                     for match in matches[0]:
                         matchip = match['addr']
@@ -1276,8 +1276,8 @@ class Kvirt(object):
                 except:
                     continue
             if ifaces:
-                matches = [ifaces[x]['addrs'] for x in ifaces if ifaces[x]['hwaddr'] == mac and
-                           ifaces[x]['addrs'] is not None]
+                matches = [ifaces[x]['addrs'] for x in ifaces
+                           if ifaces[x]['hwaddr'] == mac and ifaces[x]['addrs'] is not None]
                 if matches:
                     for match in matches[0]:
                         matchip = match['addr']
@@ -1308,11 +1308,9 @@ class Kvirt(object):
             product = list(root.getiterator('product'))
             if product:
                 thinpool = list(root.getiterator('product'))[0].get('name')
-                matchingtemplates = ["%s/%s" % (poolpath, volume) for volume in self.thintemplates(poolpath, thinpool)
-                                     if volume.endswith('qcow2') or volume.endswith('qc2') or
-                                     volume in default_templates]
-                if matchingtemplates:
-                    templates.extend(matchingtemplates)
+                for volume in self.thintemplates(poolpath, thinpool):
+                    if volume.endswith('qcow2') or volume.endswith('qc2') or volume in default_templates:
+                        templates.extend("%s/%s" % (poolpath, volume))
             for volume in pool.listVolumes():
                 if volume.endswith('iso'):
                     isos.append("%s/%s" % (poolpath, volume))
@@ -2295,6 +2293,8 @@ class Kvirt(object):
                 template = e.text
                 if template != '':
                     user = common.get_user(template)
+        if '/var/lib/libvirt/openshift-images/' in xml:
+            user = 'coreos'
         if ip is not None:
             return user, ip
         networktypes = [element.get('type') for element in list(root.getiterator('interface'))]
@@ -2991,8 +2991,7 @@ class Kvirt(object):
         if not dnsmasq or self.user != 'root':
             hostscmd = "sudo %s" % hostscmd
         elif self.protocol == 'ssh' and self.host not in ['localhost', '127.0.0.1']:
-                hostscmd = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host,
-                                                          hostscmd)
+            hostscmd = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host, hostscmd)
         call(hostscmd, shell=True)
         if dnsmasq:
             dnsmasqcmd = "/usr/bin/systemctl restart dnsmasq"
