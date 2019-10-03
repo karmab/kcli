@@ -1213,34 +1213,6 @@ def cli():
 
     subparsers = parser.add_subparsers(metavar='')
 
-    bootstrap_info = 'Generate basic config file'
-    bootstrap_parser = subparsers.add_parser('hostbootstrap', help=bootstrap_info, description=bootstrap_info,
-                                             aliases=['bootstrap'])
-    bootstrap_parser.add_argument('-n', '--name', help='Name to use', metavar='CLIENT')
-    bootstrap_parser.add_argument('-H', '--host', help='Host to use', metavar='HOST')
-    bootstrap_parser.add_argument('-p', '--port', help='Port to use', metavar='PORT')
-    bootstrap_parser.add_argument('-u', '--user', help='User to use', default='root', metavar='USER')
-    bootstrap_parser.add_argument('-P', '--protocol', help='Protocol to use', default='ssh', metavar='PROTOCOL')
-    bootstrap_parser.add_argument('-U', '--url', help='URL to use', metavar='URL')
-    bootstrap_parser.add_argument('--pool', help='Pool to use', metavar='POOL')
-    bootstrap_parser.add_argument('--poolpath', help='Pool Path to use', metavar='POOLPATH')
-    bootstrap_parser.set_defaults(func=bootstrap)
-
-    clone_info = 'Clone existing vm'
-    clone_parser = subparsers.add_parser('vmclone', description=clone_info, help=clone_info, aliases=['clone'])
-    clone_parser.add_argument('-b', '--base', help='Base VM', metavar='BASE')
-    clone_parser.add_argument('-f', '--full', action='store_true', help='Full Clone')
-    clone_parser.add_argument('-s', '--start', action='store_true', help='Start cloned VM')
-    clone_parser.add_argument('name', metavar='VMNAME')
-    clone_parser.set_defaults(func=clone)
-
-    console_info = 'Vnc/Spice/Serial Vm console'
-    console_parser = subparsers.add_parser('vmconsole', description=console_info, help=console_info,
-                                           aliases=['console'])
-    console_parser.add_argument('-s', '--serial', action='store_true')
-    console_parser.add_argument('name', metavar='VMNAME', nargs='?')
-    console_parser.set_defaults(func=console)
-
     containerconsole_info = 'Vnc/Spice/Serial/Container console'
     containerconsole_parser = subparsers.add_parser('containerconsole', description=containerconsole_info,
                                                     help=containerconsole_info)
@@ -1258,34 +1230,26 @@ def cli():
     container_parser.add_argument('name', metavar='NAME', nargs='?')
     container_parser.set_defaults(func=container)
 
-    delete_info = 'Delete vm'
-    delete_parser = subparsers.add_parser('vmdelete', description=delete_info, help=delete_info, aliases=['delete'])
-    delete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    delete_parser.add_argument('-t', '--template', action='store_true', help='delete template')
-    delete_parser.add_argument('--snapshots', action='store_true', help='Remove snapshots if needed')
-    delete_parser.add_argument('names', metavar='VMNAMES', nargs='*')
-    delete_parser.set_defaults(func=delete)
-
     deletec_info = 'Delete container'
     deletec_parser = subparsers.add_parser('containerdelete', description=deletec_info, help=deletec_info)
     deletec_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     deletec_parser.add_argument('names', metavar='VMNAMES', nargs='*')
     deletec_parser.set_defaults(func=deletec)
 
-    disk_info = 'Add disk to vm'
-    disk_parser = subparsers.add_parser('vmdiskadd', description=disk_info, help=disk_info, aliases=['disk'])
-    disk_parser.add_argument('-s', '--size', type=int, help='Size of the disk to add, in GB', metavar='SIZE')
-    disk_parser.add_argument('-t', '--template', help='Name or Path of a Template, when adding', metavar='TEMPLATE')
-    disk_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
-    disk_parser.add_argument('name', metavar='VMNAME', nargs='?')
-    disk_parser.set_defaults(func=disk)
+    restartc_info = 'Restart containers'
+    restartc_parser = subparsers.add_parser('containerrestart', description=restartc_info, help=restartc_info)
+    restartc_parser.add_argument('names', metavar='CONTAINERNAMES', nargs='*')
+    restartc_parser.set_defaults(func=restartc)
 
-    diskd_info = 'Delete disk to vm'
-    diskd_parser = subparsers.add_parser('vmdiskdelete', description=disk_info, help=diskd_info)
-    diskd_parser.add_argument('-n', '--diskname', help='Name or Path of the disk, when deleting', metavar='DISKNAME')
-    diskd_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
-    diskd_parser.add_argument('name', metavar='VMNAME', nargs='?')
-    diskd_parser.set_defaults(func=diskd)
+    startc_info = 'Start containers'
+    startc_parser = subparsers.add_parser('containerstart', description=startc_info, help=startc_info)
+    startc_parser.add_argument('names', metavar='VMNAMES', nargs='*')
+    startc_parser.set_defaults(func=startc)
+
+    stopc_info = 'Stop containers'
+    stopc_parser = subparsers.add_parser('containerstop', description=stopc_info, help=stopc_info)
+    stopc_parser.add_argument('names', metavar='CONTAINERNAMES', nargs='*')
+    stopc_parser.set_defaults(func=stopc)
 
     dns_info = 'Create dns entries'
     dns_parser = subparsers.add_parser('dnscreate', description=dns_info, help=dns_info, aliases=['dns'])
@@ -1300,48 +1264,42 @@ def cli():
     dnsd_parser.add_argument('name', metavar='NAME', nargs='?')
     dnsd_parser.set_defaults(func=dnsd)
 
-    download_info = 'Download template'
-    download_help = "Template to download. Choose between \n%s" % '\n'.join(TEMPLATES.keys())
-    download_parser = subparsers.add_parser('templatedownload', description=download_info, help=download_info,
-                                            aliases=['download'])
-    download_parser.add_argument('-c', '--cmd', help='Extra command to launch after downloading', metavar='CMD')
-    download_parser.add_argument('-p', '--pool', help='Pool to use. Defaults to default', metavar='POOL')
-    download_parser.add_argument('-u', '--url', help='Url to use', metavar='URL')
-    download_parser.add_argument('templates', choices=sorted(TEMPLATES.keys()),
-                                 default='', help=download_help, nargs='*', metavar='')
-    download_parser.set_defaults(func=download)
-
-    hoste_info = 'Enable host'
-    hoste_parser = subparsers.add_parser('hostenable', description=hoste_info, help=hoste_info)
-    hoste_parser.add_argument('host', metavar='HOST', nargs='?')
-    hoste_parser.set_defaults(func=hostenable)
+    bootstrap_info = 'Generate basic config file'
+    bootstrap_parser = subparsers.add_parser('hostbootstrap', help=bootstrap_info, description=bootstrap_info,
+                                             aliases=['bootstrap'])
+    bootstrap_parser.add_argument('-n', '--name', help='Name to use', metavar='CLIENT')
+    bootstrap_parser.add_argument('-H', '--host', help='Host to use', metavar='HOST')
+    bootstrap_parser.add_argument('-p', '--port', help='Port to use', metavar='PORT')
+    bootstrap_parser.add_argument('-u', '--user', help='User to use', default='root', metavar='USER')
+    bootstrap_parser.add_argument('-P', '--protocol', help='Protocol to use', default='ssh', metavar='PROTOCOL')
+    bootstrap_parser.add_argument('-U', '--url', help='URL to use', metavar='URL')
+    bootstrap_parser.add_argument('--pool', help='Pool to use', metavar='POOL')
+    bootstrap_parser.add_argument('--poolpath', help='Pool Path to use', metavar='POOLPATH')
+    bootstrap_parser.set_defaults(func=bootstrap)
 
     hostd_info = 'Disable host'
     hostd_parser = subparsers.add_parser('hostdisable', description=hostd_info, help=hostd_info)
     hostd_parser.add_argument('host', metavar='HOST', nargs='?')
     hostd_parser.set_defaults(func=hostdisable)
 
+    hoste_info = 'Enable host'
+    hoste_parser = subparsers.add_parser('hostenable', description=hoste_info, help=hoste_info)
+    hoste_parser.add_argument('host', metavar='HOST', nargs='?')
+    hoste_parser.set_defaults(func=hostenable)
+
+    report_info = 'Report Info about Host'
+    report_parser = subparsers.add_parser('hostreport', description=report_info, help=report_info, aliases=['report'])
+    report_parser.set_defaults(func=report)
+
+    switch_info = 'Switch host'
+    switch_parser = subparsers.add_parser('hostswitch', description=switch_info, help=switch_info, aliases=['switch'])
+    switch_parser.add_argument('host', help='HOST')
+    switch_parser.set_defaults(func=switch)
+
     hosts_info = 'Sync host'
     hosts_parser = subparsers.add_parser('hostsync', description=hosts_info, help=hosts_info)
     hosts_parser.add_argument('hosts', help='HOSTS', nargs='*')
     hosts_parser.set_defaults(func=hostsync)
-
-    info_info = 'Info vms'
-    info_parser = subparsers.add_parser('vminfo', description=info_info, help=info_info, aliases=['info'])
-    info_parser.add_argument('-f', '--fields',
-                             help='Display Corresponding list of fields,'
-                             'separated by a comma', metavar='FIELDS')
-    info_parser.add_argument('-o', '--output', choices=['plain', 'yaml'], help='Format of the output')
-    info_parser.add_argument('-v', '--values', action='store_true', help='Only report values')
-    info_parser.add_argument('names', help='VMNAMES', nargs='*')
-    info_parser.set_defaults(func=info)
-
-    export_info = 'Export vm'
-    export_parser = subparsers.add_parser('vmexport', description=export_info, help=export_info, aliases=['export'])
-    export_parser.add_argument('-t', '--template', help='Name for the generated template. Uses the vm name otherwise',
-                               metavar='TEMPLATE')
-    export_parser.add_argument('names', metavar='VMNAMES', nargs='*')
-    export_parser.set_defaults(func=export)
 
     lb_info = 'Create loadbalancer'
     lb_parser = subparsers.add_parser('lbcreate', description=lb_info, help=lb_info, aliases=['lb'])
@@ -1445,6 +1403,16 @@ def cli():
     plan_parser.add_argument('plan', metavar='PLAN', nargs='?')
     plan_parser.set_defaults(func=plan)
 
+    render_info = 'Render plans or files'
+    render_parser = subparsers.add_parser('planrender', description=render_info, help=render_info, aliases=['render'])
+    render_parser.add_argument('-f', '--inputfile', help='Input Plan file')
+    render_parser.add_argument('-P', '--param', action='append',
+                               help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    render_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    render_parser.add_argument('-v', '--volumepath', help='Volume Path (only used with kcli container)',
+                               default='/workdir', metavar='VOLUMEPATH')
+    render_parser.set_defaults(func=render)
+
     pool_info = 'Create pool'
     pool_parser = subparsers.add_parser('poolcreate', description=pool_info, help=pool_info, aliases=['pool'])
     pool_parser.add_argument('-f', '--full', action='store_true')
@@ -1483,16 +1451,6 @@ def cli():
     product_parser.add_argument('product', metavar='PRODUCT')
     product_parser.set_defaults(func=productcreate)
 
-    render_info = 'Render plans or files'
-    render_parser = subparsers.add_parser('planrender', description=render_info, help=render_info, aliases=['render'])
-    render_parser.add_argument('-f', '--inputfile', help='Input Plan file')
-    render_parser.add_argument('-P', '--param', action='append',
-                               help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    render_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
-    render_parser.add_argument('-v', '--volumepath', help='Volume Path (only used with kcli container)',
-                               default='/workdir', metavar='VOLUMEPATH')
-    render_parser.set_defaults(func=render)
-
     repo_info = 'Create repo'
     repo_parser = subparsers.add_parser('repocreate', description=repo_info, help=repo_info, aliases=['repo'])
     repo_parser.add_argument('-u', '--url', help='URL of the repo', metavar='URL')
@@ -1506,9 +1464,86 @@ def cli():
     repod_parser.add_argument('repo')
     repod_parser.set_defaults(func=repod)
 
-    report_info = 'Report Info about Host'
-    report_parser = subparsers.add_parser('hostreport', description=report_info, help=report_info, aliases=['report'])
-    report_parser.set_defaults(func=report)
+    download_info = 'Download template'
+    download_help = "Template to download. Choose between \n%s" % '\n'.join(TEMPLATES.keys())
+    download_parser = subparsers.add_parser('templatedownload', description=download_info, help=download_info,
+                                            aliases=['download'])
+    download_parser.add_argument('-c', '--cmd', help='Extra command to launch after downloading', metavar='CMD')
+    download_parser.add_argument('-p', '--pool', help='Pool to use. Defaults to default', metavar='POOL')
+    download_parser.add_argument('-u', '--url', help='Url to use', metavar='URL')
+    download_parser.add_argument('templates', choices=sorted(TEMPLATES.keys()),
+                                 default='', help=download_help, nargs='*', metavar='')
+    download_parser.set_defaults(func=download)
+
+    clone_info = 'Clone existing vm'
+    clone_parser = subparsers.add_parser('vmclone', description=clone_info, help=clone_info, aliases=['clone'])
+    clone_parser.add_argument('-b', '--base', help='Base VM', metavar='BASE')
+    clone_parser.add_argument('-f', '--full', action='store_true', help='Full Clone')
+    clone_parser.add_argument('-s', '--start', action='store_true', help='Start cloned VM')
+    clone_parser.add_argument('name', metavar='VMNAME')
+    clone_parser.set_defaults(func=clone)
+
+    console_info = 'Vnc/Spice/Serial Vm console'
+    console_parser = subparsers.add_parser('vmconsole', description=console_info, help=console_info,
+                                           aliases=['console'])
+    console_parser.add_argument('-s', '--serial', action='store_true')
+    console_parser.add_argument('name', metavar='VMNAME', nargs='?')
+    console_parser.set_defaults(func=console)
+
+    vm_info = 'Create vm'
+    vm_parser = subparsers.add_parser('vmcreate', description=vm_info, help=vm_info, aliases=['create', 'vm'])
+    vm_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
+    vm_parser.add_argument('--profilefile', help='File to load profiles from', metavar='PROFILEFILE')
+    vm_parser.add_argument('-P', '--param', action='append',
+                           help='specify parameter or keyword for rendering (can specify multiple)', metavar='PARAM')
+    vm_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    vm_parser.add_argument('name', metavar='VMNAME', nargs='?')
+    vm_parser.set_defaults(func=vm)
+
+    delete_info = 'Delete vm'
+    delete_parser = subparsers.add_parser('vmdelete', description=delete_info, help=delete_info, aliases=['delete'])
+    delete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    delete_parser.add_argument('-t', '--template', action='store_true', help='delete template')
+    delete_parser.add_argument('--snapshots', action='store_true', help='Remove snapshots if needed')
+    delete_parser.add_argument('names', metavar='VMNAMES', nargs='*')
+    delete_parser.set_defaults(func=delete)
+
+    disk_info = 'Add disk to vm'
+    disk_parser = subparsers.add_parser('vmdiskadd', description=disk_info, help=disk_info, aliases=['disk'])
+    disk_parser.add_argument('-s', '--size', type=int, help='Size of the disk to add, in GB', metavar='SIZE')
+    disk_parser.add_argument('-t', '--template', help='Name or Path of a Template, when adding', metavar='TEMPLATE')
+    disk_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
+    disk_parser.add_argument('name', metavar='VMNAME', nargs='?')
+    disk_parser.set_defaults(func=disk)
+
+    diskd_info = 'Delete disk to vm'
+    diskd_parser = subparsers.add_parser('vmdiskdelete', description=disk_info, help=diskd_info)
+    diskd_parser.add_argument('-n', '--diskname', help='Name or Path of the disk, when deleting', metavar='DISKNAME')
+    diskd_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
+    diskd_parser.add_argument('name', metavar='VMNAME', nargs='?')
+    diskd_parser.set_defaults(func=diskd)
+
+    export_info = 'Export vm'
+    export_parser = subparsers.add_parser('vmexport', description=export_info, help=export_info, aliases=['export'])
+    export_parser.add_argument('-t', '--template', help='Name for the generated template. Uses the vm name otherwise',
+                               metavar='TEMPLATE')
+    export_parser.add_argument('names', metavar='VMNAMES', nargs='*')
+    export_parser.set_defaults(func=export)
+
+    info_info = 'Info vms'
+    info_parser = subparsers.add_parser('vminfo', description=info_info, help=info_info, aliases=['info'])
+    info_parser.add_argument('-f', '--fields',
+                             help='Display Corresponding list of fields,'
+                             'separated by a comma', metavar='FIELDS')
+    info_parser.add_argument('-o', '--output', choices=['plain', 'yaml'], help='Format of the output')
+    info_parser.add_argument('-v', '--values', action='store_true', help='Only report values')
+    info_parser.add_argument('names', help='VMNAMES', nargs='*')
+    info_parser.set_defaults(func=info)
+
+    restart_info = 'Restart vms'
+    restart_parser = subparsers.add_parser('vmrestart', description=restart_info, help=restart_info,
+                                           aliases=['restart'])
+    restart_parser.add_argument('names', metavar='VMNAMES', nargs='*')
 
     scp_info = 'Scp into vm'
     scp_parser = subparsers.add_parser('vmscp', description=scp_info, help=scp_info, aliases=['scp'])
@@ -1518,6 +1553,17 @@ def cli():
     scp_parser.add_argument('source', nargs=1)
     scp_parser.add_argument('destination', nargs=1)
     scp_parser.set_defaults(func=scp)
+    restart_parser.set_defaults(func=restart)
+
+    ssh_info = 'Ssh into vm'
+    ssh_parser = subparsers.add_parser('vmssh', description=ssh_info, help=ssh_info, aliases=['ssh'])
+    ssh_parser.add_argument('-D', help='Dynamic Forwarding', metavar='LOCAL')
+    ssh_parser.add_argument('-L', help='Local Forwarding', metavar='LOCAL')
+    ssh_parser.add_argument('-R', help='Remote Forwarding', metavar='REMOTE')
+    ssh_parser.add_argument('-X', action='store_true', help='Enable X11 Forwarding')
+    ssh_parser.add_argument('-Y', action='store_true', help='Enable X11 Forwarding(Insecure)')
+    ssh_parser.add_argument('name', metavar='VMNAME', nargs='*')
+    ssh_parser.set_defaults(func=ssh)
 
     snapshot_info = 'Create/Delete/Revert snapshot'
     snapshot_parser = subparsers.add_parser('vmsnapshot', description=snapshot_info, help=snapshot_info,
@@ -1531,51 +1577,15 @@ def cli():
     snapshot_parser.add_argument('snapshot', nargs='?')
     snapshot_parser.set_defaults(func=snapshot)
 
-    ssh_info = 'Ssh into vm'
-    ssh_parser = subparsers.add_parser('vmssh', description=ssh_info, help=ssh_info, aliases=['ssh'])
-    ssh_parser.add_argument('-D', help='Dynamic Forwarding', metavar='LOCAL')
-    ssh_parser.add_argument('-L', help='Local Forwarding', metavar='LOCAL')
-    ssh_parser.add_argument('-R', help='Remote Forwarding', metavar='REMOTE')
-    ssh_parser.add_argument('-X', action='store_true', help='Enable X11 Forwarding')
-    ssh_parser.add_argument('-Y', action='store_true', help='Enable X11 Forwarding(Insecure)')
-    ssh_parser.add_argument('name', metavar='VMNAME', nargs='*')
-    ssh_parser.set_defaults(func=ssh)
-
     start_info = 'Start vms'
     start_parser = subparsers.add_parser('vmstart', description=start_info, help=start_info, aliases=['start'])
     start_parser.add_argument('names', metavar='VMNAMES', nargs='*')
     start_parser.set_defaults(func=start)
 
-    startc_info = 'Start containers'
-    startc_parser = subparsers.add_parser('containerstart', description=startc_info, help=startc_info)
-    startc_parser.add_argument('names', metavar='VMNAMES', nargs='*')
-    startc_parser.set_defaults(func=startc)
-
     stop_info = 'Stop vms'
     stop_parser = subparsers.add_parser('vmstop', description=stop_info, help=stop_info, aliases=['stop'])
     stop_parser.add_argument('names', metavar='VMNAMES', nargs='*')
     stop_parser.set_defaults(func=stop)
-
-    stopc_info = 'Stop containers'
-    stopc_parser = subparsers.add_parser('containerstop', description=stopc_info, help=stopc_info)
-    stopc_parser.add_argument('names', metavar='CONTAINERNAMES', nargs='*')
-    stopc_parser.set_defaults(func=stopc)
-
-    restart_info = 'Restart vms'
-    restart_parser = subparsers.add_parser('vmrestart', description=restart_info, help=restart_info,
-                                           aliases=['restart'])
-    restart_parser.add_argument('names', metavar='VMNAMES', nargs='*')
-    restart_parser.set_defaults(func=restart)
-
-    restartc_info = 'Restart containers'
-    restartc_parser = subparsers.add_parser('containerrestart', description=restartc_info, help=restartc_info)
-    restartc_parser.add_argument('names', metavar='CONTAINERNAMES', nargs='*')
-    restartc_parser.set_defaults(func=restartc)
-
-    switch_info = 'Switch host'
-    switch_parser = subparsers.add_parser('hostswitch', description=switch_info, help=switch_info, aliases=['switch'])
-    switch_parser.add_argument('host', help='HOST')
-    switch_parser.set_defaults(func=switch)
 
     update_info = 'Update vm ip, memory or numcpus'
     update_parser = subparsers.add_parser('vmupdate', description=update_info, help=update_info, aliases=['update'])
@@ -1597,15 +1607,6 @@ def cli():
     update_parser.add_argument('names', help='VMNAMES', nargs='*')
     update_parser.set_defaults(func=update)
 
-    vm_info = 'Create vm'
-    vm_parser = subparsers.add_parser('vmcreate', description=vm_info, help=vm_info, aliases=['create', 'vm'])
-    vm_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
-    vm_parser.add_argument('--profilefile', help='File to load profiles from', metavar='PROFILEFILE')
-    vm_parser.add_argument('-P', '--param', action='append',
-                           help='specify parameter or keyword for rendering (can specify multiple)', metavar='PARAM')
-    vm_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
-    vm_parser.add_argument('name', metavar='VMNAME', nargs='?')
-    vm_parser.set_defaults(func=vm)
     if len(sys.argv) == 1 or (len(sys.argv) == 3 and sys.argv[1] == '-C'):
         parser.print_help()
         os._exit(0)
