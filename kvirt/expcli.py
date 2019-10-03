@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# PYTHON_ARGCOMPLETE_OK
 # coding=utf-8
 
 from distutils.spawn import find_executable
@@ -8,6 +9,7 @@ from kvirt.containerconfig import Kcontainerconfig
 from kvirt.version import __version__
 from kvirt.defaults import TEMPLATES
 from prettytable import PrettyTable
+import argcomplete
 import argparse
 from kvirt import common
 from kvirt import nameutils
@@ -1086,13 +1088,12 @@ def networkc(args):
 def networkd(args):
     """Delete Network"""
     name = args.name
-    cidr = args.cidr
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     if name is None:
         common.pprint("Missing Network", color='red')
         os._exit(1)
-    result = k.delete_network(name=name, cidr=cidr)
+    result = k.delete_network(name=name)
     common.handle_response(result, name, element='Network ', action='deleted')
 
 
@@ -1364,7 +1365,6 @@ def cli():
 
     networkd_info = 'Delete Network'
     networkd_parser = subparsers.add_parser('networkdelete', description=networkd_info, help=networkd_info)
-    networkd_parser.add_argument('-c', '--cidr', help='Cidr of the net', metavar='CIDR')
     networkd_parser.add_argument('name', metavar='NETWORK')
     networkd_parser.set_defaults(func=networkd)
 
@@ -1607,6 +1607,7 @@ def cli():
     update_parser.add_argument('names', help='VMNAMES', nargs='*')
     update_parser.set_defaults(func=update)
 
+    argcomplete.autocomplete(parser)
     if len(sys.argv) == 1 or (len(sys.argv) == 3 and sys.argv[1] == '-C'):
         parser.print_help()
         os._exit(0)
