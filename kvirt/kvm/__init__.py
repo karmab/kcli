@@ -525,17 +525,21 @@ class Kvirt(object):
                         </disk>""" % iso
         if cloudinit:
             if template is not None and ('coreos' in template or template.startswith('rhcos')):
+                localhosts = ['localhost', '127.0.0.1']
                 ignition = True
-                ignitiondir = '/ignitiondir' if os.path.exists("/i_am_a_container") else '/tmp'
+                ignitiondir = '/var/tmp'
+                if os.path.exists("/i_am_a_container"):
+                    ignitiondir = '/ignitiondir'
+                elif self.protocol == 'ssh' and self.host not in localhosts:
+                    ignitiondir = '/tmp'
                 if os.path.exists("/i_am_a_container") and not os.path.exists(ignitiondir):
-                    return {'result': 'failure', 'reason': "You need to add -v /tmp:/ignitiondir to container alias"}
+                    return {'result': 'failure', 'reason': "Please add -v /var/tmp:/ignitiondir to container alias"}
                 version = '3.0.0' if template.startswith('fedora-coreos') else '2.2.0'
                 ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                                domain=domain, reserveip=reserveip, files=files,
                                                enableroot=enableroot, overrides=overrides, etcd=etcd, version=version,
                                                plan=plan)
 
-                localhosts = ['localhost', '127.0.0.1']
                 with open('%s/%s.ign' % (ignitiondir, name), 'w') as ignitionfile:
                     ignitionfile.write(ignitiondata)
                     identityfile = None
@@ -548,11 +552,11 @@ class Kvirt(object):
                 else:
                     identitycommand = ""
                 if self.protocol == 'ssh' and self.host not in localhosts:
-                    ignitioncmd1 = 'scp %s -qP %s /tmp/%s.ign %s@%s:/tmp' % (identitycommand, self.port, name,
-                                                                             self.user, self.host)
+                    ignitioncmd1 = 'scp %s -qP %s %s/%s.ign %s@%s:/var/tmp' % (identitycommand, self.port, ignitiondir,
+                                                                               name, self.user, self.host)
                     code = os.system(ignitioncmd1)
                     if code != 0:
-                        return {'result': 'failure', 'reason': "Unable to create ignition data file in /tmp"}
+                        return {'result': 'failure', 'reason': "Unable to create ignition data file in /var/tmp"}
             elif template is not None and not ignition:
                 cloudinitiso = "%s/%s.ISO" % (default_poolpath, name)
                 dtype = 'block' if '/dev' in diskpath else 'file'
@@ -627,7 +631,7 @@ class Kvirt(object):
             ignitionxml = ""
             if ignition:
                 ignitionxml = """<qemu:arg value='-fw_cfg' />
-                                  <qemu:arg value='name=opt/com.coreos/config,file=/tmp/%s.ign' />""" % name
+                                  <qemu:arg value='name=opt/com.coreos/config,file=/var/tmp/%s.ign' />""" % name
             usermodexml = ""
             if usermode:
                 usermodexml = """<qemu:arg value='-netdev'/>
