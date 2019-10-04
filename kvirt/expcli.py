@@ -19,7 +19,7 @@ import sys
 import yaml
 
 
-def start(args):
+def vmstart(args):
     """Start vms"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     names = [common.get_lastvm(config.client)] if not args.names else args.names
@@ -33,7 +33,7 @@ def start(args):
     os._exit(1 if 1 in codes else 0)
 
 
-def startc(args):
+def containerstart(args):
     """Start containers"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     names = [common.get_lastvm(config.client)] if not args.names else args.names
@@ -43,7 +43,7 @@ def startc(args):
         cont.start_container(name)
 
 
-def stop(args):
+def vmstop(args):
     """Stop vms"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     names = [common.get_lastvm(config.client)] if not args.names else args.names
@@ -63,7 +63,7 @@ def stop(args):
     os._exit(1 if 1 in codes else 0)
 
 
-def stopc(args):
+def containerstop(args):
     """Stop containers"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     names = [common.get_lastvm(config.client)] if not args.names else args.names
@@ -79,7 +79,7 @@ def stopc(args):
             cont.stop_container(name)
 
 
-def restart(args):
+def vmrestart(args):
     """Restart vms"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     names = [common.get_lastvm(config.client)] if not args.names else args.names
@@ -93,7 +93,7 @@ def restart(args):
     os._exit(1 if 1 in codes else 0)
 
 
-def restartc(args):
+def containerrestart(args):
     """Restart containers"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     names = [common.get_lastvm(config.client)] if not args.names else args.names
@@ -104,7 +104,7 @@ def restartc(args):
         cont.start_container(name)
 
 
-def console(args):
+def vmconsole(args):
     """Vnc/Spice/Serial Vm console"""
     serial = args.serial
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -126,7 +126,7 @@ def containerconsole(args):
     return
 
 
-def delete(args):
+def vmdelete(args):
     """Delete vm"""
     template = args.template
     snapshots = args.snapshots
@@ -180,7 +180,7 @@ def delete(args):
     os._exit(1 if 1 in codes else 0)
 
 
-def deletec(args):
+def containerdelete(args):
     """Delete container"""
     yes = args.yes
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -206,7 +206,7 @@ def deletec(args):
     os._exit(1 if 1 in codes else 0)
 
 
-def download(args):
+def templatedownload(args):
     """Download Template"""
     pool = args.pool
     templates = args.templates
@@ -220,7 +220,7 @@ def download(args):
         os._exit(1)
 
 
-def info(args):
+def vminfo(args):
     """Get info on vm"""
     output = args.output
     fields = args.fields.split(',') if args.fields is not None else []
@@ -267,115 +267,218 @@ def hostsync(args):
         os._exit(1)
 
 
-def _list(args):
-    """List hosts, profiles, flavors, templates, isos, pools or vms"""
-    clients = args.clients
-    profiles = args.profiles
-    flavors = args.flavors
-    templates = args.templates
-    isos = args.isos
-    disks = args.disks
-    pools = args.pools
-    repos = args.repos
-    products = args.products
-    networks = args.networks
-    subnets = args.subnets
-    loadbalancers = args.loadbalancers
-    containers = args.containers
-    images = args.images
-    plans = args.plans
+def vmlist(args):
+    """List vms"""
     filters = args.filters
-    short = args.short
-    group = args.group
-    repo = args.repo
-    if clients:
-        clientstable = PrettyTable(["Client", "Type", "Enabled", "Current"])
-        clientstable.align["Client"] = "l"
-        baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-        for client in sorted(baseconfig.clients):
-            enabled = baseconfig.ini[client].get('enabled', True)
-            _type = baseconfig.ini[client].get('type', 'kvm')
-            if client == baseconfig.client:
-                clientstable.add_row([client, _type, enabled, 'X'])
-            else:
-                clientstable.add_row([client, _type, enabled, ''])
-        print(clientstable)
-        return
-    if repos:
-        baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-        repos = PrettyTable(["Repo", "Url"])
-        repos.align["Repo"] = "l"
-        reposinfo = baseconfig.list_repos()
-        for repo in sorted(reposinfo):
-            url = reposinfo[repo]
-            repos.add_row([repo, url])
-        print(repos)
-        return
-    elif products:
-        baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-        products = PrettyTable(["Repo", "Group", "Product", "Description", "Numvms", "Memory"])
-        products.align["Repo"] = "l"
-        productsinfo = baseconfig.list_products(group=group, repo=repo)
-        for product in sorted(productsinfo, key=lambda x: (x['repo'], x['group'], x['name'])):
-            name = product['name']
-            repo = product['repo']
-            description = product.get('description', 'N/A')
-            numvms = product.get('numvms', 'N/A')
-            memory = product.get('memory', 'N/A')
-            group = product.get('group', 'N/A')
-            products.add_row([repo, group, name, description, numvms, memory])
-        print(products)
-        return
-    elif profiles:
-        baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-        if containers:
-            profiles = baseconfig.list_containerprofiles()
-            if short:
-                profilestable = PrettyTable(["Profile"])
-                for profile in sorted(profiles):
-                    profilename = profile[0]
-                    profilestable.add_row([profilename])
-            else:
-                profilestable = PrettyTable(["Profile", "Image", "Nets", "Ports", "Volumes", "Cmd"])
-                for profile in sorted(profiles):
-                    profilestable.add_row(profile)
-            profilestable.align["Profile"] = "l"
-            print(profilestable)
-        else:
-            profiles = baseconfig.list_profiles()
-            if short:
-                profilestable = PrettyTable(["Profile"])
-                for profile in sorted(profiles):
-                    profilename = profile[0]
-                    profilestable.add_row([profilename])
-            else:
-                profilestable = PrettyTable(["Profile", "Flavor",
-                                             "Pool", "Disks", "Template",
-                                             "Nets", "Cloudinit", "Nested",
-                                             "Reservedns", "Reservehost"])
-                for profile in sorted(profiles):
-                    profilestable.add_row(profile)
-            profilestable.align["Profile"] = "l"
-            print(profilestable)
-        return
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.client != 'all':
         k = config.k
-    if pools:
-        pools = k.list_pools()
-        if short:
-            poolstable = PrettyTable(["Pool"])
-            for pool in sorted(pools):
-                poolstable.add_row([pool])
+    customcolumns = {'kubevirt': 'Namespace', 'aws': 'InstanceId', 'openstack': 'Project'}
+    customcolumn = customcolumns[config.type] if config.type in customcolumns else 'Report'
+    if config.extraclients:
+        allclients = config.extraclients.copy()
+        allclients.update({config.client: config.k})
+        vms = PrettyTable(["Name", "Host", "Status", "Ips", "Source", "Plan", "Profile", customcolumn])
+        for cli in sorted(allclients):
+            for vm in allclients[cli].list():
+                name = vm.get('name')
+                status = vm.get('status')
+                ip = vm.get('ip', '')
+                source = vm.get('template', '')
+                plan = vm.get('plan', '')
+                profile = vm.get('profile', '')
+                report = vm.get('report', '')
+                vminfo = [name, cli, status, ip, source, plan, profile, report]
+                if filters:
+                    if status == filters:
+                        vms.add_row(vminfo)
+                else:
+                    vms.add_row(vminfo)
+        print(vms)
+    else:
+        vms = PrettyTable(["Name", "Status", "Ips", "Source", "Plan", "Profile", customcolumn])
+        for vm in k.list():
+            name = vm.get('name')
+            status = vm.get('status')
+            ip = vm.get('ip', '')
+            source = vm.get('template', '')
+            plan = vm.get('plan', '')
+            profile = vm.get('profile', '')
+            report = vm.get('report', '')
+            vminfo = [name, status, ip, source, plan, profile, report]
+            if config.planview and vm[4] != config.currentplan:
+                continue
+            if filters:
+                if status == filters:
+                    vms.add_row(vminfo)
+            else:
+                vms.add_row(vminfo)
+        print(vms)
+    return
+
+
+def containerlist(args):
+    """List containers"""
+    filters = args.filters
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    cont = Kcontainerconfig(config, client=args.containerclient).cont
+    common.pprint("Listing containers...")
+    containers = PrettyTable(["Name", "Status", "Image", "Plan", "Command", "Ports", "Deploy"])
+    for container in cont.list_containers():
+        if filters:
+            status = container[1]
+            if status == filters:
+                containers.add_row(container)
         else:
-            poolstable = PrettyTable(["Pool", "Path"])
-            for pool in sorted(pools):
-                poolpath = k.get_pool_path(pool)
-                poolstable.add_row([pool, poolpath])
-        poolstable.align["Pool"] = "l"
-        print(poolstable)
-        return
-    if networks:
+            containers.add_row(container)
+    print(containers)
+    return
+
+
+def containerprofilelist(args):
+    """List container profiles"""
+    short = args.short
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    profiles = baseconfig.list_containerprofiles()
+    if short:
+        profilestable = PrettyTable(["Profile"])
+        for profile in sorted(profiles):
+            profilename = profile[0]
+            profilestable.add_row([profilename])
+    else:
+        profilestable = PrettyTable(["Profile", "Image", "Nets", "Ports", "Volumes", "Cmd"])
+        for profile in sorted(profiles):
+            profilestable.add_row(profile)
+    profilestable.align["Profile"] = "l"
+    print(profilestable)
+    return
+
+
+def containerimagelist(args):
+    """List container images"""
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    if config.type != 'kvm':
+        common.pprint("Operation not supported on this kind of client.Leaving...", color='red')
+        os._exit(1)
+    cont = Kcontainerconfig(config, client=args.containerclient).cont
+    common.pprint("Listing images...")
+    images = PrettyTable(["Name"])
+    for image in cont.list_images():
+        images.add_row([image])
+    print(images)
+    return
+
+
+def hostlist(args):
+    """List hosts"""
+    clientstable = PrettyTable(["Client", "Type", "Enabled", "Current"])
+    clientstable.align["Client"] = "l"
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    for client in sorted(baseconfig.clients):
+        enabled = baseconfig.ini[client].get('enabled', True)
+        _type = baseconfig.ini[client].get('type', 'kvm')
+        if client == baseconfig.client:
+            clientstable.add_row([client, _type, enabled, 'X'])
+        else:
+            clientstable.add_row([client, _type, enabled, ''])
+    print(clientstable)
+    return
+
+
+def lblist(args):
+    """List lbs"""
+    short = args.short
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    loadbalancers = config.list_loadbalancer()
+    if short:
+        loadbalancerstable = PrettyTable(["Loadbalancer"])
+        for lb in sorted(loadbalancers):
+            loadbalancerstable.add_row([lb])
+    else:
+        loadbalancerstable = PrettyTable(["LoadBalancer", "IPAddress", "IPProtocol", "Ports", "Target"])
+        for lb in sorted(loadbalancers):
+            loadbalancerstable.add_row(lb)
+    loadbalancerstable.align["Loadbalancer"] = "l"
+    print(loadbalancerstable)
+    return
+
+
+def profilelist(args):
+    """List profiles"""
+    short = args.short
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    profiles = baseconfig.list_profiles()
+    if short:
+        profilestable = PrettyTable(["Profile"])
+        for profile in sorted(profiles):
+            profilename = profile[0]
+            profilestable.add_row([profilename])
+    else:
+        profilestable = PrettyTable(["Profile", "Flavor",
+                                     "Pool", "Disks", "Template",
+                                     "Nets", "Cloudinit", "Nested",
+                                     "Reservedns", "Reservehost"])
+        for profile in sorted(profiles):
+            profilestable.add_row(profile)
+    profilestable.align["Profile"] = "l"
+    print(profilestable)
+    return
+
+
+def flavorlist(args):
+    """List flavors"""
+    short = args.short
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    k = config.k
+    flavors = k.flavors()
+    if short:
+        flavorstable = PrettyTable(["Flavor"])
+        for flavor in sorted(flavors):
+            flavorname = flavor[0]
+            flavorstable.add_row([flavorname])
+    else:
+        flavorstable = PrettyTable(["Flavor", "Numcpus", "Memory"])
+        for flavor in sorted(flavors):
+            flavorstable.add_row(flavor)
+    flavorstable.align["Flavor"] = "l"
+    print(flavorstable)
+    return
+
+
+def templatelist(args):
+    """List templates"""
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    if config.client != 'all':
+        k = config.k
+    templatestable = PrettyTable(["Template"])
+    templatestable.align["Template"] = "l"
+    for template in k.volumes():
+        templatestable.add_row([template])
+    print(templatestable)
+    return
+
+
+def isolist(args):
+    """List isos"""
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    if config.client != 'all':
+        k = config.k
+    isostable = PrettyTable(["Iso"])
+    isostable.align["Iso"] = "l"
+    for iso in k.volumes(iso=True):
+        isostable.add_row([iso])
+    print(isostable)
+    return
+
+
+def networklist(args):
+    """List networks"""
+    short = args.short
+    subnets = args.subnets
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    if config.client != 'all':
+        k = config.k
+    if not subnets:
         networks = k.list_networks()
         common.pprint("Listing Networks...")
         if short:
@@ -397,7 +500,7 @@ def _list(args):
         networkstable.align["Network"] = "l"
         print(networkstable)
         return
-    if subnets:
+    else:
         subnets = k.list_subnets()
         common.pprint("Listing Subnets...")
         if short:
@@ -417,143 +520,102 @@ def _list(args):
         subnetstable.align["Network"] = "l"
         print(subnetstable)
         return
-    elif flavors:
-        flavors = k.flavors()
-        if short:
-            flavorstable = PrettyTable(["Flavor"])
-            for flavor in sorted(flavors):
-                flavorname = profile[0]
-                flavorstable.add_row([flavorname])
-        else:
-            flavorstable = PrettyTable(["Flavor", "Numcpus", "Memory"])
-            for flavor in sorted(flavors):
-                flavorstable.add_row(flavor)
-        flavorstable.align["Flavor"] = "l"
-        print(flavorstable)
-        return
-    elif loadbalancers:
-        loadbalancers = config.list_loadbalancer()
-        if short:
-            loadbalancerstable = PrettyTable(["Loadbalancer"])
-            for lb in sorted(loadbalancers):
-                flavorstable.add_row([lb])
-        else:
-            loadbalancerstable = PrettyTable(["LoadBalancer", "IPAddress", "IPProtocol", "Ports", "Target"])
-            for lb in sorted(loadbalancers):
-                loadbalancerstable.add_row(lb)
-        loadbalancerstable.align["Loadbalancer"] = "l"
-        print(loadbalancerstable)
-        return
-    elif templates:
-        templatestable = PrettyTable(["Template"])
-        templatestable.align["Template"] = "l"
-        for template in k.volumes():
-            templatestable.add_row([template])
-        print(templatestable)
-    elif isos:
-        isostable = PrettyTable(["Iso"])
-        isostable.align["Iso"] = "l"
-        for iso in k.volumes(iso=True):
-            isostable.add_row([iso])
-        print(isostable)
-    elif disks:
-        common.pprint("Listing disks...")
-        diskstable = PrettyTable(["Name", "Pool", "Path"])
-        diskstable.align["Name"] = "l"
-        disks = k.list_disks()
-        for disk in sorted(disks):
-            path = disks[disk]['path']
-            pool = disks[disk]['pool']
-            diskstable.add_row([disk, pool, path])
-        print(diskstable)
-    elif containers:
-        cont = Kcontainerconfig(config, client=args.containerclient).cont
-        common.pprint("Listing containers...")
-        containers = PrettyTable(["Name", "Status", "Image", "Plan", "Command", "Ports", "Deploy"])
-        for container in cont.list_containers():
-            if filters:
-                status = container[1]
-                if status == filters:
-                    containers.add_row(container)
-            else:
-                containers.add_row(container)
-        print(containers)
-    elif images:
-        if config.type != 'kvm':
-            common.pprint("Operation not supported on this kind of client.Leaving...", color='red')
-            os._exit(1)
-        cont = Kcontainerconfig(config, client=args.containerclient).cont
-        common.pprint("Listing images...")
-        images = PrettyTable(["Name"])
-        for image in cont.list_images():
-            images.add_row([image])
-        print(images)
-    elif plans:
-        vms = {}
-        if config.extraclients:
-            plans = PrettyTable(["Name", "Host", "Vms"])
-            allclients = config.extraclients.copy()
-            allclients.update({config.client: config.k})
-            for cli in sorted(allclients):
-                currentconfig = Kconfig(client=cli, debug=args.debug, region=args.region, zone=args.zone,
-                                        namespace=args.namespace)
-                for plan in currentconfig.list_plans():
-                    planname = plan[0]
-                    planvms = plan[1]
-                    plans.add_row([planname, cli, planvms])
-        else:
-            plans = PrettyTable(["Name", "Vms"])
-            for plan in config.list_plans():
+
+
+def planlist(args):
+    """List plans"""
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    if config.extraclients:
+        plans = PrettyTable(["Name", "Host", "Vms"])
+        allclients = config.extraclients.copy()
+        allclients.update({config.client: config.k})
+        for cli in sorted(allclients):
+            currentconfig = Kconfig(client=cli, debug=args.debug, region=args.region, zone=args.zone,
+                                    namespace=args.namespace)
+            for plan in currentconfig.list_plans():
                 planname = plan[0]
                 planvms = plan[1]
-                plans.add_row([planname, planvms])
-        print(plans)
+                plans.add_row([planname, cli, planvms])
     else:
-        customcolumns = {'kubevirt': 'Namespace', 'aws': 'InstanceId', 'openstack': 'Project'}
-        customcolumn = customcolumns[config.type] if config.type in customcolumns else 'Report'
-        if config.extraclients:
-            allclients = config.extraclients.copy()
-            allclients.update({config.client: config.k})
-            vms = PrettyTable(["Name", "Host", "Status", "Ips", "Source", "Plan", "Profile", customcolumn])
-            for cli in sorted(allclients):
-                for vm in allclients[cli].list():
-                    name = vm.get('name')
-                    status = vm.get('status')
-                    ip = vm.get('ip', '')
-                    source = vm.get('template', '')
-                    plan = vm.get('plan', '')
-                    profile = vm.get('profile', '')
-                    report = vm.get('report', '')
-                    vminfo = [name, cli, status, ip, source, plan, profile, report]
-                    if filters:
-                        if status == filters:
-                            vms.add_row(vminfo)
-                    else:
-                        vms.add_row(vminfo)
-            print(vms)
-        else:
-            vms = PrettyTable(["Name", "Status", "Ips", "Source", "Plan", "Profile", customcolumn])
-            for vm in k.list():
-                name = vm.get('name')
-                status = vm.get('status')
-                ip = vm.get('ip', '')
-                source = vm.get('template', '')
-                plan = vm.get('plan', '')
-                profile = vm.get('profile', '')
-                report = vm.get('report', '')
-                vminfo = [name, status, ip, source, plan, profile, report]
-                if config.planview and vm[4] != config.currentplan:
-                    continue
-                if filters:
-                    if status == filters:
-                        vms.add_row(vminfo)
-                else:
-                    vms.add_row(vminfo)
-            print(vms)
-            return
+        plans = PrettyTable(["Name", "Vms"])
+        for plan in config.list_plans():
+            planname = plan[0]
+            planvms = plan[1]
+            plans.add_row([planname, planvms])
+    print(plans)
+    return
 
 
-def vm(args):
+def poollist(args):
+    """List pools"""
+    short = args.short
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    k = config.k
+    pools = k.list_pools()
+    if short:
+        poolstable = PrettyTable(["Pool"])
+        for pool in sorted(pools):
+            poolstable.add_row([pool])
+    else:
+        poolstable = PrettyTable(["Pool", "Path"])
+        for pool in sorted(pools):
+            poolpath = k.get_pool_path(pool)
+            poolstable.add_row([pool, poolpath])
+    poolstable.align["Pool"] = "l"
+    print(poolstable)
+    return
+
+
+def productlist(args):
+    """List products"""
+    group = args.group
+    repo = args.repo
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    products = PrettyTable(["Repo", "Group", "Product", "Description", "Numvms", "Memory"])
+    products.align["Repo"] = "l"
+    productsinfo = baseconfig.list_products(group=group, repo=repo)
+    for product in sorted(productsinfo, key=lambda x: (x['repo'], x['group'], x['name'])):
+        name = product['name']
+        repo = product['repo']
+        description = product.get('description', 'N/A')
+        numvms = product.get('numvms', 'N/A')
+        memory = product.get('memory', 'N/A')
+        group = product.get('group', 'N/A')
+        products.add_row([repo, group, name, description, numvms, memory])
+    print(products)
+    return
+
+
+def repolist(args):
+    """List repos"""
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    repos = PrettyTable(["Repo", "Url"])
+    repos.align["Repo"] = "l"
+    reposinfo = baseconfig.list_repos()
+    for repo in sorted(reposinfo):
+        url = reposinfo[repo]
+        repos.add_row([repo, url])
+    print(repos)
+    return
+
+
+def vmdisklist(args):
+    """List vm disks"""
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    k = config.k
+    common.pprint("Listing disks...")
+    diskstable = PrettyTable(["Name", "Pool", "Path"])
+    diskstable.align["Name"] = "l"
+    disks = k.list_disks()
+    for disk in sorted(disks):
+        path = disks[disk]['path']
+        pool = disks[disk]['pool']
+        diskstable.add_row([disk, pool, path])
+    print(diskstable)
+    return
+
+
+def vmcreate(args):
     """Create vms"""
     name = args.name
     profile = args.profile
@@ -589,7 +651,7 @@ def vm(args):
     return code
 
 
-def clone(args):
+def vmclone(args):
     """Clone existing vm"""
     name = args.name
     base = args.base
@@ -601,7 +663,7 @@ def clone(args):
     k.clone(base, name, full=full, start=start)
 
 
-def update(args):
+def vmupdate(args):
     """Update ip, memory or numcpus"""
     ip1 = args.ip1
     flavor = args.flavor
@@ -678,7 +740,7 @@ def update(args):
             k.reserve_host(name, nets, domain)
 
 
-def disk(args):
+def vmdiskadd(args):
     """Add disk to vm"""
     name = args.name
     size = args.size
@@ -699,7 +761,7 @@ def disk(args):
     k.add_disk(name=name, size=size, pool=pool, template=template)
 
 
-def diskd(args):
+def vmdiskdelete(args):
     """Delete disk of vm"""
     name = args.name
     diskname = args.diskname
@@ -714,8 +776,8 @@ def diskd(args):
     return
 
 
-def dns(args):
-    """Create/Delete dns entries"""
+def dnscreate(args):
+    """Create dns entries"""
     name = args.name
     net = args.net
     domain = net
@@ -726,8 +788,8 @@ def dns(args):
     k.reserve_dns(name=name, nets=[net], domain=domain, ip=ip)
 
 
-def dnsd(args):
-    """Create/Delete dns entries"""
+def dnsdelete(args):
+    """Delete dns entries"""
     name = args.name
     net = args.net
     domain = net
@@ -737,7 +799,7 @@ def dnsd(args):
     k.delete_dns(name, domain)
 
 
-def export(args):
+def vmexport(args):
     """Export a vm"""
     template = args.template
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -756,7 +818,7 @@ def export(args):
     os._exit(1 if 1 in codes else 0)
 
 
-def lb(args):
+def lbcreate(args):
     """Create loadbalancer"""
     checkpath = args.checkpath
     checkport = args.checkport
@@ -772,7 +834,7 @@ def lb(args):
     return 0
 
 
-def lbd(args):
+def lbdelete(args):
     """Delete loadbalancer"""
     checkpath = args.checkpath
     checkport = args.checkport
@@ -791,18 +853,12 @@ def lbd(args):
     return 0
 
 
-def nic(args):
-    """Add/Delete nic to vm"""
+def niccreate(args):
+    """Add nic to vm"""
     name = args.name
-    delete = args.delete
-    interface = args.interface
     network = args.network
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
-    if delete:
-        common.pprint("Deleting nic from %s..." % name)
-        k.delete_nic(name, interface)
-        return
     if network is None:
         common.pprint("Missing network. Leaving...", color='red')
         os._exit(1)
@@ -810,7 +866,18 @@ def nic(args):
     k.add_nic(name=name, network=network)
 
 
-def pool(args):
+def nicdelete(args):
+    """Delete nic of vm"""
+    name = args.name
+    interface = args.interface
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    k = config.k
+    common.pprint("Deleting nic from %s..." % name)
+    k.delete_nic(name, interface)
+    return
+
+
+def poolcreate(args):
     """Create/Delete pool"""
     pool = args.pool
     pooltype = args.pooltype
@@ -825,7 +892,7 @@ def pool(args):
     k.create_pool(name=pool, poolpath=path, pooltype=pooltype, thinpool=thinpool)
 
 
-def poold(args):
+def pooldelete(args):
     """Delete pool"""
     pool = args.pool
     full = args.full
@@ -881,7 +948,7 @@ def plan(args):
     return 0
 
 
-def render(args):
+def planrender(args):
     """Create/Delete/Stop/Start vms from plan file"""
     inputfile = args.inputfile
     volumepath = args.volumepath
@@ -897,8 +964,8 @@ def render(args):
     return 0
 
 
-def repo(args):
-    """Create/Update repo"""
+def repocreate(args):
+    """Create repo"""
     repo = args.repo
     url = args.url
     update = args.update
@@ -929,7 +996,7 @@ def repo(args):
     return 0
 
 
-def repod(args):
+def repodelete(args):
     """Delete repo"""
     repo = args.repo
     update = args.update
@@ -994,7 +1061,7 @@ def productcreate(args):
     return 0
 
 
-def ssh(args):
+def vmssh(args):
     """Ssh into vm"""
     l = args.L
     r = args.R
@@ -1029,7 +1096,7 @@ def ssh(args):
         common.pprint("Couldnt ssh to %s" % name, color='red')
 
 
-def scp(args):
+def vmscp(args):
     """Scp into vm"""
     recursive = args.recursive
     volumepath = args.volumepath
@@ -1063,7 +1130,7 @@ def scp(args):
         common.pprint("Couldn't run scp", color='red')
 
 
-def networkc(args):
+def networkcreate(args):
     """Create Network"""
     name = args.name
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
@@ -1085,7 +1152,7 @@ def networkc(args):
     common.handle_response(result, name, element='Network ')
 
 
-def networkd(args):
+def networkdelete(args):
     """Delete Network"""
     name = args.name
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -1097,7 +1164,7 @@ def networkd(args):
     common.handle_response(result, name, element='Network ', action='deleted')
 
 
-def bootstrap(args):
+def hostbootstrap(args):
     """Generate basic config file"""
     name = args.name
     host = args.host
@@ -1111,7 +1178,7 @@ def bootstrap(args):
     baseconfig.bootstrap(name, host, port, user, protocol, url, pool, poolpath)
 
 
-def container(args):
+def containercreate(args):
     """Create container"""
     name = args.name
     profile = args.profile
@@ -1146,7 +1213,7 @@ def container(args):
     return
 
 
-def snapshot(args):
+def vmsnapshot(args):
     """Create/Delete/Revert snapshot"""
     snapshot = args.snapshot
     name = args.name
@@ -1179,14 +1246,14 @@ def snapshot(args):
     return code
 
 
-def report(args):
+def hostreport(args):
     """Report info about host"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     k.report()
 
 
-def switch(args):
+def hostswitch(args):
     """Handle host"""
     host = args.host
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
@@ -1220,161 +1287,189 @@ def cli():
     containerconsole_parser.add_argument('name', metavar='CONTAINERNAME', nargs='?')
     containerconsole_parser.set_defaults(func=containerconsole)
 
-    container_info = 'Create container'
-    container_parser = subparsers.add_parser('containercreate', description=container_info, help=container_info,
-                                             aliases=['container'])
-    container_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
-    container_parser.add_argument('-P', '--param', action='append',
-                                  help='specify parameter or keyword for rendering (can specify multiple)',
-                                  metavar='PARAM')
-    container_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
-    container_parser.add_argument('name', metavar='NAME', nargs='?')
-    container_parser.set_defaults(func=container)
+    containercreate_info = 'Create container'
+    containercreate_parser = subparsers.add_parser('containercreate',
+                                                   description=containercreate_info, help=containercreate_info,
+                                                   aliases=['container'])
+    containercreate_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
+    containercreate_parser.add_argument('-P', '--param', action='append',
+                                        help='specify parameter or keyword for rendering (can specify multiple)',
+                                        metavar='PARAM')
+    containercreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    containercreate_parser.add_argument('name', metavar='NAME', nargs='?')
+    containercreate_parser.set_defaults(func=containercreate)
 
-    deletec_info = 'Delete container'
-    deletec_parser = subparsers.add_parser('containerdelete', description=deletec_info, help=deletec_info)
-    deletec_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    deletec_parser.add_argument('names', metavar='VMNAMES', nargs='*')
-    deletec_parser.set_defaults(func=deletec)
+    containerdelete_info = 'Delete container'
+    containerdelete_parser = subparsers.add_parser('containerdelete', description=containerdelete_info,
+                                                   help=containerdelete_info)
+    containerdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    containerdelete_parser.add_argument('names', metavar='VMNAMES', nargs='*')
+    containerdelete_parser.set_defaults(func=containerdelete)
 
-    restartc_info = 'Restart containers'
-    restartc_parser = subparsers.add_parser('containerrestart', description=restartc_info, help=restartc_info)
-    restartc_parser.add_argument('names', metavar='CONTAINERNAMES', nargs='*')
-    restartc_parser.set_defaults(func=restartc)
+    containerimagelist_info = 'List container images'
+    containerimagelist_parser = subparsers.add_parser('containerimagelist', description=containerimagelist_info,
+                                                      help=containerimagelist_info)
+    containerimagelist_parser.set_defaults(func=containerimagelist)
 
-    startc_info = 'Start containers'
-    startc_parser = subparsers.add_parser('containerstart', description=startc_info, help=startc_info)
-    startc_parser.add_argument('names', metavar='VMNAMES', nargs='*')
-    startc_parser.set_defaults(func=startc)
+    containerlist_info = 'List containers'
+    containerlist_parser = subparsers.add_parser('containerlist', description=containerlist_info,
+                                                 help=containerlist_info)
+    containerlist_parser.add_argument('--filters', choices=('up', 'down'))
+    containerlist_parser.set_defaults(func=containerlist)
 
-    stopc_info = 'Stop containers'
-    stopc_parser = subparsers.add_parser('containerstop', description=stopc_info, help=stopc_info)
-    stopc_parser.add_argument('names', metavar='CONTAINERNAMES', nargs='*')
-    stopc_parser.set_defaults(func=stopc)
+    containerprofilelist_info = 'List container profiles'
+    containerprofilelist_parser = subparsers.add_parser('containerprofilelist', description=containerprofilelist_info,
+                                                        help=containerprofilelist_info)
+    containerprofilelist_parser.add_argument('--short', action='store_true')
+    containerprofilelist_parser.set_defaults(func=containerprofilelist)
 
-    dns_info = 'Create dns entries'
-    dns_parser = subparsers.add_parser('dnscreate', description=dns_info, help=dns_info, aliases=['dns'])
-    dns_parser.add_argument('-n', '--net', help='Domain where to create entry', metavar='NET')
-    dns_parser.add_argument('-i', '--ip', help='Ip', metavar='IP')
-    dns_parser.add_argument('name', metavar='NAME', nargs='?')
-    dns_parser.set_defaults(func=dns)
+    containerrestart_info = 'Restart containers'
+    containerrestart_parser = subparsers.add_parser('containerrestart', description=containerrestart_info,
+                                                    help=containerrestart_info)
+    containerrestart_parser.add_argument('names', metavar='CONTAINERNAMES', nargs='*')
+    containerrestart_parser.set_defaults(func=containerrestart)
 
-    dnsd_info = 'Delete dns entries'
-    dnsd_parser = subparsers.add_parser('dnsdelete', description=dnsd_info, help=dnsd_info)
-    dnsd_parser.add_argument('-n', '--net', help='Domain where to create entry', metavar='NET')
-    dnsd_parser.add_argument('name', metavar='NAME', nargs='?')
-    dnsd_parser.set_defaults(func=dnsd)
+    containerstart_info = 'Start containers'
+    containerstart_parser = subparsers.add_parser('containerstart', description=containerstart_info,
+                                                  help=containerstart_info)
+    containerstart_parser.add_argument('names', metavar='VMNAMES', nargs='*')
+    containerstart_parser.set_defaults(func=containerstart)
 
-    bootstrap_info = 'Generate basic config file'
-    bootstrap_parser = subparsers.add_parser('hostbootstrap', help=bootstrap_info, description=bootstrap_info,
-                                             aliases=['bootstrap'])
-    bootstrap_parser.add_argument('-n', '--name', help='Name to use', metavar='CLIENT')
-    bootstrap_parser.add_argument('-H', '--host', help='Host to use', metavar='HOST')
-    bootstrap_parser.add_argument('-p', '--port', help='Port to use', metavar='PORT')
-    bootstrap_parser.add_argument('-u', '--user', help='User to use', default='root', metavar='USER')
-    bootstrap_parser.add_argument('-P', '--protocol', help='Protocol to use', default='ssh', metavar='PROTOCOL')
-    bootstrap_parser.add_argument('-U', '--url', help='URL to use', metavar='URL')
-    bootstrap_parser.add_argument('--pool', help='Pool to use', metavar='POOL')
-    bootstrap_parser.add_argument('--poolpath', help='Pool Path to use', metavar='POOLPATH')
-    bootstrap_parser.set_defaults(func=bootstrap)
+    containerstop_info = 'Stop containers'
+    containerstop_parser = subparsers.add_parser('containerstop', description=containerstop_info,
+                                                 help=containerstop_info)
+    containerstop_parser.add_argument('names', metavar='CONTAINERNAMES', nargs='*')
+    containerstop_parser.set_defaults(func=containerstop)
 
-    hostd_info = 'Disable host'
-    hostd_parser = subparsers.add_parser('hostdisable', description=hostd_info, help=hostd_info)
-    hostd_parser.add_argument('host', metavar='HOST', nargs='?')
-    hostd_parser.set_defaults(func=hostdisable)
+    dnscreate_info = 'Create dns entries'
+    dnscreate_parser = subparsers.add_parser('dnscreate', description=dnscreate_info, help=dnscreate_info,
+                                             aliases=['dns'])
+    dnscreate_parser.add_argument('-n', '--net', help='Domain where to create entry', metavar='NET')
+    dnscreate_parser.add_argument('-i', '--ip', help='Ip', metavar='IP')
+    dnscreate_parser.add_argument('name', metavar='NAME', nargs='?')
+    dnscreate_parser.set_defaults(func=dnscreate)
 
-    hoste_info = 'Enable host'
-    hoste_parser = subparsers.add_parser('hostenable', description=hoste_info, help=hoste_info)
-    hoste_parser.add_argument('host', metavar='HOST', nargs='?')
-    hoste_parser.set_defaults(func=hostenable)
+    dnsdelete_info = 'Delete dns entries'
+    dnsdelete_parser = subparsers.add_parser('dnsdelete', description=dnsdelete_info, help=dnsdelete_info)
+    dnsdelete_parser.add_argument('-n', '--net', help='Domain where to create entry', metavar='NET')
+    dnsdelete_parser.add_argument('name', metavar='NAME', nargs='?')
+    dnsdelete_parser.set_defaults(func=dnsdelete)
 
-    report_info = 'Report Info about Host'
-    report_parser = subparsers.add_parser('hostreport', description=report_info, help=report_info, aliases=['report'])
-    report_parser.set_defaults(func=report)
+    hostbootstrap_info = 'Generate basic config file'
+    hostbootstrap_parser = subparsers.add_parser('hostbootstrap', help=hostbootstrap_info,
+                                                 description=hostbootstrap_info, aliases=['bootstrap'])
+    hostbootstrap_parser.add_argument('-n', '--name', help='Name to use', metavar='CLIENT')
+    hostbootstrap_parser.add_argument('-H', '--host', help='Host to use', metavar='HOST')
+    hostbootstrap_parser.add_argument('-p', '--port', help='Port to use', metavar='PORT')
+    hostbootstrap_parser.add_argument('-u', '--user', help='User to use', default='root', metavar='USER')
+    hostbootstrap_parser.add_argument('-P', '--protocol', help='Protocol to use', default='ssh', metavar='PROTOCOL')
+    hostbootstrap_parser.add_argument('-U', '--url', help='URL to use', metavar='URL')
+    hostbootstrap_parser.add_argument('--pool', help='Pool to use', metavar='POOL')
+    hostbootstrap_parser.add_argument('--poolpath', help='Pool Path to use', metavar='POOLPATH')
+    hostbootstrap_parser.set_defaults(func=hostbootstrap)
 
-    switch_info = 'Switch host'
-    switch_parser = subparsers.add_parser('hostswitch', description=switch_info, help=switch_info, aliases=['switch'])
-    switch_parser.add_argument('host', help='HOST')
-    switch_parser.set_defaults(func=switch)
+    hostdisable_info = 'Disable host'
+    hostdisable_parser = subparsers.add_parser('hostdisable', description=hostdisable_info, help=hostdisable_info)
+    hostdisable_parser.add_argument('host', metavar='HOST', nargs='?')
+    hostdisable_parser.set_defaults(func=hostdisable)
 
-    hosts_info = 'Sync host'
-    hosts_parser = subparsers.add_parser('hostsync', description=hosts_info, help=hosts_info)
-    hosts_parser.add_argument('hosts', help='HOSTS', nargs='*')
-    hosts_parser.set_defaults(func=hostsync)
+    hostenable_info = 'Enable host'
+    hostenable_parser = subparsers.add_parser('hostenable', description=hostenable_info, help=hostenable_info)
+    hostenable_parser.add_argument('host', metavar='HOST', nargs='?')
+    hostenable_parser.set_defaults(func=hostenable)
 
-    lb_info = 'Create loadbalancer'
-    lb_parser = subparsers.add_parser('lbcreate', description=lb_info, help=lb_info, aliases=['lb'])
-    lb_parser.add_argument('--checkpath', default='/index.html', help="Path to check. Defaults to /index.html")
-    lb_parser.add_argument('--checkport', default=80, help="Port to check. Defaults to 80")
-    lb_parser.add_argument('--domain', help='Domain to create a dns entry associated to the load balancer')
-    lb_parser.add_argument('-i', '--internal', action='store_true')
-    lb_parser.add_argument('-p', '--ports', default='443', help='Load Balancer Ports. Defaults to 443')
-    lb_parser.add_argument('-v', '--vms', help='Vms to add to the pool')
-    lb_parser.add_argument('name', metavar='NAME', nargs='?')
-    lb_parser.set_defaults(func=lb)
+    hostlist_info = 'List hosts'
+    hostlist_parser = subparsers.add_parser('hostlist', description=hostlist_info, help=hostlist_info)
+    hostlist_parser.set_defaults(func=hostlist)
 
-    lbd_info = 'Delete loadbalancer'
-    lbd_parser = subparsers.add_parser('lbdelete', description=lbd_info, help=lbd_info)
-    lbd_parser.add_argument('--checkpath', default='/index.html', help="Path to check. Defaults to /index.html")
-    lbd_parser.add_argument('--checkport', default=80, help="Port to check. Defaults to 80")
-    lbd_parser.add_argument('-d', '--delete', action='store_true')
-    lbd_parser.add_argument('--domain', help='Domain to create a dns entry associated to the load balancer')
-    lbd_parser.add_argument('-i', '--internal', action='store_true')
-    lbd_parser.add_argument('-p', '--ports', default='443', help='Load Balancer Ports. Defaults to 443')
-    lbd_parser.add_argument('-v', '--vms', help='Vms to add to the pool')
-    lbd_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    lbd_parser.add_argument('name', metavar='NAME', nargs='?')
-    lbd_parser.set_defaults(func=lbd)
+    hostreport_info = 'Report Info about Host'
+    hostreport_parser = subparsers.add_parser('hostreport', description=hostreport_info, help=hostreport_info,
+                                              aliases=['report'])
+    hostreport_parser.set_defaults(func=hostreport)
 
-    list_info = 'List hosts, profiles, flavors, templates, isos,...'
-    list_parser = subparsers.add_parser('list', description=list_info, help=list_info)
-    list_parser.add_argument('-c', '--clients', action='store_true')
-    list_parser.add_argument('-p', '--profiles', action='store_true')
-    list_parser.add_argument('-f', '--flavors', action='store_true')
-    list_parser.add_argument('-t', '--templates', action='store_true')
-    list_parser.add_argument('-i', '--isos', action='store_true')
-    list_parser.add_argument('-l', '--loadbalancers', action='store_true')
-    list_parser.add_argument('-d', '--disks', action='store_true')
-    list_parser.add_argument('-P', '--pools', action='store_true')
-    list_parser.add_argument('-n', '--networks', action='store_true')
-    list_parser.add_argument('-s', '--subnets', action='store_true')
-    list_parser.add_argument('--containers', action='store_true')
-    list_parser.add_argument('--images', action='store_true')
-    list_parser.add_argument('--short', action='store_true')
-    list_parser.add_argument('--plans', action='store_true')
-    list_parser.add_argument('--repos', action='store_true')
-    list_parser.add_argument('--products', action='store_true')
-    list_parser.add_argument('-g', '--group', help='Only Display products of the indicated group', metavar='GROUP')
-    list_parser.add_argument('-r', '--repo', help='Only Display products of the indicated repository', metavar='REPO')
-    list_parser.add_argument('--filters', choices=('up', 'down'))
-    list_parser.set_defaults(func=_list)
+    hostswitch_info = 'Switch host'
+    hostswitch_parser = subparsers.add_parser('hostswitch', description=hostswitch_info, help=hostswitch_info,
+                                              aliases=['switch'])
+    hostswitch_parser.add_argument('host', help='HOST')
+    hostswitch_parser.set_defaults(func=hostswitch)
 
-    network_info = 'Create Network'
-    network_parser = subparsers.add_parser('networkcreate', description=network_info, help=network_info,
-                                           aliases=['network'])
-    network_parser.add_argument('-i', '--isolated', action='store_true', help='Isolated Network')
-    network_parser.add_argument('-c', '--cidr', help='Cidr of the net', metavar='CIDR')
-    network_parser.add_argument('--nodhcp', action='store_true', help='Disable dhcp on the net')
-    network_parser.add_argument('--domain', help='DNS domain. Defaults to network name')
-    network_parser.add_argument('-P', '--param', action='append',
-                                help='specify parameter or keyword for rendering (can specify multiple)',
-                                metavar='PARAM')
-    network_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
-    network_parser.add_argument('name', metavar='NETWORK')
-    network_parser.set_defaults(func=networkc)
+    hostsync_info = 'Sync host'
+    hostsync_parser = subparsers.add_parser('hostsync', description=hostsync_info, help=hostsync_info)
+    hostsync_parser.add_argument('hosts', help='HOSTS', nargs='*')
+    hostsync_parser.set_defaults(func=hostsync)
 
-    networkd_info = 'Delete Network'
-    networkd_parser = subparsers.add_parser('networkdelete', description=networkd_info, help=networkd_info)
-    networkd_parser.add_argument('name', metavar='NETWORK')
-    networkd_parser.set_defaults(func=networkd)
+    lbcreate_info = 'Create loadbalancer'
+    lbcreate_parser = subparsers.add_parser('lbcreate', description=lbcreate_info, help=lbcreate_info, aliases=['lb'])
+    lbcreate_parser.add_argument('--checkpath', default='/index.html', help="Path to check. Defaults to /index.html")
+    lbcreate_parser.add_argument('--checkport', default=80, help="Port to check. Defaults to 80")
+    lbcreate_parser.add_argument('--domain', help='Domain to create a dns entry associated to the load balancer')
+    lbcreate_parser.add_argument('-i', '--internal', action='store_true')
+    lbcreate_parser.add_argument('-p', '--ports', default='443', help='Load Balancer Ports. Defaults to 443')
+    lbcreate_parser.add_argument('-v', '--vms', help='Vms to add to the pool')
+    lbcreate_parser.add_argument('name', metavar='NAME', nargs='?')
+    lbcreate_parser.set_defaults(func=lbcreate)
 
-    nic_info = 'Add/Delete nic of vm'
-    nic_parser = subparsers.add_parser('nic', description=nic_info, help=nic_info)
-    nic_parser.add_argument('-d', '--delete', action='store_true')
-    nic_parser.add_argument('-i', '--interface', help='Name of the interface, when deleting', metavar='INTERFACE')
-    nic_parser.add_argument('-n', '--network', help='Network', metavar='NETWORK')
-    nic_parser.add_argument('name', metavar='VMNAME')
-    nic_parser.set_defaults(func=nic)
+    lbdelete_info = 'Delete loadbalancer'
+    lbdelete_parser = subparsers.add_parser('lbdelete', description=lbdelete_info, help=lbdelete_info)
+    lbdelete_parser.add_argument('--checkpath', default='/index.html', help="Path to check. Defaults to /index.html")
+    lbdelete_parser.add_argument('--checkport', default=80, help="Port to check. Defaults to 80")
+    lbdelete_parser.add_argument('-d', '--delete', action='store_true')
+    lbdelete_parser.add_argument('--domain', help='Domain to create a dns entry associated to the load balancer')
+    lbdelete_parser.add_argument('-i', '--internal', action='store_true')
+    lbdelete_parser.add_argument('-p', '--ports', default='443', help='Load Balancer Ports. Defaults to 443')
+    lbdelete_parser.add_argument('-v', '--vms', help='Vms to add to the pool')
+    lbdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    lbdelete_parser.add_argument('name', metavar='NAME', nargs='?')
+    lbdelete_parser.set_defaults(func=lbdelete)
+
+    lblist_info = 'List loadbalancers'
+    lblist_parser = subparsers.add_parser('lblist', description=lblist_info, help=lblist_info)
+    lblist_parser.add_argument('--short', action='store_true')
+    lblist_parser.set_defaults(func=lblist)
+
+    profilelist_info = 'List profiles'
+    profilelist_parser = subparsers.add_parser('profilelist', description=profilelist_info, help=profilelist_info)
+    profilelist_parser.add_argument('--short', action='store_true')
+    profilelist_parser.set_defaults(func=profilelist)
+
+    flavorlist_info = 'List flavors'
+    flavorlist_parser = subparsers.add_parser('flavorlist', description=flavorlist_info, help=flavorlist_info)
+    flavorlist_parser.add_argument('--short', action='store_true')
+    flavorlist_parser.set_defaults(func=flavorlist)
+
+    templatelist_info = 'List templates'
+    templatelist_parser = subparsers.add_parser('templatelist', description=templatelist_info, help=templatelist_info)
+    templatelist_parser.set_defaults(func=templatelist)
+
+    isolist_info = 'List isos'
+    isolist_parser = subparsers.add_parser('isolist', description=isolist_info, help=isolist_info)
+    isolist_parser.set_defaults(func=isolist)
+
+    networklist_info = 'List networks'
+    networklist_parser = subparsers.add_parser('networklist', description=networklist_info, help=networklist_info)
+    networklist_parser.add_argument('--short', action='store_true')
+    networklist_parser.add_argument('-s', '--subnets', action='store_true')
+    networklist_parser.set_defaults(func=networklist)
+
+    networkcreate_info = 'Create Network'
+    networkcreate_parser = subparsers.add_parser('networkcreate', description=networkcreate_info,
+                                                 help=networkcreate_info, aliases=['network'])
+    networkcreate_parser.add_argument('-i', '--isolated', action='store_true', help='Isolated Network')
+    networkcreate_parser.add_argument('-c', '--cidr', help='Cidr of the net', metavar='CIDR')
+    networkcreate_parser.add_argument('--nodhcp', action='store_true', help='Disable dhcp on the net')
+    networkcreate_parser.add_argument('--domain', help='DNS domain. Defaults to network name')
+    networkcreate_parser.add_argument('-P', '--param', action='append',
+                                      help='specify parameter or keyword for rendering (can specify multiple)',
+                                      metavar='PARAM')
+    networkcreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    networkcreate_parser.add_argument('name', metavar='NETWORK')
+    networkcreate_parser.set_defaults(func=networkcreate)
+
+    networkdelete_info = 'Delete Network'
+    networkdelete_parser = subparsers.add_parser('networkdelete', description=networkdelete_info,
+                                                 help=networkdelete_info)
+    networkdelete_parser.add_argument('name', metavar='NETWORK')
+    networkdelete_parser.set_defaults(func=networkdelete)
 
     plan_info = 'Create/Delete/Stop/Start vms from plan file'
     plan_parser = subparsers.add_parser('plan', description=plan_info, help=plan_info)
@@ -1403,34 +1498,45 @@ def cli():
     plan_parser.add_argument('plan', metavar='PLAN', nargs='?')
     plan_parser.set_defaults(func=plan)
 
-    render_info = 'Render plans or files'
-    render_parser = subparsers.add_parser('planrender', description=render_info, help=render_info, aliases=['render'])
-    render_parser.add_argument('-f', '--inputfile', help='Input Plan file')
-    render_parser.add_argument('-P', '--param', action='append',
-                               help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    render_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
-    render_parser.add_argument('-v', '--volumepath', help='Volume Path (only used with kcli container)',
-                               default='/workdir', metavar='VOLUMEPATH')
-    render_parser.set_defaults(func=render)
+    planlist_info = 'List plans'
+    planlist_parser = subparsers.add_parser('planlist', description=planlist_info, help=planlist_info)
+    planlist_parser.set_defaults(func=planlist)
 
-    pool_info = 'Create pool'
-    pool_parser = subparsers.add_parser('poolcreate', description=pool_info, help=pool_info, aliases=['pool'])
-    pool_parser.add_argument('-f', '--full', action='store_true')
-    pool_parser.add_argument('-t', '--pooltype', help='Type of the pool', choices=('dir', 'lvm', 'zfs'),
-                             default='dir')
-    pool_parser.add_argument('-p', '--path', help='Path of the pool', metavar='PATH')
-    pool_parser.add_argument('--thinpool', help='Existing thin pool to use with lvm', metavar='THINPOOL')
-    pool_parser.add_argument('pool')
-    pool_parser.set_defaults(func=pool)
+    planrender_info = 'Render plans or files'
+    planrender_parser = subparsers.add_parser('planrender', description=planrender_info,
+                                              help=planrender_info, aliases=['render'])
+    planrender_parser.add_argument('-f', '--inputfile', help='Input Plan file')
+    planrender_parser.add_argument('-P', '--param', action='append',
+                                   help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    planrender_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    planrender_parser.add_argument('-v', '--volumepath', help='Volume Path (only used with kcli container)',
+                                   default='/workdir', metavar='VOLUMEPATH')
+    planrender_parser.set_defaults(func=planrender)
 
-    poold_info = 'Delete pool'
-    poold_parser = subparsers.add_parser('pooldelete', description=poold_info, help=poold_info)
-    poold_parser.add_argument('-d', '--delete', action='store_true')
-    poold_parser.add_argument('-f', '--full', action='store_true')
-    poold_parser.add_argument('-p', '--path', help='Path of the pool', metavar='PATH')
-    poold_parser.add_argument('--thinpool', help='Existing thin pool to use with lvm', metavar='THINPOOL')
-    poold_parser.add_argument('pool')
-    poold_parser.set_defaults(func=poold)
+    poolcreate_info = 'Create pool'
+    poolcreate_parser = subparsers.add_parser('poolcreate', description=poolcreate_info, help=poolcreate_info,
+                                              aliases=['pool'])
+    poolcreate_parser.add_argument('-f', '--full', action='store_true')
+    poolcreate_parser.add_argument('-t', '--pooltype', help='Type of the pool', choices=('dir', 'lvm', 'zfs'),
+                                   default='dir')
+    poolcreate_parser.add_argument('-p', '--path', help='Path of the pool', metavar='PATH')
+    poolcreate_parser.add_argument('--thinpool', help='Existing thin pool to use with lvm', metavar='THINPOOL')
+    poolcreate_parser.add_argument('pool')
+    poolcreate_parser.set_defaults(func=poolcreate)
+
+    pooldelete_info = 'Delete pool'
+    pooldelete_parser = subparsers.add_parser('pooldelete', description=pooldelete_info, help=pooldelete_info)
+    pooldelete_parser.add_argument('-d', '--delete', action='store_true')
+    pooldelete_parser.add_argument('-f', '--full', action='store_true')
+    pooldelete_parser.add_argument('-p', '--path', help='Path of the pool', metavar='PATH')
+    pooldelete_parser.add_argument('--thinpool', help='Existing thin pool to use with lvm', metavar='THINPOOL')
+    pooldelete_parser.add_argument('pool')
+    pooldelete_parser.set_defaults(func=pooldelete)
+
+    poollist_info = 'List pools'
+    poollist_parser = subparsers.add_parser('poollist', description=poollist_info, help=poollist_info)
+    poollist_parser.add_argument('--short', action='store_true')
+    poollist_parser.set_defaults(func=poollist)
 
     product_info = 'Deploy Product'
     product_parser = subparsers.add_parser('productcreate', description=product_info, help=product_info,
@@ -1451,161 +1557,204 @@ def cli():
     product_parser.add_argument('product', metavar='PRODUCT')
     product_parser.set_defaults(func=productcreate)
 
-    repo_info = 'Create repo'
-    repo_parser = subparsers.add_parser('repocreate', description=repo_info, help=repo_info, aliases=['repo'])
-    repo_parser.add_argument('-u', '--url', help='URL of the repo', metavar='URL')
-    repo_parser.add_argument('-U', '--update', action='store_true', help='Update repo')
-    repo_parser.add_argument('repo')
-    repo_parser.set_defaults(func=repo)
+    productlist_info = 'List products'
+    productlist_parser = subparsers.add_parser('productlist', description=productlist_info, help=productlist_info)
+    productlist_parser.add_argument('-g', '--group', help='Only Display products of the indicated group',
+                                    metavar='GROUP')
+    productlist_parser.add_argument('-r', '--repo', help='Only Display products of the indicated repository',
+                                    metavar='REPO')
+    productlist_parser.set_defaults(func=productlist)
 
-    repod_info = 'Delete repo'
-    repod_parser = subparsers.add_parser('repodelete', description=repod_info, help=repod_info)
-    repod_parser.add_argument('-U', '--update', action='store_true', help='Update repo')
-    repod_parser.add_argument('repo')
-    repod_parser.set_defaults(func=repod)
+    repocreate_info = 'Create repo'
+    repocreate_parser = subparsers.add_parser('repocreate', description=repocreate_info,
+                                              help=repocreate_info, aliases=['repo'])
+    repocreate_parser.add_argument('-u', '--url', help='URL of the repo', metavar='URL')
+    repocreate_parser.add_argument('-U', '--update', action='store_true', help='Update repo')
+    repocreate_parser.add_argument('repo')
+    repocreate_parser.set_defaults(func=repocreate)
 
-    download_info = 'Download template'
-    download_help = "Template to download. Choose between \n%s" % '\n'.join(TEMPLATES.keys())
-    download_parser = subparsers.add_parser('templatedownload', description=download_info, help=download_info,
-                                            aliases=['download'])
-    download_parser.add_argument('-c', '--cmd', help='Extra command to launch after downloading', metavar='CMD')
-    download_parser.add_argument('-p', '--pool', help='Pool to use. Defaults to default', metavar='POOL')
-    download_parser.add_argument('-u', '--url', help='Url to use', metavar='URL')
-    download_parser.add_argument('templates', choices=sorted(TEMPLATES.keys()),
-                                 default='', help=download_help, nargs='*', metavar='')
-    download_parser.set_defaults(func=download)
+    repodelete_info = 'Delete repo'
+    repodelete_parser = subparsers.add_parser('repodelete', description=repodelete_info, help=repodelete_info)
+    repodelete_parser.add_argument('-U', '--update', action='store_true', help='Update repo')
+    repodelete_parser.add_argument('repo')
+    repodelete_parser.set_defaults(func=repodelete)
 
-    clone_info = 'Clone existing vm'
-    clone_parser = subparsers.add_parser('vmclone', description=clone_info, help=clone_info, aliases=['clone'])
-    clone_parser.add_argument('-b', '--base', help='Base VM', metavar='BASE')
-    clone_parser.add_argument('-f', '--full', action='store_true', help='Full Clone')
-    clone_parser.add_argument('-s', '--start', action='store_true', help='Start cloned VM')
-    clone_parser.add_argument('name', metavar='VMNAME')
-    clone_parser.set_defaults(func=clone)
+    repolist_info = 'List repos'
+    repolist_parser = subparsers.add_parser('repolist', description=repolist_info, help=repolist_info)
+    repolist_parser.set_defaults(func=repolist)
 
-    console_info = 'Vnc/Spice/Serial Vm console'
-    console_parser = subparsers.add_parser('vmconsole', description=console_info, help=console_info,
-                                           aliases=['console'])
-    console_parser.add_argument('-s', '--serial', action='store_true')
-    console_parser.add_argument('name', metavar='VMNAME', nargs='?')
-    console_parser.set_defaults(func=console)
+    templatedownload_info = 'Download template'
+    templatedownload_help = "Template to download. Choose between \n%s" % '\n'.join(TEMPLATES.keys())
+    templatedownload_parser = subparsers.add_parser('templatedownload', description=templatedownload_info,
+                                                    help=templatedownload_info, aliases=['download'])
+    templatedownload_parser.add_argument('-c', '--cmd', help='Extra command to launch after downloading', metavar='CMD')
+    templatedownload_parser.add_argument('-p', '--pool', help='Pool to use. Defaults to default', metavar='POOL')
+    templatedownload_parser.add_argument('-u', '--url', help='Url to use', metavar='URL')
+    templatedownload_parser.add_argument('templates', choices=sorted(TEMPLATES.keys()), default='',
+                                         help=templatedownload_help, nargs='*', metavar='')
+    templatedownload_parser.set_defaults(func=templatedownload)
 
-    vm_info = 'Create vm'
-    vm_parser = subparsers.add_parser('vmcreate', description=vm_info, help=vm_info, aliases=['create', 'vm'])
-    vm_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
-    vm_parser.add_argument('--profilefile', help='File to load profiles from', metavar='PROFILEFILE')
-    vm_parser.add_argument('-P', '--param', action='append',
-                           help='specify parameter or keyword for rendering (can specify multiple)', metavar='PARAM')
-    vm_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
-    vm_parser.add_argument('name', metavar='VMNAME', nargs='?')
-    vm_parser.set_defaults(func=vm)
+    vmclone_info = 'Clone existing vm'
+    vmclone_parser = subparsers.add_parser('vmclone', description=vmclone_info, help=vmclone_info, aliases=['clone'])
+    vmclone_parser.add_argument('-b', '--base', help='Base VM', metavar='BASE')
+    vmclone_parser.add_argument('-f', '--full', action='store_true', help='Full Clone')
+    vmclone_parser.add_argument('-s', '--start', action='store_true', help='Start cloned VM')
+    vmclone_parser.add_argument('name', metavar='VMNAME')
+    vmclone_parser.set_defaults(func=vmclone)
 
-    delete_info = 'Delete vm'
-    delete_parser = subparsers.add_parser('vmdelete', description=delete_info, help=delete_info, aliases=['delete'])
-    delete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    delete_parser.add_argument('-t', '--template', action='store_true', help='delete template')
-    delete_parser.add_argument('--snapshots', action='store_true', help='Remove snapshots if needed')
-    delete_parser.add_argument('names', metavar='VMNAMES', nargs='*')
-    delete_parser.set_defaults(func=delete)
+    vmconsole_info = 'Vnc/Spice/Serial Vm console'
+    vmconsole_parser = subparsers.add_parser('vmconsole', description=vmconsole_info, help=vmconsole_info,
+                                             aliases=['console'])
+    vmconsole_parser.add_argument('-s', '--serial', action='store_true')
+    vmconsole_parser.add_argument('name', metavar='VMNAME', nargs='?')
+    vmconsole_parser.set_defaults(func=vmconsole)
 
-    disk_info = 'Add disk to vm'
-    disk_parser = subparsers.add_parser('vmdiskadd', description=disk_info, help=disk_info, aliases=['disk'])
-    disk_parser.add_argument('-s', '--size', type=int, help='Size of the disk to add, in GB', metavar='SIZE')
-    disk_parser.add_argument('-t', '--template', help='Name or Path of a Template, when adding', metavar='TEMPLATE')
-    disk_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
-    disk_parser.add_argument('name', metavar='VMNAME', nargs='?')
-    disk_parser.set_defaults(func=disk)
+    vmcreate_info = 'Create vm'
+    vmcreate_parser = subparsers.add_parser('vmcreate', description=vmcreate_info, help=vmcreate_info,
+                                            aliases=['create', 'vm'])
+    vmcreate_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
+    vmcreate_parser.add_argument('--profilefile', help='File to load profiles from', metavar='PROFILEFILE')
+    vmcreate_parser.add_argument('-P', '--param', action='append',
+                                 help='specify parameter or keyword for rendering (can specify multiple)',
+                                 metavar='PARAM')
+    vmcreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    vmcreate_parser.add_argument('name', metavar='VMNAME', nargs='?')
+    vmcreate_parser.set_defaults(func=vmcreate)
 
-    diskd_info = 'Delete disk to vm'
-    diskd_parser = subparsers.add_parser('vmdiskdelete', description=disk_info, help=diskd_info)
-    diskd_parser.add_argument('-n', '--diskname', help='Name or Path of the disk, when deleting', metavar='DISKNAME')
-    diskd_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
-    diskd_parser.add_argument('name', metavar='VMNAME', nargs='?')
-    diskd_parser.set_defaults(func=diskd)
+    vmdelete_info = 'Delete vm'
+    vmdelete_parser = subparsers.add_parser('vmdelete', description=vmdelete_info, help=vmdelete_info,
+                                            aliases=['delete'])
+    vmdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    vmdelete_parser.add_argument('-t', '--template', action='store_true', help='delete template')
+    vmdelete_parser.add_argument('--snapshots', action='store_true', help='Remove snapshots if needed')
+    vmdelete_parser.add_argument('names', metavar='VMNAMES', nargs='*')
+    vmdelete_parser.set_defaults(func=vmdelete)
 
-    export_info = 'Export vm'
-    export_parser = subparsers.add_parser('vmexport', description=export_info, help=export_info, aliases=['export'])
-    export_parser.add_argument('-t', '--template', help='Name for the generated template. Uses the vm name otherwise',
-                               metavar='TEMPLATE')
-    export_parser.add_argument('names', metavar='VMNAMES', nargs='*')
-    export_parser.set_defaults(func=export)
+    vmdiskadd_info = 'Add disk to vm'
+    vmdiskadd_parser = subparsers.add_parser('vmdiskadd', description=vmdiskadd_info, help=vmdiskadd_info,
+                                             aliases=['disk'])
+    vmdiskadd_parser.add_argument('-s', '--size', type=int, help='Size of the disk to add, in GB', metavar='SIZE')
+    vmdiskadd_parser.add_argument('-t', '--template', help='Name or Path of a Template, when adding',
+                                  metavar='TEMPLATE')
+    vmdiskadd_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
+    vmdiskadd_parser.add_argument('name', metavar='VMNAME', nargs='?')
+    vmdiskadd_parser.set_defaults(func=vmdiskadd)
 
-    info_info = 'Info vms'
-    info_parser = subparsers.add_parser('vminfo', description=info_info, help=info_info, aliases=['info'])
-    info_parser.add_argument('-f', '--fields',
-                             help='Display Corresponding list of fields,'
-                             'separated by a comma', metavar='FIELDS')
-    info_parser.add_argument('-o', '--output', choices=['plain', 'yaml'], help='Format of the output')
-    info_parser.add_argument('-v', '--values', action='store_true', help='Only report values')
-    info_parser.add_argument('names', help='VMNAMES', nargs='*')
-    info_parser.set_defaults(func=info)
+    vmdiskdelete_info = 'Delete disk to vm'
+    vmdiskdelete_parser = subparsers.add_parser('vmdiskdelete', description=vmdiskdelete_info, help=vmdiskdelete_info)
+    vmdiskdelete_parser.add_argument('-n', '--diskname', help='Name or Path of the disk, when deleting',
+                                     metavar='DISKNAME')
+    vmdiskdelete_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
+    vmdiskdelete_parser.add_argument('name', metavar='VMNAME', nargs='?')
+    vmdiskdelete_parser.set_defaults(func=vmdiskdelete)
 
-    restart_info = 'Restart vms'
-    restart_parser = subparsers.add_parser('vmrestart', description=restart_info, help=restart_info,
-                                           aliases=['restart'])
-    restart_parser.add_argument('names', metavar='VMNAMES', nargs='*')
+    vmdisklist_info = 'List disks'
+    vmdisklist_parser = subparsers.add_parser('vmdisklist', description=vmdisklist_info, help=vmdisklist_info,
+                                              aliases=['disklist'])
+    vmdisklist_parser.set_defaults(func=vmdisklist)
 
-    scp_info = 'Scp into vm'
-    scp_parser = subparsers.add_parser('vmscp', description=scp_info, help=scp_info, aliases=['scp'])
-    scp_parser.add_argument('-r', '--recursive', help='Recursive', action='store_true')
-    scp_parser.add_argument('-v', '--volumepath', help='Volume Path (only used with kcli container)',
-                            default='/workdir', metavar='VOLUMEPATH')
-    scp_parser.add_argument('source', nargs=1)
-    scp_parser.add_argument('destination', nargs=1)
-    scp_parser.set_defaults(func=scp)
-    restart_parser.set_defaults(func=restart)
+    vmexport_info = 'Export vm'
+    vmexport_parser = subparsers.add_parser('vmexport', description=vmexport_info, help=vmexport_info,
+                                            aliases=['export'])
+    vmexport_parser.add_argument('-t', '--template', help='Name for the generated template. Uses the vm name otherwise',
+                                 metavar='TEMPLATE')
+    vmexport_parser.add_argument('names', metavar='VMNAMES', nargs='*')
+    vmexport_parser.set_defaults(func=vmexport)
 
-    ssh_info = 'Ssh into vm'
-    ssh_parser = subparsers.add_parser('vmssh', description=ssh_info, help=ssh_info, aliases=['ssh'])
-    ssh_parser.add_argument('-D', help='Dynamic Forwarding', metavar='LOCAL')
-    ssh_parser.add_argument('-L', help='Local Forwarding', metavar='LOCAL')
-    ssh_parser.add_argument('-R', help='Remote Forwarding', metavar='REMOTE')
-    ssh_parser.add_argument('-X', action='store_true', help='Enable X11 Forwarding')
-    ssh_parser.add_argument('-Y', action='store_true', help='Enable X11 Forwarding(Insecure)')
-    ssh_parser.add_argument('name', metavar='VMNAME', nargs='*')
-    ssh_parser.set_defaults(func=ssh)
+    vminfo_info = 'Info vms'
+    vminfo_parser = subparsers.add_parser('vminfo', description=vminfo_info, help=vminfo_info, aliases=['info'])
+    vminfo_parser.add_argument('-f', '--fields', help='Display Corresponding list of fields,'
+                               'separated by a comma', metavar='FIELDS')
+    vminfo_parser.add_argument('-o', '--output', choices=['plain', 'yaml'], help='Format of the output')
+    vminfo_parser.add_argument('-v', '--values', action='store_true', help='Only report values')
+    vminfo_parser.add_argument('names', help='VMNAMES', nargs='*')
+    vminfo_parser.set_defaults(func=vminfo)
 
-    snapshot_info = 'Create/Delete/Revert snapshot'
-    snapshot_parser = subparsers.add_parser('vmsnapshot', description=snapshot_info, help=snapshot_info,
-                                            aliases=['snapshot'])
-    snapshot_parser.add_argument('-n', '--name', help='Use vm name for creation'
-                                 '/revert/delete', required=True,
-                                 metavar='VMNAME')
-    snapshot_parser.add_argument('-r', '--revert', help='Revert to indicated snapshot', action='store_true')
-    snapshot_parser.add_argument('-d', '--delete', help='Delete indicated snapshot', action='store_true')
-    snapshot_parser.add_argument('-l', '--listing', help='List snapshots', action='store_true')
-    snapshot_parser.add_argument('snapshot', nargs='?')
-    snapshot_parser.set_defaults(func=snapshot)
+    vmlist_info = 'List vms'
+    vmlist_parser = subparsers.add_parser('vmlist', description=vmlist_info, help=vmlist_info, aliases=['list'])
+    vmlist_parser.add_argument('--filters', choices=('up', 'down'))
+    vmlist_parser.set_defaults(func=vmlist)
 
-    start_info = 'Start vms'
-    start_parser = subparsers.add_parser('vmstart', description=start_info, help=start_info, aliases=['start'])
-    start_parser.add_argument('names', metavar='VMNAMES', nargs='*')
-    start_parser.set_defaults(func=start)
+    niccreate_info = 'Add nic of vm'
+    niccreate_parser = subparsers.add_parser('vmniccreate', description=niccreate_info, help=niccreate_info,
+                                             aliases=['nic'])
+    niccreate_parser.add_argument('-n', '--network', help='Network', metavar='NETWORK')
+    niccreate_parser.add_argument('name', metavar='VMNAME')
+    niccreate_parser.set_defaults(func=niccreate)
 
-    stop_info = 'Stop vms'
-    stop_parser = subparsers.add_parser('vmstop', description=stop_info, help=stop_info, aliases=['stop'])
-    stop_parser.add_argument('names', metavar='VMNAMES', nargs='*')
-    stop_parser.set_defaults(func=stop)
+    nicdelete_info = 'Delete nic of vm'
+    nicdelete_parser = subparsers.add_parser('vmnicdelete', description=nicdelete_info, help=nicdelete_info)
+    nicdelete_parser.add_argument('-i', '--interface', help='Name of the interface, when deleting', metavar='INTERFACE')
+    nicdelete_parser.add_argument('-n', '--network', help='Network', metavar='NETWORK')
+    nicdelete_parser.add_argument('name', metavar='VMNAME')
+    nicdelete_parser.set_defaults(func=nicdelete)
 
-    update_info = 'Update vm ip, memory or numcpus'
-    update_parser = subparsers.add_parser('vmupdate', description=update_info, help=update_info, aliases=['update'])
-    update_parser.add_argument('-1', '--ip1', help='Ip to set', metavar='IP1')
-    update_parser.add_argument('-i', '--information', '--info', help='Information to set', metavar='INFORMATION')
-    update_parser.add_argument('--network', '--net', help='Network to update', metavar='NETWORK')
-    update_parser.add_argument('-f', '--flavor', help='Flavor to set', metavar='Flavor')
-    update_parser.add_argument('-m', '--memory', help='Memory to set', metavar='MEMORY')
-    update_parser.add_argument('-c', '--numcpus', type=int, help='Number of cpus to set', metavar='NUMCPUS')
-    update_parser.add_argument('-p', '--plan', help='Plan Name to set', metavar='PLAN')
-    update_parser.add_argument('-a', '--autostart', action='store_true', help='Set VM to autostart')
-    update_parser.add_argument('-n', '--noautostart', action='store_true', help='Prevent VM from autostart')
-    update_parser.add_argument('--dns', action='store_true', help='Update Dns entry for the vm')
-    update_parser.add_argument('--host', action='store_true', help='Update Host entry for the vm')
-    update_parser.add_argument('-d', '--domain', help='Domain', metavar='DOMAIN')
-    update_parser.add_argument('-t', '--template', help='Template to set', metavar='TEMPLATE')
-    update_parser.add_argument('--iso', help='Iso to set', metavar='ISO')
-    update_parser.add_argument('--cloudinit', action='store_true', help='Remove Cloudinit Information from vm')
-    update_parser.add_argument('names', help='VMNAMES', nargs='*')
-    update_parser.set_defaults(func=update)
+    vmrestart_info = 'Restart vms'
+    vmrestart_parser = subparsers.add_parser('vmrestart', description=vmrestart_info, help=vmrestart_info,
+                                             aliases=['restart'])
+    vmrestart_parser.add_argument('names', metavar='VMNAMES', nargs='*')
+    vmrestart_parser.set_defaults(func=vmrestart)
+
+    vmscp_info = 'Scp into vm'
+    vmscp_parser = subparsers.add_parser('vmscp', description=vmscp_info, help=vmscp_info, aliases=['scp'])
+    vmscp_parser.add_argument('-r', '--recursive', help='Recursive', action='store_true')
+    vmscp_parser.add_argument('-v', '--volumepath', help='Volume Path (only used with kcli container)',
+                              default='/workdir', metavar='VOLUMEPATH')
+    vmscp_parser.add_argument('source', nargs=1)
+    vmscp_parser.add_argument('destination', nargs=1)
+    vmscp_parser.set_defaults(func=vmscp)
+
+    vmssh_info = 'Ssh into vm'
+    vmssh_parser = subparsers.add_parser('vmssh', description=vmssh_info, help=vmssh_info, aliases=['ssh'])
+    vmssh_parser.add_argument('-D', help='Dynamic Forwarding', metavar='LOCAL')
+    vmssh_parser.add_argument('-L', help='Local Forwarding', metavar='LOCAL')
+    vmssh_parser.add_argument('-R', help='Remote Forwarding', metavar='REMOTE')
+    vmssh_parser.add_argument('-X', action='store_true', help='Enable X11 Forwarding')
+    vmssh_parser.add_argument('-Y', action='store_true', help='Enable X11 Forwarding(Insecure)')
+    vmssh_parser.add_argument('name', metavar='VMNAME', nargs='*')
+    vmssh_parser.set_defaults(func=vmssh)
+
+    vmsnapshot_info = 'Create/Delete/Revert snapshot'
+    vmsnapshot_parser = subparsers.add_parser('vmsnapshot', description=vmsnapshot_info, help=vmsnapshot_info,
+                                              aliases=['snapshot'])
+    vmsnapshot_parser.add_argument('-n', '--name', help='Use vm name for creation/revert/delete',
+                                   required=True, metavar='VMNAME')
+    vmsnapshot_parser.add_argument('-r', '--revert', help='Revert to indicated snapshot', action='store_true')
+    vmsnapshot_parser.add_argument('-d', '--delete', help='Delete indicated snapshot', action='store_true')
+    vmsnapshot_parser.add_argument('-l', '--listing', help='List snapshots', action='store_true')
+    vmsnapshot_parser.add_argument('snapshot', nargs='?')
+    vmsnapshot_parser.set_defaults(func=vmsnapshot)
+
+    vmstart_info = 'Start vms'
+    vmstart_parser = subparsers.add_parser('vmstart', description=vmstart_info, help=vmstart_info, aliases=['start'])
+    vmstart_parser.add_argument('names', metavar='VMNAMES', nargs='*')
+    vmstart_parser.set_defaults(func=vmstart)
+
+    vmstop_info = 'Stop vms'
+    vmstop_parser = subparsers.add_parser('vmstop', description=vmstop_info, help=vmstop_info, aliases=['stop'])
+    vmstop_parser.add_argument('names', metavar='VMNAMES', nargs='*')
+    vmstop_parser.set_defaults(func=vmstop)
+
+    vmupdate_info = 'Update vm ip, memory or numcpus'
+    vmupdate_parser = subparsers.add_parser('vmupdate', description=vmupdate_info, help=vmupdate_info,
+                                            aliases=['update'])
+    vmupdate_parser.add_argument('-1', '--ip1', help='Ip to set', metavar='IP1')
+    vmupdate_parser.add_argument('-i', '--information', '--info', help='Information to set', metavar='INFORMATION')
+    vmupdate_parser.add_argument('--network', '--net', help='Network to update', metavar='NETWORK')
+    vmupdate_parser.add_argument('-f', '--flavor', help='Flavor to set', metavar='Flavor')
+    vmupdate_parser.add_argument('-m', '--memory', help='Memory to set', metavar='MEMORY')
+    vmupdate_parser.add_argument('-c', '--numcpus', type=int, help='Number of cpus to set', metavar='NUMCPUS')
+    vmupdate_parser.add_argument('-p', '--plan', help='Plan Name to set', metavar='PLAN')
+    vmupdate_parser.add_argument('-a', '--autostart', action='store_true', help='Set VM to autostart')
+    vmupdate_parser.add_argument('-n', '--noautostart', action='store_true', help='Prevent VM from autostart')
+    vmupdate_parser.add_argument('--dns', action='store_true', help='Update Dns entry for the vm')
+    vmupdate_parser.add_argument('--host', action='store_true', help='Update Host entry for the vm')
+    vmupdate_parser.add_argument('-d', '--domain', help='Domain', metavar='DOMAIN')
+    vmupdate_parser.add_argument('-t', '--template', help='Template to set', metavar='TEMPLATE')
+    vmupdate_parser.add_argument('--iso', help='Iso to set', metavar='ISO')
+    vmupdate_parser.add_argument('--cloudinit', action='store_true', help='Remove Cloudinit Information from vm')
+    vmupdate_parser.add_argument('names', help='VMNAMES', nargs='*')
+    vmupdate_parser.set_defaults(func=vmupdate)
 
     argcomplete.autocomplete(parser)
     if len(sys.argv) == 1 or (len(sys.argv) == 3 and sys.argv[1] == '-C'):

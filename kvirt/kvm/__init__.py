@@ -1357,6 +1357,7 @@ class Kvirt(object):
         :return:
         """
         bridged = False
+        ignition = False
         conn = self.conn
         try:
             vm = conn.lookupByName(name)
@@ -1375,6 +1376,13 @@ class Kvirt(object):
         vmxml = vm.XMLDesc(0)
         root = ET.fromstring(vmxml)
         disks = []
+        for element in list(root.getiterator('{kvirt}info')):
+            e = element.find('{kvirt}template')
+            if e is not None:
+                template = e.text
+                if template is not None and ('coreos' in template or template.startswith('rhcos')):
+                    ignition = True
+                break
         for index, element in enumerate(list(root.getiterator('disk'))):
             source = element.find('source')
             if source is not None:
@@ -1480,6 +1488,15 @@ class Kvirt(object):
                     call(dnsmasqcmd, shell=True)
                 except:
                     pass
+        if ignition:
+            ignitiondir = '/var/tmp' if os.path.exists("/i_am_a_container") else '/var/tmp'
+            if self.protocol == 'ssh' and self.host not in ['localhost', '127.0.0.1']:
+                ignitiondeletecmd = "ls /var/tmp/%s.ign >/dev/null 2>&1 && rm -f  /var/tmp/%s.ign" % (name, name)
+                ignitiondeletecmd = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user,
+                                                                   self.host, ignitiondeletecmd)
+                call(ignitiondeletecmd, shell=True)
+            elif os.path.exists('%s/%s.ign' % (ignitiondir, name)):
+                os.remove('%s/%s.ign' % (ignitiondir, name))
         return {'result': 'success'}
 
     def _xmldisk(self, diskpath, diskdev, diskbus='virtio', diskformat='qcow2', shareable=False):
