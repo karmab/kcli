@@ -231,8 +231,7 @@ class Kconfig(Kbaseconfig):
         k = self.k if k is None else k
         tunnel = self.tunnel
         if profile is None:
-            common.pprint("Missing profile", color='red')
-            os._exit(1)
+            return {'result': 'failure', 'reason': "Missing profile"}
         vmprofiles = {k: v for k, v in self.profiles.items() if 'type' not in v or v['type'] == 'vm'}
         if customprofile:
             vmprofiles[profile] = customprofile
@@ -372,8 +371,7 @@ class Kconfig(Kbaseconfig):
         cloudinit = profile.get('cloudinit', default_cloudinit)
         if cloudinit and self.type in ['kvm', 'vbox'] and\
                 find_executable('mkisofs') is None and find_executable('genisoimage') is None:
-            common.pprint("mkisofs/genisoimage not found. One of them is needed for cloudinit.Leaving...", 'red')
-            os._exit(1)
+            return {'result': 'failure', 'reason': "Missing mkisofs/genisoimage needed for cloudinit"}
         reserveip = profile.get('reserveip', default_reserveip)
         reservedns = profile.get('reservedns', default_reservedns)
         reservehost = profile.get('reservehost', default_reservehost)
@@ -407,8 +405,7 @@ class Kconfig(Kbaseconfig):
                     origin = fil.get('origin')
                     content = fil.get('content')
                 else:
-                    common.pprint("Incorrect file entry.Leaving...", color='red')
-                    os._exit(1)
+                    return {'result': 'failure', 'reason': "Incorrect file entry"}
                 if origin is not None:
                     if onfly is not None and '~' not in origin:
                         destdir = basedir
@@ -421,13 +418,9 @@ class Kconfig(Kbaseconfig):
                         origin = "%s/%s" % (basedir, origin)
                         files[index]['origin'] = origin
                     if not os.path.exists(origin):
-                        common.pprint("File %s not found in %s.Leaving..." % (origin, name),
-                                      color='red')
-                        os._exit(1)
+                        return {'result': 'failure', 'reason': "File %s not found in %s" % (origin, name)}
                 elif content is None:
-                    common.pprint("Content of file %s not found in %s.Ignoring..." % (path, name),
-                                  color='red')
-                    os._exit(1)
+                    return {'result': 'failure', 'reason': "Content of file %s not found in %s" % (path, name)}
                 if path is None:
                     common.pprint("Using current directory for path in files of %s" % name, color='blue')
                     path = os.path.basename(origin)
@@ -474,8 +467,7 @@ class Kconfig(Kbaseconfig):
                 overrides['rhnorg'] = rhnorg
             else:
                 msg = "Rhn registration required but missing credentials. Define rhnuser/rhnpassword or rhnak/rhnorg"
-                common.pprint(msg, color='red')
-                os._exit(1)
+                return {'result': 'failure', 'reason': msg}
         if scripts:
             for script in scripts:
                 if onfly is not None and '~' not in script:
@@ -490,8 +482,7 @@ class Kconfig(Kbaseconfig):
                 if script.endswith('register.sh') and skip_rhnregister_script:
                     continue
                 elif not os.path.exists(script):
-                    common.pprint("Script %s not found.Ignoring..." % script, color='red')
-                    os._exit(1)
+                    return {'result': 'failure', 'reason': "Script %s not found" % script}
                 else:
                     scriptbasedir = os.path.dirname(script) if os.path.dirname(script) != '' else '.'
                     env = Environment(loader=FileSystemLoader(scriptbasedir), undefined=undefined)
@@ -499,12 +490,11 @@ class Kconfig(Kbaseconfig):
                         templ = env.get_template(os.path.basename(script))
                         scriptentries = templ.render(overrides)
                     except TemplateSyntaxError as e:
-                        common.pprint("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message),
-                                      color='red')
-                        os._exit(1)
+                        msg = "Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message)
+                        return {'result': 'failure', 'reason': msg}
                     except TemplateError as e:
-                        common.pprint("Error rendering script %s. Got: %s" % (script, e.message), color='red')
-                        os._exit(1)
+                        msg = "Error rendering script %s. Got: %s" % (script, e.message)
+                        return {'result': 'failure', 'reason': msg}
                     scriptlines = [line.strip() for line in scriptentries.split('\n') if line.strip() != '']
                     if scriptlines:
                         scriptcmds.extend(scriptlines)
@@ -715,6 +705,7 @@ class Kconfig(Kbaseconfig):
         k = self.k
         no_overrides = not overrides
         newvms = []
+        failedvms = []
         existingvms = []
         onfly = None
         toclean = False
@@ -1279,6 +1270,8 @@ class Kconfig(Kbaseconfig):
                 common.handle_response(result, name, client=vmclient)
                 if result['result'] == 'success':
                     newvms.append(name)
+                else:
+                    failedvms.append(name)
                 if delay > 0:
                     sleep(delay)
         if diskentries:
@@ -1425,6 +1418,8 @@ class Kconfig(Kbaseconfig):
             returndata['newvms'] = newvms
         if existingvms:
             returndata['existingvms'] = existingvms
+        if failedvms:
+            returndata['failedvms'] = existingvms
         allvms = newvms + existingvms
         returndata['vms'] = allvms if allvms else []
         if getback or toclean:
@@ -1453,7 +1448,7 @@ class Kconfig(Kbaseconfig):
                 common.pprint("Using pool %s" % pool, color='blue')
             if url is None and not templates:
                 common.pprint("Missing template or url.Leaving...", color='red')
-                return {'result': 'failure', 'reason': "Missing template"}
+                return {'result': 'failure', 'reason': "Missing template or url"}
             for template in templates:
                 if url is None:
                     url = TEMPLATES[template]
