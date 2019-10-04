@@ -903,26 +903,15 @@ def pooldelete(args):
     return
 
 
-def plan(args):
-    """Create/Delete/Stop/Start vms from plan file"""
+def plancreate(args):
+    """Create plan"""
     plan = args.plan
     ansible = args.ansible
     url = args.url
     path = args.path
-    autostart = args.autostart
-    noautostart = args.noautostart
     container = args.container
     inputfile = args.inputfile
-    revert = args.revert
-    snapshot = args.snapshot
-    start = args.start
-    stop = args.stop
-    restart = args.restart
-    delete = args.delete
     delay = args.delay
-    yes = args.yes
-    info = args.info
-    update = args.update
     volumepath = args.volumepath
     paramfile = args.paramfile
     if os.path.exists("/i_am_a_container"):
@@ -930,26 +919,112 @@ def plan(args):
         if paramfile is not None:
             paramfile = "%s/%s" % (volumepath, paramfile)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
-    if info and url is None:
-        inputfile = plan if inputfile is None and plan is not None else inputfile
-        baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-        baseconfig.info_plan(inputfile)
-        os._exit(0)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if plan is None:
         plan = nameutils.get_random_name()
         common.pprint("Using %s as name of the plan" % plan)
-    if delete and not yes:
+    config.plan(plan, ansible=ansible, url=url, path=path,
+                container=container, inputfile=inputfile,
+                delay=delay, overrides=overrides)
+    return 0
+
+
+def planupdate(args):
+    """Update plan"""
+    plan = args.plan
+    url = args.url
+    path = args.path
+    container = args.container
+    inputfile = args.inputfile
+    volumepath = args.volumepath
+    paramfile = args.paramfile
+    if os.path.exists("/i_am_a_container"):
+        inputfile = "%s/%s" % (volumepath, inputfile) if inputfile is not None else "%s/kcli_plan.yml" % volumepath
+        if paramfile is not None:
+            paramfile = "%s/%s" % (volumepath, paramfile)
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    if plan is None:
+        plan = nameutils.get_random_name()
+        common.pprint("Using %s as name of the plan" % plan)
+    config.plan(plan, url=url, path=path, container=container, inputfile=inputfile, overrides=overrides, update=True)
+    return 0
+
+
+def plandelete(args):
+    """Delete plan"""
+    plan = args.plan
+    yes = args.yes
+    if not yes:
         common.confirm("Are you sure?")
-    config.plan(plan, ansible=ansible, url=url, path=path, autostart=autostart,
-                container=container, noautostart=noautostart, inputfile=inputfile,
-                start=start, stop=stop, delete=delete, delay=delay, overrides=overrides, info=info, snapshot=snapshot,
-                revert=revert, update=update, restart=restart)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config.plan(plan, delete=True)
+    return 0
+
+
+def planstart(args):
+    """Start plan"""
+    plan = args.plan
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config.plan(plan, start=True)
+    return 0
+
+
+def planstop(args):
+    """Stop plan"""
+    plan = args.plan
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config.plan(plan, stop=True)
+    return 0
+
+
+def planautostart(args):
+    """Autostart plan"""
+    plan = args.plan
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config.plan(plan, autostart=True)
+    return 0
+
+
+def plannoautostart(args):
+    """Noautostart plan"""
+    plan = args.plan
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config.plan(plan, autostart=False)
+    return 0
+
+
+def planrestart(args):
+    """Restart plan"""
+    plan = args.plan
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config.plan(plan, delete=True)
+    return 0
+
+
+def planinfo(args):
+    """Info plan """
+    plan = args.plan
+    url = args.url
+    path = args.path
+    inputfile = args.inputfile
+    volumepath = args.volumepath
+    if os.path.exists("/i_am_a_container"):
+        inputfile = "%s/%s" % (volumepath, inputfile) if inputfile is not None else "%s/kcli_plan.yml" % volumepath
+    if url is None:
+        inputfile = plan if inputfile is None and plan is not None else inputfile
+        baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+        baseconfig.info_plan(inputfile)
+    else:
+        config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
+                         namespace=args.namespace)
+        config.plan(plan, url=url, path=path, inputfile=inputfile, info=True)
     return 0
 
 
 def planrender(args):
-    """Create/Delete/Stop/Start vms from plan file"""
+    """Render plan file"""
+    plan = None
     inputfile = args.inputfile
     volumepath = args.volumepath
     paramfile = args.paramfile
@@ -961,6 +1036,22 @@ def planrender(args):
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     renderfile = baseconfig.process_inputfile(plan, inputfile, overrides=overrides, onfly=False)
     print(renderfile)
+    return 0
+
+
+def plansnapshot(args):
+    """Snapshot plan"""
+    plan = args.plan
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config.plan(plan, snapshot=True)
+    return 0
+
+
+def planrevert(args):
+    """Revert snapshot of plan"""
+    plan = args.plan
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config.plan(plan, revert=True)
     return 0
 
 
@@ -1471,36 +1562,54 @@ def cli():
     networkdelete_parser.add_argument('name', metavar='NETWORK')
     networkdelete_parser.set_defaults(func=networkdelete)
 
-    plan_info = 'Create/Delete/Stop/Start vms from plan file'
-    plan_parser = subparsers.add_parser('plan', description=plan_info, help=plan_info)
-    plan_parser.add_argument('-A', '--ansible', help='Generate ansible inventory', action='store_true')
-    plan_parser.add_argument('-d', '--delete', action='store_true')
-    plan_parser.add_argument('-u', '--url', help='Url for plan', metavar='URL')
-    plan_parser.add_argument('-i', '--info', action='store_true', help='Provide information on the given plan')
-    plan_parser.add_argument('-p', '--path', help='Path where to download plans. Defaults to plan', metavar='PATH')
-    plan_parser.add_argument('-a', '--autostart', action='store_true', help='Set all vms from plan to autostart')
-    plan_parser.add_argument('-c', '--container', action='store_true', help='Handle container')
-    plan_parser.add_argument('-n', '--noautostart', action='store_true', help='Prevent all vms from plan to autostart')
-    plan_parser.add_argument('-f', '--inputfile', help='Input Plan file')
-    plan_parser.add_argument('--snapshot', action='store_true', help='snapshot all vms from plan')
-    plan_parser.add_argument('-r', '--revert', action='store_true', help='revert snapshot of all vms from plan')
-    plan_parser.add_argument('--restart', action='store_true', help='restart all vms from plan')
-    plan_parser.add_argument('-s', '--start', action='store_true', help='start all vms from plan')
-    plan_parser.add_argument('--update', action='store_true', help='update existing vms of the plan')
-    plan_parser.add_argument('-w', '--stop', action='store_true', help='stop all vms from plan')
-    plan_parser.add_argument('-v', '--volumepath', help='Volume Path (only used with kcli container)',
-                             default='/workdir', metavar='VOLUMEPATH')
-    plan_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    plan_parser.add_argument('--delay', default=0, help="Delay between each vm's creation", metavar='DELAY')
-    plan_parser.add_argument('-P', '--param', action='append',
-                             help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    plan_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
-    plan_parser.add_argument('plan', metavar='PLAN', nargs='?')
-    plan_parser.set_defaults(func=plan)
+    planautostart_info = 'Autostart plan'
+    planautostart_parser = subparsers.add_parser('planautostart', description=planautostart_info,
+                                                 help=planautostart_info)
+    planautostart_parser.add_argument('plan', metavar='PLAN', nargs='?')
+    planautostart_parser.set_defaults(func=planautostart)
+
+    plancreate_info = 'Create plan'
+    plancreate_parser = subparsers.add_parser('plancreate', description=plancreate_info, help=plancreate_info)
+    plancreate_parser.add_argument('-A', '--ansible', help='Generate ansible inventory', action='store_true')
+    plancreate_parser.add_argument('-u', '--url', help='Url for plan', metavar='URL')
+    plancreate_parser.add_argument('-p', '--path', help='Path where to download plans. Defaults to plan',
+                                   metavar='PATH')
+    plancreate_parser.add_argument('-c', '--container', action='store_true', help='Handle container')
+    plancreate_parser.add_argument('-f', '--inputfile', help='Input Plan file')
+    plancreate_parser.add_argument('-v', '--volumepath', help='Volume Path (only used with kcli container)',
+                                   default='/workdir', metavar='VOLUMEPATH')
+    plancreate_parser.add_argument('--delay', default=0, help="Delay between each vm's creation", metavar='DELAY')
+    plancreate_parser.add_argument('-P', '--param', action='append',
+                                   help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    plancreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    plancreate_parser.add_argument('plan', metavar='PLAN', nargs='?')
+    plancreate_parser.set_defaults(func=plancreate)
+
+    plandelete_info = 'Delete plan'
+    plandelete_parser = subparsers.add_parser('plandelete', description=plandelete_info, help=plandelete_info)
+    plandelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    plandelete_parser.add_argument('plan', metavar='PLAN', nargs='?')
+    plandelete_parser.set_defaults(func=plandelete)
+
+    planinfo_info = 'Info plan'
+    planinfo_parser = subparsers.add_parser('planinfo', description=plandelete_info, help=planinfo_info)
+    planinfo_parser.add_argument('-f', '--inputfile', help='Input Plan file')
+    planinfo_parser.add_argument('-p', '--path', help='Path where to download plans. Defaults to plan', metavar='PATH')
+    planinfo_parser.add_argument('-u', '--url', help='Url for plan', metavar='URL')
+    planinfo_parser.add_argument('-v', '--volumepath', help='Volume Path (only used with kcli container)',
+                                 default='/workdir', metavar='VOLUMEPATH')
+    planinfo_parser.add_argument('plan', metavar='PLAN', nargs='?')
+    planinfo_parser.set_defaults(func=planinfo)
 
     planlist_info = 'List plans'
     planlist_parser = subparsers.add_parser('planlist', description=planlist_info, help=planlist_info)
     planlist_parser.set_defaults(func=planlist)
+
+    plannoautostart_info = 'Noautostart plan'
+    plannoautostart_parser = subparsers.add_parser('plannoautostart', description=plannoautostart_info,
+                                                   help=planautostart_info)
+    plannoautostart_parser.add_argument('plan', metavar='PLAN', nargs='?')
+    plannoautostart_parser.set_defaults(func=plannoautostart)
 
     planrender_info = 'Render plans or files'
     planrender_parser = subparsers.add_parser('planrender', description=planrender_info,
@@ -1512,6 +1621,46 @@ def cli():
     planrender_parser.add_argument('-v', '--volumepath', help='Volume Path (only used with kcli container)',
                                    default='/workdir', metavar='VOLUMEPATH')
     planrender_parser.set_defaults(func=planrender)
+
+    planrestart_info = 'Restart plan'
+    planrestart_parser = subparsers.add_parser('planrestart', description=planrestart_info, help=planrestart_info)
+    planrestart_parser.add_argument('plan', metavar='PLAN', nargs='?')
+    planrestart_parser.set_defaults(func=planrestart)
+
+    planrevert_info = 'Revert snapshot of plan'
+    planrevert_parser = subparsers.add_parser('planrevert', description=planrevert_info, help=planrevert_info)
+    planrevert_parser.add_argument('plan', metavar='PLAN', nargs='?')
+    planrevert_parser.set_defaults(func=planrevert)
+
+    plansnapshot_info = 'Snapshot plan'
+    plansnapshot_parser = subparsers.add_parser('plansnapshot', description=plansnapshot_info, help=plansnapshot_info)
+    plansnapshot_parser.add_argument('plan', metavar='PLAN', nargs='?')
+    plansnapshot_parser.set_defaults(func=plansnapshot)
+
+    planstart_info = 'Start plan'
+    planstart_parser = subparsers.add_parser('planstart', description=planstart_info, help=planstart_info)
+    planstart_parser.add_argument('plan', metavar='PLAN', nargs='?')
+    planstart_parser.set_defaults(func=planstart)
+
+    planstop_info = 'Stop plan'
+    planstop_parser = subparsers.add_parser('planstop', description=planstop_info, help=planstop_info)
+    planstop_parser.add_argument('plan', metavar='PLAN', nargs='?')
+    planstop_parser.set_defaults(func=planstop)
+
+    planupdate_info = 'Update plan'
+    planupdate_parser = subparsers.add_parser('planupdate', description=planupdate_info, help=planupdate_info)
+    planupdate_parser.add_argument('-u', '--url', help='Url for plan', metavar='URL')
+    planupdate_parser.add_argument('-p', '--path', help='Path where to download plans. Defaults to plan',
+                                   metavar='PATH')
+    planupdate_parser.add_argument('-c', '--container', action='store_true', help='Handle container')
+    planupdate_parser.add_argument('-f', '--inputfile', help='Input Plan file')
+    planupdate_parser.add_argument('-v', '--volumepath', help='Volume Path (only used with kcli container)',
+                                   default='/workdir', metavar='VOLUMEPATH')
+    planupdate_parser.add_argument('-P', '--param', action='append',
+                                   help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    planupdate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    planupdate_parser.add_argument('plan', metavar='PLAN', nargs='?')
+    planupdate_parser.set_defaults(func=planupdate)
 
     poolcreate_info = 'Create pool'
     poolcreate_parser = subparsers.add_parser('poolcreate', description=poolcreate_info, help=poolcreate_info,
@@ -1704,16 +1853,6 @@ def cli():
     vmscp_parser.add_argument('destination', nargs=1)
     vmscp_parser.set_defaults(func=vmscp)
 
-    vmssh_info = 'Ssh into vm'
-    vmssh_parser = subparsers.add_parser('vmssh', description=vmssh_info, help=vmssh_info, aliases=['ssh'])
-    vmssh_parser.add_argument('-D', help='Dynamic Forwarding', metavar='LOCAL')
-    vmssh_parser.add_argument('-L', help='Local Forwarding', metavar='LOCAL')
-    vmssh_parser.add_argument('-R', help='Remote Forwarding', metavar='REMOTE')
-    vmssh_parser.add_argument('-X', action='store_true', help='Enable X11 Forwarding')
-    vmssh_parser.add_argument('-Y', action='store_true', help='Enable X11 Forwarding(Insecure)')
-    vmssh_parser.add_argument('name', metavar='VMNAME', nargs='*')
-    vmssh_parser.set_defaults(func=vmssh)
-
     vmsnapshot_info = 'Create/Delete/Revert snapshot'
     vmsnapshot_parser = subparsers.add_parser('vmsnapshot', description=vmsnapshot_info, help=vmsnapshot_info,
                                               aliases=['snapshot'])
@@ -1724,6 +1863,16 @@ def cli():
     vmsnapshot_parser.add_argument('-l', '--listing', help='List snapshots', action='store_true')
     vmsnapshot_parser.add_argument('snapshot', nargs='?')
     vmsnapshot_parser.set_defaults(func=vmsnapshot)
+
+    vmssh_info = 'Ssh into vm'
+    vmssh_parser = subparsers.add_parser('vmssh', description=vmssh_info, help=vmssh_info, aliases=['ssh'])
+    vmssh_parser.add_argument('-D', help='Dynamic Forwarding', metavar='LOCAL')
+    vmssh_parser.add_argument('-L', help='Local Forwarding', metavar='LOCAL')
+    vmssh_parser.add_argument('-R', help='Remote Forwarding', metavar='REMOTE')
+    vmssh_parser.add_argument('-X', action='store_true', help='Enable X11 Forwarding')
+    vmssh_parser.add_argument('-Y', action='store_true', help='Enable X11 Forwarding(Insecure)')
+    vmssh_parser.add_argument('name', metavar='VMNAME', nargs='*')
+    vmssh_parser.set_defaults(func=vmssh)
 
     vmstart_info = 'Start vms'
     vmstart_parser = subparsers.add_parser('vmstart', description=vmstart_info, help=vmstart_info, aliases=['start'])
