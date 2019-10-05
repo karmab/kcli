@@ -44,19 +44,15 @@ class Kbaseconfig:
                 try:
                     secrets = yaml.safe_load(entries)
                 except yaml.scanner.ScannerError as err:
-                    common.pprint("Couldn't parse yaml in .kcli/secrets.yml. Leaving...", color='red')
-                    common.pprint(err, color='red')
+                    common.pprint("Couldn't parse yaml in .kcli/secrets.yml. Got %s" % err, color='red')
                     os._exit(1)
         if not os.path.exists(inifile):
             defaultclient = 'local'
             if os.path.exists('/var/run/libvirt/libvirt-sock'):
                 _type = 'kvm'
-            elif os.path.exists(os.path.expanduser('~/.kube')) or 'KUBECONFIG' in os.environ:
-                _type = 'kubevirt'
-                defaultclient = 'kubevirt'
             else:
-                _type = 'fake'
-                defaultclient = 'fake'
+                common.pprint("No configuration found nor local hypervisor", color='red')
+                os._exit(1)
             self.ini = {'default': {'client': defaultclient}, defaultclient:
                         {'pool': 'default', 'type': _type}}
         else:
@@ -64,8 +60,7 @@ class Kbaseconfig:
                 try:
                     self.ini = yaml.safe_load(entries)
                 except yaml.scanner.ScannerError as err:
-                    common.pprint("Couldn't parse yaml in .kcli/config.yml. Leaving...", color='red')
-                    common.pprint(err, color='red')
+                    common.pprint("Couldn't parse yaml in .kcli/config.yml. Got %s" % err, color='red')
                     os._exit(1)
                 except:
                     self.host = None
