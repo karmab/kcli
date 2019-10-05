@@ -641,22 +641,15 @@ def vm_create(args):
             name = name.replace('_', '-')
         if config.type != 'aws':
             common.pprint("Using %s as name of the vm" % name)
-    if profile is not None and profile.endswith('.yml'):
+    if profile.endswith('.yml'):
         profilefile = profile
         profile = None
-    if profilefile is not None:
         if not os.path.exists(profilefile):
             common.pprint("Missing profile file", color='red')
             os._exit(1)
         else:
             with open(profilefile, 'r') as entries:
                 config.profiles = yaml.safe_load(entries)
-    if profile is None:
-        if len(config.profiles) == 1:
-            profile = list(config.profiles)[0]
-        else:
-            common.pprint("Missing profile", color='red')
-            os._exit(1)
     result = config.create_vm(name, profile, overrides=overrides)
     code = common.handle_response(result, name, element='', action='created', client=config.client)
     return code
@@ -1829,7 +1822,7 @@ def cli():
 
     vmcreate_info = 'Create Vm'
     vmcreate_parser = vm_subparsers.add_parser('create', description=vmcreate_info, help=vmcreate_info)
-    vmcreate_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
+    vmcreate_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE', required=True)
     vmcreate_parser.add_argument('--profilefile', help='File to load profiles from', metavar='PROFILEFILE')
     vmcreate_parser.add_argument('-P', '--param', action='append',
                                  help='specify parameter or keyword for rendering (can specify multiple)',
