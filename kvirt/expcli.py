@@ -19,6 +19,17 @@ import sys
 import yaml
 
 
+def subparser_print_help(parser, subcommand):
+    subparsers_actions = [
+        action for action in parser._actions
+        if isinstance(action, argparse._SubParsersAction)]
+    for subparsers_action in subparsers_actions:
+        for choice, subparser in subparsers_action.choices.items():
+            if choice == subcommand:
+                subparser.print_help()
+                return
+
+
 def vm_start(args):
     """Start vms"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -1381,7 +1392,7 @@ def cli():
 
     container_info = 'Container'
     container_parser = subparsers.add_parser('container', description=container_info, help=container_info)
-    container_subparsers = container_parser.add_subparsers(metavar='')
+    container_subparsers = container_parser.add_subparsers(metavar='', dest='subcommand_container')
 
     containerconsole_info = 'Container Console'
     containerconsole_parser = container_subparsers.add_parser('console', description=containerconsole_info,
@@ -1444,7 +1455,7 @@ def cli():
 
     dns_info = 'Dns'
     dns_parser = subparsers.add_parser('dns', description=dns_info, help=dns_info)
-    dns_subparsers = dns_parser.add_subparsers(metavar='')
+    dns_subparsers = dns_parser.add_subparsers(metavar='', dest='subcommand_dns')
 
     dnscreate_info = 'Create Dns Entries'
     dnscreate_parser = dns_subparsers.add_parser('create', description=dnscreate_info, help=dnscreate_info)
@@ -1461,7 +1472,7 @@ def cli():
 
     host_info = 'Host'
     host_parser = subparsers.add_parser('host', description=host_info, help=host_info)
-    host_subparsers = host_parser.add_subparsers(metavar='')
+    host_subparsers = host_parser.add_subparsers(metavar='', dest='subcommand_host')
 
     hostbootstrap_info = 'Generate Config file'
     hostbootstrap_parser = host_subparsers.add_parser('bootstrap', help=hostbootstrap_info,
@@ -1506,7 +1517,7 @@ def cli():
 
     lb_info = 'Lb'
     lb_parser = subparsers.add_parser('lb', description=lb_info, help=lb_info)
-    lb_subparsers = lb_parser.add_subparsers(metavar='')
+    lb_subparsers = lb_parser.add_subparsers(metavar='', dest='subcommand_lb')
 
     lbcreate_info = 'Create Loadbalancer'
     lbcreate_parser = lb_subparsers.add_parser('create', description=lbcreate_info, help=lbcreate_info)
@@ -1539,7 +1550,7 @@ def cli():
 
     profile_info = 'Profile'
     profile_parser = subparsers.add_parser('profile', description=profile_info, help=profile_info)
-    profile_subparsers = profile_parser.add_subparsers(metavar='')
+    profile_subparsers = profile_parser.add_subparsers(metavar='', dest='profile_container')
 
     profilelist_info = 'List Profiles'
     profilelist_parser = profile_subparsers.add_parser('list', description=profilelist_info, help=profilelist_info)
@@ -1548,7 +1559,7 @@ def cli():
 
     flavor_info = 'Flavor'
     flavor_parser = subparsers.add_parser('flavor', description=flavor_info, help=flavor_info)
-    flavor_subparsers = flavor_parser.add_subparsers(metavar='')
+    flavor_subparsers = flavor_parser.add_subparsers(metavar='', dest='subcommand_flavor')
 
     flavorlist_info = 'List Flavors'
     flavorlist_parser = flavor_subparsers.add_parser('list', description=flavorlist_info, help=flavorlist_info)
@@ -1557,7 +1568,7 @@ def cli():
 
     iso_info = 'Iso'
     iso_parser = subparsers.add_parser('iso', description=iso_info, help=iso_info)
-    iso_subparsers = iso_parser.add_subparsers(metavar='')
+    iso_subparsers = iso_parser.add_subparsers(metavar='', dest='subcommand_iso')
 
     isolist_info = 'List Isos'
     isolist_parser = iso_subparsers.add_parser('list', description=isolist_info, help=isolist_info)
@@ -1565,7 +1576,7 @@ def cli():
 
     network_info = 'Network'
     network_parser = subparsers.add_parser('network', description=network_info, help=network_info)
-    network_subparsers = network_parser.add_subparsers(metavar='')
+    network_subparsers = network_parser.add_subparsers(metavar='', dest='subcommand_network')
 
     networklist_info = 'List Networks'
     networklist_parser = network_subparsers.add_parser('list', description=networklist_info, help=networklist_info)
@@ -1595,7 +1606,7 @@ def cli():
 
     plan_info = 'Plan'
     plan_parser = subparsers.add_parser('plan', description=plan_info, help=plan_info)
-    plan_subparsers = plan_parser.add_subparsers(metavar='')
+    plan_subparsers = plan_parser.add_subparsers(metavar='', dest='subcommand_plan')
 
     planautostart_info = 'Autostart Plan'
     planautostart_parser = plan_subparsers.add_parser('autostart', description=planautostart_info,
@@ -1699,7 +1710,7 @@ def cli():
 
     pool_info = 'Pool'
     pool_parser = subparsers.add_parser('pool', description=pool_info, help=pool_info)
-    pool_subparsers = pool_parser.add_subparsers(metavar='')
+    pool_subparsers = pool_parser.add_subparsers(metavar='', dest='subcommand_pool')
 
     poolcreate_info = 'Create Pool'
     poolcreate_parser = pool_subparsers.add_parser('create', description=poolcreate_info, help=poolcreate_info)
@@ -1727,7 +1738,7 @@ def cli():
 
     product_info = 'Product'
     product_parser = subparsers.add_parser('product', description=product_info, help=product_info)
-    product_subparsers = product_parser.add_subparsers(metavar='')
+    product_subparsers = product_parser.add_subparsers(metavar='', dest='subcommand_product')
 
     product_info = 'Create Product'
     product_parser = product_subparsers.add_parser('create', description=product_info, help=product_info)
@@ -1757,7 +1768,7 @@ def cli():
 
     repo_info = 'Repo'
     repo_parser = subparsers.add_parser('repo', description=repo_info, help=repo_info)
-    repo_subparsers = repo_parser.add_subparsers(metavar='')
+    repo_subparsers = repo_parser.add_subparsers(metavar='', dest='subcommand_repo')
 
     repocreate_info = 'Create Repo'
     repocreate_parser = repo_subparsers.add_parser('create', description=repocreate_info, help=repocreate_info)
@@ -1781,7 +1792,7 @@ def cli():
 
     template_info = 'Template'
     template_parser = subparsers.add_parser('template', description=template_info, help=template_info)
-    template_subparsers = template_parser.add_subparsers(metavar='')
+    template_subparsers = template_parser.add_subparsers(metavar='', dest='subcommand_template')
 
     templatedownload_info = 'Download Template'
     templatedownload_help = "Template to download. Choose between \n%s" % '\n'.join(TEMPLATES.keys())
@@ -1800,7 +1811,7 @@ def cli():
 
     vm_info = 'Vm'
     vm_parser = subparsers.add_parser('vm', description=vm_info, help=vm_info)
-    vm_subparsers = vm_parser.add_subparsers(metavar='')
+    vm_subparsers = vm_parser.add_subparsers(metavar='', dest='subcommand_vm')
 
     vmclone_info = 'Clone Vm'
     vmclone_parser = vm_subparsers.add_parser('clone', description=vmclone_info, help=vmclone_info)
@@ -1978,7 +1989,11 @@ def cli():
         os._exit(0)
     args = parser.parse_args()
     if not hasattr(args, 'func'):
-        parser.print_help()
+        for attr in dir(args):
+            if attr.startswith('subcommand'):
+                subcommand = attr.replace('subcommand_', '')
+                subparser_print_help(parser, subcommand)
+                os._exit(0)
         os._exit(0)
     elif args.func.__name__ == 'vmcreate' and args.client is not None and ',' in args.client:
         args.client = random.choice(args.client.split(','))
