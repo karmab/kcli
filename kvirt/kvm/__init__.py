@@ -485,7 +485,7 @@ class Kvirt(object):
             gcmds = []
             if template is not None:
                 lower = template.lower()
-                if (lower.startswith('centos') or lower.startswith('fedora') or lower().startswith('rhel')):
+                if (lower.startswith('centos') or lower.startswith('fedora') or lower.startswith('rhel')):
                     gcmds.append('yum -y install qemu-guest-agent')
                     gcmds.append('systemctl enable qemu-guest-agent')
                     gcmds.append('systemctl restart qemu-guest-agent')
