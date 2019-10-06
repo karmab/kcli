@@ -1509,15 +1509,13 @@ def cli():
     hostlist_parser.set_defaults(func=host_list)
 
     hostreport_desc = 'Report Info About Host'
-    hostreport_parser = argparse.ArgumentParser(add_help=False)
+    hostreport_parser = host_subparsers.add_parser('report', description=hostreport_desc, help=hostreport_desc)
     hostreport_parser.set_defaults(func=host_report)
-    host_subparsers.add_parser('report', parents=[hostreport_parser], description=hostreport_desc, help=hostreport_desc)
 
     hostswitch_desc = 'Switch Host'
-    hostswitch_parser = argparse.ArgumentParser(add_help=False)
+    hostswitch_parser = host_subparsers.add_parser('switch', description=hostswitch_desc, help=hostswitch_desc)
     hostswitch_parser.add_argument('host', help='HOST')
     hostswitch_parser.set_defaults(func=host_switch)
-    host_subparsers.add_parser('switch', parents=[hostswitch_parser], description=hostswitch_desc, help=hostswitch_desc)
 
     hostsync_desc = 'Sync Host'
     hostsync_parser = host_subparsers.add_parser('sync', description=hostsync_desc, help=hostsync_desc)
@@ -1805,15 +1803,14 @@ def cli():
 
     templatedownload_desc = 'Download Template'
     templatedownload_help = "Template to download. Choose between \n%s" % '\n'.join(TEMPLATES.keys())
-    templatedownload_parser = argparse.ArgumentParser(add_help=False)
+    templatedownload_parser = template_subparsers.add_parser('download', description=templatedownload_desc,
+                                                             help=templatedownload_desc)
     templatedownload_parser.add_argument('-c', '--cmd', help='Extra command to launch after downloading', metavar='CMD')
     templatedownload_parser.add_argument('-p', '--pool', help='Pool to use. Defaults to default', metavar='POOL')
     templatedownload_parser.add_argument('-u', '--url', help='Url to use', metavar='URL')
     templatedownload_parser.add_argument('templates', choices=sorted(TEMPLATES.keys()), default='',
                                          help=templatedownload_help, nargs='*', metavar='')
     templatedownload_parser.set_defaults(func=template_download)
-    template_subparsers.add_parser('download', parents=[templatedownload_parser], description=templatedownload_desc,
-                                   help=templatedownload_desc)
 
     templatelist_desc = 'List Templates'
     templatelist_parser = template_subparsers.add_parser('list', description=templatelist_desc, help=templatelist_desc)
@@ -1832,14 +1829,13 @@ def cli():
     vmclone_parser.set_defaults(func=vm_clone)
 
     vmconsole_desc = 'Vm Console (vnc/spice/serial)'
-    vmconsole_parser = argparse.ArgumentParser(add_help=False)
+    vmconsole_parser = vm_subparsers.add_parser('console', description=vmconsole_desc, help=vmconsole_desc)
     vmconsole_parser.add_argument('-s', '--serial', action='store_true')
     vmconsole_parser.add_argument('name', metavar='VMNAME', nargs='?')
     vmconsole_parser.set_defaults(func=vm_console)
-    vm_subparsers.add_parser('console', parents=[vmconsole_parser], description=vmconsole_desc, help=vmconsole_desc)
 
     vmcreate_desc = 'Create Vm'
-    vmcreate_parser = argparse.ArgumentParser(add_help=False)
+    vmcreate_parser = vm_subparsers.add_parser('create', description=vmcreate_desc, help=vmcreate_desc)
     vmcreate_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE', required=True)
     vmcreate_parser.add_argument('--profilefile', help='File to load profiles from', metavar='PROFILEFILE')
     vmcreate_parser.add_argument('-P', '--param', action='append',
@@ -1848,42 +1844,35 @@ def cli():
     vmcreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
     vmcreate_parser.add_argument('name', metavar='VMNAME', nargs='?')
     vmcreate_parser.set_defaults(func=vm_create)
-    vm_subparsers.add_parser('create', parents=[vmcreate_parser], description=vmcreate_desc, help=vmcreate_desc)
 
     vmdelete_desc = 'Delete Vm'
-    vmdelete_parser = argparse.ArgumentParser(add_help=False)
+    vmdelete_parser = vm_subparsers.add_parser('delete', description=vmdelete_desc, help=vmdelete_desc)
     vmdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     vmdelete_parser.add_argument('-t', '--template', action='store_true', help='delete template')
     vmdelete_parser.add_argument('--snapshots', action='store_true', help='Remove snapshots if needed')
     vmdelete_parser.add_argument('names', metavar='VMNAMES', nargs='*')
     vmdelete_parser.set_defaults(func=vm_delete)
-    vm_subparsers.add_parser('delete', parents=[vmdelete_parser], description=vmdelete_desc, help=vmdelete_desc)
 
     vmdiskadd_desc = 'Add Disk To Vm'
-    vmdiskadd_parser = argparse.ArgumentParser(add_help=False)
+    vmdiskadd_parser = vm_subparsers.add_parser('disk-add', description=vmdiskadd_desc, help=vmdiskadd_desc)
     vmdiskadd_parser.add_argument('-s', '--size', type=int, help='Size of the disk to add, in GB', metavar='SIZE')
     vmdiskadd_parser.add_argument('-t', '--template', help='Name or Path of a Template, when adding',
                                   metavar='TEMPLATE')
     vmdiskadd_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
     vmdiskadd_parser.add_argument('name', metavar='VMNAME', nargs='?')
     vmdiskadd_parser.set_defaults(func=vm_diskadd)
-    vm_subparsers.add_parser('disk-add', parents=[vmdiskadd_parser], description=vmdiskadd_desc, help=vmdiskadd_desc)
 
     vmdiskdelete_desc = 'Delete Vm Disk'
-    vmdiskdelete_parser = argparse.ArgumentParser(add_help=False)
+    vmdiskdelete_parser = vm_subparsers.add_parser('disk-delete', description=vmdiskdelete_desc, help=vmdiskdelete_desc)
     vmdiskdelete_parser.add_argument('-n', '--diskname', help='Name or Path of the disk, when deleting',
                                      metavar='DISKNAME')
     vmdiskdelete_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
     vmdiskdelete_parser.add_argument('name', metavar='VMNAME', nargs='?')
     vmdiskdelete_parser.set_defaults(func=vm_diskdelete)
-    vm_subparsers.add_parser('disk-delete', parents=[vmdiskdelete_parser], description=vmdiskdelete_desc,
-                             help=vmdiskdelete_desc)
 
     vmdisklist_desc = 'List Vms Disks'
-    vmdisklist_parser = argparse.ArgumentParser(add_help=False)
+    vmdisklist_parser = vm_subparsers.add_parser('disk-list', description=vmdisklist_desc, help=vmdisklist_desc)
     vmdisklist_parser.set_defaults(func=vm_disklist)
-    vm_subparsers.add_parser('disk-list', parents=[vmdisklist_parser], description=vmdisklist_desc,
-                             help=vmdisklist_desc)
 
     vmexport_desc = 'Export Vms'
     vmexport_parser = vm_subparsers.add_parser('export', description=vmexport_desc, help=vmexport_desc)
@@ -1893,35 +1882,31 @@ def cli():
     vmexport_parser.set_defaults(func=vm_export)
 
     vminfo_desc = 'Info Of Vms'
-    vminfo_parser = argparse.ArgumentParser(add_help=False)
+    vminfo_parser = vm_subparsers.add_parser('info', description=vminfo_desc, help=vminfo_desc)
     vminfo_parser.add_argument('-f', '--fields', help='Display Corresponding list of fields,'
                                'separated by a comma', metavar='FIELDS')
     vminfo_parser.add_argument('-o', '--output', choices=['plain', 'yaml'], help='Format of the output')
     vminfo_parser.add_argument('-v', '--values', action='store_true', help='Only report values')
     vminfo_parser.add_argument('names', help='VMNAMES', nargs='*')
     vminfo_parser.set_defaults(func=vm_info)
-    vm_subparsers.add_parser('info', parents=[vminfo_parser], description=vminfo_desc, help=vminfo_desc)
 
     vmlist_desc = 'List Vms'
-    vmlist_parser = argparse.ArgumentParser(add_help=False)
+    vmlist_parser = vm_subparsers.add_parser('list', description=vmlist_desc, help=vmlist_desc)
     vmlist_parser.add_argument('--filters', choices=('up', 'down'))
     vmlist_parser.set_defaults(func=vm_list)
-    vm_subparsers.add_parser('list', parents=[vmlist_parser], description=vmlist_desc, help=vmlist_desc)
 
     nicadd_desc = 'Add Nic To Vm'
-    nicadd_parser = argparse.ArgumentParser(add_help=False)
+    nicadd_parser = vm_subparsers.add_parser('nic-add', description=nicadd_desc, help=nicadd_desc)
     nicadd_parser.add_argument('-n', '--network', help='Network', metavar='NETWORK')
     nicadd_parser.add_argument('name', metavar='VMNAME')
     nicadd_parser.set_defaults(func=nic_add)
-    vm_subparsers.add_parser('nic-add', parents=[nicadd_parser], description=nicadd_desc, help=nicadd_desc)
 
     nicdelete_desc = 'Delete Nic From vm'
-    nicdelete_parser = argparse.ArgumentParser(add_help=False)
+    nicdelete_parser = vm_subparsers.add_parser('nic-delete', description=nicdelete_desc, help=nicdelete_desc)
     nicdelete_parser.add_argument('-i', '--interface', help='Name of the interface, when deleting', metavar='INTERFACE')
     nicdelete_parser.add_argument('-n', '--network', help='Network', metavar='NETWORK')
     nicdelete_parser.add_argument('name', metavar='VMNAME')
     nicdelete_parser.set_defaults(func=nic_delete)
-    vm_subparsers.add_parser('nic-delete', parents=[nicadd_parser], description=nicdelete_desc, help=nicdelete_desc)
 
     vmrestart_desc = 'Restart Vms'
     vmrestart_parser = vm_subparsers.add_parser('restart', description=vmrestart_desc, help=vmrestart_desc)
@@ -1929,14 +1914,13 @@ def cli():
     vmrestart_parser.set_defaults(func=vm_restart)
 
     vmscp_desc = 'Scp Into Vm'
-    vmscp_parser = argparse.ArgumentParser(add_help=False)
+    vmscp_parser = vm_subparsers.add_parser('scp', description=vmscp_desc, help=vmscp_desc)
     vmscp_parser.add_argument('-r', '--recursive', help='Recursive', action='store_true')
     vmscp_parser.add_argument('-v', '--volumepath', help='Volume Path (only used with kcli container)',
                               default='/workdir', metavar='VOLUMEPATH')
     vmscp_parser.add_argument('source', nargs=1)
     vmscp_parser.add_argument('destination', nargs=1)
     vmscp_parser.set_defaults(func=vm_scp)
-    vm_subparsers.add_parser('scp', parents=[vmscp_parser], description=vmscp_desc, help=vmscp_desc)
 
     vmsnapshotcreate_desc = 'Create Snapshot Of Vm'
     vmsnapshotcreate_parser = vm_subparsers.add_parser('snapshot-create', description=vmsnapshotcreate_desc,
@@ -1967,7 +1951,7 @@ def cli():
     vmsnapshotrevert_parser.set_defaults(func=vm_snapshotrevert)
 
     vmssh_desc = 'Ssh Into Vm'
-    vmssh_parser = argparse.ArgumentParser(add_help=False)
+    vmssh_parser = vm_subparsers.add_parser('ssh', description=vmssh_desc, help=vmssh_desc)
     vmssh_parser.add_argument('-D', help='Dynamic Forwarding', metavar='LOCAL')
     vmssh_parser.add_argument('-L', help='Local Forwarding', metavar='LOCAL')
     vmssh_parser.add_argument('-R', help='Remote Forwarding', metavar='REMOTE')
@@ -1975,19 +1959,16 @@ def cli():
     vmssh_parser.add_argument('-Y', action='store_true', help='Enable X11 Forwarding(Insecure)')
     vmssh_parser.add_argument('name', metavar='VMNAME', nargs='*')
     vmssh_parser.set_defaults(func=vm_ssh)
-    vm_subparsers.add_parser('ssh', parents=[vmssh_parser], description=vmssh_desc, help=vmssh_desc)
 
     vmstart_desc = 'Start Vms'
-    vmstart_parser = argparse.ArgumentParser(add_help=False)
+    vmstart_parser = vm_subparsers.add_parser('start', description=vmstart_desc, help=vmstart_desc)
     vmstart_parser.add_argument('names', metavar='VMNAMES', nargs='*')
     vmstart_parser.set_defaults(func=vm_start)
-    vm_subparsers.add_parser('start', parents=[vmstart_parser], description=vmstart_desc, help=vmstart_desc)
 
     vmstop_desc = 'Stop Vms'
-    vmstop_parser = argparse.ArgumentParser(add_help=False)
+    vmstop_parser = vm_subparsers.add_parser('stop', description=vmstop_desc, help=vmstop_desc)
     vmstop_parser.add_argument('names', metavar='VMNAMES', nargs='*')
     vmstop_parser.set_defaults(func=vm_stop)
-    vm_subparsers.add_parser('stop', parents=[vmstop_parser], description=vmstop_desc, help=vmstop_desc)
 
     vmupdate_desc = 'Update Vm\'s Ip, Memory Or Numcpus'
     vmupdate_parser = vm_subparsers.add_parser('update', description=vmupdate_desc, help=vmupdate_desc)
@@ -2010,30 +1991,114 @@ def cli():
     vmupdate_parser.set_defaults(func=vm_update)
 
     # alias
-    subparsers.add_parser('console', parents=[vmconsole_parser], description=vmconsole_desc, help=alias(vmconsole_desc))
-    subparsers.add_parser('create', parents=[vmcreate_parser], description=vmcreate_desc, help=alias(vmcreate_desc))
-    subparsers.add_parser('delete', parents=[vmdelete_parser], description=vmdelete_desc, help=alias(vmdelete_desc))
-    subparsers.add_parser('disk-add', parents=[vmdiskadd_parser], description=vmdiskadd_desc,
-                          help=alias(vmdiskadd_desc))
-    subparsers.add_parser('disk-delete', parents=[vmdiskdelete_parser], description=vmdiskdelete_desc,
-                          help=alias(vmdiskdelete_desc))
-    subparsers.add_parser('disk-list', parents=[vmdisklist_parser], description=vmdisklist_desc,
-                          help=alias(vmdisklist_desc))
-    subparsers.add_parser('download', parents=[templatedownload_parser], description=templatedownload_desc,
-                          help=alias(templatedownload_desc))
-    subparsers.add_parser('info', parents=[vminfo_parser], description=vminfo_desc, help=alias(vminfo_desc))
-    subparsers.add_parser('list', parents=[vmlist_parser], description=vmlist_desc, help=alias(vmdisklist_desc))
-    subparsers.add_parser('nic-add', parents=[nicadd_parser], description=nicadd_desc, help=alias(nicadd_desc))
-    subparsers.add_parser('nic-delete', parents=[nicdelete_parser], description=nicdelete_desc,
-                          help=alias(nicdelete_desc))
-    subparsers.add_parser('report', parents=[hostreport_parser], description=hostreport_desc,
-                          help=alias(hostreport_desc))
-    subparsers.add_parser('scp', parents=[vmscp_parser], description=vmscp_desc, help=alias(vmscp_desc))
-    subparsers.add_parser('ssh', parents=[vmssh_parser], description=vmssh_desc, help=alias(vmssh_desc))
-    subparsers.add_parser('start', parents=[vmstart_parser], description=vmstart_desc, help=alias(vmstart_desc))
-    subparsers.add_parser('stop', parents=[vmstop_parser], description=vmstop_desc, help=alias(vmstop_desc))
-    subparsers.add_parser('switch', parents=[hostswitch_parser], description=hostswitch_desc,
-                          help=alias(hostswitch_desc))
+    alias_vmconsole_parser = subparsers.add_parser('console', description=vmconsole_desc, help=alias(vmconsole_desc))
+    alias_vmconsole_parser.add_argument('-s', '--serial', action='store_true')
+    alias_vmconsole_parser.add_argument('name', metavar='VMNAME', nargs='?')
+    alias_vmconsole_parser.set_defaults(func=vm_console)
+
+    alias_vmcreate_parser = subparsers.add_parser('create', description=vmcreate_desc, help=alias(vmcreate_desc))
+    alias_vmcreate_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE', required=True)
+    alias_vmcreate_parser.add_argument('--profilefile', help='File to load profiles from', metavar='PROFILEFILE')
+    alias_vmcreate_parser.add_argument('-P', '--param', action='append',
+                                       help='specify parameter or keyword for rendering (can specify multiple)',
+                                       metavar='PARAM')
+    alias_vmcreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    alias_vmcreate_parser.add_argument('name', metavar='VMNAME', nargs='?')
+    alias_vmcreate_parser.set_defaults(func=vm_create)
+
+    alias_vmdelete_parser = subparsers.add_parser('delete', description=vmdelete_desc, help=alias(vmdelete_desc))
+    alias_vmdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    alias_vmdelete_parser.add_argument('-t', '--template', action='store_true', help='delete template')
+    alias_vmdelete_parser.add_argument('--snapshots', action='store_true', help='Remove snapshots if needed')
+    alias_vmdelete_parser.add_argument('names', metavar='VMNAMES', nargs='*')
+    alias_vmdelete_parser.set_defaults(func=vm_delete)
+
+    alias_vmdiskadd_parser = subparsers.add_parser('disk-add', description=vmdiskadd_desc, help=alias(vmdiskadd_desc))
+    alias_vmdiskadd_parser.add_argument('-s', '--size', type=int, help='Size of the disk to add, in GB', metavar='SIZE')
+    alias_vmdiskadd_parser.add_argument('-t', '--template', help='Name or Path of a Template, when adding',
+                                        metavar='TEMPLATE')
+    alias_vmdiskadd_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
+    alias_vmdiskadd_parser.add_argument('name', metavar='VMNAME', nargs='?')
+    alias_vmdiskadd_parser.set_defaults(func=vm_diskadd)
+
+    alias_vmdiskdelete_parser = subparsers.add_parser('disk-delete', description=vmdiskdelete_desc,
+                                                      help=alias(vmdiskdelete_desc))
+    alias_vmdiskdelete_parser.add_argument('-n', '--diskname', help='Name or Path of the disk, when deleting',
+                                           metavar='DISKNAME')
+    alias_vmdiskdelete_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
+    alias_vmdiskdelete_parser.add_argument('name', metavar='VMNAME', nargs='?')
+    alias_vmdiskdelete_parser.set_defaults(func=vm_diskdelete)
+
+    alias_vmdisklist_parser = subparsers.add_parser('disk-list', description=vmdisklist_desc,
+                                                    help=alias(vmdisklist_desc))
+    alias_vmdisklist_parser.set_defaults(func=vm_disklist)
+
+    alias_templatedownload_parser = subparsers.add_parser('download', description=templatedownload_desc,
+                                                          help=alias(templatedownload_desc))
+    alias_templatedownload_parser.add_argument('-c', '--cmd', help='Extra command to launch after downloading',
+                                               metavar='CMD')
+    alias_templatedownload_parser.add_argument('-p', '--pool', help='Pool to use. Defaults to default',
+                                               metavar='POOL')
+    alias_templatedownload_parser.add_argument('-u', '--url', help='Url to use', metavar='URL')
+    alias_templatedownload_parser.add_argument('templates', choices=sorted(TEMPLATES.keys()), default='',
+                                               help=templatedownload_help, nargs='*', metavar='')
+    alias_templatedownload_parser.set_defaults(func=template_download)
+
+    alias_vminfo_parser = subparsers.add_parser('info', description=vminfo_desc, help=alias(vminfo_desc))
+    alias_vminfo_parser.add_argument('-f', '--fields', help='Display Corresponding list of fields,'
+                                     'separated by a comma', metavar='FIELDS')
+    alias_vminfo_parser.add_argument('-o', '--output', choices=['plain', 'yaml'], help='Format of the output')
+    alias_vminfo_parser.add_argument('-v', '--values', action='store_true', help='Only report values')
+    alias_vminfo_parser.add_argument('names', help='VMNAMES', nargs='*')
+    alias_vminfo_parser.set_defaults(func=vm_info)
+
+    alias_vmlist_parser = subparsers.add_parser('list', description=vmlist_desc, help=alias(vmlist_desc))
+    alias_vmlist_parser.add_argument('--filters', choices=('up', 'down'))
+    alias_vmlist_parser.set_defaults(func=vm_list)
+
+    alias_nicadd_parser = subparsers.add_parser('nic-add', description=nicadd_desc, help=alias(nicadd_desc))
+    alias_nicadd_parser.add_argument('-n', '--network', help='Network', metavar='NETWORK')
+    alias_nicadd_parser.add_argument('name', metavar='VMNAME')
+    alias_nicadd_parser.set_defaults(func=nic_add)
+
+    alias_nicdelete_parser = subparsers.add_parser('nic-delete', description=nicdelete_desc, help=alias(nicdelete_desc))
+    alias_nicdelete_parser.add_argument('-i', '--interface', help='Name of the interface, when deleting',
+                                        metavar='INTERFACE')
+    alias_nicdelete_parser.add_argument('-n', '--network', help='Network', metavar='NETWORK')
+    alias_nicdelete_parser.add_argument('name', metavar='VMNAME')
+    alias_nicdelete_parser.set_defaults(func=nic_delete)
+
+    alias_hostreport_parser = subparsers.add_parser('report', description=hostreport_desc, help=alias(hostreport_desc))
+    alias_hostreport_parser.set_defaults(func=host_report)
+
+    alias_vmscp_parser = subparsers.add_parser('scp', description=vmscp_desc, help=alias(vmscp_desc))
+    alias_vmscp_parser.add_argument('-r', '--recursive', help='Recursive', action='store_true')
+    alias_vmscp_parser.add_argument('-v', '--volumepath', help='Volume Path (only used with kcli container)',
+                                    default='/workdir', metavar='VOLUMEPATH')
+    alias_vmscp_parser.add_argument('source', nargs=1)
+    alias_vmscp_parser.add_argument('destination', nargs=1)
+    alias_vmscp_parser.set_defaults(func=vm_scp)
+
+    alias_vmssh_parser = subparsers.add_parser('ssh', description=vmssh_desc, help=alias(vmssh_desc))
+    alias_vmssh_parser.add_argument('-D', help='Dynamic Forwarding', metavar='LOCAL')
+    alias_vmssh_parser.add_argument('-L', help='Local Forwarding', metavar='LOCAL')
+    alias_vmssh_parser.add_argument('-R', help='Remote Forwarding', metavar='REMOTE')
+    alias_vmssh_parser.add_argument('-X', action='store_true', help='Enable X11 Forwarding')
+    alias_vmssh_parser.add_argument('-Y', action='store_true', help='Enable X11 Forwarding(Insecure)')
+    alias_vmssh_parser.add_argument('name', metavar='VMNAME', nargs='*')
+    alias_vmssh_parser.set_defaults(func=vm_ssh)
+
+    alias_vmstart_parser = subparsers.add_parser('start', description=vmstart_desc, help=alias(vmstart_desc))
+    alias_vmstart_parser.add_argument('names', metavar='VMNAMES', nargs='*')
+    alias_vmstart_parser.set_defaults(func=vm_start)
+
+    alias_vmstop_parser = subparsers.add_parser('stop', description=vmstop_desc, help=alias(vmstop_desc))
+    alias_vmstop_parser.add_argument('names', metavar='VMNAMES', nargs='*')
+    alias_vmstop_parser.set_defaults(func=vm_stop)
+
+    alias_hostswitch_parser = subparsers.add_parser('switch', description=hostswitch_desc, help=alias(hostswitch_desc))
+    alias_hostswitch_parser.add_argument('host', help='HOST')
+    alias_hostswitch_parser.set_defaults(func=host_switch)
 
     argcomplete.autocomplete(parser)
     if len(sys.argv) == 1 or (len(sys.argv) == 3 and sys.argv[1] == '-C'):
