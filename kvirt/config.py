@@ -8,7 +8,7 @@ from jinja2 import Environment, FileSystemLoader
 from jinja2 import StrictUndefined as undefined
 from jinja2.exceptions import TemplateSyntaxError, TemplateError
 from kvirt.common import pretty_print
-from kvirt.defaults import TEMPLATES, TEMPLATESCOMMANDS
+from kvirt.defaults import IMAGES, IMAGESCOMMANDS
 from kvirt import ansibleutils
 from kvirt import nameutils
 from kvirt import common
@@ -238,8 +238,8 @@ class Kconfig(Kbaseconfig):
         else:
             common.pprint("Deploying vm %s from profile %s..." % (name, profile))
         if profile not in vmprofiles:
-            common.pprint("profile %s not found. Using the template as profile..." % profile, color='blue')
-            vmprofiles[profile] = {'template': profile}
+            common.pprint("profile %s not found. Using the image as profile..." % profile, color='blue')
+            vmprofiles[profile] = {'image': profile}
         profilename = profile
         profile = vmprofiles[profile]
         # profile.update(overrides)
@@ -253,7 +253,7 @@ class Kconfig(Kbaseconfig):
             default_pool = father.get('pool', self.pool)
             default_disks = father.get('disks', self.disks)
             default_nets = father.get('nets', self.nets)
-            default_template = father.get('template', self.template)
+            default_image = father.get('image', self.image)
             default_cloudinit = father.get('cloudinit', self.cloudinit)
             default_nested = father.get('nested', self.nested)
             default_reservedns = father.get('reservedns', self.reservedns)
@@ -306,7 +306,7 @@ class Kconfig(Kbaseconfig):
             default_pool = self.pool
             default_disks = self.disks
             default_nets = self.nets
-            default_template = self.template
+            default_image = self.image
             default_cloudinit = self.cloudinit
             default_nested = self.nested
             default_reservedns = self.reservedns
@@ -354,7 +354,8 @@ class Kconfig(Kbaseconfig):
             default_placement = self.placement
             default_yamlinventory = self.yamlinventory
         plan = profile.get('plan', plan)
-        template = profile.get('template', default_template)
+        template = profile.get('template', default_image)
+        image = profile.get('image', template)
         nets = profile.get('nets', default_nets)
         cpumodel = profile.get('cpumodel', default_cpumodel)
         cpuflags = profile.get('cpuflags', default_cpuflags)
@@ -456,7 +457,7 @@ class Kconfig(Kbaseconfig):
         yamlinventory = profile.get('yamlinventory', default_yamlinventory)
         scriptcmds = []
         skip_rhnregister_script = False
-        if rhnregister and template is not None and template.lower().startswith('rhel'):
+        if rhnregister and image is not None and image.lower().startswith('rhel'):
             if rhnuser is not None and rhnpassword is not None:
                 skip_rhnregister_script = True
                 overrides['rhnuser'] = rhnuser
@@ -498,13 +499,13 @@ class Kconfig(Kbaseconfig):
                     scriptlines = [line.strip() for line in scriptentries.split('\n') if line.strip() != '']
                     if scriptlines:
                         scriptcmds.extend(scriptlines)
-        if skip_rhnregister_script and cloudinit and template is not None and template.lower().startswith('rhel'):
+        if skip_rhnregister_script and cloudinit and image is not None and image.lower().startswith('rhel'):
             # rhncommands = ['sleep 30']
             rhncommands = []
             if rhnak is not None and rhnorg is not None:
                 rhncommands.append('subscription-manager register --force --activationkey=%s --org=%s'
                                    % (rhnak, rhnorg))
-                if template.startswith('rhel-8'):
+                if image.startswith('rhel-8'):
                     rhncommands.append('subscription-manager repos --enable=rhel-8-for-x86_64-baseos-rpms')
                 else:
                     rhncommands.append('subscription-manager repos --enable=rhel-7-server-rpms')
@@ -570,7 +571,7 @@ class Kconfig(Kbaseconfig):
             cmds.append('reboot')
         result = k.create(name=name, plan=plan, profile=profilename, flavor=flavor, cpumodel=cpumodel,
                           cpuflags=cpuflags, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool,
-                          template=template, disks=disks, disksize=disksize, diskthin=diskthin,
+                          image=image, disks=disks, disksize=disksize, diskthin=diskthin,
                           diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit),
                           reserveip=bool(reserveip), reservedns=bool(reservedns), reservehost=bool(reservehost),
                           start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns,
@@ -673,10 +674,10 @@ class Kconfig(Kbaseconfig):
                 repodir += "/%s" % os.path.dirname(product['file'])
             else:
                 inputfile = product['file']
-            template = product.get('template')
+            image = product.get('image')
             parameters = product.get('parameters')
-            if template is not None:
-                print("Note that this product uses template: %s" % template)
+            if image is not None:
+                print("Note that this product uses image: %s" % image)
             if parameters is not None:
                 for parameter in parameters:
                     applied_parameter = overrides[parameter] if parameter in overrides else parameters[parameter]
@@ -977,8 +978,8 @@ class Kconfig(Kbaseconfig):
                           if 'type' in entries[entry] and entries[entry]['type'] == 'ansible']
         profileentries = [entry for entry in entries
                           if 'type' in entries[entry] and entries[entry]['type'] == 'profile']
-        templateentries = [entry for entry in entries
-                           if 'type' in entries[entry] and entries[entry]['type'] == 'template']
+        imageentries = [entry for entry in entries if 'type' in
+                        entries[entry] and (entries[entry]['type'] == 'image' or entries[entry]['type'] == 'template')]
         poolentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'pool']
         planentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'plan']
         dnsentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'dns']
@@ -1043,34 +1044,34 @@ class Kconfig(Kbaseconfig):
                         common.pprint("Pool %s skipped as path is missing!" % pool, color='blue')
                         continue
                     k.create_pool(pool, poolpath)
-        if templateentries:
-            common.pprint("Deploying Templates...")
-            templates = [os.path.basename(t) for t in k.volumes()]
-            for template in templateentries:
-                if template in templates:
-                    common.pprint("Template %s skipped!" % template, color='blue')
+        if imageentries:
+            common.pprint("Deploying Images...")
+            images = [os.path.basename(t) for t in k.volumes()]
+            for image in imageentries:
+                if image in images:
+                    common.pprint("Image %s skipped!" % image, color='blue')
                     continue
                 else:
-                    templateprofile = entries[template]
-                    pool = templateprofile.get('pool', self.pool)
-                    templateurl = templateprofile.get('url')
-                    cmd = templateprofile.get('cmd')
-                    if templateurl is None:
-                        common.pprint("Template %s skipped as url is missing!" % template, color='blue')
+                    imageprofile = entries[image]
+                    pool = imageprofile.get('pool', self.pool)
+                    imageurl = imageprofile.get('url')
+                    cmd = imageprofile.get('cmd')
+                    if imageurl is None:
+                        common.pprint("Image %s skipped as url is missing!" % image, color='blue')
                         continue
-                    if not templateurl.endswith('qcow2') and not templateurl.endswith('img')\
-                            and not templateurl.endswith('qc2') and not templateurl.endswith('qcow2.xz')\
-                            and not templateurl.endswith('qcow2.gz'):
-                        common.pprint("Opening url %s for you to grab complete url for %s" % (templateurl,
-                                                                                              template),
+                    if not imageurl.endswith('qcow2') and not imageurl.endswith('img')\
+                            and not imageurl.endswith('qc2') and not imageurl.endswith('qcow2.xz')\
+                            and not imageurl.endswith('qcow2.gz'):
+                        common.pprint("Opening url %s for you to grab complete url for %s" % (imageurl,
+                                                                                              image),
                                       color='blue')
-                        webbrowser.open(templateurl, new=2, autoraise=True)
-                        templateurl = input("Copy Url:\n")
-                        if templateurl.strip() == '':
-                            common.pprint("Template %s skipped as url is empty!" % template, color='blue')
+                        webbrowser.open(imageurl, new=2, autoraise=True)
+                        imageurl = input("Copy Url:\n")
+                        if imageurl.strip() == '':
+                            common.pprint("Image %s skipped as url is empty!" % image, color='blue')
                             continue
-                    result = k.add_image(templateurl, pool, cmd=cmd)
-                    common.handle_response(result, template, element='Template ', action='Added')
+                    result = k.add_image(imageurl, pool, cmd=cmd)
+                    common.handle_response(result, image, element='Image ', action='Added')
         if dnsentries:
             common.pprint("Deploying Dns Entry...")
             dnsclients = {}
@@ -1168,17 +1169,18 @@ class Kconfig(Kbaseconfig):
                         currentvm = z.info(name)
                         currentstart = currentvm['autostart']
                         currentmemory = currentvm['memory']
-                        currenttemplate = currentvm.get('template')
+                        currentimage = currentvm.get('template')
+                        currentimage = currentvm.get('image', currentimage)
                         currentcpus = int(currentvm['cpus'])
                         currentnets = currentvm['nets']
                         currentdisks = currentvm['disks']
                         currentflavor = currentvm.get('flavor')
-                        if 'template' in currentvm:
-                            if 'template' in profile and currenttemplate != profile['template']:
-                                common.pprint("Existing %s has a different template. skipped!" % name, color='blue')
+                        if 'image' in currentvm:
+                            if 'image' in profile and currentimage != profile['image']:
+                                common.pprint("Existing %s has a different image. skipped!" % name, color='blue')
                                 continue
-                        elif 'template' in profile:
-                            common.pprint("Existing %s has a different template. skipped!" % name, color='blue')
+                        elif 'image' in profile:
+                            common.pprint("Existing %s has a different image. skipped!" % name, color='blue')
                             continue
                         if 'autostart' in profile and currentstart != profile['autostart']:
                             updated = True
@@ -1281,6 +1283,7 @@ class Kconfig(Kbaseconfig):
             pool = profile.get('pool')
             vms = profile.get('vms')
             template = profile.get('template')
+            image = profile.get('image', template)
             size = int(profile.get('size', 10))
             if pool is None:
                 common.pprint("Missing Key Pool for disk section %s. Not creating it..." % disk, color='red')
@@ -1296,17 +1299,17 @@ class Kconfig(Kbaseconfig):
                 newdisk = "%s/%s" % (poolpath, disk)
                 for vm in vms:
                     common.pprint("Adding disk %s to %s" % (disk, vm))
-                    k.add_disk(name=vm, size=size, pool=pool, template=template, shareable=shareable, existing=newdisk,
+                    k.add_disk(name=vm, size=size, pool=pool, image=image, shareable=shareable, existing=newdisk,
                                thin=False)
             else:
-                newdisk = k.create_disk(disk, size=size, pool=pool, template=template, thin=False)
+                newdisk = k.create_disk(disk, size=size, pool=pool, image=image, thin=False)
                 if newdisk is None:
                     common.pprint("Disk %s not deployed. It won't be added to any vm" % disk, color='red')
                 else:
                     common.pprint("Disk %s deployed!" % disk)
                     for vm in vms:
                         common.pprint("Adding disk %s to %s" % (disk, vm))
-                        k.add_disk(name=vm, size=size, pool=pool, template=template, shareable=shareable,
+                        k.add_disk(name=vm, size=size, pool=pool, image=image, shareable=shareable,
                                    existing=newdisk, thin=False)
         if containerentries:
             cont = Kcontainerconfig(self, client=self.containerclient).cont
@@ -1321,8 +1324,9 @@ class Kconfig(Kbaseconfig):
                     customprofile = containerprofiles[profile['profile']]
                 else:
                     customprofile = {}
-                image = next((e for e in [profile.get('image'), profile.get('template'), customprofile.get('image'),
-                                          customprofile.get('template')] if e is not None), None)
+                containerimage = next((e for e in [profile.get('image'), profile.get('image'),
+                                                   customprofile.get('image'),
+                                                   customprofile.get('image')] if e is not None), None)
                 nets = next((e for e in [profile.get('nets'), customprofile.get('nets')] if e is not None), None)
                 ports = next((e for e in [profile.get('ports'), customprofile.get('ports')] if e is not None), None)
                 volumes = next((e for e in [profile.get('volumes'), profile.get('disks'),
@@ -1332,7 +1336,7 @@ class Kconfig(Kbaseconfig):
                                     if e is not None), None)
                 cmd = next((e for e in [profile.get('cmd'), customprofile.get('cmd')] if e is not None), None)
                 common.pprint("Container %s deployed!" % container)
-                cont.create_container(name=container, image=image, nets=nets, cmd=cmd, ports=ports,
+                cont.create_container(name=container, image=containerimage, nets=nets, cmd=cmd, ports=ports,
                                       volumes=volumes, environment=environment, label=label)
         if ansibleentries:
             if not newvms:
@@ -1428,12 +1432,12 @@ class Kconfig(Kbaseconfig):
             rmtree(path)
         return returndata
 
-    def handle_host(self, pool=None, template=None, switch=None, download=False,
+    def handle_host(self, pool=None, image=None, switch=None, download=False,
                     url=None, cmd=None, sync=False):
         """
 
         :param pool:
-        :param templates:
+        :param images:
         :param switch:
         :param download:
         :param url:
@@ -1446,39 +1450,39 @@ class Kconfig(Kbaseconfig):
             if pool is None:
                 pool = self.pool
                 common.pprint("Using pool %s" % pool, color='blue')
-            if url is None and template is None:
-                common.pprint("Missing template or url.Leaving...", color='red')
-                return {'result': 'failure', 'reason': "Missing template or url"}
-            if template is not None:
+            if url is None and image is None:
+                common.pprint("Missing image or url.Leaving...", color='red')
+                return {'result': 'failure', 'reason': "Missing image or url"}
+            if image is not None:
                 if url is None:
-                    url = TEMPLATES[template]
+                    url = IMAGES[image]
                     openstack = True if self.type in ['ovirt', 'openstack'] else False
-                    if 'rhcos' in template and 'latest' in template:
+                    if 'rhcos' in image and 'latest' in image:
                         url = common.get_latest_rhcos(url, openstack=openstack)
-                    # elif 'fedoracoreos' in template and 'latest' in template:
+                    # elif 'fedoracoreos' in image and 'latest' in image:
                     #    url = common.get_latest_fcos(url, openstack=openstack)
                     shortname = os.path.basename(url)
-                    template = os.path.basename(template)
+                    image = os.path.basename(image)
                     if not url.endswith('qcow2') and not url.endswith('img') and not url.endswith('qc2')\
                             and not url.endswith('qcow2.xz') and not url.endswith('qcow2.gz'):
                         if 'web' in sys.argv[0]:
                             return {'result': 'failure', 'reason': "Missing url"}
-                        common.pprint("Opening url %s for you to grab complete url for %s" % (url, template), 'blue')
+                        common.pprint("Opening url %s for you to grab complete url for %s" % (url, image), 'blue')
                         webbrowser.open(url, new=2, autoraise=True)
                         url = input("Copy Url:\n")
                         if url.strip() == '':
                             common.pprint("Missing proper url.Leaving...", color='red')
-                            return {'result': 'failure', 'reason': "Missing template"}
+                            return {'result': 'failure', 'reason': "Missing image"}
                         search = re.search(r".*/(.*)\?.*", url)
                         if search is not None:
                             shortname = search.group(1)
                 else:
                     shortname = os.path.basename(url)
-                if cmd is None and template != '' and template in TEMPLATESCOMMANDS:
-                    cmd = TEMPLATESCOMMANDS[template]
-                common.pprint("Grabbing template %s..." % shortname)
+                if cmd is None and image != '' and image in IMAGESCOMMANDS:
+                    cmd = IMAGESCOMMANDS[image]
+                common.pprint("Grabbing image %s..." % shortname)
                 result = k.add_image(url, pool, cmd=cmd, name=shortname)
-                common.handle_response(result, shortname, element='Template ', action='Added')
+                common.handle_response(result, shortname, element='Image ', action='Added')
             return {'result': 'success'}
         elif switch:
             if switch not in self.clients:
@@ -1506,21 +1510,21 @@ class Kconfig(Kbaseconfig):
                 return {'result': 'success'}
             for cli in self.extraclients:
                 dest = self.extraclients[cli]
-                common.pprint("syncing client templates from %s to %s" % (self.client, cli))
-                common.pprint("Note rhel templates are currently not synced")
+                common.pprint("syncing client images from %s to %s" % (self.client, cli))
+                common.pprint("Note rhel images are currently not synced")
             for vol in k.volumes():
-                template = os.path.basename(vol)
-                if template in [os.path.basename(v) for v in dest.volumes()]:
-                    common.pprint("Ignoring %s as it's already there" % template, color='blue')
+                image = os.path.basename(vol)
+                if image in [os.path.basename(v) for v in dest.volumes()]:
+                    common.pprint("Ignoring %s as it's already there" % image, color='blue')
                     continue
                 url = None
-                for n in list(TEMPLATES.values()):
+                for n in list(IMAGES.values()):
                     if n is None:
                         continue
-                    elif n.split('/')[-1] == template:
+                    elif n.split('/')[-1] == image:
                         url = n
                 if url is None:
-                    return {'result': 'failure', 'reason': "template not in default list"}
+                    return {'result': 'failure', 'reason': "image not in default list"}
                 if not url.endswith('qcow2') and not url.endswith('img') and not url.endswith('qc2'):
                     if 'web' in sys.argv[0]:
                         return {'result': 'failure', 'reason': "Missing url"}
@@ -1529,11 +1533,11 @@ class Kconfig(Kbaseconfig):
                     url = input("Copy Url:\n")
                     if url.strip() == '':
                         common.pprint("Missing proper url.Leaving...", color='red')
-                        return {'result': 'failure', 'reason': "Missing template"}
+                        return {'result': 'failure', 'reason': "Missing image"}
                 cmd = None
-                if vol in TEMPLATESCOMMANDS:
-                    cmd = TEMPLATESCOMMANDS[template]
-                common.pprint("Grabbing template %s..." % template)
+                if vol in IMAGESCOMMANDS:
+                    cmd = IMAGESCOMMANDS[image]
+                common.pprint("Grabbing image %s..." % image)
                 dest.add_image(url, pool, cmd=cmd)
         return {'result': 'success'}
 

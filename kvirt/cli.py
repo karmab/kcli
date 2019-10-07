@@ -7,7 +7,7 @@ from kvirt.config import Kconfig
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
 from kvirt.version import __version__
-from kvirt.defaults import TEMPLATES
+from kvirt.defaults import IMAGES
 from prettytable import PrettyTable
 import argcomplete
 import argparse
@@ -205,18 +205,45 @@ def delete_container(args):
     os._exit(1 if 1 in codes else 0)
 
 
-def download_template(args):
-    """Download Template"""
+def download_image(args):
+    """Download Image"""
     pool = args.pool
-    template = args.template
+    image = args.image
     cmd = args.cmd
     url = args.url
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    result = config.handle_host(pool=pool, template=template, download=True, cmd=cmd, url=url)
+    result = config.handle_host(pool=pool, image=image, download=True, cmd=cmd, url=url)
     if result['result'] == 'success':
         os._exit(0)
     else:
         os._exit(1)
+
+
+def delete_image(args):
+    images = args.images
+    yes = args.yes
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    if config.extraclients:
+        allclients = config.extraclients.copy()
+        allclients.update({config.client: config.k})
+    else:
+        allclients = {config.client: config.k}
+    for cli in sorted(allclients):
+        k = allclients[cli]
+        common.pprint("Deleting on %s" % cli)
+        if not yes:
+            common.confirm("Are you sure?")
+        codes = []
+        for image in images:
+            result = k.delete_image(image)
+            if result['result'] == 'success':
+                common.pprint("%s deleted" % image)
+                codes.append(0)
+            else:
+                reason = result['reason']
+                common.pprint("Could not delete image %s because %s" % (image, reason), color='red')
+                codes.append(1)
+    os._exit(1 if 1 in codes else 0)
 
 
 def info_vm(args):
@@ -283,7 +310,7 @@ def list_vm(args):
                 name = vm.get('name')
                 status = vm.get('status')
                 ip = vm.get('ip', '')
-                source = vm.get('template', '')
+                source = vm.get('image', '')
                 plan = vm.get('plan', '')
                 profile = vm.get('profile', '')
                 report = vm.get('report', '')
@@ -300,7 +327,7 @@ def list_vm(args):
             name = vm.get('name')
             status = vm.get('status')
             ip = vm.get('ip', '')
-            source = vm.get('template', '')
+            source = vm.get('image', '')
             plan = vm.get('plan', '')
             profile = vm.get('profile', '')
             report = vm.get('report', '')
@@ -414,7 +441,7 @@ def list_profile(args):
             profilestable.add_row([profilename])
     else:
         profilestable = PrettyTable(["Profile", "Flavor",
-                                     "Pool", "Disks", "Template",
+                                     "Pool", "Disks", "Image",
                                      "Nets", "Cloudinit", "Nested",
                                      "Reservedns", "Reservehost"])
         for profile in sorted(profiles):
@@ -444,16 +471,16 @@ def list_flavor(args):
     return
 
 
-def list_template(args):
-    """List templates"""
+def list_image(args):
+    """List images"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.client != 'all':
         k = config.k
-    templatestable = PrettyTable(["Template"])
-    templatestable.align["Template"] = "l"
-    for template in k.volumes():
-        templatestable.add_row([template])
-    print(templatestable)
+    imagestable = PrettyTable(["Images"])
+    imagestable.align["Images"] = "l"
+    for image in k.volumes():
+        imagestable.add_row([image])
+    print(imagestable)
     return
 
 
@@ -617,7 +644,7 @@ def disklist_vm(args):
 def create_vm(args):
     """Create vms"""
     name = args.name
-    template = args.template
+    image = args.image
     profile = args.profile
     profilefile = args.profilefile
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
@@ -630,8 +657,8 @@ def create_vm(args):
             name = name.replace('_', '-')
         if config.type != 'aws':
             common.pprint("Using %s as name of the vm" % name)
-    if template is not None:
-        profile = template
+    if image is not None:
+        profile = image
     elif profile.endswith('.yml'):
         profilefile = profile
         profile = None
@@ -671,7 +698,7 @@ def update_vm(args):
     host = args.host
     domain = args.domain
     cloudinit = args.cloudinit
-    template = args.template
+    image = args.image
     net = args.network
     information = args.information
     iso = args.iso
@@ -701,9 +728,9 @@ def update_vm(args):
         elif plan is not None:
             common.pprint("Updating plan of vm %s to %s..." % (name, plan))
             k.update_metadata(name, 'plan', plan)
-        elif template is not None:
-            common.pprint("Updating template of vm %s to %s..." % (name, template))
-            k.update_metadata(name, 'template', template)
+        elif image is not None:
+            common.pprint("Updating image of vm %s to %s..." % (name, image))
+            k.update_metadata(name, 'image', image)
         elif memory is not None:
             common.pprint("Updating memory of vm %s to %s..." % (name, memory))
             k.update_memory(name, memory)
@@ -739,7 +766,7 @@ def create_vmdisk(args):
     """Add disk to vm"""
     name = args.name
     size = args.size
-    template = args.template
+    image = args.image
     pool = args.pool
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
@@ -753,7 +780,7 @@ def create_vmdisk(args):
         common.pprint("Missing name. Leaving...", color='red')
         os._exit(1)
     common.pprint("Adding disk to %s..." % name)
-    k.add_disk(name=name, size=size, pool=pool, template=template)
+    k.add_disk(name=name, size=size, pool=pool, image=image)
 
 
 def diskdelete_vm(args):
@@ -796,13 +823,13 @@ def delete_dns(args):
 
 def export_vm(args):
     """Export a vm"""
-    template = args.template
+    image = args.image
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     names = [common.get_lastvm(config.client)] if not args.names else args.names
     k = config.k
     codes = []
     for name in names:
-        result = k.export(name=name, template=template)
+        result = k.export(name=name, image=image)
         if result['result'] == 'success':
             common.pprint("Exporting vm %s" % name)
             codes.append(0)
@@ -1274,7 +1301,7 @@ def create_container(args):
     else:
         common.pprint("Deploying container %s from profile %s..." % (name, profile))
         profile = containerprofiles[profile]
-        image = next((e for e in [profile.get('image'), profile.get('template')] if e is not None), None)
+        image = next((e for e in [profile.get('image'), profile.get('image')] if e is not None), None)
         if image is None:
             common.pprint("Missing image in profile %s. Leaving..." % profile, color='red')
             os._exit(1)
@@ -1420,7 +1447,7 @@ def cli():
     info_subparsers = info_parser.add_subparsers(metavar='', dest='subcommand_info')
 
     list_desc = 'List'
-    list_parser = subparsers.add_parser('list', description=list_desc, help=list_desc)
+    list_parser = subparsers.add_parser('list', description=list_desc, help=list_desc, aliases=['get'])
     list_subparsers = list_parser.add_subparsers(metavar='', dest='subcommand_list')
 
     noautostart_desc = 'NoAutostart'
@@ -1830,23 +1857,30 @@ def cli():
     repoupdate_parser.add_argument('repo')
     repoupdate_parser.set_defaults(func=update_repo)
 
-    templatedownload_desc = 'Download Template'
-    templatedownload_help = "Template to download. Choose between \n%s" % '\n'.join(TEMPLATES.keys())
-    templatedownload_parser = argparse.ArgumentParser(add_help=False)
-    templatedownload_parser.add_argument('-c', '--cmd', help='Extra command to launch after downloading', metavar='CMD')
-    templatedownload_parser.add_argument('-p', '--pool', help='Pool to use. Defaults to default', metavar='POOL')
-    templatedownload_parser.add_argument('-u', '--url', help='Url to use', metavar='URL')
-    # templatedownload_parser.add_argument('templates', choices=sorted(TEMPLATES.keys()), default='',
-    #                                     help=templatedownload_help, nargs='*', metavar='')
-    templatedownload_parser.add_argument('template', choices=sorted(TEMPLATES.keys()),
-                                         help=templatedownload_help, metavar='')
-    templatedownload_parser.set_defaults(func=download_template)
-    download_subparsers.add_parser('template', parents=[templatedownload_parser], description=templatedownload_desc,
-                                   help=templatedownload_desc)
+    imagedelete_desc = 'Delete Image'
+    imagedelete_help = "Image to delete"
+    imagedelete_parser = argparse.ArgumentParser(add_help=False)
+    imagedelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    imagedelete_parser.add_argument('images', help=imagedelete_help, metavar='IMAGES', nargs='*')
+    imagedelete_parser.set_defaults(func=delete_image)
+    delete_subparsers.add_parser('image', parents=[imagedelete_parser], description=imagedelete_desc,
+                                 help=imagedelete_desc)
 
-    templatelist_desc = 'List Templates'
-    templatelist_parser = list_subparsers.add_parser('template', description=templatelist_desc, help=templatelist_desc)
-    templatelist_parser.set_defaults(func=list_template)
+    imagedownload_desc = 'Download Image'
+    imagedownload_help = "Image to download. Choose between \n%s" % '\n'.join(IMAGES.keys())
+    imagedownload_parser = argparse.ArgumentParser(add_help=False)
+    imagedownload_parser.add_argument('-c', '--cmd', help='Extra command to launch after downloading', metavar='CMD')
+    imagedownload_parser.add_argument('-p', '--pool', help='Pool to use. Defaults to default', metavar='POOL')
+    imagedownload_parser.add_argument('-u', '--url', help='Url to use', metavar='URL')
+    imagedownload_parser.add_argument('image', choices=sorted(IMAGES.keys()), help=imagedownload_help, metavar='IMAGE')
+    imagedownload_parser.set_defaults(func=download_image)
+    download_subparsers.add_parser('image', parents=[imagedownload_parser], description=imagedownload_desc,
+                                   help=imagedownload_desc)
+
+    imagelist_desc = 'List Images'
+    imagelist_parser = list_subparsers.add_parser('image', description=imagelist_desc, help=imagelist_desc,
+                                                  aliases=['template'])
+    imagelist_parser.set_defaults(func=list_image)
 
     vmclone_desc = 'Clone Vm'
     vmclone_parser = clone_subparsers.add_parser('vm', description=vmclone_desc, help=vmclone_desc)
@@ -1867,7 +1901,7 @@ def cli():
     vmcreate_parser = argparse.ArgumentParser(add_help=False)
     vmcreate_parser_group = vmcreate_parser.add_mutually_exclusive_group(required=True)
     vmcreate_parser_group.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
-    vmcreate_parser_group.add_argument('-t', '--template', help='Template to use', metavar='TEMPLATE')
+    vmcreate_parser_group.add_argument('-i', '--image', help='Image to use', metavar='IMAGE')
     vmcreate_parser.add_argument('--profilefile', help='File to load profiles from', metavar='PROFILEFILE')
     vmcreate_parser.add_argument('-P', '--param', action='append',
                                  help='specify parameter or keyword for rendering (can specify multiple)',
@@ -1888,7 +1922,7 @@ def cli():
     vmdiskadd_desc = 'Add Disk To Vm'
     vmdiskadd_parser = argparse.ArgumentParser(add_help=False)
     vmdiskadd_parser.add_argument('-s', '--size', type=int, help='Size of the disk to add, in GB', metavar='SIZE')
-    vmdiskadd_parser.add_argument('-t', '--template', help='Name or Path of a Template, when adding',
+    vmdiskadd_parser.add_argument('-i', '--image', help='Name or Path of a Image, when adding',
                                   metavar='TEMPLATE')
     vmdiskadd_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
     vmdiskadd_parser.add_argument('name', metavar='VMNAME', nargs='?')
@@ -1913,8 +1947,8 @@ def cli():
 
     vmexport_desc = 'Export Vms'
     vmexport_parser = export_subparsers.add_parser('vm', description=vmexport_desc, help=vmexport_desc)
-    vmexport_parser.add_argument('-t', '--template', help='Name for the generated template. Uses the vm name otherwise',
-                                 metavar='TEMPLATE')
+    vmexport_parser.add_argument('-t', '--image', help='Name for the generated image. Uses the vm name otherwise',
+                                 metavar='IMAGE')
     vmexport_parser.add_argument('names', metavar='VMNAMES', nargs='*')
     vmexport_parser.set_defaults(func=export_vm)
 
@@ -2018,7 +2052,7 @@ def cli():
     vmupdate_desc = 'Update Vm\'s Ip, Memory Or Numcpus'
     vmupdate_parser = update_subparsers.add_parser('vm', description=vmupdate_desc, help=vmupdate_desc)
     vmupdate_parser.add_argument('-1', '--ip1', help='Ip to set', metavar='IP1')
-    vmupdate_parser.add_argument('-i', '--information', '--info', help='Information to set', metavar='INFORMATION')
+    vmupdate_parser.add_argument('--information', '--info', help='Information to set', metavar='INFORMATION')
     vmupdate_parser.add_argument('--network', '--net', help='Network to update', metavar='NETWORK')
     vmupdate_parser.add_argument('-f', '--flavor', help='Flavor to set', metavar='Flavor')
     vmupdate_parser.add_argument('-m', '--memory', help='Memory to set', metavar='MEMORY')
@@ -2029,7 +2063,7 @@ def cli():
     vmupdate_parser.add_argument('--dns', action='store_true', help='Update Dns entry for the vm')
     vmupdate_parser.add_argument('--host', action='store_true', help='Update Host entry for the vm')
     vmupdate_parser.add_argument('-d', '--domain', help='Domain', metavar='DOMAIN')
-    vmupdate_parser.add_argument('-t', '--template', help='Template to set', metavar='TEMPLATE')
+    vmupdate_parser.add_argument('-i', '--image', help='Image to set', metavar='IMAGE')
     vmupdate_parser.add_argument('--iso', help='Iso to set', metavar='ISO')
     vmupdate_parser.add_argument('--cloudinit', action='store_true', help='Remove Cloudinit Information from vm')
     vmupdate_parser.add_argument('names', help='VMNAMES', nargs='*')

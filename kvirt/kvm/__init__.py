@@ -163,7 +163,7 @@ class Kvirt(object):
             return False
 
     def create(self, name, virttype='kvm', profile='kvirt', flavor=None, plan='kvirt', cpumodel='host-model',
-               cpuflags=[], numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None,
+               cpuflags=[], numcpus=2, memory=512, guestid='guestrhel764', pool='default', image=None,
                disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None,
                vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None,
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
@@ -182,7 +182,7 @@ class Kvirt(object):
         :param memory:
         :param guestid:
         :param pool:
-        :param template:
+        :param image:
         :param disks:
         :param disksize:
         :param diskthin:
@@ -239,9 +239,9 @@ class Kvirt(object):
         if domain is not None:
             metadata = """%s
                         <kvirt:domain>%s</kvirt:domain>""" % (metadata, domain)
-        if template is not None:
+        if image is not None:
             metadata = """%s
-                        <kvirt:template>%s</kvirt:template>""" % (metadata, template)
+                        <kvirt:image>%s</kvirt:image>""" % (metadata, image)
         if dnsclient is not None:
             metadata = """%s
                         <kvirt:dnsclient>%s</kvirt:dnsclient>""" % (metadata, dnsclient)
@@ -291,7 +291,7 @@ class Kvirt(object):
                 diskpoolpath = default_poolpath
                 diskthinpool = default_thinpool
                 diskwwn = None
-                disktemplate = None
+                diskimage = None
             elif isinstance(disk, int):
                 disksize = disk
                 diskthin = default_diskthin
@@ -301,7 +301,7 @@ class Kvirt(object):
                 diskpoolpath = default_poolpath
                 diskthinpool = default_thinpool
                 diskwwn = None
-                disktemplate = None
+                diskimage = None
             elif isinstance(disk, str) and disk.isdigit():
                 disksize = int(disk)
                 diskthin = default_diskthin
@@ -311,14 +311,14 @@ class Kvirt(object):
                 diskpoolpath = default_poolpath
                 diskthinpool = default_thinpool
                 diskwwn = None
-                disktemplate = None
+                diskimage = None
             elif isinstance(disk, dict):
                 disksize = disk.get('size', default_disksize)
                 diskthin = disk.get('thin', default_diskthin)
                 diskinterface = disk.get('interface', default_diskinterface)
                 diskpool = disk.get('pool', default_pool)
                 diskwwn = disk.get('wwn')
-                disktemplate = disk.get('template')
+                diskimage = disk.get('image')
                 try:
                     storagediskpool = conn.storagePoolLookupByName(diskpool)
                 except:
@@ -349,28 +349,28 @@ class Kvirt(object):
                 diskformat = 'raw'
             storagename = "%s_%d.img" % (name, index)
             diskpath = "%s/%s" % (diskpoolpath, storagename)
-            if template is not None and index == 0:
-                disktemplate = template
-            if disktemplate is not None:
+            if image is not None and index == 0:
+                diskimage = image
+            if diskimage is not None:
                 try:
                     if diskthinpool is not None:
-                        matchingthintemplates = self.thintemplates(diskpoolpath, diskthinpool)
-                        if disktemplate not in matchingthintemplates:
+                        matchingthinimages = self.thinimages(diskpoolpath, diskthinpool)
+                        if diskimage not in matchingthinimages:
                             raise NameError('No Template found')
                     else:
                         default_storagepool.refresh(0)
-                        if '/' in disktemplate:
-                            backingvolume = volumespaths[disktemplate]['object']
+                        if '/' in diskimage:
+                            backingvolume = volumespaths[diskimage]['object']
                         else:
-                            backingvolume = volumes[disktemplate]['object']
+                            backingvolume = volumes[diskimage]['object']
                         backingxml = backingvolume.XMLDesc(0)
                         root = ET.fromstring(backingxml)
                 except:
-                    shortname = [t for t in defaults.TEMPLATES if defaults.TEMPLATES[t] == disktemplate]
+                    shortname = [t for t in defaults.IMAGES if defaults.IMAGES[t] == diskimage]
                     if shortname:
-                        msg = "you don't have template %s. Use kcli download %s" % (disktemplate, shortname[0])
+                        msg = "you don't have image %s. Use kcli download %s" % (diskimage, shortname[0])
                     else:
-                        msg = "you don't have template %s" % disktemplate
+                        msg = "you don't have image %s" % diskimage
                     return {'result': 'failure', 'reason': msg}
                 if diskthinpool is not None:
                     backing = None
@@ -392,12 +392,12 @@ class Kvirt(object):
                 backingxml = '<backingStore/>'
             volxml = self._xmlvolume(path=diskpath, size=disksize, pooltype=diskpooltype, backing=backing,
                                      diskformat=diskformat)
-            if index == 0 and template is not None and diskpooltype in ['logical', 'zfs']\
+            if index == 0 and image is not None and diskpooltype in ['logical', 'zfs']\
                     and diskpool is None and not backing.startswith('/dev'):
                 fixqcow2path = diskpath
                 fixqcow2backing = backing
             if diskpooltype == 'logical' and diskthinpool is not None:
-                thinsource = template if index == 0 and template is not None else None
+                thinsource = image if index == 0 and image is not None else None
                 self._createthinlvm(storagename, diskpoolpath, diskthinpool, backing=thinsource, size=disksize)
             elif not self.disk_exists(pool, storagename):
                 if diskpool in volsxml:
@@ -483,19 +483,19 @@ class Kvirt(object):
                     </metadata>""" % (metadata, plan)
         if guestagent:
             gcmds = []
-            if template is not None:
-                lower = template.lower()
+            if image is not None:
+                lower = image.lower()
                 if (lower.startswith('centos') or lower.startswith('fedora') or lower.startswith('rhel')):
                     gcmds.append('yum -y install qemu-guest-agent')
                     gcmds.append('systemctl enable qemu-guest-agent')
                     gcmds.append('systemctl restart qemu-guest-agent')
-                elif template.lower().startswith('debian'):
+                elif image.lower().startswith('debian'):
                     gcmds.append('apt-get -f install qemu-guest-agent')
-                elif [x for x in ubuntus if x in template.lower()]:
+                elif [x for x in ubuntus if x in image.lower()]:
                     gcmds.append('apt-get update')
                     gcmds.append('apt-get -f install qemu-guest-agent')
             index = 1
-            if template is not None and template.startswith('rhel'):
+            if image is not None and image.startswith('rhel'):
                 subindex = [i for i, value in enumerate(cmds) if value.startswith('subscription-manager')]
                 if subindex:
                     index = subindex.pop() + 1
@@ -524,7 +524,7 @@ class Kvirt(object):
                         <readonly/>
                         </disk>""" % iso
         if cloudinit:
-            if template is not None and ('coreos' in template or template.startswith('rhcos')):
+            if image is not None and ('coreos' in image or image.startswith('rhcos')):
                 localhosts = ['localhost', '127.0.0.1']
                 ignition = True
                 ignitiondir = '/var/tmp'
@@ -534,7 +534,7 @@ class Kvirt(object):
                     ignitiondir = '/tmp'
                 if os.path.exists("/i_am_a_container") and not os.path.exists(ignitiondir):
                     return {'result': 'failure', 'reason': "Please add -v /var/tmp:/ignitiondir to container alias"}
-                version = '3.0.0' if template.startswith('fedora-coreos') else '2.2.0'
+                version = '3.0.0' if image.startswith('fedora-coreos') else '2.2.0'
                 ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                                domain=domain, reserveip=reserveip, files=files,
                                                enableroot=enableroot, overrides=overrides, etcd=etcd, version=version,
@@ -557,7 +557,7 @@ class Kvirt(object):
                     code = os.system(ignitioncmd1)
                     if code != 0:
                         return {'result': 'failure', 'reason': "Unable to create ignition data file in /var/tmp"}
-            elif template is not None and not ignition:
+            elif image is not None and not ignition:
                 cloudinitiso = "%s/%s.ISO" % (default_poolpath, name)
                 dtype = 'block' if '/dev' in diskpath else 'file'
                 dsource = 'dev' if '/dev' in diskpath else 'file'
@@ -748,7 +748,7 @@ class Kvirt(object):
                 storagepool.createXML(volxml, 0)
         if fixqcow2path is not None and fixqcow2backing is not None:
             self._fixqcow2(fixqcow2path, fixqcow2backing)
-        if cloudinit and template is not None and 'coreos' not in template and 'rhcos' not in template:
+        if cloudinit and image is not None and 'coreos' not in image and 'rhcos' not in image:
             common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
                              reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides,
                              storemetadata=storemetadata)
@@ -1124,7 +1124,7 @@ class Kvirt(object):
         # else:
         #    numcpus = numcpus.text
         yamlinfo = {'name': name, 'autostart': autostart, 'nets': [], 'disks': [], 'status': status}
-        plan, profile, template, ip, creationdate, report = '', None, None, None, None, None
+        plan, profile, image, ip, creationdate, report = '', None, None, None, None, None
         for element in list(root.getiterator('{kvirt}info')):
             e = element.find('{kvirt}plan')
             if e is not None:
@@ -1132,9 +1132,9 @@ class Kvirt(object):
             e = element.find('{kvirt}profile')
             if e is not None:
                 profile = e.text
-            e = element.find('{kvirt}template')
+            e = element.find('{kvirt}image')
             if e is not None:
-                template = e.text
+                image = e.text
             e = element.find('{kvirt}report')
             if e is not None:
                 report = e.text
@@ -1144,8 +1144,8 @@ class Kvirt(object):
             e = element.find('{kvirt}creationdate')
             if e is not None:
                 creationdate = e.text
-        if template is not None:
-            yamlinfo['template'] = template
+        if image is not None:
+            yamlinfo['image'] = image
         yamlinfo['plan'] = plan
         if profile is not None:
             yamlinfo['profile'] = profile
@@ -1297,9 +1297,9 @@ class Kvirt(object):
         :return:
         """
         isos = []
-        templates = []
-        default_templates = [os.path.basename(t).replace('.bz2', '') for t in list(defaults.TEMPLATES.values())
-                             if t is not None and 'product-software' not in t]
+        images = []
+        default_images = [os.path.basename(t).replace('.bz2', '') for t in list(defaults.IMAGES.values())
+                          if t is not None and 'product-software' not in t]
         conn = self.conn
         for poolname in conn.listStoragePools():
             pool = conn.storagePoolLookupByName(poolname)
@@ -1312,18 +1312,18 @@ class Kvirt(object):
             product = list(root.getiterator('product'))
             if product:
                 thinpool = list(root.getiterator('product'))[0].get('name')
-                for volume in self.thintemplates(poolpath, thinpool):
-                    if volume.endswith('qcow2') or volume.endswith('qc2') or volume in default_templates:
-                        templates.extend("%s/%s" % (poolpath, volume))
+                for volume in self.thinimages(poolpath, thinpool):
+                    if volume.endswith('qcow2') or volume.endswith('qc2') or volume in default_images:
+                        images.extend("%s/%s" % (poolpath, volume))
             for volume in pool.listVolumes():
                 if volume.endswith('iso'):
                     isos.append("%s/%s" % (poolpath, volume))
-                elif volume.endswith('qcow2') or volume.endswith('qc2') or volume in default_templates:
-                    templates.append("%s/%s" % (poolpath, volume))
+                elif volume.endswith('qcow2') or volume.endswith('qc2') or volume in default_images:
+                    images.append("%s/%s" % (poolpath, volume))
         if iso:
             return sorted(isos, key=lambda s: s.lower())
         else:
-            return sorted(templates, key=lambda s: s.lower())
+            return sorted(images, key=lambda s: s.lower())
 
     def dnsinfo(self, name):
         """
@@ -1377,10 +1377,10 @@ class Kvirt(object):
         root = ET.fromstring(vmxml)
         disks = []
         for element in list(root.getiterator('{kvirt}info')):
-            e = element.find('{kvirt}template')
+            e = element.find('{kvirt}image')
             if e is not None:
-                template = e.text
-                if template is not None and ('coreos' in template or template.startswith('rhcos')):
+                image = e.text
+                if image is not None and ('coreos' in image or image.startswith('rhcos')):
                     ignition = True
                 break
         for index, element in enumerate(list(root.getiterator('disk'))):
@@ -2018,14 +2018,14 @@ class Kvirt(object):
             vm.setAutostart(0)
         return {'result': 'success'}
 
-    def create_disk(self, name, size, pool=None, thin=True, template=None):
+    def create_disk(self, name, size, pool=None, thin=True, image=None):
         """
 
         :param name:
         :param size:
         :param pool:
         :param thin:
-        :param template:
+        :param image:
         :return:
         """
         conn = self.conn
@@ -2057,34 +2057,34 @@ class Kvirt(object):
         for element in list(poolroot.getiterator('path')):
             poolpath = element.text
             break
-        if template is not None:
+        if image is not None:
             volumes = {}
             for p in conn.listStoragePools():
                 poo = conn.storagePoolLookupByName(p)
                 for vol in poo.listAllVolumes():
                     volumes[vol.name()] = vol.path()
-            if template not in volumes and template not in list(volumes.values()):
-                common.pprint("Invalid template %s for disk %s" % (template, name), color='red')
+            if image not in volumes and image not in list(volumes.values()):
+                common.pprint("Invalid image %s for disk %s" % (image, name), color='red')
                 return None
-            if template in volumes:
-                template = volumes[template]
+            if image in volumes:
+                image = volumes[image]
         pool.refresh(0)
         diskpath = "%s/%s" % (poolpath, name)
         if pooltype == 'logical':
             diskformat = 'raw'
         volxml = self._xmlvolume(path=diskpath, size=size, pooltype=pooltype,
-                                 diskformat=diskformat, backing=template)
+                                 diskformat=diskformat, backing=image)
         pool.createXML(volxml, 0)
         return diskpath
 
-    def add_disk(self, name, size=1, pool=None, thin=True, template=None, shareable=False, existing=None):
+    def add_disk(self, name, size=1, pool=None, thin=True, image=None, shareable=False, existing=None):
         """
 
         :param name:
         :param size:
         :param pool:
         :param thin:
-        :param template:
+        :param image:
         :param shareable:
         :param existing:
         :return:
@@ -2119,7 +2119,7 @@ class Kvirt(object):
         diskdev = "vd%s" % string.ascii_lowercase[currentdisk]
         if existing is None:
             storagename = "%s_%d.img" % (name, diskindex)
-            diskpath = self.create_disk(name=storagename, size=size, pool=pool, thin=thin, template=template)
+            diskpath = self.create_disk(name=storagename, size=size, pool=pool, thin=thin, image=image)
         elif existing in diskpaths:
             common.pprint("Disk %s already in VM %s" % (existing, name), color='blue')
             return {'result': 'success'}
@@ -2309,11 +2309,11 @@ class Kvirt(object):
             e = element.find('{kvirt}ip')
             if e is not None:
                 ip = e.text
-            e = element.find('{kvirt}template')
+            e = element.find('{kvirt}image')
             if e is not None:
-                template = e.text
-                if template != '':
-                    user = common.get_user(template)
+                image = e.text
+                if image != '':
+                    user = common.get_user(image)
         if '/var/lib/libvirt/openshift-images/' in xml:
             user = 'coreos'
         if ip is not None:
@@ -2533,7 +2533,7 @@ class Kvirt(object):
                                                                              self.host, downloadpath, shortimage, image)
         code = os.system(downloadcmd)
         if code != 0:
-            return {'result': 'failure', 'reason': "Unable to download indicated template"}
+            return {'result': 'failure', 'reason': "Unable to download indicated image"}
         if shortimage.endswith('bz2'):
             if self.host == 'localhost' or self.host == '127.0.0.1':
                 if find_executable('bunzip2') is not None:
@@ -2890,7 +2890,7 @@ class Kvirt(object):
         """
         return []
 
-    def thintemplates(self, path, thinpool):
+    def thinimages(self, path, thinpool):
         """
 
         :param path:
@@ -2961,14 +2961,14 @@ class Kvirt(object):
             command = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host, command)
         os.system(command)
 
-    def export(self, name, template=None):
+    def export(self, name, image=None):
         """
 
         :param name:
-        :param template:
+        :param image:
         :return:
         """
-        newname = template if template is not None else "template-%s" % name
+        newname = image if image is not None else "image-%s" % name
         conn = self.conn
         oldvm = conn.lookupByName(name)
         oldxml = oldvm.XMLDesc(0)

@@ -11,7 +11,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             START, AUTOSTART, NESTED, TUNNEL, REPORTURL, REPORTDIR,
                             REPORT, REPORTALL, INSECURE, KEYS, CMDS, DNS,
                             DOMAIN, SCRIPTS, FILES, ISO,
-                            NETMASKS, GATEWAY, SHAREDKEY, TEMPLATE, ENABLEROOT,
+                            NETMASKS, GATEWAY, SHAREDKEY, IMAGE, ENABLEROOT,
                             PLANVIEW, PRIVATEKEY, TAGS, RHNREGISTER, RHNUSER, RHNPASSWORD, RHNAK, RHNORG, RHNPOOL,
                             FLAVOR, KEEP_NETWORKS, DNSCLIENT, STORE_METADATA, NOTIFY, NOTIFYTOKEN, NOTIFYCMD,
                             SHAREDFOLDERS, KERNEL, INITRD, CMDLINE, PLACEMENT, YAMLINVENTORY)
@@ -96,7 +96,7 @@ class Kbaseconfig:
         default = self.ini['default']
         defaults['nets'] = default.get('nets', NETS)
         defaults['pool'] = default.get('pool', POOL)
-        defaults['template'] = default.get('template', TEMPLATE)
+        defaults['image'] = default.get('image', IMAGE)
         defaults['cpumodel'] = default.get('cpumodel', CPUMODEL)
         defaults['numcpus'] = int(default.get('numcpus', NUMCPUS))
         defaults['memory'] = int(default.get('memory', MEMORY))
@@ -210,7 +210,7 @@ class Kbaseconfig:
         self.type = options.get('type', 'kvm')
         self.url = options.get('url', None)
         self.pool = options.get('pool', self.default['pool'])
-        self.template = options.get('template', self.default['template'])
+        self.image = options.get('image', self.default['image'])
         self.tunnel = bool(options.get('tunnel', self.default['tunnel']))
         self.insecure = bool(options.get('insecure', self.default['insecure']))
         self.report = options.get('report', self.default['report'])
@@ -604,7 +604,7 @@ class Kbaseconfig:
             _file = product['file']
             description = product.get('description')
             numvms = product.get('numvms')
-            template = product.get('template')
+            image = product.get('image')
             comments = product.get('comments')
             if not web:
                 if description is not None:
@@ -616,8 +616,8 @@ class Kbaseconfig:
                     if numvms == 1:
                         numvmsinfo += " (Vm name can be overriden)"
                     print(numvmsinfo)
-                if template is not None:
-                    print("template: %s" % template)
+                if image is not None:
+                    print("image: %s" % image)
                 if comments is not None:
                     print("Comments : %s" % comments)
             inputfile = "%s/%s" % (product['realdir'], _file) if 'realdir' in product else _file
@@ -694,7 +694,7 @@ class Kbaseconfig:
                 default_pool = father.get('pool', default['pool'])
                 default_disks = father.get('disks', default['disks'])
                 default_nets = father.get('nets', default['nets'])
-                default_template = father.get('template', '')
+                default_image = father.get('image', '')
                 default_cloudinit = father.get('cloudinit', default['cloudinit'])
                 default_nested = father.get('nested', default['nested'])
                 default_reservedns = father.get('reservedns', default['reservedns'])
@@ -706,7 +706,7 @@ class Kbaseconfig:
                 default_pool = default['pool']
                 default_disks = default['disks']
                 default_nets = default['nets']
-                default_template = ''
+                default_image = ''
                 default_cloudinit = default['cloudinit']
                 default_nested = default['nested']
                 default_reservedns = default['reservedns']
@@ -738,7 +738,7 @@ class Kbaseconfig:
                     netname = net['name']
                 netinfo.append(netname)
             netinfo = ','.join(netinfo)
-            template = info.get('template', default_template)
+            image = info.get('image', default_image)
             cloudinit = info.get('cloudinit', default_cloudinit)
             nested = info.get('nested', default_nested)
             reservedns = info.get('reservedns', default_reservedns)
@@ -746,7 +746,7 @@ class Kbaseconfig:
             flavor = info.get('flavor', default_flavor)
             if flavor is None:
                 flavor = "%scpus %sMb ram" % (numcpus, memory)
-            results.append([profile, flavor, pool, diskinfo, template, netinfo, cloudinit, nested,
+            results.append([profile, flavor, pool, diskinfo, image, netinfo, cloudinit, nested,
                             reservedns, reservehost])
         return sorted(results, key=lambda x: x[0])
 
@@ -776,7 +776,7 @@ class Kbaseconfig:
             if 'type' not in info or info['type'] != 'container':
                 continue
             else:
-                image = next((e for e in [info.get('image'), info.get('template')] if e is not None), '')
+                image = next((e for e in [info.get('image'), info.get('image')] if e is not None), '')
                 nets = info.get('nets', '')
                 ports = info.get('ports', '')
                 volumes = next((e for e in [info.get('volumes'), info.get('disks')] if e is not None), '')
