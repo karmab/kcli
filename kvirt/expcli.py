@@ -2022,7 +2022,7 @@ def cli():
     subparsers.add_parser('download', parents=[templatedownload_parser], description=templatedownload_desc,
                           help=alias('template download'))
     subparsers.add_parser('info', parents=[vminfo_parser], description=vminfo_desc, help=alias('vm info'))
-    subparsers.add_parser('list', parents=[vmlist_parser], description=vmlist_desc, help=alias('vm disk-list'))
+    subparsers.add_parser('list', parents=[vmlist_parser], description=vmlist_desc, help=alias('vm list'))
     subparsers.add_parser('nic-add', parents=[nicadd_parser], description=nicadd_desc, help=alias('vm nic-add'))
     subparsers.add_parser('nic-delete', parents=[nicdelete_parser], description=nicdelete_desc,
                           help=alias('vm nic-delete'))
