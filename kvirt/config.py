@@ -1433,7 +1433,7 @@ class Kconfig(Kbaseconfig):
         return returndata
 
     def handle_host(self, pool=None, image=None, switch=None, download=False,
-                    url=None, cmd=None, sync=False):
+                    url=None, cmd=None, sync=False, profile=False):
         """
 
         :param pool:
@@ -1446,6 +1446,7 @@ class Kconfig(Kbaseconfig):
         :return:
         """
         if download:
+            imagename = image
             k = self.k
             if pool is None:
                 pool = self.pool
@@ -1483,6 +1484,8 @@ class Kconfig(Kbaseconfig):
                 common.pprint("Grabbing image %s..." % shortname)
                 result = k.add_image(url, pool, cmd=cmd, name=shortname)
                 common.handle_response(result, shortname, element='Image ', action='Added')
+                if imagename not in self.profiles:
+                    self.create_profile(imagename, {'image': shortname}, quiet=True)
             return {'result': 'success'}
         elif switch:
             if switch not in self.clients:

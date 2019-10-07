@@ -738,7 +738,8 @@ class Kbaseconfig:
                     netname = net['name']
                 netinfo.append(netname)
             netinfo = ','.join(netinfo)
-            image = info.get('image', default_image)
+            template = info.get('template', default_image)
+            image = info.get('image', template)
             cloudinit = info.get('cloudinit', default_cloudinit)
             nested = info.get('nested', default_nested)
             reservedns = info.get('reservedns', default_reservedns)
@@ -784,3 +785,48 @@ class Kbaseconfig:
                 cmd = info.get('cmd', '')
                 results.append([profile, image, nets, ports, volumes, cmd])
         return results
+
+    def delete_profile(self, profile, quiet=False):
+        if profile not in self.profiles:
+            if quiet:
+                common.pprint("Profile %s not found" % profile, color='red')
+            return {'result': 'failure', 'reason': 'Profile %s not found' % profile}
+        else:
+            del self.profiles[profile]
+            profilefile = os.path.expanduser('~/.kcli/profiles.yml')
+            rootdir = os.path.expanduser('~/.kcli')
+            if not os.path.exists(rootdir):
+                os.makedirs(rootdir)
+            newfile = ''
+            found = False
+            for line in open(profilefile).readlines():
+                if line.startswith(profile):
+                    found = True
+                elif found:
+                    if re.match(r'\w', line):
+                        found = False
+                        newfile += line
+                    elif re.match(r'\w', line):
+                        found = False
+                else:
+                    newfile += line
+            open(profilefile, 'w').write(newfile)
+        # common.pprint("Profile %s deleted!" % profile)
+        return {'result': 'success'}
+
+    def create_profile(self, profile, overrides={}, quiet=False):
+        if profile in self.profiles:
+            if not quiet:
+                common.pprint("Profile %s already there" % profile, color='blue')
+            return {'result': 'success'}
+        if not overrides:
+            return {'result': 'failure', 'reason': "You need to specify at least one parameter"}
+        profilefile = os.path.expanduser('~/.kcli/profiles.yml')
+        rootdir = os.path.expanduser('~/.kcli')
+        if not os.path.exists(rootdir):
+            os.makedirs(rootdir)
+        with open(profilefile, 'a') as f:
+            f.write("\n%s:\n" % profile)
+            for key in sorted(overrides):
+                f.write(" %s: %s\n" % (key, overrides[key]))
+        return {'result': 'success'}

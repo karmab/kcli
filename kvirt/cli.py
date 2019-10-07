@@ -212,7 +212,7 @@ def download_image(args):
     cmd = args.cmd
     url = args.url
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    result = config.handle_host(pool=pool, image=image, download=True, cmd=cmd, url=url)
+    result = config.handle_host(pool=pool, image=image, download=True, cmd=cmd, url=url, profile=True)
     if result['result'] == 'success':
         os._exit(0)
     else:
@@ -235,7 +235,12 @@ def delete_image(args):
             common.confirm("Are you sure?")
         codes = []
         for image in images:
-            result = k.delete_image(image)
+            if image in config.profiles and len(config.profiles[image]) == 1 and 'image' in config.profiles[image]:
+                profileimage = config.profiles[image]['image']
+                config.delete_profile(image, quiet=True)
+                result = k.delete_image(profileimage)
+            else:
+                result = k.delete_image(image)
             if result['result'] == 'success':
                 common.pprint("%s deleted" % image)
                 codes.append(0)
@@ -244,6 +249,32 @@ def delete_image(args):
                 common.pprint("Could not delete image %s because %s" % (image, reason), color='red')
                 codes.append(1)
     os._exit(1 if 1 in codes else 0)
+
+
+def create_profile(args):
+    """Create profile"""
+    profile = args.profile
+    overrides = common.get_overrides(param=args.param)
+    baseconfig = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
+                         namespace=args.namespace)
+    result = baseconfig.create_profile(profile, overrides=overrides)
+    code = common.handle_response(result, profile, element='Profile', action='created', client=baseconfig.client)
+    return code
+
+
+def delete_profile(args):
+    """Delete profile"""
+    yes = args.yes
+    profile = args.profile
+    baseconfig = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
+                         namespace=args.namespace)
+    common.pprint("Deleting on %s" % baseconfig.client)
+    if not yes:
+        common.confirm("Are you sure?")
+    result = baseconfig.delete_profile(profile)
+    code = common.handle_response(result, profile, element='Profile', action='deleted', client=baseconfig.client)
+    return code
+    # os._exit(0) if result['result'] == 'success' else os._exit(1)
 
 
 def info_vm(args):
@@ -1647,10 +1678,29 @@ def cli():
     lblist_parser.add_argument('--short', action='store_true')
     lblist_parser.set_defaults(func=list_lb)
 
+    profilecreate_desc = 'Create Profile'
+    profilecreate_parser = argparse.ArgumentParser(add_help=False)
+    profilecreate_parser.add_argument('-P', '--param', action='append',
+                                      help='specify parameter or keyword for rendering (can specify multiple)',
+                                      metavar='PARAM')
+    profilecreate_parser.add_argument('profile', metavar='PROFILE')
+    profilecreate_parser.set_defaults(func=create_profile)
+    create_subparsers.add_parser('profile', parents=[profilecreate_parser], description=profilecreate_desc,
+                                 help=profilecreate_desc)
+
     profilelist_desc = 'List Profiles'
     profilelist_parser = list_subparsers.add_parser('profile', description=profilelist_desc, help=profilelist_desc)
     profilelist_parser.add_argument('--short', action='store_true')
     profilelist_parser.set_defaults(func=list_profile)
+
+    profiledelete_desc = 'Delete Profile'
+    profiledelete_help = "Image to delete"
+    profiledelete_parser = argparse.ArgumentParser(add_help=False)
+    profiledelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    profiledelete_parser.add_argument('profile', help=profiledelete_help, metavar='PROFILE')
+    profiledelete_parser.set_defaults(func=delete_profile)
+    delete_subparsers.add_parser('profile', parents=[profiledelete_parser], description=profiledelete_desc,
+                                 help=profiledelete_desc)
 
     flavorlist_desc = 'List Flavors'
     flavorlist_parser = list_subparsers.add_parser('flavor', description=flavorlist_desc, help=flavorlist_desc)
