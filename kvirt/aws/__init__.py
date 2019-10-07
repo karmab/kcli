@@ -12,12 +12,12 @@ import os
 from string import ascii_lowercase
 from time import sleep
 
-static_flavors = {'t2.nano': {'cpus': 1, 'memory': 512}, 't2.micro': {'cpus': 1, 'memory': 1024},
-                  't2.small': {'cpus': 1, 'memory': 2048}, 't2.medium': {'cpus': 2, 'memory': 4096},
-                  't2.large': {'cpus': 2, 'memory': 8144}, 't2.xlarge': {'cpus': 2, 'memory': 16384},
-                  'm5.large': {'cpus': 2, 'memory': 8144}, 'm5.xlarge': {'cpus': 4, 'memory': 16384},
-                  'm5.2xlarge': {'cpus': 8, 'memory': 32768}, 'm5.4xlarge': {'cpus': 16, 'memory': 65536}
-                  }
+staticf = {'t2.nano': {'cpus': 1, 'memory': 512}, 't2.micro': {'cpus': 1, 'memory': 1024},
+           't2.small': {'cpus': 1, 'memory': 2048}, 't2.medium': {'cpus': 2, 'memory': 4096},
+           't2.large': {'cpus': 2, 'memory': 8144}, 't2.xlarge': {'cpus': 2, 'memory': 16384},
+           'm5.large': {'cpus': 2, 'memory': 8144}, 'm5.xlarge': {'cpus': 4, 'memory': 16384},
+           'm5.2xlarge': {'cpus': 8, 'memory': 32768}, 'm5.4xlarge': {'cpus': 16, 'memory': 65536}
+           }
 
 
 class Kaws(object):
@@ -83,7 +83,7 @@ class Kaws(object):
         print("not implemented")
 
     def create(self, name, virttype='kvm', profile='', flavor=None, plan='kvirt', cpumodel='Westmere', cpuflags=[],
-               numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{'size': 10}],
+               numcpus=2, memory=512, guestid='guestrhel764', pool='default', image=None, disks=[{'size': 10}],
                disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False,
                cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[],
                ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[],
@@ -102,7 +102,7 @@ class Kaws(object):
         :param memory:
         :param guestid:
         :param pool:
-        :param template:
+        :param image:
         :param disks:
         :param disksize:
         :param diskthin:
@@ -134,24 +134,23 @@ class Kaws(object):
         conn = self.conn
         if self.exists(name):
             return {'result': 'failure', 'reason': "VM %s already exists" % name}
-        template = self.__evaluate_template(template)
+        image = self.__evaluate_image(image)
         keypair = self.keypair
-        if template is not None and not template.startswith('ami-'):
-            Filters = [{'Name': 'name', 'Values': [template]}]
-            templates = conn.describe_images(Filters=Filters)
-            if 'Images' in templates and templates['Images']:
-                imageid = templates['Images'][0]['ImageId']
-                common.pprint("Using ami %s" % template)
+        if image is not None and not image.startswith('ami-'):
+            Filters = [{'Name': 'name', 'Values': [image]}]
+            images = conn.describe_images(Filters=Filters)
+            if 'Images' in image and images['Images']:
+                imageid = images['Images'][0]['ImageId']
+                common.pprint("Using ami %s" % image)
             else:
-                return {'result': 'failure', 'reason': 'Invalid template %s' % template}
+                return {'result': 'failure', 'reason': 'Invalid image %s' % image}
         else:
-                imageid = template
+            imageid = image
         defaultsubnetid = None
         if flavor is None:
-            matchingflavors = [f for f in static_flavors if static_flavors[f]['cpus'] >= numcpus and
-                               static_flavors[f]['memory'] >= memory]
-            if matchingflavors:
-                flavor = matchingflavors[0]
+            matching = [f for f in staticf if staticf[f]['cpus'] >= numcpus and staticf[f]['memory'] >= memory]
+            if matching:
+                flavor = matching[0]
                 common.pprint("Using instance type %s" % flavor)
             else:
                 return {'result': 'failure', 'reason': 'Couldnt find instance type matching requirements'}
@@ -179,9 +178,9 @@ class Kaws(object):
                 homekey = open("%s/.kcli/id_dsa.pub" % os.environ['HOME']).read()
             conn.import_key_pair(KeyName=keypair, PublicKeyMaterial=homekey)
         if cloudinit:
-            if template is not None and (template.startswith('coreos') or template.startswith('rhcos')):
+            if image is not None and (image.startswith('coreos') or image.startswith('rhcos')):
                 etcd = None
-                version = '3.0.0' if template.startswith('fedora-coreos') else '2.2.0'
+                version = '3.0.0' if image.startswith('fedora-coreos') else '2.2.0'
                 userdata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                            domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
                                            overrides=overrides, etcd=etcd, version=version, plan=plan)
@@ -233,7 +232,7 @@ class Kaws(object):
         if len(privateips) > 1:
             networkinterface['PrivateIpAddresses'] = privateips
         for index, disk in enumerate(disks):
-            if template is not None and index == 0:
+            if image is not None and index == 0:
                 continue
             letter = chr(index + ord('a'))
             # devicename = '/dev/sd%s1' % letter if index == 0 else '/dev/sd%s' % letter
@@ -518,11 +517,11 @@ class Kaws(object):
         yamlinfo['ip'] = ip
         machinetype = vm['InstanceType']
         yamlinfo['flavor'] = machinetype
-        if machinetype in static_flavors:
-            yamlinfo['cpus'] = static_flavors[machinetype]['cpus']
-            yamlinfo['memory'] = static_flavors[machinetype]['memory']
+        if machinetype in staticf:
+            yamlinfo['cpus'] = staticf[machinetype]['cpus']
+            yamlinfo['memory'] = staticf[machinetype]['memory']
         # yamlinfo['autostart'] = vm['scheduling']['automaticRestart']
-        yamlinfo['template'] = source
+        yamlinfo['image'] = source
         # yamlinfo['creationdate'] = dateparser.parse(vm['creationTimestamp']).strftime("%d-%m-%Y %H:%M")
         yamlinfo['plan'] = plan
         yamlinfo['profile'] = profile
@@ -729,7 +728,7 @@ class Kaws(object):
             common.pprint("Can't update memory of VM %s while up" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s up" % name}
         instanceid = vm['InstanceId']
-        instancetype = [f for f in static_flavors if static_flavors[f]['memory'] >= int(memory)]
+        instancetype = [f for f in staticf if staticf[f]['memory'] >= int(memory)]
         if instancetype:
             flavor = instancetype[0]
             common.pprint("Using flavor %s" % flavor)
@@ -782,7 +781,7 @@ class Kaws(object):
         if state != 'stopped':
             common.pprint("Can't update cpus of VM %s while up" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s up" % name}
-        instancetype = [f for f in static_flavors if static_flavors[f]['cpus'] >= numcpus]
+        instancetype = [f for f in staticf if staticf[f]['cpus'] >= numcpus]
         if instancetype:
             flavor = instancetype[0]
             common.pprint("Using flavor %s" % flavor)
@@ -823,27 +822,27 @@ class Kaws(object):
         print("not implemented")
         return
 
-    def create_disk(self, name, size, pool=None, thin=True, template=None):
+    def create_disk(self, name, size, pool=None, thin=True, image=None):
         """
 
         :param name:
         :param size:
         :param pool:
         :param thin:
-        :param template:
+        :param image:
         :return:
         """
         print("not implemented")
         return
 
-    def add_disk(self, name, size, pool=None, thin=True, template=None, shareable=False, existing=None):
+    def add_disk(self, name, size, pool=None, thin=True, image=None, shareable=False, existing=None):
         """
 
         :param name:
         :param size:
         :param pool:
         :param thin:
-        :param template:
+        :param image:
         :param shareable:
         :param existing:
         :return:
@@ -933,11 +932,11 @@ class Kaws(object):
             print("VM %s not found" % name)
             return '', ''
         amid = vm['ImageId']
-        image = resource.Image(amid)
-        template = os.path.basename(image.image_location)
-        if template != '':
-            user = common.get_user(template)
-            if template.lower().startswith('centos'):
+        imageid = resource.Image(amid)
+        image = os.path.basename(imageid.image_location)
+        if image != '':
+            user = common.get_user(image)
+            if image.lower().startswith('centos'):
                 user = 'root'
         ip = vm['PublicIpAddress'] if 'PublicIpAddress' in vm else ''
         if ip == '':
@@ -1146,14 +1145,14 @@ class Kaws(object):
         print("not implemented")
         return
 
-    def __evaluate_template(self, template):
-        if template.lower().startswith('centos'):
+    def __evaluate_image(self, image):
+        if image.lower().startswith('centos'):
             amiid = 'ami-8352e3fe'
             common.pprint("Using ami %s" % amiid)
             return 'ami-8352e3fe'
         else:
-            return template
-        return template
+            return image
+        return image
 
     def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, instanceid=None):
         """
@@ -1268,19 +1267,16 @@ class Kaws(object):
         if ip is None:
             common.pprint("Couldn't Get DNS Ip for %s" % name, color='red')
             return
-        records = []
-        # records = [record for record in dns.list_resource_record_sets(HostedZoneId=zoneid)['ResourceRecordSets']
-        #           if entry in record['Name'] or ('master-0' in name and
-        #                                          record['Name'].endswith("%s.%s." % (cluster, domain)))]
+        recs = []
+        clusterdomain = "%s.%s" % (cluster, domain)
         for record in dns.list_resource_record_sets(HostedZoneId=zoneid)['ResourceRecordSets']:
-            if entry in record['Name'] or ('master-0' in name and
-                                           record['Name'].endswith("%s.%s." % (cluster, domain))):
-                records.append(record)
+            if entry in record['Name'] or ('master-0' in name and record['Name'].endswith("%s." % clusterdomain)):
+                recs.append(record)
             else:
                 for rrdata in record['ResourceRecords']:
                     if name in rrdata['Value']:
-                        records.append(record)
-        changes = [{'Action': 'DELETE', 'ResourceRecordSet': record} for record in records]
+                        recs.append(record)
+        changes = [{'Action': 'DELETE', 'ResourceRecordSet': record} for record in recs]
         try:
             dns.change_resource_record_sets(HostedZoneId=zoneid, ChangeBatch={'Changes': changes})
         except:
@@ -1293,18 +1289,18 @@ class Kaws(object):
         :return:
         """
         results = []
-        for flavor in static_flavors:
+        for flavor in staticf:
             name = flavor
-            numcpus = static_flavors[flavor]['cpus']
-            memory = static_flavors[flavor]['memory']
+            numcpus = staticf[flavor]['cpus']
+            memory = staticf[flavor]['memory']
             results.append([name, numcpus, memory])
         return results
 
-    def export(self, name, template=None):
+    def export(self, name, image=None):
         """
 
         :param name:
-        :param template:
+        :param image:
         :return:
         """
         conn = self.conn
@@ -1314,8 +1310,8 @@ class Kaws(object):
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         InstanceId = vm['InstanceId']
-        Name = template if template is not None else "kcli %s" % name
-        Description = "template based on %s" % name
+        Name = image if image is not None else "kcli %s" % name
+        Description = "image based on %s" % name
         conn.create_image(InstanceId=InstanceId, Name=Name, Description=Description, NoReboot=True)
         return {'result': 'success'}
 

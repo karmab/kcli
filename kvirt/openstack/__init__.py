@@ -77,7 +77,7 @@ class Kopenstack(object):
 
     def create(self, name, virttype='kvm', profile='', plan='kvirt', flavor=None,
                cpumodel='Westmere', cpuflags=[], numcpus=2, memory=512,
-               guestid='guestrhel764', pool='default', template=None,
+               guestid='guestrhel764', pool='default', image=None,
                disks=[{'size': 10}], disksize=10, diskthin=True,
                diskinterface='virtio', nets=['default'], iso=None, vnc=False,
                cloudinit=True, reserveip=False, reservedns=False,
@@ -99,7 +99,7 @@ class Kopenstack(object):
         :param memory:
         :param guestid:
         :param pool:
-        :param template:
+        :param image:
         :param disks:
         :param disksize:
         :param diskthin:
@@ -159,12 +159,12 @@ class Kopenstack(object):
                 return {'result': 'failure', 'reason': "Network %s not found" % netname}
             nics.append({'net-id': net.id})
         image = None
-        if template is not None:
-            images = [image for image in glance.images.list() if image.name == template]
-            if images:
-                image = images[0]
+        if image is not None:
+            glanceimages = [img for img in glance.images.list() if img == image]
+            if glanceimages:
+                glanceimage = glanceimages[0]
             else:
-                msg = "you don't have template %s" % template
+                msg = "you don't have image %s" % image
                 return {'result': 'failure', 'reason': msg}
         block_dev_mapping = {}
         for index, disk in enumerate(disks):
@@ -180,9 +180,9 @@ class Kopenstack(object):
             elif isinstance(disk, dict):
                 disksize = disk.get('size', '10')
                 diskthin = disk.get('thin', True)
-            if index == 0 and template is not None:
+            if index == 0 and image is not None:
                 if not diskthin:
-                    imageref = image.id
+                    imageref = glanceimage.id
                 else:
                     continue
             newvol = self.cinder.volumes.create(name=diskname, size=disksize, imageRef=imageref)
@@ -215,9 +215,9 @@ class Kopenstack(object):
             meta['domain'] = domain
         userdata = None
         if cloudinit:
-            if template is not None and (template.startswith('coreos') or template.startswith('rhcos')):
+            if image is not None and (image.startswith('coreos') or image.startswith('rhcos')):
                 etcd = None
-                version = '3.0.0' if template.startswith('fedora-coreos') else '2.2.0'
+                version = '3.0.0' if image.startswith('fedora-coreos') else '2.2.0'
                 userdata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                            domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
                                            overrides=overrides, etcd=etcd, version=version, plan=plan)
@@ -226,8 +226,8 @@ class Kopenstack(object):
                                  reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides,
                                  iso=False, storemetadata=storemetadata)
                 userdata = open('/tmp/user-data', 'r').read().strip()
-        instance = nova.servers.create(name=name, image=image, flavor=flavor, key_name=key_name, nics=nics, meta=meta,
-                                       userdata=userdata, block_device_mapping=block_dev_mapping)
+        instance = nova.servers.create(name=name, image=glanceimage, flavor=flavor, key_name=key_name, nics=nics,
+                                       meta=meta, userdata=userdata, block_device_mapping=block_dev_mapping)
         tenant_id = instance.tenant_id
         floating_ips = [f['id'] for f in neutron.list_floatingips()['floatingips']
                         if f['port_id'] is None]
@@ -454,7 +454,7 @@ class Kopenstack(object):
             except:
                 pass
         source = self.glance.images.get(vm.image['id']).name if 'id' in vm.image else ''
-        yamlinfo['template'] = source
+        yamlinfo['image'] = source
         flavor = nova.flavors.get(vm.flavor['id'])
         yamlinfo['flavor'] = flavor.name
         yamlinfo['memory'] = flavor.ram
@@ -502,18 +502,18 @@ class Kopenstack(object):
         print("not implemented")
         return None
 
-# should return a list of available templates, or isos ( if iso is set to True
+# should return a list of available images, or isos ( if iso is set to True
     def volumes(self, iso=False):
         """
 
         :param iso:
         :return:
         """
-        images = []
+        glanceimages = []
         glance = self.glance
-        for image in glance.images.list():
-            images.append(image.name)
-        return images
+        for img in glance.images.list():
+            glanceimages.append(img)
+        return glanceimages
 
     def delete(self, name, snapshots=False):
         """
@@ -734,30 +734,30 @@ class Kopenstack(object):
         print("not implemented")
         return
 
-    def create_disk(self, name, size, pool=None, thin=True, template=None):
+    def create_disk(self, name, size, pool=None, thin=True, image=None):
         """
 
         :param name:
         :param size:
         :param pool:
         :param thin:
-        :param template:
+        :param image:
         :return:
         """
         glance = self.glance
         cinder = self.cinder
         image = None
-        if template is not None:
-            images = [image for image in glance.images.list() if image.name == template]
-            if images:
-                image = images[0]
+        if image is not None:
+            glanceimages = [img for img in glance.images.list() if img.name == image]
+            if glanceimages:
+                glanceimage = glanceimages[0]
             else:
-                msg = "you don't have template %s" % template
+                msg = "you don't have image %s" % image
                 return {'result': 'failure', 'reason': msg}
-        cinder.volumes.create(name=name, size=size, imageRef=image)
+        cinder.volumes.create(name=name, size=size, imageRef=glanceimage)
         return {'result': 'success'}
 
-    def add_disk(self, name, size, pool=None, thin=True, template=None,
+    def add_disk(self, name, size, pool=None, thin=True, image=None,
                  shareable=False, existing=None):
         """
 
@@ -765,7 +765,7 @@ class Kopenstack(object):
         :param size:
         :param pool:
         :param thin:
-        :param template:
+        :param image:
         :param shareable:
         :param existing:
         :return:
@@ -778,14 +778,14 @@ class Kopenstack(object):
         except:
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        if template is not None:
-            images = [image for image in glance.images.list() if image.name == template]
-            if images:
-                image = images[0]
+        if image is not None:
+            glanceimages = [img for img in glance.images.list() if img.name == image]
+            if glanceimages:
+                glanceimage = glanceimages[0]
             else:
-                msg = "you don't have template %s" % template
+                msg = "you don't have image %s" % image
                 return {'result': 'failure', 'reason': msg}
-        volume = cinder.volumes.create(name=name, size=size, imageRef=image)
+        volume = cinder.volumes.create(name=name, size=size, imageRef=glanceimage)
         cinder.volumes.attach(volume, vm.id, '/dev/vdi', mode='rw')
         return {'result': 'success'}
 
@@ -867,8 +867,8 @@ class Kopenstack(object):
             common.pprint("VM %s not found" % name, color='red')
             return None, None
         if 'id' in vm.image:
-            template = self.glance.images.get(vm.image['id']).name
-            user = common.get_user(template)
+            image = self.glance.images.get(vm.image['id']).name
+            user = common.get_user(image)
         for key in list(vm.addresses):
             entry1 = vm.addresses[key]
             for entry2 in entry1:
@@ -971,7 +971,7 @@ class Kopenstack(object):
             downloadcmd = "curl -Lo /tmp/%s -f '%s'" % (shortimage, image)
             code = os.system(downloadcmd)
             if code != 0:
-                return {'result': 'failure', 'reason': "Unable to download indicated template"}
+                return {'result': 'failure', 'reason': "Unable to download indicated image"}
         if shortimage.endswith('gz'):
             if find_executable('gunzip') is not None:
                 uncompresscmd = "gunzip /tmp/%s" % (shortimage)
@@ -980,8 +980,8 @@ class Kopenstack(object):
                 common.pprint("gunzip not found. Can't uncompress image", color="red")
                 return {'result': 'failure', 'reason': "gunzip not found. Can't uncompress image"}
             shortimage = shortimage.replace('.gz', '')
-        image = self.glance.images.create(name=shortimage, disk_format='qcow2', container_format='bare')
-        self.glance.images.upload(image.id, open('/tmp/%s' % shortimage, 'rb'))
+        glanceimage = self.glance.images.create(name=shortimage, disk_format='qcow2', container_format='bare')
+        self.glance.images.upload(glanceimage.id, open('/tmp/%s' % shortimage, 'rb'))
         os.remove('/tmp/%s' % shortimage)
         return {'result': 'success'}
 
@@ -1196,11 +1196,11 @@ class Kopenstack(object):
         flavors = [[flavor.name, flavor.vcpus, flavor.ram] for flavor in nova.flavors.list()]
         return flavors
 
-    def export(self, name, template=None):
+    def export(self, name, image=None):
         """
 
         :param name:
-        :param template:
+        :param image:
         :return:
         """
         cinder = self.cinder
@@ -1213,7 +1213,7 @@ class Kopenstack(object):
         for disk in vm._info['os-extended-volumes:volumes_attached']:
             volume = cinder.volumes.get(disk['id'])
             for attachment in volume.attachments:
-                newname = template if template is not None else volume.name.replace('-disk0', '')
+                newname = image if image is not None else volume.name.replace('-disk0', '')
                 volume.upload_to_image(True, newname, 'bare', 'qcow2')
                 status = ''
                 timeout = 0

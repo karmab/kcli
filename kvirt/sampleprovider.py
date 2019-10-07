@@ -60,7 +60,7 @@ class Kbase(object):
 
     def create(self, name, virttype='kvm', profile='', flavor=None, plan='kvirt',
                cpumodel='Westmere', cpuflags=[], numcpus=2, memory=512,
-               guestid='guestrhel764', pool='default', template=None,
+               guestid='guestrhel764', pool='default', image=None,
                disks=[{'size': 10}], disksize=10, diskthin=True,
                diskinterface='virtio', nets=['default'], iso=None, vnc=False,
                cloudinit=True, reserveip=False, reservedns=False,
@@ -82,7 +82,7 @@ class Kbase(object):
         :param memory:
         :param guestid:
         :param pool:
-        :param template:
+        :param image:
         :param disks:
         :param disksize:
         :param diskthin:
@@ -208,7 +208,7 @@ class Kbase(object):
 # autostart
 # plan
 # profile
-# template
+# image
 # ip
 # memory
 # cpus
@@ -242,7 +242,7 @@ class Kbase(object):
         print("not implemented")
         return None
 
-# should return a list of available templates, or isos ( if iso is set to True
+# should return a list of available images, or isos ( if iso is set to True
     def volumes(self, iso=False):
         """
 
@@ -354,20 +354,20 @@ class Kbase(object):
         print("Not implemented")
         return {'result': 'success'}
 
-    def create_disk(self, name, size, pool=None, thin=True, template=None):
+    def create_disk(self, name, size, pool=None, thin=True, image=None):
         """
 
         :param name:
         :param size:
         :param pool:
         :param thin:
-        :param template:
+        :param image:
         :return:
         """
         print("not implemented")
         return
 
-    def add_disk(self, name, size, pool=None, thin=True, template=None,
+    def add_disk(self, name, size, pool=None, thin=True, image=None,
                  shareable=False, existing=None):
         """
 
@@ -375,7 +375,7 @@ class Kbase(object):
         :param size:
         :param pool:
         :param thin:
-        :param template:
+        :param image:
         :param shareable:
         :param existing:
         :return:
@@ -610,11 +610,11 @@ class Kbase(object):
         """
         return []
 
-# export the primary disk of the corresponding instance so it's available as a template
-    def export(name, template=None):
+# export the primary disk of the corresponding instance so it's available as a image
+    def export(name, image=None):
         """
 
-        :param template:
+        :param image:
         :return:
         """
         return

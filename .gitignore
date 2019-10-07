@@ -15,4 +15,4 @@ prout.yml
 .DS_Store
 .cache/
 kvirt/static/reports/*
-venv
+venv*

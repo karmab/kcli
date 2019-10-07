@@ -135,10 +135,10 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 key = ssh.read().rstrip()
                 userdata.write("- %s\n" % key)
         if cmds:
-                data = process_cmds(cmds, overrides)
-                if data != '':
-                    userdata.write("runcmd:\n")
-                    userdata.write(data)
+            data = process_cmds(cmds, overrides)
+            if data != '':
+                userdata.write("runcmd:\n")
+                userdata.write(data)
         userdata.write('ssh_pwauth: True\n')
         userdata.write('disable_root: false\n')
         if storemetadata and overrides:
@@ -529,202 +529,202 @@ def get_parameters(inputfile):
 
 
 def print_info(yamlinfo, output='plain', fields=[], values=False, pretty=True):
-        """
+    """
 
-        :param yamlinfo:
-        :param output:
-        :param fields:
-        :param values:
-        """
-        if fields:
-            for key in list(yamlinfo):
-                if key not in fields:
-                    del yamlinfo[key]
-        if output == 'yaml':
-            if pretty:
-                return yaml.dump(yamlinfo, default_flow_style=False, indent=2, allow_unicode=True,
-                                 encoding=None).replace("'", '')[:-1]
-            else:
-                return yamlinfo
+    :param yamlinfo:
+    :param output:
+    :param fields:
+    :param values:
+    """
+    if fields:
+        for key in list(yamlinfo):
+            if key not in fields:
+                del yamlinfo[key]
+    if output == 'yaml':
+        if pretty:
+            return yaml.dump(yamlinfo, default_flow_style=False, indent=2, allow_unicode=True,
+                             encoding=None).replace("'", '')[:-1]
         else:
-            result = ''
-            orderedfields = ['name', 'project', 'namespace', 'instanceid', 'creationdate', 'host', 'status',
-                             'description', 'autostart', 'template', 'plan', 'profile', 'flavor', 'cpus', 'memory',
-                             'nets', 'ip', 'disks', 'snapshots']
-            otherfields = [key for key in yamlinfo if key not in orderedfields]
-            for key in orderedfields + sorted(otherfields):
-                if key not in yamlinfo or (fields and key not in fields):
-                    continue
+            return yamlinfo
+    else:
+        result = ''
+        orderedfields = ['name', 'project', 'namespace', 'instanceid', 'creationdate', 'host', 'status',
+                         'description', 'autostart', 'image', 'plan', 'profile', 'flavor', 'cpus', 'memory',
+                         'nets', 'ip', 'disks', 'snapshots']
+        otherfields = [key for key in yamlinfo if key not in orderedfields]
+        for key in orderedfields + sorted(otherfields):
+            if key not in yamlinfo or (fields and key not in fields):
+                continue
+            else:
+                value = yamlinfo[key]
+                if key == 'nets':
+                    nets = ''
+                    for net in value:
+                        device = net['device']
+                        mac = net['mac']
+                        network = net['net']
+                        network_type = net['type']
+                        nets += "net interface: %s mac: %s net: %s type: %s\n" % (device, mac, network,
+                                                                                  network_type)
+                    value = nets.rstrip()
+                elif key == 'disks':
+                    disks = ''
+                    for disk in value:
+                        device = disk['device']
+                        disksize = disk['size']
+                        unit = 'GB' if str(disksize).isdigit() else ''
+                        diskformat = disk['format']
+                        drivertype = disk['type']
+                        path = disk['path']
+                        disks += "diskname: %s disksize: %s%s diskformat: %s type: %s path: %s\n" % (device,
+                                                                                                     disksize,
+                                                                                                     unit,
+                                                                                                     diskformat,
+                                                                                                     drivertype,
+                                                                                                     path)
+                        value = disks.rstrip()
+                elif key == 'snapshots':
+                    for snap in value:
+                        snapshot = snap['snapshot']
+                        current = snap['current']
+                        value += "snapshot: %s current: %s" % (snapshot, current)
+                if values or key in ['disks', 'nets']:
+                    result += "%s\n" % value
                 else:
-                    value = yamlinfo[key]
-                    if key == 'nets':
-                        nets = ''
-                        for net in value:
-                            device = net['device']
-                            mac = net['mac']
-                            network = net['net']
-                            network_type = net['type']
-                            nets += "net interface: %s mac: %s net: %s type: %s\n" % (device, mac, network,
-                                                                                      network_type)
-                        value = nets.rstrip()
-                    elif key == 'disks':
-                        disks = ''
-                        for disk in value:
-                            device = disk['device']
-                            disksize = disk['size']
-                            unit = 'GB' if str(disksize).isdigit() else ''
-                            diskformat = disk['format']
-                            drivertype = disk['type']
-                            path = disk['path']
-                            disks += "diskname: %s disksize: %s%s diskformat: %s type: %s path: %s\n" % (device,
-                                                                                                         disksize,
-                                                                                                         unit,
-                                                                                                         diskformat,
-                                                                                                         drivertype,
-                                                                                                         path)
-                            value = disks.rstrip()
-                    elif key == 'snapshots':
-                        for snap in value:
-                            snapshot = snap['snapshot']
-                            current = snap['current']
-                            value += "snapshot: %s current: %s" % (snapshot, current)
-                    if values or key in ['disks', 'nets']:
-                        result += "%s\n" % value
-                    else:
-                        result += "%s: %s\n" % (key, value)
-            return result.rstrip()
+                    result += "%s: %s\n" % (key, value)
+        return result.rstrip()
 
 
 def ssh(name, ip='', host=None, port=22, hostuser=None, user=None, local=None, remote=None, tunnel=False,
         insecure=False, cmd=None, X=False, Y=False, debug=False, D=None, vmport=None):
-        """
+    """
 
-        :param name:
-        :param ip:
-        :param host:
-        :param port:
-        :param hostuser:
-        :param user:
-        :param local:
-        :param remote:
-        :param tunnel:
-        :param insecure:
-        :param cmd:
-        :param X:
-        :param Y:
-        :param debug:
-        :param D:
-        :param vmport:
-        :return:
-        """
-        if ip == '':
-            return None
-        else:
-            sshcommand = "%s@%s" % (user, ip)
-            identityfile = None
-            if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
-                identityfile = os.path.expanduser("~/.kcli/id_rsa")
-            elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
-                identityfile = os.path.expanduser("~/.kcli/id_rsa")
+    :param name:
+    :param ip:
+    :param host:
+    :param port:
+    :param hostuser:
+    :param user:
+    :param local:
+    :param remote:
+    :param tunnel:
+    :param insecure:
+    :param cmd:
+    :param X:
+    :param Y:
+    :param debug:
+    :param D:
+    :param vmport:
+    :return:
+    """
+    if ip == '':
+        return None
+    else:
+        sshcommand = "%s@%s" % (user, ip)
+        identityfile = None
+        if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
+            identityfile = os.path.expanduser("~/.kcli/id_rsa")
+        elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
+            identityfile = os.path.expanduser("~/.kcli/id_rsa")
+        if identityfile is not None:
+            sshcommand = "-i %s %s" % (identityfile, sshcommand)
+        if D:
+            sshcommand = "-D %s %s" % (D, sshcommand)
+        if X:
+            sshcommand = "-X %s" % sshcommand
+        if Y:
+            sshcommand = "-Y %s" % sshcommand
+        if cmd:
+            sshcommand = "%s '%s'" % (sshcommand, cmd)
+        if host is not None and host not in ['localhost', '127.0.0.1'] and tunnel and hostuser is not None:
+            tunnelcommand = "-qp %s -W %%h:%%p %s@%s" % (port, hostuser, host)
             if identityfile is not None:
-                sshcommand = "-i %s %s" % (identityfile, sshcommand)
-            if D:
-                sshcommand = "-D %s %s" % (D, sshcommand)
-            if X:
-                sshcommand = "-X %s" % sshcommand
-            if Y:
-                sshcommand = "-Y %s" % sshcommand
-            if cmd:
-                sshcommand = "%s '%s'" % (sshcommand, cmd)
-            if host is not None and host not in ['localhost', '127.0.0.1'] and tunnel and hostuser is not None:
-                tunnelcommand = "-qp %s -W %%h:%%p %s@%s" % (port, hostuser, host)
-                if identityfile is not None:
-                    tunnelcommand = "-i %s %s" % (identityfile, tunnelcommand)
-                sshcommand = "-o ProxyCommand='ssh %s' %s" % (tunnelcommand, sshcommand)
-            if local is not None:
-                sshcommand = "-L %s %s" % (local, sshcommand)
-            if remote is not None:
-                sshcommand = "-R %s %s" % (remote, sshcommand)
-            if vmport is not None:
-                sshcommand = "-p %s %s" % (vmport, sshcommand)
-            if insecure:
-                sshcommand = "ssh -o LogLevel=quiet -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no %s"\
-                    % sshcommand
-            else:
-                sshcommand = "ssh %s" % sshcommand
-            if debug:
-                print(sshcommand)
-            return sshcommand
+                tunnelcommand = "-i %s %s" % (identityfile, tunnelcommand)
+            sshcommand = "-o ProxyCommand='ssh %s' %s" % (tunnelcommand, sshcommand)
+        if local is not None:
+            sshcommand = "-L %s %s" % (local, sshcommand)
+        if remote is not None:
+            sshcommand = "-R %s %s" % (remote, sshcommand)
+        if vmport is not None:
+            sshcommand = "-p %s %s" % (vmport, sshcommand)
+        if insecure:
+            sshcommand = "ssh -o LogLevel=quiet -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no %s"\
+                % sshcommand
+        else:
+            sshcommand = "ssh %s" % sshcommand
+        if debug:
+            print(sshcommand)
+        return sshcommand
 
 
 def scp(name, ip='', host=None, port=22, hostuser=None, user=None, source=None, destination=None, recursive=None,
         tunnel=False, debug=False, download=False, vmport=None):
-        """
-
-        :param name:
-        :param ip:
-        :param host:
-        :param port:
-        :param hostuser:
-        :param user:
-        :param source:
-        :param destination:
-        :param recursive:
-        :param tunnel:
-        :param debug:
-        :param download:
-        :param vmport:
-        :return:
-        """
-        if ip == '':
-            print("No ip found. Cannot scp...")
-        else:
-            if host is not None and host not in ['localhost', '127.0.0.1'] and tunnel and hostuser is not None:
-                arguments = "-o ProxyCommand='ssh -qp %s -W %%h:%%p %s@%s'" % (port, hostuser, host)
-            else:
-                arguments = ''
-            scpcommand = 'scp'
-            identityfile = None
-            if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
-                identityfile = os.path.expanduser("~/.kcli/id_rsa")
-            elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
-                identityfile = os.path.expanduser("~/.kcli/id_rsa")
-            if identityfile is not None:
-                scpcommand = "%s -i %s" % (scpcommand, identityfile)
-            if recursive:
-                scpcommand = "%s -r" % scpcommand
-            if vmport is not None and host == '127.0.0.1':
-                scpcommand = "%s -P %s" % (scpcommand, vmport)
-            if download:
-                scpcommand = "%s %s %s@%s:%s %s" % (scpcommand, arguments, user, ip, source, destination)
-            else:
-                scpcommand = "%s %s %s %s@%s:%s" % (scpcommand, arguments, source, user, ip, destination)
-            if debug:
-                print(scpcommand)
-            return scpcommand
-
-
-def get_user(template):
     """
 
-    :param template:
+    :param name:
+    :param ip:
+    :param host:
+    :param port:
+    :param hostuser:
+    :param user:
+    :param source:
+    :param destination:
+    :param recursive:
+    :param tunnel:
+    :param debug:
+    :param download:
+    :param vmport:
     :return:
     """
-    if 'centos' in template.lower():
+    if ip == '':
+        print("No ip found. Cannot scp...")
+    else:
+        if host is not None and host not in ['localhost', '127.0.0.1'] and tunnel and hostuser is not None:
+            arguments = "-o ProxyCommand='ssh -qp %s -W %%h:%%p %s@%s'" % (port, hostuser, host)
+        else:
+            arguments = ''
+        scpcommand = 'scp'
+        identityfile = None
+        if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
+            identityfile = os.path.expanduser("~/.kcli/id_rsa")
+        elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
+            identityfile = os.path.expanduser("~/.kcli/id_rsa")
+        if identityfile is not None:
+            scpcommand = "%s -i %s" % (scpcommand, identityfile)
+        if recursive:
+            scpcommand = "%s -r" % scpcommand
+        if vmport is not None and host == '127.0.0.1':
+            scpcommand = "%s -P %s" % (scpcommand, vmport)
+        if download:
+            scpcommand = "%s %s %s@%s:%s %s" % (scpcommand, arguments, user, ip, source, destination)
+        else:
+            scpcommand = "%s %s %s %s@%s:%s" % (scpcommand, arguments, source, user, ip, destination)
+        if debug:
+            print(scpcommand)
+        return scpcommand
+
+
+def get_user(image):
+    """
+
+    :param image:
+    :return:
+    """
+    if 'centos' in image.lower():
         user = 'centos'
-    elif 'coreos' in template.lower() or 'rhcos' in template.lower():
+    elif 'coreos' in image.lower() or 'rhcos' in image.lower():
         user = 'core'
-    elif 'cirros' in template.lower():
+    elif 'cirros' in image.lower():
         user = 'cirros'
-    elif [x for x in ubuntus if x in template.lower()]:
+    elif [x for x in ubuntus if x in image.lower()]:
         user = 'ubuntu'
-    elif 'fedora' in template.lower():
+    elif 'fedora' in image.lower():
         user = 'fedora'
-    elif 'rhel' in template.lower():
+    elif 'rhel' in image.lower():
         user = 'cloud-user'
-    elif 'debian' in template.lower():
+    elif 'debian' in image.lower():
         user = 'debian'
-    elif 'arch' in template.lower():
+    elif 'arch' in image.lower():
         user = 'arch'
     else:
         user = 'root'
@@ -948,3 +948,15 @@ def pretty_print(o, value=False):
         print(data)
     else:
         return data
+
+
+def need_guest_agent(image):
+    if image.lower().startswith('centos'):
+        return True
+    if image.lower().startswith('fedora'):
+        return True
+    if 'fedora-cloud' in image.lower():
+        return True
+    if image.lower().startswith('rhel'):
+        return True
+    return False

@@ -49,20 +49,20 @@ class Kbox(object):
         """
         self.conn = None
 
-    def guestinstall(self, template):
+    def guestinstall(self, image):
         """
 
-        :param template:
+        :param image:
         :return:
         """
-        template = template.lower()
+        image = image.lower()
         version = self.conn.version
         commands = ['curl -O http://download.virtualbox.org/virtualbox/%s/VBoxGuestAdditions_%s.iso' % (version,
                                                                                                         version),
                     'mount -o loop VBoxGuestAdditions_5.1.14.iso /mnt']
-        if 'centos' in template or 'rhel' in template or 'fedora' in template:
+        if 'centos' in image or 'rhel' in image or 'fedora' in image:
             commands.append('yum -y install gcc make kernel-devel-`uname -r`')
-        elif 'debian' in template or [x for x in common.ubuntus if x in template]:
+        elif 'debian' in image or [x for x in common.ubuntus if x in image]:
             commands.append('apt-get install build-essential linux-headers-`uname -r`')
         else:
             return []
@@ -113,7 +113,7 @@ class Kbox(object):
             return True
 
     def create(self, name, virttype='vbox', profile='kvirt', flavor=None, plan='kvirt', cpumodel='', cpuflags=[],
-               numcpus=2, memory=512, guestid='Linux_64', pool='default', template=None, disks=[{'size': 10}],
+               numcpus=2, memory=512, guestid='Linux_64', pool='default', image=None, disks=[{'size': 10}],
                disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False,
                cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[],
                ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[],
@@ -131,7 +131,7 @@ class Kbox(object):
         :param memory:
         :param guestid:
         :param pool:
-        :param template:
+        :param image:
         :param disks:
         :param disksize:
         :param diskthin:
@@ -225,17 +225,17 @@ class Kbox(object):
         vm.lock_machine(session, library.LockType.write)
         machine = session.machine
         if iso is None and cloudinit:
-            if template is not None:
-                guestcmds = self.guestinstall(template)
+            if image is not None:
+                guestcmds = self.guestinstall(image)
                 if not cmds:
                     cmds = guestcmds
-                elif 'rhel' in template:
-                        register = [c for c in cmds if 'subscription-manager' in c]
-                        if register:
-                            index = cmds.index(register[-1])
-                            cmds[index + 1:index + 1] = guestcmds
-                        else:
-                            cmds = guestcmds + cmds
+                elif 'rhel' in image:
+                    register = [c for c in cmds if 'subscription-manager' in c]
+                    if register:
+                        index = cmds.index(register[-1])
+                        cmds[index + 1:index + 1] = guestcmds
+                    else:
+                        cmds = guestcmds + cmds
                 else:
                     cmds = guestcmds + cmds
                 cmds = cmds + ['reboot']
@@ -275,12 +275,12 @@ class Kbox(object):
             else:
                 return {'result': 'failure', 'reason': "Invalid disk entry"}
             diskname = "%s_%d" % (name, index)
-            if template is not None and index == 0:
-                diskpath = self.create_disk(diskname, disksize, pool=diskpool, thin=diskthin, template=template)
-                machine.set_extra_data('template', template)
-                # return {'result': 'failure', 'reason': "Invalid template %s" % template}
+            if image is not None and index == 0:
+                diskpath = self.create_disk(diskname, disksize, pool=diskpool, thin=diskthin, image=image)
+                machine.set_extra_data('image', image)
+                # return {'result': 'failure', 'reason': "Invalid image %s" % image}
             else:
-                diskpath = self.create_disk(diskname, disksize, pool=diskpool, thin=diskthin, template=None)
+                diskpath = self.create_disk(diskname, disksize, pool=diskpool, thin=diskthin, image=None)
             disk = conn.open_medium(diskpath, library.DeviceType.hard_disk, library.AccessMode.read_write, False)
             disksize = disksize * 1024 * 1024 * 1024
             progress = disk.resize(disksize)
@@ -601,23 +601,23 @@ class Kbox(object):
         :return:
         """
         isos = []
-        templates = []
+        images = []
         poolinfo = self._pool_info()
         for pool in poolinfo:
             path = pool['path']
             for entry in os.listdir(path):
-                if entry.endswith('qcow2') and entry not in templates:
-                    templates.append(entry)
+                if entry.endswith('qcow2') and entry not in images:
+                    images.append(entry)
                 elif entry.startswith('KVIRT'):
                     entry = entry.replace('KVIRT_', '').replace('.vdi', '.qcow2')
-                    if entry not in templates:
-                        templates.append(entry)
+                    if entry not in images:
+                        images.append(entry)
                 elif entry.endswith('iso'):
                     isos.append(entry)
         if iso:
             return isos
         else:
-            return templates
+            return images
 
     def delete(self, name, snapshots=False):
         """
@@ -795,14 +795,14 @@ class Kbox(object):
             newname = "KVIRT_%s" % name.replace('qcow2', 'vdi')
         os.system("qemu-img convert -f qcow2 %s -O vdi %s" % (name, newname))
 
-    def create_disk(self, name, size, pool=None, thin=True, template=None):
+    def create_disk(self, name, size, pool=None, thin=True, image=None):
         """
 
         :param name:
         :param size:
         :param pool:
         :param thin:
-        :param template:
+        :param image:
         :return:
         """
         conn = self.conn
@@ -822,26 +822,26 @@ class Kbox(object):
                 return {'result': 'failure', 'reason': "Pool %s not found" % pool}
         diskpath = "%s/%s.vdi" % (poolpath, name)
         disk = conn.create_medium('VDI', diskpath, library.AccessMode.read_write, library.DeviceType.hard_disk)
-        if template is not None:
+        if image is not None:
             volumes = self.volumes()
-            if template not in volumes:
-                print("you don't have template %s.Leaving..." % template)
+            if image not in volumes:
+                print("you don't have image %s.Leaving..." % image)
                 return
-            templatepath = "%s/%s" % (poolpath, template)
-            self._convert_qcow2(templatepath, diskpath)
+            imagepath = "%s/%s" % (poolpath, image)
+            self._convert_qcow2(imagepath, diskpath)
         else:
             progress = disk.create_base_storage(size, [library.MediumVariant.fixed])
             progress.wait_for_completion()
         return diskpath
 
-    def add_disk(self, name, size, pool=None, thin=True, template=None, shareable=False, existing=None):
+    def add_disk(self, name, size, pool=None, thin=True, image=None, shareable=False, existing=None):
         """
 
         :param name:
         :param size:
         :param pool:
         :param thin:
-        :param template:
+        :param image:
         :param shareable:
         :param existing:
         :return:
@@ -868,7 +868,7 @@ class Kbox(object):
         index = len(disks)
         if existing is None:
             storagename = "%s_%d" % (name, index)
-            diskpath = self.create_disk(name=storagename, size=size, pool=pool, thin=thin, template=template)
+            diskpath = self.create_disk(name=storagename, size=size, pool=pool, thin=thin, image=image)
         else:
             disks = self.list_disks()
             if existing in disks:
@@ -1029,21 +1029,21 @@ class Kbox(object):
             print("Machine down. Cannot ssh...")
             return '', ''
         vm = [v for v in self.list() if v[0] == name][0]
-        template = vm[3]
-        if template != '':
-            if 'centos' in template.lower():
+        image = vm[3]
+        if image != '':
+            if 'centos' in image.lower():
                 user = 'centos'
-            elif 'cirros' in template.lower():
+            elif 'cirros' in image.lower():
                 user = 'cirros'
-            elif [x for x in common.ubuntus if x in template.lower()]:
+            elif [x for x in common.ubuntus if x in image.lower()]:
                 user = 'ubuntu'
-            elif 'fedora' in template.lower():
+            elif 'fedora' in image.lower():
                 user = 'fedora'
-            elif 'rhel' in template.lower():
+            elif 'rhel' in image.lower():
                 user = 'cloud-user'
-            elif 'debian' in template.lower():
+            elif 'debian' in image.lower():
                 user = 'debian'
-            elif 'arch' in template.lower():
+            elif 'arch' in image.lower():
                 user = 'arch'
         port = vm[2]
         # if port == '':
@@ -1366,11 +1366,11 @@ class Kbox(object):
         """
         return []
 
-    def export(self, name, template=None):
+    def export(self, name, image=None):
         """
 
         :param name:
-        :param template:
+        :param image:
         :return:
         """
         print("not implemented")

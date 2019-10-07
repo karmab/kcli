@@ -6,7 +6,7 @@ Ovirt Provider Class
 
 from distutils.spawn import find_executable
 from kvirt import common
-from kvirt.ovirt.helpers import TEMPLATES as otemplates
+from kvirt.ovirt.helpers import IMAGES as oimages
 from kvirt.ovirt.helpers import get_home_ssh_key
 import ovirtsdk4 as sdk
 from ovirtsdk4 import Error as oerror
@@ -108,7 +108,7 @@ class KOvirt(object):
 
     def create(self, name, virttype='kvm', profile='', flavor=None, plan='kvirt',
                cpumodel='Westmere', cpuflags=[], numcpus=2, memory=512,
-               guestid='guestrhel764', pool='default', template=None,
+               guestid='guestrhel764', pool='default', image=None,
                disks=[{'size': 10}], disksize=10, diskthin=True,
                diskinterface='virtio', nets=['default'], iso=None, vnc=False,
                cloudinit=True, reserveip=False, reservedns=False,
@@ -130,7 +130,7 @@ class KOvirt(object):
         :param memory:
         :param guestid:
         :param pool:
-        :param template:
+        :param image:
         :param disks:
         :param disksize:
         :param diskthin:
@@ -164,34 +164,29 @@ class KOvirt(object):
         memory = memory * 1024 * 1024
         clone = not diskthin
         custom_properties = []
-        if template is not None:
+        if image is not None:
             templates_service = self.templates_service
             templateslist = templates_service.list()
             found = False
             for temp in templateslist:
-                if temp.name == template:
+                if temp.name == image:
                     if temp.memory > memory:
                         memory = temp.memory
-                        common.pprint("Using %sMb for memory as defined in template %s" % (memory, template),
+                        common.pprint("Using %sMb for memory as defined in template %s" % (memory, image),
                                       color='blue')
-                    _template = types.Template(name=template)
+                    _template = types.Template(name=image)
                     found = True
             if not found:
-                return {'result': 'failure', 'reason': "template %s not found" % template}
-            if 'coreos' in template or template.startswith('rhcos'):
+                return {'result': 'failure', 'reason': "image %s not found" % image}
+            if 'coreos' in image or image.startswith('rhcos'):
                 ignitiondata = ''
-                version = '3.0.0' if template.startswith('fedora-coreos') else '2.2.0'
+                version = '3.0.0' if image.startswith('fedora-coreos') else '2.2.0'
                 ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                                domain=domain, reserveip=reserveip, files=files,
                                                enableroot=enableroot, overrides=overrides, version=version, plan=plan,
                                                compact=False, removetls=True)
                 ignitiondata = ignitiondata.replace('\n', '')
-                if 'qemu' in template:
-                    common.pprint("Relying on ignition hook, make sure it's installed", color='blue')
-                    custom_property = types.CustomProperty(name='ignitiondata', value=ignitiondata)
-                    custom_properties.append(custom_property)
-                else:
-                    initialization = types.Initialization(custom_script=ignitiondata)
+                initialization = types.Initialization(custom_script=ignitiondata)
         else:
             _template = types.Template(name='Blank')
         _os = types.OperatingSystem(boot=types.Boot(devices=[types.BootDevice.HD, types.BootDevice.CDROM]))
@@ -315,8 +310,8 @@ class KOvirt(object):
                 disksize = disk.get('size', disksize)
                 diskpool = disk.get('pool', pool)
                 diskthin = disk.get('thin', diskthin)
-            if index == 0 and template is not None and disksize != 10:
-                self.update_template_size(vm.id, disksize)
+            if index == 0 and image is not None and disksize != 10:
+                self.update_image_size(vm.id, disksize)
                 continue
             newdisk = self.add_disk(name, disksize, pool=diskpool, thin=diskthin)
             if newdisk['result'] == 'failure':
@@ -341,16 +336,14 @@ class KOvirt(object):
             cmds.insert(1, 'sleep 10')
             ignorednics = "docker0 tun0 tun1 cni0 flannel.1"
             gcmds = []
-            if template is not None and template.lower().startswith('centos'):
+            if image is not None and image.lower().startswith('centos'):
                 gcmds.append('yum -y install centos-release-ovirt42')
-            if template is not None and (template.lower().startswith('centos') or
-                                         template.lower().startswith('fedora') or
-                                         template.lower().startswith('rhel')):
+            if image is not None and common.need_guest_agent(image):
                 gcmds.append('yum -y install ovirt-guest-agent-common')
                 gcmds.append('sed -i "s/# ignored_nic.*/ignored_nics = %s/" /etc/ovirt-guest-agent.conf' % ignorednics)
                 gcmds.append('systemctl enable ovirt-guest-agent')
                 gcmds.append('systemctl restart ovirt-guest-agent')
-            if template is not None and template.lower().startswith('debian'):
+            if image is not None and image.lower().startswith('debian'):
                 gcmds.append('echo "deb http://download.opensuse.org/repositories/home:/evilissimo:/deb/Debian_7.0/ ./"'
                              ' >> /etc/apt/sources.list')
                 gcmds.append('gpg -v -a --keyserver http://download.opensuse.org/repositories/home:/evilissimo:/deb/'
@@ -361,7 +354,7 @@ class KOvirt(object):
                 gcmds.append('sed -i "s/# ignored_nics.*/ignored_nics = %s/" /etc/ovirt-guest-agent.conf' % ignorednics)
                 gcmds.append('service ovirt-guest-agent enable')
                 gcmds.append('service ovirt-guest-agent restart')
-            if template is not None and [x for x in common.ubuntus if x in template.lower()]:
+            if image is not None and [x for x in common.ubuntus if x in image.lower()]:
                 gcmds.append('echo deb http://download.opensuse.org/repositories/home:/evilissimo:/ubuntu:/16.04/'
                              'xUbuntu_16.04/ /')
                 gcmds.append('wget http://download.opensuse.org/repositories/home:/evilissimo:/ubuntu:/16.04/'
@@ -372,7 +365,7 @@ class KOvirt(object):
                 gcmds.append('sed -i "s/# ignored_nics.*/ignored_nics = docker0,tun0/" /etc/ovirt-guest-agent.conf')
             if gcmds:
                 index = 1
-                if template is not None and template.startswith('rhel'):
+                if image is not None and image.startswith('rhel'):
                     subindex = [i for i, value in enumerate(cmds) if value.startswith('subscription-manager')]
                     if subindex:
                         index = subindex.pop() + 1
@@ -381,7 +374,7 @@ class KOvirt(object):
             custom_script += "runcmd:\n"
             custom_script += data
             custom_script = None if custom_script == '' else custom_script
-            user_name = common.get_user(template) if template is not None else 'root'
+            user_name = common.get_user(image) if image is not None else 'root'
             root_password = None
             # dns_servers = '8.8.8.8 1.1.1.1'
             # dns_servers = dns if dns is not None else '8.8.8.8 1.1.1.1'
@@ -693,7 +686,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         yamlinfo = {'name': vm.name, 'disks': [], 'nets': [], 'status': status, 'instanceid': vm.id}
         template = conn.follow_link(vm.template)
         source = template.name
-        yamlinfo['template'] = source
+        yamlinfo['image'] = source
         for description in vm.description.split(','):
             desc = description.split('=')
             if len(desc) == 2:
@@ -794,13 +787,13 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                         isos.append(isofile._name)
             return isos
         else:
-            templates = []
+            images = []
             templates_service = self.templates_service
             templateslist = templates_service.list()
             for template in templateslist:
                 if template.name != 'Blank':
-                    templates.append(template.name)
-            return templates
+                    images.append(template.name)
+            return images
 
     def delete(self, name, snapshots=False):
         """
@@ -964,20 +957,20 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         print("Not implemented")
         return {'result': 'success'}
 
-    def create_disk(self, name, size, pool=None, thin=True, template=None):
+    def create_disk(self, name, size, pool=None, thin=True, image=None):
         """
 
         :param name:
         :param size:
         :param pool:
         :param thin:
-        :param template:
+        :param image:
         :return:
         """
         print("not implemented")
         return
 
-    def add_disk(self, name, size, pool=None, thin=True, template=None,
+    def add_disk(self, name, size, pool=None, thin=True, image=None,
                  shareable=False, existing=None):
         """
 
@@ -985,7 +978,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         :param size:
         :param pool:
         :param thin:
-        :param template:
+        :param image:
         :param shareable:
         :param existing:
         :return:
@@ -1027,7 +1020,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                 return {'result': 'failure', 'reason': 'timeout waiting for disk %s to be ready' % diskname}
         return {'result': 'success'}
 
-    def update_template_size(self, vmid, size):
+    def update_image_size(self, vmid, size):
         size *= 2**30
         vm = self.vms_service.vm_service(vmid)
         disk_attachments_service = vm.disk_attachments_service()
@@ -1046,9 +1039,9 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             else:
                 timeout += 5
                 sleep(5)
-                common.pprint("Waiting for template disk %s to be resized" % diskname)
+                common.pprint("Waiting for image disk %s to be resized" % diskname)
             if timeout > 40:
-                return {'result': 'failure', 'reason': 'timeout waiting for template disk %s to be resized' % diskname}
+                return {'result': 'failure', 'reason': 'timeout waiting for image disk %s to be resized' % diskname}
         return {'result': 'success'}
 
     def delete_disk(self, name=None, diskname=None, pool=None):
@@ -1149,7 +1142,6 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                 return {'result': 'success'}
         common.pprint("VM %s not found" % name, color='red')
         return {'result': 'failure', 'reason': "VM %s not found" % name}
-
 
 # should return (user, ip)
     def _ssh_credentials(self, name):
@@ -1252,7 +1244,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                 template_service = templates_service.template_service(template.id)
                 template_service.remove()
                 return {'result': 'success'}
-        return {'result': 'failure', 'reason': "Template %s not found" % image}
+        return {'result': 'failure', 'reason': "Image %s not found" % image}
 
     def add_image(self, image, pool, short=None, cmd=None, name=None, size=1):
         """
@@ -1298,11 +1290,11 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             images_service = sd_service.images_service()
             images = images_service.list()
             if self.imagerepository != 'ovirt-image-repository':
-                xtemplates = {i.name: i.name for i in images}
+                ximages = {i.name: i.name for i in images}
             else:
-                xtemplates = otemplates
-            if shortimage in xtemplates:
-                imageobject = next((i for i in images if xtemplates[shortimage] in i.name), None)
+                ximages = oimages
+            if shortimage in ximages:
+                imageobject = next((i for i in images if ximages[shortimage] in i.name), None)
                 if imageobject is None:
                     common.pprint("Unable to locate the image in glance repository", color='red')
                     return {'result': 'failure', 'reason': "Unable to locate the image in glance repository"}
@@ -1323,7 +1315,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                 downloadcmd = "curl -Lo /tmp/%s -f '%s'" % (shortimage, image)
                 code = os.system(downloadcmd)
                 if code != 0:
-                    return {'result': 'failure', 'reason': "Unable to download indicated template"}
+                    return {'result': 'failure', 'reason': "Unable to download indicated image"}
             else:
                 common.pprint("Using found /tmp/%s" % shortimage, color='blue')
             BUF_SIZE = 128 * 1024
@@ -1556,11 +1548,11 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         """
         return []
 
-    def export(self, name, template=None):
+    def export(self, name, image=None):
         """
 
         :param name:
-        :param template:
+        :param image:
         :return:
         """
         vmsearch = self.vms_service.list(search='name=%s' % name)
@@ -1576,7 +1568,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         _format = types.DiskFormat.COW
         attachments = [types.DiskAttachment(disk=types.Disk(id=disk_id, format=_format)) for disk_id in disk_ids]
         newvm = types.Vm(id=vminfo.id, disk_attachments=attachments)
-        newname = template if template is not None else name
+        newname = image if image is not None else name
         template = types.Template(name=newname, vm=newvm)
         template = self.templates_service.add(template=template)
         template_service = self.templates_service.template_service(template.id)

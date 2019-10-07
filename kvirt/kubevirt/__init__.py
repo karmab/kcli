@@ -77,10 +77,10 @@ class Kubevirt(Kubecommon):
         crds = self.crds
         namespace = self.namespace
         allvms = crds.list_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines')["items"]
-        vms = [vm for vm in allvms if vm.get("metadata")["namespace"] == namespace and
-               vm.get("metadata")["name"] == name]
-        result = True if vms else False
-        return result
+        for vm in allvms:
+            if vm.get("metadata")["namespace"] == namespace and vm.get("metadata")["name"] == name:
+                return True
+        return False
 
     def net_exists(self, name):
         """
@@ -108,7 +108,7 @@ class Kubevirt(Kubecommon):
         return
 
     def create(self, name, virttype='kvm', profile='', flavor=None, plan='kvirt', cpumodel='host-model', cpuflags=[],
-               numcpus=2, memory=512, guestid='guestrhel764', pool=None, template=None, disks=[{'size': 10}],
+               numcpus=2, memory=512, guestid='guestrhel764', pool=None, image=None, disks=[{'size': 10}],
                disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False,
                cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[],
                ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[],
@@ -127,7 +127,7 @@ class Kubevirt(Kubecommon):
         :param memory:
         :param guestid:
         :param pool:
-        :param template:
+        :param image:
         :param disks:
         :param disksize:
         :param diskthin:
@@ -159,18 +159,18 @@ class Kubevirt(Kubecommon):
         guestagent = False
         if self.exists(name):
             return {'result': 'failure', 'reason': "VM %s already exists" % name}
-        if template is not None:
-            containerdisk = True if '/' in template else False
-            if template not in self.volumes():
-                if template in ['alpine', 'cirros', 'fedora-cloud']:
-                    template = "kubevirt/%s-container-disk-demo" % template
-                    common.pprint("Using container disk %s as template" % template)
-                elif template in ['debian', 'gentoo', 'ubuntu']:
-                    template = "karmab/%s-container-disk-demo" % template
-                    common.pprint("Using container disk %s as template" % template)
-            elif '/' not in template:
-                return {'result': 'failure', 'reason': "you don't have template %s" % template}
-            if template.startswith('kubevirt/fedora-cloud-registry-disk-demo') and memory <= 512:
+        if image is not None:
+            containerdisk = True if '/' in image else False
+            if image not in self.volumes():
+                if image in ['alpine', 'cirros', 'fedora-cloud']:
+                    image = "kubevirt/%s-container-disk-demo" % image
+                    common.pprint("Using container disk %s as image" % image)
+                elif image in ['debian', 'gentoo', 'ubuntu']:
+                    image = "karmab/%s-container-disk-demo" % image
+                    common.pprint("Using container disk %s as image" % image)
+            elif '/' not in image:
+                return {'result': 'failure', 'reason': "you don't have image %s" % image}
+            if image.startswith('kubevirt/fedora-cloud-registry-disk-demo') and memory <= 512:
                 memory = 1024
         default_disksize = disksize
         default_diskinterface = diskinterface
@@ -183,16 +183,16 @@ class Kubevirt(Kubecommon):
         if cdi:
             cdinamespace = self.cdinamespace
             allpvc = core.list_namespaced_persistent_volume_claim(cdinamespace)
-            templates = {}
+            images = {}
             for p in core.list_namespaced_persistent_volume_claim(cdinamespace).items:
                 if p.metadata.annotations is not None\
                         and 'cdi.kubevirt.io/storage.import.endpoint' in p.metadata.annotations:
                     cdiname = self.get_template_name(p.metadata.annotations['cdi.kubevirt.io/storage.import.endpoint'])
-                    templates[cdiname] = p.metadata.name
+                    images[cdiname] = p.metadata.name
         else:
             allpvc = core.list_namespaced_persistent_volume_claim(namespace)
-            templates = {p.metadata.annotations['kcli/template']: p.metadata.name for p in allpvc.items
-                         if p.metadata.annotations is not None and 'kcli/template' in p.metadata.annotations}
+            images = {p.metadata.annotations['kcli/image']: p.metadata.name for p in allpvc.items
+                      if p.metadata.annotations is not None and 'kcli/image' in p.metadata.annotations}
         vm = {'kind': 'VirtualMachine', 'spec': {'running': start, 'template':
                                                  {'metadata': {'labels': {'kubevirt.io/provider': 'kcli',
                                                                           'kubevirt.io/domain': name}},
@@ -206,7 +206,7 @@ class Kubevirt(Kubecommon):
                                                                                 'special': 'vmi-migratable'},
                                                                      'annotations': {'kcli/plan': plan,
                                                                                      'kcli/profile': profile,
-                                                                                     'kcli/template': template}}}
+                                                                                     'kcli/image': image}}}
         if dnsclient is not None:
             vm['metadata']['annotations']['kcli/dnsclient'] = dnsclient
         if domain is not None:
@@ -303,14 +303,14 @@ class Kubevirt(Kubecommon):
                 if 'name' in disk:
                     existingpvc = True
             myvolume = {'name': diskname}
-            if template is not None and index == 0:
-                if template in CONTAINERDISKS or '/' in template:
-                    myvolume['containerDisk'] = {'image': template}
+            if image is not None and index == 0:
+                if image in CONTAINERDISKS or '/' in image:
+                    myvolume['containerDisk'] = {'image': image}
                 elif cdi and datavolumes:
                     myvolume['dataVolume'] = {'name': diskname}
                 else:
                     myvolume['persistentVolumeClaim'] = {'claimName': diskname}
-            if index > 0 or template is None:
+            if index > 0 or image is None:
                 myvolume['persistentVolumeClaim'] = {'claimName': diskname}
             newdisk = {'disk': {'bus': diskinterface}, 'name': diskname}
             vm['spec']['template']['spec']['domain']['devices']['disks'].append(newdisk)
@@ -324,34 +324,32 @@ class Kubevirt(Kubecommon):
                                                              'accessModes': [self.accessmode],
                                                              'resources': {'requests': {'storage': '%sGi' % disksize}}},
                    'apiVersion': 'v1', 'metadata': {'name': diskname}}
-            if template is not None and index == 0 and template not in CONTAINERDISKS and cdi:
-                annotation = "%s/%s" % (cdinamespace, templates[template])
+            if image is not None and index == 0 and image not in CONTAINERDISKS and cdi:
+                annotation = "%s/%s" % (cdinamespace, images[image])
                 pvc['metadata']['annotations'] = {'k8s.io/CloneRequest': annotation}
                 pvc['metadata']['labels'] = {'app': 'Host-Assisted-Cloning'}
             pvcs.append(pvc)
             sizes.append(disksize)
         if guestagent:
             gcmds = []
-            if template is not None:
-                if (template.lower().startswith('centos') or template.lower().startswith('fedora') or
-                        template.lower().startswith('rhel') or 'fedora-cloud' in template.lower()):
-                    gcmds.append('yum -y install qemu-guest-agent')
-                    gcmds.append('systemctl enable qemu-guest-agent')
-                    gcmds.append('systemctl restart qemu-guest-agent')
-                elif template.lower().startswith('debian') or 'debian-' in template.lower():
-                    gcmds.append('apt-get -f install qemu-guest-agent')
-                elif [x for x in ubuntus if x in template.lower()]:
-                    gcmds.append('apt-get update')
-                    gcmds.append('apt-get -f install qemu-guest-agent')
+            if image is not None and common.need_guest_agent(image):
+                gcmds.append('yum -y install qemu-guest-agent')
+                gcmds.append('systemctl enable qemu-guest-agent')
+                gcmds.append('systemctl restart qemu-guest-agent')
+            elif image.lower().startswith('debian') or 'debian-' in image.lower():
+                gcmds.append('apt-get -f install qemu-guest-agent')
+            elif [x for x in ubuntus if x in image.lower()]:
+                gcmds.append('apt-get update')
+                gcmds.append('apt-get -f install qemu-guest-agent')
             idx = 1
-            if template is not None and template.startswith('rhel'):
+            if image is not None and image.startswith('rhel'):
                 subindex = [i for i, value in enumerate(cmds) if value.startswith('subscription-manager')]
                 if subindex:
                     idx = subindex.pop() + 1
             cmds = cmds[:idx] + gcmds + cmds[idx:]
         if cloudinit:
-            if template is not None and ('coreos' in template or template.startswith('rhcos')):
-                version = '3.0.0' if template.startswith('fedora-coreos') else '2.2.0'
+            if image is not None and ('coreos' in image or image.startswith('rhcos')):
+                version = '3.0.0' if image.startswith('fedora-coreos') else '2.2.0'
                 ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                                domain=domain, reserveip=reserveip, files=files,
                                                enableroot=enableroot, overrides=overrides, etcd=etcd, version=version,
@@ -371,14 +369,14 @@ class Kubevirt(Kubecommon):
         for pvc in pvcs:
             pvcname = pvc['metadata']['name']
             pvcsize = pvc['spec']['resources']['requests']['storage'].replace('Gi', '')
-            if template not in CONTAINERDISKS and index == 0:
+            if image not in CONTAINERDISKS and index == 0:
                 if cdi:
                     if datavolumes:
                         dvt = {'metadata': {'name': diskname},
                                'spec': {'pvc': {'accessModes': [self.accessmode],
                                                 'resources':
                                                 {'requests': {'storage': '%sGi' % pvcsize}}},
-                                        'source': {'pvc': {'name': template, 'namespace': self.cdinamespace}}},
+                                        'source': {'pvc': {'name': image, 'namespace': self.cdinamespace}}},
                                'status': {}}
                         vm['spec']['dataVolumeTemplates'] = [dvt]
                         continue
@@ -393,7 +391,7 @@ class Kubevirt(Kubecommon):
                             return {'result': 'failure', 'reason': 'timeout waiting for cdi importer pod to complete'}
                         continue
                 else:
-                    copy = self.copy_image(diskpool, template, diskname)
+                    copy = self.copy_image(diskpool, image, diskname)
                     if copy['result'] == 'failure':
                         reason = copy['reason']
                         return {'result': 'failure', 'reason': reason}
@@ -665,12 +663,12 @@ class Kubevirt(Kubecommon):
         name = metadata["name"]
         # creationdate = metadata["creationTimestamp"].strftime("%d-%m-%Y %H:%M")
         creationdate = metadata["creationTimestamp"]
-        profile, plan, template = 'N/A', 'N/A', 'N/A'
+        profile, plan, image = 'N/A', 'N/A', 'N/A'
         ip = None
         if annotations is not None:
             profile = annotations['kcli/profile'] if 'kcli/profile' in annotations else 'N/A'
             plan = annotations['kcli/plan'] if 'kcli/plan' in annotations else 'N/A'
-            template = annotations['kcli/template'] if 'kcli/template' in annotations else 'N/A'
+            image = annotations['kcli/image'] if 'kcli/image' in annotations else 'N/A'
             ip = vm['metadata']['annotations']['kcli/ip'] if 'kcli/ip' in annotations else None
         host = None
         state = 'down'
@@ -703,8 +701,8 @@ class Kubevirt(Kubecommon):
         if 'resources' in spectemplate['spec']['domain'] and 'requests' in spectemplate['spec']['domain']['resources']:
             memory = spectemplate['spec']['domain']['resources']['requests']['memory']
             yamlinfo['memory'] = memory
-        if template is not None:
-            yamlinfo['template'] = template
+        if image is not None:
+            yamlinfo['image'] = image
         if ip is not None:
             yamlinfo['ip'] = ip
         if plan is not None:
@@ -798,18 +796,18 @@ class Kubevirt(Kubecommon):
         cdi = self.cdi
         if iso:
             return []
-        templates = []
+        images = []
         if cdi:
             cdinamespace = self.cdinamespace
             pvc = core.list_namespaced_persistent_volume_claim(cdinamespace)
-            templates = [self.get_template_name(p.metadata.annotations['cdi.kubevirt.io/storage.import.endpoint'])
-                         for p in pvc.items if p.metadata.annotations is not None and
-                         'cdi.kubevirt.io/storage.import.endpoint' in p.metadata.annotations]
+            images = [self.get_image_name(p.metadata.annotations['cdi.kubevirt.io/storage.import.endpoint'])
+                      for p in pvc.items if p.metadata.annotations is not None and
+                      'cdi.kubevirt.io/storage.import.endpoint' in p.metadata.annotations]
         else:
             pvc = core.list_namespaced_persistent_volume_claim(namespace)
-            templates = [p.metadata.annotations['kcli/template'] for p in pvc.items
-                         if p.metadata.annotations is not None and 'kcli/template' in p.metadata.annotations]
-        return sorted(templates + CONTAINERDISKS)
+            images = [p.metadata.annotations['kcli/image'] for p in pvc.items
+                      if p.metadata.annotations is not None and 'kcli/image' in p.metadata.annotations]
+        return sorted(images + CONTAINERDISKS)
 
     def delete(self, name, snapshots=False):
         """
@@ -955,21 +953,21 @@ class Kubevirt(Kubecommon):
         print("Not implemented")
         return {'result': 'success'}
 
-    def create_disk(self, name, size, pool=None, thin=True, template=None):
+    def create_disk(self, name, size, pool=None, thin=True, image=None):
         """
 
         :param name:
         :param size:
         :param pool:
         :param thin:
-        :param template:
+        :param image:
         :return:
         """
         core = self.core
         namespace = self.namespace
         pvc = core.list_namespaced_persistent_volume_claim(namespace)
-        templates = {p.metadata.annotations['kcli/template']: p.metadata.name for p in pvc.items
-                     if p.metadata.annotations is not None and 'kcli/template' in p.metadata.annotations}
+        images = {p.metadata.annotations['kcli/image']: p.metadata.name for p in pvc.items
+                  if p.metadata.annotations is not None and 'kcli/image' in p.metadata.annotations}
         try:
             pvc = core.read_namespaced_persistent_volume(name, namespace)
             common.pprint("Disk %s already there" % name, color='red')
@@ -980,19 +978,19 @@ class Kubevirt(Kubecommon):
                                                          'accessModes': [self.accessmode],
                                                          'resources': {'requests': {'storage': '%sGi' % size}}},
                'apiVersion': 'v1', 'metadata': {'name': name}}
-        if template is not None:
-            pvc['metadata']['annotations'] = {'k8s.io/CloneRequest': templates[template]}
+        if image is not None:
+            pvc['metadata']['annotations'] = {'k8s.io/CloneRequest': images[image]}
         core.create_namespaced_persistent_volume_claim(namespace, pvc)
         return
 
-    def add_disk(self, name, size, pool=None, thin=True, template=None, shareable=False, existing=None):
+    def add_disk(self, name, size, pool=None, thin=True, image=None, shareable=False, existing=None):
         """
 
         :param name:
         :param size:
         :param pool:
         :param thin:
-        :param template:
+        :param image:
         :param shareable:
         :param existing:
         :return:
@@ -1009,7 +1007,7 @@ class Kubevirt(Kubecommon):
                         if disk['name'] != 'cloudinitdisk']
         index = len(currentdisks)
         diskname = '%s-disk%d' % (name, index)
-        self.create_disk(diskname, size=size, pool=pool, thin=thin, template=template)
+        self.create_disk(diskname, size=size, pool=pool, thin=thin, image=image)
         bound = self.pvc_bound(diskname, namespace)
         if not bound:
             return {'result': 'failure', 'reason': 'timeout waiting for pvc %s to get bound' % diskname}
@@ -1072,7 +1070,7 @@ class Kubevirt(Kubecommon):
         for p in pvc.items:
             metadata = p.metadata
             annotations = p.metadata.annotations
-            if annotations is not None and 'kcli/template' in annotations:
+            if annotations is not None and 'kcli/image' in annotations:
                 continue
             else:
                 name = metadata.name
@@ -1111,11 +1109,11 @@ class Kubevirt(Kubecommon):
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         metadata = vm.get("metadata")
         annotations = metadata.get("annotations")
-        template = annotations.get('kcli/template') if annotations is not None else None
+        image = annotations.get('kcli/image') if annotations is not None else None
         user = 'root'
         ip = self.ip(name)
-        if template is not None:
-            user = common.get_user(template)
+        if image is not None:
+            user = common.get_user(image)
         return user, ip
 
     def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, Y=False,
@@ -1192,20 +1190,20 @@ class Kubevirt(Kubecommon):
         if self.cdi:
             cdinamespace = self.cdinamespace
             pvc = core.list_namespaced_persistent_volume_claim(cdinamespace)
-            templates = [p.metadata.name for p in pvc.items if p.metadata.annotations is not None and
-                         'cdi.kubevirt.io/storage.import.endpoint' in p.metadata.annotations and
-                         self.get_template_name(p.metadata.annotations['cdi.kubevirt.io/storage.import.endpoint']) ==
-                         image]
-            if templates:
-                core.delete_namespaced_persistent_volume_claim(templates[0], cdinamespace, client.V1DeleteOptions())
+            images = [p.metadata.name for p in pvc.items if p.metadata.annotations is not None and
+                      'cdi.kubevirt.io/storage.import.endpoint' in p.metadata.annotations and
+                      self.get_image_name(p.metadata.annotations['cdi.kubevirt.io/storage.import.endpoint']) ==
+                      image]
+            if images:
+                core.delete_namespaced_persistent_volume_claim(images[0], cdinamespace, client.V1DeleteOptions())
                 return {'result': 'success'}
         else:
             pvc = core.list_namespaced_persistent_volume_claim(self.namespace)
-            templates = [p.metadata.name for p in pvc.items
-                         if p.metadata.annotations is not None and 'kcli/template' in p.metadata.annotations and
-                         p.metadata.annotations['kcli/template'] == image]
-            if templates:
-                core.delete_namespaced_persistent_volume_claim(templates[0], self.namespace, client.V1DeleteOptions())
+            images = [p.metadata.name for p in pvc.items
+                      if p.metadata.annotations is not None and 'kcli/image' in p.metadata.annotations and
+                      p.metadata.annotations['kcli/image'] == image]
+            if images:
+                core.delete_namespaced_persistent_volume_claim(images[0], self.namespace, client.V1DeleteOptions())
                 return {'result': 'success'}
         return {'result': 'failure', 'reason': 'image %s not found' % image}
 
@@ -1240,11 +1238,11 @@ class Kubevirt(Kubecommon):
         pvc = {'kind': 'PersistentVolumeClaim', 'spec': {'storageClassName': pool,
                                                          'accessModes': [self.accessmode],
                                                          'resources': {'requests': {'storage': '%sGi' % size}}},
-               'apiVersion': 'v1', 'metadata': {'name': volname, 'annotations': {'kcli/template': shortimage}}}
+               'apiVersion': 'v1', 'metadata': {'name': volname, 'annotations': {'kcli/image': shortimage}}}
         if cdi:
-                cdinamespace = self.cdinamespace
-                pvc['metadata']['annotations'] = {'cdi.kubevirt.io/storage.import.endpoint': image}
-                namespace = cdinamespace
+            cdinamespace = self.cdinamespace
+            pvc['metadata']['annotations'] = {'cdi.kubevirt.io/storage.import.endpoint': image}
+            namespace = cdinamespace
         else:
             pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'Never',
                                            'containers': [{'image': 'kubevirtci/disk-importer',
@@ -1578,7 +1576,7 @@ class Kubevirt(Kubecommon):
         """
         return []
 
-    def get_template_name(self, name):
+    def get_image_name(self, name):
         """
 
         :param name:

@@ -4,7 +4,7 @@
 Fake Provider Class
 """
 from kvirt import common
-from kvirt.defaults import TEMPLATES
+from kvirt.defaults import IMAGES
 from kvirt.nameutils import get_random_name, random_ip, right
 import os
 import random
@@ -21,11 +21,13 @@ class Kfake(object):
     def __init__(self, host='127.0.0.1', port=None, user='root', debug=False):
         self.conn = 'fake'
         self.host = host
-        templates = [os.path.basename(t) for t in list(TEMPLATES.values()) if t is not None and (t.endswith('qcow2') or
-                                                                                                 t.endswith('img'))]
-        rheltemplates = ['rhel-guest-image-7.2-20160302.0.x86_64.qcow2', 'rhel-guest-image-7.3-35.x86_64.qcow2',
-                         'rhel-server-7.4-x86_64-kvm.qcow2']
-        self.templates = templates + rheltemplates
+        images = []
+        for t in list(IMAGES.values()):
+            if t is not None and (t.endswith('qcow2') or t.endswith('img')):
+                images.append(os.path.basename(t))
+        rhelimages = ['rhel-guest-image-7.2-20160302.0.x86_64.qcow2', 'rhel-guest-image-7.3-35.x86_64.qcow2',
+                      'rhel-server-7.4-x86_64-kvm.qcow2']
+        self.images = images + rhelimages
         return
 
     def close(self):
@@ -61,7 +63,7 @@ class Kfake(object):
         return False
 
     def create(self, name, virttype='kvm', profile='', flavor=None, plan='kvirt', cpumodel='Westmere', cpuflags=[],
-               numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{'size': 10}],
+               numcpus=2, memory=512, guestid='guestrhel764', pool='default', image=None, disks=[{'size': 10}],
                disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False,
                cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[],
                ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[],
@@ -80,7 +82,7 @@ class Kfake(object):
         :param memory:
         :param guestid:
         :param pool:
-        :param template:
+        :param image:
         :param disks:
         :param disksize:
         :param diskthin:
@@ -118,9 +120,9 @@ class Kfake(object):
             rmtree(namedir)
         os.mkdir(namedir)
         if cloudinit:
-            if template is not None and ('coreos' in template or template.startswith('rhcos')):
-                common.pprint("Data provided for a %s template" % template)
-                version = '3.0.0' if template.startswith('fedora-coreos') else '2.2.0'
+            if image is not None and ('coreos' in image or image.startswith('rhcos')):
+                common.pprint("Data provided for a %s image" % image)
+                version = '3.0.0' if image.startswith('fedora-coreos') else '2.2.0'
                 etcd = None
                 ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                                domain=domain, reserveip=reserveip, files=files,
@@ -266,7 +268,7 @@ class Kfake(object):
 # autostart
 # plan
 # profile
-# template
+# image
 # ip
 # memory
 # cpus
@@ -289,10 +291,10 @@ class Kfake(object):
             ip = random_ip()
         else:
             ip = None
-        template = random.choice(self.templates + [''])
+        image = random.choice(self.images + [''])
         plan = get_random_name()
         profile = 'kvirt'
-        yamlinfo = {'name': name, 'template': template, 'plan': plan, 'profile': profile, 'status': state, 'cpus': cpus,
+        yamlinfo = {'name': name, 'image': image, 'plan': plan, 'profile': profile, 'status': state, 'cpus': cpus,
                     'memory': memory}
         if ip is not None:
             yamlinfo['ip'] = ip
@@ -331,7 +333,7 @@ class Kfake(object):
         print("not implemented")
         return None
 
-# should return a list of available templates, or isos ( if iso is set to True
+# should return a list of available images, or isos ( if iso is set to True
     def volumes(self, iso=False):
         """
 
@@ -341,7 +343,7 @@ class Kfake(object):
         if iso:
             return []
         else:
-            return sorted(self.templates)
+            return sorted(self.images)
         return
 
     def delete(self, name, snapshots=False):
@@ -426,27 +428,27 @@ class Kfake(object):
         print("not implemented")
         return
 
-    def create_disk(self, name, size, pool=None, thin=True, template=None):
+    def create_disk(self, name, size, pool=None, thin=True, image=None):
         """
 
         :param name:
         :param size:
         :param pool:
         :param thin:
-        :param template:
+        :param image:
         :return:
         """
         print("not implemented")
         return
 
-    def add_disk(self, name, size, pool=None, thin=True, template=None, shareable=False, existing=None):
+    def add_disk(self, name, size, pool=None, thin=True, image=None, shareable=False, existing=None):
         """
 
         :param name:
         :param size:
         :param pool:
         :param thin:
-        :param template:
+        :param image:
         :param shareable:
         :param existing:
         :return:

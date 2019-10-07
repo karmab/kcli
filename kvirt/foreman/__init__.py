@@ -89,7 +89,7 @@ class Kforeman(object):
 
     def create(self, name, virttype='kvm', profile='', flavor=None, plan='kvirt',
                cpumodel='Westmere', cpuflags=[], numcpus=2, memory=512,
-               guestid='guestrhel764', pool='default', template=None,
+               guestid='guestrhel764', pool='default', image=None,
                disks=[{'size': 10}], disksize=10, diskthin=True,
                diskinterface='virtio', nets=['default'], iso=None, vnc=False,
                cloudinit=True, reserveip=False, reservedns=False,
@@ -111,7 +111,7 @@ class Kforeman(object):
         :param memory:
         :param guestid:
         :param pool:
-        :param template:
+        :param image:
         :param disks:
         :param disksize:
         :param diskthin:
@@ -315,7 +315,7 @@ class Kforeman(object):
 # autostart
 # plan
 # profile
-# template
+# image
 # ip
 # memory
 # cpus
@@ -345,8 +345,8 @@ class Kforeman(object):
         state = 'up'
         cpus = 2
         memory = 1024
-        template = vm['hostgroup_name']
-        yamlinfo = {'name': name, 'template': template, 'plan': plan, 'profile': profile, 'status': state, 'cpus': cpus,
+        image = vm['hostgroup_name']
+        yamlinfo = {'name': name, 'image': image, 'plan': plan, 'profile': profile, 'status': state, 'cpus': cpus,
                     'memory': memory}
         yamlinfo['created_at'] = vm['created_at']
         yamlinfo['owner_name'] = vm['owner_name']
@@ -375,7 +375,7 @@ class Kforeman(object):
         print("not implemented")
         return None
 
-# should return a list of available templates, or isos ( if iso is set to True
+# should return a list of available images, or isos ( if iso is set to True
     def volumes(self, iso=False):
         """
 
@@ -497,20 +497,20 @@ class Kforeman(object):
         print("Not implemented")
         return {'result': 'success'}
 
-    def create_disk(self, name, size, pool=None, thin=True, template=None):
+    def create_disk(self, name, size, pool=None, thin=True, image=None):
         """
 
         :param name:
         :param size:
         :param pool:
         :param thin:
-        :param template:
+        :param image:
         :return:
         """
         print("not implemented")
         return
 
-    def add_disk(self, name, size, pool=None, thin=True, template=None,
+    def add_disk(self, name, size, pool=None, thin=True, image=None,
                  shareable=False, existing=None):
         """
 
@@ -518,7 +518,7 @@ class Kforeman(object):
         :param size:
         :param pool:
         :param thin:
-        :param template:
+        :param image:
         :param shareable:
         :param existing:
         :return:
@@ -570,9 +570,9 @@ class Kforeman(object):
     def _ssh_credentials(self, name):
         ip, user = None, 'root'
         vm = self._foremando(who=name)
-        template = vm['hostgroup_name']
-        if template is not None:
-            user = common.get_user(template)
+        image = vm['hostgroup_name']
+        if image is not None:
+            user = common.get_user(image)
         for interface in vm['interfaces']:
             if 'ip' in interface:
                 ip = vm['ip']
@@ -757,11 +757,11 @@ class Kforeman(object):
         """
         return []
 
-# export the primary disk of the corresponding instance so it's available as a template
-    def export(name, template=None):
+# export the primary disk of the corresponding instance so it's available as a image
+    def export(name, image=None):
         """
 
-        :param template:
+        :param image:
         :return:
         """
         return

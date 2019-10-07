@@ -348,7 +348,7 @@ class Ksphere:
         return
 
     def create(self, name, virttype='kvm', profile='kvirt', flavor=None, plan='kvirt', cpumodel='host-model',
-               cpuflags=[], numcpus=2, memory=512, guestid='centos7_64Guest', pool='default', template=None,
+               cpuflags=[], numcpus=2, memory=512, guestid='centos7_64Guest', pool='default', image=None,
                disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None,
                vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None,
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
@@ -375,11 +375,11 @@ class Ksphere:
         si = self.si
         clu = find(si, rootFolder, vim.ComputeResource, self.clu)
         resourcepool = clu.resourcePool
-        if template is not None:
+        if image is not None:
             rootFolder = self.rootFolder
-            templateobj = findvm(si, rootFolder, template)
-            if templateobj is None:
-                return {'result': 'failure', 'reason': "Template %s not found" % template}
+            imageobj = findvm(si, rootFolder, image)
+            if imageobj is None:
+                return {'result': 'failure', 'reason': "Image %s not found" % image}
             clonespec = createclonespec(resourcepool)
             confspec = vim.vm.ConfigSpec()
             confspec.annotation = name
@@ -391,16 +391,16 @@ class Ksphere:
             profileopt = vim.option.OptionValue()
             profileopt.key = 'profile'
             profileopt.value = profile
-            templateopt = vim.option.OptionValue()
-            templateopt.key = 'template'
-            templateopt.value = template
-            extraconfig = [templateopt, planopt, profileopt]
+            imageopt = vim.option.OptionValue()
+            imageopt.key = 'image'
+            imageopt.value = image
+            extraconfig = [imageopt, planopt, profileopt]
             clonespec.config = confspec
             clonespec.powerOn = False
             cloudinitiso = None
             if cloudinit:
-                if template is not None and ('coreos' in template or template.startswith('rhcos')):
-                    version = '3.0.0' if template.startswith('fedora-coreos') else '2.2.0'
+                if image is not None and ('coreos' in image or image.startswith('rhcos')):
+                    version = '3.0.0' if image.startswith('fedora-coreos') else '2.2.0'
                     ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                                    domain=domain, reserveip=reserveip, files=files,
                                                    enableroot=enableroot, overrides=overrides, etcd=False,
@@ -420,7 +420,7 @@ class Ksphere:
                                      domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
                                      overrides=overrides, storemetadata=storemetadata)
             confspec.extraConfig = extraconfig
-            t = templateobj.CloneVM_Task(folder=vmfolder, name=name, spec=clonespec)
+            t = imageobj.CloneVM_Task(folder=vmfolder, name=name, spec=clonespec)
             waitForMe(t)
             if cloudinitiso is not None:
                 cloudinitisofile = "/tmp/%s.ISO" % name
@@ -457,7 +457,7 @@ class Ksphere:
             opt2.key = 'RemoteDisplay.vnc.enabled'
             opt2.value = "TRUE"
             confspec.extraConfig = [opt1, opt2]
-        if template is None:
+        if image is None:
             t = vmfolder.CreateVM_Task(confspec, resourcepool)
             waitForMe(t)
         vm = find(si, dc.vmFolder, vim.VirtualMachine, name)
@@ -487,11 +487,11 @@ class Ksphere:
                 diskthin = disk.get('thin', default_diskthin)
                 diskinterface = disk.get('interface', default_diskinterface)
                 diskpool = disk.get('pool', default_pool)
-            if index < len(currentdisks) and template is not None:
+            if index < len(currentdisks) and image is not None:
                 currentdisk = currentdisks[index]
                 currentsize = convert(1000 * currentdisk.capacityInKB, GB=False)
                 if int(currentsize) < disksize:
-                    common.pprint("Waiting for template disk %s to be resized" % index)
+                    common.pprint("Waiting for image disk %s to be resized" % index)
                     currentdisk.capacityInKB = disksize * 1048576
                     diskspec = vim.vm.ConfigSpec()
                     diskspec = vim.vm.device.VirtualDeviceSpec(device=currentdisk, operation="edit")
@@ -626,11 +626,11 @@ class Ksphere:
         vm = findvm(si, vmFolder, name)
         if vm is None:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        plan, template = 'kvirt', None
+        plan, image = 'kvirt', None
         vmpath = vm.summary.config.vmPathName.replace('/%s.vmx' % name, '')
         for entry in vm.config.extraConfig:
-            if entry.key == 'template':
-                template = entry.value
+            if entry.key == 'image':
+                image = entry.value
             if entry.key == 'plan':
                 plan = entry.value
         if vm.runtime.powerState == "poweredOn":
@@ -638,7 +638,7 @@ class Ksphere:
             waitForMe(t)
         t = vm.Destroy_Task()
         waitForMe(t)
-        if template is not None and 'coreos' not in template and not template.startswith('rhcos') and\
+        if image is not None and 'coreos' not in image and not image.startswith('rhcos') and\
                 vmpath.endswith(name):
             deletedirectory(si, dc, vmpath)
         if plan != 'kvirt':
@@ -755,8 +755,8 @@ class Ksphere:
                 yamlinfo['plan'] = entry.value
             if entry.key == 'profile':
                 yamlinfo['profile'] = entry.value
-            if entry.key == 'template':
-                yamlinfo['template'] = entry.value
+            if entry.key == 'image':
+                yamlinfo['image'] = entry.value
         return yamlinfo
 
     def list(self):
@@ -848,8 +848,9 @@ class Ksphere:
         o = si.content.viewManager.CreateContainerView(rootFolder, [vim.VirtualMachine], True)
         vmlist = o.view
         o.Destroy()
-        return [v.name for v in vmlist if v.config.template and v.summary is not None and
-                v.summary.runtime.connectionState != 'orphaned']
+        return [v.name for v
+                in vmlist if v.config.template and v.summary is not
+                None and v.summary.runtime.connectionState != 'orphaned']
 
     def update_metadata(self, name, metatype, metavalue, append=False):
         si = self.si
@@ -1030,7 +1031,7 @@ class Ksphere:
         if vm.runtime.powerState == "poweredOff":
             return {'result': 'failure', 'reason': "VM %s down" % name}
         for entry in vm.config.extraConfig:
-            if entry.key == 'template':
+            if entry.key == 'image':
                 user = common.get_user(entry.value)
         # summary = vm.summary
         # ip = summary.guest.ipAddress if summary.guest is not None else None
@@ -1043,7 +1044,7 @@ class Ksphere:
                     break
         return user, ip
 
-    def add_disk(self, name, size=1, pool=None, thin=True, template=None, shareable=False, existing=None):
+    def add_disk(self, name, size=1, pool=None, thin=True, image=None, shareable=False, existing=None):
         si = self.si
         dc = self.dc
         vmFolder = dc.vmFolder
@@ -1276,7 +1277,7 @@ class Ksphere:
             downloadcmd = "curl -Lo /tmp/%s -f '%s'" % (shortimage, image)
             code = os.system(downloadcmd)
             if code != 0:
-                return {'result': 'failure', 'reason': "Unable to download indicated template"}
+                return {'result': 'failure', 'reason': "Unable to download indicated image"}
         elif os.path.exists("/tmp/%s.vmdk" % cleanname):
             common.pprint("Using found /tmp/%s.vmdk" % cleanname, color='blue')
         else:
@@ -1344,9 +1345,9 @@ class Ksphere:
         view = o.view
         o.Destroy()
         for clu in view:
-                print("Cluster: %s" % clu.name)
-                for dts in clu.datastore:
-                    print("Pool: %s" % dts.name)
+            print("Cluster: %s" % clu.name)
+            for dts in clu.datastore:
+                print("Pool: %s" % dts.name)
 
     def delete_image(self, image):
         si = self.si
@@ -1360,11 +1361,11 @@ class Ksphere:
             waitForMe(t)
             return {'result': 'success'}
 
-    def export(self, name, template=None):
+    def export(self, name, image=None):
         """
 
         :param name:
-        :param template:
+        :param image:
         :return:
         """
         si = self.si
@@ -1377,6 +1378,6 @@ class Ksphere:
             t = vm.PowerOffVM_Task()
             waitForMe(t)
         vm.MarkAsTemplate()
-        if template is not None:
-            vm.Rename(template)
+        if image is not None:
+            vm.Rename(image)
         return {'result': 'success'}

@@ -107,7 +107,7 @@ class Kgcp(object):
         print("not implemented")
 
     def create(self, name, virttype='kvm', profile='', flavor=None, plan='kvirt', cpumodel='Westmere', cpuflags=[],
-               numcpus=2, memory=512, guestid='guestrhel764', pool='default', template=None, disks=[{'size': 10}],
+               numcpus=2, memory=512, guestid='guestrhel764', pool='default', image=None, disks=[{'size': 10}],
                disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False,
                cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[],
                ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[],
@@ -126,7 +126,7 @@ class Kgcp(object):
         :param memory:
         :param guestid:
         :param pool:
-        :param template:
+        :param image:
         :param disks:
         :param disksize:
         :param diskthin:
@@ -209,16 +209,16 @@ class Kgcp(object):
             elif isinstance(disk, dict):
                 disksize = disk.get('size', '10')
             newdisk = {'boot': False, 'autoDelete': True}
-            if index == 0 and template is not None:
-                template = self.__evaluate_template(template)
-                templateproject = self.__get_template_project(template)
-                if templateproject is not None:
-                    image_response = conn.images().getFromFamily(project=templateproject, family=template).execute()
+            if index == 0 and image is not None:
+                image = self.__evaluate_image(image)
+                imageproject = self.__get_image_project(image)
+                if imageproject is not None:
+                    image_response = conn.images().getFromFamily(project=imageproject, family=image).execute()
                 else:
                     try:
-                        image_response = conn.images().get(project=self.project, image=template).execute()
+                        image_response = conn.images().get(project=self.project, image=image).execute()
                     except:
-                        return {'result': 'failure', 'reason': 'Issue with template %s' % template}
+                        return {'result': 'failure', 'reason': 'Issue with image %s' % image}
                 src = image_response['selfLink']
                 newdisk['initializeParams'] = {'sourceImage': src, 'diskSizeGb': disksize}
                 newdisk['boot'] = True
@@ -293,8 +293,8 @@ class Kgcp(object):
                     newfile = open(origin, 'r').read()
                     startup_script += "cat <<'EOF' >%s\n%s\nEOF\nchmod %s %s\n" % (path, newfile, permissions, path)
             elif content is not None:
-                    startup_script += "cat <<'EOF' >%s\n%s\nEOF\nchmod %s %s\n" % (path, content, permissions, path)
-        if enableroot and template is not None:
+                startup_script += "cat <<'EOF' >%s\n%s\nEOF\nchmod %s %s\n" % (path, content, permissions, path)
+        if enableroot and image is not None:
             enablerootcmds = ['sed -i "s/.*PermitRootLogin.*/PermitRootLogin yes/" /etc/ssh/sshd_config',
                               'systemctl restart sshd']
             if not cmds:
@@ -335,7 +335,7 @@ class Kgcp(object):
         if homekey is not None:
             keys = [homekey] + keys if keys is not None else [homekey]
         if keys is not None:
-            user = common.get_user(template)
+            user = common.get_user(image)
             if user == 'root':
                 user = getuser()
             finalkeys = ["%s: %s" % (user, x) for x in keys]
@@ -354,9 +354,9 @@ class Kgcp(object):
             newval = {'key': 'domain', 'value': domain}
             body['metadata']['items'].append(newval)
             # body['hostname'] = "%s.%s" % (name, domain)
-        if template is not None and (template.startswith('coreos') or template.startswith('rhcos')):
+        if image is not None and (image.startswith('coreos') or image.startswith('rhcos')):
             etcd = None
-            version = '3.0.0' if template.startswith('fedora-coreos') else '2.2.0'
+            version = '3.0.0' if image.startswith('fedora-coreos') else '2.2.0'
             userdata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                        domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
                                        overrides=overrides, etcd=etcd, version=version, plan=plan)
@@ -601,9 +601,9 @@ class Kgcp(object):
         source = os.path.basename(vm['disks'][0]['source'])
         source = conn.disks().get(zone=zone, project=self.project, disk=source).execute()
         if self.project in source['sourceImage']:
-            yamlinfo['template'] = os.path.basename(source['sourceImage'])
+            yamlinfo['image'] = os.path.basename(source['sourceImage'])
         elif 'licenses' in vm['disks'][0]:
-            yamlinfo['template'] = os.path.basename(vm['disks'][0]['licenses'][-1])
+            yamlinfo['image'] = os.path.basename(vm['disks'][0]['licenses'][-1])
         yamlinfo['creationdate'] = dateparser.parse(vm['creationTimestamp']).strftime("%d-%m-%Y %H:%M")
         nets = []
         for interface in vm['networkInterfaces']:
@@ -681,7 +681,7 @@ class Kgcp(object):
             ip = vm['networkInterfaces'][0]['networkIP']
         return ip
 
-# should return a list of available templates, or isos ( if iso is set to True
+# should return a list of available images, or isos ( if iso is set to True
     def volumes(self, iso=False):
         """
 
@@ -759,7 +759,7 @@ class Kgcp(object):
         zone = self.zone
         try:
             vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
-        except Exception as e:
+        except Exception:
             common.pprint("VM %s not found" % name)
             return 1
         metadata = vm['metadata']['items'] if 'items' in vm['metadata'] else []
@@ -790,7 +790,7 @@ class Kgcp(object):
         zone = self.zone
         try:
             vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
-        except Exception as e:
+        except Exception:
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if vm['status'] in ['RUNNING', 'STOPPING']:
@@ -817,7 +817,7 @@ class Kgcp(object):
         zone = self.zone
         try:
             vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
-        except Exception as e:
+        except Exception:
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if vm['status'] in ['RUNNING', 'STOPPING']:
@@ -848,7 +848,7 @@ class Kgcp(object):
         zone = self.zone
         try:
             vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
-        except Exception as e:
+        except Exception:
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if vm['status'] in ['RUNNING', 'STOPPING']:
@@ -897,27 +897,27 @@ class Kgcp(object):
         print("not implemented")
         return
 
-    def create_disk(self, name, size, pool=None, thin=True, template=None):
+    def create_disk(self, name, size, pool=None, thin=True, image=None):
         """
 
         :param name:
         :param size:
         :param pool:
         :param thin:
-        :param template:
+        :param image:
         :return:
         """
         print("not implemented")
         return
 
-    def add_disk(self, name, size, pool=None, thin=True, template=None, shareable=False, existing=None):
+    def add_disk(self, name, size, pool=None, thin=True, image=None, shareable=False, existing=None):
         """
 
         :param name:
         :param size:
         :param pool:
         :param thin:
-        :param template:
+        :param image:
         :param shareable:
         :param existing:
         :return:
@@ -1020,11 +1020,11 @@ class Kgcp(object):
         source = os.path.basename(vm['disks'][0]['source'])
         source = conn.disks().get(zone=zone, project=self.project, disk=source).execute()
         if self.project in source['sourceImage']:
-            template = os.path.basename(source['sourceImage'])
-            user = common.get_user(template)
+            image = os.path.basename(source['sourceImage'])
+            user = common.get_user(image)
         elif 'licenses' in vm['disks'][0]:
-            template = os.path.basename(vm['disks'][0]['licenses'][-1])
-            user = common.get_user(template)
+            image = os.path.basename(vm['disks'][0]['licenses'][-1])
+            user = common.get_user(image)
         if user == 'root':
             user = getuser()
         return user, ip
@@ -1270,33 +1270,33 @@ class Kgcp(object):
         print("not implemented")
         return
 
-    def __get_template_project(self, template):
-        if template.startswith('sles'):
+    def __get_image_project(self, image):
+        if image.startswith('sles'):
             return 'suse-cloud'
-        if template.startswith('ubuntu'):
+        if image.startswith('ubuntu'):
             return 'ubuntu-os-cloud'
-        elif any([template.startswith(s) for s in ['centos', 'coreos', 'cos', 'debian', 'rhel']]):
-            project = template.split('-')[0]
+        elif any([image.startswith(s) for s in ['centos', 'coreos', 'cos', 'debian', 'rhel']]):
+            project = image.split('-')[0]
             return "%s-cloud" % project
         else:
             return None
 
-    def __evaluate_template(self, template):
-        # template = template.lower()
-        if 'CentOS-7' in template:
+    def __evaluate_image(self, image):
+        # image = image.lower()
+        if 'CentOS-7' in image:
             return 'centos-7'
-        elif 'debian-8' in template:
+        elif 'debian-8' in image:
             return 'debian-8'
-        elif 'debian-9' in template:
+        elif 'debian-9' in image:
             return 'debian-9'
-        elif 'rhel-guest-image-7' in template.lower() or 'rhel-server-7' in template.lower():
+        elif 'rhel-guest-image-7' in image.lower() or 'rhel-server-7' in image.lower():
             return 'rhel-7'
-        elif 'rhel-guest-image-8' in template.lower() or 'rhel-server-8' in template.lower():
+        elif 'rhel-guest-image-8' in image.lower() or 'rhel-server-8' in image.lower():
             return 'rhel-8'
-        elif [x for x in common.ubuntus if x in template.lower()]:
+        elif [x for x in common.ubuntus if x in image.lower()]:
             return 'ubuntu-1804-lts'
         else:
-            return template
+            return image
 
     def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False):
         """
@@ -1469,11 +1469,11 @@ class Kgcp(object):
             flavors.append([name, numcpus, memory])
         return flavors
 
-    def export(self, name, template=None):
+    def export(self, name, image=None):
         """
 
         :param name:
-        :param template:
+        :param image:
         :return:
         """
         conn = self.conn
@@ -1486,8 +1486,8 @@ class Kgcp(object):
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if status.lower() == 'running':
             return {'result': 'failure', 'reason': "VM %s up" % name}
-        newname = template if template is not None else name
-        description = "template based on %s" % name
+        newname = image if image is not None else name
+        description = "image based on %s" % name
         body = {'name': newname, 'forceCreate': True, 'description': description,
                 'sourceDisk': vm['disks'][0]['source'], 'licenses': ["projects/vm-options/global/licenses/enable-vmx"]}
         conn.images().insert(project=project, body=body).execute()

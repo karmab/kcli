@@ -1485,6 +1485,7 @@ class Kconfig(Kbaseconfig):
                 result = k.add_image(url, pool, cmd=cmd, name=shortname)
                 common.handle_response(result, shortname, element='Image ', action='Added')
                 if imagename not in self.profiles:
+                    common.pprint("Adding a profile named %s with default values" % imagename)
                     self.create_profile(imagename, {'image': shortname}, quiet=True)
             return {'result': 'success'}
         elif switch:
