@@ -101,8 +101,8 @@ As a bonus, you can use the following aliases:
 
 .. code:: shell
 
-    alias kcli='docker run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir -v /tmp:/ignitiondir karmab/kcli'
-    alias kclishell='docker run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir -v /tmp:/ignitiondir --entrypoint=/bin/sh karmab/kcli'
+    alias kcli='docker run --net host -it --rm --security-opt label=disable -v $HOME/.ssh:/root/.ssh -v $HOME/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir -v /tmp:/ignitiondir karmab/kcli'
+    alias kclishell='docker run --net host -it --rm --security-opt label=disable -v $HOME/.ssh:/root/.ssh -v $HOME/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir -v /tmp:/ignitiondir --entrypoint=/bin/sh karmab/kcli'
 
 For web access, you can switch with
 ``-p 9000:9000 --entrypoint=/usr/bin/kweb`` and thus accessing to port
@@ -382,9 +382,7 @@ on openshift, you can simply use
 
     oc whoami -t
 
-*virtctl* is a hard requirement for consoles. If present on your local
-machine, this will be used. otherwise, it s expected that the host node
-has it installed.
+*kubectl* is currently a hard requirement for consoles
 
 To use this provider with kcli rpm, you’ll need to install
 *python3-kubernetes* rpm
@@ -438,6 +436,13 @@ On fedora, for instance, you can run the following:
     pip3 install ovirt-engine-sdk-python
 
 On rhel, set PYCURL_SSL_LIBRARY to nss instead
+
+If you install manually from pip, you might need to install pycurl
+manually with the following line (and get openssl-dev headers)
+
+::
+
+    pip install --no-cache-dir --global-option=build_ext --global-option="-L/usr/local/opt/openssl/lib" --global-option="-I/usr/local/opt/openssl/include"  pycurl
 
 Openstack
 ---------
@@ -1261,15 +1266,7 @@ Running on kubernetes/openshift
 You can run the container on those platforms and either use the web
 interface or log in the pod to run ``kcli`` commandline
 
-On kubernetes:
-
-::
-
-    kubectl create configmap kcli-config --from-file=~/.kcli
-    kubectl create configmap ssh-config --from-file=~/.ssh
-    kubectl create -f https://raw.githubusercontent.com/karmab/kcli/master/extras/k8sdeploy.yml
-
-On openshift, you’ll need to run those extra commands:
+On openshift, you’ll need to run first those extra commands:
 
 ::
 
@@ -1277,13 +1274,17 @@ On openshift, you’ll need to run those extra commands:
     oc adm policy add-scc-to-user anyuid system:serviceaccount:kcli:default
     oc expose svc kcli
 
-On the web interface, you won’t be able to switch to a different
-provider. You would have to modify the configmap to point to a different
-provider and recreate the pod
+Then:
+
+::
+
+    kubectl create configmap kcli-config --from-file=~/.kcli
+    kubectl create configmap ssh-config --from-file=~/.ssh
+    kubectl create -f https://raw.githubusercontent.com/karmab/kcli/master/extras/k8sdeploy.yml
 
 Alternatively, look at https://github.com/karmab/kcli-controller for a
-controller handling machines crds and creating vms with kcli/kvirt
-library
+controller/operator handling vms and plans as crds and creating the
+corresponding assets with kcli/kvirt library.
 
 Testing
 -------
