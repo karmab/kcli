@@ -779,7 +779,7 @@ def templateaction():
                 url = None
             if cmd == '':
                 cmd = None
-            result = config.handle_host(pool=pool, templates=[template], download=True, url=url, cmd=cmd)
+            result = config.handle_host(pool=pool, template=template, download=True, url=url, cmd=cmd)
         else:
             result = "Nothing to do"
         print(result)

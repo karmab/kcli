@@ -1428,7 +1428,7 @@ class Kconfig(Kbaseconfig):
             rmtree(path)
         return returndata
 
-    def handle_host(self, pool=None, templates=[], switch=None, download=False,
+    def handle_host(self, pool=None, template=None, switch=None, download=False,
                     url=None, cmd=None, sync=False):
         """
 
@@ -1446,10 +1446,10 @@ class Kconfig(Kbaseconfig):
             if pool is None:
                 pool = self.pool
                 common.pprint("Using pool %s" % pool, color='blue')
-            if url is None and not templates:
+            if url is None and template is None:
                 common.pprint("Missing template or url.Leaving...", color='red')
                 return {'result': 'failure', 'reason': "Missing template or url"}
-            for template in templates:
+            if template is not None:
                 if url is None:
                     url = TEMPLATES[template]
                     openstack = True if self.type in ['ovirt', 'openstack'] else False
