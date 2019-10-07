@@ -310,8 +310,9 @@ class KOvirt(object):
                 disksize = disk.get('size', disksize)
                 diskpool = disk.get('pool', pool)
                 diskthin = disk.get('thin', diskthin)
-            if index == 0 and image is not None and disksize != 10:
-                self.update_image_size(vm.id, disksize)
+            if index == 0 and image is not None:
+                if disksize != 10:
+                    self.update_image_size(vm.id, disksize)
                 continue
             newdisk = self.add_disk(name, disksize, pool=diskpool, thin=diskthin)
             if newdisk['result'] == 'failure':
