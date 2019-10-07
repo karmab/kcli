@@ -27,13 +27,13 @@ function vmprofilestable() {
     });
 }
 
-function templatestable() {
+function imagestable() {
     $.ajax({
          type: "GET",
-          url: '/templatestable',
+          url: '/imagestable',
           success: function(data) {
-            $('#templates').html(data);
-            $('#templates').dataTable({
+            $('#images').html(data);
+            $('#images').dataTable({
             retrieve: true,
             });
           }

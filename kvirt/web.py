@@ -6,7 +6,7 @@ from flask import Flask, render_template, request, jsonify, redirect, Response
 from kvirt.config import Kconfig
 from kvirt.common import print_info, get_free_port
 from kvirt.baseconfig import Kbaseconfig
-from kvirt.defaults import TEMPLATES, WEBSOCKIFYCERT
+from kvirt.defaults import IMAGES, WEBSOCKIFYCERT
 from kvirt import nameutils
 import os
 from time import sleep
@@ -63,7 +63,7 @@ def vmcreate():
     create vm
     """
     config = Kconfig()
-    templates = [os.path.basename(v) for v in config.k.volumes()]
+    images = [os.path.basename(v) for v in config.k.volumes()]
     disks = []
     for disk in config.disks:
         if isinstance(disk, int):
@@ -79,7 +79,7 @@ def vmcreate():
             nets.append(net['name'])
     nets = ','.join(nets)
     parameters = {'memory': config.memory, 'numcpus': config.numcpus, 'disks': disks, 'nets': nets}
-    return render_template('vmcreate.html', title='CreateVm', templates=templates,
+    return render_template('vmcreate.html', title='CreateVm', images=images,
                            parameters=parameters, client=config.client)
 
 
@@ -728,58 +728,58 @@ def containeraction():
         return jsonify(failure)
 
 
-@app.route('/templatestable')
-def templatestable():
+@app.route('/imagestable')
+def imagestable():
     """
-    retrieves templates in table
+    retrieves images in table
     """
     config = Kconfig()
     k = config.k
-    templates = k.volumes()
-    return render_template('templatestable.html', templates=templates)
+    images = k.volumes()
+    return render_template('imagestable.html', images=images)
 
 
-@app.route('/templates')
-def templates():
+@app.route('/images')
+def images():
     """
 
     :return:
     """
     config = Kconfig()
-    return render_template('templates.html', title='Templates', client=config.client)
+    return render_template('images.html', title='Images', client=config.client)
 
 
-@app.route('/templatecreate')
-def templatecreate():
+@app.route('/imagecreate')
+def imagecreate():
     """
-    create template
+    create image
     """
     config = Kconfig()
     k = config.k
     pools = k.list_pools()
-    return render_template('templatecreate.html', title='CreateTemplate', pools=pools, templates=sorted(TEMPLATES),
+    return render_template('imagecreate.html', title='CreateImage', pools=pools, images=sorted(IMAGES),
                            client=config.client)
 
 
-@app.route("/templateaction", methods=['POST'])
-def templateaction():
+@app.route("/imageaction", methods=['POST'])
+def imageaction():
     """
-    create/delete template
+    create/delete image
     """
     config = Kconfig()
     if 'pool' in request.form:
         pool = request.form['pool']
         action = request.form['action']
-        if action == 'create' and 'pool' in request.form and 'template' in request.form:
+        if action == 'create' and 'pool' in request.form and 'image' in request.form:
             pool = request.form['pool']
-            template = request.form['template']
+            image = request.form['image']
             url = request.form['url']
             cmd = request.form['cmd']
             if url == '':
                 url = None
             if cmd == '':
                 cmd = None
-            result = config.handle_host(pool=pool, template=template, download=True, url=url, cmd=cmd)
+            result = config.handle_host(pool=pool, image=image, download=True, url=url, cmd=cmd)
         else:
             result = "Nothing to do"
         print(result)

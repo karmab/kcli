@@ -12,34 +12,34 @@
         </thead>
         <tbody>
             {% for vm in vms %}
-            {% if vm.template is defined %}
-                {% if 'rhel' in vm.template.lower()%}
+            {% if vm.image is defined %}
+                {% if 'rhel' in vm.image.lower()%}
                     {% set logo = 'Redhat.png' %}
-                {% elif 'cfme' in vm.template.lower() %}
+                {% elif 'cfme' in vm.image.lower() %}
                     {% set logo = 'Centos.png' %}
-                {% elif 'centos' in vm.template.lower() %}
+                {% elif 'centos' in vm.image.lower() %}
                     {% set logo = 'Centos.png' %}
-                {% elif 'fedora' in vm.template.lower() %}
+                {% elif 'fedora' in vm.image.lower() %}
                     {% set logo = 'Fedora.png' %}
-                {% elif vm.template.startswith('debian') %}
+                {% elif vm.image.startswith('debian') %}
                     {% set logo = 'Debian.png' %}
-                {% elif vm.template.startswith('utopic') %}
+                {% elif vm.image.startswith('utopic') %}
                     {% set logo = 'Ubuntu.png' %}
-                {% elif vm.template.startswith('vivid') %}
+                {% elif vm.image.startswith('vivid') %}
                     {% set logo = 'Ubuntu.png' %}
-                {% elif vm.template.startswith('wily') %}
+                {% elif vm.image.startswith('wily') %}
                     {% set logo = 'Ubuntu.png' %}
-                {% elif vm.template.startswith('xenial') %}
+                {% elif vm.image.startswith('xenial') %}
                     {% set logo = 'Ubuntu.png' %}
-                {% elif vm.template.startswith('yakkety') %}
+                {% elif vm.image.startswith('yakkety') %}
                     {% set logo = 'Ubuntu.png' %}
-                {% elif vm.template.startswith('zesty') %}
+                {% elif vm.image.startswith('zesty') %}
                     {% set logo = 'Ubuntu.png' %}
-                {% elif vm.template.startswith('artful') %}
+                {% elif vm.image.startswith('artful') %}
                     {% set logo = 'Ubuntu.png' %}
-                {% elif vm.template.startswith('bionic') %}
+                {% elif vm.image.startswith('bionic') %}
                     {% set logo = 'Ubuntu.png' %}
-                {% elif vm.template.startswith('cosmic') %}
+                {% elif vm.image.startswith('cosmic') %}
                     {% set logo = 'Ubuntu.png' %}
                 {% else %}
                     {% set logo = 'Tux.png' %}
@@ -61,7 +61,7 @@
                 {% endif %}
                 <td>{{ vm.status }}</td>
                 <td>{{ vm.ip }}</td>
-                <td>{{ vm.template }}</td>
+                <td>{{ vm.image }}</td>
                 <td>{{ vm.plan }}</td>
                 <td>{{ vm.profile }}</td>
                 <td>

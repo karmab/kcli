@@ -1,0 +1,16 @@
+        <thead>
+            <tr>
+                <th>Image</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for image in images %}
+            <tr>
+                <td>{{ image }}</td>
+                <td>
+                    <button type="button" class="btn btn-default" id="create" onclick="vmcreate('', '{{ image }}');"><span data-toggle="tooltip" title="Create Vm from Image" class="glyphicon glyphicon-shopping-cart"></span></button><p>
+                </td>
+            </tr>
+            {% endfor %} 
+        </tbody>
