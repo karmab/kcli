@@ -34,7 +34,17 @@ def subparser_print_help(parser, subcommand):
                 return
 
 
-def start_vm(args):
+def get_subparser(parser, subcommand):
+    subparsers_actions = [
+        action for action in parser._actions
+        if isinstance(action, argparse._SubParsersAction)]
+    for subparsers_action in subparsers_actions:
+        for choice, subparser in subparsers_action.choices.items():
+            if choice == subcommand:
+                return subparser
+
+
+def vm_start(args):
     """Start vms"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     names = [common.get_lastvm(config.client)] if not args.names else args.names
@@ -48,7 +58,7 @@ def start_vm(args):
     os._exit(1 if 1 in codes else 0)
 
 
-def start_container(args):
+def container_start(args):
     """Start containers"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     names = [common.get_lastvm(config.client)] if not args.names else args.names
@@ -58,7 +68,7 @@ def start_container(args):
         cont.start_container(name)
 
 
-def stop_vm(args):
+def vm_stop(args):
     """Stop vms"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     names = [common.get_lastvm(config.client)] if not args.names else args.names
@@ -78,7 +88,7 @@ def stop_vm(args):
     os._exit(1 if 1 in codes else 0)
 
 
-def stop_container(args):
+def container_stop(args):
     """Stop containers"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     names = [common.get_lastvm(config.client)] if not args.names else args.names
@@ -94,7 +104,7 @@ def stop_container(args):
             cont.stop_container(name)
 
 
-def restart_vm(args):
+def vm_restart(args):
     """Restart vms"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     names = [common.get_lastvm(config.client)] if not args.names else args.names
@@ -108,7 +118,7 @@ def restart_vm(args):
     os._exit(1 if 1 in codes else 0)
 
 
-def restart_container(args):
+def container_restart(args):
     """Restart containers"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     names = [common.get_lastvm(config.client)] if not args.names else args.names
@@ -119,7 +129,7 @@ def restart_container(args):
         cont.start_container(name)
 
 
-def console_vm(args):
+def vm_console(args):
     """Vnc/Spice/Serial Vm console"""
     serial = args.serial
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -132,7 +142,7 @@ def console_vm(args):
         k.console(name=name, tunnel=tunnel)
 
 
-def console_container(args):
+def container_console(args):
     """Container console"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     name = common.get_lastvm(config.client) if not args.name else args.name
@@ -141,7 +151,7 @@ def console_container(args):
     return
 
 
-def delete_vm(args):
+def vm_delete(args):
     """Delete vm"""
     template = args.template
     snapshots = args.snapshots
@@ -195,7 +205,7 @@ def delete_vm(args):
     os._exit(1 if 1 in codes else 0)
 
 
-def delete_container(args):
+def container_delete(args):
     """Delete container"""
     yes = args.yes
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -221,7 +231,7 @@ def delete_container(args):
     os._exit(1 if 1 in codes else 0)
 
 
-def download_template(args):
+def template_download(args):
     """Download Template"""
     pool = args.pool
     templates = args.templates
@@ -235,7 +245,7 @@ def download_template(args):
         os._exit(1)
 
 
-def info_vm(args):
+def vm_info(args):
     """Get info on vm"""
     output = args.output
     fields = args.fields.split(',') if args.fields is not None else []
@@ -249,7 +259,7 @@ def info_vm(args):
             print(common.print_info(data, output=output, fields=fields, values=values, pretty=True))
 
 
-def enable_host(args):
+def host_enable(args):
     """Enable host"""
     host = args.host
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
@@ -260,7 +270,7 @@ def enable_host(args):
         os._exit(1)
 
 
-def disable_host(args):
+def host_disable(args):
     """Disable host"""
     host = args.host
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
@@ -271,7 +281,7 @@ def disable_host(args):
         os._exit(1)
 
 
-def sync_host(args):
+def host_sync(args):
     """Handle host"""
     hosts = args.hosts
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -282,7 +292,7 @@ def sync_host(args):
         os._exit(1)
 
 
-def list_vm(args):
+def vm_list(args):
     """List vms"""
     filters = args.filters
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -332,7 +342,7 @@ def list_vm(args):
     return
 
 
-def list_container(args):
+def container_list(args):
     """List containers"""
     filters = args.filters
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -350,7 +360,7 @@ def list_container(args):
     return
 
 
-def profilelist_container(args):
+def container_profilelist(args):
     """List container profiles"""
     short = args.short
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
@@ -369,7 +379,7 @@ def profilelist_container(args):
     return
 
 
-def imagelist_container(args):
+def container_imagelist(args):
     """List container images"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.type != 'kvm':
@@ -384,7 +394,7 @@ def imagelist_container(args):
     return
 
 
-def list_host(args):
+def host_list(args):
     """List hosts"""
     clientstable = PrettyTable(["Client", "Type", "Enabled", "Current"])
     clientstable.align["Client"] = "l"
@@ -400,7 +410,7 @@ def list_host(args):
     return
 
 
-def list_lb(args):
+def lb_list(args):
     """List lbs"""
     short = args.short
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -418,7 +428,7 @@ def list_lb(args):
     return
 
 
-def list_profile(args):
+def profile_list(args):
     """List profiles"""
     short = args.short
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
@@ -440,7 +450,7 @@ def list_profile(args):
     return
 
 
-def list_flavor(args):
+def flavor_list(args):
     """List flavors"""
     short = args.short
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -460,7 +470,7 @@ def list_flavor(args):
     return
 
 
-def list_template(args):
+def template_list(args):
     """List templates"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.client != 'all':
@@ -473,7 +483,7 @@ def list_template(args):
     return
 
 
-def list_iso(args):
+def iso_list(args):
     """List isos"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.client != 'all':
@@ -486,7 +496,7 @@ def list_iso(args):
     return
 
 
-def list_network(args):
+def network_list(args):
     """List networks"""
     short = args.short
     subnets = args.subnets
@@ -537,7 +547,7 @@ def list_network(args):
         return
 
 
-def list_plan(args):
+def plan_list(args):
     """List plans"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.extraclients:
@@ -561,7 +571,7 @@ def list_plan(args):
     return
 
 
-def list_pool(args):
+def pool_list(args):
     """List pools"""
     short = args.short
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -581,7 +591,7 @@ def list_pool(args):
     return
 
 
-def list_product(args):
+def product_list(args):
     """List products"""
     group = args.group
     repo = args.repo
@@ -601,7 +611,7 @@ def list_product(args):
     return
 
 
-def list_repo(args):
+def repo_list(args):
     """List repos"""
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     repos = PrettyTable(["Repo", "Url"])
@@ -614,7 +624,7 @@ def list_repo(args):
     return
 
 
-def disklist_vm(args):
+def vm_disklist(args):
     """List vm disks"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
@@ -630,7 +640,7 @@ def disklist_vm(args):
     return
 
 
-def create_vm(args):
+def vm_create(args):
     """Create vms"""
     name = args.name
     profile = args.profile
@@ -659,7 +669,7 @@ def create_vm(args):
     return code
 
 
-def clone_vm(args):
+def vm_clone(args):
     """Clone existing vm"""
     name = args.name
     base = args.base
@@ -671,7 +681,7 @@ def clone_vm(args):
     k.clone(base, name, full=full, start=start)
 
 
-def update_vm(args):
+def vm_update(args):
     """Update ip, memory or numcpus"""
     ip1 = args.ip1
     flavor = args.flavor
@@ -748,7 +758,7 @@ def update_vm(args):
             k.reserve_host(name, nets, domain)
 
 
-def create_vmdisk(args):
+def vm_diskadd(args):
     """Add disk to vm"""
     name = args.name
     size = args.size
@@ -769,7 +779,7 @@ def create_vmdisk(args):
     k.add_disk(name=name, size=size, pool=pool, template=template)
 
 
-def diskdelete_vm(args):
+def vm_diskdelete(args):
     """Delete disk of vm"""
     name = args.name
     diskname = args.diskname
@@ -784,7 +794,7 @@ def diskdelete_vm(args):
     return
 
 
-def create_dns(args):
+def dns_create(args):
     """Create dns entries"""
     name = args.name
     net = args.net
@@ -796,7 +806,7 @@ def create_dns(args):
     k.reserve_dns(name=name, nets=[net], domain=domain, ip=ip)
 
 
-def delete_dns(args):
+def dns_delete(args):
     """Delete dns entries"""
     name = args.name
     net = args.net
@@ -807,7 +817,7 @@ def delete_dns(args):
     k.delete_dns(name, domain)
 
 
-def export_vm(args):
+def vm_export(args):
     """Export a vm"""
     template = args.template
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -826,7 +836,7 @@ def export_vm(args):
     os._exit(1 if 1 in codes else 0)
 
 
-def create_lb(args):
+def lb_create(args):
     """Create loadbalancer"""
     checkpath = args.checkpath
     checkport = args.checkport
@@ -842,7 +852,7 @@ def create_lb(args):
     return 0
 
 
-def delete_lb(args):
+def lb_delete(args):
     """Delete loadbalancer"""
     checkpath = args.checkpath
     checkport = args.checkport
@@ -861,7 +871,7 @@ def delete_lb(args):
     return 0
 
 
-def add_nic(args):
+def nic_add(args):
     """Add nic to vm"""
     name = args.name
     network = args.network
@@ -874,7 +884,7 @@ def add_nic(args):
     k.add_nic(name=name, network=network)
 
 
-def delete_nic(args):
+def nic_delete(args):
     """Delete nic of vm"""
     name = args.name
     interface = args.interface
@@ -885,7 +895,7 @@ def delete_nic(args):
     return
 
 
-def create_pool(args):
+def pool_create(args):
     """Create/Delete pool"""
     pool = args.pool
     pooltype = args.pooltype
@@ -900,7 +910,7 @@ def create_pool(args):
     k.create_pool(name=pool, poolpath=path, pooltype=pooltype, thinpool=thinpool)
 
 
-def delete_pool(args):
+def pool_delete(args):
     """Delete pool"""
     pool = args.pool
     full = args.full
@@ -911,7 +921,7 @@ def delete_pool(args):
     return
 
 
-def create_plan(args):
+def plan_create(args):
     """Create plan"""
     plan = args.plan
     ansible = args.ansible
@@ -937,7 +947,7 @@ def create_plan(args):
     return 0
 
 
-def update_plan(args):
+def plan_update(args):
     """Update plan"""
     plan = args.plan
     url = args.url
@@ -959,7 +969,7 @@ def update_plan(args):
     return 0
 
 
-def delete_plan(args):
+def plan_delete(args):
     """Delete plan"""
     plan = args.plan
     yes = args.yes
@@ -970,7 +980,7 @@ def delete_plan(args):
     return 0
 
 
-def start_plan(args):
+def plan_start(args):
     """Start plan"""
     plan = args.plan
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -978,7 +988,7 @@ def start_plan(args):
     return 0
 
 
-def stop_plan(args):
+def plan_stop(args):
     """Stop plan"""
     plan = args.plan
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -986,7 +996,7 @@ def stop_plan(args):
     return 0
 
 
-def autostart_plan(args):
+def plan_autostart(args):
     """Autostart plan"""
     plan = args.plan
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -994,7 +1004,7 @@ def autostart_plan(args):
     return 0
 
 
-def noautostart_plan(args):
+def plan_noautostart(args):
     """Noautostart plan"""
     plan = args.plan
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -1002,7 +1012,7 @@ def noautostart_plan(args):
     return 0
 
 
-def restart_plan(args):
+def plan_restart(args):
     """Restart plan"""
     plan = args.plan
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -1010,7 +1020,7 @@ def restart_plan(args):
     return 0
 
 
-def desc_plan(args):
+def plan_desc(args):
     """Info plan """
     plan = args.plan
     url = args.url
@@ -1030,7 +1040,7 @@ def desc_plan(args):
     return 0
 
 
-def render_plan(args):
+def plan_render(args):
     """Render plan file"""
     plan = None
     inputfile = args.inputfile
@@ -1047,7 +1057,7 @@ def render_plan(args):
     return 0
 
 
-def snapshot_plan(args):
+def plan_snapshot(args):
     """Snapshot plan"""
     plan = args.plan
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -1055,7 +1065,7 @@ def snapshot_plan(args):
     return 0
 
 
-def revert_plan(args):
+def plan_revert(args):
     """Revert snapshot of plan"""
     plan = args.plan
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -1063,7 +1073,7 @@ def revert_plan(args):
     return 0
 
 
-def create_repo(args):
+def repo_create(args):
     """Create repo"""
     repo = args.repo
     url = args.url
@@ -1079,7 +1089,7 @@ def create_repo(args):
     return 0
 
 
-def delete_repo(args):
+def repo_delete(args):
     """Delete repo"""
     repo = args.repo
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
@@ -1091,7 +1101,7 @@ def delete_repo(args):
     return
 
 
-def update_repo(args):
+def repo_update(args):
     """Update repo"""
     repo = args.repo
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
@@ -1107,7 +1117,7 @@ def update_repo(args):
     return
 
 
-def create_product(args):
+def product_create(args):
     """Create product"""
     repo = args.repo
     product = args.product
@@ -1148,7 +1158,7 @@ def create_product(args):
     return 0
 
 
-def ssh_vm(args):
+def vm_ssh(args):
     """Ssh into vm"""
     l = args.L
     r = args.R
@@ -1183,7 +1193,7 @@ def ssh_vm(args):
         common.pprint("Couldnt ssh to %s" % name, color='red')
 
 
-def scp_vm(args):
+def vm_scp(args):
     """Scp into vm"""
     recursive = args.recursive
     volumepath = args.volumepath
@@ -1217,7 +1227,7 @@ def scp_vm(args):
         common.pprint("Couldn't run scp", color='red')
 
 
-def create_network(args):
+def network_create(args):
     """Create Network"""
     name = args.name
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
@@ -1239,7 +1249,7 @@ def create_network(args):
     common.handle_response(result, name, element='Network ')
 
 
-def delete_network(args):
+def network_delete(args):
     """Delete Network"""
     name = args.name
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -1251,7 +1261,7 @@ def delete_network(args):
     common.handle_response(result, name, element='Network ', action='deleted')
 
 
-def bootstrap_host(args):
+def host_bootstrap(args):
     """Generate basic config file"""
     name = args.name
     host = args.host
@@ -1265,7 +1275,7 @@ def bootstrap_host(args):
     baseconfig.bootstrap(name, host, port, user, protocol, url, pool, poolpath)
 
 
-def create_container(args):
+def container_create(args):
     """Create container"""
     name = args.name
     profile = args.profile
@@ -1300,7 +1310,7 @@ def create_container(args):
     return
 
 
-def snapshotcreate_vm(args):
+def vm_snapshotcreate(args):
     """Create snapshot"""
     snapshot = args.snapshot
     name = args.name
@@ -1312,7 +1322,7 @@ def snapshotcreate_vm(args):
     return code
 
 
-def snapshotdelete_vm(args):
+def vm_snapshotdelete(args):
     """Delete snapshot"""
     snapshot = args.snapshot
     name = args.name
@@ -1324,7 +1334,7 @@ def snapshotdelete_vm(args):
     return code
 
 
-def snapshotrevert_vm(args):
+def vm_snapshotrevert(args):
     """Revert snapshot of vm"""
     snapshot = args.snapshot
     name = args.name
@@ -1336,7 +1346,7 @@ def snapshotrevert_vm(args):
     return code
 
 
-def snapshotlist_vm(args):
+def vm_snapshotlist(args):
     """List snapshots of vm"""
     snapshot = args.snapshot
     name = args.name
@@ -1353,14 +1363,14 @@ def snapshotlist_vm(args):
     return
 
 
-def report_host(args):
+def host_report(args):
     """Report info about host"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     k.report()
 
 
-def switch_host(args):
+def host_switch(args):
     """Handle host"""
     host = args.host
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
@@ -1387,183 +1397,93 @@ def cli():
 
     subparsers = parser.add_subparsers(metavar='')
 
-    # subcommands
-    autostart_desc = 'Autostart'
-    autostart_parser = subparsers.add_parser('autostart', description=autostart_desc, help=autostart_desc)
-    autostart_subparsers = autostart_parser.add_subparsers(metavar='', dest='subcommand_autostart')
+    container_desc = 'Containers/Pods'
+    container_parser = subparsers.add_parser('container', description=container_desc, help=container_desc)
+    container_subparsers = container_parser.add_subparsers(metavar='', dest='subcommand_container')
 
-    bootstrap_desc = 'Bootstrap'
-    bootstrap_parser = subparsers.add_parser('bootstrap', description=bootstrap_desc, help=bootstrap_desc)
-    bootstrap_subparsers = bootstrap_parser.add_subparsers(metavar='', dest='subcommand_bootstrap')
-
-    clone_desc = 'Clone'
-    clone_parser = subparsers.add_parser('clone', description=clone_desc, help=clone_desc)
-    clone_subparsers = clone_parser.add_subparsers(metavar='', dest='subcommand_clone')
-
-    console_desc = 'Console'
-    console_parser = subparsers.add_parser('console', description=console_desc, help=console_desc)
-    console_subparsers = console_parser.add_subparsers(metavar='', dest='subcommand_console')
-
-    create_desc = 'Create'
-    create_parser = subparsers.add_parser('create', description=create_desc, help=create_desc)
-    create_subparsers = create_parser.add_subparsers(metavar='', dest='subcommand_create')
-
-    delete_desc = 'Delete'
-    delete_parser = subparsers.add_parser('delete', description=delete_desc, help=delete_desc)
-    delete_subparsers = delete_parser.add_subparsers(metavar='', dest='subcommand_delete')
-
-    disable_desc = 'Disable'
-    disable_parser = subparsers.add_parser('disable', description=disable_desc, help=disable_desc)
-    disable_subparsers = disable_parser.add_subparsers(metavar='', dest='subcommand_disable')
-
-    download_desc = 'Download'
-    download_parser = subparsers.add_parser('download', description=download_desc, help=download_desc)
-    download_subparsers = download_parser.add_subparsers(metavar='', dest='subcommand_download')
-
-    enable_desc = 'Enable'
-    enable_parser = subparsers.add_parser('enable', description=enable_desc, help=enable_desc)
-    enable_subparsers = enable_parser.add_subparsers(metavar='', dest='subcommand_enable')
-
-    export_desc = 'Export'
-    export_parser = subparsers.add_parser('export', description=export_desc, help=export_desc)
-    export_subparsers = export_parser.add_subparsers(metavar='', dest='subcommand_export')
-
-    info_desc = 'Info'
-    info_parser = subparsers.add_parser('info', description=info_desc, help=info_desc)
-    info_subparsers = info_parser.add_subparsers(metavar='', dest='subcommand_info')
-
-    list_desc = 'List'
-    list_parser = subparsers.add_parser('list', description=list_desc, help=list_desc)
-    list_subparsers = list_parser.add_subparsers(metavar='', dest='subcommand_list')
-
-    noautostart_desc = 'NoAutostart'
-    noautostart_parser = subparsers.add_parser('noautostart', description=noautostart_desc, help=noautostart_desc)
-    noautostart_subparsers = noautostart_parser.add_subparsers(metavar='', dest='subcommand_noautostart')
-
-    render_desc = 'Render'
-    render_parser = subparsers.add_parser('render', description=render_desc, help=render_desc)
-    render_subparsers = render_parser.add_subparsers(metavar='', dest='subcommand_render')
-
-    report_desc = 'Report'
-    report_parser = subparsers.add_parser('report', description=report_desc, help=report_desc)
-    report_subparsers = report_parser.add_subparsers(metavar='', dest='subcommand_report')
-
-    restart_desc = 'Restart'
-    restart_parser = subparsers.add_parser('restart', description=restart_desc, help=restart_desc)
-    restart_subparsers = restart_parser.add_subparsers(metavar='', dest='subcommand_restart')
-
-    revert_desc = 'Revert'
-    revert_parser = subparsers.add_parser('revert', description=revert_desc, help=revert_desc)
-    revert_subparsers = revert_parser.add_subparsers(metavar='', dest='subcommand_revert')
-
-    scp_desc = 'Scp'
-    scp_parser = subparsers.add_parser('scp', description=scp_desc, help=scp_desc)
-    scp_subparsers = scp_parser.add_subparsers(metavar='', dest='subcommand_scp')
-
-    snapshot_desc = 'Snapshot'
-    snapshot_parser = subparsers.add_parser('snapshot', description=snapshot_desc, help=snapshot_desc)
-    snapshot_subparsers = snapshot_parser.add_subparsers(metavar='', dest='subcommand_snapshot')
-
-    ssh_desc = 'Ssh'
-    ssh_parser = subparsers.add_parser('ssh', description=ssh_desc, help=ssh_desc)
-    ssh_subparsers = ssh_parser.add_subparsers(metavar='', dest='subcommand_ssh')
-
-    start_desc = 'Start'
-    start_parser = subparsers.add_parser('start', description=start_desc, help=start_desc)
-    start_subparsers = start_parser.add_subparsers(metavar='', dest='subcommand_start')
-
-    stop_desc = 'Start'
-    stop_parser = subparsers.add_parser('stop', description=stop_desc, help=stop_desc)
-    stop_subparsers = stop_parser.add_subparsers(metavar='', dest='subcommand_stop')
-
-    switch_desc = 'Switch'
-    switch_parser = subparsers.add_parser('switch', description=switch_desc, help=switch_desc)
-    switch_subparsers = switch_parser.add_subparsers(metavar='', dest='subcommand_switch')
-
-    sync_desc = 'Sync'
-    sync_parser = subparsers.add_parser('sync', description=sync_desc, help=sync_desc)
-    sync_subparsers = sync_parser.add_subparsers(metavar='', dest='subcommand_sync')
-
-    update_desc = 'Update'
-    update_parser = subparsers.add_parser('update', description=update_desc, help=update_desc)
-    update_subparsers = update_parser.add_subparsers(metavar='', dest='subcommand_update')
-
-    # sub subcommands
-    containerconsole_desc = 'Console Container'
-    containerconsole_parser = console_subparsers.add_parser('container', description=containerconsole_desc,
-                                                            help=containerconsole_desc)
+    containerconsole_desc = 'Container Console'
+    containerconsole_parser = container_subparsers.add_parser('console', description=containerconsole_desc,
+                                                              help=containerconsole_desc)
     containerconsole_parser.add_argument('name', metavar='CONTAINERNAME', nargs='?')
-    containerconsole_parser.set_defaults(func=console_container)
+    containerconsole_parser.set_defaults(func=container_console)
 
     containercreate_desc = 'Create Container'
-    containercreate_parser = create_subparsers.add_parser('container', description=containercreate_desc,
-                                                          help=containercreate_desc)
+    containercreate_parser = container_subparsers.add_parser('create', description=containercreate_desc,
+                                                             help=containercreate_desc)
     containercreate_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
     containercreate_parser.add_argument('-P', '--param', action='append',
                                         help='specify parameter or keyword for rendering (can specify multiple)',
                                         metavar='PARAM')
     containercreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
     containercreate_parser.add_argument('name', metavar='NAME', nargs='?')
-    containercreate_parser.set_defaults(func=create_container)
+    containercreate_parser.set_defaults(func=container_create)
 
     containerdelete_desc = 'Delete Container'
-    containerdelete_parser = delete_subparsers.add_parser('container', description=containerdelete_desc,
-                                                          help=containerdelete_desc)
+    containerdelete_parser = container_subparsers.add_parser('delete', description=containerdelete_desc,
+                                                             help=containerdelete_desc)
     containerdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     containerdelete_parser.add_argument('names', metavar='VMNAMES', nargs='*')
-    containerdelete_parser.set_defaults(func=delete_container)
+    containerdelete_parser.set_defaults(func=container_delete)
 
     containerimagelist_desc = 'List Container Images'
-    containerimagelist_parser = list_subparsers.add_parser('container-image', description=containerimagelist_desc,
-                                                           help=containerimagelist_desc)
-    containerimagelist_parser.set_defaults(func=imagelist_container)
+    containerimagelist_parser = container_subparsers.add_parser('image-list', description=containerimagelist_desc,
+                                                                help=containerimagelist_desc)
+    containerimagelist_parser.set_defaults(func=container_imagelist)
 
     containerlist_desc = 'List Containers'
-    containerlist_parser = list_subparsers.add_parser('container', description=containerlist_desc,
-                                                      help=containerlist_desc)
+    containerlist_parser = container_subparsers.add_parser('list', description=containerlist_desc,
+                                                           help=containerlist_desc)
     containerlist_parser.add_argument('--filters', choices=('up', 'down'))
-    containerlist_parser.set_defaults(func=list_container)
+    containerlist_parser.set_defaults(func=container_list)
 
     containerprofilelist_desc = 'List Container Profiles'
-    containerprofilelist_parser = list_subparsers.add_parser('list', description=containerprofilelist_desc,
-                                                             help=containerprofilelist_desc)
+    containerprofilelist_parser = container_subparsers.add_parser('profile-list', description=containerprofilelist_desc,
+                                                                  help=containerprofilelist_desc)
     containerprofilelist_parser.add_argument('--short', action='store_true')
-    containerprofilelist_parser.set_defaults(func=profilelist_container)
+    containerprofilelist_parser.set_defaults(func=container_profilelist)
 
     containerrestart_desc = 'Restart Containers'
-    containerrestart_parser = restart_subparsers.add_parser('container', description=containerrestart_desc,
-                                                            help=containerrestart_desc)
+    containerrestart_parser = container_subparsers.add_parser('restart', description=containerrestart_desc,
+                                                              help=containerrestart_desc)
     containerrestart_parser.add_argument('names', metavar='CONTAINERNAMES', nargs='*')
-    containerrestart_parser.set_defaults(func=restart_container)
+    containerrestart_parser.set_defaults(func=container_restart)
 
     containerstart_desc = 'Start Containers'
-    containerstart_parser = start_subparsers.add_parser('container', description=containerstart_desc,
-                                                        help=containerstart_desc)
+    containerstart_parser = container_subparsers.add_parser('start', description=containerstart_desc,
+                                                            help=containerstart_desc)
     containerstart_parser.add_argument('names', metavar='VMNAMES', nargs='*')
-    containerstart_parser.set_defaults(func=start_container)
+    containerstart_parser.set_defaults(func=container_start)
 
     containerstop_desc = 'Stop Containers'
-    containerstop_parser = stop_subparsers.add_parser('container', description=containerstop_desc,
-                                                      help=containerstop_desc)
+    containerstop_parser = container_subparsers.add_parser('stop', description=containerstop_desc,
+                                                           help=containerstop_desc)
     containerstop_parser.add_argument('names', metavar='CONTAINERNAMES', nargs='*')
-    containerstop_parser.set_defaults(func=stop_container)
+    containerstop_parser.set_defaults(func=container_stop)
+
+    dns_desc = 'Dns Entries'
+    dns_parser = subparsers.add_parser('dns', description=dns_desc, help=dns_desc)
+    dns_subparsers = dns_parser.add_subparsers(metavar='', dest='subcommand_dns')
 
     dnscreate_desc = 'Create Dns Entries'
-    dnscreate_parser = create_subparsers.add_parser('dns', description=dnscreate_desc, help=dnscreate_desc)
+    dnscreate_parser = dns_subparsers.add_parser('create', description=dnscreate_desc, help=dnscreate_desc)
     dnscreate_parser.add_argument('-n', '--net', help='Domain where to create entry', metavar='NET')
     dnscreate_parser.add_argument('-i', '--ip', help='Ip', metavar='IP')
     dnscreate_parser.add_argument('name', metavar='NAME', nargs='?')
-    dnscreate_parser.set_defaults(func=create_dns)
+    dnscreate_parser.set_defaults(func=dns_create)
 
     dnsdelete_desc = 'Delete Dns Entries'
-    dnsdelete_parser = delete_subparsers.add_parser('dns', description=dnsdelete_desc, help=dnsdelete_desc)
+    dnsdelete_parser = dns_subparsers.add_parser('delete', description=dnsdelete_desc, help=dnsdelete_desc)
     dnsdelete_parser.add_argument('-n', '--net', help='Domain where to create entry', metavar='NET')
     dnsdelete_parser.add_argument('name', metavar='NAME', nargs='?')
-    dnsdelete_parser.set_defaults(func=delete_dns)
+    dnsdelete_parser.set_defaults(func=dns_delete)
+
+    host_desc = 'Hosts/Clients'
+    host_parser = subparsers.add_parser('host', description=host_desc, help=host_desc)
+    host_subparsers = host_parser.add_subparsers(metavar='', dest='subcommand_host')
 
     hostbootstrap_desc = 'Generate Config File'
-    hostbootstrap_parser = bootstrap_subparsers.add_parser('host', help=hostbootstrap_desc,
-                                                           description=hostbootstrap_desc)
+    hostbootstrap_parser = host_subparsers.add_parser('bootstrap', help=hostbootstrap_desc,
+                                                      description=hostbootstrap_desc)
     hostbootstrap_parser.add_argument('-n', '--name', help='Name to use', metavar='CLIENT')
     hostbootstrap_parser.add_argument('-H', '--host', help='Host to use', metavar='HOST')
     hostbootstrap_parser.add_argument('-p', '--port', help='Port to use', metavar='PORT')
@@ -1572,40 +1492,44 @@ def cli():
     hostbootstrap_parser.add_argument('-U', '--url', help='URL to use', metavar='URL')
     hostbootstrap_parser.add_argument('--pool', help='Pool to use', metavar='POOL')
     hostbootstrap_parser.add_argument('--poolpath', help='Pool Path to use', metavar='POOLPATH')
-    hostbootstrap_parser.set_defaults(func=bootstrap_host)
+    hostbootstrap_parser.set_defaults(func=host_bootstrap)
 
     hostdisable_desc = 'Disable Host'
-    hostdisable_parser = disable_subparsers.add_parser('host', description=hostdisable_desc, help=hostdisable_desc)
+    hostdisable_parser = host_subparsers.add_parser('disable', description=hostdisable_desc, help=hostdisable_desc)
     hostdisable_parser.add_argument('host', metavar='HOST', nargs='?')
-    hostdisable_parser.set_defaults(func=disable_host)
+    hostdisable_parser.set_defaults(func=host_disable)
 
     hostenable_desc = 'Enable Host'
-    hostenable_parser = enable_subparsers.add_parser('host', description=hostenable_desc, help=hostenable_desc)
+    hostenable_parser = host_subparsers.add_parser('enable', description=hostenable_desc, help=hostenable_desc)
     hostenable_parser.add_argument('host', metavar='HOST', nargs='?')
-    hostenable_parser.set_defaults(func=enable_host)
+    hostenable_parser.set_defaults(func=host_enable)
 
     hostlist_desc = 'List Hosts'
-    hostlist_parser = list_subparsers.add_parser('host', description=hostlist_desc, help=hostlist_desc)
-    hostlist_parser.set_defaults(func=list_host)
+    hostlist_parser = host_subparsers.add_parser('list', description=hostlist_desc, help=hostlist_desc)
+    hostlist_parser.set_defaults(func=host_list)
 
     hostreport_desc = 'Report Info About Host'
     hostreport_parser = argparse.ArgumentParser(add_help=False)
-    hostreport_parser.set_defaults(func=report_host)
-    report_subparsers.add_parser('host', parents=[hostreport_parser], description=hostreport_desc, help=hostreport_desc)
+    hostreport_parser.set_defaults(func=host_report)
+    host_subparsers.add_parser('report', parents=[hostreport_parser], description=hostreport_desc, help=hostreport_desc)
 
     hostswitch_desc = 'Switch Host'
     hostswitch_parser = argparse.ArgumentParser(add_help=False)
     hostswitch_parser.add_argument('host', help='HOST')
-    hostswitch_parser.set_defaults(func=switch_host)
-    switch_subparsers.add_parser('host', parents=[hostswitch_parser], description=hostswitch_desc, help=hostswitch_desc)
+    hostswitch_parser.set_defaults(func=host_switch)
+    host_subparsers.add_parser('switch', parents=[hostswitch_parser], description=hostswitch_desc, help=hostswitch_desc)
 
     hostsync_desc = 'Sync Host'
-    hostsync_parser = sync_subparsers.add_parser('host', description=hostsync_desc, help=hostsync_desc)
+    hostsync_parser = host_subparsers.add_parser('sync', description=hostsync_desc, help=hostsync_desc)
     hostsync_parser.add_argument('hosts', help='HOSTS', nargs='*')
-    hostsync_parser.set_defaults(func=sync_host)
+    hostsync_parser.set_defaults(func=host_sync)
+
+    lb_desc = 'Load Balancers'
+    lb_parser = subparsers.add_parser('lb', description=lb_desc, help=lb_desc)
+    lb_subparsers = lb_parser.add_subparsers(metavar='', dest='subcommand_lb')
 
     lbcreate_desc = 'Create Load Balancer'
-    lbcreate_parser = create_subparsers.add_parser('lb', description=lbcreate_desc, help=lbcreate_desc)
+    lbcreate_parser = lb_subparsers.add_parser('create', description=lbcreate_desc, help=lbcreate_desc)
     lbcreate_parser.add_argument('--checkpath', default='/index.html', help="Path to check. Defaults to /index.html")
     lbcreate_parser.add_argument('--checkport', default=80, help="Port to check. Defaults to 80")
     lbcreate_parser.add_argument('--domain', help='Domain to create a dns entry associated to the load balancer')
@@ -1613,10 +1537,10 @@ def cli():
     lbcreate_parser.add_argument('-p', '--ports', default='443', help='Load Balancer Ports. Defaults to 443')
     lbcreate_parser.add_argument('-v', '--vms', help='Vms to add to the pool')
     lbcreate_parser.add_argument('name', metavar='NAME', nargs='?')
-    lbcreate_parser.set_defaults(func=create_lb)
+    lbcreate_parser.set_defaults(func=lb_create)
 
     lbdelete_desc = 'Delete Load Balancer'
-    lbdelete_parser = delete_subparsers.add_parser('lb', description=lbdelete_desc, help=lbdelete_desc)
+    lbdelete_parser = lb_subparsers.add_parser('delete', description=lbdelete_desc, help=lbdelete_desc)
     lbdelete_parser.add_argument('--checkpath', default='/index.html', help="Path to check. Defaults to /index.html")
     lbdelete_parser.add_argument('--checkport', default=80, help="Port to check. Defaults to 80")
     lbdelete_parser.add_argument('-d', '--delete', action='store_true')
@@ -1626,36 +1550,52 @@ def cli():
     lbdelete_parser.add_argument('-v', '--vms', help='Vms to add to the pool')
     lbdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     lbdelete_parser.add_argument('name', metavar='NAME', nargs='?')
-    lbdelete_parser.set_defaults(func=delete_lb)
+    lbdelete_parser.set_defaults(func=lb_delete)
 
     lblist_desc = 'List Load Balancers'
-    lblist_parser = list_subparsers.add_parser('lb', description=lblist_desc, help=lblist_desc)
+    lblist_parser = lb_subparsers.add_parser('list', description=lblist_desc, help=lblist_desc)
     lblist_parser.add_argument('--short', action='store_true')
-    lblist_parser.set_defaults(func=list_lb)
+    lblist_parser.set_defaults(func=lb_list)
+
+    profile_desc = 'Profiles'
+    profile_parser = subparsers.add_parser('profile', description=profile_desc, help=profile_desc)
+    profile_subparsers = profile_parser.add_subparsers(metavar='', dest='profile_container')
 
     profilelist_desc = 'List Profiles'
-    profilelist_parser = list_subparsers.add_parser('profile', description=profilelist_desc, help=profilelist_desc)
+    profilelist_parser = profile_subparsers.add_parser('list', description=profilelist_desc, help=profilelist_desc)
     profilelist_parser.add_argument('--short', action='store_true')
-    profilelist_parser.set_defaults(func=list_profile)
+    profilelist_parser.set_defaults(func=profile_list)
+
+    flavor_desc = 'Flavors'
+    flavor_parser = subparsers.add_parser('flavor', description=flavor_desc, help=flavor_desc)
+    flavor_subparsers = flavor_parser.add_subparsers(metavar='', dest='subcommand_flavor')
 
     flavorlist_desc = 'List Flavors'
-    flavorlist_parser = list_subparsers.add_parser('flavor', description=flavorlist_desc, help=flavorlist_desc)
+    flavorlist_parser = flavor_subparsers.add_parser('list', description=flavorlist_desc, help=flavorlist_desc)
     flavorlist_parser.add_argument('--short', action='store_true')
-    flavorlist_parser.set_defaults(func=list_flavor)
+    flavorlist_parser.set_defaults(func=flavor_list)
+
+    iso_desc = 'Isos'
+    iso_parser = subparsers.add_parser('iso', description=iso_desc, help=iso_desc)
+    iso_subparsers = iso_parser.add_subparsers(metavar='', dest='subcommand_iso')
 
     isolist_desc = 'List Isos'
-    isolist_parser = list_subparsers.add_parser('iso', description=isolist_desc, help=isolist_desc)
-    isolist_parser.set_defaults(func=list_iso)
+    isolist_parser = iso_subparsers.add_parser('list', description=isolist_desc, help=isolist_desc)
+    isolist_parser.set_defaults(func=iso_list)
+
+    network_desc = 'Networks And Subnets'
+    network_parser = subparsers.add_parser('network', description=network_desc, help=network_desc)
+    network_subparsers = network_parser.add_subparsers(metavar='', dest='subcommand_network')
 
     networklist_desc = 'List Networks'
-    networklist_parser = list_subparsers.add_parser('network', description=networklist_desc, help=networklist_desc)
+    networklist_parser = network_subparsers.add_parser('list', description=networklist_desc, help=networklist_desc)
     networklist_parser.add_argument('--short', action='store_true')
     networklist_parser.add_argument('-s', '--subnets', action='store_true')
-    networklist_parser.set_defaults(func=list_network)
+    networklist_parser.set_defaults(func=network_list)
 
     networkcreate_desc = 'Create Network'
-    networkcreate_parser = create_subparsers.add_parser('network', description=networkcreate_desc,
-                                                        help=networkcreate_desc)
+    networkcreate_parser = network_subparsers.add_parser('create', description=networkcreate_desc,
+                                                         help=networkcreate_desc)
     networkcreate_parser.add_argument('-i', '--isolated', action='store_true', help='Isolated Network')
     networkcreate_parser.add_argument('-c', '--cidr', help='Cidr of the net', metavar='CIDR')
     networkcreate_parser.add_argument('--nodhcp', action='store_true', help='Disable dhcp on the net')
@@ -1665,22 +1605,26 @@ def cli():
                                       metavar='PARAM')
     networkcreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
     networkcreate_parser.add_argument('name', metavar='NETWORK')
-    networkcreate_parser.set_defaults(func=create_network)
+    networkcreate_parser.set_defaults(func=network_create)
 
     networkdelete_desc = 'Delete Network'
-    networkdelete_parser = delete_subparsers.add_parser('network', description=networkdelete_desc,
-                                                        help=networkdelete_desc)
+    networkdelete_parser = network_subparsers.add_parser('delete', description=networkdelete_desc,
+                                                         help=networkdelete_desc)
     networkdelete_parser.add_argument('name', metavar='NETWORK')
-    networkdelete_parser.set_defaults(func=delete_network)
+    networkdelete_parser.set_defaults(func=network_delete)
+
+    plan_desc = 'Plan Files'
+    plan_parser = subparsers.add_parser('plan', description=plan_desc, help=plan_desc)
+    plan_subparsers = plan_parser.add_subparsers(metavar='', dest='subcommand_plan')
 
     planautostart_desc = 'Autostart Plan'
-    planautostart_parser = autostart_subparsers.add_parser('plan', description=planautostart_desc,
-                                                           help=planautostart_desc)
+    planautostart_parser = plan_subparsers.add_parser('autostart', description=planautostart_desc,
+                                                      help=planautostart_desc)
     planautostart_parser.add_argument('plan', metavar='PLAN', nargs='?')
-    planautostart_parser.set_defaults(func=autostart_plan)
+    planautostart_parser.set_defaults(func=plan_autostart)
 
     plancreate_desc = 'Create Plan'
-    plancreate_parser = create_subparsers.add_parser('plan', description=plancreate_desc, help=plancreate_desc)
+    plancreate_parser = plan_subparsers.add_parser('create', description=plancreate_desc, help=plancreate_desc)
     plancreate_parser.add_argument('-A', '--ansible', help='Generate ansible inventory', action='store_true')
     plancreate_parser.add_argument('-u', '--url', help='Url for plan', metavar='URL')
     plancreate_parser.add_argument('-p', '--path', help='Path where to download plans. Defaults to plan',
@@ -1694,72 +1638,72 @@ def cli():
                                    help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
     plancreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
     plancreate_parser.add_argument('plan', metavar='PLAN', nargs='?')
-    plancreate_parser.set_defaults(func=create_plan)
+    plancreate_parser.set_defaults(func=plan_create)
 
     plandelete_desc = 'Delete Plan'
-    plandelete_parser = delete_subparsers.add_parser('plan', description=plandelete_desc, help=plandelete_desc)
+    plandelete_parser = plan_subparsers.add_parser('delete', description=plandelete_desc, help=plandelete_desc)
     plandelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     plandelete_parser.add_argument('plan', metavar='PLAN', nargs='?')
-    plandelete_parser.set_defaults(func=delete_plan)
+    plandelete_parser.set_defaults(func=plan_delete)
 
     planinfo_desc = 'Info Plan'
-    planinfo_parser = info_subparsers.add_parser('plan', description=plandelete_desc, help=planinfo_desc)
+    planinfo_parser = plan_subparsers.add_parser('info', description=plandelete_desc, help=planinfo_desc)
     planinfo_parser.add_argument('-f', '--inputfile', help='Input Plan file')
     planinfo_parser.add_argument('-p', '--path', help='Path where to download plans. Defaults to plan', metavar='PATH')
     planinfo_parser.add_argument('-u', '--url', help='Url for plan', metavar='URL')
     planinfo_parser.add_argument('-v', '--volumepath', help='Volume Path (only used with kcli container)',
                                  default='/workdir', metavar='VOLUMEPATH')
     planinfo_parser.add_argument('plan', metavar='PLAN', nargs='?')
-    planinfo_parser.set_defaults(func=desc_plan)
+    planinfo_parser.set_defaults(func=plan_desc)
 
     planlist_desc = 'List Plans'
-    planlist_parser = list_subparsers.add_parser('plan', description=planlist_desc, help=planlist_desc)
-    planlist_parser.set_defaults(func=list_plan)
+    planlist_parser = plan_subparsers.add_parser('list', description=planlist_desc, help=planlist_desc)
+    planlist_parser.set_defaults(func=plan_list)
 
     plannoautostart_desc = 'Noautostart Plan'
-    plannoautostart_parser = noautostart_subparsers.add_parser('plan', description=plannoautostart_desc,
-                                                               help=planautostart_desc)
+    plannoautostart_parser = plan_subparsers.add_parser('noautostart', description=plannoautostart_desc,
+                                                        help=planautostart_desc)
     plannoautostart_parser.add_argument('plan', metavar='PLAN', nargs='?')
-    plannoautostart_parser.set_defaults(func=noautostart_plan)
+    plannoautostart_parser.set_defaults(func=plan_noautostart)
 
     planrender_desc = 'Render Plans/Files'
-    planrender_parser = render_subparsers.add_parser('plan', description=planrender_desc,
-                                                     help=planrender_desc)
+    planrender_parser = plan_subparsers.add_parser('render', description=planrender_desc,
+                                                   help=planrender_desc)
     planrender_parser.add_argument('-f', '--inputfile', help='Input Plan file')
     planrender_parser.add_argument('-P', '--param', action='append',
                                    help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
     planrender_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
     planrender_parser.add_argument('-v', '--volumepath', help='Volume Path (only used with kcli container)',
                                    default='/workdir', metavar='VOLUMEPATH')
-    planrender_parser.set_defaults(func=render_plan)
+    planrender_parser.set_defaults(func=plan_render)
 
     planrestart_desc = 'Restart Plan'
-    planrestart_parser = restart_subparsers.add_parser('plan', description=planrestart_desc, help=planrestart_desc)
+    planrestart_parser = plan_subparsers.add_parser('restart', description=planrestart_desc, help=planrestart_desc)
     planrestart_parser.add_argument('plan', metavar='PLAN', nargs='?')
-    planrestart_parser.set_defaults(func=restart_plan)
+    planrestart_parser.set_defaults(func=plan_restart)
 
     planrevert_desc = 'Revert Snapshot Of Plan'
-    planrevert_parser = revert_subparsers.add_parser('plan', description=planrevert_desc, help=planrevert_desc)
+    planrevert_parser = plan_subparsers.add_parser('revert', description=planrevert_desc, help=planrevert_desc)
     planrevert_parser.add_argument('plan', metavar='PLAN', nargs='?')
-    planrevert_parser.set_defaults(func=revert_plan)
+    planrevert_parser.set_defaults(func=plan_revert)
 
     plansnapshot_desc = 'Snapshot Plan'
-    plansnapshot_parser = snapshot_subparsers.add_parser('plan', description=plansnapshot_desc, help=plansnapshot_desc)
+    plansnapshot_parser = plan_subparsers.add_parser('snapshot', description=plansnapshot_desc, help=plansnapshot_desc)
     plansnapshot_parser.add_argument('plan', metavar='PLAN', nargs='?')
-    plansnapshot_parser.set_defaults(func=snapshot_plan)
+    plansnapshot_parser.set_defaults(func=plan_snapshot)
 
     planstart_desc = 'Start Plan'
-    planstart_parser = start_subparsers.add_parser('plan', description=planstart_desc, help=planstart_desc)
+    planstart_parser = plan_subparsers.add_parser('start', description=planstart_desc, help=planstart_desc)
     planstart_parser.add_argument('plan', metavar='PLAN', nargs='?')
-    planstart_parser.set_defaults(func=start_plan)
+    planstart_parser.set_defaults(func=plan_start)
 
     planstop_desc = 'Stop Plan'
-    planstop_parser = stop_subparsers.add_parser('plan', description=planstop_desc, help=planstop_desc)
+    planstop_parser = plan_subparsers.add_parser('stop', description=planstop_desc, help=planstop_desc)
     planstop_parser.add_argument('plan', metavar='PLAN', nargs='?')
-    planstop_parser.set_defaults(func=stop_plan)
+    planstop_parser.set_defaults(func=plan_stop)
 
     planupdate_desc = 'Update Plan'
-    planupdate_parser = update_subparsers.add_parser('plan', description=planupdate_desc, help=planupdate_desc)
+    planupdate_parser = plan_subparsers.add_parser('update', description=planupdate_desc, help=planupdate_desc)
     planupdate_parser.add_argument('-u', '--url', help='Url for plan', metavar='URL')
     planupdate_parser.add_argument('-p', '--path', help='Path where to download plans. Defaults to plan',
                                    metavar='PATH')
@@ -1771,34 +1715,42 @@ def cli():
                                    help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
     planupdate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
     planupdate_parser.add_argument('plan', metavar='PLAN', nargs='?')
-    planupdate_parser.set_defaults(func=update_plan)
+    planupdate_parser.set_defaults(func=plan_update)
+
+    pool_desc = 'Storage Pools'
+    pool_parser = subparsers.add_parser('pool', description=pool_desc, help=pool_desc)
+    pool_subparsers = pool_parser.add_subparsers(metavar='', dest='subcommand_pool')
 
     poolcreate_desc = 'Create Pool'
-    poolcreate_parser = create_subparsers.add_parser('pool', description=poolcreate_desc, help=poolcreate_desc)
+    poolcreate_parser = pool_subparsers.add_parser('create', description=poolcreate_desc, help=poolcreate_desc)
     poolcreate_parser.add_argument('-f', '--full', action='store_true')
     poolcreate_parser.add_argument('-t', '--pooltype', help='Type of the pool', choices=('dir', 'lvm', 'zfs'),
                                    default='dir')
     poolcreate_parser.add_argument('-p', '--path', help='Path of the pool', metavar='PATH')
     poolcreate_parser.add_argument('--thinpool', help='Existing thin pool to use with lvm', metavar='THINPOOL')
     poolcreate_parser.add_argument('pool')
-    poolcreate_parser.set_defaults(func=create_pool)
+    poolcreate_parser.set_defaults(func=pool_create)
 
     pooldelete_desc = 'Delete Pool'
-    pooldelete_parser = delete_subparsers.add_parser('pool', description=pooldelete_desc, help=pooldelete_desc)
+    pooldelete_parser = pool_subparsers.add_parser('delete', description=pooldelete_desc, help=pooldelete_desc)
     pooldelete_parser.add_argument('-d', '--delete', action='store_true')
     pooldelete_parser.add_argument('-f', '--full', action='store_true')
     pooldelete_parser.add_argument('-p', '--path', help='Path of the pool', metavar='PATH')
     pooldelete_parser.add_argument('--thinpool', help='Existing thin pool to use with lvm', metavar='THINPOOL')
     pooldelete_parser.add_argument('pool')
-    pooldelete_parser.set_defaults(func=delete_pool)
+    pooldelete_parser.set_defaults(func=pool_delete)
 
     poollist_desc = 'List Pools'
-    poollist_parser = list_subparsers.add_parser('pool', description=poollist_desc, help=poollist_desc)
+    poollist_parser = pool_subparsers.add_parser('list', description=poollist_desc, help=poollist_desc)
     poollist_parser.add_argument('--short', action='store_true')
-    poollist_parser.set_defaults(func=list_pool)
+    poollist_parser.set_defaults(func=pool_list)
+
+    product_desc = 'Products'
+    product_parser = subparsers.add_parser('product', description=product_desc, help=product_desc)
+    product_subparsers = product_parser.add_subparsers(metavar='', dest='subcommand_product')
 
     product_desc = 'Create Product'
-    product_parser = create_subparsers.add_parser('product', description=product_desc, help=product_desc)
+    product_parser = product_subparsers.add_parser('create', description=product_desc, help=product_desc)
     product_parser.add_argument('-g', '--group', help='Group to use as a name during deployment', metavar='GROUP')
     product_parser.add_argument('-i', '--info', action='store_true', help='Provide information on the given product')
     product_parser.add_argument('-l', '--latest', action='store_true', help='Grab latest version of the plans')
@@ -1813,35 +1765,43 @@ def cli():
     product_parser.add_argument('-s', '--search', action='store_true',
                                 help='Display matching products')
     product_parser.add_argument('product', metavar='PRODUCT')
-    product_parser.set_defaults(func=create_product)
+    product_parser.set_defaults(func=product_create)
 
     productlist_desc = 'List Products'
-    productlist_parser = list_subparsers.add_parser('product', description=productlist_desc, help=productlist_desc)
+    productlist_parser = product_subparsers.add_parser('list', description=productlist_desc, help=productlist_desc)
     productlist_parser.add_argument('-g', '--group', help='Only Display products of the indicated group',
                                     metavar='GROUP')
     productlist_parser.add_argument('-r', '--repo', help='Only Display products of the indicated repository',
                                     metavar='REPO')
-    productlist_parser.set_defaults(func=list_product)
+    productlist_parser.set_defaults(func=product_list)
+
+    repo_desc = 'Repositories'
+    repo_parser = subparsers.add_parser('repo', description=repo_desc, help=repo_desc)
+    repo_subparsers = repo_parser.add_subparsers(metavar='', dest='subcommand_repo')
 
     repocreate_desc = 'Create Repo'
-    repocreate_parser = create_subparsers.add_parser('repo', description=repocreate_desc, help=repocreate_desc)
+    repocreate_parser = repo_subparsers.add_parser('create', description=repocreate_desc, help=repocreate_desc)
     repocreate_parser.add_argument('-u', '--url', help='URL of the repo', metavar='URL')
     repocreate_parser.add_argument('repo')
-    repocreate_parser.set_defaults(func=create_repo)
+    repocreate_parser.set_defaults(func=repo_create)
 
     repodelete_desc = 'Delete Repo'
-    repodelete_parser = delete_subparsers.add_parser('repo', description=repodelete_desc, help=repodelete_desc)
+    repodelete_parser = repo_subparsers.add_parser('delete', description=repodelete_desc, help=repodelete_desc)
     repodelete_parser.add_argument('repo')
-    repodelete_parser.set_defaults(func=delete_repo)
+    repodelete_parser.set_defaults(func=repo_delete)
 
     repolist_desc = 'List Repos'
-    repolist_parser = list_subparsers.add_parser('repo', description=repolist_desc, help=repolist_desc)
-    repolist_parser.set_defaults(func=list_repo)
+    repolist_parser = repo_subparsers.add_parser('list', description=repolist_desc, help=repolist_desc)
+    repolist_parser.set_defaults(func=repo_list)
 
     repoupdate_desc = 'Update Repo'
-    repoupdate_parser = update_subparsers.add_parser('repo', description=repoupdate_desc, help=repoupdate_desc)
+    repoupdate_parser = repo_subparsers.add_parser('update', description=repoupdate_desc, help=repoupdate_desc)
     repoupdate_parser.add_argument('repo')
-    repoupdate_parser.set_defaults(func=update_repo)
+    repoupdate_parser.set_defaults(func=repo_update)
+
+    template_desc = 'Cloud Images'
+    template_parser = subparsers.add_parser('template', description=template_desc, help=template_desc)
+    template_subparsers = template_parser.add_subparsers(metavar='', dest='subcommand_template')
 
     templatedownload_desc = 'Download Template'
     templatedownload_help = "Template to download. Choose between \n%s" % '\n'.join(TEMPLATES.keys())
@@ -1851,28 +1811,32 @@ def cli():
     templatedownload_parser.add_argument('-u', '--url', help='Url to use', metavar='URL')
     templatedownload_parser.add_argument('templates', choices=sorted(TEMPLATES.keys()), default='',
                                          help=templatedownload_help, nargs='*', metavar='')
-    templatedownload_parser.set_defaults(func=download_template)
-    download_subparsers.add_parser('template', parents=[templatedownload_parser], description=templatedownload_desc,
+    templatedownload_parser.set_defaults(func=template_download)
+    template_subparsers.add_parser('download', parents=[templatedownload_parser], description=templatedownload_desc,
                                    help=templatedownload_desc)
 
     templatelist_desc = 'List Templates'
-    templatelist_parser = list_subparsers.add_parser('template', description=templatelist_desc, help=templatelist_desc)
-    templatelist_parser.set_defaults(func=list_template)
+    templatelist_parser = template_subparsers.add_parser('list', description=templatelist_desc, help=templatelist_desc)
+    templatelist_parser.set_defaults(func=template_list)
+
+    vm_desc = 'Virtual Machines'
+    vm_parser = subparsers.add_parser('vm', description=vm_desc, help=vm_desc)
+    vm_subparsers = vm_parser.add_subparsers(metavar='', dest='subcommand_vm')
 
     vmclone_desc = 'Clone Vm'
-    vmclone_parser = clone_subparsers.add_parser('vm', description=vmclone_desc, help=vmclone_desc)
+    vmclone_parser = vm_subparsers.add_parser('clone', description=vmclone_desc, help=vmclone_desc)
     vmclone_parser.add_argument('-b', '--base', help='Base VM', metavar='BASE')
     vmclone_parser.add_argument('-f', '--full', action='store_true', help='Full Clone')
     vmclone_parser.add_argument('-s', '--start', action='store_true', help='Start cloned VM')
     vmclone_parser.add_argument('name', metavar='VMNAME')
-    vmclone_parser.set_defaults(func=clone_vm)
+    vmclone_parser.set_defaults(func=vm_clone)
 
     vmconsole_desc = 'Vm Console (vnc/spice/serial)'
     vmconsole_parser = argparse.ArgumentParser(add_help=False)
     vmconsole_parser.add_argument('-s', '--serial', action='store_true')
     vmconsole_parser.add_argument('name', metavar='VMNAME', nargs='?')
-    vmconsole_parser.set_defaults(func=console_vm)
-    console_subparsers.add_parser('vm', parents=[vmconsole_parser], description=vmconsole_desc, help=vmconsole_desc)
+    vmconsole_parser.set_defaults(func=vm_console)
+    vm_subparsers.add_parser('console', parents=[vmconsole_parser], description=vmconsole_desc, help=vmconsole_desc)
 
     vmcreate_desc = 'Create Vm'
     vmcreate_parser = argparse.ArgumentParser(add_help=False)
@@ -1883,8 +1847,8 @@ def cli():
                                  metavar='PARAM')
     vmcreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
     vmcreate_parser.add_argument('name', metavar='VMNAME', nargs='?')
-    vmcreate_parser.set_defaults(func=create_vm)
-    create_subparsers.add_parser('vm', parents=[vmcreate_parser], description=vmcreate_desc, help=vmcreate_desc)
+    vmcreate_parser.set_defaults(func=vm_create)
+    vm_subparsers.add_parser('create', parents=[vmcreate_parser], description=vmcreate_desc, help=vmcreate_desc)
 
     vmdelete_desc = 'Delete Vm'
     vmdelete_parser = argparse.ArgumentParser(add_help=False)
@@ -1892,8 +1856,8 @@ def cli():
     vmdelete_parser.add_argument('-t', '--template', action='store_true', help='delete template')
     vmdelete_parser.add_argument('--snapshots', action='store_true', help='Remove snapshots if needed')
     vmdelete_parser.add_argument('names', metavar='VMNAMES', nargs='*')
-    vmdelete_parser.set_defaults(func=delete_vm)
-    delete_subparsers.add_parser('vm', parents=[vmdelete_parser], description=vmdelete_desc, help=vmdelete_desc)
+    vmdelete_parser.set_defaults(func=vm_delete)
+    vm_subparsers.add_parser('delete', parents=[vmdelete_parser], description=vmdelete_desc, help=vmdelete_desc)
 
     vmdiskadd_desc = 'Add Disk To Vm'
     vmdiskadd_parser = argparse.ArgumentParser(add_help=False)
@@ -1902,8 +1866,8 @@ def cli():
                                   metavar='TEMPLATE')
     vmdiskadd_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
     vmdiskadd_parser.add_argument('name', metavar='VMNAME', nargs='?')
-    vmdiskadd_parser.set_defaults(func=create_vmdisk)
-    create_subparsers.add_parser('vm-disk', parents=[vmdiskadd_parser], description=vmdiskadd_desc, help=vmdiskadd_desc)
+    vmdiskadd_parser.set_defaults(func=vm_diskadd)
+    vm_subparsers.add_parser('disk-add', parents=[vmdiskadd_parser], description=vmdiskadd_desc, help=vmdiskadd_desc)
 
     vmdiskdelete_desc = 'Delete Vm Disk'
     vmdiskdelete_parser = argparse.ArgumentParser(add_help=False)
@@ -1911,22 +1875,22 @@ def cli():
                                      metavar='DISKNAME')
     vmdiskdelete_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
     vmdiskdelete_parser.add_argument('name', metavar='VMNAME', nargs='?')
-    vmdiskdelete_parser.set_defaults(func=diskdelete_vm)
-    delete_subparsers.add_parser('vm-disk', parents=[vmdiskdelete_parser], description=vmdiskdelete_desc,
-                                 help=vmdiskdelete_desc)
+    vmdiskdelete_parser.set_defaults(func=vm_diskdelete)
+    vm_subparsers.add_parser('disk-delete', parents=[vmdiskdelete_parser], description=vmdiskdelete_desc,
+                             help=vmdiskdelete_desc)
 
     vmdisklist_desc = 'List Vms Disks'
     vmdisklist_parser = argparse.ArgumentParser(add_help=False)
-    vmdisklist_parser.set_defaults(func=disklist_vm)
-    list_subparsers.add_parser('vm-disk', parents=[vmdisklist_parser], description=vmdisklist_desc,
-                               help=vmdisklist_desc)
+    vmdisklist_parser.set_defaults(func=vm_disklist)
+    vm_subparsers.add_parser('disk-list', parents=[vmdisklist_parser], description=vmdisklist_desc,
+                             help=vmdisklist_desc)
 
     vmexport_desc = 'Export Vms'
-    vmexport_parser = export_subparsers.add_parser('vm', description=vmexport_desc, help=vmexport_desc)
+    vmexport_parser = vm_subparsers.add_parser('export', description=vmexport_desc, help=vmexport_desc)
     vmexport_parser.add_argument('-t', '--template', help='Name for the generated template. Uses the vm name otherwise',
                                  metavar='TEMPLATE')
     vmexport_parser.add_argument('names', metavar='VMNAMES', nargs='*')
-    vmexport_parser.set_defaults(func=export_vm)
+    vmexport_parser.set_defaults(func=vm_export)
 
     vminfo_desc = 'Info Of Vms'
     vminfo_parser = argparse.ArgumentParser(add_help=False)
@@ -1935,34 +1899,34 @@ def cli():
     vminfo_parser.add_argument('-o', '--output', choices=['plain', 'yaml'], help='Format of the output')
     vminfo_parser.add_argument('-v', '--values', action='store_true', help='Only report values')
     vminfo_parser.add_argument('names', help='VMNAMES', nargs='*')
-    vminfo_parser.set_defaults(func=info_vm)
-    info_subparsers.add_parser('vm', parents=[vminfo_parser], description=vminfo_desc, help=vminfo_desc)
+    vminfo_parser.set_defaults(func=vm_info)
+    vm_subparsers.add_parser('info', parents=[vminfo_parser], description=vminfo_desc, help=vminfo_desc)
 
     vmlist_desc = 'List Vms'
     vmlist_parser = argparse.ArgumentParser(add_help=False)
     vmlist_parser.add_argument('--filters', choices=('up', 'down'))
-    vmlist_parser.set_defaults(func=list_vm)
-    list_subparsers.add_parser('vm', parents=[vmlist_parser], description=vmlist_desc, help=vmlist_desc)
+    vmlist_parser.set_defaults(func=vm_list)
+    vm_subparsers.add_parser('list', parents=[vmlist_parser], description=vmlist_desc, help=vmlist_desc)
 
     nicadd_desc = 'Add Nic To Vm'
     nicadd_parser = argparse.ArgumentParser(add_help=False)
     nicadd_parser.add_argument('-n', '--network', help='Network', metavar='NETWORK')
     nicadd_parser.add_argument('name', metavar='VMNAME')
-    nicadd_parser.set_defaults(func=add_nic)
-    create_subparsers.add_parser('vm-nic', parents=[nicadd_parser], description=nicadd_desc, help=nicadd_desc)
+    nicadd_parser.set_defaults(func=nic_add)
+    vm_subparsers.add_parser('nic-add', parents=[nicadd_parser], description=nicadd_desc, help=nicadd_desc)
 
     nicdelete_desc = 'Delete Nic From vm'
     nicdelete_parser = argparse.ArgumentParser(add_help=False)
     nicdelete_parser.add_argument('-i', '--interface', help='Name of the interface, when deleting', metavar='INTERFACE')
     nicdelete_parser.add_argument('-n', '--network', help='Network', metavar='NETWORK')
     nicdelete_parser.add_argument('name', metavar='VMNAME')
-    nicdelete_parser.set_defaults(func=delete_nic)
-    delete_subparsers.add_parser('vm-nic', parents=[nicadd_parser], description=nicdelete_desc, help=nicdelete_desc)
+    nicdelete_parser.set_defaults(func=nic_delete)
+    vm_subparsers.add_parser('nic-delete', parents=[nicadd_parser], description=nicdelete_desc, help=nicdelete_desc)
 
     vmrestart_desc = 'Restart Vms'
-    vmrestart_parser = restart_subparsers.add_parser('vm', description=vmrestart_desc, help=vmrestart_desc)
+    vmrestart_parser = vm_subparsers.add_parser('restart', description=vmrestart_desc, help=vmrestart_desc)
     vmrestart_parser.add_argument('names', metavar='VMNAMES', nargs='*')
-    vmrestart_parser.set_defaults(func=restart_vm)
+    vmrestart_parser.set_defaults(func=vm_restart)
 
     vmscp_desc = 'Scp Into Vm'
     vmscp_parser = argparse.ArgumentParser(add_help=False)
@@ -1971,36 +1935,36 @@ def cli():
                               default='/workdir', metavar='VOLUMEPATH')
     vmscp_parser.add_argument('source', nargs=1)
     vmscp_parser.add_argument('destination', nargs=1)
-    vmscp_parser.set_defaults(func=scp_vm)
-    scp_subparsers.add_parser('vm', parents=[vmscp_parser], description=vmscp_desc, help=vmscp_desc)
+    vmscp_parser.set_defaults(func=vm_scp)
+    vm_subparsers.add_parser('scp', parents=[vmscp_parser], description=vmscp_desc, help=vmscp_desc)
 
     vmsnapshotcreate_desc = 'Create Snapshot Of Vm'
-    vmsnapshotcreate_parser = create_subparsers.add_parser('vm-snapshot', description=vmsnapshotcreate_desc,
-                                                           help=vmsnapshotcreate_desc)
+    vmsnapshotcreate_parser = vm_subparsers.add_parser('snapshot-create', description=vmsnapshotcreate_desc,
+                                                       help=vmsnapshotcreate_desc)
     vmsnapshotcreate_parser.add_argument('-n', '--name', help='vm name', required=True, metavar='VMNAME')
     vmsnapshotcreate_parser.add_argument('snapshot')
-    vmsnapshotcreate_parser.set_defaults(func=snapshotcreate_vm)
+    vmsnapshotcreate_parser.set_defaults(func=vm_snapshotcreate)
 
     vmsnapshotdelete_desc = 'Delete Snapshot Of Vm'
-    vmsnapshotdelete_parser = delete_subparsers.add_parser('vm-snapshot', description=vmsnapshotdelete_desc,
-                                                           help=vmsnapshotdelete_desc)
+    vmsnapshotdelete_parser = vm_subparsers.add_parser('snapshot-delete', description=vmsnapshotdelete_desc,
+                                                       help=vmsnapshotdelete_desc)
     vmsnapshotdelete_parser.add_argument('-n', '--name', help='vm name', required=True, metavar='VMNAME')
     vmsnapshotdelete_parser.add_argument('snapshot')
-    vmsnapshotdelete_parser.set_defaults(func=snapshotdelete_vm)
+    vmsnapshotdelete_parser.set_defaults(func=vm_snapshotdelete)
 
     vmsnapshotlist_desc = 'List Snapshots Of Vm'
-    vmsnapshotlist_parser = list_subparsers.add_parser('vm-snapshot', description=vmsnapshotlist_desc,
-                                                       help=vmsnapshotlist_desc)
+    vmsnapshotlist_parser = vm_subparsers.add_parser('snapshot-list', description=vmsnapshotlist_desc,
+                                                     help=vmsnapshotlist_desc)
     vmsnapshotlist_parser.add_argument('-n', '--name', help='vm name', required=True, metavar='VMNAME')
-    vmsnapshotlist_parser.set_defaults(func=snapshotlist_vm)
+    vmsnapshotlist_parser.set_defaults(func=vm_snapshotlist)
 
     vmsnapshotrevert_desc = 'Revert Snapshot Of Vm'
-    vmsnapshotrevert_parser = revert_subparsers.add_parser('vm-snapshot', description=vmsnapshotrevert_desc,
-                                                           help=vmsnapshotrevert_desc)
+    vmsnapshotrevert_parser = vm_subparsers.add_parser('snapshot-revert', description=vmsnapshotrevert_desc,
+                                                       help=vmsnapshotrevert_desc)
     vmsnapshotrevert_parser.add_argument('-n', '--name', help='Use vm name for creation/revert/delete',
                                          required=True, metavar='VMNAME')
     vmsnapshotrevert_parser.add_argument('snapshot')
-    vmsnapshotrevert_parser.set_defaults(func=snapshotrevert_vm)
+    vmsnapshotrevert_parser.set_defaults(func=vm_snapshotrevert)
 
     vmssh_desc = 'Ssh Into Vm'
     vmssh_parser = argparse.ArgumentParser(add_help=False)
@@ -2010,23 +1974,23 @@ def cli():
     vmssh_parser.add_argument('-X', action='store_true', help='Enable X11 Forwarding')
     vmssh_parser.add_argument('-Y', action='store_true', help='Enable X11 Forwarding(Insecure)')
     vmssh_parser.add_argument('name', metavar='VMNAME', nargs='*')
-    vmssh_parser.set_defaults(func=ssh_vm)
-    ssh_subparsers.add_parser('vm', parents=[vmssh_parser], description=vmssh_desc, help=vmssh_desc)
+    vmssh_parser.set_defaults(func=vm_ssh)
+    vm_subparsers.add_parser('ssh', parents=[vmssh_parser], description=vmssh_desc, help=vmssh_desc)
 
     vmstart_desc = 'Start Vms'
     vmstart_parser = argparse.ArgumentParser(add_help=False)
     vmstart_parser.add_argument('names', metavar='VMNAMES', nargs='*')
-    vmstart_parser.set_defaults(func=start_vm)
-    start_subparsers.add_parser('vm', parents=[vmstart_parser], description=vmstart_desc, help=vmstart_desc)
+    vmstart_parser.set_defaults(func=vm_start)
+    vm_subparsers.add_parser('start', parents=[vmstart_parser], description=vmstart_desc, help=vmstart_desc)
 
     vmstop_desc = 'Stop Vms'
     vmstop_parser = argparse.ArgumentParser(add_help=False)
     vmstop_parser.add_argument('names', metavar='VMNAMES', nargs='*')
-    vmstop_parser.set_defaults(func=stop_vm)
-    stop_subparsers.add_parser('vm', parents=[vmstop_parser], description=vmstop_desc, help=vmstop_desc)
+    vmstop_parser.set_defaults(func=vm_stop)
+    vm_subparsers.add_parser('stop', parents=[vmstop_parser], description=vmstop_desc, help=vmstop_desc)
 
     vmupdate_desc = 'Update Vm\'s Ip, Memory Or Numcpus'
-    vmupdate_parser = update_subparsers.add_parser('vm', description=vmupdate_desc, help=vmupdate_desc)
+    vmupdate_parser = vm_subparsers.add_parser('update', description=vmupdate_desc, help=vmupdate_desc)
     vmupdate_parser.add_argument('-1', '--ip1', help='Ip to set', metavar='IP1')
     vmupdate_parser.add_argument('-i', '--information', '--info', help='Information to set', metavar='INFORMATION')
     vmupdate_parser.add_argument('--network', '--net', help='Network to update', metavar='NETWORK')
@@ -2043,7 +2007,33 @@ def cli():
     vmupdate_parser.add_argument('--iso', help='Iso to set', metavar='ISO')
     vmupdate_parser.add_argument('--cloudinit', action='store_true', help='Remove Cloudinit Information from vm')
     vmupdate_parser.add_argument('names', help='VMNAMES', nargs='*')
-    vmupdate_parser.set_defaults(func=update_vm)
+    vmupdate_parser.set_defaults(func=vm_update)
+
+    # alias
+    subparsers.add_parser('console', parents=[vmconsole_parser], description=vmconsole_desc, help=alias('vm console'))
+    subparsers.add_parser('create', parents=[vmcreate_parser], description=vmcreate_desc, help=alias('vm create'))
+    subparsers.add_parser('delete', parents=[vmdelete_parser], description=vmdelete_desc, help=alias('vm delete'))
+    subparsers.add_parser('disk-add', parents=[vmdiskadd_parser], description=vmdiskadd_desc,
+                          help=alias('vm disk-add'))
+    subparsers.add_parser('disk-delete', parents=[vmdiskdelete_parser], description=vmdiskdelete_desc,
+                          help=alias('vm disk-delete'))
+    subparsers.add_parser('disk-list', parents=[vmdisklist_parser], description=vmdisklist_desc,
+                          help=alias('vm disk-list'))
+    subparsers.add_parser('download', parents=[templatedownload_parser], description=templatedownload_desc,
+                          help=alias('template download'))
+    subparsers.add_parser('info', parents=[vminfo_parser], description=vminfo_desc, help=alias('vm info'))
+    subparsers.add_parser('list', parents=[vmlist_parser], description=vmlist_desc, help=alias('vm list'))
+    subparsers.add_parser('nic-add', parents=[nicadd_parser], description=nicadd_desc, help=alias('vm nic-add'))
+    subparsers.add_parser('nic-delete', parents=[nicdelete_parser], description=nicdelete_desc,
+                          help=alias('vm nic-delete'))
+    subparsers.add_parser('report', parents=[hostreport_parser], description=hostreport_desc,
+                          help=alias('host report'))
+    subparsers.add_parser('scp', parents=[vmscp_parser], description=vmscp_desc, help=alias('vm scp'))
+    subparsers.add_parser('ssh', parents=[vmssh_parser], description=vmssh_desc, help=alias('vm ssh'))
+    subparsers.add_parser('start', parents=[vmstart_parser], description=vmstart_desc, help=alias('vm start'))
+    subparsers.add_parser('stop', parents=[vmstop_parser], description=vmstop_desc, help=alias('vm stop'))
+    subparsers.add_parser('switch', parents=[hostswitch_parser], description=hostswitch_desc,
+                          help=alias('host switch'))
 
     argcomplete.autocomplete(parser)
     if len(sys.argv) == 1 or (len(sys.argv) == 3 and sys.argv[1] == '-C'):
