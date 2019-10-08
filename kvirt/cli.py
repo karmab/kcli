@@ -676,7 +676,7 @@ def list_repo(args):
     return
 
 
-def disklist_vm(args):
+def list_vmdisk(args):
     """List vm disks"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
@@ -836,7 +836,7 @@ def create_vmdisk(args):
     k.add_disk(name=name, size=size, pool=pool, image=image)
 
 
-def diskdelete_vm(args):
+def delete_vmdisk(args):
     """Delete disk of vm"""
     name = args.name
     diskname = args.diskname
@@ -928,7 +928,7 @@ def delete_lb(args):
     return 0
 
 
-def add_nic(args):
+def create_vmnic(args):
     """Add nic to vm"""
     name = args.name
     network = args.network
@@ -941,7 +941,7 @@ def add_nic(args):
     k.add_nic(name=name, network=network)
 
 
-def delete_nic(args):
+def delete_vmnic(args):
     """Delete nic of vm"""
     name = args.name
     interface = args.interface
@@ -1982,9 +1982,9 @@ def cli():
 
     vmdiskadd_desc = 'Add Disk To Vm'
     vmdiskadd_parser = argparse.ArgumentParser(add_help=False)
-    vmdiskadd_parser.add_argument('-s', '--size', type=int, help='Size of the disk to add, in GB', metavar='SIZE')
-    vmdiskadd_parser.add_argument('-i', '--image', help='Name or Path of a Image, when adding',
-                                  metavar='TEMPLATE')
+    vmdiskadd_parser.add_argument('-s', '--size', type=int, help='Size of the disk to add, in GB', metavar='SIZE',
+                                  default=10)
+    vmdiskadd_parser.add_argument('-i', '--image', help='Name or Path of a Image', metavar='TEMPLATE')
     vmdiskadd_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
     vmdiskadd_parser.add_argument('name', metavar='VMNAME', nargs='?')
     vmdiskadd_parser.set_defaults(func=create_vmdisk)
@@ -1992,17 +1992,16 @@ def cli():
 
     vmdiskdelete_desc = 'Delete Vm Disk'
     vmdiskdelete_parser = argparse.ArgumentParser(add_help=False)
-    vmdiskdelete_parser.add_argument('-n', '--diskname', help='Name or Path of the disk, when deleting',
-                                     metavar='DISKNAME')
+    vmdiskdelete_parser.add_argument('-n', '--diskname', help='Name or Path of the disk', metavar='DISKNAME')
     vmdiskdelete_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
-    vmdiskdelete_parser.add_argument('name', metavar='VMNAME', nargs='?')
-    vmdiskdelete_parser.set_defaults(func=diskdelete_vm)
+    vmdiskdelete_parser.add_argument('name', metavar='VMNAME')
+    vmdiskdelete_parser.set_defaults(func=delete_vmdisk)
     delete_subparsers.add_parser('vm-disk', parents=[vmdiskdelete_parser], description=vmdiskdelete_desc,
                                  help=vmdiskdelete_desc)
 
-    vmdisklist_desc = 'List Vms Disks'
+    vmdisklist_desc = 'List All Vms Disks'
     vmdisklist_parser = argparse.ArgumentParser(add_help=False)
-    vmdisklist_parser.set_defaults(func=disklist_vm)
+    vmdisklist_parser.set_defaults(func=list_vmdisk)
     list_subparsers.add_parser('vm-disk', parents=[vmdisklist_parser], description=vmdisklist_desc,
                                help=vmdisklist_desc)
 
@@ -2029,20 +2028,22 @@ def cli():
     vmlist_parser.set_defaults(func=list_vm)
     list_subparsers.add_parser('vm', parents=[vmlist_parser], description=vmlist_desc, help=vmlist_desc)
 
-    nicadd_desc = 'Add Nic To Vm'
-    nicadd_parser = argparse.ArgumentParser(add_help=False)
-    nicadd_parser.add_argument('-n', '--network', help='Network', metavar='NETWORK')
-    nicadd_parser.add_argument('name', metavar='VMNAME')
-    nicadd_parser.set_defaults(func=add_nic)
-    create_subparsers.add_parser('vm-nic', parents=[nicadd_parser], description=nicadd_desc, help=nicadd_desc)
+    create_vmnic_desc = 'Add Nic To Vm'
+    create_vmnic_parser = argparse.ArgumentParser(add_help=False)
+    create_vmnic_parser.add_argument('-n', '--network', help='Network', metavar='NETWORK')
+    create_vmnic_parser.add_argument('name', metavar='VMNAME')
+    create_vmnic_parser.set_defaults(func=create_vmnic)
+    create_subparsers.add_parser('vm-nic', parents=[create_vmnic_parser], description=create_vmnic_desc,
+                                 help=create_vmnic_desc)
 
-    nicdelete_desc = 'Delete Nic From vm'
-    nicdelete_parser = argparse.ArgumentParser(add_help=False)
-    nicdelete_parser.add_argument('-i', '--interface', help='Name of the interface, when deleting', metavar='INTERFACE')
-    nicdelete_parser.add_argument('-n', '--network', help='Network', metavar='NETWORK')
-    nicdelete_parser.add_argument('name', metavar='VMNAME')
-    nicdelete_parser.set_defaults(func=delete_nic)
-    delete_subparsers.add_parser('vm-nic', parents=[nicadd_parser], description=nicdelete_desc, help=nicdelete_desc)
+    delete_vmnic_desc = 'Delete Nic From vm'
+    delete_vmnic_parser = argparse.ArgumentParser(add_help=False)
+    delete_vmnic_parser.add_argument('-i', '--interface', help='Interface name', metavar='INTERFACE')
+    delete_vmnic_parser.add_argument('-n', '--network', help='Network', metavar='NETWORK')
+    delete_vmnic_parser.add_argument('name', metavar='VMNAME')
+    delete_vmnic_parser.set_defaults(func=delete_vmnic)
+    delete_subparsers.add_parser('vm-nic', parents=[delete_vmnic_parser], description=delete_vmnic_desc,
+                                 help=delete_vmnic_desc)
 
     vmrestart_desc = 'Restart Vms'
     vmrestart_parser = restart_subparsers.add_parser('vm', description=vmrestart_desc, help=vmrestart_desc)
