@@ -1301,6 +1301,7 @@ def delete_network(args):
 
 def create_host(args):
     """Generate basic config file"""
+    _type = args.type
     host = args.host
     default = args.default
     port = args.port
@@ -1309,7 +1310,7 @@ def create_host(args):
     url = args.url
     pool = args.pool
     poolpath = args.poolpath
-    common.bootstrap(args.client, host, port, user, protocol, url, pool, poolpath)
+    common.bootstrap(args.client, _type, host, port, user, protocol, url, pool, poolpath)
     if default:
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
         baseconfig.set_defaults()
@@ -1424,8 +1425,14 @@ def switch_host(args):
 def list_keyword(args):
     """List keywords"""
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    keywordstable = PrettyTable(["Keyword", "Default Value"])
+    keywordstable.align["Client"] = "l"
     keywords = baseconfig.list_keywords()
-    print(keywords)
+    for keyword in sorted(keywords):
+        value = keywords[keyword]
+        keywordstable.add_row([keyword, value])
+    print(keywordstable)
+    return
 
 
 def cli():
@@ -1607,6 +1614,9 @@ def cli():
     hostcreate_parser.add_argument('-d', '--default', help="add default values in config file", action='store_true')
     hostcreate_parser.add_argument('-H', '--host', help='Host to use', metavar='HOST')
     hostcreate_parser.add_argument('-p', '--port', help='Port to use', metavar='PORT')
+    hostcreate_parser.add_argument('-t', '--type', help='Type of the host',
+                                   choices=('aws', 'gcp', 'kubevirt', 'kvm', 'ovirt', 'openstack', 'vsphere'),
+                                   default='kvm')
     hostcreate_parser.add_argument('-u', '--user', help='User to use', default='root', metavar='USER')
     hostcreate_parser.add_argument('-P', '--protocol', help='Protocol to use', default='ssh', metavar='PROTOCOL')
     hostcreate_parser.add_argument('-U', '--url', help='URL to use', metavar='URL')

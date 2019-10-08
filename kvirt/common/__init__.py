@@ -962,7 +962,7 @@ def need_guest_agent(image):
     return False
 
 
-def bootstrap(name, host, port, user, protocol, url, pool, poolpath):
+def bootstrap(name, hosttype, host, port, user, protocol, url, pool, poolpath):
     """
 
     :param name:
@@ -992,7 +992,7 @@ def bootstrap(name, host, port, user, protocol, url, pool, poolpath):
             name = host
         hostname = name
         ini['default']['client'] = name
-        ini[name] = {'host': host, 'type': 'kvm', 'tunnel': True, 'pool': pool, 'nets': ['default']}
+        ini[name] = {'host': host, 'type': hosttype, 'tunnel': True, 'pool': pool, 'nets': ['default']}
         if protocol is not None:
             ini[name]['protocol'] = protocol
         if user is not None:
@@ -1003,8 +1003,6 @@ def bootstrap(name, host, port, user, protocol, url, pool, poolpath):
             ini[name]['url'] = url
     path = os.path.expanduser('~/.kcli/config.yml')
     rootdir = os.path.expanduser('~/.kcli')
-    # if os.path.exists(path):
-    #    copyfile(path, "%s.bck" % path)
     if not os.path.exists(rootdir):
         os.makedirs(rootdir)
     with open(path, 'w') as conf_file:
