@@ -187,12 +187,9 @@ def delete_container(args):
         allclients = config.extraclients.copy()
         allclients.update({config.client: config.k})
         names = args.names
-        if not names:
-            common.pprint("Can't delete vms on multiple hosts without specifying their names", color='red')
-            os._exit(1)
     else:
         allclients = {config.client: config.k}
-        names = [common.get_lastvm(config.client)] if not args.names else args.names
+        names = args.names
     for cli in sorted(allclients):
         common.pprint("Deleting on %s" % cli)
         if not yes:
@@ -1322,34 +1319,36 @@ def create_host(args):
 def create_container(args):
     """Create container"""
     name = args.name
+    image = args.image
     profile = args.profile
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     cont = Kcontainerconfig(config, client=args.containerclient).cont
+    containerprofiles = {k: v for k, v in config.profiles.items() if 'type' in v and v['type'] == 'container'}
     if name is None:
         name = nameutils.get_random_name()
         if config.type == 'kubevirt':
             name = name.replace('_', '-')
-    if profile is None:
-        common.pprint("Missing profile", color='red')
+    if image is not None:
+        profile = image
+        if image in containerprofiles:
+            common.pprint("Using %s as a profile" % image)
+        else:
+            containerprofiles[image] = {'image': image}
+    # cont.create_container(name, profile, overrides=overrides)
+    common.pprint("Deploying container %s from profile %s..." % (name, profile))
+    profile = containerprofiles[profile]
+    image = next((e for e in [profile.get('image'), profile.get('image')] if e is not None), None)
+    if image is None:
+        common.pprint("Missing image in profile %s. Leaving..." % profile, color='red')
         os._exit(1)
-    containerprofiles = {k: v for k, v in config.profiles.items() if 'type' in v and v['type'] == 'container'}
-    if profile not in containerprofiles:
-        common.pprint("profile %s not found. Trying to use the profile as image"
-                      "and default values..." % profile, color='blue')
-        cont.create_container(name, profile, overrides=overrides)
-    else:
-        common.pprint("Deploying container %s from profile %s..." % (name, profile))
-        profile = containerprofiles[profile]
-        image = next((e for e in [profile.get('image'), profile.get('image')] if e is not None), None)
-        if image is None:
-            common.pprint("Missing image in profile %s. Leaving..." % profile, color='red')
-            os._exit(1)
-        cmd = profile.get('cmd', None)
-        ports = profile.get('ports', None)
-        environment = profile.get('environment', None)
-        volumes = next((e for e in [profile.get('volumes'), profile.get('disks')] if e is not None), None)
-        cont.create_container(name, image, nets=None, cmd=cmd, ports=ports, volumes=volumes, environment=environment)
+    cmd = profile.get('cmd')
+    ports = profile.get('ports')
+    environment = profile.get('environment')
+    volumes = next((e for e in [profile.get('volumes'), profile.get('disks')] if e is not None), None)
+    profile.update(overrides)
+    cont.create_container(name, image, nets=None, cmd=cmd, ports=ports, volumes=volumes, environment=environment,
+                          overrides=overrides)
     common.pprint("container %s created" % name)
     return
 
@@ -1503,7 +1502,7 @@ def cli():
     restart_parser = subparsers.add_parser('restart', description=restart_desc, help=restart_desc)
     restart_subparsers = restart_parser.add_subparsers(metavar='', dest='subcommand_restart')
 
-    revert_desc = 'Revert Snapshot/Plan Snapshot'
+    revert_desc = 'Revert Vm/Plan Snapshot'
     revert_parser = subparsers.add_parser('revert', description=revert_desc, help=revert_desc)
     revert_subparsers = revert_parser.add_subparsers(metavar='', dest='subcommand_revert')
 
@@ -1511,7 +1510,7 @@ def cli():
     scp_parser = subparsers.add_parser('scp', description=scp_desc, help=scp_desc)
     scp_subparsers = scp_parser.add_subparsers(metavar='', dest='subcommand_scp')
 
-    snapshot_desc = 'Snapshot Plan'
+    snapshot_desc = 'Snapshot Vm/Plan'
     snapshot_parser = subparsers.add_parser('snapshot', description=snapshot_desc, help=snapshot_desc)
     snapshot_subparsers = snapshot_parser.add_subparsers(metavar='', dest='subcommand_snapshot')
 
@@ -1549,7 +1548,9 @@ def cli():
     containercreate_desc = 'Create Container'
     containercreate_parser = create_subparsers.add_parser('container', description=containercreate_desc,
                                                           help=containercreate_desc)
-    containercreate_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
+    containercreate_parser_group = containercreate_parser.add_mutually_exclusive_group(required=True)
+    containercreate_parser_group.add_argument('-i', '--image', help='Image to use', metavar='Image')
+    containercreate_parser_group.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
     containercreate_parser.add_argument('-P', '--param', action='append',
                                         help='specify parameter or keyword for rendering (multiple can be specified)',
                                         metavar='PARAM')
@@ -1561,7 +1562,7 @@ def cli():
     containerdelete_parser = delete_subparsers.add_parser('container', description=containerdelete_desc,
                                                           help=containerdelete_desc)
     containerdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    containerdelete_parser.add_argument('names', metavar='VMNAMES', nargs='*')
+    containerdelete_parser.add_argument('names', metavar='VMNAMES', nargs='+')
     containerdelete_parser.set_defaults(func=delete_container)
 
     containerimagelist_desc = 'List Container Images'
@@ -1988,7 +1989,8 @@ def cli():
     vmdiskadd_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
     vmdiskadd_parser.add_argument('name', metavar='VMNAME', nargs='?')
     vmdiskadd_parser.set_defaults(func=create_vmdisk)
-    create_subparsers.add_parser('vm-disk', parents=[vmdiskadd_parser], description=vmdiskadd_desc, help=vmdiskadd_desc)
+    create_subparsers.add_parser('vm-disk', parents=[vmdiskadd_parser], description=vmdiskadd_desc, help=vmdiskadd_desc,
+                                 aliases=['disk'])
 
     vmdiskdelete_desc = 'Delete Vm Disk'
     vmdiskdelete_parser = argparse.ArgumentParser(add_help=False)
@@ -1997,13 +1999,13 @@ def cli():
     vmdiskdelete_parser.add_argument('name', metavar='VMNAME')
     vmdiskdelete_parser.set_defaults(func=delete_vmdisk)
     delete_subparsers.add_parser('vm-disk', parents=[vmdiskdelete_parser], description=vmdiskdelete_desc,
-                                 help=vmdiskdelete_desc)
+                                 help=vmdiskdelete_desc, aliases=['disk'])
 
     vmdisklist_desc = 'List All Vms Disks'
     vmdisklist_parser = argparse.ArgumentParser(add_help=False)
     vmdisklist_parser.set_defaults(func=list_vmdisk)
     list_subparsers.add_parser('vm-disk', parents=[vmdisklist_parser], description=vmdisklist_desc,
-                               help=vmdisklist_desc)
+                               help=vmdisklist_desc, aliases=['disk'])
 
     vmexport_desc = 'Export Vms'
     vmexport_parser = export_subparsers.add_parser('vm', description=vmexport_desc, help=vmexport_desc)
