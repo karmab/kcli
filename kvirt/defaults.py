@@ -59,6 +59,7 @@ IMAGES = {'': None, 'arch': 'https://linuximages.de/openstack/arch/arch-openstac
           'rhel74': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.4/x86_64/product-software',
           'rhel75': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.5/x86_64/product-software',
           'rhel76': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.6/x86_64/product-software',
+          'rhel77': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.7/x86_64/product-software',
           'rhel80': 'https://access.redhat.com/downloads/content/479/ver=/rhel---8/8.0/x86_64/product-software',
           'ubuntu1404': 'https://cloud-images.ubuntu.com/trusty/current/trusty-server-cloudimg-amd64-disk1.img',
           'ubuntu1604': 'https://cloud-images.ubuntu.com/xenial/current/xenial-server-cloudimg-amd64-disk1.img',
