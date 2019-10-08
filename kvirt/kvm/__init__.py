@@ -2615,7 +2615,7 @@ class Kvirt(object):
         cidrs = [network['cidr'] for network in list(networks.values())]
         if name in networks:
             common.pprint("Network %s already exists" % name, color='blue')
-            return {'result': 'success'}
+            return {'result': 'exist'}
         try:
             range = IPNetwork(cidr)
         except:

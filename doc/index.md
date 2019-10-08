@@ -81,7 +81,7 @@ There are several recommended flags:
 - `-v $HOME:/root` to share your entire home directory, useful if you want to share secret files, `~/register.sh` for instance).
 - `-e HTTP_PROXY=your_proxy -e HTTPS_PROXY=your_proxy`
 - `-v ~/.kube:/root/.kube` to share your kubeconfig.
-- `-v /tmp:/ignitiondir` for ignition files to be properly processed.
+- `-v /var/tmp:/ignitiondir` for ignition files to be properly processed.
 
 As a bonus, you can use the following aliases:
 
@@ -121,13 +121,13 @@ On most distributions, default network and storage pool are already defined.
 If needed, you can add an additional storage pool with:
 
 ```Shell
-kcli pool  -p /var/lib/libvirt/images default
+kcli create pool -p /var/lib/libvirt/images default
 ```
 
 You can create a default network:
 
 ```Shell
-kcli network  -c 192.168.122.0/24 default
+kcli create network  -c 192.168.122.0/24 default
 ```
 
 kcli configuration is done in ~/.kcli directory, that you need to manually create. It will contain:
@@ -166,16 +166,16 @@ You can find a fully detailed config.yml sample [here](https://github.com/karmab
 
 # Bootstrap
 
-You can generate the settings file with all parameters commented with:
+You can generate a settings file with all parameters commented with:
     
 ```Shell
-kcli bootstrap
+kcli create host
 ```
 
 And for advanced bootstrapping, you can specify a target name, host, a pool with a path, and have centos cloud image downloaded
 
 ```Shell
-kcli bootstrap -n host1 -H 192.168.0.6 --pool default --poolpath /var/lib/libvirt/images
+kcli create host -H 192.168.0.6 --pool default --poolpath /var/lib/libvirt/images host1
 ```
 
 # Provider specifics
@@ -278,7 +278,7 @@ You can use additional parameters for the kubevirt section:
 
 - context: the k8s context to use.
 - pool: your default storageclass. can also be set as blank, if no storage class should try to bind pvcs.
-- host: k8s api node .Also used for tunneling ssh (and consoles).
+- host: k8s api node .Also used for tunneling ssh.
 - port: k8s api port.
 - ca_file: optional certificate path.
 - token: token, either from user or service account.
@@ -423,7 +423,7 @@ Also note that in order to use kcli download on vsphere, you will need to be abl
 
 ## Fake
 
-you can also use a fake provider to get a feel of how kcli works (or to generate the cloudinit scripts)
+you can also use a fake provider to get a feel of how kcli works (or to generate scripts to run on baremetal)
 
 ```
 fake:
@@ -451,17 +451,17 @@ xxx:
 
 # Usage
 
-Templates aim to typically be the source for your vms, using the existing cloud images from the different distributions. 
-*kcli download* can be used to download a specific cloud image. for instance, centos7:
+Cloud Images from common distros aim to be the primary source for your vms
+*kcli download image* can be used to download a specific cloud image. for instance, centos7:
 
 ```Shell
-kcli download centos7
+kcli download image centos7
 ```
 
 at this point, you can deploy vms directly from the template, using default settings for the vm:
 
 ```Shell
-kcli vm -p CentOS-7-x86_64-GenericCloud.qcow2 vm1
+kcli create vm -i centos7 vm1
 ```
 
 By default, your public key will be injected (using cloudinit) to the vm.
@@ -475,26 +475,33 @@ otherwise the default user "root" will be used.
 Using parameters, you can tweak the vm creation. All keywords can be used. For instance:
 
 ```Shell
-kcli vm -p CentOS-7-x86_64-GenericCloud.qcow2 -P memory=2048 -P numcpus=2 vm1
+kcli create vm -i centos7 -P memory=2048 -P numcpus=2 vm1
 ```
 
 You can also pass disks, networks, cmds (or any keyword, really):
 
 ```Shell
-kcli vm -p CentOS-7-x86_64-GenericCloud.qcow2 -P disks=[10,20] -P nets=[default,default] -P cmds=[yum -y install nc] vm1
+kcli create vm -i centos7 -P disks=[10,20] -P nets=[default,default] -P cmds=[yum -y install nc] vm1
 ```
 
-Instead of passing parameters this way, you can use profiles.
+You can use the following to get a list of available keywords, and their default value
+
+
+```Shell
+kcli get keyword
+```
 
 ## Profiles configuration
+
+Instead of passing parameters this way, you can use profiles.
 
 Profiles are meant to help creating single vm with preconfigured settings (number of CPUS, memory, size of disk, network, whether to use a template, extra commands to run on start, whether reserving dns,....)
 
 You use the file *~/.kcli/profiles.yml* to declare your profiles. Here's a snippet declaring the profile `centos`:
 
 ```
-centos:
- template: CentOS-7-x86_64-GenericCloud.qcow2
+mycentos:
+ image: CentOS-7-x86_64-GenericCloud.qcow2
  numcpus: 2
  disks:
   - size: 10
@@ -508,73 +515,75 @@ centos:
 With this section, you can use the following to create a vm
 
 ```Shell
-kcli vm -p centos myvm
+kcli create vm -p mycentos myvm
 ```
 
 You can use the [profile file sample](https://github.com/karmab/kcli-plans/tree/master/samples/profiles.yml) to get you started
+
+Note that when you download a given cloud image, a minimal associated profile is created for you.
 
 ## Cloudinit stuff
 
 Cloudinit is enabled by default and handles static networking configuration, hostname setting, injecting ssh keys and running specific commands and entire scripts, and copying entire files.
 
-For vms based on coreos, ignition is used instead of cloudinit although the syntax is the same. If a $name.ign is found in the current directory or in one below, its content will be merged.
+For vms based on coreos, ignition is used instead of cloudinit although the syntax is the same. If a $name.ign is found in the current directory or in one directory below, its content will be merged.
 
-For ignition support on ovirt, you will either need a version of ovirt >= 4.3.4. Note that this requires to use an openstack rhcos image.
+For ignition support on ovirt, you will need a version of ovirt >= 4.3.4. Note that this requires to use an openstack rhcos image.
 
 A similar mechanism allows customization for other providers.
 
 ## Typical commands
 
 - List vms
-  - `kcli list`
-- List templates (it will find them out based on their qcow2 extension...)
-  - `kcli list -t`
-- Create vm from profile base7
-  - `kcli vm -p base7 myvm`
-- Create vm from profile base7 for the specific client twix
-  - `kcli -C twix vm -p base7 myvm`
+  - `kcli list vm`
+- List cloud images
+  - `kcli list images `
+- Create vm from a profile named base7
+  - `kcli create vm -p base7 myvm`
+- Create vm from profile base7 on a specific client/host  named twix
+  - `kcli -C twix create vm -p base7 myvm`
 - Delete vm
-  - `kcli delete vm1`
+  - `kcli delete vm vm1`
 - Get detailed info on a specific vm
-  - `kcli info vm1`
+  - `kcli info vm vm1`
 - Start vm
-  - `kcli start vm1` 
+  - `kcli start vm vm1` 
 - Stop vm
-  - `kcli stop vm1`
-- Switch active client to bumblefoot
-  - `kcli switch bumblefoot`
+  - `kcli stop vm vm1`
+- Switch active client/host to bumblefoot
+  - `kcli switch host bumblefoot`
 - Get remote-viewer console
-  - `kcli console vm1`
+  - `kcli console vm vm1`
 - Get serial console (over TCP). It will only work with vms created with kcli and will require netcat client to be installed on hypervisor
-  - `kcli console -s vm1`
+  - `kcli console vm -s vm1`
 - Deploy multiple vms using plan x defined in x.yml file
-  - `kcli plan -f x.yml x`
+  - `kcli create plan -f x.yml x`
 - Delete all vm from plan x
-  - `kcli plan -d x`
+  - `kcli delete plan x`
 - Add 5GB disk to vm1, using pool named images
-  - `kcli disk -s 5 -p images vm1`
+  - `kcli create vm-disk -s 5 -p images vm1`
 - Delete disk named vm1_2.img from vm1
-  - `kcli disk -d -n vm1_2.img  vm1`
+  - `kcli create disk -d -n vm1_2.img  vm1`
 - Update to 2GB memory  vm1
-  - `kcli update -m 2048 vm1`
+  - `kcli update vm -m 2048 vm1`
 - Clone vm1 to new vm2
-  - `kcli clone -b vm1 vm2`
+  - `kcli clone vm -b vm1 vm2`
 - Connect by ssh to the vm
-  - `kcli ssh vm1`
+  - `kcli ssh vm vm1`
 - Add a new network
-  - `kcli network -c 192.168.7.0/24 --dhcp mynet`
+  - `kcli create network -c 192.168.7.0/24 --dhcp mynet`
 - Add a new pool
-  - `kcli pool -t dir -p /hom/images images`
+  - `kcli create pool -t dir -p /hom/images images`
 - Add a new nic from network default
-  - `kcli nic -n default myvm`
+  - `kcli create nic -n default myvm`
 - Delete nic eth2 from vm
-  - `kcli nic -di eth2 myvm`
+  - `kcli delete nic -i eth2 myvm`
 - Create snapshot snap of vm:
-  - `kcli snapshot -n vm1 snap1`
+  - `kcli snapshot vm -n vm1 snap1`
 - Get info on your kvm setup
-  - `kcli report`
+  - `kcli info host`
 - Export vm:
-  - `kcli export vm1`
+  - `kcli export vm vm1`
 
 ## Omitting vm's name
  
@@ -582,7 +591,7 @@ When you don't specify a vm, the last one created by kcli on the corresponding c
 
 So for instance, you can simply use the following command to access your vm:
 
-`kcli ssh`
+`kcli ssh vm`
 
 ## How to use the web version
 
@@ -598,7 +607,7 @@ If you have multiple hypervisors/clients, you can generally use the flag *-C $CL
 
 You can also use the following to list the vms of all your vms:
  
-`kcli -C all list`  
+`kcli -C all list vm`
 
 ## Using plans
 
@@ -763,7 +772,7 @@ For an advanced use of plans, check the [kcli-plans](https://github.com/karmab/k
 You can use the following to execute a plan from a remote url:
 
 ```YAML
-kcli plan --url https://raw.githubusercontent.com/karmab/kcli-plans/master/ovirt/upstream.yml
+kcli create plan --url https://raw.githubusercontent.com/karmab/kcli-plans/master/ovirt/upstream.yml
 ```
 
 ## Disk parameters
@@ -941,19 +950,19 @@ To easily share plans, you can make use of the products feature which leverages 
 First, add a repo containing a KMETA file with yaml info about products you want to expose. For instance, mine
 
 ```
-kcli repo -u https://github.com/karmab/kcli-plans karmab
+kcli create repo -u https://github.com/karmab/kcli-plans karmab
 ```
 
 You can also update later a given repo, to refresh its KMETA file ( or all the repos, if not specifying any)
 
 ```
-kcli repo --update REPO_NAME
+kcli update repo REPO_NAME
 ```
 
 You can delete a given repo with
 
 ```
-kcli repo -d REPO_NAME
+kcli delete repo REPO_NAME
 ```
 
 ### Product
@@ -961,19 +970,19 @@ kcli repo -d REPO_NAME
 Once you have added some repos, you can list available products, and get their description
 
 ```
-kcli list --products 
+kcli list products 
 ```
 
 You can also get direct information on the product (memory and cpu used, number of vms deployed and all parameters that can be overriden)
 
 ```
-kcli product --info YOUR_PRODUCT 
+kcli info product YOUR_PRODUCT 
 ```
 
 And deploy any product. Deletion is handled by deleting the corresponding plan.
 
 ```
-kcli product YOUR_PRODUCT
+kcli create product YOUR_PRODUCT
 ```
 
 ## Running on kubernetes/openshift 

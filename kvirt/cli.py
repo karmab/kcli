@@ -627,18 +627,38 @@ def list_product(args):
     """List products"""
     group = args.group
     repo = args.repo
+    search = args.search
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-    products = PrettyTable(["Repo", "Group", "Product", "Description", "Numvms", "Memory"])
-    products.align["Repo"] = "l"
-    productsinfo = baseconfig.list_products(group=group, repo=repo)
-    for product in sorted(productsinfo, key=lambda x: (x['repo'], x['group'], x['name'])):
-        name = product['name']
-        repo = product['repo']
-        description = product.get('description', 'N/A')
-        numvms = product.get('numvms', 'N/A')
-        memory = product.get('memory', 'N/A')
-        group = product.get('group', 'N/A')
-        products.add_row([repo, group, name, description, numvms, memory])
+    if search is not None:
+        baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+        products = PrettyTable(["Repo", "Group", "Product", "Description", "Numvms", "Memory"])
+        products.align["Repo"] = "l"
+        productsinfo = baseconfig.list_products(repo=repo)
+        for prod in sorted(productsinfo, key=lambda x: (x['repo'], x['group'], x['name'])):
+            name = prod['name']
+            repo = prod['repo']
+            prodgroup = prod['group']
+            description = prod.get('description', 'N/A')
+            if search.lower() not in name.lower() and search.lower() not in description.lower():
+                continue
+            if group is not None and prodgroup != group:
+                continue
+            numvms = prod.get('numvms', 'N/A')
+            memory = prod.get('memory', 'N/A')
+            group = prod.get('group', 'N/A')
+            products.add_row([repo, group, name, description, numvms, memory])
+    else:
+        products = PrettyTable(["Repo", "Group", "Product", "Description", "Numvms", "Memory"])
+        products.align["Repo"] = "l"
+        productsinfo = baseconfig.list_products(group=group, repo=repo)
+        for product in sorted(productsinfo, key=lambda x: (x['repo'], x['group'], x['name'])):
+            name = product['name']
+            repo = product['repo']
+            description = product.get('description', 'N/A')
+            numvms = product.get('numvms', 'N/A')
+            memory = product.get('memory', 'N/A')
+            group = product.get('group', 'N/A')
+            products.add_row([repo, group, name, description, numvms, memory])
     print(products)
     return
 
@@ -1155,6 +1175,16 @@ def update_repo(args):
     return
 
 
+def info_product(args):
+    """Info product"""
+    repo = args.repo
+    product = args.product
+    group = args.group
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    common.pprint("Providing information on product %s..." % product)
+    baseconfig.info_product(product, repo, group)
+
+
 def create_product(args):
     """Create product"""
     repo = args.repo
@@ -1163,36 +1193,9 @@ def create_product(args):
     group = args.group
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
     plan = overrides['plan'] if 'plan' in overrides else None
-    info = args.info
-    search = args.search
-    if info:
-        baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-        common.pprint("Providing information on product %s..." % product)
-        baseconfig.info_product(product, repo, group)
-    elif search:
-        baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-        products = PrettyTable(["Repo", "Group", "Product", "Description", "Numvms", "Memory"])
-        products.align["Repo"] = "l"
-        productsinfo = baseconfig.list_products(repo=repo)
-        for prod in sorted(productsinfo, key=lambda x: (x['repo'], x['group'], x['name'])):
-            name = prod['name']
-            repo = prod['repo']
-            prodgroup = prod['group']
-            description = prod.get('description', 'N/A')
-            if product.lower() not in name.lower() and product.lower() not in description.lower():
-                continue
-            if group is not None and prodgroup != group:
-                continue
-            numvms = prod.get('numvms', 'N/A')
-            memory = prod.get('memory', 'N/A')
-            group = prod.get('group', 'N/A')
-            products.add_row([repo, group, name, description, numvms, memory])
-        print(products)
-    else:
-        config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
-                         namespace=args.namespace)
-        common.pprint("Creating product %s..." % product)
-        config.create_product(product, repo=repo, group=group, plan=plan, latest=latest, overrides=overrides)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    common.pprint("Creating product %s..." % product)
+    config.create_product(product, repo=repo, group=group, plan=plan, latest=latest, overrides=overrides)
     return 0
 
 
@@ -1860,23 +1863,31 @@ def cli():
     poollist_parser.add_argument('--short', action='store_true')
     poollist_parser.set_defaults(func=list_pool)
 
-    product_desc = 'Create Product'
-    product_parser = create_subparsers.add_parser('product', description=product_desc, help=product_desc)
-    product_parser.add_argument('-g', '--group', help='Group to use as a name during deployment', metavar='GROUP')
-    product_parser.add_argument('-i', '--info', action='store_true', help='Provide information on the given product')
-    product_parser.add_argument('-l', '--latest', action='store_true', help='Grab latest version of the plans')
-    product_parser.add_argument('-P', '--param', action='append',
-                                help='Define parameter for rendering within '
-                                'scripts. Can be repeated several times',
-                                metavar='PARAM')
-    product_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
-    product_parser.add_argument('-r', '--repo', help='Repo to use, '
-                                'if deploying a product present in several '
-                                'repos', metavar='REPO')
-    product_parser.add_argument('-s', '--search', action='store_true',
-                                help='Display matching products')
-    product_parser.add_argument('product', metavar='PRODUCT')
-    product_parser.set_defaults(func=create_product)
+    productcreate_desc = 'Create Product'
+    productcreate_parser = create_subparsers.add_parser('product', description=productcreate_desc,
+                                                        help=productcreate_desc)
+    productcreate_parser.add_argument('-g', '--group', help='Group to use as a name during deployment', metavar='GROUP')
+    productcreate_parser.add_argument('-l', '--latest', action='store_true', help='Grab latest version of the plans')
+    productcreate_parser.add_argument('-P', '--param', action='append',
+                                      help='Define parameter for rendering within scripts.'
+                                      'Can be repeated several times', metavar='PARAM')
+    productcreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    productcreate_parser.add_argument('-r', '--repo',
+                                      help='Repo to use, if deploying a product present in several repos',
+                                      metavar='REPO')
+    productcreate_parser.add_argument('product', metavar='PRODUCT')
+    productcreate_parser.set_defaults(func=create_product)
+
+    productinfo_desc = 'Info Of Product'
+    productinfo_parser = argparse.ArgumentParser(add_help=False)
+    productinfo_parser.set_defaults(func=info_product)
+    productinfo_parser.add_argument('-g', '--group', help='Only Display products of the indicated group',
+                                    metavar='GROUP')
+    productinfo_parser.add_argument('-r', '--repo', help='Only Display products of the indicated repository',
+                                    metavar='REPO')
+    productinfo_parser.add_argument('product', metavar='PRODUCT')
+    info_subparsers.add_parser('product', parents=[productinfo_parser], description=productinfo_desc,
+                               help=productinfo_desc)
 
     productlist_desc = 'List Products'
     productlist_parser = list_subparsers.add_parser('product', description=productlist_desc, help=productlist_desc)
@@ -1884,6 +1895,7 @@ def cli():
                                     metavar='GROUP')
     productlist_parser.add_argument('-r', '--repo', help='Only Display products of the indicated repository',
                                     metavar='REPO')
+    productlist_parser.add_argument('-s', '--search', help='Search matching products')
     productlist_parser.set_defaults(func=list_product)
 
     repocreate_desc = 'Create Repo'

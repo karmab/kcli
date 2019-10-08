@@ -378,18 +378,19 @@ def handle_response(result, name, quiet=False, element='', action='deployed', cl
     :param client:
     :return:
     """
+    code = 0
     if result['result'] == 'success':
         if not quiet:
             response = "%s %s %s" % (element, name, action)
             if client is not None:
                 response += " on %s" % client
             pprint(response.lstrip(), color='green')
-        return 0
-    else:
+    elif result['result'] == 'failure':
         if not quiet:
             response = "%s %s not %s because %s" % (element, name, action, result['reason'])
             pprint(response.lstrip(), color='red')
-        return 1
+        code = 1
+    return code
 
 
 def confirm(message):
