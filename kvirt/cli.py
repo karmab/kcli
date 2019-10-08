@@ -1283,7 +1283,7 @@ def create_network(args):
         nat = True
     dhcp = not nodhcp
     result = k.create_network(name=name, cidr=cidr, dhcp=dhcp, nat=nat, domain=domain, overrides=overrides)
-    common.handle_response(result, name, element='Network ')
+    common.handle_response(result, name, element='Network')
 
 
 def delete_network(args):
@@ -1295,7 +1295,7 @@ def delete_network(args):
         common.pprint("Missing Network", color='red')
         os._exit(1)
     result = k.delete_network(name=name)
-    common.handle_response(result, name, element='Network ', action='deleted')
+    common.handle_response(result, name, element='Network', action='deleted')
 
 
 def bootstrap_host(args):

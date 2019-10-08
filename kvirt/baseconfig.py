@@ -811,7 +811,6 @@ class Kbaseconfig:
                 else:
                     newfile += line
             open(profilefile, 'w').write(newfile)
-        # common.pprint("Profile %s deleted!" % profile)
         return {'result': 'success'}
 
     def create_profile(self, profile, overrides={}, quiet=False):

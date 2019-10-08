@@ -380,15 +380,15 @@ def handle_response(result, name, quiet=False, element='', action='deployed', cl
     """
     if result['result'] == 'success':
         if not quiet:
-            response = "%s%s %s" % (element, name, action)
+            response = "%s %s %s" % (element, name, action)
             if client is not None:
                 response += " on %s" % client
-            pprint(response, color='green')
+            pprint(response.lstrip(), color='green')
         return 0
     else:
         if not quiet:
-            reason = result['reason']
-            pprint("%s%s not %s because %s" % (element, name, action, reason), color='red')
+            response = "%s %s not %s because %s" % (element, name, action, result['reason'])
+            pprint(response.lstrip(), color='red')
         return 1
 
 
