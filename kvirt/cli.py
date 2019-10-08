@@ -986,6 +986,7 @@ def create_plan(args):
 
 def update_plan(args):
     """Update plan"""
+    autostart = args.autostart
     plan = args.plan
     url = args.url
     path = args.path
@@ -999,9 +1000,9 @@ def update_plan(args):
             paramfile = "%s/%s" % (volumepath, paramfile)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    if plan is None:
-        plan = nameutils.get_random_name()
-        common.pprint("Using %s as name of the plan" % plan)
+    if autostart:
+        config.plan(plan, autostart=autostart)
+        return 0
     config.plan(plan, url=url, path=path, container=container, inputfile=inputfile, overrides=overrides, update=True)
     return 0
 
@@ -1298,18 +1299,20 @@ def delete_network(args):
     common.handle_response(result, name, element='Network', action='deleted')
 
 
-def bootstrap_host(args):
+def create_host(args):
     """Generate basic config file"""
-    name = args.name
     host = args.host
+    default = args.default
     port = args.port
     user = args.user
     protocol = args.protocol
     url = args.url
     pool = args.pool
     poolpath = args.poolpath
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-    baseconfig.bootstrap(name, host, port, user, protocol, url, pool, poolpath)
+    common.bootstrap(args.client, host, port, user, protocol, url, pool, poolpath)
+    if default:
+        baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+        baseconfig.set_defaults()
 
 
 def create_container(args):
@@ -1418,6 +1421,13 @@ def switch_host(args):
         os._exit(1)
 
 
+def list_keyword(args):
+    """List keywords"""
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    keywords = baseconfig.list_keywords()
+    print(keywords)
+
+
 def cli():
     """
 
@@ -1435,103 +1445,87 @@ def cli():
     subparsers = parser.add_subparsers(metavar='')
 
     # subcommands
-    autostart_desc = 'Autostart'
-    autostart_parser = subparsers.add_parser('autostart', description=autostart_desc, help=autostart_desc)
-    autostart_subparsers = autostart_parser.add_subparsers(metavar='', dest='subcommand_autostart')
-
-    bootstrap_desc = 'Bootstrap'
-    bootstrap_parser = subparsers.add_parser('bootstrap', description=bootstrap_desc, help=bootstrap_desc)
-    bootstrap_subparsers = bootstrap_parser.add_subparsers(metavar='', dest='subcommand_bootstrap')
-
-    clone_desc = 'Clone'
+    clone_desc = 'Clone Vm'
     clone_parser = subparsers.add_parser('clone', description=clone_desc, help=clone_desc)
     clone_subparsers = clone_parser.add_subparsers(metavar='', dest='subcommand_clone')
 
-    console_desc = 'Console'
+    console_desc = 'Console Vm/Container'
     console_parser = subparsers.add_parser('console', description=console_desc, help=console_desc)
     console_subparsers = console_parser.add_subparsers(metavar='', dest='subcommand_console')
 
-    create_desc = 'Create'
+    create_desc = 'Create Object'
     create_parser = subparsers.add_parser('create', description=create_desc, help=create_desc)
     create_subparsers = create_parser.add_subparsers(metavar='', dest='subcommand_create')
 
-    delete_desc = 'Delete'
+    delete_desc = 'Delete Object'
     delete_parser = subparsers.add_parser('delete', description=delete_desc, help=delete_desc)
     delete_subparsers = delete_parser.add_subparsers(metavar='', dest='subcommand_delete')
 
-    disable_desc = 'Disable'
+    disable_desc = 'Disable Host'
     disable_parser = subparsers.add_parser('disable', description=disable_desc, help=disable_desc)
     disable_subparsers = disable_parser.add_subparsers(metavar='', dest='subcommand_disable')
 
-    download_desc = 'Download'
+    download_desc = 'Download Image'
     download_parser = subparsers.add_parser('download', description=download_desc, help=download_desc)
     download_subparsers = download_parser.add_subparsers(metavar='', dest='subcommand_download')
 
-    enable_desc = 'Enable'
+    enable_desc = 'Enable Host'
     enable_parser = subparsers.add_parser('enable', description=enable_desc, help=enable_desc)
     enable_subparsers = enable_parser.add_subparsers(metavar='', dest='subcommand_enable')
 
-    export_desc = 'Export'
+    export_desc = 'Export Vm'
     export_parser = subparsers.add_parser('export', description=export_desc, help=export_desc)
     export_subparsers = export_parser.add_subparsers(metavar='', dest='subcommand_export')
 
-    info_desc = 'Info'
+    info_desc = 'Info Host/Plan/Vm'
     info_parser = subparsers.add_parser('info', description=info_desc, help=info_desc)
     info_subparsers = info_parser.add_subparsers(metavar='', dest='subcommand_info')
 
-    list_desc = 'List'
+    list_desc = 'List Object'
     list_parser = subparsers.add_parser('list', description=list_desc, help=list_desc, aliases=['get'])
     list_subparsers = list_parser.add_subparsers(metavar='', dest='subcommand_list')
 
-    noautostart_desc = 'NoAutostart'
-    noautostart_parser = subparsers.add_parser('noautostart', description=noautostart_desc, help=noautostart_desc)
-    noautostart_subparsers = noautostart_parser.add_subparsers(metavar='', dest='subcommand_noautostart')
-
-    render_desc = 'Render'
+    render_desc = 'Render Plan/file'
     render_parser = subparsers.add_parser('render', description=render_desc, help=render_desc)
     render_subparsers = render_parser.add_subparsers(metavar='', dest='subcommand_render')
 
-    report_desc = 'Report'
-    report_parser = subparsers.add_parser('report', description=report_desc, help=report_desc)
-    report_subparsers = report_parser.add_subparsers(metavar='', dest='subcommand_report')
-
-    restart_desc = 'Restart'
+    restart_desc = 'Restart Vm/Plan/Container'
     restart_parser = subparsers.add_parser('restart', description=restart_desc, help=restart_desc)
     restart_subparsers = restart_parser.add_subparsers(metavar='', dest='subcommand_restart')
 
-    revert_desc = 'Revert'
+    revert_desc = 'Revert Snapshot/Plan Snapshot'
     revert_parser = subparsers.add_parser('revert', description=revert_desc, help=revert_desc)
     revert_subparsers = revert_parser.add_subparsers(metavar='', dest='subcommand_revert')
 
-    scp_desc = 'Scp'
+    scp_desc = 'Scp Into Vm'
     scp_parser = subparsers.add_parser('scp', description=scp_desc, help=scp_desc)
     scp_subparsers = scp_parser.add_subparsers(metavar='', dest='subcommand_scp')
 
-    snapshot_desc = 'Snapshot'
+    snapshot_desc = 'Snapshot Plan'
     snapshot_parser = subparsers.add_parser('snapshot', description=snapshot_desc, help=snapshot_desc)
     snapshot_subparsers = snapshot_parser.add_subparsers(metavar='', dest='subcommand_snapshot')
 
-    ssh_desc = 'Ssh'
+    ssh_desc = 'Ssh Into Vm'
     ssh_parser = subparsers.add_parser('ssh', description=ssh_desc, help=ssh_desc)
     ssh_subparsers = ssh_parser.add_subparsers(metavar='', dest='subcommand_ssh')
 
-    start_desc = 'Start'
+    start_desc = 'Start Vm/Plan/Container'
     start_parser = subparsers.add_parser('start', description=start_desc, help=start_desc)
     start_subparsers = start_parser.add_subparsers(metavar='', dest='subcommand_start')
 
-    stop_desc = 'Start'
+    stop_desc = 'Stop Vm/Plan/Container'
     stop_parser = subparsers.add_parser('stop', description=stop_desc, help=stop_desc)
     stop_subparsers = stop_parser.add_subparsers(metavar='', dest='subcommand_stop')
 
-    switch_desc = 'Switch'
+    switch_desc = 'Switch Host'
     switch_parser = subparsers.add_parser('switch', description=switch_desc, help=switch_desc)
     switch_subparsers = switch_parser.add_subparsers(metavar='', dest='subcommand_switch')
 
-    sync_desc = 'Sync'
+    sync_desc = 'Sync Host'
     sync_parser = subparsers.add_parser('sync', description=sync_desc, help=sync_desc)
     sync_subparsers = sync_parser.add_subparsers(metavar='', dest='subcommand_sync')
 
-    update_desc = 'Update'
+    update_desc = 'Update Vm/Plan/Repo'
     update_parser = subparsers.add_parser('update', description=update_desc, help=update_desc)
     update_subparsers = update_parser.add_subparsers(metavar='', dest='subcommand_update')
 
@@ -1608,18 +1602,18 @@ def cli():
     dnsdelete_parser.add_argument('name', metavar='NAME', nargs='?')
     dnsdelete_parser.set_defaults(func=delete_dns)
 
-    hostbootstrap_desc = 'Generate Config File'
-    hostbootstrap_parser = bootstrap_subparsers.add_parser('host', help=hostbootstrap_desc,
-                                                           description=hostbootstrap_desc)
-    hostbootstrap_parser.add_argument('-n', '--name', help='Name to use', metavar='CLIENT')
-    hostbootstrap_parser.add_argument('-H', '--host', help='Host to use', metavar='HOST')
-    hostbootstrap_parser.add_argument('-p', '--port', help='Port to use', metavar='PORT')
-    hostbootstrap_parser.add_argument('-u', '--user', help='User to use', default='root', metavar='USER')
-    hostbootstrap_parser.add_argument('-P', '--protocol', help='Protocol to use', default='ssh', metavar='PROTOCOL')
-    hostbootstrap_parser.add_argument('-U', '--url', help='URL to use', metavar='URL')
-    hostbootstrap_parser.add_argument('--pool', help='Pool to use', metavar='POOL')
-    hostbootstrap_parser.add_argument('--poolpath', help='Pool Path to use', metavar='POOLPATH')
-    hostbootstrap_parser.set_defaults(func=bootstrap_host)
+    hostcreate_desc = 'Create Host'
+    hostcreate_parser = create_subparsers.add_parser('host', help=hostcreate_desc, description=hostcreate_desc)
+    hostcreate_parser.add_argument('-d', '--default', help="add default values in config file", action='store_true')
+    hostcreate_parser.add_argument('-H', '--host', help='Host to use', metavar='HOST')
+    hostcreate_parser.add_argument('-p', '--port', help='Port to use', metavar='PORT')
+    hostcreate_parser.add_argument('-u', '--user', help='User to use', default='root', metavar='USER')
+    hostcreate_parser.add_argument('-P', '--protocol', help='Protocol to use', default='ssh', metavar='PROTOCOL')
+    hostcreate_parser.add_argument('-U', '--url', help='URL to use', metavar='URL')
+    hostcreate_parser.add_argument('--pool', help='Pool to use', metavar='POOL')
+    hostcreate_parser.add_argument('--poolpath', help='Pool Path to use', metavar='POOLPATH')
+    hostcreate_parser.add_argument('client', metavar='CLIENT', nargs='?')
+    hostcreate_parser.set_defaults(func=create_host)
 
     hostdisable_desc = 'Disable Host'
     hostdisable_parser = disable_subparsers.add_parser('host', description=hostdisable_desc, help=hostdisable_desc)
@@ -1638,7 +1632,7 @@ def cli():
     hostreport_desc = 'Report Info About Host'
     hostreport_parser = argparse.ArgumentParser(add_help=False)
     hostreport_parser.set_defaults(func=report_host)
-    report_subparsers.add_parser('host', parents=[hostreport_parser], description=hostreport_desc, help=hostreport_desc)
+    info_subparsers.add_parser('host', parents=[hostreport_parser], description=hostreport_desc, help=hostreport_desc)
 
     hostswitch_desc = 'Switch Host'
     hostswitch_parser = argparse.ArgumentParser(add_help=False)
@@ -1713,6 +1707,10 @@ def cli():
     isolist_parser = list_subparsers.add_parser('iso', description=isolist_desc, help=isolist_desc)
     isolist_parser.set_defaults(func=list_iso)
 
+    keywordlist_desc = 'List Keyword'
+    keywordlist_parser = list_subparsers.add_parser('keyword', description=keywordlist_desc, help=keywordlist_desc)
+    keywordlist_parser.set_defaults(func=list_keyword)
+
     networklist_desc = 'List Networks'
     networklist_parser = list_subparsers.add_parser('network', description=networklist_desc, help=networklist_desc)
     networklist_parser.add_argument('--short', action='store_true')
@@ -1738,12 +1736,6 @@ def cli():
                                                         help=networkdelete_desc)
     networkdelete_parser.add_argument('name', metavar='NETWORK')
     networkdelete_parser.set_defaults(func=delete_network)
-
-    planautostart_desc = 'Autostart Plan'
-    planautostart_parser = autostart_subparsers.add_parser('plan', description=planautostart_desc,
-                                                           help=planautostart_desc)
-    planautostart_parser.add_argument('plan', metavar='PLAN', nargs='?')
-    planautostart_parser.set_defaults(func=autostart_plan)
 
     plancreate_desc = 'Create Plan'
     plancreate_parser = create_subparsers.add_parser('plan', description=plancreate_desc, help=plancreate_desc)
@@ -1781,12 +1773,6 @@ def cli():
     planlist_desc = 'List Plans'
     planlist_parser = list_subparsers.add_parser('plan', description=planlist_desc, help=planlist_desc)
     planlist_parser.set_defaults(func=list_plan)
-
-    plannoautostart_desc = 'Noautostart Plan'
-    plannoautostart_parser = noautostart_subparsers.add_parser('plan', description=plannoautostart_desc,
-                                                               help=planautostart_desc)
-    plannoautostart_parser.add_argument('plan', metavar='PLAN', nargs='?')
-    plannoautostart_parser.set_defaults(func=noautostart_plan)
 
     planrender_desc = 'Render Plans/Files'
     planrender_parser = render_subparsers.add_parser('plan', description=planrender_desc,
@@ -1826,16 +1812,17 @@ def cli():
 
     planupdate_desc = 'Update Plan'
     planupdate_parser = update_subparsers.add_parser('plan', description=planupdate_desc, help=planupdate_desc)
+    planupdate_parser.add_argument('--autostart', action='store_true', help='Set autostart for vms of the plan')
     planupdate_parser.add_argument('-u', '--url', help='Url for plan', metavar='URL')
     planupdate_parser.add_argument('-p', '--path', help='Path where to download plans. Defaults to plan',
                                    metavar='PATH')
     planupdate_parser.add_argument('-c', '--container', action='store_true', help='Handle container')
     planupdate_parser.add_argument('-f', '--inputfile', help='Input Plan file')
-    planupdate_parser.add_argument('-v', '--volumepath', help='Volume Path (only used with kcli container)',
-                                   default='/workdir', metavar='VOLUMEPATH')
     planupdate_parser.add_argument('-P', '--param', action='append',
                                    help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
     planupdate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    planupdate_parser.add_argument('-v', '--volumepath', help='Volume Path (only used with kcli container)',
+                                   default='/workdir', metavar='VOLUMEPATH')
     planupdate_parser.add_argument('plan', metavar='PLAN', nargs='?')
     planupdate_parser.set_defaults(func=update_plan)
 

@@ -17,7 +17,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             SHAREDFOLDERS, KERNEL, INITRD, CMDLINE, PLACEMENT, YAMLINVENTORY)
 from kvirt import common
 import os
-from shutil import copyfile, copytree, rmtree
+from shutil import copytree, rmtree
 import yaml
 from jinja2 import Environment, FileSystemLoader
 from jinja2 import StrictUndefined as undefined
@@ -82,15 +82,9 @@ class Kbaseconfig:
                     self.host = None
                     return
             if 'client' not in self.ini['default']:
-                common.pprint("Using local hypervisor as no client was specified...")
+                common.pprint("Using local libvirt as no client was specified...")
                 self.ini['default']['client'] = 'local'
                 self.ini['local'] = {}
-        if client != 'all':
-            if "fake" not in self.ini:
-                self.ini["fake"] = {"type": "fake"}
-            if "kubevirt" not in self.ini\
-                    and (os.path.exists(os.path.expanduser('~/.kube')) or 'KUBECONFIG' in os.environ):
-                self.ini['kubevirt'] = {'type': 'kubevirt'}
         self.clients = [e for e in self.ini if e != 'default']
         defaults = {}
         default = self.ini['default']
@@ -371,59 +365,27 @@ class Kbaseconfig:
             open(inifile, 'w').write(newini)
         return {'result': 'success'}
 
-    def bootstrap(self, name, host, port, user, protocol, url, pool, poolpath):
+    def set_defaults(self):
         """
 
-        :param name:
-        :param host:
-        :param port:
-        :param user:
-        :param protocol:
-        :param url:
-        :param pool:
-        :param poolpath:
         """
-        common.pprint("Bootstrapping env")
-        if host is None and url is None:
-            url = 'qemu:///system'
-            host = '127.0.0.1'
-        if pool is None:
-            pool = 'default'
-        if poolpath is None:
-            poolpath = '/var/lib/libvirt/images'
         default = {}
-        for key in self.default:
+        for key in sorted(self.default):
             if self.default[key] is None or (isinstance(self.default[key], list) and not self.default[key]):
                 continue
             else:
                 default[key] = self.default[key]
-        ini = {'default': default}
-        if host == '127.0.0.1':
-            ini['default']['client'] = 'local'
-            ini['local'] = {'host': host, 'type': 'kvm', 'pool': pool, 'nets': ['default']}
-        else:
-            if name is None:
-                name = host
-            ini['default']['client'] = name
-            ini[name] = {'host': host, 'type': 'kvm', 'tunnel': True, 'pool': pool, 'nets': ['default']}
-            if protocol is not None:
-                ini[name]['protocol'] = protocol
-            if user is not None:
-                ini[name]['user'] = user
-            if port is not None:
-                ini[name]['port'] = port
-            if url is not None:
-                ini[name]['url'] = url
+        self.ini['default'] = default
         path = os.path.expanduser('~/.kcli/config.yml')
-        rootdir = os.path.expanduser('~/.kcli')
-        if os.path.exists(path):
-            copyfile(path, "%s.bck" % path)
-        if not os.path.exists(rootdir):
-            os.makedirs(rootdir)
         with open(path, 'w') as conf_file:
-            yaml.safe_dump(ini, conf_file, default_flow_style=False,
+            yaml.safe_dump(self.ini, conf_file, default_flow_style=False,
                            encoding='utf-8', allow_unicode=True)
-        common.pprint("Environment bootstrapped!")
+
+    def list_keywords(self):
+        """
+
+        """
+        return self.default
 
     def list_repos(self):
         """

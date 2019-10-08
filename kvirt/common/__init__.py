@@ -960,3 +960,55 @@ def need_guest_agent(image):
     if image.lower().startswith('rhel'):
         return True
     return False
+
+
+def bootstrap(name, host, port, user, protocol, url, pool, poolpath):
+    """
+
+    :param name:
+    :param host:
+    :param port:
+    :param user:
+    :param protocol:
+    :param url:
+    :param pool:
+    :param poolpath:
+    """
+    if host is None and url is None:
+        url = 'qemu:///system'
+        host = '127.0.0.1'
+    if pool is None:
+        pool = 'default'
+    if poolpath is None:
+        poolpath = '/var/lib/libvirt/images'
+    default = {}
+    ini = {'default': default}
+    if host == '127.0.0.1':
+        hostname = 'local'
+        ini['default']['client'] = hostname
+        ini['local'] = {'host': host, 'type': 'kvm', 'pool': pool, 'nets': ['default']}
+    else:
+        if name is None:
+            name = host
+        hostname = name
+        ini['default']['client'] = name
+        ini[name] = {'host': host, 'type': 'kvm', 'tunnel': True, 'pool': pool, 'nets': ['default']}
+        if protocol is not None:
+            ini[name]['protocol'] = protocol
+        if user is not None:
+            ini[name]['user'] = user
+        if port is not None:
+            ini[name]['port'] = port
+        if url is not None:
+            ini[name]['url'] = url
+    path = os.path.expanduser('~/.kcli/config.yml')
+    rootdir = os.path.expanduser('~/.kcli')
+    # if os.path.exists(path):
+    #    copyfile(path, "%s.bck" % path)
+    if not os.path.exists(rootdir):
+        os.makedirs(rootdir)
+    with open(path, 'w') as conf_file:
+        yaml.safe_dump(ini, conf_file, default_flow_style=False,
+                       encoding='utf-8', allow_unicode=True)
+    pprint("Using %s as hostname" % hostname)
+    pprint("Host %s created" % hostname)
