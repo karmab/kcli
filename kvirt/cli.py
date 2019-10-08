@@ -689,6 +689,8 @@ def create_vm(args):
         if config.type != 'aws':
             common.pprint("Using %s as name of the vm" % name)
     if image is not None:
+        if image in config.profiles:
+            common.pprint("Using %s as profile" % image)
         profile = image
     elif profile.endswith('.yml'):
         profilefile = profile
@@ -1545,7 +1547,7 @@ def cli():
                                                           help=containercreate_desc)
     containercreate_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
     containercreate_parser.add_argument('-P', '--param', action='append',
-                                        help='specify parameter or keyword for rendering (can specify multiple)',
+                                        help='specify parameter or keyword for rendering (multiple can be specified)',
                                         metavar='PARAM')
     containercreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
     containercreate_parser.add_argument('name', metavar='NAME', nargs='?')
@@ -1954,7 +1956,7 @@ def cli():
     vmcreate_parser_group.add_argument('-i', '--image', help='Image to use', metavar='IMAGE')
     vmcreate_parser.add_argument('--profilefile', help='File to load profiles from', metavar='PROFILEFILE')
     vmcreate_parser.add_argument('-P', '--param', action='append',
-                                 help='specify parameter or keyword for rendering (can specify multiple)',
+                                 help='specify parameter or keyword for rendering (multiple can be specified)',
                                  metavar='PARAM')
     vmcreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
     vmcreate_parser.add_argument('name', metavar='VMNAME', nargs='?')
