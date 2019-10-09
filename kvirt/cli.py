@@ -23,7 +23,7 @@ def alias(text):
     return "Alias for %s" % text
 
 
-def subparser_print_help(parser, subcommand):
+def get_subparser_print_help(parser, subcommand):
     subparsers_actions = [
         action for action in parser._actions
         if isinstance(action, argparse._SubParsersAction)]
@@ -32,6 +32,16 @@ def subparser_print_help(parser, subcommand):
             if choice == subcommand:
                 subparser.print_help()
                 return
+
+
+def get_subparser(parser, subcommand):
+    subparsers_actions = [
+        action for action in parser._actions
+        if isinstance(action, argparse._SubParsersAction)]
+    for subparsers_action in subparsers_actions:
+        for choice, subparser in subparsers_action.choices.items():
+            if choice == subcommand:
+                return subparser
 
 
 def start_vm(args):
@@ -1299,9 +1309,9 @@ def delete_network(args):
     common.handle_response(result, name, element='Network', action='deleted')
 
 
-def create_host(args):
+def create_host_kvm(args):
     """Generate basic config file"""
-    _type = args.type
+    _type = 'kvm'
     host = args.host
     default = args.default
     port = args.port
@@ -1613,49 +1623,58 @@ def cli():
     dnsdelete_parser.add_argument('name', metavar='NAME', nargs='?')
     dnsdelete_parser.set_defaults(func=delete_dns)
 
-    hostcreate_desc = 'Create Host'
-    hostcreate_parser = create_subparsers.add_parser('host', help=hostcreate_desc, description=hostcreate_desc)
-    hostcreate_parser.add_argument('-d', '--default', help="add default values in config file", action='store_true')
-    hostcreate_parser.add_argument('-H', '--host', help='Host to use', metavar='HOST')
-    hostcreate_parser.add_argument('-p', '--port', help='Port to use', metavar='PORT')
-    hostcreate_parser.add_argument('-t', '--type', help='Type of the host',
-                                   choices=('aws', 'gcp', 'kubevirt', 'kvm', 'ovirt', 'openstack', 'vsphere'),
-                                   default='kvm')
-    hostcreate_parser.add_argument('-u', '--user', help='User to use', default='root', metavar='USER')
-    hostcreate_parser.add_argument('-P', '--protocol', help='Protocol to use', default='ssh', metavar='PROTOCOL')
-    hostcreate_parser.add_argument('-U', '--url', help='URL to use', metavar='URL')
-    hostcreate_parser.add_argument('--pool', help='Pool to use', metavar='POOL')
-    hostcreate_parser.add_argument('--poolpath', help='Pool Path to use', metavar='POOLPATH')
-    hostcreate_parser.add_argument('client', metavar='CLIENT', nargs='?')
-    hostcreate_parser.set_defaults(func=create_host)
+    hostcreate_desc = 'Create Host/Client'
+    hostcreate_parser = create_subparsers.add_parser('host', help=hostcreate_desc, description=hostcreate_desc,
+                                                     aliases=['client'])
+    hostcreate_subparsers = hostcreate_parser.add_subparsers(metavar='', dest='subcommand_create_host')
 
-    hostdisable_desc = 'Disable Host'
-    hostdisable_parser = disable_subparsers.add_parser('host', description=hostdisable_desc, help=hostdisable_desc)
+    kvmhostcreate_desc = 'Create Kvm Host/Client'
+    kvmhostcreate_parser = hostcreate_subparsers.add_parser('kvm', help=kvmhostcreate_desc,
+                                                            description=kvmhostcreate_desc)
+    kvmhostcreate_parser.add_argument('-d', '--default', help="add default values in config file", action='store_true')
+    kvmhostcreate_parser.add_argument('-H', '--host', help='Host to use', metavar='HOST')
+    kvmhostcreate_parser.add_argument('-p', '--port', help='Port to use', metavar='PORT')
+    kvmhostcreate_parser.add_argument('-u', '--user', help='User to use', default='root', metavar='USER')
+    kvmhostcreate_parser.add_argument('-P', '--protocol', help='Protocol to use', default='ssh', metavar='PROTOCOL')
+    kvmhostcreate_parser.add_argument('-U', '--url', help='URL to use', metavar='URL')
+    kvmhostcreate_parser.add_argument('--pool', help='Pool to use', metavar='POOL')
+    kvmhostcreate_parser.add_argument('--poolpath', help='Pool Path to use', metavar='POOLPATH')
+    kvmhostcreate_parser.add_argument('client', metavar='CLIENT', nargs='?')
+    kvmhostcreate_parser.set_defaults(func=create_host_kvm)
+
+    hostdisable_desc = 'Disable Host/Client'
+    hostdisable_parser = disable_subparsers.add_parser('host', description=hostdisable_desc, help=hostdisable_desc,
+                                                       aliases=['client'])
     hostdisable_parser.add_argument('host', metavar='HOST', nargs='?')
     hostdisable_parser.set_defaults(func=disable_host)
 
-    hostenable_desc = 'Enable Host'
-    hostenable_parser = enable_subparsers.add_parser('host', description=hostenable_desc, help=hostenable_desc)
+    hostenable_desc = 'Enable Host/Client'
+    hostenable_parser = enable_subparsers.add_parser('host', description=hostenable_desc, help=hostenable_desc,
+                                                     aliases=['client'])
     hostenable_parser.add_argument('host', metavar='HOST', nargs='?')
     hostenable_parser.set_defaults(func=enable_host)
 
-    hostlist_desc = 'List Hosts'
-    hostlist_parser = list_subparsers.add_parser('host', description=hostlist_desc, help=hostlist_desc)
+    hostlist_desc = 'List Hosts/Clients'
+    hostlist_parser = list_subparsers.add_parser('host', description=hostlist_desc, help=hostlist_desc,
+                                                 aliases=['client'])
     hostlist_parser.set_defaults(func=list_host)
 
-    hostreport_desc = 'Report Info About Host'
+    hostreport_desc = 'Report Info About Host/Client'
     hostreport_parser = argparse.ArgumentParser(add_help=False)
     hostreport_parser.set_defaults(func=report_host)
-    info_subparsers.add_parser('host', parents=[hostreport_parser], description=hostreport_desc, help=hostreport_desc)
+    info_subparsers.add_parser('host', parents=[hostreport_parser], description=hostreport_desc, help=hostreport_desc,
+                               aliases=['client'])
 
-    hostswitch_desc = 'Switch Host'
+    hostswitch_desc = 'Switch Host/Client'
     hostswitch_parser = argparse.ArgumentParser(add_help=False)
     hostswitch_parser.add_argument('host', help='HOST')
     hostswitch_parser.set_defaults(func=switch_host)
-    switch_subparsers.add_parser('host', parents=[hostswitch_parser], description=hostswitch_desc, help=hostswitch_desc)
+    switch_subparsers.add_parser('host', parents=[hostswitch_parser], description=hostswitch_desc, help=hostswitch_desc,
+                                 aliases=['client'])
 
-    hostsync_desc = 'Sync Host'
-    hostsync_parser = sync_subparsers.add_parser('host', description=hostsync_desc, help=hostsync_desc)
+    hostsync_desc = 'Sync Host/Client'
+    hostsync_parser = sync_subparsers.add_parser('host', description=hostsync_desc, help=hostsync_desc,
+                                                 aliases=['client'])
     hostsync_parser.add_argument('hosts', help='HOSTS', nargs='*')
     hostsync_parser.set_defaults(func=sync_host)
 
@@ -2140,9 +2159,16 @@ def cli():
     args = parser.parse_args()
     if not hasattr(args, 'func'):
         for attr in dir(args):
-            if attr.startswith('subcommand'):
-                subcommand = attr.replace('subcommand_', '')
-                subparser_print_help(parser, subcommand)
+            if attr.startswith('subcommand_') and getattr(args, attr) is None:
+                split = attr.split('_')
+                if len(split) == 2:
+                    subcommand = split[1]
+                    get_subparser_print_help(parser, subcommand)
+                elif len(split) == 3:
+                    subcommand = split[1]
+                    subsubcommand = split[2]
+                    subparser = get_subparser(parser, subcommand)
+                    get_subparser_print_help(subparser, subsubcommand)
                 os._exit(0)
         os._exit(0)
     elif args.func.__name__ == 'vmcreate' and args.client is not None and ',' in args.client:
