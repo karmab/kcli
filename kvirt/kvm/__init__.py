@@ -1082,13 +1082,11 @@ class Kvirt(object):
                             print("Remote serial Console requires using ssh . Leaving...")
                             return
                         else:
-                            print("prout3")
                             if os.path.exists("/i_am_a_container"):
                                 self.identitycommand = self.identitycommand.replace('/root', '$HOME')
                             serialcommand = "ssh %s -o LogLevel=QUIET -p %s %s@%s nc 127.0.0.1 %s" %\
                                 (self.identitycommand, self.port, self.user, self.host, serialport)
                         if self.debug or os.path.exists("/i_am_a_container"):
-                            print("prout4")
                             msg = "Run the following command:\n%s" % serialcommand if not self.debug else serialcommand
                             common.pprint(msg)
                         else:

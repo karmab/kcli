@@ -1485,18 +1485,30 @@ def cli():
 
     subparsers = parser.add_subparsers(metavar='')
 
-    # subcommands
-    clone_desc = 'Clone Vm'
-    clone_parser = subparsers.add_parser('clone', description=clone_desc, help=clone_desc)
-    clone_subparsers = clone_parser.add_subparsers(metavar='', dest='subcommand_clone')
-
-    console_desc = 'Console Vm/Container'
-    console_parser = subparsers.add_parser('console', description=console_desc, help=console_desc)
-    console_subparsers = console_parser.add_subparsers(metavar='', dest='subcommand_console')
+    containerconsole_desc = 'Attach To Container'
+    containerconsole_parser = subparsers.add_parser('attach', description=containerconsole_desc,
+                                                    help=containerconsole_desc)
+    containerconsole_parser.add_argument('name', metavar='CONTAINERNAME', nargs='?')
+    containerconsole_parser.set_defaults(func=console_container)
 
     create_desc = 'Create Object'
     create_parser = subparsers.add_parser('create', description=create_desc, help=create_desc)
     create_subparsers = create_parser.add_subparsers(metavar='', dest='subcommand_create')
+
+    vmclone_desc = 'Clone Vm'
+    vmclone_parser = subparsers.add_parser('clone', description=vmclone_desc, help=vmclone_desc)
+    vmclone_parser.add_argument('-b', '--base', help='Base VM', metavar='BASE')
+    vmclone_parser.add_argument('-f', '--full', action='store_true', help='Full Clone')
+    vmclone_parser.add_argument('-s', '--start', action='store_true', help='Start cloned VM')
+    vmclone_parser.add_argument('name', metavar='VMNAME')
+    vmclone_parser.set_defaults(func=clone_vm)
+
+    vmconsole_desc = 'Vm Console (vnc/spice/serial)'
+    vmconsole_parser = argparse.ArgumentParser(add_help=False)
+    vmconsole_parser.add_argument('-s', '--serial', action='store_true')
+    vmconsole_parser.add_argument('name', metavar='VMNAME', nargs='?')
+    vmconsole_parser.set_defaults(func=console_vm)
+    subparsers.add_parser('console', parents=[vmconsole_parser], description=vmconsole_desc, help=vmconsole_desc)
 
     delete_desc = 'Delete Object'
     delete_parser = subparsers.add_parser('delete', description=delete_desc, help=delete_desc)
@@ -1514,9 +1526,14 @@ def cli():
     enable_parser = subparsers.add_parser('enable', description=enable_desc, help=enable_desc)
     enable_subparsers = enable_parser.add_subparsers(metavar='', dest='subcommand_enable')
 
-    export_desc = 'Export Vm'
-    export_parser = subparsers.add_parser('export', description=export_desc, help=export_desc)
-    export_subparsers = export_parser.add_subparsers(metavar='', dest='subcommand_export')
+    vmexport_desc = 'Export Vm'
+    vmexport_parser = subparsers.add_parser('export', description=vmexport_desc, help=vmexport_desc)
+    vmexport_parser.add_argument('-t', '--image', help='Name for the generated image. Uses the vm name otherwise',
+                                 metavar='IMAGE')
+    vmexport_parser.add_argument('names', metavar='VMNAMES', nargs='*')
+    vmexport_parser.set_defaults(func=export_vm)
+
+    hostlist_desc = 'List Hosts'
 
     info_desc = 'Info Host/Plan/Vm'
     info_parser = subparsers.add_parser('info', description=info_desc, help=info_desc)
@@ -1538,17 +1555,30 @@ def cli():
     revert_parser = subparsers.add_parser('revert', description=revert_desc, help=revert_desc)
     revert_subparsers = revert_parser.add_subparsers(metavar='', dest='subcommand_revert')
 
-    scp_desc = 'Scp Into Vm'
-    scp_parser = subparsers.add_parser('scp', description=scp_desc, help=scp_desc)
-    scp_subparsers = scp_parser.add_subparsers(metavar='', dest='subcommand_scp')
+    vmscp_desc = 'Scp Into Vm'
+    vmscp_parser = argparse.ArgumentParser(add_help=False)
+    vmscp_parser.add_argument('-r', '--recursive', help='Recursive', action='store_true')
+    vmscp_parser.add_argument('-v', '--volumepath', help='Volume Path (only used with kcli container)',
+                              default='/workdir', metavar='VOLUMEPATH')
+    vmscp_parser.add_argument('source', nargs=1)
+    vmscp_parser.add_argument('destination', nargs=1)
+    vmscp_parser.set_defaults(func=scp_vm)
+    subparsers.add_parser('scp', parents=[vmscp_parser], description=vmscp_desc, help=vmscp_desc)
 
     snapshot_desc = 'Snapshot Vm/Plan'
     snapshot_parser = subparsers.add_parser('snapshot', description=snapshot_desc, help=snapshot_desc)
     snapshot_subparsers = snapshot_parser.add_subparsers(metavar='', dest='subcommand_snapshot')
 
-    ssh_desc = 'Ssh Into Vm'
-    ssh_parser = subparsers.add_parser('ssh', description=ssh_desc, help=ssh_desc)
-    ssh_subparsers = ssh_parser.add_subparsers(metavar='', dest='subcommand_ssh')
+    vmssh_desc = 'Ssh Into Vm'
+    vmssh_parser = argparse.ArgumentParser(add_help=False)
+    vmssh_parser.add_argument('-D', help='Dynamic Forwarding', metavar='LOCAL')
+    vmssh_parser.add_argument('-L', help='Local Forwarding', metavar='LOCAL')
+    vmssh_parser.add_argument('-R', help='Remote Forwarding', metavar='REMOTE')
+    vmssh_parser.add_argument('-X', action='store_true', help='Enable X11 Forwarding')
+    vmssh_parser.add_argument('-Y', action='store_true', help='Enable X11 Forwarding(Insecure)')
+    vmssh_parser.add_argument('name', metavar='VMNAME', nargs='*')
+    vmssh_parser.set_defaults(func=ssh_vm)
+    subparsers.add_parser('ssh', parents=[vmssh_parser], description=vmssh_desc, help=vmssh_desc)
 
     start_desc = 'Start Vm/Plan/Container'
     start_parser = subparsers.add_parser('start', description=start_desc, help=start_desc)
@@ -1571,11 +1601,6 @@ def cli():
     update_subparsers = update_parser.add_subparsers(metavar='', dest='subcommand_update')
 
     # sub subcommands
-    containerconsole_desc = 'Console Container'
-    containerconsole_parser = console_subparsers.add_parser('container', description=containerconsole_desc,
-                                                            help=containerconsole_desc)
-    containerconsole_parser.add_argument('name', metavar='CONTAINERNAME', nargs='?')
-    containerconsole_parser.set_defaults(func=console_container)
 
     containercreate_desc = 'Create Container'
     containercreate_parser = create_subparsers.add_parser('container', description=containercreate_desc,
@@ -1699,7 +1724,6 @@ def cli():
     hostenable_parser.add_argument('name', metavar='NAME')
     hostenable_parser.set_defaults(func=enable_host)
 
-    hostlist_desc = 'List Hosts'
     hostlist_parser = list_subparsers.add_parser('host', description=hostlist_desc, help=hostlist_desc,
                                                  aliases=['client'])
     hostlist_parser.set_defaults(func=list_host)
@@ -2007,21 +2031,6 @@ def cli():
                                                   aliases=['template'])
     imagelist_parser.set_defaults(func=list_image)
 
-    vmclone_desc = 'Clone Vm'
-    vmclone_parser = clone_subparsers.add_parser('vm', description=vmclone_desc, help=vmclone_desc)
-    vmclone_parser.add_argument('-b', '--base', help='Base VM', metavar='BASE')
-    vmclone_parser.add_argument('-f', '--full', action='store_true', help='Full Clone')
-    vmclone_parser.add_argument('-s', '--start', action='store_true', help='Start cloned VM')
-    vmclone_parser.add_argument('name', metavar='VMNAME')
-    vmclone_parser.set_defaults(func=clone_vm)
-
-    vmconsole_desc = 'Vm Console (vnc/spice/serial)'
-    vmconsole_parser = argparse.ArgumentParser(add_help=False)
-    vmconsole_parser.add_argument('-s', '--serial', action='store_true')
-    vmconsole_parser.add_argument('name', metavar='VMNAME', nargs='?')
-    vmconsole_parser.set_defaults(func=console_vm)
-    console_subparsers.add_parser('vm', parents=[vmconsole_parser], description=vmconsole_desc, help=vmconsole_desc)
-
     vmcreate_desc = 'Create Vm'
     vmcreate_parser = argparse.ArgumentParser(add_help=False)
     vmcreate_parser_group = vmcreate_parser.add_mutually_exclusive_group(required=True)
@@ -2064,18 +2073,11 @@ def cli():
     delete_subparsers.add_parser('vm-disk', parents=[vmdiskdelete_parser], description=vmdiskdelete_desc,
                                  help=vmdiskdelete_desc, aliases=['disk'])
 
-    vmdisklist_desc = 'List All Vms Disks'
+    vmdisklist_desc = 'List All Vm Disks'
     vmdisklist_parser = argparse.ArgumentParser(add_help=False)
     vmdisklist_parser.set_defaults(func=list_vmdisk)
     list_subparsers.add_parser('vm-disk', parents=[vmdisklist_parser], description=vmdisklist_desc,
                                help=vmdisklist_desc, aliases=['disk'])
-
-    vmexport_desc = 'Export Vms'
-    vmexport_parser = export_subparsers.add_parser('vm', description=vmexport_desc, help=vmexport_desc)
-    vmexport_parser.add_argument('-t', '--image', help='Name for the generated image. Uses the vm name otherwise',
-                                 metavar='IMAGE')
-    vmexport_parser.add_argument('names', metavar='VMNAMES', nargs='*')
-    vmexport_parser.set_defaults(func=export_vm)
 
     vminfo_desc = 'Info Of Vms'
     vminfo_parser = argparse.ArgumentParser(add_help=False)
@@ -2115,16 +2117,6 @@ def cli():
     vmrestart_parser.add_argument('names', metavar='VMNAMES', nargs='*')
     vmrestart_parser.set_defaults(func=restart_vm)
 
-    vmscp_desc = 'Scp Into Vm'
-    vmscp_parser = argparse.ArgumentParser(add_help=False)
-    vmscp_parser.add_argument('-r', '--recursive', help='Recursive', action='store_true')
-    vmscp_parser.add_argument('-v', '--volumepath', help='Volume Path (only used with kcli container)',
-                              default='/workdir', metavar='VOLUMEPATH')
-    vmscp_parser.add_argument('source', nargs=1)
-    vmscp_parser.add_argument('destination', nargs=1)
-    vmscp_parser.set_defaults(func=scp_vm)
-    scp_subparsers.add_parser('vm', parents=[vmscp_parser], description=vmscp_desc, help=vmscp_desc)
-
     vmsnapshotcreate_desc = 'Create Snapshot Of Vm'
     vmsnapshotcreate_parser = create_subparsers.add_parser('vm-snapshot', description=vmsnapshotcreate_desc,
                                                            help=vmsnapshotcreate_desc)
@@ -2152,17 +2144,6 @@ def cli():
                                          required=True, metavar='VMNAME')
     vmsnapshotrevert_parser.add_argument('snapshot')
     vmsnapshotrevert_parser.set_defaults(func=snapshotrevert_vm)
-
-    vmssh_desc = 'Ssh Into Vm'
-    vmssh_parser = argparse.ArgumentParser(add_help=False)
-    vmssh_parser.add_argument('-D', help='Dynamic Forwarding', metavar='LOCAL')
-    vmssh_parser.add_argument('-L', help='Local Forwarding', metavar='LOCAL')
-    vmssh_parser.add_argument('-R', help='Remote Forwarding', metavar='REMOTE')
-    vmssh_parser.add_argument('-X', action='store_true', help='Enable X11 Forwarding')
-    vmssh_parser.add_argument('-Y', action='store_true', help='Enable X11 Forwarding(Insecure)')
-    vmssh_parser.add_argument('name', metavar='VMNAME', nargs='*')
-    vmssh_parser.set_defaults(func=ssh_vm)
-    ssh_subparsers.add_parser('vm', parents=[vmssh_parser], description=vmssh_desc, help=vmssh_desc)
 
     vmstart_desc = 'Start Vms'
     vmstart_parser = argparse.ArgumentParser(add_help=False)
