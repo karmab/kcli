@@ -160,6 +160,8 @@ class Kbaseconfig:
         else:
             with open(profilefile, 'r') as entries:
                 self.profiles = yaml.safe_load(entries)
+                if self.profiles is None:
+                    self.profiles = {}
         flavorsfile = default.get('flavors', "%s/.kcli/flavors.yml" %
                                   os.environ.get('HOME'))
         flavorsfile = os.path.expanduser(flavorsfile)

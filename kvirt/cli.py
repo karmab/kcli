@@ -271,13 +271,10 @@ def create_profile(args):
 
 def delete_profile(args):
     """Delete profile"""
-    yes = args.yes
     profile = args.profile
     baseconfig = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
     common.pprint("Deleting on %s" % baseconfig.client)
-    if not yes:
-        common.confirm("Are you sure?")
     result = baseconfig.delete_profile(profile)
     code = common.handle_response(result, profile, element='Profile', action='deleted', client=baseconfig.client)
     return code
@@ -1725,7 +1722,6 @@ def cli():
     profiledelete_desc = 'Delete Profile'
     profiledelete_help = "Image to delete"
     profiledelete_parser = argparse.ArgumentParser(add_help=False)
-    profiledelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     profiledelete_parser.add_argument('profile', help=profiledelete_help, metavar='PROFILE')
     profiledelete_parser.set_defaults(func=delete_profile)
     delete_subparsers.add_parser('profile', parents=[profiledelete_parser], description=profiledelete_desc,
