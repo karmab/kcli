@@ -701,7 +701,7 @@ class Ksphere:
             if web:
                 return vmurl
             if self.debug or os.path.exists("/i_am_a_container"):
-                msg = "Please open %s" % vmurl if os.path.exists("/i_am_a_container") else vmurl
+                msg = "Open the following url:\n%s" % vmurl if os.path.exists("/i_am_a_container") else vmurl
                 common.pprint(msg)
             else:
                 common.pprint("Opening url %s" % vmurl)

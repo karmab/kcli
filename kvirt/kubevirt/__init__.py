@@ -572,7 +572,7 @@ class Kubevirt(Kubecommon):
             return "vnc://127.0.0.1:%s" % localport
         consolecommand = "remote-viewer vnc://127.0.0.1:%s &" % localport
         if self.debug or os.path.exists("/i_am_a_container"):
-            msg = "Run the following command %s" % consolecommand if not self.debug else consolecommand
+            msg = "Run the following command:\n%s" % consolecommand if not self.debug else consolecommand
             common.pprint(msg)
         else:
             os.system(consolecommand)

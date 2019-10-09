@@ -1020,15 +1020,20 @@ class Kvirt(object):
             root = ET.fromstring(xml)
             for element in list(root.getiterator('graphics')):
                 attributes = element.attrib
-                if tunnel or (attributes['listen'] == '127.0.0.1' and not os.path.exists("i_am_a_container")):
-                    host = '127.0.0.1'
-                    tunnel = True
+                if attributes['listen'] == '127.0.0.1':
+                    if not os.path.exists("i_am_a_container"):
+                        tunnel = True
+                    elif self.host not in ['127.0.0.1', 'localhost']:
+                        tunnel = True
+                        host = '127.0.0.1'
                 else:
                     host = self.host
                 protocol = attributes['type']
                 port = attributes['port']
                 localport = port
                 consolecommand = ''
+                if os.path.exists("/i_am_a_container"):
+                    self.identitycommand = self.identitycommand.replace('/root', '$HOME')
                 if tunnel:
                     localport = common.get_free_port()
                     consolecommand += "ssh %s -o LogLevel=QUIET -f -p %s -L %s:127.0.0.1:%s %s@%s sleep 10;"\
@@ -1040,7 +1045,7 @@ class Kvirt(object):
                     return url
                 consolecommand += "remote-viewer %s &" % url
                 if self.debug or os.path.exists("/i_am_a_container"):
-                    msg = "Run the following command %s" % consolecommand if not self.debug else consolecommand
+                    msg = "Run the following command:\n%s" % consolecommand if not self.debug else consolecommand
                     common.pprint(msg)
                 else:
                     os.popen(consolecommand)
@@ -1077,9 +1082,18 @@ class Kvirt(object):
                             print("Remote serial Console requires using ssh . Leaving...")
                             return
                         else:
+                            print("prout3")
+                            if os.path.exists("/i_am_a_container"):
+                                self.identitycommand = self.identitycommand.replace('/root', '$HOME')
                             serialcommand = "ssh %s -o LogLevel=QUIET -p %s %s@%s nc 127.0.0.1 %s" %\
                                 (self.identitycommand, self.port, self.user, self.host, serialport)
-                        os.system(serialcommand)
+                        if self.debug or os.path.exists("/i_am_a_container"):
+                            print("prout4")
+                            msg = "Run the following command:\n%s" % serialcommand if not self.debug else serialcommand
+                            common.pprint(msg)
+                        else:
+                            os.system(serialcommand)
+                            # os.system(serialcommand)
 
     def info(self, name, vm=None):
         """

@@ -391,10 +391,10 @@ class Kopenstack(object):
         if web:
             return url
         if self.debug or os.path.exists("/i_am_a_container"):
-            msg = "Please open %s" % url if os.path.exists("/i_am_a_container") else url
+            msg = "Open the following url:\n%s" % url if os.path.exists("/i_am_a_container") else url
             common.pprint(msg)
         else:
-            common.pprint("Opening url %s" % url)
+            common.pprint("Opening url: %s" % url)
             webbrowser.open(url, new=2, autoraise=True)
         return
 
