@@ -605,7 +605,11 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             return "%s://%s:%s+%s" % (c.protocol, address, sport if str(c.protocol) == 'spice' else port, ticket.value)
         with open("/tmp/console.vv", "w") as f:
             f.write(connectiondetails)
-        os.popen("remote-viewer /tmp/console.vv &")
+        if self.debug or os.path.exists("/i_am_a_container"):
+            msg = "Use remote-viewer with this: \n%s" % connectiondetails if not self.debug else connectiondetails
+            common.pprint(msg)
+        else:
+            os.popen("remote-viewer /tmp/console.vv &")
         return
 
     def serialconsole(self, name):

@@ -388,11 +388,14 @@ class Kopenstack(object):
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         url = vm.get_vnc_console('novnc')['console']['url']
-        if self.debug:
-            print(url)
         if web:
             return url
-        webbrowser.open(url, new=2, autoraise=True)
+        if self.debug or os.path.exists("/i_am_a_container"):
+            msg = "Please open %s" % url if os.path.exists("/i_am_a_container") else url
+            common.pprint(msg)
+        else:
+            common.pprint("Opening url %s" % url)
+            webbrowser.open(url, new=2, autoraise=True)
         return
 
     def serialconsole(self, name):

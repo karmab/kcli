@@ -1020,7 +1020,7 @@ class Kvirt(object):
             root = ET.fromstring(xml)
             for element in list(root.getiterator('graphics')):
                 attributes = element.attrib
-                if attributes['listen'] == '127.0.0.1' or tunnel:
+                if tunnel or (attributes['listen'] == '127.0.0.1' and not os.path.exists("i_am_a_container")):
                     host = '127.0.0.1'
                     tunnel = True
                 else:
@@ -1040,8 +1040,9 @@ class Kvirt(object):
                     return url
                 consolecommand += "remote-viewer %s &" % url
                 if self.debug or os.path.exists("/i_am_a_container"):
-                    print(consolecommand)
-                if not os.path.exists("/i_am_a_container"):
+                    msg = "Run the following command %s" % consolecommand if not self.debug else consolecommand
+                    common.pprint(msg)
+                else:
                     os.popen(consolecommand)
 
     def serialconsole(self, name):

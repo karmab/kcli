@@ -700,7 +700,12 @@ class Ksphere:
                                                                                                  session, sha1)
             if web:
                 return vmurl
-            webbrowser.open(vmurl, new=2, autoraise=True)
+            if self.debug or os.path.exists("/i_am_a_container"):
+                msg = "Please open %s" % vmurl if os.path.exists("/i_am_a_container") else vmurl
+                common.pprint(msg)
+            else:
+                common.pprint("Opening url %s" % vmurl)
+                webbrowser.open(vmurl, new=2, autoraise=True)
 
     def info(self, name, output='plain', fields=[], values=False, vm=None):
         translation = {'poweredOff': 'down', 'poweredOn': 'up', 'suspended': 'suspended'}
