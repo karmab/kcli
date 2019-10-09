@@ -82,7 +82,8 @@ class Kbaseconfig:
                     self.host = None
                     return
             if 'client' not in self.ini['default']:
-                common.pprint("Using local libvirt as no client was specified...")
+                if not quiet:
+                    common.pprint("Using local libvirt as no client was specified...")
                 self.ini['default']['client'] = 'local'
                 self.ini['local'] = {}
         self.clients = [e for e in self.ini if e != 'default']
@@ -377,6 +378,8 @@ class Kbaseconfig:
                 continue
             else:
                 default[key] = self.default[key]
+        if len(self.clients) == 1:
+            default['client'] = [*self.clients][0]
         self.ini['default'] = default
         path = os.path.expanduser('~/.kcli/config.yml')
         with open(path, 'w') as conf_file:
@@ -789,7 +792,7 @@ class Kbaseconfig:
         if not os.path.exists(rootdir):
             os.makedirs(rootdir)
         with open(profilefile, 'a') as f:
-            f.write("\n%s:\n" % profile)
+            f.write("%s:\n" % profile)
             for key in sorted(overrides):
                 f.write(" %s: %s\n" % (key, overrides[key]))
         return {'result': 'success'}

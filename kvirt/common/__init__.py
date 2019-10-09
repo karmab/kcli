@@ -963,51 +963,62 @@ def need_guest_agent(image):
     return False
 
 
-def bootstrap(name, hosttype, host, port, user, protocol, url, pool, poolpath):
+def create_host(data):
     """
 
-    :param name:
-    :param host:
-    :param port:
-    :param user:
-    :param protocol:
-    :param url:
-    :param pool:
-    :param poolpath:
+    :param data:
     """
-    if host is None and url is None:
-        url = 'qemu:///system'
-        host = '127.0.0.1'
-    if pool is None:
-        pool = 'default'
-    if poolpath is None:
-        poolpath = '/var/lib/libvirt/images'
-    default = {}
-    ini = {'default': default}
-    if host == '127.0.0.1':
-        hostname = 'local'
-        ini['default']['client'] = hostname
-        ini['local'] = {'host': host, 'type': 'kvm', 'pool': pool, 'nets': ['default']}
+    if data['name'] is None:
+        if data['_type'] in ['kvm', 'ovirt']:
+            name = data['host'] if 'host' not in ['localhost', '127.0.0.1'] else 'local'
     else:
-        if name is None:
-            name = host
-        hostname = name
-        ini['default']['client'] = name
-        ini[name] = {'host': host, 'type': hosttype, 'tunnel': True, 'pool': pool, 'nets': ['default']}
-        if protocol is not None:
-            ini[name]['protocol'] = protocol
-        if user is not None:
-            ini[name]['user'] = user
-        if port is not None:
-            ini[name]['port'] = port
-        if url is not None:
-            ini[name]['url'] = url
+        name = data['name']
+        del data['name']
+    data['type'] = data['_type']
+    del data['_type']
+    ini = {}
     path = os.path.expanduser('~/.kcli/config.yml')
     rootdir = os.path.expanduser('~/.kcli')
     if not os.path.exists(rootdir):
         os.makedirs(rootdir)
+    if os.path.exists(path):
+        with open(path, 'r') as entries:
+            try:
+                oldini = yaml.safe_load(entries)
+            except yaml.scanner.ScannerError as err:
+                pprint("Couldn't parse yaml in .kcli/config.yml. Got %s" % err, color='red')
+                os._exit(1)
+        if name in oldini:
+            pprint("Skipping existing Host %s" % name, color='blue')
+            return
+        ini = oldini
+    ini[name] = {k: data[k] for k in data if data[k] is not None}
     with open(path, 'w') as conf_file:
-        yaml.safe_dump(ini, conf_file, default_flow_style=False,
-                       encoding='utf-8', allow_unicode=True)
-    pprint("Using %s as hostname" % hostname)
-    pprint("Host %s created" % hostname)
+        yaml.safe_dump(ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True)
+    pprint("Using %s as hostname" % name)
+    pprint("Host %s created" % name)
+
+
+def delete_host(name):
+    """
+
+    :param data:
+    """
+    path = os.path.expanduser('~/.kcli/config.yml')
+    if not os.path.exists(path):
+        pprint("Skipping non existing Host %s" % name, color='blue')
+        return
+    else:
+        with open(path, 'r') as entries:
+            try:
+                ini = yaml.safe_load(entries)
+            except yaml.scanner.ScannerError as err:
+                pprint("Couldn't parse yaml in .kcli/config.yml. Got %s" % err, color='red')
+                os._exit(1)
+        if name not in ini:
+            pprint("Skipping non existing Host %s" % name, color='blue')
+            return
+        del ini[name]
+        with open(path, 'w') as conf_file:
+            yaml.safe_dump(ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True)
+        pprint("Host %s deleted" % name)

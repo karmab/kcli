@@ -415,7 +415,7 @@ def profilelist_container(args):
     return
 
 
-def imagelist_container(args):
+def list_containerimage(args):
     """List container images"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.type != 'kvm':
@@ -1307,19 +1307,39 @@ def delete_network(args):
 
 
 def create_host_kvm(args):
-    """Generate basic config file"""
-    _type = 'kvm'
-    host = args.host
-    default = args.default
-    port = args.port
-    user = args.user
-    protocol = args.protocol
-    url = args.url
-    pool = args.pool
-    poolpath = args.poolpath
-    common.bootstrap(args.client, _type, host, port, user, protocol, url, pool, poolpath)
-    if default:
-        baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    """Generate Kvm host"""
+    data = {}
+    data['_type'] = 'kvm'
+    data['name'] = args.name
+    data['host'] = args.host
+    data['port'] = args.port
+    data['user'] = args.user
+    data['protocol'] = args.protocol
+    data['url'] = args.url
+    data['pool'] = args.pool
+    common.create_host(data)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
+    if len(baseconfig.clients) == 1:
+        baseconfig.set_defaults()
+
+
+def create_host_ovirt(args):
+    """Create Ovirt host"""
+    data = {}
+    data['name'] = args.name
+    data['_type'] = 'ovirt'
+    data['host'] = args.host
+    data['datacenter'] = args.datacenter
+    data['ca_file'] = args.ca
+    data['cluster'] = args.cluster
+    data['org'] = args.org
+    data['user'] = args.user
+    data['password'] = args.password
+    data['pool'] = args.pool
+    data['client'] = args.client
+    common.create_host(data)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
+    if len(baseconfig.clients) == 1:
         baseconfig.set_defaults()
 
 
@@ -1575,7 +1595,7 @@ def cli():
     containerimagelist_desc = 'List Container Images'
     containerimagelist_parser = list_subparsers.add_parser('container-image', description=containerimagelist_desc,
                                                            help=containerimagelist_desc)
-    containerimagelist_parser.set_defaults(func=imagelist_container)
+    containerimagelist_parser.set_defaults(func=list_containerimage)
 
     containerlist_desc = 'List Containers'
     containerlist_parser = list_subparsers.add_parser('container', description=containerlist_desc,
@@ -1628,16 +1648,33 @@ def cli():
     kvmhostcreate_desc = 'Create Kvm Host/Client'
     kvmhostcreate_parser = hostcreate_subparsers.add_parser('kvm', help=kvmhostcreate_desc,
                                                             description=kvmhostcreate_desc)
-    kvmhostcreate_parser.add_argument('-d', '--default', help="add default values in config file", action='store_true')
-    kvmhostcreate_parser.add_argument('-H', '--host', help='Host to use', metavar='HOST')
-    kvmhostcreate_parser.add_argument('-p', '--port', help='Port to use', metavar='PORT')
-    kvmhostcreate_parser.add_argument('-u', '--user', help='User to use', default='root', metavar='USER')
+    kvmhostcreate_parser_group = kvmhostcreate_parser.add_mutually_exclusive_group(required=True)
+    kvmhostcreate_parser_group.add_argument('-H', '--host', help='Host. Defaults to localhost', metavar='HOST',
+                                            default='localhost')
+    kvmhostcreate_parser.add_argument('-p', '--port', help='Port', metavar='PORT')
+    kvmhostcreate_parser.add_argument('-u', '--user', help='User. Defaults to root', default='root', metavar='USER')
     kvmhostcreate_parser.add_argument('-P', '--protocol', help='Protocol to use', default='ssh', metavar='PROTOCOL')
-    kvmhostcreate_parser.add_argument('-U', '--url', help='URL to use', metavar='URL')
-    kvmhostcreate_parser.add_argument('--pool', help='Pool to use', metavar='POOL')
-    kvmhostcreate_parser.add_argument('--poolpath', help='Pool Path to use', metavar='POOLPATH')
-    kvmhostcreate_parser.add_argument('client', metavar='CLIENT', nargs='?')
+    kvmhostcreate_parser_group.add_argument('-U', '--url', help='URL to use', metavar='URL')
+    kvmhostcreate_parser.add_argument('--pool', help='Pool. Defaults to default', metavar='POOL', default='default')
+    kvmhostcreate_parser.add_argument('name', metavar='NAME', nargs='?')
     kvmhostcreate_parser.set_defaults(func=create_host_kvm)
+
+    ovirthostcreate_desc = 'Create Ovirt Host/Client'
+    ovirthostcreate_parser = hostcreate_subparsers.add_parser('ovirt', help=ovirthostcreate_desc,
+                                                              description=ovirthostcreate_desc)
+    ovirthostcreate_parser.add_argument('-d', '--datacenter', help='Datacenter. Defaults to Default', default='Default',
+                                        metavar='DATACENTER')
+    ovirthostcreate_parser.add_argument('--ca', help='Path to certificate file', metavar='CA')
+    ovirthostcreate_parser.add_argument('-c', '--cluster', help='Cluster. Defaults to Default', default='Default',
+                                        metavar='CLUSTER')
+    ovirthostcreate_parser.add_argument('-o', '--org', help='Organization', metavar='ORGANIZATION')
+    ovirthostcreate_parser.add_argument('-H', '--host', help='Host to use', metavar='HOST', required=True)
+    ovirthostcreate_parser.add_argument('-u', '--user', help='User. Defaults to admin@internal',
+                                        metavar='USER', default='admin@internal')
+    ovirthostcreate_parser.add_argument('-p', '--password', help='Password to use', metavar='PASSWORD', required=True)
+    ovirthostcreate_parser.add_argument('--pool', help='Storage Domain', metavar='POOL')
+    ovirthostcreate_parser.add_argument('name', metavar='NAME', nargs='?')
+    ovirthostcreate_parser.set_defaults(func=create_host_ovirt)
 
     hostdisable_desc = 'Disable Host/Client'
     hostdisable_parser = disable_subparsers.add_parser('host', description=hostdisable_desc, help=hostdisable_desc,
