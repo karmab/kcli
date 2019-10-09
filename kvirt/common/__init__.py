@@ -994,7 +994,7 @@ def create_host(data):
         ini = oldini
     ini[name] = {k: data[k] for k in data if data[k] is not None}
     with open(path, 'w') as conf_file:
-        yaml.safe_dump(ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True)
+        yaml.safe_dump(ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True, sort_keys=False)
     pprint("Using %s as hostname" % name)
     pprint("Host %s created" % name)
 
@@ -1002,7 +1002,7 @@ def create_host(data):
 def delete_host(name):
     """
 
-    :param data:
+    :param name:
     """
     path = os.path.expanduser('~/.kcli/config.yml')
     if not os.path.exists(path):
@@ -1020,5 +1020,6 @@ def delete_host(name):
             return
         del ini[name]
         with open(path, 'w') as conf_file:
-            yaml.safe_dump(ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True)
+            yaml.safe_dump(ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True,
+                           sort_keys=False)
         pprint("Host %s deleted" % name)

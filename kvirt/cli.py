@@ -297,7 +297,7 @@ def info_vm(args):
 
 def enable_host(args):
     """Enable host"""
-    host = args.host
+    host = args.name
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     result = baseconfig.enable_host(host)
     if result['result'] == 'success':
@@ -308,7 +308,7 @@ def enable_host(args):
 
 def disable_host(args):
     """Disable host"""
-    host = args.host
+    host = args.name
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     result = baseconfig.disable_host(host)
     if result['result'] == 'success':
@@ -317,9 +317,14 @@ def disable_host(args):
         os._exit(1)
 
 
+def delete_host(args):
+    """Delete host"""
+    common.delete_host(args.name)
+
+
 def sync_host(args):
     """Handle host"""
-    hosts = args.hosts
+    hosts = args.names
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     result = config.handle_host(sync=hosts)
     if result['result'] == 'success':
@@ -1442,7 +1447,7 @@ def report_host(args):
 
 def switch_host(args):
     """Handle host"""
-    host = args.host
+    host = args.name
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     result = baseconfig.switch_host(host)
     if result['result'] == 'success':
@@ -1640,12 +1645,12 @@ def cli():
     dnsdelete_parser.add_argument('name', metavar='NAME', nargs='?')
     dnsdelete_parser.set_defaults(func=delete_dns)
 
-    hostcreate_desc = 'Create Host/Client'
+    hostcreate_desc = 'Create Host'
     hostcreate_parser = create_subparsers.add_parser('host', help=hostcreate_desc, description=hostcreate_desc,
                                                      aliases=['client'])
     hostcreate_subparsers = hostcreate_parser.add_subparsers(metavar='', dest='subcommand_create_host')
 
-    kvmhostcreate_desc = 'Create Kvm Host/Client'
+    kvmhostcreate_desc = 'Create Kvm Host'
     kvmhostcreate_parser = hostcreate_subparsers.add_parser('kvm', help=kvmhostcreate_desc,
                                                             description=kvmhostcreate_desc)
     kvmhostcreate_parser_group = kvmhostcreate_parser.add_mutually_exclusive_group(required=True)
@@ -1659,7 +1664,7 @@ def cli():
     kvmhostcreate_parser.add_argument('name', metavar='NAME', nargs='?')
     kvmhostcreate_parser.set_defaults(func=create_host_kvm)
 
-    ovirthostcreate_desc = 'Create Ovirt Host/Client'
+    ovirthostcreate_desc = 'Create Ovirt Host'
     ovirthostcreate_parser = hostcreate_subparsers.add_parser('ovirt', help=ovirthostcreate_desc,
                                                               description=ovirthostcreate_desc)
     ovirthostcreate_parser.add_argument('-d', '--datacenter', help='Datacenter. Defaults to Default', default='Default',
@@ -1676,40 +1681,46 @@ def cli():
     ovirthostcreate_parser.add_argument('name', metavar='NAME', nargs='?')
     ovirthostcreate_parser.set_defaults(func=create_host_ovirt)
 
-    hostdisable_desc = 'Disable Host/Client'
+    hostdelete_desc = 'Delete Host'
+    hostdelete_parser = delete_subparsers.add_parser('host', description=hostdelete_desc, help=hostdelete_desc,
+                                                     aliases=['client'])
+    hostdelete_parser.add_argument('name', metavar='NAME', nargs='?')
+    hostdelete_parser.set_defaults(func=delete_host)
+
+    hostdisable_desc = 'Disable Host'
     hostdisable_parser = disable_subparsers.add_parser('host', description=hostdisable_desc, help=hostdisable_desc,
                                                        aliases=['client'])
-    hostdisable_parser.add_argument('host', metavar='HOST', nargs='?')
+    hostdisable_parser.add_argument('name', metavar='NAME')
     hostdisable_parser.set_defaults(func=disable_host)
 
-    hostenable_desc = 'Enable Host/Client'
+    hostenable_desc = 'Enable Host'
     hostenable_parser = enable_subparsers.add_parser('host', description=hostenable_desc, help=hostenable_desc,
                                                      aliases=['client'])
-    hostenable_parser.add_argument('host', metavar='HOST', nargs='?')
+    hostenable_parser.add_argument('name', metavar='NAME')
     hostenable_parser.set_defaults(func=enable_host)
 
-    hostlist_desc = 'List Hosts/Clients'
+    hostlist_desc = 'List Hosts'
     hostlist_parser = list_subparsers.add_parser('host', description=hostlist_desc, help=hostlist_desc,
                                                  aliases=['client'])
     hostlist_parser.set_defaults(func=list_host)
 
-    hostreport_desc = 'Report Info About Host/Client'
+    hostreport_desc = 'Report Info About Host'
     hostreport_parser = argparse.ArgumentParser(add_help=False)
     hostreport_parser.set_defaults(func=report_host)
     info_subparsers.add_parser('host', parents=[hostreport_parser], description=hostreport_desc, help=hostreport_desc,
                                aliases=['client'])
 
-    hostswitch_desc = 'Switch Host/Client'
+    hostswitch_desc = 'Switch Host'
     hostswitch_parser = argparse.ArgumentParser(add_help=False)
-    hostswitch_parser.add_argument('host', help='HOST')
+    hostswitch_parser.add_argument('name', help='NAME')
     hostswitch_parser.set_defaults(func=switch_host)
     switch_subparsers.add_parser('host', parents=[hostswitch_parser], description=hostswitch_desc, help=hostswitch_desc,
                                  aliases=['client'])
 
-    hostsync_desc = 'Sync Host/Client'
+    hostsync_desc = 'Sync Host'
     hostsync_parser = sync_subparsers.add_parser('host', description=hostsync_desc, help=hostsync_desc,
                                                  aliases=['client'])
-    hostsync_parser.add_argument('hosts', help='HOSTS', nargs='*')
+    hostsync_parser.add_argument('names', help='NAMES', nargs='*')
     hostsync_parser.set_defaults(func=sync_host)
 
     lbcreate_desc = 'Create Load Balancer'

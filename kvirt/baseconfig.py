@@ -281,22 +281,17 @@ class Kbaseconfig:
                           color='red')
             return {'result': 'failure', 'reason': "Client %s not found in config" % client}
         enabled = self.ini[client].get('enabled', True)
-        oldclient = self.ini['default']['client']
         if not enabled:
             common.pprint("Client %s is disabled.Leaving...." % client,
                           color='red')
             return {'result': 'failure', 'reason': "Client %s is disabled" %
                     client}
         common.pprint("Switching to client %s..." % client)
+        self.ini['default']['client'] = client
         inifile = "%s/.kcli/config.yml" % os.environ.get('HOME')
-        if os.path.exists(inifile):
-            newini = ''
-            for line in open(inifile).readlines():
-                if 'client' in line:
-                    newini += line.replace(oldclient, client)
-                else:
-                    newini += line
-            open(inifile, 'w').write(newini)
+        with open(inifile, 'w') as conf_file:
+            yaml.safe_dump(self.ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True,
+                           sort_keys=False)
         return {'result': 'success'}
 
     def enable_host(self, client):
@@ -309,26 +304,11 @@ class Kbaseconfig:
             common.pprint("Client %s not found in config.Leaving...." % client)
             return {'result': 'failure', 'reason': "Client %s not found in config" % client}
         common.pprint("Enabling client %s..." % client)
+        self.ini[client]['enabled'] = True
         inifile = "%s/.kcli/config.yml" % os.environ.get('HOME')
-        if os.path.exists(inifile):
-            newini = ''
-            clientreached = False
-            for line in open(inifile).readlines():
-                if line.startswith("%s:" % client):
-                    clientreached = True
-                    newini += line
-                    continue
-                if clientreached and 'enabled' not in self.ini[client]:
-                    newini += " enabled: true\n"
-                    clientreached = False
-                    newini += line
-                    continue
-                elif clientreached and line.startswith(' enabled:'):
-                    newini += " enabled: true\n"
-                    clientreached = False
-                else:
-                    newini += line
-            open(inifile, 'w').write(newini)
+        with open(inifile, 'w') as conf_file:
+            yaml.safe_dump(self.ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True,
+                           sort_keys=False)
         return {'result': 'success'}
 
     def disable_host(self, client):
@@ -346,26 +326,11 @@ class Kbaseconfig:
                           color='red')
             return {'result': 'failure', 'reason': "Client %s currently default" % client}
         common.pprint("Disabling client %s..." % client)
+        self.ini[client]['enabled'] = False
         inifile = "%s/.kcli/config.yml" % os.environ.get('HOME')
-        if os.path.exists(inifile):
-            newini = ''
-            clientreached = False
-            for line in open(inifile).readlines():
-                if line.startswith("%s:" % client):
-                    clientreached = True
-                    newini += line
-                    continue
-                if clientreached and 'enabled' not in self.ini[client]:
-                    newini += " enabled: false\n"
-                    clientreached = False
-                    newini += line
-                    continue
-                elif clientreached and line.startswith(' enabled:'):
-                    newini += " enabled: false\n"
-                    clientreached = False
-                else:
-                    newini += line
-            open(inifile, 'w').write(newini)
+        with open(inifile, 'w') as conf_file:
+            yaml.safe_dump(self.ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True,
+                           sort_keys=False)
         return {'result': 'success'}
 
     def set_defaults(self):
@@ -383,8 +348,8 @@ class Kbaseconfig:
         self.ini['default'] = default
         path = os.path.expanduser('~/.kcli/config.yml')
         with open(path, 'w') as conf_file:
-            yaml.safe_dump(self.ini, conf_file, default_flow_style=False,
-                           encoding='utf-8', allow_unicode=True)
+            yaml.safe_dump(self.ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True,
+                           sort_keys=False)
 
     def list_keywords(self):
         """
