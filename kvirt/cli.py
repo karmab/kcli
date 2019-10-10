@@ -1330,7 +1330,7 @@ def delete_network(args):
 
 
 def create_host_kvm(args):
-    """Generate Kvm host"""
+    """Generate Kvm Host"""
     data = {}
     data['_type'] = 'kvm'
     data['name'] = args.name
@@ -1347,7 +1347,7 @@ def create_host_kvm(args):
 
 
 def create_host_ovirt(args):
-    """Create Ovirt host"""
+    """Create Ovirt Host"""
     data = {}
     data['name'] = args.name
     data['_type'] = 'ovirt'
@@ -1358,8 +1358,95 @@ def create_host_ovirt(args):
     data['org'] = args.org
     data['user'] = args.user
     data['password'] = args.password
-    data['pool'] = args.pool
+    if args.pool is not None:
+        data['pool'] = args.pool
     data['client'] = args.client
+    common.create_host(data)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
+    if len(baseconfig.clients) == 1:
+        baseconfig.set_defaults()
+
+
+def create_host_gcp(args):
+    """Create Gcp Host"""
+    data = {}
+    data['name'] = args.name
+    data['credentials'] = args.credentials
+    data['project'] = args.project
+    data['zone'] = args.zone
+    data['_type'] = 'gcp'
+    common.create_host(data)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
+    if len(baseconfig.clients) == 1:
+        baseconfig.set_defaults()
+
+
+def create_host_aws(args):
+    """Create Aws Host"""
+    data = {}
+    data['name'] = args.name
+    data['_type'] = 'aws'
+    data['access_key_id'] = args.access_key_id
+    data['access_key_secret'] = args.access_key_secret
+    data['region'] = args.region
+    data['keypair'] = args.keypair
+    common.create_host(data)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
+    if len(baseconfig.clients) == 1:
+        baseconfig.set_defaults()
+
+
+def create_host_openstack(args):
+    """Create Openstack Host"""
+    data = {}
+    data['name'] = args.name
+    data['_type'] = 'openstack'
+    data['user'] = args.user
+    data['password'] = args.password
+    data['project'] = args.project
+    data['domain'] = args.domain
+    data['auth_url'] = args.auth_url
+    common.create_host(data)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
+    if len(baseconfig.clients) == 1:
+        baseconfig.set_defaults()
+
+
+def create_host_kubevirt(args):
+    """Create Kubevirt Host"""
+    data = {}
+    data['name'] = args.name
+    data['_type'] = 'kubevirt'
+    if args.pool is not None:
+        data['pool'] = args.pool
+    if args.token is not None:
+        data['token'] = args.token
+    if args.ca_file is not None:
+        data['ca_file'] = args.ca
+    data['multus'] = args.multus
+    data['cdi'] = args.cdi
+    if args.host is not None:
+        data['host'] = args.host
+    if args.port is not None:
+        data['port'] = args.port
+    common.create_host(data)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
+    if len(baseconfig.clients) == 1:
+        baseconfig.set_defaults()
+
+
+def create_host_vsphere(args):
+    """Create Vsphere Host"""
+    data = {}
+    data['name'] = args.name
+    data['_type'] = 'vsphere'
+    data['host'] = args.host
+    data['user'] = args.user
+    data['password'] = args.password
+    data['datacenter'] = args.datacenter
+    data['cluster'] = args.cluster
+    if args.pool is not None:
+        data['pool'] = args.pool
     common.create_host(data)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
     if len(baseconfig.clients) == 1:
@@ -1693,43 +1780,92 @@ def cli():
                                                      aliases=['client'])
     hostcreate_subparsers = hostcreate_parser.add_subparsers(metavar='', dest='subcommand_create_host')
 
+    awshostcreate_desc = 'Create Aws Host'
+    awshostcreate_parser = hostcreate_subparsers.add_parser('aws', help=awshostcreate_desc,
+                                                            description=awshostcreate_desc)
+    awshostcreate_parser.add_argument('--access_key_id', help='Access Key Id', metavar='ACCESS_KEY_ID', required=True)
+    awshostcreate_parser.add_argument('--access_key_secret', help='Access Key Secret', metavar='ACCESS_KEY_SECRET',
+                                      required=True)
+    awshostcreate_parser.add_argument('-k', '--keypair', help='Keypair', metavar='KEYPAIR', required=True)
+    awshostcreate_parser.add_argument('-r', '--region', help='Region', metavar='REGION', required=True)
+    awshostcreate_parser.add_argument('name', metavar='NAME', nargs='?')
+    awshostcreate_parser.set_defaults(func=create_host_aws)
+
+    gcphostcreate_desc = 'Create Gcp Host'
+    gcphostcreate_parser = hostcreate_subparsers.add_parser('gcp', help=gcphostcreate_desc,
+                                                            description=gcphostcreate_desc)
+    gcphostcreate_parser.add_argument('--credentials', help='Path to credentials file', metavar='credentials')
+    gcphostcreate_parser.add_argument('--project', help='Project', metavar='project', required=True)
+    gcphostcreate_parser.add_argument('--zone', help='Zone', metavar='zone', required=True)
+    gcphostcreate_parser.add_argument('name', metavar='NAME', nargs='?')
+    gcphostcreate_parser.set_defaults(func=create_host_gcp)
+
     kvmhostcreate_desc = 'Create Kvm Host'
     kvmhostcreate_parser = hostcreate_subparsers.add_parser('kvm', help=kvmhostcreate_desc,
                                                             description=kvmhostcreate_desc)
     kvmhostcreate_parser_group = kvmhostcreate_parser.add_mutually_exclusive_group(required=True)
     kvmhostcreate_parser_group.add_argument('-H', '--host', help='Host. Defaults to localhost', metavar='HOST',
                                             default='localhost')
+    kvmhostcreate_parser.add_argument('--pool', help='Pool. Defaults to default', metavar='POOL', default='default')
     kvmhostcreate_parser.add_argument('-p', '--port', help='Port', metavar='PORT')
-    kvmhostcreate_parser.add_argument('-u', '--user', help='User. Defaults to root', default='root', metavar='USER')
     kvmhostcreate_parser.add_argument('-P', '--protocol', help='Protocol to use', default='ssh', metavar='PROTOCOL')
     kvmhostcreate_parser_group.add_argument('-U', '--url', help='URL to use', metavar='URL')
-    kvmhostcreate_parser.add_argument('--pool', help='Pool. Defaults to default', metavar='POOL', default='default')
+    kvmhostcreate_parser.add_argument('-u', '--user', help='User. Defaults to root', default='root', metavar='USER')
     kvmhostcreate_parser.add_argument('name', metavar='NAME', nargs='?')
     kvmhostcreate_parser.set_defaults(func=create_host_kvm)
+
+    kubevirthostcreate_desc = 'Create Kubevirt Host'
+    kubevirthostcreate_parser = hostcreate_subparsers.add_parser('kubevirt', help=kubevirthostcreate_desc,
+                                                                 description=kubevirthostcreate_desc)
+    kubevirthostcreate_parser.add_argument('--ca', help='Ca file', metavar='CA')
+    kubevirthostcreate_parser.add_argument('--cdi', help='Cdi Support', action='store_true', default=True)
+    kubevirthostcreate_parser.add_argument('-c', '--context', help='Context', metavar='CONTEXT')
+    kubevirthostcreate_parser.add_argument('-H', '--host', help='Api Host', metavar='HOST')
+    kubevirthostcreate_parser.add_argument('-p', '--pool', help='Storage Class', metavar='POOL')
+    kubevirthostcreate_parser.add_argument('--port', help='Api Port', metavar='HOST')
+    kubevirthostcreate_parser.add_argument('--token', help='Token', metavar='TOKEN')
+    kubevirthostcreate_parser.add_argument('--multus', help='Multus Support', action='store_true', default=True)
+    kubevirthostcreate_parser.add_argument('name', metavar='NAME', nargs='?')
+    kubevirthostcreate_parser.set_defaults(func=create_host_kubevirt)
+
+    openstackhostcreate_desc = 'Create Openstack Host'
+    openstackhostcreate_parser = hostcreate_subparsers.add_parser('openstack', help=openstackhostcreate_desc,
+                                                                  description=openstackhostcreate_desc)
+    openstackhostcreate_parser.add_argument('-auth-url', help='Auth url', metavar='AUTH_URL', required=True)
+    openstackhostcreate_parser.add_argument('-domain', help='Domain', metavar='DOMAIN', default='Default')
+    openstackhostcreate_parser.add_argument('-p', '--password', help='Password', metavar='PASSWORD', required=True)
+    openstackhostcreate_parser.add_argument('-project', help='Project', metavar='PROJECT', required=True)
+    openstackhostcreate_parser.add_argument('-u', '--user', help='User', metavar='USER', required=True)
+    openstackhostcreate_parser.add_argument('name', metavar='NAME', nargs='?')
+    openstackhostcreate_parser.set_defaults(func=create_host_openstack)
 
     ovirthostcreate_desc = 'Create Ovirt Host'
     ovirthostcreate_parser = hostcreate_subparsers.add_parser('ovirt', help=ovirthostcreate_desc,
                                                               description=ovirthostcreate_desc)
-    ovirthostcreate_parser.add_argument('-d', '--datacenter', help='Datacenter. Defaults to Default', default='Default',
-                                        metavar='DATACENTER')
     ovirthostcreate_parser.add_argument('--ca', help='Path to certificate file', metavar='CA')
     ovirthostcreate_parser.add_argument('-c', '--cluster', help='Cluster. Defaults to Default', default='Default',
                                         metavar='CLUSTER')
-    ovirthostcreate_parser.add_argument('-o', '--org', help='Organization', metavar='ORGANIZATION')
+    ovirthostcreate_parser.add_argument('-d', '--datacenter', help='Datacenter. Defaults to Default', default='Default',
+                                        metavar='DATACENTER')
     ovirthostcreate_parser.add_argument('-H', '--host', help='Host to use', metavar='HOST', required=True)
-    ovirthostcreate_parser.add_argument('-u', '--user', help='User. Defaults to admin@internal',
-                                        metavar='USER', default='admin@internal')
+    ovirthostcreate_parser.add_argument('-o', '--org', help='Organization', metavar='ORGANIZATION', required=True)
     ovirthostcreate_parser.add_argument('-p', '--password', help='Password to use', metavar='PASSWORD', required=True)
     ovirthostcreate_parser.add_argument('--pool', help='Storage Domain', metavar='POOL')
+    ovirthostcreate_parser.add_argument('-u', '--user', help='User. Defaults to admin@internal',
+                                        metavar='USER', default='admin@internal')
     ovirthostcreate_parser.add_argument('name', metavar='NAME', nargs='?')
     ovirthostcreate_parser.set_defaults(func=create_host_ovirt)
 
-    # hostcreate_desc = 'Create Host'
-    # hostcreate_parser = hostcreate_subparsers.add_parser('', help=hostcreate_desc,
-    #                                                          description=hostcreate_desc)
-    # hostcreate_parser.add_argument('-o', '--org', help='Organization', metavar='ORGANIZATION')
-    # hostcreate_parser.add_argument('name', metavar='NAME', nargs='?')
-    # hostcreate_parser.set_defaults(func=create_host_)
+    vspherehostcreate_desc = 'Create Vsphere Host'
+    vspherehostcreate_parser = hostcreate_subparsers.add_parser('vsphere', help=vspherehostcreate_desc,
+                                                                description=vspherehostcreate_desc)
+    vspherehostcreate_parser.add_argument('-c', '--cluster', help='Cluster', metavar='CLUSTER', required=True)
+    vspherehostcreate_parser.add_argument('-d', '--datacenter', help='Datacenter', metavar='DATACENTER', required=True)
+    vspherehostcreate_parser.add_argument('-H', '--host', help='Vcenter Host', metavar='HOST', required=True)
+    vspherehostcreate_parser.add_argument('-p', '--password', help='Password', metavar='PASSWORD', required=True)
+    vspherehostcreate_parser.add_argument('-u', '--user', help='User', metavar='USER', required=True)
+    vspherehostcreate_parser.add_argument('name', metavar='NAME', nargs='?')
+    vspherehostcreate_parser.set_defaults(func=create_host_vsphere)
 
     hostdelete_desc = 'Delete Host'
     hostdelete_parser = delete_subparsers.add_parser('host', description=hostdelete_desc, help=hostdelete_desc,
