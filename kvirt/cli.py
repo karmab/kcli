@@ -1003,6 +1003,8 @@ def create_plan(args):
             paramfile = "%s/%s" % (volumepath, paramfile)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    _type = config.ini[config.client].get('type', 'kvm')
+    overrides.update({'type': _type})
     if plan is None:
         plan = nameutils.get_random_name()
         common.pprint("Using %s as name of the plan" % plan)
@@ -1130,6 +1132,11 @@ def render_plan(args):
             paramfile = "%s/%s" % (volumepath, paramfile)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    _type = baseconfig.ini[baseconfig.client].get('type', 'kvm')
+    overrides.update({'type': _type})
+    if not os.path.exists(inputfile):
+        common.pprint("File %s not found" % inputfile, color='red')
+        return 0
     renderfile = baseconfig.process_inputfile(plan, inputfile, overrides=overrides, onfly=False)
     print(renderfile)
     return 0
