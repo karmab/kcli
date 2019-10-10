@@ -193,7 +193,7 @@ class Kbaseconfig:
         if self.client not in self.ini:
             common.pprint("Missing section for client %s in config file. Trying to connect..." % self.client,
                           color='blue')
-            self.ini[client] = {'host': self.client}
+            self.ini[self.client] = {'host': self.client}
         self.options = self.ini[self.client]
         options = self.options
         self.enabled = options.get('enabled', True)
@@ -343,13 +343,15 @@ class Kbaseconfig:
                 continue
             else:
                 default[key] = self.default[key]
+        sort_keys = False
         if len(self.clients) == 1:
             default['client'] = [*self.clients][0]
+            sort_keys = True
         self.ini['default'] = default
         path = os.path.expanduser('~/.kcli/config.yml')
         with open(path, 'w') as conf_file:
             yaml.safe_dump(self.ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True,
-                           sort_keys=False)
+                           sort_keys=sort_keys)
 
     def list_keywords(self):
         """

@@ -1019,7 +1019,11 @@ def delete_host(name):
             pprint("Skipping non existing Host %s" % name, color='blue')
             return
         del ini[name]
-        with open(path, 'w') as conf_file:
-            yaml.safe_dump(ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True,
-                           sort_keys=False)
+        clients = [c for c in ini if c != 'default']
+        if not clients:
+            os.remove(path)
+        else:
+            with open(path, 'w') as conf_file:
+                yaml.safe_dump(ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True,
+                               sort_keys=False)
         pprint("Host %s deleted" % name)
