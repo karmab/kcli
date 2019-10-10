@@ -946,16 +946,17 @@ class Kconfig(Kbaseconfig):
                     scriptfiles = vmentry.get('scripts', [])
                     for fil in vmfiles:
                         if isinstance(fil, str):
-                            origin = "%s/%s" % (basedir, path)
+                            origin = fil
                         elif isinstance(fil, dict):
                             origin = fil.get('origin')
                         else:
                             return {'result': 'failure', 'reason': "Incorrect file entry"}
                         if '~' not in origin:
-                            destdir = basedir
+                            destdir = "."
                             if '/' in origin:
                                 destdir = os.path.dirname(origin)
                                 os.makedirs(destdir, exist_ok=True)
+                            common.pprint("Retrieving file %s/%s" % (onfly, origin))
                             common.fetch("%s/%s" % (onfly, origin), destdir)
                     for script in scriptfiles:
                         if '~' not in script:
@@ -963,6 +964,7 @@ class Kconfig(Kbaseconfig):
                             if '/' in script:
                                 destdir = os.path.dirname(script)
                                 os.makedirs(destdir, exist_ok=True)
+                            common.pprint("Retrieving script %s/%s" % (onfly, script))
                             common.fetch("%s/%s" % (onfly, script), destdir)
                 os.chdir('..')
                 return {'result': 'success'}
