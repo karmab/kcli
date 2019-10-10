@@ -1882,7 +1882,7 @@ def cli():
     plandelete_desc = 'Delete Plan'
     plandelete_parser = delete_subparsers.add_parser('plan', description=plandelete_desc, help=plandelete_desc)
     plandelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    plandelete_parser.add_argument('plan', metavar='PLAN', nargs='?')
+    plandelete_parser.add_argument('plan', metavar='PLAN')
     plandelete_parser.set_defaults(func=delete_plan)
 
     planinfo_desc = 'Info Plan'
