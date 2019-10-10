@@ -624,19 +624,20 @@ class Kconfig(Kbaseconfig):
         :return:
         """
         k = self.k
-        vms = {}
-        plans = []
-        for vm in sorted(k.list(), key=lambda x: x.get('plan', 'kvirt')):
+        results = []
+        plans = {}
+        for vm in k.list():
             vmname = vm['name']
             plan = vm.get('plan')
-            if plan in vms:
-                vms[plan].append(vmname)
+            if plan is None or plan == 'kvirt':
+                continue
+            elif plan not in plans:
+                plans[plan] = [vmname]
             else:
-                vms[plan] = [vmname]
-        for plan in sorted(vms):
-            planvms = ','.join(vms[plan])
-            plans.append([plan, planvms])
-        return plans
+                plans[plan].append(vmname)
+        for plan in plans:
+            results.append([plan, ','.join(plans[plan])])
+        return results
 
     def create_product(self, name, repo=None, group=None, plan=None, latest=False, overrides={}):
         """Create product"""
