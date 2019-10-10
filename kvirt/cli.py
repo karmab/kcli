@@ -995,7 +995,6 @@ def create_plan(args):
     path = args.path
     container = args.container
     inputfile = args.inputfile
-    delay = args.delay
     volumepath = args.volumepath
     paramfile = args.paramfile
     if os.path.exists("/i_am_a_container"):
@@ -1009,7 +1008,7 @@ def create_plan(args):
         common.pprint("Using %s as name of the plan" % plan)
     config.plan(plan, ansible=ansible, url=url, path=path,
                 container=container, inputfile=inputfile,
-                delay=delay, overrides=overrides)
+                overrides=overrides)
     return 0
 
 
@@ -1087,7 +1086,7 @@ def restart_plan(args):
     return 0
 
 
-def desc_plan(args):
+def info_plan(args):
     """Info plan """
     plan = args.plan
     url = args.url
@@ -1104,6 +1103,18 @@ def desc_plan(args):
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
         config.plan(plan, url=url, path=path, inputfile=inputfile, info=True)
+    return 0
+
+
+def download_plan(args):
+    """Download plan"""
+    plan = args.plan
+    url = args.url
+    if plan is None:
+        plan = nameutils.get_random_name()
+        common.pprint("Using %s as name of the plan" % plan)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config.plan(plan, url=url, download=True)
     return 0
 
 
@@ -1855,7 +1866,6 @@ def cli():
     plancreate_parser.add_argument('-f', '--inputfile', help='Input Plan file')
     plancreate_parser.add_argument('-v', '--volumepath', help='Volume Path (only used with kcli container)',
                                    default='/workdir', metavar='VOLUMEPATH')
-    plancreate_parser.add_argument('--delay', default=0, help="Delay between each vm's creation", metavar='DELAY')
     plancreate_parser.add_argument('-P', '--param', action='append',
                                    help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
     plancreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
@@ -1876,7 +1886,7 @@ def cli():
     planinfo_parser.add_argument('-v', '--volumepath', help='Volume Path (only used with kcli container)',
                                  default='/workdir', metavar='VOLUMEPATH')
     planinfo_parser.add_argument('plan', metavar='PLAN', nargs='?')
-    planinfo_parser.set_defaults(func=desc_plan)
+    planinfo_parser.set_defaults(func=info_plan)
 
     planlist_desc = 'List Plans'
     planlist_parser = list_subparsers.add_parser('plan', description=planlist_desc, help=planlist_desc)
@@ -2033,6 +2043,14 @@ def cli():
     download_subparsers.add_parser('image', parents=[imagedownload_parser], description=imagedownload_desc,
                                    help=imagedownload_desc)
 
+    plandownload_desc = 'Download Plan'
+    plandownload_parser = argparse.ArgumentParser(add_help=False)
+    plandownload_parser.add_argument('-u', '--url', help='Url to use', metavar='URL', required=True)
+    plandownload_parser.add_argument('plan', metavar='PLAN', nargs='?')
+    plandownload_parser.set_defaults(func=download_plan)
+    download_subparsers.add_parser('plan', parents=[plandownload_parser], description=plandownload_desc,
+                                   help=plandownload_desc)
+
     imagelist_desc = 'List Images'
     imagelist_parser = list_subparsers.add_parser('image', description=imagelist_desc, help=imagelist_desc,
                                                   aliases=['template'])
@@ -2083,8 +2101,8 @@ def cli():
     vmdisklist_desc = 'List All Vm Disks'
     vmdisklist_parser = argparse.ArgumentParser(add_help=False)
     vmdisklist_parser.set_defaults(func=list_vmdisk)
-    list_subparsers.add_parser('vm-disk', parents=[vmdisklist_parser], description=vmdisklist_desc,
-                               help=vmdisklist_desc, aliases=['disk'])
+    list_subparsers.add_parser('disk', parents=[vmdisklist_parser], description=vmdisklist_desc,
+                               help=vmdisklist_desc, aliases=['disks'])
 
     vminfo_desc = 'Info Of Vms'
     vminfo_parser = argparse.ArgumentParser(add_help=False)
@@ -2100,7 +2118,8 @@ def cli():
     vmlist_parser = argparse.ArgumentParser(add_help=False)
     vmlist_parser.add_argument('--filters', choices=('up', 'down'))
     vmlist_parser.set_defaults(func=list_vm)
-    list_subparsers.add_parser('vm', parents=[vmlist_parser], description=vmlist_desc, help=vmlist_desc)
+    list_subparsers.add_parser('vm', parents=[vmlist_parser], description=vmlist_desc, help=vmlist_desc,
+                               aliases=['vms'])
 
     create_vmnic_desc = 'Add Nic To Vm'
     create_vmnic_parser = argparse.ArgumentParser(add_help=False)

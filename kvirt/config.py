@@ -695,9 +695,9 @@ class Kconfig(Kbaseconfig):
         return {'result': 'success', 'plan': plan}
 
     def plan(self, plan, ansible=False, url=None, path=None, autostart=False, container=False, noautostart=False,
-             inputfile=None, inputstring=None, start=False, stop=False, delete=False, delay=0, force=True, overrides={},
-             info=False, snapshot=False, revert=False, update=False, embedded=False, restart=False):
-        """Create/Delete/Stop/Start vms from plan file"""
+             inputfile=None, inputstring=None, start=False, stop=False, delete=False, force=True, overrides={},
+             info=False, snapshot=False, revert=False, update=False, embedded=False, restart=False, download=False):
+        """Manage plan file"""
         if self.type == 'fake' and os.path.exists("/tmp/%s" % plan) and not embedded:
             rmtree("/tmp/%s" % plan)
             common.pprint("Deleted /tmp/%s" % plan)
@@ -923,11 +923,48 @@ class Kconfig(Kbaseconfig):
             path = plan if path is None else path
             common.pprint("Retrieving specified plan from %s to %s" % (url, path))
             if not os.path.exists(path):
-                toclean = True
+                toclean = True if info else False
                 os.mkdir(path)
                 common.fetch(url, path)
+            elif download:
+                msg = "target directory %s already there" % (path)
+                common.pprint(msg, color='red')
+                return {'result': 'failure', 'reason': msg}
             else:
                 common.pprint("Using existing directory %s" % (path), color='blue')
+            if download:
+                inputfile = "%s/%s" % (path, inputfile)
+                entries, overrides, basefile, basedir = self.process_inputfile(plan, inputfile, overrides=overrides,
+                                                                               onfly=onfly, full=True)
+                os.chdir(path)
+                for entry in entries:
+                    if 'type' in entries[entry] and entries[entry]['type'] != 'vm':
+                        continue
+                    vmentry = entries[entry]
+                    vmfiles = vmentry.get('files', [])
+                    scriptfiles = vmentry.get('scripts', [])
+                    for fil in vmfiles:
+                        if isinstance(fil, str):
+                            origin = "%s/%s" % (basedir, path)
+                        elif isinstance(fil, dict):
+                            origin = fil.get('origin')
+                        else:
+                            return {'result': 'failure', 'reason': "Incorrect file entry"}
+                        if '~' not in origin:
+                            destdir = basedir
+                            if '/' in origin:
+                                destdir = os.path.dirname(origin)
+                                os.makedirs(destdir, exist_ok=True)
+                            common.fetch("%s/%s" % (onfly, origin), destdir)
+                    for script in scriptfiles:
+                        if '~' not in script:
+                            destdir = "."
+                            if '/' in script:
+                                destdir = os.path.dirname(script)
+                                os.makedirs(destdir, exist_ok=True)
+                            common.fetch("%s/%s" % (onfly, script), destdir)
+                os.chdir('..')
+                return {'result': 'success'}
         if inputstring is not None:
             with open("/tmp/plan.yml", "w") as f:
                 f.write(inputstring)
@@ -1011,7 +1048,7 @@ class Kconfig(Kbaseconfig):
                         print("Using parameter %s: %s" % (override, overrides[override]))
                 self.plan(plan, ansible=False, url=planurl, path=path, autostart=False, container=False,
                           noautostart=False, inputfile=inputfile, start=False, stop=False, delete=False,
-                          delay=delay, overrides=overrides, embedded=embedded)
+                          overrides=overrides, embedded=embedded, download=download)
             return {'result': 'success'}
         if networkentries:
             common.pprint("Deploying Networks...")
@@ -1274,8 +1311,6 @@ class Kconfig(Kbaseconfig):
                     newvms.append(name)
                 else:
                     failedvms.append(name)
-                if delay > 0:
-                    sleep(delay)
         if diskentries:
             common.pprint("Deploying Disks...")
         for disk in diskentries:
