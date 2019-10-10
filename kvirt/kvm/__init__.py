@@ -1018,16 +1018,13 @@ class Kvirt(object):
         else:
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
+            host = self.host
             for element in list(root.getiterator('graphics')):
                 attributes = element.attrib
                 if attributes['listen'] == '127.0.0.1':
-                    if not os.path.exists("i_am_a_container"):
-                        tunnel = True
-                    elif self.host not in ['127.0.0.1', 'localhost']:
+                    if not os.path.exists("i_am_a_container") or self.host not in ['127.0.0.1', 'localhost']:
                         tunnel = True
                         host = '127.0.0.1'
-                else:
-                    host = self.host
                 protocol = attributes['type']
                 port = attributes['port']
                 localport = port
@@ -1073,7 +1070,12 @@ class Kvirt(object):
                 print("No serial Console found. Leaving...")
                 return
             elif self.host in ['localhost', '127.0.0.1']:
-                os.system('virsh -c %s console %s' % (self.url, name))
+                cmd = 'virsh -c %s console %s' % (self.url, name)
+                if self.debug or os.path.exists("/i_am_a_container"):
+                    msg = "Run the following command:\n%s" % cmd
+                    common.pprint(msg)
+                else:
+                    os.system(cmd)
             else:
                 for element in serial:
                     serialport = element.find('source').get('service')
