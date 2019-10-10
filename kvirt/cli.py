@@ -1483,7 +1483,7 @@ def cli():
     parser.add_argument('-z', '--zone', help='Zone to use. specific to gcp')
     parser.add_argument('-v', '--version', action='version', version="%s" % __version__)
 
-    subparsers = parser.add_subparsers(metavar='')
+    subparsers = parser.add_subparsers(metavar='', title='Available Commands')
 
     containerconsole_desc = 'Attach To Container'
     containerconsole_parser = subparsers.add_parser('attach', description=containerconsole_desc,
@@ -1705,6 +1705,13 @@ def cli():
     ovirthostcreate_parser.add_argument('--pool', help='Storage Domain', metavar='POOL')
     ovirthostcreate_parser.add_argument('name', metavar='NAME', nargs='?')
     ovirthostcreate_parser.set_defaults(func=create_host_ovirt)
+
+    # hostcreate_desc = 'Create Host'
+    # hostcreate_parser = hostcreate_subparsers.add_parser('', help=hostcreate_desc,
+    #                                                          description=hostcreate_desc)
+    # hostcreate_parser.add_argument('-o', '--org', help='Organization', metavar='ORGANIZATION')
+    # hostcreate_parser.add_argument('name', metavar='NAME', nargs='?')
+    # hostcreate_parser.set_defaults(func=create_host_)
 
     hostdelete_desc = 'Delete Host'
     hostdelete_parser = delete_subparsers.add_parser('host', description=hostdelete_desc, help=hostdelete_desc,

@@ -725,25 +725,14 @@ class Kbaseconfig:
             return {'result': 'failure', 'reason': 'Profile %s not found' % profile}
         else:
             del self.profiles[profile]
-            profilefile = os.path.expanduser('~/.kcli/profiles.yml')
-            rootdir = os.path.expanduser('~/.kcli')
-            if not os.path.exists(rootdir):
-                os.makedirs(rootdir)
-            newfile = ''
-            found = False
-            for line in open(profilefile).readlines():
-                if line.startswith(profile):
-                    found = True
-                elif found:
-                    if re.match(r'\w', line):
-                        found = False
-                        newfile += line
-                    elif re.match(r'\w', line):
-                        found = False
-                else:
-                    newfile += line
-            open(profilefile, 'w').write(newfile)
-        return {'result': 'success'}
+            path = os.path.expanduser('~/.kcli/profiles.yml')
+            if not self.profiles:
+                os.remove(path)
+            else:
+                with open(path, 'w') as profile_file:
+                    yaml.safe_dump(self.profiles, profile_file, default_flow_style=False, encoding='utf-8',
+                                   allow_unicode=True, sort_keys=False)
+            return {'result': 'success'}
 
     def create_profile(self, profile, overrides={}, quiet=False):
         if profile in self.profiles:
@@ -752,12 +741,12 @@ class Kbaseconfig:
             return {'result': 'success'}
         if not overrides:
             return {'result': 'failure', 'reason': "You need to specify at least one parameter"}
-        profilefile = os.path.expanduser('~/.kcli/profiles.yml')
+        path = os.path.expanduser('~/.kcli/profiles.yml')
         rootdir = os.path.expanduser('~/.kcli')
+        self.profiles[profile] = overrides
         if not os.path.exists(rootdir):
             os.makedirs(rootdir)
-        with open(profilefile, 'a') as f:
-            f.write("%s:\n" % profile)
-            for key in sorted(overrides):
-                f.write(" %s: %s\n" % (key, overrides[key]))
+        with open(path, 'w') as profile_file:
+            yaml.safe_dump(self.profiles, profile_file, default_flow_style=False, encoding='utf-8',
+                           allow_unicode=True, sort_keys=False)
         return {'result': 'success'}
