@@ -916,6 +916,8 @@ class Kconfig(Kbaseconfig):
                 common.pprint("No matching vms found", color='blue')
             return {'result': 'success'}
         if url is not None:
+            if url.startswith('/'):
+                url = "file://%s" % url
             if not url.endswith('.yml'):
                 url = "%s/kcli_plan.yml" % url
                 common.pprint("Trying to retrieve %s" % url, color='blue')
