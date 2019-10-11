@@ -1097,8 +1097,11 @@ class Kconfig(Kbaseconfig):
                     imageurl = imageprofile.get('url')
                     cmd = imageprofile.get('cmd')
                     if imageurl is None:
-                        common.pprint("Image %s skipped as url is missing!" % image, color='blue')
-                        continue
+                        if image in IMAGES:
+                            imageurl = IMAGES[image]
+                        else:
+                            common.pprint("Image %s skipped as url is missing!" % image, color='blue')
+                            continue
                     if not imageurl.endswith('qcow2') and not imageurl.endswith('img')\
                             and not imageurl.endswith('qc2') and not imageurl.endswith('qcow2.xz')\
                             and not imageurl.endswith('qcow2.gz'):
