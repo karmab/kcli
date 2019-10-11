@@ -587,7 +587,7 @@ A similar mechanism allows customization for other providers.
 
 ## Omitting vm's name
  
-When you don't specify a vm, the last one created by kcli on the corresponding client is used (the list of the vms created is stored in *~/.kcli/vm*
+When you don't specify a vm, the last one created by kcli on the corresponding client is used (the list of the vms created is stored in *~/.kcli/vm*)
 
 So for instance, you can simply use the following command to access your vm:
 
@@ -605,7 +605,7 @@ kweb
 
 If you have multiple hypervisors/clients, you can generally use the flag *-C $CLIENT* to point to a specific one.
 
-You can also use the following to list the vms of all your vms:
+You can also use the following to list the vms of all your hosts/clients:
  
 `kcli -C all list vm`
 
