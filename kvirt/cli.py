@@ -168,11 +168,11 @@ def delete_vm(args):
         names = [common.get_lastvm(config.client)] if not args.names else args.names
     for cli in sorted(allclients):
         k = allclients[cli]
-        common.pprint("Deleting on %s" % cli)
         if not yes:
             common.confirm("Are you sure?")
         codes = []
         for name in names:
+            common.pprint("Deleting vm %s on %s" % (name, cli))
             dnsclient, domain = k.dnsinfo(name)
             result = k.delete(name, snapshots=snapshots)
             if result['result'] == 'success':
@@ -201,13 +201,12 @@ def delete_container(args):
         allclients = {config.client: config.k}
         names = args.names
     for cli in sorted(allclients):
-        common.pprint("Deleting on %s" % cli)
         if not yes:
             common.confirm("Are you sure?")
         codes = [0]
         cont = Kcontainerconfig(config, client=args.containerclient).cont
         for name in names:
-            common.pprint("Deleting container %s" % name)
+            common.pprint("Deleting container %s on %s" % (name, cli))
             cont.delete_container(name)
     os._exit(1 if 1 in codes else 0)
 
@@ -237,11 +236,11 @@ def delete_image(args):
         allclients = {config.client: config.k}
     for cli in sorted(allclients):
         k = allclients[cli]
-        common.pprint("Deleting on %s" % cli)
         if not yes:
             common.confirm("Are you sure?")
         codes = []
         for image in images:
+            common.pprint("Deleting image %s on %s" % (image, cli))
             if image in config.profiles and len(config.profiles[image]) == 1 and 'image' in config.profiles[image]:
                 profileimage = config.profiles[image]['image']
                 config.delete_profile(image, quiet=True)
@@ -855,7 +854,7 @@ def delete_vmdisk(args):
     if diskname is None:
         common.pprint("Missing diskname. Leaving...", color='red')
         os._exit(1)
-    common.pprint("Deleting disk %s" % diskname)
+    common.pprint("Deleting disk %s from vm %s" % (diskname, name))
     k.delete_disk(name=name, diskname=diskname, pool=pool)
     return
 
@@ -868,7 +867,7 @@ def create_dns(args):
     ip = args.ip
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
-    common.pprint("Creating Dns entry for %s..." % name)
+    common.pprint("Creating dns entry for %s..." % name)
     k.reserve_dns(name=name, nets=[net], domain=domain, ip=ip)
 
 
@@ -946,7 +945,7 @@ def create_vmnic(args):
     if network is None:
         common.pprint("Missing network. Leaving...", color='red')
         os._exit(1)
-    common.pprint("Adding Nic to %s..." % name)
+    common.pprint("Adding nic to vm %s..." % name)
     k.add_nic(name=name, network=network)
 
 
@@ -956,7 +955,7 @@ def delete_vmnic(args):
     interface = args.interface
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
-    common.pprint("Deleting nic from %s..." % name)
+    common.pprint("Deleting nic from vm %s..." % name)
     k.delete_nic(name, interface)
     return
 
@@ -1508,7 +1507,7 @@ def snapshotdelete_vm(args):
     name = args.name
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
-    common.pprint("Deleting snapshot of %s named %s..." % (name, snapshot))
+    common.pprint("Deleting snapshot %s of vm %s..." % (snapshot, name))
     result = k.snapshot(snapshot, name, delete=True)
     code = common.handle_response(result, name, element='', action='snapshotted')
     return code
@@ -1520,7 +1519,7 @@ def snapshotrevert_vm(args):
     name = args.name
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
-    common.pprint("Reverting snapshot of %s named %s..." % (name, snapshot))
+    common.pprint("Reverting snapshot %s of vm %s..." % (snapshot, name))
     result = k.snapshot(snapshot, name, revert=True)
     code = common.handle_response(result, name, element='', action='snapshotted')
     return code

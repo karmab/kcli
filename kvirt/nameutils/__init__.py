@@ -19,11 +19,12 @@ right = ["albattani", "almeida", "amazigh", "archimedes", "ardinghelli", "babbag
          "hypatia", "jhendrix", "jmayer", "jones", "kirch", "kendra", "kowalevski", "lalande", "leakey", "lilou",
          "lomax", "lovelace", "lumiere", "lomax", "macenroe", "manchadinha", "mayer", "mccarthy", "mcclintock",
          "mclean", "meitner", "mestorf", "mikel", "minwii", "morse", "mirzoyan", "newton", "nobel", "norinradd", "pare",
-         "pasteur", "pepenforce", "perlman", "picolo", "pike", "poincare", "ptolemy", "ritchie", "rosalind", "sammet",
-         "satriani", "selen", "shockley", "sinoussi", "silversurfer", "spitzer", "stallman", "tesla", "thompson",
-         "torvalds", "turing", "wilson", "wozniak", "wright", "yonath", "rulo", "tudela", "tdurdeen", "korsani",
-         "karmab", "gotrunks", "xhamster", "minwii", "djokovic", "federer", "nadal", "sampras", "tgb", "valadas", "vai",
-         "vegeta", "ivanisevic", "muster", "agassi", "targaryen", "lannister", "stark", "jsnow", "superduper"]
+         "pasteur", "pepenforce", "perlman", "picolo", "pike", "pinkman", "poincare", "ptolemy", "ritchie", "rosalind",
+         "sammet", "satriani", "selen", "shockley", "sinoussi", "silversurfer", "spitzer", "stallman", "tesla",
+         "thompson", "torvalds", "turing", "wilson", "wozniak", "wright", "yonath", "rulo", "tudela", "tdurdeen",
+         "korsani", "karmab", "gotrunks", "xhamster", "minwii", "djokovic", "federer", "nadal", "sampras", "tgb",
+         "valadas", "vai", "vegeta", "ivanisevic", "muster", "agassi", "targaryen", "lannister", "stark", "jsnow",
+         "superduper"]
 
 
 def get_random_name(sep='_'):
