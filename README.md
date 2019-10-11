@@ -17,7 +17,15 @@ Futhermore, you can deploy vms using predefined profiles, several at once using 
 
 Refer to the [documentation](https://kcli.readthedocs.io) for more information
 
-## [ChangeLog](https://github.com/karmab/kcli/wiki)
+## Getting Started
+
+```
+kcli download image centos7
+kcli create vm -i centos7
+kcli list vm
+kcli ssh vm
+kcli delete vm
+```
 
 ##  What you can do
 

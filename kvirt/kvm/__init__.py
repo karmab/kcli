@@ -2497,7 +2497,6 @@ class Kvirt(object):
         return {'result': 'success'}
 
     def delete_image(self, image):
-        common.pprint("Deleting image %s" % image)
         conn = self.conn
         shortname = os.path.basename(image)
         for poolname in conn.listStoragePools():
