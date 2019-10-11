@@ -5,7 +5,7 @@
 #
 
 Name:           kcli
-Version:        15.2
+Version:        20.0
 Release:        0
 Url:            http://github.com/karmab/kcli
 Summary:        Wapper for libvirt,gcp,aws,ovirt and openstack
@@ -61,5 +61,7 @@ rm -rf %{buildroot}
 %attr(0755,root,root) %{_bindir}/kweb
 
 %changelog
+* Fri Oct 11 2019 Karim Boumedhel <karimboumedhel@gmail.com> 20.0
+- Changes in cli syntax
 * Mon Jun 24 2019 Karim Boumedhel <karimboumedhel@gmail.com> 14.13
 - 14.13 Fix print info
