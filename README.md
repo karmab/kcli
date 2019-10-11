@@ -47,7 +47,7 @@ kcli delete vm
 
 ## Demo!
 
-[![asciicast](https://asciinema.org/a/153423.png)](https://asciinema.org/a/153423?autoplay=1)
+[![asciicast](https://asciinema.org/a/273012.png)](https://asciinema.org/a/273012?autoplay=1)
 
 ## Contributors
 
