@@ -33,3 +33,7 @@ $ kcli create vm -i CentOS-7-x86_64-GenericCloud.qcow2 -P disks=[10,20] -P nets=
 # create a vm from a custom profile
 $ kcli create vm -p myprofile myvm
 """
+
+vmexport_examples = """# export vm myvm with a specific name for the generated image
+$ kcli export -i myimage vmyvm
+"""

@@ -4,7 +4,7 @@
 
 from distutils.spawn import find_executable
 from kvirt.config import Kconfig
-from kvirt.examples import hostcreate_examples, vmcreate_examples
+from kvirt.examples import hostcreate_examples, vmcreate_examples, vmexport_examples
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
 from kvirt.version import __version__
@@ -1636,11 +1636,11 @@ def cli():
     enable_subparsers = enable_parser.add_subparsers(metavar='', dest='subcommand_enable')
 
     vmexport_desc = 'Export Vm'
-    vmexport_epilog = None
+    vmexport_epilog = "examples:\n%s" % vmexport_examples
     vmexport_parser = subparsers.add_parser('export', description=vmexport_desc, help=vmexport_desc,
                                             epilog=vmexport_epilog,
                                             formatter_class=argparse.RawDescriptionHelpFormatter)
-    vmexport_parser.add_argument('-t', '--image', help='Name for the generated image. Uses the vm name otherwise',
+    vmexport_parser.add_argument('-i', '--image', help='Name for the generated image. Uses the vm name otherwise',
                                  metavar='IMAGE')
     vmexport_parser.add_argument('names', metavar='VMNAMES', nargs='*')
     vmexport_parser.set_defaults(func=export_vm)
