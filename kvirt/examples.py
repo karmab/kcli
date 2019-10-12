@@ -1,5 +1,5 @@
 
-hostcreate_examples = """# Add a kvm host
+hostcreate = """# Add a kvm host
 $ kcli create host kvm -H 192.168.1.6 twix
 
 # Add a aws host
@@ -21,7 +21,42 @@ $ kcli create host openstack --auth-url http://10.19.114.91:5000/v3 -u admin -p 
 $ kcli create host kubevirt mykubevirt
 """
 
-vmcreate_examples = """# create a centos vm from image centos7 with a random name
+_list = """# Get list of vms
+$ kcli list vm
+
+# Get list of products
+$ kcli list product
+
+# Get list of clients/hosts
+$ kcli list host
+"""
+
+plancreate = """# Create a plan named ocp311 from a file
+$ kcli create plan -f multi.yml ocp311
+
+# Do the same but customize some parameters
+$ kcli create plan -f multi.yml -P masters=1 -P nodes=2 -P crio=true
+
+# Create a plan from a remote url, customizing some parameters
+$ kcli create plan -u https://github.com/karmab/kcli-plans/blob/master/kubernetes/kubernetes.yml -P masters=3
+"""
+
+planinfo = """# Get info from a local plan file
+$ kcli info plan -f multi.yml
+
+# Get info of a plan with a remote url
+$ kcli info plan -u https://github.com/karmab/kcli-plans/blob/master/kubernetes/kubernetes.yml
+"""
+
+productinfo = """# Get info from product kubernetes
+$ kcli info product kubernetes
+"""
+
+repocreate = """# Create a product repo from karmab samples repo
+$ kcli create repo -u https://github.com/karmab/kcli-plans karmab
+"""
+
+vmcreate = """# create a centos vm from image centos7 with a random name
 $ kcli create vm -i centos7
 
 # create a centos vm named myvm customizing its memory and cpus
@@ -34,6 +69,6 @@ $ kcli create vm -i CentOS-7-x86_64-GenericCloud.qcow2 -P disks=[10,20] -P nets=
 $ kcli create vm -p myprofile myvm
 """
 
-vmexport_examples = """# export vm myvm with a specific name for the generated image
+vmexport = """# export vm myvm with a specific name for the generated image
 $ kcli export -i myimage vmyvm
 """

@@ -4,7 +4,7 @@
 
 from distutils.spawn import find_executable
 from kvirt.config import Kconfig
-from kvirt.examples import hostcreate_examples, vmcreate_examples, vmexport_examples
+from kvirt.examples import hostcreate, _list, plancreate, planinfo, productinfo, repocreate, vmcreate, vmexport
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
 from kvirt.version import __version__
@@ -1636,7 +1636,7 @@ def cli():
     enable_subparsers = enable_parser.add_subparsers(metavar='', dest='subcommand_enable')
 
     vmexport_desc = 'Export Vm'
-    vmexport_epilog = "examples:\n%s" % vmexport_examples
+    vmexport_epilog = "examples:\n%s" % vmexport
     vmexport_parser = subparsers.add_parser('export', description=vmexport_desc, help=vmexport_desc,
                                             epilog=vmexport_epilog,
                                             formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -1652,7 +1652,10 @@ def cli():
     info_subparsers = info_parser.add_subparsers(metavar='', dest='subcommand_info')
 
     list_desc = 'List Object'
-    list_parser = subparsers.add_parser('list', description=list_desc, help=list_desc, aliases=['get'])
+    list_epilog = "examples:\n%s" % _list
+    list_parser = subparsers.add_parser('list', description=list_desc, help=list_desc, aliases=['get'],
+                                        epilog=list_epilog,
+                                        formatter_class=argparse.RawDescriptionHelpFormatter)
     list_subparsers = list_parser.add_subparsers(metavar='', dest='subcommand_list')
 
     render_desc = 'Render Plan/file'
@@ -1789,7 +1792,7 @@ def cli():
     dnsdelete_parser.set_defaults(func=delete_dns)
 
     hostcreate_desc = 'Create Host'
-    hostcreate_epilog = "examples:\n%s" % hostcreate_examples
+    hostcreate_epilog = "examples:\n%s" % hostcreate
     hostcreate_parser = create_subparsers.add_parser('host', help=hostcreate_desc, description=hostcreate_desc,
                                                      aliases=['client'], epilog=hostcreate_epilog,
                                                      formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -2015,7 +2018,10 @@ def cli():
     networkdelete_parser.set_defaults(func=delete_network)
 
     plancreate_desc = 'Create Plan'
-    plancreate_parser = create_subparsers.add_parser('plan', description=plancreate_desc, help=plancreate_desc)
+    plancreate_epilog = "examples:\n%s" % plancreate
+    plancreate_parser = create_subparsers.add_parser('plan', description=plancreate_desc, help=plancreate_desc,
+                                                     epilog=plancreate_epilog,
+                                                     formatter_class=argparse.RawDescriptionHelpFormatter)
     plancreate_parser.add_argument('-A', '--ansible', help='Generate ansible inventory', action='store_true')
     plancreate_parser.add_argument('-u', '--url', help='Url for plan', metavar='URL')
     plancreate_parser.add_argument('-p', '--path', help='Path where to download plans. Defaults to plan',
@@ -2037,7 +2043,10 @@ def cli():
     plandelete_parser.set_defaults(func=delete_plan)
 
     planinfo_desc = 'Info Plan'
-    planinfo_parser = info_subparsers.add_parser('plan', description=plandelete_desc, help=planinfo_desc)
+    planinfo_epilog = "examples:\n%s" % planinfo
+    planinfo_parser = info_subparsers.add_parser('plan', description=plandelete_desc, help=planinfo_desc,
+                                                 epilog=planinfo_epilog,
+                                                 formatter_class=argparse.RawDescriptionHelpFormatter)
     planinfo_parser.add_argument('-f', '--inputfile', help='Input Plan file')
     planinfo_parser.add_argument('-p', '--path', help='Path where to download plans. Defaults to plan', metavar='PATH')
     planinfo_parser.add_argument('-u', '--url', help='Url for plan', metavar='URL')
@@ -2142,6 +2151,7 @@ def cli():
     productcreate_parser.set_defaults(func=create_product)
 
     productinfo_desc = 'Info Of Product'
+    productinfo_epilog = "examples:\n%s" % productinfo
     productinfo_parser = argparse.ArgumentParser(add_help=False)
     productinfo_parser.set_defaults(func=info_product)
     productinfo_parser.add_argument('-g', '--group', help='Only Display products of the indicated group',
@@ -2150,7 +2160,8 @@ def cli():
                                     metavar='REPO')
     productinfo_parser.add_argument('product', metavar='PRODUCT')
     info_subparsers.add_parser('product', parents=[productinfo_parser], description=productinfo_desc,
-                               help=productinfo_desc)
+                               help=productinfo_desc,
+                               epilog=productinfo_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
 
     productlist_desc = 'List Products'
     productlist_parser = list_subparsers.add_parser('product', description=productlist_desc, help=productlist_desc)
@@ -2162,7 +2173,10 @@ def cli():
     productlist_parser.set_defaults(func=list_product)
 
     repocreate_desc = 'Create Repo'
-    repocreate_parser = create_subparsers.add_parser('repo', description=repocreate_desc, help=repocreate_desc)
+    repocreate_epilog = "examples:\n%s" % repocreate
+    repocreate_parser = create_subparsers.add_parser('repo', description=repocreate_desc, help=repocreate_desc,
+                                                     epilog=repocreate_epilog,
+                                                     formatter_class=argparse.RawDescriptionHelpFormatter)
     repocreate_parser.add_argument('-u', '--url', help='URL of the repo', metavar='URL')
     repocreate_parser.add_argument('repo')
     repocreate_parser.set_defaults(func=create_repo)
@@ -2215,7 +2229,7 @@ def cli():
     imagelist_parser.set_defaults(func=list_image)
 
     vmcreate_desc = 'Create Vm'
-    vmcreate_epilog = "examples:\n%s" % vmcreate_examples
+    vmcreate_epilog = "examples:\n%s" % vmcreate
     vmcreate_parser = argparse.ArgumentParser(add_help=False)
     vmcreate_parser_group = vmcreate_parser.add_mutually_exclusive_group(required=True)
     vmcreate_parser_group.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
