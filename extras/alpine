@@ -21,9 +21,8 @@ RUN pip3 install -e git+https://github.com/karmab/kcli.git#egg=kcli[all]
 
 ADD klist.py /usr/bin
 RUN chmod o+x /usr/bin/klist.py
-ADD i_am_a_container /
-
-#VOLUME ["/var/run/libvirt", "/root/.ssh", "/root"]
+#ADD i_am_a_container /
+RUN touch/i_am_a_container
 
 ENTRYPOINT ["/usr/bin/kcli"]
 CMD ["-h"]
