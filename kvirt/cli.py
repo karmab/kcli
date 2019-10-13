@@ -4,7 +4,7 @@
 
 from distutils.spawn import find_executable
 from kvirt.config import Kconfig
-from kvirt.examples import hostcreate, _list, plancreate, planinfo, productinfo, repocreate, vmcreate, vmexport
+from kvirt.examples import hostcreate, _list, plancreate, planinfo, productinfo, repocreate, start, vmcreate, vmexport
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
 from kvirt.version import __version__
@@ -1700,7 +1700,9 @@ def cli():
                           formatter_class=argparse.RawDescriptionHelpFormatter)
 
     start_desc = 'Start Vm/Plan/Container'
-    start_parser = subparsers.add_parser('start', description=start_desc, help=start_desc)
+    start_epilog = "examples:\n%s" % start
+    start_parser = subparsers.add_parser('start', description=start_desc, help=start_desc, epilog=start_epilog,
+                                         formatter_class=argparse.RawDescriptionHelpFormatter)
     start_subparsers = start_parser.add_subparsers(metavar='', dest='subcommand_start')
 
     stop_desc = 'Stop Vm/Plan/Container'
