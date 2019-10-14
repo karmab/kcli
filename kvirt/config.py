@@ -426,16 +426,9 @@ class Kconfig(Kbaseconfig):
                     common.pprint("Using current directory for path in files of %s" % name, color='blue')
                     path = os.path.basename(origin)
         enableroot = profile.get('enableroot', default_enableroot)
-        tags = None
+        tags = profile.get('tags', [])
         if default_tags:
-            if isinstance(default_tags, dict):
-                tags = default_tags.copy()
-                tags.update(profile.get('tags', {}))
-            elif isinstance(default_tags, list):
-                customtags = profile.get('tags')
-                tags = default_tags + customtags if customtags else default_tags
-        elif profile.get('tags') is not None:
-            tags = profile.get('tags')
+            tags = default_tags + tags if tags else default_tags
         privatekey = profile.get('privatekey', default_privatekey)
         rhnregister = profile.get('rhnregister', default_rhnregister)
         rhnuser = profile.get('rhnuser', default_rhnuser)

@@ -282,7 +282,7 @@ You can use additional parameters for the kubevirt section:
 - port: k8s api port.
 - ca_file: optional certificate path.
 - token: token, either from user or service account.
-- tags: additional tags to put to all created vms in their *nodeSelector*. Can be further indicated at profile or plan level in which case values are combined. This provides an easy way to force vms to run on specific nodes, by matching labels.
+- tags: additional list of tags in a key=value format to put to all created vms in their *nodeSelector*. Can be further indicated at profile or plan level in which case values are combined. This provides an easy way to force vms to run on specific nodes, by matching labels.
 - multus: whether to create vms on multus backed networks. Defaults to true.
 - cdi: whether to use cdi. Defaults to true. A check on whether cdi is actually present will be performed.
 
