@@ -38,23 +38,13 @@ If not running as root, you'll have to add your user to those groups
 sudo usermod -aG qemu,libvirt YOUR_USER
 ```
 
-for *macosx*, check the container installation section
-
-## Package install method
-
-If using *fedora*, you can use this:
-
-```bash
-dnf -y copr enable karmab/kcli ; dnf -y install kcli
-```
-
-If using a debian based distribution, you can use this (example is for ubuntu cosmic):
-
-```bash
-echo deb [trusted=yes] https://packagecloud.io/karmab/kcli/ubuntu/ cosmic main > /etc/apt/sources.list.d/kcli.list ; apt-get update ; apt-get -y install python3-kcli
-```
-
 ## Container install method
+
+For a quick install, you can simply run the following which will pull the image and creates the proper aliases based on you default shell
+
+```Shell
+curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | sh
+```
 
 In the commands below, use either docker or podman (if you don't want a big fat daemon)
 
@@ -91,6 +81,21 @@ alias kclishell='docker run --net host -it --rm --security-opt label=disable -v 
 ```
 
 For web access, you can switch with `-p 9000:9000 --entrypoint=/usr/bin/kweb` and thus accessing to port 9000.
+
+## Package install method
+
+If using *fedora*, you can use this:
+
+```bash
+dnf -y copr enable karmab/kcli ; dnf -y install kcli
+```
+
+If using a debian based distribution, you can use this (example is for ubuntu cosmic):
+
+```bash
+echo deb [trusted=yes] https://packagecloud.io/karmab/kcli/ubuntu/ cosmic main > /etc/apt/sources.list.d/kcli.list ; apt-get update ; apt-get -y install python3-kcli
+```
+
 
 ## Dev installation from pip
 
