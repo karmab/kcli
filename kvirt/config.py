@@ -692,7 +692,7 @@ class Kconfig(Kbaseconfig):
             else:
                 self.update_repo(repo)
                 self.plan(plan, path=repodir, inputfile=inputfile, overrides=overrides)
-            common.pprint("Product can be deleted with: kcli plan -d --yes %s" % plan)
+            common.pprint("Product can be deleted with: kcli delete plan --yes %s" % plan)
         return {'result': 'success', 'plan': plan}
 
     def plan(self, plan, ansible=False, url=None, path=None, autostart=False, container=False, noautostart=False,
