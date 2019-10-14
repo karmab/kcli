@@ -38,13 +38,15 @@ If not running as root, you'll have to add your user to those groups
 sudo usermod -aG qemu,libvirt YOUR_USER
 ```
 
-## Container install method
+## Quick install method
 
-For a quick install, you can simply run the following which will pull the image and creates the proper aliases based on you default shell
+Simply run the following oneliner which will pull the image and creates the proper aliases based on you default shell:
 
 ```Shell
 curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | sh
 ```
+
+## Container install method
 
 In the commands below, use either docker or podman (if you don't want a big fat daemon)
 
@@ -73,14 +75,15 @@ There are several recommended flags:
 - `-v ~/.kube:/root/.kube` to share your kubeconfig.
 - `-v /var/tmp:/ignitiondir` for ignition files to be properly processed.
 
+For web access, you can switch with `-p 9000:9000 --entrypoint=/usr/bin/kweb` and thus accessing to port 9000.
+
 As a bonus, you can use the following aliases:
 
 ```Shell
 alias kcli='docker run --net host -it --rm --security-opt label=disable -v $HOME/.ssh:/root/.ssh -v $HOME/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir -v /var/tmp:/ignitiondir karmab/kcli'
 alias kclishell='docker run --net host -it --rm --security-opt label=disable -v $HOME/.ssh:/root/.ssh -v $HOME/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir -v /var/tmp:/ignitiondir --entrypoint=/bin/sh karmab/kcli'
+alias kweb='docker run -p 9000:9000 --net host -it --rm --security-opt label=disable -v $HOME/.ssh:/root/.ssh -v $HOME/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir -v /var/tmp:/ignitiondir --entrypoint=/usr/bin/kweb karmab/kcli'
 ```
-
-For web access, you can switch with `-p 9000:9000 --entrypoint=/usr/bin/kweb` and thus accessing to port 9000.
 
 ## Package install method
 
@@ -95,7 +98,6 @@ If using a debian based distribution, you can use this (example is for ubuntu co
 ```bash
 echo deb [trusted=yes] https://packagecloud.io/karmab/kcli/ubuntu/ cosmic main > /etc/apt/sources.list.d/kcli.list ; apt-get update ; apt-get -y install python3-kcli
 ```
-
 
 ## Dev installation from pip
 
@@ -121,7 +123,25 @@ Use the provided [script](https://github.com/karmab/kcli/blob/master/extras/cent
 
 If you only want to use your local libvirt, *no specific configuration* is needed.
 
-On most distributions, default network and storage pool are already defined.
+kcli configuration is done in ~/.kcli directory, that you need to manually create. It will contain:
+
+- config.yml generic configuration where you declare clients.
+- profiles.yml stores your profiles where you combine things like memory, numcpus and all supported parameters into named profiles to create vms from.
+- id_rsa/id_rsa.pub/id_dsa/id_dsa.pub You can store your default public and private keys in *.kcli* directory which will be the first place to look at them when connecting to a remote kvm hpervisor, virtual machine or when injecting your public key.
+
+You can generate a default config file (with all parameters commented) with:
+    
+```Shell
+kcli create host
+```
+
+Or specify a target name, host, a pool with a custom path
+
+```Shell
+kcli create host -H 192.168.0.6 --pool default --poolpath /var/lib/libvirt/images host1
+```
+
+On most distributions, default network and storage pool for libvirt are already defined.
 
 If needed, you can add an additional storage pool with:
 
@@ -135,11 +155,7 @@ You can create a default network:
 kcli create network  -c 192.168.122.0/24 default
 ```
 
-kcli configuration is done in ~/.kcli directory, that you need to manually create. It will contain:
-
-- config.yml generic configuration where you declare clients.
-- profiles.yml stores your profiles where you combine things like memory, numcpus and all supported parameters into named profiles to create vms from.
-- id_rsa/id_rsa.pub/id_dsa/id_dsa.pub You can store your default public and private keys in *.kcli* directory which will be the first place to look at them when connecting to a remote kvm hpervisor, virtual machine or when injecting your public key.
+For using several hypervisors, you can use the command *kcli create host* or simply edit your configuration file.
 
 For instance, here's a sample `~/.kcli/config.yml` with two hypervisors:
 
@@ -164,24 +180,10 @@ bumblefoot:
  pool: whatever
 ```
 
-Replace with your own client in default section and indicate host and protocol in the corresponding client section.
+Replace with your own client in default section and indicate the relevant parameters in the corresponding client section, depending on your client/host type.
 
 Most of the parameters are actually optional, and can be overridden in the default, client or profile section (or in a plan file).
 You can find a fully detailed config.yml sample [here](https://github.com/karmab/kcli/tree/master/samples/config.yml)
-
-# Bootstrap
-
-You can generate a settings file with all parameters commented with:
-    
-```Shell
-kcli create host
-```
-
-And for advanced bootstrapping, you can specify a target name, host, a pool with a path, and have centos cloud image downloaded
-
-```Shell
-kcli create host -H 192.168.0.6 --pool default --poolpath /var/lib/libvirt/images host1
-```
 
 # Provider specifics
 
@@ -1136,6 +1138,10 @@ parameters:
    baseplan: upstream.yml
    xx_version: v0.7.0
 ```
+
+# Auto Completion
+
+For autocompletion to work, source the relevant file in the extras directory depending on your default shell (kcli.bash for bash or zsh, and kcli.fish for...fish).
 
 # Api Usage
 

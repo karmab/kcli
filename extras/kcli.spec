@@ -33,6 +33,7 @@ and generally for every vm deployed from this client.
 
 %build
 sed -i "s/, 'libvirt.*/\]/" setup.py
+sed -i "/kcliold/d" setup.py
 INSTALL=$(grep -m 1 INSTALL setup.py  | sed 's/INSTALL = //')
 sed -i "s/install_requires=INSTALL/install_requires=$INSTALL/" setup.py
 sed -i '/INSTALL/d' setup.py
