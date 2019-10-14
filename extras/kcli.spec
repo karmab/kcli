@@ -19,7 +19,7 @@ Requires:       python3 libvirt-python3 genisoimage nmap-ncat python3-prettytabl
 
 %description
 Kcli is meant to interact with a local/remote libvirt, gcp, aws ovirt,
-openstack, kubevirt and to easily deploy from templates (optionally using cloud-init).
+openstack, vsphere and kubevirt and to easily deploy from templates (optionally using cloud-init or ignition).
 It will also report ips for any vm connected to a dhcp-enabled libvirt network
 and generally for every vm deployed from this client.
 
