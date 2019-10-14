@@ -1,3 +1,13 @@
+diskcreate = """# Add a 10G disk to vm, using default pool
+$ kcli create disk -s 10 vm1
+
+# Add 5GB disk to vm1, using a pool named images
+$ kcli create disk -s 5 -p images vm2
+"""
+
+diskdelete = """# Delete disk named vm1_2.img from vm vm1
+$ kcli delete disk -d -n vm1_2.img vm1
+"""
 
 hostcreate = """# Add a kvm host
 $ kcli create host kvm -H 192.168.1.6 twix
@@ -23,6 +33,9 @@ $ kcli create host kubevirt mykubevirt
 
 _list = """# Get list of vms
 $ kcli list vm
+
+# Get list of vms from all hosts/clients
+$ kcli -C all list vm
 
 # Get list of products
 $ kcli list product
@@ -77,6 +90,13 @@ $ kcli create vm -i CentOS-7-x86_64-GenericCloud.qcow2 -P disks=[10,20] -P nets=
 
 # Create a vm from a custom profile
 $ kcli create vm -p myprofile myvm
+"""
+
+vmconsole = """# Open a graphical console for vm ( only shows the command if using container)
+$ kcli console myvm
+
+# Get a serial console to the vm
+$ kcli console -s myvm
 """
 
 vmexport = """# Export vm myvm with a specific name for the generated image

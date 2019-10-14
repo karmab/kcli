@@ -4,7 +4,8 @@
 
 from distutils.spawn import find_executable
 from kvirt.config import Kconfig
-from kvirt.examples import hostcreate, _list, plancreate, planinfo, productinfo, repocreate, start, vmcreate, vmexport
+from kvirt.examples import hostcreate, _list, plancreate, planinfo, productinfo, repocreate, start
+from kvirt.examples import diskcreate, diskdelete, vmcreate, vmconsole, vmexport
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
 from kvirt.version import __version__
@@ -1611,7 +1612,7 @@ def cli():
     vmclone_parser.set_defaults(func=clone_vm)
 
     vmconsole_desc = 'Vm Console (vnc/spice/serial)'
-    vmconsole_epilog = None
+    vmconsole_epilog = "examples:\n%s" % vmconsole
     vmconsole_parser = argparse.ArgumentParser(add_help=False)
     vmconsole_parser.add_argument('-s', '--serial', action='store_true')
     vmconsole_parser.add_argument('name', metavar='VMNAME', nargs='?')
@@ -2255,24 +2256,28 @@ def cli():
     delete_subparsers.add_parser('vm', parents=[vmdelete_parser], description=vmdelete_desc, help=vmdelete_desc)
 
     vmdiskadd_desc = 'Add Disk To Vm'
+    diskcreate_epilog = "examples:\n%s" % diskcreate
     vmdiskadd_parser = argparse.ArgumentParser(add_help=False)
     vmdiskadd_parser.add_argument('-s', '--size', type=int, help='Size of the disk to add, in GB', metavar='SIZE',
                                   default=10)
     vmdiskadd_parser.add_argument('-i', '--image', help='Name or Path of a Image', metavar='TEMPLATE')
     vmdiskadd_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
-    vmdiskadd_parser.add_argument('name', metavar='VMNAME', nargs='?')
+    vmdiskadd_parser.add_argument('name', metavar='VMNAME')
     vmdiskadd_parser.set_defaults(func=create_vmdisk)
-    create_subparsers.add_parser('vm-disk', parents=[vmdiskadd_parser], description=vmdiskadd_desc, help=vmdiskadd_desc,
-                                 aliases=['disk'])
+    create_subparsers.add_parser('disk', parents=[vmdiskadd_parser], description=vmdiskadd_desc, help=vmdiskadd_desc,
+                                 aliases=['vm-disk'], epilog=diskcreate_epilog,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
 
     vmdiskdelete_desc = 'Delete Vm Disk'
+    diskdelete_epilog = "examples:\n%s" % diskdelete
     vmdiskdelete_parser = argparse.ArgumentParser(add_help=False)
     vmdiskdelete_parser.add_argument('-n', '--diskname', help='Name or Path of the disk', metavar='DISKNAME')
     vmdiskdelete_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
     vmdiskdelete_parser.add_argument('name', metavar='VMNAME')
     vmdiskdelete_parser.set_defaults(func=delete_vmdisk)
-    delete_subparsers.add_parser('vm-disk', parents=[vmdiskdelete_parser], description=vmdiskdelete_desc,
-                                 help=vmdiskdelete_desc, aliases=['disk'])
+    delete_subparsers.add_parser('disk', parents=[vmdiskdelete_parser], description=vmdiskdelete_desc,
+                                 aliases=['vm-disk'], help=vmdiskdelete_desc, epilog=diskdelete_epilog,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
 
     vmdisklist_desc = 'List All Vm Disks'
     vmdisklist_parser = argparse.ArgumentParser(add_help=False)
