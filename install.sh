@@ -65,7 +65,7 @@ esac
   echo -e "${GREEN}Launch a new shell for aliases kcli, kclishell and kcliweb to work${NC}"
   if [ "$local" == "true" ] ; then
     echo -e "${GREEN}Creating default host for you$VERSION${NC}"
-    kcli create host kvm
+    kcli create host kvm -H 127.0.0.1 local
   fi
 else
   echo -e "${BLUE}Skipping already installed kcli${NC}"
