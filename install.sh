@@ -30,10 +30,10 @@ if [ "$BIN" != "0" ] && [ "$ALIAS" != "0" ]; then
   $engine pull karmab/kcli
   VOLUMES="-v $(realpath $HOME/.ssh):/root/.ssh"
   if [ -d /var/lib/libvirt/images ] && [ -d /var/run/libvirt ]; then
-      local=true
-      # sudo usermod -aG qemu,libvirt $(id -un)
-      # sudo newgrp qemu
-      # sudo newgrp libvirt
+      echo -e """${BLUE}Make sure you have libvirt access from your user:
+      sudo usermod -aG qemu,libvirt $(id -un)
+      sudo newgrp qemu
+      sudo newgrp libvirt${NC}"""
       VOLUMES="-v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt"
   fi
   [ -d $HOME/.kcli ] || mkdir -p $HOME/.kcli
@@ -61,12 +61,8 @@ fish)
 esac
   shopt -s expand_aliases
   VERSION=$(kcli -v)
-  echo -e "${GREEN}Installed kcli $VERSION${NC}"
-  echo -e "${GREEN}Launch a new shell for aliases kcli, kclishell and kcliweb to work${NC}"
-  if [ "$local" == "true" ] ; then
-    echo -e "${GREEN}Creating default host for you$VERSION${NC}"
-    kcli create host kvm -H 127.0.0.1 local
-  fi
+  echo -e "${GREEN}Installed kcli $VERSION ${NC}"
+  echo -e "${GREEN}Launch a new shell for aliases kcli, kclishell and kweb to work ${NC}"
 else
-  echo -e "${BLUE}Skipping already installed kcli${NC}"
+  echo -e "${BLUE}Skipping already installed kcli ${NC}"
 fi
