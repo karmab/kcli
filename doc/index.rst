@@ -162,28 +162,28 @@ manually create. It will contain:
    machine or when injecting your public key.
 
 You can generate a default config file (with all parameters commented)
-with:
+pointing to your local host with:
 
 .. code:: shell
 
-    kcli create host
+    kcli create host kvm -H 127.0.0.1 local
 
-Or specify a target name, host, a pool with a custom path
+Or indicate a different target host
 
 .. code:: shell
 
-    kcli create host -H 192.168.0.6 --pool default --poolpath /var/lib/libvirt/images host1
+    kcli create host -H 192.168.0.6 host1
 
 On most distributions, default network and storage pool for libvirt are
 already defined.
 
-If needed, you can add an additional storage pool with:
+If needed, you can create this default storage pool with:
 
 .. code:: shell
 
     kcli create pool -p /var/lib/libvirt/images default
 
-You can create a default network:
+And default network:
 
 .. code:: shell
 

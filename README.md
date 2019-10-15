@@ -17,7 +17,15 @@ Futhermore, you can deploy vms using predefined profiles, several at once using 
 
 Refer to the [documentation](https://kcli.readthedocs.io) for more information
 
-## Getting Started
+## Quick Start
+
+Install container aliases with:
+
+```
+curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | sh
+```
+
+Deploy your first vm with:
 
 ```
 kcli download image centos7

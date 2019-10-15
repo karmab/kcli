@@ -129,27 +129,27 @@ kcli configuration is done in ~/.kcli directory, that you need to manually creat
 - profiles.yml stores your profiles where you combine things like memory, numcpus and all supported parameters into named profiles to create vms from.
 - id_rsa/id_rsa.pub/id_dsa/id_dsa.pub You can store your default public and private keys in *.kcli* directory which will be the first place to look at them when connecting to a remote kvm hpervisor, virtual machine or when injecting your public key.
 
-You can generate a default config file (with all parameters commented) with:
+You can generate a default config file (with all parameters commented) pointing to your local host with:
     
 ```Shell
-kcli create host
+kcli create host kvm -H 127.0.0.1 local
 ```
 
-Or specify a target name, host, a pool with a custom path
+Or indicate a different target host
 
 ```Shell
-kcli create host -H 192.168.0.6 --pool default --poolpath /var/lib/libvirt/images host1
+kcli create host -H 192.168.0.6 host1
 ```
 
 On most distributions, default network and storage pool for libvirt are already defined.
 
-If needed, you can add an additional storage pool with:
+If needed, you can create this default storage pool with:
 
 ```Shell
 kcli create pool -p /var/lib/libvirt/images default
 ```
 
-You can create a default network:
+And default network:
 
 ```Shell
 kcli create network  -c 192.168.122.0/24 default
