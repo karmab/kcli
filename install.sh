@@ -6,12 +6,6 @@ GREEN='\033[0;32m'
 BLUE='\033[0;36m'
 NC='\033[0m'
 
-if [ -d /Users ] ; then
-    SYSTEM=macosx
-else
-    SYSTEM=linux
-fi
-
 shell=$(basename $SHELL)
 engine="docker"
 local=false
@@ -28,41 +22,42 @@ ALIAS="$?"
 
 if [ "$BIN" != "0" ] && [ "$ALIAS" != "0" ]; then
   $engine pull karmab/kcli
-  VOLUMES="-v $(realpath $HOME/.ssh):/root/.ssh"
+  SSHVOLUME="-v $(realpath $HOME/.ssh):/root/.ssh"
   if [ -d /var/lib/libvirt/images ] && [ -d /var/run/libvirt ]; then
-      echo -e """${BLUE}Make sure you have libvirt access from your user:
+      echo -e """${BLUE}Make sure you have libvirt access from your user by running:
       sudo usermod -aG qemu,libvirt $(id -un)
-      sudo newgrp qemu
-      sudo newgrp libvirt${NC}"""
+      newgrp qemu
+      newgrp libvirt${NC}"""
       VOLUMES="-v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt"
   fi
   [ -d $HOME/.kcli ] || mkdir -p $HOME/.kcli
-  echo -e '#/bin/bash\n'$engine run -p 9000:9000 --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $VOLUMES '-v $PWD:/workdir -v /var/tmp:/ignitiondir --entrypoint=/usr/bin/kweb karmab/kcli' > $HOME/klist.py
+  echo -e '#/bin/bash\n'$engine run -p 9000:9000 --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir -v /var/tmp:/ignitiondir --entrypoint=/usr/bin/kweb karmab/kcli' > $HOME/klist.py
 case $shell in
 bash|zsh)
   shellfile="$HOME/.bashrc"
   [ "$shell" == zsh ] && shellfile="$HOME/.zshrc" 
-  grep -q kcli= $shellfile || echo alias kcli=\'$engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $VOLUMES '-v $PWD:/workdir -v /var/tmp:/ignitiondir karmab/kcli'\' >> $shellfile
-  alias kcli="$engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $VOLUMES -v $PWD:/workdir -v /var/tmp:/ignitiondir karmab/kcli"
-  grep -q kclishell= $shellfile || echo alias kclishell=\'$engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $VOLUMES '-v $PWD:/workdir -v /var/tmp:/ignitiondir --entrypoint=/bin/sh karmab/kcli'\' >> $shellfile
-  grep -q kcliweb= $shellfile || echo alias kweb=\'$engine run -p 9000:9000 --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $VOLUMES '-v $PWD:/workdir -v /var/tmp:/ignitiondir --entrypoint=/usr/bin/kweb karmab/kcli'\' >> $shellfile
+  grep -q kcli= $shellfile || echo alias kcli=\'$engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir -v /var/tmp:/ignitiondir karmab/kcli'\' >> $shellfile
+  grep -q kclishell= $shellfile || echo alias kclishell=\'$engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir -v /var/tmp:/ignitiondir --entrypoint=/bin/sh karmab/kcli'\' >> $shellfile
+  grep -q kcliweb= $shellfile || echo alias kweb=\'$engine run -p 9000:9000 --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir -v /var/tmp:/ignitiondir --entrypoint=/usr/bin/kweb karmab/kcli'\' >> $shellfile
+  alias kcli="$engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES -v $PWD:/workdir -v /var/tmp:/ignitiondir karmab/kcli"
+
   ;;
 fish)
   shellfile="$HOME/.config/fish/config.fish"
   [ ! -d ~/.config/fish ] && mkdir -p ~/.config/fish
-  grep -q 'kcli ' $shellfile || echo alias kcli $engine 'run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $VOLUMES -v $PWD:/workdir -v /var/tmp:/ignitiondir karmab/kcli' >> $shellfile
-  alias kcli "$engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $VOLUMES -v $PWD:/workdir -v /var/tmp:/ignitiondir karmab/kcli"
-  grep -q kclishell $shellfile || echo alias kclishell $engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $VOLUMES '-v $PWD:/workdir -v /var/tmp:/ignitiondir --entrypoint=/bin/sh karmab/kcli' >> $shellfile
-  grep -q kcliweb $shellfile || echo alias kweb $engine run -p 9000:9000 --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $VOLUMES '-v $PWD:/workdir -v /var/tmp:/ignitiondir --entrypoint=/usr/bin/kweb karmab/kcli' >> $shellfile
+  grep -q 'kcli ' $shellfile || echo alias kcli $engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir -v /var/tmp:/ignitiondir karmab/kcli' >> $shellfile
+  grep -q kclishell $shellfile || echo alias kclishell $engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir -v /var/tmp:/ignitiondir --entrypoint=/bin/sh karmab/kcli' >> $shellfile
+  grep -q kcliweb $shellfile || echo alias kweb $engine run -p 9000:9000 --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir -v /var/tmp:/ignitiondir --entrypoint=/usr/bin/kweb karmab/kcli' >> $shellfile
+  alias kcli $engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES -v $PWD:/workdir -v /var/tmp:/ignitiondir karmab/kcli
   ;;
 *)
-  echo -e "${RED}Installing aliases for $shell is not supported :(${NC}"
+  echo -e "${RED} Installing aliases for $shell is not supported :(${NC}"
   ;;
 esac
   shopt -s expand_aliases
   VERSION=$(kcli -v)
-  echo -e "${GREEN}Installed kcli $VERSION ${NC}"
-  echo -e "${GREEN}Launch a new shell for aliases kcli, kclishell and kweb to work ${NC}"
+  echo -e "${GREEN} Installed kcli $VERSION ${NC}"
+  echo -e "${GREEN} Launch a new shell for aliases kcli, kclishell and kweb to work ${NC}"
 else
-  echo -e "${BLUE}Skipping already installed kcli ${NC}"
+  echo -e "${BLUE} Skipping already installed kcli ${NC}"
 fi
