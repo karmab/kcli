@@ -177,11 +177,12 @@ Or indicate a different target host
 On most distributions, default network and storage pool for libvirt are
 already defined.
 
-If needed, you can create this default storage pool with:
+If needed, you can create this default storage pool with this:
 
 .. code:: shell
 
     kcli create pool -p /var/lib/libvirt/images default
+    setfacl -m u:$(id -un):rwx /var/lib/libvirt/images
 
 And default network:
 
@@ -1495,6 +1496,9 @@ current one:
 
 Auto Completion
 ===============
+
+You can enable autocompletion if running kcli from package or pip. It’s
+enabled by default when running kclishell container alias
 
 Bash/Zsh
 --------

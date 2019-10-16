@@ -1142,7 +1142,7 @@ parameters:
 
 # Auto Completion
 
-You can enable autocompletion if running kcli from package or pip
+You can enable autocompletion if running kcli from package or pip. It's enabled by default when running kclishell container alias
 
 ## Bash/Zsh
 
