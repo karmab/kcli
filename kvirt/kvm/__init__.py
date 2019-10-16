@@ -528,12 +528,14 @@ class Kvirt(object):
                 localhosts = ['localhost', '127.0.0.1']
                 ignition = True
                 ignitiondir = '/var/tmp'
-                if os.path.exists("/i_am_a_container"):
+                k8sdir = '/var/run/secrets/kubernetes.io'
+                if os.path.exists("/i_am_a_container") and not os.path.exists(k8sdir):
                     ignitiondir = '/ignitiondir'
+                    if not os.path.exists(ignitiondir):
+                        msg = "You need to add -v /var/tmp:/ignitiondir to container alias"
+                        return {'result': 'failure', 'reason': msg}
                 elif self.protocol == 'ssh' and self.host not in localhosts:
                     ignitiondir = '/tmp'
-                if os.path.exists("/i_am_a_container") and not os.path.exists(ignitiondir):
-                    return {'result': 'failure', 'reason': "Please add -v /var/tmp:/ignitiondir to container alias"}
                 version = '3.0.0' if image.startswith('fedora-coreos') else '2.2.0'
                 ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                                domain=domain, reserveip=reserveip, files=files,
