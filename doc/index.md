@@ -143,10 +143,11 @@ kcli create host -H 192.168.0.6 host1
 
 On most distributions, default network and storage pool for libvirt are already defined.
 
-If needed, you can create this default storage pool with:
+If needed, you can create this default storage pool with this:
 
 ```Shell
 kcli create pool -p /var/lib/libvirt/images default
+setfacl -m u:$(id -un):rwx /var/lib/libvirt/images
 ```
 
 And default network:
@@ -1140,6 +1141,8 @@ parameters:
 ```
 
 # Auto Completion
+
+You can enable autocompletion if running kcli from package or pip
 
 ## Bash/Zsh
 
