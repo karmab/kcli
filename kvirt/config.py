@@ -964,9 +964,9 @@ class Kconfig(Kbaseconfig):
                 os.chdir('..')
                 return {'result': 'success'}
         if inputstring is not None:
-            with open("/tmp/plan.yml", "w") as f:
+            inputfile = "temp_plan_%s.yml" % plan
+            with open(inputfile, "w") as f:
                 f.write(inputstring)
-            inputfile = "/tmp/plan.yml"
         if inputfile is None:
             inputfile = 'kcli_plan.yml'
             common.pprint("using default input file kcli_plan.yml")
@@ -1454,18 +1454,15 @@ class Kconfig(Kbaseconfig):
                                          domain=domain, plan=plan, checkport=checkport, alias=alias,
                                          internal=internal)
         returndata = {'result': 'success', 'plan': plan}
-        if newvms:
-            returndata['newvms'] = newvms
-        if existingvms:
-            returndata['existingvms'] = existingvms
-        if failedvms:
-            returndata['failedvms'] = existingvms
-        allvms = newvms + existingvms
-        returndata['vms'] = allvms if allvms else []
+        returndata['newvms'] = newvms if newvms else []
+        returndata['existingvms'] = existingvms if existingvms else []
+        returndata['failedvms'] = failedvms if failedvms else []
         if getback or toclean:
             os.chdir('..')
         if toclean:
             rmtree(path)
+        if inputstring is not None and os.path.exists("temp_plan_%s.yml" % plan):
+            os.remove("temp_plan_%s.yml" % plan)
         return returndata
 
     def handle_host(self, pool=None, image=None, switch=None, download=False,
