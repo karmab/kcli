@@ -44,6 +44,14 @@ $ kcli list product
 $ kcli list host
 """
 
+niccreate = """# Add a nic from default network to vm1
+$ kcli create nic -n default vm1
+"""
+
+nicdelete = """# Delete nic named eth2 from vm1
+$ kcli delete nic -i eth2 vm1
+"""
+
 plancreate = """# Create a plan named ocp311 from a file
 $ kcli create plan -f multi.yml ocp311
 

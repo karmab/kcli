@@ -5,7 +5,7 @@
 from distutils.spawn import find_executable
 from kvirt.config import Kconfig
 from kvirt.examples import hostcreate, _list, plancreate, planinfo, productinfo, repocreate, start
-from kvirt.examples import diskcreate, diskdelete, vmcreate, vmconsole, vmexport
+from kvirt.examples import diskcreate, diskdelete, vmcreate, vmconsole, vmexport, niccreate, nicdelete
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
 from kvirt.version import __version__
@@ -2303,21 +2303,25 @@ def cli():
                                aliases=['vms'])
 
     create_vmnic_desc = 'Add Nic To Vm'
+    create_vmnic_epilog = "examples:\n%s" % niccreate
     create_vmnic_parser = argparse.ArgumentParser(add_help=False)
     create_vmnic_parser.add_argument('-n', '--network', help='Network', metavar='NETWORK')
     create_vmnic_parser.add_argument('name', metavar='VMNAME')
     create_vmnic_parser.set_defaults(func=create_vmnic)
-    create_subparsers.add_parser('vm-nic', parents=[create_vmnic_parser], description=create_vmnic_desc,
-                                 help=create_vmnic_desc)
+    create_subparsers.add_parser('nic', parents=[create_vmnic_parser], description=create_vmnic_desc,
+                                 help=create_vmnic_desc, aliases=['vm-nic'],
+                                 epilog=create_vmnic_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
 
     delete_vmnic_desc = 'Delete Nic From vm'
+    delete_vmnic_epilog = "examples:\n%s" % nicdelete
     delete_vmnic_parser = argparse.ArgumentParser(add_help=False)
     delete_vmnic_parser.add_argument('-i', '--interface', help='Interface name', metavar='INTERFACE')
     delete_vmnic_parser.add_argument('-n', '--network', help='Network', metavar='NETWORK')
     delete_vmnic_parser.add_argument('name', metavar='VMNAME')
     delete_vmnic_parser.set_defaults(func=delete_vmnic)
-    delete_subparsers.add_parser('vm-nic', parents=[delete_vmnic_parser], description=delete_vmnic_desc,
-                                 help=delete_vmnic_desc)
+    delete_subparsers.add_parser('nic', parents=[delete_vmnic_parser], description=delete_vmnic_desc,
+                                 help=delete_vmnic_desc, aliases=['vm-nic'],
+                                 epilog=delete_vmnic_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
 
     vmrestart_desc = 'Restart Vms'
     vmrestart_parser = restart_subparsers.add_parser('vm', description=vmrestart_desc, help=vmrestart_desc)
