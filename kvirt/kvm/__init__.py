@@ -1037,6 +1037,7 @@ class Kvirt(object):
                     localport = common.get_free_port()
                     consolecommand += "ssh %s -o LogLevel=QUIET -f -p %s -L %s:127.0.0.1:%s %s@%s sleep 10;"\
                         % (self.identitycommand, self.port, localport, port, self.user, self.host)
+                    host = '127.0.0.1'
                 url = "%s://%s:%s" % (protocol, host, localport)
                 if web:
                     if tunnel:
