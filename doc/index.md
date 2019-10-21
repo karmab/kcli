@@ -40,8 +40,6 @@ sudo usermod -aG qemu,libvirt YOUR_USER
 
 ## Quick install method
 
-Simply run the following oneliner which will pull the image and creates the proper aliases based on you default shell:
-
 ```Shell
 curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | sh
 ```

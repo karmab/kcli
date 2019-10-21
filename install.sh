@@ -25,6 +25,18 @@ if [ "$?" != "0" ] ; then
     echo -e "${RED}Missing container engine or a compatible package manager(dnf, apt-get). Install podman first${NC}"
     exit 1
   fi
+  case $shell in
+  bash|zsh)
+    shellfile="$HOME/.bashrc"
+    [ "$shell" == zsh ] && shellfile="$HOME/.zshrc" 
+    grep -q kcli $shellfile || echo eval \"\$\(register-python-argcomplete kcli\)\" >> $shellfile
+  ;;
+  fish)
+    shellfile="$HOME/.config/fish/config.fish"
+    [ ! -d ~/.config/fish ] && mkdir -p ~/.config/fish
+    grep -q kcli $shellfile || curl -s https://raw.githubusercontent.com/karmab/kcli/master/extras/kcli.fish >> $shellfile
+  ;;
+  esac
 fi
 which kcli >/dev/null 2>&1
 BIN="$?"

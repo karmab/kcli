@@ -19,8 +19,6 @@ Refer to the [documentation](https://kcli.readthedocs.io) for more information
 
 ## Quick Start
 
-Install container aliases with:
-
 ```
 curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | sh
 ```
