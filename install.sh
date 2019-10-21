@@ -15,14 +15,14 @@ which $engine >/dev/null 2>&1
 if [ "$?" != "0" ] ; then
   echo -e "${BLUE}No container engine found. Installing with package manager${NC}"
   if [ $(which dnf) != "" ] ; then 
-    dnf -y copr enable karmab/kcli
-    dnf -y install kcli
+    sudo dnf -y copr enable karmab/kcli
+    sudo dnf -y install kcli
     exit 0
   elif [ $(which apt-get) != "" ] ; then
     curl -s https://packagecloud.io/install/repositories/karmab/kcli/script.deb.sh | sudo bash
     exit 0
   else
-    echo -e "${BLUE}Missing container engine. Installing with package manager${NC}"
+    echo -e "${RED}Missing container engine or a compatible package manager(dnf, apt-get). Install podman first${NC}"
     exit 1
   fi
 fi
