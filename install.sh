@@ -8,12 +8,23 @@ NC='\033[0m'
 
 shell=$(basename $SHELL)
 engine="docker"
+packagemanager="dnf"
 local=false
 which podman >/dev/null 2>&1 && engine="podman"
 which $engine >/dev/null 2>&1
 if [ "$?" != "0" ] ; then
-  echo -e "${RED}Missing container engine. Install docker or podman first${NC}"
-  exit 1
+  echo -e "${BLUE}No container engine found. Installing with package manager${NC}"
+  if [ $(which dnf) != "" ] ; then 
+    dnf -y copr enable karmab/kcli
+    dnf -y install kcli
+    exit 0
+  elif [ $(which apt-get) != "" ] ; then
+    curl -s https://packagecloud.io/install/repositories/karmab/kcli/script.deb.sh | sudo bash
+    exit 0
+  else
+    echo -e "${BLUE}Missing container engine. Installing with package manager${NC}"
+    exit 1
+  fi
 fi
 which kcli >/dev/null 2>&1
 BIN="$?"
@@ -21,13 +32,14 @@ alias kcli >/dev/null 2>&1
 ALIAS="$?"
 
 if [ "$BIN" != "0" ] && [ "$ALIAS" != "0" ]; then
+  echo -e "${BLUE}Installing as alias for $engine${NC}"
   $engine pull karmab/kcli
   SSHVOLUME="-v $(realpath $HOME/.ssh):/root/.ssh"
   if [ -d /var/lib/libvirt/images ] && [ -d /var/run/libvirt ]; then
       echo -e """${BLUE}Make sure you have libvirt access from your user by running:
-      sudo usermod -aG qemu,libvirt $(id -un)
-      newgrp qemu
-      newgrp libvirt${NC}"""
+sudo usermod -aG qemu,libvirt $(id -un)
+newgrp qemu
+newgrp libvirt${NC}"""
       VOLUMES="-v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt"
   fi
   [ -d $HOME/.kcli ] || mkdir -p $HOME/.kcli
@@ -40,8 +52,6 @@ bash|zsh)
   grep -q kclishell= $shellfile || echo alias kclishell=\'$engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir -v /var/tmp:/ignitiondir --entrypoint=/bin/sh karmab/kcli'\' >> $shellfile
   grep -q kcliweb= $shellfile || echo alias kweb=\'$engine run -p 9000:9000 --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir -v /var/tmp:/ignitiondir --entrypoint=/usr/bin/kweb karmab/kcli'\' >> $shellfile
   alias kcli="$engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES -v $PWD:/workdir -v /var/tmp:/ignitiondir karmab/kcli"
-#  echo eval \"\$\(register-python-argcomplete kcli\)\" >> $shellfile
-
   ;;
 fish)
   shellfile="$HOME/.config/fish/config.fish"
@@ -50,21 +60,6 @@ fish)
   grep -q kclishell $shellfile || echo alias kclishell $engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir -v /var/tmp:/ignitiondir --entrypoint=/bin/sh karmab/kcli' >> $shellfile
   grep -q kcliweb $shellfile || echo alias kweb $engine run -p 9000:9000 --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir -v /var/tmp:/ignitiondir --entrypoint=/usr/bin/kweb karmab/kcli' >> $shellfile
   alias kcli $engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES -v $PWD:/workdir -v /var/tmp:/ignitiondir karmab/kcli
-#  echo """function __fish_kcli_complete
-#    set -x _ARGCOMPLETE 1
-#    set -x _ARGCOMPLETE_IFS \n
-#    set -x _ARGCOMPLETE_SUPPRESS_SPACE 1
-#    set -x _ARGCOMPLETE_SHELL fish
-#    set -x COMP_LINE (commandline -p)
-#    set -x COMP_POINT (string length (commandline -cp))
-#    set -x COMP_TYPE
-#    if set -q _ARC_DEBUG
-#        kcli 8>&1 9>&2 1>/dev/null 2>&1
-#    else
-#        kcli 8>&1 9>&2 1>&9 2>&1
-#    end
-#end
-#complete -c kcli -f -a '(__fish_kcli_complete)'""" >> $shellfile
   ;;
 *)
   echo -e "${RED} Installing aliases for $shell is not supported :(${NC}"
@@ -72,8 +67,8 @@ fish)
 esac
   shopt -s expand_aliases
   VERSION=$(kcli -v)
-  echo -e "${GREEN} Installed kcli $VERSION ${NC}"
-  echo -e "${GREEN} Launch a new shell for aliases kcli, kclishell and kweb to work ${NC}"
+  echo -e "${GREEN}Installed kcli $VERSION ${NC}"
+  echo -e "${GREEN}Launch a new shell for aliases kcli, kclishell and kweb to work${NC}"
 else
-  echo -e "${BLUE} Skipping already installed kcli ${NC}"
+  echo -e "${BLUE}Skipping already installed kcli${NC}"
 fi

@@ -6,7 +6,7 @@
 
 Name:           kcli
 Version:        20.0
-Release:        0
+Release:        1
 Url:            http://github.com/karmab/kcli
 Summary:        Wapper for libvirt,gcp,aws,ovirt and openstack
 License:        ASL 2.0
@@ -15,7 +15,7 @@ Source:         https://files.pythonhosted.org/packages/source/k/kcli/kcli-%{ver
 AutoReq:        no
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildRequires:  python3-devel rubygem-ronn gzip
-Requires:       python3 libvirt-python3 genisoimage nmap-ncat python3-prettytable python3-PyYAML python3-flask python3-netaddr python3-docker python3-podman-api python3-argcomplete
+Requires:       python3 libvirt-python3 genisoimage nmap-ncat python3-prettytable python3-PyYAML python3-flask python3-netaddr python3-argcomplete
 
 %description
 Kcli is meant to interact with a local/remote libvirt, gcp, aws ovirt,
