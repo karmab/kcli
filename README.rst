@@ -9,13 +9,13 @@ kcli repository
    Screenshot
 
 This tool is meant to interact with existing virtualization providers
-(libvirt, kubevirt, ovirt, openstack, gcp and aws) and to easily deploy
-and customize vms from cloud images.
+(libvirt, KubeVirt, oVirt, OpenStack, VMware vSphere GCP and AWS) and 
+to easily deploy and customize VMs from cloud images.
 
-You can also interact with those vms (list, info, ssh, start, stop,
+You can also interact with those VMs (list, info, ssh, start, stop,
 delete, console, serialconsole, add/delete disk, add/delete nic,…)
 
-Futhermore, you can deploy vms using predefined profiles, several at
+Furthermore, you can deploy VMs using predefined profiles, several at
 once using plan files or entire products for which plans were already
 created for you
 
@@ -29,22 +29,22 @@ What you can do
 ---------------
 
 -  Interact with all the virtualization providers using a single tool
--  Declare all your objects(vm, containers, networks, ansible
+-  Declare all your objects(VM, containers, networks, ansible
    playbooks,…) in a single yaml plan file with a simple syntax
--  Customize a plan deployment using parameters and jinja templating
--  Adjust vms from a plan (memory, cpu, flavor, disks and nics) to match
+-  Customize a plan deployment using parameters and Jinja templating
+-  Adjust VMs from a plan (memory, CPU, flavor, disks and NICs) to match
    what’s defined in the plans
--  Inject all configuration with cloudinit/ignition or the equivalent in
+-  Inject all configuration with cloud-init/Ignition or the equivalent in
    cloud providers
--  Use profiles to launch vms with same hardware characteristics
--  Launch a plan from an url
+-  Use profiles to launch VMs with same hardware characteristics
+-  Launch a plan from an URL
 -  Share your plan or use existing ones from github repo as products
--  Use the existing plans to deploy kubernetes, openshift, openstack,
-   ovirt, kubevirt, ….
+-  Use the existing plans to deploy Kubernetes, OpenShift, OpenStack,
+   oVirt, KubeVirt, ….
 -  Use the existing cloud images for each distribution
--  Easily share private keys between your vms
--  Handle dns entries for the vms
--  Automatically subscribe your rhel vms
+-  Easily share private keys between your VMs
+-  Handle dns entries for the VMs
+-  Automatically subscribe your RHEL VMs
 -  Get a push button notification when a vm has finished its deployment
 -  Alternatively use web UI to do the same
 
@@ -62,7 +62,7 @@ GitHub <https://github.com/karmab/kcli/graphs/contributors>`__
 Copyright
 ---------
 
-Copyright 2017 Karim Boumedhel
+Copyright 2017-2019 Karim Boumedhel
 
 Licensed under the Apache License, Version 2.0 (the “License”); you may
 not use this file except in compliance with the License. You may obtain
