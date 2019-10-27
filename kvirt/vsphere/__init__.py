@@ -9,7 +9,6 @@ from distutils.spawn import find_executable
 from kvirt import common
 from kvirt.vsphere.helpers import HWVERSIONS, VMTEMPLATE
 from math import ceil
-from netaddr import IPAddress, IPNetwork
 from pathlib import Path
 from pyVmomi import vim, vmodl
 from pyVim import connect
@@ -725,14 +724,14 @@ class Ksphere:
         yamlinfo['memory'] = vm.config.hardware.memoryMB
         if vm.runtime.powerState == "poweredOn":
             yamlinfo['host'] = vm.runtime.host.name
+            prefix = 0
             for nic in vm.guest.net:
                 if nic.ipConfig is not None:
                     for addr in nic.ipConfig.ipAddress:
-                        ip = addr.ipAddress
-                        if IPAddress(ip) not in IPNetwork("10.132.0.0/14") and not addr.ipAddress.startswith('192.168')\
-                                and not addr.ipAddress.startswith('10.88') and ':' not in addr.ipAddress:
+                        currentprefix = addr.prefixLength
+                        if currentprefix > prefix and ':' not in addr.ipAddress:
+                            prefix = currentprefix
                             yamlinfo['ip'] = addr.ipAddress
-                            break
         yamlinfo['status'] = translation[vm.runtime.powerState]
         yamlinfo['nets'] = []
         yamlinfo['disks'] = []
@@ -1041,13 +1040,13 @@ class Ksphere:
         # summary = vm.summary
         # ip = summary.guest.ipAddress if summary.guest is not None else None
         ip = None
+        prefix = 0
         for nic in vm.guest.net:
             for addr in nic.ipConfig.ipAddress:
-                if IPAddress(addr.ipAddress) not in IPNetwork("10.132.0.0/14") and\
-                        not addr.ipAddress.startswith('192.168') and not addr.ipAddress.startswith('192.168') and\
-                        ':' not in addr.ipAddress:
+                currentprefix = addr.prefixLength
+                if currentprefix > prefix and ':' not in addr.ipAddress:
+                    prefix = currentprefix
                     ip = addr.ipAddress
-                    break
         return user, ip
 
     def add_disk(self, name, size=1, pool=None, thin=True, image=None, shareable=False, existing=None):
