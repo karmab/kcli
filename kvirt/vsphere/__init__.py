@@ -730,7 +730,7 @@ class Ksphere:
                     for addr in nic.ipConfig.ipAddress:
                         ip = addr.ipAddress
                         if IPAddress(ip) not in IPNetwork("10.132.0.0/14") and not addr.ipAddress.startswith('192.168')\
-                                and ':' not in addr.ipAddress:
+                                and not addr.ipAddress.startswith('10.88') and ':' not in addr.ipAddress:
                             yamlinfo['ip'] = addr.ipAddress
                             break
         yamlinfo['status'] = translation[vm.runtime.powerState]
@@ -1044,7 +1044,8 @@ class Ksphere:
         for nic in vm.guest.net:
             for addr in nic.ipConfig.ipAddress:
                 if IPAddress(addr.ipAddress) not in IPNetwork("10.132.0.0/14") and\
-                        not addr.ipAddress.startswith('192.168') and ':' not in addr.ipAddress:
+                        not addr.ipAddress.startswith('192.168') and not addr.ipAddress.startswith('192.168') and\
+                        ':' not in addr.ipAddress:
                     ip = addr.ipAddress
                     break
         return user, ip
