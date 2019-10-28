@@ -726,8 +726,10 @@ class Ksphere:
             yamlinfo['host'] = vm.runtime.host.name
             for nic in vm.guest.net:
                 if nic.ipAddress:
-                    yamlinfo['ip'] = nic.ipAddress[0]
-                    break
+                    for ip in nic.ipAddress:
+                        if ':' not in ip:
+                            yamlinfo['ip'] = ip
+                            break
         yamlinfo['status'] = translation[vm.runtime.powerState]
         yamlinfo['nets'] = []
         yamlinfo['disks'] = []
@@ -1038,8 +1040,10 @@ class Ksphere:
         ip = None
         for nic in vm.guest.net:
             if nic.ipAddress:
-                ip = nic.ipAddress[0]
-                break
+                for i in nic.ipAddress:
+                    if ':' not in i:
+                        ip = i
+                        break
         return user, ip
 
     def add_disk(self, name, size=1, pool=None, thin=True, image=None, shareable=False, existing=None):
