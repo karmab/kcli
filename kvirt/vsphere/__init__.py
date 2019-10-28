@@ -724,14 +724,10 @@ class Ksphere:
         yamlinfo['memory'] = vm.config.hardware.memoryMB
         if vm.runtime.powerState == "poweredOn":
             yamlinfo['host'] = vm.runtime.host.name
-            prefix = 0
             for nic in vm.guest.net:
-                if nic.ipConfig is not None:
-                    for addr in nic.ipConfig.ipAddress:
-                        currentprefix = addr.prefixLength
-                        if currentprefix > prefix and ':' not in addr.ipAddress:
-                            prefix = currentprefix
-                            yamlinfo['ip'] = addr.ipAddress
+                if nic.ipAddress:
+                    yamlinfo['ip'] = nic.ipAddress[0]
+                    break
         yamlinfo['status'] = translation[vm.runtime.powerState]
         yamlinfo['nets'] = []
         yamlinfo['disks'] = []
@@ -1040,13 +1036,10 @@ class Ksphere:
         # summary = vm.summary
         # ip = summary.guest.ipAddress if summary.guest is not None else None
         ip = None
-        prefix = 0
         for nic in vm.guest.net:
-            for addr in nic.ipConfig.ipAddress:
-                currentprefix = addr.prefixLength
-                if currentprefix > prefix and ':' not in addr.ipAddress:
-                    prefix = currentprefix
-                    ip = addr.ipAddress
+            if nic.ipAddress:
+                ip = nic.ipAddress[0]
+                break
         return user, ip
 
     def add_disk(self, name, size=1, pool=None, thin=True, image=None, shareable=False, existing=None):
