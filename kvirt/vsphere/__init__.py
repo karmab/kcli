@@ -722,24 +722,19 @@ class Ksphere:
         yamlinfo['id'] = summary.config.instanceUuid
         yamlinfo['cpus'] = vm.config.hardware.numCPU
         yamlinfo['memory'] = vm.config.hardware.memoryMB
-        if vm.runtime.powerState == "poweredOn":
-            yamlinfo['host'] = vm.runtime.host.name
-            for nic in vm.guest.net:
-                if nic.ipAddress:
-                    for ip in nic.ipAddress:
-                        if ':' not in ip:
-                            yamlinfo['ip'] = ip
-                            break
         yamlinfo['status'] = translation[vm.runtime.powerState]
         yamlinfo['nets'] = []
         yamlinfo['disks'] = []
         devices = vm.config.hardware.device
-        for devnumber, dev in enumerate(devices):
+        mainmac = None
+        for number, dev in enumerate(devices):
             if "addressType" in dir(dev):
                 network = dev.backing.deviceName
                 device = dev.deviceInfo.label
                 networktype = 'N/A'
                 mac = dev.macAddress
+                if mainmac is None:
+                    mainmac = mac
                 net = {'device': device, 'mac': mac, 'net': network, 'type': networktype}
                 yamlinfo['nets'].append(net)
             if type(dev).__name__ == 'vim.vm.device.VirtualDisk':
@@ -750,6 +745,13 @@ class Ksphere:
                 path = dev.backing.datastore.name
                 disk = {'device': device, 'size': disksize, 'format': diskformat, 'type': drivertype, 'path': path}
                 yamlinfo['disks'].append(disk)
+        if vm.runtime.powerState == "poweredOn":
+            yamlinfo['host'] = vm.runtime.host.name
+            for nic in vm.guest.net:
+                currentmac = nic.macAddress
+                currentips = nic.ipAddress
+                if currentmac == mainmac and currentips:
+                    yamlinfo['ip'] = currentips[0]
         if self.debug:
             print(vm.config.extraConfig)
         for entry in vm.config.extraConfig:
@@ -1038,12 +1040,18 @@ class Ksphere:
         # summary = vm.summary
         # ip = summary.guest.ipAddress if summary.guest is not None else None
         ip = None
-        for nic in vm.guest.net:
-            if nic.ipAddress:
-                for i in nic.ipAddress:
-                    if ':' not in i:
-                        ip = i
-                        break
+        mainmac = None
+        for devnumber, dev in enumerate(vm.config.hardware.device):
+            if "addressType" in dir(dev):
+                mac = dev.macAddress
+                if mainmac is None:
+                    mainmac = mac
+                    for nic in vm.guest.net:
+                        currentmac = nic.macAddress
+                        currentips = nic.ipAddress
+                        if currentmac == mainmac and currentips:
+                            ip = currentips[0]
+                            break
         return user, ip
 
     def add_disk(self, name, size=1, pool=None, thin=True, image=None, shareable=False, existing=None):
