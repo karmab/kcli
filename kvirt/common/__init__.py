@@ -921,12 +921,13 @@ def get_latest_rhcos(url, openstack=False):
         for build in data['builds']:
             if isinstance(build, dict):
                 build = build['id']
-            metaurl = '%s/%s/meta.json' % (url, build)
-            print(metaurl)
-            with urlopen(metaurl) as m:
-                data = json.loads(m.read().decode())
-                if key in data['images']:
-                    return "%s/%s/%s" % (url, build, data['images'][key]['path'])
+                return "%s/%s/x86_64/rhcos-%s-qemu.x86_64.qcow2" % (url, build, build)
+            else:
+                metaurl = '%s/%s/meta.json' % (url, build)
+                with urlopen(metaurl) as m:
+                    data = json.loads(m.read().decode())
+                    if key in data['images']:
+                        return "%s/%s/%s" % (url, build, data['images'][key]['path'])
 
 
 def find_ignition_files(role, plan=None):
