@@ -607,7 +607,9 @@ class Kvirt(object):
                     else:
                         cpuxml = """%s<feature policy='disable' name='%s'/>""" % (cpuxml, feature)
         if cpuxml != '':
-            cpuxml = "%s</cpu>" % cpuxml
+            lastcpu = int(numcpus) - 1
+            cpuxml = "%s<numa><cell id='0' cpus='0-%s' memory='1048576' unit='KiB'/></numa></cpu>" % (cpuxml, lastcpu)
+            # cpuxml = "%s</cpu>" % cpuxml
         if self.host in ['localhost', '127.0.0.1']:
             serialxml = """<serial type='pty'>
                        <target port='0'/>
@@ -706,6 +708,7 @@ class Kvirt(object):
         vmxml = """<domain type='%s' %s>
                   <name>%s</name>
                   %s
+                  <maxMemory slots='16' unit='MiB'>1524288</maxMemory>
                   <memory unit='MiB'>%d</memory>
                   %s
                   <os>
@@ -1929,15 +1932,17 @@ class Kvirt(object):
         memorynode = list(root.getiterator('memory'))[0]
         memorynode.text = memory
         currentmemory = list(root.getiterator('currentMemory'))[0]
-        if vm.isActive():
-            common.pprint("Note it will only be effective upon next start", color='blue')
+        maxmemory = list(root.getiterator('maxMemory'))
+        if maxmemory:
+            diff = int(memory) - int(currentmemory.text)
+            if diff > 0:
+                xml = "<memory model='dimm'><target><size unit='KiB'>%s</size><node>0</node></target></memory>" % diff
+                vm.attachDeviceFlags(xml, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
+        elif vm.isActive():
+            common.pprint("Note this will only be effective upon next start", color='blue')
         currentmemory.text = memory
         newxml = ET.tostring(root)
         conn.defineXML(newxml.decode("utf-8"))
-        # diff = int(memory) - int(currentmemory.text)
-        # elif diff > 0:
-        #    xml = "<memory model='dimm'><target><size unit='KiB'>%s</size><node>0</node></target></memory>" % diff
-        #    vm.attachDeviceFlags(xml, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
         return {'result': 'success'}
 
     def update_iso(self, name, iso):
