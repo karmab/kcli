@@ -47,9 +47,6 @@ If not running as root, you’ll have to add your user to those groups
 Quick install method
 --------------------
 
-Simply run the following oneliner which will pull the image and creates
-the proper aliases based on you default shell:
-
 .. code:: shell
 
     curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | sh
@@ -1336,7 +1333,7 @@ Specific parameters for a client
 Available parameters for client/profile/plan files
 ==================================================
 
--  *cpumodel* Defaults to Westmere
+-  *cpumodel* Defaults to host-model
 -  *cpuflags* (optional). You can specify a list of strings with
    features to enable or use dict entries with *name* of the feature and
    *enable* either set to True or False. The value for vmx is ignored,

@@ -1030,7 +1030,7 @@ Basic testing can be run with pytest, which leverages your existing kcli config:
 
 # Available parameters for client/profile/plan files
 
-- *cpumodel* Defaults to Westmere
+- *cpumodel* Defaults to host-model
 - *cpuflags* (optional). You can specify a list of strings with features to enable or use dict entries with *name* of the feature and *enable* either set to True or False. The value for vmx is ignored, as it s handled by the nested flag
 - *numcpus* Defaults to 2
 - *memory* Defaults to 512M
