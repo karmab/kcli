@@ -1897,7 +1897,7 @@ class Kvirt(object):
             conn.defineXML(newxml.decode("utf-8"))
             return {'result': 'success'}
         elif 'current' in cpuattributes and cpuattributes['current'] != numcpus:
-            if numcpus < int(cpunode.text):
+            if numcpus < int(cpuattributes['current']):
                 common.pprint("Can't remove cpus while vm is up", color='red')
                 return {'result': 'failure', 'reason': "VM %s not found" % name}
             else:
