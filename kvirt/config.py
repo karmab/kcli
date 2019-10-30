@@ -1506,7 +1506,12 @@ class Kconfig(Kbaseconfig):
                 if cmd is None and image != '' and image in IMAGESCOMMANDS:
                     cmd = IMAGESCOMMANDS[image]
                 common.pprint("Grabbing image %s..." % image)
-                result = k.add_image(url, pool, cmd=cmd, name=image)
+                try:
+                    result = k.add_image(url, pool, cmd=cmd, name=image)
+                except:
+                    shortname = os.path.basename(url)
+                    common.pprint("\nPlease run kcli delete image --yes %s" % shortname, color='red')
+                    return {'result': 'failure', 'reason': "User interruption"}
                 common.handle_response(result, image, element='Image ', action='Added')
                 if imagename not in self.profiles:
                     common.pprint("Adding a profile named %s with default values" % imagename)

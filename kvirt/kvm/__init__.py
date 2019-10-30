@@ -2505,9 +2505,9 @@ class Kvirt(object):
         for poolname in conn.listStoragePools():
             try:
                 pool = conn.storagePoolLookupByName(poolname)
+                pool.refresh(0)
                 volume = pool.storageVolLookupByName(shortname)
                 volume.delete(0)
-                pool.refresh(0)
                 return {'result': 'success'}
             except:
                 continue
@@ -2548,7 +2548,7 @@ class Kvirt(object):
         elif self.protocol == 'ssh':
             downloadcmd = 'ssh %s -p %s %s@%s "curl -Lo %s/%s -f \'%s\'"' % (self.identitycommand, self.port, self.user,
                                                                              self.host, downloadpath, shortimage, image)
-        code = os.system(downloadcmd)
+        code = call(downloadcmd, shell=True)
         if code != 0:
             return {'result': 'failure', 'reason': "Unable to download indicated image"}
         if shortimage.endswith('bz2'):
