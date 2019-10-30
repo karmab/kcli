@@ -18,7 +18,6 @@ from kvirt.containerconfig import Kcontainerconfig
 from distutils.spawn import find_executable
 import glob
 import os
-import re
 from shutil import rmtree
 import sys
 from time import sleep
@@ -1484,18 +1483,15 @@ class Kconfig(Kbaseconfig):
             if pool is None:
                 pool = self.pool
                 common.pprint("Using pool %s" % pool, color='blue')
-            if url is None and image is None:
-                common.pprint("Missing image or url.Leaving...", color='red')
-                return {'result': 'failure', 'reason': "Missing image or url"}
             if image is not None:
                 if url is None:
+                    if image not in IMAGES:
+                        common.pprint("Incorrect image", color='red')
+                        return {'result': 'failure', 'reason': "Incorrect image"}
                     url = IMAGES[image]
                     openstack = True if self.type in ['ovirt', 'openstack'] else False
                     if 'rhcos' in image and 'latest' in image:
                         url = common.get_latest_rhcos(url, openstack=openstack)
-                    # elif 'fedoracoreos' in image and 'latest' in image:
-                    #    url = common.get_latest_fcos(url, openstack=openstack)
-                    shortname = os.path.basename(url)
                     image = os.path.basename(image)
                     if not url.endswith('qcow2') and not url.endswith('img') and not url.endswith('qc2')\
                             and not url.endswith('qcow2.xz') and not url.endswith('qcow2.gz'):
@@ -1507,19 +1503,14 @@ class Kconfig(Kbaseconfig):
                         if url.strip() == '':
                             common.pprint("Missing proper url.Leaving...", color='red')
                             return {'result': 'failure', 'reason': "Missing image"}
-                        search = re.search(r".*/(.*)\?.*", url)
-                        if search is not None:
-                            shortname = search.group(1)
-                else:
-                    shortname = os.path.basename(url)
                 if cmd is None and image != '' and image in IMAGESCOMMANDS:
                     cmd = IMAGESCOMMANDS[image]
-                common.pprint("Grabbing image %s..." % shortname)
-                result = k.add_image(url, pool, cmd=cmd, name=shortname)
-                common.handle_response(result, shortname, element='Image ', action='Added')
+                common.pprint("Grabbing image %s..." % image)
+                result = k.add_image(url, pool, cmd=cmd, name=image)
+                common.handle_response(result, image, element='Image ', action='Added')
                 if imagename not in self.profiles:
                     common.pprint("Adding a profile named %s with default values" % imagename)
-                    self.create_profile(imagename, {'image': shortname}, quiet=True)
+                    self.create_profile(imagename, {'image': image}, quiet=True)
             return {'result': 'success'}
         elif switch:
             if switch not in self.clients:

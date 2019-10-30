@@ -19,7 +19,7 @@ NESTED = True
 START = True
 AUTOSTART = False
 TUNNEL = False
-IMAGES = {'': None, 'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-image-bootstrap.qcow2',
+IMAGES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-image-bootstrap.qcow2',
           'atomic': 'https://download.fedoraproject.org/pub/alt/atomic/stable/Fedora-Atomic-26-20170905.0/'
           'CloudImages/x86_64/images/Fedora-Atomic-26-20170905.0.x86_64.qcow2',
           'centos6': 'https://cloud.centos.org/centos/6/images/CentOS-6-x86_64-GenericCloud.qcow2',

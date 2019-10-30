@@ -2213,7 +2213,7 @@ def cli():
     imagedownload_parser.add_argument('-c', '--cmd', help='Extra command to launch after downloading', metavar='CMD')
     imagedownload_parser.add_argument('-p', '--pool', help='Pool to use. Defaults to default', metavar='POOL')
     imagedownload_parser.add_argument('-u', '--url', help='Url to use', metavar='URL')
-    imagedownload_parser.add_argument('image', choices=sorted(IMAGES.keys()), help=imagedownload_help, metavar='IMAGE')
+    imagedownload_parser.add_argument('image', help=imagedownload_help, metavar='IMAGE')
     imagedownload_parser.set_defaults(func=download_image)
     download_subparsers.add_parser('image', parents=[imagedownload_parser], description=imagedownload_desc,
                                    help=imagedownload_desc)
