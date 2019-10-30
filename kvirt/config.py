@@ -1486,11 +1486,11 @@ class Kconfig(Kbaseconfig):
             if image is not None:
                 if url is None:
                     if image not in IMAGES:
-                        common.pprint("Incorrect image", color='red')
+                        common.pprint("Image %s has no associated url" % image, color='red')
                         return {'result': 'failure', 'reason': "Incorrect image"}
                     url = IMAGES[image]
                     openstack = True if self.type in ['ovirt', 'openstack'] else False
-                    if 'rhcos' in image and 'latest' in image:
+                    if 'rhcos' in image:
                         url = common.get_latest_rhcos(url, openstack=openstack)
                     image = os.path.basename(image)
                     if not url.endswith('qcow2') and not url.endswith('img') and not url.endswith('qc2')\

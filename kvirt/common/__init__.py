@@ -919,7 +919,10 @@ def get_latest_rhcos(url, openstack=False):
     with urlopen(buildurl) as b:
         data = json.loads(b.read().decode())
         for build in data['builds']:
+            if isinstance(build, dict):
+                build = build['id']
             metaurl = '%s/%s/meta.json' % (url, build)
+            print(metaurl)
             with urlopen(metaurl) as m:
                 data = json.loads(m.read().decode())
                 if key in data['images']:

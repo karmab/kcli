@@ -42,7 +42,10 @@ IMAGES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-i
           'qcow2',
           'opensuse': 'http://download.opensuse.org/pub/opensuse/repositories/Cloud:/Images:/Leap_42.3/images/'
           'openSUSE-Leap-42.3-OpenStack.x86_64.qcow2',
+          'rhcos41': 'https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.1',
+          'rhcos42': 'https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.2',
           'rhcoslatest': 'https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.2',
+          # 'rhcos43': 'https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.3',
           'rhel7': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7',
           'rhel8': 'https://access.redhat.com/downloads/content/479/ver=/rhel---8',
           'ubuntu1804': 'https://cloud-images.ubuntu.com/bionic/current/bionic-server-cloudimg-amd64.img',
