@@ -74,13 +74,13 @@ fish)
   alias kcli $engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES -v $PWD:/workdir -v /var/tmp:/ignitiondir karmab/kcli
   ;;
 *)
-  echo -e "${RED} Installing aliases for $shell is not supported :(${NC}"
+  echo -e "${RED}Installing aliases for $shell is not supported :(${NC}"
   ;;
 esac
   shopt -s expand_aliases
   VERSION=$(kcli -v)
-  echo -e "${GREEN}Installed kcli $VERSION ${NC}"
-  echo -e "${GREEN}Launch a new shell for aliases kcli, kclishell and kweb to work${NC}"
+  echo -e """${GREEN}Installed kcli $VERSION
+${GREEN}Launch a new shell for aliases kcli, kclishell and kweb to work${NC}"""
 else
   echo -e "${BLUE}Skipping already installed kcli${NC}"
 fi
