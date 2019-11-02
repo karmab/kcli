@@ -80,7 +80,7 @@ esac
   shopt -s expand_aliases
   VERSION=$(kcli -v)
   echo -e """${GREEN}Installed kcli $VERSION
-${GREEN}Launch a new shell for aliases kcli, kclishell and kweb to work${NC}"""
+Launch a new shell for aliases kcli, kclishell and kweb to work${NC}"""
 else
   echo -e "${BLUE}Skipping already installed kcli${NC}"
 fi
