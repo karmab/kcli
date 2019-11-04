@@ -168,7 +168,8 @@ class Kvirt(object):
                vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None,
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
                files=[], enableroot=True, overrides={}, tags=[], dnsclient=None, storemetadata=False,
-               sharedfolders=[], kernel=None, initrd=None, cmdline=None, placement=[], autostart=False):
+               sharedfolders=[], kernel=None, initrd=None, cmdline=None, placement=[], autostart=False,
+               cpuhotplug=False, memoryhotplug=False):
         """
 
         :param name:
@@ -607,9 +608,12 @@ class Kvirt(object):
                     else:
                         cpuxml = """%s<feature policy='disable' name='%s'/>""" % (cpuxml, feature)
         if cpuxml != '':
-            lastcpu = int(numcpus) - 1
-            cpuxml = "%s<numa><cell id='0' cpus='0-%s' memory='1048576' unit='KiB'/></numa></cpu>" % (cpuxml, lastcpu)
-            # cpuxml = "%s</cpu>" % cpuxml
+            if memoryhotplug:
+                lastcpu = int(numcpus) - 1
+                cpuxml = "%s<numa><cell id='0' cpus='0-%s' memory='1048576' unit='KiB'/></numa></cpu>" % (cpuxml,
+                                                                                                          lastcpu)
+            else:
+                cpuxml = "%s</cpu>" % cpuxml
         if self.host in ['localhost', '127.0.0.1']:
             serialxml = """<serial type='pty'>
                        <target port='0'/>
@@ -627,8 +631,10 @@ class Kvirt(object):
                       <source mode='bind'/>
                       <target type='virtio' name='org.qemu.guest_agent.0'/>
                       </channel>"""
-        # vcpuxml = "<vcpu>%d</vcpu>" % numcpus
-        vcpuxml = "<vcpu  placement='static' current='%d'>64</vcpu>" % (numcpus)
+        if cpuhotplug:
+            vcpuxml = "<vcpu  placement='static' current='%d'>64</vcpu>" % (numcpus)
+        else:
+            vcpuxml = "<vcpu>%d</vcpu>" % numcpus
         qemuextraxml = ''
         if ignition or usermode:
             namespace = "xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'"
@@ -705,10 +711,11 @@ class Kvirt(object):
         bootdev = "<boot dev='hd'/>"
         if iso:
             bootdev += "<boot dev='cdrom'/>"
+        memoryhotplugxml = "<maxMemory slots='16' unit='MiB'>1524288</maxMemory>" if memoryhotplug else ""
         vmxml = """<domain type='%s' %s>
                   <name>%s</name>
                   %s
-                  <maxMemory slots='16' unit='MiB'>1524288</maxMemory>
+                  %s
                   <memory unit='MiB'>%d</memory>
                   %s
                   <os>
@@ -737,9 +744,9 @@ class Kvirt(object):
                   </devices>
                     %s
                     %s
-                    </domain>""" % (virttype, namespace, name, metadata, memory, vcpuxml, machine, bootdev,
-                                    kernelxml, disksxml, netxml, isoxml, displayxml, serialxml, sharedxml, guestxml,
-                                    cpuxml, qemuextraxml)
+                    </domain>""" % (virttype, namespace, name, metadata, memoryhotplugxml, memory, vcpuxml, machine,
+                                    bootdev, kernelxml, disksxml, netxml, isoxml, displayxml, serialxml, sharedxml,
+                                    guestxml, cpuxml, qemuextraxml)
         if self.debug:
             print(vmxml)
         conn.defineXML(vmxml)

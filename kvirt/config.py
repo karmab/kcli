@@ -299,6 +299,8 @@ class Kconfig(Kbaseconfig):
             default_cmdline = father.get('cmdline', self.cmdline)
             default_placement = father.get('placement', self.placement)
             default_yamlinventory = father.get('yamlinventory', self.yamlinventory)
+            default_cpuhotplug = father.get('cpuhotplug', self.cpuhotplug)
+            default_memoryhotplug = father.get('memoryhotplug', self.memoryhotplug)
         else:
             default_numcpus = self.numcpus
             default_memory = self.memory
@@ -352,6 +354,8 @@ class Kconfig(Kbaseconfig):
             default_cmdline = self.cmdline
             default_placement = self.placement
             default_yamlinventory = self.yamlinventory
+            default_cpuhotplug = self.cpuhotplug
+            default_memoryhotplug = self.memoryhotplug
         plan = profile.get('plan', plan)
         template = profile.get('template', default_image)
         image = profile.get('image', template)
@@ -447,6 +451,8 @@ class Kconfig(Kbaseconfig):
         cmdline = profile.get('cmdline', default_cmdline)
         placement = profile.get('placement', default_placement)
         yamlinventory = profile.get('yamlinventory', default_yamlinventory)
+        cpuhotplug = profile.get('cpuhotplug', default_cpuhotplug)
+        memoryhotplug = profile.get('memoryhotplug', default_memoryhotplug)
         scriptcmds = []
         skip_rhnregister_script = False
         if rhnregister and image is not None and image.lower().startswith('rhel'):
@@ -570,7 +576,7 @@ class Kconfig(Kbaseconfig):
                           domain=domain, nested=bool(nested), tunnel=tunnel, files=files, enableroot=enableroot,
                           overrides=overrides, tags=tags, dnsclient=dnsclient, storemetadata=storemetadata,
                           sharedfolders=sharedfolders, kernel=kernel, initrd=initrd, cmdline=cmdline,
-                          placement=placement, autostart=autostart)
+                          placement=placement, autostart=autostart, cpuhotplug=cpuhotplug, memoryhotplug=memoryhotplug)
         if result['result'] != 'success':
             return result
         if dnsclient is not None and domain is not None:

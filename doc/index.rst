@@ -1339,7 +1339,9 @@ Available parameters for client/profile/plan files
    *enable* either set to True or False. The value for vmx is ignored,
    as it s handled by the nested flag
 -  *numcpus* Defaults to 2
+-  *cpuhotplug* Defaults to False
 -  *memory* Defaults to 512M
+-  *memoryhotplug* Defaults to False
 -  *flavor* For gcp, aws and openstack, You can specify an existing
    flavor so that cpu and memory is derived from it
 -  *guestid* Defaults to guestrhel764

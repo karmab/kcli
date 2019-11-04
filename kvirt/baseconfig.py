@@ -14,7 +14,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             NETMASKS, GATEWAY, SHAREDKEY, IMAGE, ENABLEROOT,
                             PLANVIEW, PRIVATEKEY, TAGS, RHNREGISTER, RHNUSER, RHNPASSWORD, RHNAK, RHNORG, RHNPOOL,
                             FLAVOR, KEEP_NETWORKS, DNSCLIENT, STORE_METADATA, NOTIFY, NOTIFYTOKEN, NOTIFYCMD,
-                            SHAREDFOLDERS, KERNEL, INITRD, CMDLINE, PLACEMENT, YAMLINVENTORY)
+                            SHAREDFOLDERS, KERNEL, INITRD, CMDLINE, PLACEMENT, YAMLINVENTORY, CPUHOTPLUG, MEMORYHOTPLUG)
 from kvirt import common
 import os
 from shutil import copytree, rmtree
@@ -147,6 +147,8 @@ class Kbaseconfig:
         defaults['cmdline'] = default.get('cmdline', CMDLINE)
         defaults['placement'] = default.get('placement', PLACEMENT)
         defaults['yamlinventory'] = default.get('yamlinventory', YAMLINVENTORY)
+        defaults['cpuhotplug'] = bool(default.get('cpuhotplug', CPUHOTPLUG))
+        defaults['memoryhotplug'] = bool(default.get('memoryhotplug', MEMORYHOTPLUG))
         currentplanfile = "%s/.kcli/plan" % os.environ.get('HOME')
         if os.path.exists(currentplanfile):
             self.currentplan = open(currentplanfile).read().strip()
@@ -267,6 +269,8 @@ class Kbaseconfig:
         self.cmdline = options.get('cmdline', self.default['cmdline'])
         self.placement = options.get('placement', self.default['placement'])
         self.yamlinventory = options.get('yamlinventory', self.default['yamlinventory'])
+        self.cpuhotplug = options.get('cpuhotplug', self.default['cpuhotplug'])
+        self.memoryhotplug = options.get('memoryhotplug', self.default['memoryhotplug'])
         self.containerclient = containerclient
         self.overrides = {}
 

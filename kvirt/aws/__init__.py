@@ -88,7 +88,8 @@ class Kaws(object):
                cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[],
                ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[],
                enableroot=True, alias=[], overrides={}, tags=[], dnsclient=None, storemetadata=False,
-               sharedfolders=[], kernel=None, initrd=None, cmdline=None, placement=[], autostart=False):
+               sharedfolders=[], kernel=None, initrd=None, cmdline=None, placement=[], autostart=False,
+               cpuhotplug=False, memoryhotplug=False):
         """
 
         :param name:
