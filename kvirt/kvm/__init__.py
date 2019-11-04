@@ -179,8 +179,10 @@ class Kvirt(object):
         :param plan:
         :param cpumodel:
         :param cpuflags:
+        :param cpuhotplug:
         :param numcpus:
         :param memory:
+        :param memoryhotplug:
         :param guestid:
         :param pool:
         :param image:
