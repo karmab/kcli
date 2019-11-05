@@ -26,3 +26,13 @@ notifications:
       - "chat.freenode.net#kcli"
     on_success: change
     on_failure: always
+
+after_success:
+- if [[ "$TRAVIS_BRANCH" == "master" ]]; then
+   docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+   docker push karmab/kcli:latest
+  fi
+- if [[ "$TRAVIS_TAG" != "" ]]; then
+   docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+   docker push karmab/kcli:$TRAVIS_TAG
+  fi
