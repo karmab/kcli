@@ -709,6 +709,7 @@ def create_vm(args):
     profile = args.profile
     profilefile = args.profilefile
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
+    print(overrides)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if 'name' in overrides:
         name = overrides['name']
