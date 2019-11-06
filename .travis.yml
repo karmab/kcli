@@ -1,38 +1,23 @@
 language: python
 notifications:
-  email:
-    recipients:
-      - karimboumedhel@gmail.com
+  irc:
+    channels:
+    - chat.freenode.net#kcli
+    on_success: change
+    on_failure: always
 sudo: required
-
 python:
 - 3.6
-
 before_install:
 - pip install pep8
 - pip install misspellings
-- cp extras/klist.py . 
-- touch i_am_a_container 
+- cp extras/klist.py .
+- touch i_am_a_container
 - docker build -t karmab/kcli -f extras/alpine .
-
 script:
 - find . -name \*.py -exec pep8 --ignore=E402,W504 --max-line-length=120 {} +
 - find . -name '*.py' | misspellings -f -
-- docker run -it --rm karmab/kcli 
-
-notifications:
-  irc:
-    channels:
-      - "chat.freenode.net#kcli"
-    on_success: change
-    on_failure: always
-
+- docker run -it --rm karmab/kcli
 after_success:
-- if [[ "$TRAVIS_BRANCH" == "master" ]]; then
-   docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
-   docker push karmab/kcli:latest
-  fi
-- if [[ "$TRAVIS_TAG" != "" ]]; then
-   docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
-   docker push karmab/kcli:$TRAVIS_TAG
-  fi
+- if [ "$TRAVIS_BRANCH" == "master" ]; then docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD ; docker push karmab/kcli:latest ; fi
+- if [ "$TRAVIS_TAG" != "" ]; then docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD ; docker push karmab/kcli:$TRAVIS_TAG ; fi
