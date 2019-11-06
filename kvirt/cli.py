@@ -1127,6 +1127,7 @@ def render_plan(args):
     inputfile = args.inputfile
     volumepath = args.volumepath
     paramfile = args.paramfile
+    ignore = args.ignore
     if os.path.exists("/i_am_a_container"):
         inputfile = "%s/%s" % (volumepath, inputfile) if inputfile is not None else "%s/kcli_plan.yml" % volumepath
         if paramfile is not None:
@@ -1138,7 +1139,7 @@ def render_plan(args):
     if not os.path.exists(inputfile):
         common.pprint("File %s not found" % inputfile, color='red')
         return 0
-    renderfile = baseconfig.process_inputfile(plan, inputfile, overrides=overrides, onfly=False)
+    renderfile = baseconfig.process_inputfile(plan, inputfile, overrides=overrides, onfly=False, ignore=ignore)
     print(renderfile)
     return 0
 
@@ -2066,6 +2067,7 @@ def cli():
     planrender_parser = render_subparsers.add_parser('plan', description=planrender_desc,
                                                      help=planrender_desc)
     planrender_parser.add_argument('-f', '--inputfile', help='Input Plan file')
+    planrender_parser.add_argument('-i', '--ignore', action='store_true', help='Ignore missing variables')
     planrender_parser.add_argument('-P', '--param', action='append',
                                    help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
     planrender_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')

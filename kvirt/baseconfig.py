@@ -20,7 +20,8 @@ import os
 from shutil import copytree, rmtree
 import yaml
 from jinja2 import Environment, FileSystemLoader
-from jinja2 import StrictUndefined as undefined
+from jinja2 import StrictUndefined as strictundefined
+from jinja2.runtime import Undefined as defaultundefined
 from jinja2.exceptions import TemplateSyntaxError, TemplateError
 import re
 
@@ -563,9 +564,10 @@ class Kbaseconfig:
             if web:
                 return {'product': product, 'comments': comments, 'description': description, 'parameters': parameters}
 
-    def process_inputfile(self, plan, inputfile, overrides={}, onfly=None, full=False):
+    def process_inputfile(self, plan, inputfile, overrides={}, onfly=None, full=False, ignore=False):
         basedir = os.path.dirname(inputfile) if os.path.dirname(inputfile) != '' else '.'
         basefile = None
+        undefined = strictundefined if not ignore else defaultundefined
         env = Environment(loader=FileSystemLoader(basedir), undefined=undefined)
         try:
             templ = env.get_template(os.path.basename(inputfile))
