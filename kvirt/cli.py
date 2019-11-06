@@ -156,6 +156,7 @@ def console_container(args):
 def delete_vm(args):
     """Delete vm"""
     snapshots = args.snapshots
+    yes_top = args.yes_top
     yes = args.yes
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.extraclients:
@@ -170,7 +171,7 @@ def delete_vm(args):
         names = [common.get_lastvm(config.client)] if not args.names else args.names
     for cli in sorted(allclients):
         k = allclients[cli]
-        if not yes:
+        if not yes and not yes_top:
             common.confirm("Are you sure?")
         codes = []
         for name in names:
@@ -194,6 +195,7 @@ def delete_vm(args):
 def delete_container(args):
     """Delete container"""
     yes = args.yes
+    yes_top = args.yes_top
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.extraclients:
         allclients = config.extraclients.copy()
@@ -203,7 +205,7 @@ def delete_container(args):
         allclients = {config.client: config.k}
         names = args.names
     for cli in sorted(allclients):
-        if not yes:
+        if not yes and not yes_top:
             common.confirm("Are you sure?")
         codes = [0]
         cont = Kcontainerconfig(config, client=args.containerclient).cont
@@ -230,6 +232,7 @@ def download_image(args):
 def delete_image(args):
     images = args.images
     yes = args.yes
+    yes_top = args.yes_top
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.extraclients:
         allclients = config.extraclients.copy()
@@ -238,7 +241,7 @@ def delete_image(args):
         allclients = {config.client: config.k}
     for cli in sorted(allclients):
         k = allclients[cli]
-        if not yes:
+        if not yes and not yes_top:
             common.confirm("Are you sure?")
         codes = []
         for image in images:
@@ -935,13 +938,14 @@ def delete_lb(args):
     checkpath = args.checkpath
     checkport = args.checkport
     yes = args.yes
+    yes_top = args.yes_top
     ports = args.ports
     domain = args.domain
     internal = args.internal
     vms = args.vms.split(',') if args.vms is not None else []
     ports = args.ports.split(',') if args.ports is not None else []
     name = nameutils.get_random_name().replace('_', '-') if args.name is None else args.name
-    if not yes:
+    if not yes and not yes_top:
         common.confirm("Are you sure?")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     config.handle_loadbalancer(name, ports=ports, checkpath=checkpath, vms=vms, delete=True, domain=domain,
@@ -1053,7 +1057,8 @@ def delete_plan(args):
     """Delete plan"""
     plan = args.plan
     yes = args.yes
-    if not yes:
+    yes_top = args.yes_top
+    if not yes and not yes_top:
         common.confirm("Are you sure?")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     config.plan(plan, delete=True)
@@ -1634,6 +1639,7 @@ def cli():
 
     delete_desc = 'Delete Object'
     delete_parser = subparsers.add_parser('delete', description=delete_desc, help=delete_desc)
+    delete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation', dest="yes_top")
     delete_subparsers = delete_parser.add_subparsers(metavar='', dest='subcommand_delete')
 
     disable_desc = 'Disable Host'
