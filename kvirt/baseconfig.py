@@ -758,3 +758,17 @@ class Kbaseconfig:
             yaml.safe_dump(self.profiles, profile_file, default_flow_style=False, encoding='utf-8',
                            allow_unicode=True, sort_keys=False)
         return {'result': 'success'}
+
+    def update_profile(self, profile, overrides={}, quiet=False):
+        if profile not in self.profiles:
+            if quiet:
+                common.pprint("Profile %s not found" % profile, color='red')
+            return {'result': 'failure', 'reason': 'Profile %s not found' % profile}
+        if not overrides:
+            return {'result': 'failure', 'reason': "You need to specify at least one parameter"}
+        path = os.path.expanduser('~/.kcli/profiles.yml')
+        self.profiles[profile].update(overrides)
+        with open(path, 'w') as profile_file:
+            yaml.safe_dump(self.profiles, profile_file, default_flow_style=False, encoding='utf-8',
+                           allow_unicode=True, sort_keys=False)
+        return {'result': 'success'}

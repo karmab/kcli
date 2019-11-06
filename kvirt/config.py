@@ -1514,7 +1514,7 @@ class Kconfig(Kbaseconfig):
                 if cmd is None and image != '' and image in IMAGESCOMMANDS:
                     cmd = IMAGESCOMMANDS[image]
                 common.pprint("Grabbing image %s..." % image)
-                shortname = os.path.basename(url)
+                shortname = os.path.basename(url).split('?')[0]
                 try:
                     result = k.add_image(url, pool, cmd=cmd, name=image)
                 except:
@@ -1524,6 +1524,9 @@ class Kconfig(Kbaseconfig):
                 if imagename not in self.profiles:
                     common.pprint("Adding a profile named %s with default values" % imagename)
                     self.create_profile(imagename, {'image': shortname}, quiet=True)
+                else:
+                    common.pprint("Updating profile %s with image %s" % (imagename, shortname))
+                    self.update_profile(imagename, {'image': shortname}, quiet=True)
             return {'result': 'success'}
         elif switch:
             if switch not in self.clients:

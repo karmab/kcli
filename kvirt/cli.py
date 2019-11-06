@@ -282,6 +282,17 @@ def delete_profile(args):
     # os._exit(0) if result['result'] == 'success' else os._exit(1)
 
 
+def update_profile(args):
+    """Update profile"""
+    profile = args.profile
+    overrides = common.get_overrides(param=args.param)
+    baseconfig = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
+                         namespace=args.namespace)
+    result = baseconfig.update_profile(profile, overrides=overrides)
+    code = common.handle_response(result, profile, element='Profile', action='updated', client=baseconfig.client)
+    return code
+
+
 def info_vm(args):
     """Get info on vm"""
     output = args.output
@@ -1975,12 +1986,20 @@ def cli():
     profilelist_parser.set_defaults(func=list_profile)
 
     profiledelete_desc = 'Delete Profile'
-    profiledelete_help = "Image to delete"
+    profiledelete_help = "Profile to delete"
     profiledelete_parser = argparse.ArgumentParser(add_help=False)
     profiledelete_parser.add_argument('profile', help=profiledelete_help, metavar='PROFILE')
     profiledelete_parser.set_defaults(func=delete_profile)
     delete_subparsers.add_parser('profile', parents=[profiledelete_parser], description=profiledelete_desc,
                                  help=profiledelete_desc)
+
+    profileupdate_desc = 'Update Profile'
+    profileupdate_parser = update_subparsers.add_parser('profile', description=profileupdate_desc,
+                                                        help=profileupdate_desc)
+    profileupdate_parser.add_argument('-P', '--param', action='append',
+                                      help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    profileupdate_parser.add_argument('profile', metavar='PROFILE', nargs='?')
+    profileupdate_parser.set_defaults(func=update_profile)
 
     flavorlist_desc = 'List Flavors'
     flavorlist_parser = list_subparsers.add_parser('flavor', description=flavorlist_desc, help=flavorlist_desc)
