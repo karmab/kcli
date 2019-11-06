@@ -70,6 +70,8 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                     vips = []
                 elif isinstance(net, dict):
                     nicname = net.get('nic', "eth%d" % index)
+                    if index == 0 and 'type' in net and net.get('type') != 'virtio':
+                        nicname = "ens3"
                     ip = net.get('ip')
                     netmask = next((e for e in [net.get('mask'), net.get('netmask')] if e is not None), None)
                     noconf = net.get('noconf')
