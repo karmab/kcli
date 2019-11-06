@@ -403,8 +403,8 @@ class Ksphere:
                     version = '3.0.0' if image.startswith('fedora-coreos') else '2.2.0'
                     ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                                    domain=domain, reserveip=reserveip, files=files,
-                                                   enableroot=enableroot, overrides=overrides, etcd=False,
-                                                   version=version, plan=plan)
+                                                   enableroot=enableroot, overrides=overrides, version=version,
+                                                   plan=plan)
                     ignitionopt = vim.option.OptionValue()
                     ignitionopt.key = 'guestinfo.ignition.config.data'
                     ignitionopt.value = base64.b64encode(ignitiondata.encode()).decode()

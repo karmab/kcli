@@ -124,10 +124,9 @@ class Kfake(object):
             if image is not None and ('coreos' in image or image.startswith('rhcos')):
                 common.pprint("Data provided for a %s image" % image)
                 version = '3.0.0' if image.startswith('fedora-coreos') else '2.2.0'
-                etcd = None
                 ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                                domain=domain, reserveip=reserveip, files=files,
-                                               enableroot=enableroot, overrides=overrides, etcd=etcd, version=version,
+                                               enableroot=enableroot, overrides=overrides, version=version,
                                                plan=plan)
                 with open('%s/%s.ign' % (namedir, name), 'w') as ignitionfile:
                     ignitionfile.write(ignitiondata)

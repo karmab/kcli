@@ -428,7 +428,6 @@ class Kvirt(object):
                                   diskwwn)
         netxml = ''
         alias = []
-        etcd = None
         guestagent = False
         for index, net in enumerate(nets):
             if usermode:
@@ -449,8 +448,6 @@ class Kvirt(object):
                 if index == 0 and 'alias' in nets[index] and isinstance(nets[index]['alias'], list):
                     reservedns = True
                     alias = nets[index]['alias']
-                if 'etcd' in nets[index] and nets[index]['etcd']:
-                    etcd = "eth%s" % index
                 if 'ovs' in nets[index] and nets[index]['ovs']:
                     ovs = True
                 if 'ip' in nets[index] and index == 0:
@@ -542,8 +539,7 @@ class Kvirt(object):
                 version = '3.0.0' if image.startswith('fedora-coreos') else '2.2.0'
                 ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                                domain=domain, reserveip=reserveip, files=files,
-                                               enableroot=enableroot, overrides=overrides, etcd=etcd, version=version,
-                                               plan=plan)
+                                               enableroot=enableroot, overrides=overrides, version=version, plan=plan)
 
                 with open('%s/%s.ign' % (ignitiondir, name), 'w') as ignitionfile:
                     ignitionfile.write(ignitiondata)

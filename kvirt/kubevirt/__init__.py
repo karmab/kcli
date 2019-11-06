@@ -237,7 +237,6 @@ class Kubevirt(Kubecommon):
             vm['spec']['template']['spec']['nodeSelector'] = tags
         interfaces = []
         networks = []
-        etcd = None
         allnetworks = {}
         for index, net in enumerate(nets):
             netpublic = False
@@ -259,8 +258,6 @@ class Kubevirt(Kubecommon):
                     newnet['name'] = netname
                 if 'mac' in net:
                     newif['macAddress'] = net['mac']
-                if 'etcd' in nets[index] and nets[index]['etcd']:
-                    etcd = "eth%s" % index
                 if index == 0:
                     netpublic = net.get('public', False)
                     if 'ip' in nets[index]:
@@ -354,7 +351,7 @@ class Kubevirt(Kubecommon):
                 version = '3.0.0' if image.startswith('fedora-coreos') else '2.2.0'
                 ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                                domain=domain, reserveip=reserveip, files=files,
-                                               enableroot=enableroot, overrides=overrides, etcd=etcd, version=version,
+                                               enableroot=enableroot, overrides=overrides, version=version,
                                                plan=plan, compact=True)
                 vm['spec']['template']['metadata']['annotations'] = {'kubevirt.io/ignitiondata': ignitiondata}
             else:

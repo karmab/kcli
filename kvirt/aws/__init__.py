@@ -180,11 +180,10 @@ class Kaws(object):
             conn.import_key_pair(KeyName=keypair, PublicKeyMaterial=homekey)
         if cloudinit:
             if image is not None and (image.startswith('coreos') or image.startswith('rhcos')):
-                etcd = None
                 version = '3.0.0' if image.startswith('fedora-coreos') else '2.2.0'
                 userdata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                            domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
-                                           overrides=overrides, etcd=etcd, version=version, plan=plan)
+                                           overrides=overrides, version=version, plan=plan)
             else:
                 common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
                                  reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides,
