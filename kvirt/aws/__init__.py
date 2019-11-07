@@ -592,59 +592,28 @@ class Kaws(object):
         """
         conn = self.conn
         images = {}
-        finalimages = []
-        oses = ['CentOS Linux 7 x86_64*', 'RHEL-7.*GA*', 'ubuntu-xenial-*Standard*', 'kcli*',
-                'CoreOS-stable*', 'RHEL-8.0.0_HVM-*', 'rhcos-4*']
+        oses = ['CentOS Linux 7 x86_64*', 'CentOS Linux 8 x86_64*', 'RHEL-7.*GA*', 'ubuntu-xenial-*Standard*', 'kcli*',
+                'RHEL-8.0.0_HVM-*', 'rhcos-4*']
         Filters = [{'Name': 'name', 'Values': oses}]
-        allimages = conn.describe_images(Filters=Filters)
         rhcos = {}
-        rhels = {}
-        coreosname, coreosid, coreosversion = None, None, 0
-        centosname, centosid, centosversion = None, None, 0
+        allimages = conn.describe_images(Filters=Filters)
+        allimages = conn.describe_images(Filters=Filters)
         for image in allimages['Images']:
             name = image['Name']
             amiid = image['ImageId']
             date = datetime.strptime(image['CreationDate'], '%Y-%m-%dT%H:%M:%S.000Z')
             if int("%s%s" % (date.year, date.month)) < self.ami_date:
                 continue
-            if name.startswith('CentOS'):
-                index = 8 if 'ENA' in name else 6
-                newcentosversion = int(name.split(' ')[index].split('_')[0])
-                if newcentosversion > centosversion:
-                    centosversion = newcentosversion
-                    centosname = name
-                    centosid = amiid
+            if name.startswith('rhcos') and 'devel' in name:
                 continue
-            if name.startswith('rhcos'):
-                rhcosversion = '.'.join(name.split('.')[:1])
-                date = datetime.strptime(name.split('.')[2], '%Y%m%d')
-                if rhcosversion not in images or date > rhcos[rhcosversion]['date']:
-                    rhcos[rhcosversion] = {'name': name, 'date': date, 'id': amiid}
+            if name.startswith('rhcos-4'):
+                number = name[6:8]
+                rhcos[number] = [name, amiid]
                 continue
-            elif name.startswith('RHEL'):
-                rhelversion = name.split('_')[0]
-                date = datetime.strptime(name.split('-')[2], '%Y%m%d')
-                if rhelversion not in images or date > rhels[rhelversion]['date']:
-                    rhels[rhelversion] = {'name': name, 'date': date, 'id': amiid}
-                continue
-            elif name.startswith('CoreOS-stable-'):
-                newcoreosversion = int(name.split('-')[2].replace('.', ''))
-                if newcoreosversion > coreosversion:
-                    coreosversion = newcoreosversion
-                    coreosname = name
-                    coreosid = amiid
-                continue
-            else:
-                finalimages.append("%s - %s" % (name, amiid))
-        for image in images:
-            finalimages.append("%s - %s" % (images[image]['name'], images[image]['id']))
-        for version in rhcos:
-            finalimages.append("%s - %s" % (rhcos[version]['name'], rhcos[version]['id']))
-        for version in rhels:
-            finalimages.append("%s - %s" % (rhels[version]['name'], rhels[version]['id']))
-        finalimages.append("%s - %s" % (coreosname, coreosid))
-        finalimages.append("%s - %s" % (centosname, centosid))
-        return sorted(finalimages, key=str.lower)
+            images.append("%s - %s" % (name, amiid))
+        for value in rhcos.values():
+            images.append("%s - %s" % (value[0], value[1]))
+        return sorted(images, key=str.lower)
 
     def delete(self, name, snapshots=False):
         """
