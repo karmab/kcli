@@ -11,12 +11,10 @@ python:
 before_install:
 - pip install pep8
 - pip install misspellings
-- cp extras/klist.py .
-- touch i_am_a_container
-- docker build -t karmab/kcli -f extras/alpine .
 script:
 - find . -name \*.py -exec pep8 --ignore=E402,W504 --max-line-length=120 {} +
 - find . -name '*.py' | misspellings -f -
+- docker build -t karmab/kcli -f extras/alpine .
 - docker run -it --rm karmab/kcli
 after_success:
 - if [ "$TRAVIS_BRANCH" == "master" ]; then docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD ; docker push karmab/kcli:latest ; fi

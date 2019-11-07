@@ -1596,6 +1596,9 @@ def cli():
     """
 
     """
+    version = "kcli: %s" % __version__
+    if os.path.exists('/git_version'):
+        version += " commit: %s" % open('/git_version').read()
     parser = argparse.ArgumentParser(description='Libvirt/Ovirt/Vsphere/Gcp/Aws/Openstack/Kubevirt Wrapper')
     parser.add_argument('-C', '--client')
     parser.add_argument('--containerclient', help='Containerclient to use')
@@ -1604,7 +1607,7 @@ def cli():
     parser.add_argument('-n', '--namespace', help='Namespace to use. specific to kubevirt')
     parser.add_argument('-r', '--region', help='Region to use. specific to aws/gcp')
     parser.add_argument('-z', '--zone', help='Zone to use. specific to gcp')
-    parser.add_argument('-v', '--version', action='version', version="%s" % __version__)
+    parser.add_argument('-v', '--version', action='version', version=version)
 
     subparsers = parser.add_subparsers(metavar='', title='Available Commands')
 

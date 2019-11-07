@@ -5,7 +5,7 @@
 #
 
 Name:           kcli
-Version:        20.0
+Version:        20.2
 Release:        1
 Url:            http://github.com/karmab/kcli
 Summary:        Wapper for libvirt,gcp,aws,ovirt and openstack

@@ -5,7 +5,6 @@
 [![Pypi](https://img.shields.io/pypi/v/kcli.svg)](https://pypi.python.org/pypi/kcli/)
 [![Copr](https://copr.fedorainfracloud.org/coprs/karmab/kcli/package/kcli/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/karmab/kcli/package/kcli)
 [![](https://images.microbadger.com/badges/image/karmab/kcli.svg)](https://microbadger.com/images/karmab/kcli "Get your own image badge on microbadger.com")
-[![Visit our IRC channel](https://kiwiirc.com/buttons/irc.freenode.net/kcli.png)](https://kiwiirc.com/client/irc.freenode.net/#kcli)
 
 ![Screenshot](kcli-small.png)
 
@@ -78,7 +77,6 @@ limitations under the License.
 ## Problems?
 
 Open an issue !
-Or drop by #kcli channel on Freenode IRC network
 
 Mc Fly!!!
 
