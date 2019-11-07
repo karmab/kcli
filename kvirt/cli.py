@@ -1596,7 +1596,7 @@ def cli():
     """
 
     """
-    version = "kcli: %s" % __version__
+    version = "version: %s" % __version__
     if os.path.exists('/git_version'):
         version += " commit: %s" % open('/git_version').read()
     parser = argparse.ArgumentParser(description='Libvirt/Ovirt/Vsphere/Gcp/Aws/Openstack/Kubevirt Wrapper')
