@@ -1,5 +1,5 @@
 centos:
- template: CentOS-7-x86_64-GenericCloud.qcow2
+ image: CentOS-7-x86_64-GenericCloud.qcow2
  numcpus: 2
  disks:
   - size: 10
@@ -10,7 +10,7 @@ centos:
   - echo unix1234 | passwd --stdin root
 
 rhel:
- template: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
+ image: rhel-guest-image-7.2-20160302.0.x86_64.qcow2
  numcpus: 2
  rhnregister: true
  nets:
@@ -21,7 +21,7 @@ rhel:
   - echo unix1234 | passwd --stdin root
 
 debian:
- template: debian-8-openstack-amd64.qcow2
+ image: debian-8-openstack-amd64.qcow2
  numcpus: 1
  memory: 1024
  nets:
@@ -31,7 +31,7 @@ debian:
   - echo unix1234 | passwd --stdin root
 
 ubuntu:
- template: xenial-server-cloudimg-amd64-disk1.img
+ image: xenial-server-cloudimg-amd64-disk1.img
  numcpus: 1
  memory: 2048
  nets:

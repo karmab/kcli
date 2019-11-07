@@ -1,8 +1,0 @@
-apt-get install python-setuptools
-apt-get install libyaml-dev
-apt-get install zlib1g-dev
-apt-get install libjpeg-dev
-apt-get install python-pip
-apt-get install pkg-config
-apt-get install libvirt-dev
-apt-get install python-pip

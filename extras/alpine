@@ -12,15 +12,19 @@ LABEL name="karmab/kcli" \
 
 EXPOSE 9000
 
-RUN apk add --update --no-cache g++ gcc libvirt libvirt-dev python3-dev openssh-client curl curl-dev libressl-dev libxml2-dev git linux-headers libffi-dev cdrkit xauth bash
+RUN apk add --update --no-cache g++ gcc libvirt libvirt-dev python3-dev openssh-client curl curl-dev libressl-dev libxml2-dev linux-headers libffi-dev cdrkit xauth bash
 
 # Group the pip installation
 # RUN pip3 install --no-cache-dir -e git+https://github.com/karmab/kcli.git#egg=kcli[all]
-ADD . /root/kcli
-RUN pip3 install -e /root/kcli
+RUN mkdir /root/kcli
+ADD kvirt /root/kcli/kvirt
+COPY setup.py /root/kcli
+RUN pip3 install -e /root/kcli[all]
 ADD extras/klist.py /usr/bin
+ADD extras/git_version /git_version
+ADD extras/i_am_a_container /i_am_a_container
 
-RUN chmod o+x /usr/bin/klist.py && git --git-dir /root/kcli/.git rev-parse HEAD > /git_version && touch /i_am_a_container && echo eval \"\$\(register-python-argcomplete kcli\)\" >> /root/.bashrc && apk del g++ gcc libvirt-dev curl-dev libressl-dev libxml2-dev git linux-headers libffi-dev
+RUN chmod o+x /usr/bin/klist.py && echo eval \"\$\(register-python-argcomplete kcli\)\" >> /root/.bashrc && apk del g++ gcc libvirt-dev curl-dev libressl-dev libxml2-dev linux-headers libffi-dev
 
 ENTRYPOINT ["/usr/bin/kcli"]
 CMD ["-h"]
