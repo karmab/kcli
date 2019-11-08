@@ -19,8 +19,8 @@ Futhermore, you can deploy vms using predefined profiles, several at once using 
 If you don't have libvirt installed on the target hypervisor, you can use the following command to get you going:
 
 ```bash
-yum -y install libvirt libvirt-daemon-driver-qemu qemu-kvm 
-sudo usermod -aG qemu,libvirt YOUR_USER
+sudo yum -y install libvirt libvirt-daemon-driver-qemu qemu-kvm 
+sudo usermod -aG qemu,libvirt $(id -un)
 newgrp libvirt
 ```
 
@@ -145,7 +145,7 @@ If needed, you can create this default storage pool with this:
 
 ```Shell
 kcli create pool -p /var/lib/libvirt/images default
-setfacl -m u:$(id -un):rwx /var/lib/libvirt/images
+sudo setfacl -m u:$(id -un):rwx /var/lib/libvirt/images
 ```
 
 And default network:

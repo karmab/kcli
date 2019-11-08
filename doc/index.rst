@@ -25,8 +25,8 @@ use the following command to get you going:
 
 .. code:: bash
 
-    yum -y install libvirt libvirt-daemon-driver-qemu qemu-kvm 
-    sudo usermod -aG qemu,libvirt YOUR_USER
+    sudo yum -y install libvirt libvirt-daemon-driver-qemu qemu-kvm 
+    sudo usermod -aG qemu,libvirt $(id -un)
     newgrp libvirt
 
 (Optional) For interaction with your local docker daemon, you also need
@@ -179,7 +179,7 @@ If needed, you can create this default storage pool with this:
 .. code:: shell
 
     kcli create pool -p /var/lib/libvirt/images default
-    setfacl -m u:$(id -un):rwx /var/lib/libvirt/images
+    sudo setfacl -m u:$(id -un):rwx /var/lib/libvirt/images
 
 And default network:
 

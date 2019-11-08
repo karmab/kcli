@@ -45,7 +45,7 @@ ALIAS="$?"
 
 if [ "$BIN" != "0" ] && [ "$ALIAS" != "0" ]; then
   echo -e "${BLUE}Installing as alias for $engine${NC}"
-  $engine pull karmab/kcli
+  $engine pull docker.io/karmab/kcli:latest
   SSHVOLUME="-v $(realpath $HOME/.ssh):/root/.ssh"
   if [ -d /var/lib/libvirt/images ] && [ -d /var/run/libvirt ]; then
       echo -e """${BLUE}Make sure you have libvirt access from your user by running:
@@ -55,6 +55,7 @@ newgrp libvirt${NC}"""
       VOLUMES="-v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt"
   fi
   [ -d $HOME/.kcli ] || mkdir -p $HOME/.kcli
+  [ -d $HOME/.ssh  ] || ssh-keygen -t rsa -N '' -f $HOME/.ssh/id_rsa
   echo -e '#/bin/bash\n'$engine run -p 9000:9000 --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir -v /var/tmp:/ignitiondir --entrypoint=/usr/bin/kweb karmab/kcli' > $HOME/klist.py
 case $shell in
 bash|zsh)
