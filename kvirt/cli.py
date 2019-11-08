@@ -1552,7 +1552,7 @@ def snapshotdelete_vm(args):
     k = config.k
     common.pprint("Deleting snapshot %s of vm %s..." % (snapshot, name))
     result = k.snapshot(snapshot, name, delete=True)
-    code = common.handle_response(result, name, element='', action='snapshotted')
+    code = common.handle_response(result, name, element='', action='snapshot deleted')
     return code
 
 
@@ -1564,7 +1564,7 @@ def snapshotrevert_vm(args):
     k = config.k
     common.pprint("Reverting snapshot %s of vm %s..." % (snapshot, name))
     result = k.snapshot(snapshot, name, revert=True)
-    code = common.handle_response(result, name, element='', action='snapshotted')
+    code = common.handle_response(result, name, element='', action='snapshot reverted')
     return code
 
 

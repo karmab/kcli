@@ -14,9 +14,9 @@ before_install:
 script:
 - find . -name \*.py -exec pep8 --ignore=E402,W504 --max-line-length=120 {} +
 - find . -name '*.py' | misspellings -f -
-- git rev-parse HEAD > extras/git_version
+- echo $TRAVIS_COMMIT > extras/git_version
 - docker build -t karmab/kcli -f extras/alpine .
 - docker run -it --rm karmab/kcli
 after_success:
-- if [ "$TRAVIS_BRANCH" == "master" ]; then docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD ; docker push karmab/kcli:latest ; fi
+- if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == 'false' ] ; then docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD ; docker push karmab/kcli:latest ; fi
 - if [ "$TRAVIS_TAG" != "" ]; then docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD ; docker push karmab/kcli:$TRAVIS_TAG ; fi
