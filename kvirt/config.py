@@ -1497,12 +1497,12 @@ class Kconfig(Kbaseconfig):
                         common.pprint("Image %s has no associated url" % image, color='red')
                         return {'result': 'failure', 'reason': "Incorrect image"}
                     url = IMAGES[image]
-                    openstack = True if self.type in ['ovirt', 'openstack'] else False
                     if 'rhcos' in image:
-                        url = common.get_latest_rhcos(url, openstack=openstack)
+                        url = common.get_latest_rhcos(url, _type=self.type)
                     image = os.path.basename(image)
                     if not url.endswith('qcow2') and not url.endswith('img') and not url.endswith('qc2')\
-                            and not url.endswith('qcow2.xz') and not url.endswith('qcow2.gz'):
+                            and not url.endswith('qcow2.xz') and not url.endswith('qcow2.gz')\
+                            and 'storage.googleapis.com' not in url:
                         if 'web' in sys.argv[0]:
                             return {'result': 'failure', 'reason': "Missing url"}
                         common.pprint("Opening url %s for you to grab complete url for %s" % (url, image), 'blue')

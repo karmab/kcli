@@ -1123,7 +1123,7 @@ class Kgcp(object):
         common.pprint("Adding image %s" % shortimage)
         image_body = {'name': shortimage}
         if image.endswith('tar.gz'):
-            image_body['rawDisk'] = {'source': image}
+            image_body['rawDisk'] = {'source': image, 'licenses': ["projects/vm-options/global/licenses/enable-vmx"]}
         operation = conn.images().insert(project=project, body=image_body).execute()
         self._wait_for_operation(operation)
         return {'result': 'success'}
