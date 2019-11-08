@@ -9,6 +9,13 @@ diskdelete = """# Delete disk named vm1_2.img from vm vm1
 $ kcli delete disk -d -n vm1_2.img vm1
 """
 
+dnscreate = """# Create a dns entry
+$ kcli create dns -n mydomain.com -i 104.197.157.226 api.jhendrix
+
+# Do the same with an extra wildcard alias
+$ kcli create dns -n mydomain.com -i 104.197.157.226 -a '*' api.jhendrix
+"""
+
 hostcreate = """# Add a kvm host
 $ kcli create host kvm -H 192.168.1.6 twix
 

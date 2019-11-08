@@ -5,7 +5,7 @@
 from distutils.spawn import find_executable
 from kvirt.config import Kconfig
 from kvirt.examples import hostcreate, _list, plancreate, planinfo, productinfo, repocreate, start
-from kvirt.examples import diskcreate, diskdelete, vmcreate, vmconsole, vmexport, niccreate, nicdelete
+from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsole, vmexport, niccreate, nicdelete
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
 from kvirt.version import __version__
@@ -881,10 +881,11 @@ def create_dns(args):
     net = args.net
     domain = net
     ip = args.ip
+    alias = args.alias
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     common.pprint("Creating dns entry for %s..." % name)
-    k.reserve_dns(name=name, nets=[net], domain=domain, ip=ip)
+    k.reserve_dns(name=name, nets=[net], domain=domain, ip=ip, alias=alias)
 
 
 def delete_dns(args):
@@ -1803,7 +1804,12 @@ def cli():
     containerstop_parser.set_defaults(func=stop_container)
 
     dnscreate_desc = 'Create Dns Entries'
-    dnscreate_parser = create_subparsers.add_parser('dns', description=dnscreate_desc, help=dnscreate_desc)
+    dnscreate_epilog = "examples:\n%s" % dnscreate
+    dnscreate_parser = create_subparsers.add_parser('dns', description=dnscreate_desc, help=dnscreate_desc,
+                                                    epilog=dnscreate_epilog,
+                                                    formatter_class=argparse.RawDescriptionHelpFormatter)
+    dnscreate_parser.add_argument('-a', '--alias', action='append', help='specify alias (can specify multiple)',
+                                  metavar='ALIAS')
     dnscreate_parser.add_argument('-n', '--net', help='Domain where to create entry', metavar='NET')
     dnscreate_parser.add_argument('-i', '--ip', help='Ip', metavar='IP')
     dnscreate_parser.add_argument('name', metavar='NAME', nargs='?')
