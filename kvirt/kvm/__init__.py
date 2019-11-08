@@ -216,6 +216,7 @@ class Kvirt(object):
         namespace = ''
         ignition = False
         usermode = False
+        macosx = False
         if 'session' in self.url:
             usermode = True
             userport = common.get_free_port()
@@ -305,6 +306,7 @@ class Kvirt(object):
                 diskthinpool = default_thinpool
                 diskwwn = None
                 diskimage = None
+                diskname = None
             elif isinstance(disk, str) and disk.isdigit():
                 disksize = int(disk)
                 diskthin = default_diskthin
@@ -315,6 +317,7 @@ class Kvirt(object):
                 diskthinpool = default_thinpool
                 diskwwn = None
                 diskimage = None
+                diskname = None
             elif isinstance(disk, dict):
                 disksize = disk.get('size', default_disksize)
                 diskthin = disk.get('thin', default_diskthin)
@@ -322,6 +325,7 @@ class Kvirt(object):
                 diskpool = disk.get('pool', default_pool)
                 diskwwn = disk.get('wwn')
                 diskimage = disk.get('image')
+                diskname = disk.get('name')
                 try:
                     storagediskpool = conn.storagePoolLookupByName(diskpool)
                 except:
@@ -341,16 +345,17 @@ class Kvirt(object):
             else:
                 return {'result': 'failure', 'reason': "Invalid disk entry"}
             letter = chr(index + ord('a'))
+            diskbus = diskinterface
             if diskinterface == 'ide':
-                diskdev, diskbus = 'hd%s' % letter, 'ide'
-            elif diskinterface == 'scsi':
-                diskdev, diskbus = 'sd%s' % letter, 'scsi'
+                diskdev = 'hd%s' % letter
+            elif diskinterface in ['scsi', 'sata']:
+                diskdev = 'sd%s' % letter
             else:
-                diskdev, diskbus = 'vd%s' % letter, 'virtio'
+                diskdev = 'vd%s' % letter
             diskformat = 'qcow2'
             if not diskthin:
                 diskformat = 'raw'
-            storagename = "%s_%d.img" % (name, index)
+            storagename = "%s_%d.img" % (name, index) if diskname is None else diskname
             diskpath = "%s/%s" % (diskpoolpath, storagename)
             if image is not None and index == 0:
                 diskimage = image
@@ -409,6 +414,8 @@ class Kvirt(object):
                     volsxml[diskpool] = [volxml]
             else:
                 common.pprint("Using existing disk %s..." % storagename, color='blue')
+                if index == 0 and storagename == "ESP.qcow2":
+                    macosx = True
             if diskwwn is not None and diskbus == 'ide':
                 diskwwn = '0x%016x' % diskwwn
                 diskwwn = "<wwn>%s</wwn>" % diskwwn
@@ -634,7 +641,7 @@ class Kvirt(object):
         else:
             vcpuxml = "<vcpu>%d</vcpu>" % numcpus
         qemuextraxml = ''
-        if ignition or usermode:
+        if ignition or usermode or macosx:
             namespace = "xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'"
             ignitionxml = ""
             if ignition:
@@ -646,10 +653,18 @@ class Kvirt(object):
                                  <qemu:arg value='user,id=mynet.0,net=10.0.10.0/24,hostfwd=tcp::%s-:22'/>
                                  <qemu:arg value='-device'/>
                                  <qemu:arg value='virtio-net-pci,netdev=mynet.0'/>""" % userport
+            macosxml = ""
+            if macosx:
+                osk = "ourhardworkbythesewordsguardedpleasedontsteal(c)AppleComputerInc"
+                macosxml = """<qemu:arg value='-device'/>
+                             <qemu:arg value='isa-applesmc,osk=%s'/>
+                             <qemu:arg value='-smbios'/>
+                             <qemu:arg value='type=2'/>""" % osk
             qemuextraxml = """<qemu:commandline>
                               %s
                               %s
-                              </qemu:commandline>""" % (ignitionxml, usermodexml)
+                              %s
+                              </qemu:commandline>""" % (ignitionxml, usermodexml, macosxml)
         sharedxml = ""
         if sharedfolders:
             for folder in sharedfolders:
@@ -710,6 +725,10 @@ class Kvirt(object):
         if iso:
             bootdev += "<boot dev='cdrom'/>"
         memoryhotplugxml = "<maxMemory slots='16' unit='MiB'>1524288</maxMemory>" if memoryhotplug else ""
+        firmwarexml = ""
+        if macosx:
+            firmwarexml = """<loader readonly='yes' type='pflash'>%s/OVMF_CODE.fd</loader>
+                             <nvram>%s/OVMF_VARS-1024x768.fd</nvram>""" % (default_poolpath, default_poolpath)
         vmxml = """<domain type='%s' %s>
                   <name>%s</name>
                   %s
@@ -718,6 +737,7 @@ class Kvirt(object):
                   %s
                   <os>
                     <type arch='x86_64' machine='%s'>hvm</type>
+                    %s
                     %s
                     %s
                     <bootmenu enable='yes'/>
@@ -743,8 +763,8 @@ class Kvirt(object):
                     %s
                     %s
                     </domain>""" % (virttype, namespace, name, metadata, memoryhotplugxml, memory, vcpuxml, machine,
-                                    bootdev, kernelxml, disksxml, netxml, isoxml, displayxml, serialxml, sharedxml,
-                                    guestxml, cpuxml, qemuextraxml)
+                                    firmwarexml, bootdev, kernelxml, disksxml, netxml, isoxml, displayxml, serialxml,
+                                    sharedxml, guestxml, cpuxml, qemuextraxml)
         if self.debug:
             print(vmxml)
         conn.defineXML(vmxml)
