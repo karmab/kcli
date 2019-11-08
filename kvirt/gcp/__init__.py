@@ -1718,7 +1718,8 @@ class Kgcp(object):
                 name = lb['name']
                 ip = lb['IPAddress']
                 protocol = lb['IPProtocol']
-                port = lb['portRange']
-                target = os.path.basename(lb['target'])
+                port = lb['portRange'] if 'portRange' in lb else ','.join(lb['ports'])
+                target = lb['target'] if 'target' in lb else lb['backendService']
+                target = os.path.basename(target)
                 results.append([name, ip, protocol, port, target])
         return results
