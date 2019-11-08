@@ -1121,9 +1121,9 @@ class Kgcp(object):
         if 'rhcos' in image:
             shortimage = "rhcos-%s" % shortimage
         common.pprint("Adding image %s" % shortimage)
-        image_body = {'name': shortimage}
+        image_body = {'name': shortimage, 'licenses': ["projects/vm-options/global/licenses/enable-vmx"]}
         if image.endswith('tar.gz'):
-            image_body['rawDisk'] = {'source': image, 'licenses': ["projects/vm-options/global/licenses/enable-vmx"]}
+            image_body['rawDisk'] = {'source': image}
         operation = conn.images().insert(project=project, body=image_body).execute()
         self._wait_for_operation(operation)
         return {'result': 'success'}
