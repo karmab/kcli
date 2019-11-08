@@ -812,3 +812,11 @@ class Kforeman(object):
             return str(result[shortname]['id'])
         except:
             return str(result['id'])
+
+    def list_dns(self, domain):
+        """
+
+        :param domain:
+        :return:
+        """
+        return []

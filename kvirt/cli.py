@@ -506,6 +506,27 @@ def list_profile(args):
     return
 
 
+def list_dns(args):
+    """List flavors"""
+    short = args.short
+    domain = args.domain
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    k = config.k
+    entries = k.list_dns(domain)
+    if short:
+        dnstable = PrettyTable(["Entry"])
+        for entry in sorted(entries):
+            entryname = entry[0]
+            dnstable.add_row([entryname])
+    else:
+        dnstable = PrettyTable(["Entry", "Type", "TTL", "Data"])
+        for entry in sorted(entries):
+            dnstable.add_row(entry)
+    dnstable.align["Flavor"] = "l"
+    print(dnstable)
+    return
+
+
 def list_flavor(args):
     """List flavors"""
     short = args.short
@@ -882,6 +903,8 @@ def create_dns(args):
     domain = net
     ip = args.ip
     alias = args.alias
+    if alias is None:
+        alias = []
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     common.pprint("Creating dns entry for %s..." % name)
@@ -1780,7 +1803,7 @@ def cli():
     containerlist_parser.set_defaults(func=list_container)
 
     containerprofilelist_desc = 'List Container Profiles'
-    containerprofilelist_parser = list_subparsers.add_parser('list', description=containerprofilelist_desc,
+    containerprofilelist_parser = list_subparsers.add_parser('container-profike', description=containerprofilelist_desc,
                                                              help=containerprofilelist_desc)
     containerprofilelist_parser.add_argument('--short', action='store_true')
     containerprofilelist_parser.set_defaults(func=profilelist_container)
@@ -1820,6 +1843,13 @@ def cli():
     dnsdelete_parser.add_argument('-n', '--net', help='Domain where to create entry', metavar='NET')
     dnsdelete_parser.add_argument('name', metavar='NAME', nargs='?')
     dnsdelete_parser.set_defaults(func=delete_dns)
+
+    dnslist_desc = 'List Dns Entries'
+    dnslist_parser = argparse.ArgumentParser(add_help=False)
+    dnslist_parser.add_argument('--short', action='store_true')
+    dnslist_parser.add_argument('domain', metavar='DOMAIN')
+    dnslist_parser.set_defaults(func=list_dns)
+    list_subparsers.add_parser('dns', parents=[dnslist_parser], description=dnslist_desc, help=dnslist_desc)
 
     hostcreate_desc = 'Create Host'
     hostcreate_epilog = "examples:\n%s" % hostcreate

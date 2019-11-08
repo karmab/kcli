@@ -1595,3 +1595,11 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             # host_service = hosts_service.host_service(host.id)
         except:
             return address
+
+    def list_dns(self, domain):
+        """
+
+        :param domain:
+        :return:
+        """
+        return []

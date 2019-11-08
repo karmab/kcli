@@ -3072,3 +3072,25 @@ class Kvirt(object):
                     hostentry = '<host ip="%s"><hostname>%s</hostname></host>' % (iphost, name)
                     network.update(2, 10, 0, hostentry, 1)
                 return {'result': 'success'}
+
+    def list_dns(self, domain):
+        """
+
+        :param domain:
+        :return:
+        """
+        results = []
+        conn = self.conn
+        try:
+            network = conn.networkLookupByName(domain)
+        except:
+            return {'result': 'failure', 'reason': "Network %s not found" % domain}
+        netxml = network.XMLDesc()
+        netroot = ET.fromstring(netxml)
+        for host in list(netroot.getiterator('host')):
+            iphost = host.get('ip')
+            for host in list(netroot.getiterator('host')):
+                iphost = host.get('ip')
+                hostname = host.find('hostname')
+                results.append([hostname.text, 'A', '0', iphost])
+        return results

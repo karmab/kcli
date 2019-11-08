@@ -1229,3 +1229,11 @@ class Kopenstack(object):
                         break
                 break
         return {'result': 'success'}
+
+    def list_dns(self, domain):
+        """
+
+        :param domain:
+        :return:
+        """
+        return []

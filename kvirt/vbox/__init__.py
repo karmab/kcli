@@ -1376,3 +1376,11 @@ class Kbox(object):
         """
         print("not implemented")
         return
+
+    def list_dns(self, domain):
+        """
+
+        :param domain:
+        :return:
+        """
+        return []

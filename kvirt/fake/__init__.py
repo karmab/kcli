@@ -670,3 +670,11 @@ class Kfake(object):
 
     def delete_image(self, image):
         return {'result': 'success'}
+
+    def list_dns(self, domain):
+        """
+
+        :param domain:
+        :return:
+        """
+        return []

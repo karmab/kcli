@@ -1453,6 +1453,25 @@ class Kgcp(object):
             pass
         return {'result': 'success'}
 
+    def list_dns(self, domain):
+        """
+
+        :param domain:
+        :return:
+        """
+        results = []
+        project = self.project
+        client = dns.Client(project)
+        domain_name = domain.replace('.', '-')
+        dnszones = [z for z in client.list_zones() if z.name == domain_name]
+        if dnszones:
+            dnszone = dnszones[0]
+            for record in dnszone.list_resource_record_sets():
+                if record.record_type in ['SOA', 'NS']:
+                    continue
+                results.append([record.name, record.record_type, record.ttl, ','.join(record.rrdatas)])
+        return results
+
     def flavors(self):
         """
 

@@ -1392,3 +1392,11 @@ class Ksphere:
         if image is not None:
             vm.Rename(image)
         return {'result': 'success'}
+
+    def list_dns(self, domain):
+        """
+
+        :param domain:
+        :return:
+        """
+        return []

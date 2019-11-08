@@ -1252,6 +1252,14 @@ class Kaws(object):
             pass
         return {'result': 'success'}
 
+    def list_dns(self, domain):
+        """
+
+        :param domain:
+        :return:
+        """
+        return []
+
     def flavors(self):
         """
 

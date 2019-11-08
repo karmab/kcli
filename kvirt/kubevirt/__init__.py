@@ -1596,3 +1596,11 @@ class Kubevirt(Kubecommon):
         except:
             return None
         return sshservice.spec.ports[0].node_port
+
+    def list_dns(self, domain):
+        """
+
+        :param domain:
+        :return:
+        """
+        return []
