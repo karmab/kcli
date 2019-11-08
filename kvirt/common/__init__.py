@@ -585,12 +585,15 @@ def print_info(yamlinfo, output='plain', fields=[], values=False, pretty=True):
                                                                                                      diskformat,
                                                                                                      drivertype,
                                                                                                      path)
-                        value = disks.rstrip()
+                    value = disks.rstrip()
                 elif key == 'snapshots':
+                    snaps = ''
                     for snap in value:
                         snapshot = snap['snapshot']
                         current = snap['current']
-                        value += "snapshot: %s current: %s" % (snapshot, current)
+                        snaps += "snapshot: %s current: %s\n" % (snapshot, current)
+                    value = snaps.rstrip()
+
                 if values or key in ['disks', 'nets']:
                     result += "%s\n" % value
                 else:
