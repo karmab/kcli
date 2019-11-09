@@ -15,8 +15,7 @@ from libvirt import VIR_DOMAIN_AFFECT_LIVE, VIR_DOMAIN_AFFECT_CONFIG
 from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_AGENT as vir_src_agent
 from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE as vir_src_lease
 from libvirt import (VIR_DOMAIN_NOSTATE, VIR_DOMAIN_RUNNING, VIR_DOMAIN_BLOCKED, VIR_DOMAIN_PAUSED,
-                     VIR_DOMAIN_SHUTDOWN, VIR_DOMAIN_SHUTOFF, VIR_DOMAIN_CRASHED)
-# from libvirt import VIR_DOMAIN_UNDEFINE_KEEP_NVRAM
+                     VIR_DOMAIN_SHUTDOWN, VIR_DOMAIN_SHUTOFF, VIR_DOMAIN_CRASHED, VIR_DOMAIN_UNDEFINE_KEEP_NVRAM)
 import json
 import os
 from subprocess import call
@@ -726,10 +725,12 @@ class Kvirt(object):
         if iso:
             bootdev += "<boot dev='cdrom'/>"
         memoryhotplugxml = "<maxMemory slots='16' unit='MiB'>1524288</maxMemory>" if memoryhotplug else ""
+        videoxml = ""
         firmwarexml = ""
         if macosx:
             firmwarexml = """<loader readonly='yes' type='pflash'>%s/OVMF_CODE.fd</loader>
                              <nvram>%s/OVMF_VARS-1024x768.fd</nvram>""" % (default_poolpath, default_poolpath)
+            videoxml = """<video><model type='vga' vram='65536'/></video>"""
         vmxml = """<domain type='%s' %s>
                   <name>%s</name>
                   %s
@@ -760,12 +761,13 @@ class Kvirt(object):
                     %s
                     %s
                     %s
+                    %s
                   </devices>
                     %s
                     %s
                     </domain>""" % (virttype, namespace, name, metadata, memoryhotplugxml, memory, vcpuxml, machine,
                                     firmwarexml, bootdev, kernelxml, disksxml, netxml, isoxml, displayxml, serialxml,
-                                    sharedxml, guestxml, cpuxml, qemuextraxml)
+                                    sharedxml, guestxml, videoxml, cpuxml, qemuextraxml)
         if self.debug:
             print(vmxml)
         conn.defineXML(vmxml)
@@ -1444,8 +1446,8 @@ class Kvirt(object):
                     continue
         if status[vm.isActive()] != "down":
             vm.destroy()
-        vm.undefine()
-        # vm.undefineFlags(flags=VIR_DOMAIN_UNDEFINE_KEEP_NVRAM)
+        # vm.undefine()
+        vm.undefineFlags(flags=VIR_DOMAIN_UNDEFINE_KEEP_NVRAM)
         founddisks = []
         thinpools = []
         for storage in conn.listStoragePools():
