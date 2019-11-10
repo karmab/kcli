@@ -296,6 +296,7 @@ class Kvirt(object):
                 diskthinpool = default_thinpool
                 diskwwn = None
                 diskimage = None
+                diskmacosx = False
             elif isinstance(disk, int):
                 disksize = disk
                 diskthin = default_diskthin
@@ -307,6 +308,7 @@ class Kvirt(object):
                 diskwwn = None
                 diskimage = None
                 diskname = None
+                diskmacosx = False
             elif isinstance(disk, str) and disk.isdigit():
                 disksize = int(disk)
                 diskthin = default_diskthin
@@ -318,6 +320,7 @@ class Kvirt(object):
                 diskwwn = None
                 diskimage = None
                 diskname = None
+                diskmacosx = False
             elif isinstance(disk, dict):
                 disksize = disk.get('size', default_disksize)
                 diskthin = disk.get('thin', default_diskthin)
@@ -326,6 +329,7 @@ class Kvirt(object):
                 diskwwn = disk.get('wwn')
                 diskimage = disk.get('image')
                 diskname = disk.get('name')
+                diskmacosx = disk.get('macosx', False)
                 try:
                     storagediskpool = conn.storagePoolLookupByName(diskpool)
                 except:
@@ -414,7 +418,7 @@ class Kvirt(object):
                     volsxml[diskpool] = [volxml]
             else:
                 common.pprint("Using existing disk %s..." % storagename, color='blue')
-                if index == 0 and storagename == "ESP.qcow2":
+                if index == 0 and diskmacosx:
                     macosx = True
             if diskwwn is not None and diskbus == 'ide':
                 diskwwn = '0x%016x' % diskwwn
@@ -588,6 +592,8 @@ class Kvirt(object):
         else:
             cpuxml = """<cpu mode='custom' match='exact'>
                         <model fallback='allow'>%s</model>""" % cpumodel
+        if macosx:
+            cpuxml = "%s<vendor>Intel</vendor>" % cpuxml
         if nested and virttype == 'kvm':
             capabilities = self.conn.getCapabilities()
             if 'vmx' in capabilities:
@@ -600,18 +606,16 @@ class Kvirt(object):
                 if isinstance(flag, str):
                     if flag == 'vmx':
                         continue
-                    cpuxml = """%s<feature policy='require' name='%s'/>""" % (cpuxml, flag)
+                    cpuxml = """%s<feature policy='optional' name='%s'/>""" % (cpuxml, flag)
                 elif isinstance(flag, dict):
                     feature = flag.get('name')
-                    enable = flag.get('enable')
-                    if feature is None or enable is None or not isinstance(enable, bool):
+                    policy = flag.get('policy', 'optional')
+                    if feature is None:
                         continue
                     elif feature == 'vmx':
                         continue
-                    elif enable:
-                        cpuxml = """%s<feature policy='require' name='%s'/>""" % (cpuxml, feature)
-                    else:
-                        cpuxml = """%s<feature policy='disable' name='%s'/>""" % (cpuxml, feature)
+                    elif policy in ['force', 'require', 'optional', 'disable', 'forbid']:
+                        cpuxml = """%s<feature policy='%s' name='%s'/>""" % (cpuxml, policy, feature)
         if cpuxml != '':
             if memoryhotplug:
                 lastcpu = int(numcpus) - 1
@@ -649,10 +653,11 @@ class Kvirt(object):
                                   <qemu:arg value='name=opt/com.coreos/config,file=/var/tmp/%s.ign' />""" % name
             usermodexml = ""
             if usermode:
+                netmodel = 'virtio-net-pci' if not macosx else 'e1000-82545em'
                 usermodexml = """<qemu:arg value='-netdev'/>
                                  <qemu:arg value='user,id=mynet.0,net=10.0.10.0/24,hostfwd=tcp::%s-:22'/>
                                  <qemu:arg value='-device'/>
-                                 <qemu:arg value='virtio-net-pci,netdev=mynet.0'/>""" % userport
+                                 <qemu:arg value='virtio-net-pci,netdev=mynet.0'/>""" % (netmodel, userport)
             macosxml = ""
             if macosx:
                 osk = "ourhardworkbythesewordsguardedpleasedontsteal(c)AppleComputerInc"
@@ -730,7 +735,8 @@ class Kvirt(object):
         if macosx:
             firmwarexml = """<loader readonly='yes' type='pflash'>%s/OVMF_CODE.fd</loader>
                              <nvram>%s/OVMF_VARS-1024x768.fd</nvram>""" % (default_poolpath, default_poolpath)
-            videoxml = """<video><model type='vga' vram='65536'/></video>"""
+            videoxml = """<video><model type='qxl' vram='65536'/></video>"""
+            guestxml = ""
         vmxml = """<domain type='%s' %s>
                   <name>%s</name>
                   %s
