@@ -784,7 +784,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
         pprint("neither id_rsa or id_dsa public keys found in your .ssh or .kcli directory, you might have trouble "
                "accessing the vm", color='red')
     storage = {"files": []}
-    hostnameline = quote("%s\n" % localhostname)
+    hostnameline = quote("%s\n" % localhostname.replace('_', '-'))
     storage["files"].append({"filesystem": "root", "path": "/etc/hostname", "overwrite": True,
                              "contents": {"source": "data:,%s" % hostnameline, "verification": {}}, "mode": 420})
     if dns is not None:
