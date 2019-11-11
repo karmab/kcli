@@ -27,7 +27,7 @@ right = ["albattani", "almeida", "amazigh", "archimedes", "ardinghelli", "babbag
          "superduper"]
 
 
-def get_random_name(sep='_'):
+def get_random_name(sep='-'):
     """
 
     :param sep:
