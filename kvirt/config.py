@@ -1525,6 +1525,8 @@ class Kconfig(Kbaseconfig):
                     common.pprint("Adding a profile named %s with default values" % imagename)
                     self.create_profile(imagename, {'image': shortname}, quiet=True)
                 else:
+                    if shortname.endswith('.bz2') or shortname.endswith('.gz') or shortname.endswith('.xz'):
+                        shortname = os.path.splitext(shortname)[0]
                     common.pprint("Updating profile %s with image %s" % (imagename, shortname))
                     self.update_profile(imagename, {'image': shortname}, quiet=True)
             return {'result': 'success'}

@@ -891,7 +891,7 @@ def get_latest_fcos(url, openstack=False):
         return "%s/%s" % (url, data['images'][key]['path'])
 
 
-def get_latest_rhcos(url, _type='qemu'):
+def get_latest_rhcos(url, _type='kvm'):
     key = 'openstack' if _type in ['openstack', 'ovirt'] else 'qemu'
     buildurl = '%s/builds.json' % url
     with urlopen(buildurl) as b:
@@ -900,7 +900,8 @@ def get_latest_rhcos(url, _type='qemu'):
             if isinstance(build, dict):
                 build = build['id']
                 if _type != 'gcp':
-                    return "%s/%s/x86_64/rhcos-%s-qemu.x86_64.qcow2" % (url, build, build)
+                    print("%s/%s/x86_64/rhcos-%s-qemu.x86_64.qcow2.gz" % (url, build, build))
+                    return "%s/%s/x86_64/rhcos-%s-qemu.x86_64.qcow2.gz" % (url, build, build)
                 else:
                     return "https://storage.googleapis.com/rhcos/rhcos/%s.tar.gz" % build
             else:

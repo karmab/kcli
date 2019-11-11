@@ -420,6 +420,8 @@ class Kvirt(object):
                 common.pprint("Using existing disk %s..." % storagename, color='blue')
                 if index == 0 and diskmacosx:
                     macosx = True
+                    usermode = True
+                    userport = common.get_free_port()
             if diskwwn is not None and diskbus == 'ide':
                 diskwwn = '0x%016x' % diskwwn
                 diskwwn = "<wwn>%s</wwn>" % diskwwn
@@ -623,6 +625,8 @@ class Kvirt(object):
                                                                                                           lastcpu)
             else:
                 cpuxml = "%s</cpu>" % cpuxml
+        if macosx:
+            cpuxml = ""
         if self.host in ['localhost', '127.0.0.1']:
             serialxml = """<serial type='pty'>
                        <target port='0'/>
@@ -657,14 +661,18 @@ class Kvirt(object):
                 usermodexml = """<qemu:arg value='-netdev'/>
                                  <qemu:arg value='user,id=mynet.0,net=10.0.10.0/24,hostfwd=tcp::%s-:22'/>
                                  <qemu:arg value='-device'/>
-                                 <qemu:arg value='virtio-net-pci,netdev=mynet.0'/>""" % (netmodel, userport)
+                                 <qemu:arg value='%s,netdev=mynet.0'/>""" % (userport, netmodel)
             macosxml = ""
             if macosx:
                 osk = "ourhardworkbythesewordsguardedpleasedontsteal(c)AppleComputerInc"
-                macosxml = """<qemu:arg value='-device'/>
-                             <qemu:arg value='isa-applesmc,osk=%s'/>
+                cpuflags = "+invtsc,vmware-cpuid-freq=on,+pcid,+ssse3,+sse4.2,+popcnt,+avx,+aes,+xsave,+xsaveopt"
+                cpuinfo = "Penryn,kvm=on,vendor=GenuineIntel,%s,check" % cpuflags
+                macosxml = """<qemu:arg value='-cpu'/>
+                              <qemu:arg value='%s'/>
+                              <qemu:arg value='-device'/>
+                              <qemu:arg value='isa-applesmc,osk=%s'/>
                              <qemu:arg value='-smbios'/>
-                             <qemu:arg value='type=2'/>""" % osk
+                             <qemu:arg value='type=2'/>""" % (cpuinfo, osk)
             qemuextraxml = """<qemu:commandline>
                               %s
                               %s
