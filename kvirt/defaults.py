@@ -36,8 +36,7 @@ IMAGES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-i
           'Fedora-Cloud-Base-29-1.2.x86_64.qcow2',
           'fedora30': 'https://download.fedoraproject.org/pub/fedora/linux/releases/30/Cloud/x86_64/images/'
           'Fedora-Cloud-Base-30-1.2.x86_64.qcow2',
-          'fedoracoreos30': 'https://builds.coreos.fedoraproject.org/prod/streams/testing/builds/30.20190716.1/'
-          'x86_64/fedora-coreos-30.20190716.1-qemu.qcow2.xz',
+          'fcos': 'https://builds.coreos.fedoraproject.org/streams/testing.json',
           'fedora31': 'https://download.fedoraproject.org/pub/fedora/linux/releases/31/Cloud/x86_64/images/'
           'Fedora-Cloud-Base-31-1.9.x86_64.qcow2',
           'gentoo': 'https://gentoo.osuosl.org/experimental/amd64/openstack/gentoo-openstack-amd64-default-20180621.'

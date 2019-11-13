@@ -883,12 +883,11 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     return json.dumps(data, sort_keys=True, indent=indent, separators=separators)
 
 
-def get_latest_fcos(url, openstack=False):
-    key = 'openstack' if openstack else 'qemu'
-    metaurl = '%s/meta.json' % url
-    with urlopen(metaurl) as u:
+def get_latest_fcos(url, _type='kvm'):
+    key = 'openstack' if _type in ['openstack', 'ovirt'] else 'qemu'
+    with urlopen(url) as u:
         data = json.loads(u.read().decode())
-        return "%s/%s" % (url, data['images'][key]['path'])
+        return data['architectures']['x86_64']['artifacts'][key]["formats"]['qcow2.xz']['disk']['location']
 
 
 def get_latest_rhcos(url, _type='kvm'):

@@ -420,8 +420,7 @@ class Kvirt(object):
                 common.pprint("Using existing disk %s..." % storagename, color='blue')
                 if index == 0 and diskmacosx:
                     macosx = True
-                    usermode = True
-                    userport = common.get_free_port()
+                    machine = 'pc-q35-2.11'
             if diskwwn is not None and diskbus == 'ide':
                 diskwwn = '0x%016x' % diskwwn
                 diskwwn = "<wwn>%s</wwn>" % diskwwn
@@ -594,8 +593,6 @@ class Kvirt(object):
         else:
             cpuxml = """<cpu mode='custom' match='exact'>
                         <model fallback='allow'>%s</model>""" % cpumodel
-        if macosx:
-            cpuxml = "%s<vendor>Intel</vendor>" % cpuxml
         if nested and virttype == 'kvm':
             capabilities = self.conn.getCapabilities()
             if 'vmx' in capabilities:
@@ -2573,6 +2570,7 @@ class Kvirt(object):
         """
         poolname = pool
         shortimage = os.path.basename(image).split('?')[0]
+        shortimage_uncompressed = os.path.splitext(shortimage)[0]
         conn = self.conn
         volumes = []
         try:
@@ -2586,8 +2584,8 @@ class Kvirt(object):
         pooltype = list(root.getiterator('pool'))[0].get('type')
         poolpath = list(root.getiterator('path'))[0].text
         downloadpath = poolpath if pooltype == 'dir' else '/tmp'
-        if shortimage in volumes:
-            common.pprint("Template %s already there.Leaving..." % shortimage, color="blue")
+        if shortimage_uncompressed in volumes:
+            common.pprint("Image %s already there.Leaving..." % shortimage_uncompressed, color="blue")
             return {'result': 'success'}
         if 'rhcos' in shortimage:
             shortimage += ".gz"
@@ -2611,7 +2609,6 @@ class Kvirt(object):
                 uncompresscmd = 'ssh %s -p %s %s@%s "bunzip2 %s/%s"' % (self.identitycommand, self.port, self.user,
                                                                         self.host, poolpath, shortimage)
                 os.system(uncompresscmd)
-            shortimage = shortimage.replace('.bz2', '')
         if shortimage.endswith('gz'):
             if self.host == 'localhost' or self.host == '127.0.0.1':
                 if find_executable('gunzip') is not None:
@@ -2624,7 +2621,6 @@ class Kvirt(object):
                 uncompresscmd = 'ssh %s -p %s %s@%s "gunzip %s/%s"' % (self.identitycommand, self.port, self.user,
                                                                        self.host, poolpath, shortimage)
                 os.system(uncompresscmd)
-            shortimage = shortimage.replace('.gz', '')
         if shortimage.endswith('xz') or shortimage.endswith('gz'):
             executable = 'unxz' if shortimage.endswith('xz') else 'gunzip'
             if self.host == 'localhost' or self.host == '127.0.0.1':
@@ -2638,17 +2634,17 @@ class Kvirt(object):
                 uncompresscmd = 'ssh %s -p %s %s@%s "%s %s/%s"' % (self.identitycommand, self.port, self.user,
                                                                    self.host, executable, poolpath, shortimage)
                 os.system(uncompresscmd)
-            shortimage = shortimage.replace('.xz', '')
         if cmd is not None:
             if self.host == 'localhost' or self.host == '127.0.0.1':
                 if find_executable('virt-customize') is not None:
-                    cmd = "virt-customize -a %s/%s --run-command '%s'" % (poolpath, shortimage, cmd)
+                    cmd = "virt-customize -a %s/%s --run-command '%s'" % (poolpath, shortimage_uncompressed, cmd)
                     os.system(cmd)
             elif self.protocol == 'ssh':
                 cmd = 'ssh %s -p %s %s@%s "virt-customize -a %s/%s --run-command \'%s\'"' % (self.identitycommand,
                                                                                              self.port, self.user,
                                                                                              self.host, poolpath,
-                                                                                             shortimage, cmd)
+                                                                                             shortimage_uncompressed,
+                                                                                             cmd)
                 os.system(cmd)
         if pooltype in ['logical', 'zfs']:
             product = list(root.getiterator('product'))
@@ -2656,7 +2652,7 @@ class Kvirt(object):
                 thinpool = list(root.getiterator('product'))[0].get('name')
             else:
                 thinpool = None
-            self.add_image_to_deadpool(poolname, pooltype, poolpath, shortimage, thinpool)
+            self.add_image_to_deadpool(poolname, pooltype, poolpath, shortimage_uncompressed, thinpool)
             return {'result': 'success'}
         pool.refresh()
         return {'result': 'success'}

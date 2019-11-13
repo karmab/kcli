@@ -1499,6 +1499,8 @@ class Kconfig(Kbaseconfig):
                     url = IMAGES[image]
                     if 'rhcos' in image:
                         url = common.get_latest_rhcos(url, _type=self.type)
+                    if 'fcos' in image:
+                        url = common.get_latest_fcos(url, _type=self.type)
                     image = os.path.basename(image)
                     if not url.endswith('qcow2') and not url.endswith('img') and not url.endswith('qc2')\
                             and not url.endswith('qcow2.xz') and not url.endswith('qcow2.gz')\
@@ -1521,12 +1523,12 @@ class Kconfig(Kbaseconfig):
                     common.pprint("\nPlease run kcli delete image --yes %s" % shortname, color='red')
                     return {'result': 'failure', 'reason': "User interruption"}
                 common.handle_response(result, image, element='Image ', action='Added')
+                if shortname.endswith('.bz2') or shortname.endswith('.gz') or shortname.endswith('.xz'):
+                    shortname = os.path.splitext(shortname)[0]
                 if imagename not in self.profiles:
                     common.pprint("Adding a profile named %s with default values" % imagename)
                     self.create_profile(imagename, {'image': shortname}, quiet=True)
                 else:
-                    if shortname.endswith('.bz2') or shortname.endswith('.gz') or shortname.endswith('.xz'):
-                        shortname = os.path.splitext(shortname)[0]
                     common.pprint("Updating profile %s with image %s" % (imagename, shortname))
                     self.update_profile(imagename, {'image': shortname}, quiet=True)
             return {'result': 'success'}
