@@ -221,8 +221,9 @@ def download_image(args):
     image = args.image
     cmd = args.cmd
     url = args.url
+    update_profile = not args.skip_profile
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    result = config.handle_host(pool=pool, image=image, download=True, cmd=cmd, url=url, profile=True)
+    result = config.handle_host(pool=pool, image=image, download=True, cmd=cmd, url=url, update_profile=update_profile)
     if result['result'] == 'success':
         os._exit(0)
     else:
@@ -2279,6 +2280,7 @@ def cli():
     imagedownload_parser.add_argument('-c', '--cmd', help='Extra command to launch after downloading', metavar='CMD')
     imagedownload_parser.add_argument('-p', '--pool', help='Pool to use. Defaults to default', metavar='POOL')
     imagedownload_parser.add_argument('-u', '--url', help='Url to use', metavar='URL')
+    imagedownload_parser.add_argument('-s', '--skip-profile', help='Skip Profile update', action='store_true')
     imagedownload_parser.add_argument('image', help=imagedownload_help, metavar='IMAGE')
     imagedownload_parser.set_defaults(func=download_image)
     download_subparsers.add_parser('image', parents=[imagedownload_parser], description=imagedownload_desc,

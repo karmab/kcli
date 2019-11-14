@@ -2570,7 +2570,7 @@ class Kvirt(object):
         """
         poolname = pool
         shortimage = os.path.basename(image).split('?')[0]
-        shortimage_uncompressed = os.path.splitext(shortimage)[0]
+        shortimage_uncompressed = shortimage.replace('.gz', '').replace('.xz', '').replace('.bz2', '')
         conn = self.conn
         volumes = []
         try:

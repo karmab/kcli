@@ -1098,6 +1098,7 @@ class Kconfig(Kbaseconfig):
                     pool = imageprofile.get('pool', self.pool)
                     imageurl = imageprofile.get('url')
                     cmd = imageprofile.get('cmd')
+                    # updateprofile = imageprofile.get('updateprofile')
                     if imageurl is None:
                         if image in IMAGES:
                             imageurl = IMAGES[image]
@@ -1473,7 +1474,7 @@ class Kconfig(Kbaseconfig):
         return returndata
 
     def handle_host(self, pool=None, image=None, switch=None, download=False,
-                    url=None, cmd=None, sync=False, profile=False):
+                    url=None, cmd=None, sync=False, update_profile=False):
         """
 
         :param pool:
@@ -1483,6 +1484,7 @@ class Kconfig(Kbaseconfig):
         :param url:
         :param cmd:
         :param sync:
+        :param profile:
         :return:
         """
         if download:
@@ -1523,14 +1525,15 @@ class Kconfig(Kbaseconfig):
                     common.pprint("\nPlease run kcli delete image --yes %s" % shortname, color='red')
                     return {'result': 'failure', 'reason': "User interruption"}
                 common.handle_response(result, image, element='Image ', action='Added')
-                if shortname.endswith('.bz2') or shortname.endswith('.gz') or shortname.endswith('.xz'):
-                    shortname = os.path.splitext(shortname)[0]
-                if imagename not in self.profiles:
-                    common.pprint("Adding a profile named %s with default values" % imagename)
-                    self.create_profile(imagename, {'image': shortname}, quiet=True)
-                else:
-                    common.pprint("Updating profile %s with image %s" % (imagename, shortname))
-                    self.update_profile(imagename, {'image': shortname}, quiet=True)
+                if update_profile:
+                    if shortname.endswith('.bz2') or shortname.endswith('.gz') or shortname.endswith('.xz'):
+                        shortname = os.path.splitext(shortname)[0]
+                    if imagename not in self.profiles:
+                        common.pprint("Adding a profile named %s with default values" % imagename)
+                        self.create_profile(imagename, {'image': shortname}, quiet=True)
+                    else:
+                        common.pprint("Updating profile %s with image %s" % (imagename, shortname))
+                        self.update_profile(imagename, {'image': shortname}, quiet=True)
             return {'result': 'success'}
         elif switch:
             if switch not in self.clients:
