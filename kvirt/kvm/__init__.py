@@ -1453,6 +1453,8 @@ class Kvirt(object):
                     continue
                 elif imagefile.endswith("%s.ISO" % name) or "%s_" % name in imagefile or "%s.img" % name in imagefile:
                     disks.append(imagefile)
+                elif imagefile == name:
+                    disks.append(imagefile)
                 else:
                     continue
         if status[vm.isActive()] != "down":
