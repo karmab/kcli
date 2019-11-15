@@ -2395,7 +2395,8 @@ class Kvirt(object):
                 except:
                     pass
                 if ifaces:
-                    matches = [ifaces[x]['addrs'] for x in ifaces if ifaces[x]['hwaddr'] == mac]
+                    matches = [ifaces[x]['addrs'] for x in ifaces if ifaces[x]['hwaddr'] == mac and
+                               ifaces[x]['addrs'] is not None]
                     if matches:
                         for match in matches[0]:
                             matchip = match['addr']
