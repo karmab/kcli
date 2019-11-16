@@ -564,7 +564,8 @@ class Kbaseconfig:
             if web:
                 return {'product': product, 'comments': comments, 'description': description, 'parameters': parameters}
 
-    def process_inputfile(self, plan, inputfile, overrides={}, onfly=None, full=False, ignore=False):
+    def process_inputfile(self, plan, inputfile, overrides={}, onfly=None, full=False, ignore=False,
+                          download_mode=True):
         basedir = os.path.dirname(inputfile) if os.path.dirname(inputfile) != '' else '.'
         basefile = None
         undefined = strictundefined if not ignore else defaultundefined
@@ -596,7 +597,10 @@ class Kbaseconfig:
                             if baseparameter not in overrides and baseparameter not in parameters:
                                 overrides[baseparameter] = baseparameters[baseparameter]
                 elif parameter not in overrides:
-                    overrides[parameter] = parameters[parameter]
+                    currentparameter = parameters[parameter]
+                    if isinstance(currentparameter, bool) and download_mode:
+                        currentparameter = True
+                    overrides[parameter] = currentparameter
         with open(inputfile, 'r') as entries:
             overrides.update(self.overrides)
             overrides.update({'plan': plan})

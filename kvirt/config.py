@@ -938,7 +938,8 @@ class Kconfig(Kbaseconfig):
             if download:
                 inputfile = "%s/%s" % (path, inputfile)
                 entries, overrides, basefile, basedir = self.process_inputfile(plan, inputfile, overrides=overrides,
-                                                                               onfly=onfly, full=True)
+                                                                               onfly=onfly, full=True,
+                                                                               download_mode=True)
                 os.chdir(path)
                 for entry in entries:
                     if 'type' in entries[entry] and entries[entry]['type'] != 'vm':
@@ -959,7 +960,10 @@ class Kconfig(Kbaseconfig):
                                 destdir = os.path.dirname(origin)
                                 os.makedirs(destdir, exist_ok=True)
                             common.pprint("Retrieving file %s/%s" % (onfly, origin))
-                            common.fetch("%s/%s" % (onfly, origin), destdir)
+                            try:
+                                common.fetch("%s/%s" % (onfly, origin), destdir)
+                            except:
+                                common.pprint("file %s/%s skipped" % (onfly, origin), color='blue')
                     for script in scriptfiles:
                         if '~' not in script:
                             destdir = "."
