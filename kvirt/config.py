@@ -1510,7 +1510,7 @@ class Kconfig(Kbaseconfig):
                     image = os.path.basename(image)
                     if not url.endswith('qcow2') and not url.endswith('img') and not url.endswith('qc2')\
                             and not url.endswith('qcow2.xz') and not url.endswith('qcow2.gz')\
-                            and 'storage.googleapis.com' not in url:
+                            and 'storage.googleapis.com' not in url and not url.endswith('ova'):
                         if 'web' in sys.argv[0]:
                             return {'result': 'failure', 'reason': "Missing url"}
                         common.pprint("Opening url %s for you to grab complete url for %s" % (url, image), 'blue')
@@ -1521,12 +1521,14 @@ class Kconfig(Kbaseconfig):
                             return {'result': 'failure', 'reason': "Missing image"}
                 if cmd is None and image != '' and image in IMAGESCOMMANDS:
                     cmd = IMAGESCOMMANDS[image]
+                common.pprint("Using url %s..." % url)
                 common.pprint("Grabbing image %s..." % image)
                 shortname = os.path.basename(url).split('?')[0]
                 try:
                     result = k.add_image(url, pool, cmd=cmd, name=image)
-                except:
-                    common.pprint("\nPlease run kcli delete image --yes %s" % shortname, color='red')
+                except Exception as e:
+                    common.pprint("Got %s" % e, color='red')
+                    common.pprint("Please run kcli delete image --yes %s" % shortname, color='red')
                     return {'result': 'failure', 'reason': "User interruption"}
                 common.handle_response(result, image, element='Image ', action='Added')
                 if update_profile:

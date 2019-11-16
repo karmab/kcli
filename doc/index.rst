@@ -509,8 +509,8 @@ Note that pool in Vsphere context refers to datastore.
 To use this provider with kcli rpm, you’ll need to install
 *python3-pyvmomi*
 
-Also note that in order to use kcli download on vsphere, you will need
-to be able to connect by ssh to your first esx server
+Also note that kcli download will only upload OVAS, either from
+specified urls or gathering them in the case of rhcos/fcos.
 
 Fake
 ----
