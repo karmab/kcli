@@ -17,6 +17,9 @@ import time
 import pyVmomi
 import webbrowser
 
+GOVC_LINUX = "https://github.com/vmware/govmomi/releases/download/v0.21.0/govc_linux_amd64.gz"
+GOVC_MACOSX = GOVC_LINUX.replace('linux', 'darwin')
+
 
 def waitForMe(t):
     while t.info.state not in [vim.TaskInfo.State.success, vim.TaskInfo.State.error]:
@@ -1285,10 +1288,7 @@ class Ksphere:
                 return {'result': 'failure', 'reason': "Unable to download indicated image"}
         else:
             common.pprint("Using found /tmp/%s" % shortimage, color='blue')
-        govc = 'govc'
-        linuxurl = "https://github.com/vmware/govmomi/releases/download/v0.21.0/govc_linux_amd64.gz"
-        macosurl = linuxurl.replace('linux', 'darwin')
-        govc = common.get_binary('govc', linuxurl, macosurl, compressed=True)
+        govc = common.get_binary('govc', GOVC_LINUX, GOVC_MACOSX, compressed=True)
         opts = "-name=%s -ds=%s -k=true -u=%s" % (name, pool, self.url)
         ovacmd = "%s import.ova %s /tmp/%s" % (govc, opts, shortimage)
         os.system(ovacmd)

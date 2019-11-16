@@ -4,7 +4,6 @@
 Kubevirt Provider Class
 """
 
-from distutils.spawn import find_executable
 from kubernetes import client
 # from kubernetes.stream import stream
 from kvirt.kubecommon import Kubecommon
@@ -29,6 +28,8 @@ CONTAINERDISKS = ['kubevirt/alpine-container-disk-demo', 'kubevirt/cirros-contai
                   'karmab/fedora-coreos-container-disk-demo', 'karmab/gentoo-container-disk-demo',
                   'karmab/ubuntu-container-disk-demo']
 ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety', 'zesty', 'artful', 'bionic', 'cosmic']
+KUBECTL_LINUX = "https://storage.googleapis.com/kubernetes-release/release/v1.16.1/bin/linux/amd64/kubectl"
+KUBECTL_MACOSX = KUBECTL_LINUX.replace('linux', 'darwin')
 
 
 class Kubevirt(Kubecommon):
@@ -537,9 +538,10 @@ class Kubevirt(Kubecommon):
         :param tunnel:
         :return:
         """
-        if find_executable('kubectl') is None:
-            common.pprint("kubectl is currently required for this functionality", color='red')
+        if os.path.exists("/i_am_a_container"):
+            common.pprint("This functionality is not supported in container mode", color='red')
             return
+        kubectl = common.get_binary('kubectl', KUBECTL_LINUX, KUBECTL_MACOSX, compressed=True)
         crds = self.crds
         core = self.core
         namespace = self.namespace
@@ -558,19 +560,19 @@ class Kubevirt(Kubecommon):
         #       % (localport, uid)]
         # stream(core.connect_get_namespaced_pod_exec, podname, namespace, command=exe, stderr=True, stdin=False,
         #       stdout=True, tty=True, _preload_content=False)
-        socatcmd = "kubectl exec -n %s %s -- /bin/sh -c 'socat "\
-            "TCP4-LISTEN:%s,fork UNIX-CONNECT:/var/run/kubevirt-private/%s/virt-vnc' &" % (namespace, podname,
+        socatcmd = "%s exec -n %s %s -- /bin/sh -c 'socat "\
+            "TCP4-LISTEN:%s,fork UNIX-CONNECT:/var/run/kubevirt-private/%s/virt-vnc' &" % (kubectl, namespace, podname,
                                                                                            localport, uid)
         os.system(socatcmd)
         # stream(core.connect_post_namespaced_pod_portforward, podname, namespace, ports=localport,
         # _preload_content=False)
-        forwardcmd = "kubectl port-forward %s %s:%s &" % (podname, localport, localport)
+        forwardcmd = "%s port-forward %s %s:%s &" % (kubectl, podname, localport, localport)
         os.system(forwardcmd)
         time.sleep(15)
         if web:
             return "vnc://127.0.0.1:%s" % localport
         consolecommand = "remote-viewer vnc://127.0.0.1:%s &" % localport
-        if self.debug or os.path.exists("/i_am_a_container"):
+        if self.debug:
             msg = "Run the following command:\n%s" % consolecommand if not self.debug else consolecommand
             common.pprint(msg)
         else:
@@ -583,9 +585,7 @@ class Kubevirt(Kubecommon):
         :param name:
         :return:
         """
-        if find_executable('kubectl') is None:
-            common.pprint("kubectl is currently required for this functionality", color='red')
-            return
+        kubectl = common.get_binary('kubectl', KUBECTL_LINUX, KUBECTL_MACOSX, compressed=True)
         crds = self.crds
         core = self.core
         namespace = self.namespace
@@ -600,11 +600,11 @@ class Kubevirt(Kubecommon):
                 podname = pod.metadata.name
                 localport = common.get_free_port()
                 break
-        socatcmd = "kubectl exec -n %s %s -- /bin/sh -c 'socat "\
-            "TCP4-LISTEN:%s,fork UNIX-CONNECT:/var/run/kubevirt-private/%s/virt-serial0' &" % (namespace, podname,
-                                                                                               localport, uid)
+        socatcmd = "%s exec -n %s %s -- /bin/sh -c 'socat "\
+            "TCP4-LISTEN:%s,fork UNIX-CONNECT:/var/run/kubevirt-private/%s/virt-serial0' &" % (kubectl, namespace,
+                                                                                               podname, localport, uid)
         os.system(socatcmd)
-        forwardcmd = "kubectl port-forward %s %s:%s &" % (podname, localport, localport)
+        forwardcmd = "%s port-forward %s %s:%s &" % (kubectl, podname, localport, localport)
         os.system(forwardcmd)
         time.sleep(12)
         consolecommand = "nc 127.0.0.1 %s" % localport
