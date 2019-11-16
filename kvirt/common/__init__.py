@@ -884,23 +884,27 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
 
 
 def get_latest_fcos(url, _type='kvm'):
-    key = 'openstack' if _type in ['openstack', 'ovirt'] else 'qemu'
+    keys = {'ovirt': 'openstack', 'kvm': 'qemu', 'vsphere': 'vmware'}
+    key = keys.get(_type, _type)
+    _format = 'ova' if _type == 'vsphere' else 'qcow2.xz'
     with urlopen(url) as u:
         data = json.loads(u.read().decode())
-        return data['architectures']['x86_64']['artifacts'][key]["formats"]['qcow2.xz']['disk']['location']
+        return data['architectures']['x86_64']['artifacts'][key]["formats"][_format]['disk']['location']
 
 
 def get_latest_rhcos(url, _type='kvm'):
-    key = 'openstack' if _type in ['openstack', 'ovirt'] else 'qemu'
+    keys = {'ovirt': 'openstack', 'kvm': 'qemu', 'vsphere': 'vmware'}
+    key = keys.get(_type, _type)
     buildurl = '%s/builds.json' % url
     with urlopen(buildurl) as b:
         data = json.loads(b.read().decode())
         for build in data['builds']:
             if isinstance(build, dict):
                 build = build['id']
-                if _type != 'gcp':
-                    print("%s/%s/x86_64/rhcos-%s-qemu.x86_64.qcow2.gz" % (url, build, build))
+                if _type in ['openstack', 'kvm']:
                     return "%s/%s/x86_64/rhcos-%s-qemu.x86_64.qcow2.gz" % (url, build, build)
+                elif _type == 'vsphere':
+                    return "%s/%s/x86_64/rhcos-%s-vmware.x86_64.ova" % (url, build, build)
                 else:
                     return "https://storage.googleapis.com/rhcos/rhcos/%s.tar.gz" % build
             else:
@@ -1012,3 +1016,21 @@ def delete_host(name):
                 yaml.safe_dump(ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True,
                                sort_keys=False)
         pprint("Host %s deleted" % name)
+
+
+def get_binary(name, linuxurl, macosurl, compressed=False):
+    if find_executable(name) is not None:
+        return find_executable(name)
+    binary = '/var/tmp/%s' % name
+    if os.path.exists(binary):
+        pprint("Using %s from /var/tmp" % name, color='blue')
+    else:
+        pprint("Downloading %s in /var/tmp" % name, color='green')
+        url = macosurl if os.path.exists('/Users') else linuxurl
+        if compressed:
+            downloadcmd = "curl -L '%s' | gunzip > %s" % (url, binary)
+        else:
+            downloadcmd = "curl -L '%s' > %s" % (url, binary)
+        downloadcmd += "; chmod u+x %s" % binary
+        os.system(downloadcmd)
+    return binary

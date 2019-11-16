@@ -5,11 +5,8 @@ from binascii import hexlify
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
-from distutils.spawn import find_executable
 from kvirt import common
-from kvirt.vsphere.helpers import HWVERSIONS, VMTEMPLATE
 from math import ceil
-from pathlib import Path
 from pyVmomi import vim, vmodl
 from pyVim import connect
 import os
@@ -315,6 +312,7 @@ class Ksphere:
         self.conn = si
         self.si = si
         self.vcip = host
+        self.url = "https://%s:%s@%s/sdk" % (user, password, host)
         self.rootFolder = si.content.rootFolder
         self.dc = find(si, self.rootFolder, vim.Datacenter, datacenter)
         self.macaddr = []
@@ -1251,7 +1249,7 @@ class Ksphere:
         """
 
         :param name:
-        :return:
+        return:
         """
         return []
 
@@ -1268,65 +1266,34 @@ class Ksphere:
         """
         si = self.si
         rootFolder = self.rootFolder
-        vmFolder = self.dc.vmFolder
         shortimage = os.path.basename(image).split('?')[0]
-        cleanname = Path(name).stem
+        if name is None:
+            name = name.replace('.ova', '').replace('.x86_64', '')
+        if not image.endswith('ova'):
+            common.pprint("Invalid image. Only ovas are supported", color='red')
+            return {'result': 'failure', 'reason': "Invalid image. Only ovas are supported"}
         if shortimage in self.volumes():
             common.pprint("Template %s already there" % shortimage, color='blue')
             return {'result': 'success'}
         if not find(si, rootFolder, vim.Datastore, pool):
             return {'result': 'failure', 'reason': "Pool %s not found" % pool}
-        template_path = "/tmp/%s.vmtx" % cleanname
-        version = HWVERSIONS.get(Path(si.content.about.version).stem, 14)
-        template = VMTEMPLATE.format(name=cleanname, version=version)
-        with open(template_path, 'w') as f:
-            f.write(template)
-        if 'rhcos' in shortimage:
-            shortimage += ".gz"
-        if not os.path.exists('/tmp/%s' % shortimage) and not os.path.exists("/tmp/%s.vmdk" % cleanname):
+        if not os.path.exists('/tmp/%s' % shortimage):
             common.pprint("Downloading locally %s" % shortimage)
             downloadcmd = "curl -Lo /tmp/%s -f '%s'" % (shortimage, image)
             code = os.system(downloadcmd)
             if code != 0:
                 return {'result': 'failure', 'reason': "Unable to download indicated image"}
-        elif os.path.exists("/tmp/%s.vmdk" % cleanname):
-            common.pprint("Using found /tmp/%s.vmdk" % cleanname, color='blue')
         else:
             common.pprint("Using found /tmp/%s" % shortimage, color='blue')
-        image_path = '/tmp/%s' % shortimage
-        extensions = {'bz2': 'bunzip2', 'gz': 'gunzip', 'xz': 'unxz'}
-        for extension in extensions:
-            if shortimage.endswith(extension):
-                executable = extensions[extension]
-                if find_executable(executable) is None:
-                    common.pprint("%s not found. Can't uncompress image" % executable, color="blue")
-                    os._exit(1)
-                else:
-                    uncompresscmd = "%s %s" % (executable, image_path)
-                    os.system(uncompresscmd)
-                    shortimage = shortimage.replace(".%s" % extension, '')
-                    image_path = '/tmp/%s' % shortimage
-                    break
-        if not os.path.exists("/tmp/%s.vmdk" % cleanname):
-            # options = "-o adapter_type=lsilogic,compat6"
-            options = "-o adapter_type=lsilogic,subformat=streamOptimized"
-            common.pprint("Converting image %s to vmdk" % cleanname)
-            os.system("qemu-img convert -f qcow2 %s -O vmdk %s /tmp/%s.vmdk" % (image_path, options, cleanname))
-        image_path = '/tmp/%s.vmdk' % cleanname
-        template_path = "/tmp/%s.vmtx" % cleanname
-        self._uploadimage(pool, image_path, cleanname, verbose=True, temp=True)
-        self._uploadimage(pool, template_path, cleanname, verbose=True)
-        template_path = "[%s]/%s/%s.vmtx" % (pool, cleanname, cleanname)
-        host = self._getfirshost()
-        directory = '/vmfs/volumes/"%s"/%s' % (pool, cleanname)
-        cmd = 'vmkfstools -i %s/temp-%s.vmdk -d thin %s/%s.vmdk ; rm %s/temp-%s.vmdk' % (directory, cleanname,
-                                                                                         directory, cleanname,
-                                                                                         directory, cleanname)
-        common.pprint("Attempting to ssh in %s to run:\n%s" % (host.name, cmd))
-        cmd = "ssh root@%s %s" % (host.name, cmd)
-        os.system(cmd)
-        t = vmFolder.RegisterVM_Task(template_path, shortimage, asTemplate=True, host=host)
-        waitForMe(t)
+        govc = 'govc'
+        linuxurl = "https://github.com/vmware/govmomi/releases/download/v0.21.0/govc_linux_amd64.gz"
+        macosurl = linuxurl.replace('linux', 'darwin')
+        govc = common.get_binary('govc', linuxurl, macosurl, compressed=True)
+        opts = "-name=%s -ds=%s -k=true -u=%s" % (name, pool, self.url)
+        ovacmd = "%s import.ova %s /tmp/%s" % (govc, opts, shortimage)
+        os.system(ovacmd)
+        self.export(name)
+        os.remove('/tmp/%s' % shortimage)
         return {'result': 'success'}
 
     def _getfirshost(self):
