@@ -1162,8 +1162,8 @@ def download_plan(args):
     return 0
 
 
-def render_plan(args):
-    """Render plan file"""
+def render_file(args):
+    """Render file"""
     plan = None
     inputfile = args.inputfile
     volumepath = args.volumepath
@@ -1707,7 +1707,14 @@ def cli():
 
     render_desc = 'Render Plan/file'
     render_parser = subparsers.add_parser('render', description=render_desc, help=render_desc)
-    render_subparsers = render_parser.add_subparsers(metavar='', dest='subcommand_render')
+    render_parser.add_argument('-f', '--inputfile', help='Input Plan/File', default='kcli_plan.yml')
+    render_parser.add_argument('-i', '--ignore', action='store_true', help='Ignore missing variables')
+    render_parser.add_argument('-P', '--param', action='append',
+                               help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    render_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    render_parser.add_argument('-v', '--volumepath', help='Volume Path (only used with kcli container)',
+                               default='/workdir', metavar='VOLUMEPATH')
+    render_parser.set_defaults(func=render_file)
 
     restart_desc = 'Restart Vm/Plan/Container'
     restart_parser = subparsers.add_parser('restart', description=restart_desc, help=restart_desc)
@@ -2127,18 +2134,6 @@ def cli():
     planlist_desc = 'List Plans'
     planlist_parser = list_subparsers.add_parser('plan', description=planlist_desc, help=planlist_desc)
     planlist_parser.set_defaults(func=list_plan)
-
-    planrender_desc = 'Render Plans/Files'
-    planrender_parser = render_subparsers.add_parser('plan', description=planrender_desc,
-                                                     help=planrender_desc)
-    planrender_parser.add_argument('-f', '--inputfile', help='Input Plan file')
-    planrender_parser.add_argument('-i', '--ignore', action='store_true', help='Ignore missing variables')
-    planrender_parser.add_argument('-P', '--param', action='append',
-                                   help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    planrender_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
-    planrender_parser.add_argument('-v', '--volumepath', help='Volume Path (only used with kcli container)',
-                                   default='/workdir', metavar='VOLUMEPATH')
-    planrender_parser.set_defaults(func=render_plan)
 
     planrestart_desc = 'Restart Plan'
     planrestart_parser = restart_subparsers.add_parser('plan', description=planrestart_desc, help=planrestart_desc)
