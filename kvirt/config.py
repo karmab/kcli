@@ -1530,8 +1530,8 @@ class Kconfig(Kbaseconfig):
                     common.pprint("Got %s" % e, color='red')
                     common.pprint("Please run kcli delete image --yes %s" % shortname, color='red')
                     return {'result': 'failure', 'reason': "User interruption"}
-                common.handle_response(result, image, element='Image ', action='Added')
-                if update_profile:
+                common.handle_response(result, image, element='Image', action='Added')
+                if update_profile and result['result'] == 'success':
                     if shortname.endswith('.bz2') or shortname.endswith('.gz') or shortname.endswith('.xz'):
                         shortname = os.path.splitext(shortname)[0]
                     if imagename not in self.profiles:

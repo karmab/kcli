@@ -1273,7 +1273,6 @@ class Ksphere:
         if name is None:
             name = name.replace('.ova', '').replace('.x86_64', '')
         if not image.endswith('ova'):
-            common.pprint("Invalid image. Only ovas are supported", color='red')
             return {'result': 'failure', 'reason': "Invalid image. Only ovas are supported"}
         if shortimage in self.volumes():
             common.pprint("Template %s already there" % shortimage, color='blue')
