@@ -565,7 +565,7 @@ class Kbaseconfig:
                 return {'product': product, 'comments': comments, 'description': description, 'parameters': parameters}
 
     def process_inputfile(self, plan, inputfile, overrides={}, onfly=None, full=False, ignore=False,
-                          download_mode=True):
+                          download_mode=False):
         basedir = os.path.dirname(inputfile) if os.path.dirname(inputfile) != '' else '.'
         basefile = None
         undefined = strictundefined if not ignore else defaultundefined
