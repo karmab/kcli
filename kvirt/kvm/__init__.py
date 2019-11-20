@@ -1693,7 +1693,7 @@ class Kvirt(object):
                     iphost = host.get('ip')
                     machost = host.get('mac')
                     if iphost == ip and machost is not None and machost != mac:
-                        oldentry = '<host mac=%s ip="%s"></host>' % (machost, iphost)
+                        oldentry = '<host mac="%s" ip="%s"></host>' % (machost, iphost)
                         print("Removing old reserveip entry for ip %s" % ip)
                         network.update(2, 10, 0, oldentry, 1)
             ipentry = list(root.getiterator('ip'))
