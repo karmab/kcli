@@ -2387,6 +2387,8 @@ class Kvirt(object):
         nics = [n for n in list(root.getiterator('interface'))]
         networktypes = [element.get('type') for element in nics]
         for nic in nics:
+            if ip is not None:
+                break
             mac = nic.find('mac').get('address')
             ifaces = []
             if vm.isActive():
