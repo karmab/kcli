@@ -25,6 +25,27 @@ import time
 import xml.etree.ElementTree as ET
 
 
+LIBVIRT_CMD_NONE = 0
+LIBVIRT_CMD_MODIFY = 1
+LIBVIRT_CMD_DELETE = 2
+LIBVIRT_CMD_ADD_FIRST = 4
+LIBVIRT_SECTION_NONE = 0
+LIBVIRT_SECTION_BRIDGE = 1
+LIBVIRT_SECTION_DOMAIN = 2
+LIBVIRT_SECTION_IP = 3
+LIBVIRT_SECTION_IP_DHCP_HOST = 4
+LIBVIRT_SECTION_IP_DHCP_RANGE = 5
+LIBVIRT_SECTION_FORWARD = 6
+LIBVIRT_SECTION_FORWARD_INTERFACE = 7
+LIBVIRT_SECTION_FORWARD_PF = 8
+LIBVIRT_SECTION_PORTGROUP = 9
+LIBVIRT_SECTION_DNS_HOST = 10
+LIBVIRT_SECTION_DNS_TXT = 11
+LIBVIRT_SECTION_DNS_SRV = 12
+LIBVIRT_FLAGS_CURRENT = 0
+LIBVIRT_FLAGS_LIVE = 1
+LIBVIRT_FLAGS_CONFIG = 2
+
 KB = 1024 * 1024
 MB = 1024 * KB
 guestrhel532 = "rhel_5"
@@ -1693,9 +1714,9 @@ class Kvirt(object):
                     iphost = host.get('ip')
                     machost = host.get('mac')
                     if iphost == ip and machost is not None and machost != mac:
-                        oldentry = '<host mac="%s" ip="%s"></host>' % (machost, iphost)
-                        print("Removing old reserveip entry for ip %s" % ip)
-                        network.update(2, 10, 0, oldentry, 1)
+                        oldentry = "<host mac='%s' ip='%s'/>" % (machost, iphost)
+                        common.pprint("Removing old reserveip entry for ip %s" % ip, color='blue')
+                        network.update(2, 4, 0, oldentry, 2)
             ipentry = list(root.getiterator('ip'))
             if ipentry:
                 attributes = ipentry[0].attrib
@@ -1707,7 +1728,8 @@ class Kvirt(object):
                 continue
             if not IPAddress(ip) in netip:
                 continue
-            network.update(4, 4, 0, '<host mac="%s" name="%s" ip="%s" />' % (mac, name, ip), 1)
+            common.pprint("Adding a reserved ip entry for ip %s and mac %s " % (ip, mac), color='blue')
+            network.update(4, 4, 0, '<host mac="%s" name="%s" ip="%s" />' % (mac, name, ip), 2)
 
     def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False):
         """
