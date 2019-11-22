@@ -489,6 +489,9 @@ class Kvirt(object):
                     netmasks and len(netmasks) > index and netmasks[index] is not None and gateway is not None:
                 nets[index]['ip'] = ips[index]
                 nets[index]['netmask'] = netmasks[index]
+            elif netname in networks:
+                iftype = 'network'
+                sourcexml = "<source network='%s'/>" % netname
             if netname in bridges or ovs:
                 iftype = 'bridge'
                 sourcexml = "<source bridge='%s'/>" % netname
@@ -497,9 +500,6 @@ class Kvirt(object):
                     dnscmdhost = dns if dns is not None else self.host
                     dnscmd = "sed -i 's/nameserver .*/nameserver %s/' /etc/resolv.conf" % dnscmdhost
                     cmds = cmds[:index] + [dnscmd] + cmds[index:]
-            elif netname in networks:
-                iftype = 'network'
-                sourcexml = "<source network='%s'/>" % netname
             else:
                 return {'result': 'failure', 'reason': "Invalid network %s" % netname}
             ovsxml = "<virtualport type='openvswitch'/>" if ovs else ''
@@ -818,14 +818,9 @@ class Kvirt(object):
                              reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides,
                              storemetadata=storemetadata)
             self._uploadimage(name, pool=default_storagepool)
-        if reserveip:
-            xml = vm.XMLDesc(0)
-            vmxml = ET.fromstring(xml)
-            macs = []
-            for element in list(vmxml.getiterator('interface')):
-                mac = element.find('mac').get('address')
-                macs.append(mac)
-            self._reserve_ip(name, nets, macs)
+        xml = vm.XMLDesc(0)
+        vmxml = ET.fromstring(xml)
+        self._reserve_ip(name, vmxml, nets)
         if start:
             try:
                 vm.create()
@@ -1696,27 +1691,35 @@ class Kvirt(object):
             vm.setAutostart(1)
             vm.create()
 
-    def _reserve_ip(self, name, nets, macs, force=True):
+    def _reserve_ip(self, name, vmxml, nets, force=True):
         conn = self.conn
+        macs = []
+        for element in list(vmxml.getiterator('interface')):
+            mac = element.find('mac').get('address')
+            macs.append(mac)
         for index, net in enumerate(nets):
             if not isinstance(net, dict):
                 continue
             ip = net.get('ip')
             network = net.get('name')
+            reserveip = net.get('reserveip', False)
+            if not reserveip:
+                continue
             mac = macs[index]
             if ip is None or network is None:
                 continue
             network = conn.networkLookupByName(network)
             oldnetxml = network.XMLDesc()
             root = ET.fromstring(oldnetxml)
-            if force:
-                for host in list(root.getiterator('host')):
-                    iphost = host.get('ip')
-                    machost = host.get('mac')
-                    if iphost == ip and machost is not None and machost != mac:
-                        oldentry = "<host mac='%s' ip='%s'/>" % (machost, iphost)
-                        common.pprint("Removing old reserveip entry for ip %s" % ip, color='blue')
-                        network.update(2, 4, 0, oldentry, 2)
+            oldentry = "<host name='%s'/>" % name
+            try:
+                network.update(2, 4, 0, oldentry, 1)
+            except:
+                pass
+            try:
+                network.update(2, 4, 0, oldentry, 2)
+            except:
+                pass
             ipentry = list(root.getiterator('ip'))
             if ipentry:
                 attributes = ipentry[0].attrib
@@ -1729,6 +1732,7 @@ class Kvirt(object):
             if not IPAddress(ip) in netip:
                 continue
             common.pprint("Adding a reserved ip entry for ip %s and mac %s " % (ip, mac), color='blue')
+            network.update(4, 4, 0, '<host mac="%s" name="%s" ip="%s" />' % (mac, name, ip), 1)
             network.update(4, 4, 0, '<host mac="%s" name="%s" ip="%s" />' % (mac, name, ip), 2)
 
     def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False):
