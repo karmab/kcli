@@ -477,7 +477,7 @@ class Kbox(object):
             serialport = serial.path
             os.system("nc 127.0.0.1 %s" % serialport)
 
-    def info(self, name, vm=None):
+    def info(self, name, vm=None, debug=False):
         """
 
         :param name:

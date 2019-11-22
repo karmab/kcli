@@ -637,7 +637,7 @@ class Kubevirt(Kubecommon):
                 domain = annotations['kcli/domain']
         return dnsclient, domain
 
-    def info(self, name, vm=None):
+    def info(self, name, vm=None, debug=False):
         """
 
         :param name:
@@ -655,7 +655,7 @@ class Kubevirt(Kubecommon):
             except:
                 common.pprint("VM %s not found" % name, color='red')
                 return {}
-        if self.debug:
+        if debug:
             common.pretty_print(vm)
         metadata = vm.get("metadata")
         spec = vm.get("spec")

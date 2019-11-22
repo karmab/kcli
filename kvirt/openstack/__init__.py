@@ -432,7 +432,7 @@ class Kopenstack(object):
                 domain = metadata['domain']
         return dnsclient, domain
 
-    def info(self, name, vm=None):
+    def info(self, name, vm=None, debug=False):
         """
 
         :param name:
@@ -447,7 +447,7 @@ class Kopenstack(object):
             except:
                 common.pprint("VM %s not found" % name, color='red')
                 return {}
-        if self.debug:
+        if debug:
             print(vars(vm))
         yamlinfo = {'name': vm.name, 'status': vm.status, 'project': self.project}
         if vm.status.lower() == 'error':

@@ -466,7 +466,7 @@ class Kaws(object):
                 return sg['GroupId']
         return None
 
-    def info(self, name, vm=None):
+    def info(self, name, vm=None, debug=False):
         """
 
         :param name:
@@ -486,7 +486,7 @@ class Kaws(object):
             except:
                 common.pprint("VM %s not found" % name, color='red')
                 return {}
-        if self.debug:
+        if debug:
             print(vm)
         instanceid = vm['InstanceId']
         name = instanceid

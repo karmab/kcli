@@ -573,7 +573,7 @@ class Kgcp(object):
                     domain = data['value']
         return dnsclient, domain
 
-    def info(self, name, vm=None):
+    def info(self, name, vm=None, debug=False):
         """
 
         :param name:
@@ -590,7 +590,7 @@ class Kgcp(object):
             except:
                 common.pprint("VM %s not found" % name, color='red')
                 return {}
-        if self.debug:
+        if debug:
             print(vm)
         yamlinfo['name'] = vm['name']
         yamlinfo['status'] = vm['status']

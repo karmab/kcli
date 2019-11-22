@@ -277,7 +277,7 @@ class Kfake(object):
 # disks list of {'device': device, 'size': disksize, 'format': diskformat, 'type': drivertype, 'path': path}
 # snapshots list of {'snapshot': snapshot, current: current}
 # fields should be split with fields.split(',')
-    def info(self, name, vm=None):
+    def info(self, name, vm=None, debug=False):
         """
 
         :param name:

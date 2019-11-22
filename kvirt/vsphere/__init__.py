@@ -708,7 +708,7 @@ class Ksphere:
                 common.pprint("Opening url %s" % vmurl)
                 webbrowser.open(vmurl, new=2, autoraise=True)
 
-    def info(self, name, output='plain', fields=[], values=False, vm=None):
+    def info(self, name, output='plain', fields=[], values=False, vm=None, debug=False):
         translation = {'poweredOff': 'down', 'poweredOn': 'up', 'suspended': 'suspended'}
         yamlinfo = {}
         si = self.si
@@ -754,7 +754,7 @@ class Ksphere:
                 currentips = nic.ipAddress
                 if currentmac == mainmac and currentips:
                     yamlinfo['ip'] = currentips[0]
-        if self.debug:
+        if debug:
             print(vm.config.extraConfig)
         for entry in vm.config.extraConfig:
             if entry.key == 'plan':

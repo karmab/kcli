@@ -668,7 +668,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                     domain = desc[1]
         return dnsclient, domain
 
-    def info(self, name, vm=None):
+    def info(self, name, vm=None, debug=False):
         """
 
         :param name:
@@ -685,7 +685,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             vm = vmsearch[0]
         else:
             minimal = True
-        if self.debug:
+        if debug:
             print(vars(vm))
         status = str(vm.status)
         yamlinfo = {'name': vm.name, 'disks': [], 'nets': [], 'status': status, 'instanceid': vm.id}

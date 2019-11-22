@@ -327,7 +327,7 @@ class Kforeman(object):
 # 'type': drivertype, 'path': path}
 # snapshots list of {'snapshot': snapshot, current: current}
 # fields should be split with fields.split(',')
-    def info(self, name, output='plain', fields=[], values=False, vm=None):
+    def info(self, name, output='plain', fields=[], values=False, vm=None, debug=False):
         """
 
         :param name:

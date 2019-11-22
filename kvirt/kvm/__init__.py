@@ -1157,7 +1157,7 @@ class Kvirt(object):
                             os.system(serialcommand)
                             # os.system(serialcommand)
 
-    def info(self, name, vm=None):
+    def info(self, name, vm=None, debug=False):
         """
 
         :param name:
@@ -1173,7 +1173,7 @@ class Kvirt(object):
                 common.pprint("VM %s not found" % name, color='red')
                 return {}
         xml = vm.XMLDesc(0)
-        if self.debug:
+        if debug:
             print(xml)
         root = ET.fromstring(xml)
         status = 'down'
@@ -1212,6 +1212,7 @@ class Kvirt(object):
             e = element.find('{kvirt}image')
             if e is not None:
                 image = e.text
+                yamlinfo['user'] = common.get_user(image)
             e = element.find('{kvirt}report')
             if e is not None:
                 report = e.text
@@ -2387,53 +2388,10 @@ class Kvirt(object):
         return {'result': 'success'}
 
     def _ssh_credentials(self, name):
-        user = 'root'
-        ip = None
-        conn = self.conn
-        try:
-            vm = conn.lookupByName(name)
-            xml = vm.XMLDesc(0)
-            root = ET.fromstring(xml)
-        except:
-            common.pprint("VM %s not found" % name, color='red')
+        info = self.info(name, debug=False)
+        if not info:
             return None, None
-        for element in list(root.getiterator('{kvirt}info')):
-            e = element.find('{kvirt}ip')
-            if e is not None:
-                ip = e.text
-            e = element.find('{kvirt}image')
-            if e is not None:
-                image = e.text
-                if image != '':
-                    user = common.get_user(image)
-        if '/var/lib/libvirt/openshift-images/' in xml:
-            user = 'coreos'
-        if ip is not None:
-            return user, ip
-        networktypes = [element.get('type') for element in list(root.getiterator('interface'))]
-        nics = [n for n in list(root.getiterator('interface'))]
-        networktypes = [element.get('type') for element in nics]
-        for nic in nics:
-            if ip is not None:
-                break
-            mac = nic.find('mac').get('address')
-            ifaces = []
-            if vm.isActive():
-                guestagent = vir_src_agent if 'bridge' in networktypes else vir_src_lease
-                try:
-                    gfaces = vm.interfaceAddresses(guestagent, 0)
-                    ifaces = gfaces
-                except:
-                    pass
-                if ifaces:
-                    matches = [ifaces[x]['addrs'] for x in ifaces if ifaces[x]['hwaddr'] == mac and
-                               ifaces[x]['addrs'] is not None]
-                    if matches:
-                        for match in matches[0]:
-                            matchip = match['addr']
-                            if IPAddress(matchip).version == 4:
-                                ip = matchip
-                                break
+        user, ip = info.get('user', 'root'), info.get('ip')
         if ip is None:
             common.pprint("No ip found. Cannot ssh...", color='red')
         return user, ip
