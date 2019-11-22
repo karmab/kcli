@@ -489,10 +489,10 @@ class Kvirt(object):
                     netmasks and len(netmasks) > index and netmasks[index] is not None and gateway is not None:
                 nets[index]['ip'] = ips[index]
                 nets[index]['netmask'] = netmasks[index]
-            elif netname in networks:
+            if netname in networks:
                 iftype = 'network'
                 sourcexml = "<source network='%s'/>" % netname
-            if netname in bridges or ovs:
+            elif netname in bridges or ovs:
                 iftype = 'bridge'
                 sourcexml = "<source bridge='%s'/>" % netname
                 guestagent = True
@@ -1511,12 +1511,11 @@ class Kvirt(object):
         for element in list(root.getiterator('interface')):
             mac = element.find('mac').get('address')
             networktype = element.get('type')
-            if networktype != 'bridge' and networktype != 'user':
+            if networktype == 'user':
+                continue
+            try:
                 network = element.find('source').get('network')
-                try:
-                    network = conn.networkLookupByName(network)
-                except:
-                    continue
+                network = conn.networkLookupByName(network)
                 netxml = network.XMLDesc(0)
                 netroot = ET.fromstring(netxml)
                 for host in list(netroot.getiterator('host')):
@@ -1530,8 +1529,9 @@ class Kvirt(object):
                     if hostname is not None and hostname.text == name:
                         hostentry = '<host ip="%s"><hostname>%s</hostname></host>' % (iphost, name)
                         network.update(2, 10, 0, hostentry, 1)
-            elif networktype == 'bridge':
-                bridged = True
+            except:
+                if networktype == 'bridge':
+                    bridged = True
         if ip is not None:
             os.system("ssh-keygen -q -R %s >/dev/null 2>&1" % ip)
             # delete hosts entry
