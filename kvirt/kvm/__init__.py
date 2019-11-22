@@ -820,7 +820,8 @@ class Kvirt(object):
             self._uploadimage(name, pool=default_storagepool)
         xml = vm.XMLDesc(0)
         vmxml = ET.fromstring(xml)
-        self._reserve_ip(name, vmxml, nets)
+        if reserveip:
+            self._reserve_ip(name, vmxml, nets)
         if start:
             try:
                 vm.create()
@@ -1702,7 +1703,7 @@ class Kvirt(object):
                 continue
             ip = net.get('ip')
             network = net.get('name')
-            reserveip = net.get('reserveip', False)
+            reserveip = net.get('reserveip', True)
             if not reserveip:
                 continue
             mac = macs[index]
