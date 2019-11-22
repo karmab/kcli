@@ -423,14 +423,9 @@ class Kbase(object):
         print("not implemented")
         return
 
-# should return (user, ip)
-    def _ssh_credentials(self, name):
-        print("not implemented")
-        return
-
 # should leverage if possible
 # should return a sshcommand string
-# u, ip = self._ssh_credentials(name)
+# u, ip = common._ssh_credentials(self, name)
 # sshcommand = common.ssh(name, ip=ip, host=self.host, port=self.port,
 # hostuser=self.user, user=u, local=local,
 # remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X,

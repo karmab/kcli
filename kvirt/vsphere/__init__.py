@@ -763,6 +763,7 @@ class Ksphere:
                 yamlinfo['profile'] = entry.value
             if entry.key == 'image':
                 yamlinfo['image'] = entry.value
+                yamlinfo['user'] = common.get_user(entry.value)
         return yamlinfo
 
     def list(self):
@@ -994,7 +995,7 @@ class Ksphere:
         :param D:
         :return:
         """
-        u, ip = self._ssh_credentials(name)
+        u, ip = common._ssh_credentials(self, name)
         if ip is None:
             return None
         if user is None:
@@ -1016,7 +1017,7 @@ class Ksphere:
         :param recursive:
         :return:
         """
-        u, ip = self._ssh_credentials(name)
+        u, ip = common._ssh_credentials(self, name)
         if ip is None:
             return None
         if user is None:
@@ -1025,36 +1026,6 @@ class Ksphere:
                                 source=source, destination=destination, recursive=recursive, tunnel=tunnel,
                                 debug=self.debug, download=False)
         return scpcommand
-
-    def _ssh_credentials(self, name):
-        user = None
-        si = self.si
-        dc = self.dc
-        vmFolder = dc.vmFolder
-        vm = findvm(si, vmFolder, name)
-        if vm is None:
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
-        if vm.runtime.powerState == "poweredOff":
-            return {'result': 'failure', 'reason': "VM %s down" % name}
-        for entry in vm.config.extraConfig:
-            if entry.key == 'image':
-                user = common.get_user(entry.value)
-        # summary = vm.summary
-        # ip = summary.guest.ipAddress if summary.guest is not None else None
-        ip = None
-        mainmac = None
-        for devnumber, dev in enumerate(vm.config.hardware.device):
-            if "addressType" in dir(dev):
-                mac = dev.macAddress
-                if mainmac is None:
-                    mainmac = mac
-                    for nic in vm.guest.net:
-                        currentmac = nic.macAddress
-                        currentips = nic.ipAddress
-                        if currentmac == mainmac and currentips:
-                            ip = currentips[0]
-                            break
-        return user, ip
 
     def add_disk(self, name, size=1, pool=None, thin=True, image=None, shareable=False, existing=None):
         si = self.si

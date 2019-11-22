@@ -457,6 +457,7 @@ class Kopenstack(object):
                 pass
         source = self.glance.images.get(vm.image['id']).name if 'id' in vm.image else ''
         yamlinfo['image'] = source
+        yamlinfo['user'] = common.get_user(source)
         flavor = nova.flavors.get(vm.flavor['id'])
         yamlinfo['flavor'] = flavor.name
         yamlinfo['memory'] = flavor.ram
@@ -855,32 +856,6 @@ class Kopenstack(object):
         print("not implemented")
         return
 
-    def _ssh_credentials(self, name):
-        user = 'root'
-        ip = None
-        nova = self.nova
-        try:
-            vm = nova.servers.find(name=name)
-        except:
-            return None, None
-        try:
-            vm = nova.servers.find(name=name)
-        except:
-            common.pprint("VM %s not found" % name, color='red')
-            return None, None
-        if 'id' in vm.image:
-            image = self.glance.images.get(vm.image['id']).name
-            user = common.get_user(image)
-        for key in list(vm.addresses):
-            entry1 = vm.addresses[key]
-            for entry2 in entry1:
-                if entry2['OS-EXT-IPS:type'] == 'floating':
-                    ip = entry2['addr']
-        if ip is None:
-            print("No ip found. Cannot ssh...")
-            return None, None
-        return user, ip
-
     def ssh(self, name, user=None, local=None, remote=None, tunnel=False,
             insecure=False, cmd=None, X=False, Y=False, D=None):
         """
@@ -897,7 +872,7 @@ class Kopenstack(object):
         :param D:
         :return:
         """
-        u, ip = self._ssh_credentials(name)
+        u, ip = common._ssh_credentials(self, name)
         if user is None:
             user = u
         tunnel = False
@@ -921,7 +896,7 @@ class Kopenstack(object):
         :return:
         """
         tunnel = False
-        u, ip = self._ssh_credentials(name)
+        u, ip = common._ssh_credentials(self, name)
         if user is None:
             user = u
         scpcommand = common.scp(name, ip=ip, host=self.host, user=user, source=source,

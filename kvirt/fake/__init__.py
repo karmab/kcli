@@ -496,12 +496,9 @@ class Kfake(object):
         print("not implemented")
         return
 
-    def _ssh_credentials(self, name):
-        return 'root', '127.0.0.1'
-
 # should leverage if possible
 # should return a sshcommand string
-# u, ip = self._ssh_credentials(name)
+# u, ip = common._ssh_credentials(self, name)
 # sshcommand = common.ssh(name, ip=ip, host=self.host, port=self.port, hostuser=self.user, user=u, local=local,
 # remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, Y=Y, debug=self.debug)
     def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, Y=False,
@@ -525,7 +522,7 @@ class Kfake(object):
 
 # should leverage if possible
 # should return a scpcommand string
-# u, ip = self._ssh_credentials(name)
+# u, ip = common._ssh_credentials(self, name)
 # scpcommand = common.scp(name, ip='', host=self.host, port=self.port, hostuser=self.user, user=user, source=source,
 # destination=destination, recursive=recursive, tunnel=tunnel, debug=self.debug, download=False)
     def scp(self, name, user=None, source=None, destination=None, tunnel=False, download=False, recursive=False):

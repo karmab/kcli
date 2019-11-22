@@ -706,6 +706,8 @@ class Kubevirt(Kubecommon):
             yamlinfo['memory'] = memory
         if image is not None:
             yamlinfo['image'] = image
+            if image != 'N/A':
+                yamlinfo['user'] = common.get_user(image)
         if ip is not None:
             yamlinfo['ip'] = ip
         if plan is not None:
@@ -1102,23 +1104,6 @@ class Kubevirt(Kubecommon):
         print("not implemented")
         return
 
-    def _ssh_credentials(self, name):
-        crds = self.crds
-        namespace = self.namespace
-        try:
-            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
-        except:
-            common.pprint("VM %s not found" % name, color='red')
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
-        metadata = vm.get("metadata")
-        annotations = metadata.get("annotations")
-        image = annotations.get('kcli/image') if annotations is not None else None
-        user = 'root'
-        ip = self.ip(name)
-        if image is not None:
-            user = common.get_user(image)
-        return user, ip
-
     def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, Y=False,
             D=None):
         """
@@ -1135,7 +1120,7 @@ class Kubevirt(Kubecommon):
         :param D:
         :return:
         """
-        u, ip = self._ssh_credentials(name)
+        u, ip = common._ssh_credentials(self, name)
         host = self.host
         vmport = None
         if user is None:
@@ -1164,7 +1149,7 @@ class Kubevirt(Kubecommon):
         :param recursive:
         :return:
         """
-        u, ip = self._ssh_credentials(name)
+        u, ip = common._ssh_credentials(self, name)
         if ip is None:
             return None
         if user is None:

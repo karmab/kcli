@@ -692,6 +692,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         template = conn.follow_link(vm.template)
         source = template.name
         yamlinfo['image'] = source
+        yamlinfo['user'] = common.get_user(source)
         for description in vm.description.split(','):
             desc = description.split('=')
             if len(desc) == 2:
@@ -1148,36 +1149,6 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         common.pprint("VM %s not found" % name, color='red')
         return {'result': 'failure', 'reason': "VM %s not found" % name}
 
-# should return (user, ip)
-    def _ssh_credentials(self, name):
-        ip = ''
-        vmsearch = self.vms_service.list(search='name=%s' % name)
-        if not vmsearch:
-            common.pprint("VM %s not found" % name, color='red')
-            return 'root', None
-        vm = vmsearch[0]
-        template = self.conn.follow_link(vm.template)
-        user = common.get_user(template.name)
-        for description in vm.description.split(','):
-            desc = description.split('=')
-            if len(desc) == 2:
-                if desc[0] == 'ip':
-                    ip = desc[1]
-        if ip == '':
-            ips = []
-            devices = self.vms_service.vm_service(vm.id).reported_devices_service().list()
-            for device in devices:
-                if device.ips:
-                    for i in device.ips:
-                        if str(i.version) == 'v4' and i.address not in ['172.17.0.1', '127.0.0.1']:
-                            ips.append(i.address)
-            if not ips:
-                common.pprint("No ip found. Cannot ssh...", color='red')
-                return 'root', None
-            else:
-                ip = ips[-1]
-        return user, ip
-
     def ssh(self, name, user=None, local=None, remote=None, tunnel=False,
             insecure=False, cmd=None, X=False, Y=False, D=None):
         """
@@ -1194,7 +1165,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         :param D:
         :return:
         """
-        u, ip = self._ssh_credentials(name)
+        u, ip = common._ssh_credentials(self, name)
         if user is None:
             user = u
         if ip == '':
@@ -1217,7 +1188,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         :param recursive:
         :return:
         """
-        u, ip = self._ssh_credentials(name)
+        u, ip = common._ssh_credentials(self, name)
         if user is None:
             user = u
         if ip == '':

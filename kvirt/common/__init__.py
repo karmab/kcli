@@ -1036,3 +1036,13 @@ def get_binary(name, linuxurl, macosurl, compressed=False):
         downloadcmd += "; chmod u+x %s" % binary
         os.system(downloadcmd)
     return binary
+
+
+def _ssh_credentials(k, name):
+    info = k.info(name, debug=False)
+    if not info:
+        return None, None
+    user, ip = info.get('user', 'root'), info.get('ip')
+    if ip is None:
+        pprint("No ip found. Cannot ssh...", color='red')
+    return user, ip

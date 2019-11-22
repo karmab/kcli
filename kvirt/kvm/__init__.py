@@ -2387,15 +2387,6 @@ class Kvirt(object):
         conn.defineXML(vmxml)
         return {'result': 'success'}
 
-    def _ssh_credentials(self, name):
-        info = self.info(name, debug=False)
-        if not info:
-            return None, None
-        user, ip = info.get('user', 'root'), info.get('ip')
-        if ip is None:
-            common.pprint("No ip found. Cannot ssh...", color='red')
-        return user, ip
-
     def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, Y=False,
             D=None):
         """
@@ -2412,7 +2403,7 @@ class Kvirt(object):
         :param D:
         :return:
         """
-        u, ip = self._ssh_credentials(name)
+        u, ip = common._ssh_credentials(self, name)
         if ip is None:
             return None
         if user is None:
@@ -2438,7 +2429,7 @@ class Kvirt(object):
         :param recursive:
         :return:
         """
-        u, ip = self._ssh_credentials(name)
+        u, ip = common._ssh_credentials(self, name)
         if ip is None:
             return None
         if user is None:

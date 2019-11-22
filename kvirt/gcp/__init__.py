@@ -536,7 +536,7 @@ class Kgcp(object):
         """
         project = self.project
         zone = self.zone
-        user, ip = self._ssh_credentials(name)
+        user, ip = common._ssh_credentials(self. name)
         sshcommand = "ssh"
         identityfile = None
         if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
@@ -607,6 +607,8 @@ class Kgcp(object):
             yamlinfo['image'] = os.path.basename(source['sourceImage'])
         elif 'licenses' in vm['disks'][0]:
             yamlinfo['image'] = os.path.basename(vm['disks'][0]['licenses'][-1])
+        if 'image' in yamlinfo:
+            yamlinfo['user'] = common.get_user(yamlinfo['image'])
         yamlinfo['creationdate'] = dateparser.parse(vm['creationTimestamp']).strftime("%d-%m-%Y %H:%M")
         nets = []
         for interface in vm['networkInterfaces']:
@@ -1007,31 +1009,6 @@ class Kgcp(object):
         print("not implemented")
         return
 
-    def _ssh_credentials(self, name):
-        user, ip = None, None
-        conn = self.conn
-        project = self.project
-        zone = self.zone
-        try:
-            vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
-        except:
-            common.pprint("Vm %s not found" % name, color='red')
-            os._exit(1)
-        if 'natIP' in vm['networkInterfaces'][0]['accessConfigs'][0]:
-            ip = vm['networkInterfaces'][0]['accessConfigs'][0]['natIP']
-        user = 'root'
-        source = os.path.basename(vm['disks'][0]['source'])
-        source = conn.disks().get(zone=zone, project=self.project, disk=source).execute()
-        if self.project in source['sourceImage']:
-            image = os.path.basename(source['sourceImage'])
-            user = common.get_user(image)
-        elif 'licenses' in vm['disks'][0]:
-            image = os.path.basename(vm['disks'][0]['licenses'][-1])
-            user = common.get_user(image)
-        if user == 'root':
-            user = getuser()
-        return user, ip
-
     def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, Y=False,
             D=None):
         """
@@ -1048,7 +1025,7 @@ class Kgcp(object):
         :param D:
         :return:
         """
-        u, ip = self._ssh_credentials(name)
+        u, ip = common._ssh_credentials(self, name)
         if ip is None:
             return None
         if user is None:
@@ -1070,7 +1047,7 @@ class Kgcp(object):
         :param recursive:
         :return:
         """
-        u, ip = self._ssh_credentials(name)
+        u, ip = common._ssh_credentials(self, name)
         if ip is None:
             return None
         if user is None:
@@ -1117,7 +1094,7 @@ class Kgcp(object):
         """
         conn = self.conn
         project = self.project
-        shortimage = os.path.basename(image).split('?')[0].replace('.tar.gz', '').replace('.', '-')
+        shortimage = os.path.basename(image).split('?')[0].replace('.tar.gz', '').replace('.', '-').replace('-', '.')
         if 'rhcos' in image:
             shortimage = "rhcos-%s" % shortimage
         common.pprint("Adding image %s" % shortimage)

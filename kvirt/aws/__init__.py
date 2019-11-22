@@ -522,6 +522,7 @@ class Kaws(object):
             yamlinfo['memory'] = staticf[machinetype]['memory']
         # yamlinfo['autostart'] = vm['scheduling']['automaticRestart']
         yamlinfo['image'] = source
+        yamlinfo['user'] = common.get_user(yamlinfo['image'])
         # yamlinfo['creationdate'] = dateparser.parse(vm['creationTimestamp']).strftime("%d-%m-%Y %H:%M")
         yamlinfo['plan'] = plan
         yamlinfo['profile'] = profile
@@ -891,27 +892,6 @@ class Kaws(object):
         print("not implemented")
         return
 
-    def _ssh_credentials(self, name):
-        conn = self.conn
-        resource = self.resource
-        try:
-            Filters = {'Name': "tag:Name", 'Values': [name]}
-            vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
-        except:
-            print("VM %s not found" % name)
-            return '', ''
-        amid = vm['ImageId']
-        imageid = resource.Image(amid)
-        image = os.path.basename(imageid.image_location)
-        if image != '':
-            user = common.get_user(image)
-            if image.lower().startswith('centos'):
-                user = 'root'
-        ip = vm['PublicIpAddress'] if 'PublicIpAddress' in vm else ''
-        if ip == '':
-            print("No ip found. Cannot ssh...")
-        return user, ip
-
     def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, Y=False,
             D=None):
         """
@@ -928,7 +908,7 @@ class Kaws(object):
         :param D:
         :return:
         """
-        u, ip = self._ssh_credentials(name)
+        u, ip = common._ssh_credentials(self, name)
         if user is None:
             user = u
         sshcommand = common.ssh(name, ip=ip, user=user, local=local, remote=remote, tunnel=tunnel, insecure=insecure,
@@ -947,7 +927,7 @@ class Kaws(object):
         :param recursive:
         :return:
         """
-        u, ip = self._ssh_credentials(name)
+        u, ip = common._ssh_credentials(self, name)
         if ip is None:
             return None
         if user is None:

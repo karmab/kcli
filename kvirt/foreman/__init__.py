@@ -346,8 +346,9 @@ class Kforeman(object):
         cpus = 2
         memory = 1024
         image = vm['hostgroup_name']
+        user = common.get_user(image)
         yamlinfo = {'name': name, 'image': image, 'plan': plan, 'profile': profile, 'status': state, 'cpus': cpus,
-                    'memory': memory}
+                    'memory': memory, 'user': user}
         yamlinfo['created_at'] = vm['created_at']
         yamlinfo['owner_name'] = vm['owner_name']
         yamlinfo['id'] = vm['id']
@@ -566,19 +567,6 @@ class Kforeman(object):
         print("not implemented")
         return
 
-# should return (user, ip)
-    def _ssh_credentials(self, name):
-        ip, user = None, 'root'
-        vm = self._foremando(who=name)
-        image = vm['hostgroup_name']
-        if image is not None:
-            user = common.get_user(image)
-        for interface in vm['interfaces']:
-            if 'ip' in interface:
-                ip = vm['ip']
-                break
-        return user, ip
-
     def ssh(self, name, user=None, local=None, remote=None, tunnel=False,
             insecure=False, cmd=None, X=False, Y=False, D=None):
         """
@@ -595,7 +583,7 @@ class Kforeman(object):
         :param D:
         :return:
         """
-        u, ip = self._ssh_credentials(name)
+        u, ip = common._ssh_credentials(self, name)
         if user is None:
             user = u
         sshcommand = common.ssh(name, ip=ip, user=user, local=local, remote=remote, tunnel=tunnel, insecure=insecure,
@@ -615,7 +603,7 @@ class Kforeman(object):
         :param recursive:
         :return:
         """
-        u, ip = self._ssh_credentials(name)
+        u, ip = common._ssh_credentials(self, name)
         if ip is None:
             return None
         if user is None:
