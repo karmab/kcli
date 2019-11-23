@@ -496,7 +496,8 @@ def get_overrides(paramfile=None, param=[]):
                     key, value = x.split('=')
                 else:
                     split = x.split('=')
-                    key, value = split[0], ''.join(split[1:])
+                    key = split[0]
+                    value = x.replace("%s=" % key, '')
                 if value.isdigit():
                     value = int(value)
                 elif value.lower() == 'true':
