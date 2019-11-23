@@ -942,8 +942,6 @@ class Kopenstack(object):
         shortimage = os.path.basename(image).split('?')[0]
         if [i for i in self.glance.images.list() if i['name'] == shortimage]:
             return {'result': 'success'}
-        if 'rhcos' in shortimage:
-            shortimage += ".gz"
         if not os.path.exists('/tmp/%s' % shortimage):
             downloadcmd = "curl -Lo /tmp/%s -f '%s'" % (shortimage, image)
             code = os.system(downloadcmd)

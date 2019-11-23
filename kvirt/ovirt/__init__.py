@@ -1237,8 +1237,6 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         if shortimage in self.volumes():
             common.pprint("Template %s already there" % shortimage, color='blue')
             return {'result': 'success'}
-        if 'rhcos' in shortimage:
-            shortimage += ".gz"
         system_service = self.conn.system_service()
         profiles_service = self.conn.system_service().vnic_profiles_service()
         profile_id = None
