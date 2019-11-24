@@ -16,6 +16,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             FLAVOR, KEEP_NETWORKS, DNSCLIENT, STORE_METADATA, NOTIFY, NOTIFYTOKEN, NOTIFYCMD,
                             SHAREDFOLDERS, KERNEL, INITRD, CMDLINE, PLACEMENT, YAMLINVENTORY, CPUHOTPLUG, MEMORYHOTPLUG)
 from kvirt import common
+from kvirt import jinjafilters
 import os
 from shutil import copytree, rmtree
 import yaml
@@ -570,6 +571,8 @@ class Kbaseconfig:
         basefile = None
         undefined = strictundefined if not ignore else defaultundefined
         env = Environment(loader=FileSystemLoader(basedir), undefined=undefined)
+        for jinjafilter in jinjafilters.jinjafilters:
+            env.filters[jinjafilter] = jinjafilters.jinjafilters[jinjafilter]
         try:
             templ = env.get_template(os.path.basename(inputfile))
         except TemplateSyntaxError as e:
