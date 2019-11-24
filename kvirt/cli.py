@@ -303,11 +303,10 @@ def info_vm(args):
     fields = args.fields.split(',') if args.fields is not None else []
     values = args.values
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    debug = config.debug
     names = [common.get_lastvm(config.client)] if not args.names else args.names
     k = config.k
     for name in names:
-        data = k.info(name, debug=debug)
+        data = k.info(name, debug=args.debug)
         if data:
             print(common.print_info(data, output=output, fields=fields, values=values, pretty=True))
 

@@ -19,7 +19,7 @@ if os.path.exists('README.rst'):
 
 setup(
     name='kcli',
-    version='20.3',
+    version='20.4',
     include_package_data=True,
     packages=find_packages(),
     zip_safe=False,
