@@ -2576,32 +2576,10 @@ class Kvirt(object):
         code = call(downloadcmd, shell=True)
         if code != 0:
             return {'result': 'failure', 'reason': "Unable to download indicated image"}
-        if shortimage.endswith('bz2'):
-            if self.host == 'localhost' or self.host == '127.0.0.1':
-                if find_executable('bunzip2') is not None:
-                    uncompresscmd = "bunzip2 %s/%s" % (poolpath, shortimage)
-                    os.system(uncompresscmd)
-                else:
-                    common.pprint("bunzip2 not found. Can't uncompress image", color="red")
-                    return {'result': 'failure', 'reason': "bunzip2 not found. Can't uncompress image"}
-            elif self.protocol == 'ssh':
-                uncompresscmd = 'ssh %s -p %s %s@%s "bunzip2 %s/%s"' % (self.identitycommand, self.port, self.user,
-                                                                        self.host, poolpath, shortimage)
-                os.system(uncompresscmd)
-        if shortimage.endswith('gz'):
-            if self.host == 'localhost' or self.host == '127.0.0.1':
-                if find_executable('gunzip') is not None:
-                    uncompresscmd = "gunzip %s/%s" % (poolpath, shortimage)
-                    os.system(uncompresscmd)
-                else:
-                    common.pprint("gunzip not found. Can't uncompress image", color="red")
-                    return {'result': 'failure', 'reason': "gunzip not found. Can't uncompress image"}
-            elif self.protocol == 'ssh':
-                uncompresscmd = 'ssh %s -p %s %s@%s "gunzip %s/%s"' % (self.identitycommand, self.port, self.user,
-                                                                       self.host, poolpath, shortimage)
-                os.system(uncompresscmd)
-        if shortimage.endswith('xz') or shortimage.endswith('gz'):
-            executable = 'unxz' if shortimage.endswith('xz') else 'gunzip'
+        if shortimage.endswith('xz') or shortimage.endswith('gz') or shortimage.endswith('bz2'):
+            executable = {'xz': 'unxz', 'gz': 'gunzip', 'bz2': 'bunzip2'}
+            extension = os.path.splitext(shortimage)[1]
+            executable = executable[extension]
             if self.host == 'localhost' or self.host == '127.0.0.1':
                 if find_executable(executable) is not None:
                     uncompresscmd = "%s %s/%s" % (executable, poolpath, shortimage)
