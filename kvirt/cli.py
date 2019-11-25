@@ -1276,6 +1276,7 @@ def ssh_vm(args):
     D = args.D
     X = args.X
     Y = args.Y
+    user = args.user
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     name = [common.get_lastvm(config.client)] if not args.name else args.name
     k = config.k
@@ -1289,8 +1290,6 @@ def ssh_vm(args):
     if '@' in name and len(name.split('@')) == 2:
         user = name.split('@')[0]
         name = name.split('@')[1]
-    else:
-        user = None
     if os.path.exists("/i_am_a_container") and not os.path.exists("/root/.kcli/config.yml")\
             and not os.path.exists("/root/.ssh/config"):
         insecure = True
@@ -1311,6 +1310,7 @@ def scp_vm(args):
     source = args.source[0]
     source = source if not os.path.exists("/i_am_a_container") else "%s/%s" % (volumepath, source)
     destination = args.destination[0]
+    user = args.user
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     tunnel = config.tunnel
@@ -1325,8 +1325,6 @@ def scp_vm(args):
         return
     if '@' in name and len(name.split('@')) == 2:
         user, name = name.split('@')
-    else:
-        user = None
     scpcommand = k.scp(name, user=user, source=source, destination=destination,
                        tunnel=tunnel, download=download, recursive=recursive)
     if scpcommand is not None:
@@ -1730,6 +1728,7 @@ def cli():
     vmscp_parser.add_argument('-r', '--recursive', help='Recursive', action='store_true')
     vmscp_parser.add_argument('-v', '--volumepath', help='Volume Path (only used with kcli container)',
                               default='/workdir', metavar='VOLUMEPATH')
+    vmscp_parser.add_argument('-u', '-l', '--user', help='User for ssh')
     vmscp_parser.add_argument('source', nargs=1)
     vmscp_parser.add_argument('destination', nargs=1)
     vmscp_parser.set_defaults(func=scp_vm)
@@ -1748,6 +1747,7 @@ def cli():
     vmssh_parser.add_argument('-R', help='Remote Forwarding', metavar='REMOTE')
     vmssh_parser.add_argument('-X', action='store_true', help='Enable X11 Forwarding')
     vmssh_parser.add_argument('-Y', action='store_true', help='Enable X11 Forwarding(Insecure)')
+    vmssh_parser.add_argument('-u', '-l', '--user', help='User for ssh')
     vmssh_parser.add_argument('name', metavar='VMNAME', nargs='*')
     vmssh_parser.set_defaults(func=ssh_vm)
     subparsers.add_parser('ssh', parents=[vmssh_parser], description=vmssh_desc, help=vmssh_desc, epilog=vmssh_epilog,
