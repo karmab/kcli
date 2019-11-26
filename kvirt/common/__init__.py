@@ -854,35 +854,22 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     if enableroot:
         rootdata = {'name': 'root', 'sshAuthorizedKeys': publickeys}
         data['passwd']['users'].append(rootdata)
-    ignitionextrapath = None
     if os.path.exists("%s.ign" % name):
         ignitionextrapath = "%s.ign" % name
-    elif 'master' in name:
-        ignitionextrapath = find_ignition_files('master', plan=plan)
-    elif 'worker' in name:
-        ignitionextrapath = find_ignition_files('worker', plan=plan)
-    elif 'bootstrap' in name:
-        ignitionextrapath = find_ignition_files('bootstrap', plan=plan)
-    if ignitionextrapath is not None:
-        pprint("Merging ignition data from existing %s for %s" % (ignitionextrapath, name), color="blue")
-        with open(ignitionextrapath, 'r') as extra:
-            ignitionextra = json.load(extra)
-            children = {'storage': 'files', 'passwd': 'users', 'systemd': 'units'}
-            for key in children:
-                childrenkey2 = 'path' if key == 'storage' else 'name'
-                if key in data and key in ignitionextra:
-                    if children[key] in data[key] and children[key] in ignitionextra[key]:
-                        for entry in data[key][children[key]]:
-                            if entry[childrenkey2] not in [x[childrenkey2] for x in ignitionextra[key][children[key]]]:
-                                ignitionextra[key][children[key]].append(entry)
-                    elif children[key] in data[key] and children[key] not in ignitionextra[key]:
-                        ignitionextra[key][children[key]] = data[key][children[key]]
-                elif key in data and key not in ignitionextra:
-                    ignitionextra[key] = data[key]
-        if removetls and 'append' in ignitionextra['ignition']['config'] and\
-                ignitionextra['ignition']['config']['append'][0]['source'].startswith("http://"):
-            del ignitionextra['ignition']['security']['tls']['certificateAuthorities']
-        data = ignitionextra
+        data = mergeignition(name, ignitionextrapath, data)
+    role = None
+    if len(name.split('-')) == 3 and name.split('-')[1] in ['master', 'worker', 'bootstrap']:
+        role = name.split('-')[1]
+    if role is not None:
+        if os.path.exists("%s-%s.ign" % (plan, role)):
+            ignitionextrapath = "%s-%s.ign" % (plan, role)
+            data = mergeignition(name, ignitionextrapath, data)
+        ignitionrolepath = find_ignition_files(role, plan=plan)
+        if ignitionrolepath is not None:
+            data = mergeignition(name, ignitionrolepath, data)
+    if removetls and 'append' in data['ignition']['config'] and\
+            data['ignition']['config']['append'][0]['source'].startswith("http://"):
+        del data['ignition']['security']['tls']['certificateAuthorities']
     return json.dumps(data, sort_keys=True, indent=indent, separators=separators)
 
 
@@ -918,16 +905,13 @@ def get_latest_rhcos(url, _type='kvm'):
                         return "%s/%s/%s" % (url, build, data['images'][key]['path'])
 
 
-def find_ignition_files(role, plan=None):
-    if plan is not None:
-        if os.path.exists("clusters/%s/%s.ign" % (plan, role)):
-            return "clusters/%s/%s.ign" % (plan, role)
-        elif os.path.exists("./%s/%s.ign" % (plan, role)):
-            return "%s/%s.ign" % (plan, role)
-    for r, d, f in os.walk('.'):
-        if '%s.ign' % role in f:
-            return "%s/%s.ign" % (r, role)
-    return None
+def find_ignition_files(role, plan):
+    if os.path.exists("clusters/%s/%s.ign" % (plan, role)):
+        return "clusters/%s/%s.ign" % (plan, role)
+    elif os.path.exists("./%s/%s.ign" % (plan, role)):
+        return "%s/%s.ign" % (plan, role)
+    else:
+        return None
 
 
 def pretty_print(o, value=False):
@@ -1047,3 +1031,22 @@ def _ssh_credentials(k, name):
     if ip is None:
         pprint("No ip found. Cannot ssh...", color='red')
     return user, ip
+
+
+def mergeignition(name, ignitionextrapath, data):
+    pprint("Merging ignition data from existing %s for %s" % (ignitionextrapath, name), color="blue")
+    with open(ignitionextrapath, 'r') as extra:
+        ignitionextra = json.load(extra)
+        children = {'storage': 'files', 'passwd': 'users', 'systemd': 'units'}
+        for key in children:
+            childrenkey2 = 'path' if key == 'storage' else 'name'
+            if key in data and key in ignitionextra:
+                if children[key] in data[key] and children[key] in ignitionextra[key]:
+                    for entry in data[key][children[key]]:
+                        if entry[childrenkey2] not in [x[childrenkey2] for x in ignitionextra[key][children[key]]]:
+                            ignitionextra[key][children[key]].append(entry)
+                elif children[key] in data[key] and children[key] not in ignitionextra[key]:
+                    ignitionextra[key][children[key]] = data[key][children[key]]
+            elif key in data and key not in ignitionextra:
+                ignitionextra[key] = data[key]
+    return ignitionextra
