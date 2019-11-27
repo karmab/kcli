@@ -633,20 +633,21 @@ to get you started
 Note that when you download a given cloud image, a minimal associated
 profile is created for you.
 
-Cloudinit stuff
----------------
+Cloudinit/Ignition support
+--------------------------
 
 Cloudinit is enabled by default and handles static networking
 configuration, hostname setting, injecting ssh keys and running specific
 commands and entire scripts, and copying entire files.
 
 For vms based on coreos, ignition is used instead of cloudinit although
-the syntax is the same. If a $name.ign is found in the current directory
-or in one directory below, its content will be merged. To ease openshift
-deployment, when a node has a name in the :math:`cluster-role-`\ num,
-where role can either be master, worker or bootstrap, additional paths
-are searched, namely :math:`cluster-`\ role.ign and
-clusters/\ :math:`cluster/`\ role.ign
+the syntax is the same. If $name.ign or $plan.ign are found in the
+current directory, their content will be merged.
+
+To ease openshift deployment, when a node has a name in the
+:math:`cluster-role-`\ num, where role can either be master, worker or
+bootstrap, additional paths are searched, namely
+:math:`cluster-`\ role.ign and clusters/\ :math:`cluster/`\ role.ign
 
 For ignition support on ovirt, you will need a version of ovirt >=
 4.3.4. Note that this requires to use an openstack rhcos image.

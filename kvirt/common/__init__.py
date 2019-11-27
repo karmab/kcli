@@ -854,19 +854,37 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     if enableroot:
         rootdata = {'name': 'root', 'sshAuthorizedKeys': publickeys}
         data['passwd']['users'].append(rootdata)
-    if os.path.exists("%s.ign" % name):
-        ignitionextrapath = "%s.ign" % name
-        data = mergeignition(name, ignitionextrapath, data)
+    # if os.path.exists("%s.ign" % name):
+    #     ignitionextrapath = "%s.ign" % name
+    #     data = mergeignition(name, ignitionextrapath, data)
+    # role = None
+    # if len(name.split('-')) == 3 and name.split('-')[1] in ['master', 'worker', 'bootstrap']:
+    #     role = name.split('-')[1]
+    # if role is not None:
+    #     if os.path.exists("%s-%s.ign" % (plan, role)):
+    #         ignitionextrapath = "%s-%s.ign" % (plan, role)
+    #         data = mergeignition(name, ignitionextrapath, data)
+    #     ignitionrolepath = find_ignition_files(role, plan=plan)
+    #     if ignitionrolepath is not None:
+    #         data = mergeignition(name, ignitionrolepath, data)
     role = None
-    if len(name.split('-')) == 3 and name.split('-')[1] in ['master', 'worker', 'bootstrap']:
+    if len(name.split('-')) == 3 and name.split('-')[1] in ['master', 'worker']:
+        role = name.split('-')[1]
+    elif len(name.split('-')) == 2 and name.split('-')[1] == 'bootstrap':
         role = name.split('-')[1]
     if role is not None:
-        if os.path.exists("%s-%s.ign" % (plan, role)):
-            ignitionextrapath = "%s-%s.ign" % (plan, role)
-            data = mergeignition(name, ignitionextrapath, data)
         ignitionrolepath = find_ignition_files(role, plan=plan)
         if ignitionrolepath is not None:
             data = mergeignition(name, ignitionrolepath, data)
+        if os.path.exists("%s-%s.ign" % (plan, role)):
+            ignitionextrapath = "%s-%s.ign" % (plan, role)
+            data = mergeignition(name, ignitionextrapath, data)
+    if os.path.exists("%s.ign" % plan):
+        ignitionextrapath = "%s.ign" % plan
+        data = mergeignition(name, ignitionextrapath, data)
+    if os.path.exists("%s.ign" % name):
+        ignitionextrapath = "%s.ign" % name
+        data = mergeignition(name, ignitionextrapath, data)
     if removetls and 'append' in data['ignition']['config'] and\
             data['ignition']['config']['append'][0]['source'].startswith("http://"):
         del data['ignition']['security']['tls']['certificateAuthorities']
@@ -1049,4 +1067,6 @@ def mergeignition(name, ignitionextrapath, data):
                     ignitionextra[key][children[key]] = data[key][children[key]]
             elif key in data and key not in ignitionextra:
                 ignitionextra[key] = data[key]
+        if data['ignition']['config']:
+            ignitionextra['ignition']['config'] = data['ignition']['config']
     return ignitionextra
