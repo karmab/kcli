@@ -723,7 +723,7 @@ def get_user(image):
         user = 'core'
     elif 'cirros' in image.lower():
         user = 'cirros'
-    elif [x for x in ubuntus if x in image.lower()]:
+    elif [x for x in ubuntus if x in image.lower()] or 'ubuntu' in image.lower():
         user = 'ubuntu'
     elif 'fedora' in image.lower():
         user = 'fedora'
@@ -736,6 +736,19 @@ def get_user(image):
     else:
         user = 'root'
     return user
+
+
+def get_cloudinitfile(image):
+    """
+
+    :param image:
+    :return:
+    """
+    if 'fedora' in image.lower() or 'ubuntu' in image.lower() or [x for x in ubuntus if x in image.lower()]:
+        cloudinitfile = '/var/log/cloud-init-output.log'
+    else:
+        cloudinitfile = '/var/log/messages'
+    return cloudinitfile
 
 
 def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[],

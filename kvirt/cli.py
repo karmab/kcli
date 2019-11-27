@@ -745,6 +745,7 @@ def create_vm(args):
     profile = args.profile
     profilefile = args.profilefile
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
+    wait = args.wait
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if 'name' in overrides:
         name = overrides['name']
@@ -767,7 +768,7 @@ def create_vm(args):
         else:
             with open(profilefile, 'r') as entries:
                 config.profiles = yaml.safe_load(entries)
-    result = config.create_vm(name, profile, overrides=overrides)
+    result = config.create_vm(name, profile, overrides=overrides, wait=wait)
     code = common.handle_response(result, name, element='', action='created', client=config.client)
     return code
 
@@ -1038,6 +1039,7 @@ def create_plan(args):
     inputfile = args.inputfile
     volumepath = args.volumepath
     paramfile = args.paramfile
+    wait = args.wait
     if os.path.exists("/i_am_a_container"):
         inputfile = "%s/%s" % (volumepath, inputfile) if inputfile is not None else "%s/kcli_plan.yml" % volumepath
         if paramfile is not None:
@@ -1051,7 +1053,7 @@ def create_plan(args):
         common.pprint("Using %s as name of the plan" % plan)
     config.plan(plan, ansible=ansible, url=url, path=path,
                 container=container, inputfile=inputfile,
-                overrides=overrides)
+                overrides=overrides, wait=wait)
     return 0
 
 
@@ -2109,6 +2111,7 @@ def cli():
     plancreate_parser.add_argument('-P', '--param', action='append',
                                    help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
     plancreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    plancreate_parser.add_argument('-w', '--wait', action='store_true', help='Wait for cloudinit to finish')
     plancreate_parser.add_argument('plan', metavar='PLAN', nargs='?')
     plancreate_parser.set_defaults(func=create_plan)
 
@@ -2305,6 +2308,7 @@ def cli():
                                  help='specify parameter or keyword for rendering (multiple can be specified)',
                                  metavar='PARAM')
     vmcreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    vmcreate_parser.add_argument('-w', '--wait', action='store_true', help='Wait for cloudinit to finish')
     vmcreate_parser.add_argument('name', metavar='VMNAME', nargs='?')
     vmcreate_parser.set_defaults(func=create_vm)
     create_subparsers.add_parser('vm', parents=[vmcreate_parser], description=vmcreate_desc, help=vmcreate_desc,

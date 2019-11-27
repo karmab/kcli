@@ -214,7 +214,7 @@ class Kconfig(Kbaseconfig):
         self.overrides.update({'type': self.type})
 
     def create_vm(self, name, profile, overrides={}, customprofile={}, k=None,
-                  plan='kvirt', basedir='.', client=None, onfly=None):
+                  plan='kvirt', basedir='.', client=None, onfly=None, wait=False):
         """
 
         :param k:
@@ -614,6 +614,31 @@ class Kconfig(Kbaseconfig):
         if os.access(os.path.expanduser('~/.kcli'), os.W_OK):
             client = client if client is not None else self.client
             common.set_lastvm(name, client)
+        if wait:
+            if image is None or not cloudinit or not start:
+                common.pprint("Skipping wait on %s as vm won't be accessible" % name, color='blue')
+            else:
+                common.pprint("Waiting for vm %s to finish customisation" % name, color='blue')
+                cloudinitfile = common.get_cloudinitfile(image)
+                cmd = "sudo grep -i cloud-init %s" % cloudinitfile
+                if 'cos' in image:
+                    cmd = 'journalctl --identifier=ignition --all --no-pager'
+                ip = None
+                while ip is None:
+                    ip = k.info(name).get('ip')
+                    common.pprint("Waiting for vm to be accessible...", color='blue')
+                    sleep(5)
+                sleep(5)
+                done = False
+                oldoutput = ''
+                while not done:
+                    sshcmd = k.ssh(name, tunnel=self.tunnel, insecure=self.insecure, cmd=cmd)
+                    output = os.popen(sshcmd).read()
+                    if 'finished' in output:
+                        done = True
+                    output = output.replace(oldoutput, '')
+                    print(output)
+                    oldoutput = output
         return {'result': 'success', 'vm': name}
 
     def list_plans(self):
@@ -695,7 +720,8 @@ class Kconfig(Kbaseconfig):
 
     def plan(self, plan, ansible=False, url=None, path=None, autostart=False, container=False, noautostart=False,
              inputfile=None, inputstring=None, start=False, stop=False, delete=False, force=True, overrides={},
-             info=False, snapshot=False, revert=False, update=False, embedded=False, restart=False, download=False):
+             info=False, snapshot=False, revert=False, update=False, embedded=False, restart=False, download=False,
+             wait=False):
         """Manage plan file"""
         if self.type == 'fake' and os.path.exists("/tmp/%s" % plan) and not embedded:
             rmtree("/tmp/%s" % plan)
@@ -1318,7 +1344,7 @@ class Kconfig(Kbaseconfig):
                         os.remove("%s.key.pub" % plan)
                         os.remove("%s.key" % plan)
                 result = self.create_vm(name, profilename, overrides=overrides, customprofile=profile, k=z,
-                                        plan=plan, basedir=currentplandir, client=vmclient, onfly=onfly)
+                                        plan=plan, basedir=currentplandir, client=vmclient, onfly=onfly, wait=wait)
                 common.handle_response(result, name, client=vmclient)
                 if result['result'] == 'success':
                     newvms.append(name)
