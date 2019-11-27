@@ -1269,10 +1269,10 @@ class Kvirt(object):
                 matches = [ifaces[x]['addrs'] for x in
                            ifaces if ifaces[x]['hwaddr'] == mac and ifaces[x]['addrs'] is not None]
                 if matches:
-                    for match in matches[0]:
-                        matchip = match['addr']
-                        if IPAddress(matchip).version == 4:
-                            ip = matchip
+                    for match in matches:
+                        match = match[0]
+                        if 'addr' in match and IPAddress(match['addr']).version == 4:
+                            ip = match['addr']
                             break
             yamlinfo['nets'].append({'device': device, 'mac': mac, 'net': network, 'type': networktype})
             nicnumber = nicnumber + 1
