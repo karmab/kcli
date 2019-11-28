@@ -2356,6 +2356,7 @@ class Kvirt(object):
         except:
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
+        networktype, mac, source = None, None, None
         for element in list(root.getiterator('interface')):
             device = "eth%s" % nicnumber
             if device == interface:
@@ -2370,6 +2371,9 @@ class Kvirt(object):
                 break
             else:
                 nicnumber += 1
+        if networktype is None or mac is None or source is None:
+            common.pprint("Interface %s not found" % interface, color='red')
+            return {'result': 'failure', 'reason': "Interface %s not found" % interface}
         nicxml = """<interface type='%s'>
                     <mac address='%s'/>
                     %s
