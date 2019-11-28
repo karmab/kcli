@@ -1432,6 +1432,11 @@ Available parameters for client/profile/plan files
    ansible entries will be yaml based.
 -  *autostart* (optional). Defaults to false. Autostarts vm (only
    applies for libvirt)
+-  *kernel* (optional). Kernel location to pass to the vm. Needs to be
+   local to the hypervisor
+-  *initrd* (optional). Initrd location to pass to the vm. Needs to be
+   local to the hypervisor
+-  *cmdline* (optional). Cmdline to pass to the vm
 
 Overriding parameters
 ---------------------

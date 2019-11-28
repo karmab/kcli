@@ -103,59 +103,65 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             if netdata:
                 metadata["network-interfaces"] = netdata
             metadatafile.write(json.dumps(metadata))
-    with open('/tmp/user-data', 'w') as userdata:
-        userdata.write('#cloud-config\nhostname: %s\n' % name)
-        if fqdn:
-            fqdn = "%s.%s" % (name, domain) if domain is not None else name
-            userdata.write("fqdn: %s\n" % fqdn)
-        if enableroot:
-            userdata.write("ssh_pwauth: True\ndisable_root: false\n")
-        if domain is not None:
-            userdata.write("fqdn: %s.%s\n" % (name, domain))
-        if keys or os.path.exists(os.path.expanduser("~/.ssh/id_rsa.pub"))\
-                or os.path.exists(os.path.expanduser("~/.ssh/id_dsa.pub"))\
-                or os.path.exists(os.path.expanduser("~/.kcli/id_rsa.pub"))\
-                or os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub")):
-            userdata.write("ssh_authorized_keys:\n")
-        else:
-            pprint("neither id_rsa or id_dsa public keys found in your .ssh or .kcli directory, you might have trouble "
-                   "accessing the vm", color='red')
-        if keys:
-            for key in list(set(keys)):
-                userdata.write("- %s\n" % key)
-        publickeyfile = None
-        if os.path.exists(os.path.expanduser("~/.ssh/id_rsa.pub")):
-            publickeyfile = os.path.expanduser("~/.ssh/id_rsa.pub")
-        elif os.path.exists(os.path.expanduser("~/.ssh/id_dsa.pub")):
-            publickeyfile = os.path.expanduser("~/.ssh/id_dsa.pub")
-        elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa.pub")):
-            publickeyfile = os.path.expanduser("~/.kcli/id_rsa.pub")
-        elif os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub")):
-            publickeyfile = os.path.expanduser("~/.kcli/id_dsa.pub")
-        if publickeyfile is not None:
-            with open(publickeyfile, 'r') as ssh:
-                key = ssh.read().rstrip()
-                userdata.write("- %s\n" % key)
-        if cmds:
-            data = process_cmds(cmds, overrides)
-            if data != '':
-                userdata.write("runcmd:\n")
-                userdata.write(data)
-        userdata.write('ssh_pwauth: True\n')
-        userdata.write('disable_root: false\n')
-        if storemetadata and overrides:
-            storeoverrides = {k: overrides[k] for k in overrides if k not in ['password', 'rhnpassword', 'rhnak']}
-            storedata = {'path': '/root/.metadata', 'content': yaml.dump(storeoverrides, default_flow_style=False,
-                                                                         indent=2)}
-            if files:
-                files.append(storedata)
+    existing = "%s.cloudinit" % name if not os.path.exists('/i_am_a_container') else "/workdir/%s.cloudinit" % name
+    if os.path.exists(existing):
+        pprint("using cloudinit from existing %s for %s" % (existing, name), color="blue")
+        with open('/tmp/user-data', 'w') as userdata:
+            userdata.write(open(existing).read())
+    else:
+        with open('/tmp/user-data', 'w') as userdata:
+            userdata.write('#cloud-config\nhostname: %s\n' % name)
+            if fqdn:
+                fqdn = "%s.%s" % (name, domain) if domain is not None else name
+                userdata.write("fqdn: %s\n" % fqdn)
+            if enableroot:
+                userdata.write("ssh_pwauth: True\ndisable_root: false\n")
+            if domain is not None:
+                userdata.write("fqdn: %s.%s\n" % (name, domain))
+            if keys or os.path.exists(os.path.expanduser("~/.ssh/id_rsa.pub"))\
+                    or os.path.exists(os.path.expanduser("~/.ssh/id_dsa.pub"))\
+                    or os.path.exists(os.path.expanduser("~/.kcli/id_rsa.pub"))\
+                    or os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub")):
+                userdata.write("ssh_authorized_keys:\n")
             else:
-                files = [storedata]
-        if files:
-            data = process_files(files=files, overrides=overrides)
-            if data != '':
-                userdata.write("write_files:\n")
-                userdata.write(data)
+                pprint("neither id_rsa or id_dsa public keys found in your .ssh or .kcli directory, you might have "
+                       "trouble accessing the vm", color='red')
+            if keys:
+                for key in list(set(keys)):
+                    userdata.write("- %s\n" % key)
+            publickeyfile = None
+            if os.path.exists(os.path.expanduser("~/.ssh/id_rsa.pub")):
+                publickeyfile = os.path.expanduser("~/.ssh/id_rsa.pub")
+            elif os.path.exists(os.path.expanduser("~/.ssh/id_dsa.pub")):
+                publickeyfile = os.path.expanduser("~/.ssh/id_dsa.pub")
+            elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa.pub")):
+                publickeyfile = os.path.expanduser("~/.kcli/id_rsa.pub")
+            elif os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub")):
+                publickeyfile = os.path.expanduser("~/.kcli/id_dsa.pub")
+            if publickeyfile is not None:
+                with open(publickeyfile, 'r') as ssh:
+                    key = ssh.read().rstrip()
+                    userdata.write("- %s\n" % key)
+            if cmds:
+                data = process_cmds(cmds, overrides)
+                if data != '':
+                    userdata.write("runcmd:\n")
+                    userdata.write(data)
+            userdata.write('ssh_pwauth: True\n')
+            userdata.write('disable_root: false\n')
+            if storemetadata and overrides:
+                storeoverrides = {k: overrides[k] for k in overrides if k not in ['password', 'rhnpassword', 'rhnak']}
+                storedata = {'path': '/root/.metadata', 'content': yaml.dump(storeoverrides, default_flow_style=False,
+                                                                             indent=2)}
+                if files:
+                    files.append(storedata)
+                else:
+                    files = [storedata]
+            if files:
+                data = process_files(files=files, overrides=overrides)
+                if data != '':
+                    userdata.write("write_files:\n")
+                    userdata.write(data)
     if iso:
         isocmd = 'mkisofs'
         if find_executable('genisoimage') is not None:
