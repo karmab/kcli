@@ -2578,7 +2578,7 @@ class Kvirt(object):
             return {'result': 'failure', 'reason': "Unable to download indicated image"}
         if shortimage.endswith('xz') or shortimage.endswith('gz') or shortimage.endswith('bz2'):
             executable = {'xz': 'unxz', 'gz': 'gunzip', 'bz2': 'bunzip2'}
-            extension = os.path.splitext(shortimage)[1]
+            extension = os.path.splitext(shortimage)[1].replace('.', '')
             executable = executable[extension]
             if self.host == 'localhost' or self.host == '127.0.0.1':
                 if find_executable(executable) is not None:
