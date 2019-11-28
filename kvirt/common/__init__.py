@@ -867,36 +867,27 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     if enableroot:
         rootdata = {'name': 'root', 'sshAuthorizedKeys': publickeys}
         data['passwd']['users'].append(rootdata)
-    # if os.path.exists("%s.ign" % name):
-    #     ignitionextrapath = "%s.ign" % name
-    #     data = mergeignition(name, ignitionextrapath, data)
-    # role = None
-    # if len(name.split('-')) == 3 and name.split('-')[1] in ['master', 'worker', 'bootstrap']:
-    #     role = name.split('-')[1]
-    # if role is not None:
-    #     if os.path.exists("%s-%s.ign" % (plan, role)):
-    #         ignitionextrapath = "%s-%s.ign" % (plan, role)
-    #         data = mergeignition(name, ignitionextrapath, data)
-    #     ignitionrolepath = find_ignition_files(role, plan=plan)
-    #     if ignitionrolepath is not None:
-    #         data = mergeignition(name, ignitionrolepath, data)
     role = None
     if len(name.split('-')) == 3 and name.split('-')[1] in ['master', 'worker']:
         role = name.split('-')[1]
     elif len(name.split('-')) == 2 and name.split('-')[1] == 'bootstrap':
         role = name.split('-')[1]
     if role is not None:
-        ignitionrolepath = find_ignition_files(role, plan=plan)
-        if ignitionrolepath is not None:
-            data = mergeignition(name, ignitionrolepath, data)
-        if os.path.exists("%s-%s.ign" % (plan, role)):
-            ignitionextrapath = "%s-%s.ign" % (plan, role)
+        ignitionclusterpath = find_ignition_files(role, plan=plan)
+        if ignitionclusterpath is not None:
+            data = mergeignition(name, ignitionclusterpath, data)
+        rolepath = "/workdir/%s-%s.ign" % (plan, role) if os.path.exists('/i_am_a_container') else "%s-%s.ign" % (plan,
+                                                                                                                  role)
+        if os.path.exists(rolepath):
+            ignitionextrapath = rolepath
             data = mergeignition(name, ignitionextrapath, data)
-    if os.path.exists("%s.ign" % plan):
-        ignitionextrapath = "%s.ign" % plan
+    planpath = "/workdir/%s.ign" % plan if os.path.exists('/i_am_a_container') else "%s.ign" % plan
+    if os.path.exists(planpath):
+        ignitionextrapath = planpath
         data = mergeignition(name, ignitionextrapath, data)
-    if os.path.exists("%s.ign" % name):
-        ignitionextrapath = "%s.ign" % name
+    namepath = "/workdir/%s.ign" % name if os.path.exists('/i_am_a_container') else "%s.ign" % name
+    if os.path.exists(namepath):
+        ignitionextrapath = namepath
         data = mergeignition(name, ignitionextrapath, data)
     if removetls and 'append' in data['ignition']['config'] and\
             data['ignition']['config']['append'][0]['source'].startswith("http://"):
@@ -937,10 +928,16 @@ def get_latest_rhcos(url, _type='kvm'):
 
 
 def find_ignition_files(role, plan):
-    if os.path.exists("clusters/%s/%s.ign" % (plan, role)):
-        return "clusters/%s/%s.ign" % (plan, role)
-    elif os.path.exists("./%s/%s.ign" % (plan, role)):
-        return "%s/%s.ign" % (plan, role)
+    if os.path.exists('/i_am_a_container'):
+        clusterpath = "/workdir/clusters/%s/%s.ign" % (plan, role)
+        rolepath = "/workdir/%s/%s.ign" % (plan, role)
+    else:
+        clusterpath = "clusters/%s/%s.ign" % (plan, role)
+        rolepath = "%s/%s.ign" % (plan, role)
+    if os.path.exists(clusterpath):
+        return clusterpath
+    elif os.path.exists(rolepath):
+        return rolepath
     else:
         return None
 

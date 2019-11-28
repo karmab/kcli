@@ -1037,13 +1037,12 @@ def create_plan(args):
     path = args.path
     container = args.container
     inputfile = args.inputfile
-    volumepath = args.volumepath
     paramfile = args.paramfile
     wait = args.wait
     if os.path.exists("/i_am_a_container"):
-        inputfile = "%s/%s" % (volumepath, inputfile) if inputfile is not None else "%s/kcli_plan.yml" % volumepath
+        inputfile = "/workdir/%s" % inputfile if inputfile is not None else "/workdir/kcli_plan.yml"
         if paramfile is not None:
-            paramfile = "%s/%s" % (volumepath, paramfile)
+            paramfile = "/workdir/%s" % paramfile
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     _type = config.ini[config.client].get('type', 'kvm')
@@ -1065,12 +1064,11 @@ def update_plan(args):
     path = args.path
     container = args.container
     inputfile = args.inputfile
-    volumepath = args.volumepath
     paramfile = args.paramfile
     if os.path.exists("/i_am_a_container"):
-        inputfile = "%s/%s" % (volumepath, inputfile) if inputfile is not None else "%s/kcli_plan.yml" % volumepath
+        inputfile = "/workdir/%s" % inputfile if inputfile is not None else "/workdir/kcli_plan.yml"
         if paramfile is not None:
-            paramfile = "%s/%s" % (volumepath, paramfile)
+            paramfile = "/workdir/%s" % paramfile
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if autostart:
@@ -1138,9 +1136,8 @@ def info_plan(args):
     url = args.url
     path = args.path
     inputfile = args.inputfile
-    volumepath = args.volumepath
     if os.path.exists("/i_am_a_container"):
-        inputfile = "%s/%s" % (volumepath, inputfile) if inputfile is not None else "%s/kcli_plan.yml" % volumepath
+        inputfile = "/workdir/%s" % inputfile if inputfile is not None else "/workdir/kcli_plan.yml"
     if url is None:
         inputfile = plan if inputfile is None and plan is not None else inputfile
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
@@ -1168,13 +1165,12 @@ def render_file(args):
     """Render file"""
     plan = None
     inputfile = args.inputfile
-    volumepath = args.volumepath
     paramfile = args.paramfile
     ignore = args.ignore
     if os.path.exists("/i_am_a_container"):
-        inputfile = "%s/%s" % (volumepath, inputfile) if inputfile is not None else "%s/kcli_plan.yml" % volumepath
+        inputfile = "/workdir/%s" % inputfile if inputfile is not None else "/workdir/kcli_plan.yml"
         if paramfile is not None:
-            paramfile = "%s/%s" % (volumepath, paramfile)
+            paramfile = "/workdir/%s" % paramfile
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     _type = baseconfig.ini[baseconfig.client].get('type', 'kvm')
@@ -1308,9 +1304,8 @@ def ssh_vm(args):
 def scp_vm(args):
     """Scp into vm"""
     recursive = args.recursive
-    volumepath = args.volumepath
     source = args.source[0]
-    source = source if not os.path.exists("/i_am_a_container") else "%s/%s" % (volumepath, source)
+    source = source if not os.path.exists("/i_am_a_container") else "/workdir/%s" % source
     destination = args.destination[0]
     user = args.user
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -1712,8 +1707,6 @@ def cli():
     render_parser.add_argument('-P', '--param', action='append',
                                help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
     render_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
-    render_parser.add_argument('-v', '--volumepath', help='Volume Path (only used with kcli container)',
-                               default='/workdir', metavar='VOLUMEPATH')
     render_parser.set_defaults(func=render_file)
 
     restart_desc = 'Restart Vm/Plan/Container'
@@ -1728,8 +1721,6 @@ def cli():
     vmscp_epilog = None
     vmscp_parser = argparse.ArgumentParser(add_help=False)
     vmscp_parser.add_argument('-r', '--recursive', help='Recursive', action='store_true')
-    vmscp_parser.add_argument('-v', '--volumepath', help='Volume Path (only used with kcli container)',
-                              default='/workdir', metavar='VOLUMEPATH')
     vmscp_parser.add_argument('-u', '-l', '--user', help='User for ssh')
     vmscp_parser.add_argument('source', nargs=1)
     vmscp_parser.add_argument('destination', nargs=1)
@@ -2106,8 +2097,6 @@ def cli():
                                    metavar='PATH')
     plancreate_parser.add_argument('-c', '--container', action='store_true', help='Handle container')
     plancreate_parser.add_argument('-f', '--inputfile', help='Input Plan file')
-    plancreate_parser.add_argument('-v', '--volumepath', help='Volume Path (only used with kcli container)',
-                                   default='/workdir', metavar='VOLUMEPATH')
     plancreate_parser.add_argument('-P', '--param', action='append',
                                    help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
     plancreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
@@ -2129,8 +2118,6 @@ def cli():
     planinfo_parser.add_argument('-f', '--inputfile', help='Input Plan file')
     planinfo_parser.add_argument('-p', '--path', help='Path where to download plans. Defaults to plan', metavar='PATH')
     planinfo_parser.add_argument('-u', '--url', help='Url for plan', metavar='URL')
-    planinfo_parser.add_argument('-v', '--volumepath', help='Volume Path (only used with kcli container)',
-                                 default='/workdir', metavar='VOLUMEPATH')
     planinfo_parser.add_argument('plan', metavar='PLAN', nargs='?')
     planinfo_parser.set_defaults(func=info_plan)
 
@@ -2174,8 +2161,6 @@ def cli():
     planupdate_parser.add_argument('-P', '--param', action='append',
                                    help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
     planupdate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
-    planupdate_parser.add_argument('-v', '--volumepath', help='Volume Path (only used with kcli container)',
-                                   default='/workdir', metavar='VOLUMEPATH')
     planupdate_parser.add_argument('plan', metavar='PLAN', nargs='?')
     planupdate_parser.set_defaults(func=update_plan)
 
