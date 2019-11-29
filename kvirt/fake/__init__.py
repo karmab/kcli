@@ -525,7 +525,8 @@ class Kfake(object):
 # u, ip = common._ssh_credentials(self, name)
 # scpcommand = common.scp(name, ip='', host=self.host, port=self.port, hostuser=self.user, user=user, source=source,
 # destination=destination, recursive=recursive, tunnel=tunnel, debug=self.debug, download=False)
-    def scp(self, name, user=None, source=None, destination=None, tunnel=False, download=False, recursive=False):
+    def scp(self, name, user=None, source=None, destination=None, tunnel=False, download=False, recursive=False,
+            insecure=False):
         """
 
         :param name:
@@ -535,6 +536,7 @@ class Kfake(object):
         :param tunnel:
         :param download:
         :param recursive:
+        :param insecure:
         :return:
         """
         print("not implemented")

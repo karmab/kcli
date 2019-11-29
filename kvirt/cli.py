@@ -1311,6 +1311,7 @@ def scp_vm(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     tunnel = config.tunnel
+    insecure = config.insecure
     if len(source.split(':')) == 2:
         name, source = source.split(':')
         download = True
@@ -1323,7 +1324,7 @@ def scp_vm(args):
     if '@' in name and len(name.split('@')) == 2:
         user, name = name.split('@')
     scpcommand = k.scp(name, user=user, source=source, destination=destination,
-                       tunnel=tunnel, download=download, recursive=recursive)
+                       tunnel=tunnel, download=download, recursive=recursive, insecure=insecure)
     if scpcommand is not None:
         if find_executable('scp') is not None:
             os.system(scpcommand)

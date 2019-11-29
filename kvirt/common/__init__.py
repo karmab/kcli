@@ -671,7 +671,7 @@ def ssh(name, ip='', host=None, port=22, hostuser=None, user=None, local=None, r
 
 
 def scp(name, ip='', host=None, port=22, hostuser=None, user=None, source=None, destination=None, recursive=None,
-        tunnel=False, debug=False, download=False, vmport=None):
+        tunnel=False, debug=False, download=False, vmport=None, insecure=False):
     """
 
     :param name:
@@ -692,10 +692,11 @@ def scp(name, ip='', host=None, port=22, hostuser=None, user=None, source=None, 
     if ip == '':
         print("No ip found. Cannot scp...")
     else:
+        arguments = ''
         if host is not None and host not in ['localhost', '127.0.0.1'] and tunnel and hostuser is not None:
-            arguments = "-o ProxyCommand='ssh -qp %s -W %%h:%%p %s@%s'" % (port, hostuser, host)
-        else:
-            arguments = ''
+            arguments += "-o ProxyCommand='ssh -qp %s -W %%h:%%p %s@%s'" % (port, hostuser, host)
+        if insecure:
+            arguments += " -o LogLevel=quiet -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
         scpcommand = 'scp'
         identityfile = None
         if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):

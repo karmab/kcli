@@ -1093,7 +1093,8 @@ class Kbox(object):
                 sshcommand = "ssh %s" % sshcommand
             return sshcommand
 
-    def scp(self, name, user=None, source=None, destination=None, tunnel=False, download=False, recursive=False):
+    def scp(self, name, user=None, source=None, destination=None, tunnel=False, download=False, recursive=False,
+            insecure=False):
         """
 
         :param name:
@@ -1103,6 +1104,7 @@ class Kbox(object):
         :param tunnel:
         :param download:
         :param recursive:
+        :param insecure:
         :return:
         """
         u, port = self._ssh_credentials(name)

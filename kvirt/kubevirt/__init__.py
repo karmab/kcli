@@ -1137,7 +1137,8 @@ class Kubevirt(Kubecommon):
                                 debug=self.debug, D=D, vmport=vmport)
         return sshcommand
 
-    def scp(self, name, user=None, source=None, destination=None, tunnel=False, download=False, recursive=False):
+    def scp(self, name, user=None, source=None, destination=None, tunnel=False, download=False, recursive=False,
+            insecure=False):
         """
 
         :param name:
@@ -1147,6 +1148,7 @@ class Kubevirt(Kubecommon):
         :param tunnel:
         :param download:
         :param recursive:
+        :param insecure:
         :return:
         """
         u, ip = common._ssh_credentials(self, name)
@@ -1156,7 +1158,7 @@ class Kubevirt(Kubecommon):
             user = u
         scpcommand = common.scp(name, ip=ip, host=self.host, port=22, hostuser=self.user, user=user,
                                 source=source, destination=destination, recursive=recursive, tunnel=tunnel,
-                                debug=self.debug, download=download)
+                                debug=self.debug, download=download, insecure=insecure)
         return scpcommand
 
     def create_pool(self, name, poolpath, pooltype='dir', user='qemu', thinpool=None):

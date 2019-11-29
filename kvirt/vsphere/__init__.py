@@ -1005,7 +1005,8 @@ class Ksphere:
                                 debug=self.debug)
         return sshcommand
 
-    def scp(self, name, user=None, source=None, destination=None, tunnel=False, download=False, recursive=False):
+    def scp(self, name, user=None, source=None, destination=None, tunnel=False, download=False, recursive=False,
+            insecure=False):
         """
 
         :param name:
@@ -1015,6 +1016,7 @@ class Ksphere:
         :param tunnel:
         :param download:
         :param recursive:
+        :param insecure:
         :return:
         """
         u, ip = common._ssh_credentials(self, name)
@@ -1024,7 +1026,7 @@ class Ksphere:
             user = u
         scpcommand = common.scp(name, ip=ip, host=None, hostuser=None, user=user,
                                 source=source, destination=destination, recursive=recursive, tunnel=tunnel,
-                                debug=self.debug, download=False)
+                                debug=self.debug, download=False, insecure=insecure)
         return scpcommand
 
     def add_disk(self, name, size=1, pool=None, thin=True, image=None, shareable=False, existing=None):

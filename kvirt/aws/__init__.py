@@ -915,7 +915,8 @@ class Kaws(object):
                                 cmd=cmd, X=X, Y=Y, D=D, debug=self.debug)
         return sshcommand
 
-    def scp(self, name, user=None, source=None, destination=None, tunnel=False, download=False, recursive=False):
+    def scp(self, name, user=None, source=None, destination=None, tunnel=False, download=False, recursive=False,
+            insecure=False):
         """
 
         :param name:
@@ -925,6 +926,7 @@ class Kaws(object):
         :param tunnel:
         :param download:
         :param recursive:
+        :param insecure:
         :return:
         """
         u, ip = common._ssh_credentials(self, name)
@@ -933,7 +935,7 @@ class Kaws(object):
         if user is None:
             user = u
         scpcommand = common.scp(name, ip=ip, user=user, source=source, destination=destination, recursive=recursive,
-                                tunnel=tunnel, debug=self.debug, download=False)
+                                tunnel=tunnel, debug=self.debug, download=False, insecure=insecure)
         return scpcommand
 
     def create_pool(self, name, poolpath, pooltype='dir', user='qemu', thinpool=None):

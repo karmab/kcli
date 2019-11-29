@@ -883,7 +883,7 @@ class Kopenstack(object):
         return sshcommand
 
     def scp(self, name, user=None, source=None, destination=None, tunnel=False,
-            download=False, recursive=False):
+            download=False, recursive=False, insecure=False):
         """
 
         :param name:
@@ -893,6 +893,7 @@ class Kopenstack(object):
         :param tunnel:
         :param download:
         :param recursive:
+        :param insecure:
         :return:
         """
         tunnel = False
@@ -901,7 +902,7 @@ class Kopenstack(object):
             user = u
         scpcommand = common.scp(name, ip=ip, host=self.host, user=user, source=source,
                                 destination=destination, recursive=recursive, tunnel=tunnel,
-                                debug=self.debug, download=download)
+                                debug=self.debug, download=download, insecure=insecure)
         if self.debug:
             print(scpcommand)
         return scpcommand

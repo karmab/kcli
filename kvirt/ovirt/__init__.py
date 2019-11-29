@@ -1176,7 +1176,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         return sshcommand
 
     def scp(self, name, user=None, source=None, destination=None, tunnel=False,
-            download=False, recursive=False):
+            download=False, recursive=False, insecure=False):
         """
 
         :param name:
@@ -1186,6 +1186,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         :param tunnel:
         :param download:
         :param recursive:
+        :param insecure:
         :return:
         """
         u, ip = common._ssh_credentials(self, name)
@@ -1195,7 +1196,8 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             return None
         scpcommand = common.scp(name, ip=ip, host=self.host, port=self.port,
                                 hostuser=self.user, user=user, source=source, destination=destination,
-                                recursive=recursive, tunnel=tunnel, debug=self.debug, download=download)
+                                recursive=recursive, tunnel=tunnel, debug=self.debug, download=download,
+                                insecure=insecure)
         return scpcommand
 
     def create_pool(self, name, poolpath, pooltype='dir', user='qemu', thinpool=None):

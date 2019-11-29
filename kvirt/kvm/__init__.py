@@ -2421,16 +2421,19 @@ class Kvirt(object):
                                 debug=self.debug, vmport=vmport)
         return sshcommand
 
-    def scp(self, name, user=None, source=None, destination=None, tunnel=False, download=False, recursive=False):
+    def scp(self, name, user=None, source=None, destination=None, tunnel=False, download=False, recursive=False,
+            insecure=False):
         """
 
         :param name:
         :param user:
         :param source:
         :param destination:
+        :param insecure:
         :param tunnel:
         :param download:
         :param recursive:
+        :param insecure:
         :return:
         """
         u, ip = common._ssh_credentials(self, name)
@@ -2444,7 +2447,7 @@ class Kvirt(object):
             ip = '127.0.0.1'
         scpcommand = common.scp(name, ip=ip, host=self.host, port=self.port, hostuser=self.user, user=user,
                                 source=source, destination=destination, recursive=recursive, tunnel=tunnel,
-                                debug=self.debug, download=download, vmport=vmport)
+                                debug=self.debug, download=download, vmport=vmport, insecure=insecure)
         return scpcommand
 
     def create_pool(self, name, poolpath, pooltype='dir', user='qemu', thinpool=None):

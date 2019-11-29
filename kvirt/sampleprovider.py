@@ -457,7 +457,7 @@ class Kbase(object):
 # source=source, destination=destination, recursive=recursive, tunnel=tunnel,
 # debug=self.debug, download=False)
     def scp(self, name, user=None, source=None, destination=None, tunnel=False,
-            download=False, recursive=False):
+            download=False, recursive=False, insecure=False):
         """
 
         :param name:
@@ -467,6 +467,7 @@ class Kbase(object):
         :param tunnel:
         :param download:
         :param recursive:
+        :param insecure:
         :return:
         """
         print("not implemented")

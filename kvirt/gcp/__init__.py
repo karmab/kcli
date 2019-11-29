@@ -1035,7 +1035,8 @@ class Kgcp(object):
                                 debug=self.debug)
         return sshcommand
 
-    def scp(self, name, user=None, source=None, destination=None, tunnel=False, download=False, recursive=False):
+    def scp(self, name, user=None, source=None, destination=None, tunnel=False, download=False, recursive=False,
+            insecure=False):
         """
 
         :param name:
@@ -1045,6 +1046,7 @@ class Kgcp(object):
         :param tunnel:
         :param download:
         :param recursive:
+        :param insecure:
         :return:
         """
         u, ip = common._ssh_credentials(self, name)
@@ -1054,7 +1056,7 @@ class Kgcp(object):
             user = u
         scpcommand = common.scp(name, ip=ip, host=None, hostuser=None, user=user,
                                 source=source, destination=destination, recursive=recursive, tunnel=tunnel,
-                                debug=self.debug, download=False)
+                                debug=self.debug, download=False, insecure=insecure)
         return scpcommand
 
     def create_pool(self, name, poolpath, pooltype='dir', user='qemu', thinpool=None):
