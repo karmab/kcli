@@ -1126,7 +1126,7 @@ def restart_plan(args):
     """Restart plan"""
     plan = args.plan
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.plan(plan, delete=True)
+    config.plan(plan, restart=True)
     return 0
 
 
