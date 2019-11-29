@@ -615,30 +615,10 @@ class Kconfig(Kbaseconfig):
             client = client if client is not None else self.client
             common.set_lastvm(name, client)
         if wait:
-            if image is None or not cloudinit or not start:
-                common.pprint("Skipping wait on %s as vm won't be accessible" % name, color='blue')
+            if not cloudinit or not start or image is None:
+                common.pprint("Skipping wait on %s" % name, color='blue')
             else:
-                common.pprint("Waiting for vm %s to finish customisation" % name, color='blue')
-                cloudinitfile = common.get_cloudinitfile(image)
-                cmd = "sudo grep -i cloud-init %s" % cloudinitfile
-                if 'cos' in image:
-                    cmd = 'journalctl --identifier=ignition --all --no-pager'
-                ip = None
-                while ip is None:
-                    ip = k.info(name).get('ip')
-                    common.pprint("Waiting for vm to be accessible...", color='blue')
-                    sleep(5)
-                sleep(5)
-                done = False
-                oldoutput = ''
-                while not done:
-                    sshcmd = k.ssh(name, tunnel=self.tunnel, insecure=self.insecure, cmd=cmd)
-                    output = os.popen(sshcmd).read()
-                    if 'finished' in output:
-                        done = True
-                    output = output.replace(oldoutput, '')
-                    print(output)
-                    oldoutput = output
+                self.wait(name, image=image)
         return {'result': 'success', 'vm': name}
 
     def list_plans(self):
@@ -733,6 +713,7 @@ class Kconfig(Kbaseconfig):
         newvms = []
         failedvms = []
         existingvms = []
+        waitvms = []
         onfly = None
         toclean = False
         getback = False
@@ -1344,10 +1325,16 @@ class Kconfig(Kbaseconfig):
                         os.remove("%s.key.pub" % plan)
                         os.remove("%s.key" % plan)
                 result = self.create_vm(name, profilename, overrides=overrides, customprofile=profile, k=z,
-                                        plan=plan, basedir=currentplandir, client=vmclient, onfly=onfly, wait=wait)
+                                        plan=plan, basedir=currentplandir, client=vmclient, onfly=onfly)
                 common.handle_response(result, name, client=vmclient)
                 if result['result'] == 'success':
                     newvms.append(name)
+                    start = profile.get('start', True)
+                    cloudinit = profile.get('cloudinit', True)
+                    if not start or not cloudinit or profile.get('image') is None:
+                        common.pprint("Skipping wait on %s" % name, color='blue')
+                    else:
+                        waitvms.append(name)
                 else:
                     failedvms.append(name)
         if diskentries:
@@ -1501,6 +1488,9 @@ class Kconfig(Kbaseconfig):
             rmtree(path)
         if inputstring is not None and os.path.exists("temp_plan_%s.yml" % plan):
             os.remove("temp_plan_%s.yml" % plan)
+        if wait:
+            for vm in waitvms:
+                self.wait(vm)
         return returndata
 
     def handle_host(self, pool=None, image=None, switch=None, download=False,
@@ -1560,10 +1550,12 @@ class Kconfig(Kbaseconfig):
                 if update_profile and result['result'] == 'success':
                     if shortname.endswith('.bz2') or shortname.endswith('.gz') or shortname.endswith('.xz'):
                         shortname = os.path.splitext(shortname)[0]
+                    if self.type == 'vsphere':
+                        shortname = image
                     if imagename not in self.profiles:
                         common.pprint("Adding a profile named %s with default values" % imagename)
                         self.create_profile(imagename, {'image': shortname}, quiet=True)
-                    else:
+                    elif len(self.clients) == 1:
                         common.pprint("Updating profile %s with image %s" % (imagename, shortname))
                         self.update_profile(imagename, {'image': shortname}, quiet=True)
             return {'result': 'success'}
@@ -1666,3 +1658,30 @@ class Kconfig(Kbaseconfig):
             return results
         else:
             return k.list_loadbalancers()
+
+    def wait(self, name, image=None):
+        k = self.k
+        if image is None:
+            image = k.info(name)['image']
+        common.pprint("Waiting for vm %s to finish customisation" % name, color='blue')
+        cloudinitfile = common.get_cloudinitfile(image)
+        cmd = "sudo grep -i cloud-init %s" % cloudinitfile
+        if 'cos' in image:
+            cmd = 'journalctl --identifier=ignition --all --no-pager'
+        ip = None
+        while ip is None:
+            ip = k.info(name).get('ip')
+            common.pprint("Waiting for vm to be accessible...", color='blue')
+            sleep(5)
+        sleep(5)
+        done = False
+        oldoutput = ''
+        while not done:
+            sshcmd = k.ssh(name, tunnel=self.tunnel, insecure=self.insecure, cmd=cmd)
+            output = os.popen(sshcmd).read()
+            if 'finished' in output:
+                done = True
+            output = output.replace(oldoutput, '')
+            print(output)
+            oldoutput = output
+        return True
