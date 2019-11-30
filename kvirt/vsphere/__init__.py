@@ -640,7 +640,7 @@ class Ksphere:
         t = vm.Destroy_Task()
         waitForMe(t)
         if image is not None and 'coreos' not in image and not image.startswith('rhcos') and\
-                vmpath.endswith(name):
+                not image.startswith('fcos') and vmpath.endswith(name):
             deletedirectory(si, dc, vmpath)
         if plan != 'kvirt':
             planfolder = find(si, vmFolder, vim.Folder, plan)
