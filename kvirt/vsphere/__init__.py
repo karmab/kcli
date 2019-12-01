@@ -628,7 +628,9 @@ class Ksphere:
         if vm is None:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         plan, image = 'kvirt', None
+        print(vm.summary.config.vmPathName)
         vmpath = vm.summary.config.vmPathName.replace('/%s.vmx' % name, '')
+        print(vmpath)
         for entry in vm.config.extraConfig:
             if entry.key == 'image':
                 image = entry.value
@@ -641,6 +643,7 @@ class Ksphere:
         waitForMe(t)
         if image is not None and 'coreos' not in image and not image.startswith('rhcos') and\
                 not image.startswith('fcos') and vmpath.endswith(name):
+            print("coucou")
             deletedirectory(si, dc, vmpath)
         if plan != 'kvirt':
             planfolder = find(si, vmFolder, vim.Folder, plan)

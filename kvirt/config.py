@@ -1331,7 +1331,9 @@ class Kconfig(Kbaseconfig):
                     newvms.append(name)
                     start = profile.get('start', True)
                     cloudinit = profile.get('cloudinit', True)
-                    if not start or not cloudinit or profile.get('image') is None:
+                    if not wait:
+                        continue
+                    elif not start or not cloudinit or profile.get('image') is None:
                         common.pprint("Skipping wait on %s" % name, color='blue')
                     else:
                         waitvms.append(name)

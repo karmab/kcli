@@ -96,10 +96,10 @@ class Kvirt(object):
                 if os.path.exists("/i_am_a_container") and not os.path.exists(socketf):
                     reason = "You need to add /var/run/libvirt:/var/run/libvirt to container alias"
                     return {'result': 'failure', 'reason': reason}
-            elif port:
-                url = "qemu+%s://%s@%s:%s/%s?socket=%s" % (protocol, user, host, port, conntype, socketf)
             elif protocol == 'ssh':
                 url = "qemu+%s://%s@%s/%s?socket=%s" % (protocol, user, host, conntype, socketf)
+            elif port:
+                url = "qemu+%s://%s@%s:%s/%s?socket=%s" % (protocol, user, host, port, conntype, socketf)
             else:
                 url = "qemu:///%s" % conntype
             if url.startswith('qemu+ssh'):
