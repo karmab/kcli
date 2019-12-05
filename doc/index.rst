@@ -108,6 +108,12 @@ If using *fedora*, you can use this:
 
     dnf -y copr enable karmab/kcli ; dnf -y install kcli
 
+If you want to leave on the edge, you can instead use the latest repo:
+
+.. code:: bash
+
+    dnf -y copr enable karmab/kcli-latest ; dnf -y install kcli
+
 If using a debian based distribution, you can use this (example is for
 ubuntu cosmic):
 
@@ -132,13 +138,6 @@ Or for a full install using latest:
 ::
 
     pip install -e git+https://github.com/karmab/kcli.git#egg=kcli[all]
-
-CentOS installation
-~~~~~~~~~~~~~~~~~~~
-
-Use the provided
-`script <https://github.com/karmab/kcli/blob/master/extras/centos.sh>`__
-which will install a dedicated python3 env
 
 Configuration
 =============
