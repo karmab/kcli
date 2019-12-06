@@ -9,7 +9,7 @@ from kubernetes import client
 from kvirt.kubecommon import Kubecommon
 from netaddr import IPAddress
 from kvirt import common
-from kvirt.defaults import TEMPLATES
+from kvirt.defaults import IMAGES
 import datetime
 import os
 import time
@@ -1216,7 +1216,7 @@ class Kubevirt(Kubecommon):
         cdi = self.cdi
         shortimage = os.path.basename(image).split('?')[0]
         if name is None:
-            volname = [k for k in TEMPLATES if TEMPLATES[k] == image][0]
+            volname = [k for k in IMAGES if IMAGES[k] == image][0]
         else:
             volname = name.replace('_', '-').replace('.', '-').lower()
         for key in sizes:
