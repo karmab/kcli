@@ -47,19 +47,22 @@ class Kubevirt(Kubecommon):
         self.cdi = False
         self.datavolumes = False
         if cdi:
-            cdipods = self.core.list_pod_for_all_namespaces(label_selector='app=containerized-data-importer').items
-            if cdipods:
-                for pod in cdipods:
-                    if pod.metadata.name.startswith('cdi-deployment'):
-                        self.cdinamespace = pod.metadata.namespace
-                        self.cdi = True
-            if self.cdi and datavolumes:
-                try:
-                    cm = self.core.read_namespaced_config_map('kubevirt-config', KUBEVIRTNAMESPACE)
-                    if 'feature-gates' in cm.data and 'DataVolumes' in cm.data['feature-gates']:
-                        self.datavolumes = True
-                except:
-                    pass
+            try:
+                cdipods = self.core.list_pod_for_all_namespaces(label_selector='app=containerized-data-importer').items
+                if cdipods:
+                    for pod in cdipods:
+                        if pod.metadata.name.startswith('cdi-deployment'):
+                            self.cdinamespace = pod.metadata.namespace
+                            self.cdi = True
+                if self.cdi and datavolumes:
+                    try:
+                        cm = self.core.read_namespaced_config_map('kubevirt-config', KUBEVIRTNAMESPACE)
+                        if 'feature-gates' in cm.data and 'DataVolumes' in cm.data['feature-gates']:
+                            self.datavolumes = True
+                    except:
+                        pass
+            except:
+                pass
         return
 
     def close(self):
