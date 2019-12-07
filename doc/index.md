@@ -44,6 +44,12 @@ sudo usermod -aG qemu,libvirt YOUR_USER
 curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | sh
 ```
 
+## Container versus Package
+
+- Both install methods are continuously updated
+- The package version doesn't bundle the dependencies for anything else than libvirt, so you have to install the extra packages for each additional cloud platforms, which are listed in the *Provider specifics* section. This means that the package version is lightweight but needs extra works for other providers.
+- The console/serial console functionality works better with the package version. In container mode, it only outputs the command to launch manually to get to the console.
+
 ## Container install method
 
 In the commands below, use either docker or podman (if you don't want a big fat daemon)
@@ -91,26 +97,18 @@ If using *fedora*, you can use this:
 dnf -y copr enable karmab/kcli ; dnf -y install kcli
 ```
 
-If you want to leave on the edge, you can instead use the latest repo:
-
-```bash
-dnf -y copr enable karmab/kcli-latest ; dnf -y install kcli
-```
-
 If using a debian based distribution, you can use this (example is for ubuntu cosmic):
 
 ```bash
 echo deb [trusted=yes] https://packagecloud.io/karmab/kcli/ubuntu/ cosmic main > /etc/apt/sources.list.d/kcli.list ; apt-get update ; apt-get -y install python3-kcli
 ```
 
-## Dev installation from pip
+## Dev installation
 
 ### Generic platform
 
-Install kcli from pypi (Only libvirt dependencies are pulled).
-
 ```Shell
-pip install kcli
+pip install -e git+https://github.com/karmab/kcli.git
 ```
 
 Or for a full install using latest:
