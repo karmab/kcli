@@ -2,11 +2,10 @@
 
 [![](https://dockerbuildbadges.quelltext.eu/status.svg?organization=karmab&repository=kcli)](https://hub.docker.com/r/karmab/kcli/builds/)
 [![Build Status](https://travis-ci.org/karmab/kcli.svg?branch=master)](https://travis-ci.org/karmab/kcli)
-[![Pypi](https://img.shields.io/pypi/v/kcli.svg)](https://pypi.python.org/pypi/kcli/)
 [![Copr](https://copr.fedorainfracloud.org/coprs/karmab/kcli/package/kcli/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/karmab/kcli/package/kcli)
 [![](https://images.microbadger.com/badges/image/karmab/kcli.svg)](https://microbadger.com/images/karmab/kcli "Get your own image badge on microbadger.com")
 
-![Screenshot](kcli-small.png)
+![Screenshot](kcli.png)
 
 This tool is meant to interact with existing virtualization providers (libvirt, KubeVirt, oVirt, OpenStack, VMware vSphere, GCP and AWS) and to easily deploy and customize VMs from cloud images.
 
