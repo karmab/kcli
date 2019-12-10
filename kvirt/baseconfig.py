@@ -221,6 +221,7 @@ class Kbaseconfig:
         self.nets = options.get('nets', self.default['nets'])
         self.cpumodel = options.get('cpumodel', self.default['cpumodel'])
         self.cpuflags = options.get('cpuflags', [])
+        self.cpupinning = options.get('cpupinning', [])
         self.numcpus = options.get('numcpus', self.default['numcpus'])
         self.memory = options.get('memory', self.default['memory'])
         self.disks = options.get('disks', self.default['disks'])

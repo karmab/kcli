@@ -136,7 +136,7 @@ Generic platform
 
 .. code:: shell
 
-    pip install -e git+https://github.com/karmab/kcli.git
+    pip install -e git+https://github.com/karmab/kcli.git#egg=kcli
 
 Or for a full install using latest:
 

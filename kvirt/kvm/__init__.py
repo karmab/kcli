@@ -184,13 +184,13 @@ class Kvirt(object):
             return False
 
     def create(self, name, virttype='kvm', profile='kvirt', flavor=None, plan='kvirt', cpumodel='host-model',
-               cpuflags=[], numcpus=2, memory=512, guestid='guestrhel764', pool='default', image=None,
+               cpuflags=[], cpupinning=[], numcpus=2, memory=512, guestid='guestrhel764', pool='default', image=None,
                disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None,
                vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None,
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
                files=[], enableroot=True, overrides={}, tags=[], dnsclient=None, storemetadata=False,
                sharedfolders=[], kernel=None, initrd=None, cmdline=None, placement=[], autostart=False,
-               cpuhotplug=False, memoryhotplug=False):
+               cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[]):
         """
 
         :param name:
@@ -200,6 +200,7 @@ class Kvirt(object):
         :param plan:
         :param cpumodel:
         :param cpuflags:
+        :param cpupinning:
         :param cpuhotplug:
         :param numcpus:
         :param memory:
@@ -637,12 +638,37 @@ class Kvirt(object):
                     elif policy in ['force', 'require', 'optional', 'disable', 'forbid']:
                         cpuxml = """%s<feature policy='%s' name='%s'/>""" % (cpuxml, policy, feature)
         if cpuxml != '':
-            if memoryhotplug:
+            if memoryhotplug and not numa:
                 lastcpu = int(numcpus) - 1
                 cpuxml = "%s<numa><cell id='0' cpus='0-%s' memory='1048576' unit='KiB'/></numa></cpu>" % (cpuxml,
                                                                                                           lastcpu)
             else:
                 cpuxml = "%s</cpu>" % cpuxml
+        cpupinningxml = ''
+        if cpupinning:
+            for entry in cpupinning:
+                if not isinstance(entry, dict):
+                    continue
+                else:
+                    for vcpu in list(entry.keys()):
+                        cpupinningxml += "<vcpupin vcpu='%s' cpuset='%s'/>\n" % (vcpu, entry[vcpu])
+            cpupinningxml = "<cputune>%s</cputune>" % cpupinningxml
+        numatunexml = ''
+        if numamode is not None:
+            numatunexml += "<numatune><memory mode='%s' nodeset='0'/></numatune>" % numamode
+        numaxml = ''
+        if numa:
+            for entry in numa:
+                if not isinstance(entry, dict):
+                    continue
+                else:
+                    for cell in list(entry.keys()):
+                        guestcpus = cell.get('guestcpus')
+                        hostcpus = cell.get('hostcpus')
+                        guestmemory = cell.get('memory')
+                        if guestcpus is not None and hostcpus is not None and guestmemory is not None:
+                            numaxml += "<cell id='%s' cpus='%s' memory='%s' unit='MiB'>" % (guestcpus, hostcpus,
+                                                                                            guestmemory)
         if macosx:
             cpuxml = ""
         if self.host in ['localhost', '127.0.0.1']:
@@ -767,6 +793,8 @@ class Kvirt(object):
                   <name>%s</name>
                   %s
                   %s
+                  %s
+                  %s
                   <memory unit='MiB'>%d</memory>
                   %s
                   <os>
@@ -797,9 +825,9 @@ class Kvirt(object):
                   </devices>
                     %s
                     %s
-                    </domain>""" % (virttype, namespace, name, metadata, memoryhotplugxml, memory, vcpuxml, machine,
-                                    firmwarexml, bootdev, kernelxml, disksxml, netxml, isoxml, displayxml, serialxml,
-                                    sharedxml, guestxml, videoxml, cpuxml, qemuextraxml)
+                    </domain>""" % (virttype, namespace, name, metadata, memoryhotplugxml, cpupinningxml, numatunexml,
+                                    memory, vcpuxml, machine, firmwarexml, bootdev, kernelxml, disksxml, netxml, isoxml,
+                                    displayxml, serialxml, sharedxml, guestxml, videoxml, cpuxml, qemuextraxml)
         if self.debug:
             print(vmxml)
         conn.defineXML(vmxml)

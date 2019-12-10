@@ -259,6 +259,7 @@ class Kconfig(Kbaseconfig):
             default_reservehost = father.get('reservehost', self.reservehost)
             default_cpumodel = father.get('cpumodel', self.cpumodel)
             default_cpuflags = father.get('cpuflags', self.cpuflags)
+            default_cpupinning = father.get('cpupinning', self.cpupinning)
             default_disksize = father.get('disksize', self.disksize)
             default_diskinterface = father.get('diskinterface', self.diskinterface)
             default_diskthin = father.get('diskthin', self.diskthin)
@@ -314,6 +315,7 @@ class Kconfig(Kbaseconfig):
             default_reservehost = self.reservehost
             default_cpumodel = self.cpumodel
             default_cpuflags = self.cpuflags
+            default_cpupinning = self.cpupinning
             default_disksize = self.disksize
             default_diskinterface = self.diskinterface
             default_diskthin = self.diskthin
@@ -362,6 +364,7 @@ class Kconfig(Kbaseconfig):
         nets = profile.get('nets', default_nets)
         cpumodel = profile.get('cpumodel', default_cpumodel)
         cpuflags = profile.get('cpuflags', default_cpuflags)
+        cpupinning = profile.get('cpupinning', default_cpupinning)
         numcpus = profile.get('numcpus', default_numcpus)
         memory = profile.get('memory', default_memory)
         pool = profile.get('pool', default_pool)
@@ -568,7 +571,8 @@ class Kconfig(Kbaseconfig):
                 cmds.remove('reboot')
             cmds.append('reboot')
         result = k.create(name=name, plan=plan, profile=profilename, flavor=flavor, cpumodel=cpumodel,
-                          cpuflags=cpuflags, numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool,
+                          cpuflags=cpuflags, cpupinning=cpupinning,
+                          numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool,
                           image=image, disks=disks, disksize=disksize, diskthin=diskthin,
                           diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit),
                           reserveip=bool(reserveip), reservedns=bool(reservedns), reservehost=bool(reservehost),

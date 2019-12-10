@@ -113,11 +113,11 @@ class Kbox(object):
             return True
 
     def create(self, name, virttype='vbox', profile='kvirt', flavor=None, plan='kvirt', cpumodel='', cpuflags=[],
-               numcpus=2, memory=512, guestid='Linux_64', pool='default', image=None, disks=[{'size': 10}],
-               disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False,
-               cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[],
-               ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[],
-               enableroot=True, alias=[], overrides={}, tags=None, dnsclient=None, autostart=False,
+               cpupinning=[], numcpus=2, memory=512, guestid='Linux_64', pool='default', image=None,
+               disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None,
+               vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None,
+               cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
+               files=[], enableroot=True, alias=[], overrides={}, tags=None, dnsclient=None, autostart=False,
                cpuhotplug=False, memoryhotplug=False):
         """
 
@@ -128,6 +128,7 @@ class Kbox(object):
         :param plan:
         :param cpumodel:
         :param cpuflags:
+        :param cpupinning:
         :param numcpus:
         :param memory:
         :param guestid:

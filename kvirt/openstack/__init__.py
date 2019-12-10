@@ -76,7 +76,7 @@ class Kopenstack(object):
         print("not implemented")
 
     def create(self, name, virttype='kvm', profile='', plan='kvirt', flavor=None,
-               cpumodel='Westmere', cpuflags=[], numcpus=2, memory=512,
+               cpumodel='Westmere', cpuflags=[], cpupinning=[], numcpus=2, memory=512,
                guestid='guestrhel764', pool='default', image=None,
                disks=[{'size': 10}], disksize=10, diskthin=True,
                diskinterface='virtio', nets=['default'], iso=None, vnc=False,
@@ -95,6 +95,7 @@ class Kopenstack(object):
         :param flavor:
         :param cpumodel:
         :param cpuflags:
+        :param cpupinning:
         :param numcpus:
         :param memory:
         :param guestid:

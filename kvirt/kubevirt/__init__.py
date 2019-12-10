@@ -112,11 +112,11 @@ class Kubevirt(Kubecommon):
         return
 
     def create(self, name, virttype='kvm', profile='', flavor=None, plan='kvirt', cpumodel='host-model', cpuflags=[],
-               numcpus=2, memory=512, guestid='guestrhel764', pool=None, image=None, disks=[{'size': 10}],
-               disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None, vnc=False,
-               cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None, cmds=[],
-               ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False, files=[],
-               enableroot=True, alias=[], overrides={}, tags=[], dnsclient=None, storemetadata=False,
+               cpupinning=[], numcpus=2, memory=512, guestid='guestrhel764', pool=None, image=None,
+               disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None,
+               vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None,
+               cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
+               files=[], enableroot=True, alias=[], overrides={}, tags=[], dnsclient=None, storemetadata=False,
                sharedfolders=[], kernel=None, initrd=None, cmdline=None, placement=[], autostart=False,
                cpuhotplug=False, memoryhotplug=False):
         """
@@ -128,6 +128,7 @@ class Kubevirt(Kubecommon):
         :param plan:
         :param cpumodel:
         :param cpuflags:
+        :param cpupinning:
         :param numcpus:
         :param memory:
         :param guestid:
