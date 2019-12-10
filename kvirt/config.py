@@ -316,6 +316,8 @@ class Kconfig(Kbaseconfig):
             default_cpumodel = self.cpumodel
             default_cpuflags = self.cpuflags
             default_cpupinning = self.cpupinning
+            default_numamode = self.numamode
+            default_numa = self.numa
             default_disksize = self.disksize
             default_diskinterface = self.diskinterface
             default_diskthin = self.diskthin
@@ -365,6 +367,8 @@ class Kconfig(Kbaseconfig):
         cpumodel = profile.get('cpumodel', default_cpumodel)
         cpuflags = profile.get('cpuflags', default_cpuflags)
         cpupinning = profile.get('cpupinning', default_cpupinning)
+        numamode = profile.get('numamode', default_numamode)
+        numa = profile.get('numa', default_numa)
         numcpus = profile.get('numcpus', default_numcpus)
         memory = profile.get('memory', default_memory)
         pool = profile.get('pool', default_pool)
@@ -571,7 +575,7 @@ class Kconfig(Kbaseconfig):
                 cmds.remove('reboot')
             cmds.append('reboot')
         result = k.create(name=name, plan=plan, profile=profilename, flavor=flavor, cpumodel=cpumodel,
-                          cpuflags=cpuflags, cpupinning=cpupinning,
+                          cpuflags=cpuflags, cpupinning=cpupinning, numamode=numamode, numa=numa,
                           numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool,
                           image=image, disks=disks, disksize=disksize, diskthin=diskthin,
                           diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit),

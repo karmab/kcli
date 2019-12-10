@@ -233,6 +233,10 @@ class Kvirt(object):
         :param enableroot:
         :param overrides:
         :param tags:
+        :param cpuhotplug:
+        :param memoryhotplug:
+        :param numamode:
+        :param numa:
         :return:
         """
         namespace = ''
@@ -638,12 +642,23 @@ class Kvirt(object):
                     elif policy in ['force', 'require', 'optional', 'disable', 'forbid']:
                         cpuxml = """%s<feature policy='%s' name='%s'/>""" % (cpuxml, policy, feature)
         if cpuxml != '':
-            if memoryhotplug and not numa:
+            if numa:
+                numaxml = '<numa>'
+                for cell in numa:
+                    if not isinstance(cell, dict):
+                        continue
+                    else:
+                        cellid = cell.get('id')
+                        cellcpus = cell.get('cpus')
+                        cellmemory = cell.get('memory')
+                        if cellid is not None and cellcpus is not None and cellmemory is not None:
+                            numaxml += "<cell id='%s' cpus='%s' memory='%s' unit='MiB'/>" % (cellid, cellcpus,
+                                                                                             cellmemory)
+                cpuxml += '%s</numa>' % numaxml
+            elif memoryhotplug:
                 lastcpu = int(numcpus) - 1
-                cpuxml = "%s<numa><cell id='0' cpus='0-%s' memory='1048576' unit='KiB'/></numa></cpu>" % (cpuxml,
-                                                                                                          lastcpu)
-            else:
-                cpuxml = "%s</cpu>" % cpuxml
+                cpuxml += "<numa><cell id='0' cpus='0-%s' memory='1048576' unit='KiB'/></numa>" % lastcpu
+            cpuxml += "</cpu>"
         cpupinningxml = ''
         if cpupinning:
             for entry in cpupinning:
@@ -656,19 +671,6 @@ class Kvirt(object):
         numatunexml = ''
         if numamode is not None:
             numatunexml += "<numatune><memory mode='%s' nodeset='0'/></numatune>" % numamode
-        numaxml = ''
-        if numa:
-            for entry in numa:
-                if not isinstance(entry, dict):
-                    continue
-                else:
-                    for cell in list(entry.keys()):
-                        guestcpus = cell.get('guestcpus')
-                        hostcpus = cell.get('hostcpus')
-                        guestmemory = cell.get('memory')
-                        if guestcpus is not None and hostcpus is not None and guestmemory is not None:
-                            numaxml += "<cell id='%s' cpus='%s' memory='%s' unit='MiB'>" % (guestcpus, hostcpus,
-                                                                                            guestmemory)
         if macosx:
             cpuxml = ""
         if self.host in ['localhost', '127.0.0.1']:

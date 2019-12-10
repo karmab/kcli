@@ -354,7 +354,55 @@ class Ksphere:
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
                files=[], enableroot=True, overrides={}, tags=[], dnsclient=None, storemetadata=False,
                sharedfolders=[], kernel=None, initrd=None, cmdline=None, placement=[], autostart=False,
-               cpuhotplug=False, memoryhotplug=False):
+               cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[]):
+        """
+
+        :param name:
+        :param virttype:
+        :param profile:
+        :param flavor:
+        :param plan:
+        :param cpumodel:
+        :param cpuflags:
+        :param cpupinning:
+        :param cpuhotplug:
+        :param numcpus:
+        :param memory:
+        :param memoryhotplug:
+        :param guestid:
+        :param pool:
+        :param image:
+        :param disks:
+        :param disksize:
+        :param diskthin:
+        :param diskinterface:
+        :param nets:
+        :param iso:
+        :param vnc:
+        :param cloudinit:
+        :param reserveip:
+        :param reservedns:
+        :param reservehost:
+        :param start:
+        :param keys:
+        :param cmds:
+        :param ips:
+        :param netmasks:
+        :param gateway:
+        :param nested:
+        :param dns:
+        :param domain:
+        :param tunnel:
+        :param files:
+        :param enableroot:
+        :param overrides:
+        :param tags:
+        :param cpuhotplug:
+        :param memoryhotplug:
+        :param numamode:
+        :param numa:
+        :return:
+        """
         dc = self.dc
         vmFolder = dc.vmFolder
         distributed = self.distributed

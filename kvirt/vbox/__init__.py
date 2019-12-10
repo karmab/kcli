@@ -118,7 +118,7 @@ class Kbox(object):
                vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None,
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
                files=[], enableroot=True, alias=[], overrides={}, tags=None, dnsclient=None, autostart=False,
-               cpuhotplug=False, memoryhotplug=False):
+               cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[]):
         """
 
         :param name:
@@ -160,6 +160,10 @@ class Kbox(object):
         :param alias:
         :param overrides:
         :param tags:
+        :param cpuhotplug:
+        :param memoryhotplug:
+        :param numamode:
+        :param numa:
         :return:
         """
         if self.exists(name):
