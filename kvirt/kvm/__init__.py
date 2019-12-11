@@ -644,16 +644,18 @@ class Kvirt(object):
         if cpuxml != '':
             if numa:
                 numaxml = '<numa>'
-                for cell in numa:
+                for index, cell in enumerate(numa):
                     if not isinstance(cell, dict):
-                        continue
+                        msg = "Can't process entry %s in numa block" % index
+                        return {'result': 'failure', 'reason': msg}
                     else:
-                        cellid = cell.get('id')
-                        cellcpus = cell.get('cpus')
+                        cellid = cell.get('id', index)
+                        cellcpus = cell.get('vcpus')
                         cellmemory = cell.get('memory')
-                        if cellid is not None and cellcpus is not None and cellmemory is not None:
-                            numaxml += "<cell id='%s' cpus='%s' memory='%s' unit='MiB'/>" % (cellid, cellcpus,
-                                                                                             cellmemory)
+                        if cellcpus is None or cellmemory is None:
+                            msg = "Can't properly use cell %s in numa block" % index
+                            return {'result': 'failure', 'reason': msg}
+                        numaxml += "<cell id='%s' cpus='%s' memory='%s' unit='MiB'/>" % (cellid, cellcpus, cellmemory)
                 cpuxml += '%s</numa>' % numaxml
             elif memoryhotplug:
                 lastcpu = int(numcpus) - 1
@@ -663,10 +665,29 @@ class Kvirt(object):
         if cpupinning:
             for entry in cpupinning:
                 if not isinstance(entry, dict):
-                    continue
+                    msg = "Can't process entry %s in numa block" % index
+                    return {'result': 'failure', 'reason': msg}
                 else:
-                    for vcpu in list(entry.keys()):
-                        cpupinningxml += "<vcpupin vcpu='%s' cpuset='%s'/>\n" % (vcpu, entry[vcpu])
+                    vcpus = entry.get('vcpus')
+                    hostcpus = entry.get('hostcpus')
+                    if vcpus is None or hostcpus is None:
+                        msg = "Can't process entry %s in cpupinning block" % index
+                        return {'result': 'failure', 'reason': msg}
+                    if '-' in str(vcpus):
+                        if len(vcpus.split('-')) != 2:
+                            msg = "Can't properly split vcpu in cpupinning block"
+                            return {'result': 'failure', 'reason': msg}
+                        else:
+                            idmin, idmax = vcpus.split('-')
+                    else:
+                        try:
+                            idmin, idmax = vcpus, vcpus
+                        except ValueError:
+                            msg = "Can't properly use vcpu as integer in cpunning block"
+                            return {'result': 'failure', 'reason': msg}
+                    idmin, idmax = int(idmin), int(idmax) + 1
+                    for cpunum in range(idmin, idmax):
+                        cpupinningxml += "<vcpupin vcpu='%s' cpuset='%s'/>\n" % (cpunum, hostcpus)
             cpupinningxml = "<cputune>%s</cputune>" % cpupinningxml
         numatunexml = ''
         if numamode is not None:
