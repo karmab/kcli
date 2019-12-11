@@ -67,7 +67,7 @@ class KcliInventory(object):
             name = vm.get('name')
             status = vm.get('status')
             ip = vm.get('ip', '')
-            template = vm.get('template')
+            image = vm.get('image')
             plan = vm.get('plan', 'kvirt')
             if plan == '':
                 plan = 'kvirt'
@@ -86,8 +86,8 @@ class KcliInventory(object):
                     hostvalues[name]['ansible_port'] = ip
                 else:
                     hostvalues[name]['ansible_host'] = ip
-                if template != '':
-                    user = get_user(template)
+                if image != '':
+                    user = get_user(image)
                     hostvalues[name]['ansible_user'] = user
         return metadata
 
