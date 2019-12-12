@@ -746,6 +746,7 @@ def create_vm(args):
     profilefile = args.profilefile
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
     wait = args.wait
+    customprofile = {}
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if 'name' in overrides:
         name = overrides['name']
@@ -763,12 +764,20 @@ def create_vm(args):
         profilefile = profile
         profile = None
         if not os.path.exists(profilefile):
-            common.pprint("Missing profile file", color='red')
+            common.pprint("Missing profile file %s" % profilefile, color='red')
             os._exit(1)
         else:
             with open(profilefile, 'r') as entries:
-                config.profiles = yaml.safe_load(entries)
-    result = config.create_vm(name, profile, overrides=overrides, wait=wait)
+                entries = yaml.safe_load(entries)
+                entrieskeys = list(entries.keys())
+                if len(entrieskeys) == 1:
+                    profile = entrieskeys[0]
+                    customprofile = entries[profile]
+                    common.pprint("Using data from %s as profile" % profilefile, color='blue')
+                else:
+                    common.pprint("Cant' parse %s as profile file" % profilefile, color='red')
+                    os._exit(1)
+    result = config.create_vm(name, profile, overrides=overrides, customprofile=customprofile, wait=wait)
     code = common.handle_response(result, name, element='', action='created', client=config.client)
     return code
 
