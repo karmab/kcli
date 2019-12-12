@@ -108,10 +108,10 @@ echo deb [trusted=yes] https://packagecloud.io/karmab/kcli/ubuntu/ cosmic main >
 ### Generic platform
 
 ```Shell
-pip install -e git+https://github.com/karmab/kcli.git#egg=kcli
+pip install kcli
 ```
 
-Or for a full install using latest:
+Or for a full install:
 
 ```
 pip install -e git+https://github.com/karmab/kcli.git#egg=kcli[all]

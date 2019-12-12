@@ -18,5 +18,17 @@ script:
 - docker build -t karmab/kcli -f extras/alpine .
 - docker run -it --rm karmab/kcli
 after_success:
-- if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == 'false' ] ; then docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD ; docker push karmab/kcli:latest ; fi
-- if [ "$TRAVIS_TAG" != "" ]; then docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD ; docker push karmab/kcli:$TRAVIS_TAG ; fi
+- if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == 'false' ] ; then
+  docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD ; docker push karmab/kcli:latest
+  ; fi
+- if [ "$TRAVIS_TAG" != "" ]; then docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+  ; docker push karmab/kcli:$TRAVIS_TAG ; fi
+#- rm -f extras/git_version
+#- sed -i "s/99.0/99.0.$(git rev-parse --short HEAD)/" setup.py
+#
+#deploy:
+#  overwrite: true
+#  provider: pypi
+#  user: karimb
+#  password:
+#    secure: nA3RswhrhNGB4JjwQcVKeCTpgPAt3by+E2zoviab5EUaGSFVDwfKtD0mH/G3CnRNyQyDn1luGXWphgv6+rB8+Gn5L2nZaUWAY1scH+YLjGcz01WlfbCFgFHKQPBoI4Mb9f7yOQPOHH11VSy5PSiv43wPQ0sWFh9vEhzmTSHImEpqWLrqgxjfALaNhN82Z6+sQ/2cyQ5Mcs6v+ebhjsdRBzSsBsKpjF9yTT1drD2XWfTXKZ8vhkGtLWeze3KDi/WuiUX8jZHrpQ3eS8HnOubPjcKrHwSLG+eGUjmyxcIXMcrfLxGgckpmGoyAj78SwEI7Nw0qqx8WBEe2KOd4VFCRS1sMEDDniInlZotOF07Yk1pNL6LO7c6uC4tBCpZBpBhStB6p1dz7RA4TOK5XogEj93ZCB69hMoiFb59ymd0pzk1rG+4LuV7UPWO0kZluh3IoCfJjL3be+V0GgIfbrx7ClbZVk1pDepX0RWMAdpZ4y2PDtjS9NH8XlTD/AjYMc45w0mGFIVv429sgmekK7QCukRuc5vsHXiOunBFt+QGRzVoP+6dOvakSM4FDNo7fidbucNHNfOZFLHCxXFlLXCog5zQlW4+nrdOFJdjYIyCuAhyyoefGS+buI9nhM/FwRHbTrIRrs3mKsYuNc1e/17/Fdt2zw25Wt7IvDYuh6D09Gh4=
