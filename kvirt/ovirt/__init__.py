@@ -117,7 +117,7 @@ class KOvirt(object):
                tunnel=False, files=[], enableroot=True, alias=[], overrides={},
                tags=[], dnsclient=None, storemetadata=False, sharedfolders=[], kernel=None, initrd=None,
                cmdline=None, placement=[], autostart=False, cpuhotplug=False, memoryhotplug=False, numamode=None,
-               numa=[]):
+               numa=[], pcidevices=[]):
         """
 
         :param name:
@@ -163,6 +163,7 @@ class KOvirt(object):
         :param memoryhotplug:
         :param numamode:
         :param numa:
+        :param pcidevices:
         :return:
         """
         ip = None

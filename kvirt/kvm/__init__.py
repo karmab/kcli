@@ -190,7 +190,7 @@ class Kvirt(object):
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
                files=[], enableroot=True, overrides={}, tags=[], dnsclient=None, storemetadata=False,
                sharedfolders=[], kernel=None, initrd=None, cmdline=None, placement=[], autostart=False,
-               cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[]):
+               cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[]):
         """
 
         :param name:
@@ -237,6 +237,7 @@ class Kvirt(object):
         :param memoryhotplug:
         :param numamode:
         :param numa:
+        :param pcidevices:
         :return:
         """
         namespace = ''
@@ -812,6 +813,22 @@ class Kvirt(object):
                              <nvram>%s/OVMF_VARS-1024x768.fd</nvram>""" % (default_poolpath, default_poolpath)
             videoxml = """<video><model type='qxl' vram='65536'/></video>"""
             guestxml = ""
+        hostdevxml = ""
+        if pcidevices:
+            for index, pcidevice in enumerate(pcidevices):
+                pcidevice = str(pcidevice)
+                newdomain = "0000"
+                if len(pcidevice.split(':')) != 2:
+                    return {'result': 'failure', 'reason': "Incorrect pcidevice entry %s" % index}
+                newbus = pcidevice.split(':')[0]
+                if len(pcidevice.split('.')) != 2:
+                    return {'result': 'failure', 'reason': "Incorrect pcidevice entry %s" % index}
+                newslot = pcidevice.split('.')[0].replace('%s:' % newbus, '')
+                newfunction = pcidevice.split('.')[1]
+                newhostdev = """<hostdev mode='subsystem' type='pci' managed='yes'>
+                                <source><address domain='0x%s' bus='0x%s' slot='0x%s' function='0x%s'/></source>
+                                </hostdev>""" % (newdomain, newbus, newslot, newfunction)
+                hostdevxml += newhostdev
         vmxml = """<domain type='%s' %s>
                   <name>%s</name>
                   %s
@@ -845,12 +862,14 @@ class Kvirt(object):
                     %s
                     %s
                     %s
+                    %s
                   </devices>
                     %s
                     %s
                     </domain>""" % (virttype, namespace, name, metadata, memoryhotplugxml, cpupinningxml, numatunexml,
                                     memory, vcpuxml, machine, firmwarexml, bootdev, kernelxml, disksxml, netxml, isoxml,
-                                    displayxml, serialxml, sharedxml, guestxml, videoxml, cpuxml, qemuextraxml)
+                                    displayxml, serialxml, sharedxml, guestxml, videoxml, hostdevxml, cpuxml,
+                                    qemuextraxml)
         if self.debug:
             print(vmxml)
         conn.defineXML(vmxml)

@@ -68,7 +68,7 @@ class Kbase(object):
                netmasks=None, gateway=None, nested=True, dns=None, domain=None,
                tunnel=False, files=[], enableroot=True, alias=[], overrides={},
                tags=[], dnsclient=None, storemetadata=False, sharedfolders=[], kernel=None, initrd=None,
-               cmdline=None, cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[]):
+               cmdline=None, cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[]):
         """
 
         :param name:
@@ -114,6 +114,7 @@ class Kbase(object):
         :param memoryhotplug:
         :param numamode:
         :param numa:
+        :param pcidevices:
         :return:
         """
         print("not implemented")

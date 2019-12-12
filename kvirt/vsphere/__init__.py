@@ -354,7 +354,7 @@ class Ksphere:
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
                files=[], enableroot=True, overrides={}, tags=[], dnsclient=None, storemetadata=False,
                sharedfolders=[], kernel=None, initrd=None, cmdline=None, placement=[], autostart=False,
-               cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[]):
+               cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[]):
         """
 
         :param name:
@@ -401,6 +401,7 @@ class Ksphere:
         :param memoryhotplug:
         :param numamode:
         :param numa:
+        :param pcidevices:
         :return:
         """
         dc = self.dc

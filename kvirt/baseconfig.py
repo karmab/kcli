@@ -15,7 +15,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             PLANVIEW, PRIVATEKEY, TAGS, RHNREGISTER, RHNUSER, RHNPASSWORD, RHNAK, RHNORG, RHNPOOL,
                             FLAVOR, KEEP_NETWORKS, DNSCLIENT, STORE_METADATA, NOTIFY, NOTIFYTOKEN, NOTIFYCMD,
                             SHAREDFOLDERS, KERNEL, INITRD, CMDLINE, PLACEMENT, YAMLINVENTORY, CPUHOTPLUG, MEMORYHOTPLUG,
-                            CPUFLAGS, CPUPINNING, NUMAMODE, NUMA)
+                            CPUFLAGS, CPUPINNING, NUMAMODE, NUMA, PCIDEVICES)
 from kvirt import common
 from kvirt import jinjafilters
 import os
@@ -225,6 +225,7 @@ class Kbaseconfig:
         self.cpupinning = options.get('cpupinning', CPUPINNING)
         self.numamode = options.get('numamode', NUMAMODE)
         self.numa = options.get('numa', NUMA)
+        self.pcidevices = options.get('pcidevices', PCIDEVICES)
         self.numcpus = options.get('numcpus', self.default['numcpus'])
         self.memory = options.get('memory', self.default['memory'])
         self.disks = options.get('disks', self.default['disks'])
