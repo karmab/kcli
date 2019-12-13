@@ -1182,8 +1182,9 @@ def render_file(args):
             paramfile = "/workdir/%s" % paramfile
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-    _type = baseconfig.ini[baseconfig.client].get('type', 'kvm')
-    overrides.update({'type': _type})
+    config_data = {'config_%s' % k: baseconfig.ini[baseconfig.client][k] for k in baseconfig.ini[baseconfig.client]}
+    config_data['config_type'] = config_data.get('config_type', 'kvm')
+    overrides.update(config_data)
     if not os.path.exists(inputfile):
         common.pprint("File %s not found" % inputfile, color='red')
         return 0

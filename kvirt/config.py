@@ -211,7 +211,9 @@ class Kconfig(Kbaseconfig):
                     common.pprint("Couldn't connect to specify hypervisor %s. Leaving..." % extraclient, color='red')
                     os._exit(1)
         self.k = k
-        self.overrides.update({'type': self.type})
+        config_data = {'config_%s' % k: self.ini[self.client][k] for k in self.ini[self.client]}
+        config_data['config_type'] = config_data.get('config_type', 'kvm')
+        self.overrides.update(config_data)
 
     def create_vm(self, name, profile, overrides={}, customprofile={}, k=None,
                   plan='kvirt', basedir='.', client=None, onfly=None, wait=False, planmode=False):
