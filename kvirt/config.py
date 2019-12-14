@@ -7,7 +7,6 @@ Kvirt config class
 from jinja2 import Environment, FileSystemLoader
 from jinja2 import StrictUndefined as undefined
 from jinja2.exceptions import TemplateSyntaxError, TemplateError
-from kvirt.common import pretty_print
 from kvirt.defaults import IMAGES, IMAGESCOMMANDS
 from kvirt import ansibleutils
 from kvirt import nameutils
@@ -34,13 +33,7 @@ class Kconfig(Kbaseconfig):
         if not self.enabled:
             k = None
         else:
-            if self.type == 'fake':
-                from kvirt.fake import Kfake
-                k = Kfake()
-            elif self.type == 'vbox':
-                from kvirt.vbox import Kbox
-                k = Kbox()
-            elif self.type == 'kubevirt':
+            if self.type == 'kubevirt':
                 namespace = self.options.get('namespace') if namespace is None else namespace
                 context = self.options.get('context')
                 cdi = self.options.get('cdi', True)
@@ -387,7 +380,7 @@ class Kconfig(Kbaseconfig):
         iso = profile.get('iso', default_iso)
         vnc = profile.get('vnc', default_vnc)
         cloudinit = profile.get('cloudinit', default_cloudinit)
-        if cloudinit and self.type in ['kvm', 'vbox'] and\
+        if cloudinit and self.type == 'kvm' and\
                 find_executable('mkisofs') is None and find_executable('genisoimage') is None:
             return {'result': 'failure', 'reason': "Missing mkisofs/genisoimage needed for cloudinit"}
         reserveip = profile.get('reserveip', default_reserveip)
@@ -719,11 +712,6 @@ class Kconfig(Kbaseconfig):
              info=False, snapshot=False, revert=False, update=False, embedded=False, restart=False, download=False,
              wait=False):
         """Manage plan file"""
-        if self.type == 'fake' and os.path.exists("/tmp/%s" % plan) and not embedded:
-            rmtree("/tmp/%s" % plan)
-            common.pprint("Deleted /tmp/%s" % plan)
-            if delete:
-                return {'result': 'success'}
         k = self.k
         no_overrides = not overrides
         newvms = []
@@ -1020,15 +1008,6 @@ class Kconfig(Kbaseconfig):
         baseentries = {}
         entries, overrides, basefile, basedir = self.process_inputfile(plan, inputfile, overrides=overrides,
                                                                        onfly=onfly, full=True)
-        if self.type == 'fake':
-            fakeentries = {key: entries[key] for key in entries if key != 'parameters'}
-            plandir = "/tmp/%s" % plan
-            if not os.path.exists(plandir):
-                common.pprint("Generating assets in %s" % plandir)
-                os.mkdir(plandir)
-            with open("%s/%s" % (plandir, inputfile), "w") as f:
-                fakestuff = pretty_print(fakeentries, value=True)
-                f.write(fakestuff)
         if basefile is not None:
             baseinfo = self.process_inputfile(plan, basefile, overrides=overrides, full=True)
             baseentries, baseoverrides = baseinfo[0], baseinfo[1]

@@ -427,15 +427,6 @@ To use this provider with kcli rpm, you'll need to install *python3-pyvmomi*
 
 Also note that kcli download will only upload OVAS, either from specified urls or gathering them in the case of rhcos/fcos.If not present, govc binary is downloaded on the fly in */var/tmp* to provide this functionality.
 
-## Fake
-
-you can also use a fake provider to get a feel of how kcli works (or to generate scripts to run on baremetal)
-
-```
-fake:
- type: fake
-```
-
 # Storing secrets
 
 You can hide your secrets in *~/.kcli/config.yml* by replacing any value by *?secret*. You can then place the real value in *~/.kcli/secrets.yml* by using the same yaml hierarchy.

@@ -518,17 +518,6 @@ specified urls or gathering them in the case of rhcos/fcos.If not
 present, govc binary is downloaded on the fly in */var/tmp* to provide
 this functionality.
 
-Fake
-----
-
-you can also use a fake provider to get a feel of how kcli works (or to
-generate scripts to run on baremetal)
-
-::
-
-    fake:
-     type: fake
-
 Storing secrets
 ===============
 

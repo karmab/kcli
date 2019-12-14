@@ -444,8 +444,6 @@ def set_lastvm(name, client, delete=False):
     :param delete:
     :return:
     """
-    if client == 'fake':
-        return
     configdir = "%s/.kcli/" % os.environ.get('HOME')
     vmfile = "%s/vm" % configdir
     if not os.path.exists(configdir):
