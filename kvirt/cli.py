@@ -760,23 +760,30 @@ def create_vm(args):
         if image in config.profiles:
             common.pprint("Using %s as profile" % image)
         profile = image
-    elif profile.endswith('.yml'):
-        profilefile = profile
-        profile = None
-        if not os.path.exists(profilefile):
-            common.pprint("Missing profile file %s" % profilefile, color='red')
-            os._exit(1)
-        else:
-            with open(profilefile, 'r') as entries:
-                entries = yaml.safe_load(entries)
-                entrieskeys = list(entries.keys())
-                if len(entrieskeys) == 1:
-                    profile = entrieskeys[0]
-                    customprofile = entries[profile]
-                    common.pprint("Using data from %s as profile" % profilefile, color='blue')
-                else:
-                    common.pprint("Cant' parse %s as profile file" % profilefile, color='red')
-                    os._exit(1)
+    elif profile is not None:
+        if profile.endswith('.yml'):
+            profilefile = profile
+            profile = None
+            if not os.path.exists(profilefile):
+                common.pprint("Missing profile file %s" % profilefile, color='red')
+                os._exit(1)
+            else:
+                with open(profilefile, 'r') as entries:
+                    entries = yaml.safe_load(entries)
+                    entrieskeys = list(entries.keys())
+                    if len(entrieskeys) == 1:
+                        profile = entrieskeys[0]
+                        customprofile = entries[profile]
+                        common.pprint("Using data from %s as profile" % profilefile, color='blue')
+                    else:
+                        common.pprint("Cant' parse %s as profile file" % profilefile, color='red')
+                        os._exit(1)
+    elif overrides:
+        profile = 'kvirt'
+        config.profiles[profile] = {}
+    else:
+        common.pprint("You need to either provide a profile, an image or some parameters", color='red')
+        os._exit(1)
     result = config.create_vm(name, profile, overrides=overrides, customprofile=customprofile, wait=wait)
     code = common.handle_response(result, name, element='', action='created', client=config.client)
     return code
@@ -2296,9 +2303,8 @@ def cli():
     vmcreate_desc = 'Create Vm'
     vmcreate_epilog = "examples:\n%s" % vmcreate
     vmcreate_parser = argparse.ArgumentParser(add_help=False)
-    vmcreate_parser_group = vmcreate_parser.add_mutually_exclusive_group(required=True)
-    vmcreate_parser_group.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
-    vmcreate_parser_group.add_argument('-i', '--image', help='Image to use', metavar='IMAGE')
+    vmcreate_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
+    vmcreate_parser.add_argument('-i', '--image', help='Image to use', metavar='IMAGE')
     vmcreate_parser.add_argument('--profilefile', help='File to load profiles from', metavar='PROFILEFILE')
     vmcreate_parser.add_argument('-P', '--param', action='append',
                                  help='specify parameter or keyword for rendering (multiple can be specified)',
