@@ -693,7 +693,7 @@ class Ksphere:
             deletedirectory(si, dc, vmpath)
         if plan != 'kvirt':
             planfolder = find(si, vmFolder, vim.Folder, plan)
-            if len(planfolder.childEntity) == 0:
+            if planfolder is not None and len(planfolder.childEntity) == 0:
                 planfolder.Destroy()
         return {'result': 'success'}
 
