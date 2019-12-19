@@ -2741,8 +2741,7 @@ class Kvirt(object):
             domainxml = "<domain name='%s'/>" % domain
         else:
             domainxml = "<domain name='%s'/>" % name
-        # bridgexml = ''
-        bridgexml = "<bridge name='%s' stp='on' delay='0'/>" % name
+        bridgexml = "<bridge name='%s' stp='on' delay='0'/>" % name if len(name) < 16 else ''
         metadata = """<metadata>
         <kvirt:info xmlns:kvirt="kvirt">
         <kvirt:plan>%s</kvirt:plan>
