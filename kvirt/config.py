@@ -574,6 +574,23 @@ class Kconfig(Kbaseconfig):
             while 'reboot' in cmds:
                 cmds.remove('reboot')
             cmds.append('reboot')
+        if image is not None and (image.startswith('rhel-8') or 'rhcos' in image) and disks:
+            firstdisk = disks[0]
+            if isinstance(firstdisk, str) and firstdisk.isdigit():
+                firstdisk = int(firstdisk)
+            if isinstance(firstdisk, int):
+                firstdisksize = firstdisk
+                if firstdisksize < 20:
+                    common.pprint("Rounding up first disk to 20Gb", color='blue')
+                    disks[0] = 20
+            elif isinstance(firstdisk, dict) and 'size' in firstdisk:
+                firstdisksize = firstdisk['size']
+                if firstdisksize < 20:
+                    common.pprint("Rounding up first disk to 20Gb", color='blue')
+                    disks[0]['size'] = 20
+            else:
+                msg = "Incorrect first disk spec"
+                return {'result': 'failure', 'reason': msg}
         result = k.create(name=name, plan=plan, profile=profilename, flavor=flavor, cpumodel=cpumodel,
                           cpuflags=cpuflags, cpupinning=cpupinning, numamode=numamode, numa=numa,
                           numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool,

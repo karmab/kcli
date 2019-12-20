@@ -1071,9 +1071,12 @@ Basic testing can be run with pytest, which leverages your existing kcli config:
 - *sharedfolders* (optional). Defaults to a blank array. List of paths to share between a kvm hypervisor and vm. You will also make sure that the path is accessible as qemu user (typically with id 107) and use an hypervisor and a guest with 9p support (centos/rhel lack it)
 - *yamlinventory* (optional). Defaults to false. If set to true, ansible generated inventory for single vms or for plans containing ansible entries will be yaml based.
 - *autostart* (optional). Defaults to false. Autostarts vm (only applies for libvirt)
-- *kernel* (optional). Kernel location to pass to the vm. Needs to be local to the hypervisor
-- *initrd* (optional). Initrd location to pass to the vm. Needs to be local to the hypervisor
-- *cmdline* (optional). Cmdline to pass to the vm
+- *kernel* (optional). Kernel location to pass to the vm. Needs to be local to the hypervisor.
+- *initrd* (optional). Initrd location to pass to the vm. Needs to be local to the hypervisor.
+- *cmdline* (optional). Cmdline to pass to the vm.
+- *numamode* optional numamode to apply to the workers only.
+- *cpupinning* optional cpupinning conf to apply to the workers only.
+- *pcidevices* optional array of pcidevices to passthrough to the first worker only. Check [here](https://github.com/karmab/kcli-plans/blob/master/samples/pcipassthrough/pci.yml) for an example.
 
 ## Overriding parameters
 

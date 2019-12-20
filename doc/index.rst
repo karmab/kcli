@@ -1426,10 +1426,16 @@ Available parameters for client/profile/plan files
 -  *autostart* (optional). Defaults to false. Autostarts vm (only
    applies for libvirt)
 -  *kernel* (optional). Kernel location to pass to the vm. Needs to be
-   local to the hypervisor
+   local to the hypervisor.
 -  *initrd* (optional). Initrd location to pass to the vm. Needs to be
-   local to the hypervisor
--  *cmdline* (optional). Cmdline to pass to the vm
+   local to the hypervisor.
+-  *cmdline* (optional). Cmdline to pass to the vm.
+-  *numamode* optional numamode to apply to the workers only.
+-  *cpupinning* optional cpupinning conf to apply to the workers only.
+-  *pcidevices* optional array of pcidevices to passthrough to the first
+   worker only. Check
+   `here <https://github.com/karmab/kcli-plans/blob/master/samples/pcipassthrough/pci.yml>`__
+   for an example.
 
 Overriding parameters
 ---------------------

@@ -644,6 +644,7 @@ class Kvirt(object):
                         cpuxml = """%s<feature policy='%s' name='%s'/>""" % (cpuxml, policy, feature)
         if cpuxml != '':
             if numa:
+                numamemory = 0
                 numaxml = '<numa>'
                 for index, cell in enumerate(numa):
                     if not isinstance(cell, dict):
@@ -657,7 +658,11 @@ class Kvirt(object):
                             msg = "Can't properly use cell %s in numa block" % index
                             return {'result': 'failure', 'reason': msg}
                         numaxml += "<cell id='%s' cpus='%s' memory='%s' unit='MiB'/>" % (cellid, cellcpus, cellmemory)
+                        numamemory += int(cellmemory)
                 cpuxml += '%s</numa>' % numaxml
+                if numamemory > memory:
+                    msg = "Can't use more memory for numa than assigned memory"
+                    return {'result': 'failure', 'reason': msg}
             elif memoryhotplug:
                 lastcpu = int(numcpus) - 1
                 cpuxml += "<numa><cell id='0' cpus='0-%s' memory='1048576' unit='KiB'/></numa>" % lastcpu
@@ -687,6 +692,9 @@ class Kvirt(object):
                             msg = "Can't properly use vcpu as integer in cpunning block"
                             return {'result': 'failure', 'reason': msg}
                     idmin, idmax = int(idmin), int(idmax) + 1
+                    if idmax > numcpus:
+                        msg = "Can't use more cpus for pinning than assigned numcpus"
+                        return {'result': 'failure', 'reason': msg}
                     for cpunum in range(idmin, idmax):
                         cpupinningxml += "<vcpupin vcpu='%s' cpuset='%s'/>\n" % (cpunum, hostcpus)
             cpupinningxml = "<cputune>%s</cputune>" % cpupinningxml
