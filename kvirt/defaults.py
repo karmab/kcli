@@ -25,6 +25,7 @@ TUNNEL = False
 IMAGES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-image-bootstrap.qcow2',
           'centos6': 'https://cloud.centos.org/centos/6/images/CentOS-6-x86_64-GenericCloud.qcow2',
           'centos7': 'https://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2',
+          'centos8': 'http://karmab.gmbros.net/CentOS-8-x86_64-Unofficial.qcow2.gz',
           'cirros': 'http://download.cirros-cloud.net/0.4.0/cirros-0.4.0-x86_64-disk.img',
           'coreos': 'https://stable.release.core-os.net/amd64-usr/current/coreos_production_qemu_image.img.bz2',
           'debian8': 'https://cdimage.debian.org/cdimage/openstack/archive/8.11.0/'
