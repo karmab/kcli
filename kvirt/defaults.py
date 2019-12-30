@@ -43,8 +43,8 @@ IMAGES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-i
           'Fedora-Cloud-Base-31-1.9.x86_64.qcow2',
           'gentoo': 'https://gentoo.osuosl.org/experimental/amd64/openstack/gentoo-openstack-amd64-default-20180621.'
           'qcow2',
-          'opensuse': 'http://download.opensuse.org/pub/opensuse/repositories/Cloud:/Images:/Leap_42.3/images/'
-          'openSUSE-Leap-42.3-OpenStack.x86_64.qcow2',
+          'opensuse': 'https://download.opensuse.org/repositories/Cloud:/Images:/Leap_15.2/images/'
+          'openSUSE-Leap-15.2-OpenStack.x86_64.qcow2',
           'rhcos41': 'https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.1',
           'rhcos42': 'https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.2',
           'rhcos43': 'https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.3',
