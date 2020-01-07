@@ -280,6 +280,7 @@ class Kconfig(Kbaseconfig):
             default_rhnak = father.get('rhnactivationkey', self.rhnak)
             default_rhnorg = father.get('rhnorg', self.rhnorg)
             default_rhnpool = father.get('rhnpool', self.rhnpool)
+            default_rhnwait = father.get('rhnwait', self.rhnwait)
             default_tags = father.get('tags', self.tags)
             default_flavor = father.get('flavor', self.flavor)
             default_cmds = common.remove_duplicates(self.cmds + father.get('cmds', []))
@@ -344,6 +345,7 @@ class Kconfig(Kbaseconfig):
             default_rhnak = self.rhnak
             default_rhnorg = self.rhnorg
             default_rhnpool = self.rhnpool
+            default_rhnwait = self.rhnwait
             default_cmds = self.cmds
             default_scripts = self.scripts
             default_dnsclient = self.dnsclient
@@ -446,6 +448,7 @@ class Kconfig(Kbaseconfig):
         rhnak = profile.get('rhnactivationkey', default_rhnak)
         rhnorg = profile.get('rhnorg', default_rhnorg)
         rhnpool = profile.get('rhnpool', default_rhnpool)
+        rhnwait = profile.get('rhnwait', default_rhnwait)
         flavor = profile.get('flavor', default_flavor)
         dnsclient = profile.get('dnsclient', default_dnsclient)
         storemetadata = profile.get('storemetadata', default_storemetadata)
@@ -505,8 +508,7 @@ class Kconfig(Kbaseconfig):
                     if scriptlines:
                         scriptcmds.extend(scriptlines)
         if skip_rhnregister_script and cloudinit and image is not None and image.lower().startswith('rhel'):
-            # rhncommands = ['sleep 30']
-            rhncommands = []
+            rhncommands = ['sleep %s' % rhnwait] if rhnwait > 0 else []
             if rhnak is not None and rhnorg is not None:
                 rhncommands.append('subscription-manager register --force --activationkey=%s --org=%s'
                                    % (rhnak, rhnorg))

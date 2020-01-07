@@ -1411,6 +1411,9 @@ Available parameters for client/profile/plan files
 -  *rhnactivationkey* (optional). Red Hat network activation key
 -  *rhnorg* (optional). Red Hat network organization
 -  *rhnpool* (optional). Red Hat network pool
+-  *rhnwait* (optional). Defaults to 0. Delay in seconds before
+   attempting to subscribe machine, to be used in environment where
+   networking takes more time to come up.
 -  *enableroot* (optional). Defaults to true. Allows ssh access as root
    user
 -  *storemetadata* (optional). Defaults to false. creates a

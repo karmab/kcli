@@ -13,7 +13,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             DOMAIN, SCRIPTS, FILES, ISO,
                             NETMASKS, GATEWAY, SHAREDKEY, IMAGE, ENABLEROOT,
                             PLANVIEW, PRIVATEKEY, TAGS, RHNREGISTER, RHNUSER, RHNPASSWORD, RHNAK, RHNORG, RHNPOOL,
-                            FLAVOR, KEEP_NETWORKS, DNSCLIENT, STORE_METADATA, NOTIFY, NOTIFYTOKEN, NOTIFYCMD,
+                            RHNWAIT, FLAVOR, KEEP_NETWORKS, DNSCLIENT, STORE_METADATA, NOTIFY, NOTIFYTOKEN, NOTIFYCMD,
                             SHAREDFOLDERS, KERNEL, INITRD, CMDLINE, PLACEMENT, YAMLINVENTORY, CPUHOTPLUG, MEMORYHOTPLUG,
                             CPUFLAGS, CPUPINNING, NUMAMODE, NUMA, PCIDEVICES)
 from kvirt import common
@@ -136,6 +136,7 @@ class Kbaseconfig:
         defaults['rhnactivationkey'] = default.get('rhnactivationkey', RHNAK)
         defaults['rhnorg'] = default.get('rhnorg', RHNORG)
         defaults['rhnpool'] = default.get('rhnpool', RHNPOOL)
+        defaults['rhnwait'] = default.get('rhnwait', RHNWAIT)
         defaults['tags'] = default.get('tags', TAGS)
         defaults['flavor'] = default.get('flavor', FLAVOR)
         defaults['keep_networks'] = default.get('keep_networks', KEEP_NETWORKS)
@@ -262,6 +263,7 @@ class Kbaseconfig:
         self.rhnak = options.get('rhnactivationkey', self.default['rhnactivationkey'])
         self.rhnorg = options.get('rhnorg', self.default['rhnorg'])
         self.rhnpool = options.get('rhnpool', self.default['rhnpool'])
+        self.rhnwait = options.get('rhnwait', self.default['rhnwait'])
         self.tags = options.get('tags', self.default['tags'])
         self.flavor = options.get('flavor', self.default['flavor'])
         self.dnsclient = options.get('dnsclient', self.default['dnsclient'])
