@@ -178,6 +178,17 @@ def process_files(files=[], overrides={}):
     :return:
     """
     data = ''
+    for directory in files:
+        if not isinstance(directory, dict) or 'origin' not in directory\
+                or not os.path.isdir(os.path.expanduser(directory['origin'])):
+            continue
+        else:
+            origin = os.path.expanduser(directory.get('origin'))
+            path = directory.get('path')
+            for subfil in os.listdir(origin):
+                if os.path.isfile("%s/%s" % (origin, subfil)):
+                    files.append({'path': '%s/%s' % (path, subfil), 'origin': "%s/%s" % (origin, subfil)})
+            files.remove(directory)
     for fil in files:
         if not isinstance(fil, dict):
             continue
@@ -241,6 +252,17 @@ def process_ignition_files(files=[], overrides={}):
     :return:
     """
     data = []
+    for directory in files:
+        if not isinstance(directory, dict) or 'origin' not in directory\
+                or not os.path.isdir(os.path.expanduser(directory['origin'])):
+            continue
+        else:
+            origin = os.path.expanduser(directory.get('origin'))
+            path = directory.get('path')
+            for subfil in os.listdir(origin):
+                if os.path.isfile("%s/%s" % (origin, subfil)):
+                    files.append({'path': '%s/%s' % (path, subfil), 'origin': "%s/%s" % (origin, subfil)})
+            files.remove(directory)
     for fil in files:
         if not isinstance(fil, dict):
             continue

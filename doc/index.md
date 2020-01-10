@@ -1055,7 +1055,7 @@ Basic testing can be run with pytest, which leverages your existing kcli config:
 - *nested* Defaults to True
 - *sharedkey* Defaults to False. Set it to true so that a private/public key gets shared between all the nodes of your plan. Additionally, root access will be allowed
 - *privatekey* Defaults to False. Set it to true so that your private key is passed to the nodes of your plan. If you need this, you know why :)
-- *files* (optional)- Array of files to inject to the vm. For ecach of the them , you can specify path, owner ( root by default) , permissions (600 by default ) and either origin or content to gather content data directly or from specified origin
+- *files* (optional)- Array of files to inject to the vm. For each of them, you can specify path, owner ( root by default) , permissions (600 by default ) and either origin or content to gather content data directly or from specified origin. When specifying a directory as origin, all the files it contains will be parsed and added.
 - *insecure* (optional) Handles all the ssh option details so you dont get any warnings about man in the middle
 - *client* (optional) Allows you to create the vm on a specific client. This field is not used for other types like network, so expect to use this in relatively simple plans only
 - *base* (optional) Allows you to point to a parent profile so that values are taken from parent when not found in the current profile. Scripts and commands are rather concatenated between default, father and children ( so you have a happy family...)
