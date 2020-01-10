@@ -183,11 +183,21 @@ def process_files(files=[], overrides={}):
                 or not os.path.isdir(os.path.expanduser(directory['origin'])):
             continue
         else:
-            origin = os.path.expanduser(directory.get('origin'))
+            origin_unexpanded = directory.get('origin')
+            origin = os.path.expanduser(origin_unexpanded)
             path = directory.get('path')
-            for subfil in os.listdir(origin):
-                if os.path.isfile("%s/%s" % (origin, subfil)):
-                    files.append({'path': '%s/%s' % (path, subfil), 'origin': "%s/%s" % (origin, subfil)})
+            for entry in os.walk(origin):
+                subdirectory = os.path.expanduser(entry[0])
+                vm_subdirectory = entry[0].replace('%s' % origin_unexpanded, '')
+                subfiles = entry[1:]
+                for subfil in subfiles:
+                    if not subfil or not os.path.isfile("%s/%s" % (subdirectory, subfil[0])):
+                        continue
+                    else:
+                        subfil = subfil[0]
+                        subpath = "%s/%s/%s" % (path, vm_subdirectory, subfil)
+                        subpath = subpath.replace('//', '/')
+                        files.append({'path': subpath, 'origin': "%s/%s" % (subdirectory, subfil)})
             files.remove(directory)
     for fil in files:
         if not isinstance(fil, dict):
