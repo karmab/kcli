@@ -106,7 +106,7 @@ class KOvirt(object):
         """
         print("not implemented")
 
-    def create(self, name, virttype='kvm', profile='', flavor=None, plan='kvirt',
+    def create(self, name, virttype=None, profile='', flavor=None, plan='kvirt',
                cpumodel='Westmere', cpuflags=[], cpupinning=[], numcpus=2, memory=512,
                guestid='guestrhel764', pool='default', image=None,
                disks=[{'size': 10}], disksize=10, diskthin=True,

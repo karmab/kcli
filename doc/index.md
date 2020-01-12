@@ -1023,6 +1023,7 @@ Basic testing can be run with pytest, which leverages your existing kcli config:
 
 # Available parameters for client/profile/plan files
 
+- *virttype* Defaults to None. Only used for libvirt where it evaluates to kvm if acceleration shows in capabilities, or qemu emulation otherwise. If a value is provided, it must be either kvm, qemu, xen or lxc.
 - *cpumodel* Defaults to host-model
 - *cpuflags* (optional). You can specify a list of strings with features to enable or use dict entries with *name* of the feature and *policy* either set to require,disable, optional or force. The value for vmx is ignored, as it's handled by the nested flag.
 - *numcpus* Defaults to 2

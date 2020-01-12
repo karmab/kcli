@@ -15,7 +15,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             PLANVIEW, PRIVATEKEY, TAGS, RHNREGISTER, RHNUSER, RHNPASSWORD, RHNAK, RHNORG, RHNPOOL,
                             RHNWAIT, FLAVOR, KEEP_NETWORKS, DNSCLIENT, STORE_METADATA, NOTIFY, NOTIFYTOKEN, NOTIFYCMD,
                             SHAREDFOLDERS, KERNEL, INITRD, CMDLINE, PLACEMENT, YAMLINVENTORY, CPUHOTPLUG, MEMORYHOTPLUG,
-                            CPUFLAGS, CPUPINNING, NUMAMODE, NUMA, PCIDEVICES)
+                            CPUFLAGS, CPUPINNING, NUMAMODE, NUMA, PCIDEVICES, VIRTTYPE)
 from kvirt import common
 from kvirt import jinjafilters
 import os
@@ -153,6 +153,7 @@ class Kbaseconfig:
         defaults['yamlinventory'] = default.get('yamlinventory', YAMLINVENTORY)
         defaults['cpuhotplug'] = bool(default.get('cpuhotplug', CPUHOTPLUG))
         defaults['memoryhotplug'] = bool(default.get('memoryhotplug', MEMORYHOTPLUG))
+        defaults['virttype'] = default.get('virttype', VIRTTYPE)
         currentplanfile = "%s/.kcli/plan" % os.environ.get('HOME')
         if os.path.exists(currentplanfile):
             self.currentplan = open(currentplanfile).read().strip()
@@ -280,6 +281,7 @@ class Kbaseconfig:
         self.yamlinventory = options.get('yamlinventory', self.default['yamlinventory'])
         self.cpuhotplug = options.get('cpuhotplug', self.default['cpuhotplug'])
         self.memoryhotplug = options.get('memoryhotplug', self.default['memoryhotplug'])
+        self.virttype = options.get('virttype', self.default['virttype'])
         self.containerclient = containerclient
         self.overrides = {}
 

@@ -183,7 +183,7 @@ class Kvirt(object):
         except:
             return False
 
-    def create(self, name, virttype='kvm', profile='kvirt', flavor=None, plan='kvirt', cpumodel='host-model',
+    def create(self, name, virttype=None, profile='kvirt', flavor=None, plan='kvirt', cpumodel='host-model',
                cpuflags=[], cpupinning=[], numcpus=2, memory=512, guestid='guestrhel764', pool='default', image=None,
                disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None,
                vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None,
@@ -620,7 +620,11 @@ class Kvirt(object):
         else:
             cpuxml = """<cpu mode='custom' match='exact'>
                         <model fallback='allow'>%s</model>""" % cpumodel
-        virttype = 'kvm' if 'kvm' in self.conn.getCapabilities() else 'qemu'
+        if virttype is None:
+            virttype = 'kvm' if 'kvm' in self.conn.getCapabilities() else 'qemu'
+        elif virttype not in ['qemu', 'kvm', 'xen', 'lxc']:
+            msg = "Incorrect virttype %s" % virttype
+            return {'result': 'failure', 'reason': msg}
         if nested and virttype == 'kvm':
             capabilities = self.conn.getCapabilities()
             if 'vmx' in capabilities:

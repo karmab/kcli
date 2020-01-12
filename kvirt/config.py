@@ -301,6 +301,7 @@ class Kconfig(Kbaseconfig):
             default_numa = father.get('numa', self.numa)
             default_numamode = father.get('numamode', self.numamode)
             default_pcidevices = father.get('pcidevices', self.pcidevices)
+            default_virttype = father.get('virttype', self.virttype)
         else:
             default_numcpus = self.numcpus
             default_memory = self.memory
@@ -361,6 +362,7 @@ class Kconfig(Kbaseconfig):
             default_yamlinventory = self.yamlinventory
             default_cpuhotplug = self.cpuhotplug
             default_memoryhotplug = self.memoryhotplug
+            default_virttype = self.virttype
         plan = profile.get('plan', plan)
         template = profile.get('template', default_image)
         image = profile.get('image', template)
@@ -463,6 +465,7 @@ class Kconfig(Kbaseconfig):
         yamlinventory = profile.get('yamlinventory', default_yamlinventory)
         cpuhotplug = profile.get('cpuhotplug', default_cpuhotplug)
         memoryhotplug = profile.get('memoryhotplug', default_memoryhotplug)
+        virttype = profile.get('virttype', default_virttype)
         scriptcmds = []
         skip_rhnregister_script = False
         if rhnregister and image is not None and image.lower().startswith('rhel'):
@@ -593,8 +596,8 @@ class Kconfig(Kbaseconfig):
             else:
                 msg = "Incorrect first disk spec"
                 return {'result': 'failure', 'reason': msg}
-        result = k.create(name=name, plan=plan, profile=profilename, flavor=flavor, cpumodel=cpumodel,
-                          cpuflags=cpuflags, cpupinning=cpupinning, numamode=numamode, numa=numa,
+        result = k.create(name=name, virttype=virttype, plan=plan, profile=profilename, flavor=flavor,
+                          cpumodel=cpumodel, cpuflags=cpuflags, cpupinning=cpupinning, numamode=numamode, numa=numa,
                           numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool,
                           image=image, disks=disks, disksize=disksize, diskthin=diskthin,
                           diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit),
