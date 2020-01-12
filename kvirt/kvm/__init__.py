@@ -620,6 +620,7 @@ class Kvirt(object):
         else:
             cpuxml = """<cpu mode='custom' match='exact'>
                         <model fallback='allow'>%s</model>""" % cpumodel
+        virttype = 'kvm' if 'kvm' in self.conn.getCapabilities() else 'qemu'
         if nested and virttype == 'kvm':
             capabilities = self.conn.getCapabilities()
             if 'vmx' in capabilities:
