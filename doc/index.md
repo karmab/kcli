@@ -22,6 +22,7 @@ If you don't have libvirt installed on the target hypervisor, you can use the fo
 sudo yum -y install libvirt libvirt-daemon-driver-qemu qemu-kvm 
 sudo usermod -aG qemu,libvirt $(id -un)
 newgrp libvirt
+systemctl enable --now libvirtd
 ```
 
 (Optional) For interaction with your local docker daemon, you also need the following:

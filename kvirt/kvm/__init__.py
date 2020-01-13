@@ -620,24 +620,21 @@ class Kvirt(object):
         else:
             cpuxml = """<cpu mode='custom' match='exact'>
                         <model fallback='allow'>%s</model>""" % cpumodel
+        capabilities = self.conn.getCapabilities()
+        nestedfeature = 'vmx' if 'vmx' in capabilities else 'svm'
+        nestedflag = 'require' if nested else 'disable'
         if virttype is None:
-            virttype = 'kvm' if 'kvm' in self.conn.getCapabilities() else 'qemu'
+            virttype = 'kvm' if "<domain type='kvm'>" in capabilities else 'qemu'
         elif virttype not in ['qemu', 'kvm', 'xen', 'lxc']:
             msg = "Incorrect virttype %s" % virttype
             return {'result': 'failure', 'reason': msg}
-        if nested and virttype == 'kvm':
-            capabilities = self.conn.getCapabilities()
-            if 'vmx' in capabilities:
-                nestedfeature = 'vmx'
-            else:
-                nestedfeature = 'svm'
-            cpuxml = """%s<feature policy='require' name='%s'/>""" % (cpuxml, nestedfeature)
+        cpuxml += "<feature policy='%s' name='%s'/>" % (nestedflag, nestedfeature)
         if cpuflags:
             for flag in cpuflags:
                 if isinstance(flag, str):
                     if flag == 'vmx':
                         continue
-                    cpuxml = """%s<feature policy='optional' name='%s'/>""" % (cpuxml, flag)
+                    cpuxml += "<feature policy='optional' name='%s'/>" % flag
                 elif isinstance(flag, dict):
                     feature = flag.get('name')
                     policy = flag.get('policy', 'optional')
@@ -646,7 +643,7 @@ class Kvirt(object):
                     elif feature == 'vmx':
                         continue
                     elif policy in ['force', 'require', 'optional', 'disable', 'forbid']:
-                        cpuxml = """%s<feature policy='%s' name='%s'/>""" % (cpuxml, policy, feature)
+                        cpuxml += "<feature policy='%s' name='%s'/>" % (policy, feature)
         if cpuxml != '':
             if numa:
                 numamemory = 0
