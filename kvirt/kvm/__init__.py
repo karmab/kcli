@@ -624,7 +624,7 @@ class Kvirt(object):
         nestedfeature = 'vmx' if 'vmx' in capabilities else 'svm'
         nestedflag = 'require' if nested else 'disable'
         if virttype is None:
-            virttype = 'kvm' if "<domain type='kvm'>" in capabilities else 'qemu'
+            virttype = 'kvm' if "<domain type='kvm'" in capabilities else 'qemu'
         elif virttype not in ['qemu', 'kvm', 'xen', 'lxc']:
             msg = "Incorrect virttype %s" % virttype
             return {'result': 'failure', 'reason': msg}
