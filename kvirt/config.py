@@ -1619,7 +1619,10 @@ class Kconfig(Kbaseconfig):
                         url = n
                 if url is None:
                     return {'result': 'failure', 'reason': "image not in default list"}
-                if not url.endswith('qcow2') and not url.endswith('img') and not url.endswith('qc2'):
+                if (not url.endswith('qcow2')
+                   and not url.endswith('img')
+                   and not url.endswith('qc2')
+                   and not url.endswith('raw.xz')):
                     if 'web' in sys.argv[0]:
                         return {'result': 'failure', 'reason': "Missing url"}
                     common.pprint("Opening url %s for you to grab complete url for %s" % (url, vol), color='blue')
