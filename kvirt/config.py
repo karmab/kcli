@@ -1133,9 +1133,7 @@ class Kconfig(Kbaseconfig):
                         else:
                             common.pprint("Image %s skipped as url is missing!" % image, color='blue')
                             continue
-                    if not imageurl.endswith('qcow2') and not imageurl.endswith('img')\
-                            and not imageurl.endswith('qc2') and not imageurl.endswith('qcow2.xz')\
-                            and not imageurl.endswith('qcow2.gz'):
+                    if imageurl.startswith('rhel'):
                         common.pprint("Opening url %s for you to grab complete url for %s" % (imageurl,
                                                                                               image),
                                       color='blue')
@@ -1543,9 +1541,7 @@ class Kconfig(Kbaseconfig):
                     if 'fcos' in image:
                         url = common.get_latest_fcos(url, _type=self.type)
                     image = os.path.basename(image)
-                    if not url.endswith('qcow2') and not url.endswith('img') and not url.endswith('qc2')\
-                            and not url.endswith('qcow2.xz') and not url.endswith('qcow2.gz')\
-                            and 'storage.googleapis.com' not in url and not url.endswith('ova'):
+                    if image.startswith('rhel'):
                         if 'web' in sys.argv[0]:
                             return {'result': 'failure', 'reason': "Missing url"}
                         common.pprint("Opening url %s for you to grab complete url for %s" % (url, image), 'blue')
@@ -1619,10 +1615,7 @@ class Kconfig(Kbaseconfig):
                         url = n
                 if url is None:
                     return {'result': 'failure', 'reason': "image not in default list"}
-                if (not url.endswith('qcow2')
-                   and not url.endswith('img')
-                   and not url.endswith('qc2')
-                   and not url.endswith('raw.xz')):
+                if image.startswith('rhel'):
                     if 'web' in sys.argv[0]:
                         return {'result': 'failure', 'reason': "Missing url"}
                     common.pprint("Opening url %s for you to grab complete url for %s" % (url, vol), color='blue')
