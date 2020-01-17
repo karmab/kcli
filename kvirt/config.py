@@ -290,6 +290,8 @@ class Kconfig(Kbaseconfig):
             default_notify = father.get('notify', self.notify)
             default_notifytoken = father.get('notifytoken', self.notifytoken)
             default_notifycmd = father.get('notifycmd', self.notifycmd)
+            default_notifymethod = father.get('notifymethod', self.notifymethod)
+            default_notifychannel = father.get('notifychannel', self.notifychannel)
             default_sharedfolders = father.get('sharedfolders', self.sharedfolders)
             default_kernel = father.get('kernel', self.kernel)
             default_initrd = father.get('initrd', self.initrd)
@@ -354,6 +356,8 @@ class Kconfig(Kbaseconfig):
             default_notify = self.notify
             default_notifytoken = self.notifytoken
             default_notifycmd = self.notifycmd
+            default_notifymethod = self.notifymethod
+            default_notifychannel = self.notifychannel
             default_sharedfolders = self.sharedfolders
             default_kernel = self.kernel
             default_initrd = self.initrd
@@ -457,6 +461,8 @@ class Kconfig(Kbaseconfig):
         notify = profile.get('notify', default_notify)
         notifytoken = profile.get('notifytoken', default_notifytoken)
         notifycmd = profile.get('notifycmd', default_notifycmd)
+        notifymethod = profile.get('notifycmd', default_notifymethod)
+        notifychannel = profile.get('notifycmd', default_notifychannel)
         sharedfolders = profile.get('sharedfolders', default_sharedfolders)
         kernel = profile.get('kernel', default_kernel)
         initrd = profile.get('initrd', default_initrd)
@@ -549,7 +555,9 @@ class Kconfig(Kbaseconfig):
                          '/dev/null' % (name, self.reporturl)]
             cmds = cmds + reportcmd
         if notify:
-            if notifytoken is not None:
+            if notifytoken is None:
+                common.pprint("Notification required but missing notifytoken for %s" % notifymethod, color='blue')
+            elif notifymethod == 'pushbullet':
                 title = "Vm %s on %s report" % (self.client, name)
                 notifycmd = 'curl -su "%s:" -d type="note" -d body="`%s 2>&1`" -d title="%s" ' % (notifytoken,
                                                                                                   notifycmd,
@@ -559,8 +567,21 @@ class Kconfig(Kbaseconfig):
                     cmds = [notifycmd]
                 else:
                     cmds.append(notifycmd)
-            else:
-                common.pprint("Notification required but missing notifytoken. Get it a pushbullet.com", color='blue')
+            elif notifymethod == 'slack':
+                if notifychannel is None:
+                    common.pprint("Notification required but missing slack channel", color='blue')
+                else:
+                    title = "Vm %s on %s report" % (self.client, name)
+                    notifycmd = "info=`%s 2>&1`;" % notifycmd
+                    notifycmd += """curl -X POST -H 'Authorization: Bearer %s' -H 'Content-type: application/json'
+ --data '{"channel":"%s","text":"%s","attachments": [{"text":"'"$info"'","fallback":"nothing",
+"color":"#3AA3E3","attachment_type":"default"}]}' https://slack.com/api/chat.postMessage""" % (notifytoken,
+                                                                                               notifychannel, title)
+                    notifycmd = notifycmd.replace('\n', '')
+                    if not cmds:
+                        cmds = [notifycmd]
+                    else:
+                        cmds.append(notifycmd)
         ips = [overrides[key] for key in overrides if key.startswith('ip')]
         netmasks = [overrides[key] for key in overrides if key.startswith('netmask')]
         if privatekey:

@@ -14,8 +14,9 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             NETMASKS, GATEWAY, SHAREDKEY, IMAGE, ENABLEROOT,
                             PLANVIEW, PRIVATEKEY, TAGS, RHNREGISTER, RHNUSER, RHNPASSWORD, RHNAK, RHNORG, RHNPOOL,
                             RHNWAIT, FLAVOR, KEEP_NETWORKS, DNSCLIENT, STORE_METADATA, NOTIFY, NOTIFYTOKEN, NOTIFYCMD,
-                            SHAREDFOLDERS, KERNEL, INITRD, CMDLINE, PLACEMENT, YAMLINVENTORY, CPUHOTPLUG, MEMORYHOTPLUG,
-                            CPUFLAGS, CPUPINNING, NUMAMODE, NUMA, PCIDEVICES, VIRTTYPE)
+                            NOTIFYMETHOD, NOTIFYCHANNEL, SHAREDFOLDERS, KERNEL, INITRD, CMDLINE, PLACEMENT,
+                            YAMLINVENTORY, CPUHOTPLUG, MEMORYHOTPLUG, CPUFLAGS, CPUPINNING, NUMAMODE, NUMA, PCIDEVICES,
+                            VIRTTYPE)
 from kvirt import common
 from kvirt import jinjafilters
 import os
@@ -145,6 +146,8 @@ class Kbaseconfig:
         defaults['notify'] = default.get('notify', NOTIFY)
         defaults['notifytoken'] = default.get('notifytoken', NOTIFYTOKEN)
         defaults['notifycmd'] = default.get('notifycmd', NOTIFYCMD)
+        defaults['notifymethod'] = default.get('notifymethod', NOTIFYMETHOD)
+        defaults['notifychannel'] = default.get('notifychannel', NOTIFYCHANNEL)
         defaults['sharedfolders'] = default.get('sharedfolders', SHAREDFOLDERS)
         defaults['kernel'] = default.get('kernel', KERNEL)
         defaults['initrd'] = default.get('initrd', INITRD)
@@ -272,6 +275,8 @@ class Kbaseconfig:
         self.notify = options.get('notify', self.default['notify'])
         self.notifytoken = options.get('notifytoken', self.default['notifytoken'])
         self.notifycmd = options.get('notifycmd', self.default['notifycmd'])
+        self.notifymethod = options.get('notifymethod', self.default['notifymethod'])
+        self.notifychannel = options.get('notifychannel', self.default['notifychannel'])
         self.keep_networks = options.get('keep_networks', self.default['keep_networks'])
         self.sharedfolders = options.get('sharedfolders', self.default['sharedfolders'])
         self.kernel = options.get('kernel', self.default['kernel'])
