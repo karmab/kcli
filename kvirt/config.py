@@ -558,7 +558,7 @@ class Kconfig(Kbaseconfig):
             if notifytoken is None:
                 common.pprint("Notification required but missing notifytoken for %s" % notifymethod, color='blue')
             elif notifymethod == 'pushbullet':
-                title = "Vm %s on %s report" % (self.client, name)
+                title = "Vm %s on %s report" % (name, self.client)
                 notifycmd = 'curl -su "%s:" -d type="note" -d body="`%s 2>&1`" -d title="%s" ' % (notifytoken,
                                                                                                   notifycmd,
                                                                                                   title)
@@ -571,7 +571,7 @@ class Kconfig(Kbaseconfig):
                 if notifychannel is None:
                     common.pprint("Notification required but missing slack channel", color='blue')
                 else:
-                    title = "Vm %s on %s report" % (self.client, name)
+                    title = "Vm %s on %s report" % (name, self.client)
                     notifycmd = "info=`%s 2>&1`;" % notifycmd
                     notifycmd += """curl -X POST -H 'Authorization: Bearer %s' -H 'Content-type: application/json'
  --data '{"channel":"%s","text":"%s","attachments": [{"text":"'"$info"'","fallback":"nothing",
