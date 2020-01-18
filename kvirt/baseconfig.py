@@ -13,10 +13,10 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             DOMAIN, SCRIPTS, FILES, ISO,
                             NETMASKS, GATEWAY, SHAREDKEY, IMAGE, ENABLEROOT,
                             PLANVIEW, PRIVATEKEY, TAGS, RHNREGISTER, RHNUSER, RHNPASSWORD, RHNAK, RHNORG, RHNPOOL,
-                            RHNWAIT, FLAVOR, KEEP_NETWORKS, DNSCLIENT, STORE_METADATA, NOTIFY, NOTIFYTOKEN, NOTIFYCMD,
-                            NOTIFYMETHOD, NOTIFYCHANNEL, SHAREDFOLDERS, KERNEL, INITRD, CMDLINE, PLACEMENT,
-                            YAMLINVENTORY, CPUHOTPLUG, MEMORYHOTPLUG, CPUFLAGS, CPUPINNING, NUMAMODE, NUMA, PCIDEVICES,
-                            VIRTTYPE)
+                            RHNWAIT, FLAVOR, KEEP_NETWORKS, DNSCLIENT, STORE_METADATA, NOTIFY, PUSHBULLETTOKEN,
+                            SLACKTOKEN, NOTIFYCMD, NOTIFYMETHODS, NOTIFYCHANNEL, SHAREDFOLDERS, KERNEL, INITRD, CMDLINE,
+                            PLACEMENT, YAMLINVENTORY, CPUHOTPLUG, MEMORYHOTPLUG, CPUFLAGS, CPUPINNING, NUMAMODE, NUMA,
+                            PCIDEVICES, VIRTTYPE)
 from kvirt import common
 from kvirt import jinjafilters
 import os
@@ -144,9 +144,10 @@ class Kbaseconfig:
         defaults['dnsclient'] = default.get('dnsclient', DNSCLIENT)
         defaults['storemetadata'] = default.get('storemetadata', STORE_METADATA)
         defaults['notify'] = default.get('notify', NOTIFY)
-        defaults['notifytoken'] = default.get('notifytoken', NOTIFYTOKEN)
+        defaults['slacktoken'] = default.get('slacktoken', SLACKTOKEN)
+        defaults['pushbullettoken'] = default.get('pushbullettoken', PUSHBULLETTOKEN)
         defaults['notifycmd'] = default.get('notifycmd', NOTIFYCMD)
-        defaults['notifymethod'] = default.get('notifymethod', NOTIFYMETHOD)
+        defaults['notifymethods'] = default.get('notifymethods', NOTIFYMETHODS)
         defaults['notifychannel'] = default.get('notifychannel', NOTIFYCHANNEL)
         defaults['sharedfolders'] = default.get('sharedfolders', SHAREDFOLDERS)
         defaults['kernel'] = default.get('kernel', KERNEL)
@@ -273,9 +274,10 @@ class Kbaseconfig:
         self.dnsclient = options.get('dnsclient', self.default['dnsclient'])
         self.storemetadata = options.get('storemetadata', self.default['storemetadata'])
         self.notify = options.get('notify', self.default['notify'])
-        self.notifytoken = options.get('notifytoken', self.default['notifytoken'])
+        self.slacktoken = options.get('slacktoken', self.default['slacktoken'])
+        self.pushbullettoken = options.get('self.pushbullettoken', self.default['pushbullettoken'])
         self.notifycmd = options.get('notifycmd', self.default['notifycmd'])
-        self.notifymethod = options.get('notifymethod', self.default['notifymethod'])
+        self.notifymethods = options.get('notifymethods', self.default['notifymethods'])
         self.notifychannel = options.get('notifychannel', self.default['notifychannel'])
         self.keep_networks = options.get('keep_networks', self.default['keep_networks'])
         self.sharedfolders = options.get('sharedfolders', self.default['sharedfolders'])

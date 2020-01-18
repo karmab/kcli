@@ -288,10 +288,13 @@ class Kconfig(Kbaseconfig):
             default_dnsclient = father.get('dnsclient', self.dnsclient)
             default_storemetadata = father.get('storemetadata', self.storemetadata)
             default_notify = father.get('notify', self.notify)
-            default_notifytoken = father.get('notifytoken', self.notifytoken)
+            default_pushbullettoken = father.get('slacktoken', self.pushbullettoken)
+            default_pushbullettoken = father.get('pushbullettoken', self.pushbullettoken)
             default_notifycmd = father.get('notifycmd', self.notifycmd)
-            default_notifymethod = father.get('notifymethod', self.notifymethod)
+            default_notifymethods = father.get('notifymethods', self.notifymethods)
             default_notifychannel = father.get('notifychannel', self.notifychannel)
+            default_pushbullettoken = father.get('pushbullettoken', self.pushbullettoken)
+            default_slacktoken = father.get('slacktoken', self.slacktoken)
             default_sharedfolders = father.get('sharedfolders', self.sharedfolders)
             default_kernel = father.get('kernel', self.kernel)
             default_initrd = father.get('initrd', self.initrd)
@@ -354,9 +357,10 @@ class Kconfig(Kbaseconfig):
             default_dnsclient = self.dnsclient
             default_storemetadata = self.storemetadata
             default_notify = self.notify
-            default_notifytoken = self.notifytoken
+            default_pushbullettoken = self.pushbullettoken
+            default_slacktoken = self.slacktoken
             default_notifycmd = self.notifycmd
-            default_notifymethod = self.notifymethod
+            default_notifymethods = self.notifymethods
             default_notifychannel = self.notifychannel
             default_sharedfolders = self.sharedfolders
             default_kernel = self.kernel
@@ -459,10 +463,11 @@ class Kconfig(Kbaseconfig):
         dnsclient = profile.get('dnsclient', default_dnsclient)
         storemetadata = profile.get('storemetadata', default_storemetadata)
         notify = profile.get('notify', default_notify)
-        notifytoken = profile.get('notifytoken', default_notifytoken)
+        pushbullettoken = profile.get('pushbullettoken', default_pushbullettoken)
+        slacktoken = profile.get('slacktoken', default_slacktoken)
         notifycmd = profile.get('notifycmd', default_notifycmd)
-        notifymethod = profile.get('notifycmd', default_notifymethod)
-        notifychannel = profile.get('notifycmd', default_notifychannel)
+        notifymethods = profile.get('notifymethods', default_notifymethods)
+        notifychannel = profile.get('notifychannel', default_notifychannel)
         sharedfolders = profile.get('sharedfolders', default_sharedfolders)
         kernel = profile.get('kernel', default_kernel)
         initrd = profile.get('initrd', default_initrd)
@@ -555,33 +560,47 @@ class Kconfig(Kbaseconfig):
                          '/dev/null' % (name, self.reporturl)]
             cmds = cmds + reportcmd
         if notify:
-            if notifytoken is None:
-                common.pprint("Notification required but missing notifytoken for %s" % notifymethod, color='blue')
-            elif notifymethod == 'pushbullet':
-                title = "Vm %s on %s report" % (name, self.client)
-                notifycmd = 'curl -su "%s:" -d type="note" -d body="`%s 2>&1`" -d title="%s" ' % (notifytoken,
-                                                                                                  notifycmd,
-                                                                                                  title)
-                notifycmd += 'https://api.pushbullet.com/v2/pushes'
-                if not cmds:
-                    cmds = [notifycmd]
+            if notifycmd is None:
+                if 'cos' in image:
+                    notifycmd = 'journalctl --identifier=ignition --all --no-pager'
                 else:
-                    cmds.append(notifycmd)
-            elif notifymethod == 'slack':
-                if notifychannel is None:
-                    common.pprint("Notification required but missing slack channel", color='blue')
-                else:
-                    title = "Vm %s on %s report" % (name, self.client)
-                    notifycmd = "info=`%s 2>&1`;" % notifycmd
-                    notifycmd += """curl -X POST -H 'Authorization: Bearer %s' -H 'Content-type: application/json'
- --data '{"channel":"%s","text":"%s","attachments": [{"text":"'"$info"'","fallback":"nothing",
-"color":"#3AA3E3","attachment_type":"default"}]}' https://slack.com/api/chat.postMessage""" % (notifytoken,
-                                                                                               notifychannel, title)
-                    notifycmd = notifycmd.replace('\n', '')
-                    if not cmds:
-                        cmds = [notifycmd]
+                    cloudinitfile = common.get_cloudinitfile(image)
+                    notifycmd = "tail -100 %s" % cloudinitfile
+            for notifymethod in notifymethods:
+                if notifymethod == 'pushbullet':
+                    if pushbullettoken is None:
+                        common.pprint("Notification required but missing pushbullettoken", color='red')
                     else:
-                        cmds.append(notifycmd)
+                        title = "Vm %s on %s report" % (name, self.client)
+                        token = pushbullettoken
+                        pbcmd = 'curl -su "%s:" -d type="note" -d body="`%s 2>&1`" -d title="%s" ' % (token,
+                                                                                                      notifycmd,
+                                                                                                      title)
+                        pbcmd += 'https://api.pushbullet.com/v2/pushes'
+                        if not cmds:
+                            cmds = [pbcmd]
+                        else:
+                            cmds.append(pbcmd)
+                elif notifymethod == 'slack':
+                    if notifychannel is None:
+                        common.pprint("Notification required but missing slack channel", color='red')
+                    elif slacktoken is None:
+                        common.pprint("Notification required but missing slacktoken", color='red')
+                    else:
+                        title = "Vm %s on %s report" % (name, self.client)
+                        slackcmd = "info=`%s 2>&1 | sed 's/\\x2/ /g'`;" % notifycmd
+                        slackcmd += """curl -X POST -H 'Authorization: Bearer %s'
+ -H 'Content-type: application/json; charset=utf-8'
+ --data '{"channel":"%s","text":"%s","attachments": [{"text":"'"$info"'","fallback":"nothing",
+"color":"#3AA3E3","attachment_type":"default"}]}' https://slack.com/api/chat.postMessage""" % (slacktoken,
+                                                                                               notifychannel, title)
+                        slackcmd = slackcmd.replace('\n', '')
+                    if not cmds:
+                        cmds = [slackcmd]
+                    else:
+                        cmds.append(slackcmd)
+                else:
+                    common.pprint("Invalid method %s" % notifymethod, color='red')
         ips = [overrides[key] for key in overrides if key.startswith('ip')]
         netmasks = [overrides[key] for key in overrides if key.startswith('netmask')]
         if privatekey:
@@ -1700,10 +1719,11 @@ class Kconfig(Kbaseconfig):
         if image is None:
             image = k.info(name)['image']
         common.pprint("Waiting for vm %s to finish customisation" % name, color='blue')
-        cloudinitfile = common.get_cloudinitfile(image)
-        cmd = "sudo grep -i cloud-init %s" % cloudinitfile
         if 'cos' in image:
             cmd = 'journalctl --identifier=ignition --all --no-pager'
+        else:
+            cloudinitfile = common.get_cloudinitfile(image)
+            cmd = "sudo grep -i cloud-init %s" % cloudinitfile
         ip = None
         while ip is None:
             ip = k.info(name).get('ip')
