@@ -1445,6 +1445,20 @@ Available parameters for client/profile/plan files
    worker only. Check
    `here <https://github.com/karmab/kcli-plans/blob/master/samples/pcipassthrough/pci.yml>`__
    for an example.
+-  *notify* (optional). Defaults to false. Sends result of a command or
+   a script run from the vm to one of the supported notify engines.
+-  *notifymethod* (optional). Array of notify engines. Defaults to
+   [pushbullet]. Slack is the other supported one.
+-  *notifycmd* (optional). Which command to run for notification. If
+   none is provided and no notifyscript either, defaults to sending last
+   100 lines of the cloudinit file of the machine, or ignition for
+   coreos based vms.
+-  *notifyscript* Script to execute on the vm and whose output will be
+   sent to notification engines.
+-  *pushbullettoken*. Token to use when notifying through pushbullet.
+-  *slacktoken*. Token to use when notifying through slack. Should be
+   the token of an app generated in your workspace.
+-  *slackchannel*. Slack Channel where to send the notification.
 
 Overriding parameters
 ---------------------

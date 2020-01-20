@@ -291,6 +291,7 @@ class Kconfig(Kbaseconfig):
             default_pushbullettoken = father.get('slacktoken', self.pushbullettoken)
             default_pushbullettoken = father.get('pushbullettoken', self.pushbullettoken)
             default_notifycmd = father.get('notifycmd', self.notifycmd)
+            default_notifyscript = father.get('notifyscript', self.notifyscript)
             default_notifymethods = father.get('notifymethods', self.notifymethods)
             default_notifychannel = father.get('notifychannel', self.notifychannel)
             default_pushbullettoken = father.get('pushbullettoken', self.pushbullettoken)
@@ -360,6 +361,7 @@ class Kconfig(Kbaseconfig):
             default_pushbullettoken = self.pushbullettoken
             default_slacktoken = self.slacktoken
             default_notifycmd = self.notifycmd
+            default_notifyscript = self.notifyscript
             default_notifymethods = self.notifymethods
             default_notifychannel = self.notifychannel
             default_sharedfolders = self.sharedfolders
@@ -466,6 +468,7 @@ class Kconfig(Kbaseconfig):
         pushbullettoken = profile.get('pushbullettoken', default_pushbullettoken)
         slacktoken = profile.get('slacktoken', default_slacktoken)
         notifycmd = profile.get('notifycmd', default_notifycmd)
+        notifyscript = profile.get('notifyscript', default_notifyscript)
         notifymethods = profile.get('notifymethods', default_notifymethods)
         notifychannel = profile.get('notifychannel', default_notifychannel)
         sharedfolders = profile.get('sharedfolders', default_sharedfolders)
@@ -560,16 +563,25 @@ class Kconfig(Kbaseconfig):
                          '/dev/null' % (name, self.reporturl)]
             cmds = cmds + reportcmd
         if notify:
-            if notifycmd is None:
+            if notifycmd is None and notifyscript is None:
                 if 'cos' in image:
                     notifycmd = 'journalctl --identifier=ignition --all --no-pager'
                 else:
                     cloudinitfile = common.get_cloudinitfile(image)
                     notifycmd = "tail -100 %s" % cloudinitfile
+            if notifyscript is not None:
+                notifyscript = os.path.expanduser(notifyscript)
+                if not os.path.exists(notifyscript):
+                    notifycmd = None
+                else:
+                    files.append({'path': '/root/.notify.sh', 'origin': notifyscript})
+                    notifycmd = "bash /root/.notify.sh"
             for notifymethod in notifymethods:
                 if notifymethod == 'pushbullet':
                     if pushbullettoken is None:
                         common.pprint("Notification required but missing pushbullettoken", color='red')
+                    elif notifyscript is None and notifycmd is None:
+                        common.pprint("Notification required but missing notifyscript", color='red')
                     else:
                         title = "Vm %s on %s report" % (name, self.client)
                         token = pushbullettoken

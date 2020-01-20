@@ -14,9 +14,9 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             NETMASKS, GATEWAY, SHAREDKEY, IMAGE, ENABLEROOT,
                             PLANVIEW, PRIVATEKEY, TAGS, RHNREGISTER, RHNUSER, RHNPASSWORD, RHNAK, RHNORG, RHNPOOL,
                             RHNWAIT, FLAVOR, KEEP_NETWORKS, DNSCLIENT, STORE_METADATA, NOTIFY, PUSHBULLETTOKEN,
-                            SLACKTOKEN, NOTIFYCMD, NOTIFYMETHODS, NOTIFYCHANNEL, SHAREDFOLDERS, KERNEL, INITRD, CMDLINE,
-                            PLACEMENT, YAMLINVENTORY, CPUHOTPLUG, MEMORYHOTPLUG, CPUFLAGS, CPUPINNING, NUMAMODE, NUMA,
-                            PCIDEVICES, VIRTTYPE)
+                            NOTIFYSCRIPT, SLACKTOKEN, NOTIFYCMD, NOTIFYMETHODS, NOTIFYCHANNEL, SHAREDFOLDERS, KERNEL,
+                            INITRD, CMDLINE, PLACEMENT, YAMLINVENTORY, CPUHOTPLUG, MEMORYHOTPLUG, CPUFLAGS, CPUPINNING,
+                            NUMAMODE, NUMA, PCIDEVICES, VIRTTYPE)
 from kvirt import common
 from kvirt import jinjafilters
 import os
@@ -147,6 +147,7 @@ class Kbaseconfig:
         defaults['slacktoken'] = default.get('slacktoken', SLACKTOKEN)
         defaults['pushbullettoken'] = default.get('pushbullettoken', PUSHBULLETTOKEN)
         defaults['notifycmd'] = default.get('notifycmd', NOTIFYCMD)
+        defaults['notifyscript'] = default.get('notifyscript', NOTIFYSCRIPT)
         defaults['notifymethods'] = default.get('notifymethods', NOTIFYMETHODS)
         defaults['notifychannel'] = default.get('notifychannel', NOTIFYCHANNEL)
         defaults['sharedfolders'] = default.get('sharedfolders', SHAREDFOLDERS)
@@ -277,6 +278,7 @@ class Kbaseconfig:
         self.slacktoken = options.get('slacktoken', self.default['slacktoken'])
         self.pushbullettoken = options.get('self.pushbullettoken', self.default['pushbullettoken'])
         self.notifycmd = options.get('notifycmd', self.default['notifycmd'])
+        self.notifyscript = options.get('notifyscript', self.default['notifyscript'])
         self.notifymethods = options.get('notifymethods', self.default['notifymethods'])
         self.notifychannel = options.get('notifychannel', self.default['notifychannel'])
         self.keep_networks = options.get('keep_networks', self.default['keep_networks'])
