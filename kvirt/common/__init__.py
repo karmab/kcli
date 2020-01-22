@@ -225,31 +225,39 @@ def process_files(files=[], overrides={}):
     :return:
     """
     data = ''
+    todelete = []
     for directory in files:
         if not isinstance(directory, dict) or 'origin' not in directory\
                 or not os.path.isdir(os.path.expanduser(directory['origin'])):
             continue
         else:
+            todelete.append(directory)
             origin_unexpanded = directory.get('origin')
             origin = os.path.expanduser(origin_unexpanded)
             path = directory.get('path')
-            if not os.listdir(origin):
+            entries = os.listdir(origin)
+            if not entries:
                 files.append({'path': '%s/.k' % path, 'content': ''})
             else:
-                for entry in os.walk(origin):
-                    subdirectory = os.path.expanduser(entry[0])
-                    vm_subdirectory = entry[0].replace('%s' % origin_unexpanded, '')
-                    subfiles = entry[1:]
-                    for directorylist in subfiles:
-                        if not directorylist:
-                            continue
+                for entry in entries:
+                    if os.path.isdir(entry):
+                        subentries = os.listdir(entry)
+                        if not subentries:
+                            files.append({'path': '%s/%s/.k' % (path, entry), 'content': ''})
                         else:
-                            for subfil in directorylist:
-                                if os.path.isfile("%s/%s" % (subdirectory, subfil)):
-                                    subpath = "%s/%s/%s" % (path, vm_subdirectory, subfil)
+                            for subentry in subentries:
+                                if os.path.isdir(subentry):
+                                    continue
+                                else:
+                                    subpath = "%s/%s/%s" % (path, entry, subentry)
                                     subpath = subpath.replace('//', '/')
-                                    files.append({'path': subpath, 'origin': "%s/%s" % (subdirectory, subfil)})
-            files.remove(directory)
+                                    files.append({'path': subpath, 'origin': "%s/%s/%s" % (origin, entry, subentry)})
+                    else:
+                        subpath = "%s/%s" % (path, entry)
+                        subpath = subpath.replace('//', '/')
+                        files.append({'path': subpath, 'origin': "%s/%s" % (origin, entry)})
+    for directory in todelete:
+        files.remove(directory)
     for fil in files:
         if not isinstance(fil, dict):
             continue
