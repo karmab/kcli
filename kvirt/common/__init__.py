@@ -6,6 +6,7 @@ from jinja2 import Environment, FileSystemLoader
 from jinja2 import StrictUndefined as undefined
 from jinja2.exceptions import TemplateSyntaxError, TemplateError
 from distutils.spawn import find_executable
+from netaddr import IPAddress
 import random
 import socket
 from urllib.parse import quote
@@ -33,7 +34,7 @@ def fetch(url, path):
 
 
 def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[],
-              enableroot=True, overrides={}, iso=True, fqdn=False, storemetadata=True):
+              enableroot=True, overrides={}, iso=True, fqdn=False, storemetadata=True, image=None):
     """
 
     :param name:
@@ -51,58 +52,102 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
     :param fqdn:
     """
     default_gateway = gateway
+    legacy = True if image is not None and image.startswith('CentOS-7') else False
+    prefix = 'ens' if image is not None and image.startswith('ubuntu') else 'eth'
+    netdata = {} if not legacy else ''
+    if nets:
+        for index, net in enumerate(nets):
+            if isinstance(net, str) or (len(net) == 1 and 'name' in net):
+                if index == 0:
+                    continue
+                if prefix.startswith('ens'):
+                    nicname = "%s%d" % (prefix, 3 + index)
+                else:
+                    nicname = "%s%d" % (prefix, index)
+                ip = None
+                netmask = None
+                noconf = None
+                vips = []
+            elif isinstance(net, dict):
+                if index == 0 and 'type' in net and net.get('type') != 'virtio':
+                    prefix = 'ens'
+                nicname = net.get('nic')
+                if nicname is None:
+                    if prefix.startswith('ens'):
+                        nicname = "%s%d" % (prefix, 3 + index)
+                    else:
+                        nicname = "%s%d" % (prefix, index)
+                ip = net.get('ip')
+                netmask = next((e for e in [net.get('mask'), net.get('netmask')] if e is not None), None)
+                noconf = net.get('noconf')
+                vips = net.get('vips')
+            if legacy:
+                netdata += "  auto %s\n" % nicname
+            if noconf is not None:
+                if legacy:
+                    netdata += "  iface %s inet manual\n" % nicname
+                else:
+                    netdata[nicname] = {'dhcp4': False}
+            elif ip is not None and netmask is not None and not reserveip:
+                if legacy:
+                    netdata += "  iface %s inet static\n" % nicname
+                    netdata += "  address %s\n" % ip
+                    netdata += "  netmask %s\n" % netmask
+                else:
+                    cidr = IPAddress(netmask).netmask_bits()
+                    netdata[nicname] = {'dhcp4': False, 'addresses': ["%s/%s" % (ip, cidr)]}
+                gateway = net.get('gateway')
+                if index == 0 and default_gateway is not None:
+                    if legacy:
+                        netdata += "  gateway %s\n" % default_gateway
+                    else:
+                        netdata[nicname]['gateway4'] = default_gateway
+                elif gateway is not None:
+                    if legacy:
+                        netdata += "  gateway %s\n" % gateway
+                    else:
+                        netdata[nicname]['gateway4'] = gateway
+                dns = net.get('dns')
+                if not legacy:
+                    netdata[nicname]['nameservers'] = {}
+                if dns is not None:
+                    if legacy:
+                        netdata += "  dns-nameservers %s\n" % dns
+                    else:
+                        netdata[nicname]['nameservers']['addresses'] = [dns]
+                domain = net.get('domain')
+                if domain is not None:
+                    if legacy:
+                        netdata += "  dns-search %s\n" % domain
+                    else:
+                        netdata[nicname]['addresses']['search'] = [domain]
+                if not legacy and not netdata[nicname]['nameservers']:
+                    del netdata[nicname]['nameservers']
+                if isinstance(vips, list) and vips:
+                    for index, vip in enumerate(vips):
+                        if legacy:
+                            netdata += "  auto %s:%s\n  iface %s:%s inet static\n  address %s\n  netmask %s\n"\
+                                % (nicname, index, nicname, index, vip, netmask)
+                        else:
+                            netdata[nicname]['addresses'].append("%s/%s" % (vip, netmask))
+            else:
+                if legacy:
+                    netdata += "  iface %s inet dhcp\n" % nicname
+                else:
+                    netdata[nicname] = {'dhcp4': True}
     with open('/tmp/meta-data', 'w') as metadatafile:
         if domain is not None:
             localhostname = "%s.%s" % (name, domain)
         else:
             localhostname = name
         metadata = {"instance-id": localhostname, "local-hostname": localhostname}
-        netdata = ''
-        if nets:
-            for index, net in enumerate(nets):
-                if isinstance(net, str) or (len(net) == 1 and 'name' in net):
-                    if index == 0:
-                        continue
-                    nicname = "eth%d" % index
-                    ip = None
-                    netmask = None
-                    noconf = None
-                    vips = []
-                elif isinstance(net, dict):
-                    nicname = net.get('nic', "eth%d" % index)
-                    if index == 0 and 'type' in net and net.get('type') != 'virtio':
-                        nicname = "ens3"
-                    ip = net.get('ip')
-                    netmask = next((e for e in [net.get('mask'), net.get('netmask')] if e is not None), None)
-                    noconf = net.get('noconf')
-                    vips = net.get('vips')
-                netdata += "  auto %s\n" % nicname
-                if noconf is not None:
-                    netdata += "  iface %s inet manual\n" % nicname
-                elif ip is not None and netmask is not None and not reserveip:
-                    netdata += "  iface %s inet static\n" % nicname
-                    netdata += "  address %s\n" % ip
-                    netdata += "  netmask %s\n" % netmask
-                    gateway = net.get('gateway')
-                    if index == 0 and default_gateway is not None:
-                        netdata += "  gateway %s\n" % default_gateway
-                    elif gateway is not None:
-                        netdata += "  gateway %s\n" % gateway
-                    dns = net.get('dns')
-                    if dns is not None:
-                        netdata += "  dns-nameservers %s\n" % dns
-                    domain = net.get('domain')
-                    if domain is not None:
-                        netdata += "  dns-search %s\n" % domain
-                    if isinstance(vips, list) and vips:
-                        for index, vip in enumerate(vips):
-                            netdata += "  auto %s:%s\n  iface %s:%s inet static\n  address %s\n  netmask %s\n"\
-                                % (nicname, index, nicname, index, vip, netmask)
-                else:
-                    netdata += "  iface %s inet dhcp\n" % nicname
-            if netdata:
-                metadata["network-interfaces"] = netdata
-            metadatafile.write(json.dumps(metadata))
+        if legacy and netdata != '':
+            metadata["network-interfaces"] = netdata
+        metadatafile.write(json.dumps(metadata))
+    if not legacy and netdata:
+        with open('/tmp/network-config', 'w') as netfile:
+            netdata = {'version': 2, 'ethernets': netdata}
+            yaml.safe_dump(netdata, netfile, default_flow_style=False, encoding='utf-8')
     existing = "%s.cloudinit" % name if not os.path.exists('/i_am_a_container') else "/workdir/%s.cloudinit" % name
     if os.path.exists(existing):
         pprint("using cloudinit from existing %s for %s" % (existing, name), color="blue")
@@ -166,8 +211,10 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
         isocmd = 'mkisofs'
         if find_executable('genisoimage') is not None:
             isocmd = 'genisoimage'
-        os.system("%s --quiet -o /tmp/%s.ISO --volid cidata --joliet --rock /tmp/user-data /tmp/meta-data" % (isocmd,
-                                                                                                              name))
+        isocmd += " --quiet -o /tmp/%s.ISO --volid cidata --joliet --rock /tmp/user-data /tmp/meta-data" % name
+        if not legacy and netdata:
+            isocmd += " /tmp/network-config"
+        os.system(isocmd)
 
 
 def process_files(files=[], overrides={}):
@@ -193,14 +240,15 @@ def process_files(files=[], overrides={}):
                     subdirectory = os.path.expanduser(entry[0])
                     vm_subdirectory = entry[0].replace('%s' % origin_unexpanded, '')
                     subfiles = entry[1:]
-                    for subfil in subfiles:
-                        if not subfil or not os.path.isfile("%s/%s" % (subdirectory, subfil[0])):
+                    for directorylist in subfiles:
+                        if not directorylist:
                             continue
                         else:
-                            subfil = subfil[0]
-                            subpath = "%s/%s/%s" % (path, vm_subdirectory, subfil)
-                            subpath = subpath.replace('//', '/')
-                            files.append({'path': subpath, 'origin': "%s/%s" % (subdirectory, subfil)})
+                            for subfil in directorylist:
+                                if os.path.isfile("%s/%s" % (subdirectory, subfil)):
+                                    subpath = "%s/%s/%s" % (path, vm_subdirectory, subfil)
+                                    subpath = subpath.replace('//', '/')
+                                    files.append({'path': subpath, 'origin': "%s/%s" % (subdirectory, subfil)})
             files.remove(directory)
     for fil in files:
         if not isinstance(fil, dict):

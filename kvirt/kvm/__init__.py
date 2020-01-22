@@ -896,7 +896,7 @@ class Kvirt(object):
         if cloudinit and image is not None and 'coreos' not in image and 'rhcos' not in image:
             common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
                              reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides,
-                             storemetadata=storemetadata)
+                             storemetadata=storemetadata, image=image)
             self._uploadimage(name, pool=default_storagepool)
         xml = vm.XMLDesc(0)
         vmxml = ET.fromstring(xml)
