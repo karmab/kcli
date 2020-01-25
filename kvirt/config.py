@@ -617,16 +617,22 @@ class Kconfig(Kbaseconfig):
         netmasks = [overrides[key] for key in overrides if key.startswith('netmask')]
         if privatekey:
             privatekeyfile = None
-            if os.path.exists("%s/.ssh/id_rsa" % os.environ['HOME']):
-                privatekeyfile = "%s/.ssh/id_rsa" % os.environ['HOME']
-            elif os.path.exists("%s/.ssh/id_rsa" % os.environ['HOME']):
-                privatekeyfile = "%s/.ssh/id_dsa" % os.environ['HOME']
+            sshdir = "%s/.ssh" % os.environ['HOME']
+            if os.path.exists("%s/id_rsa" % sshdir) and os.path.exists("%s/id_rsa.pub" % sshdir):
+                privatekeyfile = "%s/id_rsa" % sshdir
+                pubkeyfile = "%s/id_rsa.pub" % sshdir
+            elif os.path.exists("%s/id_rsa" % sshdir) and os.path.exists("%s/id_dsa.pub" % sshdir):
+                privatekeyfile = "%s/id_dsa" % sshdir
+                pubkeyfile = "%s/id_dsa.pub" % sshdir
             if privatekeyfile is not None:
                 privatekey = open(privatekeyfile).read().strip()
+                pubkey = open(pubkeyfile).read().strip()
                 if files:
                     files.append({'path': '/root/.ssh/id_rsa', 'content': privatekey})
+                    files.append({'path': '/root/.ssh/id_rsa.pub', 'content': pubkey})
                 else:
                     files = [{'path': '/root/.ssh/id_rsa', 'content': privatekey}]
+                    files = [{'path': '/root/.ssh/id_rsa.pub', 'content': pubkey}]
         if cmds and 'reboot' in cmds:
             while 'reboot' in cmds:
                 cmds.remove('reboot')
@@ -1048,7 +1054,10 @@ class Kconfig(Kbaseconfig):
                             try:
                                 common.fetch("%s/%s" % (onfly, origin), destdir)
                             except:
-                                common.pprint("file %s/%s skipped" % (onfly, origin), color='blue')
+                                if common.url_exists("%s/%s/README.md" % (onfly, origin)):
+                                    os.makedirs("%s/%s" % (destdir, os.path.basename(onfly)), exist_ok=True)
+                                else:
+                                    common.pprint("file %s/%s skipped" % (onfly, origin), color='blue')
                     for script in scriptfiles:
                         if '~' not in script:
                             destdir = "."

@@ -24,6 +24,14 @@ systemctl restart NetworkManager
 fi"""
 
 
+def url_exists(url):
+    try:
+        urlopen(url)
+        return True
+    except:
+        return False
+
+
 def fetch(url, path):
     if 'raw.githubusercontent.com' not in url:
         url = url.replace('github.com', 'raw.githubusercontent.com').replace('blob/master', 'master')
