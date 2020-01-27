@@ -2659,6 +2659,8 @@ class Kvirt(object):
         if shortimage_uncompressed in volumes:
             common.pprint("Image %s already there.Leaving..." % shortimage_uncompressed, color="blue")
             return {'result': 'success'}
+        if name == 'rhcos42':
+            shortimage += '.gz'
         if self.host == 'localhost' or self.host == '127.0.0.1':
             downloadcmd = "curl -Lo %s/%s -f '%s'" % (downloadpath, shortimage, image)
         elif self.protocol == 'ssh':
@@ -2667,10 +2669,10 @@ class Kvirt(object):
         code = call(downloadcmd, shell=True)
         if code != 0:
             return {'result': 'failure', 'reason': "Unable to download indicated image"}
-        if shortimage.endswith('xz') or shortimage.endswith('gz') or shortimage.endswith('bz2'):
+        if shortimage.endswith('xz') or shortimage.endswith('gz') or shortimage.endswith('bz2') or name == 'rhcos42':
             executable = {'xz': 'unxz', 'gz': 'gunzip', 'bz2': 'bunzip2'}
             extension = os.path.splitext(shortimage)[1].replace('.', '')
-            executable = executable[extension]
+            executable = executable[extension] if name != 'rhcos42' else 'gunzip'
             if self.host == 'localhost' or self.host == '127.0.0.1':
                 if find_executable(executable) is not None:
                     uncompresscmd = "%s %s/%s" % (executable, poolpath, shortimage)
