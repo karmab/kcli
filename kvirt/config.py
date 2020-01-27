@@ -1204,7 +1204,7 @@ class Kconfig(Kbaseconfig):
                             common.pprint("Image %s skipped as url is empty!" % image, color='blue')
                             continue
                     result = k.add_image(imageurl, pool, cmd=cmd)
-                    common.handle_response(result, image, element='Image ', action='Added')
+                    common.handle_response(result, image, element='Image', action='Added')
         if dnsentries:
             common.pprint("Deploying Dns Entry...")
             dnsclients = {}
@@ -1400,6 +1400,11 @@ class Kconfig(Kbaseconfig):
                     if vmcounter >= len(vmentries):
                         os.remove("%s.key.pub" % plan)
                         os.remove("%s.key" % plan)
+                if 'image' in profile:
+                    for entry in self.list_profiles():
+                        if entry[0] == profile['image']:
+                            profile['image'] = entry[4]
+                            break
                 result = self.create_vm(name, profilename, overrides=overrides, customprofile=profile, k=z,
                                         plan=plan, basedir=currentplandir, client=vmclient, onfly=onfly, planmode=True)
                 common.handle_response(result, name, client=vmclient)
