@@ -616,10 +616,10 @@ class Kconfig(Kbaseconfig):
 "color":"#3AA3E3","attachment_type":"default"}]}' https://slack.com/api/chat.postMessage""" % (slacktoken,
                                                                                                slackchannel, title)
                         slackcmd = slackcmd.replace('\n', '')
-                    if not cmds:
-                        cmds = [slackcmd]
-                    else:
-                        cmds.append(slackcmd)
+                        if not cmds:
+                            cmds = [slackcmd]
+                        else:
+                            cmds.append(slackcmd)
                 elif notifymethod == 'mail':
                     if mailserver is None:
                         common.pprint("Notification required but missing mail server", color='red')
@@ -650,10 +650,10 @@ $INFO
                         mailcmd = ['pkg=yum ; which apt-get /dev/null 2>&1 && pkg=apt-get ; $pkg -y install nc']
                         mailcmd.append('export INFO=`%s 2>&1` ; envsubst < /tmp/.mail.txt > /tmp/mail.txt' % notifycmd)
                         mailcmd.append("nc %s 25 < /tmp/mail.txt" % mailserver)
-                    if not cmds:
-                        cmds = mailcmd
-                    else:
-                        cmds.extend(mailcmd)
+                        if not cmds:
+                            cmds = mailcmd
+                        else:
+                            cmds.extend(mailcmd)
                 else:
                     common.pprint("Invalid method %s" % notifymethod, color='red')
         ips = [overrides[key] for key in overrides if key.startswith('ip')]
