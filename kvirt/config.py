@@ -296,7 +296,7 @@ class Kconfig(Kbaseconfig):
             default_notifycmd = father.get('notifycmd', self.notifycmd)
             default_notifyscript = father.get('notifyscript', self.notifyscript)
             default_notifymethods = father.get('notifymethods', self.notifymethods)
-            default_notifychannel = father.get('notifychannel', self.notifychannel)
+            default_slackchannel = father.get('slackchannel', self.slackchannel)
             default_pushbullettoken = father.get('pushbullettoken', self.pushbullettoken)
             default_slacktoken = father.get('slacktoken', self.slacktoken)
             default_sharedfolders = father.get('sharedfolders', self.sharedfolders)
@@ -369,7 +369,7 @@ class Kconfig(Kbaseconfig):
             default_notifycmd = self.notifycmd
             default_notifyscript = self.notifyscript
             default_notifymethods = self.notifymethods
-            default_notifychannel = self.notifychannel
+            default_slackchannel = self.slackchannel
             default_sharedfolders = self.sharedfolders
             default_kernel = self.kernel
             default_initrd = self.initrd
@@ -476,7 +476,7 @@ class Kconfig(Kbaseconfig):
         notifycmd = profile.get('notifycmd', default_notifycmd)
         notifyscript = profile.get('notifyscript', default_notifyscript)
         notifymethods = profile.get('notifymethods', default_notifymethods)
-        notifychannel = profile.get('notifychannel', default_notifychannel)
+        slackchannel = profile.get('slackchannel', default_slackchannel)
         mailserver = profile.get('mailserver', default_mailserver)
         mailfrom = profile.get('mailfrom', default_mailfrom)
         mailto = profile.get('mailto', default_mailto)
@@ -603,7 +603,7 @@ class Kconfig(Kbaseconfig):
                         else:
                             cmds.append(pbcmd)
                 elif notifymethod == 'slack':
-                    if notifychannel is None:
+                    if slackchannel is None:
                         common.pprint("Notification required but missing slack channel", color='red')
                     elif slacktoken is None:
                         common.pprint("Notification required but missing slacktoken", color='red')
@@ -614,7 +614,7 @@ class Kconfig(Kbaseconfig):
  -H 'Content-type: application/json; charset=utf-8'
  --data '{"channel":"%s","text":"%s","attachments": [{"text":"'"$info"'","fallback":"nothing",
 "color":"#3AA3E3","attachment_type":"default"}]}' https://slack.com/api/chat.postMessage""" % (slacktoken,
-                                                                                               notifychannel, title)
+                                                                                               slackchannel, title)
                         slackcmd = slackcmd.replace('\n', '')
                     if not cmds:
                         cmds = [slackcmd]

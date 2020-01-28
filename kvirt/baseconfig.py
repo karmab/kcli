@@ -14,7 +14,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             NETMASKS, GATEWAY, SHAREDKEY, IMAGE, ENABLEROOT,
                             PLANVIEW, PRIVATEKEY, TAGS, RHNREGISTER, RHNUSER, RHNPASSWORD, RHNAK, RHNORG, RHNPOOL,
                             RHNWAIT, FLAVOR, KEEP_NETWORKS, DNSCLIENT, STORE_METADATA, NOTIFY, PUSHBULLETTOKEN,
-                            NOTIFYSCRIPT, SLACKTOKEN, NOTIFYCMD, NOTIFYMETHODS, NOTIFYCHANNEL, SHAREDFOLDERS, KERNEL,
+                            NOTIFYSCRIPT, SLACKTOKEN, NOTIFYCMD, NOTIFYMETHODS, SLACKCHANNEL, SHAREDFOLDERS, KERNEL,
                             INITRD, CMDLINE, PLACEMENT, YAMLINVENTORY, CPUHOTPLUG, MEMORYHOTPLUG, CPUFLAGS, CPUPINNING,
                             NUMAMODE, NUMA, PCIDEVICES, VIRTTYPE, MAILSERVER, MAILFROM, MAILTO)
 from kvirt import common
@@ -149,7 +149,7 @@ class Kbaseconfig:
         defaults['notifycmd'] = default.get('notifycmd', NOTIFYCMD)
         defaults['notifyscript'] = default.get('notifyscript', NOTIFYSCRIPT)
         defaults['notifymethods'] = default.get('notifymethods', NOTIFYMETHODS)
-        defaults['notifychannel'] = default.get('notifychannel', NOTIFYCHANNEL)
+        defaults['slackchannel'] = default.get('slackchannel', SLACKCHANNEL)
         defaults['mailserver'] = default.get('mailserver', MAILSERVER)
         defaults['mailfrom'] = default.get('mailfrom', MAILFROM)
         defaults['mailto'] = default.get('mailto', MAILTO)
@@ -283,7 +283,7 @@ class Kbaseconfig:
         self.notifycmd = options.get('notifycmd', self.default['notifycmd'])
         self.notifyscript = options.get('notifyscript', self.default['notifyscript'])
         self.notifymethods = options.get('notifymethods', self.default['notifymethods'])
-        self.notifychannel = options.get('notifychannel', self.default['notifychannel'])
+        self.slackchannel = options.get('slackchannel', self.default['slackchannel'])
         self.keep_networks = options.get('keep_networks', self.default['keep_networks'])
         self.sharedfolders = options.get('sharedfolders', self.default['sharedfolders'])
         self.mailserver = options.get('mailserver', self.default['mailserver'])

@@ -1448,7 +1448,7 @@ Available parameters for client/profile/plan files
 -  *notify* (optional). Defaults to false. Sends result of a command or
    a script run from the vm to one of the supported notify engines.
 -  *notifymethod* (optional). Array of notify engines. Defaults to
-   [pushbullet]. Slack is the other supported one.
+   [pushbullet]. Other options are slack and mail.
 -  *notifycmd* (optional). Which command to run for notification. If
    none is provided and no notifyscript either, defaults to sending last
    100 lines of the cloudinit file of the machine, or ignition for
@@ -1459,6 +1459,10 @@ Available parameters for client/profile/plan files
 -  *slacktoken*. Token to use when notifying through slack. Should be
    the token of an app generated in your workspace.
 -  *slackchannel*. Slack Channel where to send the notification.
+-  *mailserver*. Mail server where to send the notification (on port
+   25).
+-  *mailfrom*. Mail address to send mail from.
+-  *mailto*. List of mail addresses to send mail to.
 
 Overriding parameters
 ---------------------

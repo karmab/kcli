@@ -1081,12 +1081,15 @@ Basic testing can be run with pytest, which leverages your existing kcli config:
 - *cpupinning* optional cpupinning conf to apply to the workers only.
 - *pcidevices* optional array of pcidevices to passthrough to the first worker only. Check [here](https://github.com/karmab/kcli-plans/blob/master/samples/pcipassthrough/pci.yml) for an example.
 - *notify* (optional). Defaults to false. Sends result of a command or a script run from the vm to one of the supported notify engines.
-- *notifymethod* (optional). Array of notify engines. Defaults to [pushbullet]. Slack is the other supported one.
+- *notifymethod* (optional). Array of notify engines. Defaults to [pushbullet]. Other options are slack and mail.
 - *notifycmd* (optional). Which command to run for notification. If none is provided and no notifyscript either, defaults to sending last 100 lines of the cloudinit file of the machine, or ignition for coreos based vms.
 - *notifyscript* Script to execute on the vm and whose output will be sent to notification engines.
 - *pushbullettoken*. Token to use when notifying through pushbullet.
 - *slacktoken*. Token to use when notifying through slack. Should be the token of an app generated in your workspace.
 - *slackchannel*. Slack Channel where to send the notification.
+- *mailserver*. Mail server where to send the notification (on port 25).
+- *mailfrom*. Mail address to send mail from.
+- *mailto*. List of mail addresses to send mail to.
 
 ## Overriding parameters
 
