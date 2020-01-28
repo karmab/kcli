@@ -4,6 +4,7 @@
 Kvirt config class
 """
 
+from datetime import datetime
 from jinja2 import Environment, FileSystemLoader
 from jinja2 import StrictUndefined as undefined
 from jinja2.exceptions import TemplateSyntaxError, TemplateError
@@ -288,8 +289,10 @@ class Kconfig(Kbaseconfig):
             default_dnsclient = father.get('dnsclient', self.dnsclient)
             default_storemetadata = father.get('storemetadata', self.storemetadata)
             default_notify = father.get('notify', self.notify)
-            default_pushbullettoken = father.get('slacktoken', self.pushbullettoken)
             default_pushbullettoken = father.get('pushbullettoken', self.pushbullettoken)
+            default_mailserver = father.get('mailserver', self.mailserver)
+            default_mailfrom = father.get('mailfrom', self.mailfrom)
+            default_mailto = father.get('mailto', self.mailto)
             default_notifycmd = father.get('notifycmd', self.notifycmd)
             default_notifyscript = father.get('notifyscript', self.notifyscript)
             default_notifymethods = father.get('notifymethods', self.notifymethods)
@@ -360,6 +363,9 @@ class Kconfig(Kbaseconfig):
             default_notify = self.notify
             default_pushbullettoken = self.pushbullettoken
             default_slacktoken = self.slacktoken
+            default_mailserver = self.mailserver
+            default_mailfrom = self.mailfrom
+            default_mailto = self.mailto
             default_notifycmd = self.notifycmd
             default_notifyscript = self.notifyscript
             default_notifymethods = self.notifymethods
@@ -471,6 +477,9 @@ class Kconfig(Kbaseconfig):
         notifyscript = profile.get('notifyscript', default_notifyscript)
         notifymethods = profile.get('notifymethods', default_notifymethods)
         notifychannel = profile.get('notifychannel', default_notifychannel)
+        mailserver = profile.get('mailserver', default_mailserver)
+        mailfrom = profile.get('mailfrom', default_mailfrom)
+        mailto = profile.get('mailto', default_mailto)
         sharedfolders = profile.get('sharedfolders', default_sharedfolders)
         kernel = profile.get('kernel', default_kernel)
         initrd = profile.get('initrd', default_initrd)
@@ -611,6 +620,40 @@ class Kconfig(Kbaseconfig):
                         cmds = [slackcmd]
                     else:
                         cmds.append(slackcmd)
+                elif notifymethod == 'mail':
+                    if mailserver is None:
+                        common.pprint("Notification required but missing mail server", color='red')
+                    elif mailfrom is None:
+                        common.pprint("Notification required but missing mail from", color='red')
+                    elif not mailto:
+                        common.pprint("Notification required but missing mail to", color='red')
+                    else:
+                        title = "Vm %s on %s report" % (name, self.client)
+                        now = datetime.now()
+                        now = now. strftime("%a,%d %b %Y %H:%M:%S")
+                        rcpt = '\n'.join(["RCPT TO:<%s>" % to for to in mailto])
+                        tos = ','.join(["<%s>" % to for to in mailto])
+                        mailcontent = """HELO %s
+MAIL FROM:<%s>
+%s
+DATA
+From: %s <%s>
+To: %s
+Date: %s
+Subject: %s
+
+$INFO
+
+.
+""" % (mailserver, mailfrom, rcpt, mailfrom, mailfrom, tos, now, title)
+                        files.append({'path': '/tmp/.mail.txt', 'content': mailcontent})
+                        mailcmd = ['pkg=yum ; which apt-get /dev/null 2>&1 && pkg=apt-get ; $pkg -y install nc']
+                        mailcmd.append('export INFO=`%s 2>&1` ; envsubst < /tmp/.mail.txt > /tmp/mail.txt' % notifycmd)
+                        mailcmd.append("nc %s 25 < /tmp/mail.txt" % mailserver)
+                    if not cmds:
+                        cmds = mailcmd
+                    else:
+                        cmds.extend(mailcmd)
                 else:
                     common.pprint("Invalid method %s" % notifymethod, color='red')
         ips = [overrides[key] for key in overrides if key.startswith('ip')]

@@ -16,7 +16,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             RHNWAIT, FLAVOR, KEEP_NETWORKS, DNSCLIENT, STORE_METADATA, NOTIFY, PUSHBULLETTOKEN,
                             NOTIFYSCRIPT, SLACKTOKEN, NOTIFYCMD, NOTIFYMETHODS, NOTIFYCHANNEL, SHAREDFOLDERS, KERNEL,
                             INITRD, CMDLINE, PLACEMENT, YAMLINVENTORY, CPUHOTPLUG, MEMORYHOTPLUG, CPUFLAGS, CPUPINNING,
-                            NUMAMODE, NUMA, PCIDEVICES, VIRTTYPE)
+                            NUMAMODE, NUMA, PCIDEVICES, VIRTTYPE, MAILSERVER, MAILFROM, MAILTO)
 from kvirt import common
 from kvirt import jinjafilters
 import os
@@ -150,6 +150,9 @@ class Kbaseconfig:
         defaults['notifyscript'] = default.get('notifyscript', NOTIFYSCRIPT)
         defaults['notifymethods'] = default.get('notifymethods', NOTIFYMETHODS)
         defaults['notifychannel'] = default.get('notifychannel', NOTIFYCHANNEL)
+        defaults['mailserver'] = default.get('mailserver', MAILSERVER)
+        defaults['mailfrom'] = default.get('mailfrom', MAILFROM)
+        defaults['mailto'] = default.get('mailto', MAILTO)
         defaults['sharedfolders'] = default.get('sharedfolders', SHAREDFOLDERS)
         defaults['kernel'] = default.get('kernel', KERNEL)
         defaults['initrd'] = default.get('initrd', INITRD)
@@ -283,6 +286,9 @@ class Kbaseconfig:
         self.notifychannel = options.get('notifychannel', self.default['notifychannel'])
         self.keep_networks = options.get('keep_networks', self.default['keep_networks'])
         self.sharedfolders = options.get('sharedfolders', self.default['sharedfolders'])
+        self.mailserver = options.get('mailserver', self.default['mailserver'])
+        self.mailfrom = options.get('mailfrom', self.default['mailfrom'])
+        self.mailto = options.get('mailto', self.default['mailto'])
         self.kernel = options.get('kernel', self.default['kernel'])
         self.initrd = options.get('initrd', self.default['initrd'])
         self.cmdline = options.get('cmdline', self.default['cmdline'])
