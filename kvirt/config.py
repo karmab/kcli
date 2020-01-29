@@ -1222,7 +1222,7 @@ $INFO
             common.pprint("Deploying Images...")
             images = [os.path.basename(t) for t in k.volumes()]
             for image in imageentries:
-                if image in images:
+                if image in images or image in self.profiles:
                     common.pprint("Image %s skipped!" % image, color='blue')
                     continue
                 else:
