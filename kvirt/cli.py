@@ -1059,6 +1059,12 @@ def create_plan(args):
         inputfile = "/workdir/%s" % inputfile if inputfile is not None else "/workdir/kcli_plan.yml"
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
+        elif os.path.exists("/workdir/kcli_parameters.yml"):
+            paramfile = "/workdir/kcli_parameters.yml"
+            common.pprint("using default parameter file kcli_parameters.yml")
+    elif paramfile is None and os.path.exists("kcli_parameters.yml"):
+        paramfile = "kcli_parameters.yml"
+        common.pprint("using default parameter file kcli_parameters.yml")
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     _type = config.ini[config.client].get('type', 'kvm')
