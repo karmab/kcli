@@ -1229,25 +1229,10 @@ $INFO
                     imageprofile = entries[image]
                     pool = imageprofile.get('pool', self.pool)
                     imageurl = imageprofile.get('url')
+                    if isinstance(imageurl, str) and imageurl == "None":
+                        imageurl = None
                     cmd = imageprofile.get('cmd')
-                    # updateprofile = imageprofile.get('updateprofile')
-                    if imageurl is None:
-                        if image in IMAGES:
-                            imageurl = IMAGES[image]
-                        else:
-                            common.pprint("Image %s skipped as url is missing!" % image, color='blue')
-                            continue
-                    if imageurl.startswith('rhel'):
-                        common.pprint("Opening url %s for you to grab complete url for %s" % (imageurl,
-                                                                                              image),
-                                      color='blue')
-                        webbrowser.open(imageurl, new=2, autoraise=True)
-                        imageurl = input("Copy Url:\n")
-                        if imageurl.strip() == '':
-                            common.pprint("Image %s skipped as url is empty!" % image, color='blue')
-                            continue
-                    result = k.add_image(imageurl, pool, cmd=cmd)
-                    common.handle_response(result, image, element='Image', action='Added')
+                    self.handle_host(pool=pool, image=image, download=True, cmd=cmd, url=imageurl, update_profile=True)
         if dnsentries:
             common.pprint("Deploying Dns Entry...")
             dnsclients = {}
