@@ -92,7 +92,7 @@ alias kweb='docker run -p 9000:9000 --net host -it --rm --security-opt label=dis
 
 ## Package install method
 
-If using *fedora*, you can use this:
+If using *fedora* or *rhel/centos8*,  you can use this:
 
 ```bash
 dnf -y copr enable karmab/kcli ; dnf -y install kcli

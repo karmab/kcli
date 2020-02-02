@@ -7,24 +7,18 @@ BLUE='\033[0;36m'
 NC='\033[0m'
 
 shell=$(basename $SHELL)
-engine="docker"
-packagemanager="dnf"
-local=false
-which podman >/dev/null 2>&1 && engine="podman"
-which $engine >/dev/null 2>&1
-if [ "$?" != "0" ] ; then
-  echo -e "${BLUE}No container engine found. Installing with package manager${NC}"
-  if [ $(which dnf) != "" ] ; then 
-    sudo dnf -y copr enable karmab/kcli
-    sudo dnf -y install kcli
-    exit 0
-  elif [ $(which apt-get) != "" ] ; then
-    curl -s https://packagecloud.io/install/repositories/karmab/kcli/script.deb.sh | sudo bash
-    exit 0
-  else
-    echo -e "${RED}Missing container engine or a compatible package manager(dnf, apt-get). Install podman first${NC}"
-    exit 1
-  fi
+packagefound=false
+if [ $(which dnf) != "" ] ; then 
+  packagefound=true
+  sudo dnf -y copr enable karmab/kcli
+  sudo dnf -y install kcli
+elif [ $(which apt-get) != "" ] ; then
+  packagefound=true
+  curl -s https://packagecloud.io/install/repositories/karmab/kcli/script.deb.sh | sudo bash
+fi
+
+if [ "$packagefound" == "true" ] ; then
+  echo -e "${BLUE}Installing kcli completion for your shell${NC}"
   case $shell in
   bash|zsh)
     shellfile="$HOME/.bashrc"
@@ -37,13 +31,22 @@ if [ "$?" != "0" ] ; then
     grep -q kcli $shellfile || curl -s https://raw.githubusercontent.com/karmab/kcli/master/extras/kcli.fish >> $shellfile
   ;;
   esac
+  echo -e """${GREEN}Launch a new shell for completion to work${NC}"""
+  exit 0
 fi
-which kcli >/dev/null 2>&1
-BIN="$?"
+
+engine=""
+which docker >/dev/null 2>&1 && engine="docker"
+which podman >/dev/null 2>&1 && engine="podman"
+if [ "$?" == "0" ] ; then
+  echo -e "${BLUE}No container engine found nor compatible package manager. Install podman or docker first${NC}"
+  exit 1
+fi
+
 alias kcli >/dev/null 2>&1
 ALIAS="$?"
 
-if [ "$BIN" != "0" ] && [ "$ALIAS" != "0" ]; then
+if [ "$ALIAS" != "0" ]; then
   echo -e "${BLUE}Installing as alias for $engine${NC}"
   $engine pull docker.io/karmab/kcli:latest
   SSHVOLUME="-v $(realpath $HOME/.ssh):/root/.ssh"

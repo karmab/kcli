@@ -116,7 +116,7 @@ As a bonus, you can use the following aliases:
 Package install method
 ----------------------
 
-If using *fedora*, you can use this:
+If using *fedora* or *rhel/centos8*, you can use this:
 
 .. code:: bash
 
