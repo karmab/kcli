@@ -2733,11 +2733,11 @@ class Kvirt(object):
             return {'result': 'failure', 'reason': "Invalid Cidr %s" % cidr}
         if IPNetwork(cidr) in cidrs:
             return {'result': 'failure', 'reason': "Cidr %s already exists" % cidr}
-        netmask = IPNetwork(cidr).netmask
         gateway = str(range[1])
+        family = 'ipv6' if ':' in gateway else 'ipv4'
         if dhcp:
             start = str(range[2])
-            end = str(range[-2])
+            end = str(range[-2]) if family == 'ipv4' else str(range[1000])
             dhcpxml = """<dhcp>
                     <range start='%s' end='%s'/>""" % (start, end)
             if 'pxe' in overrides:
@@ -2758,6 +2758,7 @@ class Kvirt(object):
         else:
             domainxml = "<domain name='%s'/>" % name
         bridgexml = "<bridge name='%s' stp='on' delay='0'/>" % name if len(name) < 16 else ''
+        cidr = cidr.split('/')[1]
         metadata = """<metadata>
         <kvirt:info xmlns:kvirt="kvirt">
         <kvirt:plan>%s</kvirt:plan>
@@ -2768,10 +2769,10 @@ class Kvirt(object):
                     %s
                     %s
                     %s
-                    <ip address='%s' netmask='%s'>
+                    <ip address='%s' prefix='%s' family='%s'>
                     %s
                     </ip>
-                    </network>""" % (name, metadata, natxml, bridgexml, domainxml, gateway, netmask, dhcpxml)
+                    </network>""" % (name, metadata, natxml, bridgexml, domainxml, gateway, cidr, family, dhcpxml)
         new_net = conn.networkDefineXML(networkxml)
         new_net.setAutostart(True)
         new_net.create()
