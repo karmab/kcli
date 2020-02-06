@@ -12,6 +12,7 @@ from kvirt.defaults import IMAGES, IMAGESCOMMANDS
 from kvirt import ansibleutils
 from kvirt import nameutils
 from kvirt import common
+from kvirt.internalplans import kube, openshift
 from kvirt.internalplans import haproxy as haproxyplan
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
@@ -1795,3 +1796,14 @@ $INFO
             print(output)
             oldoutput = output
         return True
+
+    def create_kube(self, name, _type='generic', overrides={}):
+        if _type == 'openshift4':
+            plandir = openshift.__path__[0]
+        else:
+            plandir = kube.__path__[0]
+            inputfile = '%s/kcli_plan.yml' % plandir
+            self.plan(name, inputfile=inputfile, overrides=overrides)
+
+    def delete_kube(self, name, _type='generic', overrides={}):
+        self.plan(name, delete=True)

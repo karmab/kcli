@@ -117,3 +117,11 @@ $ kcli console -s myvm
 vmexport = """# Export vm myvm with a specific name for the generated image
 $ kcli export -i myimage vmyvm
 """
+
+kubecreate = """# Create a kube instance named mykube
+$ kcli create kube mykube
+
+# Do the same but customize some parameters
+$ kcli create kube -f multi.yml -P masters=1 -P workers=2 mykube
+
+"""

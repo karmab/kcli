@@ -1,0 +1,107 @@
+parameters:
+ masters: 1
+ workers: 0
+ domain: karmalabs.com
+ pool: default
+ network: default
+ prefix: ku
+ deploy_app: false
+ nfs: true
+ sdn: flannel
+ multus: false
+ master_memory: 6144
+ node_memory: 4096
+ image: centos7
+ notifycmd: "kubectl get pod --all-namespaces"
+
+{{ image }}:
+ type: image
+
+{% if masters > 1 %}
+{{ prefix }}-master:
+ type: loadbalancer
+ nets:
+ - name: {{ network }}
+ ports:
+ - 6443
+ vms:
+{% for number in range(0, masters) %}
+  - {{prefix}}-master-0{{ number }}
+{% endfor %}
+{%endif %}
+
+{% for number in range(0, masters) %}
+{{prefix}}-master-0{{ number }}:
+ image: {{ image }}
+ numcpus: 2
+ memory: {{ master_memory }}
+ reservedns: true
+ sharedkey: true
+ domain: {{ domain }}
+{% if number == 0 %}
+ notify: true
+ notifycmd: {{ notifycmd }}
+{% endif %}
+ nets:
+  - {{ network }}
+ disks:
+  - size: 50
+ pool: {{ pool }}
+ files:
+{% if config_type == 'ovirt' %}
+  - ovirt_fix.sh
+{% endif %}
+  - path: /etc/yum.repos.d/kubernetes.repo
+    origin: kubernetes.repo
+{% if nfs and number == 0 %}
+  - nfs.yml
+  - nfs.sh
+{% endif %}
+{% if multus and number == 0 %}
+  - multus.yml
+  - cni-plugins.yml
+  - l2-bridge.yml
+{% endif %}
+ scripts: 
+{% if 'xenial' in image or 'yaketty' in image or 'zesty' in image or 'artful' in image or 'bionic' in image or 'cosmic' in image %}
+  - pre_ubuntu.sh
+{% else %}
+  - pre.sh
+{% endif %}
+{% if number == 0 %}
+  - kubernetes.sh
+{% if multus %}
+  - multus.sh
+{% endif %}
+{% if deploy_app %}
+  - app.sh
+{% endif %}
+{% if nfs %}
+  - nfs.sh
+{% endif %}
+{% endif %}
+{% endfor %}
+
+{% for number in range(0, workers) %}
+{{prefix }}-worker-0{{ number }}:
+ image: {{ image }}
+ numcpus: 2
+ memory: {{ node_memory }}
+ reservedns: true
+ sharedkey: true
+ domain: {{ domain }}
+ nets:
+  - {{ network }}
+ disks:
+  - size: 50
+ pool: {{ pool }}
+ files:
+  - path: /etc/yum.repos.d/kubernetes.repo
+    origin: kubernetes.repo
+ scripts: 
+{% if 'xenial' in image or 'yaketty' in image or 'zesty' in image or 'artful' in image or 'bionic' in image or 'cosmic' in image %}
+  - pre_ubuntu.sh
+{% else %}
+  - pre.sh
+{% endif %}
+{% endfor %}

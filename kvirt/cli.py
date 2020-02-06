@@ -4,7 +4,7 @@
 
 from distutils.spawn import find_executable
 from kvirt.config import Kconfig
-from kvirt.examples import hostcreate, _list, plancreate, planinfo, productinfo, repocreate, start
+from kvirt.examples import hostcreate, _list, plancreate, planinfo, productinfo, repocreate, start, kubecreate
 from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsole, vmexport, niccreate, nicdelete
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
@@ -993,6 +993,34 @@ def delete_lb(args):
     config.handle_loadbalancer(name, ports=ports, checkpath=checkpath, vms=vms, delete=True, domain=domain,
                                checkport=checkport, internal=internal)
     return 0
+
+
+def create_kube(args):
+    """Create kube"""
+    name = args.name
+    _type = args.type
+    overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
+    name = nameutils.get_random_name().replace('_', '-') if args.name is None else args.name
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config.create_kube(name, _type=_type, overrides=overrides)
+
+
+def delete_kube(args):
+    """Create kube"""
+    name = args.name
+    overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
+    name = nameutils.get_random_name().replace('_', '-') if args.name is None else args.name
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config.delete_kube(name, overrides=overrides)
+
+
+def scale_kube(args):
+    """Scale kube"""
+    name = args.name
+    overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
+    name = nameutils.get_random_name().replace('_', '-') if args.name is None else args.name
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config.scale_kube(name, overrides=overrides)
 
 
 def create_vmnic(args):
@@ -2010,6 +2038,31 @@ def cli():
                                                  aliases=['client'])
     hostsync_parser.add_argument('names', help='NAMES', nargs='*')
     hostsync_parser.set_defaults(func=sync_host)
+
+    kubecreate_desc = 'Create Kube'
+    kubecreate_epilog = "examples:\n%s" % kubecreate
+    kubecreate_parser = argparse.ArgumentParser(add_help=False)
+    kubecreate_parser.add_argument('--type', type=str, choices=['generic', 'openshift'], default='generic',
+                                   metavar='TYPE', help='type for the kubernetes cluster. Use generic or openshift')
+    kubecreate_parser.add_argument('-P', '--param', action='append',
+                                   help='specify parameter or keyword for rendering (multiple can be specified)',
+                                   metavar='PARAM')
+    kubecreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    kubecreate_parser.add_argument('name', metavar='KUBENAME')
+    kubecreate_parser.set_defaults(func=create_kube)
+    create_subparsers.add_parser('kube', parents=[kubecreate_parser], description=kubecreate_desc, help=kubecreate_desc,
+                                 epilog=kubecreate_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
+
+    kubedelete_desc = 'Delete Kube'
+    kubedelete_parser = argparse.ArgumentParser(add_help=False)
+    kubedelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    kubedelete_parser.add_argument('name', metavar='KUBENAME')
+    kubedelete_parser.add_argument('-P', '--param', action='append',
+                                   help='specify parameter or keyword for rendering (multiple can be specified)',
+                                   metavar='PARAM')
+    kubedelete_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    kubedelete_parser.set_defaults(func=delete_kube)
+    delete_subparsers.add_parser('kube', parents=[kubedelete_parser], description=kubedelete_desc, help=kubedelete_desc)
 
     lbcreate_desc = 'Create Load Balancer'
     lbcreate_parser = create_subparsers.add_parser('lb', description=lbcreate_desc, help=lbcreate_desc)
