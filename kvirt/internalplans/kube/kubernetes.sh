@@ -4,7 +4,7 @@ CIDR="192.168.0.0/16"
 CIDR="10.244.0.0/16"
 {% endif %} 
 {% if masters > 1 %}
-kubeadm init --control-plane-endpoint "{{ prefix }}-master.{{ network }}:6443" --pod-network-cidr $CIDR --upload-certs
+kubeadm init --control-plane-endpoint "{{ cluster }}-master.{{ network }}:6443" --pod-network-cidr $CIDR --upload-certs
 {% else %}
 kubeadm init --pod-network-cidr $CIDR
 {% endif %}
@@ -40,19 +40,19 @@ sleep 60
 CERTKEY=$(grep certificate-key /var/log/messages | head -1 | sed 's/.*certificate-key \(.*\)/\1/')
 MASTERCMD="$CMD --control-plane --certificate-key $CERTKEY"
 echo $MASTERCMD > /root/mastercmd.sh
-ssh-keyscan -H {{ prefix }}-master-0{{ number }} >> ~/.ssh/known_hosts 
-scp /etc/kubernetes/admin.conf root@{{ prefix }}-master-0{{ number }}:/etc/kubernetes/
-echo ssh root@{{ prefix }}-master-0{{ number }} $MASTERCMD > /root/{{ prefix }}-master-0{{ number }}.log 2>&1
-ssh root@{{ prefix }}-master-0{{ number }} $MASTERCMD >> /root/{{ prefix }}-master-0{{ number }}.log 2>&1
-scp /etc/kubernetes/admin.conf {{ prefix }}-master-0{{ number }}:/root
-ssh {{ prefix }}-master-0{{ number }} mkdir -p /root/.kube
-ssh {{ prefix }}-master-0{{ number }} cp -i /root/admin.conf /root/.kube/config
-ssh {{ prefix }}-master-0{{ number }} chown root:root /root/.kube/config
+ssh-keyscan -H {{ cluster }}-master-0{{ number }} >> ~/.ssh/known_hosts 
+scp /etc/kubernetes/admin.conf root@{{ cluster }}-master-0{{ number }}:/etc/kubernetes/
+echo ssh root@{{ cluster }}-master-0{{ number }} $MASTERCMD > /root/{{ cluster }}-master-0{{ number }}.log 2>&1
+ssh root@{{ cluster }}-master-0{{ number }} $MASTERCMD >> /root/{{ cluster }}-master-0{{ number }}.log 2>&1
+scp /etc/kubernetes/admin.conf {{ cluster }}-master-0{{ number }}:/root
+ssh {{ cluster }}-master-0{{ number }} mkdir -p /root/.kube
+ssh {{ cluster }}-master-0{{ number }} cp -i /root/admin.conf /root/.kube/config
+ssh {{ cluster }}-master-0{{ number }} chown root:root /root/.kube/config
 {% endfor %}
 {% endif %}
 
 {% for number in range(0,workers) %}
-ssh-keyscan -H {{ prefix }}-worker-0{{ number }} >> ~/.ssh/known_hosts
-scp /etc/kubernetes/admin.conf root@{{ prefix }}-worker-0{{ number }}:/etc/kubernetes/
-ssh root@{{ prefix }}-worker-0{{ number }} ${CMD} > /root/{{ prefix }}-worker-0{{ number }}.log 2>&1
+ssh-keyscan -H {{ cluster }}-worker-0{{ number }} >> ~/.ssh/known_hosts
+scp /etc/kubernetes/admin.conf root@{{ cluster }}-worker-0{{ number }}:/etc/kubernetes/
+ssh root@{{ cluster }}-worker-0{{ number }} ${CMD} > /root/{{ cluster }}-worker-0{{ number }}.log 2>&1
 {% endfor %}

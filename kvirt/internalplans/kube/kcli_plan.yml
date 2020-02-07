@@ -4,7 +4,7 @@ parameters:
  domain: karmalabs.com
  pool: default
  network: default
- prefix: ku
+ cluster: ku
  deploy_app: false
  nfs: true
  sdn: flannel
@@ -18,7 +18,7 @@ parameters:
  type: image
 
 {% if masters > 1 %}
-{{ prefix }}-master:
+{{ cluster }}-master:
  type: loadbalancer
  nets:
  - name: {{ network }}
@@ -26,12 +26,12 @@ parameters:
  - 6443
  vms:
 {% for number in range(0, masters) %}
-  - {{prefix}}-master-0{{ number }}
+  - {{cluster}}-master-0{{ number }}
 {% endfor %}
 {%endif %}
 
 {% for number in range(0, masters) %}
-{{prefix}}-master-0{{ number }}:
+{{cluster}}-master-0{{ number }}:
  image: {{ image }}
  numcpus: 2
  memory: {{ master_memory }}
@@ -83,7 +83,7 @@ parameters:
 {% endfor %}
 
 {% for number in range(0, workers) %}
-{{prefix }}-worker-0{{ number }}:
+{{cluster }}-worker-0{{ number }}:
  image: {{ image }}
  numcpus: 2
  memory: {{ node_memory }}

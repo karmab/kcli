@@ -13,7 +13,7 @@ from kvirt import ansibleutils
 from kvirt import nameutils
 from kvirt import common
 from kvirt.internalplans import kube
-from kvirt.openshift import openshift_create, openshift_delete, openshift_scale
+from kvirt.openshift import openshift_create, openshift_scale
 from kvirt.internalplans import haproxy as haproxyplan
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
@@ -1798,23 +1798,25 @@ $INFO
             oldoutput = output
         return True
 
-    def create_kube_generic(self, name, overrides={}):
+    def create_kube_generic(self, cluster, overrides={}):
         plandir = kube.__path__[0]
         inputfile = '%s/kcli_plan.yml' % plandir
-        self.plan(name, inputfile=inputfile, overrides=overrides)
+        overrides['cluster'] = cluster
+        self.plan(cluster, inputfile=inputfile, overrides=overrides)
 
-    def create_kube_openshift(self, name, paramfile):
+    def create_kube_openshift(self, cluster, paramfile):
         if os.path.exists('/i_am_a_container'):
             os.environ['PATH'] = '/:/workdir:%s' % os.environ['PATH']
         else:
             os.environ['PATH'] = '.:%s' % os.environ['PATH']
         openshift_create(self, paramfile)
 
-    def delete_kube_generic(self, name, overrides={}):
-        self.plan(name, delete=True)
+    def delete_kube(self, cluster, overrides={}):
+        self.plan(cluster, delete=True)
+        clusterdir = common.pwd_path("clusters/%s" % cluster)
+        if os.path.exists(clusterdir):
+            common.pprint("Deleting %s" % common.real_path(clusterdir), color='green')
+            rmtree(clusterdir)
 
-    def delete_kube_openshift(self, name, paramfile):
-        openshift_delete(self, paramfile)
-
-    def scale_kube_openshift(self, name, paramfile):
+    def scale_kube_openshift(self, cluster, paramfile):
         openshift_scale(self, paramfile)

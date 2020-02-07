@@ -997,38 +997,31 @@ def delete_lb(args):
 
 def create_kube(args):
     """Create kube"""
-    name = args.name
     _type = args.type
-    name = nameutils.get_random_name().replace('_', '-') if args.name is None else args.name
+    cluster = nameutils.get_random_name().replace('_', '-') if args.cluster is None else args.cluster
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if _type == 'openshift':
-        config.create_kube_openshift(name, args.paramfile)
+        config.create_kube_openshift(cluster, args.paramfile)
     else:
         overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
-        config.create_kube_generic(name, overrides=overrides)
+        config.create_kube_generic(cluster, overrides=overrides)
 
 
 def delete_kube(args):
     """Delete kube"""
-    name = args.name
-    _type = args.type
-    name = nameutils.get_random_name().replace('_', '-') if args.name is None else args.name
+    cluster = nameutils.get_random_name().replace('_', '-') if args.cluster is None else args.cluster
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    if _type == 'openshift':
-        config.delete_kube_openshift(name, args.paramfile)
-    else:
-        overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
-        config.delete_kube_generic(name, overrides=overrides)
+    overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
+    config.delete_kube(cluster, overrides=overrides)
 
 
 def scale_kube(args):
     """Scale kube"""
-    name = args.name
     _type = args.type
-    name = nameutils.get_random_name().replace('_', '-') if args.name is None else args.name
+    cluster = nameutils.get_random_name().replace('_', '-') if args.cluster is None else args.cluster
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if _type == 'openshift':
-        config.scale_kube_openshift(name, paramfile=args.paramfile)
+        config.scale_kube_openshift(cluster, paramfile=args.paramfile)
     else:
         # overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
         common.pprint("Not supported on other platforms yet")
@@ -2059,17 +2052,15 @@ def cli():
                                    help='specify parameter or keyword for rendering (multiple can be specified)',
                                    metavar='PARAM')
     kubecreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
-    kubecreate_parser.add_argument('name', metavar='KUBENAME', nargs='?')
+    kubecreate_parser.add_argument('cluster', metavar='CLUSTER')
     kubecreate_parser.set_defaults(func=create_kube)
     create_subparsers.add_parser('kube', parents=[kubecreate_parser], description=kubecreate_desc, help=kubecreate_desc,
                                  epilog=kubecreate_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
 
     kubedelete_desc = 'Delete Kube'
     kubedelete_parser = argparse.ArgumentParser(add_help=False)
-    kubedelete_parser.add_argument('--type', type=str, choices=['generic', 'openshift'], default='generic',
-                                   metavar='TYPE', help='type for the kubernetes cluster. Use generic or openshift')
     kubedelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    kubedelete_parser.add_argument('name', metavar='KUBENAME', nargs='?')
+    kubedelete_parser.add_argument('cluster', metavar='CLUSTER')
     kubedelete_parser.add_argument('-P', '--param', action='append',
                                    help='specify parameter or keyword for rendering (multiple can be specified)',
                                    metavar='PARAM')

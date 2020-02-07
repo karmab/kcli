@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding=utf-8
 
+from random import randint
 import base64
 from jinja2 import Environment, FileSystemLoader
 from jinja2 import StrictUndefined as undefined
@@ -9,6 +10,7 @@ from distutils.spawn import find_executable
 from netaddr import IPAddress
 import random
 import socket
+import ssl
 from urllib.parse import quote
 from urllib.request import urlretrieve, urlopen
 import json
@@ -1195,3 +1197,43 @@ def mergeignition(name, ignitionextrapath, data):
         if data['ignition']['config']:
             ignitionextra['ignition']['config'] = data['ignition']['config']
     return ignitionextra
+
+
+def valid_tag(tag):
+    if '/' in tag:
+        tag = tag.split('/')[1]
+    if len(tag) != 3 or not tag.startswith('4.'):
+        msg = "Tag should have a format of 4.X"
+        raise Exception(msg)
+    return tag
+
+
+def gen_mac():
+    mac = [0x00, 0x16, 0x3e, randint(0x00, 0x7f), randint(0x00, 0xff), randint(0x00, 0xff)]
+    return ':'.join(map(lambda x: "%02x" % x, mac))
+
+
+def pwd_path(x):
+    if x is None:
+        return None
+    result = '/workdir/%s' % x if os.path.exists('/i_am_a_container') else x
+    return result
+
+
+def real_path(x):
+    return x.replace('/workdir/', '')
+
+
+def insecure_fetch(url):
+    context = ssl._create_unverified_context()
+    response = urlopen(url, timeout=5, context=context)
+    data = response.read()
+    return data.decode('utf-8')
+
+
+def get_values(data, element, field):
+    results = []
+    if '%s_%s' % (element, field) in data:
+        new = data['%s_%s' % (element, field)]
+        results.extend(new)
+    return results

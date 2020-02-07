@@ -5,59 +5,17 @@ from glob import glob
 import json
 import os
 import sys
-from kvirt.common import pprint
-from random import randint
+from kvirt.common import pprint, gen_mac, get_values, real_path, pwd_path, insecure_fetch
 import re
-from shutil import copy2, rmtree, move
+from shutil import copy2, move
 from subprocess import call
 from time import sleep
 import yaml
-import ssl
 from urllib.request import urlopen
 
 
 virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere']
 cloudplatforms = ['aws', 'gcp']
-
-
-def valid_tag(tag):
-    if '/' in tag:
-        tag = tag.split('/')[1]
-    if len(tag) != 3 or not tag.startswith('4.'):
-        msg = "Tag should have a format of 4.X"
-        raise Exception(msg)
-    return tag
-
-
-def gen_mac():
-    mac = [0x00, 0x16, 0x3e, randint(0x00, 0x7f), randint(0x00, 0xff), randint(0x00, 0xff)]
-    return ':'.join(map(lambda x: "%02x" % x, mac))
-
-
-def pwd_path(x):
-    if x is None:
-        return None
-    result = '/workdir/%s' % x if os.path.exists('/i_am_a_container') else x
-    return result
-
-
-def real_path(x):
-    return x.replace('/workdir/', '')
-
-
-def insecure_fetch(url):
-    context = ssl._create_unverified_context()
-    response = urlopen(url, timeout=5, context=context)
-    data = response.read()
-    return data.decode('utf-8')
-
-
-def get_values(data, element, field):
-    results = []
-    if '%s_%s' % (element, field) in data:
-        new = data['%s_%s' % (element, field)]
-        results.extend(new)
-    return results
 
 
 def get_installer(nightly=False, macosx=False, tag=None):
@@ -187,23 +145,6 @@ def openshift_scale(config, paramfile, workers):
         config.plan(cluster, inputfile='workers.yml', overrides=paramdata)
     elif platform in cloudplatforms:
         config.plan(cluster, inputfile='cloud.yml', overrides=paramdata)
-
-
-def openshift_delete(config, paramfile):
-    paramfile = paramfile if not os.path.exists('/i_am_a_container') else '/workdir/%s' % paramfile
-    client = config.client
-    pprint("Cleaning on client %s" % client, color='blue')
-    if not os.path.exists(paramfile):
-        pprint("Specified parameter file %s doesn't exist.Leaving..." % real_path(paramfile), color='red')
-        sys.exit(1)
-    with open(paramfile) as entries:
-        paramdata = yaml.safe_load(entries)
-    cluster = paramdata.get('cluster', 'testk')
-    config.plan(cluster, delete=True)
-    clusterdir = pwd_path("clusters/%s" % cluster)
-    if os.path.exists(clusterdir):
-        pprint("Deleting %s" % real_path(clusterdir), color='green')
-        rmtree(clusterdir)
 
 
 def openshift_create(config, paramfile):
