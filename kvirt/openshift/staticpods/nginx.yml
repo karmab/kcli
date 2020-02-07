@@ -1,0 +1,50 @@
+---
+kind: Pod
+apiVersion: v1
+metadata:
+  name: nginx
+  namespace: openshift-infra
+  creationTimestamp:
+  deletionGracePeriodSeconds: 65
+  labels:
+    app: kcli-nginx
+spec:
+  volumes:
+  - name: data-dir
+    empty-dir: {}
+  initContainers:
+  - name: nginx-get-master-mco
+    securityContext:
+      privileged: true
+    image: docker.io/yauritux/busybox-curl
+    command:
+    - "curl"
+    args:
+    - "-kL"
+    - "https://{{ api_ip}}:22623/config/master"
+    - "-o"
+    - "/usr/share/nginx/html/master"
+    volumeMounts:
+    - name: data-dir
+      mountPath: "/usr/share/nginx/html"
+  containers:
+  - name: nginx
+    image: docker.io/library/nginx:alpine
+    resources:
+      requests:
+        cpu: 150m
+        memory: 512Mi
+    volumeMounts:
+    - name: data-dir
+      mountPath: "/usr/share/nginx/html"
+    terminationMessagePolicy: FallbackToLogsOnError
+    imagePullPolicy: IfNotPresent
+    ports:
+    - name: web
+      containerPort: 80
+      hostPort: 8080
+      protocol: TCP
+  tolerations:
+  - operator: Exists
+  priorityClassName: system-node-critical
+status: {}

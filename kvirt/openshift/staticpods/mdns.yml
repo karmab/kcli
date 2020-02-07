@@ -1,0 +1,57 @@
+---
+kind: Pod
+apiVersion: v1
+metadata:
+  name: mdns
+  namespace: openshift-infra
+  creationTimestamp:
+  deletionGracePeriodSeconds: 65
+  labels:
+    app: kcli-mdns
+spec:
+  volumes:
+  - name: conf-dir
+    hostPath:
+      path: "/etc/kubernetes"
+  initContainers:
+  - name: mdns-render-config
+    securityContext:
+      privileged: true
+    image: docker.io/yauritux/busybox-curl
+    command:
+    - "/bin/sh"
+    - "-c"
+    - |
+      #/bin/sh
+      NIC=$(ip r | grep default | tail -1 | sed 's/.*dev \(.*\) \(proto\|metric\).*/\1/')
+      IP=$(ip -4 -o addr show $NIC | awk '{print $4}' | cut -d "/" -f 1 | head -1)
+      [ -z "$IP" ] && exit 1
+      HOSTNAME=$(hostname -s)
+      ETCD=$(echo "$HOSTNAME" | sed 's@{{ cluster }}-master@etcd@')
+      sed "s/IP/$IP/" /etc/mdns/config.hcl.templ > /etc/mdns/config.hcl
+      sed -i "s/HOSTNAME/$HOSTNAME/" /etc/mdns/config.hcl
+      sed -i "s/ETCD/$ETCD/" /etc/mdns/config.hcl
+    resources: {}
+    volumeMounts:
+    - name: conf-dir
+      mountPath: "/etc/mdns"
+    imagePullPolicy: IfNotPresent
+  containers:
+  - name: mdns-publish
+    image: quay.io/openshift-metal3/mdns-publisher:latest
+    args:
+    - "--debug"
+    resources:
+      requests:
+        cpu: 150m
+        memory: 1Gi
+    volumeMounts:
+    - name: conf-dir
+      mountPath: "/etc/mdns"
+    terminationMessagePolicy: FallbackToLogsOnError
+    imagePullPolicy: IfNotPresent
+  hostNetwork: true
+  tolerations:
+  - operator: Exists
+  priorityClassName: system-node-critical
+status: {}

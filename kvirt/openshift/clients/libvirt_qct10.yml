@@ -1,0 +1,14 @@
+cluster: qct10
+numcpus: 16
+network: baremetal2
+master_memory: 28672
+worker_memory: 16384
+bootstrap_memory: 8192
+disk_size: 30
+extra_disks:
+ - 60
+domain: karmalabs.com
+masters: 3
+workers: 0
+api_ip: 10.19.140.12
+image: rhcos-42.80.20190925.2-qemu.qcow2

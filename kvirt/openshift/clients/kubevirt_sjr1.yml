@@ -1,0 +1,14 @@
+cluster: sjr1
+numcpus: 16
+network: default
+use_br: true
+master_memory: 16384
+worker_memory: 16384
+bootstrap_memory: 8192
+disk_size: 30
+extra_disks:
+ - 10
+domain: karmalabs.com
+masters: 1
+workers: 2
+api_ip: 10.19.140.18

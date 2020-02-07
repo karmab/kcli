@@ -1,0 +1,18 @@
+cluster: openstack
+image: rhcos-420.8.20190611.0-openstack.qcow2
+numcpus: 4
+network: private
+use_br: true
+master_memory: 8192
+worker_memory: 8192
+bootstrap_memory: 8192
+disk_size: 30
+extra_disks:
+ - 10
+domain: karmalabs.com
+masters: 1
+workers: 1
+api_ip: 10.0.0.200
+api_netmask: 255.255.255.0
+public_api_ip: 10.19.136.22
+helper_sleep: 120

@@ -1,0 +1,125 @@
+parameters:
+ numcpus: 4
+ network: default
+ enableroot: false
+ extra_disks: []
+ master_memory: 8192
+ worker_memory: 8192
+ bootstrap_memory: 4096
+ disk_size: 30
+ image: rhcos44
+ cluster: testk
+ domain: karmalabs.com
+ masters: 1
+ workers: 0
+ scale: false
+ tag: cnvlab
+ api_internal: false
+
+api.{{ cluster }}:
+ type: loadbalancer
+ domain: {{ domain }}
+ checkport: 6080
+ checkpath: /readyz
+{% if not api_internal %}
+ alias: ['api-int.{{ cluster }}.{{ domain }}']
+{% endif %}
+ ports:
+ - 6443
+ - 22623
+ vms:
+ - {{ cluster }}-bootstrap
+{% for num in range(0, masters) %}
+ - {{ cluster }}-master-{{ num }}
+{% endfor %}
+
+{% if api_internal %}
+api-int.{{ cluster }}:
+ type: loadbalancer
+ internal: true
+ domain: {{ domain }}
+ checkport: 6080
+ ports:
+ - 6443
+ - 22623
+ vms:
+ - {{ cluster }}-bootstrap
+{% for num in range(0, masters) %}
+ - {{ cluster }}-master-{{ num }}
+{% endfor %}
+{% endif %}
+
+apps.{{ cluster }}:
+ type: loadbalancer
+ domain: {{ domain }}
+ checkport: 80
+ alias: ['*']
+ ports:
+ - 80
+ - 443
+ vms:
+{% if workers > 0 %}
+{% for num in range(0, workers) %}
+ - {{ cluster }}-worker-{{ num }}
+{% endfor %}
+{% else %}
+{% for num in range(0, masters) %}
+ - {{ cluster }}-master-{{ num }}
+{% endfor %}
+{% endif %}
+
+{% if not scale %}
+{{ cluster }}-bootstrap:
+ image: {{ image }}
+ enableroot: {{ enableroot }}
+ numcpus: 2
+ memory: {{ bootstrap_memory }}
+ nets:
+ - name: {{ network }}
+ reservedns: true
+ disks:
+ - size: {{ disk_size }}
+ tags: [{{ tag }}]
+
+{% for num in range(0, masters) %}
+{{ cluster }}-master-{{ num }}:
+ domain: {{ cluster }}.{{ domain }} 
+ image: {{ image }}
+ enableroot: {{ enableroot }}
+ numcpus: {{ numcpus }}
+ memory: {{ master_memory }}
+ nets:
+ - name: {{ network }}
+ reservedns: true
+ disks:
+ - size: {{ disk_size }}
+ files:
+{% if type == 'gcp' %}
+ - path: /usr/local/bin/gcp-hack.sh
+   origin: gcp-hack.sh
+   mode: 755
+ - path: /etc/systemd/system/gcp-hack.service
+   origin: gcp-hack.service
+   mode: 644
+ - path: /etc/systemd/system-preset/00-gcp-hack.preset
+   origin: gcp-hack.preset
+   mode: 644
+{% endif %}
+ tags: [{{ tag }}]
+{% endfor %}
+
+{% endif %}
+
+{% for num in range(0, workers) %}
+{{ cluster }}-worker-{{ num }}:
+ domain: {{ cluster }}.{{ domain }} 
+ image: {{ image }}
+ enableroot: {{ enableroot }}
+ numcpus: {{ numcpus }}
+ memory: {{ worker_memory }}
+ nets:
+ - name: {{ network }}
+ reservedns: true
+ disks: {{ [disk_size] + extra_disks }}
+ tags: [{{ tag }}]
+{% endfor %}

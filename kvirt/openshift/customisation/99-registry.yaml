@@ -1,0 +1,17 @@
+apiVersion: imageregistry.operator.openshift.io/v1
+kind: Config
+metadata:
+  generation: 1
+  name: cluster
+spec:
+  logging: 2
+  managementState: Managed
+  proxy: {}
+  replicas: 1
+  requests:
+    read:
+      maxWaitInQueue: 0s
+    write:
+      maxWaitInQueue: 0s
+  storage:
+    emptyDir: {}

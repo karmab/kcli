@@ -1,0 +1,13 @@
+. {
+    errors
+    health :18080
+    mdns {{ cluster }}.{{ domain }} {{ masters if 'bootstrap' in name else '0' }} {{ cluster }}
+    forward . NAMESERVER
+    cache 30
+    reload
+    hosts {{ cluster }}.{{ domain }} {
+        {{ api_ip }} api-int.{{ cluster }}.{{ domain }} api.{{ cluster }}.{{ domain }}
+        fallthrough
+    }
+    file /etc/coredns/apps.db apps.{{ cluster }}.{{ domain }}
+}

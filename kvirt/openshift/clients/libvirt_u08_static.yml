@@ -1,0 +1,30 @@
+cluster: u09
+numcpus: 16
+network: nodhcpnet
+extra_disk: true
+master_memory: 28672
+worker_memory: 28672
+bootstrap_memory: 8192
+disk_size: 30
+extra_disks:
+ - 60
+domain: karmalabs.com
+masters: 1
+workers: 2
+api_ip: 192.168.100.10
+master_macs:
+- aa:bb:cc:dd:ee:01
+worker_macs:
+- aa:bb:cc:dd:ee:02
+- aa:bb:cc:dd:ee:03
+master_ips:
+- 192.168.100.11
+worker_ips:
+- 192.168.100.12
+- 192.168.100.13
+bootstrap_mac: aa:bb:cc:dd:ee:04
+bootstrap_ip: 192.168.100.14
+dhcp_ip: 192.168.100.9
+dhcp_netmask: 255.255.255.0
+dhcp_gateway: 192.168.100.1
+dhcp_dns: 192.168.100.1

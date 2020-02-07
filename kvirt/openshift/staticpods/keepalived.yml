@@ -1,0 +1,72 @@
+---
+kind: Pod
+apiVersion: v1
+metadata:
+  name: keepalived
+  namespace: openshift-infra
+  creationTimestamp:
+  deletionGracePeriodSeconds: 65
+  labels:
+    app: kcli-keepalived
+spec:
+  volumes:
+  - name: conf-dir
+    hostPath:
+      path: "/etc/kubernetes"
+  initContainers:
+  - name: fix-keepalived-conf
+    securityContext:
+      privileged: true
+    image: docker.io/yauritux/busybox-curl
+    command:
+    - "/bin/sh"
+    - "-c"
+    - |
+      #/bin/sh
+      grep "{{ api_ip }}/" /etc/keepalived/keepalived.conf
+      if [ "$?" == "0" ] ; then
+        exit 0
+      else
+        NIC=$(ip r | grep default | tail -1 | sed 's/.*dev \(.*\) \(proto\|metric\).*/\1/')
+        sed -i "s@NIC@$NIC@" /etc/keepalived/keepalived.conf
+        NETMASK=$(ip -o -f inet addr show | awk '/scope global/ {print $4}' | head -1 | cut -d'/' -f2)
+        if [ "$NETMASK" != "" ] ; then
+          sed -i "s@{{ api_ip }}@{{ api_ip }}/$NETMASK@" /etc/keepalived/keepalived.conf
+          {% if ingress_ip != None %}
+          sed -i "s@{{ ingress_ip }}@{{ ingress_ip }}/$NETMASK@" /etc/keepalived/keepalived.conf
+          {% endif %}
+        fi
+      fi
+    resources: {}
+    volumeMounts:
+    - name: conf-dir
+      mountPath: "/etc/keepalived"
+    imagePullPolicy: IfNotPresent
+  containers:
+  - name: keepalived
+    securityContext:
+      privileged: true
+    image: quay.io/openshift/origin-keepalived-ipfailover:latest
+    command:
+    - /usr/sbin/keepalived
+    args:
+    - "-f"
+    - "/etc/keepalived/keepalived.conf"
+    - "--dont-fork"
+    - "--vrrp"
+    - "--log-detail"
+    - "--log-console"
+    resources:
+      requests:
+        cpu: 150m
+        memory: 2048Mi
+    volumeMounts:
+    - name: conf-dir
+      mountPath: "/etc/keepalived"
+    terminationMessagePolicy: FallbackToLogsOnError
+    imagePullPolicy: IfNotPresent
+  hostNetwork: true
+  tolerations:
+  - operator: Exists
+  priorityClassName: system-node-critical
+status: {}

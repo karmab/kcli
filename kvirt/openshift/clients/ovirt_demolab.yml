@@ -1,0 +1,16 @@
+cluster: ocp4-karmab
+numcpus: 16
+network: default
+use_br: false
+master_memory: 28672
+worker_memory: 16384
+bootstrap_memory: 8192
+disk_size: 30
+extra_disks:
+ - 20
+domain: karmalabs.com
+masters: 3
+workers: 0
+api_ip: 10.32.170.79
+api_netmask: 255.255.255.0
+image: rhcos-420.8.20190611.0-openstack.qcow2

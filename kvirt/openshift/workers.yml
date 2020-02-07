@@ -1,0 +1,66 @@
+parameters:
+ numcpus: 4
+ network: default
+ worker_memory: 8192
+ disk_size: 30
+ image: rhcos44
+ cluster: testk
+ domain: karmalabs.com
+ workers: 0
+ scale: false
+ autostart: false
+ keys: []
+ api_ip: 
+ ingress_ip: 
+ extra_disks: []
+ extra_networks: []
+ worker_macs: []
+ worker_ips: []
+ numa:
+ numamode:
+ cpupinning:
+ pcidevices:
+
+{% for num in range(0, workers) %}
+{% if worker_macs and worker_macs|length >= workers %}
+ {% set net0 = {"name": network, "mac": worker_macs[num]} %}
+{% else %}
+ {% set net0 = network %}
+{% endif %}
+{{ cluster }}-worker-{{ num }}:
+ domain: {{ cluster }}.{{ domain }} 
+ image: {{ image }}
+ keys: {{ keys }}
+ enableroot: false 
+ numcpus: {{ numcpus }}
+ memory: {{ worker_memory }}
+ autostart: {{ autostart }}
+ nets: {{ [net0] + extra_networks }}
+ disks: {{ [disk_size] + extra_disks }}
+ files:
+  - path: /etc/NetworkManager/dispatcher.d/99-forcedns
+    origin: 99-forcedns
+    mode: 755
+  - path: /etc/kubernetes/manifests/coredns.yml
+    origin: staticpods/coredns.yml
+  - path: /etc/kubernetes/Corefile
+    origin: Corefile
+  - path: /etc/kubernetes/manifests/mdns.yml
+    origin: staticpods/mdns.yml
+  - path: /etc/kubernetes/config.hcl.templ
+    origin: config.hcl.templ
+  - path: /etc/kubernetes/apps.db
+    origin: apps.db
+{% if numa != None %}
+ numa: {{ numa }}
+{% endif %}
+{% if numamode != None %}
+ numamode: {{ numamode }}
+{% endif %}
+{% if cpupinning != None %}
+ cpupinning: {{ cpupinning }}
+{% endif %}
+{% if pcidevices != None and num == 0 %}
+ pcidevices: {{ pcidevices }}
+{% endif %}
+{% endfor %}

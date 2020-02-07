@@ -1,0 +1,31 @@
+bind_address = "IP"
+collision_avoidance = "hostname"
+
+service {
+    name = "{{ cluster }} Workstation"
+    host_name = "HOSTNAME.local."
+    type = "_workstation._tcp"
+    domain = "local."
+    port = 42424
+    ttl = 3200
+}
+
+{% if 'master' in name %}
+service {
+    name = "{{ cluster }} Etcd"
+    host_name = "ETCD.local."
+    type = "_etcd-server-ssl._tcp"
+    domain = "local."
+    port = 2380
+    ttl = 3200
+}
+
+service {
+    name = "{{ cluster }} EtcdWorkstation"
+    host_name = "ETCD.local."
+    type = "_workstation._tcp"
+    domain = "local."
+    port = 42424
+    ttl = 300
+}
+{% endif %}

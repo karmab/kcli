@@ -1,0 +1,13 @@
+cluster: twix
+numcpus: 4
+network: localnet
+extra_disk: true
+master_memory: 16384
+bootstrap_memory: 8192
+disk_size: 30
+extra_disks:
+ - 10
+domain: karmalabs.com
+masters: 1
+workers: 0
+api_ip: 192.168.1.179

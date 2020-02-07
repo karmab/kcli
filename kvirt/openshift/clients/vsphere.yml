@@ -1,0 +1,17 @@
+cluster: kuerten
+numcpus: 16
+network: VM Network
+master_memory: 28672
+worker_memory: 16384
+bootstrap_memory: 8192
+disk_size: 30
+extra_disks:
+ - 20
+domain: karmalabs.com
+masters: 1
+workers: 2
+api_ip: 10.19.115.246
+image: fcos
+helper_image: centos7k
+version: upstream
+macosx: true

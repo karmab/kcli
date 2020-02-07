@@ -1,0 +1,30 @@
+parameters:
+ dhcp_image: CentOS-7-x86_64-GenericCloud.qcow2
+ numcpus: 2
+ memory: 2048
+ prefix: prout
+ domain: karmalabs.com
+ node_macs: []
+ node_ips: []
+ node_names: []
+ network:
+ dhcp_ip: 
+ dhcp_netmask: 
+ dhcp_gateway: 
+ dhcp_dns: 
+ 
+{{ prefix }}-dhcp-helper:
+ image: {{ dhcp_image }}
+ domain: {{ domain }}
+ numcpus: {{ numcpus }}
+ memory: {{ memory }}
+ scripts:
+  - dhcp.sh
+ files:
+  - dhcp.conf
+ nets:
+ - name: {{ network }}
+   ip: {{ dhcp_ip }}
+   netmask: {{ dhcp_netmask }}
+   gateway: {{ dhcp_gateway }}
+   dns: {{ dhcp_dns }}

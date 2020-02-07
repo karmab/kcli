@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+IF=$(ip r | grep default | grep -Po '(?<=dev )(\S+)')
+#if $(grep -q "dracut" /etc/sysconfig/network-scripts/ifcfg-$IF); then
+#if [ "$IF" != "" ]] && [ ! -f /etc/sysconfig/network-scripts/ifcfg-$IF ] ; then
+if [ ! -f /etc/sysconfig/network-scripts/ifcfg-$IF ] ; then
+echo brext acting on $IF
+cat <<EOF > /etc/sysconfig/network-scripts/ifcfg-$IF
+DEVICE=$IF
+BRIDGE=brext
+ONBOOT=yes
+NM_CONTROLLED=yes
+BOOTPROTO=none
+EOF
+systemctl restart NetworkManager
+nmcli conn down $IF
+fi

@@ -1,0 +1,14 @@
+cluster: u11
+numcpus: 16
+network: default
+extra_disk: true
+master_memory: 28672
+worker_memory: 28672
+bootstrap_memory: 8192
+disk_size: 30
+extra_disks:
+ - 60
+domain: karmalabs.com
+masters: 1
+workers: 1
+api_ip: 192.168.122.251

@@ -1,0 +1,16 @@
+cluster: qct8
+numcpus: 16
+network: br1
+extra_disk: true
+master_memory: 28672
+worker_memory: 28672
+bootstrap_memory: 8192
+disk_size: 30
+extra_disks:
+ - 60
+domain: karmalabs.com
+masters: 1
+workers: 2
+api_ip: 10.19.140.10
+image: fedora-coreos-30.20191014.0-qemu.x86_64.qcow2
+upstream: true

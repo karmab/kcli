@@ -1,0 +1,13 @@
+cluster: iglesias
+image: rhcos-43-81-201911080953-0
+numcpus: 4
+master_memory: 16384
+worker_memory: 16384
+bootstrap_memory: 8192
+disk_size: 30
+extra_disks:
+ - 10
+domain: cnvlab.gce.sysdeseng.com
+masters: 1
+workers: 1
+api_internal: true
