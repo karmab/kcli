@@ -320,8 +320,11 @@ class Kbaseconfig:
         self.ini['default']['client'] = client
         inifile = "%s/.kcli/config.yml" % os.environ.get('HOME')
         with open(inifile, 'w') as conf_file:
-            yaml.safe_dump(self.ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True,
-                           sort_keys=False)
+            try:
+                yaml.safe_dump(self.ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True,
+                               sort_keys=False)
+            except:
+                yaml.safe_dump(self.ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True)
         return {'result': 'success'}
 
     def enable_host(self, client):
@@ -337,8 +340,11 @@ class Kbaseconfig:
         self.ini[client]['enabled'] = True
         inifile = "%s/.kcli/config.yml" % os.environ.get('HOME')
         with open(inifile, 'w') as conf_file:
-            yaml.safe_dump(self.ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True,
-                           sort_keys=False)
+            try:
+                yaml.safe_dump(self.ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True,
+                               sort_keys=False)
+            except:
+                yaml.safe_dump(self.ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True)
         return {'result': 'success'}
 
     def disable_host(self, client):
@@ -359,8 +365,11 @@ class Kbaseconfig:
         self.ini[client]['enabled'] = False
         inifile = "%s/.kcli/config.yml" % os.environ.get('HOME')
         with open(inifile, 'w') as conf_file:
-            yaml.safe_dump(self.ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True,
-                           sort_keys=False)
+            try:
+                yaml.safe_dump(self.ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True,
+                               sort_keys=False)
+            except:
+                yaml.safe_dump(self.ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True)
         return {'result': 'success'}
 
     def set_defaults(self):
@@ -380,8 +389,11 @@ class Kbaseconfig:
         self.ini['default'] = default
         path = os.path.expanduser('~/.kcli/config.yml')
         with open(path, 'w') as conf_file:
-            yaml.safe_dump(self.ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True,
-                           sort_keys=sort_keys)
+            try:
+                yaml.safe_dump(self.ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True,
+                               sort_keys=sort_keys)
+            except:
+                yaml.safe_dump(self.ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True)
 
     def list_keywords(self):
         """
@@ -769,8 +781,12 @@ class Kbaseconfig:
                 os.remove(path)
             else:
                 with open(path, 'w') as profile_file:
-                    yaml.safe_dump(self.profiles, profile_file, default_flow_style=False, encoding='utf-8',
-                                   allow_unicode=True, sort_keys=False)
+                    try:
+                        yaml.safe_dump(self.profiles, profile_file, default_flow_style=False, encoding='utf-8',
+                                       allow_unicode=True, sort_keys=False)
+                    except:
+                        yaml.safe_dump(self.profiles, profile_file, default_flow_style=False, encoding='utf-8',
+                                       allow_unicode=True)
             return {'result': 'success'}
 
     def create_profile(self, profile, overrides={}, quiet=False):
@@ -786,8 +802,12 @@ class Kbaseconfig:
         if not os.path.exists(rootdir):
             os.makedirs(rootdir)
         with open(path, 'w') as profile_file:
-            yaml.safe_dump(self.profiles, profile_file, default_flow_style=False, encoding='utf-8',
-                           allow_unicode=True, sort_keys=False)
+            try:
+                yaml.safe_dump(self.profiles, profile_file, default_flow_style=False, encoding='utf-8',
+                               allow_unicode=True, sort_keys=False)
+            except:
+                yaml.safe_dump(self.profiles, profile_file, default_flow_style=False, encoding='utf-8',
+                               allow_unicode=True)
         return {'result': 'success'}
 
     def update_profile(self, profile, overrides={}, quiet=False):
@@ -800,6 +820,10 @@ class Kbaseconfig:
         path = os.path.expanduser('~/.kcli/profiles.yml')
         self.profiles[profile].update(overrides)
         with open(path, 'w') as profile_file:
-            yaml.safe_dump(self.profiles, profile_file, default_flow_style=False, encoding='utf-8',
-                           allow_unicode=True, sort_keys=False)
+            try:
+                yaml.safe_dump(self.profiles, profile_file, default_flow_style=False, encoding='utf-8',
+                               allow_unicode=True, sort_keys=False)
+            except:
+                yaml.safe_dump(self.profiles, profile_file, default_flow_style=False, encoding='utf-8',
+                               allow_unicode=True)
         return {'result': 'success'}

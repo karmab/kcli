@@ -996,7 +996,11 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     if removetls and 'append' in data['ignition']['config'] and\
             data['ignition']['config']['append'][0]['source'].startswith("http://"):
         del data['ignition']['security']['tls']['certificateAuthorities']
-    return json.dumps(data, sort_keys=True, indent=indent, separators=separators)
+    try:
+        result = json.dumps(data, sort_keys=True, indent=indent, separators=separators)
+    except:
+        result = json.dumps(data, indent=indent, separators=separators)
+    return result
 
 
 def get_latest_fcos(url, _type='kvm'):
@@ -1102,7 +1106,11 @@ def create_host(data):
         ini = oldini
     ini[name] = {k: data[k] for k in data if data[k] is not None}
     with open(path, 'w') as conf_file:
-        yaml.safe_dump(ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True, sort_keys=False)
+        try:
+            yaml.safe_dump(ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True,
+                           sort_keys=False)
+        except:
+            yaml.safe_dump(ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     pprint("Using %s as hostname" % name)
     pprint("Host %s created" % name)
 
@@ -1132,8 +1140,11 @@ def delete_host(name):
             os.remove(path)
         else:
             with open(path, 'w') as conf_file:
-                yaml.safe_dump(ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True,
-                               sort_keys=False)
+                try:
+                    yaml.safe_dump(ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True,
+                                   sort_keys=False)
+                except:
+                    yaml.safe_dump(ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True)
         pprint("Host %s deleted" % name)
 
 
