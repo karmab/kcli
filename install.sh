@@ -38,7 +38,7 @@ fi
 engine=""
 which docker >/dev/null 2>&1 && engine="docker"
 which podman >/dev/null 2>&1 && engine="podman"
-if [ "$?" == "0" ] ; then
+if [ "$engine" == "" ] ; then
   echo -e "${BLUE}No container engine found nor compatible package manager. Install podman or docker first${NC}"
   exit 1
 fi
