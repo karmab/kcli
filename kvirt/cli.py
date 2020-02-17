@@ -21,6 +21,13 @@ import sys
 import yaml
 
 
+def valid_fqdn(name):
+    if name is not None and '/' in name:
+        msg = "Vm name can't include /"
+        raise argparse.ArgumentTypeError(msg)
+    return name
+
+
 def alias(text):
     return "Alias for %s" % text
 
@@ -2374,7 +2381,7 @@ def cli():
                                  metavar='PARAM')
     vmcreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
     vmcreate_parser.add_argument('-w', '--wait', action='store_true', help='Wait for cloudinit to finish')
-    vmcreate_parser.add_argument('name', metavar='VMNAME', nargs='?')
+    vmcreate_parser.add_argument('name', metavar='VMNAME', nargs='?', type=valid_fqdn)
     vmcreate_parser.set_defaults(func=create_vm)
     create_subparsers.add_parser('vm', parents=[vmcreate_parser], description=vmcreate_desc, help=vmcreate_desc,
                                  epilog=vmcreate_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
