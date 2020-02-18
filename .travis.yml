@@ -18,6 +18,7 @@ script:
 - echo $TRAVIS_COMMIT > extras/git_version
 - docker build -t karmab/kcli -f extras/alpine .
 - docker run -it --rm karmab/kcli
+- rm extras/git_version
 after_success:
 - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == 'false' ] ; then
   docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD ; docker push karmab/kcli:latest
@@ -25,4 +26,3 @@ after_success:
 - if [ "$TRAVIS_TAG" != "" ]; then docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
   ; docker push karmab/kcli:$TRAVIS_TAG ; fi
 - "./pypi.sh"
-#- "./packagecloud.sh"

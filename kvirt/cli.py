@@ -1007,10 +1007,10 @@ def create_kube(args):
     _type = args.type
     cluster = nameutils.get_random_name().replace('_', '-') if args.cluster is None else args.cluster
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
     if _type == 'openshift':
-        config.create_kube_openshift(cluster, args.paramfile)
+        config.create_kube_openshift(cluster, overrides=overrides)
     else:
-        overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
         config.create_kube_generic(cluster, overrides=overrides)
 
 
@@ -1028,7 +1028,8 @@ def scale_kube(args):
     cluster = nameutils.get_random_name().replace('_', '-') if args.cluster is None else args.cluster
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if _type == 'openshift':
-        config.scale_kube_openshift(cluster, paramfile=args.paramfile)
+        overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
+        config.scale_kube_openshift(cluster, overrides=overrides)
     else:
         # overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
         common.pprint("Not supported on other platforms yet")
@@ -1207,6 +1208,17 @@ def info_plan(args):
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
         config.plan(plan, url=url, path=path, inputfile=inputfile, info=True)
+    return 0
+
+
+def info_kube(args):
+    """Info kube"""
+    _type = args.type
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    if _type == 'openshift':
+        config.info_kube_openshift()
+    else:
+        config.info_kube_generic()
     return 0
 
 
@@ -1680,8 +1692,8 @@ def cli():
 
     """
     version = "version: %s" % __version__
-    if os.path.exists('/git_version'):
-        version += " commit: %s" % open('/git_version').read()
+    git_version = open('/git_version').read() if os.path.exists('/git_version') else 'N/A'
+    version += " commit: %s" % git_version
     parser = argparse.ArgumentParser(description='Libvirt/Ovirt/Vsphere/Gcp/Aws/Openstack/Kubevirt Wrapper')
     parser.add_argument('-C', '--client')
     parser.add_argument('--containerclient', help='Containerclient to use')
@@ -1752,7 +1764,7 @@ def cli():
 
     hostlist_desc = 'List Hosts'
 
-    info_desc = 'Info Host/Plan/Vm'
+    info_desc = 'Info Host/Kube/Plan/Vm'
     info_parser = subparsers.add_parser('info', description=info_desc, help=info_desc)
     info_subparsers = info_parser.add_subparsers(metavar='', dest='subcommand_info')
 
@@ -2075,6 +2087,12 @@ def cli():
     kubedelete_parser.set_defaults(func=delete_kube)
     delete_subparsers.add_parser('kube', parents=[kubedelete_parser], description=kubedelete_desc, help=kubedelete_desc)
 
+    kubeinfo_desc = 'Info Kube'
+    kubeinfo_parser = info_subparsers.add_parser('kube', description=kubeinfo_desc, help=kubeinfo_desc)
+    kubeinfo_parser.add_argument('-t', '--type', type=str, choices=['generic', 'openshift'], default='generic',
+                                 metavar='TYPE', help='type for the kubernetes cluster. Use generic or openshift')
+    kubeinfo_parser.set_defaults(func=info_kube)
+
     lbcreate_desc = 'Create Load Balancer'
     lbcreate_parser = create_subparsers.add_parser('lb', description=lbcreate_desc, help=lbcreate_desc)
     lbcreate_parser.add_argument('--checkpath', default='/index.html', help="Path to check. Defaults to /index.html")
@@ -2200,7 +2218,7 @@ def cli():
 
     planinfo_desc = 'Info Plan'
     planinfo_epilog = "examples:\n%s" % planinfo
-    planinfo_parser = info_subparsers.add_parser('plan', description=plandelete_desc, help=planinfo_desc,
+    planinfo_parser = info_subparsers.add_parser('plan', description=planinfo_desc, help=planinfo_desc,
                                                  epilog=planinfo_epilog,
                                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     planinfo_parser.add_argument('-f', '--inputfile', help='Input Plan file')

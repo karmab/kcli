@@ -5,12 +5,11 @@ from glob import glob
 import json
 import os
 import sys
-from kvirt.common import pprint, gen_mac, get_values, real_path, pwd_path, insecure_fetch
+from kvirt.common import pprint, gen_mac, get_values, pwd_path, insecure_fetch
 import re
 from shutil import copy2, move
 from subprocess import call
 from time import sleep
-import yaml
 from urllib.request import urlopen
 
 
@@ -120,46 +119,33 @@ def gather_dhcp(data, platform):
         return {'node_names': node_names, 'node_macs': node_macs, 'node_ips': node_ips, 'nodes': nodes}
 
 
-def openshift_scale(config, paramfile, workers):
-    paramfile = paramfile if not os.path.exists('/i_am_a_container') else '/workdir/%s' % paramfile
+def openshift_scale(config, cluster, overrides, workers):
     client = config.client
     platform = config.type
     k = config.k
     pprint("Scaling on client %s" % client, color='blue')
-    if not os.path.exists(paramfile):
-        pprint("Specified parameter file %s doesn't exist.Leaving..." % real_path(paramfile), color='red')
-        sys.exit(1)
-    with open(paramfile) as entries:
-        paramdata = yaml.safe_load(entries)
-    cluster = paramdata.get('cluster', 'testk')
+    cluster = overrides.get('cluster', 'testk')
     image = k.info("%s-master-0" % cluster).get('image')
     if image is None:
         pprint("Missing image...", color='red')
         sys.exit(1)
     else:
         pprint("Using image %s" % image, color='red')
-    paramdata['image'] = image
-    paramdata['scale'] = True
-    paramdata['workers'] = workers
+    overrides['image'] = image
+    overrides['scale'] = True
+    overrides['workers'] = workers
     if platform in virtplatforms:
-        config.plan(cluster, inputfile='workers.yml', overrides=paramdata)
+        config.plan(cluster, inputfile='workers.yml', overrides=overrides)
     elif platform in cloudplatforms:
-        config.plan(cluster, inputfile='cloud.yml', overrides=paramdata)
+        config.plan(cluster, inputfile='cloud.yml', overrides=overrides)
 
 
-def openshift_create(config, paramfile):
-    paramfile = paramfile if not os.path.exists('/i_am_a_container') else '/workdir/%s' % paramfile
+def openshift_create(config, cluster, overrides):
     k = config.k
     client = config.client
     platform = config.type
     pprint("Deploying on client %s" % client, color='blue')
-    envname = paramfile if paramfile is not None else 'testk'
-    if not os.path.exists(paramfile):
-        pprint("Specified parameter file %s doesn't exist.Leaving..." % real_path(paramfile), color='red')
-        sys.exit(1)
-    with open(paramfile) as entries:
-        paramdata = yaml.safe_load(entries)
-    data = {'cluster': envname,
+    data = {'cluster': cluster,
             'helper_image': 'CentOS-7-x86_64-GenericCloud.qcow2',
             'domain': 'karmalabs.com',
             'network': 'default',
@@ -171,7 +157,7 @@ def openshift_create(config, paramfile):
             'version': 'nightly',
             'macosx': False,
             'network_type': 'OpenShiftSDN'}
-    data.update(paramdata)
+    data.update(overrides)
     version = data.get('version')
     if version not in ['ci', 'nightly', 'upstream']:
         pprint("Using stable version", color='blue')
@@ -270,7 +256,7 @@ def openshift_create(config, paramfile):
         if not images:
             pprint("Missing %s. Indicate correct image in your parameters file..." % image, color='red')
             os._exit(1)
-    paramdata['image'] = image
+    overrides['image'] = image
     if not os.path.exists(clusterdir):
         os.makedirs(clusterdir)
     data['pub_key'] = open(pub_key).read().strip()
@@ -401,7 +387,7 @@ def openshift_create(config, paramfile):
         call(sedcmd, shell=True)
     if platform in virtplatforms:
         pprint("Deploying masters", color='blue')
-        config.plan(cluster, inputfile='masters.yml', overrides=paramdata)
+        config.plan(cluster, inputfile='masters.yml', overrides=overrides)
         call('openshift-install --dir=%s wait-for bootstrap-complete || exit 1' % clusterdir, shell=True)
         todelete = ["%s-bootstrap" % cluster]
         if platform in ['kubevirt', 'openstack', 'vsphere']:
@@ -410,7 +396,7 @@ def openshift_create(config, paramfile):
             pprint("Deleting %s" % vm)
             k.delete(vm)
     else:
-        config.plan(cluster, inputfile='cloud.yml', overrides=paramdata)
+        config.plan(cluster, inputfile='cloud.yml', overrides=overrides)
         call('openshift-install --dir=%s wait-for bootstrap-complete || exit 1' % clusterdir, shell=True)
         todelete = ["%s-bootstrap" % cluster, "%s-bootstrap-helper" % cluster]
         for vm in todelete:
@@ -427,7 +413,7 @@ def openshift_create(config, paramfile):
                 w.write(workerdata)
             sleep(5)
         pprint("Deploying workers", color='blue')
-        config.plan(cluster, inputfile='workers.yml', overrides=paramdata)
+        config.plan(cluster, inputfile='workers.yml', overrides=overrides)
     call("oc adm taint nodes -l node-role.kubernetes.io/master node-role.kubernetes.io/master:NoSchedule-", shell=True)
     pprint("Deploying certs autoapprover cronjob", color='blue')
     call("oc create -f autoapprovercron.yml ; oc apply -f autoapprovercron.yml", shell=True)

@@ -1804,12 +1804,12 @@ $INFO
         overrides['cluster'] = cluster
         self.plan(cluster, inputfile=inputfile, overrides=overrides)
 
-    def create_kube_openshift(self, cluster, paramfile):
+    def create_kube_openshift(self, cluster, overrides={}):
         if os.path.exists('/i_am_a_container'):
             os.environ['PATH'] = '/:/workdir:%s' % os.environ['PATH']
         else:
             os.environ['PATH'] = '.:%s' % os.environ['PATH']
-        openshift_create(self, paramfile)
+        openshift_create(self, cluster, overrides)
 
     def delete_kube(self, cluster, overrides={}):
         self.plan(cluster, delete=True)
@@ -1818,5 +1818,15 @@ $INFO
             common.pprint("Deleting %s" % common.real_path(clusterdir), color='green')
             rmtree(clusterdir)
 
-    def scale_kube_openshift(self, cluster, paramfile):
-        openshift_scale(self, paramfile)
+    def scale_kube_openshift(self, cluster, overrides={}):
+        openshift_scale(self, cluster, overrides)
+
+    def info_kube_generic(self):
+        plandir = kube.__path__[0]
+        inputfile = '%s/kcli_plan.yml' % plandir
+        self.plan('xxx', inputfile=inputfile, info=True)
+
+    def info_kube_openshift(self):
+        plandir = os.path.dirname(openshift_create.__code__.co_filename)
+        inputfile = '%s/masters.yml' % plandir
+        self.plan('xxx', inputfile=inputfile, info=True)

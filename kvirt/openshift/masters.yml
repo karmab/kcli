@@ -1,15 +1,14 @@
 parameters:
- numcpus: 4
- network: default
- master_memory: 8192
- deploy_bootstrap: true
- bootstrap_memory: 4096
- disk_size: 30
- image: rhcos44
- cluster: testk
- domain: karmalabs.com
  masters: 1
  workers: 0
+ image: rhcos44
+ network: default
+ cluster: testk
+ domain: karmalabs.com
+ numcpus: 4
+ master_memory: 8192
+ bootstrap_memory: 4096
+ disk_size: 30
  autostart: false
  keys: []
  api_ip: 

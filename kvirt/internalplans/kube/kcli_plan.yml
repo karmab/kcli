@@ -1,18 +1,18 @@
 parameters:
  masters: 1
  workers: 0
- domain: karmalabs.com
- pool: default
+ image: centos7
  network: default
  cluster: ku
+ domain: karmalabs.com
+ pool: default
+ master_memory: 6144
+ node_memory: 4096
  deploy_app: false
  nfs: true
  sdn: flannel
  multus: false
- master_memory: 6144
- node_memory: 4096
- image: centos7
- notifycmd: "kubectl get pod --all-namespaces"
+ notifycmd: "kubectl get pod -A"
 
 {{ image }}:
  type: image
