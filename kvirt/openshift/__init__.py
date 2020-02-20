@@ -119,7 +119,7 @@ def gather_dhcp(data, platform):
         return {'node_names': node_names, 'node_macs': node_macs, 'node_ips': node_ips, 'nodes': nodes}
 
 
-def openshift_scale(config, plandir, cluster, overrides, workers):
+def openshift_scale(config, plandir, cluster, overrides):
     client = config.client
     platform = config.type
     k = config.k
@@ -133,7 +133,6 @@ def openshift_scale(config, plandir, cluster, overrides, workers):
         pprint("Using image %s" % image, color='red')
     overrides['image'] = image
     overrides['scale'] = True
-    overrides['workers'] = workers
     if platform in virtplatforms:
         config.plan(cluster, inputfile='%s/workers.yml' % plandir, overrides=overrides)
     elif platform in cloudplatforms:
