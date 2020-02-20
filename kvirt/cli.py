@@ -2123,6 +2123,8 @@ def cli():
                                   help='specify parameter or keyword for rendering (multiple can be specified)',
                                   metavar='PARAM')
     kubescale_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    kubescale_parser.add_argument('-t', '--type', type=str, choices=['generic', 'openshift'], default='generic',
+                                  metavar='TYPE', help='type for the kubernetes cluster. Use generic or openshift')
     kubescale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int, default=0)
     kubescale_parser.add_argument('cluster', metavar='CLUSTER')
     kubescale_parser.set_defaults(func=scale_kube)
