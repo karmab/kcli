@@ -412,6 +412,8 @@ def openshift_create(config, plandir, cluster, overrides):
                 w.write(workerdata)
             sleep(5)
         pprint("Deploying workers", color='blue')
+        if 'name' in overrides:
+            del overrides['name']
         config.plan(cluster, inputfile='%s/workers.yml' % plandir, overrides=overrides)
     call("oc adm taint nodes -l node-role.kubernetes.io/master node-role.kubernetes.io/master:NoSchedule-", shell=True)
     pprint("Deploying certs autoapprover cronjob", color='blue')
