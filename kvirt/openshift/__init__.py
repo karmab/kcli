@@ -119,7 +119,7 @@ def gather_dhcp(data, platform):
         return {'node_names': node_names, 'node_macs': node_macs, 'node_ips': node_ips, 'nodes': nodes}
 
 
-def openshift_scale(config, cluster, overrides, workers):
+def openshift_scale(config, plandir, cluster, overrides, workers):
     client = config.client
     platform = config.type
     k = config.k
@@ -135,12 +135,12 @@ def openshift_scale(config, cluster, overrides, workers):
     overrides['scale'] = True
     overrides['workers'] = workers
     if platform in virtplatforms:
-        config.plan(cluster, inputfile='workers.yml', overrides=overrides)
+        config.plan(cluster, inputfile='%s/workers.yml' % plandir, overrides=overrides)
     elif platform in cloudplatforms:
-        config.plan(cluster, inputfile='cloud.yml', overrides=overrides)
+        config.plan(cluster, inputfile='%s/cloud.yml' % plandir, overrides=overrides)
 
 
-def openshift_create(config, cluster, overrides):
+def openshift_create(config, plandir, cluster, overrides):
     k = config.k
     client = config.client
     platform = config.type
@@ -261,7 +261,7 @@ def openshift_create(config, cluster, overrides):
         os.makedirs(clusterdir)
     data['pub_key'] = open(pub_key).read().strip()
     data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
-    installconfig = config.process_inputfile(cluster, "install-config.yaml", overrides=data)
+    installconfig = config.process_inputfile(cluster, "%s/install-config.yaml" % plandir, overrides=data)
     with open("%s/install-config.yaml" % clusterdir, 'w') as f:
         f.write(installconfig)
     call('openshift-install --dir=%s create manifests' % clusterdir, shell=True)
@@ -280,7 +280,7 @@ def openshift_create(config, cluster, overrides):
         pprint("Deploying helper dhcp node" % image, color='green')
         staticdata.update({'network': network, 'dhcp_image': helper_image, 'prefix': cluster,
                           domain: '%s.%s' % (cluster, domain)})
-        config.plan(cluster, inputfile='dhcp.yml', overrides=staticdata)
+        config.plan(cluster, inputfile='%s/dhcp.yml' % plandir, overrides=staticdata)
     if platform in virtplatforms:
         if api_ip is None:
             pprint("You need to define api_ip in your parameters file", color='red')
@@ -387,7 +387,7 @@ def openshift_create(config, cluster, overrides):
         call(sedcmd, shell=True)
     if platform in virtplatforms:
         pprint("Deploying masters", color='blue')
-        config.plan(cluster, inputfile='masters.yml', overrides=overrides)
+        config.plan(cluster, inputfile='%s/masters.yml' % plandir, overrides=overrides)
         call('openshift-install --dir=%s wait-for bootstrap-complete || exit 1' % clusterdir, shell=True)
         todelete = ["%s-bootstrap" % cluster]
         if platform in ['kubevirt', 'openstack', 'vsphere']:
@@ -396,7 +396,7 @@ def openshift_create(config, cluster, overrides):
             pprint("Deleting %s" % vm)
             k.delete(vm)
     else:
-        config.plan(cluster, inputfile='cloud.yml', overrides=overrides)
+        config.plan(cluster, inputfile='%s/cloud.yml' % plandir, overrides=overrides)
         call('openshift-install --dir=%s wait-for bootstrap-complete || exit 1' % clusterdir, shell=True)
         todelete = ["%s-bootstrap" % cluster, "%s-bootstrap-helper" % cluster]
         for vm in todelete:
@@ -413,7 +413,7 @@ def openshift_create(config, cluster, overrides):
                 w.write(workerdata)
             sleep(5)
         pprint("Deploying workers", color='blue')
-        config.plan(cluster, inputfile='workers.yml', overrides=overrides)
+        config.plan(cluster, inputfile='%s/workers.yml' % plandir, overrides=overrides)
     call("oc adm taint nodes -l node-role.kubernetes.io/master node-role.kubernetes.io/master:NoSchedule-", shell=True)
     pprint("Deploying certs autoapprover cronjob", color='blue')
     call("oc create -f autoapprovercron.yml ; oc apply -f autoapprovercron.yml", shell=True)

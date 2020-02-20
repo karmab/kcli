@@ -1809,7 +1809,8 @@ $INFO
             os.environ['PATH'] = '/:/workdir:%s' % os.environ['PATH']
         else:
             os.environ['PATH'] = '.:%s' % os.environ['PATH']
-        openshift_create(self, cluster, overrides)
+        plandir = os.path.dirname(openshift_create.__code__.co_filename)
+        openshift_create(self, plandir, cluster, overrides)
 
     def delete_kube(self, cluster, overrides={}):
         self.plan(cluster, delete=True)
@@ -1819,7 +1820,8 @@ $INFO
             rmtree(clusterdir)
 
     def scale_kube_openshift(self, cluster, overrides={}):
-        openshift_scale(self, cluster, overrides)
+        plandir = os.path.dirname(openshift_create.__code__.co_filename)
+        openshift_scale(self, cluster, plandir, overrides)
 
     def info_kube_generic(self):
         plandir = kube.__path__[0]
