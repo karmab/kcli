@@ -1821,7 +1821,7 @@ $INFO
 
     def scale_kube_openshift(self, cluster, overrides={}):
         plandir = os.path.dirname(openshift_create.__code__.co_filename)
-        openshift_scale(self, cluster, plandir, overrides)
+        openshift_scale(self, plandir, cluster, overrides)
 
     def info_kube_generic(self):
         plandir = kube.__path__[0]
