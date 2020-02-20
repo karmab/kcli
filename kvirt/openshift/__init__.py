@@ -416,7 +416,7 @@ def openshift_create(config, plandir, cluster, overrides):
         config.plan(cluster, inputfile='%s/workers.yml' % plandir, overrides=overrides)
     call("oc adm taint nodes -l node-role.kubernetes.io/master node-role.kubernetes.io/master:NoSchedule-", shell=True)
     pprint("Deploying certs autoapprover cronjob", color='blue')
-    call("oc create -f autoapprovercron.yml ; oc apply -f autoapprovercron.yml", shell=True)
+    call("oc create -f %s/autoapprovercron.yml ; oc apply -f %s/autoapprovercron.yml" % (plandir, plandir), shell=True)
     installcommand = 'openshift-install --dir=%s wait-for install-complete' % clusterdir
     installcommand = "%s | %s" % (installcommand, installcommand)
     pprint("Launching install-complete step. Note it will be retried one extra time in case of timeouts", color='blue')
