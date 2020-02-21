@@ -48,16 +48,19 @@ def get_ci_installer(pull_secret, tag=None, macosx=False, upstream=False):
         for line in r:
             tag_match = re.match('.*label="(.*.)", shape=.*', str(line))
             if tag_match is not None:
-                tags.append(tag_match.group(1))
+                if '4.5' not in tag_match.group(1):
+                    tags.append(tag_match.group(1))
         tag = sorted(tags)[-1]
     if '/' not in str(tag):
         tag = 'registry.svc.ci.openshift.org/%s/release:%s' % (basetag, tag)
     os.environ['OPENSHIFT_RELEASE_IMAGE'] = tag
-    binary = 'openshift-install'
-    msg = 'Downloading %s %s in current directory' % (binary, tag)
+    msg = 'Downloading openshift-install %s in current directory' % tag
     pprint(msg, color='blue')
-    cmd = "oc adm release extract --registry-config %s --command=%s --to . %s" % (pull_secret, binary, tag)
-    cmd += "; chmod 700 %s" % binary
+    if upstream:
+        cmd = "oc adm release extract --command=openshift-install --to . %s" % tag
+    else:
+        cmd = "oc adm release extract --registry-config %s --command=openshift-install --to . %s" % (pull_secret, tag)
+    cmd += "; chmod 700 openshift-install"
     call(cmd, shell=True)
 
 
