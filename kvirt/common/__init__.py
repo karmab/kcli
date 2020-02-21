@@ -998,6 +998,14 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     if removetls and 'append' in data['ignition']['config'] and\
             data['ignition']['config']['append'][0]['source'].startswith("http://"):
         del data['ignition']['security']['tls']['certificateAuthorities']
+    # remove duplicate files to please ignition v3
+    paths = []
+    storagefinal = []
+    for fileentry in data['ignition']['storage']['files']:
+        if fileentry['path'] not in paths:
+            storagefinal.append(fileentry)
+            paths.append(fileentry['path'])
+    data['ignition']['storage']['files'] = storagefinal
     try:
         result = json.dumps(data, sort_keys=True, indent=indent, separators=separators)
     except:
