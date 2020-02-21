@@ -39,11 +39,7 @@ spec:
       mountPath: "/usr/share/nginx/html"
     terminationMessagePolicy: FallbackToLogsOnError
     imagePullPolicy: IfNotPresent
-    ports:
-    - name: web
-      containerPort: 80
-      hostPort: 8080
-      protocol: TCP
+  hostNetwork: true
   tolerations:
   - operator: Exists
   priorityClassName: system-node-critical

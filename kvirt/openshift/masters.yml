@@ -53,13 +53,8 @@ parameters:
     origin: staticpods/keepalived.yml
   - path: /etc/kubernetes/keepalived.conf
     origin: keepalived.conf
-{% if 'rhcos' in image %}
   - path: /etc/kubernetes/manifests/nginx.yml
     origin: staticpods/nginx.yml
-{% else %}
- scripts:
-  - web.sh
-{% endif %}
 
 {% for num in range(0, masters) %}
 {% if master_macs and master_macs|length >= masters %}

@@ -358,7 +358,7 @@ def openshift_create(config, plandir, cluster, overrides):
             sedcmd += '%s/master.ign' % clusterdir
             sedcmd += ' > %s/bootstrap.ign' % clusterdir
             call(sedcmd, shell=True)
-        sedcmd = 'sed -i "s@https://api-int.%s.%s:22623/config@http://%s:8080@"' % (cluster, domain, api_ip)
+        sedcmd = 'sed -i "s@https://api-int.%s.%s:22623/config@http://%s@"' % (cluster, domain, api_ip)
         sedcmd += ' %s/master.ign' % clusterdir
         call(sedcmd, shell=True)
     if platform in cloudplatforms:
