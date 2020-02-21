@@ -1001,11 +1001,11 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     # remove duplicate files to please ignition v3
     paths = []
     storagefinal = []
-    for fileentry in data['ignition']['storage']['files']:
+    for fileentry in data['storage']['files']:
         if fileentry['path'] not in paths:
             storagefinal.append(fileentry)
             paths.append(fileentry['path'])
-    data['ignition']['storage']['files'] = storagefinal
+    data['storage']['files'] = storagefinal
     try:
         result = json.dumps(data, sort_keys=True, indent=indent, separators=separators)
     except:
