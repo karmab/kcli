@@ -17,7 +17,7 @@ virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere']
 cloudplatforms = ['aws', 'gcp']
 
 
-def get_installer(nightly=False, macosx=False, tag=None):
+def get_downstream_installer(nightly=False, macosx=False, tag=None):
     repo = 'ocp-dev-preview' if nightly else 'ocp'
     latest = 'latest' if tag is None else 'latest-%s' % tag
     INSTALLSYSTEM = 'mac' if os.path.exists('/Users') or macosx else 'linux'
@@ -39,17 +39,19 @@ def get_installer(nightly=False, macosx=False, tag=None):
     call(cmd, shell=True)
 
 
-def get_ci_installer(pull_secret, tag=None, macosx=False):
+def get_ci_installer(pull_secret, tag=None, macosx=False, upstream=False):
+    base = 'openshift' if not upstream else 'origin'
+    basetag = 'ocp' if not upstream else 'origin'
     if tag is None:
         tags = []
-        r = urlopen("https://openshift-release.svc.ci.openshift.org/graph?format=dot").readlines()
+        r = urlopen("https://%s-release.svc.ci.openshift.org/graph?format=dot" % base).readlines()
         for line in r:
             tag_match = re.match('.*label="(.*.)", shape=.*', str(line))
             if tag_match is not None:
                 tags.append(tag_match.group(1))
         tag = sorted(tags)[-1]
     if '/' not in str(tag):
-        tag = 'registry.svc.ci.openshift.org/ocp/release:%s' % tag
+        tag = 'registry.svc.ci.openshift.org/%s/release:%s' % (basetag, tag)
     os.environ['OPENSHIFT_RELEASE_IMAGE'] = tag
     binary = 'openshift-install'
     msg = 'Downloading %s %s in current directory' % (binary, tag)
@@ -155,10 +157,12 @@ def openshift_create(config, plandir, cluster, overrides):
             'pull_secret': 'openshift_pull.json',
             'version': 'nightly',
             'macosx': False,
+            'upstream': False,
             'network_type': 'OpenShiftSDN'}
     data.update(overrides)
+    upstream = data.get('upstream')
     version = data.get('version')
-    if version not in ['ci', 'nightly', 'upstream']:
+    if version not in ['ci', 'nightly']:
         pprint("Using stable version", color='blue')
     else:
         pprint("Using %s version" % version, color='blue')
@@ -177,7 +181,7 @@ def openshift_create(config, plandir, cluster, overrides):
     workers = data.get('workers')
     tag = data.get('tag')
     pub_key = data.get('pub_key')
-    pull_secret = pwd_path(data.get('pull_secret')) if version != 'upstream' else "%s/fake_pull.json" % plandir
+    pull_secret = pwd_path(data.get('pull_secret')) if not upstream else "%s/fake_pull.json" % plandir
     macosx = data.get('macosx')
     if macosx and not os.path.exists('/i_am_a_container'):
         macosx = False
@@ -215,18 +219,18 @@ def openshift_create(config, plandir, cluster, overrides):
                 move('oc', '/workdir/oc')
     if find_executable('openshift-install') is None:
         if version == 'ci':
-            get_ci_installer(pull_secret, tag=tag)
+            get_ci_installer(pull_secret, tag=tag, upstream=upstream)
         elif version == 'nightly':
-            get_installer(nightly=True)
-        elif version == 'upstream':
+            get_downstream_installer(nightly=True)
+        elif upstream:
             get_upstream_installer()
         else:
-            get_installer()
+            get_downstream_installer()
         if not macosx and os.path.exists('/i_am_a_container'):
             move('openshift-install', '/workdir')
     INSTALLER_VERSION = os.popen('openshift-install version').readlines()[0].split(" ")[1].strip()
     pprint("Using installer version %s" % INSTALLER_VERSION, color='blue')
-    if version == 'upstream':
+    if upstream:
         COS_VERSION = "latest"
         COS_TYPE = "fcos"
     else:
