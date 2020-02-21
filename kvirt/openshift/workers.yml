@@ -20,6 +20,7 @@ parameters:
  numamode:
  cpupinning:
  pcidevices:
+ cloud_tag:
 
 {% for num in range(0, workers) %}
 {% if worker_macs and worker_macs|length >= workers %}
@@ -62,5 +63,8 @@ parameters:
 {% endif %}
 {% if pcidevices != None and num == 0 %}
  pcidevices: {{ pcidevices }}
+{% endif %}
+{% if cloud_tag != None %}
+ tags: [{{ cloud_tag }}]
 {% endif %}
 {% endfor %}

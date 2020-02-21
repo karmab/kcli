@@ -13,7 +13,7 @@ parameters:
  masters: 1
  workers: 0
  scale: false
- tag: cnvlab
+ cloud_tag:
  api_internal: false
 
 api.{{ cluster }}:
@@ -79,7 +79,7 @@ apps.{{ cluster }}:
  reservedns: true
  disks:
  - size: {{ disk_size }}
- tags: [{{ tag }}]
+ tags: [{{ cloud_tag }}]
 
 {% for num in range(0, masters) %}
 {{ cluster }}-master-{{ num }}:
