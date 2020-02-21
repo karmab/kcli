@@ -1025,6 +1025,10 @@ def create_kube(args):
 
 def delete_kube(args):
     """Delete kube"""
+    yes = args.yes
+    yes_top = args.yes_top
+    if not yes and not yes_top:
+        common.confirm("Are you sure?")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
     config.delete_kube(args.cluster, overrides=overrides)
