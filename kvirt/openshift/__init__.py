@@ -177,7 +177,7 @@ def openshift_create(config, plandir, cluster, overrides):
     workers = data.get('workers')
     tag = data.get('tag')
     pub_key = data.get('pub_key')
-    pull_secret = pwd_path(data.get('pull_secret')) if version != 'upstream' else pwd_path('fake_pull.json')
+    pull_secret = pwd_path(data.get('pull_secret')) if version != 'upstream' else "%s/fake_pull.json" % plandir
     macosx = data.get('macosx')
     if macosx and not os.path.exists('/i_am_a_container'):
         macosx = False
