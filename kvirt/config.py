@@ -1806,9 +1806,9 @@ $INFO
 
     def create_kube_openshift(self, cluster, overrides={}):
         if os.path.exists('/i_am_a_container'):
-            os.environ['PATH'] = '/:/workdir:%s' % os.environ['PATH']
+            os.environ['PATH'] += ':/workdir'
         else:
-            os.environ['PATH'] = '.:%s' % os.environ['PATH']
+            os.environ['PATH'] += '.'
         plandir = os.path.dirname(openshift_create.__code__.co_filename)
         openshift_create(self, plandir, cluster, overrides)
 

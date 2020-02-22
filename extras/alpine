@@ -12,7 +12,7 @@ LABEL name="karmab/kcli" \
 
 EXPOSE 9000
 
-RUN apk add --update --no-cache g++ gcc libvirt libvirt-dev python3-dev openssh-client curl curl-dev libressl-dev libxml2-dev linux-headers libffi-dev cdrkit xauth bash
+RUN apk add --update --no-cache g++ gcc libvirt libvirt-dev libc6-compat python3-dev openssh-client curl curl-dev libressl-dev libxml2-dev linux-headers libffi-dev cdrkit xauth bash
 
 # Group the pip installation
 # RUN pip3 install --no-cache-dir -e git+https://github.com/karmab/kcli.git#egg=kcli[all]
