@@ -1087,7 +1087,7 @@ As such, any machine config file present in this directory will be added to the 
 
 #### Architecture
 
-Check [Architecture](openshift_architecture.rst)
+Check [This documentation](https://github.com/karmab/kcli/blob/master/doc/openshift_architecture.md)
 
 ## Running on kubernetes/openshift 
 

@@ -1430,7 +1430,8 @@ to the deployment.
 Architecture
 ^^^^^^^^^^^^
 
-Check `Architecture <openshift_architecture.rst>`__
+Check `This
+documentation <https://github.com/karmab/kcli/blob/master/doc/openshift_architecture.md>`__
 
 Running on kubernetes/openshift
 -------------------------------
