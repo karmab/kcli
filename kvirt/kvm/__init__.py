@@ -1581,7 +1581,7 @@ class Kvirt(object):
                 thinpools.append(poolpath)
             for stor in storage.listVolumes():
                 for disk in disks:
-                    if stor in disk:
+                    if stor in os.path.basename(disk):
                         try:
                             volume = storage.storageVolLookupByName(stor)
                         except:
