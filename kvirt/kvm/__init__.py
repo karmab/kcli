@@ -99,7 +99,10 @@ class Kvirt(object):
                     self.conn = None
                     return
             elif protocol == 'ssh':
-                url = "qemu+%s://%s@%s/%s?socket=%s" % (protocol, user, host, conntype, socketf)
+                if port != 22:
+                    url = "qemu+%s://%s@%s:%s/%s?socket=%s" % (protocol, user, host, port, conntype, socketf)
+                else:
+                    url = "qemu+%s://%s@%s/%s?socket=%s" % (protocol, user, host, conntype, socketf)
             elif port:
                 url = "qemu+%s://%s@%s:%s/%s?socket=%s" % (protocol, user, host, port, conntype, socketf)
             else:
