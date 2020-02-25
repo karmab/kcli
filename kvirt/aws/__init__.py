@@ -598,7 +598,7 @@ class Kaws(object):
         :return:
         """
         conn = self.conn
-        images = {}
+        images = []
         oses = ['CentOS Linux 7 x86_64*', 'CentOS Linux 8 x86_64*', 'RHEL-7.*GA*', 'ubuntu-xenial-*Standard*', 'kcli*',
                 'RHEL-8.0.0_HVM-*', 'rhcos-4*']
         Filters = [{'Name': 'name', 'Values': oses}]
