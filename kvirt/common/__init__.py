@@ -63,7 +63,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
     """
     default_gateway = gateway
     legacy = True if image is not None and image.startswith('CentOS-7') else False
-    prefix = 'ens' if image is not None and image.startswith('ubuntu') else 'eth'
+    prefix = 'ens' if image is not None and is_debian(image) else 'eth'
     netdata = {} if not legacy else ''
     if nets:
         for index, net in enumerate(nets):
@@ -1253,3 +1253,10 @@ def get_values(data, element, field):
         new = data['%s_%s' % (element, field)]
         results.extend(new)
     return results
+
+
+def is_debian(image):
+    if [x for x in ubuntus if x in image.lower()] or 'ubuntu' in image.lower() or 'debian' in image.lower():
+        return True
+    else:
+        return False
