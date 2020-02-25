@@ -305,13 +305,19 @@ class Kvirt(object):
             for vol in poo.listAllVolumes():
                 volumes[vol.name()] = {'pool': poo, 'object': vol}
                 volumespaths[vol.path()] = {'pool': poo, 'object': vol}
-        networks = []
-        bridges = []
-        for net in conn.listNetworks():
-            networks.append(net)
-        for net in conn.listInterfaces():
-            if net != 'lo':
-                bridges.append(net)
+        # networks = []
+        # bridges = []
+        # for net in conn.listNetworks():
+        #     networks.append(net)
+        # for net in conn.listInterfaces():
+        #     if net != 'lo':
+        #         bridges.append(net)
+        allnetworks = self.list_networks()
+        networks = [n for n in allnetworks if allnetworks[n]['type'] == 'routed' and
+                    ':' not in str(allnetworks[n]['cidr'].cidr)]
+        bridges = [n for n in allnetworks if allnetworks[n]['type'] == 'bridged']
+        ipv6networks = [n for n in allnetworks if n not in networks and n not in bridges]
+        ipv6 = []
         machine = 'pc'
         # sysinfo = "<smbios mode='sysinfo'/>"
         disksxml = ''
@@ -511,6 +517,10 @@ class Kvirt(object):
                     dnscmdhost = dns if dns is not None else self.host
                     dnscmd = "sed -i 's/nameserver .*/nameserver %s/' /etc/resolv.conf" % dnscmdhost
                     cmds = cmds[:index] + [dnscmd] + cmds[index:]
+            elif netname in ipv6networks:
+                iftype = 'network'
+                sourcexml = "<source network='%s'/>" % netname
+                ipv6.append(netname)
             else:
                 return {'result': 'failure', 'reason': "Invalid network %s" % netname}
             ovsxml = "<virtualport type='openvswitch'/>" if ovs else ''
@@ -583,8 +593,8 @@ class Kvirt(object):
                 version = '3.0.0' if image.startswith('fedora-coreos') else '2.2.0'
                 ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                                domain=domain, reserveip=reserveip, files=files,
-                                               enableroot=enableroot, overrides=overrides, version=version, plan=plan)
-
+                                               enableroot=enableroot, overrides=overrides, version=version, plan=plan,
+                                               ipv6=ipv6)
                 with open('%s/%s.ign' % (ignitiondir, name), 'w') as ignitionfile:
                     ignitionfile.write(ignitiondata)
                     identityfile = None
@@ -905,7 +915,7 @@ class Kvirt(object):
         if cloudinit and image is not None and 'coreos' not in image and 'rhcos' not in image:
             common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
                              reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides,
-                             storemetadata=storemetadata, image=image)
+                             storemetadata=storemetadata, image=image, ipv6=ipv6)
             self._uploadimage(name, pool=default_storagepool)
         xml = vm.XMLDesc(0)
         vmxml = ET.fromstring(xml)
@@ -1360,7 +1370,8 @@ class Kvirt(object):
                 if matches:
                     for match in matches:
                         match = match[0]
-                        if 'addr' in match and IPAddress(match['addr']).version == 4:
+                        # if 'addr' in match and IPAddress(match['addr']).version == 4:
+                        if 'addr' in match:
                             ip = match['addr']
                             break
             yamlinfo['nets'].append({'device': device, 'mac': mac, 'net': network, 'type': networktype})
@@ -2502,7 +2513,7 @@ class Kvirt(object):
         if user is None:
             user = u
         vmport = None
-        if '.' not in ip:
+        if '.' not in ip and ':' not in ip:
             vmport = ip
             ip = self.host
         sshcommand = common.ssh(name, ip=ip, host=self.host, port=self.port, hostuser=self.user, user=user,

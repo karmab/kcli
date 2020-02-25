@@ -44,7 +44,7 @@ def fetch(url, path):
 
 
 def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[],
-              enableroot=True, overrides={}, iso=True, fqdn=False, storemetadata=True, image=None):
+              enableroot=True, overrides={}, iso=True, fqdn=False, storemetadata=True, image=None, ipv6=[]):
     """
 
     :param name:
@@ -68,16 +68,19 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
     if nets:
         for index, net in enumerate(nets):
             if isinstance(net, str) or (len(net) == 1 and 'name' in net):
-                if index == 0:
-                    continue
                 if prefix.startswith('ens'):
                     nicname = "%s%d" % (prefix, 3 + index)
                 else:
                     nicname = "%s%d" % (prefix, index)
+                if index == 0:
+                    if not legacy and ((isinstance(net, str) and net in ipv6) or net['name'] in ipv6):
+                        netdata[nicname] = {'dhcp6': True}
+                    continue
                 ip = None
                 netmask = None
                 noconf = None
                 vips = []
+                enableipv6 = False
             elif isinstance(net, dict):
                 if index == 0 and 'type' in net and net.get('type') != 'virtio':
                     prefix = 'ens'
@@ -91,6 +94,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 netmask = next((e for e in [net.get('mask'), net.get('netmask')] if e is not None), None)
                 noconf = net.get('noconf')
                 vips = net.get('vips')
+                enableipv6 = net.get('ipv6', False)
             if legacy:
                 netdata += "  auto %s\n" % nicname
             if noconf is not None:
@@ -145,6 +149,8 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                     netdata += "  iface %s inet dhcp\n" % nicname
                 else:
                     netdata[nicname] = {'dhcp4': True}
+                    if enableipv6:
+                        netdata[nicname]['dhcp6'] = True
     with open('/tmp/meta-data', 'w') as metadatafile:
         if domain is not None:
             localhostname = "%s.%s" % (name, domain)
@@ -753,6 +759,8 @@ def ssh(name, ip='', host=None, port=22, hostuser=None, user=None, local=None, r
             if identityfile is not None:
                 tunnelcommand = "-i %s %s" % (identityfile, tunnelcommand)
             sshcommand = "-o ProxyCommand='ssh %s' %s" % (tunnelcommand, sshcommand)
+            if ':' in ip:
+                sshcommand = sshcommand.replace(ip, '[%s]' % ip)
         if local is not None:
             sshcommand = "-L %s %s" % (local, sshcommand)
         if remote is not None:
@@ -859,7 +867,7 @@ def get_cloudinitfile(image):
 
 def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[],
              enableroot=True, overrides={}, iso=True, fqdn=False, version='3.0.0', plan=None, compact=False,
-             removetls=False):
+             removetls=False, ipv6=[]):
     """
 
     :param name:
