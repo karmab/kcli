@@ -1365,15 +1365,10 @@ class Kvirt(object):
                     except:
                         pass
             if ifaces and ip is None:
-                matches = [ifaces[x]['addrs'] for x in
-                           ifaces if ifaces[x]['hwaddr'] == mac and ifaces[x]['addrs'] is not None]
-                if matches:
-                    for match in matches:
-                        match = match[0]
-                        # if 'addr' in match and IPAddress(match['addr']).version == 4:
-                        if 'addr' in match:
-                            ip = match['addr']
-                            break
+                for x in ifaces:
+                    if ifaces[x]['hwaddr'] == mac and ifaces[x]['addrs'] is not None:
+                        for entry in ifaces[x]['addrs']:
+                            ip = entry['addr']
             yamlinfo['nets'].append({'device': device, 'mac': mac, 'net': network, 'type': networktype})
             nicnumber = nicnumber + 1
         if ip is not None:
@@ -1458,14 +1453,10 @@ class Kvirt(object):
                 except:
                     continue
             if ifaces:
-                matches = [ifaces[x]['addrs'] for x in ifaces
-                           if ifaces[x]['hwaddr'] == mac and ifaces[x]['addrs'] is not None]
-                if matches:
-                    for match in matches[0]:
-                        matchip = match['addr']
-                        if IPAddress(matchip).version == 4:
-                            ip = matchip
-                            break
+                for x in ifaces:
+                    if ifaces[x]['hwaddr'] == mac and ifaces[x]['addrs'] is not None:
+                        for entry in ifaces[x]['addrs']:
+                            ip = entry['addr']
             return ip
 
     def volumes(self, iso=False):
