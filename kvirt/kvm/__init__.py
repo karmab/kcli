@@ -1332,7 +1332,6 @@ class Kvirt(object):
             yamlinfo['creationdate'] = creationdate
         yamlinfo['cpus'] = numcpus
         yamlinfo['memory'] = memory
-        nicnumber = 0
         ifaces = []
         if vm.isActive():
             networktypes = [element.get('type') for element in list(root.getiterator('interface'))]
@@ -1342,9 +1341,10 @@ class Kvirt(object):
                 ifaces = gfaces
             except:
                 pass
-        for element in list(root.getiterator('interface')):
+        interfaces = list(root.getiterator('interface'))
+        for index, element in enumerate(interfaces):
             networktype = element.get('type').replace('network', 'routed')
-            device = "eth%s" % nicnumber
+            device = "eth%s" % index
             mac = element.find('mac').get('address')
             if networktype == 'user':
                 network = 'user'
@@ -1369,8 +1369,9 @@ class Kvirt(object):
                     if ifaces[x]['hwaddr'] == mac and ifaces[x]['addrs'] is not None:
                         for entry in ifaces[x]['addrs']:
                             ip = entry['addr']
+                            if len(interfaces) > 1:
+                                break
             yamlinfo['nets'].append({'device': device, 'mac': mac, 'net': network, 'type': networktype})
-            nicnumber = nicnumber + 1
         if ip is not None:
             yamlinfo['ip'] = ip
             if '.' not in ip:
@@ -1433,7 +1434,8 @@ class Kvirt(object):
                 ifaces = gfaces
             except:
                 pass
-        for element in list(root.getiterator('interface')):
+        interfaces = list(root.getiterator('interface'))
+        for element in interfaces:
             networktype = element.get('type')
             mac = element.find('mac').get('address')
             if networktype == 'user':
@@ -1457,6 +1459,8 @@ class Kvirt(object):
                     if ifaces[x]['hwaddr'] == mac and ifaces[x]['addrs'] is not None:
                         for entry in ifaces[x]['addrs']:
                             ip = entry['addr']
+                            if len(interfaces) > 1:
+                                break
             return ip
 
     def volumes(self, iso=False):
