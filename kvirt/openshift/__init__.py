@@ -280,6 +280,10 @@ def openshift_create(config, plandir, cluster, overrides):
                 f.write(installconfig)
         else:
             copy2(f, "%s/openshift" % clusterdir)
+    manifestsdir = pwd_path("manifests")
+    if os.path.exists(manifestsdir) and os.path.isdir(manifestsdir):
+        for f in [f for f in glob("%s/*.yaml" % manifestsdir)]:
+            copy2(f, "%s/openshift" % clusterdir)
     call('openshift-install --dir=%s create ignition-configs' % clusterdir, shell=True)
     staticdata = gather_dhcp(data, platform)
     if staticdata:
