@@ -570,10 +570,13 @@ class Kubevirt(Kubecommon):
         #       % (localport, uid)]
         # stream(core.connect_get_namespaced_pod_exec, podname, namespace, command=exe, stderr=True, stdin=False,
         #       stdout=True, tty=True, _preload_content=False)
-        socatcmd = "%s exec -n %s %s -- /bin/sh -c 'socat "\
-            "TCP4-LISTEN:%s,fork UNIX-CONNECT:/var/run/kubevirt-private/%s/virt-vnc' &" % (kubectl, namespace, podname,
-                                                                                           localport, uid)
-        os.system(socatcmd)
+        nccmd = "%s exec -n %s %s -- /bin/sh -c 'nc -l %s | nc -U /var/run/kubevirt-private/%s/virt-vnc'" % (kubectl,
+                                                                                                             namespace,
+                                                                                                             podname,
+                                                                                                             localport,
+                                                                                                             uid)
+        nccmd += " &"
+        os.system(nccmd)
         # stream(core.connect_post_namespaced_pod_portforward, podname, namespace, ports=localport,
         # _preload_content=False)
         forwardcmd = "%s port-forward %s %s:%s &" % (kubectl, podname, localport, localport)
