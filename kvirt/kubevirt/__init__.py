@@ -609,18 +609,12 @@ class Kubevirt(Kubecommon):
             if pod.metadata.name.startswith("virt-launcher-%s-" % name) and\
                     pod.metadata.labels['kubevirt.io/domain'] == name:
                 podname = pod.metadata.name
-                localport = common.get_free_port()
                 break
-        socatcmd = "%s exec -n %s %s -- /bin/sh -c 'socat "\
-            "TCP4-LISTEN:%s,fork UNIX-CONNECT:/var/run/kubevirt-private/%s/virt-serial0' &" % (kubectl, namespace,
-                                                                                               podname, localport, uid)
-        os.system(socatcmd)
-        forwardcmd = "%s port-forward %s %s:%s &" % (kubectl, podname, localport, localport)
-        os.system(forwardcmd)
-        time.sleep(12)
-        consolecommand = "nc 127.0.0.1 %s" % localport
-        # common.pprint("Press enter to get serial console", color='blue')
-        os.system(consolecommand)
+        nccmd = "%s exec -n %s -it %s -- /bin/sh -c 'nc -U /var/run/kubevirt-private/%s/virt-serial0'" % (kubectl,
+                                                                                                          namespace,
+                                                                                                          podname,
+                                                                                                          uid)
+        os.system(nccmd)
         return
 
     def dnsinfo(self, name):
