@@ -561,7 +561,8 @@ class Kubevirt(Kubecommon):
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         uid = vm.get("metadata")['uid']
         for pod in core.list_namespaced_pod(namespace).items:
-            if pod.metadata.name.startswith("virt-launcher-%s-" % name) and pod.metadata.labels['app'] == name:
+            if pod.metadata.name.startswith("virt-launcher-%s-" % name) and\
+                    pod.metadata.labels['kubevirt.io/domain'] == name:
                 podname = pod.metadata.name
                 localport = common.get_free_port()
                 break
@@ -605,7 +606,8 @@ class Kubevirt(Kubecommon):
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         uid = vm.get("metadata")['uid']
         for pod in core.list_namespaced_pod(namespace).items:
-            if pod.metadata.name.startswith("virt-launcher-%s-" % name) and pod.metadata.labels['app'] == name:
+            if pod.metadata.name.startswith("virt-launcher-%s-" % name) and\
+                    pod.metadata.labels['kubevirt.io/domain'] == name:
                 podname = pod.metadata.name
                 localport = common.get_free_port()
                 break
