@@ -67,14 +67,20 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
     netdata = {} if not legacy else ''
     if nets:
         for index, net in enumerate(nets):
+            if isinstance(net, str):
+                netname = net
+            elif 'name' in net:
+                netname = net['name']
+            else:
+                pprint("Missing name for net %s" % index, color='red')
+                continue
             if isinstance(net, str) or (len(net) == 1 and 'name' in net):
                 if prefix.startswith('ens'):
                     nicname = "%s%d" % (prefix, 3 + index)
                 else:
                     nicname = "%s%d" % (prefix, index)
                 if index == 0:
-                    if not legacy and\
-                            ((isinstance(net, str) and net in ipv6) or (isinstance(net, dict) and net['name'] in ipv6)):
+                    if not legacy and netname in ipv6:
                         netdata[nicname] = {'dhcp6': True}
                     continue
                 ip = None
@@ -149,9 +155,10 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 if legacy:
                     netdata += "  iface %s inet dhcp\n" % nicname
                 else:
-                    netdata[nicname] = {'dhcp4': True}
-                    if enableipv6:
-                        netdata[nicname]['dhcp6'] = True
+                    if enableipv6 or netname in ipv6:
+                        netdata[nicname] = {'dhcp6': True}
+                    else:
+                        netdata[nicname] = {'dhcp4': True}
     with open('/tmp/meta-data', 'w') as metadatafile:
         if domain is not None:
             localhostname = "%s.%s" % (name, domain)
