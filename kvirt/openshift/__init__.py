@@ -156,6 +156,7 @@ def openshift_create(config, plandir, cluster, overrides):
             'masters': 1,
             'workers': 0,
             'tag': 'cnvlab',
+            'ipv6': False,
             'pub_key': '%s/.ssh/id_rsa.pub' % os.environ['HOME'],
             'pull_secret': 'openshift_pull.json',
             'version': 'nightly',
