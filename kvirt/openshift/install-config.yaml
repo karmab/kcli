@@ -10,8 +10,13 @@ metadata:
   name: {{ cluster }}
 networking:
   clusterNetworks:
+{%- if ipv6 %}
+  - cidr: fd35::/48
+    hostPrefix: 64
+{%- else %}
   - cidr: 10.132.0.0/14
     hostPrefix: 23
+{%- endif %}
   networkType: {{ network_type | default('OpenShiftSDN') }}
   serviceNetwork:
   - 172.30.0.0/16
@@ -33,3 +38,12 @@ additionalTrustBundle: |
 pullSecret: '{{ pull_secret }}'
 sshKey: |
   {{ pub_key }}
+{% if disconnected_url is defined -%}
+imageContentSources:
+- mirrors:
+  - {{ disconnected_url }}/ocp4/openshift4
+  source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
+- mirrors:
+  - {{ disconnected_url }}/ocp4/openshift4
+  source: registry.svc.ci.openshift.org/ocp/release
+{%- endif %}

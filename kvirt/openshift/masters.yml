@@ -23,6 +23,8 @@ parameters:
  numamode:
  cpupinning:
  pcidevices:
+ disconnected_url:
+ ipv6: false
 
 {{ cluster }}-bootstrap:
  image: {{ image }}
