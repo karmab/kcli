@@ -9,4 +9,4 @@ $TTL 10800      ; 3 hours
                                 )
 
 $ORIGIN apps.{{ cluster }}.{{ domain }}.
-*                                                      A                {{ api_ip }}
+*                                                      {{ 'AAAA' if ipv6 else 'A' }}                {{ api_ip }}
