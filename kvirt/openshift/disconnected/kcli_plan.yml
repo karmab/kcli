@@ -1,0 +1,57 @@
+parameters:
+ prefix: openshift
+ openshift_image: registry.svc.ci.openshift.org/ocp/release:4.3
+ image: centos8
+ image_url:
+ pool: default
+ numcpus: 8
+ memory: 12288
+ disk_size: 30
+ rhnregister: true
+ pullsecret_path: openshift_pull.json
+ cache: true
+ notify: false
+ keys: []
+ rhnwait: 30
+ nets:
+ - ipv6-only
+ - default
+ ipv6: true
+ registry_user: dummy
+ registry_password: dummy
+
+{{ image }}:
+ type: image
+ url: {{ image_url }}
+
+{{ prefix }}-disconnecter:
+ image: {{ image }}
+ pool: {{ pool }}
+ numcpus: {{ numcpus }}
+ keys: {{ keys }}
+{% if 'rhel' in image %}
+ rhnregister: {{ rhnregister }}
+ rhnwait: {{ rhnwait }}
+{% endif %}
+ reservedns: true
+ memory: {{ memory }}
+ notify: {{ notify }}
+ notifycmd: cat /root/results.txt
+ nets: {{ nets }}
+ disks:
+ - {{ disk_size }}
+ files:
+ - origin: get_clients.sh
+   path: /root/get_clients.sh
+   mode: 700
+ - origin: pull_and_push.sh
+   path: /root/bin/pull_and_push.sh
+   mode: 700
+ - origin: {{ pullsecret_path }}
+   path: /root/openshift_pull.json
+ - origin: disconnected.sh
+   path: /root/disconnected.sh
+   mode: 700
+ cmds:
+ - bash /root/get_oc.sh
+ - bash /root/disconnected.sh
