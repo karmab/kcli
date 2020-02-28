@@ -17,14 +17,19 @@ spec:
   - name: mdns-render-config
     securityContext:
       privileged: true
-    image: docker.io/yauritux/busybox-curl
+    image: {{ disconnected_url if disconnected_url is defined else 'docker.io' }}/yauritux/busybox-curl
     command:
     - "/bin/sh"
     - "-c"
     - |
       #/bin/sh
+      {%- if ipv6 %}
+      NIC=$(ip -6 r | grep -v lo | head -1 | sed 's/.*dev \(.*\) \(proto\|metric\).*/\1/' | awk '{print $1}')
+      IP=$(ip -6 -o addr show $NIC | awk '{print $4}' | cut -d "/" -f 1 | head -1)
+      {%- else %}
       NIC=$(ip r | grep default | tail -1 | sed 's/.*dev \(.*\) \(proto\|metric\).*/\1/')
       IP=$(ip -4 -o addr show $NIC | awk '{print $4}' | cut -d "/" -f 1 | head -1)
+      {%- endif %}
       [ -z "$IP" ] && exit 1
       HOSTNAME=$(hostname -s)
       ETCD=$(echo "$HOSTNAME" | sed 's@{{ cluster }}-master@etcd@')
@@ -38,7 +43,7 @@ spec:
     imagePullPolicy: IfNotPresent
   containers:
   - name: mdns-publish
-    image: quay.io/openshift-metal3/mdns-publisher:latest
+    image: {{ disconnected_url if disconnected_url is defined else 'quay.io' }}/openshift-metal3/mdns-publisher:latest
     args:
     - "--debug"
     resources:

@@ -16,7 +16,7 @@ spec:
   - name: nginx-get-master-mco
     securityContext:
       privileged: true
-    image: docker.io/yauritux/busybox-curl
+    image: {{ disconnected_url if disconnected_url is defined else 'docker.io' }}/yauritux/busybox-curl
     command:
     - "curl"
     args:
@@ -29,7 +29,7 @@ spec:
       mountPath: "/usr/share/nginx/html"
   containers:
   - name: nginx
-    image: docker.io/library/nginx:alpine
+    image: {{ disconnected_url if disconnected_url is defined else 'docker.io' }}/library/nginx:alpine
     resources:
       requests:
         cpu: 150m

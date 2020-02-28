@@ -32,7 +32,6 @@ parameters:
  numcpus: 2
  enableroot: false 
  memory: {{ bootstrap_memory }}
- dns: 127.0.0.1
  nets:
   - name: {{ network }}
 {% if bootstrap_mac != None %}
@@ -41,6 +40,9 @@ parameters:
  disks:
   - size: {{ disk_size }}
  files:
+  - path: /etc/NetworkManager/dispatcher.d/99-forcedns
+    origin: 99-forcedns
+    mode: 755
   - path: /etc/kubernetes/manifests/coredns.yml
     origin: staticpods/coredns.yml
   - path: /etc/kubernetes/Corefile
