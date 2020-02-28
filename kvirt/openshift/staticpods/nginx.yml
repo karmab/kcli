@@ -23,7 +23,7 @@ spec:
     command:
     - "curl"
     args:
-    - "-kL"
+    - "-gkL"
 {%- if ipv6 %}
     - "https://[{{ api_ip}}]:22623/config/master"
 {%- else %}
@@ -46,6 +46,8 @@ spec:
     volumeMounts:
     - name: data-dir
       mountPath: "/usr/share/nginx/html"
+    - name: conf-dir
+      mountPath: "/etc/nginx"
     terminationMessagePolicy: FallbackToLogsOnError
     imagePullPolicy: IfNotPresent
   hostNetwork: true

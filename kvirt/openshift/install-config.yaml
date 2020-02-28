@@ -9,17 +9,19 @@ controlPlane:
 metadata:
   name: {{ cluster }}
 networking:
+  networkType: {{ network_type | default('OpenShiftSDN') }}
   clusterNetworks:
 {%- if ipv6 %}
-  - cidr: fd35::/48
+  - cidr: fd01::/48
     hostPrefix: 64
+  serviceNetwork:
+  - fd02::/112
 {%- else %}
   - cidr: 10.132.0.0/14
     hostPrefix: 23
-{%- endif %}
-  networkType: {{ network_type | default('OpenShiftSDN') }}
   serviceNetwork:
   - 172.30.0.0/16
+{%- endif %}
 platform:
 {%- if config_type == 'vsphere' %}
   vsphere:

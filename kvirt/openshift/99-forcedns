@@ -18,6 +18,10 @@ if [ "$2" = "dhcp4-change" ] || [ "$2" = "dhcp6-change" ] || [ "$2" = "up" ] || 
       sed -i 's/search /search {{ cluster }}.{{ domain }} /' /etc/resolv.conf
       sed -i "/nameserver.* # coredns/d" /etc/resolv.conf
       sed -i "0,/nameserver/s/nameserver/nameserver $IP #coredns\n&/" /etc/resolv.conf
+      {%- if ipv6 %}
+      GATEWAY=$( tail -1 /etc/resolv.conf  | cut -f2 -d" ")
+      ip -6 r | grep -q default || ip -6 r add default via $GATEWAY
+      {%- endif %}
     fi
   fi
 fi

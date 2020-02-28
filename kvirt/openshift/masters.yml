@@ -59,6 +59,8 @@ parameters:
     origin: keepalived.conf
   - path: /etc/kubernetes/manifests/nginx.yml
     origin: staticpods/nginx.yml
+  - path: /etc/kubernetes/nginx.conf
+    origin: nginx.conf
 
 {% for num in range(0, masters) %}
 {% if master_macs and master_macs|length >= masters %}

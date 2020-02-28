@@ -161,10 +161,12 @@ def openshift_create(config, plandir, cluster, overrides):
             'pull_secret': 'openshift_pull.json',
             'version': 'nightly',
             'macosx': False,
-            'upstream': False,
-            'network_type': 'OpenShiftSDN'}
+            'upstream': False}
     data.update(overrides)
     ipv6 = data['ipv6']
+    if 'network_type' not in data:
+        default_sdn = 'OVNKubernetes' if ipv6 else 'OpenShiftSDN'
+        data['network_type'] = default_sdn
     upstream = data.get('upstream')
     version = data.get('version')
     if version not in ['ci', 'nightly']:
@@ -272,6 +274,8 @@ def openshift_create(config, plandir, cluster, overrides):
     installconfig = config.process_inputfile(cluster, "%s/install-config.yaml" % plandir, overrides=data)
     with open("%s/install-config.yaml" % clusterdir, 'w') as f:
         f.write(installconfig)
+    # with open("install-config.yaml", 'w') as f:
+    #    f.write(installconfig)
     call('openshift-install --dir=%s create manifests' % clusterdir, shell=True)
     for f in [f for f in glob("customisation/*.yaml")]:
         if '99-ingress-controller.yaml' in f:
