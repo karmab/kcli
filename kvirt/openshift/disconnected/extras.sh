@@ -1,4 +1,5 @@
-images="docker.io/yauritux/busybox-curl quay.io/openshift/origin-coredns:latest docker.io/library/haproxy:latest quay.io/openshift/origin-keepalived-ipfailover:latest quay.io/openshift-metal3/mdns-publisher:latest docker.io/library/nginx:alpine docker.io/karmab/kubectl"
+#images="docker.io/yauritux/busybox-curl quay.io/openshift/origin-coredns:latest docker.io/library/haproxy:latest quay.io/openshift/origin-keepalived-ipfailover:latest quay.io/openshift-metal3/mdns-publisher:latest docker.io/library/nginx:alpine docker.io/karmab/kubectl"
+images="{{ extra_containers |join(' ') }}"
 
 podman login -u dummy -p dummy $(hostname -f):5000
 for image in $images ; do

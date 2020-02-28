@@ -19,6 +19,14 @@ parameters:
  ipv6: true
  registry_user: dummy
  registry_password: dummy
+ extra_containers:
+ - docker.io/yauritux/busybox-curl
+ - quay.io/openshift/origin-coredns:latest
+ - docker.io/library/haproxy:latest
+ - quay.io/openshift/origin-keepalived-ipfailover:latest
+ - quay.io/openshift-metal3/mdns-publisher:latest
+ - docker.io/library/nginx:alpine
+ - docker.io/karmab/kubectl
 
 {{ image }}:
  type: image
@@ -41,8 +49,11 @@ parameters:
  disks:
  - {{ disk_size }}
  files:
- - origin: get_clients.sh
-   path: /root/get_clients.sh
+ - origin: get_oc.sh
+   path: /root/get_oc.sh
+   mode: 700
+ - origin: extras.sh
+   path: /root/extras.sh
    mode: 700
  - origin: pull_and_push.sh
    path: /root/bin/pull_and_push.sh
@@ -55,3 +66,6 @@ parameters:
  cmds:
  - bash /root/get_oc.sh
  - bash /root/disconnected.sh
+{% if extras %}
+ - bash /root/extras.sh
+{% endif %}
