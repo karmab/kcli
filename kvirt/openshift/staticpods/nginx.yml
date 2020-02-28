@@ -12,6 +12,9 @@ spec:
   volumes:
   - name: data-dir
     empty-dir: {}
+  - name: conf-dir
+    hostPath:
+      path: "/etc/kubernetes"
   initContainers:
   - name: nginx-get-master-mco
     securityContext:
@@ -21,12 +24,18 @@ spec:
     - "curl"
     args:
     - "-kL"
+{%- if ipv6 %}
+    - "https://[{{ api_ip}}]:22623/config/master"
+{%- else %}
     - "https://{{ api_ip}}:22623/config/master"
+{%- endif %}
     - "-o"
     - "/usr/share/nginx/html/master"
     volumeMounts:
     - name: data-dir
       mountPath: "/usr/share/nginx/html"
+    - name: conf-dir
+      mountPath: "/etc/nginx"
   containers:
   - name: nginx
     image: {{ disconnected_url if disconnected_url is defined else 'docker.io' }}/library/nginx:alpine

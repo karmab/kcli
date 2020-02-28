@@ -164,6 +164,7 @@ def openshift_create(config, plandir, cluster, overrides):
             'upstream': False,
             'network_type': 'OpenShiftSDN'}
     data.update(overrides)
+    ipv6 = data['ipv6']
     upstream = data.get('upstream')
     version = data.get('version')
     if version not in ['ci', 'nightly']:
@@ -296,6 +297,9 @@ def openshift_create(config, plandir, cluster, overrides):
         if api_ip is None:
             pprint("You need to define api_ip in your parameters file", color='red')
             os._exit(1)
+        # TODO ipv6: define a logic for virtual router id
+        virtual_router_id = int(api_ip.split('.')[-1]) if not ipv6 else 200
+        data['virtual_router_id'] = virtual_router_id
         host_ip = ingress_ip if platform != "openstack" else public_api_ip
         pprint("Using %s for api vip...." % api_ip, color='blue')
         if not os.path.exists("/i_am_a_container"):
@@ -370,7 +374,10 @@ def openshift_create(config, plandir, cluster, overrides):
             sedcmd += '%s/master.ign' % clusterdir
             sedcmd += ' > %s/bootstrap.ign' % clusterdir
             call(sedcmd, shell=True)
-        sedcmd = 'sed -i "s@https://api-int.%s.%s:22623/config@http://%s@"' % (cluster, domain, api_ip)
+        if ipv6:
+            sedcmd = 'sed -i "s@https://api-int.%s.%s:22623/config@http://[%s]@"' % (cluster, domain, api_ip)
+        else:
+            sedcmd = 'sed -i "s@https://api-int.%s.%s:22623/config@http://%s@"' % (cluster, domain, api_ip)
         sedcmd += ' %s/master.ign' % clusterdir
         call(sedcmd, shell=True)
     if platform in cloudplatforms:
