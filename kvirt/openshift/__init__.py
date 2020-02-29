@@ -6,6 +6,7 @@ import json
 import os
 import sys
 from kvirt.common import pprint, gen_mac, get_values, pwd_path, insecure_fetch
+from random import randint
 import re
 from shutil import copy2, move
 from subprocess import call
@@ -164,9 +165,6 @@ def openshift_create(config, plandir, cluster, overrides):
             'upstream': False}
     data.update(overrides)
     ipv6 = data['ipv6']
-    if 'network_type' not in data:
-        default_sdn = 'OVNKubernetes' if ipv6 else 'OpenShiftSDN'
-        data['network_type'] = default_sdn
     upstream = data.get('upstream')
     version = data.get('version')
     if version not in ['ci', 'nightly']:
@@ -177,6 +175,11 @@ def openshift_create(config, plandir, cluster, overrides):
     helper_image = data.get('helper_image')
     image = data.get('image')
     api_ip = data.get('api_ip')
+    if platform in virtplatforms and api_ip is None:
+        pprint("You need to define api_ip in your parameters file", color='red')
+        os._exit(1)
+    if ':' in api_ip:
+        ipv6 = True
     ingress_ip = data.get('ingress_ip')
     if ingress_ip is None:
         ingress_ip = api_ip
@@ -271,6 +274,9 @@ def openshift_create(config, plandir, cluster, overrides):
         os.makedirs(clusterdir)
     data['pub_key'] = open(pub_key).read().strip()
     data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
+    if 'network_type' not in data:
+        default_sdn = 'OVNKubernetes' if ipv6 else 'OpenShiftSDN'
+        data['network_type'] = default_sdn
     installconfig = config.process_inputfile(cluster, "%s/install-config.yaml" % plandir, overrides=data)
     with open("%s/install-config.yaml" % clusterdir, 'w') as f:
         f.write(installconfig)
@@ -298,12 +304,9 @@ def openshift_create(config, plandir, cluster, overrides):
                           domain: '%s.%s' % (cluster, domain)})
         config.plan(cluster, inputfile='%s/dhcp.yml' % plandir, overrides=staticdata)
     if platform in virtplatforms:
-        if api_ip is None:
-            pprint("You need to define api_ip in your parameters file", color='red')
-            os._exit(1)
-        # TODO ipv6: define a logic for virtual router id
-        virtual_router_id = int(api_ip.split('.')[-1]) if not ipv6 else 200
-        data['virtual_router_id'] = virtual_router_id
+        if 'virtual_router_id' not in data:
+            # virtual_router_id = int(api_ip.split('.')[-1]) if not ipv6 else randint(1, 255)
+            data['virtual_router_id'] = randint(1, 255)
         host_ip = ingress_ip if platform != "openstack" else public_api_ip
         pprint("Using %s for api vip...." % api_ip, color='blue')
         if not os.path.exists("/i_am_a_container"):
