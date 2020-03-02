@@ -19,9 +19,11 @@ export LOCAL_REG="$(hostname -f):5000"
 export LOCAL_REPO='ocp/release'
 export PULL_SECRET="/root/openshift_pull.json"
 export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE=${LOCAL_REG}/${LOCAL_REPO}:${OCP_RELEASE}
-jq ".auths += {\"$(hostname -f):5000\": {\"auth\": \"ZHVtbXk6ZHVtbXk=\",\"email\": \"jhendrix@karmalabs.com\"}}" < $PULL_SECRET > /root/temp.json
+KEY=$( echo -n {{ registry_user }}:{{ registry_password }} | base64)
+jq ".auths += {\"$(hostname -f):5000\": {\"auth\": \"$KEY\",\"email\": \"jhendrix@karmalabs.com\"}}" < $PULL_SECRET > /root/temp.json
 mv /root/temp.json $PULL_SECRET
 oc adm release mirror -a $PULL_SECRET --from=$OPENSHIFT_RELEASE_IMAGE --to-release-image=$LOCAL_REG/$LOCAL_REPO:$OCP_RELEASE --to=$LOCAL_REG/$LOCAL_REPO
+echo "{\"auths\": {\"$(hostname -f):5000\": {\"auth\": \"$KEY\", \"email\": \"jhendrix@karmalabs.com\"}}}" > /root/temp.json
 
 echo "additionalTrustBundle: |" >> /root/results.txt
 sed -e 's/^/  /' /opt/registry/certs/domain.crt >>  /root/results.txt

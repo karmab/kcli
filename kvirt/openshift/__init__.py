@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from base64 import b64encode
 from distutils.spawn import find_executable
 from glob import glob
 import json
@@ -189,6 +190,9 @@ def openshift_create(config, plandir, cluster, overrides):
     network = data.get('network')
     masters = data.get('masters')
     workers = data.get('workers')
+    disconnected_url = data.get('disconnected_url')
+    disconnected_user = data.get('disconnected_user')
+    disconnected_password = data.get('disconnected_password')
     tag = data.get('tag')
     pub_key = data.get('pub_key')
     pull_secret = pwd_path(data.get('pull_secret')) if not upstream else "%s/fake_pull.json" % plandir
@@ -273,16 +277,29 @@ def openshift_create(config, plandir, cluster, overrides):
     if not os.path.exists(clusterdir):
         os.makedirs(clusterdir)
     data['pub_key'] = open(pub_key).read().strip()
-    data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
+    if disconnected_url is not None and disconnected_user is not None and disconnected_password is not None:
+        key = "%s:%s" % (disconnected_user, disconnected_password)
+        key = str(b64encode(key.encode('utf-8')), 'utf-8')
+        auths = {'auths': {disconnected_url: {'auth': key, 'email': 'jhendrix@karmalabs.com'}}}
+        data['pull_secret'] = json.dumps(auths)
+        # data['pull_secret'] = "{\"auths\": {\"%s\": \"%s\",\"email\": \"jhendrix@karmalabs.com\"}}" %
+        # (disconnected_url,
+        #                                                                                               key)
+    else:
+        data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
     if 'network_type' not in data:
         default_sdn = 'OVNKubernetes' if ipv6 else 'OpenShiftSDN'
         data['network_type'] = default_sdn
     installconfig = config.process_inputfile(cluster, "%s/install-config.yaml" % plandir, overrides=data)
     with open("%s/install-config.yaml" % clusterdir, 'w') as f:
         f.write(installconfig)
-    # with open("install-config.yaml", 'w') as f:
-    #    f.write(installconfig)
-    call('openshift-install --dir=%s create manifests' % clusterdir, shell=True)
+    with open("%s/install-config.yaml.bck" % clusterdir, 'w') as f:
+        f.write(installconfig)
+    run = call('openshift-install --dir=%s create manifests' % clusterdir, shell=True)
+    if run != 0:
+        pprint("Leaving environment for debugging purposes", color='red')
+        pprint("You can delete it with kcli delete kube --yes %s" % cluster, color='red')
+        os._exit(run)
     for f in [f for f in glob("customisation/*.yaml")]:
         if '99-ingress-controller.yaml' in f:
             ingressrole = 'master' if workers == 0 else 'worker'
