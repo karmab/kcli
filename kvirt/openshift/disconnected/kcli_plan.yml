@@ -20,13 +20,13 @@ parameters:
  registry_user: dummy
  registry_password: dummy
  extra_containers:
- - docker.io/yauritux/busybox-curl
+ - docker.io/yauritux/busybox-curl:latest
  - quay.io/openshift/origin-coredns:latest
  - docker.io/library/haproxy:latest
  - quay.io/openshift/origin-keepalived-ipfailover:latest
  - quay.io/openshift-metal3/mdns-publisher:latest
  - docker.io/library/nginx:alpine
- - docker.io/karmab/kubectl
+ - docker.io/karmab/kubectl:latest
 
 {{ image }}:
  type: image

@@ -413,7 +413,11 @@ def openshift_create(config, plandir, cluster, overrides):
     if platform in virtplatforms:
         pprint("Deploying masters", color='blue')
         config.plan(cluster, inputfile='%s/masters.yml' % plandir, overrides=overrides)
-        call('openshift-install --dir=%s wait-for bootstrap-complete || exit 1' % clusterdir, shell=True)
+        run = call('openshift-install --dir=%s wait-for bootstrap-complete' % clusterdir, shell=True)
+        if run != 0:
+            pprint("Leaving environment for debugging purposes", color='red')
+            pprint("You can delete it with kcli delete kube --yes %s" % cluster, color='red')
+            os._exit(run)
         todelete = ["%s-bootstrap" % cluster]
         if platform in ['kubevirt', 'openstack', 'vsphere']:
             todelete.append("%s-bootstrap-helper" % cluster)
