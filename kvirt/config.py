@@ -13,7 +13,7 @@ from kvirt import ansibleutils
 from kvirt import nameutils
 from kvirt import common
 from kvirt.internalplans import kube
-from kvirt.openshift import openshift_create, openshift_scale
+from kvirt import openshift
 from kvirt.internalplans import haproxy as haproxyplan
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
@@ -1809,8 +1809,8 @@ $INFO
             os.environ['PATH'] += ':/workdir'
         else:
             os.environ['PATH'] += ':.'
-        plandir = os.path.dirname(openshift_create.__code__.co_filename)
-        openshift_create(self, plandir, cluster, overrides)
+        plandir = os.path.dirname(openshift.create.__code__.co_filename)
+        openshift.create(self, plandir, cluster, overrides)
 
     def delete_kube(self, cluster, overrides={}):
         self.plan(cluster, delete=True)
@@ -1820,8 +1820,8 @@ $INFO
             rmtree(clusterdir)
 
     def scale_kube_openshift(self, cluster, overrides={}):
-        plandir = os.path.dirname(openshift_create.__code__.co_filename)
-        openshift_scale(self, plandir, cluster, overrides)
+        plandir = os.path.dirname(openshift.create.__code__.co_filename)
+        openshift.scale(self, plandir, cluster, overrides)
 
     def info_kube_generic(self):
         plandir = kube.__path__[0]
@@ -1829,6 +1829,6 @@ $INFO
         self.plan('xxx', inputfile=inputfile, info=True)
 
     def info_kube_openshift(self):
-        plandir = os.path.dirname(openshift_create.__code__.co_filename)
+        plandir = os.path.dirname(openshift.create.__code__.co_filename)
         inputfile = '%s/masters.yml' % plandir
         self.plan('xxx', inputfile=inputfile, info=True)

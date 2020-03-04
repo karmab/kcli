@@ -1,5 +1,5 @@
 parameters:
- prefix: openshift
+ cluster: openshift
  openshift_image: registry.svc.ci.openshift.org/ocp/release:4.3
  image: centos8
  image_url:
@@ -8,15 +8,13 @@ parameters:
  memory: 12288
  disk_size: 30
  rhnregister: true
- pullsecret_path: openshift_pull.json
- cache: true
+ pullsecret: ~/openshift_pull.json
  notify: false
  keys: []
  rhnwait: 30
  nets:
  - ipv6-only
  - default
- ipv6: true
  registry_user: dummy
  registry_password: dummy
  extra_containers:
@@ -32,7 +30,7 @@ parameters:
  type: image
  url: {{ image_url }}
 
-{{ prefix }}-disconnecter:
+{{ cluster }}-disconnecter:
  image: {{ image }}
  pool: {{ pool }}
  numcpus: {{ numcpus }}
@@ -58,7 +56,7 @@ parameters:
  - origin: pull_and_push.sh
    path: /root/bin/pull_and_push.sh
    mode: 700
- - origin: {{ pullsecret_path }}
+ - origin: {{ pullsecret }}
    path: /root/openshift_pull.json
  - origin: disconnected.sh
    path: /root/disconnected.sh
@@ -66,6 +64,6 @@ parameters:
  cmds:
  - bash /root/get_oc.sh
  - bash /root/disconnected.sh
-{% if extras %}
+{% if extra_containers %}
  - bash /root/extras.sh
 {% endif %}

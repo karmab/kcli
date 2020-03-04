@@ -622,6 +622,10 @@ class Kvirt(object):
                         <target dev='hdd' bus='ide'/>
                         <readonly/>
                         </disk>""" % (isoxml, dtype, dsource, cloudinitiso)
+                common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
+                                 reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides,
+                                 storemetadata=storemetadata, image=image, ipv6=ipv6)
+                self._uploadimage(name, pool=default_storagepool)
         listen = '0.0.0.0' if self.host not in ['localhost', '127.0.0.1'] else '127.0.0.1'
         displayxml = """<input type='tablet' bus='usb'/>
                         <input type='mouse' bus='ps2'/>
@@ -912,11 +916,6 @@ class Kvirt(object):
                 storagepool.createXML(volxml, 0)
         if fixqcow2path is not None and fixqcow2backing is not None:
             self._fixqcow2(fixqcow2path, fixqcow2backing)
-        if cloudinit and image is not None and 'coreos' not in image and 'rhcos' not in image:
-            common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
-                             reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides,
-                             storemetadata=storemetadata, image=image, ipv6=ipv6)
-            self._uploadimage(name, pool=default_storagepool)
         xml = vm.XMLDesc(0)
         vmxml = ET.fromstring(xml)
         if reserveip:

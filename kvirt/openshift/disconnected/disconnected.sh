@@ -1,9 +1,3 @@
-{% if ipv6 %}
- {% set proto = 6 %}
-{% else %}
- {% set proto = 4 %}
-{% endif %}
-
 export PATH=/root/bin:$PATH
 yum -y install podman httpd httpd-tools jq
 mkdir -p /opt/registry/{auth,certs,data}

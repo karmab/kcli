@@ -126,7 +126,7 @@ def gather_dhcp(data, platform):
         return {'node_names': node_names, 'node_macs': node_macs, 'node_ips': node_ips, 'nodes': nodes}
 
 
-def openshift_scale(config, plandir, cluster, overrides):
+def scale(config, plandir, cluster, overrides):
     client = config.client
     platform = config.type
     k = config.k
@@ -146,7 +146,7 @@ def openshift_scale(config, plandir, cluster, overrides):
         config.plan(cluster, inputfile='%s/cloud.yml' % plandir, overrides=overrides)
 
 
-def openshift_create(config, plandir, cluster, overrides):
+def create(config, plandir, cluster, overrides):
     k = config.k
     client = config.client
     platform = config.type
@@ -190,12 +190,14 @@ def openshift_create(config, plandir, cluster, overrides):
     network = data.get('network')
     masters = data.get('masters')
     workers = data.get('workers')
+    disconnected_deploy = data.get('disconnected_deploy', False)
     disconnected_url = data.get('disconnected_url')
     disconnected_user = data.get('disconnected_user')
     disconnected_password = data.get('disconnected_password')
     tag = data.get('tag')
     pub_key = data.get('pub_key')
     pull_secret = pwd_path(data.get('pull_secret')) if not upstream else "%s/fake_pull.json" % plandir
+    pull_secret = os.path.expanduser(pull_secret)
     macosx = data.get('macosx')
     if macosx and not os.path.exists('/i_am_a_container'):
         macosx = False
@@ -282,9 +284,6 @@ def openshift_create(config, plandir, cluster, overrides):
         key = str(b64encode(key.encode('utf-8')), 'utf-8')
         auths = {'auths': {disconnected_url: {'auth': key, 'email': 'jhendrix@karmalabs.com'}}}
         data['pull_secret'] = json.dumps(auths)
-        # data['pull_secret'] = "{\"auths\": {\"%s\": \"%s\",\"email\": \"jhendrix@karmalabs.com\"}}" %
-        # (disconnected_url,
-        #                                                                                               key)
     else:
         data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
     if 'network_type' not in data:
@@ -322,11 +321,13 @@ def openshift_create(config, plandir, cluster, overrides):
         config.plan(cluster, inputfile='%s/dhcp.yml' % plandir, overrides=staticdata)
     if platform in virtplatforms:
         if 'virtual_router_id' not in data:
-            # virtual_router_id = int(api_ip.split('.')[-1]) if not ipv6 else randint(1, 255)
             data['virtual_router_id'] = randint(1, 255)
         host_ip = ingress_ip if platform != "openstack" else public_api_ip
         pprint("Using %s for api vip...." % api_ip, color='blue')
-        if not os.path.exists("/i_am_a_container"):
+        ignore_hosts = data.get('ignore_hosts', False)
+        if ignore_hosts:
+            pprint("Ignoring /etc/hosts as per your request", color='blue')
+        elif not os.path.exists("/i_am_a_container"):
             hosts = open("/etc/hosts").readlines()
             wronglines = [e for e in hosts if not e.startswith('#') and "api.%s.%s" % (cluster, domain) in e and
                           host_ip not in e]
@@ -428,6 +429,17 @@ def openshift_create(config, plandir, cluster, overrides):
         sedcmd += ' > %s/bootstrap.ign' % clusterdir
         call(sedcmd, shell=True)
     if platform in virtplatforms:
+        if disconnected_deploy:
+            disconnected_vm = "%s-disconnecter" % cluster
+            cmd = "cat /opt/registry/certs/domain.crt"
+            pprint("Deploying disconnected vm %s" % disconnected_vm, color='blue')
+            config.plan(cluster, inputfile='%s/disconnected' % plandir, overrides=overrides, wait=True)
+            cacmd = k.ssh(disconnected_vm, user='root', tunnel=config.tunnel, insecure=True, cmd=cmd)
+            disconnected_ca = os.popen(cacmd).read()
+            if 'ca' in overrides:
+                overrides['ca'] += disconnected_ca
+            else:
+                overrides['ca'] = disconnected_ca
         pprint("Deploying masters", color='blue')
         config.plan(cluster, inputfile='%s/masters.yml' % plandir, overrides=overrides)
         run = call('openshift-install --dir=%s wait-for bootstrap-complete' % clusterdir, shell=True)
