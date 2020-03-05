@@ -3,7 +3,7 @@ parameters:
  workers: 0
  image: centos7
  network: default
- cluster: ku
+ cluster: testk
  domain: karmalabs.com
  pool: default
  master_memory: 6144
@@ -26,12 +26,12 @@ parameters:
  - 6443
  vms:
 {% for number in range(0, masters) %}
-  - {{cluster}}-master-0{{ number }}
+  - {{cluster}}-master-{{ number }}
 {% endfor %}
 {%endif %}
 
 {% for number in range(0, masters) %}
-{{cluster}}-master-0{{ number }}:
+{{cluster}}-master-{{ number }}:
  image: {{ image }}
  numcpus: 2
  memory: {{ master_memory }}
@@ -83,7 +83,7 @@ parameters:
 {% endfor %}
 
 {% for number in range(0, workers) %}
-{{cluster }}-worker-0{{ number }}:
+{{cluster }}-worker-{{ number }}:
  image: {{ image }}
  numcpus: 2
  memory: {{ node_memory }}
