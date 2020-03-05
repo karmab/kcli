@@ -7,6 +7,12 @@
 
 ![Screenshot](kcli.png)
 
+## Demo!
+
+![](kcli.gif)
+
+# Description
+
 This tool is meant to interact with existing virtualization providers (libvirt, KubeVirt, oVirt, OpenStack, VMware vSphere, GCP and AWS) and to easily deploy and customize VMs from cloud images.
 
 You can also interact with those VMs (list, info, ssh, start, stop, delete, console, serialconsole, add/delete disk, add/delete nic, ...).
@@ -48,10 +54,6 @@ kcli delete vm
 - Automatically subscribe your RHEL VMs
 - Get a push button notification when a vm has finished its deployment
 - Alternatively use web UI to do the same
-
-## Demo!
-
-[![asciicast](https://asciinema.org/a/273012.png)](https://asciinema.org/a/273012?autoplay=1)
 
 ## Contributors
 
