@@ -8,6 +8,7 @@ parameters:
  numcpus: 4
  master_memory: 8192
  bootstrap_memory: 6144
+ bootstrap_numcpus: 4
  disk_size: 30
  autostart: false
  keys: []
@@ -31,7 +32,7 @@ parameters:
 {{ cluster }}-bootstrap:
  image: {{ image }}
  keys: {{ keys }}
- numcpus: 2
+ numcpus: {{ bootstrap_numcpus }}
  enableroot: false 
  memory: {{ bootstrap_memory }}
  nets:
