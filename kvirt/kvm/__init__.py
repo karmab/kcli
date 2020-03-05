@@ -306,18 +306,18 @@ class Kvirt(object):
                 volumes[vol.name()] = {'pool': poo, 'object': vol}
                 volumespaths[vol.path()] = {'pool': poo, 'object': vol}
         allnetworks = self.list_networks()
-        # networks = [n for n in allnetworks if allnetworks[n]['type'] == 'routed' and
-        #            isinstance(allnetworks[n]['cidr'], dict) and ':' not in str(allnetworks[n]['cidr'].cidr)]
+        bridges = []
         networks = []
+        ipv6networks = []
         for n in allnetworks:
-            if allnetworks[n]['type'] != 'routed':
-                continue
-            elif isinstance(allnetworks[n]['cidr'], dict) and ':' not in str(allnetworks[n]['cidr'].cidr):
-                networks.append(n)
+            if allnetworks[n]['type'] == 'bridged':
+                bridges.append(n)
             elif isinstance(allnetworks[n]['cidr'], str):
                 networks.append(n)
-        bridges = [n for n in allnetworks if allnetworks[n]['type'] == 'bridged']
-        ipv6networks = [n for n in allnetworks if n not in networks and n not in bridges]
+            elif ':' not in str(allnetworks[n]['cidr'].cidr):
+                networks.append(n)
+            else:
+                ipv6networks.append(n)
         ipv6 = []
         machine = 'pc'
         # sysinfo = "<smbios mode='sysinfo'/>"

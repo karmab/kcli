@@ -75,7 +75,7 @@ limitations under the License.
 
 ## Problems?
 
-Open an issue !
+Open an issue or join us on [kcli slack channel](https://app.slack.com/client/T09NY5SBT/CU76B52JE)
 
 Mc Fly!!!
 
