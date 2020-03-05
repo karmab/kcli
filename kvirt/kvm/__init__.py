@@ -305,16 +305,17 @@ class Kvirt(object):
             for vol in poo.listAllVolumes():
                 volumes[vol.name()] = {'pool': poo, 'object': vol}
                 volumespaths[vol.path()] = {'pool': poo, 'object': vol}
-        # networks = []
-        # bridges = []
-        # for net in conn.listNetworks():
-        #     networks.append(net)
-        # for net in conn.listInterfaces():
-        #     if net != 'lo':
-        #         bridges.append(net)
         allnetworks = self.list_networks()
-        networks = [n for n in allnetworks if allnetworks[n]['type'] == 'routed' and
-                    ':' not in str(allnetworks[n]['cidr'].cidr)]
+        # networks = [n for n in allnetworks if allnetworks[n]['type'] == 'routed' and
+        #            isinstance(allnetworks[n]['cidr'], dict) and ':' not in str(allnetworks[n]['cidr'].cidr)]
+        networks = []
+        for n in allnetworks:
+            if allnetworks[n]['type'] != 'routed':
+                continue
+            elif isinstance(allnetworks[n]['cidr'], dict) and ':' not in str(allnetworks[n]['cidr'].cidr):
+                networks.append(n)
+            elif isinstance(allnetworks[n]['cidr'], str):
+                networks.append(n)
         bridges = [n for n in allnetworks if allnetworks[n]['type'] == 'bridged']
         ipv6networks = [n for n in allnetworks if n not in networks and n not in bridges]
         ipv6 = []
@@ -1589,7 +1590,7 @@ class Kvirt(object):
                 thinpools.append(poolpath)
             for stor in storage.listVolumes():
                 for disk in disks:
-                    if stor in os.path.basename(disk):
+                    if stor == os.path.basename(disk):
                         try:
                             volume = storage.storageVolLookupByName(stor)
                         except:

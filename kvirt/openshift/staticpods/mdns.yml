@@ -17,7 +17,7 @@ spec:
   - name: mdns-render-config
     securityContext:
       privileged: true
-    image: {{ disconnected_url if disconnected_url is defined else 'docker.io' }}/yauritux/busybox-curl
+    image: {{ disconnected_url if disconnected_url != None else 'docker.io' }}/yauritux/busybox-curl
     command:
     - "/bin/sh"
     - "-c"
@@ -43,7 +43,7 @@ spec:
     imagePullPolicy: IfNotPresent
   containers:
   - name: mdns-publish
-    image: {{ disconnected_url if disconnected_url is defined else 'quay.io' }}/openshift-metal3/mdns-publisher:latest
+    image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/openshift-metal3/mdns-publisher:latest
     args:
     - "--debug"
     resources:

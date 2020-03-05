@@ -17,7 +17,7 @@ spec:
   - name: fix-keepalived-conf
     securityContext:
       privileged: true
-    image: {{ disconnected_url if disconnected_url is defined else 'docker.io' }}/yauritux/busybox-curl
+    image: {{ disconnected_url if disconnected_url != None else 'docker.io' }}/yauritux/busybox-curl
     command:
     - "/bin/sh"
     - "-c"
@@ -52,7 +52,7 @@ spec:
   - name: keepalived
     securityContext:
       privileged: true
-    image: {{ disconnected_url if disconnected_url is defined else 'quay.io' }}/openshift/origin-keepalived-ipfailover:latest
+    image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/openshift/origin-keepalived-ipfailover:latest
     command:
     - /usr/sbin/keepalived
     args:

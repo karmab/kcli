@@ -17,7 +17,7 @@ spec:
   - name: update-coredns-conf
     securityContext:
       privileged: true
-    image: {{ disconnected_url if disconnected_url is defined else 'docker.io' }}/yauritux/busybox-curl
+    image: {{ disconnected_url if disconnected_url != None else 'docker.io' }}/yauritux/busybox-curl
     command:
     - "/bin/sh"
     - "-c"
@@ -39,7 +39,7 @@ spec:
   - name: coredns
     securityContext:
       privileged: true
-    image: {{ disconnected_url if disconnected_url is defined else 'quay.io' }}/openshift/origin-coredns:latest
+    image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/openshift/origin-coredns:latest
     args:
     - "--conf"
     - "/etc/coredns/Corefile"

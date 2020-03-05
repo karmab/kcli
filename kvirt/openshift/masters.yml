@@ -7,7 +7,7 @@ parameters:
  domain: karmalabs.com
  numcpus: 4
  master_memory: 8192
- bootstrap_memory: 4096
+ bootstrap_memory: 6144
  disk_size: 30
  autostart: false
  keys: []
