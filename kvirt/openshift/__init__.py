@@ -276,6 +276,7 @@ def create(config, plandir, cluster, overrides):
             pprint("Missing %s. Indicate correct image in your parameters file..." % image, color='red')
             os._exit(1)
     overrides['image'] = image
+    overrides['cluster'] = cluster
     if not os.path.exists(clusterdir):
         os.makedirs(clusterdir)
     data['pub_key'] = open(pub_key).read().strip()

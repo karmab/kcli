@@ -1017,6 +1017,9 @@ def create_kube(args):
         common.pprint("using default parameter file kcli_parameters.yml")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    if 'type' in overrides:
+        _type = overrides['type']
+        common.pprint("Setting type to %s as specified as parameter" % _type)
     if _type == 'openshift':
         config.create_kube_openshift(args.cluster, overrides=overrides)
     else:
