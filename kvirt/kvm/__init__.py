@@ -1816,7 +1816,7 @@ class Kvirt(object):
             if ipentry:
                 attributes = ipentry[0].attrib
                 firstip = attributes.get('address')
-                netmask = attributes.get('netmask')
+                netmask = next(a for a in [attributes.get('netmask'), attributes.get('prefix')] if a is not None)
                 netip = IPNetwork('%s/%s' % (firstip, netmask))
             dhcp = list(root.getiterator('dhcp'))
             if not dhcp:
@@ -1897,14 +1897,14 @@ class Kvirt(object):
                             for hostname in list(host.getiterator('hostname')):
                                 existing.append(hostname.text)
                             if name in existing:
-                                common.pprint("Entry already found for %s" % name, color='red')
+                                common.pprint("Skipping existing dns entry for %s" % name, color='blue')
                             oldentry = '<host ip="%s"></host>' % iphost
                             common.pprint("Removing old dns entry for ip %s" % ip, color='blue')
                             network.update(2, 10, 0, oldentry, 1)
                 try:
                     network.update(4, 10, 0, dnsentry, 1)
                 except:
-                    common.pprint("Entry already found for %s" % name, color='red')
+                    common.pprint("Skipping existing dns entry for %s" % name, color='red')
 
     def reserve_host(self, name, nets, domain):
         """
