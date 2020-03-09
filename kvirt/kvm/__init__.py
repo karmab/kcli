@@ -1841,6 +1841,9 @@ class Kvirt(object):
         conn = self.conn
         bridged = False
         for index, net in enumerate(nets):
+            if isinstance(net, str):
+                netname = net
+                net = {'name': netname}
             reservedns = True if index == 0 and primary else False
             reservedns = net.get('reservedns', reservedns)
             if not reservedns:

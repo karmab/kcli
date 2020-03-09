@@ -1262,7 +1262,8 @@ $INFO
                 if dnsnet is None:
                     common.pprint("Missing net. Skipping!", color='blue')
                     return
-                z.reserve_dns(name=dnsentry, nets=[dnsnet], domain=dnsdomain, ip=dnsip, alias=dnsalias, force=True)
+                z.reserve_dns(name=dnsentry, nets=[dnsnet], domain=dnsdomain, ip=dnsip, alias=dnsalias, force=True,
+                              primary=True)
         if vmentries:
             common.pprint("Deploying Vms...")
             vmcounter = 0
