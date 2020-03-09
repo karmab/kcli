@@ -2862,7 +2862,7 @@ class Kvirt(object):
             networks[networkname]['plan'] = plan
         for interface in conn.listAllInterfaces():
             interfacename = interface.name()
-            if interfacename == 'lo':
+            if interfacename == 'lo' or interfacename in networks:
                 continue
             netxml = interface.XMLDesc(0)
             root = ET.fromstring(netxml)
