@@ -919,15 +919,13 @@ class Kvirt(object):
             self._fixqcow2(fixqcow2path, fixqcow2backing)
         xml = vm.XMLDesc(0)
         vmxml = ET.fromstring(xml)
-        if reserveip:
-            self._reserve_ip(name, vmxml, nets)
+        self._reserve_ip(name, vmxml, nets, primary=reserveip)
         if start:
             try:
                 vm.create()
             except Exception as e:
                 return {'result': 'failure', 'reason': e}
-        if reservedns:
-            self.reserve_dns(name, nets=nets, domain=domain, alias=alias, force=True)
+        self.reserve_dns(name, nets=nets, domain=domain, alias=alias, force=True, primary=reservedns)
         if reservehost:
             self.reserve_host(name, nets, domain)
         return {'result': 'success'}
@@ -1788,22 +1786,19 @@ class Kvirt(object):
             vm.setAutostart(1)
             vm.create()
 
-    def _reserve_ip(self, name, vmxml, nets, force=True):
+    def _reserve_ip(self, name, vmxml, nets, force=True, primary=False):
         conn = self.conn
         macs = []
         for element in list(vmxml.getiterator('interface')):
             mac = element.find('mac').get('address')
             macs.append(mac)
         for index, net in enumerate(nets):
-            if not isinstance(net, dict):
-                continue
             ip = net.get('ip')
             network = net.get('name')
-            reserveip = net.get('reserveip', True)
-            if not reserveip:
-                continue
             mac = macs[index]
-            if ip is None or network is None:
+            reserveip = True if index == 0 and primary else False
+            reserveip = net.get('reserveip', reserveip)
+            if not reserveip or ip is None or network is None:
                 continue
             network = conn.networkLookupByName(network)
             oldnetxml = network.XMLDesc()
@@ -1832,7 +1827,7 @@ class Kvirt(object):
             network.update(4, 4, 0, '<host mac="%s" name="%s" ip="%s" />' % (mac, name, ip), 1)
             network.update(4, 4, 0, '<host mac="%s" name="%s" ip="%s" />' % (mac, name, ip), 2)
 
-    def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False):
+    def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, primary=False):
         """
 
         :param name:
@@ -1845,71 +1840,68 @@ class Kvirt(object):
         """
         conn = self.conn
         bridged = False
-        net = nets[0]
-        if isinstance(net, dict):
+        for index, net in enumerate(nets):
+            reservedns = True if index == 0 and primary else False
+            reservedns = net.get('reservedns', reservedns)
+            if not reservedns:
+                continue
             network = net.get('name')
-        else:
-            network = net
-        try:
-            network = conn.networkLookupByName(network)
-        except:
-            bridged = True
-        if ip is None:
-            if isinstance(net, dict):
-                ip = net.get('ip')
-            if ip is None:
-                counter = 0
-                while counter != 100:
-                    ip = self.ip(name)
-                    if ip is None:
-                        time.sleep(5)
-                        print("Waiting 5 seconds to grab ip and create DNS record...")
-                        counter += 5
-                    else:
-                        break
-        if ip is None:
-            print("Couldn't assign DNS")
-            return
-        if bridged:
-            self._create_host_entry(name, ip, network, domain, dnsmasq=True)
-            return 0
-        else:
-            oldnetxml = network.XMLDesc()
-            root = ET.fromstring(oldnetxml)
-            dns = list(root.getiterator('dns'))
-            if not dns:
-                base = list(root.getiterator('network'))[0]
-                dns = ET.Element("dns")
-                base.append(dns)
-                newxml = ET.tostring(root)
-                conn.networkDefineXML(newxml.decode("utf-8"))
-            dnsentry = '<host ip="%s"><hostname>%s</hostname>' % (ip, name)
-            if domain is not None:
-                dnsentry = '%s<hostname>%s.%s</hostname>' % (dnsentry, name, domain)
-            for entry in alias:
-                dnsentry = "%s<hostname>%s</hostname>" % (dnsentry, entry)
-            dnsentry = "%s</host>" % dnsentry
-            if force:
-                for host in list(root.getiterator('host')):
-                    iphost = host.get('ip')
-                    machost = host.get('mac')
-                    if iphost == ip and machost is None:
-                        existing = []
-                        for hostname in list(host.getiterator('hostname')):
-                            existing.append(hostname.text)
-                        if name in existing:
-                            print("Entry already found for %s" % name)
-                            return {'result': 'failure', 'reason': "Entry already found found for %s" % name}
-                        oldentry = '<host ip="%s"></host>' % iphost
-                        print("Removing old dns entry for ip %s" % ip)
-                        network.update(2, 10, 0, oldentry, 1)
+            common.pprint("Creating Dns entry for net %s of vm %s" % (index, name), color='blue')
             try:
-                network.update(4, 10, 0, dnsentry, 1)
-                # network.update(4, 10, 0, dnsentry, 2)
-                return 0
+                network = conn.networkLookupByName(network)
             except:
-                print("Entry already found for %s" % name)
-                return {'result': 'failure', 'reason': "Entry already found found for %s" % name}
+                bridged = True
+            if ip is None:
+                if isinstance(net, dict):
+                    ip = net.get('ip')
+                if ip is None:
+                    counter = 0
+                    while counter != 100:
+                        ip = self.ip(name)
+                        if ip is None:
+                            time.sleep(5)
+                            common.pprint("Waiting 5 seconds to grab ip...", color='blue')
+                            counter += 5
+                        else:
+                            break
+            if ip is None:
+                common.pprint("Couldn't assign DNS for net %s" % index, color='red')
+                continue
+            if bridged:
+                self._create_host_entry(name, ip, network, domain, dnsmasq=True)
+            else:
+                oldnetxml = network.XMLDesc()
+                root = ET.fromstring(oldnetxml)
+                dns = list(root.getiterator('dns'))
+                if not dns:
+                    base = list(root.getiterator('network'))[0]
+                    dns = ET.Element("dns")
+                    base.append(dns)
+                    newxml = ET.tostring(root)
+                    conn.networkDefineXML(newxml.decode("utf-8"))
+                dnsentry = '<host ip="%s"><hostname>%s</hostname>' % (ip, name)
+                if domain is not None:
+                    dnsentry = '%s<hostname>%s.%s</hostname>' % (dnsentry, name, domain)
+                for entry in alias:
+                    dnsentry = "%s<hostname>%s</hostname>" % (dnsentry, entry)
+                dnsentry = "%s</host>" % dnsentry
+                if force:
+                    for host in list(root.getiterator('host')):
+                        iphost = host.get('ip')
+                        machost = host.get('mac')
+                        if iphost == ip and machost is None:
+                            existing = []
+                            for hostname in list(host.getiterator('hostname')):
+                                existing.append(hostname.text)
+                            if name in existing:
+                                common.pprint("Entry already found for %s" % name, color='red')
+                            oldentry = '<host ip="%s"></host>' % iphost
+                            common.pprint("Removing old dns entry for ip %s" % ip, color='blue')
+                            network.update(2, 10, 0, oldentry, 1)
+                try:
+                    network.update(4, 10, 0, dnsentry, 1)
+                except:
+                    common.pprint("Entry already found for %s" % name, color='red')
 
     def reserve_host(self, name, nets, domain):
         """

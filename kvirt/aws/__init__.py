@@ -1111,7 +1111,7 @@ class Kaws(object):
             return image
         return image
 
-    def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, instanceid=None):
+    def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, primary=False, instanceid=None):
         """
 
         :param name:

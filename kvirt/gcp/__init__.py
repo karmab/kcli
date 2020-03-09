@@ -1286,7 +1286,7 @@ class Kgcp(object):
         else:
             return image
 
-    def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False):
+    def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, primary=False):
         """
 
         :param name:
