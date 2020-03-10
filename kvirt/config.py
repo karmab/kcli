@@ -682,7 +682,7 @@ $INFO
             while 'reboot' in cmds:
                 cmds.remove('reboot')
             cmds.append('reboot')
-        if image is not None and (image.startswith('rhel-8') or 'rhcos' in image) and disks:
+        if image is not None and ('rhel-8' in image or 'rhcos' in image) and disks:
             firstdisk = disks[0]
             if isinstance(firstdisk, str) and firstdisk.isdigit():
                 firstdisk = int(firstdisk)

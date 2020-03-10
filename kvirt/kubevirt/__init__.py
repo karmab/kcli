@@ -357,8 +357,8 @@ class Kubevirt(Kubecommon):
                     idx = subindex.pop() + 1
             cmds = cmds[:idx] + gcmds + cmds[idx:]
         if cloudinit:
-            if image is not None and ('coreos' in image or image.startswith('rhcos')):
-                version = '3.0.0' if image.startswith('fedora-coreos') else '2.2.0'
+            if image is not None and ('coreos' in image or 'rhcos' in image):
+                version = '3.0.0' if 'fedora-coreos' in image else '2.2.0'
                 ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                                domain=domain, reserveip=reserveip, files=files,
                                                enableroot=enableroot, overrides=overrides, version=version,

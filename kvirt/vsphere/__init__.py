@@ -449,8 +449,8 @@ class Ksphere:
             clonespec.powerOn = False
             cloudinitiso = None
             if cloudinit:
-                if image is not None and ('coreos' in image or image.startswith('rhcos') or 'fcos' in image):
-                    version = '3.0.0' if image.startswith('fedora-coreos') or image.startswith('fcos') else '2.2.0'
+                if image is not None and ('coreos' in image or 'rhcos' in image or 'fcos' in image):
+                    version = '3.0.0' if 'fedora-coreos' in image or 'fcos' in image else '2.2.0'
                     ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                                    domain=domain, reserveip=reserveip, files=files,
                                                    enableroot=enableroot, overrides=overrides, version=version,
@@ -688,8 +688,8 @@ class Ksphere:
             waitForMe(t)
         t = vm.Destroy_Task()
         waitForMe(t)
-        if image is not None and 'coreos' not in image and not image.startswith('rhcos') and\
-                not image.startswith('fcos') and vmpath.endswith(name):
+        if image is not None and 'coreos' not in image and 'rhcos' not in image and\
+                'fcos' not in image and vmpath.endswith(name):
             deletedirectory(si, dc, vmpath)
         if plan != 'kvirt':
             planfolder = find(si, vmFolder, vim.Folder, plan)

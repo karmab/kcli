@@ -579,7 +579,7 @@ class Kvirt(object):
                         <readonly/>
                         </disk>""" % iso
         if cloudinit:
-            if image is not None and ('coreos' in image or image.startswith('rhcos')):
+            if image is not None and ('coreos' in image or 'rhcos' in image):
                 localhosts = ['localhost', '127.0.0.1']
                 ignition = True
                 ignitiondir = '/var/tmp'
@@ -1551,7 +1551,7 @@ class Kvirt(object):
             e = element.find('{kvirt}image')
             if e is not None:
                 image = e.text
-                if image is not None and ('coreos' in image or image.startswith('rhcos')):
+                if image is not None and ('coreos' in image or 'rhcos' in image):
                     ignition = True
                 break
         for index, element in enumerate(list(root.getiterator('disk'))):

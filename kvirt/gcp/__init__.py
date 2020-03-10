@@ -361,8 +361,8 @@ class Kgcp(object):
             newval = {'key': 'domain', 'value': domain}
             body['metadata']['items'].append(newval)
             # body['hostname'] = "%s.%s" % (name, domain)
-        if image is not None and (image.startswith('coreos') or image.startswith('rhcos')):
-            version = '3.0.0' if image.startswith('fedora-coreos') else '2.2.0'
+        if image is not None and ('coreos' in image or 'rhcos' in image):
+            version = '3.0.0' if 'fedora-coreos' in image else '2.2.0'
             userdata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                        domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
                                        overrides=overrides, version=version, plan=plan)
