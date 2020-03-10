@@ -50,8 +50,7 @@ def get_ci_installer(pull_secret, tag=None, macosx=False, upstream=False):
         for line in r:
             tag_match = re.match('.*label="(.*.)", shape=.*', str(line))
             if tag_match is not None:
-                if '4.5' not in tag_match.group(1):
-                    tags.append(tag_match.group(1))
+                tags.append(tag_match.group(1))
         tag = sorted(tags)[-1]
     if '/' not in str(tag):
         tag = 'registry.svc.ci.openshift.org/%s/release:%s' % (basetag, tag)
