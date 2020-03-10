@@ -424,11 +424,10 @@ The following parameters are specific to ovirt:
 -  org Organization
 -  ca_file Points to a local path with the cert of the ovirt engine
    host. It can be retrieved with
-   ``wget http://$HOST/ovirt-engine/services/pki-resource?resource=ca-certificate&format=X509-PEM-CA``
+   ``curl "http://$HOST/ovirt-engine/services/pki-resource?resource=ca-certificate&format=X509-PEM-CA" > ~/.kcli/ovirt.pem``
 -  cluster Defaults to Default
 -  datacenter Defaults to Default
--  filtervms Defaults to True. Only list vms created by kcli. Useful for
-   environments when you are superadmin and have a ton of vms!!!
+-  filtervms Defaults to True. Only list vms created by kcli.
 -  filteruser Defaults to False. Only list vms created by own user
 -  filtertag Defaults to None. Only list vms created by kcli with the
    corresponding filter=filtertag in their description. Useful for
@@ -438,10 +437,15 @@ The following parameters are specific to ovirt:
 
 Note that pool in Ovirt context refers to storage domain.
 
-To use this provider with kcli rpm, you’ll need to install (from pip)
-*ovirt-engine-sdk-python*
+To use this provider with kcli rpm, you’ll need to install -
+http://resources.ovirt.org/pub/yum-repo/ovirt-release-master.rpm -
+python3-ovirt-engine-sdk4
 
-On fedora, for instance, you can run the following:
+Deploying Ovirt dependencies with pip
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You will need to get *ovirt-engine-sdk-python* . On fedora, for
+instance, you would run:
 
 ::
 
