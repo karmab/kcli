@@ -1052,13 +1052,15 @@ def scale_kube(args):
         paramfile = "kcli_parameters.yml"
         common.pprint("using default parameter file kcli_parameters.yml")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    if 'type' in overrides:
+        _type = overrides['type']
+        common.pprint("Setting type to %s as specified as parameter" % _type)
     if _type == 'openshift':
-        overrides = common.get_overrides(paramfile=paramfile, param=args.param)
         if workers > 0:
             overrides['workers'] = workers
         config.scale_kube_openshift(args.cluster, overrides=overrides)
     else:
-        # overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
         common.pprint("Not supported on other platforms yet")
 
 
