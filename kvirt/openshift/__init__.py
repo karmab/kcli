@@ -468,8 +468,9 @@ def create(config, plandir, cluster, overrides):
             pprint("Deleting %s" % vm)
             k.delete(vm)
     if platform in virtplatforms:
-        pprint("Waiting 30s before retrieving workers ignition data", color='blue')
-        sleep(30)
+        wait_time = 60 if upstream else 30
+        pprint("Waiting %s before retrieving workers ignition data" % wait_time, color='blue')
+        sleep(wait_time)
         ignitionworkerfile = "%s/worker.ign" % clusterdir
         os.remove(ignitionworkerfile)
         while not os.path.exists(ignitionworkerfile) or os.stat(ignitionworkerfile).st_size == 0:
