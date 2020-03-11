@@ -162,11 +162,13 @@ def create(config, plandir, cluster, overrides):
             'pull_secret': 'openshift_pull.json',
             'version': 'nightly',
             'macosx': False,
-            'upstream': False}
+            'upstream': False,
+            'baremetal': False}
     data.update(overrides)
     ipv6 = data['ipv6']
     upstream = data.get('upstream')
     version = data.get('version')
+    baremetal = data.get('baremetal')
     if version not in ['ci', 'nightly']:
         pprint("Using stable version", color='blue')
     else:
@@ -299,6 +301,11 @@ def create(config, plandir, cluster, overrides):
         pprint("Leaving environment for debugging purposes", color='red')
         pprint("You can delete it with kcli delete kube --yes %s" % cluster, color='red')
         os._exit(run)
+    if baremetal:
+        for f in [f for f in glob("%s/openshift/99_openshift-cluster-api_master-machines-*.yaml" % clusterdir)]:
+            os.remove(f)
+        for f in [f for f in glob("%s/openshift/99_openshift-cluster-api_worker-machineset-*.yaml" % clusterdir)]:
+            os.remove(f)
     for f in [f for f in glob("customisation/*.yaml")]:
         if '99-ingress-controller.yaml' in f:
             ingressrole = 'master' if workers == 0 else 'worker'

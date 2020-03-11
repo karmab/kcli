@@ -185,9 +185,9 @@ class KOvirt(object):
                     found = True
             if not found:
                 return {'result': 'failure', 'reason': "image %s not found" % image}
-            if 'coreos' in image or 'rhcos' in image:
+            if image is not None and common.needs_ignition(image):
                 ignitiondata = ''
-                version = '3.0.0' if 'fedora-coreos' in image else '2.2.0'
+                version = common.ignition_version(image)
                 ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                                domain=domain, reserveip=reserveip, files=files,
                                                enableroot=enableroot, overrides=overrides, version=version, plan=plan,

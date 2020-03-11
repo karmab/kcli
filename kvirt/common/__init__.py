@@ -1268,3 +1268,18 @@ def is_debian(image):
         return True
     else:
         return False
+
+
+def needs_ignition(image):
+    if 'coreos' in image or 'rhcos' in image or 'fcos' in image or 'fedora-coreos' in image:
+        return True
+    else:
+        return False
+
+
+def ignition_version(image):
+    if 'fedora-coreos' in image or 'fcos' in image:
+        version = '3.0.0'
+    else:
+        version = '2.2.0'
+    return version

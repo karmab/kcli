@@ -185,8 +185,8 @@ class Kaws(object):
                 homekey = open("%s/.kcli/id_dsa.pub" % os.environ['HOME']).read()
             conn.import_key_pair(KeyName=keypair, PublicKeyMaterial=homekey)
         if cloudinit:
-            if image is not None and ('coreos' in image or 'rhcos' in image):
-                version = '3.0.0' if 'fedora-coreos' in image else '2.2.0'
+            if image is not None and common.needs_ignition(image):
+                version = common.ignition_version(image)
                 userdata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                            domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
                                            overrides=overrides, version=version, plan=plan)

@@ -30,7 +30,11 @@ platform:
     password: {{ config_password }}
     datacenter: {{ config_datacenter }}
     defaultDatastore: {{ config_pool }}
-{%- else %}
+{%- elif baremetal %}
+  baremetal:
+    provisioningBridge: {{ provisioning_net }}
+    provisioningNetworkInterface: {{ provisioning_nic }}
+{%- else %} 
   none: {}
 {%- endif %}
 {%- if ca is defined %}

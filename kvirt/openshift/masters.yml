@@ -28,6 +28,8 @@ parameters:
  disconnected_user:
  disconnected_password:
  ipv6: false
+ provisioning_net: provisioning
+ provisioning_nic: ens4
 
 {{ cluster }}-bootstrap:
  image: {{ image }}
@@ -70,6 +72,9 @@ parameters:
  {% set net0 = {"name": network, "mac": master_macs[num]} %}
 {% else %}
  {% set net0 = network %}
+{% endif %}
+{% if baremetal and not extra_networks %}
+ {% set extra_networks = [provisioning_net] %}
 {% endif %}
 
 {{ cluster }}-master-{{ num }}:

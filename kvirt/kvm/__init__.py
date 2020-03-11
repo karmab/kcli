@@ -579,7 +579,7 @@ class Kvirt(object):
                         <readonly/>
                         </disk>""" % iso
         if cloudinit:
-            if image is not None and ('coreos' in image or 'rhcos' in image):
+            if image is not None and common.needs_ignition(image):
                 localhosts = ['localhost', '127.0.0.1']
                 ignition = True
                 ignitiondir = '/var/tmp'
@@ -591,7 +591,7 @@ class Kvirt(object):
                         return {'result': 'failure', 'reason': msg}
                 elif self.protocol == 'ssh' and self.host not in localhosts:
                     ignitiondir = '/tmp'
-                version = '3.0.0' if image.startswith('fedora-coreos') else '2.2.0'
+                version = common.ignition_version(image)
                 ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                                domain=domain, reserveip=reserveip, files=files,
                                                enableroot=enableroot, overrides=overrides, version=version, plan=plan,
