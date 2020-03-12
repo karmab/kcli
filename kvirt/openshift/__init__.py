@@ -256,7 +256,7 @@ def create(config, plandir, cluster, overrides):
         if version_match is not None:
             COS_VERSION = "%s%s" % (version_match.group(1), version_match.group(2))
         else:
-            COS_VERSION = "latest"
+            COS_VERSION = "44"
     if image is None:
         images = [v for v in k.volumes() if COS_TYPE in v and COS_VERSION in v]
         if images:
