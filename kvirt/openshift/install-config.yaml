@@ -11,7 +11,7 @@ metadata:
 networking:
   networkType: {{ network_type | default('OpenShiftSDN') }}
 {%- if baremetal %}
-  machineCIDR: 192.168.122.0/24
+  machineCIDR: 192.168.125.0/24
 {%- endif %}
   clusterNetworks:
 {%- if ipv6 %}
@@ -35,19 +35,19 @@ platform:
     defaultDatastore: {{ config_pool }}
 {%- elif baremetal %}
   baremetal:
-    apiVIP: 192.168.122.1
-    dnsVIP: 192.168.122.1
-    ingressVIP: 192.168.122.1
+    apiVIP: 192.168.125.1
+    dnsVIP: 192.168.125.1
+    ingressVIP: 192.168.125.1
     provisioningBridge: {{ provisioning_net }}
     provisioningNetworkInterface: {{ provisioning_nic }}
     hosts:
-    - name: master-0
+    - name: fake-0
       role: master
       bmc:
-        address: ipmi://192.168.122.254:6230
+        address: ipmi://192.168.125.254:6230
         username: xxx
         password: xxx
-      bootMACAddress: aa:aa:aa:aa:aa:01
+      bootMACAddress: aa:bb:cc:dd:aa:01
 {%- else %} 
   none: {}
 {%- endif %}
