@@ -1,27 +1,3 @@
-parameters:
- numcpus: 4
- network: default
- worker_memory: 8192
- disk_size: 30
- image: rhcos44
- cluster: testk
- domain: karmalabs.com
- workers: 0
- scale: false
- autostart: false
- keys: []
- api_ip: 
- ingress_ip: 
- extra_disks: []
- extra_networks: []
- worker_macs: []
- worker_ips: []
- numa:
- numamode:
- cpupinning:
- pcidevices:
- cloud_tag:
-
 {% for num in range(0, workers) %}
 {% if worker_macs and worker_macs|length >= workers %}
  {% set net0 = {"name": network, "mac": worker_macs[num]} %}

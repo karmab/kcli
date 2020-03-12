@@ -629,26 +629,34 @@ def get_overrides(paramfile=None, param=[]):
     return overrides
 
 
-def get_parameters(inputfile):
+def get_parameters(inputfile, raw=False):
     """
 
     :param inputfile:
+    :param raw:
     :return:
     """
-    parameters = ""
-    found = False
-    for line in open(inputfile).readlines():
-        if found and not line.startswith(' '):
-            break
-        elif found:
-            parameters += line
-        elif line != 'parameters:\n' and not found:
-            continue
-        else:
-            parameters += line
-            found = True
-    results = parameters if parameters != '' else None
-    return results
+    if raw:
+        with open(inputfile, 'r') as entries:
+            try:
+                return yaml.safe_load(entries)
+            except:
+                return None
+    else:
+        parameters = ""
+        found = False
+        for line in open(inputfile).readlines():
+            if found and not line.startswith(' '):
+                break
+            elif found:
+                parameters += line
+            elif line != 'parameters:\n' and not found:
+                continue
+            else:
+                parameters += line
+                found = True
+        results = parameters if parameters != '' else None
+        return results
 
 
 def print_info(yamlinfo, output='plain', fields=[], values=False, pretty=True):

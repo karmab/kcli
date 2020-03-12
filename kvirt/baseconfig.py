@@ -529,14 +529,27 @@ class Kbaseconfig:
         :return:
         """
         inputfile = os.path.expanduser(inputfile) if inputfile is not None else 'kcli_plan.yml'
+        basedir = os.path.dirname(inputfile)
+        if basedir == "":
+            basedir = '.'
+        plan = os.path.basename(inputfile).replace('.yml', '').replace('.yaml', '')
         if not quiet:
             common.pprint("Providing information on parameters of plan %s..." % inputfile)
         if not os.path.exists(inputfile):
             common.pprint("No input file found nor default kcli_plan.yml. Leaving....", color='red')
             os._exit(1)
-        parameters = common.get_parameters(inputfile)
+        if os.path.exists("%s/%s_default.yml" % (basedir, plan)):
+            parameterfile = "%s/%s_default.yml" % (basedir, plan)
+            common.pprint("Using %s_default.yml for default parameters" % plan)
+        elif os.path.exists("%s/kcli_default.yml" % basedir):
+            parameterfile = "%s/kcli_default.yml" % basedir
+            common.pprint("Using kcli_default.yml for default parameters")
+        else:
+            parameterfile = inputfile
+        raw = True if parameterfile != inputfile else False
+        parameters = common.get_parameters(parameterfile, raw=raw)
         if parameters is not None:
-            parameters = yaml.safe_load(parameters)['parameters']
+            parameters = yaml.safe_load(parameters)['parameters'] if not raw else parameters
             if web:
                 return parameters
             for parameter in parameters:
@@ -618,9 +631,18 @@ class Kbaseconfig:
         except TemplateError as e:
             common.pprint("Error rendering file %s. Got: %s" % (inputfile, e.message), color='red')
             os._exit(1)
-        parameters = common.get_parameters(inputfile)
+        if os.path.exists("%s/%s_default.yml" % (basedir, plan)):
+            parameterfile = "%s/%s_default.yml" % (basedir, plan)
+            common.pprint("Using %s_default.yml for default parameters" % plan)
+        elif os.path.exists("%s/kcli_default.yml" % basedir):
+            parameterfile = "%s/kcli_default.yml" % basedir
+            common.pprint("Using kcli_default.yml for default parameters")
+        else:
+            parameterfile = inputfile
+        raw = True if parameterfile != inputfile else False
+        parameters = common.get_parameters(parameterfile, raw=raw)
         if parameters is not None:
-            parameters = yaml.safe_load(parameters)['parameters']
+            parameters = yaml.safe_load(parameters)['parameters'] if not raw else parameters
             if not isinstance(parameters, dict):
                 common.pprint("Error rendering parameters section of file %s" % inputfile, color='red')
                 os._exit(1)
