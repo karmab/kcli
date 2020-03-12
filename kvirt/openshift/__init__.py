@@ -406,12 +406,17 @@ def create(config, plandir, cluster, overrides):
             sedcmd += '%s/master.ign' % clusterdir
             sedcmd += ' > %s/bootstrap.ign' % clusterdir
             call(sedcmd, shell=True)
-        if ipv6:
-            sedcmd = 'sed -i "s@https://api-int.%s.%s:22623/config@http://[%s]@"' % (cluster, domain, api_ip)
+        if baremetal:
+            new_api_ip = api_ip if not ipv6 else "[%s]" % api_ip
+            sedcmd = 'sed -i "s@https://192.168.122.1:22623/config@http://%s@"' % new_api_ip
+            sedcmd += ' %s/master.ign' % clusterdir
+            call(sedcmd, shell=True)
+
         else:
-            sedcmd = 'sed -i "s@https://api-int.%s.%s:22623/config@http://%s@"' % (cluster, domain, api_ip)
-        sedcmd += ' %s/master.ign' % clusterdir
-        call(sedcmd, shell=True)
+            new_api_ip = api_ip if not ipv6 else "[%s]" % api_ip
+            sedcmd = 'sed -i "s@https://api-int.%s.%s:22623/config@http://%s@"' % (cluster, domain, new_api_ip)
+            sedcmd += ' %s/master.ign' % clusterdir
+            call(sedcmd, shell=True)
     if platform in cloudplatforms:
         bootstrap_helper_name = "%s-bootstrap-helper" % cluster
         overrides = {'reservedns': True, 'domain': '%s.%s' % (cluster, domain), 'tags': [tag], 'plan': cluster,
@@ -469,7 +474,7 @@ def create(config, plandir, cluster, overrides):
             k.delete(vm)
     if platform in virtplatforms:
         wait_time = 60 if upstream else 30
-        pprint("Waiting %s before retrieving workers ignition data" % wait_time, color='blue')
+        pprint("Waiting %ss before retrieving workers ignition data" % wait_time, color='blue')
         sleep(wait_time)
         ignitionworkerfile = "%s/worker.ign" % clusterdir
         os.remove(ignitionworkerfile)

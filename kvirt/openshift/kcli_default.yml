@@ -19,6 +19,8 @@ master_macs: []
 master_ips: []
 bootstrap_mac: 
 bootstrap_ip: 
+worker_macs: []
+worker_ips: []
 numa:
 numamode:
 cpupinning:
@@ -29,3 +31,5 @@ disconnected_password:
 ipv6: false
 provisioning_net: provisioning
 provisioning_nic: ens4
+cloud_tag:
+

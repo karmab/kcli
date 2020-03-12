@@ -10,6 +10,9 @@ metadata:
   name: {{ cluster }}
 networking:
   networkType: {{ network_type | default('OpenShiftSDN') }}
+{%- if baremetal %}
+  machineCIDR: 192.168.122.0/24
+{%- endif %}
   clusterNetworks:
 {%- if ipv6 %}
   - cidr: fd01::/48
@@ -32,8 +35,19 @@ platform:
     defaultDatastore: {{ config_pool }}
 {%- elif baremetal %}
   baremetal:
+    apiVIP: 192.168.122.1
+    dnsVIP: 192.168.122.1
+    ingressVIP: 192.168.122.1
     provisioningBridge: {{ provisioning_net }}
     provisioningNetworkInterface: {{ provisioning_nic }}
+    hosts:
+    - name: master-0
+      role: master
+      bmc:
+        address: ipmi://192.168.122.254:6230
+        username: xxx
+        password: xxx
+      bootMACAddress: aa:aa:aa:aa:aa:01
 {%- else %} 
   none: {}
 {%- endif %}
@@ -44,7 +58,7 @@ additionalTrustBundle: |
 pullSecret: '{{ pull_secret }}'
 sshKey: |
   {{ pub_key }}
-{% if disconnected_url is defined -%}
+{% if disconnected_url != None -%}
 imageContentSources:
 - mirrors:
   - {{ disconnected_url }}/ocp/release
