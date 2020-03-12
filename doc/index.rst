@@ -1291,8 +1291,8 @@ Deploying kubernetes/openshift clusters
 Deploying generic kubernetes clusters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Deploying openshift clusters
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Deploying openshift/okd clusters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 *DISCLAIMER*: This is not supported in anyway by Red Hat.
 
@@ -1316,7 +1316,7 @@ The main features are:
 Requirements
 ^^^^^^^^^^^^
 
--  Valid pull secret.
+-  Valid pull secret (for downstream)
 -  ssh public key.
 -  Write access to /etc/hosts file to allow editing of this file.
 -  An available ip in your vm’s network to use as *api_ip*. Make sure it

@@ -248,7 +248,7 @@ def create(config, plandir, cluster, overrides):
     INSTALLER_VERSION = os.popen('openshift-install version').readlines()[0].split(" ")[1].strip()
     pprint("Using installer version %s" % INSTALLER_VERSION, color='blue')
     if upstream:
-        COS_VERSION = "latest"
+        COS_VERSION = ""
         COS_TYPE = "fcos"
     else:
         COS_TYPE = "rhcos"
@@ -256,7 +256,7 @@ def create(config, plandir, cluster, overrides):
         if version_match is not None:
             COS_VERSION = "%s%s" % (version_match.group(1), version_match.group(2))
         else:
-            COS_VERSION = "44"
+            COS_VERSION = "latest"
     if image is None:
         images = [v for v in k.volumes() if COS_TYPE in v and COS_VERSION in v]
         if images:
