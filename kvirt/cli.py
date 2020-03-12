@@ -1227,6 +1227,7 @@ def restart_plan(args):
 def info_plan(args):
     """Info plan """
     plan = args.plan
+    quiet = args.quiet
     url = args.url
     path = args.path
     inputfile = args.inputfile
@@ -1235,11 +1236,11 @@ def info_plan(args):
     if url is None:
         inputfile = plan if inputfile is None and plan is not None else inputfile
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-        baseconfig.info_plan(inputfile)
+        baseconfig.info_plan(inputfile, quiet=quiet)
     else:
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
-        config.plan(plan, url=url, path=path, inputfile=inputfile, info=True)
+        config.plan(plan, url=url, path=path, inputfile=inputfile, info=True, quiet=quiet)
     return 0
 
 
@@ -1248,9 +1249,9 @@ def info_kube(args):
     _type = args.type
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if _type == 'openshift':
-        config.info_kube_openshift()
+        config.info_kube_openshift(quiet=args.quiet)
     else:
-        config.info_kube_generic()
+        config.info_kube_generic(quiet=args.quiet)
     return 0
 
 
@@ -2131,6 +2132,7 @@ def cli():
 
     kubeinfo_desc = 'Info Kube'
     kubeinfo_parser = info_subparsers.add_parser('kube', description=kubeinfo_desc, help=kubeinfo_desc)
+    kubeinfo_parser.add_argument('-q', '--quiet', action='store_true', help='Provide parameter file output')
     kubeinfo_parser.add_argument('-t', '--type', type=str, choices=['generic', 'openshift'], default='generic',
                                  metavar='TYPE', help='type for the kubernetes cluster. Use generic or openshift')
     kubeinfo_parser.set_defaults(func=info_kube)
@@ -2279,6 +2281,7 @@ def cli():
                                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     planinfo_parser.add_argument('-f', '--inputfile', help='Input Plan file')
     planinfo_parser.add_argument('-p', '--path', help='Path where to download plans. Defaults to plan', metavar='PATH')
+    planinfo_parser.add_argument('-q', '--quiet', action='store_true', help='Provide parameter file output')
     planinfo_parser.add_argument('-u', '--url', help='Url for plan', metavar='URL')
     planinfo_parser.add_argument('plan', metavar='PLAN', nargs='?')
     planinfo_parser.set_defaults(func=info_plan)

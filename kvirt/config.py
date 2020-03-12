@@ -835,7 +835,7 @@ $INFO
     def plan(self, plan, ansible=False, url=None, path=None, autostart=False, container=False, noautostart=False,
              inputfile=None, inputstring=None, start=False, stop=False, delete=False, force=True, overrides={},
              info=False, snapshot=False, revert=False, update=False, embedded=False, restart=False, download=False,
-             wait=False):
+             wait=False, quiet=False):
         """Manage plan file"""
         k = self.k
         no_overrides = not overrides
@@ -1058,7 +1058,8 @@ $INFO
             inputfile = os.path.basename(url)
             onfly = os.path.dirname(url)
             path = plan if path is None else path
-            common.pprint("Retrieving specified plan from %s to %s" % (url, path))
+            if not quiet:
+                common.pprint("Retrieving specified plan from %s to %s" % (url, path))
             if os.path.exists("/i_am_a_container"):
                 path = "/workdir/%s" % path
             if not os.path.exists(path):
@@ -1128,7 +1129,7 @@ $INFO
             common.pprint("No input file found nor default kcli_plan.yml.Leaving....", color='red')
             os._exit(1)
         if info:
-            self.info_plan(inputfile, onfly=onfly)
+            self.info_plan(inputfile, onfly=onfly, quiet=quiet)
             if toclean:
                 os.chdir('..')
                 rmtree(path)
@@ -1824,12 +1825,12 @@ $INFO
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
         openshift.scale(self, plandir, cluster, overrides)
 
-    def info_kube_generic(self):
+    def info_kube_generic(self, quiet):
         plandir = kube.__path__[0]
         inputfile = '%s/kcli_plan.yml' % plandir
-        self.plan('xxx', inputfile=inputfile, info=True)
+        self.plan('xxx', inputfile=inputfile, info=True, quiet=quiet)
 
-    def info_kube_openshift(self):
+    def info_kube_openshift(self, quiet):
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
         inputfile = '%s/masters.yml' % plandir
-        self.plan('xxx', inputfile=inputfile, info=True)
+        self.plan('xxx', inputfile=inputfile, info=True, quiet=quiet)

@@ -540,10 +540,12 @@ class Kbaseconfig:
             os._exit(1)
         if os.path.exists("%s/%s_default.yml" % (basedir, plan)):
             parameterfile = "%s/%s_default.yml" % (basedir, plan)
-            common.pprint("Using %s_default.yml for default parameters" % plan)
+            if not quiet:
+                common.pprint("Using %s_default.yml for default parameters" % plan)
         elif os.path.exists("%s/kcli_default.yml" % basedir):
             parameterfile = "%s/kcli_default.yml" % basedir
-            common.pprint("Using kcli_default.yml for default parameters")
+            if not quiet:
+                common.pprint("Using kcli_default.yml for default parameters")
         else:
             parameterfile = inputfile
         raw = True if parameterfile != inputfile else False
