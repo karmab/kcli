@@ -43,7 +43,6 @@ def get_downstream_installer(nightly=False, macosx=False, tag=None):
 
 def get_ci_installer(pull_secret, tag=None, macosx=False, upstream=False):
     base = 'openshift' if not upstream else 'origin'
-    basetag = 'ocp' if not upstream else 'origin'
     if tag is None:
         tags = []
         r = urlopen("https://%s-release.svc.ci.openshift.org/graph?format=dot" % base).readlines()
@@ -52,8 +51,6 @@ def get_ci_installer(pull_secret, tag=None, macosx=False, upstream=False):
             if tag_match is not None:
                 tags.append(tag_match.group(1))
         tag = sorted(tags)[-1]
-    if '/' not in str(tag):
-        tag = 'registry.svc.ci.openshift.org/%s/release:%s' % (basetag, tag)
     os.environ['OPENSHIFT_RELEASE_IMAGE'] = tag
     msg = 'Downloading openshift-install %s in current directory' % tag
     pprint(msg, color='blue')
@@ -234,6 +231,12 @@ def create(config, plandir, cluster, overrides):
                 call(occmd, shell=True)
             else:
                 move('oc', '/workdir/oc')
+    if tag is not None:
+        if '/' not in str(tag):
+            basetag = 'ocp' if not upstream else 'origin'
+            tag = 'registry.svc.ci.openshift.org/%s/release:%s' % (basetag, tag)
+        os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = tag
+        pprint("Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to %s" % tag, color='blue')
     if find_executable('openshift-install') is None:
         if version == 'ci':
             get_ci_installer(pull_secret, tag=tag, upstream=upstream)
