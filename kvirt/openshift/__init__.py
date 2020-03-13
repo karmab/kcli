@@ -502,13 +502,13 @@ def create(config, plandir, cluster, overrides):
                 workerdata = insecure_fetch("https://api.%s.%s:22623/config/worker" % (cluster, domain))
                 w.write(workerdata)
             sleep(5)
-        pprint("Deploying workers", color='blue')
-        if 'name' in overrides:
-            del overrides['name']
-        config.plan(cluster, inputfile='%s/workers.yml' % plandir, overrides=overrides)
+        if workers > 0:
+            pprint("Deploying workers", color='blue')
+            if 'name' in overrides:
+                del overrides['name']
+            config.plan(cluster, inputfile='%s/workers.yml' % plandir, overrides=overrides)
     call("oc adm taint nodes -l node-role.kubernetes.io/master node-role.kubernetes.io/master:NoSchedule-", shell=True)
     pprint("Deploying certs autoapprover cronjob", color='blue')
-    # call("oc create -f %s/autoapprovercron.yml ; oc apply -f %s/autoapprovercron.yml" % (plandir, plandir),shell=True)
     autoapprover = config.process_inputfile(cluster, "%s/autoapprovercron.yml" % plandir, overrides=data)
     with open("%s/autoapprovercron.yml" % clusterdir, 'w') as f:
         f.write(autoapprover)
@@ -518,10 +518,3 @@ def create(config, plandir, cluster, overrides):
     installcommand = "%s | %s" % (installcommand, installcommand)
     pprint("Launching install-complete step. Note it will be retried one extra time in case of timeouts", color='blue')
     call(installcommand, shell=True)
-    # extrasdir = pwd_path("extras")
-    # if os.path.exists(extrasdir):
-    #     pprint("Deploying extras", color='blue')
-    #     os.chdir(extrasdir)
-    #     for entry in sorted(os.listdir('.')):
-    #         if os.path.isfile(entry) and entry.endswith('sh'):
-    #             call("bash %s" % entry, shell=True)

@@ -51,13 +51,14 @@ def create(config, plandir, cluster, overrides):
         get_kubectl()
     if not os.path.exists(clusterdir):
         os.makedirs(clusterdir)
+        os.mkdir("%s/auth" % clusterdir)
     k = config.k
     config.plan(cluster, inputfile='%s/masters.yml' % plandir, overrides=data, wait=True)
     source, destination = "/root/join.sh", "%s/join.sh" % clusterdir
     scpcmd = k.scp(firstmaster, user='root', source=source, destination=destination, tunnel=config.tunnel,
                    download=True, insecure=True)
     os.system(scpcmd)
-    source, destination = "/etc/kubernetes/admin.conf", "%s/admin.conf" % clusterdir
+    source, destination = "/etc/kubernetes/admin.conf", "%s/auth/kubeconfig" % clusterdir
     scpcmd = k.scp(firstmaster, user='root', source=source, destination=destination, tunnel=config.tunnel,
                    download=True, insecure=True)
     os.system(scpcmd)
