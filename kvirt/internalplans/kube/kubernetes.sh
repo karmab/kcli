@@ -52,7 +52,7 @@ ssh {{ cluster }}-master-0{{ number }} chown root:root /root/.kube/config
 {% endif %}
 
 {% for number in range(0,workers) %}
-ssh-keyscan -H {{ cluster }}-worker-0{{ number }} >> ~/.ssh/known_hosts
-scp /etc/kubernetes/admin.conf root@{{ cluster }}-worker-0{{ number }}:/etc/kubernetes/
-ssh root@{{ cluster }}-worker-0{{ number }} ${CMD} > /root/{{ cluster }}-worker-0{{ number }}.log 2>&1
+ssh-keyscan -H {{ cluster }}-worker-{{ number }} >> ~/.ssh/known_hosts
+scp /etc/kubernetes/admin.conf root@{{ cluster }}-worker-{{ number }}:/etc/kubernetes/
+ssh root@{{ cluster }}-worker-{{ number }} ${CMD} > /root/{{ cluster }}-worker-{{ number }}.log 2>&1
 {% endfor %}
