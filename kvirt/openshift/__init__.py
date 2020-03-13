@@ -13,10 +13,21 @@ from shutil import copy2, move
 from subprocess import call
 from time import sleep
 from urllib.request import urlopen
+import requests
 
 
 virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere']
 cloudplatforms = ['aws', 'gcp']
+
+
+def get_rhcos_openstack_url():
+    for line in os.popen('openshift-install version').readlines():
+        if 'built from commit' in line:
+            commit_id = line.replace('built from commit ', '').strip()
+            break
+    r = requests.get("https://raw.githubusercontent.com/openshift/installer/%s/data/data/rhcos.json" % commit_id)
+    data = r.json()
+    return "%s%s" % (data['baseURI'], data['images']['openstack']['path'])
 
 
 def get_downstream_installer(nightly=False, macosx=False, tag=None):
@@ -309,13 +320,18 @@ def create(config, plandir, cluster, overrides):
             os.remove(f)
         for f in glob("%s/openshift/99_openshift-cluster-api_worker-machineset-*.yaml" % clusterdir):
             os.remove(f)
+        rhcos_image_url = get_rhcos_openstack_url()
+        installconfig = config.process_inputfile(cluster, "%s/metal3-config.yaml" % plandir,
+                                                 overrides={'rhcos_image_url': rhcos_image_url})
+        with open("%s/openshift/99-metal3-config.yaml" % clusterdir, 'w') as f:
+            f.write(installconfig)
     for f in glob("%s/customisation/*.yaml" % plandir):
         if '99-ingress-controller.yaml' in f:
             ingressrole = 'master' if workers == 0 else 'worker'
             replicas = masters if workers == 0 else workers
-            installconfig = config.process_inputfile(cluster, f, overrides={'replicas': replicas, 'role': ingressrole})
+            ingressconfig = config.process_inputfile(cluster, f, overrides={'replicas': replicas, 'role': ingressrole})
             with open("%s/openshift/99-ingress-controller.yaml" % clusterdir, 'w') as f:
-                f.write(installconfig)
+                f.write(ingressconfig)
         else:
             copy2(f, "%s/openshift" % clusterdir)
     manifestsdir = pwd_path("manifests")
