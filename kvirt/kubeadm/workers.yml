@@ -1,0 +1,28 @@
+{% for number in range(0, workers) %}
+{{cluster }}-worker-{{ number }}:
+ image: {{ image }}
+ numcpus: 2
+ memory: {{ node_memory }}
+ reservedns: true
+ sharedkey: true
+ domain: {{ domain }}
+ nets:
+  - {{ network }}
+ disks:
+  - size: 50
+ pool: {{ pool }}
+ files:
+  - path: /etc/yum.repos.d/kubernetes.repo
+    origin: kubernetes.repo
+  - path: /root/join.sh
+    origin: {{ basedir }}/clusters/{{ cluster }}/join.sh
+  - path: /root/admin.conf
+    origin: {{ basedir }}/clusters/{{ cluster }}/admin.conf
+ scripts: 
+{% if 'xenial' in image or 'yaketty' in image or 'zesty' in image or 'artful' in image or 'bionic' in image or 'cosmic' in image %}
+  - pre_ubuntu.sh
+{% else %}
+  - pre.sh
+{% endif %}
+  - workers.sh
+{% endfor %}

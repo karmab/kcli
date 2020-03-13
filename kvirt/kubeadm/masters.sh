@@ -41,18 +41,14 @@ CERTKEY=$(grep certificate-key /var/log/messages | head -1 | sed 's/.*certificat
 MASTERCMD="$CMD --control-plane --certificate-key $CERTKEY"
 echo $MASTERCMD > /root/mastercmd.sh
 ssh-keyscan -H {{ cluster }}-master-0{{ number }} >> ~/.ssh/known_hosts 
-scp /etc/kubernetes/admin.conf root@{{ cluster }}-master-0{{ number }}:/etc/kubernetes/
-echo ssh root@{{ cluster }}-master-0{{ number }} $MASTERCMD > /root/{{ cluster }}-master-0{{ number }}.log 2>&1
-ssh root@{{ cluster }}-master-0{{ number }} $MASTERCMD >> /root/{{ cluster }}-master-0{{ number }}.log 2>&1
-scp /etc/kubernetes/admin.conf {{ cluster }}-master-0{{ number }}:/root
+scp /etc/kubernetes/admin.conf root@{{ cluster }}-master-{{ number }}:/etc/kubernetes/
+echo ssh root@{{ cluster }}-master-0{{ number }} $MASTERCMD > /root/{{ cluster }}-master-{{ number }}.log 2>&1
+ssh root@{{ cluster }}-master-0{{ number }} $MASTERCMD >> /root/{{ cluster }}-master-{{ number }}.log 2>&1
+scp /etc/kubernetes/admin.conf {{ cluster }}-master-{{ number }}:/root
 ssh {{ cluster }}-master-0{{ number }} mkdir -p /root/.kube
 ssh {{ cluster }}-master-0{{ number }} cp -i /root/admin.conf /root/.kube/config
 ssh {{ cluster }}-master-0{{ number }} chown root:root /root/.kube/config
 {% endfor %}
 {% endif %}
 
-{% for number in range(0,workers) %}
-ssh-keyscan -H {{ cluster }}-worker-{{ number }} >> ~/.ssh/known_hosts
-scp /etc/kubernetes/admin.conf root@{{ cluster }}-worker-{{ number }}:/etc/kubernetes/
-ssh root@{{ cluster }}-worker-{{ number }} ${CMD} > /root/{{ cluster }}-worker-{{ number }}.log 2>&1
-{% endfor %}
+echo ${CMD} > /root/join.sh

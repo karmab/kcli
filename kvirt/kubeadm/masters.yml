@@ -1,0 +1,67 @@
+{{ image }}:
+ type: image
+
+{% if masters > 1 %}
+{{ cluster }}-master:
+ type: loadbalancer
+ nets:
+ - name: {{ network }}
+ ports:
+ - 6443
+ vms:
+{% for number in range(0, masters) %}
+  - {{cluster}}-master-{{ number }}
+{% endfor %}
+{%endif %}
+
+{% for number in range(0, masters) %}
+{{cluster}}-master-{{ number }}:
+ image: {{ image }}
+ numcpus: 2
+ memory: {{ master_memory }}
+ reservedns: true
+ sharedkey: true
+ domain: {{ domain }}
+{% if number == 0 %}
+ notify: {{ notify }}
+ notifycmd: {{ notifycmd }}
+{% endif %}
+ nets:
+  - {{ network }}
+ disks:
+  - size: 50
+ pool: {{ pool }}
+ files:
+{% if config_type == 'ovirt' %}
+  - ovirt_fix.sh
+{% endif %}
+  - path: /etc/yum.repos.d/kubernetes.repo
+    origin: kubernetes.repo
+{% if nfs and number == 0 %}
+  - nfs.yml
+  - nfs.sh
+{% endif %}
+{% if multus and number == 0 %}
+  - multus.yml
+  - cni-plugins.yml
+  - l2-bridge.yml
+{% endif %}
+ scripts: 
+{% if 'xenial' in image or 'yaketty' in image or 'zesty' in image or 'artful' in image or 'bionic' in image or 'cosmic' in image %}
+  - pre_ubuntu.sh
+{% else %}
+  - pre.sh
+{% endif %}
+{% if number == 0 %}
+  - masters.sh
+{% if multus %}
+  - multus.sh
+{% endif %}
+{% if deploy_app %}
+  - app.sh
+{% endif %}
+{% if nfs %}
+  - nfs.sh
+{% endif %}
+{% endif %}
+{% endfor %}

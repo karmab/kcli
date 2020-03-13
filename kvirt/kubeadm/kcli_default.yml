@@ -1,0 +1,15 @@
+masters: 1
+workers: 0
+image: centos7
+network: default
+cluster: testk
+domain: karmalabs.com
+pool: default
+master_memory: 6144
+node_memory: 4096
+deploy_app: false
+nfs: true
+sdn: flannel
+multus: false
+notifycmd: "kubectl get pod -A"
+notify: false

@@ -133,7 +133,7 @@ def scale(config, plandir, cluster, overrides):
         pprint("Missing image...", color='red')
         sys.exit(1)
     else:
-        pprint("Using image %s" % image, color='red')
+        pprint("Using image %s" % image, color='blue')
     overrides['image'] = image
     overrides['scale'] = True
     if platform in virtplatforms:
@@ -225,7 +225,7 @@ def create(config, plandir, cluster, overrides):
         call(occmd, shell=True)
         if os.path.exists('/i_am_a_container'):
             if macosx:
-                occmd = "curl -s https://mirror.openshift.com/pub/openshift-v4/clients/oc/latest/maxosx/oc.tar.gz"
+                occmd = "curl -s https://mirror.openshift.com/pub/openshift-v4/clients/oc/latest/macosx/oc.tar.gz"
                 occmd += "| tar zxf -C /workdir - oc"
                 occmd += "; chmod 700 /workdir/oc"
                 call(occmd, shell=True)
@@ -305,11 +305,11 @@ def create(config, plandir, cluster, overrides):
         pprint("You can delete it with kcli delete kube --yes %s" % cluster, color='red')
         os._exit(run)
     if baremetal:
-        for f in [f for f in glob("%s/openshift/99_openshift-cluster-api_master-machines-*.yaml" % clusterdir)]:
+        for f in glob("%s/openshift/99_openshift-cluster-api_master-machines-*.yaml" % clusterdir):
             os.remove(f)
-        for f in [f for f in glob("%s/openshift/99_openshift-cluster-api_worker-machineset-*.yaml" % clusterdir)]:
+        for f in glob("%s/openshift/99_openshift-cluster-api_worker-machineset-*.yaml" % clusterdir):
             os.remove(f)
-    for f in [f for f in glob("customisation/*.yaml")]:
+    for f in glob("%s/customisation/*.yaml" % plandir):
         if '99-ingress-controller.yaml' in f:
             ingressrole = 'master' if workers == 0 else 'worker'
             replicas = masters if workers == 0 else workers
@@ -320,7 +320,7 @@ def create(config, plandir, cluster, overrides):
             copy2(f, "%s/openshift" % clusterdir)
     manifestsdir = pwd_path("manifests")
     if os.path.exists(manifestsdir) and os.path.isdir(manifestsdir):
-        for f in [f for f in glob("%s/*.yaml" % manifestsdir)]:
+        for f in glob("%s/*.yaml" % manifestsdir):
             copy2(f, "%s/openshift" % clusterdir)
     call('openshift-install --dir=%s create ignition-configs' % clusterdir, shell=True)
     staticdata = gather_dhcp(data, platform)
@@ -411,7 +411,7 @@ def create(config, plandir, cluster, overrides):
             call(sedcmd, shell=True)
         if baremetal:
             new_api_ip = api_ip if not ipv6 else "[%s]" % api_ip
-            sedcmd = 'sed -i "s@https://192.168.122.1:22623/config@http://%s@"' % new_api_ip
+            sedcmd = 'sed -i "s@https://192.168.125.1:22623/config@http://%s@"' % new_api_ip
             sedcmd += ' %s/master.ign' % clusterdir
             call(sedcmd, shell=True)
 

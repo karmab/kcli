@@ -1056,12 +1056,12 @@ def scale_kube(args):
     if 'type' in overrides:
         _type = overrides['type']
         common.pprint("Setting type to %s as specified as parameter" % _type)
+    if workers > 0:
+        overrides['workers'] = workers
     if _type == 'openshift':
-        if workers > 0:
-            overrides['workers'] = workers
         config.scale_kube_openshift(args.cluster, overrides=overrides)
     else:
-        common.pprint("Not supported on other platforms yet")
+        config.scale_kube_generic(args.cluster, overrides=overrides)
 
 
 def create_vmnic(args):

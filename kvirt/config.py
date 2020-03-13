@@ -12,7 +12,7 @@ from kvirt.defaults import IMAGES, IMAGESCOMMANDS
 from kvirt import ansibleutils
 from kvirt import nameutils
 from kvirt import common
-from kvirt.internalplans import kube
+from kvirt import kubeadm
 from kvirt import openshift
 from kvirt.internalplans import haproxy as haproxyplan
 from kvirt.baseconfig import Kbaseconfig
@@ -447,7 +447,7 @@ class Kconfig(Kbaseconfig):
                             os.makedirs(destdir, exist_ok=True)
                         common.fetch("%s/%s" % (onfly, origin), destdir)
                     origin = os.path.expanduser(origin)
-                    if basedir != '.':
+                    if basedir != '.' and not origin.startswith('./') and not origin.startswith('/workdir/'):
                         origin = "%s/%s" % (basedir, origin)
                         files[index]['origin'] = origin
                     if not os.path.exists(origin):
@@ -1801,10 +1801,12 @@ $INFO
         return True
 
     def create_kube_generic(self, cluster, overrides={}):
-        plandir = kube.__path__[0]
-        inputfile = '%s/kcli_plan.yml' % plandir
-        overrides['cluster'] = cluster
-        self.plan(cluster, inputfile=inputfile, overrides=overrides)
+        if os.path.exists('/i_am_a_container'):
+            os.environ['PATH'] += ':/workdir'
+        else:
+            os.environ['PATH'] += ':.'
+        plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
+        kubeadm.create(self, plandir, cluster, overrides)
 
     def create_kube_openshift(self, cluster, overrides={}):
         if os.path.exists('/i_am_a_container'):
@@ -1821,12 +1823,16 @@ $INFO
             common.pprint("Deleting %s" % common.real_path(clusterdir), color='green')
             rmtree(clusterdir)
 
+    def scale_kube_generic(self, cluster, overrides={}):
+        plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
+        kubeadm.scale(self, plandir, cluster, overrides)
+
     def scale_kube_openshift(self, cluster, overrides={}):
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
         openshift.scale(self, plandir, cluster, overrides)
 
     def info_kube_generic(self, quiet):
-        plandir = kube.__path__[0]
+        plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
         inputfile = '%s/kcli_plan.yml' % plandir
         self.plan('xxx', inputfile=inputfile, info=True, quiet=quiet)
 
