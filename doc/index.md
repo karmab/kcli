@@ -991,21 +991,26 @@ kcli create product YOUR_PRODUCT
 
 ## Deploying kubernetes/openshift clusters
 
+You can deploy kubernetes or openshift/okd on any platform and on an arbitrary number of masters and workers.
+Easy scaling of workers is also supported.
+
 ### Deploying generic kubernetes clusters
+
+```
+kcli create kube -P masters=X -P workers=Y $cluster
+```
 
 ### Deploying openshift/okd clusters
 
 *DISCLAIMER*: This is not supported in anyway by Red Hat.
 
-You can deploy kubernetes or openshift/okd on any platform and on an arbitrary number of masters and workers.
-
-for Openshift, the official installer is used along with kcli for creation and customization of the vms.
+for Openshift, the official installer is used while kcli creates the vms instead of Terraform.
 
 The main features are:
 
-- Easy customisation of the vms.
-- Single procedure regardless of the virtualization platform (tested on libvirt, ovirt, vsphere, kubevirt, openstack, aws and gcp)
-- Self contained dns. (For cloud platforms, we do use cloud public dns)
+- Easy vms customization.
+- Single procedure regardless of the virtualization platform
+- Self contained dns. (For cloud platforms, cloud public dns is leveraged instead)
 - No need to compile installer or tweak libvirtd.
 - Vms can be connected to a physical bridge.
 - Multiple clusters can live on the same l2 network.
@@ -1014,7 +1019,7 @@ The main features are:
 #### Requirements
 
 - Valid pull secret (for downstream)
-- ssh public key.
+- Ssh public key.
 - Write access to /etc/hosts file to allow editing of this file.
 - An available ip in your vm's network to use as *api_ip*. Make sure it is excluded from your dhcp server.
 - Direct access to the deployed vms. Use something like this otherwise `sshuttle -r your_hypervisor 192.168.122.0/24 -v`).
@@ -1059,6 +1064,10 @@ Prepare a parameter file with the folloving variables:
 - *cpupinning* optional cpupinning conf to apply to the workers only.
 - *pcidevices* optional array of pcidevices to passthrough to the first worker only. Check [here](https://github.com/karmab/kcli-plans/blob/master/samples/pcipassthrough/pci.yml) for an example.
 - *ca* optional string of certificates to trust
+- *ipv6* Whether to deploy for ipv6
+- *baremetal* Whether to also deploy the metal3 operator, for provisioning workers
+- *provisioning_net* Which network to put metal3 operator provisioning on
+- *provisioning_nic* Which nic to put metal3 operator provisioning on
 
 ##### Deploying
 
@@ -1164,7 +1173,7 @@ Basic testing can be run with pytest, which leverages your existing kcli config:
 - *sharedkey* Defaults to False. Set it to true so that a private/public key gets shared between all the nodes of your plan. Additionally, root access will be allowed
 - *privatekey* Defaults to False. Set it to true so that your private key is passed to the nodes of your plan. If you need this, you know why :)
 - *files* (optional)- Array of files to inject to the vm. For each of them, you can specify path, owner ( root by default) , permissions (600 by default ) and either origin or content to gather content data directly or from specified origin. When specifying a directory as origin, all the files it contains will be parsed and added.
-- *insecure* (optional) Handles all the ssh option details so you dont get any warnings about man in the middle
+- *insecure* (optional) Defaults to True. Handles all the ssh option details so you dont get any warnings about man in the middle.
 - *client* (optional) Allows you to create the vm on a specific client. This field is not used for other types like network, so expect to use this in relatively simple plans only
 - *base* (optional) Allows you to point to a parent profile so that values are taken from parent when not found in the current profile. Scripts and commands are rather concatenated between default, father and children ( so you have a happy family...)
 - *tags* (optional) Array of tags to apply to gcp instances (usefull when matched in a firewall rule). In the case of kubevirt, it s rather a dict of key=value used as node selector (allowing to force vms to be scheduled on a matching node)

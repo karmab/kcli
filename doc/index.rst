@@ -1288,26 +1288,31 @@ corresponding plan.
 Deploying kubernetes/openshift clusters
 ---------------------------------------
 
+You can deploy kubernetes or openshift/okd on any platform and on an
+arbitrary number of masters and workers. Easy scaling of workers is also
+supported.
+
 Deploying generic kubernetes clusters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+::
+
+    kcli create kube -P masters=X -P workers=Y $cluster
 
 Deploying openshift/okd clusters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 *DISCLAIMER*: This is not supported in anyway by Red Hat.
 
-You can deploy kubernetes or openshift/okd on any platform and on an
-arbitrary number of masters and workers.
-
-for Openshift, the official installer is used along with kcli for
-creation and customization of the vms.
+for Openshift, the official installer is used while kcli creates the vms
+instead of Terraform.
 
 The main features are:
 
--  Easy customisation of the vms.
--  Single procedure regardless of the virtualization platform (tested on
-   libvirt, ovirt, vsphere, kubevirt, openstack, aws and gcp)
--  Self contained dns. (For cloud platforms, we do use cloud public dns)
+-  Easy vms customization.
+-  Single procedure regardless of the virtualization platform
+-  Self contained dns. (For cloud platforms, cloud public dns is
+   leveraged instead)
 -  No need to compile installer or tweak libvirtd.
 -  Vms can be connected to a physical bridge.
 -  Multiple clusters can live on the same l2 network.
@@ -1317,7 +1322,7 @@ Requirements
 ^^^^^^^^^^^^
 
 -  Valid pull secret (for downstream)
--  ssh public key.
+-  Ssh public key.
 -  Write access to /etc/hosts file to allow editing of this file.
 -  An available ip in your vm’s network to use as *api_ip*. Make sure it
    is excluded from your dhcp server.
@@ -1393,6 +1398,12 @@ Prepare a parameter file with the folloving variables:
    `here <https://github.com/karmab/kcli-plans/blob/master/samples/pcipassthrough/pci.yml>`__
    for an example.
 -  *ca* optional string of certificates to trust
+-  *ipv6* Whether to deploy for ipv6
+-  *baremetal* Whether to also deploy the metal3 operator, for
+   provisioning workers
+-  *provisioning_net* Which network to put metal3 operator provisioning
+   on
+-  *provisioning_nic* Which nic to put metal3 operator provisioning on
 
 Deploying
 '''''''''
@@ -1550,8 +1561,8 @@ Available parameters for client/profile/plan files
    (600 by default ) and either origin or content to gather content data
    directly or from specified origin. When specifying a directory as
    origin, all the files it contains will be parsed and added.
--  *insecure* (optional) Handles all the ssh option details so you dont
-   get any warnings about man in the middle
+-  *insecure* (optional) Defaults to True. Handles all the ssh option
+   details so you dont get any warnings about man in the middle.
 -  *client* (optional) Allows you to create the vm on a specific client.
    This field is not used for other types like network, so expect to use
    this in relatively simple plans only

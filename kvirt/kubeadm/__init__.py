@@ -68,3 +68,6 @@ def create(config, plandir, cluster, overrides):
         if 'name' in data:
             del data['name']
         config.plan(cluster, inputfile='%s/workers.yml' % plandir, overrides=data)
+    pprint("Kubernetes cluster %s deployed!!!" % cluster,)
+    pprint("Use The following command to interact with this cluster")
+    pprint("export KUBECONFIG=clusters/%s/auth/kubeconfig" % cluster)
