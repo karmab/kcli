@@ -9,9 +9,11 @@ notifications:
 sudo: required
 python:
 - 3.6
+virtualenv:
+  system_site_packages: true
 before_install:
-- pip install pep8 twine misspellings stdeb
-- pip install setuptools --upgrade
+- pip3 install pep8 twine misspellings stdeb
+- pip3 install setuptools --upgrade
 script:
 - find . -name \*.py -exec pep8 --ignore=E402,W504 --max-line-length=120 {} +
 - find . -name '*.py' | misspellings -f -
@@ -26,3 +28,4 @@ after_success:
 - if [ "$TRAVIS_TAG" != "" ]; then docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
   ; docker push karmab/kcli:$TRAVIS_TAG ; fi
 - "./pypi.sh"
+- "./packagecloud.sh"
