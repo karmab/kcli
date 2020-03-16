@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding=utf-8
 
+from kvirt import jinjafilters
 from random import randint
 import base64
 from jinja2 import Environment, FileSystemLoader
@@ -303,6 +304,8 @@ def process_files(files=[], overrides={}):
             elif overrides and render:
                 basedir = os.path.dirname(origin) if os.path.dirname(origin) != '' else '.'
                 env = Environment(loader=FileSystemLoader(basedir), undefined=undefined)
+                for jinjafilter in jinjafilters.jinjafilters:
+                    env.filters[jinjafilter] = jinjafilters.jinjafilters[jinjafilter]
                 try:
                     templ = env.get_template(os.path.basename(origin))
                     fileentries = templ.render(overrides)
@@ -376,6 +379,8 @@ def process_ignition_files(files=[], overrides={}):
             elif overrides:
                 basedir = os.path.dirname(origin) if os.path.dirname(origin) != '' else '.'
                 env = Environment(loader=FileSystemLoader(basedir), undefined=undefined)
+                for jinjafilter in jinjafilters.jinjafilters:
+                    env.filters[jinjafilter] = jinjafilters.jinjafilters[jinjafilter]
                 try:
                     templ = env.get_template(os.path.basename(origin))
                     fileentries = templ.render(overrides)
