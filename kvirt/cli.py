@@ -1272,6 +1272,11 @@ def download_plan(args):
     return 0
 
 
+def download_kubectl(args):
+    """Download Kubectl"""
+    common.get_kubectl()
+
+
 def download_openshift_installer(args):
     """Download Openshift Installer"""
     paramfile = args.paramfile
@@ -2445,7 +2450,7 @@ def cli():
     delete_subparsers.add_parser('image', parents=[imagedelete_parser], description=imagedelete_desc,
                                  help=imagedelete_desc)
 
-    imagedownload_desc = 'Download Image'
+    imagedownload_desc = 'Download Cloud Image'
     imagedownload_help = "Image to download. Choose between \n%s" % '\n'.join(IMAGES.keys())
     imagedownload_parser = argparse.ArgumentParser(add_help=False)
     imagedownload_parser.add_argument('-c', '--cmd', help='Extra command to launch after downloading', metavar='CMD')
@@ -2466,6 +2471,16 @@ def cli():
     download_subparsers.add_parser('openshift-installer', parents=[openshiftdownload_parser],
                                    description=openshiftdownload_desc,
                                    help=openshiftdownload_desc)
+
+    kubectldownload_desc = 'Download Kubectl'
+    kubectldownload_parser = argparse.ArgumentParser(add_help=False)
+    kubectldownload_parser.add_argument('-P', '--param', action='append',
+                                        help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    kubectldownload_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    kubectldownload_parser.set_defaults(func=download_kubectl)
+    download_subparsers.add_parser('kubectl', parents=[kubectldownload_parser],
+                                   description=kubectldownload_desc,
+                                   help=kubectldownload_desc)
 
     plandownload_desc = 'Download Plan'
     plandownload_parser = argparse.ArgumentParser(add_help=False)

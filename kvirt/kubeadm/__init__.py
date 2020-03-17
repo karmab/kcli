@@ -1,22 +1,9 @@
 #!/usr/bin/env python
 
 from distutils.spawn import find_executable
-from kvirt.common import pprint, pwd_path
+from kvirt.common import pprint, pwd_path, get_kubectl
 import os
 import sys
-from subprocess import call
-from urllib.request import urlopen
-
-
-def get_kubectl():
-    SYSTEM = 'darwin' if os.path.exists('/Users') else 'linux'
-    r = urlopen("https://storage.googleapis.com/kubernetes-release/release/stable.txt")
-    version = str(r.read(), 'utf-8').strip()
-    kubecmd = "curl -LO https://storage.googleapis.com/kubernetes-release/release/%s/bin/%s/amd64/kubectl" % (version,
-                                                                                                              SYSTEM)
-    kubecmd += "| tar zxf - kubectl"
-    kubecmd += "; chmod 700 kubectl"
-    call(kubecmd, shell=True)
 
 
 def scale(config, plandir, cluster, overrides):

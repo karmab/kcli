@@ -16,6 +16,7 @@ from urllib.parse import quote
 from urllib.request import urlretrieve, urlopen
 import json
 import os
+from subprocess import call
 import yaml
 
 binary_types = ['bz2', 'deb', 'jpg', 'gz', 'jpeg', 'iso', 'png', 'rpm', 'tgz', 'zip', 'ks']
@@ -1296,3 +1297,13 @@ def ignition_version(image):
     else:
         version = '2.2.0'
     return version
+
+
+def get_kubectl():
+    SYSTEM = 'darwin' if os.path.exists('/Users') else 'linux'
+    r = urlopen("https://storage.googleapis.com/kubernetes-release/release/stable.txt")
+    version = str(r.read(), 'utf-8').strip()
+    kubecmd = "curl -LO https://storage.googleapis.com/kubernetes-release/release/%s/bin/%s/amd64/kubectl" % (version,
+                                                                                                              SYSTEM)
+    kubecmd += "; chmod 700 kubectl"
+    call(kubecmd, shell=True)

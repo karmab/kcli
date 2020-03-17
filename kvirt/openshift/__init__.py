@@ -13,7 +13,6 @@ from shutil import copy2, move
 from subprocess import call
 from time import sleep
 from urllib.request import urlopen
-import requests
 
 
 virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere']
@@ -25,8 +24,9 @@ def get_rhcos_openstack_url():
         if 'built from commit' in line:
             commit_id = line.replace('built from commit ', '').strip()
             break
-    r = requests.get("https://raw.githubusercontent.com/openshift/installer/%s/data/data/rhcos.json" % commit_id)
-    data = r.json()
+    r = urlopen("https://raw.githubusercontent.com/openshift/installer/%s/data/data/rhcos.json" % commit_id)
+    r = str(r.read(), 'utf-8').strip()
+    data = json.loads(r)
     return "%s%s" % (data['baseURI'], data['images']['openstack']['path'])
 
 
