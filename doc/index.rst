@@ -516,7 +516,7 @@ The following parameters are specific to vsphere:
 Note that pool in Vsphere context refers to datastore.
 
 To use this provider with kcli rpm, you’ll need to install
-*python3-pyvmomi*
+*python3-pyvmomi* and *python3-requests*
 
 Also note that kcli download will only upload OVAS, either from
 specified urls or gathering them in the case of rhcos/fcos.If not

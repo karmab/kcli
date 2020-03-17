@@ -9,7 +9,7 @@ KUBEVIRT = ['kubernetes']
 OPENSTACK = ['python-cinderclient', 'python-neutronclient', 'python-glanceclient', 'python-keystoneclient',
              'python-novaclient']
 OVIRT = ['ovirt-engine-sdk-python']
-VSPHERE = ['pyvmomi']
+VSPHERE = ['requests', 'pyvmomi']
 ALL = ['docker>=2.0'] + ['podman'] + ['websockify'] + AWS + GCP + KUBEVIRT + OPENSTACK + OVIRT + VSPHERE
 
 description = 'Provisioner/Manager for Libvirt/Ovirt/Gcp/Aws/Openstack/Kubevirt and containers'
