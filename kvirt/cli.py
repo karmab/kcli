@@ -755,6 +755,11 @@ def create_vm(args):
     wait = args.wait
     customprofile = {}
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    for key in overrides:
+        if key in vars(config) and type(overrides[key]) != type(vars(config)[key]):
+            key_type = str(type(vars(config)[key]))
+            common.pprint("The provided parameter %s has a wrong type, it should be %s" % (key, key_type), color='red')
+            os._exit(1)
     if 'name' in overrides:
         name = overrides['name']
     if name is None:
@@ -1264,6 +1269,24 @@ def download_plan(args):
         common.pprint("Using %s as name of the plan" % plan)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     config.plan(plan, url=url, download=True)
+    return 0
+
+
+def download_openshift_installer(args):
+    """Download Openshift Installer"""
+    paramfile = args.paramfile
+    if os.path.exists("/i_am_a_container"):
+        if paramfile is not None:
+            paramfile = "/workdir/%s" % paramfile
+        elif os.path.exists("/workdir/kcli_parameters.yml"):
+            paramfile = "/workdir/kcli_parameters.yml"
+            common.pprint("Using default parameter file kcli_parameters.yml")
+    elif paramfile is None and os.path.exists("kcli_parameters.yml"):
+        paramfile = "kcli_parameters.yml"
+        common.pprint("Using default parameter file kcli_parameters.yml")
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config.download_openshift_installer(overrides)
     return 0
 
 
@@ -1783,7 +1806,7 @@ def cli():
     disable_parser = subparsers.add_parser('disable', description=disable_desc, help=disable_desc)
     disable_subparsers = disable_parser.add_subparsers(metavar='', dest='subcommand_disable')
 
-    download_desc = 'Download Image'
+    download_desc = 'Download Assets like Image, plans or binaries'
     download_parser = subparsers.add_parser('download', description=download_desc, help=download_desc)
     download_subparsers = download_parser.add_subparsers(metavar='', dest='subcommand_download')
 
@@ -2433,6 +2456,16 @@ def cli():
     imagedownload_parser.set_defaults(func=download_image)
     download_subparsers.add_parser('image', parents=[imagedownload_parser], description=imagedownload_desc,
                                    help=imagedownload_desc)
+
+    openshiftdownload_desc = 'Download Openshift Installer'
+    openshiftdownload_parser = argparse.ArgumentParser(add_help=False)
+    openshiftdownload_parser.add_argument('-P', '--param', action='append',
+                                          help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    openshiftdownload_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    openshiftdownload_parser.set_defaults(func=download_openshift_installer)
+    download_subparsers.add_parser('openshift-installer', parents=[openshiftdownload_parser],
+                                   description=openshiftdownload_desc,
+                                   help=openshiftdownload_desc)
 
     plandownload_desc = 'Download Plan'
     plandownload_parser = argparse.ArgumentParser(add_help=False)

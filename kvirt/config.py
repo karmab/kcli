@@ -1840,3 +1840,10 @@ $INFO
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
         inputfile = '%s/masters.yml' % plandir
         self.plan('xxx', inputfile=inputfile, info=True, quiet=quiet)
+
+    def download_openshift_installer(self, overrides={}):
+        pull_secret = overrides.get('pull_secret', 'openshift_pull.json')
+        tag = overrides.get('tag', '4.5')
+        upstream = overrides.get('upstream', False)
+        macosx = True if os.path.exists('/Users') else False
+        openshift.get_ci_installer(pull_secret, tag=tag, macosx=macosx, upstream=upstream)
