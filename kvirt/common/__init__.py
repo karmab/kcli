@@ -17,6 +17,7 @@ from urllib.request import urlretrieve, urlopen
 import json
 import os
 from subprocess import call
+from shutil import move
 import yaml
 
 binary_types = ['bz2', 'deb', 'jpg', 'gz', 'jpeg', 'iso', 'png', 'rpm', 'tgz', 'zip', 'ks']
@@ -1307,3 +1308,20 @@ def get_kubectl():
                                                                                                               SYSTEM)
     kubecmd += "; chmod 700 kubectl"
     call(kubecmd, shell=True)
+
+
+def get_oc(macosx=False):
+    SYSTEM = 'macosx' if os.path.exists('/Users') else 'linux'
+    pprint("Downloading oc in current directory", color='blue')
+    occmd = "curl -s https://mirror.openshift.com/pub/openshift-v4/clients/oc/latest/%s/oc.tar.gz" % SYSTEM
+    occmd += "| tar zxf - oc"
+    occmd += "; chmod 700 oc"
+    call(occmd, shell=True)
+    if os.path.exists('/i_am_a_container'):
+        if macosx:
+            occmd = "curl -s https://mirror.openshift.com/pub/openshift-v4/clients/oc/latest/macosx/oc.tar.gz"
+            occmd += "| tar zxf -C /workdir - oc"
+            occmd += "; chmod 700 /workdir/oc"
+            call(occmd, shell=True)
+        else:
+            move('oc', '/workdir/oc')

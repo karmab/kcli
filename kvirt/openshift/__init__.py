@@ -6,7 +6,7 @@ from glob import glob
 import json
 import os
 import sys
-from kvirt.common import pprint, gen_mac, get_values, pwd_path, insecure_fetch
+from kvirt.common import pprint, gen_mac, get_oc, get_values, pwd_path, insecure_fetch
 from random import randint
 import re
 from shutil import copy2, move
@@ -228,20 +228,7 @@ def create(config, plandir, cluster, overrides):
         sys.exit(1)
     os.environ['KUBECONFIG'] = "%s/auth/kubeconfig" % clusterdir
     if find_executable('oc') is None:
-        SYSTEM = 'macosx' if os.path.exists('/Users') else 'linux'
-        pprint("Downloading oc in current directory", color='blue')
-        occmd = "curl -s https://mirror.openshift.com/pub/openshift-v4/clients/oc/latest/%s/oc.tar.gz" % SYSTEM
-        occmd += "| tar zxf - oc"
-        occmd += "; chmod 700 oc"
-        call(occmd, shell=True)
-        if os.path.exists('/i_am_a_container'):
-            if macosx:
-                occmd = "curl -s https://mirror.openshift.com/pub/openshift-v4/clients/oc/latest/macosx/oc.tar.gz"
-                occmd += "| tar zxf -C /workdir - oc"
-                occmd += "; chmod 700 /workdir/oc"
-                call(occmd, shell=True)
-            else:
-                move('oc', '/workdir/oc')
+        get_oc(macosx)
     if tag is not None:
         if '/' not in str(tag):
             basetag = 'ocp' if not upstream else 'origin'

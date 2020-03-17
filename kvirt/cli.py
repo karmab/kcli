@@ -1277,6 +1277,11 @@ def download_kubectl(args):
     common.get_kubectl()
 
 
+def download_oc(args):
+    """Download Oc"""
+    common.get_oc()
+
+
 def download_openshift_installer(args):
     """Download Openshift Installer"""
     paramfile = args.paramfile
@@ -2481,6 +2486,16 @@ def cli():
     download_subparsers.add_parser('kubectl', parents=[kubectldownload_parser],
                                    description=kubectldownload_desc,
                                    help=kubectldownload_desc)
+
+    ocdownload_desc = 'Download Oc'
+    ocdownload_parser = argparse.ArgumentParser(add_help=False)
+    ocdownload_parser.add_argument('-P', '--param', action='append',
+                                   help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    ocdownload_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    ocdownload_parser.set_defaults(func=download_oc)
+    download_subparsers.add_parser('oc', parents=[ocdownload_parser],
+                                   description=ocdownload_desc,
+                                   help=ocdownload_desc)
 
     plandownload_desc = 'Download Plan'
     plandownload_parser = argparse.ArgumentParser(add_help=False)
