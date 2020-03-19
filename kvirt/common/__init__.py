@@ -1229,6 +1229,29 @@ def mergeignition(name, ignitionextrapath, data):
                     for entry in data[key][children[key]]:
                         if entry[childrenkey2] not in [x[childrenkey2] for x in ignitionextra[key][children[key]]]:
                             ignitionextra[key][children[key]].append(entry)
+                        elif children[key] == 'users':
+                            newdata = []
+                            users = [x['name'] for x in data[key][children[key]] + ignitionextra[key][children[key]]]
+                            users = list(dict.fromkeys(users))
+                            for user in users:
+                                newuser = {'name': user}
+                                sshkey1, sshkey2 = [], []
+                                password = None
+                                for y in data[key][children[key]]:
+                                    if y['name'] == user:
+                                        sshkey1 = y['sshAuthorizedKeys'] if 'sshAuthorizedKeys' in y else []
+                                        password = y.get('passwordHash')
+                                for x in ignitionextra[key][children[key]]:
+                                    if x['name'] == user:
+                                        sshkey2 = x['sshAuthorizedKeys'] if 'sshAuthorizedKeys' in x else []
+                                        password = x.get('passwordHash')
+                                sshkeys = sshkey1 + sshkey2
+                                if sshkeys:
+                                    newuser['sshAuthorizedKeys'] = sshkeys
+                                if password is not None:
+                                    newuser['passwordHash'] = password
+                                newdata.append(newuser)
+                            ignitionextra[key][children[key]] = newdata
                 elif children[key] in data[key] and children[key] not in ignitionextra[key]:
                     ignitionextra[key][children[key]] = data[key][children[key]]
             elif key in data and key not in ignitionextra:
