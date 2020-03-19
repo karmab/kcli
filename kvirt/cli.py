@@ -1011,6 +1011,7 @@ def create_kube(args):
     """Create kube"""
     _type = args.type
     paramfile = args.paramfile
+    force = args.force
     if os.path.exists("/i_am_a_container"):
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
@@ -1022,6 +1023,8 @@ def create_kube(args):
         common.pprint("Using default parameter file kcli_parameters.yml")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    if force:
+        config.delete_kube(args.cluster, overrides=overrides)
     if 'type' in overrides:
         _type = overrides['type']
         common.pprint("Setting type to %s as specified as parameter" % _type)
@@ -2141,6 +2144,7 @@ def cli():
     kubecreate_desc = 'Create Kube'
     kubecreate_epilog = "examples:\n%s" % kubecreate
     kubecreate_parser = argparse.ArgumentParser(add_help=False)
+    kubecreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
     kubecreate_parser.add_argument('-t', '--type', type=str, choices=['generic', 'openshift'], default='generic',
                                    metavar='TYPE', help='type for the kubernetes cluster. Use generic or openshift')
     kubecreate_parser.add_argument('-P', '--param', action='append',

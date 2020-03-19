@@ -250,6 +250,8 @@ def create(config, plandir, cluster, overrides):
         if not macosx and os.path.exists('/i_am_a_container'):
             move('openshift-install', '/workdir')
     INSTALLER_VERSION = os.popen('openshift-install version').readlines()[0].split(" ")[1].strip()
+    if INSTALLER_VERSION.startswith('v'):
+        INSTALLER_VERSION = INSTALLER_VERSION[1:]
     pprint("Using installer version %s" % INSTALLER_VERSION, color='blue')
     if upstream:
         COS_VERSION = ""
