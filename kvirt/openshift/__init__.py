@@ -256,11 +256,8 @@ def create(config, plandir, cluster, overrides):
         COS_TYPE = "fcos"
     else:
         COS_TYPE = "rhcos"
-        version_match = re.match("v([0-9]*).([0-9]*).*", INSTALLER_VERSION)
-        if version_match is not None:
-            COS_VERSION = "%s%s" % (version_match.group(1), version_match.group(2))
-        else:
-            COS_VERSION = "44"
+        version_match = re.match("4.([0-9]*).*", INSTALLER_VERSION)
+        COS_VERSION = "4%s" % version_match.group(1) if version_match is not None else '44'
     if image is None:
         images = [v for v in k.volumes() if COS_TYPE in v and COS_VERSION in v]
         if images:
