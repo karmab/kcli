@@ -62,6 +62,9 @@ def get_ci_installer(pull_secret, tag=None, macosx=False, upstream=False):
             if tag_match is not None:
                 tags.append(tag_match.group(1))
         tag = sorted(tags)[-1]
+    elif '/' not in str(tag):
+        basetag = 'ocp' if not upstream else 'origin'
+        tag = 'registry.svc.ci.openshift.org/%s/release:%s' % (basetag, tag)
     os.environ['OPENSHIFT_RELEASE_IMAGE'] = tag
     msg = 'Downloading openshift-install %s in current directory' % tag
     pprint(msg, color='blue')

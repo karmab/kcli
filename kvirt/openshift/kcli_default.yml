@@ -3,6 +3,7 @@ workers: 0
 image: rhcos44
 network: default
 cluster: testk
+baremetal: false
 domain: karmalabs.com
 numcpus: 4
 master_memory: 8192
