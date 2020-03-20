@@ -6,7 +6,7 @@ from glob import glob
 import json
 import os
 import sys
-from kvirt.common import pprint, gen_mac, get_oc, get_values, pwd_path, insecure_fetch
+from kvirt.common import info, pprint, gen_mac, get_oc, get_values, pwd_path, insecure_fetch
 from random import randint
 import re
 from shutil import copy2, move
@@ -174,12 +174,14 @@ def create(config, plandir, cluster, overrides):
             'version': 'nightly',
             'macosx': False,
             'upstream': False,
-            'baremetal': False}
+            'baremetal': False,
+            'minimal': False}
     data.update(overrides)
     ipv6 = data['ipv6']
     upstream = data.get('upstream')
     version = data.get('version')
     baremetal = data.get('baremetal')
+    minimal = data.get('minimal')
     if version not in ['ci', 'nightly']:
         pprint("Using stable version", color='blue')
     else:
@@ -304,6 +306,12 @@ def create(config, plandir, cluster, overrides):
         pprint("Leaving environment for debugging purposes", color='red')
         pprint("You can delete it with kcli delete kube --yes %s" % cluster, color='red')
         os._exit(run)
+    if minimal:
+        pprint("Deploying cvo overrides to provide a minimal install", color='blue')
+        with open("%s/cvo-overrides.yaml" % plandir) as f:
+            cvo_override = f.read()
+        with open("%s/manifests/cvo-overrides.yaml" % clusterdir, "a") as f:
+            f.write(cvo_override)
     if baremetal:
         for f in glob("%s/openshift/99_openshift-cluster-api_master-machines-*.yaml" % clusterdir):
             os.remove(f)
@@ -503,7 +511,17 @@ def create(config, plandir, cluster, overrides):
         f.write(autoapprover)
     call("oc create -f %s/autoapprovercron.yml ; oc apply -f %s/autoapprovercron.yml" % (clusterdir, clusterdir),
          shell=True)
-    installcommand = 'openshift-install --dir=%s wait-for install-complete' % clusterdir
-    installcommand = "%s | %s" % (installcommand, installcommand)
-    pprint("Launching install-complete step. Note it will be retried one extra time in case of timeouts", color='blue')
-    call(installcommand, shell=True)
+    if not minimal:
+        installcommand = 'openshift-install --dir=%s wait-for install-complete' % clusterdir
+        installcommand = "%s | %s" % (installcommand, installcommand)
+        pprint("Launching install-complete step. Note it will be retried one extra time in case of timeouts",
+               color='blue')
+        call(installcommand, shell=True)
+    else:
+        kubeconf = os.environ['KUBECONFIG']
+        kubepassword = open("%s/auth/auth/kubeadmin-password" % clusterdir).read()
+        info("Minimal Cluster ready to be used")
+        info("INFO Install Complete")
+        info("To access the cluster as the system:admin user when running 'oc', run export KUBECONFIG=%s" % kubeconf)
+        info("Access the Openshift web-console here: https://console-openshift-console.apps.%s.%s" % (cluster, domain))
+        info("Login to the console with user: kubeadmin, password: %s" % kubepassword)

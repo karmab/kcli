@@ -33,4 +33,5 @@ ipv6: false
 provisioning_net: provisioning
 provisioning_nic: ens4
 cloud_tag:
+minimal: false
 

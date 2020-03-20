@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from distutils.spawn import find_executable
-from kvirt.common import pprint, pwd_path, get_kubectl
+from kvirt.common import info, pprint, pwd_path, get_kubectl
 import os
 import sys
 
@@ -56,5 +56,5 @@ def create(config, plandir, cluster, overrides):
             del data['name']
         config.plan(cluster, inputfile='%s/workers.yml' % plandir, overrides=data)
     pprint("Kubernetes cluster %s deployed!!!" % cluster,)
-    pprint("Use The following command to interact with this cluster")
-    pprint("export KUBECONFIG=clusters/%s/auth/kubeconfig" % cluster)
+    info("Use The following command to interact with this cluster")
+    info("export KUBECONFIG=clusters/%s/auth/kubeconfig" % cluster)

@@ -497,6 +497,11 @@ def pprint(text, color='green'):
         print(text)
 
 
+def info(text):
+    color = '36'
+    print('\033[0;%smINFO\033[0;0m %s' % (color, text))
+
+
 def handle_response(result, name, quiet=False, element='', action='deployed', client=None):
     """
 

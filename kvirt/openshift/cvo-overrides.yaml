@@ -1,0 +1,36 @@
+  overrides:
+  - group: apps/v1
+    kind: Deployment
+    name: cluster-monitoring-operator
+    namespace: openshift-monitoring
+    unmanaged: true
+  - group: apps/v1
+    kind: Deployment
+    name: machine-config-operator
+    namespace: openshift-machine-config-operator
+    unmanaged: true
+  - group: apps/v1
+    kind: Deployment
+    name: etcd-quorum-guard
+    namespace: openshift-machine-config-operator
+    unmanaged: true
+  - group: apps/v1
+    kind: Deployment
+    name: machine-api-operator
+    namespace: openshift-machine-api
+    unmanaged: true
+  - group: apps/v1
+    kind: Deployment
+    name: cluster-autoscaler-operator
+    namespace: openshift-machine-api
+    unmanaged: true
+  - group: apps/v1
+    kind: Deployment
+    name: insights-operator
+    namespace: openshift-insights
+    unmanaged: true
+  - group: apps/v1
+    kind: Deployment
+    name: prometheus-k8s
+    namespace: openshift-cloud-credential-operator
+    unmanaged: true
