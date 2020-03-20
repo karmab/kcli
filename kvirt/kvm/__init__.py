@@ -1366,13 +1366,16 @@ class Kvirt(object):
                 for x in ifaces:
                     if ifaces[x]['hwaddr'] == mac and ifaces[x]['addrs'] is not None:
                         for entry in ifaces[x]['addrs']:
+                            if entry['addr'].startswith('fe80::'):
+                                continue
                             ip = entry['addr']
                             if len(interfaces) > 1:
                                 break
             yamlinfo['nets'].append({'device': device, 'mac': mac, 'net': network, 'type': networktype})
         if ip is not None:
             yamlinfo['ip'] = ip
-            if '.' not in ip:
+            # better filter to detect user nets needed here
+            if '.' not in ip and ':' not in ip:
                 usernetinfo = {'device': 'eth%s' % len(yamlinfo['nets']), 'mac': 'N/A', 'net': 'user', 'type': 'user'}
                 yamlinfo['nets'].append(usernetinfo)
         for element in list(root.getiterator('disk')):
