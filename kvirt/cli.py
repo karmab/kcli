@@ -55,7 +55,8 @@ def get_subparser(parser, subcommand):
                 return subparser
 
 
-def get_version(url="https://github.com/karmab/kcli"):
+def get_version(args):
+    url = "https://github.com/karmab/kcli"
     full_version = "version: %s" % VERSION
     versiondir = os.path.dirname(version.__file__)
     git_version = open('%s/git' % versiondir).read().rstrip() if os.path.exists('%s/git' % versiondir) else 'N/A'
