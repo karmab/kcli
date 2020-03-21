@@ -1,4 +1,5 @@
 # coding=utf-8
+VERSION = "99.0"
 NETS = ['default']
 POOL = 'default'
 IMAGE = None

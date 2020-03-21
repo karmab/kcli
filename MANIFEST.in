@@ -8,3 +8,4 @@ recursive-include kvirt/templates *
 recursive-include kvirt/internalplans *
 recursive-include kvirt/kubeadm *
 recursive-include kvirt/openshift *
+recursive-include kvirt/version *

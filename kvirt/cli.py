@@ -8,8 +8,8 @@ from kvirt.examples import hostcreate, _list, plancreate, planinfo, productinfo,
 from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsole, vmexport, niccreate, nicdelete
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
-from kvirt.version import __version__
-from kvirt.defaults import IMAGES
+from kvirt import version
+from kvirt.defaults import IMAGES, VERSION
 from prettytable import PrettyTable
 import argcomplete
 import argparse
@@ -17,8 +17,10 @@ from kvirt import common
 from kvirt import nameutils
 import os
 import random
+import re
 import sys
 import yaml
+from urllib.request import urlopen
 
 
 def valid_fqdn(name):
@@ -51,6 +53,27 @@ def get_subparser(parser, subcommand):
         for choice, subparser in subparsers_action.choices.items():
             if choice == subcommand:
                 return subparser
+
+
+def get_version(repo="https://github.com/karmab/kcli"):
+    full_version = "version: %s" % VERSION
+    versiondir = os.path.dirname(version.__file__)
+    git_version = open('%s/git' % versiondir).read().rstrip() if os.path.exists('%s/git' % versiondir) else 'N/A'
+    full_version += " commit: %s" % git_version
+    update = 'N/A'
+    if git_version != 'N/A':
+        update = False
+        r = urlopen("%s/commits/master" % repo)
+        for line in r.readlines():
+            if '%s/commits/master?' % repo in str(line, 'utf-8').strip():
+                tag_match = re.match('.*=(.*)\\+..".*', str(line, 'utf-8'))
+                if tag_match is not None:
+                    upstream_version = tag_match.group(1)[:7]
+                    if upstream_version != git_version:
+                        update = True
+                break
+    full_version += " Available Updates: %s" % update
+    print(full_version)
 
 
 def start_vm(args):
@@ -1766,9 +1789,6 @@ def cli():
     """
 
     """
-    version = "version: %s" % __version__
-    git_version = open('/git_version').read() if os.path.exists('/git_version') else 'N/A'
-    version += " commit: %s" % git_version
     parser = argparse.ArgumentParser(description='Libvirt/Ovirt/Vsphere/Gcp/Aws/Openstack/Kubevirt Wrapper')
     parser.add_argument('-C', '--client')
     parser.add_argument('--containerclient', help='Containerclient to use')
@@ -1777,7 +1797,6 @@ def cli():
     parser.add_argument('-n', '--namespace', help='Namespace to use. specific to kubevirt')
     parser.add_argument('-r', '--region', help='Region to use. specific to aws/gcp')
     parser.add_argument('-z', '--zone', help='Zone to use. specific to gcp')
-    parser.add_argument('-v', '--version', action='version', version=version)
 
     subparsers = parser.add_subparsers(metavar='', title='Available Commands')
 
@@ -1921,6 +1940,13 @@ def cli():
     update_desc = 'Update Vm/Plan/Repo'
     update_parser = subparsers.add_parser('update', description=update_desc, help=update_desc)
     update_subparsers = update_parser.add_subparsers(metavar='', dest='subcommand_update')
+
+    version_desc = 'Version'
+    version_epilog = None
+    version_parser = argparse.ArgumentParser(add_help=False)
+    version_parser.set_defaults(func=get_version)
+    subparsers.add_parser('version', parents=[version_parser], description=version_desc, help=version_desc,
+                          epilog=version_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
 
     # sub subcommands
 

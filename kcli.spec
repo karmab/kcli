@@ -34,6 +34,7 @@ sed -i "s/, 'libvirt.*/\]/" setup.py
 INSTALL=$(grep -m 1 INSTALL setup.py  | sed 's/INSTALL = //')
 sed -i "s/install_requires=INSTALL/install_requires=$INSTALL/" setup.py
 sed -i '/INSTALL/d' setup.py
+curl -s https://github.com/karmab/kcli/commits/master | grep 'https://github.com/karmab/kcli/commits/master?' | sed 's@.*=\(.......\).*+.*@\1@' > kvirt/version/git
 %{__python} setup.py build
 
 %install

@@ -17,10 +17,10 @@ before_install:
 script:
 - find . -name \*.py -exec pep8 --ignore=E402,W504,E721 --max-line-length=120 {} +
 - find . -name '*.py' | misspellings -f -
-- echo $TRAVIS_COMMIT > extras/git_version
+# - echo $TRAVIS_COMMIT > kvirt/version/git
+- git rev-parse --short HEAD > kvirt/version/git
 - docker build -t karmab/kcli -f extras/alpine .
 - docker run -it --rm karmab/kcli
-- rm extras/git_version
 after_success:
 - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == 'false' ] ; then
   docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD ; docker push karmab/kcli:latest
