@@ -55,7 +55,7 @@ def get_subparser(parser, subcommand):
                 return subparser
 
 
-def get_version(repo="https://github.com/karmab/kcli"):
+def get_version(url="https://github.com/karmab/kcli"):
     full_version = "version: %s" % VERSION
     versiondir = os.path.dirname(version.__file__)
     git_version = open('%s/git' % versiondir).read().rstrip() if os.path.exists('%s/git' % versiondir) else 'N/A'
@@ -63,9 +63,9 @@ def get_version(repo="https://github.com/karmab/kcli"):
     update = 'N/A'
     if git_version != 'N/A':
         update = False
-        r = urlopen("%s/commits/master" % repo)
+        r = urlopen("%s/commits/master" % url)
         for line in r.readlines():
-            if '%s/commits/master?' % repo in str(line, 'utf-8').strip():
+            if '%s/commits/master?' % url in str(line, 'utf-8').strip():
                 tag_match = re.match('.*=(.*)\\+..".*', str(line, 'utf-8'))
                 if tag_match is not None:
                     upstream_version = tag_match.group(1)[:7]
