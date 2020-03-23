@@ -317,6 +317,7 @@ class Kconfig(Kbaseconfig):
             default_numa = father.get('numa', self.numa)
             default_numamode = father.get('numamode', self.numamode)
             default_pcidevices = father.get('pcidevices', self.pcidevices)
+            default_tpm = father.get('tpm', self.tpm)
             default_virttype = father.get('virttype', self.virttype)
         else:
             default_numcpus = self.numcpus
@@ -335,6 +336,7 @@ class Kconfig(Kbaseconfig):
             default_numamode = self.numamode
             default_numa = self.numa
             default_pcidevices = self.pcidevices
+            default_tpm = self.tpm
             default_disksize = self.disksize
             default_diskinterface = self.diskinterface
             default_diskthin = self.diskthin
@@ -396,6 +398,7 @@ class Kconfig(Kbaseconfig):
         numamode = profile.get('numamode', default_numamode)
         numa = profile.get('numa', default_numa)
         pcidevices = profile.get('pcidevices', default_pcidevices)
+        tpm = profile.get('tpm', default_tpm)
         numcpus = profile.get('numcpus', default_numcpus)
         memory = profile.get('memory', default_memory)
         pool = profile.get('pool', default_pool)
@@ -715,7 +718,7 @@ $INFO
                           overrides=overrides, tags=tags, dnsclient=dnsclient, storemetadata=storemetadata,
                           sharedfolders=sharedfolders, kernel=kernel, initrd=initrd, cmdline=cmdline,
                           placement=placement, autostart=autostart, cpuhotplug=cpuhotplug, memoryhotplug=memoryhotplug,
-                          pcidevices=pcidevices)
+                          pcidevices=pcidevices, tpm=tpm)
         if result['result'] != 'success':
             return result
         if dnsclient is not None and domain is not None:

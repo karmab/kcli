@@ -16,7 +16,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             RHNWAIT, FLAVOR, KEEP_NETWORKS, DNSCLIENT, STORE_METADATA, NOTIFY, PUSHBULLETTOKEN,
                             NOTIFYSCRIPT, SLACKTOKEN, NOTIFYCMD, NOTIFYMETHODS, SLACKCHANNEL, SHAREDFOLDERS, KERNEL,
                             INITRD, CMDLINE, PLACEMENT, YAMLINVENTORY, CPUHOTPLUG, MEMORYHOTPLUG, CPUFLAGS, CPUPINNING,
-                            NUMAMODE, NUMA, PCIDEVICES, VIRTTYPE, MAILSERVER, MAILFROM, MAILTO)
+                            NUMAMODE, NUMA, PCIDEVICES, VIRTTYPE, MAILSERVER, MAILFROM, MAILTO, TPM)
 from kvirt import common
 from kvirt import jinjafilters
 import os
@@ -236,6 +236,7 @@ class Kbaseconfig:
         self.numamode = options.get('numamode', NUMAMODE)
         self.numa = options.get('numa', NUMA)
         self.pcidevices = options.get('pcidevices', PCIDEVICES)
+        self.tpm = options.get('tpm', TPM)
         self.numcpus = options.get('numcpus', self.default['numcpus'])
         self.memory = options.get('memory', self.default['memory'])
         self.disks = options.get('disks', self.default['disks'])

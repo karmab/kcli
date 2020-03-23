@@ -86,7 +86,7 @@ class Kopenstack(object):
                tunnel=False, files=[], enableroot=True, alias=[], overrides={},
                tags={}, dnsclient=None, storemetadata=False, sharedfolders=[], kernel=None, initrd=None,
                cmdline=None, placement=[], autostart=False, cpuhotplug=False, memoryhotplug=False, numamode=None,
-               numa=[], pcidevices=[]):
+               numa=[], pcidevices=[], tpm=False):
         """
 
         :param name:
@@ -133,6 +133,7 @@ class Kopenstack(object):
         :param numamode:
         :param numa:
         :param pcidevices:
+        :param tpm:
         :return:
         """
         glance = self.glance

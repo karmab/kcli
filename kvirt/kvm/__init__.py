@@ -195,7 +195,7 @@ class Kvirt(object):
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
                files=[], enableroot=True, overrides={}, tags=[], dnsclient=None, storemetadata=False,
                sharedfolders=[], kernel=None, initrd=None, cmdline=None, placement=[], autostart=False,
-               cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[]):
+               cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False):
         """
 
         :param name:
@@ -243,6 +243,7 @@ class Kvirt(object):
         :param numamode:
         :param numa:
         :param pcidevices:
+        :param tpm:
         :return:
         """
         namespace = ''
@@ -751,12 +752,18 @@ class Kvirt(object):
         else:
             vcpuxml = "<vcpu>%d</vcpu>" % numcpus
         qemuextraxml = ''
-        if ignition or usermode or macosx:
+        if ignition or usermode or macosx or tpm:
             namespace = "xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'"
             ignitionxml = ""
             if ignition:
                 ignitionxml = """<qemu:arg value='-fw_cfg' />
                                   <qemu:arg value='name=opt/com.coreos/config,file=/var/tmp/%s.ign' />""" % name
+            tpmxml = ""
+            if tpm:
+                tpmxml = """<qemu:arg value='-tpmdev'/>
+                            <qemu:arg value='cuse-tpm,id=tpm-tpm0,path=/dev/vtpm0,cancel-path=/dev/null'/>
+                            <qemu:arg value='-device'/>
+                            <qemu:arg value='tpm-tis,tpmdev=tpm-tpm0,id=tpm0'/>"""
             usermodexml = ""
             if usermode:
                 netmodel = 'virtio-net-pci' if not macosx else 'e1000-82545em'
@@ -779,7 +786,8 @@ class Kvirt(object):
                               %s
                               %s
                               %s
-                              </qemu:commandline>""" % (ignitionxml, usermodexml, macosxml)
+                              %s
+                              </qemu:commandline>""" % (ignitionxml, tpmxml, usermodexml, macosxml)
         sharedxml = ""
         if sharedfolders:
             for folder in sharedfolders:
