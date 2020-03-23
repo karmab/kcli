@@ -708,7 +708,7 @@ def list_product(args):
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     if search is not None:
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-        products = PrettyTable(["Repo", "Group", "Product", "Description", "Numvms", "Memory"])
+        products = PrettyTable(["Repo", "Product", "Group", "Description", "Numvms", "Memory"])
         products.align["Repo"] = "l"
         productsinfo = baseconfig.list_products(repo=repo)
         for prod in sorted(productsinfo, key=lambda x: (x['repo'], x['group'], x['name'])):
@@ -723,9 +723,9 @@ def list_product(args):
             numvms = prod.get('numvms', 'N/A')
             memory = prod.get('memory', 'N/A')
             group = prod.get('group', 'N/A')
-            products.add_row([repo, group, name, description, numvms, memory])
+            products.add_row([repo, name, group, description, numvms, memory])
     else:
-        products = PrettyTable(["Repo", "Group", "Product", "Description", "Numvms", "Memory"])
+        products = PrettyTable(["Repo", "Product", "Group", "Description", "Numvms", "Memory"])
         products.align["Repo"] = "l"
         productsinfo = baseconfig.list_products(group=group, repo=repo)
         for product in sorted(productsinfo, key=lambda x: (x['repo'], x['group'], x['name'])):
@@ -735,7 +735,7 @@ def list_product(args):
             numvms = product.get('numvms', 'N/A')
             memory = product.get('memory', 'N/A')
             group = product.get('group', 'N/A')
-            products.add_row([repo, group, name, description, numvms, memory])
+            products.add_row([repo, name, group, description, numvms, memory])
     print(products)
     return
 
