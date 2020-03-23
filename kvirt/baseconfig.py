@@ -679,6 +679,16 @@ class Kbaseconfig:
                             break
                 return entries
             entries = yaml.safe_load(entries)
+        wrong_entries = [x for x in entries if '-' in x]
+        wrong_overrides = [y for y in overrides if '-' in y]
+        if wrong_entries:
+            for wrong_entry in wrong_entries:
+                common.pprint("Incorrect parameter %s. Hyphens are not allowed" % wrong_entry, color='red')
+            os._exit(1)
+        elif wrong_overrides:
+            for wrong_override in wrong_overrides:
+                common.pprint("Incorrect parameter %s. Hyphens are not allowed" % wrong_override, color='red')
+            os._exit(1)
         return entries, overrides, basefile, basedir
 
     def list_profiles(self):

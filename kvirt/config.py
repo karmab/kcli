@@ -224,6 +224,11 @@ class Kconfig(Kbaseconfig):
         :return:
         """
         overrides.update(self.overrides)
+        wrong_overrides = [y for y in overrides if '-' in y]
+        if wrong_overrides:
+            for wrong_override in wrong_overrides:
+                common.pprint("Incorrect parameter %s. Hyphens are not allowed" % wrong_override, color='red')
+            os._exit(1)
         overrides['name'] = name
         k = self.k if k is None else k
         tunnel = self.tunnel
