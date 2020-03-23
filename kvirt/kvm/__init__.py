@@ -868,7 +868,6 @@ class Kvirt(object):
         if tpm:
             tpmxml = """<tpm model='tpm-tis'>
                         <backend type='emulator' version='2.0'>
-                        <encryption secret='6dd3e4a5-1d76-44ce-961f-f119f5aad935'/>
                         </backend>
                         </tpm>"""
         vmxml = """<domain type='%s' %s>
