@@ -859,3 +859,37 @@ class Kbaseconfig:
                 yaml.safe_dump(self.profiles, profile_file, default_flow_style=False, encoding='utf-8',
                                allow_unicode=True)
         return {'result': 'success'}
+
+    def generate_jenkinsfile(self, inputfile, overrides={}):
+        inputfile = os.path.expanduser(inputfile) if inputfile is not None else 'kcli_plan.yml'
+        basedir = os.path.dirname(inputfile)
+        if basedir == "":
+            basedir = '.'
+        plan = os.path.basename(inputfile).replace('.yml', '').replace('.yaml', '')
+        if not os.path.exists(inputfile):
+            common.pprint("No input file found nor default kcli_plan.yml. Leaving....", color='red')
+            os._exit(1)
+        if os.path.exists("%s/%s_default.yml" % (basedir, plan)):
+            parameterfile = "%s/%s_default.yml" % (basedir, plan)
+        elif os.path.exists("%s/kcli_default.yml" % basedir):
+            parameterfile = "%s/kcli_default.yml" % basedir
+        else:
+            parameterfile = inputfile
+        raw = True if parameterfile != inputfile else False
+        parameters = common.get_parameters(parameterfile, raw=raw)
+        if parameters is not None:
+            parameters = yaml.safe_load(parameters)['parameters'] if not raw else parameters
+        jenkinsdir = os.path.dirname(common.__file__)
+        env = Environment(loader=FileSystemLoader(jenkinsdir))
+        try:
+            templ = env.get_template(os.path.basename("Jenkinsfile.j2"))
+        except TemplateSyntaxError as e:
+            common.pprint("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message),
+                          color='red')
+            os._exit(1)
+        except TemplateError as e:
+            common.pprint("Error rendering file %s. Got: %s" % (inputfile, e.message), color='red')
+            os._exit(1)
+        parameterline = " ".join(["-P %s=${params.%s}" % (parameter, parameter) for parameter in parameters])
+        jenkinsfile = templ.render(parameters=parameters, parameterline=parameterline)
+        return jenkinsfile

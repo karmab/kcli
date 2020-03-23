@@ -1331,6 +1331,7 @@ def render_file(args):
     """Render file"""
     plan = None
     inputfile = args.inputfile
+    jenkins = args.jenkins
     paramfile = args.paramfile
     ignore = args.ignore
     if os.path.exists("/i_am_a_container"):
@@ -1339,10 +1340,10 @@ def render_file(args):
             paramfile = "/workdir/%s" % paramfile
         elif os.path.exists("/workdir/kcli_parameters.yml"):
             paramfile = "/workdir/kcli_parameters.yml"
-            common.pprint("Using default parameter file kcli_parameters.yml")
+            # common.pprint("Using default parameter file kcli_parameters.yml")
     elif paramfile is None and os.path.exists("kcli_parameters.yml"):
         paramfile = "kcli_parameters.yml"
-        common.pprint("Using default parameter file kcli_parameters.yml")
+        # common.pprint("Using default parameter file kcli_parameters.yml")
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     config_data = {'config_%s' % k: baseconfig.ini[baseconfig.client][k] for k in baseconfig.ini[baseconfig.client]}
@@ -1351,7 +1352,10 @@ def render_file(args):
     if not os.path.exists(inputfile):
         common.pprint("File %s not found" % inputfile, color='red')
         return 0
-    renderfile = baseconfig.process_inputfile(plan, inputfile, overrides=overrides, onfly=False, ignore=ignore)
+    if jenkins:
+        renderfile = baseconfig.generate_jenkinsfile(inputfile)
+    else:
+        renderfile = baseconfig.process_inputfile(plan, inputfile, overrides=overrides, onfly=False, ignore=ignore)
     print(renderfile)
     return 0
 
@@ -1873,6 +1877,7 @@ def cli():
     render_desc = 'Render Plan/file'
     render_parser = subparsers.add_parser('render', description=render_desc, help=render_desc)
     render_parser.add_argument('-f', '--inputfile', help='Input Plan/File', default='kcli_plan.yml')
+    render_parser.add_argument('-j', '--jenkins', action='store_true', help='Renders as jenkins file')
     render_parser.add_argument('-i', '--ignore', action='store_true', help='Ignore missing variables')
     render_parser.add_argument('-P', '--param', action='append',
                                help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
