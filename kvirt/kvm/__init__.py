@@ -758,12 +758,6 @@ class Kvirt(object):
             if ignition:
                 ignitionxml = """<qemu:arg value='-fw_cfg' />
                                   <qemu:arg value='name=opt/com.coreos/config,file=/var/tmp/%s.ign' />""" % name
-            tpmxml = ""
-            if tpm:
-                tpmxml = """<qemu:arg value='-tpmdev'/>
-                            <qemu:arg value='cuse-tpm,id=tpm-tpm0,path=/dev/vtpm0,cancel-path=/dev/null'/>
-                            <qemu:arg value='-device'/>
-                            <qemu:arg value='tpm-tis,tpmdev=tpm-tpm0,id=tpm0'/>"""
             usermodexml = ""
             if usermode:
                 netmodel = 'virtio-net-pci' if not macosx else 'e1000-82545em'
@@ -786,8 +780,7 @@ class Kvirt(object):
                               %s
                               %s
                               %s
-                              %s
-                              </qemu:commandline>""" % (ignitionxml, tpmxml, usermodexml, macosxml)
+                              </qemu:commandline>""" % (ignitionxml, usermodexml, macosxml)
         sharedxml = ""
         if sharedfolders:
             for folder in sharedfolders:
@@ -871,6 +864,13 @@ class Kvirt(object):
                                 <source><address domain='0x%s' bus='0x%s' slot='0x%s' function='0x%s'/></source>
                                 </hostdev>""" % (newdomain, newbus, newslot, newfunction)
                 hostdevxml += newhostdev
+        tpmxml = ""
+        if tpm:
+            tpmxml = """<tpm model='tpm-tis'>
+                        <backend type='emulator' version='2.0'>
+                        <encryption secret='6dd3e4a5-1d76-44ce-961f-f119f5aad935'/>
+                        </backend>
+                        </tpm>"""
         vmxml = """<domain type='%s' %s>
                   <name>%s</name>
                   %s
@@ -905,12 +905,13 @@ class Kvirt(object):
                     %s
                     %s
                     %s
+                    %s
                   </devices>
                     %s
                     %s
                     </domain>""" % (virttype, namespace, name, metadata, memoryhotplugxml, cpupinningxml, numatunexml,
                                     memory, vcpuxml, machine, firmwarexml, bootdev, kernelxml, disksxml, netxml, isoxml,
-                                    displayxml, serialxml, sharedxml, guestxml, videoxml, hostdevxml, cpuxml,
+                                    displayxml, serialxml, sharedxml, guestxml, videoxml, hostdevxml, tpmxml, cpuxml,
                                     qemuextraxml)
         if self.debug:
             print(vmxml)
