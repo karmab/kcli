@@ -76,7 +76,7 @@ def get_ci_installer(pull_secret, tag=None, macosx=False, upstream=False):
     call(cmd, shell=True)
 
 
-def get_upstream_installer(macosx=False):
+def get_upstream_installer(macosx=False, tag=None):
     INSTALLSYSTEM = 'mac' if os.path.exists('/Users') or macosx else 'linux'
     msg = 'Downloading okd openshift-install from github in current directory'
     pprint(msg, color='blue')
@@ -244,11 +244,11 @@ def create(config, plandir, cluster, overrides):
         if version == 'ci':
             get_ci_installer(pull_secret, tag=tag, upstream=upstream)
         elif version == 'nightly':
-            get_downstream_installer(nightly=True)
+            get_downstream_installer(nightly=True, tag=tag)
         elif upstream:
-            get_upstream_installer()
+            get_upstream_installer(tag=tag)
         else:
-            get_downstream_installer()
+            get_downstream_installer(tag=tag)
         if not macosx and os.path.exists('/i_am_a_container'):
             move('openshift-install', '/workdir')
     INSTALLER_VERSION = os.popen('openshift-install version').readlines()[0].split(" ")[1].strip()

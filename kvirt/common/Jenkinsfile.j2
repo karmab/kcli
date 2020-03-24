@@ -3,7 +3,7 @@ properties(
   parameters (
     [
     {%- for parameter in parameters %}
-    string(name: '{{ parameter }}', defaultValue: "{{ parameters[parameter] }}", description: '{{ parameter }}'),
+    string(name: '{{ parameter }}', defaultValue: "{{ parameters[parameter]|none }}", description: '{{ parameter }}'),
     {%- endfor %}
     ]
   ),

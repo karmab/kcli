@@ -882,6 +882,8 @@ class Kbaseconfig:
             parameters = yaml.safe_load(parameters)['parameters'] if not raw else parameters
         jenkinsdir = os.path.dirname(common.__file__)
         env = Environment(loader=FileSystemLoader(jenkinsdir))
+        for jinjafilter in jinjafilters.jinjafilters:
+            env.filters[jinjafilter] = jinjafilters.jinjafilters[jinjafilter]
         try:
             templ = env.get_template(os.path.basename("Jenkinsfile.j2"))
         except TemplateSyntaxError as e:
