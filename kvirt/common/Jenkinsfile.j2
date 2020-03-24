@@ -2,8 +2,9 @@ properties(
  [
   parameters (
     [
+    booleanParam(name: 'wait', defaultValue: false, description: 'Wait for plan to finish'),
     {%- for parameter in parameters %}
-    string(name: '{{ parameter }}', defaultValue: "{{ parameters[parameter]|none }}", description: '{{ parameter }}'),
+    string(name: '{{ parameter }}', defaultValue: "{{ parameters[parameter]|none }}", description: ''),
     {%- endfor %}
     ]
   ),
@@ -24,7 +25,16 @@ pipeline {
         }
         stage('Deploy Kcli plan') {
             steps {
-                sh 'docker run ${DOCKER_OPTIONS} karmab/kcli create plan -f ${WORKSPACE}/{{ inputfile | default('kcli_plan.yml') }} ${KCLI_PARAMETERS}'
+                script {
+                  if ( "${params.wait}" == "true" ) {
+                     WAIT = "--wait"
+                  } else {
+                     WAIT = ""
+                  }
+                }
+                sh """
+                  docker run ${DOCKER_OPTIONS} karmab/kcli create plan -f ${WORKSPACE}/{{ inputfile | default('kcli_plan.yml') }} ${KCLI_PARAMETERS} ${WAIT} ${env.JOB_NAME}_${env.BUILD_NUMBER}
+                """
             }
         }
     }

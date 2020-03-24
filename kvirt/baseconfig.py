@@ -894,5 +894,6 @@ class Kbaseconfig:
             common.pprint("Error rendering file %s. Got: %s" % (inputfile, e.message), color='red')
             os._exit(1)
         parameterline = " ".join(["-P %s=${params.%s}" % (parameter, parameter) for parameter in parameters])
+        parameterline += " -P wait=${params.wait}"
         jenkinsfile = templ.render(parameters=parameters, parameterline=parameterline)
         return jenkinsfile

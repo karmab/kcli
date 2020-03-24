@@ -1154,7 +1154,7 @@ def create_plan(args):
     path = args.path
     container = args.container
     inputfile = args.inputfile
-    delete = args.delete
+    force = args.force
     paramfile = args.paramfile
     wait = args.wait
     if os.path.exists("/i_am_a_container"):
@@ -1174,7 +1174,7 @@ def create_plan(args):
     if plan is None:
         plan = nameutils.get_random_name()
         common.pprint("Using %s as name of the plan" % plan)
-    elif delete:
+    elif force:
         config.plan(plan, delete=True)
     config.plan(plan, ansible=ansible, url=url, path=path,
                 container=container, inputfile=inputfile,
@@ -2328,7 +2328,7 @@ def cli():
     plancreate_parser.add_argument('-p', '--path', help='Path where to download plans. Defaults to plan',
                                    metavar='PATH')
     plancreate_parser.add_argument('-c', '--container', action='store_true', help='Handle container')
-    plancreate_parser.add_argument('--delete', action='store_true', help='Delete existing vms first')
+    plancreate_parser.add_argument('--force', action='store_true', help='Delete existing vms first')
     plancreate_parser.add_argument('-f', '--inputfile', help='Input Plan file')
     plancreate_parser.add_argument('-P', '--param', action='append',
                                    help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
