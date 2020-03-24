@@ -37,7 +37,7 @@ class Kubevirt(Kubecommon):
 
     """
     def __init__(self, token=None, ca_file=None, context=None, multus=True, host='127.0.0.1', port=443,
-                 user='root', debug=False, tags=None, namespace=None, cdi=True, datavolumes=True, readwritemany=False):
+                 user='root', debug=False, tags=None, namespace=None, cdi=False, datavolumes=True, readwritemany=False):
         Kubecommon.__init__(self, token=token, ca_file=ca_file, context=context, host=host, port=port,
                             namespace=namespace, readwritemany=readwritemany)
         self.crds = client.CustomObjectsApi(api_client=self.api_client)
@@ -180,8 +180,8 @@ class Kubevirt(Kubecommon):
                 elif image in ['debian', 'gentoo', 'ubuntu']:
                     image = "karmab/%s-container-disk-demo" % image
                     common.pprint("Using container disk %s as image" % image)
-            elif '/' not in image:
-                return {'result': 'failure', 'reason': "you don't have image %s" % image}
+                elif '/' not in image:
+                    return {'result': 'failure', 'reason': "you don't have image %s" % image}
             if image.startswith('kubevirt/fedora-cloud-registry-disk-demo') and memory <= 512:
                 memory = 1024
         default_disksize = disksize
@@ -199,7 +199,7 @@ class Kubevirt(Kubecommon):
             for p in core.list_namespaced_persistent_volume_claim(cdinamespace).items:
                 if p.metadata.annotations is not None\
                         and 'cdi.kubevirt.io/storage.import.endpoint' in p.metadata.annotations:
-                    cdiname = self.get_template_name(p.metadata.annotations['cdi.kubevirt.io/storage.import.endpoint'])
+                    cdiname = self.get_image_name(p.metadata.annotations['cdi.kubevirt.io/storage.import.endpoint'])
                     images[cdiname] = p.metadata.name
         else:
             allpvc = core.list_namespaced_persistent_volume_claim(namespace)
