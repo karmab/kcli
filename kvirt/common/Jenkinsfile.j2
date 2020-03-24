@@ -12,10 +12,19 @@ properties(
 
 pipeline {
     agent any 
+    environment {
+     DOCKER_OPTIONS = "--net host --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli -v $HOME/.ssh:/root/.ssh -v $PWD:/workdir -v /var/tmp:/ignitiondir"
+     KCLI_PARAMETERS = "{{ parameterline }}"
+    }
     stages {
+        stage('Check Kcli client') {
+            steps {
+                sh 'docker run ${DOCKER_OPTIONS} karmab/kcli list client'
+            }
+        }
         stage('Deploy Kcli plan') {
             steps {
-                sh 'docker run --net host --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli -v $HOME/.ssh:/root/.ssh -v $PWD:/workdir -v /var/tmp:/ignitiondir karmab/kcli create plan -f {{ inputfile | default('kcli_plan.yml')  }} {{ parameterline }}'
+                sh 'docker run ${DOCKER_OPTIONS} karmab/kcli create plan -f ${WORKSPACE}/{{ inputfile | default('kcli_plan.yml') }} ${KCLI_PARAMETERS}'
             }
         }
     }
