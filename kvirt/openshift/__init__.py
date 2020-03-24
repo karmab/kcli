@@ -234,11 +234,16 @@ def create(config, plandir, cluster, overrides):
     os.environ['KUBECONFIG'] = "%s/auth/kubeconfig" % clusterdir
     if find_executable('oc') is None:
         get_oc(macosx)
-    if tag is not None:
+    if tag is not None and version == 'ci':
         if '/' not in str(tag):
             basetag = 'ocp' if not upstream else 'origin'
             tag = 'registry.svc.ci.openshift.org/%s/release:%s' % (basetag, tag)
         os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = tag
+        pprint("Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to %s" % tag, color='blue')
+    if disconnected_url is not None:
+        if '/' not in str(tag):
+            tag = '%s/release:%s' % (disconnected_url, tag)
+            os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = tag
         pprint("Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to %s" % tag, color='blue')
     if find_executable('openshift-install') is None:
         if version == 'ci':
