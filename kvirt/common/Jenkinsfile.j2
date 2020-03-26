@@ -3,27 +3,70 @@ properties(
   parameters (
     [
     booleanParam(name: 'wait', defaultValue: false, description: 'Wait for plan to finish'),
+    string(name: 'kcli_config_yml', defaultValue: "kcli-config-yml", description: 'Secret File Credential storing your ~/.kcli/config.yml'),
+    string(name: 'kcli_id_rsa', defaultValue: "kcli-id-rsa", description: 'Secret File Credential storing your private key'),
+    string(name: 'kcli_id_rsa_pub', defaultValue: "kcli-id-rsa-pub", description: 'Secret File Credential container your public key'),
     {%- for parameter in parameters %}
     string(name: '{{ parameter }}', defaultValue: "{{ parameters[parameter]|none }}", description: ''),
     {%- endfor %}
     ]
-  ),
+  )
  ]
 )
 
 pipeline {
-    agent any 
+    {%- if jenkinsmode == 'kubernetes' %}
+    agent { kubernetes {
+      cloud 'openshift'
+      label 'kcli'
+      defaultContainer 'kcli'
+      yaml """
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: kcli
+    image: docker.io/karmab/kcli:latest
+    command: ['kweb']
+    tty: true
+"""
+          }
+    }
+    {%- else %}
+    agent any
+    {%- endif %}
     environment {
-     DOCKER_OPTIONS = "--net host --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli -v $HOME/.ssh:/root/.ssh -v $PWD:/workdir -v /var/tmp:/ignitiondir"
+     KCLI_CONFIG = credentials("${params.kcli_config_yml}")
+     KCLI_SSH_ID_RSA = credentials("${params.kcli_id_rsa}")
+     KCLI_SSH_ID_RSA_PUB = credentials("${params.kcli_id_rsa_pub}")
      KCLI_PARAMETERS = "{{ parameterline }}"
+     {% if jenkinsmode != 'kubernetes' -%}
+     CONTAINER_OPTIONS = "--net host --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli -v $HOME/.ssh:/root/.ssh -v $PWD:/workdir -v /var/tmp:/ignitiondir"
+     {%- endif %}
+     KCLI = "{{ jenkinsmode + ' run ${CONTAINER_OPTIONS} karmab/kcli' if jenkinsmode != 'kubernetes' else 'kcli' }}"
     }
     stages {
-        stage('Check Kcli client') {
+        stage('Prepare kcli environment') {
             steps {
-                sh 'docker run ${DOCKER_OPTIONS} karmab/kcli list client'
+                sh '''
+                [ -d $HOME/.kcli ] && rm -rf $HOME/.kcli
+                mkdir $HOME/.kcli
+                cp "$KCLI_CONFIG" $HOME/.kcli/config.yml
+                cp "$KCLI_SSH_ID_RSA" $HOME/.kcli/id_rsa
+                chmod 600 $HOME/.kcli/id_rsa
+                cp "$KCLI_SSH_ID_RSA_PUB" $HOME/.kcli/id_rsa.pub
+                {% if jenkinsmode == 'kubernetes' -%}
+                [ -f /i_am_a_container ] && rm /i_am_a_container
+                {%- endif %}
+                '''
             }
         }
-        stage('Deploy Kcli plan') {
+        stage('Check kcli client') {
+            steps {
+                sh '${KCLI} list client'
+            }
+        }
+        stage('Deploy kcli plan') {
             steps {
                 script {
                   if ( "${params.wait}" == "true" ) {
@@ -33,7 +76,7 @@ pipeline {
                   }
                 }
                 sh """
-                  docker run ${DOCKER_OPTIONS} karmab/kcli create plan -f ${WORKSPACE}/{{ inputfile | default('kcli_plan.yml') }} ${KCLI_PARAMETERS} ${WAIT} ${env.JOB_NAME}_${env.BUILD_NUMBER}
+                  ${KCLI} create plan -f ${WORKSPACE}/{{ inputfile | default('kcli_plan.yml') }} ${KCLI_PARAMETERS} ${WAIT} ${env.JOB_NAME}_${env.BUILD_NUMBER}
                 """
             }
         }

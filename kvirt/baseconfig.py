@@ -16,7 +16,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             RHNWAIT, FLAVOR, KEEP_NETWORKS, DNSCLIENT, STORE_METADATA, NOTIFY, PUSHBULLETTOKEN,
                             NOTIFYSCRIPT, SLACKTOKEN, NOTIFYCMD, NOTIFYMETHODS, SLACKCHANNEL, SHAREDFOLDERS, KERNEL,
                             INITRD, CMDLINE, PLACEMENT, YAMLINVENTORY, CPUHOTPLUG, MEMORYHOTPLUG, CPUFLAGS, CPUPINNING,
-                            NUMAMODE, NUMA, PCIDEVICES, VIRTTYPE, MAILSERVER, MAILFROM, MAILTO, TPM)
+                            NUMAMODE, NUMA, PCIDEVICES, VIRTTYPE, MAILSERVER, MAILFROM, MAILTO, TPM, JENKINSMODE)
 from kvirt import common
 from kvirt import jinjafilters
 import os
@@ -162,6 +162,8 @@ class Kbaseconfig:
         defaults['cpuhotplug'] = bool(default.get('cpuhotplug', CPUHOTPLUG))
         defaults['memoryhotplug'] = bool(default.get('memoryhotplug', MEMORYHOTPLUG))
         defaults['virttype'] = default.get('virttype', VIRTTYPE)
+        defaults['tpm'] = default.get('tpm', TPM)
+        defaults['jenkinsmode'] = default.get('jenkinsmode', JENKINSMODE)
         currentplanfile = "%s/.kcli/plan" % os.environ.get('HOME')
         if os.path.exists(currentplanfile):
             self.currentplan = open(currentplanfile).read().strip()
@@ -236,7 +238,8 @@ class Kbaseconfig:
         self.numamode = options.get('numamode', NUMAMODE)
         self.numa = options.get('numa', NUMA)
         self.pcidevices = options.get('pcidevices', PCIDEVICES)
-        self.tpm = options.get('tpm', TPM)
+        self.tpm = options.get('tpm', self.default['tpm'])
+        self.jenkinsmode = options.get('jenkinsmode', self.default['jenkinsmode'])
         self.numcpus = options.get('numcpus', self.default['numcpus'])
         self.memory = options.get('memory', self.default['memory'])
         self.disks = options.get('disks', self.default['disks'])
@@ -862,6 +865,10 @@ class Kbaseconfig:
         return {'result': 'success'}
 
     def generate_jenkinsfile(self, inputfile, overrides={}):
+        if self.jenkinsmode not in ['docker', 'podman', 'kubernetes']:
+            common.pprint("Incorrect jenkins mode %s. Choose betwen docker, podman or kubernetes" % self.jenkinsmode,
+                          color='red')
+            os._exit(1)
         inputfile = os.path.expanduser(inputfile) if inputfile is not None else 'kcli_plan.yml'
         basedir = os.path.dirname(inputfile)
         if basedir == "":
@@ -894,6 +901,5 @@ class Kbaseconfig:
             common.pprint("Error rendering file %s. Got: %s" % (inputfile, e.message), color='red')
             os._exit(1)
         parameterline = " ".join(["-P %s=${params.%s}" % (parameter, parameter) for parameter in parameters])
-        parameterline += " -P wait=${params.wait}"
-        jenkinsfile = templ.render(parameters=parameters, parameterline=parameterline)
+        jenkinsfile = templ.render(parameters=parameters, parameterline=parameterline, jenkinsmode=self.jenkinsmode)
         return jenkinsfile
