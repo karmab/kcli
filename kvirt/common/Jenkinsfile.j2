@@ -2,7 +2,9 @@ properties(
  [
   parameters (
     [
+    {% if _type == 'plan' -%}
     booleanParam(name: 'wait', defaultValue: false, description: 'Wait for plan to finish'),
+    {%- endif %}
     string(name: 'kcli_config_yml', defaultValue: "kcli-config-yml", description: 'Secret File Credential storing your ~/.kcli/config.yml'),
     string(name: 'kcli_id_rsa', defaultValue: "kcli-id-rsa", description: 'Secret File Credential storing your private key'),
     string(name: 'kcli_id_rsa_pub', defaultValue: "kcli-id-rsa-pub", description: 'Secret File Credential container your public key'),
@@ -42,8 +44,10 @@ spec:
      KCLI_PARAMETERS = "{{ parameterline }}"
      {% if jenkinsmode != 'kubernetes' -%}
      CONTAINER_OPTIONS = "--net host --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli -v $HOME/.ssh:/root/.ssh -v $PWD:/workdir -v /var/tmp:/ignitiondir"
+     KCLI = "{{ jenkinsmode + ' run ${CONTAINER_OPTIONS} karmab/kcli' }}"
+     {%- else -%}
+     KCLI = kcli
      {%- endif %}
-     KCLI = "{{ jenkinsmode + ' run ${CONTAINER_OPTIONS} karmab/kcli' if jenkinsmode != 'kubernetes' else 'kcli' }}"
     }
     stages {
         stage('Prepare kcli environment') {
@@ -68,6 +72,7 @@ spec:
         }
         stage('Deploy kcli plan') {
             steps {
+                {% if _type == 'plan' -%}
                 script {
                   if ( "${params.wait}" == "true" ) {
                      WAIT = "--wait"
@@ -75,8 +80,13 @@ spec:
                      WAIT = ""
                   }
                 }
+                {%- endif %}
                 sh """
+                  {% if _type == 'plan' -%}
                   ${KCLI} create plan -f ${WORKSPACE}/{{ inputfile | default('kcli_plan.yml') }} ${KCLI_PARAMETERS} ${WAIT} ${env.JOB_NAME}_${env.BUILD_NUMBER}
+                  {%- else -%}
+                  ${KCLI} create kube -t {{ _type }} ${KCLI_PARAMETERS} ${WAIT} ${env.JOB_NAME}_${env.BUILD_NUMBER}
+                  {%- endif %}
                 """
             }
         }

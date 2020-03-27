@@ -19,6 +19,8 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             NUMAMODE, NUMA, PCIDEVICES, VIRTTYPE, MAILSERVER, MAILFROM, MAILTO, TPM, JENKINSMODE)
 from kvirt import common
 from kvirt import jinjafilters
+from kvirt import kubeadm
+from kvirt import openshift
 import os
 from shutil import copytree, rmtree
 import yaml
@@ -864,8 +866,26 @@ class Kbaseconfig:
                                allow_unicode=True)
         return {'result': 'success'}
 
-    def create_pipeline(self, inputfile, overrides={}):
-        jenkinsmode = overrides.get('jenkinsmode', self.jenkinsmode)
+    def create_pipeline(self, inputfile, overrides={}, kube=False):
+        _type = 'plan'
+        if kube:
+            _type = 'generic'
+            plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
+            if 'type' in overrides:
+                _type = overrides['type']
+                del overrides['type']
+                if _type == 'openshift':
+                    plandir = os.path.dirname(openshift.create.__code__.co_filename)
+                elif _type != 'generic':
+                    common.pprint("Incorrect kubernetes type %s. Choose betwen generic or openshift" % _type,
+                                  color='red')
+                    os._exit(1)
+                inputfile = "%s/masters.yml" % plandir
+        if 'jenkinsmode' in overrides:
+            jenkinsmode = overrides['jenkinsmode']
+            del overrides['jenkinsmode']
+        else:
+            jenkinsmode = self.jenkinsmode
         if jenkinsmode not in ['docker', 'podman', 'kubernetes']:
             common.pprint("Incorrect jenkins mode %s. Choose betwen docker, podman or kubernetes" % self.jenkinsmode,
                           color='red')
@@ -905,5 +925,6 @@ class Kbaseconfig:
             common.pprint("Error rendering file %s. Got: %s" % (inputfile, e.message), color='red')
             os._exit(1)
         parameterline = " ".join(["-P %s=${params.%s}" % (parameter, parameter) for parameter in parameters])
-        jenkinsfile = templ.render(parameters=parameters, parameterline=parameterline, jenkinsmode=jenkinsmode)
+        jenkinsfile = templ.render(parameters=parameters, parameterline=parameterline, jenkinsmode=jenkinsmode,
+                                   _type=_type)
         return jenkinsfile

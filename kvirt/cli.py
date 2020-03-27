@@ -1330,8 +1330,9 @@ def download_openshift_installer(args):
 
 
 def create_pipeline(args):
-    """Render file"""
+    """Create Pipeline"""
     inputfile = args.inputfile
+    kube = args.kube
     paramfile = args.paramfile
     if inputfile is None:
         inputfile = 'kcli_plan.yml'
@@ -1345,10 +1346,10 @@ def create_pipeline(args):
         paramfile = "kcli_parameters.yml"
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-    if not os.path.exists(inputfile):
+    if not kube and not os.path.exists(inputfile):
         common.pprint("File %s not found" % inputfile, color='red')
         return 0
-    renderfile = baseconfig.create_pipeline(inputfile, overrides=overrides)
+    renderfile = baseconfig.create_pipeline(inputfile, overrides=overrides, kube=kube)
     print(renderfile)
     return 0
 
@@ -2343,6 +2344,7 @@ def cli():
     pipelinecreate_parser = create_subparsers.add_parser('pipeline', description=pipelinecreate_desc,
                                                          help=pipelinecreate_desc)
     pipelinecreate_parser.add_argument('-f', '--inputfile', help='Input Plan file')
+    pipelinecreate_parser.add_argument('-k', '--kube', action='store_true', help='Create kube pipeline')
     pipelinecreate_parser.add_argument('-P', '--param', action='append',
                                        help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
     pipelinecreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
