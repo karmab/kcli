@@ -1157,8 +1157,10 @@ def create_plan(args):
     force = args.force
     paramfile = args.paramfile
     wait = args.wait
+    if inputfile is None:
+        inputfile = 'kcli_plan.yml'
     if os.path.exists("/i_am_a_container"):
-        inputfile = "/workdir/%s" % inputfile if inputfile is not None else "/workdir/kcli_plan.yml"
+        inputfile = "/workdir/%s" % inputfile
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
         elif os.path.exists("/workdir/kcli_parameters.yml"):
@@ -1327,11 +1329,34 @@ def download_openshift_installer(args):
     return 0
 
 
+def create_pipeline(args):
+    """Render file"""
+    inputfile = args.inputfile
+    paramfile = args.paramfile
+    if inputfile is None:
+        inputfile = 'kcli_plan.yml'
+    if os.path.exists("/i_am_a_container"):
+        inputfile = "/workdir/%s" % inputfile
+        if paramfile is not None:
+            paramfile = "/workdir/%s" % paramfile
+        elif os.path.exists("/workdir/kcli_parameters.yml"):
+            paramfile = "/workdir/kcli_parameters.yml"
+    elif paramfile is None and os.path.exists("kcli_parameters.yml"):
+        paramfile = "kcli_parameters.yml"
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    if not os.path.exists(inputfile):
+        common.pprint("File %s not found" % inputfile, color='red')
+        return 0
+    renderfile = baseconfig.create_pipeline(inputfile, overrides=overrides)
+    print(renderfile)
+    return 0
+
+
 def render_file(args):
     """Render file"""
     plan = None
     inputfile = args.inputfile
-    jenkins = args.jenkins
     paramfile = args.paramfile
     ignore = args.ignore
     if os.path.exists("/i_am_a_container"):
@@ -1352,10 +1377,7 @@ def render_file(args):
     if not os.path.exists(inputfile):
         common.pprint("File %s not found" % inputfile, color='red')
         return 0
-    if jenkins:
-        renderfile = baseconfig.generate_jenkinsfile(inputfile)
-    else:
-        renderfile = baseconfig.process_inputfile(plan, inputfile, overrides=overrides, onfly=False, ignore=ignore)
+    renderfile = baseconfig.process_inputfile(plan, inputfile, overrides=overrides, onfly=False, ignore=ignore)
     print(renderfile)
     return 0
 
@@ -1877,7 +1899,6 @@ def cli():
     render_desc = 'Render Plan/file'
     render_parser = subparsers.add_parser('render', description=render_desc, help=render_desc)
     render_parser.add_argument('-f', '--inputfile', help='Input Plan/File', default='kcli_plan.yml')
-    render_parser.add_argument('-j', '--jenkins', action='store_true', help='Renders as jenkins file')
     render_parser.add_argument('-i', '--ignore', action='store_true', help='Ignore missing variables')
     render_parser.add_argument('-P', '--param', action='append',
                                help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
@@ -2317,6 +2338,15 @@ def cli():
                                                         help=networkdelete_desc)
     networkdelete_parser.add_argument('name', metavar='NETWORK')
     networkdelete_parser.set_defaults(func=delete_network)
+
+    pipelinecreate_desc = 'Create Pipeline'
+    pipelinecreate_parser = create_subparsers.add_parser('pipeline', description=pipelinecreate_desc,
+                                                         help=pipelinecreate_desc)
+    pipelinecreate_parser.add_argument('-f', '--inputfile', help='Input Plan file')
+    pipelinecreate_parser.add_argument('-P', '--param', action='append',
+                                       help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    pipelinecreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    pipelinecreate_parser.set_defaults(func=create_pipeline)
 
     plancreate_desc = 'Create Plan'
     plancreate_epilog = "examples:\n%s" % plancreate

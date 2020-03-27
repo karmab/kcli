@@ -864,7 +864,7 @@ class Kbaseconfig:
                                allow_unicode=True)
         return {'result': 'success'}
 
-    def generate_jenkinsfile(self, inputfile, overrides={}):
+    def create_pipeline(self, inputfile, overrides={}):
         if self.jenkinsmode not in ['docker', 'podman', 'kubernetes']:
             common.pprint("Incorrect jenkins mode %s. Choose betwen docker, podman or kubernetes" % self.jenkinsmode,
                           color='red')
