@@ -865,7 +865,8 @@ class Kbaseconfig:
         return {'result': 'success'}
 
     def create_pipeline(self, inputfile, overrides={}):
-        if self.jenkinsmode not in ['docker', 'podman', 'kubernetes']:
+        jenkinsmode = overrides.get('jenkinsmode', self.jenkinsmode)
+        if jenkinsmode not in ['docker', 'podman', 'kubernetes']:
             common.pprint("Incorrect jenkins mode %s. Choose betwen docker, podman or kubernetes" % self.jenkinsmode,
                           color='red')
             os._exit(1)
@@ -904,5 +905,5 @@ class Kbaseconfig:
             common.pprint("Error rendering file %s. Got: %s" % (inputfile, e.message), color='red')
             os._exit(1)
         parameterline = " ".join(["-P %s=${params.%s}" % (parameter, parameter) for parameter in parameters])
-        jenkinsfile = templ.render(parameters=parameters, parameterline=parameterline, jenkinsmode=self.jenkinsmode)
+        jenkinsfile = templ.render(parameters=parameters, parameterline=parameterline, jenkinsmode=jenkinsmode)
         return jenkinsfile
