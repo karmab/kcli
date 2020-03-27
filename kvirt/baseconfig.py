@@ -887,6 +887,9 @@ class Kbaseconfig:
         parameters = common.get_parameters(parameterfile, raw=raw)
         if parameters is not None:
             parameters = yaml.safe_load(parameters)['parameters'] if not raw else parameters
+        else:
+            parameters = {}
+        parameters.update(overrides)
         jenkinsdir = os.path.dirname(common.__file__)
         env = Environment(loader=FileSystemLoader(jenkinsdir))
         for jinjafilter in jinjafilters.jinjafilters:
