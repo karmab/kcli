@@ -1274,14 +1274,17 @@ def info_plan(args):
     return 0
 
 
-def info_kube(args):
-    """Info kube"""
-    _type = args.type
+def info_generic_kube(args):
+    """Info Generic kube"""
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-    if _type == 'openshift':
-        baseconfig.info_kube_openshift(quiet=args.quiet)
-    else:
-        baseconfig.info_kube_generic(quiet=args.quiet)
+    baseconfig.info_kube_generic(quiet=True)
+    return 0
+
+
+def info_openshift_kube(args):
+    """Info Openshift kube"""
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    baseconfig.info_kube_openshift(quiet=True)
     return 0
 
 
@@ -2217,10 +2220,17 @@ def cli():
 
     kubeinfo_desc = 'Info Kube'
     kubeinfo_parser = info_subparsers.add_parser('kube', description=kubeinfo_desc, help=kubeinfo_desc)
-    kubeinfo_parser.add_argument('-q', '--quiet', action='store_true', help='Provide parameter file output')
-    kubeinfo_parser.add_argument('-t', '--type', type=str, choices=['generic', 'openshift'], default='generic',
-                                 metavar='TYPE', help='type for the kubernetes cluster. Use generic or openshift')
-    kubeinfo_parser.set_defaults(func=info_kube)
+    kubeinfo_subparsers = kubeinfo_parser.add_subparsers(metavar='', dest='subcommand_info_kube')
+
+    kubegenericinfo_desc = 'Info Generic Kube'
+    kubegenericinfo_parser = kubeinfo_subparsers.add_parser('generic', description=kubegenericinfo_desc,
+                                                            help=kubegenericinfo_desc)
+    kubegenericinfo_parser.set_defaults(func=info_generic_kube)
+
+    kubeopenshiftinfo_desc = 'Info Openshift Kube'
+    kubeopenshiftinfo_parser = kubeinfo_subparsers.add_parser('openshift', description=kubeopenshiftinfo_desc,
+                                                              help=kubeopenshiftinfo_desc)
+    kubeopenshiftinfo_parser.set_defaults(func=info_openshift_kube)
 
     kubescale_desc = 'Scale Kube'
     kubescale_parser = argparse.ArgumentParser(add_help=False)
