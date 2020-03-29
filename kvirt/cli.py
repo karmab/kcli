@@ -1033,7 +1033,6 @@ def delete_lb(args):
 
 def create_kube(args):
     """Create kube"""
-    _type = args.type
     paramfile = args.paramfile
     force = args.force
     if os.path.exists("/i_am_a_container"):
@@ -1049,9 +1048,8 @@ def create_kube(args):
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     if force:
         config.delete_kube(args.cluster, overrides=overrides)
-    if 'type' in overrides:
-        _type = overrides['type']
-        common.pprint("Setting type to %s as specified as parameter" % _type)
+    _type = overrides.get('type', 'generic')
+    common.pprint("Setting type to %s" % _type)
     if _type == 'openshift':
         config.create_kube_openshift(args.cluster, overrides=overrides)
     else:
@@ -1071,7 +1069,6 @@ def delete_kube(args):
 
 def scale_kube(args):
     """Scale kube"""
-    _type = args.type
     workers = args.workers
     paramfile = args.paramfile
     if os.path.exists("/i_am_a_container"):
@@ -1085,9 +1082,8 @@ def scale_kube(args):
         common.pprint("Using default parameter file kcli_parameters.yml")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
-    if 'type' in overrides:
-        _type = overrides['type']
-        common.pprint("Setting type to %s as specified as parameter" % _type)
+    _type = overrides.get('type', 'generic')
+    common.pprint("Setting type to %s" % _type)
     if workers > 0:
         overrides['workers'] = workers
     if _type == 'openshift':
@@ -2199,8 +2195,6 @@ def cli():
     kubecreate_epilog = "examples:\n%s" % kubecreate
     kubecreate_parser = argparse.ArgumentParser(add_help=False)
     kubecreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
-    kubecreate_parser.add_argument('-t', '--type', type=str, choices=['generic', 'openshift'], default='generic',
-                                   metavar='TYPE', help='type for the kubernetes cluster. Use generic or openshift')
     kubecreate_parser.add_argument('-P', '--param', action='append',
                                    help='specify parameter or keyword for rendering (multiple can be specified)',
                                    metavar='PARAM')
@@ -2234,8 +2228,6 @@ def cli():
                                   help='specify parameter or keyword for rendering (multiple can be specified)',
                                   metavar='PARAM')
     kubescale_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
-    kubescale_parser.add_argument('-t', '--type', type=str, choices=['generic', 'openshift'], default='generic',
-                                  metavar='TYPE', help='type for the kubernetes cluster. Use generic or openshift')
     kubescale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int, default=0)
     kubescale_parser.add_argument('cluster', metavar='CLUSTER')
     kubescale_parser.set_defaults(func=scale_kube)

@@ -1037,6 +1037,7 @@ The main features are:
 
 Prepare a parameter file with the folloving variables:
 
+- *type*. Set it to openshift
 - *version*. You can choose between nightly, ci or stable . Defaults to `nightly`. ci requires specific data in your secret
 - *upstream*. If set to True, okd installer will be used instead, along with fedora coreos images.
 - *domain*. For cloud platforms, it should point to a domain name you have access to.Defaults to `karmalabs.com`.
@@ -1072,7 +1073,7 @@ Prepare a parameter file with the folloving variables:
 ##### Deploying
 
 ```
-kcli create kube -t openshift --paramfile parameters.yml $cluster
+kcli create kube --paramfile parameters.yml $cluster
 ```
 
 - You will be asked for your sudo password in order to create a /etc/hosts entry for the api vip.
