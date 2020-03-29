@@ -1277,11 +1277,11 @@ def info_plan(args):
 def info_kube(args):
     """Info kube"""
     _type = args.type
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     if _type == 'openshift':
-        config.info_kube_openshift(quiet=args.quiet)
+        baseconfig.info_kube_openshift(quiet=args.quiet)
     else:
-        config.info_kube_generic(quiet=args.quiet)
+        baseconfig.info_kube_generic(quiet=args.quiet)
     return 0
 
 

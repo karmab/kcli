@@ -928,3 +928,13 @@ class Kbaseconfig:
         jenkinsfile = templ.render(parameters=parameters, parameterline=parameterline, jenkinsmode=jenkinsmode,
                                    _type=_type)
         return jenkinsfile
+
+    def info_kube_generic(self, quiet):
+        plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
+        inputfile = '%s/kcli_plan.yml' % plandir
+        self.info_plan(inputfile, quiet=quiet)
+
+    def info_kube_openshift(self, quiet):
+        plandir = os.path.dirname(openshift.create.__code__.co_filename)
+        inputfile = '%s/masters.yml' % plandir
+        self.info_plan(inputfile, quiet=quiet)

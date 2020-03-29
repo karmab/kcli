@@ -1839,16 +1839,6 @@ $INFO
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
         openshift.scale(self, plandir, cluster, overrides)
 
-    def info_kube_generic(self, quiet):
-        plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
-        inputfile = '%s/kcli_plan.yml' % plandir
-        self.plan('xxx', inputfile=inputfile, info=True, quiet=quiet)
-
-    def info_kube_openshift(self, quiet):
-        plandir = os.path.dirname(openshift.create.__code__.co_filename)
-        inputfile = '%s/masters.yml' % plandir
-        self.plan('xxx', inputfile=inputfile, info=True, quiet=quiet)
-
     def download_openshift_installer(self, overrides={}):
         pull_secret = overrides.get('pull_secret', 'openshift_pull.json')
         tag = overrides.get('tag', '4.5')
