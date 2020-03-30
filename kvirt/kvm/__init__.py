@@ -2845,7 +2845,8 @@ class Kvirt(object):
                 firstip = attributes.get('address')
                 netmask = attributes.get('netmask')
                 netmask = attributes.get('prefix') if netmask is None else netmask
-                ip = IPNetwork('%s/%s' % (firstip, netmask))
+                ipnet = '%s/%s' % (firstip, netmask) if netmask is not None else firstip
+                ip = IPNetwork(ipnet)
                 cidr = ip.cidr
             dhcp = list(root.getiterator('dhcp'))
             if dhcp:
