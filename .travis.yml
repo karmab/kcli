@@ -28,5 +28,5 @@ after_success:
 - if [ "$TRAVIS_TAG" != "" ]; then docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
   ; docker push karmab/kcli:$TRAVIS_TAG ; fi
 - "./pypi.sh"
-- "./packagecloud_clean.py"
 - "./packagecloud.sh"
+- "./packagecloud_clean.py"
