@@ -43,6 +43,11 @@ IMAGES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-i
           'fcos': 'https://builds.coreos.fedoraproject.org/streams/stable.json',
           'fedora31': 'https://download.fedoraproject.org/pub/fedora/linux/releases/31/Cloud/x86_64/images/'
           'Fedora-Cloud-Base-31-1.9.x86_64.qcow2',
+          'freebsd112': 'https://bsd-cloud-image.org/images/freebsd/11.2/freebsd-11.2.qcow2',
+          'freebsd121': 'https://bsd-cloud-image.org/images/freebsd/12.1/freebsd-12.1.qcow2',
+          'netbsd81': 'https://bsd-cloud-image.org/images/netbsd/8.1/netbsd-8.1.qcow2',
+          'netbsd90': 'https://bsd-cloud-image.org/images/netbsd/9.0/netbsd-9.0.qcow2',
+          'openbsd66': 'https://bsd-cloud-image.org/images/openbsd/6.6/openbsd-6.6.qcow2',
           'gentoo': 'https://gentoo.osuosl.org/experimental/amd64/openstack/gentoo-openstack-amd64-default-20180621.'
           'qcow2',
           'opensuse': 'https://download.opensuse.org/repositories/Cloud:/Images:/Leap_15.2/images/'
