@@ -11,6 +11,8 @@
  enableroot: false 
  numcpus: {{ numcpus }}
  memory: {{ worker_memory }}
+ rng: {{ worker_rng }}
+ tpm: {{ worker_tpm }}
  autostart: {{ autostart }}
  nets: {{ [net0] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}

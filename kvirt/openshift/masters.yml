@@ -51,6 +51,8 @@
  keys: {{ keys }}
  numcpus: {{ numcpus }}
  memory: {{ master_memory }}
+ rng: {{ master_rng }}
+ tpm: {{ master_tpm }}
  autostart: {{ autostart }}
  nets: {{ [net0] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}

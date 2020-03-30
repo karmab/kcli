@@ -3,10 +3,15 @@ workers: 0
 image: rhcos44
 network: default
 cluster: testk
-baremetal: false
 domain: karmalabs.com
+minimal: false
 numcpus: 4
 master_memory: 8192
+master_tpm: false
+master_rng: false
+worker_memory: 8192
+worker_tpm: false
+worker_rng: false
 bootstrap_memory: 6144
 bootstrap_numcpus: 4
 disk_size: 30
@@ -30,8 +35,7 @@ disconnected_url:
 disconnected_user:
 disconnected_password:
 ipv6: false
+baremetal: false
 provisioning_net: provisioning
 provisioning_nic: ens4
 cloud_tag:
-minimal: false
-

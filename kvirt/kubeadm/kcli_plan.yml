@@ -70,7 +70,7 @@
 {{cluster }}-worker-{{ number }}:
  image: {{ image }}
  numcpus: 2
- memory: {{ node_memory }}
+ memory: {{ worker_memory }}
  reservedns: true
  sharedkey: true
  domain: {{ domain }}
