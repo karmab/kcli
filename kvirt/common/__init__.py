@@ -875,6 +875,12 @@ def get_user(image):
         user = 'debian'
     elif 'arch' in image.lower():
         user = 'arch'
+    elif 'freebsd' in image.lower():
+        user = 'freebsd'
+    elif 'netbsd' in image.lower():
+        user = 'netbsd'
+    elif 'openbsd' in image.lower():
+        user = 'openbsd'
     else:
         user = 'root'
     return user
