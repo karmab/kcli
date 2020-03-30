@@ -16,7 +16,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             RHNWAIT, FLAVOR, KEEP_NETWORKS, DNSCLIENT, STORE_METADATA, NOTIFY, PUSHBULLETTOKEN,
                             NOTIFYSCRIPT, SLACKTOKEN, NOTIFYCMD, NOTIFYMETHODS, SLACKCHANNEL, SHAREDFOLDERS, KERNEL,
                             INITRD, CMDLINE, PLACEMENT, YAMLINVENTORY, CPUHOTPLUG, MEMORYHOTPLUG, CPUFLAGS, CPUPINNING,
-                            NUMAMODE, NUMA, PCIDEVICES, VIRTTYPE, MAILSERVER, MAILFROM, MAILTO, TPM, JENKINSMODE)
+                            NUMAMODE, NUMA, PCIDEVICES, VIRTTYPE, MAILSERVER, MAILFROM, MAILTO, TPM, JENKINSMODE, RNG)
 from kvirt import common
 from kvirt import jinjafilters
 from kvirt import kubeadm
@@ -165,6 +165,7 @@ class Kbaseconfig:
         defaults['memoryhotplug'] = bool(default.get('memoryhotplug', MEMORYHOTPLUG))
         defaults['virttype'] = default.get('virttype', VIRTTYPE)
         defaults['tpm'] = default.get('tpm', TPM)
+        defaults['rng'] = default.get('rng', RNG)
         defaults['jenkinsmode'] = default.get('jenkinsmode', JENKINSMODE)
         currentplanfile = "%s/.kcli/plan" % os.environ.get('HOME')
         if os.path.exists(currentplanfile):
@@ -241,6 +242,7 @@ class Kbaseconfig:
         self.numa = options.get('numa', NUMA)
         self.pcidevices = options.get('pcidevices', PCIDEVICES)
         self.tpm = options.get('tpm', self.default['tpm'])
+        self.rng = options.get('rng', self.default['rng'])
         self.jenkinsmode = options.get('jenkinsmode', self.default['jenkinsmode'])
         self.numcpus = options.get('numcpus', self.default['numcpus'])
         self.memory = options.get('memory', self.default['memory'])

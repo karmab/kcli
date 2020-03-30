@@ -1611,6 +1611,9 @@ Available parameters for client/profile/plan files
    worker only. Check
    `here <https://github.com/karmab/kcli-plans/blob/master/samples/pcipassthrough/pci.yml>`__
    for an example.
+-  *tpm* (optional). Defaults to false. Enables a TPM device in the vm,
+   using emulator mode. Requires swtpm in the host.
+-  \*rng (optional). Defaults to false. Enables a RNG device in the vm.
 -  *notify* (optional). Defaults to false. Sends result of a command or
    a script run from the vm to one of the supported notify engines.
 -  *notifymethod* (optional). Array of notify engines. Defaults to

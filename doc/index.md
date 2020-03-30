@@ -1196,6 +1196,8 @@ Basic testing can be run with pytest, which leverages your existing kcli config:
 - *numamode* optional numamode to apply to the workers only.
 - *cpupinning* optional cpupinning conf to apply to the workers only.
 - *pcidevices* optional array of pcidevices to passthrough to the first worker only. Check [here](https://github.com/karmab/kcli-plans/blob/master/samples/pcipassthrough/pci.yml) for an example.
+- *tpm* (optional). Defaults to false. Enables a TPM device in the vm, using emulator mode. Requires swtpm in the host.
+- *rng (optional). Defaults to false. Enables a RNG device in the vm.
 - *notify* (optional). Defaults to false. Sends result of a command or a script run from the vm to one of the supported notify engines.
 - *notifymethod* (optional). Array of notify engines. Defaults to [pushbullet]. Other options are slack and mail.
 - *notifycmd* (optional). Which command to run for notification. If none is provided and no notifyscript either, defaults to sending last 100 lines of the cloudinit file of the machine, or ignition for coreos based vms.

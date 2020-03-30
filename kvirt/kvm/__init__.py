@@ -195,7 +195,7 @@ class Kvirt(object):
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
                files=[], enableroot=True, overrides={}, tags=[], dnsclient=None, storemetadata=False,
                sharedfolders=[], kernel=None, initrd=None, cmdline=None, placement=[], autostart=False,
-               cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False):
+               cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False):
         """
 
         :param name:
@@ -244,6 +244,7 @@ class Kvirt(object):
         :param numa:
         :param pcidevices:
         :param tpm:
+        :param rng:
         :return:
         """
         namespace = ''
@@ -864,6 +865,13 @@ class Kvirt(object):
                                 <source><address domain='0x%s' bus='0x%s' slot='0x%s' function='0x%s'/></source>
                                 </hostdev>""" % (newdomain, newbus, newslot, newfunction)
                 hostdevxml += newhostdev
+        rngxml = ""
+        if rng:
+            rngxml = """<rng model='virtio'>
+                        <rate bytes='192' period='300000'/>
+                        <backend model='random'>/dev/random</backend>
+                        <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0'/>
+                        </rng>"""
         tpmxml = ""
         if tpm:
             tpmxml = """<tpm model='tpm-tis'>
@@ -905,13 +913,14 @@ class Kvirt(object):
                     %s
                     %s
                     %s
+                    %s
                   </devices>
                     %s
                     %s
                     </domain>""" % (virttype, namespace, name, metadata, memoryhotplugxml, cpupinningxml, numatunexml,
                                     memory, vcpuxml, machine, firmwarexml, bootdev, kernelxml, disksxml, netxml, isoxml,
-                                    displayxml, serialxml, sharedxml, guestxml, videoxml, hostdevxml, tpmxml, cpuxml,
-                                    qemuextraxml)
+                                    displayxml, serialxml, sharedxml, guestxml, videoxml, hostdevxml, rngxml, tpmxml,
+                                    cpuxml, qemuextraxml)
         if self.debug:
             print(vmxml)
         conn.defineXML(vmxml)

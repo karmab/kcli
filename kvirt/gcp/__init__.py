@@ -113,7 +113,7 @@ class Kgcp(object):
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
                files=[], enableroot=True, alias=[], overrides={}, tags=[], dnsclient=None, storemetadata=False,
                sharedfolders=[], kernel=None, initrd=None, cmdline=None, placement=[], autostart=False,
-               cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False):
+               cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False):
         """
 
         :param name:
@@ -161,6 +161,7 @@ class Kgcp(object):
         :param numa:
         :param pcidevices:
         :param tpm:
+        :param rng:
         :return:
         """
         conn = self.conn
