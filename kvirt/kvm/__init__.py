@@ -1380,14 +1380,18 @@ class Kvirt(object):
                     except:
                         pass
             if ifaces and ip is None:
+                ips = []
                 for x in ifaces:
                     if ifaces[x]['hwaddr'] == mac and ifaces[x]['addrs'] is not None:
                         for entry in ifaces[x]['addrs']:
                             if entry['addr'].startswith('fe80::'):
                                 continue
                             ip = entry['addr']
-                            if len(interfaces) > 1:
-                                break
+                            ips.append(ip)
+                if ips:
+                    ip4s = [i for i in ips if ':' not in i]
+                    ip6s = [i for i in ips if i not in ip4s]
+                    ip = ip4s[0] if ip4s else ip6s[0]
             yamlinfo['nets'].append({'device': device, 'mac': mac, 'net': network, 'type': networktype})
         if ip is not None:
             yamlinfo['ip'] = ip
