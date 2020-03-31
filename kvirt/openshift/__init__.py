@@ -167,7 +167,8 @@ def create(config, plandir, cluster, overrides):
             'network': 'default',
             'masters': 1,
             'workers': 0,
-            'tag': 'cnvlab',
+            'cloud_tag': 'cnvlab',
+            'tag': '4.4',
             'ipv6': False,
             'pub_key': '%s/.ssh/id_rsa.pub' % os.environ['HOME'],
             'pull_secret': 'openshift_pull.json',
@@ -234,7 +235,7 @@ def create(config, plandir, cluster, overrides):
     os.environ['KUBECONFIG'] = "%s/auth/kubeconfig" % clusterdir
     if find_executable('oc') is None:
         get_oc(macosx)
-    if tag is not None and version == 'ci':
+    if version == 'ci':
         if '/' not in str(tag):
             basetag = 'ocp' if not upstream else 'origin'
             tag = 'registry.svc.ci.openshift.org/%s/release:%s' % (basetag, tag)

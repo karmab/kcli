@@ -39,3 +39,5 @@ baremetal: false
 provisioning_net: provisioning
 provisioning_nic: ens4
 cloud_tag:
+cloud_scale: false
+cloud_api_internal: false

@@ -1,27 +1,9 @@
-parameters:
- numcpus: 4
- network: default
- enableroot: false
- extra_disks: []
- master_memory: 8192
- worker_memory: 8192
- bootstrap_memory: 4096
- disk_size: 30
- image: rhcos44
- cluster: testk
- domain: karmalabs.com
- masters: 1
- workers: 0
- scale: false
- cloud_tag:
- api_internal: false
-
 api.{{ cluster }}:
  type: loadbalancer
  domain: {{ domain }}
  checkport: 6080
  checkpath: /readyz
-{% if not api_internal %}
+{% if not cloud_api_internal %}
  alias: ['api-int.{{ cluster }}.{{ domain }}']
 {% endif %}
  ports:
@@ -33,7 +15,7 @@ api.{{ cluster }}:
  - {{ cluster }}-master-{{ num }}
 {% endfor %}
 
-{% if api_internal %}
+{% if cloud_api_internal %}
 api-int.{{ cluster }}:
  type: loadbalancer
  internal: true
@@ -68,7 +50,7 @@ apps.{{ cluster }}:
 {% endfor %}
 {% endif %}
 
-{% if not scale %}
+{% if not cloud_scale %}
 {{ cluster }}-bootstrap:
  image: {{ image }}
  enableroot: {{ enableroot }}
