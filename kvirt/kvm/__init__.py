@@ -542,15 +542,18 @@ class Kvirt(object):
             gcmds = []
             if image is not None:
                 lower = image.lower()
-                if (lower.startswith('centos') or lower.startswith('fedora') or lower.startswith('rhel')):
-                    gcmds.append('yum -y install qemu-guest-agent')
-                    gcmds.append('systemctl enable qemu-guest-agent')
-                    gcmds.append('systemctl restart qemu-guest-agent')
-                elif image.lower().startswith('debian'):
+                if lower.startswith('debian'):
                     gcmds.append('apt-get -f install qemu-guest-agent')
-                elif [x for x in ubuntus if x in image.lower()]:
+                    gcmds.append('/etc/init.d/qemu-guest-agent start')
+                    gcmds.append('update-rc.d  qemu-guest-agent defaults')
+                elif lower.startswith('fedora') or lower.startswith('rhel'):
+                    gcmds.append('yum -y install qemu-guest-agent')
+                    gcmds.append('systemctl enable --now qemu-guest-agent')
+                elif [x for x in ubuntus if x in lower] or 'ubuntu' in lower:
                     gcmds.append('apt-get update')
                     gcmds.append('apt-get -f install qemu-guest-agent')
+                    gcmds.append('/etc/init.d/qemu-guest-agent start')
+                    gcmds.append('update-rc.d  qemu-guest-agent defaults')
             index = 1
             if image is not None and image.startswith('rhel'):
                 subindex = [i for i, value in enumerate(cmds) if value.startswith('subscription-manager')]

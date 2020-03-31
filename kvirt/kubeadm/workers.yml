@@ -3,8 +3,7 @@
  image: {{ image }}
  numcpus: 2
  memory: {{ worker_memory }}
- reservedns: true
- sharedkey: true
+ reservedns: false
  domain: {{ domain }}
  nets:
   - {{ network }}

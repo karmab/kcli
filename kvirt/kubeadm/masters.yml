@@ -19,8 +19,10 @@
  image: {{ image }}
  numcpus: 2
  memory: {{ master_memory }}
+{% if masters > 1 %}
  reservedns: true
  sharedkey: true
+{% endif %}
  domain: {{ domain }}
 {% if number == 0 %}
  notify: {{ notify }}
