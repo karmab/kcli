@@ -168,7 +168,7 @@ def create(config, plandir, cluster, overrides):
             'masters': 1,
             'workers': 0,
             'cloud_tag': 'cnvlab',
-            'tag': '4.4',
+            'tag': '4.5',
             'ipv6': False,
             'pub_key': '%s/.ssh/id_rsa.pub' % os.environ['HOME'],
             'pull_secret': 'openshift_pull.json',
@@ -267,7 +267,7 @@ def create(config, plandir, cluster, overrides):
     else:
         COS_TYPE = "rhcos"
         version_match = re.match("4.([0-9]*).*", INSTALLER_VERSION)
-        COS_VERSION = "4%s" % version_match.group(1) if version_match is not None else '44'
+        COS_VERSION = "4%s" % version_match.group(1) if version_match is not None else '45'
     if image is None:
         images = [v for v in k.volumes() if COS_TYPE in v and COS_VERSION in v]
         if images:
