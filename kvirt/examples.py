@@ -118,12 +118,12 @@ vmexport = """# Export vm myvm with a specific name for the generated image
 $ kcli export -i myimage vmyvm
 """
 
-kubecreate = """# Create a kube instance named mykube based on kubeadm
+kubecreate = """# Create a kube instance named mykube
 $ kcli create kube mykube
 
 # Do the same but customize some parameters
 $ kcli create kube -P masters=1 -P workers=2 mykube
 
-# Deploy an openshift cluster
-$ kcli create kube --type openshift --paramfile=myparameters.yml mykube2
+# Use a parameter file
+$ kcli create kube --paramfile=myparameters.yml mykube2
 """

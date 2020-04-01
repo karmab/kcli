@@ -1031,8 +1031,8 @@ def delete_lb(args):
     return 0
 
 
-def create_kube(args):
-    """Create kube"""
+def create_generic_kube(args):
+    """Create Generic kube"""
     paramfile = args.paramfile
     force = args.force
     if os.path.exists("/i_am_a_container"):
@@ -1048,12 +1048,27 @@ def create_kube(args):
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     if force:
         config.delete_kube(args.cluster, overrides=overrides)
-    _type = overrides.get('type', 'generic')
-    common.pprint("Setting type to %s" % _type)
-    if _type == 'openshift':
-        config.create_kube_openshift(args.cluster, overrides=overrides)
-    else:
-        config.create_kube_generic(args.cluster, overrides=overrides)
+    config.create_kube_generic(args.cluster, overrides=overrides)
+
+
+def create_openshift_kube(args):
+    """Create Generic kube"""
+    paramfile = args.paramfile
+    force = args.force
+    if os.path.exists("/i_am_a_container"):
+        if paramfile is not None:
+            paramfile = "/workdir/%s" % paramfile
+        elif os.path.exists("/workdir/kcli_parameters.yml"):
+            paramfile = "/workdir/kcli_parameters.yml"
+            common.pprint("Using default parameter file kcli_parameters.yml")
+    elif paramfile is None and os.path.exists("kcli_parameters.yml"):
+        paramfile = "kcli_parameters.yml"
+        common.pprint("Using default parameter file kcli_parameters.yml")
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    if force:
+        config.delete_kube(args.cluster, overrides=overrides)
+    config.create_kube_openshift(args.cluster, overrides=overrides)
 
 
 def delete_kube(args):
@@ -1067,7 +1082,7 @@ def delete_kube(args):
     config.delete_kube(args.cluster, overrides=overrides)
 
 
-def scale_kube(args):
+def scale_generic_kube(args):
     """Scale kube"""
     workers = args.workers
     paramfile = args.paramfile
@@ -1082,14 +1097,29 @@ def scale_kube(args):
         common.pprint("Using default parameter file kcli_parameters.yml")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
-    _type = overrides.get('type', 'generic')
-    common.pprint("Setting type to %s" % _type)
     if workers > 0:
         overrides['workers'] = workers
-    if _type == 'openshift':
-        config.scale_kube_openshift(args.cluster, overrides=overrides)
-    else:
-        config.scale_kube_generic(args.cluster, overrides=overrides)
+    config.scale_kube_generic(args.cluster, overrides=overrides)
+
+
+def scale_openshift_kube(args):
+    """Scale openshift kube"""
+    workers = args.workers
+    paramfile = args.paramfile
+    if os.path.exists("/i_am_a_container"):
+        if paramfile is not None:
+            paramfile = "/workdir/%s" % paramfile
+        elif os.path.exists("/workdir/kcli_parameters.yml"):
+            paramfile = "/workdir/kcli_parameters.yml"
+            common.pprint("Using default parameter file kcli_parameters.yml")
+    elif paramfile is None and os.path.exists("kcli_parameters.yml"):
+        paramfile = "kcli_parameters.yml"
+        common.pprint("Using default parameter file kcli_parameters.yml")
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    if workers > 0:
+        overrides['workers'] = workers
+    config.scale_kube_openshift(args.cluster, overrides=overrides)
 
 
 def create_vmnic(args):
@@ -2195,17 +2225,39 @@ def cli():
     hostsync_parser.set_defaults(func=sync_host)
 
     kubecreate_desc = 'Create Kube'
-    kubecreate_epilog = "examples:\n%s" % kubecreate
-    kubecreate_parser = argparse.ArgumentParser(add_help=False)
-    kubecreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
-    kubecreate_parser.add_argument('-P', '--param', action='append',
-                                   help='specify parameter or keyword for rendering (multiple can be specified)',
-                                   metavar='PARAM')
-    kubecreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
-    kubecreate_parser.add_argument('cluster', metavar='CLUSTER')
-    kubecreate_parser.set_defaults(func=create_kube)
-    create_subparsers.add_parser('kube', parents=[kubecreate_parser], description=kubecreate_desc, help=kubecreate_desc,
-                                 epilog=kubecreate_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
+    kubecreate_parser = create_subparsers.add_parser('kube', description=kubecreate_desc, help=kubecreate_desc)
+    kubecreate_subparsers = kubecreate_parser.add_subparsers(metavar='', dest='subcommand_create_kube')
+
+    kubegenericcreate_desc = 'Create Generic Kube'
+    kubegenericcreate_epilog = "examples:\n%s" % kubecreate
+    kubegenericcreate_parser = argparse.ArgumentParser(add_help=False)
+    kubegenericcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
+    kubegenericcreate_parser.add_argument('-P', '--param', action='append',
+                                          help='specify parameter or keyword for rendering (multiple can be specified)',
+                                          metavar='PARAM')
+    kubegenericcreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    kubegenericcreate_parser.add_argument('cluster', metavar='CLUSTER')
+    kubegenericcreate_parser.set_defaults(func=create_generic_kube)
+    kubecreate_subparsers.add_parser('generic', parents=[kubegenericcreate_parser],
+                                     description=kubegenericcreate_desc,
+                                     help=kubegenericcreate_desc,
+                                     epilog=kubegenericcreate_epilog,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+
+    parameterhelp = "specify parameter or keyword for rendering (multiple can be specified)"
+    kubeopenshiftcreate_desc = 'Create Openshift Kube'
+    kubeopenshiftcreate_epilog = "examples:\n%s" % kubecreate
+    kubeopenshiftcreate_parser = argparse.ArgumentParser(add_help=False)
+    kubeopenshiftcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
+    kubeopenshiftcreate_parser.add_argument('-P', '--param', action='append', help=parameterhelp, metavar='PARAM')
+    kubeopenshiftcreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    kubeopenshiftcreate_parser.add_argument('cluster', metavar='CLUSTER')
+    kubeopenshiftcreate_parser.set_defaults(func=create_openshift_kube)
+    kubecreate_subparsers.add_parser('openshift', parents=[kubeopenshiftcreate_parser],
+                                     description=kubeopenshiftcreate_desc,
+                                     help=kubeopenshiftcreate_desc,
+                                     epilog=kubeopenshiftcreate_epilog,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
 
     kubedelete_desc = 'Delete Kube'
     kubedelete_parser = argparse.ArgumentParser(add_help=False)
@@ -2233,15 +2285,32 @@ def cli():
     kubeopenshiftinfo_parser.set_defaults(func=info_openshift_kube)
 
     kubescale_desc = 'Scale Kube'
-    kubescale_parser = argparse.ArgumentParser(add_help=False)
-    kubescale_parser.add_argument('-P', '--param', action='append',
-                                  help='specify parameter or keyword for rendering (multiple can be specified)',
-                                  metavar='PARAM')
-    kubescale_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
-    kubescale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int, default=0)
-    kubescale_parser.add_argument('cluster', metavar='CLUSTER')
-    kubescale_parser.set_defaults(func=scale_kube)
-    scale_subparsers.add_parser('kube', parents=[kubescale_parser], description=kubescale_desc, help=kubescale_desc)
+    kubescale_parser = scale_subparsers.add_parser('kube', description=kubescale_desc, help=kubescale_desc)
+    kubescale_subparsers = kubescale_parser.add_subparsers(metavar='', dest='subcommand_scale_kube')
+
+    kubegenericscale_desc = 'Scale Generic Kube'
+    kubegenericscale_parser = argparse.ArgumentParser(add_help=False)
+    kubegenericscale_parser.add_argument('-P', '--param', action='append',
+                                         help='specify parameter or keyword for rendering (multiple can be specified)',
+                                         metavar='PARAM')
+    kubegenericscale_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    kubegenericscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int, default=0)
+    kubegenericscale_parser.add_argument('cluster', metavar='CLUSTER')
+    kubegenericscale_parser.set_defaults(func=scale_generic_kube)
+    kubescale_subparsers.add_parser('generic', parents=[kubegenericscale_parser], description=kubegenericscale_desc,
+                                    help=kubegenericscale_desc)
+
+    parameterhelp = "specify parameter or keyword for rendering (multiple can be specified)"
+    kubeopenshiftscale_desc = 'Scale Openshift Kube'
+    kubeopenshiftscale_parser = argparse.ArgumentParser(add_help=False)
+    kubeopenshiftscale_parser.add_argument('-P', '--param', action='append', help=parameterhelp, metavar='PARAM')
+    kubeopenshiftscale_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    kubeopenshiftscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int, default=0)
+    kubeopenshiftscale_parser.add_argument('cluster', metavar='CLUSTER')
+    kubeopenshiftscale_parser.set_defaults(func=scale_openshift_kube)
+    kubescale_subparsers.add_parser('openshift', parents=[kubeopenshiftscale_parser],
+                                    description=kubeopenshiftscale_desc,
+                                    help=kubeopenshiftscale_desc)
 
     lbcreate_desc = 'Create Load Balancer'
     lbcreate_parser = create_subparsers.add_parser('lb', description=lbcreate_desc, help=lbcreate_desc)

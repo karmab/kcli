@@ -1297,7 +1297,7 @@ Deploying generic kubernetes clusters
 
 ::
 
-    kcli create kube -P masters=X -P workers=Y $cluster
+    kcli create kube generic -P masters=X -P workers=Y $cluster
 
 Deploying openshift/okd clusters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1357,7 +1357,6 @@ Create a parameters.yml
 
 Prepare a parameter file with the folloving variables:
 
--  *type*. Set it to openshift
 -  *version*. You can choose between nightly, ci or stable . Defaults to
    ``nightly``. ci requires specific data in your secret
 -  *upstream*. If set to True, okd installer will be used instead, along
@@ -1411,7 +1410,7 @@ Deploying
 
 ::
 
-    kcli create kube --paramfile parameters.yml $cluster
+    kcli create kube openshift --paramfile parameters.yml $cluster
 
 -  You will be asked for your sudo password in order to create a
    /etc/hosts entry for the api vip.
@@ -1419,20 +1418,6 @@ Deploying
 -  Once that finishes, set the following environment variable in order
    to use oc commands
    ``export KUBECONFIG=clusters/$cluster/auth/kubeconfig``
-
-Adding more workers
-'''''''''''''''''''
-
-::
-
-    kcli scale kube -w num_of_workers --paramfile parameters.yml $cluster
-
-Cleaning up
-'''''''''''
-
-::
-
-    kcli delete kube $cluster
 
 Providing custom machine configs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1446,6 +1431,24 @@ Architecture
 
 Check `This
 documentation <https://github.com/karmab/kcli/blob/master/doc/openshift_architecture.md>`__
+
+Adding more workers
+^^^^^^^^^^^^^^^^^^^
+
+The procedure is the same independently of the type of cluster used.
+
+::
+
+    kcli scale kube generic|openshift -w num_of_workers --paramfile parameters.yml $cluster
+
+Cleaning up
+^^^^^^^^^^^
+
+The procedure is the same independently of the type of cluster used.
+
+::
+
+    kcli delete kube $cluster
 
 Running on kubernetes/openshift
 -------------------------------
