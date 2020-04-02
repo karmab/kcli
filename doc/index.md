@@ -1323,7 +1323,5 @@ You can then either use config for high level actions or the more low level *k* 
 # Api Details
 
 ```{=rst}
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+<api>
 ```

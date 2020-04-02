@@ -1761,9 +1761,7 @@ level *k* object.
 Api Details
 ===========
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+<api>
 
 .. |Build Status| image:: https://travis-ci.org/karmab/kcli.svg?branch=master
    :target: https://travis-ci.org/karmab/kcli
