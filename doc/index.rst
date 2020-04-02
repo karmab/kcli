@@ -1,4 +1,4 @@
-|Build Status| |Pypi| |Copr| |image3|
+|Build Status| |Pypi| |Copr| |Documentation Status| |image4|
 
 About
 =====
@@ -1758,11 +1758,20 @@ Here’s a sample:
 You can then either use config for high level actions or the more low
 level *k* object.
 
+Api Details
+===========
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
+
 .. |Build Status| image:: https://travis-ci.org/karmab/kcli.svg?branch=master
    :target: https://travis-ci.org/karmab/kcli
 .. |Pypi| image:: http://img.shields.io/pypi/v/kcli.svg
    :target: https://pypi.python.org/pypi/kcli/
 .. |Copr| image:: https://copr.fedorainfracloud.org/coprs/karmab/kcli/package/kcli/status_image/last_build.png
    :target: https://copr.fedorainfracloud.org/coprs/karmab/kcli/package/kcli
-.. |image3| image:: https://images.microbadger.com/badges/image/karmab/kcli.svg
+.. |Documentation Status| image:: https://readthedocs.org/projects/kcli/badge/?version=master
+   :target: https://kcli.readthedocs.io/en/master/?badge=master
+.. |image4| image:: https://images.microbadger.com/badges/image/karmab/kcli.svg
    :target: https://microbadger.com/images/karmab/kcli
