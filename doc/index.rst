@@ -1761,7 +1761,7 @@ level *k* object.
 Api Details
 ===========
 
-<api>
+* :ref:`genindex`
 
 .. |Build Status| image:: https://travis-ci.org/karmab/kcli.svg?branch=master
    :target: https://travis-ci.org/karmab/kcli

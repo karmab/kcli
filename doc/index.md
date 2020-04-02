@@ -1323,5 +1323,5 @@ You can then either use config for high level actions or the more low level *k* 
 # Api Details
 
 ```{=rst}
-<api>
+* :ref:`genindex`
 ```
