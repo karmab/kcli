@@ -723,12 +723,18 @@ class Kvirt(object):
                 sharedxml += "</filesystem>"
         kernelxml = ""
         if kernel is not None:
+            locationdir = os.path.basename(kernel)
+            locationdir = "%s/%s" % (default_poolpath, locationdir)
+            if self.host == 'localhost' or self.host == '127.0.0.1':
+                os.mkdir(locationdir)
+            elif self.protocol == 'ssh':
+                locationcmd = 'ssh %s -p %s %s@%s "mkdir %s"' % (self.identitycommand, self.port, self.user,
+                                                                 self.host, locationdir)
+                code = os.system(locationcmd)
+            else:
+                return {'result': 'failure', 'reason': "Couldn't create dir to hold kernel and initrd"}
             if kernel.startswith('http') or kernel.startswith('ftp'):
-                locationdir = kernel.replace('http://', '').replace('ftp://', '').replace('/', '_')
-                locationdir = "%s/%s" % (default_poolpath, locationdir)
-                if os.path.exists(locationdir):
-                    common.pprint("Reusing existing dir for kernel", color='blue')
-                elif 'rhcos' in kernel:
+                if 'rhcos' in kernel:
                     if self.host == 'localhost' or self.host == '127.0.0.1':
                         kernelcmd = "curl -Lo %s/vmlinuz -f '%s'" % (locationdir, kernel)
                         initrdcmd = "curl -Lo %s/initrd.img -f '%s'" % (locationdir, initrd)
@@ -744,14 +750,6 @@ class Kvirt(object):
                     code = os.system(kernelcmd)
                     code = os.system(initrdcmd)
                 else:
-                    if self.host == 'localhost' or self.host == '127.0.0.1':
-                        os.mkdir(locationdir)
-                    elif self.protocol == 'ssh':
-                        locationcmd = 'ssh %s -p %s %s@%s "mkdir %s"' % (self.identitycommand, self.port, self.user,
-                                                                         self.host, locationdir)
-                        code = os.system(locationcmd)
-                    else:
-                        return {'result': 'failure', 'reason': "Couldn't create dir to hold kernel and initrd"}
                     try:
                         location = urlopen(kernel).readlines()
                     except Exception as e:
@@ -784,7 +782,7 @@ class Kvirt(object):
             elif initrd is None:
                 return {'result': 'failure', 'reason': "Missing initrd"}
             kernel = "%s/vmlinuz" % locationdir
-            initrd = "%s/initrd" % locationdir
+            initrd = "%s/initrd.img" % locationdir
             kernelxml = "<kernel>%s</kernel><initrd>%s</initrd>" % (kernel, initrd)
             if cmdline is not None:
                 kernelxml += "<cmdline>%s</cmdline>" % cmdline
