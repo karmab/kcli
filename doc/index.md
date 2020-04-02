@@ -1,6 +1,7 @@
 [![Build Status](https://travis-ci.org/karmab/kcli.svg?branch=master)](https://travis-ci.org/karmab/kcli)
 [![Pypi](http://img.shields.io/pypi/v/kcli.svg)](https://pypi.python.org/pypi/kcli/)
 [![Copr](https://copr.fedorainfracloud.org/coprs/karmab/kcli/package/kcli/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/karmab/kcli/package/kcli)
+[![Documentation Status](https://readthedocs.org/projects/kcli/badge/?version=master)](https://kcli.readthedocs.io/en/master/?badge=master)
 [![](https://images.microbadger.com/badges/image/karmab/kcli.svg)](https://microbadger.com/images/karmab/kcli "Get your own image badge on microbadger.com")
 
 # About
@@ -1318,3 +1319,11 @@ k = config.k
 ```
 
 You can then either use config for high level actions or the more low level *k* object.
+
+# Api Details
+
+```{=rst}
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
+```
