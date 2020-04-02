@@ -728,6 +728,21 @@ class Kvirt(object):
                 locationdir = "%s/%s" % (default_poolpath, locationdir)
                 if os.path.exists(locationdir):
                     common.pprint("Reusing existing dir for kernel", color='blue')
+                elif 'rhcos' in kernel:
+                    if self.host == 'localhost' or self.host == '127.0.0.1':
+                        kernelcmd = "curl -Lo %s/vmlinuz -f '%s'" % (locationdir, kernel)
+                        initrdcmd = "curl -Lo %s/initrd.img -f '%s'" % (locationdir, initrd)
+                    elif self.protocol == 'ssh':
+                        kernelcmd = 'ssh %s -p %s %s@%s "curl -Lo %s/vmlinuz -f \'%s\'"' % (self.identitycommand,
+                                                                                            self.port, self.user,
+                                                                                            self.host, locationdir,
+                                                                                            kernel)
+                        initrdcmd = 'ssh %s -p %s %s@%s "curl -Lo %s/initrd.img -f \'%s\'"' % (self.identitycommand,
+                                                                                               self.port, self.user,
+                                                                                               self.host, locationdir,
+                                                                                               initrd)
+                    code = os.system(kernelcmd)
+                    code = os.system(initrdcmd)
                 else:
                     if self.host == 'localhost' or self.host == '127.0.0.1':
                         os.mkdir(locationdir)
@@ -768,6 +783,8 @@ class Kvirt(object):
                     code = os.system(kernelcmd)
             elif initrd is None:
                 return {'result': 'failure', 'reason': "Missing initrd"}
+            kernel = "%s/vmlinuz" % locationdir
+            initrd = "%s/initrd" % locationdir
             kernelxml = "<kernel>%s</kernel><initrd>%s</initrd>" % (kernel, initrd)
             if cmdline is not None:
                 kernelxml += "<cmdline>%s</cmdline>" % cmdline

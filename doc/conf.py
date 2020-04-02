@@ -60,7 +60,7 @@ html_static_path = ['_static']
 
 autoapi_type = 'python'
 autoapi_dirs = ['../kvirt']
-autoapi_options = ['members', 'undoc-members', 'show-inheritance']
+autoapi_options = ['members', 'show-inheritance']
 autoapi_add_toctree_entry = True
 # autoapi_root = 'api'
 # autoapi_keep_files = True
