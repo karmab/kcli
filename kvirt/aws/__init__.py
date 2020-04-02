@@ -41,18 +41,9 @@ class Kaws(object):
         return
 
     def close(self):
-        """
-
-        :return:
-        """
         return
 
     def exists(self, name):
-        """
-
-        :param name:
-        :return:
-        """
         conn = self.conn
         try:
             Filters = {'Name': "tag:Name", 'Values': [name]}
@@ -62,11 +53,6 @@ class Kaws(object):
             return False
 
     def net_exists(self, name):
-        """
-
-        :param name:
-        :return:
-        """
         conn = self.conn
         try:
             conn.describe_subnets(SubnetIds=[name])
@@ -75,11 +61,6 @@ class Kaws(object):
             return False
 
     def disk_exists(self, pool, name):
-        """
-
-        :param pool:
-        :param name:
-        """
         print("not implemented")
 
     def create(self, name, virttype=None, profile='', flavor=None, plan='kvirt', cpumodel='Westmere', cpuflags=[],
@@ -90,56 +71,6 @@ class Kaws(object):
                files=[], enableroot=True, alias=[], overrides={}, tags=[], dnsclient=None, storemetadata=False,
                sharedfolders=[], kernel=None, initrd=None, cmdline=None, placement=[], autostart=False,
                cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False):
-        """
-
-        :param name:
-        :param virttype:
-        :param profile:
-        :param flavor:
-        :param plan:
-        :param cpumodel:
-        :param cpuflags:
-        :param cpupinning:
-        :param numcpus:
-        :param memory:
-        :param guestid:
-        :param pool:
-        :param image:
-        :param disks:
-        :param disksize:
-        :param diskthin:
-        :param diskinterface:
-        :param nets:
-        :param iso:
-        :param vnc:
-        :param cloudinit:
-        :param reserveip:
-        :param reservedns:
-        :param reservehost:
-        :param start:
-        :param keys:
-        :param cmds:
-        :param ips:
-        :param netmasks:
-        :param gateway:
-        :param nested:
-        :param dns:
-        :param domain:
-        :param tunnel:
-        :param files:
-        :param enableroot:
-        :param alias:
-        :param overrides:
-        :param tags:
-        :param cpuhotplug:
-        :param memoryhotplug:
-        :param numamode:
-        :param numa:
-        :param pcidevices:
-        :param tpm:
-        :param rng:
-        :return:
-        """
         conn = self.conn
         if self.exists(name):
             return {'result': 'failure', 'reason': "VM %s already exists" % name}
@@ -280,11 +211,6 @@ class Kaws(object):
         return {'result': 'success'}
 
     def start(self, name):
-        """
-
-        :param name:
-        :return:
-        """
         conn = self.conn
         try:
             Filters = {'Name': "tag:Name", 'Values': [name]}
@@ -296,11 +222,6 @@ class Kaws(object):
         return {'result': 'success'}
 
     def stop(self, name):
-        """
-
-        :param name:
-        :return:
-        """
         conn = self.conn
         try:
             Filters = {'Name': "tag:Name", 'Values': [name]}
@@ -312,24 +233,10 @@ class Kaws(object):
         return {'result': 'success'}
 
     def snapshot(self, name, base, revert=False, delete=False, listing=False):
-        """
-
-        :param name:
-        :param base:
-        :param revert:
-        :param delete:
-        :param listing:
-        :return:
-        """
         print("not implemented")
         return
 
     def restart(self, name):
-        """
-
-        :param name:
-        :return:
-        """
         conn = self.conn
         try:
             Filters = {'Name': "tag:Name", 'Values': [name]}
@@ -341,19 +248,10 @@ class Kaws(object):
         return {'result': 'success'}
 
     def report(self):
-        """
-
-        :return:
-        """
         print("Region: %s" % self.region)
         return
 
     def status(self, name):
-        """
-
-        :param name:
-        :return:
-        """
         conn = self.conn
         try:
             Filters = {'Name': "tag:Name", 'Values': [name]}
@@ -364,10 +262,6 @@ class Kaws(object):
         return status
 
     def list(self):
-        """
-
-        :return:
-        """
         conn = self.conn
         vms = []
         results = conn.describe_instances()
@@ -379,21 +273,10 @@ class Kaws(object):
         return sorted(vms, key=lambda x: x['name'])
 
     def console(self, name, tunnel=False, web=False):
-        """
-
-        :param name:
-        :param tunnel:
-        :return:
-        """
         print("not implemented")
         return
 
     def serialconsole(self, name):
-        """
-
-        :param name:
-        :return:
-        """
         conn = self.conn
         try:
             Filters = {'Name': "tag:Name", 'Values': [name]}
@@ -406,14 +289,6 @@ class Kaws(object):
         return
 
     def dnsinfo(self, name):
-        """
-
-        :param name:
-        :param output:
-        :param fields:
-        :param values:
-        :return:
-        """
         conn = self.conn
         try:
             Filters = {'Name': "tag:Name", 'Values': [name]}
@@ -430,11 +305,6 @@ class Kaws(object):
         return dnsclient, domain
 
     def get_id(self, name):
-        """
-
-        :param name:
-        :return:
-        """
         conn = self.conn
         try:
             if name.startswith('i-'):
@@ -447,11 +317,6 @@ class Kaws(object):
         return vm['InstanceId']
 
     def get_security_groups(self, name):
-        """
-
-        :param name:
-        :return:
-        """
         conn = self.conn
         try:
             if name.startswith('i-'):
@@ -464,10 +329,6 @@ class Kaws(object):
         return vm['SecurityGroups']
 
     def get_security_group_id(self, name, vpcid):
-        """
-
-        :return:
-        """
         conn = self.conn
         for sg in conn.describe_security_groups()['SecurityGroups']:
             if sg['GroupName'] == name and sg['VpcId'] == vpcid:
@@ -475,12 +336,6 @@ class Kaws(object):
         return None
 
     def info(self, name, vm=None, debug=False):
-        """
-
-        :param name:
-        :param vm:
-        :return:
-        """
         yamlinfo = {}
         conn = self.conn
         resource = self.resource
@@ -561,11 +416,6 @@ class Kaws(object):
         return yamlinfo
 
     def ip(self, name):
-        """
-
-        :param name:
-        :return:
-        """
         ip = None
         conn = self.conn
         try:
@@ -577,11 +427,6 @@ class Kaws(object):
         return ip
 
     def internalip(self, name):
-        """
-
-        :param name:
-        :return:
-        """
         ip = None
         conn = self.conn
         try:
@@ -594,11 +439,6 @@ class Kaws(object):
         return ip
 
     def volumes(self, iso=False):
-        """
-
-        :param iso:
-        :return:
-        """
         conn = self.conn
         images = []
         oses = ['CentOS Linux 7 x86_64*', 'CentOS Linux 8 x86_64*', 'RHEL-7.*GA*', 'ubuntu-xenial-*Standard*', 'kcli*',
@@ -625,12 +465,6 @@ class Kaws(object):
         return sorted(images, key=str.lower)
 
     def delete(self, name, snapshots=False):
-        """
-
-        :param name:
-        :param snapshots:
-        :return:
-        """
         conn = self.conn
         domain = None
         try:
@@ -650,25 +484,10 @@ class Kaws(object):
         return {'result': 'success'}
 
     def clone(self, old, new, full=False, start=False):
-        """
-
-        :param old:
-        :param new:
-        :param full:
-        :param start:
-        :return:
-        """
         print("not implemented")
         return
 
     def update_metadata(self, name, metatype, metavalue, append=False):
-        """
-
-        :param name:
-        :param metatype:
-        :param metavalue:
-        :return:
-        """
         conn = self.conn
         try:
             Filters = {'Name': "tag:Name", 'Values': [name]}
@@ -689,12 +508,6 @@ class Kaws(object):
         return 0
 
     def update_memory(self, name, memory):
-        """
-
-        :param name:
-        :param memory:
-        :return:
-        """
         conn = self.conn
         try:
             Filters = {'Name': "tag:Name", 'Values': [name]}
@@ -718,12 +531,6 @@ class Kaws(object):
             return {'result': 'failure', 'reason': "Couldn't find matching flavor for this amount of memory"}
 
     def update_flavor(self, name, flavor):
-        """
-
-        :param name:
-        :param flavor:
-        :return:
-        """
         conn = self.conn
         try:
             Filters = {'Name': "tag:Name", 'Values': [name]}
@@ -742,12 +549,6 @@ class Kaws(object):
         return {'result': 'success'}
 
     def update_cpus(self, name, numcpus):
-        """
-
-        :param name:
-        :param numcpus:
-        :return:
-        """
         conn = self.conn
         try:
             Filters = {'Name': "tag:Name", 'Values': [name]}
@@ -771,60 +572,22 @@ class Kaws(object):
             return {'result': 'failure', 'reason': "Couldn't find matching flavor for this number of cpus"}
 
     def update_start(self, name, start=True):
-        """
-
-        :param name:
-        :param start:
-        :return:
-        """
         print("not implemented")
         return
 
     def update_information(self, name, information):
-        """
-
-        :param name:
-        :param information:
-        :return:
-        """
         self.update_metadata(name, 'information', information)
         return
 
     def update_iso(self, name, iso):
-        """
-
-        :param name:
-        :param iso:
-        :return:
-        """
         print("not implemented")
         return
 
     def create_disk(self, name, size, pool=None, thin=True, image=None):
-        """
-
-        :param name:
-        :param size:
-        :param pool:
-        :param thin:
-        :param image:
-        :return:
-        """
         print("not implemented")
         return
 
     def add_disk(self, name, size, pool=None, thin=True, image=None, shareable=False, existing=None):
-        """
-
-        :param name:
-        :param size:
-        :param pool:
-        :param thin:
-        :param image:
-        :param shareable:
-        :param existing:
-        :return:
-        """
         conn = self.conn
         try:
             Filters = {'Name': "tag:Name", 'Values': [name]}
@@ -848,13 +611,6 @@ class Kaws(object):
         return
 
     def delete_disk(self, name=None, diskname=None, pool=None):
-        """
-
-        :param name:
-        :param diskname:
-        :param pool:
-        :return:
-        """
         conn = self.conn
         volumeid = diskname
         try:
@@ -873,49 +629,19 @@ class Kaws(object):
 
 # should return a dict of {'pool': poolname, 'path': name}
     def list_disks(self):
-        """
-
-        :return:
-        """
         print("not implemented")
         return
 
     def add_nic(self, name, network):
-        """
-
-        :param name:
-        :param network:
-        :return:
-        """
         print("not implemented")
         return
 
     def delete_nic(self, name, interface):
-        """
-
-        :param name:
-        :param interface:
-        :return:
-        """
         print("not implemented")
         return
 
     def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, Y=False,
             D=None):
-        """
-
-        :param name:
-        :param user:
-        :param local:
-        :param remote:
-        :param tunnel:
-        :param insecure:
-        :param cmd:
-        :param X:
-        :param Y:
-        :param D:
-        :return:
-        """
         u, ip = common._ssh_credentials(self, name)
         if user is None:
             user = u
@@ -925,18 +651,6 @@ class Kaws(object):
 
     def scp(self, name, user=None, source=None, destination=None, tunnel=False, download=False, recursive=False,
             insecure=False):
-        """
-
-        :param name:
-        :param user:
-        :param source:
-        :param destination:
-        :param tunnel:
-        :param download:
-        :param recursive:
-        :param insecure:
-        :return:
-        """
         u, ip = common._ssh_credentials(self, name)
         if ip is None:
             return None
@@ -947,15 +661,6 @@ class Kaws(object):
         return scpcommand
 
     def create_pool(self, name, poolpath, pooltype='dir', user='qemu', thinpool=None):
-        """
-
-        :param name:
-        :param poolpath:
-        :param pooltype:
-        :param user:
-        :param thinpool:
-        :return:
-        """
         print("not implemented")
         return
 
@@ -969,31 +674,10 @@ class Kaws(object):
             return {'result': 'failure', 'reason': "Image %s not found" % image}
 
     def add_image(self, image, pool, short=None, cmd=None, name=None, size=1):
-        """
-
-        :param image:
-        :param pool:
-        :param short:
-        :param cmd:
-        :param name:
-        :param size:
-        :return:
-        """
         print("not implemented")
         return {'result': 'success'}
 
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
-        """
-
-        :param name:
-        :param cidr:
-        :param dhcp:
-        :param nat:
-        :param domain:
-        :param plan:
-        :param overrides:
-        :return:
-        """
         conn = self.conn
         if cidr is not None:
             try:
@@ -1008,12 +692,6 @@ class Kaws(object):
         return {'result': 'success'}
 
     def delete_network(self, name=None, cidr=None):
-        """
-
-        :param name:
-        :param cidr:
-        :return:
-        """
         conn = self.conn
         Filters = [{'Name': 'vpc-id', 'Values': [name]}]
         subnets = conn.describe_subnets(Filters=Filters)
@@ -1023,20 +701,11 @@ class Kaws(object):
         conn.delete_vpc(VpcId=name)
         return {'result': 'success'}
 
-# should return a dict of pool strings
     def list_pools(self):
-        """
-
-        :return:
-        """
         print("not implemented")
         return
 
     def list_networks(self):
-        """
-
-        :return:
-        """
         conn = self.conn
         networks = {}
         vpcs = conn.describe_vpcs()
@@ -1050,10 +719,6 @@ class Kaws(object):
         return networks
 
     def list_subnets(self):
-        """
-
-        :return:
-        """
         conn = self.conn
         results = {}
         vpcs = conn.describe_vpcs()
@@ -1069,38 +734,16 @@ class Kaws(object):
         return results
 
     def delete_pool(self, name, full=False):
-        """
-
-        :param name:
-        :param full:
-        :return:
-        """
         print("not implemented")
         return
 
     def network_ports(self, name):
-        """
-
-        :param name:
-        :return:
-        """
         return []
 
     def vm_ports(self, name):
-        """
-
-        :param name:
-        :return:
-        """
         return []
 
-# returns the path of the pool, if it makes sense. used by kcli list --pools
     def get_pool_path(self, pool):
-        """
-
-        :param pool:
-        :return:
-        """
         print("not implemented")
         return
 
@@ -1114,17 +757,6 @@ class Kaws(object):
         return image
 
     def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, primary=False, instanceid=None):
-        """
-
-        :param name:
-        :param nets:
-        :param domain:
-        :param ip:
-        :param alias:
-        :param force:
-        :param instanceid:
-        :return:
-        """
         internalip = None
         common.pprint("Using domain %s..." % domain)
         dns = self.dns
@@ -1200,13 +832,6 @@ class Kaws(object):
         return {'result': 'success'}
 
     def delete_dns(self, name, domain, instanceid=None):
-        """
-
-        :param name:
-        :param domain:
-        :param instanceid:
-        :return:
-        """
         dns = self.dns
         cluster = None
         fqdn = "%s.%s" % (name, domain)
@@ -1243,18 +868,9 @@ class Kaws(object):
         return {'result': 'success'}
 
     def list_dns(self, domain):
-        """
-
-        :param domain:
-        :return:
-        """
         return []
 
     def flavors(self):
-        """
-
-        :return:
-        """
         results = []
         for flavor in staticf:
             name = flavor
@@ -1264,12 +880,6 @@ class Kaws(object):
         return results
 
     def export(self, name, image=None):
-        """
-
-        :param name:
-        :param image:
-        :return:
-        """
         conn = self.conn
         try:
             Filters = {'Name': "tag:Name", 'Values': [name]}

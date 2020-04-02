@@ -66,18 +66,9 @@ class Kubevirt(Kubecommon):
         return
 
     def close(self):
-        """
-
-        :return:
-        """
         return
 
     def exists(self, name):
-        """
-
-        :param name:
-        :return:
-        """
         crds = self.crds
         namespace = self.namespace
         allvms = crds.list_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines')["items"]
@@ -87,11 +78,6 @@ class Kubevirt(Kubecommon):
         return False
 
     def net_exists(self, name):
-        """
-
-        :param name:
-        :return:
-        """
         crds = self.crds
         namespace = self.namespace
         try:
@@ -102,12 +88,6 @@ class Kubevirt(Kubecommon):
         return True
 
     def disk_exists(self, pool, name):
-        """
-
-        :param pool:
-        :param name:
-        :return:
-        """
         print("not implemented")
         return
 
@@ -119,56 +99,6 @@ class Kubevirt(Kubecommon):
                files=[], enableroot=True, alias=[], overrides={}, tags=[], dnsclient=None, storemetadata=False,
                sharedfolders=[], kernel=None, initrd=None, cmdline=None, placement=[], autostart=False,
                cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False):
-        """
-
-        :param name:
-        :param virttype:
-        :param profile:
-        :param flavor:
-        :param plan:
-        :param cpumodel:
-        :param cpuflags:
-        :param cpupinning:
-        :param numcpus:
-        :param memory:
-        :param guestid:
-        :param pool:
-        :param image:
-        :param disks:
-        :param disksize:
-        :param diskthin:
-        :param diskinterface:
-        :param nets:
-        :param iso:
-        :param vnc:
-        :param cloudinit:
-        :param reserveip:
-        :param reservedns:
-        :param reservehost:
-        :param start:
-        :param keys:
-        :param cmds:
-        :param ips:
-        :param netmasks:
-        :param gateway:
-        :param nested:
-        :param dns:
-        :param domain:
-        :param tunnel:
-        :param files:
-        :param enableroot:
-        :param alias:
-        :param overrides:
-        :param tags:
-        :param cpuhotplug:
-        :param memoryhotplug:
-        :param numamode:
-        :param numa:
-        :param pcidevices:
-        :param tpm:
-        :param rng:
-        :return:
-        """
         guestagent = False
         if self.exists(name):
             return {'result': 'failure', 'reason': "VM %s already exists" % name}
@@ -439,11 +369,6 @@ class Kubevirt(Kubecommon):
         return {'result': 'success'}
 
     def start(self, name):
-        """
-
-        :param name:
-        :return:
-        """
         crds = self.crds
         namespace = self.namespace
         try:
@@ -455,11 +380,6 @@ class Kubevirt(Kubecommon):
         return {'result': 'success'}
 
     def stop(self, name):
-        """
-
-        :param name:
-        :return:
-        """
         crds = self.crds
         namespace = self.namespace
         try:
@@ -471,32 +391,14 @@ class Kubevirt(Kubecommon):
         return {'result': 'success'}
 
     def snapshot(self, name, base, revert=False, delete=False, listing=False):
-        """
-
-        :param name:
-        :param base:
-        :param revert:
-        :param delete:
-        :param listing:
-        :return:
-        """
         print("not implemented")
         return
 
     def restart(self, name):
-        """
-
-        :param name:
-        :return:
-        """
         print("not implemented")
         return {'result': 'success'}
 
     def report(self):
-        """
-
-        :return:
-        """
         cdi = self.cdi
         if self.token is not None:
             print("Connection: https://%s:%s" % (self.host, self.port))
@@ -510,11 +412,6 @@ class Kubevirt(Kubecommon):
         return
 
     def status(self, name):
-        """
-
-        :param name:
-        :return:
-        """
         crds = self.crds
         namespace = self.namespace
         try:
@@ -529,10 +426,6 @@ class Kubevirt(Kubecommon):
         return 'down'
 
     def list(self):
-        """
-
-        :return:
-        """
         crds = self.crds
         namespace = self.namespace
         vms = []
@@ -543,12 +436,6 @@ class Kubevirt(Kubecommon):
         return sorted(vms, key=lambda x: x['name'])
 
     def console(self, name, tunnel=False, web=False):
-        """
-
-        :param name:
-        :param tunnel:
-        :return:
-        """
         if os.path.exists("/i_am_a_container"):
             common.pprint("This functionality is not supported in container mode", color='red')
             return
@@ -623,11 +510,6 @@ class Kubevirt(Kubecommon):
         return
 
     def dnsinfo(self, name):
-        """
-
-        :param name:
-        :return:
-        """
         crds = self.crds
         namespace = self.namespace
         crds = self.crds
@@ -648,12 +530,6 @@ class Kubevirt(Kubecommon):
         return dnsclient, domain
 
     def info(self, name, vm=None, debug=False):
-        """
-
-        :param name:
-        :param vm:
-        :return:
-        """
         yamlinfo = {}
         core = self.core
         crds = self.crds
@@ -770,11 +646,6 @@ class Kubevirt(Kubecommon):
         return yamlinfo
 
     def ip(self, name):
-        """
-
-        :param name:
-        :return:
-        """
         crds = self.crds
         namespace = self.namespace
         ip = None
@@ -801,11 +672,6 @@ class Kubevirt(Kubecommon):
         return ip
 
     def volumes(self, iso=False):
-        """
-
-        :param iso:
-        :return:
-        """
         core = self.core
         namespace = self.namespace
         cdi = self.cdi
@@ -825,12 +691,6 @@ class Kubevirt(Kubecommon):
         return sorted(images + CONTAINERDISKS)
 
     def delete(self, name, snapshots=False):
-        """
-
-        :param name:
-        :param snapshots:
-        :return:
-        """
         crds = self.crds
         core = self.core
         namespace = self.namespace
@@ -855,25 +715,10 @@ class Kubevirt(Kubecommon):
         return {'result': 'success'}
 
     def clone(self, old, new, full=False, start=False):
-        """
-
-        :param old:
-        :param new:
-        :param full:
-        :param start:
-        :return:
-        """
         print("not implemented")
         return
 
     def update_metadata(self, name, metatype, metavalue, append=False):
-        """
-
-        :param name:
-        :param metatype:
-        :param metavalue:
-        :return:
-        """
         crds = self.crds
         namespace = self.namespace
         try:
@@ -889,12 +734,6 @@ class Kubevirt(Kubecommon):
         return
 
     def update_memory(self, name, memory):
-        """
-
-        :param name:
-        :param memory:
-        :return:
-        """
         crds = self.crds
         namespace = self.namespace
         try:
@@ -909,12 +748,6 @@ class Kubevirt(Kubecommon):
         return
 
     def update_cpus(self, name, numcpus):
-        """
-
-        :param name:
-        :param numcpus:
-        :return:
-        """
         crds = self.crds
         namespace = self.namespace
         try:
@@ -929,55 +762,22 @@ class Kubevirt(Kubecommon):
         return
 
     def update_start(self, name, start=True):
-        """
-
-        :param name:
-        :param start:
-        :return:
-        """
         print("not implemented")
         return
 
     def update_information(self, name, information):
-        """
-
-        :param name:
-        :param information:
-        :return:
-        """
         self.update_metadata(name, 'information', information)
         return
 
     def update_iso(self, name, iso):
-        """
-
-        :param name:
-        :param iso:
-        :return:
-        """
         print("not implemented")
         return
 
     def update_flavor(self, name, flavor):
-        """
-
-        :param name:
-        :param flavor:
-        :return:
-        """
         print("Not implemented")
         return {'result': 'success'}
 
     def create_disk(self, name, size, pool=None, thin=True, image=None):
-        """
-
-        :param name:
-        :param size:
-        :param pool:
-        :param thin:
-        :param image:
-        :return:
-        """
         core = self.core
         namespace = self.namespace
         pvc = core.list_namespaced_persistent_volume_claim(namespace)
@@ -999,17 +799,6 @@ class Kubevirt(Kubecommon):
         return
 
     def add_disk(self, name, size, pool=None, thin=True, image=None, shareable=False, existing=None):
-        """
-
-        :param name:
-        :param size:
-        :param pool:
-        :param thin:
-        :param image:
-        :param shareable:
-        :param existing:
-        :return:
-        """
         crds = self.crds
         namespace = self.namespace
         try:
@@ -1038,13 +827,6 @@ class Kubevirt(Kubecommon):
         return
 
     def delete_disk(self, name=None, diskname=None, pool=None):
-        """
-
-        :param name:
-        :param diskname:
-        :param pool:
-        :return:
-        """
         crds = self.crds
         core = self.core
         namespace = self.namespace
@@ -1074,10 +856,6 @@ class Kubevirt(Kubecommon):
         return
 
     def list_disks(self):
-        """
-
-        :return:
-        """
         disks = {}
         namespace = self.namespace
         core = self.core
@@ -1095,41 +873,15 @@ class Kubevirt(Kubecommon):
         return disks
 
     def add_nic(self, name, network):
-        """
-
-        :param name:
-        :param network:
-        :return:
-        """
         print("not implemented")
         return
 
     def delete_nic(self, name, interface):
-        """
-
-        :param name:
-        :param interface:
-        :return:
-        """
         print("not implemented")
         return
 
     def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, Y=False,
             D=None):
-        """
-
-        :param name:
-        :param user:
-        :param local:
-        :param remote:
-        :param tunnel:
-        :param insecure:
-        :param cmd:
-        :param X:
-        :param Y:
-        :param D:
-        :return:
-        """
         u, ip = common._ssh_credentials(self, name)
         host = self.host
         vmport = None
@@ -1149,18 +901,6 @@ class Kubevirt(Kubecommon):
 
     def scp(self, name, user=None, source=None, destination=None, tunnel=False, download=False, recursive=False,
             insecure=False):
-        """
-
-        :param name:
-        :param user:
-        :param source:
-        :param destination:
-        :param tunnel:
-        :param download:
-        :param recursive:
-        :param insecure:
-        :return:
-        """
         u, ip = common._ssh_credentials(self, name)
         if ip is None:
             return None
@@ -1172,15 +912,6 @@ class Kubevirt(Kubecommon):
         return scpcommand
 
     def create_pool(self, name, poolpath, pooltype='dir', user='qemu', thinpool=None):
-        """
-
-        :param name:
-        :param poolpath:
-        :param pooltype:
-        :param user:
-        :param thinpool:
-        :return:
-        """
         print("not implemented")
         return
 
@@ -1208,16 +939,6 @@ class Kubevirt(Kubecommon):
         return {'result': 'failure', 'reason': 'image %s not found' % image}
 
     def add_image(self, image, pool, short=None, cmd=None, name=None, size=1):
-        """
-
-        :param image:
-        :param pool:
-        :param short:
-        :param cmd:
-        :param name:
-        :param size:
-        :return:
-        """
         sizes = {'debian': 2, 'centos': 8, 'centos7': 8, 'fedora': 4, 'rhel': 10, 'trusty': 2.2, 'xenial': 2.2,
                  'yakkety': 2.2, 'zesty': 2.2, 'artful': 2.2, 'bionic': 2.2, 'cosmic': 2.2}
         core = self.core
@@ -1280,14 +1001,6 @@ class Kubevirt(Kubecommon):
         return {'result': 'success'}
 
     def copy_image(self, pool, ori, dest, size=1):
-        """
-
-        :param pool:
-        :param ori:
-        :param dest:
-        :param size:
-        :return:
-        """
         sizes = {'debian': 2, 'centos': 8, 'fedora': 4, 'rhel': 10, 'trusty': 2.2, 'xenial': 2.2, 'yakkety': 2.2,
                  'zesty': 2.2, 'artful': 2.2}
         core = self.core
@@ -1332,17 +1045,6 @@ class Kubevirt(Kubecommon):
         return {'result': 'success'}
 
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
-        """
-
-        :param name:
-        :param cidr:
-        :param dhcp:
-        :param nat:
-        :param domain:
-        :param plan:
-        :param overrides:
-        :return:
-        """
         crds = self.crds
         namespace = self.namespace
         apiversion = "%s/%s" % (MULTUSDOMAIN, MULTUSVERSION)
@@ -1359,12 +1061,6 @@ class Kubevirt(Kubecommon):
         return {'result': 'success'}
 
     def delete_network(self, name=None, cidr=None):
-        """
-
-        :param name:
-        :param cidr:
-        :return:
-        """
         crds = self.crds
         namespace = self.namespace
         try:
@@ -1376,19 +1072,11 @@ class Kubevirt(Kubecommon):
         return {'result': 'success'}
 
     def list_pools(self):
-        """
-
-        :return:
-        """
         storageapi = self.storageapi
         pools = [x.metadata.name for x in storageapi.list_storage_class().items]
         return pools
 
     def list_networks(self):
-        """
-
-        :return:
-        """
         core = self.core
         cidr = 'N/A'
         for node in core.list_node().items:
@@ -1415,57 +1103,26 @@ class Kubevirt(Kubecommon):
             return networks
 
     def list_subnets(self):
-        """
-
-        :return:
-        """
         print("not implemented")
         return {}
 
     def delete_pool(self, name, full=False):
-        """
-
-        :param name:
-        :param full:
-        :return:
-        """
         print("not implemented")
         return
 
     def network_ports(self, name):
-        """
-
-        :param name:
-        :return:
-        """
         print("not implemented")
         return
 
     def vm_ports(self, name):
-        """
-
-        :param name:
-        :return:
-        """
         return []
 
     def get_pool_path(self, pool):
-        """
-
-        :param pool:
-        :return:
-        """
         storageapi = self.storageapi
         storageclass = storageapi.read_storage_class(pool)
         return storageclass.provisioner
 
     def pvc_bound(self, volname, namespace):
-        """
-
-        :param volname:
-        :param namespace:
-        :return:
-        """
         core = self.core
         pvctimeout = 40
         pvcruntime = 0
@@ -1481,12 +1138,6 @@ class Kubevirt(Kubecommon):
         return True
 
     def import_completed(self, volname, namespace):
-        """
-
-        :param volname:
-        :param namespace:
-        :return:
-        """
         core = self.core
         pvctimeout = 400
         pvcruntime = 0
@@ -1506,12 +1157,6 @@ class Kubevirt(Kubecommon):
         return True
 
     def pod_completed(self, podname, namespace):
-        """
-
-        :param podname:
-        :param namespace:
-        :return:
-        """
         core = self.core
         podtimeout = 600
         podruntime = 0
@@ -1527,12 +1172,6 @@ class Kubevirt(Kubecommon):
         return True
 
     def prepare_pvc(self, name, size=1):
-        """
-
-        :param name:
-        :param size:
-        :return:
-        """
         core = self.core
         namespace = self.namespace
         now = datetime.datetime.now().strftime("%Y%M%d%H%M")
@@ -1555,11 +1194,6 @@ class Kubevirt(Kubecommon):
         return {'result': 'success'}
 
     def check_pool(self, pool):
-        """
-
-        :param pool:
-        :return:
-        """
         storageapi = self.storageapi
         storageclasses = storageapi.list_storage_class().items
         if storageclasses:
@@ -1570,18 +1204,9 @@ class Kubevirt(Kubecommon):
         return None
 
     def flavors(self):
-        """
-
-        :return:
-        """
         return []
 
     def get_image_name(self, name):
-        """
-
-        :param name:
-        :return:
-        """
         if '?' in name:
             return os.path.basename(name).split('?')[0]
         else:
@@ -1595,9 +1220,4 @@ class Kubevirt(Kubecommon):
         return sshservice.spec.ports[0].node_port
 
     def list_dns(self, domain):
-        """
-
-        :param domain:
-        :return:
-        """
         return []

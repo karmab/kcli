@@ -339,11 +339,6 @@ class Ksphere:
         return True if vm is not None else False
 
     def net_exists(self, name):
-        """
-
-        :param name:
-        :return:
-        """
         print("not implemented")
         return
 
@@ -355,57 +350,6 @@ class Ksphere:
                files=[], enableroot=True, overrides={}, tags=[], dnsclient=None, storemetadata=False,
                sharedfolders=[], kernel=None, initrd=None, cmdline=None, placement=[], autostart=False,
                cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False):
-        """
-
-        :param name:
-        :param virttype:
-        :param profile:
-        :param flavor:
-        :param plan:
-        :param cpumodel:
-        :param cpuflags:
-        :param cpupinning:
-        :param cpuhotplug:
-        :param numcpus:
-        :param memory:
-        :param memoryhotplug:
-        :param guestid:
-        :param pool:
-        :param image:
-        :param disks:
-        :param disksize:
-        :param diskthin:
-        :param diskinterface:
-        :param nets:
-        :param iso:
-        :param vnc:
-        :param cloudinit:
-        :param reserveip:
-        :param reservedns:
-        :param reservehost:
-        :param start:
-        :param keys:
-        :param cmds:
-        :param ips:
-        :param netmasks:
-        :param gateway:
-        :param nested:
-        :param dns:
-        :param domain:
-        :param tunnel:
-        :param files:
-        :param enableroot:
-        :param overrides:
-        :param tags:
-        :param cpuhotplug:
-        :param memoryhotplug:
-        :param numamode:
-        :param numa:
-        :param pcidevices:
-        :param tpm:
-        :param rng:
-        :return:
-        """
         dc = self.dc
         vmFolder = dc.vmFolder
         distributed = self.distributed
@@ -926,52 +870,22 @@ class Ksphere:
         waitForMe(t)
 
     def update_memory(self, name, memory):
-        """
-
-        :param name:
-        :param memory:
-        :return:
-        """
         print("not implemented")
         return
 
     def update_cpus(self, name, numcpus):
-        """
-
-        :param name:
-        :param numcpus:
-        :return:
-        """
         print("not implemented")
         return
 
     def update_start(self, name, start=True):
-        """
-
-        :param name:
-        :param start:
-        :return:
-        """
         print("not implemented")
         return
 
     def update_information(self, name, information):
-        """
-
-        :param name:
-        :param information:
-        :return:
-        """
         self.update_metadata(name, 'information', information)
         return
 
     def update_iso(self, name, iso):
-        """
-
-        :param name:
-        :param iso:
-        :return:
-        """
         si = self.si
         dc = self.dc
         vmFolder = dc.vmFolder
@@ -989,12 +903,6 @@ class Ksphere:
         return {'result': 'success'}
 
     def dnsinfo(self, name):
-        """
-
-
-        :param name:
-        :return:
-        """
         return None, None
 
     def _uploadimage(self, pool, origin, directory, verbose=False, temp=False):
@@ -1032,20 +940,6 @@ class Ksphere:
 
     def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, Y=False,
             D=None):
-        """
-
-        :param name:
-        :param user:
-        :param local:
-        :param remote:
-        :param tunnel:
-        :param insecure:
-        :param cmd:
-        :param X:
-        :param Y:
-        :param D:
-        :return:
-        """
         u, ip = common._ssh_credentials(self, name)
         if ip is None:
             return None
@@ -1058,18 +952,6 @@ class Ksphere:
 
     def scp(self, name, user=None, source=None, destination=None, tunnel=False, download=False, recursive=False,
             insecure=False):
-        """
-
-        :param name:
-        :param user:
-        :param source:
-        :param destination:
-        :param tunnel:
-        :param download:
-        :param recursive:
-        :param insecure:
-        :return:
-        """
         u, ip = common._ssh_credentials(self, name)
         if ip is None:
             return None
@@ -1133,12 +1015,6 @@ class Ksphere:
         return {'result': 'failure', 'reason': "Disk %s not found in %s" % (diskname, name)}
 
     def add_nic(self, name, network):
-        """
-
-        :param name:
-        :param network:
-        :return:
-        """
         if network == 'default':
             network = 'VM Network'
         si = self.si
@@ -1158,12 +1034,6 @@ class Ksphere:
         return {'result': 'success'}
 
     def delete_nic(self, name, interface):
-        """
-
-        :param name:
-        :param interface
-        :return:
-        """
         si = self.si
         dc = self.dc
         vmFolder = dc.vmFolder
@@ -1183,10 +1053,6 @@ class Ksphere:
         return {'result': 'failure', 'reason': "Nic %s not found in %s" % (interface, name)}
 
     def list_networks(self):
-        """
-
-        :return:
-        """
         si = self.si
         rootFolder = si.content.rootFolder
         networks = {}
@@ -1207,18 +1073,6 @@ class Ksphere:
         return networks
 
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
-        """
-
-        :param name:
-        :param cidr:
-        :param dhcp:
-        :param nat:
-        :param domain:
-        :param plan:
-        :param pxe:
-        :param vlan:
-        :return:
-        """
         return {'result': 'failure', 'reason': "Not implemented yet..."}
         si = self.si
         cluster = self.clu
@@ -1256,11 +1110,6 @@ class Ksphere:
         return {'result': 'success'}
 
     def delete_network(self, name=None, cidr=None):
-        """
-
-        :param name:
-        :return:
-        """
         si = self.si
         rootFolder = self.rootFolder
         if self.distributed:
@@ -1273,24 +1122,9 @@ class Ksphere:
         return {'result': 'success'}
 
     def vm_ports(self, name):
-        """
-
-        :param name:
-        return:
-        """
         return []
 
     def add_image(self, image, pool, short=None, cmd=None, name=None, size=1):
-        """
-
-        :param image:
-        :param pool:
-        :param short:
-        :param cmd:
-        :param name:
-        :param size:
-        :return:
-        """
         si = self.si
         rootFolder = self.rootFolder
         shortimage = os.path.basename(image).split('?')[0]
@@ -1363,12 +1197,6 @@ class Ksphere:
             return {'result': 'success'}
 
     def export(self, name, image=None):
-        """
-
-        :param name:
-        :param image:
-        :return:
-        """
         si = self.si
         dc = self.dc
         vmFolder = dc.vmFolder
@@ -1384,9 +1212,4 @@ class Ksphere:
         return {'result': 'success'}
 
     def list_dns(self, domain):
-        """
-
-        :param domain:
-        :return:
-        """
         return []
