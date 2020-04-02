@@ -791,7 +791,7 @@ def create_vm(args):
     customprofile = {}
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     for key in overrides:
-        if key in vars(config) and type(overrides[key]) != type(vars(config)[key]):
+        if key in vars(config) and vars(config)[key] is not None and type(overrides[key]) != type(vars(config)[key]):
             key_type = str(type(vars(config)[key]))
             common.pprint("The provided parameter %s has a wrong type, it should be %s" % (key, key_type), color='red')
             os._exit(1)
