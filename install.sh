@@ -18,20 +18,8 @@ elif [ $(which apt-get) != "" ] ; then
 fi
 
 if [ "$packagefound" == "true" ] ; then
-  echo -e "${BLUE}Installing kcli completion for your shell${NC}"
-  case $shell in
-  bash|zsh)
-    shellfile="$HOME/.bashrc"
-    [ "$shell" == zsh ] && shellfile="$HOME/.zshrc" 
-    grep -q kcli $shellfile || echo eval \"\$\(register-python-argcomplete kcli\)\" >> $shellfile
-  ;;
-  fish)
-    shellfile="$HOME/.config/fish/config.fish"
-    [ ! -d ~/.config/fish ] && mkdir -p ~/.config/fish
-    grep -q kcli $shellfile || curl -s https://raw.githubusercontent.com/karmab/kcli/master/extras/kcli.fish >> $shellfile
-  ;;
-  esac
-  echo -e """${GREEN}Launch a new shell for completion to work${NC}"""
+  echo -e "${GREEN} kcli installed${NC}"
+  echo -e "${BLUE} Consider installing completion by following https://kcli.readthedocs.io/#auto-completion${NC}"
   exit 0
 fi
 
