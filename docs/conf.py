@@ -10,10 +10,10 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import os
-import sys
-sys.path.insert(0, os.path.abspath('..'))
-sys.setrecursionlimit(1500)
+# import os
+# import sys
+# sys.path.insert(0, os.path.abspath('..'))
+# sys.setrecursionlimit(1500)
 
 
 # -- Project information -----------------------------------------------------
@@ -34,6 +34,7 @@ master_doc = 'index'
 # ones.
 # extensions = ['autoapi.extension']
 # extensions = ['sphinx.ext.autodoc', 'autoapi.extension', 'sphinx_rtd_theme', 'sphinx.ext.napoleon']
+# extensions = ['autoapi.extension', 'sphinx_rtd_theme', 'sphinx.ext.napoleon']
 extensions = ['autoapi.extension', 'sphinx_rtd_theme', 'sphinx.ext.napoleon']
 
 
