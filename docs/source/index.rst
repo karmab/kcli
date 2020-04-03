@@ -1761,9 +1761,11 @@ level *k* object.
 API documentation
 -----------------
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+.. toctree::
+   :maxdepth: 1
+   :caption: API
+
+   autoapi/kvirt/index
 
 .. |Build Status| image:: https://travis-ci.org/karmab/kcli.svg?branch=master
    :target: https://travis-ci.org/karmab/kcli
@@ -1772,6 +1774,6 @@ API documentation
 .. |Copr| image:: https://copr.fedorainfracloud.org/coprs/karmab/kcli/package/kcli/status_image/last_build.png
    :target: https://copr.fedorainfracloud.org/coprs/karmab/kcli/package/kcli
 .. |Documentation Status| image:: https://readthedocs.org/projects/kcli/badge/?version=master
-   :target: https://kcli.readthedocs.io/en/master/?badge=master
+   :target: https://kcli.readthedocs.io/en/latest/?badge=latest
 .. |image4| image:: https://images.microbadger.com/badges/image/karmab/kcli.svg
    :target: https://microbadger.com/images/karmab/kcli
