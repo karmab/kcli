@@ -12,7 +12,8 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('../..'))
+sys.setrecursionlimit(1500)
 
 
 # -- Project information -----------------------------------------------------
@@ -24,7 +25,7 @@ author = 'karmab'
 # The full version, including alpha/beta/rc tags
 release = '99.0'
 
-master_doc = 'index'
+# master_doc = 'index'
 
 # -- General configuration ---------------------------------------------------
 
@@ -42,7 +43,7 @@ templates_path = ['_templates']
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = ['']
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -60,8 +61,8 @@ html_static_path = ['_static']
 # -- Extension configuration -------------------------------------------------
 
 autoapi_type = 'python'
-autoapi_dirs = ['../kvirt']
+autoapi_dirs = ['../../kvirt']
 autoapi_options = ['members', 'show-inheritance']
-autoapi_add_toctree_entry = True
+autoapi_add_toctree_entry = False
 # autoapi_root = 'api'
 # autoapi_keep_files = True

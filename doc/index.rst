@@ -1758,10 +1758,14 @@ Here’s a sample:
 You can then either use config for high level actions or the more low
 level *k* object.
 
-Api Details
-===========
+API documentation
+-----------------
 
-* :ref:`genindex`
+.. toctree::
+   :maxdepth: 1
+   :caption: API documentation
+
+   autoapi/kvirt/index
 
 .. |Build Status| image:: https://travis-ci.org/karmab/kcli.svg?branch=master
    :target: https://travis-ci.org/karmab/kcli
