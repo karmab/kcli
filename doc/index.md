@@ -1320,8 +1320,13 @@ k = config.k
 
 You can then either use config for high level actions or the more low level *k* object.
 
-# Api Details
-
 ```{=rst}
-* :ref:`genindex`
+API documentation
+-----------------
+
+.. toctree::
+   :maxdepth: 1
+   :caption: API documentation
+
+   autoapi/kvirt/index
 ```
