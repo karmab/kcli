@@ -25,7 +25,7 @@ author = 'karmab'
 # The full version, including alpha/beta/rc tags
 release = '99.0'
 
-# master_doc = 'index'
+master_doc = 'index'
 
 # -- General configuration ---------------------------------------------------
 
@@ -58,13 +58,9 @@ html_theme = 'sphinx_rtd_theme'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-# modindex_common_prefix = ['kcli.kvirt.', 'latest.kcli.kvirt.']
-add_module_names = False
-
 # -- Extension configuration -------------------------------------------------
 # autoapi
 autoapi_type = 'python'
 autoapi_dirs = ['../kvirt']
 autoapi_options = ['members', 'show-inheritance']
 autoapi_add_toctree_entry = False
-pygments_style = 'sphinx'
