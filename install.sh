@@ -51,11 +51,7 @@ if [ "$ALIAS" != "0" ]; then
   $engine pull docker.io/karmab/kcli:latest
   SSHVOLUME="-v $(realpath $HOME/.ssh):/root/.ssh"
   if [ -d /var/lib/libvirt/images ] && [ -d /var/run/libvirt ]; then
-      echo -e """${BLUE}Make sure you have libvirt access from your user by running:
-sudo usermod -aG qemu,libvirt $(id -un)
-newgrp qemu
-newgrp libvirt${NC}"""
-      VOLUMES="-v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt"
+    VOLUMES="-v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt"
   fi
   [ -d $HOME/.kcli ] || mkdir -p $HOME/.kcli
   [ -d $HOME/.ssh  ] || ssh-keygen -t rsa -N '' -f $HOME/.ssh/id_rsa
@@ -87,4 +83,12 @@ esac
 Launch a new shell for aliases kcli, kclishell and kweb to work${NC}"""
 else
   echo -e "${BLUE}Skipping already installed kcli${NC}"
+fi
+
+if [ "$(id -u)" != "0" ] && [ -d /var/lib/libvirt/images ] && [ -d /var/run/libvirt ]; then
+ echo -e """${BLUE}Make sure you have libvirt access from your user by running:
+sudo usermod -aG qemu,libvirt $(id -un)
+newgrp qemu
+newgrp libvirt
+sudo setfacl -m u:$(id -un):rwx /var/lib/libvirt/images${NC}"""
 fi
