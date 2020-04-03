@@ -32,7 +32,8 @@ master_doc = 'index'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 # extensions = ['autoapi.extension']
-extensions = ['sphinx.ext.autodoc', 'autoapi.extension', 'sphinx_rtd_theme', 'sphinx.ext.napoleon']
+# extensions = ['sphinx.ext.autodoc', 'autoapi.extension', 'sphinx_rtd_theme', 'sphinx.ext.napoleon']
+extensions = ['autoapi.extension', 'sphinx_rtd_theme', 'sphinx.ext.napoleon']
 
 
 # Add any paths that contain templates here, relative to this directory.
