@@ -12,7 +12,7 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../..'))
+sys.path.insert(0, os.path.abspath('..'))
 sys.setrecursionlimit(1500)
 
 
@@ -58,11 +58,13 @@ html_theme = 'sphinx_rtd_theme'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
+# modindex_common_prefix = ['kcli.kvirt.', 'latest.kcli.kvirt.']
+add_module_names = False
+
 # -- Extension configuration -------------------------------------------------
 # autoapi
 autoapi_type = 'python'
-autoapi_dirs = ['../../kvirt']
+autoapi_dirs = ['../kvirt']
 autoapi_options = ['members', 'show-inheritance']
 autoapi_add_toctree_entry = False
-
 pygments_style = 'sphinx'

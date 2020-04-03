@@ -1761,11 +1761,8 @@ level *k* object.
 API documentation
 -----------------
 
-.. toctree::
-   :maxdepth: 1
-   :caption: API
-
-   autoapi/kvirt/index
+* :ref:`genindex`
+* :ref:`modindex`
 
 .. |Build Status| image:: https://travis-ci.org/karmab/kcli.svg?branch=master
    :target: https://travis-ci.org/karmab/kcli

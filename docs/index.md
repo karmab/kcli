@@ -1324,10 +1324,7 @@ You can then either use config for high level actions or the more low level *k* 
 API documentation
 -----------------
 
-.. toctree::
-   :maxdepth: 1
-   :caption: API
-
-   autoapi/kvirt/index
+* :ref:`genindex`
+* :ref:`modindex`
 
 ```
