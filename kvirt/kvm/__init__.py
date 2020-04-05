@@ -412,58 +412,61 @@ class Kvirt(object):
         netxml = ''
         alias = []
         guestagent = False
-        for index, net in enumerate(nets):
-            if usermode:
-                continue
-            ovs = False
-            macxml = ''
-            nettype = 'virtio'
-            if isinstance(net, str):
-                netname = net
-                nets[index] = {'name': netname}
-            elif isinstance(net, dict) and 'name' in net:
-                netname = net['name']
-                if 'mac' in nets[index]:
-                    mac = nets[index]['mac']
-                    macxml = "<mac address='%s'/>" % mac
-                if 'type' in nets[index]:
-                    nettype = nets[index]['type']
-                if index == 0 and 'alias' in nets[index] and isinstance(nets[index]['alias'], list):
-                    reservedns = True
-                    alias = nets[index]['alias']
-                if 'ovs' in nets[index] and nets[index]['ovs']:
-                    ovs = True
-                if 'ip' in nets[index] and index == 0:
-                    metadata = """%s<kvirt:ip >%s</kvirt:ip>""" % (metadata, nets[index]['ip'])
-            if ips and len(ips) > index and ips[index] is not None and\
-                    netmasks and len(netmasks) > index and netmasks[index] is not None and gateway is not None:
-                nets[index]['ip'] = ips[index]
-                nets[index]['netmask'] = netmasks[index]
-            if netname in networks:
-                iftype = 'network'
-                sourcexml = "<source network='%s'/>" % netname
-            elif netname in bridges or ovs:
-                iftype = 'bridge'
-                sourcexml = "<source bridge='%s'/>" % netname
-                guestagent = True
-                if reservedns:
-                    dnscmdhost = dns if dns is not None else self.host
-                    dnscmd = "sed -i 's/nameserver .*/nameserver %s/' /etc/resolv.conf" % dnscmdhost
-                    cmds = cmds[:index] + [dnscmd] + cmds[index:]
-            elif netname in ipv6networks:
-                iftype = 'network'
-                sourcexml = "<source network='%s'/>" % netname
-                ipv6.append(netname)
-            else:
-                return {'result': 'failure', 'reason': "Invalid network %s" % netname}
-            ovsxml = "<virtualport type='openvswitch'/>" if ovs else ''
-            netxml = """%s
-                     <interface type='%s'>
-                     %s
-                     %s
-                     %s
-                     <model type='%s'/>
-                     </interface>""" % (netxml, iftype, macxml, sourcexml, ovsxml, nettype)
+        if isinstance(nets, str) and nets == "detached":
+            common.pprint("Starting in detached network mode", color='blue')
+        else:
+            for index, net in enumerate(nets):
+                if usermode:
+                    continue
+                ovs = False
+                macxml = ''
+                nettype = 'virtio'
+                if isinstance(net, str):
+                    netname = net
+                    nets[index] = {'name': netname}
+                elif isinstance(net, dict) and 'name' in net:
+                    netname = net['name']
+                    if 'mac' in nets[index]:
+                        mac = nets[index]['mac']
+                        macxml = "<mac address='%s'/>" % mac
+                    if 'type' in nets[index]:
+                        nettype = nets[index]['type']
+                    if index == 0 and 'alias' in nets[index] and isinstance(nets[index]['alias'], list):
+                        reservedns = True
+                        alias = nets[index]['alias']
+                    if 'ovs' in nets[index] and nets[index]['ovs']:
+                        ovs = True
+                    if 'ip' in nets[index] and index == 0:
+                        metadata = """%s<kvirt:ip >%s</kvirt:ip>""" % (metadata, nets[index]['ip'])
+                if ips and len(ips) > index and ips[index] is not None and\
+                        netmasks and len(netmasks) > index and netmasks[index] is not None and gateway is not None:
+                    nets[index]['ip'] = ips[index]
+                    nets[index]['netmask'] = netmasks[index]
+                if netname in networks:
+                    iftype = 'network'
+                    sourcexml = "<source network='%s'/>" % netname
+                elif netname in bridges or ovs:
+                    iftype = 'bridge'
+                    sourcexml = "<source bridge='%s'/>" % netname
+                    guestagent = True
+                    if reservedns:
+                        dnscmdhost = dns if dns is not None else self.host
+                        dnscmd = "sed -i 's/nameserver .*/nameserver %s/' /etc/resolv.conf" % dnscmdhost
+                        cmds = cmds[:index] + [dnscmd] + cmds[index:]
+                elif netname in ipv6networks:
+                    iftype = 'network'
+                    sourcexml = "<source network='%s'/>" % netname
+                    ipv6.append(netname)
+                else:
+                    return {'result': 'failure', 'reason': "Invalid network %s" % netname}
+                ovsxml = "<virtualport type='openvswitch'/>" if ovs else ''
+                netxml = """%s
+                         <interface type='%s'>
+                         %s
+                         %s
+                         %s
+                         <model type='%s'/>
+                         </interface>""" % (netxml, iftype, macxml, sourcexml, ovsxml, nettype)
         metadata = """%s
                     <kvirt:plan>%s</kvirt:plan>
                     </kvirt:info>
