@@ -36,6 +36,7 @@ disconnected_user:
 disconnected_password:
 ipv6: false
 baremetal: false
+baremetal_machine_cidr:
 provisioning_net: provisioning
 provisioning_nic: ens4
 cloud_tag:

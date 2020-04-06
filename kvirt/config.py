@@ -846,7 +846,7 @@ $INFO
     def plan(self, plan, ansible=False, url=None, path=None, autostart=False, container=False, noautostart=False,
              inputfile=None, inputstring=None, start=False, stop=False, delete=False, force=True, overrides={},
              info=False, snapshot=False, revert=False, update=False, embedded=False, restart=False, download=False,
-             wait=False, quiet=False):
+             wait=False, quiet=False, doc=False):
         """Manage plan file"""
         k = self.k
         no_overrides = not overrides
@@ -1140,7 +1140,7 @@ $INFO
             common.pprint("No input file found nor default kcli_plan.yml.Leaving....", color='red')
             os._exit(1)
         if info:
-            self.info_plan(inputfile, onfly=onfly, quiet=quiet)
+            self.info_plan(inputfile, onfly=onfly, quiet=quiet, doc=doc)
             if toclean:
                 os.chdir('..')
                 rmtree(path)

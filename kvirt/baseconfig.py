@@ -529,7 +529,7 @@ class Kbaseconfig:
             rmtree(repodir)
             return {'result': 'success'}
 
-    def info_plan(self, inputfile, quiet=False, web=False, onfly=None):
+    def info_plan(self, inputfile, quiet=False, web=False, onfly=None, doc=False):
         """
 
         :param inputfile:

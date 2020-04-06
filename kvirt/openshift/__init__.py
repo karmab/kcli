@@ -30,6 +30,18 @@ def get_rhcos_openstack_url():
     return "%s%s" % (data['baseURI'], data['images']['openstack']['path'])
 
 
+def get_minimal_rhcos():
+    for line in os.popen('openshift-install version').readlines():
+        if 'built from commit' in line:
+            commit_id = line.replace('built from commit ', '').strip()
+            break
+    r = urlopen("https://raw.githubusercontent.com/openshift/installer/%s/data/data/rhcos.json" % commit_id)
+    r = str(r.read(), 'utf-8').strip()
+    data = json.loads(r)
+    ver = os.path.basename(data['images']['qemu']['path']).replace('-0-qemu.x86_64.qcow2.gz', '').replace('rhcos-', '')
+    return int(ver.replace('.', ''))
+
+
 def get_downstream_installer(nightly=False, macosx=False, tag=None):
     repo = 'ocp-dev-preview' if nightly else 'ocp'
     latest = 'latest' if tag is None else 'latest-%s' % tag
@@ -193,6 +205,9 @@ def create(config, plandir, cluster, overrides):
     api_ip = data.get('api_ip')
     if platform in virtplatforms and api_ip is None:
         pprint("You need to define api_ip in your parameters file", color='red')
+        os._exit(1)
+    if platform in virtplatforms and baremetal and data.get('baremetal_machine_cidr') is None:
+        pprint("You need to define baremetal_machine_cidr in your parameters file", color='red')
         os._exit(1)
     if ':' in api_ip:
         ipv6 = True

@@ -1303,6 +1303,7 @@ def restart_plan(args):
 def info_plan(args):
     """Info plan """
     plan = args.plan
+    doc = args.doc
     quiet = args.quiet
     url = args.url
     path = args.path
@@ -1312,11 +1313,11 @@ def info_plan(args):
     if url is None:
         inputfile = plan if inputfile is None and plan is not None else inputfile
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-        baseconfig.info_plan(inputfile, quiet=quiet)
+        baseconfig.info_plan(inputfile, quiet=quiet, doc=doc)
     else:
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
-        config.plan(plan, url=url, path=path, inputfile=inputfile, info=True, quiet=quiet)
+        config.plan(plan, url=url, path=path, inputfile=inputfile, info=True, quiet=quiet, doc=doc)
     return 0
 
 
@@ -2467,6 +2468,7 @@ def cli():
     planinfo_parser = info_subparsers.add_parser('plan', description=planinfo_desc, help=planinfo_desc,
                                                  epilog=planinfo_epilog,
                                                  formatter_class=argparse.RawDescriptionHelpFormatter)
+    planinfo_parser.add_argument('-d', '--doc', action='store_true', help='Render info as markdown table')
     planinfo_parser.add_argument('-f', '--inputfile', help='Input Plan file')
     planinfo_parser.add_argument('-p', '--path', help='Path where to download plans. Defaults to plan', metavar='PATH')
     planinfo_parser.add_argument('-q', '--quiet', action='store_true', help='Provide parameter file output')
