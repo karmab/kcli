@@ -562,8 +562,18 @@ class Kbaseconfig:
             parameters = yaml.safe_load(parameters)['parameters'] if not raw else parameters
             if web:
                 return parameters
+            if doc:
+                maxkey = max([len(x) for x in parameters])
+                maxvalue = max([len(str(parameters[x])) for x in parameters if parameters[x] is not None])
+                print("|Parameter%s|Default Value%s|" % (" " * (maxkey - len("Parameter")),
+                                                         " " * (maxvalue - len("Default Value"))))
+                print("|%s|%s|" % ("-" * maxkey, "-" * maxvalue))
             for parameter in parameters:
-                print("%s: %s" % (parameter, parameters[parameter]))
+                if doc:
+                    print("|%s%s|%s%s|" % (parameter, " " * (maxkey - len(parameter)),
+                                           parameters[parameter], " " * (maxvalue - len(str(parameters[parameter])))))
+                else:
+                    print("%s: %s" % (parameter, parameters[parameter]))
                 if parameter == 'baseplan':
                     if onfly is not None:
                         common.fetch("%s/%s" % (onfly, parameters[parameter]), '.')

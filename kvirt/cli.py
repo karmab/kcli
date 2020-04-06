@@ -2468,7 +2468,7 @@ def cli():
     planinfo_parser = info_subparsers.add_parser('plan', description=planinfo_desc, help=planinfo_desc,
                                                  epilog=planinfo_epilog,
                                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    planinfo_parser.add_argument('-d', '--doc', action='store_true', help='Render info as markdown table')
+    planinfo_parser.add_argument('--doc', action='store_true', help='Render info as markdown table')
     planinfo_parser.add_argument('-f', '--inputfile', help='Input Plan file')
     planinfo_parser.add_argument('-p', '--path', help='Path where to download plans. Defaults to plan', metavar='PATH')
     planinfo_parser.add_argument('-q', '--quiet', action='store_true', help='Provide parameter file output')
