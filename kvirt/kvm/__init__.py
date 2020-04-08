@@ -476,9 +476,10 @@ class Kvirt(object):
                     gcmds.append('apt-get -f install qemu-guest-agent')
                     gcmds.append('/etc/init.d/qemu-guest-agent start')
                     gcmds.append('update-rc.d  qemu-guest-agent defaults')
-                elif lower.startswith('fedora') or lower.startswith('rhel'):
+                elif lower.startswith('fedora') or lower.startswith('rhel') or lower.startswith('centos'):
                     gcmds.append('yum -y install qemu-guest-agent')
-                    gcmds.append('systemctl enable --now qemu-guest-agent')
+                    gcmds.append('systemctl enable qemu-guest-agent')
+                    gcmds.append('systemctl start qemu-guest-agent')
                 elif [x for x in ubuntus if x in lower] or 'ubuntu' in lower:
                     gcmds.append('apt-get update')
                     gcmds.append('apt-get -f install qemu-guest-agent')
