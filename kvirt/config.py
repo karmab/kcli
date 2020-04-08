@@ -240,8 +240,13 @@ class Kconfig(Kbaseconfig):
         else:
             common.pprint("Deploying vm %s from profile %s..." % (name, profile))
         if profile not in vmprofiles:
-            common.pprint("profile %s not found. Using the image as profile..." % profile, color='blue')
-            vmprofiles[profile] = {'image': profile}
+            clientprofile = "%s_%s" % (self.client, profile)
+            if clientprofile in vmprofiles and 'image' in vmprofiles[clientprofile]:
+                # profile = clientprofile
+                vmprofiles[profile] = {'image': vmprofiles[clientprofile]['image']}
+            else:
+                common.pprint("profile %s not found. Using the image as profile..." % profile, color='blue')
+                vmprofiles[profile] = {'image': profile}
         profilename = profile
         profile = vmprofiles[profile]
         if not planmode:
@@ -1676,12 +1681,13 @@ $INFO
                         shortname = os.path.splitext(shortname)[0]
                     if self.type == 'vsphere':
                         shortname = image
-                    if imagename not in self.profiles:
-                        common.pprint("Adding a profile named %s with default values" % imagename)
-                        self.create_profile(imagename, {'image': shortname}, quiet=True)
-                    elif len(self.clients) == 1:
-                        common.pprint("Updating profile %s with image %s" % (imagename, shortname))
-                        self.update_profile(imagename, {'image': shortname}, quiet=True)
+                    clientprofile = "%s_%s" % (self.client, imagename)
+                    if clientprofile not in self.profiles:
+                        common.pprint("Adding a profile named %s with default values" % clientprofile)
+                        self.create_profile(clientprofile, {'image': shortname}, quiet=True)
+                    else:
+                        common.pprint("Updating profile %s with image %s" % (clientprofile, shortname))
+                        self.update_profile(clientprofile, {'image': shortname}, quiet=True)
             return {'result': 'success'}
         elif switch:
             if switch not in self.clients:
