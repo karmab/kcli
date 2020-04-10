@@ -143,14 +143,19 @@ class Kconfig(Kbaseconfig):
                                             os.environ.get("OS_PROJECT_NAME")] if e is not None), 'admin')
                 password = next((e for e in [self.options.get('password'),
                                              os.environ.get("OS_PASSWORD")] if e is not None), None)
+                cacert = next((e for e in [self.options.get('cacert'),
+                                            os.environ.get("OS_CACERT")] if e is not None), None)
                 if password is None:
                     common.pprint("Missing password in the configuration. Leaving", color='red')
                     os._exit(1)
                 if auth_url.endswith('v2.0'):
                     domain = None
+                if auth_url.startswith('https') and cacert is None:
+                    common.pprint("Secure auth_url was specified and cacert is missing. Leaving", color='red')
+                    os.exit(1)
                 from kvirt.openstack import Kopenstack
                 k = Kopenstack(host=self.host, port=self.port, user=user, password=password, version=version,
-                               debug=debug, project=project, domain=domain, auth_url=auth_url)
+                               debug=debug, project=project, domain=domain, auth_url=auth_url, cacert=cacert)
             elif self.type == 'foreman':
                 user = self.options.get('user', 'admin')
                 password = self.options.get('password')

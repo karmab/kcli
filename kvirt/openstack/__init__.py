@@ -23,13 +23,13 @@ class Kopenstack(object):
 
     """
     def __init__(self, host='127.0.0.1', version='2', port=None, user='root', password=None, debug=False, project=None,
-                 domain='Default', auth_url=None):
+                 domain='Default', auth_url=None, cacert=None):
         self.debug = debug
         self.host = host
         loader = loading.get_plugin_loader('password')
         auth = loader.load_from_options(auth_url=auth_url, username=user, password=password, project_name=project,
                                         user_domain_name=domain, project_domain_name=domain)
-        sess = session.Session(auth=auth)
+        sess = session.Session(auth=auth, verify=cacert)
         self.nova = novaclient.Client(version, session=sess)
         self.glance = glanceclient(version, session=sess)
         self.cinder = cinderclient.Client(version, session=sess)
