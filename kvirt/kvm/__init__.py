@@ -417,6 +417,7 @@ class Kvirt(object):
                 continue
             ovs = False
             macxml = ''
+            ovsxml = ''
             nettype = 'virtio'
             if isinstance(net, str):
                 netname = net
@@ -456,7 +457,13 @@ class Kvirt(object):
                 ipv6.append(netname)
             else:
                 return {'result': 'failure', 'reason': "Invalid network %s" % netname}
-            ovsxml = "<virtualport type='openvswitch'/>" if ovs else ''
+            if ovs:
+                ovsxml = "<virtualport type='openvswitch'/>{}"
+                if "port_name" in nets[index] and nets[index]["port_name"]:
+                    port_name = "<target dev='{port_name}'/>".format(**nets[index])
+                    ovsxml.format(port_name)
+                else:
+                    ovsxml.format("")
             netxml = """%s
                      <interface type='%s'>
                      %s
