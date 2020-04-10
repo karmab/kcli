@@ -357,6 +357,8 @@ class Kopenstack(object):
                         yamlinfo['privateip'] = entry2['addr']
                     yamlinfo['nets'].append(net)
                     index += 1
+        if 'ip' not in yamlinfo:
+            yamlinfo['ip'] = yamlinfo['privateip']
         disks = []
         for disk in vm._info['os-extended-volumes:volumes_attached']:
             diskid = disk['id']
