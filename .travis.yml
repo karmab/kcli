@@ -32,18 +32,19 @@ env:
 
 jobs:
   include:
-      - stage: source analysis|linting
-        script:
-            - find . -name \*.py -exec pep8 --ignore=E402,W504,E721 --max-line-length=120 {} +
-            - find . -name '*.py' | misspellings -f -
-      - stage: build 
-        script:
-            - git rev-parse --short HEAD > kvirt/version/git
-            - docker build -t karmab/kcli -f extras/alpine .
+      #- stage: source analysis|linting
+      #  script:
+      #      - find . -name \*.py -exec pep8 --ignore=E402,W504,E721 --max-line-length=120 {} +
+      #      - find . -name '*.py' | misspellings -f -
+      #- stage: build 
+      #  script:
+      #      - git rev-parse --short HEAD > kvirt/version/git
+      #      - docker build -t karmab/kcli -f extras/alpine .
 
       - stage: testing 
         script:
-            - ${COMMAND_BASIS} create plan -f ./tests/pipeline/plans/base_kvm.yml base_plan_test
+            - echo "${COMMAND_BASIS}"
+            - "${COMMAND_BASIS}" create plan -f ./tests/pipeline/plans/base_kvm.yml base_plan_test
             - ${COMMAND_BASIS} delete plan -y base_plan_test
       - stage: release 
         script:
@@ -57,8 +58,8 @@ jobs:
             - "./packagecloud_clean.py"
 
 stages:
-    - name: source analysis|linting
-    - name: build
+    #- name: source analysis|linting
+    #- name: build
     - name: testing
     - name: release
       if: branch = master
