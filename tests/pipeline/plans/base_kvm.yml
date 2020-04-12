@@ -1,0 +1,32 @@
+---
+
+fedora31:
+ type: image
+ pool: image_pool
+
+image_pool:
+  type: pool
+  path: /srv/
+
+micro_network:
+ type: network
+ cidr: 10.0.5.0/24
+ dhcp: true 
+ nat: false
+
+micro_fedora:
+  type: profile
+  image: fedora31
+  memory: 2048
+  numcpus: 2
+  disks:
+   - size: 5
+  pool: image_pool 
+
+test_instance:
+  profile: micro_fedora 
+
+local:
+    type: kvm
+    host: localhost
+    pool: image_pool

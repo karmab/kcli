@@ -11,22 +11,54 @@ python:
 - 3.6
 virtualenv:
   system_site_packages: true
+
 before_install:
 - pip3 install pep8 twine misspellings stdeb requests
 - pip3 install setuptools --upgrade
-script:
-- find . -name \*.py -exec pep8 --ignore=E402,W504,E721 --max-line-length=120 {} +
-- find . -name '*.py' | misspellings -f -
-# - echo $TRAVIS_COMMIT > kvirt/version/git
-- git rev-parse --short HEAD > kvirt/version/git
-- docker build -t karmab/kcli -f extras/alpine .
-- docker run -it --rm karmab/kcli
-after_success:
-- if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == 'false' ] ; then
-  docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD ; docker push karmab/kcli:latest
-  ; fi
-- if [ "$TRAVIS_TAG" != "" ]; then docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
-  ; docker push karmab/kcli:$TRAVIS_TAG ; fi
-- "./pypi.sh"
-- "./packagecloud.sh"
-- "./packagecloud_clean.py"
+
+env:
+    global:
+        COMMAND_BASIS: >
+                       docker run --rm
+                       --privileged
+                       --net host
+                       -t -a stdout -a stderr
+                       -v ${HOME}/.kcli:/root/.kcli
+                       -v ${HOME}/.ssh:/root/.ssh
+                       -v /var/run/libvirt:/var/run/libvirt
+                       -v /srv/:/srv/
+                       -v ${PWD}:/workdir
+                       karmab/kcli 
+
+jobs:
+  include:
+      - stage: source analysis|linting
+        script:
+            - find . -name \*.py -exec pep8 --ignore=E402,W504,E721 --max-line-length=120 {} +
+            - find . -name '*.py' | misspellings -f -
+      - stage: build 
+        script:
+            - git rev-parse --short HEAD > kvirt/version/git
+            - docker build -t karmab/kcli -f extras/alpine .
+
+      - stage: testing 
+        script:
+            - ${COMMAND_BASIS} create plan -f ./tests/pipeline/plans/base_kvm.yml base_plan_test
+            - ${COMMAND_BASIS} delete plan -y base_plan_test
+      - stage: release 
+        script:
+            - if [ "$TRAVIS_PULL_REQUEST" == 'false' ] ; then
+              docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD ; docker push karmab/kcli:latest
+              ; fi
+            - if [ "$TRAVIS_TAG" != "" ]; then docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+              ; docker push karmab/kcli:$TRAVIS_TAG ; fi
+            - "./pypi.sh"
+            - "./packagecloud.sh"
+            - "./packagecloud_clean.py"
+
+stages:
+    - name: source analysis|linting
+    - name: build
+    - name: testing
+    - name: release
+      if: branch = master
