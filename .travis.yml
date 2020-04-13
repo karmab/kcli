@@ -1,5 +1,5 @@
 language: python
-dist: bionic
+dist: xenial
 notifications:
   irc:
     channels:
@@ -9,19 +9,32 @@ notifications:
 sudo: required
 python:
 - 3.6
-virtualenv:
-  system_site_packages: true
 
 before_install:
 - pip3 install pep8 twine misspellings stdeb requests
 - pip3 install setuptools --upgrade
 
+install:
+    - sudo apt-get update
+    - >
+      sudo apt-get -y install
+      libvirt-daemon
+      libvirt0
+      qemu-system-x86
+      qemu-utils
+      qemu-kvm
+
+before_script:
+    - ${PWD}/tests/pipeline/setup_hypervizor.sh
 
 script:
     # source analysis|linting
     - ${PWD}/tests/pipeline/stages/linting.sh
     # build 
     - ${PWD}/tests/pipeline/stages/build.sh
+    # testing 
+    - ${PWD}/tests/pipeline/stages/testing.sh
+    - tree -f /srv/
 after_success:
     # release 
     - ${PWD}/tests/pipeline/stages/release.sh
