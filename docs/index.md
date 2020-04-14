@@ -390,7 +390,7 @@ myopenstack:
  project: testk
  domain: Default
  auth_url: http://openstack:5000/v3
- cacert: ~/ca-trust.crt
+ ca_file: ~/ca-trust.crt
 ```
 
 The following parameters are specific to openstack:
@@ -398,7 +398,7 @@ The following parameters are specific to openstack:
 - auth_url
 - project
 - domain
-- cacert
+- ca_file
 
 To use this provider with kcli rpm, you'll need to install the following rpms 
 
