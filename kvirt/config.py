@@ -156,18 +156,6 @@ class Kconfig(Kbaseconfig):
                 from kvirt.openstack import Kopenstack
                 k = Kopenstack(host=self.host, port=self.port, user=user, password=password, version=version,
                                debug=debug, project=project, domain=domain, auth_url=auth_url, ca_file=ca_file)
-            elif self.type == 'foreman':
-                user = self.options.get('user', 'admin')
-                password = self.options.get('password')
-                port = self.options.get('port', 443)
-                if password is None:
-                    common.pprint("Missing password in the configuration. Leaving", color='red')
-                    os._exit(1)
-                filtervms = self.options.get('filtervms', False)
-                filteruser = self.options.get('filteruser', False)
-                from kvirt.foreman import Kforeman
-                k = Kforeman(host=self.host, port=port, user=user, password=password, debug=debug, filtervms=filtervms,
-                             filteruser=filteruser)
             elif self.type == 'vsphere':
                 user = self.options.get('user')
                 if user is None:
