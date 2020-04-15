@@ -606,12 +606,12 @@ def productcreate(prod):
     product form
     """
     config = Kbaseconfig()
-    info = config.info_product(prod, web=True)
-    parameters = info['parameters']
-    description = info['description']
-    comments = info['comments']
+    productinfo = config.info_product(prod, web=True)
+    parameters = productinfo.get('parameters', {})
+    description = parameters.get('description', '')
+    info = parameters.get('info', '')
     return render_template('productcreate.html', title='CreateProduct', client=config.client, product=prod,
-                           parameters=parameters, description=description, comments=comments)
+                           parameters=parameters, description=description, info=info)
 
 
 @app.route("/productaction", methods=['POST'])

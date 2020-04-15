@@ -560,6 +560,14 @@ class Kbaseconfig:
         parameters = common.get_parameters(parameterfile, raw=raw)
         if parameters is not None:
             parameters = yaml.safe_load(parameters)['parameters'] if not raw else parameters
+            description = parameters.get('description')
+            if description is not None:
+                print("description: %s" % description.strip())
+                del parameters['description']
+            info = parameters.get('info')
+            if info is not None:
+                print("info: %s" % info.strip())
+                del parameters['info']
             if web:
                 return parameters
             if doc:
@@ -610,29 +618,20 @@ class Kbaseconfig:
             repo = product['repo']
             repodir = "%s/.kcli/plans/%s" % (os.environ.get('HOME'), repo)
             group = product['group']
-            _file = product['file']
             description = product.get('description')
-            numvms = product.get('numvms')
-            image = product.get('image')
-            comments = product.get('comments')
+            _file = product['file']
             if not web:
-                if description is not None:
-                    print("description: %s" % description)
                 if group is not None:
                     print("group: %s" % group)
-                if numvms is not None:
-                    numvmsinfo = "numvms: %s" % numvms
-                    if numvms == 1:
-                        numvmsinfo += " (Vm name can be overriden)"
-                    print(numvmsinfo)
-                if image is not None:
-                    print("image: %s" % image)
-                if comments is not None:
-                    print("Comments : %s" % comments)
+                if description is not None:
+                    print("description: %s" % description)
             inputfile = "%s/%s" % (product['realdir'], _file) if 'realdir' in product else _file
+            print("%s/%s" % (repodir, inputfile))
             parameters = self.info_plan("%s/%s" % (repodir, inputfile), quiet=True, web=web)
             if web:
-                return {'product': product, 'comments': comments, 'description': description, 'parameters': parameters}
+                if parameters is None:
+                    parameters = {}
+                return {'product': product, 'parameters': parameters}
 
     def process_inputfile(self, plan, inputfile, overrides={}, onfly=None, full=False, ignore=False,
                           download_mode=False):
