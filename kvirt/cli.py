@@ -4,7 +4,8 @@
 
 from distutils.spawn import find_executable
 from kvirt.config import Kconfig
-from kvirt.examples import hostcreate, _list, plancreate, planinfo, productinfo, repocreate, start, kubecreate
+from kvirt.examples import hostcreate, _list, plancreate, planinfo, productinfo, repocreate, start
+from kvirt.examples import kubegenericcreate, kubeopenshiftcreate
 from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsole, vmexport, niccreate, nicdelete
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
@@ -2246,7 +2247,7 @@ def cli():
     kubecreate_subparsers = kubecreate_parser.add_subparsers(metavar='', dest='subcommand_create_kube')
 
     kubegenericcreate_desc = 'Create Generic Kube'
-    kubegenericcreate_epilog = "examples:\n%s" % kubecreate
+    kubegenericcreate_epilog = "examples:\n%s" % kubegenericcreate
     kubegenericcreate_parser = argparse.ArgumentParser(add_help=False)
     kubegenericcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
     kubegenericcreate_parser.add_argument('-P', '--param', action='append',
@@ -2263,7 +2264,7 @@ def cli():
 
     parameterhelp = "specify parameter or keyword for rendering (multiple can be specified)"
     kubeopenshiftcreate_desc = 'Create Openshift Kube'
-    kubeopenshiftcreate_epilog = "examples:\n%s" % kubecreate
+    kubeopenshiftcreate_epilog = "examples:\n%s" % kubeopenshiftcreate
     kubeopenshiftcreate_parser = argparse.ArgumentParser(add_help=False)
     kubeopenshiftcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
     kubeopenshiftcreate_parser.add_argument('-P', '--param', action='append', help=parameterhelp, metavar='PARAM')
