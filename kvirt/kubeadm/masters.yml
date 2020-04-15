@@ -6,6 +6,7 @@
  type: loadbalancer
  nets:
  - name: {{ network }}
+   alias: {{ cluster }}-master.{{ domain }}
  ports:
  - 6443
  vms:

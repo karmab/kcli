@@ -55,6 +55,11 @@ def create(config, plandir, cluster, overrides):
         if 'name' in data:
             del data['name']
         config.plan(cluster, inputfile='%s/workers.yml' % plandir, overrides=data)
-    pprint("Kubernetes cluster %s deployed!!!" % cluster,)
+    pprint("Kubernetes cluster %s deployed!!!" % cluster)
+    masters = data.get('masters', 1)
+    master_node = "%s-master" % cluster if masters > 1 else "%s-master-0" % cluster
+    master_ip = k.info(master_node)['ip']
+    info("Create the following /etc/hosts entry if needed")
+    info("%s %s" % (master_ip, master_node))
     info("Use The following command to interact with this cluster")
     info("export KUBECONFIG=clusters/%s/auth/kubeconfig" % cluster)

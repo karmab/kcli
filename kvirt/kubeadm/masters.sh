@@ -40,14 +40,14 @@ sleep 60
 CERTKEY=$(grep certificate-key /var/log/messages | head -1 | sed 's/.*certificate-key \(.*\)/\1/')
 MASTERCMD="$CMD --control-plane --certificate-key $CERTKEY"
 echo $MASTERCMD > /root/mastercmd.sh
-ssh-keyscan -H {{ cluster }}-master-0{{ number }} >> ~/.ssh/known_hosts 
+ssh-keyscan -H {{ cluster }}-master-{{ number }} >> ~/.ssh/known_hosts 
 scp /etc/kubernetes/admin.conf root@{{ cluster }}-master-{{ number }}:/etc/kubernetes/
 echo ssh root@{{ cluster }}-master-0{{ number }} $MASTERCMD > /root/{{ cluster }}-master-{{ number }}.log 2>&1
-ssh root@{{ cluster }}-master-0{{ number }} $MASTERCMD >> /root/{{ cluster }}-master-{{ number }}.log 2>&1
+ssh root@{{ cluster }}-master-{{ number }} $MASTERCMD >> /root/{{ cluster }}-master-{{ number }}.log 2>&1
 scp /etc/kubernetes/admin.conf {{ cluster }}-master-{{ number }}:/root
-ssh {{ cluster }}-master-0{{ number }} mkdir -p /root/.kube
-ssh {{ cluster }}-master-0{{ number }} cp -i /root/admin.conf /root/.kube/config
-ssh {{ cluster }}-master-0{{ number }} chown root:root /root/.kube/config
+ssh {{ cluster }}-master-{{ number }} mkdir -p /root/.kube
+ssh {{ cluster }}-master-{{ number }} cp -i /root/admin.conf /root/.kube/config
+ssh {{ cluster }}-master-{{ number }} chown root:root /root/.kube/config
 {% endfor %}
 {% endif %}
 

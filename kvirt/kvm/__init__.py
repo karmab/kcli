@@ -1732,6 +1732,8 @@ class Kvirt(object):
     def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, primary=False):
         conn = self.conn
         bridged = False
+        if len(nets) == 1:
+            primary = True
         for index, net in enumerate(nets):
             if isinstance(net, str):
                 netname = net
@@ -1740,10 +1742,10 @@ class Kvirt(object):
             reservedns = net.get('reservedns', reservedns)
             if not reservedns:
                 continue
-            network = net.get('name')
+            netname = net.get('name')
             common.pprint("Creating Dns entry for net %s of vm %s" % (index, name), color='blue')
             try:
-                network = conn.networkLookupByName(network)
+                network = conn.networkLookupByName(netname)
             except:
                 bridged = True
             if ip is None:
@@ -1775,11 +1777,12 @@ class Kvirt(object):
                     newxml = ET.tostring(root)
                     conn.networkDefineXML(newxml.decode("utf-8"))
                 dnsentry = '<host ip="%s"><hostname>%s</hostname>' % (ip, name)
+                dnsentry += '<hostname>%s.%s</hostname>' % (name, netname)
                 if domain is not None:
-                    dnsentry = '%s<hostname>%s.%s</hostname>' % (dnsentry, name, domain)
+                    dnsentry += '<hostname>%s.%s</hostname>' % (name, domain)
                 for entry in alias:
-                    dnsentry = "%s<hostname>%s</hostname>" % (dnsentry, entry)
-                dnsentry = "%s</host>" % dnsentry
+                    dnsentry += "%s<hostname>%s</hostname>" % entry
+                dnsentry += "</host>"
                 if force:
                     for host in list(root.getiterator('host')):
                         iphost = host.get('ip')
