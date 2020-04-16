@@ -566,7 +566,7 @@ class Kbaseconfig:
                 del parameters['description']
             info = parameters.get('info')
             if info is not None:
-                print("info: %s" % info.strip())
+                common.pprint("info: %s" % info.strip(), color='blue')
                 del parameters['info']
             if web:
                 return parameters
