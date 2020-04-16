@@ -1732,8 +1732,6 @@ class Kvirt(object):
     def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, primary=False):
         conn = self.conn
         bridged = False
-        if len(nets) == 1:
-            primary = True
         for index, net in enumerate(nets):
             if isinstance(net, str):
                 netname = net
@@ -1765,7 +1763,7 @@ class Kvirt(object):
                 common.pprint("Couldn't assign DNS for net %s" % index, color='red')
                 continue
             if bridged:
-                self._create_host_entry(name, ip, network, domain, dnsmasq=True)
+                self._create_host_entry(name, ip, netname, domain, dnsmasq=True)
             else:
                 oldnetxml = network.XMLDesc()
                 root = ET.fromstring(oldnetxml)

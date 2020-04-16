@@ -1,7 +1,7 @@
 haproxy = """
 #jinja2: lstrip_blocks: True
 parameters:
- template: CentOS-7-x86_64-GenericCloud.qcow2
+ image: CentOS-7-x86_64-GenericCloud.qcow2
  name: haproxy
  nets:
  - default
@@ -9,7 +9,7 @@ parameters:
 
 loadbalancer_{{ ports | join('+') }}:
  type: profile
- template: {{ template }}
+ image: {{ image }}
  nets: {{ nets }}
 
 {{ name }}:

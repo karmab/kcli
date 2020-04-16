@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding=utf-8
 
+from ast import literal_eval
 from kvirt import jinjafilters
 from random import randint
 import base64
@@ -636,7 +637,13 @@ def get_overrides(paramfile=None, param=[]):
                 elif value.lower() == 'false':
                     value = False
                 elif value.startswith('[') and value.endswith(']'):
-                    value = value[1:-1].split(',')
+                    if '{' in value:
+                        value = literal_eval(value)
+                    else:
+                        value = value[1:-1].split(',')
+                        for index, v in enumerate(value):
+                            v = v.strip()
+                            value[index] = v
                 overrides[key] = value
     return overrides
 
