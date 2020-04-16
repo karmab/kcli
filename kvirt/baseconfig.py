@@ -566,7 +566,7 @@ class Kbaseconfig:
                 del parameters['description']
             info = parameters.get('info')
             if info is not None:
-                common.pprint("info: %s" % info.strip(), color='blue')
+                common.pprint(info.strip(), color='blue')
                 del parameters['info']
             if web:
                 return parameters
@@ -942,7 +942,7 @@ class Kbaseconfig:
 
     def info_kube_generic(self, quiet):
         plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
-        inputfile = '%s/kcli_plan.yml' % plandir
+        inputfile = '%s/masters.yml' % plandir
         self.info_plan(inputfile, quiet=quiet)
 
     def info_kube_openshift(self, quiet):
