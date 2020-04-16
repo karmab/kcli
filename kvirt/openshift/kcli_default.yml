@@ -1,3 +1,12 @@
+info: |
+    Deploys an openshift cluster with an arbitray number of masters or workers using openshift-install
+    and creating the node with kcli instead of terraforms.
+    This allows easily tweaking the hardware caracteristics of those nodes.
+    When running on cloud platforms, loadbalancer and dns from the platform is used.
+    Otherwise, extra static pods (coredns with mdns, keepalived and haproxy) are deployed on the nodes to provide a self contained platform.
+    Default version is latest stable but you can instead use ci, for which you will need a specific pull secret
+    Upstream okd version can be specified with the upstream flag.
+    the baremetal flag allows to get the baremetal operator deployed, so that you can deploy physical workers afterwards.
 masters: 1
 workers: 0
 image: rhcos44
