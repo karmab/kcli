@@ -5,6 +5,7 @@ network: default
 cluster: testk
 domain: karmalabs.com
 pool: default
+numcpus: 4
 master_memory: 6144
 master_tpm: false
 master_rng: false
@@ -17,3 +18,9 @@ sdn: flannel
 multus: false
 notifycmd: "kubectl get pod -A"
 notify: false
+info: |
+    Deploys kubernetes using kubeadm on an arbitrary number of masters and workers.
+    when using more than a master, a load balancer gets deployed (as an haproxy vm if not running on cloud)
+    default image is centos7, but there's also support for ubuntu based ones
+    sdn can be choosen between flannel, weavenet, calico, canal or romana
+    nfs can be set to deploy an initial set of pvcs on the first master node

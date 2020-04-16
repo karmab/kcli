@@ -1,7 +1,7 @@
 {% for number in range(0, workers) %}
 {{cluster }}-worker-{{ number }}:
  image: {{ image }}
- numcpus: 2
+ numcpus: {{ numcpus }}
  memory: {{ worker_memory }}
  reservedns: false
  domain: {{ domain }}

@@ -19,7 +19,7 @@
 {% for number in range(0, masters) %}
 {{cluster}}-master-{{ number }}:
  image: {{ image }}
- numcpus: 2
+ numcpus: {{ numcpus }}
  memory: {{ master_memory }}
 {% if masters > 1 %}
  reservedns: true
