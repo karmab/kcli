@@ -1443,7 +1443,10 @@ $INFO
                         os.remove("%s.key" % plan)
                 if 'image' in profile:
                     for entry in self.list_profiles():
-                        if entry[0] == profile['image']:
+                        currentimage = profile['image']
+                        profilename = entry[0]
+                        clientprofile = "%s_%s" % (self.client, currentimage)
+                        if profilename == currentimage or profilename == clientprofile:
                             profile['image'] = entry[4]
                             break
                 result = self.create_vm(name, profilename, overrides=overrides, customprofile=profile, k=z,
