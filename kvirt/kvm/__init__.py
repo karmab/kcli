@@ -444,6 +444,8 @@ class Kvirt(object):
                 iftype = 'network'
                 sourcexml = "<source network='%s'/>" % netname
             elif netname in bridges or ovs:
+                if 'ip' in allnetworks[netname] and 'config_host' not in overrides:
+                    overrides['config_host'] = allnetworks[netname]['ip']
                 iftype = 'bridge'
                 sourcexml = "<source bridge='%s'/>" % netname
                 guestagent = True
@@ -2547,8 +2549,10 @@ class Kvirt(object):
                 netmask = attributes.get('netmask')
                 netmask = attributes.get('prefix') if netmask is None else netmask
                 ipnet = '%s/%s' % (firstip, netmask) if netmask is not None else firstip
-                ip = IPNetwork(ipnet)
-                cidr = ip.cidr
+                ipnet = IPNetwork(ipnet)
+                cidr = ipnet.cidr
+            else:
+                ip = None
             dhcp = list(root.getiterator('dhcp'))
             if dhcp:
                 dhcp = True
@@ -2567,6 +2571,8 @@ class Kvirt(object):
             else:
                 mode = 'isolated'
             networks[networkname] = {'cidr': cidr, 'dhcp': dhcp, 'domain': domainname, 'type': 'routed', 'mode': mode}
+            if ip is not None:
+                networks[networkname]['ip'] = ip
             plan = 'N/A'
             for element in list(root.getiterator('{kvirt}info')):
                 e = element.find('{kvirt}plan')
@@ -2587,11 +2593,14 @@ class Kvirt(object):
                 attributes = ip[0].attrib
                 ip = attributes.get('address')
                 prefix = attributes.get('prefix')
-                ip = IPNetwork('%s/%s' % (ip, prefix))
-                cidr = ip.cidr
+                ipnet = IPNetwork('%s/%s' % (ip, prefix))
+                cidr = ipnet.cidr
             else:
+                ip = None
                 cidr = 'N/A'
             networks[interfacename] = {'cidr': cidr, 'dhcp': 'N/A', 'type': 'bridged', 'mode': 'N/A'}
+            if ip is not None:
+                networks[interfacename]['ip'] = ip
             plan = 'N/A'
             for element in list(root.getiterator('{kvirt}info')):
                 e = element.find('{kvirt}plan')
