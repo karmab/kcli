@@ -880,34 +880,32 @@ class Kubevirt(Kubecommon):
         print("not implemented")
         return
 
-    def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, Y=False,
-            D=None):
+    def ssh(self, name, user=None, local=None, remote=None, tunnel=False, tunnelhost=None, tunnelport=22,
+            tunneluser='root', insecure=False, cmd=None, X=False, Y=False, D=None):
         u, ip = common._ssh_credentials(self, name)
-        host = self.host
         vmport = None
         if user is None:
             user = u
-        if self.host == '127.0.0.1':
-            tunnel = False
         elif not tunnel:
             nodeport = self._node_port(name, self.namespace)
             if nodeport is not None:
                 ip = self.host
                 vmport = nodeport
-        sshcommand = common.ssh(name, ip=ip, host=host, hostuser=self.user, user=user, local=local,
-                                remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, Y=Y,
-                                debug=self.debug, D=D, vmport=vmport)
+        sshcommand = common.ssh(name, ip=ip, user=user, local=local, remote=remote, tunnel=tunnel,
+                                tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser, insecure=insecure,
+                                cmd=cmd, X=X, Y=Y, debug=self.debug, D=D, vmport=vmport)
         return sshcommand
 
-    def scp(self, name, user=None, source=None, destination=None, tunnel=False, download=False, recursive=False,
+    def scp(self, name, user=None, source=None, destination=None, tunnel=False, tunnelhost=None, tunnelport=22,
+            tunneluser='root', download=False, recursive=False,
             insecure=False):
         u, ip = common._ssh_credentials(self, name)
         if ip is None:
             return None
         if user is None:
             user = u
-        scpcommand = common.scp(name, ip=ip, host=self.host, port=22, hostuser=self.user, user=user,
-                                source=source, destination=destination, recursive=recursive, tunnel=tunnel,
+        scpcommand = common.scp(name, ip=ip, user=user, source=source, destination=destination, recursive=recursive,
+                                tunnel=tunnel, tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser,
                                 debug=self.debug, download=download, insecure=insecure)
         return scpcommand
 

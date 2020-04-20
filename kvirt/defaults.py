@@ -23,6 +23,9 @@ NESTED = True
 START = True
 AUTOSTART = False
 TUNNEL = False
+TUNNELHOST = None
+TUNNELUSER = 'root'
+TUNNELPORT = 22
 IMAGES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-image-bootstrap.qcow2',
           'centos6': 'https://cloud.centos.org/centos/6/images/CentOS-6-x86_64-GenericCloud.qcow2',
           'centos7': 'https://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2',

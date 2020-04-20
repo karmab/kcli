@@ -1526,6 +1526,12 @@ def ssh_vm(args):
     name = [common.get_lastvm(config.client)] if not args.name else args.name
     k = config.k
     tunnel = config.tunnel
+    tunnelhost = config.tunnelhost if config.tunnelhost is not None else config.host
+    if tunnel and tunnelhost == '127.0.0.1':
+        common.pprint("Tunnel requested but invalid tunnelhost", color='red')
+        os._exit(1)
+    tunnelport = config.tunnelport if config.tunnelport is not None else 22
+    tunneluser = config.tunneluser if config.tunneluser is not None else 'root'
     insecure = config.insecure
     if len(name) > 1:
         cmd = ' '.join(name[1:])
@@ -1538,7 +1544,8 @@ def ssh_vm(args):
     if os.path.exists("/i_am_a_container") and not os.path.exists("/root/.kcli/config.yml")\
             and not os.path.exists("/root/.ssh/config"):
         insecure = True
-    sshcommand = k.ssh(name, user=user, local=l, remote=r, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, Y=Y, D=D)
+    sshcommand = k.ssh(name, user=user, local=l, remote=r, tunnel=tunnel, tunnelhost=tunnelhost, tunnelport=tunnelport,
+                       tunneluser=tunneluser, insecure=insecure, cmd=cmd, X=X, Y=Y, D=D)
     if sshcommand is not None:
         if find_executable('ssh') is not None:
             os.system(sshcommand)
@@ -1558,6 +1565,12 @@ def scp_vm(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     tunnel = config.tunnel
+    tunnelhost = config.tunnelhost if config.tunnelhost is not None else config.host
+    tunnelport = config.tunnelport if config.tunnelport is not None else 22
+    tunneluser = config.tunneluser if config.tunneluser is not None else 'root'
+    if tunnel and tunnelhost == '127.0.0.1':
+        common.pprint("Tunnel requested but invalid tunnelhost", color='red')
+        os._exit(1)
     insecure = config.insecure
     if len(source.split(':')) == 2:
         name, source = source.split(':')
@@ -1571,7 +1584,8 @@ def scp_vm(args):
     if '@' in name and len(name.split('@')) == 2:
         user, name = name.split('@')
     scpcommand = k.scp(name, user=user, source=source, destination=destination,
-                       tunnel=tunnel, download=download, recursive=recursive, insecure=insecure)
+                       tunnel=tunnel, tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser,
+                       download=download, recursive=recursive, insecure=insecure)
     if scpcommand is not None:
         if find_executable('scp') is not None:
             os.system(scpcommand)

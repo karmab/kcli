@@ -773,27 +773,28 @@ class Kgcp(object):
         print("not implemented")
         return
 
-    def ssh(self, name, user=None, local=None, remote=None, tunnel=False, insecure=False, cmd=None, X=False, Y=False,
+    def ssh(self, name, user=None, local=None, remote=None, tunnel=False,
+            tunnelhost=None, tunnelport=22, tunneluser='root', insecure=False, cmd=None, X=False, Y=False,
             D=None):
         u, ip = common._ssh_credentials(self, name)
         if ip is None:
             return None
         if user is None:
             user = u
-        sshcommand = common.ssh(name, ip=ip, host=None, hostuser=None, user=user,
-                                local=local, remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X, Y=Y, D=D,
-                                debug=self.debug)
+        sshcommand = common.ssh(name, ip=ip, user=user, local=local, remote=remote, tunnel=tunnel,
+                                tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser, insecure=insecure,
+                                cmd=cmd, X=X, Y=Y, D=D, debug=self.debug)
         return sshcommand
 
-    def scp(self, name, user=None, source=None, destination=None, tunnel=False, download=False, recursive=False,
-            insecure=False):
+    def scp(self, name, user=None, source=None, destination=None, tunnel=False, tunnelhost=None, tunnelport=22,
+            tunneluser='root', download=False, recursive=False, insecure=False):
         u, ip = common._ssh_credentials(self, name)
         if ip is None:
             return None
         if user is None:
             user = u
-        scpcommand = common.scp(name, ip=ip, host=None, hostuser=None, user=user,
-                                source=source, destination=destination, recursive=recursive, tunnel=tunnel,
+        scpcommand = common.scp(name, ip=ip, user=user, source=source, destination=destination, recursive=recursive,
+                                tunnel=tunnel, tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser,
                                 debug=self.debug, download=False, insecure=insecure)
         return scpcommand
 
