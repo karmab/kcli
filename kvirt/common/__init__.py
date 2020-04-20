@@ -66,7 +66,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
     :param fqdn:
     """
     default_gateway = gateway
-    legacy = True if image is not None and image.startswith('CentOS-7') else False
+    legacy = True if image is not None and is_7(image) else False
     prefix = 'ens' if image is not None and is_debian(image) else 'eth'
     netdata = {} if not legacy else ''
     if nets:
@@ -1325,6 +1325,13 @@ def is_debian(image):
         return True
     else:
         return False
+
+
+def is_7(image):
+    lower = image.lower()
+    if lower.startswith('centos-7') or lower.startswith('rhel-server-7'):
+        return True
+    return False
 
 
 def needs_ignition(image):
