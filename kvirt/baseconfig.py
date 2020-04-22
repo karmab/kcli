@@ -8,7 +8,7 @@ from distutils.spawn import find_executable
 from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID,
                             VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, RESERVEHOST,
-                            START, AUTOSTART, NESTED, TUNNEL, REPORTURL, REPORTDIR,
+                            START, AUTOSTART, NESTED, TUNNEL, TUNNELHOST, TUNNELPORT, TUNNELUSER, REPORTURL, REPORTDIR,
                             REPORT, REPORTALL, INSECURE, KEYS, CMDS, DNS,
                             DOMAIN, SCRIPTS, FILES, ISO,
                             NETMASKS, GATEWAY, SHAREDKEY, IMAGE, ENABLEROOT,
@@ -115,6 +115,9 @@ class Kbaseconfig:
         defaults['start'] = bool(default.get('start', START))
         defaults['autostart'] = bool(default.get('autostart', AUTOSTART))
         defaults['tunnel'] = bool(default.get('tunnel', TUNNEL))
+        defaults['tunnelhost'] = default.get('tunnelhost', TUNNELHOST)
+        defaults['tunnelport'] = default.get('tunnelport', TUNNELPORT)
+        defaults['tunneluser'] = default.get('tunneluser', TUNNELUSER)
         defaults['insecure'] = bool(default.get('insecure', INSECURE))
         defaults['reporturl'] = default.get('reporturl', REPORTURL)
         defaults['reportdir'] = default.get('reportdir', REPORTDIR)
@@ -229,6 +232,9 @@ class Kbaseconfig:
         self.pool = options.get('pool', self.default['pool'])
         self.image = options.get('image', self.default['image'])
         self.tunnel = bool(options.get('tunnel', self.default['tunnel']))
+        self.tunnelhost = options.get('tunnelhost', self.default['tunnelhost'])
+        self.tunnelport = options.get('tunnelport', self.default['tunnelport'])
+        self.tunneluser = options.get('tunneluser', self.default['tunneluser'])
         self.insecure = bool(options.get('insecure', self.default['insecure']))
         self.report = options.get('report', self.default['report'])
         self.reporturl = options.get('reporturl', self.default['reportdir'])

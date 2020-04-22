@@ -748,19 +748,21 @@ def print_info(yamlinfo, output='plain', fields=[], values=False, pretty=True):
         return result.rstrip()
 
 
-def ssh(name, ip='', host=None, port=22, hostuser=None, user=None, local=None, remote=None, tunnel=False,
-        insecure=False, cmd=None, X=False, Y=False, debug=False, D=None, vmport=None):
+def ssh(name, ip='', user=None, local=None, remote=None, tunnel=False, tunnelhost=None, tunnelport=22,
+        tunneluser='root', insecure=False, cmd=None, X=False, Y=False, debug=False, D=None, vmport=None):
     """
 
     :param name:
     :param ip:
     :param host:
     :param port:
-    :param hostuser:
     :param user:
     :param local:
     :param remote:
     :param tunnel:
+    :param tunnelhost:
+    :param tunnelport:
+    :param tunneluser:
     :param insecure:
     :param cmd:
     :param X:
@@ -789,8 +791,9 @@ def ssh(name, ip='', host=None, port=22, hostuser=None, user=None, local=None, r
             sshcommand = "-Y %s" % sshcommand
         if cmd:
             sshcommand = "%s '%s'" % (sshcommand, cmd)
-        if host is not None and host not in ['localhost', '127.0.0.1'] and tunnel and hostuser is not None:
-            tunnelcommand = "-qp %s -W %%h:%%p %s@%s" % (port, hostuser, host)
+        if tunnelhost is not None and tunnelhost not in ['localhost', '127.0.0.1'] and tunnel and\
+                tunneluser is not None:
+            tunnelcommand = "-qp %s -W %%h:%%p %s@%s" % (tunnelport, tunneluser, tunnelhost)
             if identityfile is not None:
                 tunnelcommand = "-i %s %s" % (identityfile, tunnelcommand)
             sshcommand = "-o ProxyCommand='ssh %s' %s" % (tunnelcommand, sshcommand)
@@ -812,20 +815,20 @@ def ssh(name, ip='', host=None, port=22, hostuser=None, user=None, local=None, r
         return sshcommand
 
 
-def scp(name, ip='', host=None, port=22, hostuser=None, user=None, source=None, destination=None, recursive=None,
-        tunnel=False, debug=False, download=False, vmport=None, insecure=False):
+def scp(name, ip='', user=None, source=None, destination=None, recursive=None, tunnel=False, tunnelhost=None,
+        tunnelport=22, tunneluser='root', debug=False, download=False, vmport=None, insecure=False):
     """
 
     :param name:
     :param ip:
-    :param host:
-    :param port:
-    :param hostuser:
     :param user:
     :param source:
     :param destination:
     :param recursive:
     :param tunnel:
+    :param tunnelhost:
+    :param tunnelport:
+    :param tunneluser:
     :param debug:
     :param download:
     :param vmport:
@@ -835,8 +838,9 @@ def scp(name, ip='', host=None, port=22, hostuser=None, user=None, source=None, 
         print("No ip found. Cannot scp...")
     else:
         arguments = ''
-        if host is not None and host not in ['localhost', '127.0.0.1'] and tunnel and hostuser is not None:
-            arguments += "-o ProxyCommand='ssh -qp %s -W %%h:%%p %s@%s'" % (port, hostuser, host)
+        if tunnelhost is not None and tunnelhost not in ['localhost', '127.0.0.1'] and\
+                tunnel and tunneluser is not None:
+            arguments += "-o ProxyCommand='ssh -qp %s -W %%h:%%p %s@%s'" % (tunnelport, tunneluser, tunnelhost)
         if insecure:
             arguments += " -o LogLevel=quiet -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
         scpcommand = 'scp'
@@ -849,7 +853,7 @@ def scp(name, ip='', host=None, port=22, hostuser=None, user=None, source=None, 
             scpcommand = "%s -i %s" % (scpcommand, identityfile)
         if recursive:
             scpcommand = "%s -r" % scpcommand
-        if vmport is not None and host == '127.0.0.1':
+        if vmport is not None and tunnelhost == '127.0.0.1':
             scpcommand = "%s -P %s" % (scpcommand, vmport)
         if download:
             scpcommand = "%s %s %s@%s:%s %s" % (scpcommand, arguments, user, ip, source, destination)
