@@ -477,6 +477,8 @@ def create(config, plandir, cluster, overrides):
         sedcmd += '%s/master.ign' % clusterdir
         sedcmd += ' > %s/bootstrap.ign' % clusterdir
         call(sedcmd, shell=True)
+    if masters == 1 and (upstream or int(COS_VERSION) > 43):
+        overrides['fix_ceo'] = True
     if platform in virtplatforms:
         if disconnected_deploy:
             disconnected_vm = "%s-disconnecter" % cluster

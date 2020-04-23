@@ -29,6 +29,17 @@ echo -e \"\"\"{data}\"\"\" > /etc/sysconfig/network-scripts/ifcfg-{nicname}
 systemctl restart NetworkManager
 fi"""
 
+ceo_yaml = """apiVersion: operator.openshift.io/v1
+kind: Etcd
+metadata:
+  name: cluster
+  annotations:
+    release.openshift.io/create-only: "true"
+spec:
+  managementState: Managed
+  unsupportedConfigOverrides:
+    useUnsupportedUnsafeNonHANonProductionUnstableEtcd: true"""
+
 
 def url_exists(url):
     try:
@@ -1055,11 +1066,28 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     # remove duplicate files to please ignition v3
     paths = []
     storagefinal = []
+    fix_ceo = overrides.get('fix_ceo', False)
     for fileentry in data['storage']['files']:
         if fileentry['path'] not in paths:
+            if fix_ceo and 'bootstrap' in name and fileentry['path'] == '/usr/local/bin/bootkube.sh':
+                pprint("Patching bootkube in bootstrap ignition to handle single master", color='blue')
+                content = base64.b64decode(fileentry['contents']['source'].split(',')[1])
+                ceofix = """cp etcd-bootstrap/manifests/* manifests/
+                cp /root/ceo.yaml manifests/0000_12_etcd-operator_01_operator.cr.yaml"""
+                content = content.decode("utf-8")
+                newcontent = content.replace('cp etcd-bootstrap/manifests/* manifests/', ceofix)
+                newcontent = base64.b64encode(newcontent.encode()).decode("UTF-8")
+                newcontent = "data:text/plain;charset=utf-8;base64,%s" % newcontent
+                fileentry['contents']['source'] = newcontent
             storagefinal.append(fileentry)
             paths.append(fileentry['path'])
     data['storage']['files'] = storagefinal
+    if fix_ceo and 'bootstrap' in name:
+        ceo_base64 = base64.b64encode(ceo_yaml.encode()).decode("UTF-8")
+        ceo_source = "data:text/plain;charset=utf-8;base64,%s" % ceo_base64
+        ceo_entry = {"filesystem": "root", "path": "/root/ceo.yaml",
+                     "contents": {"source": ceo_source, "verification": {}}, "mode": 420}
+        data['storage']['files'].append(ceo_entry)
     try:
         result = json.dumps(data, sort_keys=True, indent=indent, separators=separators)
     except:
