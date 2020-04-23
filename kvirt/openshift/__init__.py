@@ -512,7 +512,7 @@ def create(config, plandir, cluster, overrides):
             pprint("Deleting %s" % vm)
             k.delete(vm)
     if platform in virtplatforms:
-        wait_time = 120
+        wait_time = 180 / masters
         pprint("Waiting %ss before retrieving workers ignition data" % wait_time, color='blue')
         sleep(wait_time)
         ignitionworkerfile = "%s/worker.ign" % clusterdir
