@@ -501,20 +501,18 @@ def create(config, plandir, cluster, overrides):
         todelete = ["%s-bootstrap" % cluster]
         if platform in ['kubevirt', 'openstack', 'vsphere']:
             todelete.append("%s-bootstrap-helper" % cluster)
-        for vm in todelete:
-            pprint("Deleting %s" % vm)
-            k.delete(vm)
     else:
         config.plan(cluster, inputfile='%s/cloud.yml' % plandir, overrides=overrides)
         call('openshift-install --dir=%s wait-for bootstrap-complete || exit 1' % clusterdir, shell=True)
         todelete = ["%s-bootstrap" % cluster, "%s-bootstrap-helper" % cluster]
-        for vm in todelete:
-            pprint("Deleting %s" % vm)
-            k.delete(vm)
     if platform in virtplatforms:
         wait_time = 180 / masters
         pprint("Waiting %ss before retrieving workers ignition data" % wait_time, color='blue')
         sleep(wait_time)
+    for vm in todelete:
+        pprint("Deleting %s" % vm)
+        k.delete(vm)
+    if platform in virtplatforms:
         ignitionworkerfile = "%s/worker.ign" % clusterdir
         os.remove(ignitionworkerfile)
         while not os.path.exists(ignitionworkerfile) or os.stat(ignitionworkerfile).st_size == 0:
