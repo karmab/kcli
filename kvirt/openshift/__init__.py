@@ -433,11 +433,14 @@ def create(config, plandir, cluster, overrides):
                 sleep(5)
             sleep(5)
             cmd = "iptables -F ; yum -y install httpd ; systemctl start httpd"
-            sshcmd = k.ssh(bootstrap_helper_name, user='root', tunnel=config.tunnel, insecure=True, cmd=cmd)
+            sshcmd = k.ssh(bootstrap_helper_name, user='root', tunnel=config.tunnel,
+                           tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
+                           insecure=True, cmd=cmd)
             os.system(sshcmd)
             source, destination = "%s/bootstrap.ign" % clusterdir, "/var/www/html/bootstrap"
             scpcmd = k.scp(bootstrap_helper_name, user='root', source=source, destination=destination,
-                           tunnel=config.tunnel, download=False, insecure=True)
+                           tunnel=config.tunnel, tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
+                           tunneluser=config.tunneluser, download=False, insecure=True)
             os.system(scpcmd)
             sedcmd = 'sed "s@https://api-int.%s.%s:22623/config/master@http://%s/bootstrap@" ' % (cluster, domain,
                                                                                                   bootstrap_api_ip)
@@ -467,11 +470,14 @@ def create(config, plandir, cluster, overrides):
             sleep(5)
         sleep(5)
         cmd = "iptables -F ; yum -y install httpd ; systemctl start httpd"
-        sshcmd = k.ssh(bootstrap_helper_name, user='root', tunnel=config.tunnel, insecure=True, cmd=cmd)
+        sshcmd = k.ssh(bootstrap_helper_name, user='root', tunnel=config.tunnel,
+                       tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
+                       insecure=True, cmd=cmd)
         os.system(sshcmd)
         source, destination = "%s/bootstrap.ign" % clusterdir, "/var/www/html/bootstrap"
         scpcmd = k.scp(bootstrap_helper_name, user='root', source=source, destination=destination,
-                       tunnel=config.tunnel, download=False, insecure=True)
+                       tunnel=config.tunnel, tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
+                       tunneluser=config.tunneluser, download=False, insecure=True)
         os.system(scpcmd)
         sedcmd = 'sed "s@https://api-int.%s.%s:22623/config/master@' % (cluster, domain)
         sedcmd += 'http://%s-bootstrap-helper.%s.%s/bootstrap@ "' % (cluster, domain)
@@ -486,7 +492,9 @@ def create(config, plandir, cluster, overrides):
             cmd = "cat /opt/registry/certs/domain.crt"
             pprint("Deploying disconnected vm %s" % disconnected_vm, color='blue')
             config.plan(cluster, inputfile='%s/disconnected' % plandir, overrides=overrides, wait=True)
-            cacmd = k.ssh(disconnected_vm, user='root', tunnel=config.tunnel, insecure=True, cmd=cmd)
+            cacmd = k.ssh(disconnected_vm, user='root', tunnel=config.tunnel,
+                          tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
+                          insecure=True, cmd=cmd)
             disconnected_ca = os.popen(cacmd).read()
             if 'ca' in overrides:
                 overrides['ca'] += disconnected_ca

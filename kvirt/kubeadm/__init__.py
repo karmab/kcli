@@ -43,10 +43,12 @@ def create(config, plandir, cluster, overrides):
     config.plan(cluster, inputfile='%s/masters.yml' % plandir, overrides=data, wait=True)
     source, destination = "/root/join.sh", "%s/join.sh" % clusterdir
     scpcmd = k.scp(firstmaster, user='root', source=source, destination=destination, tunnel=config.tunnel,
+                   tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
                    download=True, insecure=True)
     os.system(scpcmd)
     source, destination = "/etc/kubernetes/admin.conf", "%s/auth/kubeconfig" % clusterdir
     scpcmd = k.scp(firstmaster, user='root', source=source, destination=destination, tunnel=config.tunnel,
+                   tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
                    download=True, insecure=True)
     os.system(scpcmd)
     workers = data.get('workers', 0)

@@ -1804,7 +1804,8 @@ $INFO
         done = False
         oldoutput = ''
         while not done:
-            sshcmd = k.ssh(name, tunnel=self.tunnel, insecure=self.insecure, cmd=cmd)
+            sshcmd = k.ssh(name, tunnel=self.tunnel, tunnelhost=self.tunnelhost, tunnelport=self.tunnelport,
+                           tunneluser=self.tunneluser, insecure=self.insecure, cmd=cmd)
             output = os.popen(sshcmd).read()
             if 'finished' in output:
                 done = True

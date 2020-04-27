@@ -233,6 +233,8 @@ class Kbaseconfig:
         self.image = options.get('image', self.default['image'])
         self.tunnel = bool(options.get('tunnel', self.default['tunnel']))
         self.tunnelhost = options.get('tunnelhost', self.default['tunnelhost'])
+        if self.tunnelhost is None and self.type == 'kvm':
+            self.tunnelhost = self.host
         self.tunnelport = options.get('tunnelport', self.default['tunnelport'])
         self.tunneluser = options.get('tunneluser', self.default['tunneluser'])
         self.insecure = bool(options.get('insecure', self.default['insecure']))

@@ -18,7 +18,7 @@ kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documen
 {% elif sdn == 'weavenet' %}
 kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=`kubectl version | base64 | tr -d '\n'`"
 {% elif sdn == 'calico' %}
-kubectl apply -f https://docs.projectcalico.org/v3.9/manifests/calico.yaml
+kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
 {% elif sdn == 'canal' %}
 kubectl apply -f https://docs.projectcalico.org/v3.1/getting-started/kubernetes/installation/hosted/canal/rbac.yaml
 kubectl apply -f https://docs.projectcalico.org/v3.1/getting-started/kubernetes/installation/hosted/canal/canal.yaml
@@ -28,7 +28,8 @@ kubectl apply -f https://raw.githubusercontent.com/romana/romana/master/containe
 mkdir -p /root/.kube
 cp -i /etc/kubernetes/admin.conf /root/.kube/config
 chown root:root /root/.kube/config
-IP=`ip -4 addr show eth0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}'`
+# IP=`ip -4 addr show eth0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}'`
+IP=`hostname -I | cut -f1 -d" "`
 TOKEN=`kubeadm token create --ttl 0`
 HASH=`openssl x509 -in /etc/kubernetes/pki/ca.crt -noout -pubkey | openssl rsa -pubin -outform DER 2>/dev/null | sha256sum | cut -d' ' -f1`
 CMD="kubeadm join $IP:6443 --token $TOKEN --discovery-token-ca-cert-hash sha256:$HASH"
