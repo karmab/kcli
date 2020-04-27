@@ -188,6 +188,7 @@ def create(config, plandir, cluster, overrides):
             'macosx': False,
             'upstream': False,
             'baremetal': False,
+            'fips': False,
             'minimal': False}
     data.update(overrides)
     ipv6 = data['ipv6']
