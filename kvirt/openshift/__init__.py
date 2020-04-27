@@ -505,6 +505,12 @@ def create(config, plandir, cluster, overrides):
         config.plan(cluster, inputfile='%s/cloud.yml' % plandir, overrides=overrides)
         call('openshift-install --dir=%s wait-for bootstrap-complete || exit 1' % clusterdir, shell=True)
         todelete = ["%s-bootstrap" % cluster, "%s-bootstrap-helper" % cluster]
+    call("oc adm taint nodes -l node-role.kubernetes.io/master node-role.kubernetes.io/master:NoSchedule-", shell=True)
+    pprint("Deploying certs autoapprover cronjob", color='blue')
+    autoapprover = config.process_inputfile(cluster, "%s/autoapprovercron.yml" % plandir, overrides=data)
+    with open("%s/autoapprovercron.yml" % clusterdir, 'w') as f:
+        f.write(autoapprover)
+    call("oc create -f %s/autoapprovercron.yml" % clusterdir, shell=True)
     if platform in virtplatforms:
         wait_time = 180 / masters
         pprint("Waiting %ss before retrieving workers ignition data" % wait_time, color='blue')
@@ -525,13 +531,6 @@ def create(config, plandir, cluster, overrides):
             if 'name' in overrides:
                 del overrides['name']
             config.plan(cluster, inputfile='%s/workers.yml' % plandir, overrides=overrides)
-    call("oc adm taint nodes -l node-role.kubernetes.io/master node-role.kubernetes.io/master:NoSchedule-", shell=True)
-    pprint("Deploying certs autoapprover cronjob", color='blue')
-    autoapprover = config.process_inputfile(cluster, "%s/autoapprovercron.yml" % plandir, overrides=data)
-    with open("%s/autoapprovercron.yml" % clusterdir, 'w') as f:
-        f.write(autoapprover)
-    call("oc create -f %s/autoapprovercron.yml ; oc apply -f %s/autoapprovercron.yml" % (clusterdir, clusterdir),
-         shell=True)
     if not minimal:
         installcommand = 'openshift-install --dir=%s wait-for install-complete' % clusterdir
         installcommand = "%s | %s" % (installcommand, installcommand)
