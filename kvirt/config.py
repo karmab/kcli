@@ -1794,7 +1794,10 @@ $INFO
             cmd = 'journalctl --identifier=ignition --all --no-pager'
         else:
             cloudinitfile = common.get_cloudinitfile(image)
-            cmd = "sudo grep -i cloud-init %s" % cloudinitfile
+            if common.is_debian(image):
+                cmd = "sudo grep -A5000 -i cloud-init %s" % cloudinitfile
+            else:
+                cmd = "sudo grep -i cloud-init %s" % cloudinitfile
         ip = None
         while ip is None:
             ip = k.info(name).get('ip')
