@@ -1,5 +1,6 @@
 masters: 1
 workers: 0
+version:
 image: centos7
 network: default
 cluster: testk
@@ -22,5 +23,6 @@ info: |
     Deploys kubernetes using kubeadm on an arbitrary number of masters and workers.
     when using more than a master, a load balancer gets deployed (as an haproxy vm if not running on cloud)
     default image is centos7, but there's also support for ubuntu based ones
+    version can be let blank to get latest, or specified as x.yy or x.yy.z
     sdn can be choosen between flannel, weavenet, calico, canal or romana
     nfs can be set to deploy an initial set of pvcs on the first master node

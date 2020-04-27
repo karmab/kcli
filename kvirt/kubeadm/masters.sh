@@ -1,8 +1,4 @@
-{% if sdn == 'calico' %}
-CIDR="192.168.0.0/16"
-{% else %} 
 CIDR="10.244.0.0/16"
-{% endif %} 
 {% if masters > 1 %}
 kubeadm init --control-plane-endpoint "{{ cluster }}-master.{{ network }}:6443" --pod-network-cidr $CIDR --upload-certs
 {% else %}
@@ -18,7 +14,7 @@ kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documen
 {% elif sdn == 'weavenet' %}
 kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=`kubectl version | base64 | tr -d '\n'`"
 {% elif sdn == 'calico' %}
-kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml | sed -e "s/# - name: CALICO_IPV4POOL_CIDR/- name: CALICO_IPV4POOL_CIDR/" -e "s@#   value: \"192.168.0.0/16\"@  value: \"$CIDR\"@"
 {% elif sdn == 'canal' %}
 kubectl apply -f https://docs.projectcalico.org/v3.1/getting-started/kubernetes/installation/hosted/canal/rbac.yaml
 kubectl apply -f https://docs.projectcalico.org/v3.1/getting-started/kubernetes/installation/hosted/canal/canal.yaml

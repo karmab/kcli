@@ -11,10 +11,8 @@
   - size: 50
  pool: {{ pool }}
  files:
-{% if 'ubuntu' in image or 'xenial' in image or 'yaketty' in image or 'zesty' in image or 'artful' in image or 'bionic' in image or 'cosmic' in image %}
   - path: /etc/yum.repos.d/kubernetes.repo
     origin: kubernetes.repo
-{% endif %}
   - path: /root/join.sh
     origin: {{ basedir }}/clusters/{{ cluster }}/join.sh
   - path: /root/admin.conf
