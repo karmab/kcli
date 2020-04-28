@@ -17,7 +17,7 @@ spec:
   - name: fix-keepalived-conf
     securityContext:
       privileged: true
-    image: {{ disconnected_url if disconnected_url != None else 'docker.io' }}/yauritux/busybox-curl
+    image: {{ disconnected_url if disconnected_url != None else 'docker.io' }}/karmab/curl
     command:
     - "/bin/sh"
     - "-c"

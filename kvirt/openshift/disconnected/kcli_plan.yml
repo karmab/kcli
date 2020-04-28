@@ -18,7 +18,7 @@ parameters:
  registry_user: dummy
  registry_password: dummy
  extra_containers:
- - docker.io/yauritux/busybox-curl:latest
+ - docker.io/karmab/curl:latest
  - quay.io/openshift/origin-coredns:latest
  - docker.io/library/haproxy:latest
  - quay.io/openshift/origin-keepalived-ipfailover:latest
