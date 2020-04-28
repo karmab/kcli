@@ -2455,12 +2455,27 @@ class Kvirt(object):
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
         conn = self.conn
         networks = self.list_networks()
-        if cidr is None:
-            return {'result': 'failure', 'reason': "Missing Cidr"}
-        cidrs = [network['cidr'] for network in list(networks.values())]
         if name in networks:
             common.pprint("Network %s already exists" % name, color='blue')
             return {'result': 'exist'}
+        if 'macvtap' in overrides and overrides['macvtap']:
+            if 'nic' not in overrides:
+                return {'result': 'failure', 'reason': "Missing nic parameter"}
+            else:
+                nic = overrides['nic']
+                networkxml = """<network>
+                                <name>%s</name>
+                                <forward mode="bridge">
+                                <interface dev="%s"/>
+                                </forward>
+                                </network>""" % (name, nic)
+                new_net = conn.networkDefineXML(networkxml)
+                new_net.setAutostart(True)
+                new_net.create()
+                return {'result': 'success'}
+        if cidr is None:
+            return {'result': 'failure', 'reason': "Missing Cidr"}
+        cidrs = [network['cidr'] for network in list(networks.values())]
         try:
             range = IPNetwork(cidr)
         except:
