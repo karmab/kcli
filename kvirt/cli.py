@@ -1828,12 +1828,11 @@ def snapshotrevert_vm(args):
 
 def snapshotlist_vm(args):
     """List snapshots of vm"""
-    snapshot = args.snapshot
     name = args.name
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     common.pprint("Listing snapshots of %s..." % name)
-    snapshots = k.snapshot(snapshot, name, listing=True)
+    snapshots = k.snapshot('', name, listing=True)
     if isinstance(snapshots, dict):
         common.pprint("Vm %s not found" % name, color='red')
         return
