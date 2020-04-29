@@ -191,6 +191,10 @@ def create(config, plandir, cluster, overrides):
             'fips': False,
             'minimal': False}
     data.update(overrides)
+    masters = data.get('masters', 1)
+    if masters == 0:
+        pprint("Invalid number of masters", color='red')
+        os._exit(1)
     ipv6 = data['ipv6']
     upstream = data.get('upstream')
     version = data.get('version')

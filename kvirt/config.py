@@ -1169,6 +1169,7 @@ $INFO
         poolentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'pool']
         planentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'plan']
         dnsentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'dns']
+        kubeentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'kube']
         lbs = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'loadbalancer']
         for p in profileentries:
             vmprofiles[p] = entries[p]
@@ -1217,7 +1218,7 @@ $INFO
                                           overrides=netprofile)
                 common.handle_response(result, net, element='Network ')
         if poolentries:
-            common.pprint("Deploying Pool...")
+            common.pprint("Deploying Pools...")
             pools = k.list_pools()
             for pool in poolentries:
                 if pool in pools:
@@ -1246,7 +1247,7 @@ $INFO
                     cmd = imageprofile.get('cmd')
                     self.handle_host(pool=pool, image=image, download=True, cmd=cmd, url=imageurl, update_profile=True)
         if dnsentries:
-            common.pprint("Deploying Dns Entry...")
+            common.pprint("Deploying Dns Entries...")
             dnsclients = {}
             for dnsentry in dnsentries:
                 dnsprofile = entries[dnsentry]
@@ -1274,6 +1275,33 @@ $INFO
                     return
                 z.reserve_dns(name=dnsentry, nets=[dnsnet], domain=dnsdomain, ip=dnsip, alias=dnsalias, force=True,
                               primary=True)
+        if kubeentries:
+            common.pprint("Deploying Kube Entries...")
+            dnsclients = {}
+            for cluster in kubeentries:
+                common.pprint("Deploying Cluster %s..." % cluster)
+                kubeprofile = entries[cluster]
+                kubeclient = kubeprofile.get('client')
+                if kubeclient is None:
+                    currentconfig = self
+                elif kubeclient in self.clients:
+                    currentconfig = Kconfig(client=kubeclient)
+                else:
+                    common.pprint("Client %s not found. skipped" % kubeclient, color='red')
+                    continue
+                kubetype = kubeprofile.get('kubetype', 'generic')
+                overrides = kubeprofile
+                if kubetype not in ['generic', 'openshift']:
+                    common.pprint("Incorrect kubetype %s specified. skipped!" % kubetype, color='blue')
+                    continue
+                existing_masters = [v for v in currentconfig.k.list() if '%s-master' % cluster in v['name']]
+                if existing_masters:
+                    common.pprint("Cluster %s found. skipped!" % cluster, color='blue')
+                    continue
+                if kubetype == 'generic':
+                    currentconfig.create_kube_generic(cluster, overrides=overrides)
+                else:
+                    currentconfig.create_kube_openshift(cluster, overrides=overrides)
         if vmentries:
             common.pprint("Deploying Vms...")
             vmcounter = 0

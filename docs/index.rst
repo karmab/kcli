@@ -798,8 +798,9 @@ You can also define plan files in yaml with a list of profiles, vms,
 disks, and networks and vms to deploy and deploy it with kcli plan. The
 following type can be used within a plan:
 
+-  vm ( this is the type used when none is specified )
+-  image
 -  network
--  template
 -  disk
 -  pool
 -  profile
@@ -807,7 +808,7 @@ following type can be used within a plan:
 -  container
 -  dns
 -  plan ( so you can compose plans from several urls)
--  vm ( this is the type used when none is specified )
+-  kube
 
 Here are some examples of each type ( additional ones can be found in
 this `samples
@@ -826,13 +827,13 @@ network
 You can also use the boolean keyword *dhcp* (mostly to disable it) and
 isolated . When not specified, dhcp and nat will be enabled
 
-template
-~~~~~~~~
+image
+~~~~~
 
 .. code:: yaml
 
     CentOS-7-x86_64-GenericCloud.qcow2:
-     type: template
+     type: image
      url: http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2
 
 It will only be downloaded only if not present

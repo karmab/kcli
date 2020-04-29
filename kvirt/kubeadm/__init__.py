@@ -27,6 +27,10 @@ def scale(config, plandir, cluster, overrides):
 def create(config, plandir, cluster, overrides):
     data = {'cluster': cluster}
     data.update(overrides)
+    masters = data.get('masters', 1)
+    if masters == 0:
+        pprint("Invalid number of masters", color='red')
+        os._exit(1)
     data['basedir'] = '/workdir' if os.path.exists("/i_am_a_container") else '.'
     cluster = data.get('cluster')
     clusterdir = pwd_path("clusters/%s" % cluster)
