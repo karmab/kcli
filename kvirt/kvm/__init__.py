@@ -181,6 +181,7 @@ class Kvirt(object):
         ignition = False
         usermode = False
         macosx = False
+        diskpath = None
         if 'session' in self.url:
             usermode = True
             userport = common.get_free_port()
@@ -265,6 +266,7 @@ class Kvirt(object):
                 diskpooltype = default_pooltype
                 diskpoolpath = default_poolpath
                 diskthinpool = default_thinpool
+                diskname = None
                 diskwwn = None
                 diskimage = None
                 diskmacosx = False
@@ -558,7 +560,7 @@ class Kvirt(object):
                     code = os.system(ignitioncmd1)
                     if code != 0:
                         return {'result': 'failure', 'reason': "Unable to create ignition data file in /var/tmp"}
-            elif image is not None and not ignition:
+            elif image is not None and not ignition and diskpath is not None:
                 cloudinitiso = "%s/%s.ISO" % (default_poolpath, name)
                 dtype = 'block' if '/dev' in diskpath else 'file'
                 dsource = 'dev' if '/dev' in diskpath else 'file'
@@ -1443,7 +1445,7 @@ class Kvirt(object):
                 return {'result': 'failure', 'reason': "VM %s has snapshots" % name}
             else:
                 for snapshot in vm.snapshotListNames():
-                    print("Deleting snapshot %s" % snapshot)
+                    common.pprint("Deleting snapshot %s" % snapshot, color='blue')
                     snap = vm.snapshotLookupByName(snapshot)
                     snap.delete()
         ip = self.ip(name)
