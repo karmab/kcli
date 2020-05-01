@@ -759,7 +759,12 @@ class Kbaseconfig:
             memory = info.get('memory', default_memory)
             pool = info.get('pool', default_pool)
             diskinfo = []
-            disks = info.get('disks', default_disks)
+            disks = info.get('disks')
+            if disks is None:
+                if 'disksize' in info:
+                    disks = [info['disksize']]
+                else:
+                    disks = default_disks
             for disk in disks:
                 if disk is None:
                     size = default_disksize
