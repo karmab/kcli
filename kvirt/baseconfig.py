@@ -415,7 +415,10 @@ class Kbaseconfig:
         """
 
         """
-        return self.default
+        results = {}
+        for keyword in self.default:
+            results[keyword] = vars(self)[keyword] if keyword in vars(self) else self.default[keyword]
+        return results
 
     def list_repos(self):
         """
