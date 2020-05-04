@@ -407,7 +407,7 @@ class Kconfig(Kbaseconfig):
         disksize = profile.get('disksize', default_disksize)
         diskinterface = profile.get('diskinterface', default_diskinterface)
         diskthin = profile.get('diskthin', default_diskthin)
-        if disks and 'default' in disks[0]:
+        if disks and isinstance(disks, dict) and 'default' in disks[0]:
             disks = [{'size': disksize, 'interface': diskinterface, 'thin': diskthin}]
         guestid = profile.get('guestid', default_guestid)
         iso = profile.get('iso', default_iso)
