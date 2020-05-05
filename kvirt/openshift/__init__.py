@@ -518,19 +518,22 @@ def create(config, plandir, cluster, overrides):
         config.plan(cluster, inputfile='%s/cloud.yml' % plandir, overrides=overrides)
         call('openshift-install --dir=%s wait-for bootstrap-complete || exit 1' % clusterdir, shell=True)
         todelete = ["%s-bootstrap" % cluster, "%s-bootstrap-helper" % cluster]
+    if platform in virtplatforms:
+        wait_time = 90 if masters > 1 else 180
+        pprint("Waiting %ss before deleting bootstrap vm" % wait_time, color='blue')
+    for vm in todelete:
+        pprint("Deleting %s" % vm)
+        k.delete(vm)
+    if platform in virtplatforms:
+        wait_time = 90 if masters > 1 else 180
+        pprint("Waiting %ss before retrieving workers ignition data" % wait_time, color='blue')
+        sleep(wait_time)
     call("oc adm taint nodes -l node-role.kubernetes.io/master node-role.kubernetes.io/master:NoSchedule-", shell=True)
     pprint("Deploying certs autoapprover cronjob", color='blue')
     autoapprover = config.process_inputfile(cluster, "%s/autoapprovercron.yml" % plandir, overrides=data)
     with open("%s/autoapprovercron.yml" % clusterdir, 'w') as f:
         f.write(autoapprover)
     call("oc create -f %s/autoapprovercron.yml" % clusterdir, shell=True)
-    if platform in virtplatforms:
-        wait_time = 180 / masters
-        pprint("Waiting %ss before retrieving workers ignition data" % wait_time, color='blue')
-        sleep(wait_time)
-    for vm in todelete:
-        pprint("Deleting %s" % vm)
-        k.delete(vm)
     if platform in virtplatforms:
         ignitionworkerfile = "%s/worker.ign" % clusterdir
         os.remove(ignitionworkerfile)

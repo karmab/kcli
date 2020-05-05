@@ -38,7 +38,7 @@ metadata:
 spec:
   managementState: Managed
   unsupportedConfigOverrides:
-    useUnsupportedUnsafeNonHANonProductionUnstableEtcd: true"""
+    useUnsupportedUnsafeNonHANonProductionUnstableEtcd: true\n"""
 
 
 def url_exists(url):
