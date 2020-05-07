@@ -230,15 +230,28 @@ class Kconfig(Kbaseconfig):
         vmprofiles = {k: v for k, v in self.profiles.items() if 'type' not in v or v['type'] == 'vm'}
         if customprofile:
             vmprofiles[profile] = customprofile
+            customprofileimage = customprofile.get('image')
+            if customprofileimage is not None:
+                clientprofile = "%s_%s" % (self.client, customprofileimage)
+                if clientprofile in vmprofiles and 'image' in vmprofiles[clientprofile]:
+                    vmprofiles[profile]['image'] = vmprofiles[clientprofile]['image']
+                elif customprofileimage in IMAGES and\
+                        IMAGES[customprofileimage] not in [os.path.basename(v) for v in self.k.volumes()]:
+                    common.pprint("Image %s not found. Downloading" % customprofileimage, color='blue')
+                    self.handle_host(pool=self.pool, image=customprofileimage, download=True, update_profile=True)
+                    vmprofiles[profile]['image'] = os.path.basename(IMAGES[customprofileimage])
         else:
             common.pprint("Deploying vm %s from profile %s..." % (name, profile))
         if profile not in vmprofiles:
             clientprofile = "%s_%s" % (self.client, profile)
             if clientprofile in vmprofiles and 'image' in vmprofiles[clientprofile]:
-                # profile = clientprofile
                 vmprofiles[profile] = {'image': vmprofiles[clientprofile]['image']}
+            elif profile in IMAGES and IMAGES[profile] not in [os.path.basename(v) for v in self.k.volumes()]:
+                common.pprint("Image %s not found. Downloading" % profile, color='blue')
+                self.handle_host(pool=self.pool, image=profile, download=True, update_profile=True)
+                vmprofiles[profile] = {'image': os.path.basename(IMAGES[profile])}
             else:
-                common.pprint("profile %s not found. Using the image as profile..." % profile, color='blue')
+                common.pprint("Profile %s not found. Using the image as profile..." % profile, color='blue')
                 vmprofiles[profile] = {'image': profile}
         profilename = profile
         profile = vmprofiles[profile]
@@ -1479,6 +1492,12 @@ $INFO
                         if profilename == currentimage or profilename == clientprofile:
                             profile['image'] = entry[4]
                             break
+                    imageprofile = profile['image']
+                    if imageprofile in IMAGES and\
+                            IMAGES[imageprofile] not in [os.path.basename(v) for v in self.k.volumes()]:
+                        common.pprint("Image %s not found. Downloading" % imageprofile, color='blue')
+                        self.handle_host(pool=self.pool, image=imageprofile, download=True, update_profile=True)
+                        profile['image'] = os.path.basename(IMAGES[imageprofile])
                 result = self.create_vm(name, profilename, overrides=overrides, customprofile=profile, k=z,
                                         plan=plan, basedir=currentplandir, client=vmclient, onfly=onfly, planmode=True)
                 common.handle_response(result, name, client=vmclient)
