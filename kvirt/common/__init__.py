@@ -304,7 +304,7 @@ def process_files(files=[], overrides={}):
         content = fil.get('content')
         path = fil.get('path')
         owner = fil.get('owner', 'root')
-        mode = fil.get('mode', '0600')
+        mode = fil.get('mode', '0600' if not path.endswith('sh') and not path.endswith('py') else '0700')
         permissions = fil.get('permissions', mode)
         render = fil.get('render', True)
         binary = False

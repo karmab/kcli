@@ -584,6 +584,9 @@ class Kvirt(object):
         if cpumodel == 'host-model':
             cpuxml = """<cpu mode='host-model'>
                         <model fallback='allow'/>"""
+        elif cpumodel == 'host-passthrough':
+            cpuxml = """<cpu mode='host-passthrough'>
+                        <model fallback='allow'/>"""
         else:
             cpuxml = """<cpu mode='custom' match='exact'>
                         <model fallback='allow'>%s</model>""" % cpumodel
