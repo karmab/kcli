@@ -693,27 +693,27 @@ def list_kube(args):
     """List kube"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.extraclients:
-        kubes = PrettyTable(["Cluster", "Host", "Vms"])
+        kubestable = PrettyTable(["Cluster", "Type", "Host", "Vms"])
         allclients = config.extraclients.copy()
         allclients.update({config.client: config.k})
         for cli in sorted(allclients):
             currentconfig = Kconfig(client=cli, debug=args.debug, region=args.region, zone=args.zone,
                                     namespace=args.namespace)
-            for plan in currentconfig.list_plans():
-                planname = plan[0]
-                planvms = plan[1]
-                for vm in planvms.split(','):
-                    if '-master-' in vm or '-worker' in vm:
-                        kubes.add_row([planname, cli, planvms])
+            kubes = currentconfig.list_kubes()
+            for kubename in kubes:
+                kube = kubes[kubename]
+                kubetype = kube['type']
+                kubevms = kube['vms']
+                kubestable.add_row([kubename, kubetype, cli, kubevms])
     else:
-        kubes = PrettyTable(["Cluster", "Vms"])
-        for plan in config.list_plans():
-            planname = plan[0]
-            planvms = plan[1]
-            for vm in planvms.split(','):
-                if '-master-' in vm or '-worker' in vm:
-                    kubes.add_row([planname, planvms])
-    print(kubes)
+        kubestable = PrettyTable(["Cluster", "Type", "Vms"])
+        kubes = config.list_kubes()
+        for kubename in kubes:
+            kube = kubes[kubename]
+            kubetype = kube['type']
+            kubevms = kube['vms']
+            kubestable.add_row([kubename, kubetype, kubevms])
+    print(kubestable)
     return
 
 

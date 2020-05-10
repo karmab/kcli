@@ -176,7 +176,8 @@ class Kvirt(object):
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
                files=[], enableroot=True, overrides={}, tags=[], dnsclient=None, storemetadata=False,
                sharedfolders=[], kernel=None, initrd=None, cmdline=None, placement=[], autostart=False,
-               cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False):
+               cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False,
+               kube=None, kubetype=None):
         namespace = ''
         ignition = False
         usermode = False
@@ -214,6 +215,10 @@ class Kvirt(object):
         if dnsclient is not None:
             metadata = """%s
                         <kvirt:dnsclient>%s</kvirt:dnsclient>""" % (metadata, dnsclient)
+        if kube is not None and kubetype is not None:
+            metadata = """%s
+                        <kvirt:kubetype>%s</kvirt:kubetype>
+                        <kvirt:kube>%s</kvirt:kube>""" % (metadata, kubetype, kube)
         default_poolxml = default_storagepool.XMLDesc(0)
         root = ET.fromstring(default_poolxml)
         default_pooltype = list(root.getiterator('pool'))[0].get('type')
@@ -1222,11 +1227,18 @@ class Kvirt(object):
         # else:
         #    numcpus = numcpus.text
         yamlinfo = {'name': name, 'autostart': autostart, 'nets': [], 'disks': [], 'status': status}
-        plan, profile, image, ip, creationdate, report = '', None, None, None, None, None
+        plan, profile, image, ip, creationdate = '', None, None, None, None
+        kube, kubetype = None, None
         for element in list(root.getiterator('{kvirt}info')):
             e = element.find('{kvirt}plan')
             if e is not None:
                 plan = e.text
+            e = element.find('{kvirt}kube')
+            if e is not None:
+                kube = e.text
+            e = element.find('{kvirt}kubetype')
+            if e is not None:
+                kubetype = e.text
             e = element.find('{kvirt}profile')
             if e is not None:
                 profile = e.text
@@ -1234,9 +1246,6 @@ class Kvirt(object):
             if e is not None:
                 image = e.text
                 yamlinfo['user'] = common.get_user(image)
-            e = element.find('{kvirt}report')
-            if e is not None:
-                report = e.text
             e = element.find('{kvirt}ip')
             if e is not None:
                 ip = e.text
@@ -1248,8 +1257,9 @@ class Kvirt(object):
         yamlinfo['plan'] = plan
         if profile is not None:
             yamlinfo['profile'] = profile
-        if report is not None:
-            yamlinfo['report'] = report
+        if kube is not None and kubetype is not None:
+            yamlinfo['kube'] = kube
+            yamlinfo['kubetype'] = kubetype
         if creationdate is not None:
             yamlinfo['creationdate'] = creationdate
         yamlinfo['cpus'] = numcpus

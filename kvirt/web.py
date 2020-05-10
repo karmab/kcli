@@ -654,8 +654,17 @@ def kubeaction():
             for p in request.form:
                 if p.startswith('parameters'):
                     value = request.form[p]
+                    if value == 'None':
+                        value = None
+                    elif value.isdigit():
+                        value = int(value)
+                    elif value == 'False':
+                        value = False
+                    elif value == 'True':
+                        value = True
                     key = p.replace('parameters[', '').replace(']', '')
                     parameters[key] = value
+            del parameters['cluster']
             if _type == 'generic':
                 thread = Thread(target=config.create_kube_generic, kwargs={'cluster': cluster,
                                                                            'overrides': parameters})
@@ -726,13 +735,7 @@ def kubestable():
     retrieves all kubes in table
     """
     config = Kconfig()
-    kubes = []
-    for plan in config.list_plans():
-        planvms = plan[1]
-        for vm in planvms.split(','):
-            if '-master-' in vm or '-worker' in vm:
-                kubes.append(plan)
-                break
+    kubes = config.list_kubes()
     return render_template('kubestable.html', kubes=kubes)
 
 

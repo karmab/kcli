@@ -25,7 +25,7 @@ def scale(config, plandir, cluster, overrides):
 
 
 def create(config, plandir, cluster, overrides):
-    data = {'cluster': cluster}
+    data = {'cluster': cluster, 'kubetype': 'generic', 'kube': cluster}
     data.update(overrides)
     masters = data.get('masters', 1)
     if masters == 0:

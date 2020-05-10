@@ -94,7 +94,8 @@ class Kgcp(object):
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
                files=[], enableroot=True, alias=[], overrides={}, tags=[], dnsclient=None, storemetadata=False,
                sharedfolders=[], kernel=None, initrd=None, cmdline=None, placement=[], autostart=False,
-               cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False):
+               cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False,
+               kube=None, kubetype=None):
         conn = self.conn
         project = self.project
         zone = self.zone
@@ -293,7 +294,11 @@ class Kgcp(object):
         if reservedns:
             newval = {'key': 'domain', 'value': domain}
             body['metadata']['items'].append(newval)
-            # body['hostname'] = "%s.%s" % (name, domain)
+        if kube is not None and kubetype is not None:
+            newval = {'key': 'kube', 'value': kube}
+            body['metadata']['items'].append(newval)
+            newval = {'key': 'kubetype', 'value': kubetype}
+            body['metadata']['items'].append(newval)
         if image is not None and common.needs_ignition(image):
             version = common.ignition_version(image)
             userdata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
@@ -520,6 +525,10 @@ class Kgcp(object):
                     yamlinfo['profile'] = data['value']
                 if data['key'] == 'loadbalancer':
                     yamlinfo['loadbalancer'] = data['value']
+                if data['key'] == 'kube':
+                    yamlinfo['kube'] = data['value']
+                if data['key'] == 'kubetype':
+                    yamlinfo['kubetype'] = data['value']
         if 'tags' in vm and 'items' in vm['tags']:
             yamlinfo['tags'] = ','.join(vm['tags']['items'])
         return yamlinfo

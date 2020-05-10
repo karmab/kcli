@@ -223,6 +223,8 @@ class Kconfig(Kbaseconfig):
                 common.pprint("Incorrect parameter %s. Hyphens are not allowed" % wrong_override, color='red')
             os._exit(1)
         overrides['name'] = name
+        kube = overrides.get('kube')
+        kubetype = overrides.get('kubetype')
         k = self.k if k is None else k
         tunnel = self.tunnel
         if profile is None:
@@ -709,7 +711,7 @@ $INFO
                           overrides=overrides, tags=tags, dnsclient=dnsclient, storemetadata=storemetadata,
                           sharedfolders=sharedfolders, kernel=kernel, initrd=initrd, cmdline=cmdline,
                           placement=placement, autostart=autostart, cpuhotplug=cpuhotplug, memoryhotplug=memoryhotplug,
-                          pcidevices=pcidevices, tpm=tpm, rng=rng)
+                          pcidevices=pcidevices, tpm=tpm, rng=rng, kube=kube, kubetype=kubetype)
         if result['result'] != 'success':
             return result
         if dnsclient is not None and domain is not None:
@@ -774,6 +776,26 @@ $INFO
         for plan in plans:
             results.append([plan, ','.join(plans[plan])])
         return results
+
+    def list_kubes(self):
+        """
+
+        :return:
+        """
+        k = self.k
+        kubes = {}
+        for vm in k.list():
+            if 'kube' in vm and 'kubetype' in vm:
+                vmname = vm['name']
+                kube = vm['kube']
+                kubetype = vm['kubetype']
+                if kube not in kubes:
+                    kubes[kube] = {'type': kubetype, 'vms': [vmname]}
+                else:
+                    kubes[kube]['vms'].append(vmname)
+        for kube in kubes:
+            kubes[kube]['vms'] = ','.join(kubes[kube]['vms'])
+        return kubes
 
     def create_product(self, name, repo=None, group=None, plan=None, latest=False, overrides={}):
         """Create product"""

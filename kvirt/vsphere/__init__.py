@@ -349,7 +349,8 @@ class Ksphere:
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
                files=[], enableroot=True, overrides={}, tags=[], dnsclient=None, storemetadata=False,
                sharedfolders=[], kernel=None, initrd=None, cmdline=None, placement=[], autostart=False,
-               cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False):
+               cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False,
+               kube=None, kubetype=None):
         dc = self.dc
         vmFolder = dc.vmFolder
         distributed = self.distributed
@@ -437,6 +438,15 @@ class Ksphere:
         profileopt.key = 'profile'
         profileopt.value = profile
         confspec.extraConfig = [planopt, profileopt]
+        if kube is not None and kubetype is not None:
+            kubeopt = vim.option.OptionValue()
+            kubeopt.key = 'kube'
+            kubeopt.value = kube
+            confspec.extraConfig.append(kubeopt)
+            kubetypeopt = vim.option.OptionValue()
+            kubetypeopt.key = 'kubetype'
+            kubetypeopt.value = kubetype
+            confspec.extraConfig.append(kubetypeopt)
         if nested:
             confspec.nestedHVEnabled = True
         confspec.guestId = 'centos7_64Guest'
@@ -754,6 +764,10 @@ class Ksphere:
         for entry in vm.config.extraConfig:
             if entry.key == 'plan':
                 yamlinfo['plan'] = entry.value
+            if entry.key == 'kube':
+                yamlinfo['kube'] = entry.value
+            if entry.key == 'kubetype':
+                yamlinfo['kubetype'] = entry.value
             if entry.key == 'profile':
                 yamlinfo['profile'] = entry.value
             if entry.key == 'image':

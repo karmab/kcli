@@ -98,7 +98,8 @@ class Kubevirt(Kubecommon):
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
                files=[], enableroot=True, alias=[], overrides={}, tags=[], dnsclient=None, storemetadata=False,
                sharedfolders=[], kernel=None, initrd=None, cmdline=None, placement=[], autostart=False,
-               cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False):
+               cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False,
+               kube=None, kubetype=None):
         guestagent = False
         if self.exists(name):
             return {'result': 'failure', 'reason': "VM %s already exists" % name}
@@ -152,6 +153,9 @@ class Kubevirt(Kubecommon):
                                                                                      'kcli/image': image}}}
         if dnsclient is not None:
             vm['metadata']['annotations']['kcli/dnsclient'] = dnsclient
+        if kube is not None and kubetype is not None:
+            vm['metadata']['annotations']['kcli/kube'] = kube
+            vm['metadata']['annotations']['kcli/kubetype'] = kubetype
         if domain is not None:
             vm['metadata']['annotations']['kcli/domain'] = domain
             if reservedns:
@@ -553,12 +557,15 @@ class Kubevirt(Kubecommon):
         # creationdate = metadata["creationTimestamp"].strftime("%d-%m-%Y %H:%M")
         creationdate = metadata["creationTimestamp"]
         profile, plan, image = 'N/A', 'N/A', 'N/A'
+        kube, kubetype = None, None
         ip = None
         if annotations is not None:
             profile = annotations['kcli/profile'] if 'kcli/profile' in annotations else 'N/A'
             plan = annotations['kcli/plan'] if 'kcli/plan' in annotations else 'N/A'
             image = annotations['kcli/image'] if 'kcli/image' in annotations else 'N/A'
             ip = vm['metadata']['annotations']['kcli/ip'] if 'kcli/ip' in annotations else None
+            kube = annotations['kcli/kube'] if 'kcli/kube' in annotations else None
+            kubetype = annotations['kcli/kubetype'] if 'kcli/kubetype' in annotations else None
         host = None
         state = 'down'
         foundmacs = {}
@@ -600,6 +607,9 @@ class Kubevirt(Kubecommon):
             yamlinfo['plan'] = plan
         if profile is not None:
             yamlinfo['profile'] = profile
+        if kube is not None and kubetype is not None:
+            yamlinfo['kube'] = kube
+            yamlinfo['kubetype'] = kubetype
         plaindisks = spectemplate['spec']['domain']['devices']['disks']
         disks = []
         for d in plaindisks:
