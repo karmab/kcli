@@ -726,7 +726,14 @@ def kubestable():
     retrieves all kubes in table
     """
     config = Kconfig()
-    return render_template('kubestable.html', kubes=config.list_plans())
+    kubes = []
+    for plan in config.list_plans():
+        planvms = plan[1]
+        for vm in planvms.split(','):
+            if '-master-' in vm or '-worker' in vm:
+                kubes.append(plan)
+                break
+    return render_template('kubestable.html', kubes=kubes)
 
 
 @app.route('/kubes')

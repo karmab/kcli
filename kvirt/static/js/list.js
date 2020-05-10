@@ -90,6 +90,7 @@ function kubestable() {
             });
           }
     });
+}
 
 function isostable() {
     $.ajax({
