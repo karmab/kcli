@@ -10,6 +10,7 @@ from kvirt.defaults import IMAGES, WEBSOCKIFYCERT
 from kvirt import nameutils
 import os
 from time import sleep
+from threading import Thread
 
 app = Flask(__name__)
 try:
@@ -649,7 +650,6 @@ def kubeaction():
         _type = request.form['type']
         action = request.form['action']
         if action == 'create':
-            print(request.form)
             parameters = {}
             for p in request.form:
                 if p.startswith('parameters'):
@@ -657,14 +657,16 @@ def kubeaction():
                     key = p.replace('parameters[', '').replace(']', '')
                     parameters[key] = value
             if _type == 'generic':
-                result = config.create_kube_generic(cluster, overrides=parameters)
+                thread = Thread(target=config.create_kube_generic, kwargs={'cluster': cluster,
+                                                                           'overrides': parameters})
             elif _type == 'openshift':
-                result = config.create_kube_openshift(cluster, overrides=parameters)
+                thread = Thread(target=config.create_kube_openshift, kwargs={'cluster': cluster,
+                                                                             'overrides': parameters})
+            thread.start()
+            result = "Kube %s created" % cluster
         else:
             result = "Nothing to do"
-        print(result)
         response = jsonify(result)
-        print(response)
         response.status_code = 200
         return response
     else:
@@ -716,6 +718,25 @@ def plans():
     """
     config = Kconfig()
     return render_template('plans.html', title='Plans', client=config.client)
+
+
+@app.route('/kubestable')
+def kubestable():
+    """
+    retrieves all kubes in table
+    """
+    config = Kconfig()
+    return render_template('kubestable.html', kubes=config.list_plans())
+
+
+@app.route('/kubes')
+def kubes():
+    """
+
+    :return:
+    """
+    config = Kconfig()
+    return render_template('kubes.html', title='Kubes', client=config.client)
 
 
 @app.route("/containeraction", methods=['POST'])

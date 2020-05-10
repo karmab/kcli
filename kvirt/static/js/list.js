@@ -79,6 +79,18 @@ function planstable() {
     });
 }
 
+function kubestable() {
+    $.ajax({
+         type: "GET",
+          url: '/kubestable',
+          success: function(data) {
+            $('#kubes').html(data);
+            $('#kubes').dataTable({
+            retrieve: true,
+            });
+          }
+    });
+
 function isostable() {
     $.ajax({
          type: "GET",

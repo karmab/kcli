@@ -669,7 +669,7 @@ def list_plan(args):
     """List plans"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.extraclients:
-        plans = PrettyTable(["Name", "Host", "Vms"])
+        plans = PrettyTable(["Plan", "Host", "Vms"])
         allclients = config.extraclients.copy()
         allclients.update({config.client: config.k})
         for cli in sorted(allclients):
@@ -680,12 +680,40 @@ def list_plan(args):
                 planvms = plan[1]
                 plans.add_row([planname, cli, planvms])
     else:
-        plans = PrettyTable(["Name", "Vms"])
+        plans = PrettyTable(["Plan", "Vms"])
         for plan in config.list_plans():
             planname = plan[0]
             planvms = plan[1]
             plans.add_row([planname, planvms])
     print(plans)
+    return
+
+
+def list_kube(args):
+    """List kube"""
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    if config.extraclients:
+        kubes = PrettyTable(["Cluster", "Host", "Vms"])
+        allclients = config.extraclients.copy()
+        allclients.update({config.client: config.k})
+        for cli in sorted(allclients):
+            currentconfig = Kconfig(client=cli, debug=args.debug, region=args.region, zone=args.zone,
+                                    namespace=args.namespace)
+            for plan in currentconfig.list_plans():
+                planname = plan[0]
+                planvms = plan[1]
+                for vm in planvms.split(','):
+                    if '-master-' in vm or '-worker' in vm:
+                        kubes.add_row([planname, cli, planvms])
+    else:
+        kubes = PrettyTable(["Cluster", "Vms"])
+        for plan in config.list_plans():
+            planname = plan[0]
+            planvms = plan[1]
+            for vm in planvms.split(','):
+                if '-master-' in vm or '-worker' in vm:
+                    kubes.add_row([planname, planvms])
+    print(kubes)
     return
 
 
@@ -2309,6 +2337,10 @@ def cli():
     kubeopenshiftinfo_parser = kubeinfo_subparsers.add_parser('openshift', description=kubeopenshiftinfo_desc,
                                                               help=kubeopenshiftinfo_desc)
     kubeopenshiftinfo_parser.set_defaults(func=info_openshift_kube)
+
+    kubelist_desc = 'List Kube'
+    kubelist_parser = list_subparsers.add_parser('kube', description=kubelist_desc, help=kubelist_desc)
+    kubelist_parser.set_defaults(func=list_kube)
 
     kubescale_desc = 'Scale Kube'
     kubescale_parser = scale_subparsers.add_parser('kube', description=kubescale_desc, help=kubescale_desc)

@@ -14,7 +14,6 @@ function kubecreate(){
         success: function(data) {
             $("#wheel").hide();
             if (data.result == 'success') {
-                cluster = data.cluster
                 $('.top-right').notify({message: { text: "Cluster "+cluster+" created!!!" }, type: 'success'}).show();
             } else {
                 $('.top-right').notify({message: { text: "Cluster "+cluster+" not created because "+data.reason }, type: 'danger'}).show();
