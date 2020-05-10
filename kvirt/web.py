@@ -32,15 +32,8 @@ def vmstable():
     """
     config = Kconfig()
     k = config.k
-    reportdir = config.reportdir
     vms = []
     for vm in k.list():
-        name = vm['name']
-        if os.path.exists('%s/%s.txt' % (reportdir, name)):
-            if os.path.exists('%s/%s.running' % (reportdir, name)):
-                vm['report'] = 'Running'
-            else:
-                vm['report'] = 'OK'
         vm['info'] = print_info(vm, output='plain', pretty=True)
         vms.append(vm)
     return render_template('vmstable.html', vms=vms)
@@ -445,33 +438,6 @@ def planaction():
         response.status_code = 400
 
 
-@app.route("/report", methods=['POST'])
-def report():
-    """
-    updatestatus
-    """
-    config = Kconfig()
-    k = config.k
-    reportdir = config.reportdir
-    if 'name' in request.form and 'report' in request.form and 'status' in request.form:
-        name = request.form['name']
-        status = request.form['status']
-        report = request.form['report']
-    if not k.exists(name):
-        return "KO"
-    k.update_metadata(name, 'report', status)
-    if not os.path.exists(reportdir):
-        os.mkdir(reportdir)
-    with open("%s/%s.txt" % (reportdir, name), 'w') as f:
-        f.write(report)
-    print("Name: %s Status: %s" % (name, status))
-    if status == 'Running' and not os.path.exists("%s/%s.running" % (reportdir, name)):
-        open("%s/%s.running" % (reportdir, name), 'a').close()
-    if status == 'OK' and os.path.exists("%s/%s.running" % (reportdir, name)):
-        os.remove("%s/%s.running" % (reportdir, name))
-    return 'OK'
-
-
 @app.route('/containerstable')
 def containerstable():
     """
@@ -638,6 +604,67 @@ def productaction():
             result = "Nothing to do"
         print(result)
         response = jsonify(result)
+        response.status_code = 200
+        return response
+    else:
+        failure = {'result': 'failure', 'reason': "Invalid Data"}
+        response = jsonify(failure)
+        response.status_code = 400
+
+
+# KUBE
+
+@app.route('/kubegenericcreate')
+def kubegenericcreate():
+    """
+    create generic kube
+    """
+    config = Kconfig()
+    parameters = config.info_kube_generic(quiet=True, web=True)
+    _type = 'generic'
+    return render_template('kubecreate.html', title='CreateGenericKube', client=config.client,
+                           parameters=parameters, _type=_type)
+
+
+@app.route('/kubeopenshiftcreate')
+def kubeopenshiftcreate():
+    """
+    create openshift kube
+    """
+    config = Kconfig()
+    parameters = config.info_kube_openshift(quiet=True, web=True)
+    _type = 'openshift'
+    return render_template('kubecreate.html', title='CreateOpenshiftKube', client=config.client,
+                           parameters=parameters, _type=_type)
+
+
+@app.route("/kubeaction", methods=['POST'])
+def kubeaction():
+    """
+    create kube
+    """
+    config = Kconfig()
+    if 'cluster' in request.form:
+        cluster = request.form['cluster']
+        _type = request.form['type']
+        action = request.form['action']
+        if action == 'create':
+            print(request.form)
+            parameters = {}
+            for p in request.form:
+                if p.startswith('parameters'):
+                    value = request.form[p]
+                    key = p.replace('parameters[', '').replace(']', '')
+                    parameters[key] = value
+            if _type == 'generic':
+                result = config.create_kube_generic(cluster, overrides=parameters)
+            elif _type == 'openshift':
+                result = config.create_kube_openshift(cluster, overrides=parameters)
+        else:
+            result = "Nothing to do"
+        print(result)
+        response = jsonify(result)
+        print(response)
         response.status_code = 200
         return response
     else:

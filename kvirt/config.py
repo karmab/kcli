@@ -283,8 +283,6 @@ class Kconfig(Kbaseconfig):
             default_reserveip = father.get('reserveip', self.reserveip)
             default_start = father.get('start', self.start)
             default_autostart = father.get('autostart', self.autostart)
-            default_report = father.get('report', self.report)
-            default_reportall = father.get('reportall', self.reportall)
             default_keys = father.get('keys', self.keys)
             default_netmasks = father.get('netmasks', self.netmasks)
             default_gateway = father.get('gateway', self.gateway)
@@ -359,8 +357,6 @@ class Kconfig(Kbaseconfig):
             default_reserveip = self.reserveip
             default_start = self.start
             default_autostart = self.autostart
-            default_report = self.report
-            default_reportall = self.reportall
             default_keys = self.keys
             default_netmasks = self.netmasks
             default_gateway = self.gateway
@@ -435,8 +431,6 @@ class Kconfig(Kbaseconfig):
         nested = profile.get('nested', default_nested)
         start = profile.get('start', default_start)
         autostart = profile.get('autostart', default_autostart)
-        report = profile.get('report', default_report)
-        reportall = profile.get('reportall', default_reportall)
         keys = profile.get('keys', default_keys)
         cmds = common.remove_duplicates(default_cmds + profile.get('cmds', []))
         netmasks = profile.get('netmasks', default_netmasks)
@@ -578,25 +572,6 @@ class Kconfig(Kbaseconfig):
         else:
             rhncommands = []
         cmds = rhncommands + cmds + scriptcmds
-        if reportall:
-            reportcmd = 'curl -s -X POST -d "name=%s&status=Running&report=`cat /var/log/cloud-init.log`" %s/report '
-            '>/dev/null' % (name, self.reporturl)
-            finishcmd = 'curl -s -X POST -d "name=%s&status=OK&report=`cat /var/log/cloud-init.log`" %s/report '
-            '>/dev/null' % (name, self.reporturl)
-            if not cmds:
-                cmds = [finishcmd]
-            else:
-                results = []
-                for cmd in cmds[:-1]:
-                    results.append(cmd)
-                    results.append(reportcmd)
-                results.append(cmds[-1])
-                results.append(finishcmd)
-                cmds = results
-        elif report:
-            reportcmd = ['curl -s -X POST -d "name=%s&status=OK&report=`cat /var/log/cloud-init.log`" %s/report '
-                         '/dev/null' % (name, self.reporturl)]
-            cmds = cmds + reportcmd
         if notify:
             if notifycmd is None and notifyscript is None:
                 if 'cos' in image:

@@ -399,12 +399,10 @@ def list_vm(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.client != 'all':
         k = config.k
-    customcolumns = {'kubevirt': 'Namespace', 'aws': 'InstanceId', 'openstack': 'Project'}
-    customcolumn = customcolumns[config.type] if config.type in customcolumns else 'Report'
     if config.extraclients:
         allclients = config.extraclients.copy()
         allclients.update({config.client: config.k})
-        vms = PrettyTable(["Name", "Host", "Status", "Ips", "Source", "Plan", "Profile", customcolumn])
+        vms = PrettyTable(["Name", "Host", "Status", "Ips", "Source", "Plan", "Profile"])
         for cli in sorted(allclients):
             for vm in allclients[cli].list():
                 name = vm.get('name')
@@ -413,8 +411,7 @@ def list_vm(args):
                 source = vm.get('image', '')
                 plan = vm.get('plan', '')
                 profile = vm.get('profile', '')
-                report = vm.get('report', '')
-                vminfo = [name, cli, status, ip, source, plan, profile, report]
+                vminfo = [name, cli, status, ip, source, plan, profile]
                 if filters:
                     if status == filters:
                         vms.add_row(vminfo)
@@ -422,7 +419,7 @@ def list_vm(args):
                     vms.add_row(vminfo)
         print(vms)
     else:
-        vms = PrettyTable(["Name", "Status", "Ips", "Source", "Plan", "Profile", customcolumn])
+        vms = PrettyTable(["Name", "Status", "Ips", "Source", "Plan", "Profile"])
         for vm in k.list():
             name = vm.get('name')
             status = vm.get('status')
@@ -430,8 +427,7 @@ def list_vm(args):
             source = vm.get('image', '')
             plan = vm.get('plan', '')
             profile = vm.get('profile', '')
-            report = vm.get('report', '')
-            vminfo = [name, status, ip, source, plan, profile, report]
+            vminfo = [name, status, ip, source, plan, profile]
             if config.planview and vm[4] != config.currentplan:
                 continue
             if filters:
@@ -1327,14 +1323,12 @@ def info_generic_kube(args):
     """Info Generic kube"""
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     baseconfig.info_kube_generic(quiet=True)
-    return 0
 
 
 def info_openshift_kube(args):
     """Info Openshift kube"""
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     baseconfig.info_kube_openshift(quiet=True)
-    return 0
 
 
 def download_plan(args):

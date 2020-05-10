@@ -66,6 +66,13 @@
                 </ul>
             </li>
             <li class="dropdown">
+                <a data-toggle="dropdown" class="dropdown-toggle" href="#">Kube <b class="caret"></b></a>
+                <ul role="menu" class="dropdown-menu">
+                    <li><a href="{{ url_for('kubegenericcreate') }}">Create Generic Kube</a></li>
+                    <li><a href="{{ url_for('kubeopenshiftcreate') }}">Create Openshift</a></li>
+                </ul>
+            </li>
+            <li class="dropdown">
                 <a data-toggle="dropdown" class="dropdown-toggle" href="#">Client <b class="caret"></b></a>
                 <ul role="menu" class="dropdown-menu">
                     <li ><a href="{{ url_for('hosts') }}">List Clients</a></li>

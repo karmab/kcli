@@ -74,10 +74,6 @@ IMAGES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-i
 
 IMAGESCOMMANDS = {'debian8': 'echo datasource_list: [NoCloud, ConfigDrive, Openstack, Ec2] > /etc/cloud/cloud.cfg.d/'
                   '90_dpkg.cfg'}
-REPORT = False
-REPORTALL = False
-REPORTURL = "http://127.0.0.1:9000"
-REPORTDIR = "/tmp/static/reports"
 INSECURE = True
 KEYS = []
 CMDS = []
