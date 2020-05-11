@@ -885,7 +885,7 @@ def get_user(image):
     """
     if 'centos' in image.lower():
         user = 'centos'
-    elif 'coreos' in image.lower() or 'rhcos' in image.lower():
+    elif 'coreos' in image.lower() or 'rhcos' in image.lower() or 'fcos' in image.lower():
         user = 'core'
     elif 'cirros' in image.lower():
         user = 'cirros'
