@@ -70,7 +70,8 @@ class Kaws(object):
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
                files=[], enableroot=True, alias=[], overrides={}, tags=[], dnsclient=None, storemetadata=False,
                sharedfolders=[], kernel=None, initrd=None, cmdline=None, placement=[], autostart=False,
-               cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False):
+               cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False,
+               kube=None, kubetype=None):
         conn = self.conn
         if self.exists(name):
             return {'result': 'failure', 'reason': "VM %s already exists" % name}
@@ -97,6 +98,9 @@ class Kaws(object):
         vmtags = [{'ResourceType': 'instance',
                    'Tags': [{'Key': 'Name', 'Value': name}, {'Key': 'plan', 'Value': plan},
                             {'Key': 'hostname', 'Value': name}, {'Key': 'profile', 'Value': profile}]}]
+        if kube is not None and kubetype is not None:
+            vmtags[0]['Tags'].append({'Key': 'kube', 'Value': kube})
+            vmtags[0]['Tags'].append({'Key': 'kubetype', 'Value': kubetype})
         if keypair is None:
             keypair = 'kvirt_%s' % self.access_key_id
         keypairs = [k for k in conn.describe_key_pairs()['KeyPairs'] if k['KeyName'] == keypair]
@@ -360,12 +364,18 @@ class Kaws(object):
         image = resource.Image(amid)
         source = os.path.basename(image.image_location)
         plan = ''
+        kube = None
+        kubetype = None
         profile = ''
         loadbalancer = None
         if 'Tags' in vm:
             for tag in vm['Tags']:
                 if tag['Key'] == 'plan':
                     plan = tag['Value']
+                if tag['Key'] == 'kube':
+                    kube = tag['Value']
+                if tag['Key'] == 'kubetype':
+                    kubetype = tag['Value']
                 if tag['Key'] == 'profile':
                     profile = tag['Value']
                 if tag['Key'] == 'Name':
@@ -374,6 +384,9 @@ class Kaws(object):
                     loadbalancer = tag['Value']
         if loadbalancer is not None:
             yamlinfo['loadbalancer'] = loadbalancer
+        if kube is not None and kubetype is not None:
+            yamlinfo['kube'] = kube
+            yamlinfo['kubetype'] = kubetype
         yamlinfo['name'] = name
         yamlinfo['status'] = state
         yamlinfo['az'] = az

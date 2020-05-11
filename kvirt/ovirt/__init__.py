@@ -98,7 +98,7 @@ class KOvirt(object):
                tunnel=False, files=[], enableroot=True, alias=[], overrides={},
                tags=[], dnsclient=None, storemetadata=False, sharedfolders=[], kernel=None, initrd=None,
                cmdline=None, placement=[], autostart=False, cpuhotplug=False, memoryhotplug=False, numamode=None,
-               numa=[], pcidevices=[], tpm=False, rng=False):
+               numa=[], pcidevices=[], tpm=False, rng=False, kube=None, kubetype=None):
         ip = None
         initialization = None
         memory = memory * 1024 * 1024
@@ -146,6 +146,9 @@ class KOvirt(object):
             description += ',dnsclient=%s' % dnsclient
         if domain is not None:
             description += ',domain=%s' % domain
+        if kube is not None and kubetype is not None:
+            description += ',kube=%s' % kube
+            description += ',kubetype=%s' % kubetype
         cpu = types.Cpu(topology=types.CpuTopology(cores=numcpus, sockets=1))
         try:
             if placement:
@@ -585,6 +588,10 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             if len(desc) == 2:
                 if desc[0] == 'plan':
                     yamlinfo['plan'] = desc[1]
+                if desc[0] == 'kube':
+                    yamlinfo['kube'] = desc[1]
+                if desc[0] == 'kubetype':
+                    yamlinfo['kubetype'] = desc[1]
                 elif desc[0] == 'profile':
                     yamlinfo['profile'] = desc[1]
                 elif desc[0] == 'loadbalancer':

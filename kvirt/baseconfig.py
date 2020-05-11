@@ -8,9 +8,8 @@ from distutils.spawn import find_executable
 from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID,
                             VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, RESERVEHOST,
-                            START, AUTOSTART, NESTED, TUNNEL, TUNNELHOST, TUNNELPORT, TUNNELUSER, REPORTURL, REPORTDIR,
-                            REPORT, REPORTALL, INSECURE, KEYS, CMDS, DNS,
-                            DOMAIN, SCRIPTS, FILES, ISO,
+                            START, AUTOSTART, NESTED, TUNNEL, TUNNELHOST, TUNNELPORT, TUNNELUSER,
+                            INSECURE, KEYS, CMDS, DNS, DOMAIN, SCRIPTS, FILES, ISO,
                             NETMASKS, GATEWAY, SHAREDKEY, IMAGE, ENABLEROOT,
                             PLANVIEW, PRIVATEKEY, TAGS, RHNREGISTER, RHNUSER, RHNPASSWORD, RHNAK, RHNORG, RHNPOOL,
                             RHNWAIT, FLAVOR, KEEP_NETWORKS, DNSCLIENT, STORE_METADATA, NOTIFY, PUSHBULLETTOKEN,
@@ -119,10 +118,6 @@ class Kbaseconfig:
         defaults['tunnelport'] = default.get('tunnelport', TUNNELPORT)
         defaults['tunneluser'] = default.get('tunneluser', TUNNELUSER)
         defaults['insecure'] = bool(default.get('insecure', INSECURE))
-        defaults['reporturl'] = default.get('reporturl', REPORTURL)
-        defaults['reportdir'] = default.get('reportdir', REPORTDIR)
-        defaults['report'] = bool(default.get('report', REPORT))
-        defaults['reportall'] = bool(default.get('reportall', REPORTALL))
         defaults['keys'] = default.get('keys', KEYS)
         defaults['cmds'] = default.get('cmds', CMDS)
         defaults['dns'] = default.get('dns', DNS)
@@ -238,10 +233,6 @@ class Kbaseconfig:
         self.tunnelport = options.get('tunnelport', self.default['tunnelport'])
         self.tunneluser = options.get('tunneluser', self.default['tunneluser'])
         self.insecure = bool(options.get('insecure', self.default['insecure']))
-        self.report = options.get('report', self.default['report'])
-        self.reporturl = options.get('reporturl', self.default['reportdir'])
-        self.reportdir = options.get('reportdir', self.default['reportdir'])
-        self.reportall = options.get('reportall', self.default['reportall'])
         self.nets = options.get('nets', self.default['nets'])
         self.cpumodel = options.get('cpumodel', self.default['cpumodel'])
         self.cpuflags = options.get('cpuflags', CPUFLAGS)
@@ -956,12 +947,12 @@ class Kbaseconfig:
                                    _type=_type)
         return jenkinsfile
 
-    def info_kube_generic(self, quiet):
+    def info_kube_generic(self, quiet, web=False):
         plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
         inputfile = '%s/masters.yml' % plandir
-        self.info_plan(inputfile, quiet=quiet)
+        return self.info_plan(inputfile, quiet=quiet, web=web)
 
-    def info_kube_openshift(self, quiet):
+    def info_kube_openshift(self, quiet, web=False):
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
         inputfile = '%s/masters.yml' % plandir
-        self.info_plan(inputfile, quiet=quiet)
+        return self.info_plan(inputfile, quiet=quiet, web=web)

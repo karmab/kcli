@@ -1,0 +1,30 @@
+        <thead>
+            <tr>
+                <th>Kube</th>
+                <th>KubeType</th>
+                <th>Vms</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for kube in kubes %}
+            <tr>
+                <td>{{ kube }}</td>
+                <td>{{ kubes[kube]['type'] }}</td>
+                <td>{{ kubes[kube]['vms'] }}</td>
+                <td>
+                    <div class="dropdown">
+                        <button class="btn btn-default dropdown-toggle" type="button" id="actions" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true"><font size="1">Actions</font>
+                    <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                        <li onclick="planstart('{{ kube }}');"><span class="glyphicon glyphicon-play green" data-toggle="tooltip" title="Start Kube"></span> Start</li>
+                        <li class="divider"></li>
+                        <li onclick="planstop('{{ kube }}');"><span class="glyphicon glyphicon-stop" data-toggle="tooltip" title="Stop Kube"></span> Stop</li>
+                        <li class="divider"></li>
+                        <li onclick="plandelete('{{ kube }}');"><span class="glyphicon glyphicon-trash red" data-toggle="tooltip" title="Delete Kube"></span> Delete</li>
+                    </ul></div>
+                </td>
+            </tr>
+            {% endfor %} 
+        </tbody>

@@ -47,18 +47,9 @@
             {% else %}
                 {% set logo = 'Tux.png' %}
             {% endif %}
-            {% if vm.report == 'OK' %}
-                {% set report = 'glyphicon glyphicon-ok-circle green' %}
-            {% elif vm.report == 'Running' %}
-                {% set report = 'glyphicon glyphicon-minus-sign blue' %}
-                {% endif %}
                 <tr>
                 <td><img src="{{ url_for('static', filename='images/'+ logo) }}"/></td>
-                {% if vm.report == 'OK' or vm.report == 'Running' %}
-                <td align="left"><a href="{{ url_for('static', filename='reports/'+ vm.name + '.txt') }}"><span class="{{ report }}" data-toggle="tooltip" title="Consult Report"></span> {{ vm.name }}</a></td>
-                {% else %}
                 <td align="left"> <a data-toggle="tooltip" data-placement="left" data-delay='{"show": "1000", "hide": "100"}' title="{{ vm.info }}">{{ vm.name }}</a></td>
-                {% endif %}
                 <td>{{ vm.status }}</td>
                 <td>{{ vm.ip }}</td>
                 <td>{{ vm.image }}</td>

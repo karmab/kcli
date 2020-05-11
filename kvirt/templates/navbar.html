@@ -19,15 +19,15 @@
                 <a data-toggle="dropdown" class="dropdown-toggle" href="#">Vms <b class="caret"></b></a>
                 <ul role="menu" class="dropdown-menu">
                     <li><a href="{{ url_for('vms') }}">List</a></li>
-                    <li><a href="{{ url_for('vmcreate') }}">Create</a></li>
                     <li><a href="{{ url_for('vmprofiles') }}">Profiles</a></li>
+                    <li><a href="{{ url_for('vmcreate') }}">Create</a></li>
                 </ul>
             </li>
             <li class="dropdown">
                 <a data-toggle="dropdown" class="dropdown-toggle" href="#">Repos <b class="caret"></b></a>
                 <ul role="menu" class="dropdown-menu">
-                    <li><a href="{{ url_for('repocreate') }}">Create Repo</a></li>
                     <li><a href="{{ url_for('repos') }}">List Repos</a></li>
+                    <li><a href="{{ url_for('repocreate') }}">Create Repo</a></li>
                 </ul>
             </li>
             <li class="dropdown">
@@ -39,44 +39,52 @@
             <li class="dropdown">
                 <a data-toggle="dropdown" class="dropdown-toggle" href="#">Plans <b class="caret"></b></a>
                 <ul role="menu" class="dropdown-menu">
-                    <li><a href="{{ url_for('plancreate') }}">Create Plan</a></li>
                     <li><a href="{{ url_for('plans') }}">List Plans</a></li>
+                    <li><a href="{{ url_for('plancreate') }}">Create Plan</a></li>
                 </ul>
             </li>
             <li class="dropdown">
                 <a data-toggle="dropdown" class="dropdown-toggle" href="#">Pools <b class="caret"></b></a>
                 <ul role="menu" class="dropdown-menu">
-                    <li><a href="{{ url_for('poolcreate') }}">Create Pool</a></li>
                     <li><a href="{{ url_for('pools') }}">List Pools</a></li>
+                    <li><a href="{{ url_for('poolcreate') }}">Create Pool</a></li>
                 </ul>
             </li>
             <li class="dropdown">
                 <a data-toggle="dropdown" class="dropdown-toggle" href="#">Networks <b class="caret"></b></a>
                 <ul role="menu" class="dropdown-menu">
-                    <li><a href="{{ url_for('networkcreate') }}">Create Network</a></li>
                     <li><a href="{{ url_for('networks') }}">List Networks</a></li>
+                    <li><a href="{{ url_for('networkcreate') }}">Create Network</a></li>
                 </ul>
             </li>
             <li class="dropdown">
                 <a data-toggle="dropdown" class="dropdown-toggle" href="#">Containers <b class="caret"></b></a>
                 <ul role="menu" class="dropdown-menu">
-                    <li><a href="{{ url_for('containercreate') }}">Create Container</a></li>
-                    <li><a href="{{ url_for('containerprofiles') }}">Profiles</a></li>
                     <li><a href="{{ url_for('containers') }}">List Containers</a></li>
+                    <li><a href="{{ url_for('containerprofiles') }}">Profiles</a></li>
+                    <li><a href="{{ url_for('containercreate') }}">Create Container</a></li>
                 </ul>
             </li>
             <li class="dropdown">
-                <a data-toggle="dropdown" class="dropdown-toggle" href="#">Client <b class="caret"></b></a>
+                <a data-toggle="dropdown" class="dropdown-toggle" href="#">Kubes <b class="caret"></b></a>
+                <ul role="menu" class="dropdown-menu">
+                    <li><a href="{{ url_for('kubes') }}">List Kubes</a></li>
+                    <li><a href="{{ url_for('kubegenericcreate') }}">Create Generic Kube</a></li>
+                    <li><a href="{{ url_for('kubeopenshiftcreate') }}">Create Openshift</a></li>
+                </ul>
+            </li>
+            <li class="dropdown">
+                <a data-toggle="dropdown" class="dropdown-toggle" href="#">Clients <b class="caret"></b></a>
                 <ul role="menu" class="dropdown-menu">
                     <li ><a href="{{ url_for('hosts') }}">List Clients</a></li>
-                    <li ><a href="{{ url_for('imagecreate') }}">Download Images</a></li>
                     <li ><a href="{{ url_for('images') }}">List Images</a></li>
                     <li ><a href="{{ url_for('isos') }}">List Isos</a></li>
+                    <li ><a href="{{ url_for('imagecreate') }}">Download Images</a></li>
                 </ul>
             </li>
         </ul>
         <ul class="nav navbar-nav navbar-right">
-            <li><a href="https://github.com/karmab/kcli">Documentation</a></li>
+            <li><a href="https://kcli.readthedocs.io">Documentation</a></li>
         </ul>
         <p class="navbar-text navbar-right">Current Client: {{ client }}</p>
     </div>

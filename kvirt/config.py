@@ -223,6 +223,8 @@ class Kconfig(Kbaseconfig):
                 common.pprint("Incorrect parameter %s. Hyphens are not allowed" % wrong_override, color='red')
             os._exit(1)
         overrides['name'] = name
+        kube = overrides.get('kube')
+        kubetype = overrides.get('kubetype')
         k = self.k if k is None else k
         tunnel = self.tunnel
         if profile is None:
@@ -283,8 +285,6 @@ class Kconfig(Kbaseconfig):
             default_reserveip = father.get('reserveip', self.reserveip)
             default_start = father.get('start', self.start)
             default_autostart = father.get('autostart', self.autostart)
-            default_report = father.get('report', self.report)
-            default_reportall = father.get('reportall', self.reportall)
             default_keys = father.get('keys', self.keys)
             default_netmasks = father.get('netmasks', self.netmasks)
             default_gateway = father.get('gateway', self.gateway)
@@ -359,8 +359,6 @@ class Kconfig(Kbaseconfig):
             default_reserveip = self.reserveip
             default_start = self.start
             default_autostart = self.autostart
-            default_report = self.report
-            default_reportall = self.reportall
             default_keys = self.keys
             default_netmasks = self.netmasks
             default_gateway = self.gateway
@@ -435,8 +433,6 @@ class Kconfig(Kbaseconfig):
         nested = profile.get('nested', default_nested)
         start = profile.get('start', default_start)
         autostart = profile.get('autostart', default_autostart)
-        report = profile.get('report', default_report)
-        reportall = profile.get('reportall', default_reportall)
         keys = profile.get('keys', default_keys)
         cmds = common.remove_duplicates(default_cmds + profile.get('cmds', []))
         netmasks = profile.get('netmasks', default_netmasks)
@@ -578,25 +574,6 @@ class Kconfig(Kbaseconfig):
         else:
             rhncommands = []
         cmds = rhncommands + cmds + scriptcmds
-        if reportall:
-            reportcmd = 'curl -s -X POST -d "name=%s&status=Running&report=`cat /var/log/cloud-init.log`" %s/report '
-            '>/dev/null' % (name, self.reporturl)
-            finishcmd = 'curl -s -X POST -d "name=%s&status=OK&report=`cat /var/log/cloud-init.log`" %s/report '
-            '>/dev/null' % (name, self.reporturl)
-            if not cmds:
-                cmds = [finishcmd]
-            else:
-                results = []
-                for cmd in cmds[:-1]:
-                    results.append(cmd)
-                    results.append(reportcmd)
-                results.append(cmds[-1])
-                results.append(finishcmd)
-                cmds = results
-        elif report:
-            reportcmd = ['curl -s -X POST -d "name=%s&status=OK&report=`cat /var/log/cloud-init.log`" %s/report '
-                         '/dev/null' % (name, self.reporturl)]
-            cmds = cmds + reportcmd
         if notify:
             if notifycmd is None and notifyscript is None:
                 if 'cos' in image:
@@ -734,7 +711,7 @@ $INFO
                           overrides=overrides, tags=tags, dnsclient=dnsclient, storemetadata=storemetadata,
                           sharedfolders=sharedfolders, kernel=kernel, initrd=initrd, cmdline=cmdline,
                           placement=placement, autostart=autostart, cpuhotplug=cpuhotplug, memoryhotplug=memoryhotplug,
-                          pcidevices=pcidevices, tpm=tpm, rng=rng)
+                          pcidevices=pcidevices, tpm=tpm, rng=rng, kube=kube, kubetype=kubetype)
         if result['result'] != 'success':
             return result
         if dnsclient is not None and domain is not None:
@@ -799,6 +776,26 @@ $INFO
         for plan in plans:
             results.append([plan, ','.join(plans[plan])])
         return results
+
+    def list_kubes(self):
+        """
+
+        :return:
+        """
+        k = self.k
+        kubes = {}
+        for vm in k.list():
+            if 'kube' in vm and 'kubetype' in vm:
+                vmname = vm['name']
+                kube = vm['kube']
+                kubetype = vm['kubetype']
+                if kube not in kubes:
+                    kubes[kube] = {'type': kubetype, 'vms': [vmname]}
+                else:
+                    kubes[kube]['vms'].append(vmname)
+        for kube in kubes:
+            kubes[kube]['vms'] = ','.join(kubes[kube]['vms'])
+        return kubes
 
     def create_product(self, name, repo=None, group=None, plan=None, latest=False, overrides={}):
         """Create product"""

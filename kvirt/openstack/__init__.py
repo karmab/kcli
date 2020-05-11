@@ -67,7 +67,7 @@ class Kopenstack(object):
                tunnel=False, files=[], enableroot=True, alias=[], overrides={},
                tags={}, dnsclient=None, storemetadata=False, sharedfolders=[], kernel=None, initrd=None,
                cmdline=None, placement=[], autostart=False, cpuhotplug=False, memoryhotplug=False, numamode=None,
-               numa=[], pcidevices=[], tpm=False, rng=False):
+               numa=[], pcidevices=[], tpm=False, rng=False, kube=None, kubetype=None):
         glance = self.glance
         nova = self.nova
         neutron = self.neutron
@@ -153,6 +153,9 @@ class Kopenstack(object):
             meta['dnsclient'] = dnsclient
         if domain is not None:
             meta['domain'] = domain
+        if kube is not None and kubetype is not None:
+            meta['kube'] = kube
+            meta['kubetype'] = kubetype
         userdata = None
         if cloudinit:
             if image is not None and common.needs_ignition(image):
@@ -372,6 +375,9 @@ class Kopenstack(object):
         if metadata is not None:
             if 'plan' in metadata:
                 yamlinfo['plan'] = metadata['plan']
+            if 'kube' in metadata and 'kubetype' in metadata:
+                yamlinfo['kube'] = metadata['kube']
+                yamlinfo['kubetype'] = metadata['kubetype']
             if 'profile' in metadata:
                 yamlinfo['profile'] = metadata['profile']
             if 'loadbalancer' in metadata:
