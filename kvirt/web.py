@@ -106,18 +106,22 @@ def diskaction():
     k = config.k
     if 'action' in request.form:
         action = request.form['action']
-        if action == 'add':
-            name = request.form['name']
-            size = int(request.form['size'])
-            pool = request.form['pool']
-            result = k.add_disk(name, size, pool)
-        elif action == 'delete':
-            name = request.form['name']
-            diskname = request.form['disk']
-            result = k.delete_disk(name, diskname)
-        response = jsonify(result)
-        print(response)
-        response.status_code = 200
+        if action not in ['create', 'delete']:
+            result = {'result': 'failure', 'reason': "Incorrect action"}
+            response = jsonify(result)
+            response.status_code = 400
+        else:
+            if action == 'add':
+                name = request.form['name']
+                size = int(request.form['size'])
+                pool = request.form['pool']
+                result = k.add_disk(name, size, pool)
+            elif action == 'delete':
+                name = request.form['name']
+                diskname = request.form['disk']
+                result = k.delete_disk(name, diskname)
+            response = jsonify(result)
+            response.status_code = 200
     else:
         failure = {'result': 'failure', 'reason': "Invalid Data"}
         response = jsonify(failure)
@@ -134,17 +138,21 @@ def nicaction():
     k = config.k
     if 'action' in request.form:
         action = request.form['action']
-        if action == 'add':
-            name = request.form['name']
-            network = request.form['network']
-            result = k.add_nic(name, network)
-        elif action == 'delete':
-            name = request.form['name']
-            nicname = request.form['nic']
-            result = k.delete_nic(name, nicname)
-        response = jsonify(result)
-        print(response)
-        response.status_code = 200
+        if action not in ['create', 'delete']:
+            result = {'result': 'failure', 'reason': "Incorrect action"}
+            response = jsonify(result)
+            response.status_code = 400
+        else:
+            if action == 'add':
+                name = request.form['name']
+                network = request.form['network']
+                result = k.add_nic(name, network)
+            elif action == 'delete':
+                name = request.form['name']
+                nicname = request.form['nic']
+                result = k.delete_nic(name, nicname)
+            response = jsonify(result)
+            response.status_code = 200
     else:
         failure = {'result': 'failure', 'reason': "Invalid Data"}
         response = jsonify(failure)
@@ -187,22 +195,22 @@ def poolaction():
     if 'pool' in request.form:
         pool = request.form['pool']
         action = request.form['action']
-        if action == 'create':
-            path = request.form['path']
-            pooltype = request.form['type']
-            print(pool, path, pooltype)
-            result = k.create_pool(name=pool, poolpath=path, pooltype=pooltype)
-            print(result)
-        elif action == 'delete':
-            result = k.delete_pool(name=pool)
+        if action not in ['create', 'delete']:
+            result = {'result': 'failure', 'reason': "Incorrect action"}
+            response = jsonify(result)
+            response.status_code = 400
         else:
-            result = "Nothing to do"
-        response = jsonify(result)
-        print(response)
-        response.status_code = 200
+            if action == 'create':
+                path = request.form['path']
+                pooltype = request.form['type']
+                result = k.create_pool(name=pool, poolpath=path, pooltype=pooltype)
+            elif action == 'delete':
+                result = k.delete_pool(name=pool)
+            response = jsonify(result)
+            response.status_code = 200
     else:
-        failure = {'result': 'failure', 'reason': "Invalid Data"}
-        response = jsonify(failure)
+        result = {'result': 'failure', 'reason': "Invalid Data"}
+        response = jsonify(result)
         response.status_code = 400
     return response
 
@@ -218,26 +226,25 @@ def repoaction():
     if 'repo' in request.form:
         repo = request.form['repo']
         action = request.form['action']
-        if action == 'create':
-            url = request.form['url']
-            print(repo, url)
-            if url == '':
-                failure = {'result': 'failure', 'reason': "Invalid Data"}
-                response = jsonify(failure)
-                response.status_code = 400
-            else:
-                result = config.create_repo(repo, url)
-                print(result)
-        elif action == 'update':
-            result = config.update_repo(repo)
-            print(result)
-        elif action == 'delete':
-            result = config.delete_repo(repo)
+        if action not in ['create', 'delete', 'update']:
+            result = {'result': 'failure', 'reason': "Incorrect action"}
+            response = jsonify(result)
+            response.status_code = 400
         else:
-            result = "Nothing to do"
-        response = jsonify(result)
-        print(response)
-        response.status_code = 200
+            if action == 'create':
+                url = request.form['url']
+                if url == '':
+                    failure = {'result': 'failure', 'reason': "Invalid Data"}
+                    response = jsonify(failure)
+                    response.status_code = 400
+                else:
+                    result = config.create_repo(repo, url)
+            elif action == 'update':
+                result = config.update_repo(repo)
+            elif action == 'delete':
+                result = config.delete_repo(repo)
+            response = jsonify(result)
+            response.status_code = 200
     else:
         failure = {'result': 'failure', 'reason': "Invalid Data"}
         response = jsonify(failure)
@@ -266,26 +273,26 @@ def networkaction():
     if 'network' in request.form:
         network = request.form['network']
         action = request.form['action']
-        if action == 'create':
-            cidr = request.form['cidr']
-            dhcp = bool(request.form['dhcp'])
-            isolated = bool(request.form['isolated'])
-            nat = not isolated
-            print(network, cidr, dhcp, nat)
-            result = k.create_network(name=network, cidr=cidr, dhcp=dhcp, nat=nat)
-        elif action == 'delete':
-            result = k.delete_network(name=network)
+        if action not in ['create', 'delete']:
+            result = {'result': 'failure', 'reason': "Incorrect action"}
+            response = jsonify(result)
+            response.status_code = 400
         else:
-            result = "Nothing to do"
-        response = jsonify(result)
-        print(response)
-        response.status_code = 200
-        return response
+            if action == 'create':
+                cidr = request.form['cidr']
+                dhcp = bool(request.form['dhcp'])
+                isolated = bool(request.form['isolated'])
+                nat = not isolated
+                result = k.create_network(name=network, cidr=cidr, dhcp=dhcp, nat=nat)
+            elif action == 'delete':
+                result = k.delete_network(name=network)
+            response = jsonify(result)
+            response.status_code = 200
     else:
-        failure = {'result': 'failure', 'reason': "Invalid Data"}
-        response = jsonify(failure)
+        result = {'result': 'failure', 'reason': "Invalid Data"}
+        response = jsonify(result)
         response.status_code = 400
-        return jsonify(failure)
+    return response
 
 
 # PLANS
@@ -310,36 +317,37 @@ def vmaction():
     if 'name' in request.form:
         name = request.form['name']
         action = request.form['action']
-        if action == 'start':
-            result = k.start(name)
-        elif action == 'stop':
-            result = k.stop(name)
-        elif action == 'delete':
-            result = k.delete(name)
-        elif action == 'create' and 'profile' in request.form:
-            profile = request.form['profile']
-            parameters = {}
-            for p in request.form:
-                if p.startswith('parameters'):
-                    value = request.form[p]
-                    key = p.replace('parameters[', '').replace(']', '')
-                    parameters[key] = value
-            parameters['nets'] = parameters['nets'].split(',')
-            parameters['disks'] = [int(disk) for disk in parameters['disks'].split(',')]
-            if name == '':
-                name = nameutils.get_random_name()
-            result = config.create_vm(name, profile, overrides=parameters)
+        if action not in ['start', 'stop', 'delete', 'create']:
+            result = {'result': 'failure', 'reason': "Invalid Action"}
+            response = jsonify(result)
+            response.status_code = 400
         else:
-            result = "Nothing to do"
-        print(result)
-        response = jsonify(result)
-        response.status_code = 200
-        return response
+            if action == 'start':
+                result = k.start(name)
+            elif action == 'stop':
+                result = k.stop(name)
+            elif action == 'delete':
+                result = k.delete(name)
+            elif action == 'create' and 'profile' in request.form:
+                profile = request.form['profile']
+                parameters = {}
+                for p in request.form:
+                    if p.startswith('parameters'):
+                        value = request.form[p]
+                        key = p.replace('parameters[', '').replace(']', '')
+                        parameters[key] = value
+                parameters['nets'] = parameters['nets'].split(',')
+                parameters['disks'] = [int(disk) for disk in parameters['disks'].split(',')]
+                if name == '':
+                    name = nameutils.get_random_name()
+                result = config.create_vm(name, profile, overrides=parameters)
+            response = jsonify(result)
+            response.status_code = 200
     else:
-        failure = {'result': 'failure', 'reason': "Invalid Data"}
-        response = jsonify(failure)
+        result = {'result': 'failure', 'reason': "Invalid Data"}
+        response = jsonify(result)
         response.status_code = 400
-        return jsonify(failure)
+    return jsonify(result)
 
 
 # HOSTS
@@ -353,22 +361,24 @@ def hostaction():
     if 'name' in request.form:
         name = request.form['name']
         action = request.form['action']
-        if action == 'enable':
-            result = baseconfig.enable_host(name)
-        elif action == 'disable':
-            result = baseconfig.disable_host(name)
-        elif action == 'switch':
-            result = baseconfig.switch_host(name)
+        if action not in ['enable', 'disable', 'switch']:
+            result = {'result': 'failure', 'reason': "Invalid Action"}
+            response = jsonify(result)
+            response.status_code = 400
         else:
-            result = "Nothing to do"
-        response = jsonify(result)
-        response.status_code = 200
-        return response
+            if action == 'enable':
+                result = baseconfig.enable_host(name)
+            elif action == 'disable':
+                result = baseconfig.disable_host(name)
+            elif action == 'switch':
+                result = baseconfig.switch_host(name)
+            response = jsonify(result)
+            response.status_code = 200
     else:
-        failure = {'result': 'failure', 'reason': "Invalid Data"}
-        response = jsonify(failure)
+        result = {'result': 'failure', 'reason': "Invalid Data"}
+        response = jsonify(result)
         response.status_code = 400
-        return jsonify(failure)
+    return response
 
 
 @app.route("/snapshotaction", methods=['POST'])
@@ -381,28 +391,30 @@ def snapshotaction():
     if 'name' in request.form:
         name = request.form['name']
         action = request.form['action']
-        if action == 'list':
-            result = k.snapshot(None, name, listing=True)
-        elif action == 'create':
-            snapshot = request.form['snapshot']
-            result = k.snapshot(snapshot, name)
-        elif action == 'delete':
-            snapshot = request.form['snapshot']
-            result = k.snapshot(snapshot, name, delete=True)
-        elif action == 'revert':
-            snapshot = request.form['snapshot']
-            name = request.form['name']
-            result = k.snapshot(snapshot, name, revert=True)
-        print(result)
-        response = jsonify(result)
-        print(response)
-        response.status_code = 200
-        return response
+        if action not in ['list', 'revert', 'delete', 'create']:
+            result = {'result': 'failure', 'reason': "Invalid Action"}
+            response = jsonify(result)
+            response.status_code = 400
+        else:
+            if action == 'list':
+                result = k.snapshot(None, name, listing=True)
+            elif action == 'create':
+                snapshot = request.form['snapshot']
+                result = k.snapshot(snapshot, name)
+            elif action == 'delete':
+                snapshot = request.form['snapshot']
+                result = k.snapshot(snapshot, name, delete=True)
+            elif action == 'revert':
+                snapshot = request.form['snapshot']
+                name = request.form['name']
+                result = k.snapshot(snapshot, name, revert=True)
+            response = jsonify(result)
+            response.status_code = 200
     else:
-        failure = {'result': 'failure', 'reason': "Invalid Data"}
-        response = jsonify(failure)
+        result = {'result': 'failure', 'reason': "Invalid Data"}
+        response = jsonify(result)
         response.status_code = 400
-        return jsonify(failure)
+    return response
 
 
 @app.route("/planaction", methods=['POST'])
@@ -414,29 +426,30 @@ def planaction():
     if 'name' in request.form:
         plan = request.form['name']
         action = request.form['action']
-        if action == 'start':
-            result = config.plan(plan, start=True)
-        elif action == 'stop':
-            result = config.plan(plan, stop=True)
-        elif action == 'delete':
-            result = config.plan(plan, delete=True)
-        elif action == 'create':
-            print(request.form)
-            url = request.form['url']
-            if plan == '':
-                plan = nameutils.get_random_name()
-            result = config.plan(plan, url=url)
+        if action not in ['start', 'stop', 'delete', 'create']:
+            result = {'result': 'failure', 'reason': "Invalid Action"}
+            response = jsonify(result)
+            response.status_code = 400
         else:
-            result = "Nothing to do"
-        print(result)
-        response = jsonify(result)
-        print(response)
-        response.status_code = 200
-        return response
+            if action == 'start':
+                result = config.plan(plan, start=True)
+            elif action == 'stop':
+                result = config.plan(plan, stop=True)
+            elif action == 'delete':
+                result = config.plan(plan, delete=True)
+            elif action == 'create':
+                print(request.form)
+                url = request.form['url']
+                if plan == '':
+                    plan = nameutils.get_random_name()
+                result = config.plan(plan, url=url)
+            response = jsonify(result)
+            response.status_code = 200
     else:
-        failure = {'result': 'failure', 'reason': "Invalid Data"}
-        response = jsonify(failure)
+        result = {'result': 'failure', 'reason': "Invalid Data"}
+        response = jsonify(result)
         response.status_code = 400
+    return response
 
 
 @app.route('/containerstable')
@@ -602,15 +615,16 @@ def productaction():
                 plan = None
             result = config.create_product(product, plan=plan, overrides=parameters)
         else:
-            result = "Nothing to do"
-        print(result)
+            result = {'result': 'failure', 'reason': "Invalid Action"}
+            response = jsonify(result)
+            response.status_code = 400
         response = jsonify(result)
         response.status_code = 200
-        return response
     else:
-        failure = {'result': 'failure', 'reason': "Invalid Data"}
-        response = jsonify(failure)
+        result = {'result': 'failure', 'reason': "Invalid Data"}
+        response = jsonify(result)
         response.status_code = 400
+    return response
 
 
 # KUBE
@@ -672,16 +686,18 @@ def kubeaction():
                 thread = Thread(target=config.create_kube_openshift, kwargs={'cluster': cluster,
                                                                              'overrides': parameters})
             thread.start()
-            result = "Kube %s created" % cluster
+            result = {'result': 'success'}
+            response = jsonify(result)
+            response.status_code = 200
         else:
-            result = "Nothing to do"
-        response = jsonify(result)
-        response.status_code = 200
-        return response
+            result = {'result': 'failure', 'reason': "Invalid Action"}
+            response = jsonify(result)
+            response.status_code = 400
     else:
         failure = {'result': 'failure', 'reason': "Invalid Data"}
         response = jsonify(failure)
         response.status_code = 400
+    return response
 
 
 @app.route('/hoststable')
@@ -760,30 +776,32 @@ def containeraction():
     if 'name' in request.form:
         name = request.form['name']
         action = request.form['action']
-        if action == 'start':
-            result = dockerutils.start_container(k, name)
-        elif action == 'stop':
-            result = dockerutils.stop_container(k, name)
-        elif action == 'delete':
-            result = dockerutils.delete_container(k, name)
-        elif action == 'create' and 'profile' in request.form:
-            profile = [prof for prof in config.list_containerprofiles() if prof[0] == request.form['profile']][0]
-            if name is None:
-                name = nameutils.get_random_name()
-            image, nets, ports, volumes, cmd = profile[1:]
-            result = dockerutils.create_container(k, name=name, image=image, nets=nets, cmd=cmd, ports=ports,
-                                                  volumes=volumes)
-            result = dockerutils.create_container(k, name, profile)
+        if action not in ['start', 'stop', 'delete', 'create']:
+            result = {'result': 'failure', 'reason': "Invalid Action"}
+            response = jsonify(result)
+            response.status_code = 400
         else:
-            result = "Nothing to do"
-        print(result)
-        response = jsonify(result)
-        response.status_code = 200
-        return response
+            if action == 'start':
+                result = dockerutils.start_container(k, name)
+            elif action == 'stop':
+                result = dockerutils.stop_container(k, name)
+            elif action == 'delete':
+                result = dockerutils.delete_container(k, name)
+            elif action == 'create' and 'profile' in request.form:
+                profile = [prof for prof in config.list_containerprofiles() if prof[0] == request.form['profile']][0]
+                if name is None:
+                    name = nameutils.get_random_name()
+                image, nets, ports, volumes, cmd = profile[1:]
+                result = dockerutils.create_container(k, name=name, image=image, nets=nets, cmd=cmd, ports=ports,
+                                                      volumes=volumes)
+                result = dockerutils.create_container(k, name, profile)
+            response = jsonify(result)
+            response.status_code = 200
     else:
-        failure = {'result': 'failure', 'reason': "Invalid Data"}
+        result = {'result': 'failure', 'reason': "Invalid Data"}
+        response = jsonify(result)
         response.status_code = 400
-        return jsonify(failure)
+    return response
 
 
 @app.route('/imagestable')
@@ -838,17 +856,17 @@ def imageaction():
             if cmd == '':
                 cmd = None
             result = config.handle_host(pool=pool, image=image, download=True, url=url, cmd=cmd)
+            response = jsonify(result)
+            response.status_code = 200
         else:
-            result = "Nothing to do"
-        print(result)
-        response = jsonify(result)
-        response.status_code = 200
-        return response
+            result = {'result': 'failure', 'reason': "Invalid Action"}
+            response = jsonify(result)
+            response.status_code = 400
     else:
-        failure = {'result': 'failure', 'reason': "Invalid Data"}
-        response = jsonify(failure)
+        result = {'result': 'failure', 'reason': "Invalid Data"}
+        response = jsonify(result)
         response.status_code = 400
-        return response
+    return response
 
 
 @app.route('/isostable')
