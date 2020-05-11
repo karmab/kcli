@@ -58,7 +58,7 @@ class Kconfig(Kbaseconfig):
                         os._exit(1)
                     else:
                         token = open(token_file).read()
-                from kvirt.kubevirt import Kubevirt
+                from kvirt.providers.kubevirt import Kubevirt
                 k = Kubevirt(context=context, token=token, ca_file=ca_file, multus=multus, host=self.host,
                              port=self.port, user=self.user, debug=debug, namespace=namespace, cdi=cdi,
                              datavolumes=datavolumes, readwritemany=readwritemany)
@@ -77,7 +77,7 @@ class Kconfig(Kbaseconfig):
                 zone = self.options.get('zone', 'europe-west1-b') if zone is None else zone
                 region = self.options.get('region') if region is None else region
                 region = zone[:-2] if region is None else region
-                from kvirt.gcp import Kgcp
+                from kvirt.providers.gcp import Kgcp
                 k = Kgcp(region=region, zone=zone, project=project, debug=debug)
                 self.overrides.update({'project': project})
             elif self.type == 'aws':
@@ -94,7 +94,7 @@ class Kconfig(Kbaseconfig):
                     common.pprint("Missing access_key_secret in the configuration. Leaving", color='red')
                     os._exit(1)
                 keypair = self.options.get('keypair')
-                from kvirt.aws import Kaws
+                from kvirt.providers.aws import Kaws
                 k = Kaws(access_key_id=access_key_id, access_key_secret=access_key_secret, region=region,
                          debug=debug, keypair=keypair)
             elif self.type == 'ovirt':
@@ -121,7 +121,7 @@ class Kconfig(Kbaseconfig):
                 filtervms = self.options.get('filtervms', False)
                 filteruser = self.options.get('filteruser', False)
                 filtertag = self.options.get('filtertag')
-                from kvirt.ovirt import KOvirt
+                from kvirt.providers.ovirt import KOvirt
                 k = KOvirt(host=self.host, port=self.port, user=user, password=password,
                            debug=debug, datacenter=datacenter, cluster=cluster, ca_file=ca_file, org=org,
                            imagerepository=imagerepository, filtervms=filtervms, filteruser=filteruser,
@@ -153,7 +153,7 @@ class Kconfig(Kbaseconfig):
                 if auth_url.startswith('https') and ca_file is None:
                     common.pprint("Secure auth_url was specified and ca_file is missing. Leaving", color='red')
                     os.exit(1)
-                from kvirt.openstack import Kopenstack
+                from kvirt.providers.openstack import Kopenstack
                 k = Kopenstack(host=self.host, port=self.port, user=user, password=password, version=version,
                                debug=debug, project=project, domain=domain, auth_url=auth_url, ca_file=ca_file)
             elif self.type == 'vsphere':
@@ -174,7 +174,7 @@ class Kconfig(Kbaseconfig):
                 filtervms = self.options.get('filtervms', False)
                 filteruser = self.options.get('filteruser', False)
                 filtertag = self.options.get('filtertag')
-                from kvirt.vsphere import Ksphere
+                from kvirt.providers.vsphere import Ksphere
                 k = Ksphere(self.host, user, password, datacenter, cluster, debug=debug, filtervms=filtervms,
                             filteruser=filteruser, filtertag=filtertag)
             else:
@@ -182,7 +182,7 @@ class Kconfig(Kbaseconfig):
                     common.pprint("Problem parsing your configuration file", color='red')
                     os._exit(1)
                 session = self.options.get('session', False)
-                from kvirt.kvm import Kvirt
+                from kvirt.providers.kvm import Kvirt
                 k = Kvirt(host=self.host, port=self.port, user=self.user, protocol=self.protocol, url=self.url,
                           debug=debug, insecure=self.insecure, session=session)
             if k.conn is None:
