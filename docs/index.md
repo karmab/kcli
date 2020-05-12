@@ -879,8 +879,7 @@ Finally, note that if using the docker version of kcli against your local hyperv
 
 ## Ansible support
 
-You can check klist.py in the extra directory and use it as a dynamic inventory for ansible.
-It's also present at `/usr/share/doc/kcli/extras/klist.py` in the rpm and `/usr/bin/klist.py` in the container
+klist.py is provided as a dynamic inventory for ansible.
 
 The script uses sames conf as kcli (and as such defaults to local if no configuration file is found).
 
@@ -891,8 +890,9 @@ An interesting thing is that the script will try to guess the type of vm based o
 Try it with:
 
 ```Shell
-python extras/klist.py --list
-ansible all -i extras/klist.py -m ping
+klist.py --list
+KLIST=$(which klist.py)
+ansible all -i $KLIST -m ping
 ```
 
 If you're using kcli as a container, you will have to create a script such as the following to properly call the inventory.

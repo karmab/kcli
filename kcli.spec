@@ -41,7 +41,6 @@ curl -s https://github.com/karmab/kcli/commits/master | grep 'https://github.com
 %{__python} setup.py install --prefix=%{_prefix} --root=%{buildroot}
 mkdir -p %{buildroot}/%{_docdir}/kcli
 mkdir -p %{buildroot}/%{_mandir}/man1
-cp -r extras %{buildroot}/%{_docdir}/kcli
 LANG=en_US.UTF-8 ronn -r README.md
 mv README kcli.1
 gzip kcli.1

@@ -121,4 +121,9 @@ class KcliInventory(object):
         return metadata
 
 
-KcliInventory()
+def main():
+    KcliInventory()
+
+
+if __name__ == "__main__":
+    main()

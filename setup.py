@@ -43,5 +43,6 @@ setup(
         [console_scripts]
         kcli=kvirt.cli:cli
         kweb=kvirt.web.main:run
+        klist.py=kvirt.klist:main
     ''',
 )
