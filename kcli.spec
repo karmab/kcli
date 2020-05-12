@@ -56,6 +56,7 @@ rm -rf %{buildroot}
 %{python_sitelib}/*
 %attr(0755,root,root) %{_bindir}/kcli
 %attr(0755,root,root) %{_bindir}/kweb
+%attr(0755,root,root) %{_bindir}/klist.py
 
 %changelog
 {{{ git_dir_changelog }}}

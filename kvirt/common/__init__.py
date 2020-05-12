@@ -753,7 +753,6 @@ def print_info(yamlinfo, output='plain', fields=[], values=False, pretty=True):
                         current = snap['current']
                         snaps += "snapshot: %s current: %s\n" % (snapshot, current)
                     value = snaps.rstrip()
-
                 if values or key in ['disks', 'nets']:
                     result += "%s\n" % value
                 else:
