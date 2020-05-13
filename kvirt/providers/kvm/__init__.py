@@ -1795,7 +1795,7 @@ class Kvirt(object):
                 if domain is not None:
                     dnsentry += '<hostname>%s.%s</hostname>' % (name, domain)
                 for entry in alias:
-                    dnsentry += "%s<hostname>%s</hostname>" % entry
+                    dnsentry += "%s<hostname>%s</hostname>" % (entry, entry)
                 dnsentry += "</host>"
                 if force:
                     for host in list(root.getiterator('host')):
