@@ -1058,11 +1058,10 @@ class Kvirt(object):
             available = float(available)
             print(("Storage:%s Type: %s Path:%s Used space: %sGB Available space: %sGB" % (poolname, pooltype, poolpath,
                                                                                            used, available)))
-        for interface in conn.listAllInterfaces():
-            interfacename = interface.name()
-            if interfacename == 'lo':
+        for interface in conn.listInterfaces():
+            if interface == 'lo':
                 continue
-            print("Network: %s Type: bridged" % interfacename)
+            print("Network: %s Type: bridged" % interface)
         for network in conn.listAllNetworks():
             networkname = network.name()
             netxml = network.XMLDesc(0)
@@ -2202,8 +2201,8 @@ class Kvirt(object):
     def add_nic(self, name, network):
         conn = self.conn
         networks = {}
-        for interface in conn.listAllInterfaces():
-            networks[interface.name()] = 'bridge'
+        for interface in conn.listInterfaces():
+            networks[interface] = 'bridge'
         for net in conn.listAllNetworks():
             networks[net.name()] = 'network'
         try:
@@ -2234,7 +2233,7 @@ class Kvirt(object):
         conn = self.conn
         networks = {}
         nicnumber = 0
-        for n in conn.listAllInterfaces():
+        for n in conn.listInterfaces():
             networks[n.name()] = 'bridge'
         for n in conn.listAllNetworks():
             networks[n.name()] = 'network'
@@ -2609,11 +2608,10 @@ class Kvirt(object):
                 if e is not None:
                     plan = e.text
             networks[networkname]['plan'] = plan
-        for interface in conn.listAllInterfaces():
-            interfacename = interface.name()
-            if interfacename == 'lo' or interfacename in networks:
+        for interface in conn.listInterfaces():
+            if interface == 'lo' or interface in networks:
                 continue
-            netxml = interface.XMLDesc(0)
+            netxml = conn.interfaceLookupByName(interface).XMLDesc(0)
             root = ET.fromstring(netxml)
             bridge = list(root.getiterator('bridge'))
             if not bridge:
@@ -2628,15 +2626,15 @@ class Kvirt(object):
             else:
                 ip = None
                 cidr = 'N/A'
-            networks[interfacename] = {'cidr': cidr, 'dhcp': 'N/A', 'type': 'bridged', 'mode': 'N/A'}
+            networks[interface] = {'cidr': cidr, 'dhcp': 'N/A', 'type': 'bridged', 'mode': 'N/A'}
             if ip is not None:
-                networks[interfacename]['ip'] = ip
+                networks[interface]['ip'] = ip
             plan = 'N/A'
             for element in list(root.getiterator('{kvirt}info')):
                 e = element.find('{kvirt}plan')
                 if e is not None:
                     plan = e.text
-            networks[interfacename]['plan'] = plan
+            networks[interface]['plan'] = plan
         return networks
 
     def list_subnets(self):
@@ -2695,7 +2693,7 @@ class Kvirt(object):
 
     def _get_bridge(self, name):
         conn = self.conn
-        bridges = [interface.name() for interface in conn.listAllInterfaces()]
+        bridges = [interface for interface in conn.listInterfaces()]
         if name in bridges:
             return name
         try:
