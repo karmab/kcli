@@ -7,12 +7,14 @@ info: |
     Default version is latest stable but you can instead use ci, for which you will need a specific pull secret
     Upstream okd version can be specified with the upstream flag.
     the baremetal flag allows to get the baremetal operator deployed, so that you can deploy physical workers afterwards.
+    Sdn defaults to OpenShiftSDN but OVNKubernetes or Calico can be specified instead
 masters: 1
 workers: 0
 image: rhcos44
 network: default
 cluster: testk
 domain: karmalabs.com
+network_type: OpenShiftSDN
 minimal: false
 numcpus: 4
 master_memory: 8192

@@ -6,7 +6,8 @@ from glob import glob
 import json
 import os
 import sys
-from kvirt.common import info, pprint, gen_mac, get_oc, get_values, pwd_path, insecure_fetch
+from kvirt.common import info, pprint, gen_mac, get_oc, get_values, pwd_path, insecure_fetch, fetch
+from kvirt.openshift.calico import calicoassets
 from random import randint
 import re
 from shutil import copy2, move
@@ -363,6 +364,9 @@ def create(config, plandir, cluster, overrides):
     if os.path.exists(manifestsdir) and os.path.isdir(manifestsdir):
         for f in glob("%s/*.yaml" % manifestsdir):
             copy2(f, "%s/openshift" % clusterdir)
+    if 'network_type' in data and data['network_type'] == 'Calico':
+        for asset in calicoassets:
+            fetch(asset, manifestsdir)
     call('openshift-install --dir=%s create ignition-configs' % clusterdir, shell=True)
     staticdata = gather_dhcp(data, platform)
     if staticdata:
