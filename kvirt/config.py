@@ -1166,6 +1166,10 @@ $INFO
         parameters = entries.get('parameters')
         if parameters is not None:
             del entries['parameters']
+        dict_types = [entry for entry in entries if isinstance(entries[entry], dict)]
+        if not dict_types:
+            common.pprint("%s doesn't look like a valid plan.Leaving...." % inputfile, color='red')
+            os._exit(1)
         vmentries = [entry for entry in entries if 'type' not in entries[entry] or entries[entry]['type'] == 'vm']
         diskentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'disk']
         networkentries = [entry for entry in entries
