@@ -1705,7 +1705,9 @@ $INFO
                     if image.startswith('rhel'):
                         if 'web' in sys.argv[0]:
                             return {'result': 'failure', 'reason': "Missing url"}
-                        common.pprint("Opening url %s for you to grab complete url for %s" % (url, image), 'blue')
+                        common.pprint("Opening url %s for you to grab complete url for %s kvm guest image" % (url,
+                                                                                                              image),
+                                      'blue')
                         webbrowser.open(url, new=2, autoraise=True)
                         url = input("Copy Url:\n")
                         if url.strip() == '':
@@ -1780,7 +1782,8 @@ $INFO
                 if image.startswith('rhel'):
                     if 'web' in sys.argv[0]:
                         return {'result': 'failure', 'reason': "Missing url"}
-                    common.pprint("Opening url %s for you to grab complete url for %s" % (url, vol), color='blue')
+                    common.pprint("Opening url %s for you to grab complete url for %s kvm guest image" % (url, vol),
+                                  color='blue')
                     webbrowser.open(url, new=2, autoraise=True)
                     url = input("Copy Url:\n")
                     if url.strip() == '':
