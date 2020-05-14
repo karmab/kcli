@@ -956,6 +956,10 @@ def create_vmdisk(args):
     name = args.name
     size = args.size
     image = args.image
+    interface = args.interface
+    if interface not in ['virtio', 'ide', 'scsi']:
+        common.pprint("Incorrect disk interface. Choose betwen virtio, scsi or ide...", color='red')
+        os._exit(1)
     pool = args.pool
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
@@ -969,7 +973,7 @@ def create_vmdisk(args):
         common.pprint("Missing name. Leaving...", color='red')
         os._exit(1)
     common.pprint("Adding disk to %s..." % name)
-    k.add_disk(name=name, size=size, pool=pool, image=image)
+    k.add_disk(name=name, size=size, pool=pool, image=image, interface=interface)
 
 
 def delete_vmdisk(args):
@@ -2737,7 +2741,9 @@ def cli():
     vmdiskadd_parser = argparse.ArgumentParser(add_help=False)
     vmdiskadd_parser.add_argument('-s', '--size', type=int, help='Size of the disk to add, in GB', metavar='SIZE',
                                   default=10)
-    vmdiskadd_parser.add_argument('-i', '--image', help='Name or Path of a Image', metavar='TEMPLATE')
+    vmdiskadd_parser.add_argument('-i', '--image', help='Name or Path of a Image', metavar='IMAGE')
+    vmdiskadd_parser.add_argument('--interface', default='virtio', help='Disk Interface. Defaults to virtio',
+                                  metavar='INTERFACE')
     vmdiskadd_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
     vmdiskadd_parser.add_argument('name', metavar='VMNAME')
     vmdiskadd_parser.set_defaults(func=create_vmdisk)

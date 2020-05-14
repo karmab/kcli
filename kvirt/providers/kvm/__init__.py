@@ -262,6 +262,7 @@ class Kvirt(object):
         disksxml = ''
         fixqcow2path, fixqcow2backing = None, None
         volsxml = {}
+        virtio_index, ide_index, scsi_index = 0, 0, 0
         for index, disk in enumerate(disks):
             if disk is None:
                 disksize = default_disksize
@@ -326,14 +327,16 @@ class Kvirt(object):
                     diskthinpool = None
             else:
                 return {'result': 'failure', 'reason': "Invalid disk entry"}
-            letter = chr(index + ord('a'))
             diskbus = diskinterface
             if diskinterface == 'ide':
-                diskdev = 'hd%s' % letter
+                diskdev = 'hd%s' % chr(ide_index + ord('a'))
+                ide_index += 1
             elif diskinterface in ['scsi', 'sata']:
-                diskdev = 'sd%s' % letter
+                diskdev = 'sd%s' % chr(scsi_index + ord('a'))
+                scsi_index += 1
             else:
-                diskdev = 'vd%s' % letter
+                diskdev = 'vd%s' % chr(virtio_index + ord('a'))
+                virtio_index += 1
             diskformat = 'qcow2'
             if not diskthin:
                 diskformat = 'raw'
@@ -2098,10 +2101,11 @@ class Kvirt(object):
         pool.createXML(volxml, 0)
         return diskpath
 
-    def add_disk(self, name, size=1, pool=None, thin=True, image=None, shareable=False, existing=None):
+    def add_disk(self, name, size=1, pool=None, thin=True, image=None, shareable=False, existing=None,
+                 interface='virtio'):
         conn = self.conn
         diskformat = 'qcow2'
-        diskbus = 'virtio'
+        diskbus = interface
         if size < 1:
             common.pprint("Incorrect size.Leaving...", color='red')
             return {'result': 'failure', 'reason': "Incorrect size"}
@@ -2116,17 +2120,30 @@ class Kvirt(object):
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         currentdisk = 0
         diskpaths = []
+        virtio_index, scsi_index, ide_index = 0, 0, 0
         for element in list(root.getiterator('disk')):
             disktype = element.get('device')
+            device = element.find('target').get('dev')
             imagefiles = [element.find('source').get('file'), element.find('source').get('dev'),
                           element.find('source').get('volume')]
             path = next(item for item in imagefiles if item is not None)
             diskpaths.append(path)
             if disktype == 'cdrom':
                 continue
-            currentdisk = currentdisk + 1
-        diskindex = currentdisk + 1
-        diskdev = "vd%s" % string.ascii_lowercase[currentdisk]
+            elif device.startswith('sd'):
+                scsi_index += 1
+            elif device.startswith('hd'):
+                ide_index += 1
+            else:
+                virtio_index += 1
+            currentdisk += 1
+        diskindex = currentdisk
+        if interface == 'scsi':
+            diskdev = "sd%s" % string.ascii_lowercase[scsi_index]
+        elif interface == 'ide':
+            diskdev = "hd%s" % string.ascii_lowercase[ide_index]
+        else:
+            diskdev = "vd%s" % string.ascii_lowercase[virtio_index]
         if existing is None:
             storagename = "%s_%d.img" % (name, diskindex)
             diskpath = self.create_disk(name=storagename, size=size, pool=pool, thin=thin, image=image)
@@ -2138,12 +2155,12 @@ class Kvirt(object):
         diskxml = self._xmldisk(diskpath=diskpath, diskdev=diskdev, diskbus=diskbus, diskformat=diskformat,
                                 shareable=shareable)
         if vm.isActive() == 1:
-            vm.attachDeviceFlags(diskxml, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
+            vm.attachDeviceFlags(diskxml, VIR_DOMAIN_AFFECT_LIVE)
+            vm = conn.lookupByName(name)
+            vmxml = vm.XMLDesc(0)
+            conn.defineXML(vmxml)
         else:
             vm.attachDeviceFlags(diskxml, VIR_DOMAIN_AFFECT_CONFIG)
-        vm = conn.lookupByName(name)
-        vmxml = vm.XMLDesc(0)
-        conn.defineXML(vmxml)
         return {'result': 'success'}
 
     def delete_disk_by_name(self, name, pool):

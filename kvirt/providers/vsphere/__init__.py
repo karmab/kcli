@@ -977,7 +977,8 @@ class Ksphere:
                                 debug=self.debug, download=download, insecure=insecure)
         return scpcommand
 
-    def add_disk(self, name, size=1, pool=None, thin=True, image=None, shareable=False, existing=None):
+    def add_disk(self, name, size=1, pool=None, thin=True, image=None, shareable=False, existing=None,
+                 interface='virtio'):
         si = self.si
         dc = self.dc
         vmFolder = dc.vmFolder

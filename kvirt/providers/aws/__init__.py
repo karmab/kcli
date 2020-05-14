@@ -600,7 +600,8 @@ class Kaws(object):
         print("not implemented")
         return
 
-    def add_disk(self, name, size, pool=None, thin=True, image=None, shareable=False, existing=None):
+    def add_disk(self, name, size, pool=None, thin=True, image=None, shareable=False, existing=None,
+                 interface='virtio'):
         conn = self.conn
         try:
             Filters = {'Name': "tag:Name", 'Values': [name]}

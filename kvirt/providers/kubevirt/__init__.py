@@ -808,7 +808,8 @@ class Kubevirt(Kubecommon):
         core.create_namespaced_persistent_volume_claim(namespace, pvc)
         return
 
-    def add_disk(self, name, size, pool=None, thin=True, image=None, shareable=False, existing=None):
+    def add_disk(self, name, size, pool=None, thin=True, image=None, shareable=False, existing=None,
+                 interface='virtio'):
         crds = self.crds
         namespace = self.namespace
         try:
