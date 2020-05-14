@@ -2443,7 +2443,11 @@ class Kvirt(object):
             downloadcmd = 'ssh %s -p %s %s@%s "curl -Lo %s/%s -f \'%s\'"' % (self.identitycommand, self.port, self.user,
                                                                              self.host, downloadpath, shortimage, image)
         code = call(downloadcmd, shell=True)
-        if code != 0:
+        if code == 23:
+            common.pprint("Consider running the following command on the hypervisor:", color="blue")
+            common.pprint("sudo setfacl -m u:%s:rwx %s" % (self.user, downloadpath), color="blue")
+            return {'result': 'failure', 'reason': "of Permission issues"}
+        elif code != 0:
             return {'result': 'failure', 'reason': "Unable to download indicated image"}
         if shortimage.endswith('xz') or shortimage.endswith('gz') or shortimage.endswith('bz2') or name == 'rhcos42':
             executable = {'xz': 'unxz', 'gz': 'gunzip', 'bz2': 'bunzip2'}
