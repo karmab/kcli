@@ -2344,10 +2344,15 @@ class Kvirt(object):
                         common.pprint(reason, color='red')
                         return {'result': 'failure', 'reason': reason}
             elif self.protocol == 'ssh':
-                cmd1 = 'ssh %s -p %s %s@%s "test -d %s || mkdir %s"' % (self.identitycommand, self.port, self.user,
-                                                                        self.host, poolpath, poolpath)
+                cmd1 = 'ssh %s -p %s %s@%s "test -d %s || sudo mkdir %s"' % (self.identitycommand, self.port, self.user,
+                                                                             self.host, poolpath, poolpath)
                 cmd2 = 'ssh %s -p %s -t %s@%s "sudo chown %s %s"' % (self.identitycommand, self.port, self.user,
                                                                      self.host, user, poolpath)
+                if self.user != 'root':
+                    setfacl = "sudo setfacl -m u:%s:rwx %s" % (self.user, poolpath)
+                    cmd3 = 'ssh %s -p %s -t %s@%s "%s"' % (self.identitycommand, self.port, self.user, self.host,
+                                                           setfacl)
+
                 return1 = os.system(cmd1)
                 if return1 > 0:
                     reason = "Couldn't create directory %s.Leaving..." % poolpath
@@ -2358,6 +2363,12 @@ class Kvirt(object):
                     reason = "Couldn't change permission of directory %s to qemu" % poolpath
                     common.pprint(reason, color='red')
                     return {'result': 'failure', 'reason': reason}
+                if self.user != 'root':
+                    return3 = os.system(cmd3)
+                    if return3 > 0:
+                        reason = "Couldn't run setfacl for user %s in %s" % (self.user, poolpath)
+                        common.pprint(reason, color='red')
+                        return {'result': 'failure', 'reason': reason}
             else:
                 reason = "Make sure %s directory exists on hypervisor" % name
                 common.pprint(reason, color='red')
