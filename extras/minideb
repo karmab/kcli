@@ -1,4 +1,4 @@
-FROM alpine:3.10
+FROM  bitnami/minideb:stretch
 
 MAINTAINER Karim Boumedhel <karimboumedhel@gmail.com>
 
@@ -12,7 +12,7 @@ LABEL name="karmab/kcli" \
 
 EXPOSE 9000
 
-RUN apk add --update --no-cache g++ gcc libvirt libvirt-dev libc6-compat python3-dev openssh-client curl curl-dev libressl-dev libxml2-dev linux-headers libffi-dev cdrkit xauth bash
+RUN install_packages python3-dateutil python3-prettytable python3-flask python3-netaddr python3-libvirt genisoimage python3-pip python3-setuptools curl libcurl4-openssl-dev build-essential python3-dev libssl-dev libxml2-dev openssh-client
 
 # Group the pip installation
 RUN mkdir /root/kcli
@@ -21,7 +21,7 @@ COPY setup.py /root/kcli
 RUN pip3 install -e /root/kcli[all]
 ADD extras/i_am_a_container /i_am_a_container
 
-RUN echo eval \"\$\(register-python-argcomplete kcli\)\" >> /root/.bashrc && apk del g++ gcc libvirt-dev curl-dev libressl-dev libxml2-dev linux-headers libffi-dev
+RUN echo eval \"\$\(register-python-argcomplete kcli\)\" >> /root/.bashrc && apt-get -y remove build-essential libcurl4-openssl-dev libssl-dev libxml2-dev
 
-ENTRYPOINT ["/usr/bin/kcli"]
+ENTRYPOINT ["/usr/local/bin/kcli"]
 CMD ["-h"]
