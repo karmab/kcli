@@ -1,5 +1,5 @@
 language: python
-dist: bionic
+dist: xenial
 notifications:
   irc:
     channels:
@@ -9,24 +9,32 @@ notifications:
 sudo: required
 python:
 - 3.6
-virtualenv:
-  system_site_packages: true
+
 before_install:
 - pip3 install pep8 misspellings stdeb requests
 - pip3 install setuptools --upgrade
+
+install:
+    - sudo apt-get update
+    - >
+      sudo apt-get -y install
+      libvirt-daemon
+      libvirt0
+      qemu-system-x86
+      qemu-utils
+      qemu-kvm
+
+before_script:
+    - ${PWD}/tests/pipeline/setup_hypervizor.sh
+
 script:
-- find . -name \*.py -exec pep8 --ignore=E402,W504,E721 --max-line-length=120 {} +
-- find . -name '*.py' | misspellings -f -
-# - echo $TRAVIS_COMMIT > kvirt/version/git
-- git rev-parse --short HEAD > kvirt/version/git
-- docker build -t karmab/kcli -f extras/alpine .
-- docker run -it --rm karmab/kcli
+    # source analysis|linting
+    - ${PWD}/tests/pipeline/stages/linting.sh
+    # build 
+    - ${PWD}/tests/pipeline/stages/build.sh
+    # testing 
+    - ${PWD}/tests/pipeline/stages/testing.sh
+    - tree -f /srv/
 after_success:
-- if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == 'false' ] ; then
-  docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD ; docker push karmab/kcli:latest
-  ; fi
-- if [ "$TRAVIS_TAG" != "" ]; then docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
-  ; docker push karmab/kcli:$TRAVIS_TAG ; fi
-- "./pypi.sh"
-- "./packagecloud.sh"
-- "./packagecloud_clean.py"
+    # release 
+    - ${PWD}/tests/pipeline/stages/release.sh
