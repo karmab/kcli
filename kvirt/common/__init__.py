@@ -1037,8 +1037,9 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     data = {'ignition': {'version': version, 'config': {}}, 'storage': storage, 'systemd': systemd,
             'networkd': {}, 'passwd': {'users': [{'name': 'core', 'sshAuthorizedKeys': publickeys}]}}
     if enableroot:
-        rootdata = {'name': 'root', 'sshAuthorizedKeys': publickeys}
-        data['passwd']['users'].append(rootdata)
+        pprint("Ignoring request to add ssh keys for root user as ignition currently complains about it", color='blue')
+        # rootdata = {'name': 'root', 'sshAuthorizedKeys': publickeys}
+        # data['passwd']['users'].append(rootdata)
     role = None
     if len(name.split('-')) == 3 and name.split('-')[1] in ['master', 'worker']:
         role = name.split('-')[1]
