@@ -2,7 +2,9 @@ language: python
 dist: xenial
 sudo: required
 python:
-- 3.6
+- 3.5
+virtualenv:	
+  system_site_packages: true
 
 before_install:
 - pip3 install pep8 misspellings stdeb requests
