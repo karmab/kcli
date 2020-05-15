@@ -20,15 +20,10 @@ micro_fedora:
   memory: 2048
   numcpus: 2
   disks:
-   - size: 5
+   - size: 10
   nets:
       - micro_network
 
 test_instance:
   profile: micro_fedora 
   pool: image_pool 
-
-local:
-    type: kvm
-    host: localhost
-    pool: image_pool
