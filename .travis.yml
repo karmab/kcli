@@ -1,11 +1,5 @@
 language: python
 dist: xenial
-notifications:
-  irc:
-    channels:
-    - chat.freenode.net#kcli
-    on_success: change
-    on_failure: always
 sudo: required
 python:
 - 3.6
@@ -16,25 +10,15 @@ before_install:
 
 install:
     - sudo apt-get update
-    - >
-      sudo apt-get -y install
-      libvirt-daemon
-      libvirt0
-      qemu-system-x86
-      qemu-utils
-      qemu-kvm
+    - sudo apt-get -y install libvirt-daemon libvirt0 qemu-system-x86 qemu-utils qemu-kvm tree
 
 before_script:
-    - ${PWD}/tests/pipeline/setup_hypervizor.sh
+    - travis/setup_hypervisor.sh
 
 script:
-    # source analysis|linting
-    - ${PWD}/tests/pipeline/stages/linting.sh
-    # build 
-    - ${PWD}/tests/pipeline/stages/build.sh
-    # testing 
-    - ${PWD}/tests/pipeline/stages/testing.sh
-    - tree -f /srv/
+    - travis/linting.sh
+    - travis/build.sh
+    - travis/testing.sh
+
 after_success:
-    # release 
-    - ${PWD}/tests/pipeline/stages/release.sh
+    - travis/release.sh

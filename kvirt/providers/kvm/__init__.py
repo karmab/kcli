@@ -15,7 +15,7 @@ from libvirt import VIR_DOMAIN_AFFECT_LIVE, VIR_DOMAIN_AFFECT_CONFIG
 from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_AGENT as vir_src_agent
 from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE as vir_src_lease
 from libvirt import (VIR_DOMAIN_NOSTATE, VIR_DOMAIN_RUNNING, VIR_DOMAIN_BLOCKED, VIR_DOMAIN_PAUSED,
-                     VIR_DOMAIN_SHUTDOWN, VIR_DOMAIN_SHUTOFF, VIR_DOMAIN_CRASHED, VIR_DOMAIN_UNDEFINE_KEEP_NVRAM)
+                     VIR_DOMAIN_SHUTDOWN, VIR_DOMAIN_SHUTOFF, VIR_DOMAIN_CRASHED)
 import json
 import os
 from subprocess import call
@@ -1491,8 +1491,7 @@ class Kvirt(object):
                     continue
         if status[vm.isActive()] != "down":
             vm.destroy()
-        # vm.undefine()
-        vm.undefineFlags(flags=VIR_DOMAIN_UNDEFINE_KEEP_NVRAM)
+        vm.undefine()
         founddisks = []
         thinpools = []
         for storage in conn.listStoragePools():

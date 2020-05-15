@@ -5,7 +5,7 @@
 set -ex
 
 __libvirtd_pid_file="/srv/virt_pid"
-__libvirtd_config_file="${PWD}/tests/pipeline/libvirtd.conf"
+__libvirtd_config_file="${PWD}/travis/libvirtd.conf"
 __libvirt_dir="/var/run/libvirt/"
 
 sudo touch "${__libvirtd_pid_file}"
