@@ -2260,14 +2260,14 @@ def cli():
     hostenable_parser.set_defaults(func=enable_host)
 
     hostlist_parser = list_subparsers.add_parser('host', description=hostlist_desc, help=hostlist_desc,
-                                                 aliases=['client'])
+                                                 aliases=['hosts', 'client', 'clients'])
     hostlist_parser.set_defaults(func=list_host)
 
     hostreport_desc = 'Report Info About Host'
     hostreport_parser = argparse.ArgumentParser(add_help=False)
     hostreport_parser.set_defaults(func=report_host)
     info_subparsers.add_parser('host', parents=[hostreport_parser], description=hostreport_desc, help=hostreport_desc,
-                               aliases=['client'])
+                               aliases=['hosts', 'client', 'clients'])
 
     hostswitch_desc = 'Switch Host'
     hostswitch_parser = argparse.ArgumentParser(add_help=False)
@@ -2278,7 +2278,7 @@ def cli():
 
     hostsync_desc = 'Sync Host'
     hostsync_parser = sync_subparsers.add_parser('host', description=hostsync_desc, help=hostsync_desc,
-                                                 aliases=['client'])
+                                                 aliases=['hosts', 'client', 'clients'])
     hostsync_parser.add_argument('names', help='NAMES', nargs='*')
     hostsync_parser.set_defaults(func=sync_host)
 
@@ -2709,7 +2709,7 @@ def cli():
 
     imagelist_desc = 'List Images'
     imagelist_parser = list_subparsers.add_parser('image', description=imagelist_desc, help=imagelist_desc,
-                                                  aliases=['template'])
+                                                  aliases=['images', 'template', 'templates'])
     imagelist_parser.set_defaults(func=list_image)
 
     vmcreate_desc = 'Create Vm'
