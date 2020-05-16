@@ -1945,7 +1945,7 @@ def cli():
                           epilog=vmconsole_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
 
     delete_desc = 'Delete Object'
-    delete_parser = subparsers.add_parser('delete', description=delete_desc, help=delete_desc)
+    delete_parser = subparsers.add_parser('delete', description=delete_desc, help=delete_desc, aliases=['remove'])
     delete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation', dest="yes_top")
     delete_subparsers = delete_parser.add_subparsers(metavar='', dest='subcommand_delete')
 
