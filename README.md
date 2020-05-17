@@ -31,9 +31,10 @@ Deploy your first vm with:
 
 ```
 kcli download image centos7
-kcli create vm -i centos7
+kcli create vm -i centos7 myvm
 kcli list vm
-kcli ssh vm
+# wait 5-10 seconds for vm to grab an ip
+kcli ssh myvm
 kcli delete vm
 ```
 
