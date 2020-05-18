@@ -526,12 +526,6 @@ def create(config, plandir, cluster, overrides):
         todelete = ["%s-bootstrap" % cluster, "%s-bootstrap-helper" % cluster]
     if platform in virtplatforms:
         wait_time = 90 if masters > 1 else 180
-        pprint("Waiting %ss before deleting bootstrap vm" % wait_time, color='blue')
-    for vm in todelete:
-        pprint("Deleting %s" % vm)
-        k.delete(vm)
-    if platform in virtplatforms:
-        wait_time = 90 if masters > 1 else 180
         pprint("Waiting %ss before retrieving workers ignition data" % wait_time, color='blue')
         sleep(wait_time)
     call("oc adm taint nodes -l node-role.kubernetes.io/master node-role.kubernetes.io/master:NoSchedule-", shell=True)
@@ -567,3 +561,6 @@ def create(config, plandir, cluster, overrides):
         info("To access the cluster as the system:admin user when running 'oc', run export KUBECONFIG=%s" % kubeconf)
         info("Access the Openshift web-console here: https://console-openshift-console.apps.%s.%s" % (cluster, domain))
         info("Login to the console with user: kubeadmin, password: %s" % kubepassword)
+    for vm in todelete:
+        pprint("Deleting %s" % vm)
+        k.delete(vm)
