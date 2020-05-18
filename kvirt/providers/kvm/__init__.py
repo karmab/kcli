@@ -459,7 +459,7 @@ class Kvirt(object):
                 iftype = 'bridge'
                 sourcexml = "<source bridge='%s'/>" % netname
                 guestagent = True
-                if reservedns:
+                if reservedns and index == 0:
                     dnscmdhost = dns if dns is not None else self.host
                     dnscmd = "sed -i 's/nameserver .*/nameserver %s/' /etc/resolv.conf" % dnscmdhost
                     cmds = cmds[:index] + [dnscmd] + cmds[index:]
