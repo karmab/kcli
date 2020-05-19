@@ -573,7 +573,17 @@ class Kconfig(Kbaseconfig):
                     rhncommands.append('subscription-manager attach --auto')
         else:
             rhncommands = []
-        cmds = rhncommands + cmds + scriptcmds
+        sharedfoldercmds = []
+        if sharedfolders:
+            for sharedfolder in sharedfolders:
+                basefolder = os.path.basename(sharedfolder)
+                cmd1 = "mkdir /%s" % basefolder
+                cmd2 = "echo %s %s 9p trans=virtio,version=9p2000.L,rw 0 0 >> /etc/fstab" % (basefolder, sharedfolder)
+                sharedfoldercmds.append(cmd1)
+                sharedfoldercmds.append(cmd2)
+        if sharedfoldercmds:
+            sharedfoldercmds.append("mount -a")
+        cmds = rhncommands + sharedfoldercmds + cmds + scriptcmds
         if notify:
             if notifycmd is None and notifyscript is None:
                 if 'cos' in image:
