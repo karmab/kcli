@@ -574,7 +574,7 @@ class Kconfig(Kbaseconfig):
         else:
             rhncommands = []
         sharedfoldercmds = []
-        if sharedfolders:
+        if sharedfolders and self.type == 'kvm':
             for sharedfolder in sharedfolders:
                 basefolder = os.path.basename(sharedfolder)
                 cmd1 = "mkdir /%s" % basefolder

@@ -746,6 +746,13 @@ class Kvirt(object):
                 sharedxml += "<filesystem type='mount' accessmode='%s'>" % accessmode
                 sharedxml += "<source dir='%s'/><target dir='%s'/>" % (folder, os.path.basename(folder))
                 sharedxml += "</filesystem>"
+                foldercmd = "sudo mkdir %s ; sudo chmod 777 %s" % (folder, folder)
+                if self.host == 'localhost' or self.host == '127.0.0.1' and not os.path.exists(folder):
+                    os.mkdir(foldercmd)
+                elif self.protocol == 'ssh':
+                    foldercmd = 'ssh %s -p %s %s@%s "test -d %s || (%s)"' % (self.identitycommand, self.port,
+                                                                             self.user, self.host, folder, foldercmd)
+                    code = os.system(foldercmd)
         kernelxml = ""
         if kernel is not None:
             locationdir = os.path.basename(kernel)
