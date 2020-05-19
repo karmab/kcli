@@ -741,7 +741,9 @@ class Kvirt(object):
         sharedxml = ""
         if sharedfolders:
             for folder in sharedfolders:
-                sharedxml += "<filesystem type='mount' accessmode='passthrough'>"
+                # accessmode = "passthrough"
+                accessmode = "mapped"
+                sharedxml += "<filesystem type='mount' accessmode='%s'>" % accessmode
                 sharedxml += "<source dir='%s'/><target dir='%s'/>" % (folder, os.path.basename(folder))
                 sharedxml += "</filesystem>"
         kernelxml = ""
