@@ -577,8 +577,9 @@ class Kconfig(Kbaseconfig):
         if sharedfolders and self.type == 'kvm':
             for sharedfolder in sharedfolders:
                 basefolder = os.path.basename(sharedfolder)
-                cmd1 = "mkdir /%s" % basefolder
-                cmd2 = "echo %s %s 9p trans=virtio,version=9p2000.L,rw 0 0 >> /etc/fstab" % (basefolder, sharedfolder)
+                cmd1 = "mkdir -p /mnt/%s" % sharedfolder
+                cmd2 = "echo %s /mnt/%s 9p trans=virtio,version=9p2000.L,rw 0 0 >> /etc/fstab" % (basefolder,
+                                                                                                  sharedfolder)
                 sharedfoldercmds.append(cmd1)
                 sharedfoldercmds.append(cmd2)
         if sharedfoldercmds:
