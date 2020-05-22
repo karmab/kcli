@@ -6,8 +6,8 @@ Ovirt Provider Class
 
 from distutils.spawn import find_executable
 from kvirt import common
-from kvirt.ovirt.helpers import IMAGES as oimages
-from kvirt.ovirt.helpers import get_home_ssh_key
+from kvirt.providers.ovirt.helpers import IMAGES as oimages
+from kvirt.providers.ovirt.helpers import get_home_ssh_key
 import ovirtsdk4 as sdk
 from ovirtsdk4 import Error as oerror
 import ovirtsdk4.types as types

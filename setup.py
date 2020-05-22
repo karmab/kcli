@@ -10,7 +10,7 @@ OPENSTACK = ['python-cinderclient', 'python-neutronclient', 'python-glanceclient
              'python-novaclient']
 OVIRT = ['ovirt-engine-sdk-python']
 VSPHERE = ['requests', 'pyvmomi']
-ALL = ['docker>=2.0'] + ['podman'] + ['websockify'] + AWS + GCP + KUBEVIRT + OPENSTACK + OVIRT + VSPHERE
+ALL = ['docker>=2.0'] + ['podman'] + ['websockify'] + ['pyghmi'] + AWS + GCP + KUBEVIRT + OPENSTACK + OVIRT + VSPHERE
 
 description = 'Provisioner/Manager for Libvirt/Ovirt/Gcp/Aws/Openstack/Kubevirt and containers'
 long_description = description
@@ -44,6 +44,6 @@ setup(
         kcli=kvirt.cli:cli
         kweb=kvirt.web.main:run
         klist.py=kvirt.klist:main
-        kbmc.py=kvirt.kbmc:main
+        kbmc=kvirt.kbmc:main
     ''',
 )
