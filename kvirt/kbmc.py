@@ -18,6 +18,7 @@ class KBmc(bmc.Bmc):
             status = self.k.info(name)['status']
             self.powerstate = 'off' if status.lower() not in ['up', 'poweredon'] else 'on'
             pprint('Handling vm %s on port %s' % (name, port))
+            pprint('Initial state for vm %s: %s' % (name, self.powerstate), color='blue')
         self.name = name
 
     def get_boot_device(self):
@@ -34,22 +35,26 @@ class KBmc(bmc.Bmc):
         return self.powerstate
 
     def power_off(self):
-        self.k.stop(self.name)
-        self.powerstate = 'off'
-        pprint('%s powered off!' % self.name)
+        result = self.k.stop(self.name)
+        if result['result'] == 'success':
+            pprint('%s powered off!' % self.name)
+            self.powerstate = 'off'
+        else:
+            pprint('%s not powered off because %s' % (self.name, result['reason']), color='red')
 
     def power_on(self):
-        self.k.start(self.name)
-        self.powerstate = 'on'
-        pprint('%s powered on!' % self.name)
+        result = self.k.start(self.name)
+        if result['result'] == 'success':
+            self.powerstate = 'on'
+            pprint('%s powered on!' % self.name)
+        else:
+            pprint('%s not powered on because %s' % (self.name, result['reason']), color='red')
 
     def power_reset(self):
         pass
 
     def power_shutdown(self):
-        self.k.stop(self.name)
-        self.powerstate = 'off'
-        pprint('%s powered off!' % self.name)
+        self.power_off()
 
     def is_active(self):
         return self.powerstate == 'on'
