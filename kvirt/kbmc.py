@@ -7,7 +7,7 @@ import pyghmi.ipmi.bmc as bmc
 
 
 class KBmc(bmc.Bmc):
-    def __init__(self, authdata, port, name, foreground, client):
+    def __init__(self, authdata, port, name, client):
         super(KBmc, self).__init__(authdata, port)
         self.bootdevice = 'default'
         self.k = Kconfig(client=client).k
@@ -72,11 +72,10 @@ def main():
     parser.add_argument('--password', dest='password', type=str, default='password',
                         help='Password to use. Defaults to password')
     parser.add_argument('--port', dest='port', type=int, default=6230, help='Port to listen on. Defaults to 6230')
-    parser.add_argument('-f', '--foreground', action='store_true', help='Stay in foreground')
+    # parser.add_argument('-f', '--foreground', action='store_true', help='Stay in foreground')
     parser.add_argument('name', type=str, help='Vm to handle')
     args = parser.parse_args()
-    kbmc = KBmc({args.user: args.password}, port=args.port, name=args.name, foreground=args.foreground,
-                client=args.client)
+    kbmc = KBmc({args.user: args.password}, port=args.port, name=args.name, client=args.client)
     kbmc.listen()
 
 
