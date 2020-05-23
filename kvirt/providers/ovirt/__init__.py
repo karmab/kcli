@@ -575,8 +575,6 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             vm = vmsearch[0]
         else:
             minimal = True
-        if debug:
-            print(vars(vm))
         status = str(vm.status)
         yamlinfo = {'name': vm.name, 'disks': [], 'nets': [], 'status': status, 'instanceid': vm.id}
         template = conn.follow_link(vm.template)
@@ -644,7 +642,8 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             path = disk.id
             yamlinfo['disks'].append({'device': device, 'size': disksize, 'format': diskformat, 'type': drivertype,
                                       'path': "%s/%s" % (storagedomain, path)})
-
+        if debug:
+            yamlinfo['debug'] = vars(vm)
         return yamlinfo
 
     def ip(self, name):

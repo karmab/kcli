@@ -475,8 +475,6 @@ class Kgcp(object):
             except:
                 common.pprint("VM %s not found" % name, color='red')
                 return {}
-        if debug:
-            print(vm)
         yamlinfo['name'] = vm['name']
         yamlinfo['status'] = vm['status']
         machinetype = os.path.basename(vm['machineType'])
@@ -531,6 +529,8 @@ class Kgcp(object):
                     yamlinfo['kubetype'] = data['value']
         if 'tags' in vm and 'items' in vm['tags']:
             yamlinfo['tags'] = ','.join(vm['tags']['items'])
+        if debug:
+            yamlinfo['debug'] = vm
         return yamlinfo
 
     def ip(self, name):

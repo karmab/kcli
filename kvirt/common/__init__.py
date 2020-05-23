@@ -526,6 +526,8 @@ def handle_response(result, name, quiet=False, element='', action='deployed', cl
     :return:
     """
     code = 0
+    if not isinstance(result, dict):
+        result = {'result': result.result, 'reason': result.reason}
     if result['result'] == 'success':
         if not quiet:
             response = "%s %s %s" % (element, name, action)
@@ -711,7 +713,7 @@ def print_info(yamlinfo, output='plain', fields=[], values=False, pretty=True):
             return yamlinfo
     else:
         result = ''
-        orderedfields = ['name', 'project', 'namespace', 'instanceid', 'creationdate', 'host', 'status',
+        orderedfields = ['debug', 'name', 'project', 'namespace', 'instanceid', 'creationdate', 'host', 'status',
                          'description', 'autostart', 'image', 'user', 'plan', 'profile', 'flavor', 'cpus', 'memory',
                          'nets', 'ip', 'disks', 'snapshots']
         otherfields = [key for key in yamlinfo if key not in orderedfields]

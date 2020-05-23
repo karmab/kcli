@@ -1210,8 +1210,6 @@ class Kvirt(object):
                 common.pprint("VM %s not found" % name, color='red')
                 return {}
         xml = vm.XMLDesc(0)
-        if debug:
-            print(xml)
         root = ET.fromstring(xml)
         status = 'down'
         autostart = starts[vm.autostart()]
@@ -1357,6 +1355,8 @@ class Kvirt(object):
             snapshots.append({'snapshot': snapshot, 'current': current})
         if snapshots:
             yamlinfo['snapshots'] = snapshots
+        if debug:
+            yamlinfo['debug'] = xml
         return yamlinfo
 
     def ip(self, name):
@@ -2640,8 +2640,8 @@ class Kvirt(object):
             else:
                 mode = 'isolated'
             networks[networkname] = {'cidr': cidr, 'dhcp': dhcp, 'domain': domainname, 'type': 'routed', 'mode': mode}
-            if ip is not None:
-                networks[networkname]['ip'] = ip
+            # if ip is not None:
+            #    networks[networkname]['ip'] = ip
             plan = 'N/A'
             for element in list(root.getiterator('{kvirt}info')):
                 e = element.find('{kvirt}plan')

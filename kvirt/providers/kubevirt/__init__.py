@@ -545,8 +545,6 @@ class Kubevirt(Kubecommon):
             except:
                 common.pprint("VM %s not found" % name, color='red')
                 return {}
-        if debug:
-            common.pretty_print(vm)
         metadata = vm.get("metadata")
         spec = vm.get("spec")
         running = spec.get("running")
@@ -653,6 +651,8 @@ class Kubevirt(Kubecommon):
         nodeport = self._node_port(name, namespace)
         if nodeport is not None:
             yamlinfo['nodeport'] = nodeport
+        if debug:
+            yamlinfo['debug'] = common.pretty_print(vm)
         return yamlinfo
 
     def ip(self, name):

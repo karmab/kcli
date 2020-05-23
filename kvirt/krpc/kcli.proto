@@ -1,0 +1,194 @@
+syntax = "proto3";
+//import "google/protobuf/empty.proto";
+//import "google/protobuf/any.proto";
+
+
+message empty {}
+
+message client {
+ string client = 1 ; 
+ string type = 2 ;
+ bool enabled = 3 ; 
+ bool current = 4 ; 
+}
+
+message clientslist {
+ repeated client clients = 1 ;
+}
+message vm{
+    string name = 1 ;
+    bool debug = 2 ;
+    bool snapshots = 3 ;
+}
+
+message snapshot{
+ string snapshot = 1 ; 
+ bool current = 2 ;
+}
+
+message netinfo{
+ string device = 1 ; 
+ string mac = 2 ; 
+ string net = 3 ; 
+ string type = 4 ; 
+}
+
+message diskinfo{
+ string device = 1 ; 
+ string format = 2 ; 
+ string path = 3 ; 
+ int32 size = 4 ; 
+ string type = 5 ; 
+}
+
+message vminfo{
+    string name = 1 ;
+    string image = 2 ;
+    int32 cpus = 3 ;
+    int32 memory = 4 ;
+    string plan = 5 ;
+    string profile = 6 ;
+    string status = 7 ;
+    string ip = 8 ;
+    repeated netinfo nets = 9 ;
+    repeated diskinfo disks = 10 ;
+    string creationdate = 11 ;
+    string user = 12 ;
+    bool autostart = 13 ;
+    string debug = 14 ; 
+    repeated snapshot snapshots = 15 ;
+    string kube = 16 ; 
+    string kubetype = 17 ; 
+}
+
+message vmlist{
+    repeated vminfo vms = 1 ;
+}
+
+message result{
+    string result = 1 ;
+    string reason = 2 ;
+}
+
+message profile{
+    string name = 1 ;
+    string flavor = 2 ;
+    string pool = 3 ; 
+    string disks = 4 ; 
+    string image = 5 ; 
+    string nets = 6 ; 
+    bool cloudinit = 7 ; 
+    bool nested = 8 ; 
+    bool reservedns = 9 ; 
+    bool reservehost = 10 ; 
+}
+
+message profileslist{
+    repeated profile profiles = 1 ;
+}
+
+message isoslist{
+    repeated string isos = 1 ;
+}
+
+message imageslist{
+    repeated string images = 1 ;
+}
+
+message disk {
+    string disk = 1 ; 
+    string pool = 2 ; 
+    string path = 3 ; 
+}
+
+message diskslist{
+    repeated disk disks = 1 ;
+}
+
+
+message plan {
+    string plan = 1 ; 
+    string vms = 2 ; 
+}
+
+message planslist {
+    repeated plan plans = 1 ; 
+}
+
+message keyword {
+    string keyword = 1 ; 
+    string value = 2 ; 
+}
+
+message keywordslist {
+    repeated keyword keywords = 1 ; 
+}
+
+message pool {
+    string pool = 1 ; 
+    string path = 2 ; 
+}
+
+message poolslist {
+    repeated pool pools  = 1 ;
+}
+
+message network {
+    string  network = 1 ; 
+    string type = 2 ; 
+    string cidr = 3 ; 
+    string dhcp = 4 ; 
+    string domain = 5 ; 
+    string mode = 6 ; 
+    string plan = 7 ; 
+    string ip = 8 ; 
+}
+
+message networkslist {
+    repeated network networks = 1 ;
+}
+
+message subnet {
+    string subnet = 1 ; 
+    string az = 2 ;
+    string cidr = 3 ; 
+    string network = 4 ; 
+}
+
+message subnetslist {
+    repeated subnet subnets = 1 ;
+}
+
+message kube {
+    string kube = 1 ;
+    string type = 2 ; 
+    string vms = 3 ;
+}
+
+message kubeslist {
+    repeated kube kubes = 1 ;
+}
+
+service Kcli {
+    rpc info(vm) returns (vminfo) {}
+    rpc list(empty) returns (vmlist) {}
+    rpc list_disks(empty) returns (diskslist) {}
+    rpc list_images(empty) returns (imageslist) {}
+    rpc list_networks(empty) returns (networkslist) {}
+    rpc list_isos(empty) returns (isoslist) {}
+    rpc list_pools(empty) returns (poolslist) {}
+    rpc list_subnets(empty) returns (subnetslist) {}
+    rpc restart(vm) returns (result) {}
+    rpc start(vm) returns (result) {}
+    rpc stop(vm) returns (result) {}
+    rpc delete(vm) returns (result) {}
+    rpc get_lastvm(client) returns (vm) {}
+}
+
+service Kconfig {
+    rpc list_profiles(empty) returns (profileslist) {}
+    rpc list_hosts(empty) returns (clientslist) {}
+    rpc list_keywords(empty) returns (keywordslist) {}
+    rpc list_plans(empty) returns (planslist) {}
+    rpc list_kubes(empty) returns (kubeslist) {}
+}

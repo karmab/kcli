@@ -331,8 +331,6 @@ class Kopenstack(object):
             except:
                 common.pprint("VM %s not found" % name, color='red')
                 return {}
-        if debug:
-            print(vars(vm))
         yamlinfo = {'name': vm.name, 'status': vm.status, 'project': self.project}
         if vm.status.lower() == 'error':
             try:
@@ -382,6 +380,8 @@ class Kopenstack(object):
                 yamlinfo['profile'] = metadata['profile']
             if 'loadbalancer' in metadata:
                 yamlinfo['loadbalancer'] = metadata['loadbalancer']
+        if debug:
+            yamlinfo['debug'] = vars(vm)
         return yamlinfo
 
     def ip(self, name):

@@ -759,8 +759,6 @@ class Ksphere:
                 currentips = nic.ipAddress
                 if currentmac == mainmac and currentips:
                     yamlinfo['ip'] = currentips[0]
-        if debug:
-            print(vm.config.extraConfig)
         for entry in vm.config.extraConfig:
             if entry.key == 'plan':
                 yamlinfo['plan'] = entry.value
@@ -773,6 +771,8 @@ class Ksphere:
             if entry.key == 'image':
                 yamlinfo['image'] = entry.value
                 yamlinfo['user'] = common.get_user(entry.value)
+        if debug:
+            yamlinfo['debug'] = vm.config.extraConfig
         return yamlinfo
 
     def list(self):

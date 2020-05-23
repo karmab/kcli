@@ -353,8 +353,6 @@ class Kaws(object):
             except:
                 common.pprint("VM %s not found" % name, color='red')
                 return {}
-        if debug:
-            print(vm)
         instanceid = vm['InstanceId']
         name = instanceid
         state = vm['State']['Name']
@@ -426,6 +424,8 @@ class Kaws(object):
             disks.append({'device': devname, 'size': disksize, 'format': diskformat, 'type': drivertype, 'path': path})
         if disks:
             yamlinfo['disks'] = disks
+        if debug:
+            yamlinfo['debug'] = vm
         return yamlinfo
 
     def ip(self, name):
@@ -729,7 +729,7 @@ class Kaws(object):
         for vpc in vpcs['Vpcs']:
             networkname = vpc['VpcId']
             cidr = vpc['CidrBlock']
-            domainname = vpc['IsDefault']
+            domainname = 'default' if vpc['IsDefault'] else 'N/A'
             dhcp = vpc['DhcpOptionsId']
             mode = ''
             networks[networkname] = {'cidr': cidr, 'dhcp': dhcp, 'domain': domainname, 'type': 'routed', 'mode': mode}
