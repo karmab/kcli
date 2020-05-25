@@ -1,0 +1,13 @@
+---
+
+micro_network:
+ type: network
+ engine: ovs
+ switches:
+     - name: "br-1"
+     - name: "br-2"
+ links:
+     - between:
+         - "br-1"
+         - "br-2"
+       prefix: "test"
