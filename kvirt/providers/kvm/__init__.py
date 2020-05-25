@@ -16,6 +16,9 @@ from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_AGENT as vir_src_agent
 from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE as vir_src_lease
 from libvirt import (VIR_DOMAIN_NOSTATE, VIR_DOMAIN_RUNNING, VIR_DOMAIN_BLOCKED, VIR_DOMAIN_PAUSED,
                      VIR_DOMAIN_SHUTDOWN, VIR_DOMAIN_SHUTOFF, VIR_DOMAIN_CRASHED)
+from ryu.lib.ovs import vsctl
+from pyroute2 import IPRoute
+
 import json
 import os
 from subprocess import call
@@ -2506,7 +2509,7 @@ class Kvirt(object):
         pool.refresh()
         return {'result': 'success'}
 
-    def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
+    def create_libvirt_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
         conn = self.conn
         networks = self.list_networks()
         if name in networks:
@@ -2581,7 +2584,47 @@ class Kvirt(object):
         new_net.create()
         return {'result': 'success'}
 
-    def delete_network(self, name=None, cidr=None):
+    def create_ovs_network(name, ovsdb_endpoint='tcp:127.0.0.1:6640', switches=[], links=[]):
+        ovs_vsctl = vsctl.VSCtl(ovsdb_endpoint)
+        iproute = IPRoute()
+
+        for switch in switches:
+            command = vsctl.VSCtlCommand('add-br {name}'.format(**switch))
+            ovs_vsctl.run_command([command])
+
+        for link in links:
+            prefix = link.get('prefix')
+            source_switch = link['between'][0]
+            target_switch = link['between'][1]
+
+            if not prefix:
+                prefix = "link-{}-{}".format(source_switch, target_switch)
+
+            source_port = "{}-{}".format(prefix, "0")
+            target_port = "{}-{}".format(prefix, "1")
+            iproute.link('add',
+                         ifname=source_port,
+                         peer=target_port,
+                         kind='veth')
+
+            for switch, port in ((source_switch, source_port),
+                                 (target_switch, target_port)):
+                command = vsctl.VSCtlCommand('add-port {} {}'.format(switch,
+                                                                     port))
+                ovs_vsctl.run_command([command])
+
+        return {'result': 'success'}
+
+    def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
+        engine = overrides.get('engine')
+        if engine == 'libvirt':
+            self.create_libvirt_network(name, **kwargs)
+        elif engine == 'ovs':
+            self.create_ovs_network(name, **overrides)
+        else:
+            return {'result': 'failure', 'reason': "Unknown network engine %s " % engine}
+
+    def delete_libvirt_network(self, name=None, cidr=None):
         conn = self.conn
         try:
             network = conn.networkLookupByName(name)
@@ -2595,6 +2638,13 @@ class Kvirt(object):
             network.destroy()
         network.undefine()
         return {'result': 'success'}
+
+    def delete_ovs_network(self, name=None, cidr=None):
+        pass
+
+    def delete_network(self, name=None, cidr=None):
+        self.delete_libvirt_network(name=name,
+                                    cidr=cidr)
 
     def list_pools(self):
         pools = []

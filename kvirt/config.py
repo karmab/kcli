@@ -1231,16 +1231,18 @@ $INFO
             common.pprint("Deploying Networks...")
             for net in networkentries:
                 netprofile = entries[net]
-                if k.net_exists(net):
-                    common.pprint("Network %s skipped!" % net, color='blue')
-                    continue
-                cidr = netprofile.get('cidr')
-                nat = bool(netprofile.get('nat', True))
-                if cidr is None:
-                    common.pprint("Missing Cidr for network %s. Not creating it..." % net, color='blue')
-                    continue
-                dhcp = netprofile.get('dhcp', True)
-                domain = netprofile.get('domain')
+                engine = netprofile.get('engine') # sentinel for ovs network
+                if not engine or engine == 'ovs':
+                    if k.net_exists(net):
+                        common.pprint("Network %s skipped!" % net, color='blue')
+                        continue
+                    cidr = netprofile.get('cidr')
+                    nat = bool(netprofile.get('nat', True))
+                    if cidr is None:
+                        common.pprint("Missing Cidr for network %s. Not creating it..." % net, color='blue')
+                        continue
+                    dhcp = netprofile.get('dhcp', True)
+                    domain = netprofile.get('domain')
                 result = k.create_network(name=net, cidr=cidr, dhcp=dhcp, nat=nat, domain=domain, plan=plan,
                                           overrides=netprofile)
                 common.handle_response(result, net, element='Network ')
