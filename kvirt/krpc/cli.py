@@ -563,14 +563,20 @@ def list_lb(args):
     """List lbs"""
     short = args.short
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    loadbalancers = config.list_loadbalancer()
+    loadbalancers = config.config.list_lbs(empty()).lbs
     if short:
+        lbslist = []
         loadbalancerstable = PrettyTable(["Loadbalancer"])
-        for lb in sorted(loadbalancers):
+        for lb in loadbalancers:
+            lbslist.append(lb.lb)
+        for lb in sorted(lbslist):
             loadbalancerstable.add_row([lb])
     else:
         loadbalancerstable = PrettyTable(["LoadBalancer", "IPAddress", "IPProtocol", "Ports", "Target"])
-        for lb in sorted(loadbalancers):
+        lbslist = []
+        for lb in loadbalancers:
+            lbslist.append([lb.lb, lb.ip, lb.protocol, lb.ports, lb.target])
+        for lb in sorted(lbslist):
             loadbalancerstable.add_row(lb)
     loadbalancerstable.align["Loadbalancer"] = "l"
     print(loadbalancerstable)

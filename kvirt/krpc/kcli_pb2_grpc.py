@@ -457,11 +457,6 @@ class KconfigStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.list_profiles = channel.unary_unary(
-                '/Kconfig/list_profiles',
-                request_serializer=kcli__pb2.empty.SerializeToString,
-                response_deserializer=kcli__pb2.profileslist.FromString,
-                )
         self.list_hosts = channel.unary_unary(
                 '/Kconfig/list_hosts',
                 request_serializer=kcli__pb2.empty.SerializeToString,
@@ -472,26 +467,30 @@ class KconfigStub(object):
                 request_serializer=kcli__pb2.empty.SerializeToString,
                 response_deserializer=kcli__pb2.keywordslist.FromString,
                 )
-        self.list_plans = channel.unary_unary(
-                '/Kconfig/list_plans',
-                request_serializer=kcli__pb2.empty.SerializeToString,
-                response_deserializer=kcli__pb2.planslist.FromString,
-                )
         self.list_kubes = channel.unary_unary(
                 '/Kconfig/list_kubes',
                 request_serializer=kcli__pb2.empty.SerializeToString,
                 response_deserializer=kcli__pb2.kubeslist.FromString,
                 )
+        self.list_lbs = channel.unary_unary(
+                '/Kconfig/list_lbs',
+                request_serializer=kcli__pb2.empty.SerializeToString,
+                response_deserializer=kcli__pb2.lbslist.FromString,
+                )
+        self.list_plans = channel.unary_unary(
+                '/Kconfig/list_plans',
+                request_serializer=kcli__pb2.empty.SerializeToString,
+                response_deserializer=kcli__pb2.planslist.FromString,
+                )
+        self.list_profiles = channel.unary_unary(
+                '/Kconfig/list_profiles',
+                request_serializer=kcli__pb2.empty.SerializeToString,
+                response_deserializer=kcli__pb2.profileslist.FromString,
+                )
 
 
 class KconfigServicer(object):
     """Missing associated documentation comment in .proto file"""
-
-    def list_profiles(self, request, context):
-        """Missing associated documentation comment in .proto file"""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
 
     def list_hosts(self, request, context):
         """Missing associated documentation comment in .proto file"""
@@ -505,13 +504,25 @@ class KconfigServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def list_kubes(self, request, context):
+        """Missing associated documentation comment in .proto file"""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def list_lbs(self, request, context):
+        """Missing associated documentation comment in .proto file"""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def list_plans(self, request, context):
         """Missing associated documentation comment in .proto file"""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def list_kubes(self, request, context):
+    def list_profiles(self, request, context):
         """Missing associated documentation comment in .proto file"""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -520,11 +531,6 @@ class KconfigServicer(object):
 
 def add_KconfigServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'list_profiles': grpc.unary_unary_rpc_method_handler(
-                    servicer.list_profiles,
-                    request_deserializer=kcli__pb2.empty.FromString,
-                    response_serializer=kcli__pb2.profileslist.SerializeToString,
-            ),
             'list_hosts': grpc.unary_unary_rpc_method_handler(
                     servicer.list_hosts,
                     request_deserializer=kcli__pb2.empty.FromString,
@@ -535,15 +541,25 @@ def add_KconfigServicer_to_server(servicer, server):
                     request_deserializer=kcli__pb2.empty.FromString,
                     response_serializer=kcli__pb2.keywordslist.SerializeToString,
             ),
+            'list_kubes': grpc.unary_unary_rpc_method_handler(
+                    servicer.list_kubes,
+                    request_deserializer=kcli__pb2.empty.FromString,
+                    response_serializer=kcli__pb2.kubeslist.SerializeToString,
+            ),
+            'list_lbs': grpc.unary_unary_rpc_method_handler(
+                    servicer.list_lbs,
+                    request_deserializer=kcli__pb2.empty.FromString,
+                    response_serializer=kcli__pb2.lbslist.SerializeToString,
+            ),
             'list_plans': grpc.unary_unary_rpc_method_handler(
                     servicer.list_plans,
                     request_deserializer=kcli__pb2.empty.FromString,
                     response_serializer=kcli__pb2.planslist.SerializeToString,
             ),
-            'list_kubes': grpc.unary_unary_rpc_method_handler(
-                    servicer.list_kubes,
+            'list_profiles': grpc.unary_unary_rpc_method_handler(
+                    servicer.list_profiles,
                     request_deserializer=kcli__pb2.empty.FromString,
-                    response_serializer=kcli__pb2.kubeslist.SerializeToString,
+                    response_serializer=kcli__pb2.profileslist.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -554,22 +570,6 @@ def add_KconfigServicer_to_server(servicer, server):
  # This class is part of an EXPERIMENTAL API.
 class Kconfig(object):
     """Missing associated documentation comment in .proto file"""
-
-    @staticmethod
-    def list_profiles(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/Kconfig/list_profiles',
-            kcli__pb2.empty.SerializeToString,
-            kcli__pb2.profileslist.FromString,
-            options, channel_credentials,
-            call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
     def list_hosts(request,
@@ -604,6 +604,38 @@ class Kconfig(object):
             call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
+    def list_kubes(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/Kconfig/list_kubes',
+            kcli__pb2.empty.SerializeToString,
+            kcli__pb2.kubeslist.FromString,
+            options, channel_credentials,
+            call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def list_lbs(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/Kconfig/list_lbs',
+            kcli__pb2.empty.SerializeToString,
+            kcli__pb2.lbslist.FromString,
+            options, channel_credentials,
+            call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
     def list_plans(request,
             target,
             options=(),
@@ -620,7 +652,7 @@ class Kconfig(object):
             call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def list_kubes(request,
+    def list_profiles(request,
             target,
             options=(),
             channel_credentials=None,
@@ -629,8 +661,8 @@ class Kconfig(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/Kconfig/list_kubes',
+        return grpc.experimental.unary_unary(request, target, '/Kconfig/list_profiles',
             kcli__pb2.empty.SerializeToString,
-            kcli__pb2.kubeslist.FromString,
+            kcli__pb2.profileslist.FromString,
             options, channel_credentials,
             call_credentials, compression, wait_for_ready, timeout, metadata)

@@ -169,6 +169,18 @@ message kubeslist {
     repeated kube kubes = 1 ;
 }
 
+message lb {
+    string lb = 1 ;
+    string ip = 2 ; 
+    string protocol = 3 ;
+    string ports = 4 ;
+    string target = 5 ;
+}
+
+message lbslist {
+    repeated lb lbs = 1 ;
+}
+
 service Kcli {
     rpc info(vm) returns (vminfo) {}
     rpc list(empty) returns (vmlist) {}
@@ -186,9 +198,10 @@ service Kcli {
 }
 
 service Kconfig {
-    rpc list_profiles(empty) returns (profileslist) {}
     rpc list_hosts(empty) returns (clientslist) {}
     rpc list_keywords(empty) returns (keywordslist) {}
-    rpc list_plans(empty) returns (planslist) {}
     rpc list_kubes(empty) returns (kubeslist) {}
+    rpc list_lbs(empty) returns (lbslist) {}
+    rpc list_plans(empty) returns (planslist) {}
+    rpc list_profiles(empty) returns (profileslist) {}
 }

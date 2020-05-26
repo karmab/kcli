@@ -18,7 +18,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=b'\n\nkcli.proto\"\x07\n\x05\x65mpty\"H\n\x06\x63lient\x12\x0e\n\x06\x63lient\x18\x01 \x01(\t\x12\x0c\n\x04type\x18\x02 \x01(\t\x12\x0f\n\x07\x65nabled\x18\x03 \x01(\x08\x12\x0f\n\x07\x63urrent\x18\x04 \x01(\x08\"\'\n\x0b\x63lientslist\x12\x18\n\x07\x63lients\x18\x01 \x03(\x0b\x32\x07.client\"4\n\x02vm\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\r\n\x05\x64\x65\x62ug\x18\x02 \x01(\x08\x12\x11\n\tsnapshots\x18\x03 \x01(\x08\"-\n\x08snapshot\x12\x10\n\x08snapshot\x18\x01 \x01(\t\x12\x0f\n\x07\x63urrent\x18\x02 \x01(\x08\"A\n\x07netinfo\x12\x0e\n\x06\x64\x65vice\x18\x01 \x01(\t\x12\x0b\n\x03mac\x18\x02 \x01(\t\x12\x0b\n\x03net\x18\x03 \x01(\t\x12\x0c\n\x04type\x18\x04 \x01(\t\"T\n\x08\x64iskinfo\x12\x0e\n\x06\x64\x65vice\x18\x01 \x01(\t\x12\x0e\n\x06\x66ormat\x18\x02 \x01(\t\x12\x0c\n\x04path\x18\x03 \x01(\t\x12\x0c\n\x04size\x18\x04 \x01(\x05\x12\x0c\n\x04type\x18\x05 \x01(\t\"\xb4\x02\n\x06vminfo\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\r\n\x05image\x18\x02 \x01(\t\x12\x0c\n\x04\x63pus\x18\x03 \x01(\x05\x12\x0e\n\x06memory\x18\x04 \x01(\x05\x12\x0c\n\x04plan\x18\x05 \x01(\t\x12\x0f\n\x07profile\x18\x06 \x01(\t\x12\x0e\n\x06status\x18\x07 \x01(\t\x12\n\n\x02ip\x18\x08 \x01(\t\x12\x16\n\x04nets\x18\t \x03(\x0b\x32\x08.netinfo\x12\x18\n\x05\x64isks\x18\n \x03(\x0b\x32\t.diskinfo\x12\x14\n\x0c\x63reationdate\x18\x0b \x01(\t\x12\x0c\n\x04user\x18\x0c \x01(\t\x12\x11\n\tautostart\x18\r \x01(\x08\x12\r\n\x05\x64\x65\x62ug\x18\x0e \x01(\t\x12\x1c\n\tsnapshots\x18\x0f \x03(\x0b\x32\t.snapshot\x12\x0c\n\x04kube\x18\x10 \x01(\t\x12\x10\n\x08kubetype\x18\x11 \x01(\t\"\x1e\n\x06vmlist\x12\x14\n\x03vms\x18\x01 \x03(\x0b\x32\x07.vminfo\"(\n\x06result\x12\x0e\n\x06result\x18\x01 \x01(\t\x12\x0e\n\x06reason\x18\x02 \x01(\t\"\xad\x01\n\x07profile\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0e\n\x06\x66lavor\x18\x02 \x01(\t\x12\x0c\n\x04pool\x18\x03 \x01(\t\x12\r\n\x05\x64isks\x18\x04 \x01(\t\x12\r\n\x05image\x18\x05 \x01(\t\x12\x0c\n\x04nets\x18\x06 \x01(\t\x12\x11\n\tcloudinit\x18\x07 \x01(\x08\x12\x0e\n\x06nested\x18\x08 \x01(\x08\x12\x12\n\nreservedns\x18\t \x01(\x08\x12\x13\n\x0breservehost\x18\n \x01(\x08\"*\n\x0cprofileslist\x12\x1a\n\x08profiles\x18\x01 \x03(\x0b\x32\x08.profile\"\x18\n\x08isoslist\x12\x0c\n\x04isos\x18\x01 \x03(\t\"\x1c\n\nimageslist\x12\x0e\n\x06images\x18\x01 \x03(\t\"0\n\x04\x64isk\x12\x0c\n\x04\x64isk\x18\x01 \x01(\t\x12\x0c\n\x04pool\x18\x02 \x01(\t\x12\x0c\n\x04path\x18\x03 \x01(\t\"!\n\tdiskslist\x12\x14\n\x05\x64isks\x18\x01 \x03(\x0b\x32\x05.disk\"!\n\x04plan\x12\x0c\n\x04plan\x18\x01 \x01(\t\x12\x0b\n\x03vms\x18\x02 \x01(\t\"!\n\tplanslist\x12\x14\n\x05plans\x18\x01 \x03(\x0b\x32\x05.plan\")\n\x07keyword\x12\x0f\n\x07keyword\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t\"*\n\x0ckeywordslist\x12\x1a\n\x08keywords\x18\x01 \x03(\x0b\x32\x08.keyword\"\"\n\x04pool\x12\x0c\n\x04pool\x18\x01 \x01(\t\x12\x0c\n\x04path\x18\x02 \x01(\t\"!\n\tpoolslist\x12\x14\n\x05pools\x18\x01 \x03(\x0b\x32\x05.pool\"|\n\x07network\x12\x0f\n\x07network\x18\x01 \x01(\t\x12\x0c\n\x04type\x18\x02 \x01(\t\x12\x0c\n\x04\x63idr\x18\x03 \x01(\t\x12\x0c\n\x04\x64hcp\x18\x04 \x01(\t\x12\x0e\n\x06\x64omain\x18\x05 \x01(\t\x12\x0c\n\x04mode\x18\x06 \x01(\t\x12\x0c\n\x04plan\x18\x07 \x01(\t\x12\n\n\x02ip\x18\x08 \x01(\t\"*\n\x0cnetworkslist\x12\x1a\n\x08networks\x18\x01 \x03(\x0b\x32\x08.network\"C\n\x06subnet\x12\x0e\n\x06subnet\x18\x01 \x01(\t\x12\n\n\x02\x61z\x18\x02 \x01(\t\x12\x0c\n\x04\x63idr\x18\x03 \x01(\t\x12\x0f\n\x07network\x18\x04 \x01(\t\"\'\n\x0bsubnetslist\x12\x18\n\x07subnets\x18\x01 \x03(\x0b\x32\x07.subnet\"/\n\x04kube\x12\x0c\n\x04kube\x18\x01 \x01(\t\x12\x0c\n\x04type\x18\x02 \x01(\t\x12\x0b\n\x03vms\x18\x03 \x01(\t\"!\n\tkubeslist\x12\x14\n\x05kubes\x18\x01 \x03(\x0b\x32\x05.kube2\x9f\x03\n\x04Kcli\x12\x16\n\x04info\x12\x03.vm\x1a\x07.vminfo\"\x00\x12\x19\n\x04list\x12\x06.empty\x1a\x07.vmlist\"\x00\x12\"\n\nlist_disks\x12\x06.empty\x1a\n.diskslist\"\x00\x12$\n\x0blist_images\x12\x06.empty\x1a\x0b.imageslist\"\x00\x12(\n\rlist_networks\x12\x06.empty\x1a\r.networkslist\"\x00\x12 \n\tlist_isos\x12\x06.empty\x1a\t.isoslist\"\x00\x12\"\n\nlist_pools\x12\x06.empty\x1a\n.poolslist\"\x00\x12&\n\x0clist_subnets\x12\x06.empty\x1a\x0c.subnetslist\"\x00\x12\x19\n\x07restart\x12\x03.vm\x1a\x07.result\"\x00\x12\x17\n\x05start\x12\x03.vm\x1a\x07.result\"\x00\x12\x16\n\x04stop\x12\x03.vm\x1a\x07.result\"\x00\x12\x18\n\x06\x64\x65lete\x12\x03.vm\x1a\x07.result\"\x00\x12\x1c\n\nget_lastvm\x12\x07.client\x1a\x03.vm\"\x00\x32\xcb\x01\n\x07Kconfig\x12(\n\rlist_profiles\x12\x06.empty\x1a\r.profileslist\"\x00\x12$\n\nlist_hosts\x12\x06.empty\x1a\x0c.clientslist\"\x00\x12(\n\rlist_keywords\x12\x06.empty\x1a\r.keywordslist\"\x00\x12\"\n\nlist_plans\x12\x06.empty\x1a\n.planslist\"\x00\x12\"\n\nlist_kubes\x12\x06.empty\x1a\n.kubeslist\"\x00\x62\x06proto3'
+  serialized_pb=b'\n\nkcli.proto\"\x07\n\x05\x65mpty\"H\n\x06\x63lient\x12\x0e\n\x06\x63lient\x18\x01 \x01(\t\x12\x0c\n\x04type\x18\x02 \x01(\t\x12\x0f\n\x07\x65nabled\x18\x03 \x01(\x08\x12\x0f\n\x07\x63urrent\x18\x04 \x01(\x08\"\'\n\x0b\x63lientslist\x12\x18\n\x07\x63lients\x18\x01 \x03(\x0b\x32\x07.client\"4\n\x02vm\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\r\n\x05\x64\x65\x62ug\x18\x02 \x01(\x08\x12\x11\n\tsnapshots\x18\x03 \x01(\x08\"-\n\x08snapshot\x12\x10\n\x08snapshot\x18\x01 \x01(\t\x12\x0f\n\x07\x63urrent\x18\x02 \x01(\x08\"A\n\x07netinfo\x12\x0e\n\x06\x64\x65vice\x18\x01 \x01(\t\x12\x0b\n\x03mac\x18\x02 \x01(\t\x12\x0b\n\x03net\x18\x03 \x01(\t\x12\x0c\n\x04type\x18\x04 \x01(\t\"T\n\x08\x64iskinfo\x12\x0e\n\x06\x64\x65vice\x18\x01 \x01(\t\x12\x0e\n\x06\x66ormat\x18\x02 \x01(\t\x12\x0c\n\x04path\x18\x03 \x01(\t\x12\x0c\n\x04size\x18\x04 \x01(\x05\x12\x0c\n\x04type\x18\x05 \x01(\t\"\xb4\x02\n\x06vminfo\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\r\n\x05image\x18\x02 \x01(\t\x12\x0c\n\x04\x63pus\x18\x03 \x01(\x05\x12\x0e\n\x06memory\x18\x04 \x01(\x05\x12\x0c\n\x04plan\x18\x05 \x01(\t\x12\x0f\n\x07profile\x18\x06 \x01(\t\x12\x0e\n\x06status\x18\x07 \x01(\t\x12\n\n\x02ip\x18\x08 \x01(\t\x12\x16\n\x04nets\x18\t \x03(\x0b\x32\x08.netinfo\x12\x18\n\x05\x64isks\x18\n \x03(\x0b\x32\t.diskinfo\x12\x14\n\x0c\x63reationdate\x18\x0b \x01(\t\x12\x0c\n\x04user\x18\x0c \x01(\t\x12\x11\n\tautostart\x18\r \x01(\x08\x12\r\n\x05\x64\x65\x62ug\x18\x0e \x01(\t\x12\x1c\n\tsnapshots\x18\x0f \x03(\x0b\x32\t.snapshot\x12\x0c\n\x04kube\x18\x10 \x01(\t\x12\x10\n\x08kubetype\x18\x11 \x01(\t\"\x1e\n\x06vmlist\x12\x14\n\x03vms\x18\x01 \x03(\x0b\x32\x07.vminfo\"(\n\x06result\x12\x0e\n\x06result\x18\x01 \x01(\t\x12\x0e\n\x06reason\x18\x02 \x01(\t\"\xad\x01\n\x07profile\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0e\n\x06\x66lavor\x18\x02 \x01(\t\x12\x0c\n\x04pool\x18\x03 \x01(\t\x12\r\n\x05\x64isks\x18\x04 \x01(\t\x12\r\n\x05image\x18\x05 \x01(\t\x12\x0c\n\x04nets\x18\x06 \x01(\t\x12\x11\n\tcloudinit\x18\x07 \x01(\x08\x12\x0e\n\x06nested\x18\x08 \x01(\x08\x12\x12\n\nreservedns\x18\t \x01(\x08\x12\x13\n\x0breservehost\x18\n \x01(\x08\"*\n\x0cprofileslist\x12\x1a\n\x08profiles\x18\x01 \x03(\x0b\x32\x08.profile\"\x18\n\x08isoslist\x12\x0c\n\x04isos\x18\x01 \x03(\t\"\x1c\n\nimageslist\x12\x0e\n\x06images\x18\x01 \x03(\t\"0\n\x04\x64isk\x12\x0c\n\x04\x64isk\x18\x01 \x01(\t\x12\x0c\n\x04pool\x18\x02 \x01(\t\x12\x0c\n\x04path\x18\x03 \x01(\t\"!\n\tdiskslist\x12\x14\n\x05\x64isks\x18\x01 \x03(\x0b\x32\x05.disk\"!\n\x04plan\x12\x0c\n\x04plan\x18\x01 \x01(\t\x12\x0b\n\x03vms\x18\x02 \x01(\t\"!\n\tplanslist\x12\x14\n\x05plans\x18\x01 \x03(\x0b\x32\x05.plan\")\n\x07keyword\x12\x0f\n\x07keyword\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t\"*\n\x0ckeywordslist\x12\x1a\n\x08keywords\x18\x01 \x03(\x0b\x32\x08.keyword\"\"\n\x04pool\x12\x0c\n\x04pool\x18\x01 \x01(\t\x12\x0c\n\x04path\x18\x02 \x01(\t\"!\n\tpoolslist\x12\x14\n\x05pools\x18\x01 \x03(\x0b\x32\x05.pool\"|\n\x07network\x12\x0f\n\x07network\x18\x01 \x01(\t\x12\x0c\n\x04type\x18\x02 \x01(\t\x12\x0c\n\x04\x63idr\x18\x03 \x01(\t\x12\x0c\n\x04\x64hcp\x18\x04 \x01(\t\x12\x0e\n\x06\x64omain\x18\x05 \x01(\t\x12\x0c\n\x04mode\x18\x06 \x01(\t\x12\x0c\n\x04plan\x18\x07 \x01(\t\x12\n\n\x02ip\x18\x08 \x01(\t\"*\n\x0cnetworkslist\x12\x1a\n\x08networks\x18\x01 \x03(\x0b\x32\x08.network\"C\n\x06subnet\x12\x0e\n\x06subnet\x18\x01 \x01(\t\x12\n\n\x02\x61z\x18\x02 \x01(\t\x12\x0c\n\x04\x63idr\x18\x03 \x01(\t\x12\x0f\n\x07network\x18\x04 \x01(\t\"\'\n\x0bsubnetslist\x12\x18\n\x07subnets\x18\x01 \x03(\x0b\x32\x07.subnet\"/\n\x04kube\x12\x0c\n\x04kube\x18\x01 \x01(\t\x12\x0c\n\x04type\x18\x02 \x01(\t\x12\x0b\n\x03vms\x18\x03 \x01(\t\"!\n\tkubeslist\x12\x14\n\x05kubes\x18\x01 \x03(\x0b\x32\x05.kube\"M\n\x02lb\x12\n\n\x02lb\x18\x01 \x01(\t\x12\n\n\x02ip\x18\x02 \x01(\t\x12\x10\n\x08protocol\x18\x03 \x01(\t\x12\r\n\x05ports\x18\x04 \x01(\t\x12\x0e\n\x06target\x18\x05 \x01(\t\"\x1b\n\x07lbslist\x12\x10\n\x03lbs\x18\x01 \x03(\x0b\x32\x03.lb2\x9f\x03\n\x04Kcli\x12\x16\n\x04info\x12\x03.vm\x1a\x07.vminfo\"\x00\x12\x19\n\x04list\x12\x06.empty\x1a\x07.vmlist\"\x00\x12\"\n\nlist_disks\x12\x06.empty\x1a\n.diskslist\"\x00\x12$\n\x0blist_images\x12\x06.empty\x1a\x0b.imageslist\"\x00\x12(\n\rlist_networks\x12\x06.empty\x1a\r.networkslist\"\x00\x12 \n\tlist_isos\x12\x06.empty\x1a\t.isoslist\"\x00\x12\"\n\nlist_pools\x12\x06.empty\x1a\n.poolslist\"\x00\x12&\n\x0clist_subnets\x12\x06.empty\x1a\x0c.subnetslist\"\x00\x12\x19\n\x07restart\x12\x03.vm\x1a\x07.result\"\x00\x12\x17\n\x05start\x12\x03.vm\x1a\x07.result\"\x00\x12\x16\n\x04stop\x12\x03.vm\x1a\x07.result\"\x00\x12\x18\n\x06\x64\x65lete\x12\x03.vm\x1a\x07.result\"\x00\x12\x1c\n\nget_lastvm\x12\x07.client\x1a\x03.vm\"\x00\x32\xeb\x01\n\x07Kconfig\x12$\n\nlist_hosts\x12\x06.empty\x1a\x0c.clientslist\"\x00\x12(\n\rlist_keywords\x12\x06.empty\x1a\r.keywordslist\"\x00\x12\"\n\nlist_kubes\x12\x06.empty\x1a\n.kubeslist\"\x00\x12\x1e\n\x08list_lbs\x12\x06.empty\x1a\x08.lbslist\"\x00\x12\"\n\nlist_plans\x12\x06.empty\x1a\n.planslist\"\x00\x12(\n\rlist_profiles\x12\x06.empty\x1a\r.profileslist\"\x00\x62\x06proto3'
 )
 
 
@@ -1276,6 +1276,96 @@ _KUBESLIST = _descriptor.Descriptor(
   serialized_end=1728,
 )
 
+
+_LB = _descriptor.Descriptor(
+  name='lb',
+  full_name='lb',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='lb', full_name='lb.lb', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='ip', full_name='lb.ip', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='protocol', full_name='lb.protocol', index=2,
+      number=3, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='ports', full_name='lb.ports', index=3,
+      number=4, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='target', full_name='lb.target', index=4,
+      number=5, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=1730,
+  serialized_end=1807,
+)
+
+
+_LBSLIST = _descriptor.Descriptor(
+  name='lbslist',
+  full_name='lbslist',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='lbs', full_name='lbslist.lbs', index=0,
+      number=1, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=1809,
+  serialized_end=1836,
+)
+
 _CLIENTSLIST.fields_by_name['clients'].message_type = _CLIENT
 _VMINFO.fields_by_name['nets'].message_type = _NETINFO
 _VMINFO.fields_by_name['disks'].message_type = _DISKINFO
@@ -1289,6 +1379,7 @@ _POOLSLIST.fields_by_name['pools'].message_type = _POOL
 _NETWORKSLIST.fields_by_name['networks'].message_type = _NETWORK
 _SUBNETSLIST.fields_by_name['subnets'].message_type = _SUBNET
 _KUBESLIST.fields_by_name['kubes'].message_type = _KUBE
+_LBSLIST.fields_by_name['lbs'].message_type = _LB
 DESCRIPTOR.message_types_by_name['empty'] = _EMPTY
 DESCRIPTOR.message_types_by_name['client'] = _CLIENT
 DESCRIPTOR.message_types_by_name['clientslist'] = _CLIENTSLIST
@@ -1317,6 +1408,8 @@ DESCRIPTOR.message_types_by_name['subnet'] = _SUBNET
 DESCRIPTOR.message_types_by_name['subnetslist'] = _SUBNETSLIST
 DESCRIPTOR.message_types_by_name['kube'] = _KUBE
 DESCRIPTOR.message_types_by_name['kubeslist'] = _KUBESLIST
+DESCRIPTOR.message_types_by_name['lb'] = _LB
+DESCRIPTOR.message_types_by_name['lbslist'] = _LBSLIST
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 empty = _reflection.GeneratedProtocolMessageType('empty', (_message.Message,), {
@@ -1515,6 +1608,20 @@ kubeslist = _reflection.GeneratedProtocolMessageType('kubeslist', (_message.Mess
   })
 _sym_db.RegisterMessage(kubeslist)
 
+lb = _reflection.GeneratedProtocolMessageType('lb', (_message.Message,), {
+  'DESCRIPTOR' : _LB,
+  '__module__' : 'kcli_pb2'
+  # @@protoc_insertion_point(class_scope:lb)
+  })
+_sym_db.RegisterMessage(lb)
+
+lbslist = _reflection.GeneratedProtocolMessageType('lbslist', (_message.Message,), {
+  'DESCRIPTOR' : _LBSLIST,
+  '__module__' : 'kcli_pb2'
+  # @@protoc_insertion_point(class_scope:lbslist)
+  })
+_sym_db.RegisterMessage(lbslist)
+
 
 
 _KCLI = _descriptor.ServiceDescriptor(
@@ -1523,8 +1630,8 @@ _KCLI = _descriptor.ServiceDescriptor(
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
-  serialized_start=1731,
-  serialized_end=2146,
+  serialized_start=1839,
+  serialized_end=2254,
   methods=[
   _descriptor.MethodDescriptor(
     name='info',
@@ -1655,22 +1762,13 @@ _KCONFIG = _descriptor.ServiceDescriptor(
   file=DESCRIPTOR,
   index=1,
   serialized_options=None,
-  serialized_start=2149,
-  serialized_end=2352,
+  serialized_start=2257,
+  serialized_end=2492,
   methods=[
-  _descriptor.MethodDescriptor(
-    name='list_profiles',
-    full_name='Kconfig.list_profiles',
-    index=0,
-    containing_service=None,
-    input_type=_EMPTY,
-    output_type=_PROFILESLIST,
-    serialized_options=None,
-  ),
   _descriptor.MethodDescriptor(
     name='list_hosts',
     full_name='Kconfig.list_hosts',
-    index=1,
+    index=0,
     containing_service=None,
     input_type=_EMPTY,
     output_type=_CLIENTSLIST,
@@ -1679,28 +1777,46 @@ _KCONFIG = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='list_keywords',
     full_name='Kconfig.list_keywords',
-    index=2,
+    index=1,
     containing_service=None,
     input_type=_EMPTY,
     output_type=_KEYWORDSLIST,
     serialized_options=None,
   ),
   _descriptor.MethodDescriptor(
+    name='list_kubes',
+    full_name='Kconfig.list_kubes',
+    index=2,
+    containing_service=None,
+    input_type=_EMPTY,
+    output_type=_KUBESLIST,
+    serialized_options=None,
+  ),
+  _descriptor.MethodDescriptor(
+    name='list_lbs',
+    full_name='Kconfig.list_lbs',
+    index=3,
+    containing_service=None,
+    input_type=_EMPTY,
+    output_type=_LBSLIST,
+    serialized_options=None,
+  ),
+  _descriptor.MethodDescriptor(
     name='list_plans',
     full_name='Kconfig.list_plans',
-    index=3,
+    index=4,
     containing_service=None,
     input_type=_EMPTY,
     output_type=_PLANSLIST,
     serialized_options=None,
   ),
   _descriptor.MethodDescriptor(
-    name='list_kubes',
-    full_name='Kconfig.list_kubes',
-    index=4,
+    name='list_profiles',
+    full_name='Kconfig.list_profiles',
+    index=5,
     containing_service=None,
     input_type=_EMPTY,
-    output_type=_KUBESLIST,
+    output_type=_PROFILESLIST,
     serialized_options=None,
   ),
 ])

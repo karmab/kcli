@@ -187,6 +187,16 @@ class KconfigServicer(kcli_pb2_grpc.KconfigServicer):
         response = kcli_pb2.keywordslist(keywords=[kcli_pb2.keyword(**k) for k in keywordslist])
         return response
 
+    def list_lbs(self, request, context):
+        print("Handling list_lbs call")
+        config = Kconfig()
+        lbslist = []
+        for lb in config.list_loadbalancers():
+            lbname, ip, protocol, ports, target = lb
+            lbslist.append({'lb': lbname, 'ip': ip, 'protocol': protocol, 'ports': ports, 'target': target})
+        response = kcli_pb2.lbslist(lbs=[kcli_pb2.lb(**l) for l in lbslist])
+        return response
+
 
 def main():
     print('Starting server. Listening on port 50051.')
