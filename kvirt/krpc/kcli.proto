@@ -5,6 +5,10 @@ syntax = "proto3";
 
 message empty {}
 
+message version {
+    string version = 1 ; 
+    string git_version = 2 ; 
+}
 message client {
  string client = 1 ; 
  string type = 2 ;
@@ -91,6 +95,10 @@ message isoslist{
     repeated string isos = 1 ;
 }
 
+message image{
+    string image = 1 ; 
+}
+
 message imageslist{
     repeated string images = 1 ;
 }
@@ -134,7 +142,7 @@ message poolslist {
 }
 
 message network {
-    string  network = 1 ; 
+    string network = 1 ; 
     string type = 2 ; 
     string cidr = 3 ; 
     string dhcp = 4 ; 
@@ -181,10 +189,48 @@ message lbslist {
     repeated lb lbs = 1 ;
 }
 
+message flavor {
+    string flavor = 1 ;
+    int32 numcpus = 2 ; 
+    int32 memory = 3 ; 
+}
+
+message flavorslist {
+    repeated flavor flavors = 1 ; 
+}
+
+message repo {
+    string repo = 1 ; 
+    string url = 2 ; 
+}
+
+message reposlist {
+    repeated repo repos = 1 ; 
+}
+
+message product {
+    string product = 1 ;
+    string repo = 2 ; 
+    string group = 3 ;
+    string description = 4 ; 
+    string numvms = 5 ; 
+    string memory = 6 ; 
+}
+
+message productslist {
+    repeated product products = 1 ; 
+}
+
+message config {
+    string client = 1 ; 
+    repeated string extraclients = 2 ; 
+}
+
 service Kcli {
     rpc info(vm) returns (vminfo) {}
     rpc list(empty) returns (vmlist) {}
     rpc list_disks(empty) returns (diskslist) {}
+    rpc list_flavors(empty) returns (flavorslist) {}
     rpc list_images(empty) returns (imageslist) {}
     rpc list_networks(empty) returns (networkslist) {}
     rpc list_isos(empty) returns (isoslist) {}
@@ -195,13 +241,20 @@ service Kcli {
     rpc stop(vm) returns (result) {}
     rpc delete(vm) returns (result) {}
     rpc get_lastvm(client) returns (vm) {}
+    rpc delete_image(image) returns (result) {}
+    rpc delete_network(network) returns (result) {}
 }
 
 service Kconfig {
+    rpc get_config(empty) returns (config) {}
+    rpc get_version(empty) returns (version) {}
+    rpc delete_host(client) returns (result) {}
     rpc list_hosts(empty) returns (clientslist) {}
     rpc list_keywords(empty) returns (keywordslist) {}
     rpc list_kubes(empty) returns (kubeslist) {}
     rpc list_lbs(empty) returns (lbslist) {}
     rpc list_plans(empty) returns (planslist) {}
     rpc list_profiles(empty) returns (profileslist) {}
+    rpc list_products(product) returns (productslist) {}
+    rpc list_repos(empty) returns (reposlist) {}
 }

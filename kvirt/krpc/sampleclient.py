@@ -1,6 +1,6 @@
 import grpc
 # from kcli_pb2 import vm, client
-from kcli_pb2 import vm
+from kcli_pb2 import vm, product
 from kcli_pb2 import empty
 import kcli_pb2_grpc
 import os
@@ -9,8 +9,15 @@ channel = grpc.insecure_channel('localhost:50051')
 k = kcli_pb2_grpc.KcliStub(channel)
 config = kcli_pb2_grpc.KconfigStub(channel)
 
-print(config.list_keywords(empty()))
+repo = None
+group = None
+print(config.list_products(product(repo=repo, group=group)).products)
+# print(config.list_products(product(group=group)).products)
 os._exit(0)
+
+print(config.list_repos(empty()))
+os._exit(0)
+
 print(k.list_disks(empty()))
 os._exit(0)
 

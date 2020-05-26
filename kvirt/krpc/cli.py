@@ -13,10 +13,8 @@ from distutils.spawn import find_executable
 from kvirt.examples import hostcreate, _list, plancreate, planinfo, productinfo, repocreate, start
 from kvirt.examples import kubegenericcreate, kubeopenshiftcreate
 from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsole, vmexport, niccreate, nicdelete
-from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
-from kvirt import version
-from kvirt.defaults import IMAGES, VERSION
+from kvirt.defaults import IMAGES
 from prettytable import PrettyTable
 import argcomplete
 import argparse
@@ -32,11 +30,16 @@ from urllib.request import urlopen
 
 class Kconfig():
     def __init__(self, client=None, debug=None, region=None, zone=None, namespace=None):
-        self.client = client
-        self.extraclients = []
         self.k = kcli_pb2_grpc.KcliStub(channel)
         self.config = kcli_pb2_grpc.KconfigStub(channel)
         self.baseconfig = self.config
+        if client is None:
+            clientinfo = self.config.get_config(empty())
+            self.client = clientinfo.client
+            self.extraclients = [c for c in clientinfo.extraclients]
+        else:
+            self.client = client
+            self.extraclients = []
         self.planview = False
 
 
@@ -85,9 +88,10 @@ def get_subparser(parser, subcommand):
 
 def get_version(args):
     url = "https://github.com/karmab/kcli"
+    baseconfig = Kconfig(client=args.client, debug=args.debug).baseconfig
+    version = baseconfig.get_version(empty())
+    VERSION, git_version = version.version, version.git_version
     full_version = "version: %s" % VERSION
-    versiondir = os.path.dirname(version.__file__)
-    git_version = open('%s/git' % versiondir).read().rstrip() if os.path.exists('%s/git' % versiondir) else 'N/A'
     full_version += " commit: %s" % git_version
     update = 'N/A'
     if git_version != 'N/A':
@@ -312,19 +316,20 @@ def delete_image(args):
             common.confirm("Are you sure?")
         codes = []
         for image in images:
-            clientprofile = "%s_%s" % (cli, image)
+            # clientprofile = "%s_%s" % (cli, image)
             common.pprint("Deleting image %s on %s" % (image, cli))
-            if clientprofile in config.profiles and 'image' in config.profiles[clientprofile]:
-                profileimage = config.profiles[clientprofile]['image']
-                config.delete_profile(clientprofile, quiet=True)
-                result = k.delete_image(profileimage)
-            else:
-                result = k.delete_image(image)
-            if result['result'] == 'success':
+            result = k.delete_image(kcli_pb2.image(image=image))
+            # if clientprofile in config.profiles and 'image' in config.profiles[clientprofile]:
+            #     profileimage = config.profiles[clientprofile]['image']
+            #     config.delete_profile(clientprofile, quiet=True)
+            #     result = k.delete_image(kcli_pb2.image(image=profileimage))
+            # else:
+            #     result = k.delete_image(kcli_pb2.image(image=image))
+            if result.result == 'success':
                 common.pprint("%s deleted" % image)
                 codes.append(0)
             else:
-                reason = result['reason']
+                reason = result.reason
                 common.pprint("Could not delete image %s because %s" % (image, reason), color='red')
                 codes.append(1)
     os._exit(1 if 1 in codes else 0)
@@ -408,7 +413,7 @@ def info_vm(args):
 def enable_host(args):
     """Enable host"""
     host = args.name
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    baseconfig = Kconfig(client=args.client, debug=args.debug).baseconfig
     result = baseconfig.enable_host(host)
     if result['result'] == 'success':
         os._exit(0)
@@ -419,7 +424,7 @@ def enable_host(args):
 def disable_host(args):
     """Disable host"""
     host = args.name
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    baseconfig = Kconfig(client=args.client, debug=args.debug).baseconfig
     result = baseconfig.disable_host(host)
     if result['result'] == 'success':
         os._exit(0)
@@ -429,7 +434,9 @@ def disable_host(args):
 
 def delete_host(args):
     """Delete host"""
-    common.delete_host(args.name)
+    baseconfig = Kconfig(client=args.client, debug=args.debug).baseconfig
+    baseconfig.delete_host(kcli_pb2.client(client=args.name))
+    common.pprint("Host %s deleted" % args.client)
 
 
 def sync_host(args):
@@ -510,7 +517,7 @@ def list_container(args):
 def profilelist_container(args):
     """List container profiles"""
     short = args.short
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    baseconfig = Kconfig(client=args.client, debug=args.debug).baseconfig
     profiles = baseconfig.list_containerprofiles()
     if short:
         profilestable = PrettyTable(["Profile"])
@@ -636,15 +643,19 @@ def list_flavor(args):
     short = args.short
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
-    flavors = k.flavors()
+    flavorslist = []
+    flavors = k.list_flavors(empty()).flavors
     if short:
         flavorstable = PrettyTable(["Flavor"])
-        for flavor in sorted(flavors):
-            flavorname = flavor[0]
-            flavorstable.add_row([flavorname])
+        for flavor in flavors:
+            flavorslist.append(flavor.flavor)
+        for flavor in sorted(flavorslist):
+            flavorstable.add_row([flavor])
     else:
         flavorstable = PrettyTable(["Flavor", "Numcpus", "Memory"])
-        for flavor in sorted(flavors):
+        for flavor in flavors:
+            flavorslist.append([flavor.flavor, flavor.numcpus, flavor.memory])
+        for flavor in sorted(flavorslist):
             flavorstable.add_row(flavor)
     flavorstable.align["Flavor"] = "l"
     print(flavorstable)
@@ -810,13 +821,19 @@ def list_product(args):
     group = args.group
     repo = args.repo
     search = args.search
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    baseconfig = Kconfig(client=args.client, debug=args.debug).baseconfig
+    productslist = []
+    productsinfo = baseconfig.list_products(kcli_pb2.product(repo=repo, group=group)).products
+    for prod in productsinfo:
+        newproduct = {'name': prod.product, 'repo': prod.repo, 'group': prod.group, 'numvms': prod.numvms,
+                      'memory': prod.memory, 'description': prod.description}
+        productslist.append(newproduct)
     if search is not None:
-        baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+        baseconfig = Kconfig(client=args.client, debug=args.debug).baseconfig
         products = PrettyTable(["Repo", "Product", "Group", "Description", "Numvms", "Memory"])
         products.align["Repo"] = "l"
-        productsinfo = baseconfig.list_products(repo=repo)
-        for prod in sorted(productsinfo, key=lambda x: (x['repo'], x['group'], x['name'])):
+        # productsinfo = baseconfig.list_products(kcli_pb2.product(repo=repo)).products
+        for prod in sorted(productslist, key=lambda x: (x['repo'], x['group'], x['name'])):
             name = prod['name']
             repo = prod['repo']
             prodgroup = prod['group']
@@ -832,8 +849,8 @@ def list_product(args):
     else:
         products = PrettyTable(["Repo", "Product", "Group", "Description", "Numvms", "Memory"])
         products.align["Repo"] = "l"
-        productsinfo = baseconfig.list_products(group=group, repo=repo)
-        for product in sorted(productsinfo, key=lambda x: (x['repo'], x['group'], x['name'])):
+        # productsinfo = baseconfig.list_products(group=group, repo=repo)
+        for product in sorted(productslist, key=lambda x: (x['repo'], x['group'], x['name'])):
             name = product['name']
             repo = product['repo']
             description = product.get('description', 'N/A')
@@ -847,13 +864,14 @@ def list_product(args):
 
 def list_repo(args):
     """List repos"""
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    baseconfig = Kconfig(client=args.client, debug=args.debug).baseconfig
     repos = PrettyTable(["Repo", "Url"])
     repos.align["Repo"] = "l"
-    reposinfo = baseconfig.list_repos()
-    for repo in sorted(reposinfo):
-        url = reposinfo[repo]
-        repos.add_row([repo, url])
+    reposlist = []
+    for repo in baseconfig.list_repos(empty()).repos:
+        reposlist.append([repo.repo, repo.url])
+    for repo in sorted(reposlist):
+        repos.add_row(repo)
     print(repos)
     return
 
@@ -1413,7 +1431,7 @@ def info_plan(args):
         inputfile = "/workdir/%s" % inputfile if inputfile is not None else "/workdir/kcli_plan.yml"
     if url is None:
         inputfile = plan if inputfile is None and plan is not None else inputfile
-        baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+        baseconfig = Kconfig(client=args.client, debug=args.debug).baseconfig
         baseconfig.info_plan(inputfile, quiet=quiet, doc=doc)
     else:
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
@@ -1424,13 +1442,13 @@ def info_plan(args):
 
 def info_generic_kube(args):
     """Info Generic kube"""
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    baseconfig = Kconfig(client=args.client, debug=args.debug).baseconfig
     baseconfig.info_kube_generic(quiet=True)
 
 
 def info_openshift_kube(args):
     """Info Openshift kube"""
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    baseconfig = Kconfig(client=args.client, debug=args.debug).baseconfig
     baseconfig.info_kube_openshift(quiet=True)
 
 
@@ -1490,7 +1508,7 @@ def create_pipeline(args):
     elif paramfile is None and os.path.exists("kcli_parameters.yml"):
         paramfile = "kcli_parameters.yml"
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    baseconfig = Kconfig(client=args.client, debug=args.debug).baseconfig
     if not kube and not os.path.exists(inputfile):
         common.pprint("File %s not found" % inputfile, color='red')
         return 0
@@ -1516,7 +1534,7 @@ def render_file(args):
         paramfile = "kcli_parameters.yml"
         # common.pprint("Using default parameter file kcli_parameters.yml")
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    baseconfig = Kconfig(client=args.client, debug=args.debug).baseconfig
     config_data = {'config_%s' % k: baseconfig.ini[baseconfig.client][k] for k in baseconfig.ini[baseconfig.client]}
     config_data['config_type'] = config_data.get('config_type', 'kvm')
     overrides.update(config_data)
@@ -1548,7 +1566,7 @@ def create_repo(args):
     """Create repo"""
     repo = args.repo
     url = args.url
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    baseconfig = Kconfig(client=args.client, debug=args.debug).baseconfig
     if repo is None:
         common.pprint("Missing repo. Leaving...", color='red')
         os._exit(1)
@@ -1563,7 +1581,7 @@ def create_repo(args):
 def delete_repo(args):
     """Delete repo"""
     repo = args.repo
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    baseconfig = Kconfig(client=args.client, debug=args.debug).baseconfig
     if repo is None:
         common.pprint("Missing repo. Leaving...", color='red')
         os._exit(1)
@@ -1575,7 +1593,7 @@ def delete_repo(args):
 def update_repo(args):
     """Update repo"""
     repo = args.repo
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    baseconfig = Kconfig(client=args.client, debug=args.debug).baseconfig
     if repo is None:
         common.pprint("Updating all repos...", color='blue')
         repos = baseconfig.list_repos()
@@ -1593,7 +1611,7 @@ def info_product(args):
     repo = args.repo
     product = args.product
     group = args.group
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    baseconfig = Kconfig(client=args.client, debug=args.debug).baseconfig
     common.pprint("Providing information on product %s..." % product)
     baseconfig.info_product(product, repo, group)
 
@@ -1718,12 +1736,13 @@ def create_network(args):
 def delete_network(args):
     """Delete Network"""
     name = args.name
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
+                     namespace=args.namespace)
     k = config.k
     if name is None:
         common.pprint("Missing Network", color='red')
         os._exit(1)
-    result = k.delete_network(name=name)
+    result = k.delete_network(kcli_pb2.network(network=name))
     common.handle_response(result, name, element='Network', action='deleted')
 
 
@@ -1739,7 +1758,7 @@ def create_host_kvm(args):
     data['url'] = args.url
     data['pool'] = args.pool
     common.create_host(data)
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
+    baseconfig = Kconfig(client=args.client, debug=args.debug, quiet=True).baseconfig
     if len(baseconfig.clients) == 1:
         baseconfig.set_defaults()
 
@@ -1760,7 +1779,7 @@ def create_host_ovirt(args):
         data['pool'] = args.pool
     data['client'] = args.client
     common.create_host(data)
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
+    baseconfig = Kconfig(client=args.client, debug=args.debug, quiet=True).baseconfig
     if len(baseconfig.clients) == 1:
         baseconfig.set_defaults()
 
@@ -1774,7 +1793,7 @@ def create_host_gcp(args):
     data['zone'] = args.zone
     data['_type'] = 'gcp'
     common.create_host(data)
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
+    baseconfig = Kconfig(client=args.client, debug=args.debug, quiet=True).baseconfig
     if len(baseconfig.clients) == 1:
         baseconfig.set_defaults()
 
@@ -1789,7 +1808,7 @@ def create_host_aws(args):
     data['region'] = args.region
     data['keypair'] = args.keypair
     common.create_host(data)
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
+    baseconfig = Kconfig(client=args.client, debug=args.debug, quiet=True).baseconfig
     if len(baseconfig.clients) == 1:
         baseconfig.set_defaults()
 
@@ -1805,7 +1824,7 @@ def create_host_openstack(args):
     data['domain'] = args.domain
     data['auth_url'] = args.auth_url
     common.create_host(data)
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
+    baseconfig = Kconfig(client=args.client, debug=args.debug, quiet=True).baseconfig
     if len(baseconfig.clients) == 1:
         baseconfig.set_defaults()
 
@@ -1828,7 +1847,7 @@ def create_host_kubevirt(args):
     if args.port is not None:
         data['port'] = args.port
     common.create_host(data)
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
+    baseconfig = Kconfig(client=args.client, debug=args.debug, quiet=True).baseconfig
     if len(baseconfig.clients) == 1:
         baseconfig.set_defaults()
 
@@ -1846,7 +1865,7 @@ def create_host_vsphere(args):
     if args.pool is not None:
         data['pool'] = args.pool
     common.create_host(data)
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
+    baseconfig = Kconfig(client=args.client, debug=args.debug, quiet=True).baseconfig
     if len(baseconfig.clients) == 1:
         baseconfig.set_defaults()
 
@@ -1950,7 +1969,7 @@ def report_host(args):
 def switch_host(args):
     """Handle host"""
     host = args.name
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    baseconfig = Kconfig(client=args.client, debug=args.debug).baseconfig
     result = baseconfig.switch_host(host)
     if result['result'] == 'success':
         os._exit(0)

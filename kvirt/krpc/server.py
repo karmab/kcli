@@ -7,6 +7,9 @@ import kvirt.krpc.kcli_pb2_grpc as kcli_pb2_grpc
 
 from kvirt.config import Kconfig, Kbaseconfig
 from kvirt import common
+from kvirt import version
+from kvirt.defaults import VERSION
+import os
 
 
 class KcliServicer(kcli_pb2_grpc.KcliServicer):
@@ -22,6 +25,20 @@ class KcliServicer(kcli_pb2_grpc.KcliServicer):
         print("Handling delete call for:\n%s" % request)
         config = Kconfig()
         result = config.k.delete(request.name, snapshots=request.snapshots)
+        response = kcli_pb2.result(**result)
+        return response
+
+    def delete_image(self, request, context):
+        print("Handling delete_image call for:\n%s" % request)
+        config = Kconfig()
+        result = config.k.delete_image(request.image)
+        response = kcli_pb2.result(**result)
+        return response
+
+    def delete_network(self, request, context):
+        print("Handling delete_network call for:\n%s" % request)
+        config = Kconfig()
+        result = config.k.delete_network(request.network)
         response = kcli_pb2.result(**result)
         return response
 
@@ -118,8 +135,41 @@ class KcliServicer(kcli_pb2_grpc.KcliServicer):
         response = kcli_pb2.poolslist(pools=[{'pool': pool, 'path': k.get_pool_path(pool)} for pool in k.list_pools()])
         return response
 
+    def list_flavors(self, request, context):
+        print("Handling list_flavors call")
+        config = Kconfig()
+        k = config.k
+        flavorslist = []
+        for flavor in k.flavors():
+            flavorname, numcpus, memory = flavor
+            flavorslist.append({'flavor': flavorname, 'numcpus': numcpus, 'memory': memory})
+        response = kcli_pb2.flavorslist(flavors=[kcli_pb2.flavor(**f) for f in flavorslist])
+        return response
+
 
 class KconfigServicer(kcli_pb2_grpc.KconfigServicer):
+
+    def get_version(self, request, context):
+        print("Handling get_version call")
+        versiondir = os.path.dirname(version.__file__)
+        git_version = open('%s/git' % versiondir).read().rstrip() if os.path.exists('%s/git' % versiondir) else 'N/A'
+        ver = {'version': VERSION, 'git_version': git_version}
+        response = kcli_pb2.version(**ver)
+        return response
+
+    def get_config(self, request, context):
+        print("Handling list_profiles call")
+        config = Kconfig()
+        configinfo = {'client': config.client, 'extraclients': [c for c in config.extraclients]}
+        response = kcli_pb2.config(**configinfo)
+        return response
+
+    def delete_host(self, request, context):
+        print("Handling delete_host call for:\n%s" % request)
+        common.delete_host(request.client)
+        result = {'result': 'success'}
+        response = kcli_pb2.result(**result)
+        return response
 
     def list_profiles(self, request, context):
         print("Handling list_profiles call")
@@ -195,6 +245,35 @@ class KconfigServicer(kcli_pb2_grpc.KconfigServicer):
             lbname, ip, protocol, ports, target = lb
             lbslist.append({'lb': lbname, 'ip': ip, 'protocol': protocol, 'ports': ports, 'target': target})
         response = kcli_pb2.lbslist(lbs=[kcli_pb2.lb(**l) for l in lbslist])
+        return response
+
+    def list_repos(self, request, context):
+        print("Handling list_repos call")
+        baseconfig = Kbaseconfig()
+        repos = baseconfig.list_repos()
+        reposlist = []
+        for r in repos:
+            reposlist.append({'repo': r, 'url': repos[r]})
+        response = kcli_pb2.reposlist(repos=[kcli_pb2.repo(**r) for r in reposlist])
+        return response
+
+    def list_products(self, request, context):
+        print("Handling list_products call")
+        repo = request.repo if request.repo != '' else None
+        group = request.group if request.group != '' else None
+        baseconfig = Kbaseconfig()
+        products = baseconfig.list_products(group=group, repo=repo)
+        productslist = []
+        for product in products:
+            productname = product['name']
+            repo = product['repo']
+            group = product['group']
+            numvms = str(product.get('numvms', 'N/A'))
+            memory = str(product.get('memory', 'N/A'))
+            description = product.get('description', 'N/A')
+            productslist.append({'product': productname, 'numvms': numvms, 'memory': memory, 'description': description,
+                                 'repo': repo, 'group': group})
+        response = kcli_pb2.productslist(products=[kcli_pb2.product(**r) for r in productslist])
         return response
 
 
