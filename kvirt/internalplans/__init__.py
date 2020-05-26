@@ -7,13 +7,13 @@ parameters:
  - default
  vms: []
 
-loadbalancer_{{ ports | join('+') }}:
+loadbalancer-{{ ports | join('+') }}:
  type: profile
  image: {{ image }}
  nets: {{ nets }}
 
 {{ name }}:
- profile: loadbalancer_{{ ports | join('+') }}
+ profile: loadbalancer-{{ ports | join('+') }}
  files:
   - path: /root/haproxy.cfg
     content:   |

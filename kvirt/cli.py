@@ -511,7 +511,7 @@ def list_lb(args):
     """List lbs"""
     short = args.short
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    loadbalancers = config.list_loadbalancer()
+    loadbalancers = config.list_loadbalancers()
     if short:
         loadbalancerstable = PrettyTable(["Loadbalancer"])
         for lb in sorted(loadbalancers):

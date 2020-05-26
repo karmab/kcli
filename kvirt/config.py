@@ -1500,9 +1500,9 @@ $INFO
                 if 'image' in profile:
                     for entry in self.list_profiles():
                         currentimage = profile['image']
-                        profilename = entry[0]
+                        entryprofile = entry[0]
                         clientprofile = "%s_%s" % (self.client, currentimage)
-                        if profilename == currentimage or profilename == clientprofile:
+                        if entryprofile == currentimage or entryprofile == clientprofile:
                             profile['image'] = entry[4]
                             break
                     imageprofile = profile['image']
@@ -1817,12 +1817,13 @@ $INFO
                 k.delete_loadbalancer(name)
                 return
             else:
-                common.pprint("Creating loadbalancer %s" % name)
+                common.pprint("Deploying loadbalancer %s" % name)
                 k.create_loadbalancer(name, ports=ports, checkpath=checkpath, vms=vms, domain=domain,
                                       checkport=checkport, alias=alias, internal=internal)
         elif delete:
             return
         else:
+            common.pprint("Deploying loadbalancer %s" % name)
             vminfo = []
             for vm in vms:
                 counter = 0
@@ -1838,13 +1839,13 @@ $INFO
             overrides = {'name': name, 'vms': vminfo, 'nets': nets, 'ports': ports, 'checkpath': checkpath}
             self.plan(plan, inputstring=haproxyplan, overrides=overrides)
 
-    def list_loadbalancer(self):
+    def list_loadbalancers(self):
         k = self.k
         if self.type not in ['aws', 'gcp']:
             results = []
             for vm in k.list():
-                if vm['profile'].startswith('loadbalancer') and len(vm['profile'].split('_')) == 2:
-                    ports = vm['profile'].split('_')[1]
+                if vm['profile'].startswith('loadbalancer') and len(vm['profile'].split('-')) == 2:
+                    ports = vm['profile'].split('-')[1]
                     results.append([vm['name'], vm['ip'], 'tcp', ports, ''])
             return results
         else:
