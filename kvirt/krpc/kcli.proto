@@ -262,6 +262,15 @@ message sshcmd {
     string sshcmd = 1 ; 
 }
 
+message scpdetails {
+    string name = 1 ; 
+    string source = 2 ;
+    string destination = 3 ;
+    string user = 4 ;
+    bool recursive = 5 ;
+    bool download = 6 ;
+}
+
 service Kcli {
     rpc info(vm) returns (vminfo) {}
     rpc list(empty) returns (vmlist) {}
@@ -274,6 +283,7 @@ service Kcli {
     rpc list_subnets(empty) returns (subnetslist) {}
     rpc restart(vm) returns (result) {}
     rpc ssh(vm) returns (sshcmd) {}
+    rpc scp(scpdetails) returns (sshcmd) {}
     rpc start(vm) returns (result) {}
     rpc stop(vm) returns (result) {}
     rpc delete(vm) returns (result) {}
@@ -297,6 +307,7 @@ service Kconfig {
     rpc list_profiles(empty) returns (profileslist) {}
     rpc list_products(product) returns (productslist) {}
     rpc list_repos(empty) returns (reposlist) {}
+    rpc restart_container(container) returns (result) {}
     rpc start_container(container) returns (result) {}
     rpc stop_container(container) returns (result) {}
     rpc switch_host(client) returns (result) {}

@@ -189,11 +189,10 @@ def restart_container(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     names = [k.get_lastvm(kcli_pb2.client(client=config.client)).name] if not args.names else args.names
-    cont = Kcontainerconfig(config, client=args.containerclient).cont
     for name in names:
         common.pprint("Restarting container %s..." % name)
-        cont.stop_container(name)
-        cont.start_container(name)
+        config.config.stop_container(kcli_pb2.container(container=name))
+        config.config.start_container(kcli_pb2.container(container=name))
 
 
 def console_vm(args):
@@ -1663,14 +1662,6 @@ def scp_vm(args):
     user = args.user
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
-    tunnel = config.tunnel
-    tunnelhost = config.tunnelhost if config.tunnelhost is not None else config.host
-    tunnelport = config.tunnelport if config.tunnelport is not None else 22
-    tunneluser = config.tunneluser if config.tunneluser is not None else 'root'
-    if tunnel and tunnelhost == '127.0.0.1':
-        common.pprint("Tunnel requested but invalid tunnelhost", color='red')
-        os._exit(1)
-    insecure = config.insecure
     if len(source.split(':')) == 2:
         name, source = source.split(':')
         download = True
@@ -1682,9 +1673,9 @@ def scp_vm(args):
         return
     if '@' in name and len(name.split('@')) == 2:
         user, name = name.split('@')
-    scpcommand = k.scp(name, user=user, source=source, destination=destination,
-                       tunnel=tunnel, tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser,
-                       download=download, recursive=recursive, insecure=insecure)
+    scpdetails = kcli_pb2.scpdetails(name=name, user=user, source=source, destination=destination, download=download,
+                                     recursive=recursive)
+    scpcommand = k.scp(scpdetails).sshcmd
     if scpcommand is not None:
         if find_executable('scp') is not None:
             os.system(scpcommand)

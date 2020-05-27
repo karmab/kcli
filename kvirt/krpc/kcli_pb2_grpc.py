@@ -68,6 +68,11 @@ class KcliStub(object):
                 request_serializer=kcli__pb2.vm.SerializeToString,
                 response_deserializer=kcli__pb2.sshcmd.FromString,
                 )
+        self.scp = channel.unary_unary(
+                '/Kcli/scp',
+                request_serializer=kcli__pb2.scpdetails.SerializeToString,
+                response_deserializer=kcli__pb2.sshcmd.FromString,
+                )
         self.start = channel.unary_unary(
                 '/Kcli/start',
                 request_serializer=kcli__pb2.vm.SerializeToString,
@@ -169,6 +174,12 @@ class KcliServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def scp(self, request, context):
+        """Missing associated documentation comment in .proto file"""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def start(self, request, context):
         """Missing associated documentation comment in .proto file"""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -261,6 +272,11 @@ def add_KcliServicer_to_server(servicer, server):
             'ssh': grpc.unary_unary_rpc_method_handler(
                     servicer.ssh,
                     request_deserializer=kcli__pb2.vm.FromString,
+                    response_serializer=kcli__pb2.sshcmd.SerializeToString,
+            ),
+            'scp': grpc.unary_unary_rpc_method_handler(
+                    servicer.scp,
+                    request_deserializer=kcli__pb2.scpdetails.FromString,
                     response_serializer=kcli__pb2.sshcmd.SerializeToString,
             ),
             'start': grpc.unary_unary_rpc_method_handler(
@@ -480,6 +496,22 @@ class Kcli(object):
             call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
+    def scp(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/Kcli/scp',
+            kcli__pb2.scpdetails.SerializeToString,
+            kcli__pb2.sshcmd.FromString,
+            options, channel_credentials,
+            call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
     def start(request,
             target,
             options=(),
@@ -655,6 +687,11 @@ class KconfigStub(object):
                 request_serializer=kcli__pb2.empty.SerializeToString,
                 response_deserializer=kcli__pb2.reposlist.FromString,
                 )
+        self.restart_container = channel.unary_unary(
+                '/Kconfig/restart_container',
+                request_serializer=kcli__pb2.container.SerializeToString,
+                response_deserializer=kcli__pb2.result.FromString,
+                )
         self.start_container = channel.unary_unary(
                 '/Kconfig/start_container',
                 request_serializer=kcli__pb2.container.SerializeToString,
@@ -759,6 +796,12 @@ class KconfigServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def restart_container(self, request, context):
+        """Missing associated documentation comment in .proto file"""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def start_container(self, request, context):
         """Missing associated documentation comment in .proto file"""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -849,6 +892,11 @@ def add_KconfigServicer_to_server(servicer, server):
                     servicer.list_repos,
                     request_deserializer=kcli__pb2.empty.FromString,
                     response_serializer=kcli__pb2.reposlist.SerializeToString,
+            ),
+            'restart_container': grpc.unary_unary_rpc_method_handler(
+                    servicer.restart_container,
+                    request_deserializer=kcli__pb2.container.FromString,
+                    response_serializer=kcli__pb2.result.SerializeToString,
             ),
             'start_container': grpc.unary_unary_rpc_method_handler(
                     servicer.start_container,
@@ -1096,6 +1144,22 @@ class Kconfig(object):
         return grpc.experimental.unary_unary(request, target, '/Kconfig/list_repos',
             kcli__pb2.empty.SerializeToString,
             kcli__pb2.reposlist.FromString,
+            options, channel_credentials,
+            call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def restart_container(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/Kconfig/restart_container',
+            kcli__pb2.container.SerializeToString,
+            kcli__pb2.result.FromString,
             options, channel_credentials,
             call_credentials, compression, wait_for_ready, timeout, metadata)
 

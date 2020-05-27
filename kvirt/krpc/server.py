@@ -63,6 +63,30 @@ class KcliServicer(kcli_pb2_grpc.KcliServicer):
         response = kcli_pb2.result(**result)
         return response
 
+    def scp(self, request, context):
+        print("Handling scp call for:\n%s" % request)
+        name = request.name
+        recursive = request.recursive
+        source = request.source
+        destination = request.destination
+        download = request.download
+        user = request.user if request.user != '' else None
+        config = Kconfig()
+        k = config.k
+        tunnel = config.tunnel
+        tunnelhost = config.tunnelhost if config.tunnelhost is not None else config.host
+        tunnelport = config.tunnelport if config.tunnelport is not None else 22
+        tunneluser = config.tunneluser if config.tunneluser is not None else 'root'
+        if tunnel and tunnelhost == '127.0.0.1':
+            common.pprint("Tunnel requested but invalid tunnelhost", color='red')
+            os._exit(1)
+        insecure = config.insecure
+        scpcommand = k.scp(name, user=user, source=source, destination=destination,
+                           tunnel=tunnel, tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser,
+                           download=download, recursive=recursive, insecure=insecure)
+        response = kcli_pb2.sshcmd(sshcmd=scpcommand)
+        return response
+
     def ssh(self, request, context):
         print("Handling ssh call for:\n%s" % request)
         config = Kconfig()
@@ -342,6 +366,14 @@ class KconfigServicer(kcli_pb2_grpc.KconfigServicer):
         response = kcli_pb2.productslist(products=[kcli_pb2.product(**r) for r in productslist])
         return response
 
+    def restart_container(self, request, context):
+        print("Handling restart_container call for:\n%s" % request)
+        config = Kconfig()
+        cont = Kcontainerconfig(config).cont
+        result = cont.restart_container(request.container)
+        response = kcli_pb2.result(**result)
+        return response
+
     def start_container(self, request, context):
         print("Handling start_container call for:\n%s" % request)
         config = Kconfig()
@@ -351,7 +383,7 @@ class KconfigServicer(kcli_pb2_grpc.KconfigServicer):
         return response
 
     def stop_container(self, request, context):
-        print("Handling start_container call for:\n%s" % request)
+        print("Handling stop_container call for:\n%s" % request)
         config = Kconfig()
         cont = Kcontainerconfig(config).cont
         result = cont.stop_container(request.container)
