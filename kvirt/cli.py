@@ -2084,7 +2084,7 @@ def cli():
     containerdelete_parser = delete_subparsers.add_parser('container', description=containerdelete_desc,
                                                           help=containerdelete_desc)
     containerdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    containerdelete_parser.add_argument('names', metavar='VMNAMES', nargs='+')
+    containerdelete_parser.add_argument('names', metavar='CONTAINERIMAGES', nargs='+')
     containerdelete_parser.set_defaults(func=delete_container)
 
     containerimagelist_desc = 'List Container Images'

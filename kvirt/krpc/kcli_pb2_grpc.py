@@ -63,6 +63,11 @@ class KcliStub(object):
                 request_serializer=kcli__pb2.vm.SerializeToString,
                 response_deserializer=kcli__pb2.result.FromString,
                 )
+        self.ssh = channel.unary_unary(
+                '/Kcli/ssh',
+                request_serializer=kcli__pb2.vm.SerializeToString,
+                response_deserializer=kcli__pb2.sshcmd.FromString,
+                )
         self.start = channel.unary_unary(
                 '/Kcli/start',
                 request_serializer=kcli__pb2.vm.SerializeToString,
@@ -158,6 +163,12 @@ class KcliServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def ssh(self, request, context):
+        """Missing associated documentation comment in .proto file"""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def start(self, request, context):
         """Missing associated documentation comment in .proto file"""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -246,6 +257,11 @@ def add_KcliServicer_to_server(servicer, server):
                     servicer.restart,
                     request_deserializer=kcli__pb2.vm.FromString,
                     response_serializer=kcli__pb2.result.SerializeToString,
+            ),
+            'ssh': grpc.unary_unary_rpc_method_handler(
+                    servicer.ssh,
+                    request_deserializer=kcli__pb2.vm.FromString,
+                    response_serializer=kcli__pb2.sshcmd.SerializeToString,
             ),
             'start': grpc.unary_unary_rpc_method_handler(
                     servicer.start,
@@ -448,6 +464,22 @@ class Kcli(object):
             call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
+    def ssh(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/Kcli/ssh',
+            kcli__pb2.vm.SerializeToString,
+            kcli__pb2.sshcmd.FromString,
+            options, channel_credentials,
+            call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
     def start(request,
             target,
             options=(),
@@ -568,6 +600,21 @@ class KconfigStub(object):
                 request_serializer=kcli__pb2.client.SerializeToString,
                 response_deserializer=kcli__pb2.result.FromString,
                 )
+        self.delete_container = channel.unary_unary(
+                '/Kconfig/delete_container',
+                request_serializer=kcli__pb2.container.SerializeToString,
+                response_deserializer=kcli__pb2.result.FromString,
+                )
+        self.list_containers = channel.unary_unary(
+                '/Kconfig/list_containers',
+                request_serializer=kcli__pb2.empty.SerializeToString,
+                response_deserializer=kcli__pb2.containerslist.FromString,
+                )
+        self.list_container_images = channel.unary_unary(
+                '/Kconfig/list_container_images',
+                request_serializer=kcli__pb2.empty.SerializeToString,
+                response_deserializer=kcli__pb2.imageslist.FromString,
+                )
         self.list_hosts = channel.unary_unary(
                 '/Kconfig/list_hosts',
                 request_serializer=kcli__pb2.empty.SerializeToString,
@@ -608,6 +655,11 @@ class KconfigStub(object):
                 request_serializer=kcli__pb2.empty.SerializeToString,
                 response_deserializer=kcli__pb2.reposlist.FromString,
                 )
+        self.switch_host = channel.unary_unary(
+                '/Kconfig/switch_host',
+                request_serializer=kcli__pb2.client.SerializeToString,
+                response_deserializer=kcli__pb2.result.FromString,
+                )
 
 
 class KconfigServicer(object):
@@ -626,6 +678,24 @@ class KconfigServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def delete_host(self, request, context):
+        """Missing associated documentation comment in .proto file"""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def delete_container(self, request, context):
+        """Missing associated documentation comment in .proto file"""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def list_containers(self, request, context):
+        """Missing associated documentation comment in .proto file"""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def list_container_images(self, request, context):
         """Missing associated documentation comment in .proto file"""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -679,6 +749,12 @@ class KconfigServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def switch_host(self, request, context):
+        """Missing associated documentation comment in .proto file"""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_KconfigServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -696,6 +772,21 @@ def add_KconfigServicer_to_server(servicer, server):
                     servicer.delete_host,
                     request_deserializer=kcli__pb2.client.FromString,
                     response_serializer=kcli__pb2.result.SerializeToString,
+            ),
+            'delete_container': grpc.unary_unary_rpc_method_handler(
+                    servicer.delete_container,
+                    request_deserializer=kcli__pb2.container.FromString,
+                    response_serializer=kcli__pb2.result.SerializeToString,
+            ),
+            'list_containers': grpc.unary_unary_rpc_method_handler(
+                    servicer.list_containers,
+                    request_deserializer=kcli__pb2.empty.FromString,
+                    response_serializer=kcli__pb2.containerslist.SerializeToString,
+            ),
+            'list_container_images': grpc.unary_unary_rpc_method_handler(
+                    servicer.list_container_images,
+                    request_deserializer=kcli__pb2.empty.FromString,
+                    response_serializer=kcli__pb2.imageslist.SerializeToString,
             ),
             'list_hosts': grpc.unary_unary_rpc_method_handler(
                     servicer.list_hosts,
@@ -736,6 +827,11 @@ def add_KconfigServicer_to_server(servicer, server):
                     servicer.list_repos,
                     request_deserializer=kcli__pb2.empty.FromString,
                     response_serializer=kcli__pb2.reposlist.SerializeToString,
+            ),
+            'switch_host': grpc.unary_unary_rpc_method_handler(
+                    servicer.switch_host,
+                    request_deserializer=kcli__pb2.client.FromString,
+                    response_serializer=kcli__pb2.result.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -792,6 +888,54 @@ class Kconfig(object):
         return grpc.experimental.unary_unary(request, target, '/Kconfig/delete_host',
             kcli__pb2.client.SerializeToString,
             kcli__pb2.result.FromString,
+            options, channel_credentials,
+            call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def delete_container(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/Kconfig/delete_container',
+            kcli__pb2.container.SerializeToString,
+            kcli__pb2.result.FromString,
+            options, channel_credentials,
+            call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def list_containers(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/Kconfig/list_containers',
+            kcli__pb2.empty.SerializeToString,
+            kcli__pb2.containerslist.FromString,
+            options, channel_credentials,
+            call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def list_container_images(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/Kconfig/list_container_images',
+            kcli__pb2.empty.SerializeToString,
+            kcli__pb2.imageslist.FromString,
             options, channel_credentials,
             call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -920,5 +1064,21 @@ class Kconfig(object):
         return grpc.experimental.unary_unary(request, target, '/Kconfig/list_repos',
             kcli__pb2.empty.SerializeToString,
             kcli__pb2.reposlist.FromString,
+            options, channel_credentials,
+            call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def switch_host(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/Kconfig/switch_host',
+            kcli__pb2.client.SerializeToString,
+            kcli__pb2.result.FromString,
             options, channel_credentials,
             call_credentials, compression, wait_for_ready, timeout, metadata)

@@ -18,7 +18,7 @@ from kvirt.defaults import IMAGES
 from prettytable import PrettyTable
 import argcomplete
 import argparse
-from kvirt import common
+from kvirt.krpc import commoncli as common
 from kvirt import nameutils
 import os
 import random
@@ -278,10 +278,9 @@ def delete_container(args):
         if not yes and not yes_top:
             common.confirm("Are you sure?")
         codes = [0]
-        cont = Kcontainerconfig(config, client=args.containerclient).cont
         for name in names:
             common.pprint("Deleting container %s on %s" % (name, cli))
-            cont.delete_container(name)
+            config.config.delete_container(kcli_pb2.container(container=name))
     os._exit(1 if 1 in codes else 0)
 
 
@@ -500,16 +499,17 @@ def list_container(args):
     """List containers"""
     filters = args.filters
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    cont = Kcontainerconfig(config, client=args.containerclient).cont
     common.pprint("Listing containers...")
     containers = PrettyTable(["Name", "Status", "Image", "Plan", "Command", "Ports", "Deploy"])
-    for container in cont.list_containers():
+    for container in config.config.list_containers(empty()).containers:
         if filters:
-            status = container[1]
+            status = container.status
             if status == filters:
-                containers.add_row(container)
+                containers.add_row([container.container, container.status, container.image, container.plan,
+                                    container.command, container.ports, container.deploy])
         else:
-            containers.add_row(container)
+            containers.add_row([container.container, container.status, container.image, container.plan,
+                                container.command, container.ports, container.deploy])
     print(containers)
     return
 
@@ -536,13 +536,12 @@ def profilelist_container(args):
 def list_containerimage(args):
     """List container images"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    if config.type != 'kvm':
-        common.pprint("Operation not supported on this kind of client.Leaving...", color='red')
-        os._exit(1)
-    cont = Kcontainerconfig(config, client=args.containerclient).cont
-    common.pprint("Listing images...")
+    # if config.type != 'kvm':
+    #     common.pprint("Operation not supported on this kind of client.Leaving...", color='red')
+    #    os._exit(1)
+    common.pprint("Listing container images...")
     images = PrettyTable(["Name"])
-    for image in cont.list_images():
+    for image in config.config.list_container_images(empty()).images:
         images.add_row([image])
     print(images)
     return
@@ -1641,34 +1640,20 @@ def ssh_vm(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     name = k.get_lastvm(kcli_pb2.client(client=config.client)).name if args.name is not None else args.name
-    tunnel = config.tunnel
-    tunnelhost = config.tunnelhost if config.tunnelhost is not None else config.host
-    if tunnel and tunnelhost == '127.0.0.1':
-        common.pprint("Tunnel requested but invalid tunnelhost", color='red')
-        os._exit(1)
-    tunnelport = config.tunnelport if config.tunnelport is not None else 22
-    tunneluser = config.tunneluser if config.tunneluser is not None else 'root'
-    insecure = config.insecure
-    if len(name) > 1:
-        cmd = ' '.join(name[1:])
+    if args.name is not None and name is not None:
+        common.pprint("Using %s from %s as vm" % (name, config.client))
+    if len(args.name) > 1:
+        cmd = ' '.join(args.name[1:])
+        name = args.name[0]
     else:
         cmd = None
-    name = name[0]
-    if '@' in name and len(name.split('@')) == 2:
-        user = name.split('@')[0]
-        name = name.split('@')[1]
-    if os.path.exists("/i_am_a_container") and not os.path.exists("/root/.kcli/config.yml")\
-            and not os.path.exists("/root/.ssh/config"):
-        insecure = True
-    sshcommand = k.ssh(name, user=user, local=l, remote=r, tunnel=tunnel, tunnelhost=tunnelhost, tunnelport=tunnelport,
-                       tunneluser=tunneluser, insecure=insecure, cmd=cmd, X=X, Y=Y, D=D)
-    if sshcommand is not None:
-        if find_executable('ssh') is not None:
-            os.system(sshcommand)
-        else:
-            print(sshcommand)
+    sshcommand = k.ssh(kcli_pb2.vm(name=name, user=user, l=l, r=r, X=X, Y=Y, D=D, cmd=cmd)).sshcmd
+    if args.debug:
+        print(sshcommand)
+    if find_executable('ssh') is not None:
+        os.system(sshcommand)
     else:
-        common.pprint("Couldnt ssh to %s" % name, color='red')
+        print(sshcommand)
 
 
 def scp_vm(args):
@@ -1969,9 +1954,10 @@ def report_host(args):
 def switch_host(args):
     """Handle host"""
     host = args.name
+    print("Switching to client %s..." % host)
     baseconfig = Kconfig(client=args.client, debug=args.debug).baseconfig
-    result = baseconfig.switch_host(host)
-    if result['result'] == 'success':
+    result = baseconfig.switch_host(kcli_pb2.client(client=host))
+    if result.result == 'success':
         os._exit(0)
     else:
         os._exit(1)
@@ -2176,7 +2162,7 @@ def cli():
     containerdelete_parser = delete_subparsers.add_parser('container', description=containerdelete_desc,
                                                           help=containerdelete_desc)
     containerdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    containerdelete_parser.add_argument('names', metavar='VMNAMES', nargs='+')
+    containerdelete_parser.add_argument('names', metavar='CONTAINERNAMES', nargs='+')
     containerdelete_parser.set_defaults(func=delete_container)
 
     containerimagelist_desc = 'List Container Images'

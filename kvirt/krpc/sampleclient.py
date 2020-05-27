@@ -9,6 +9,11 @@ channel = grpc.insecure_channel('localhost:50051')
 k = kcli_pb2_grpc.KcliStub(channel)
 config = kcli_pb2_grpc.KconfigStub(channel)
 
+vm = vm(name='agitated-wozniak')
+response = k.ssh(vm)
+print(response)
+os._exit(0)
+
 repo = None
 group = None
 print(config.list_products(product(repo=repo, group=group)).products)

@@ -588,7 +588,7 @@ class Kubevirt(Kubecommon):
         else:
             state = 'down'
         yamlinfo = {'name': name, 'nets': [], 'disks': [], 'state': state, 'creationdate': creationdate, 'host': host,
-                    'status': state, 'report': namespace}
+                    'status': state, 'namespace': namespace}
         if 'cpu' in spectemplate['spec']['domain']:
             numcpus = spectemplate['spec']['domain']['cpu']['cores']
             yamlinfo['cpus'] = numcpus

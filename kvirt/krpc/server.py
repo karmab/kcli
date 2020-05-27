@@ -5,7 +5,7 @@ import time
 import kvirt.krpc.kcli_pb2 as kcli_pb2
 import kvirt.krpc.kcli_pb2_grpc as kcli_pb2_grpc
 
-from kvirt.config import Kconfig, Kbaseconfig
+from kvirt.config import Kconfig, Kbaseconfig, Kcontainerconfig
 from kvirt import common
 from kvirt import version
 from kvirt.defaults import VERSION
@@ -61,6 +61,37 @@ class KcliServicer(kcli_pb2_grpc.KcliServicer):
         config = Kconfig()
         result = config.k.start(request.name)
         response = kcli_pb2.result(**result)
+        return response
+
+    def ssh(self, request, context):
+        print("Handling ssh call for:\n%s" % request)
+        config = Kconfig()
+        k = config.k
+        name = request.name
+        l = request.l if request.l != '' else None
+        r = request.r if request.r != '' else None
+        X = request.X
+        Y = request.Y
+        D = request.D if request.D != '' else None
+        user = request.user if request.user != '' else None
+        cmd = request.cmd if request.cmd != '' else None
+        tunnel = config.tunnel
+        tunnelhost = config.tunnelhost if config.tunnelhost is not None else config.host
+        if tunnel and tunnelhost == '127.0.0.1':
+            common.pprint("Tunnel requested but invalid tunnelhost", color='red')
+            os._exit(1)
+        tunnelport = config.tunnelport if config.tunnelport is not None else 22
+        tunneluser = config.tunneluser if config.tunneluser is not None else 'root'
+        insecure = config.insecure
+        if '@' in name and len(name.split('@')) == 2:
+            user = name.split('@')[0]
+            name = name.split('@')[1]
+        if os.path.exists("/i_am_a_container") and not os.path.exists("/root/.kcli/config.yml")\
+                and not os.path.exists("/root/.ssh/config"):
+            insecure = True
+        sshcmd = k.ssh(name, user=user, local=l, remote=r, tunnel=tunnel, tunnelhost=tunnelhost, tunnelport=tunnelport,
+                       tunneluser=tunneluser, insecure=insecure, cmd=cmd, X=X, Y=Y, D=D)
+        response = kcli_pb2.sshcmd(sshcmd=sshcmd)
         return response
 
     def stop(self, request, context):
@@ -158,7 +189,7 @@ class KconfigServicer(kcli_pb2_grpc.KconfigServicer):
         return response
 
     def get_config(self, request, context):
-        print("Handling list_profiles call")
+        print("Handling get_config call")
         config = Kconfig()
         configinfo = {'client': config.client, 'extraclients': [c for c in config.extraclients]}
         response = kcli_pb2.config(**configinfo)
@@ -169,6 +200,41 @@ class KconfigServicer(kcli_pb2_grpc.KconfigServicer):
         common.delete_host(request.client)
         result = {'result': 'success'}
         response = kcli_pb2.result(**result)
+        return response
+
+    def delete_container(self, request, context):
+        print("Handling delete_container call for:\n%s" % request)
+        config = Kconfig()
+        cont = Kcontainerconfig(config).cont
+        result = cont.delete_container(request.container)
+        response = kcli_pb2.result(**result)
+        return response
+
+    def list_containers(self, request, context):
+        print("Handling list_containers call")
+        config = Kconfig()
+        # cont = Kcontainerconfig(config, client=args.containerclient).cont
+        cont = Kcontainerconfig(config).cont
+        containers = []
+        for container in cont.list_containers():
+            newcontainer = {}
+            newcontainer['container'] = container[0]
+            newcontainer['status'] = container[1]
+            newcontainer['image'] = container[2]
+            newcontainer['plan'] = container[3]
+            newcontainer['command'] = container[4]
+            newcontainer['ports'] = container[5]
+            newcontainer['deploy'] = container[6]
+            containers.append(kcli_pb2.container(**newcontainer))
+        response = kcli_pb2.containerslist(containers=containers)
+        return response
+
+    def list_container_images(self, request, context):
+        print("Handling list_container_images call")
+        config = Kconfig()
+        # cont = Kcontainerconfig(config, client=args.containerclient).cont
+        cont = Kcontainerconfig(config).cont
+        response = kcli_pb2.imageslist(images=cont.list_images())
         return response
 
     def list_profiles(self, request, context):
@@ -274,6 +340,13 @@ class KconfigServicer(kcli_pb2_grpc.KconfigServicer):
             productslist.append({'product': productname, 'numvms': numvms, 'memory': memory, 'description': description,
                                  'repo': repo, 'group': group})
         response = kcli_pb2.productslist(products=[kcli_pb2.product(**r) for r in productslist])
+        return response
+
+    def switch_host(self, request, context):
+        print("Handling switch_host call for:\n%s" % request)
+        baseconfig = Kbaseconfig()
+        result = baseconfig.switch_host(request.client)
+        response = kcli_pb2.result(**result)
         return response
 
 
