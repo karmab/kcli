@@ -297,5 +297,7 @@ service Kconfig {
     rpc list_profiles(empty) returns (profileslist) {}
     rpc list_products(product) returns (productslist) {}
     rpc list_repos(empty) returns (reposlist) {}
+    rpc start_container(container) returns (result) {}
+    rpc stop_container(container) returns (result) {}
     rpc switch_host(client) returns (result) {}
 }

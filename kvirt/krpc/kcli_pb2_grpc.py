@@ -655,6 +655,16 @@ class KconfigStub(object):
                 request_serializer=kcli__pb2.empty.SerializeToString,
                 response_deserializer=kcli__pb2.reposlist.FromString,
                 )
+        self.start_container = channel.unary_unary(
+                '/Kconfig/start_container',
+                request_serializer=kcli__pb2.container.SerializeToString,
+                response_deserializer=kcli__pb2.result.FromString,
+                )
+        self.stop_container = channel.unary_unary(
+                '/Kconfig/stop_container',
+                request_serializer=kcli__pb2.container.SerializeToString,
+                response_deserializer=kcli__pb2.result.FromString,
+                )
         self.switch_host = channel.unary_unary(
                 '/Kconfig/switch_host',
                 request_serializer=kcli__pb2.client.SerializeToString,
@@ -749,6 +759,18 @@ class KconfigServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def start_container(self, request, context):
+        """Missing associated documentation comment in .proto file"""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def stop_container(self, request, context):
+        """Missing associated documentation comment in .proto file"""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def switch_host(self, request, context):
         """Missing associated documentation comment in .proto file"""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -827,6 +849,16 @@ def add_KconfigServicer_to_server(servicer, server):
                     servicer.list_repos,
                     request_deserializer=kcli__pb2.empty.FromString,
                     response_serializer=kcli__pb2.reposlist.SerializeToString,
+            ),
+            'start_container': grpc.unary_unary_rpc_method_handler(
+                    servicer.start_container,
+                    request_deserializer=kcli__pb2.container.FromString,
+                    response_serializer=kcli__pb2.result.SerializeToString,
+            ),
+            'stop_container': grpc.unary_unary_rpc_method_handler(
+                    servicer.stop_container,
+                    request_deserializer=kcli__pb2.container.FromString,
+                    response_serializer=kcli__pb2.result.SerializeToString,
             ),
             'switch_host': grpc.unary_unary_rpc_method_handler(
                     servicer.switch_host,
@@ -1064,6 +1096,38 @@ class Kconfig(object):
         return grpc.experimental.unary_unary(request, target, '/Kconfig/list_repos',
             kcli__pb2.empty.SerializeToString,
             kcli__pb2.reposlist.FromString,
+            options, channel_credentials,
+            call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def start_container(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/Kconfig/start_container',
+            kcli__pb2.container.SerializeToString,
+            kcli__pb2.result.FromString,
+            options, channel_credentials,
+            call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def stop_container(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/Kconfig/stop_container',
+            kcli__pb2.container.SerializeToString,
+            kcli__pb2.result.FromString,
             options, channel_credentials,
             call_credentials, compression, wait_for_ready, timeout, metadata)
 

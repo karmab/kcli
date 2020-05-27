@@ -342,6 +342,22 @@ class KconfigServicer(kcli_pb2_grpc.KconfigServicer):
         response = kcli_pb2.productslist(products=[kcli_pb2.product(**r) for r in productslist])
         return response
 
+    def start_container(self, request, context):
+        print("Handling start_container call for:\n%s" % request)
+        config = Kconfig()
+        cont = Kcontainerconfig(config).cont
+        result = cont.start_container(request.container)
+        response = kcli_pb2.result(**result)
+        return response
+
+    def stop_container(self, request, context):
+        print("Handling start_container call for:\n%s" % request)
+        config = Kconfig()
+        cont = Kcontainerconfig(config).cont
+        result = cont.stop_container(request.container)
+        response = kcli_pb2.result(**result)
+        return response
+
     def switch_host(self, request, context):
         print("Handling switch_host call for:\n%s" % request)
         baseconfig = Kbaseconfig()

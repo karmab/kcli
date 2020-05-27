@@ -128,10 +128,9 @@ def start_container(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     names = [k.get_lastvm(kcli_pb2.client(client=config.client)).name] if not args.names else args.names
-    cont = Kcontainerconfig(config, client=args.containerclient).cont
     for name in names:
         common.pprint("Starting container %s..." % name)
-        cont.start_container(name)
+        config.config.start_container(kcli_pb2.container(container=name))
 
 
 def stop_vm(args):
@@ -166,10 +165,9 @@ def stop_container(args):
     else:
         ks = {config.client: config.k}
     for cli in ks:
-        cont = Kcontainerconfig(config, client=args.containerclient).cont
         for name in names:
             common.pprint("Stopping container %s in %s..." % (name, cli))
-            cont.stop_container(name)
+            config.config.stop_container(kcli_pb2.container(container=name))
 
 
 def restart_vm(args):

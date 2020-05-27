@@ -156,7 +156,7 @@ class Kcontainer():
                         else:
                             continue
                     envinfo = "%s -e %s=%s" % (envinfo, key, value)
-            labelcmd = ''
+            labelcmd = '-l plan=kvirt'
             if 'labels' in overrides:
                 labels = overrides['labels']
                 labelcmd = ' '.join('-l %s=%s' % (label.split('=')[0], label.split('=')[1]) for label in labels)
@@ -298,9 +298,11 @@ class Kcontainer():
             results = os.popen(lscommand).readlines()
             for container in results:
                 name, state, source, command, ports, labels = container.split('?')
-                labels = labels.replace('map[', '').replace(']', '').split(' ')
-                plan = ''
+                labels = labels.replace('map[', '').replace(']', '').replace('\n', '').split(' ')
+                plan = 'kvirt'
                 for label in labels:
+                    if ':' not in label:
+                        break
                     key, value = label.split(':')
                     if key == 'plan':
                         plan = value
