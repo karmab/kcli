@@ -18,7 +18,7 @@ class Kubernetes():
     """
 
     def __init__(self, host='127.0.0.1', user='root', port=443, token=None, ca_file=None, context=None,
-                 namespace='default', readwritemany=False):
+                 namespace='default', readwritemany=False, debug=False):
         Kubecommon.__init__(self, token=token, ca_file=ca_file, context=context, host=host, port=port,
                             namespace=namespace, readwritemany=readwritemany)
         self.host = host

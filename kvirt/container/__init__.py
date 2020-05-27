@@ -13,17 +13,18 @@ class Kcontainer():
 
     """
 
-    def __init__(self, host='127.0.0.1', user='root', port=22):
+    def __init__(self, host='127.0.0.1', user='root', port=22, engine='podman', debug=False):
         self.host = host
         self.user = user
         self.port = port
+        self.debug = debug
         self.containermode = False
-        self.engine = 'podman' if find_executable('podman') else 'docker'
+        self.engine = engine
+        if self.host == '127.0.0.1' and not find_executable(engine):
+            reason = "executable %s not found in path" % engine
+            return {'result': 'failure', 'reason': reason}
+        self.engine = engine
         if self.host == '127.0.0.1' and os.path.exists("/i_am_a_container"):
-            if os.path.exists("/run/podman/io.podman"):
-                self.engine = 'podman'
-            elif os.path.exists("/var/run/docker.sock"):
-                self.engine = 'docker'
             self.containermode = True
             if self.engine == 'podman':
                 if not os.path.exists("/run/podman/io.podman"):
@@ -81,7 +82,7 @@ class Kcontainer():
                 key, value = label.split('=')
                 labels = {key: value}
             else:
-                labels = None
+                labels = {'plan': 'kvirt'}
             finalenv = {}
             if environment is not None:
                 for env in enumerate(environment):
@@ -155,12 +156,18 @@ class Kcontainer():
                         else:
                             continue
                     envinfo = "%s -e %s=%s" % (envinfo, key, value)
-            runcommand = "%s run -it %s %s %s --name %s -l %s -d %s" % (engine, volumeinfo, envinfo, portinfo, name,
-                                                                        label, image)
+            labelcmd = ''
+            if 'labels' in overrides:
+                labels = overrides['labels']
+                labelcmd = ' '.join('-l %s=%s' % (label.split('=')[0], label.split('=')[1]) for label in labels)
+            runcommand = "%s run -it %s %s %s --name %s %s -d %s" % (engine, volumeinfo, envinfo, portinfo, name,
+                                                                     labelcmd, image)
             if cmd is not None:
                 runcommand = "%s %s" % (runcommand, cmd)
             if self.host != '127.0.0.1':
                 runcommand = "ssh -p %s %s@%s %s" % (self.port, self.user, self.host, runcommand)
+            if self.debug:
+                print(runcommand)
             os.system(runcommand)
         return {'result': 'success'}
 
@@ -259,7 +266,7 @@ class Kcontainer():
                 if 'plan' in labels:
                     plan = labels['plan']
                 else:
-                    plan = ''
+                    plan = 'kvirt'
                 command = container.attrs['Config']['Cmd']
                 if command is None:
                     command = ''
@@ -283,12 +290,21 @@ class Kcontainer():
         else:
             containers = []
             lscommand = "%s ps -a --format \"'{{.Names}}?{{.Status}}?{{.Image}}?{{.Command}}?{{.Ports}}?" % engine
-            lscommand += "{{.Label \\\"plan\\\"}}'\""
+            lscommand += "{{.Labels}}'\""
+            if self.debug:
+                print(lscommand)
             if self.host != '127.0.0.1':
                 lscommand = "ssh -p %s %s@%s %s" % (self.port, self.user, self.host, lscommand)
             results = os.popen(lscommand).readlines()
             for container in results:
-                name, state, source, command, ports, plan = container.split('?')
+                name, state, source, command, ports, labels = container.split('?')
+                labels = labels.replace('map[', '').replace(']', '').split(' ')
+                plan = ''
+                for label in labels:
+                    key, value = label.split(':')
+                    if key == 'plan':
+                        plan = value
+                        break
                 if state.startswith('Up'):
                     state = 'up'
                 else:

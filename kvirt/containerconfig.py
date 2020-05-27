@@ -12,7 +12,7 @@ class Kcontainerconfig():
     """
 
     """
-    def __init__(self, config, client=None, namespace=None):
+    def __init__(self, config, client=None, namespace=None, debug=False):
             k8s = False
             default_k8s = False
             client = config.client if client is None else client
@@ -38,7 +38,8 @@ class Kcontainerconfig():
             user = currentconfig.get('user', 'root')
             if not k8s:
                 from kvirt.container import Kcontainer
-                cont = Kcontainer(host)
+                engine = currentconfig.get('containerengine', 'podman')
+                cont = Kcontainer(host, engine=engine, debug=debug)
             else:
                 ca_file = currentconfig.get('ca_file')
                 namespace = currentconfig.get('namespace') if namespace is None else namespace
@@ -61,5 +62,5 @@ class Kcontainerconfig():
                         token = open(token_file).read()
                 from kvirt.kubernetes import Kubernetes
                 cont = Kubernetes(host=host, user=user, port=port, token=token, ca_file=ca_file, context=context,
-                                  namespace=namespace, readwritemany=readwritemany)
+                                  namespace=namespace, readwritemany=readwritemany, debug=debug)
             self.cont = cont
