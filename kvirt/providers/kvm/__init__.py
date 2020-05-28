@@ -1157,7 +1157,7 @@ class Kvirt(object):
                 else:
                     os.popen(consolecommand)
 
-    def serialconsole(self, name):
+    def serialconsole(self, name, web=False):
         conn = self.conn
         try:
             vm = conn.lookupByName(name)
@@ -1193,6 +1193,8 @@ class Kvirt(object):
                                 self.identitycommand = self.identitycommand.replace('/root', '$HOME')
                             serialcommand = "ssh %s -o LogLevel=QUIET -p %s %s@%s nc 127.0.0.1 %s" %\
                                 (self.identitycommand, self.port, self.user, self.host, serialport)
+                        if web:
+                            return serialcommand
                         if self.debug or os.path.exists("/i_am_a_container"):
                             msg = "Run the following command:\n%s" % serialcommand if not self.debug else serialcommand
                             common.pprint(msg)

@@ -513,7 +513,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             os.popen("remote-viewer /tmp/console.vv &")
         return
 
-    def serialconsole(self, name):
+    def serialconsole(self, name, web=False):
         """
 
         :param name:
@@ -545,6 +545,8 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         except:
             pass
         command = "ssh -t -p 2222 ovirt-vmconsole@%s connect --vm-name %s" % (self.host, name)
+        if web:
+            return command
         call(command, shell=True)
         return
 

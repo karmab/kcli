@@ -297,14 +297,17 @@ class Kopenstack(object):
             webbrowser.open(url, new=2, autoraise=True)
         return
 
-    def serialconsole(self, name):
+    def serialconsole(self, name, web=False):
         nova = self.nova
         try:
             vm = nova.servers.find(name=name)
         except:
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        print(vm.get_console_output())
+        cmd = vm.get_console_output()
+        if web:
+            return cmd
+        print(cmd)
         return
 
     def dnsinfo(self, name):

@@ -485,7 +485,7 @@ class Kubevirt(Kubecommon):
             os.system(consolecommand)
         return
 
-    def serialconsole(self, name):
+    def serialconsole(self, name, web=False):
         """
 
         :param name:
@@ -510,6 +510,8 @@ class Kubevirt(Kubecommon):
                                                                                                           namespace,
                                                                                                           podname,
                                                                                                           uid)
+        if web:
+            return nccmd
         os.system(nccmd)
         return
 

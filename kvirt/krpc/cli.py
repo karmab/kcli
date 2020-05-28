@@ -2,7 +2,7 @@
 # PYTHON_ARGCOMPLETE_OK
 # coding=utf-8
 
-
+import atexit
 import grpc
 from kvirt.krpc import kcli_pb2
 from kvirt.krpc import kcli_pb2_grpc
@@ -33,14 +33,26 @@ class Kconfig():
         self.k = kcli_pb2_grpc.KcliStub(channel)
         self.config = kcli_pb2_grpc.KconfigStub(channel)
         self.baseconfig = self.config
-        if client is None:
-            clientinfo = self.config.get_config(empty())
-            self.client = clientinfo.client
-            self.extraclients = [c for c in clientinfo.extraclients]
-        else:
+        clientinfo = self.config.get_config(empty())
+        currentclient = clientinfo.client
+        self.planview = False
+        self.client = clientinfo.client
+        self.extraclients = [c for c in clientinfo.extraclients]
+        if client is not None:
+            result = self.baseconfig.switch_host(kcli_pb2.client(client=client))
+            if result.result != 'success':
+                common.pprint("Couldn't switch to client %s..." % client, color='red')
+                os._exit(1)
             self.client = client
             self.extraclients = []
-        self.planview = False
+            atexit.register(finalswitch, self.baseconfig, currentclient)
+
+
+def finalswitch(baseconfig, client):
+    result = baseconfig.switch_host(kcli_pb2.client(client=client))
+    if result.result != 'success':
+        common.pprint("Couldn't switch to client %s..." % client, color='red')
+        os._exit(0)
 
 
 def valid_fqdn(name):
@@ -200,19 +212,20 @@ def console_vm(args):
     serial = args.serial
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
-    name = k.get_lastvm(kcli_pb2.client(client=config.client)).name if args.name is not None else args.name
-    tunnel = config.tunnel
+    name = k.get_lastvm(kcli_pb2.client(client=config.client)).name if args.name is None else args.name
     if serial:
-        k.serialconsole(name)
+        cmd = k.serial_console(kcli_pb2.vm(name=name)).cmd
+        os.system(cmd)
     else:
-        k.console(name=name, tunnel=tunnel)
+        cmd = k.console(kcli_pb2.vm(name=name)).cmd
+        os.popen("remote-viewer %s &" % cmd)
 
 
 def console_container(args):
     """Container console"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
-    name = k.get_lastvm(kcli_pb2.client(client=config.client)).name if args.name is not None else args.name
+    name = k.get_lastvm(kcli_pb2.client(client=config.client)).name if args.name is None else args.name
     cont = Kcontainerconfig(config, client=args.containerclient).cont
     cont.console_container(name)
     return
@@ -348,7 +361,7 @@ def delete_profile(args):
     baseconfig = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
     common.pprint("Deleting on %s" % baseconfig.client)
-    result = baseconfig.delete_profile(profile)
+    result = baseconfig.baseconfig.delete_profile(kcli_pb2.profile(name=profile))
     code = common.handle_response(result, profile, element='Profile', action='deleted', client=baseconfig.client)
     return code
     # os._exit(0) if result['result'] == 'success' else os._exit(1)
@@ -432,7 +445,7 @@ def delete_host(args):
     """Delete host"""
     baseconfig = Kconfig(client=args.client, debug=args.debug).baseconfig
     baseconfig.delete_host(kcli_pb2.client(client=args.name))
-    common.pprint("Host %s deleted" % args.client)
+    common.pprint("Host %s deleted" % args.name)
 
 
 def sync_host(args):
@@ -1139,21 +1152,12 @@ def create_lb(args):
 
 def delete_lb(args):
     """Delete loadbalancer"""
-    checkpath = args.checkpath
-    checkport = args.checkport
     yes = args.yes
     yes_top = args.yes_top
-    ports = args.ports
-    domain = args.domain
-    internal = args.internal
-    vms = args.vms.split(',') if args.vms is not None else []
-    ports = args.ports.split(',') if args.ports is not None else []
-    name = nameutils.get_random_name().replace('_', '-') if args.name is None else args.name
     if not yes and not yes_top:
         common.confirm("Are you sure?")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.handle_loadbalancer(name, ports=ports, checkpath=checkpath, vms=vms, delete=True, domain=domain,
-                               checkport=checkport, internal=internal)
+    config.config.delete_lb(kcli_pb2.lb(lb=args.name))
     return 0
 
 
@@ -1206,9 +1210,14 @@ def delete_kube(args):
     cluster = args.cluster if args.cluster is not None else 'testk'
     if not yes and not yes_top:
         common.confirm("Are you sure?")
+    common.pprint("Deleting kube %s" % cluster)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
-    config.delete_kube(cluster, overrides=overrides)
+    result = config.config.delete_kube(kcli_pb2.kube(kube=cluster))
+    if result.result == 'success':
+        common.pprint("Kube %s deleted!" % cluster)
+    else:
+        reason = result.reason
+        common.pprint("Could not delete kube %s because %s" % (cluster, reason), color='red')
 
 
 def scale_generic_kube(args):
@@ -1299,7 +1308,7 @@ def delete_pool(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     common.pprint("Deleting pool %s..." % pool)
-    k.delete_pool(name=pool, full=full)
+    k.delete_pool(kcli_pb2.pool(pool=pool, full=full))
     return
 
 
@@ -1379,8 +1388,12 @@ def delete_plan(args):
     if not yes and not yes_top:
         common.confirm("Are you sure?")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.plan(plan, delete=True)
-    return 0
+    result = config.config.delete_plan(kcli_pb2.plan(plan=plan))
+    if result.result == 'success':
+        common.pprint("Plan %s deleted!" % plan)
+    else:
+        reason = result.reason
+        common.pprint("Could not delete plan %s because %s" % (plan, reason), color='red')
 
 
 def start_plan(args):
@@ -1598,7 +1611,7 @@ def delete_repo(args):
         common.pprint("Missing repo. Leaving...", color='red')
         os._exit(1)
     common.pprint("Deleting repo %s..." % repo)
-    baseconfig.delete_repo(repo)
+    baseconfig.delete_repo(kcli_pb2.repo(repo=repo))
     return
 
 
@@ -1652,7 +1665,7 @@ def ssh_vm(args):
     user = args.user
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
-    name = k.get_lastvm(kcli_pb2.client(client=config.client)).name if args.name is not None else args.name
+    name = k.get_lastvm(kcli_pb2.client(client=config.client)).name if args.name is None else args.name
     if args.name is not None and name is not None:
         common.pprint("Using %s from %s as vm" % (name, config.client))
     if len(args.name) > 1:
@@ -1739,7 +1752,7 @@ def delete_network(args):
 def create_host_kvm(args):
     """Generate Kvm Host"""
     data = {}
-    data['_type'] = 'kvm'
+    data['type'] = 'kvm'
     data['name'] = args.name
     data['host'] = args.host
     data['port'] = args.port
@@ -1747,10 +1760,13 @@ def create_host_kvm(args):
     data['protocol'] = args.protocol
     data['url'] = args.url
     data['pool'] = args.pool
-    common.create_host(data)
-    baseconfig = Kconfig(client=args.client, debug=args.debug, quiet=True).baseconfig
-    if len(baseconfig.clients) == 1:
-        baseconfig.set_defaults()
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
+                     namespace=args.namespace)
+    config.config.create_host(kcli_pb2.client(**data))
+    common.pprint("Host %s created" % args.name)
+    # baseconfig = Kconfig(client=args.client, debug=args.debug, quiet=True).baseconfig
+    # if len(baseconfig.clients) == 1:
+    #    baseconfig.set_defaults()
 
 
 def create_host_ovirt(args):
@@ -1854,7 +1870,7 @@ def create_host_vsphere(args):
     data['cluster'] = args.cluster
     if args.pool is not None:
         data['pool'] = args.pool
-    common.create_host(data)
+    common.create_host(kcli_pb2.client(**data))
     baseconfig = Kconfig(client=args.client, debug=args.debug, quiet=True).baseconfig
     if len(baseconfig.clients) == 1:
         baseconfig.set_defaults()
@@ -1959,7 +1975,7 @@ def report_host(args):
 def switch_host(args):
     """Handle host"""
     host = args.name
-    print("Switching to client %s..." % host)
+    common.pprint("Switching to client %s..." % host)
     baseconfig = Kconfig(client=args.client, debug=args.debug).baseconfig
     result = baseconfig.switch_host(kcli_pb2.client(client=host))
     if result.result == 'success':
@@ -1989,6 +2005,7 @@ def cli():
     """
     parser = argparse.ArgumentParser(description='Libvirt/Ovirt/Vsphere/Gcp/Aws/Openstack/Kubevirt Wrapper')
     parser.add_argument('-C', '--client')
+    parser.add_argument('-G', '--grpcserver', default='localhost')
     parser.add_argument('--containerclient', help='Containerclient to use')
     parser.add_argument('--dnsclient', help='Dnsclient to use')
     parser.add_argument('-d', '--debug', action='store_true')
@@ -2473,15 +2490,8 @@ def cli():
 
     lbdelete_desc = 'Delete Load Balancer'
     lbdelete_parser = delete_subparsers.add_parser('lb', description=lbdelete_desc, help=lbdelete_desc)
-    lbdelete_parser.add_argument('--checkpath', default='/index.html', help="Path to check. Defaults to /index.html")
-    lbdelete_parser.add_argument('--checkport', default=80, help="Port to check. Defaults to 80")
-    lbdelete_parser.add_argument('-d', '--delete', action='store_true')
-    lbdelete_parser.add_argument('--domain', help='Domain to create a dns entry associated to the load balancer')
-    lbdelete_parser.add_argument('-i', '--internal', action='store_true')
-    lbdelete_parser.add_argument('-p', '--ports', default='443', help='Load Balancer Ports. Defaults to 443')
-    lbdelete_parser.add_argument('-v', '--vms', help='Vms to add to the pool')
     lbdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    lbdelete_parser.add_argument('name', metavar='NAME', nargs='?')
+    lbdelete_parser.add_argument('name', metavar='NAME')
     lbdelete_parser.set_defaults(func=delete_lb)
 
     lblist_desc = 'List Load Balancers'
@@ -2989,12 +2999,11 @@ def cli():
         args.client = random.choice(args.client.split(','))
         common.pprint("Selecting %s for creation" % args.client)
     global channel
-    server = args.client if args.client is not None else 'localhost'
-    channel = grpc.insecure_channel('%s:50051' % server)
+    channel = grpc.insecure_channel('%s:50051' % args.grpcserver)
     try:
         grpc.channel_ready_future(channel).result(timeout=2)
     except grpc.FutureTimeoutError:
-        common.pprint("RPC remote host %s not connected. Leaving" % server, color='red')
+        common.pprint("RPC remote host %s not connected. Leaving" % args.grpcserver, color='red')
         os._exit(1)
     args.func(args)
 

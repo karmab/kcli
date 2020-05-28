@@ -1821,6 +1821,8 @@ $INFO
                 k.create_loadbalancer(name, ports=ports, checkpath=checkpath, vms=vms, domain=domain,
                                       checkport=checkport, alias=alias, internal=internal)
         elif delete:
+            if self.type == 'kvm':
+                k.delete(name)
             return
         else:
             common.pprint("Deploying loadbalancer %s" % name)

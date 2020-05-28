@@ -18,7 +18,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=b'\n\nkcli.proto\"\x07\n\x05\x65mpty\"/\n\x07version\x12\x0f\n\x07version\x18\x01 \x01(\t\x12\x13\n\x0bgit_version\x18\x02 \x01(\t\"H\n\x06\x63lient\x12\x0e\n\x06\x63lient\x18\x01 \x01(\t\x12\x0c\n\x04type\x18\x02 \x01(\t\x12\x0f\n\x07\x65nabled\x18\x03 \x01(\x08\x12\x0f\n\x07\x63urrent\x18\x04 \x01(\x08\"\'\n\x0b\x63lientslist\x12\x18\n\x07\x63lients\x18\x01 \x03(\x0b\x32\x07.client\"\x86\x01\n\x02vm\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\r\n\x05\x64\x65\x62ug\x18\x02 \x01(\x08\x12\x11\n\tsnapshots\x18\x03 \x01(\x08\x12\x0c\n\x04user\x18\x04 \x01(\t\x12\t\n\x01l\x18\x05 \x01(\t\x12\t\n\x01r\x18\x06 \x01(\t\x12\t\n\x01X\x18\x07 \x01(\x08\x12\t\n\x01Y\x18\x08 \x01(\x08\x12\t\n\x01\x44\x18\t \x01(\t\x12\x0b\n\x03\x63md\x18\n \x01(\t\"-\n\x08snapshot\x12\x10\n\x08snapshot\x18\x01 \x01(\t\x12\x0f\n\x07\x63urrent\x18\x02 \x01(\x08\"A\n\x07netinfo\x12\x0e\n\x06\x64\x65vice\x18\x01 \x01(\t\x12\x0b\n\x03mac\x18\x02 \x01(\t\x12\x0b\n\x03net\x18\x03 \x01(\t\x12\x0c\n\x04type\x18\x04 \x01(\t\"T\n\x08\x64iskinfo\x12\x0e\n\x06\x64\x65vice\x18\x01 \x01(\t\x12\x0e\n\x06\x66ormat\x18\x02 \x01(\t\x12\x0c\n\x04path\x18\x03 \x01(\t\x12\x0c\n\x04size\x18\x04 \x01(\x05\x12\x0c\n\x04type\x18\x05 \x01(\t\"\xdd\x03\n\x06vminfo\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\r\n\x05image\x18\x02 \x01(\t\x12\x0c\n\x04\x63pus\x18\x03 \x01(\x05\x12\x0e\n\x06memory\x18\x04 \x01(\x05\x12\x0c\n\x04plan\x18\x05 \x01(\t\x12\x0f\n\x07profile\x18\x06 \x01(\t\x12\x0e\n\x06status\x18\x07 \x01(\t\x12\n\n\x02ip\x18\x08 \x01(\t\x12\x16\n\x04nets\x18\t \x03(\x0b\x32\x08.netinfo\x12\x18\n\x05\x64isks\x18\n \x03(\x0b\x32\t.diskinfo\x12\x14\n\x0c\x63reationdate\x18\x0b \x01(\t\x12\x0c\n\x04user\x18\x0c \x01(\t\x12\x11\n\tautostart\x18\r \x01(\x08\x12\r\n\x05\x64\x65\x62ug\x18\x0e \x01(\t\x12\x1c\n\tsnapshots\x18\x0f \x03(\x0b\x32\t.snapshot\x12\x0c\n\x04kube\x18\x10 \x01(\t\x12\x10\n\x08kubetype\x18\x11 \x01(\t\x12\x12\n\ninstanceid\x18\x12 \x01(\t\x12\x0c\n\x04host\x18\x13 \x01(\t\x12\x11\n\tprivateip\x18\x14 \x01(\t\x12\n\n\x02\x61z\x18\x15 \x01(\t\x12\x0e\n\x06\x66lavor\x18\x16 \x01(\t\x12\x0c\n\x04tags\x18\x17 \x01(\t\x12\x10\n\x08nodeport\x18\x18 \x01(\t\x12\x11\n\tnamespace\x18\x19 \x01(\t\x12\x14\n\x0cloadbalancer\x18\x1a \x01(\t\x12\r\n\x05\x65rror\x18\x1b \x01(\t\"\x1e\n\x06vmlist\x12\x14\n\x03vms\x18\x01 \x03(\x0b\x32\x07.vminfo\"(\n\x06result\x12\x0e\n\x06result\x18\x01 \x01(\t\x12\x0e\n\x06reason\x18\x02 \x01(\t\"\xad\x01\n\x07profile\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0e\n\x06\x66lavor\x18\x02 \x01(\t\x12\x0c\n\x04pool\x18\x03 \x01(\t\x12\r\n\x05\x64isks\x18\x04 \x01(\t\x12\r\n\x05image\x18\x05 \x01(\t\x12\x0c\n\x04nets\x18\x06 \x01(\t\x12\x11\n\tcloudinit\x18\x07 \x01(\x08\x12\x0e\n\x06nested\x18\x08 \x01(\x08\x12\x12\n\nreservedns\x18\t \x01(\x08\x12\x13\n\x0breservehost\x18\n \x01(\x08\"*\n\x0cprofileslist\x12\x1a\n\x08profiles\x18\x01 \x03(\x0b\x32\x08.profile\"\x18\n\x08isoslist\x12\x0c\n\x04isos\x18\x01 \x03(\t\"\x16\n\x05image\x12\r\n\x05image\x18\x01 \x01(\t\"\x1c\n\nimageslist\x12\x0e\n\x06images\x18\x01 \x03(\t\"0\n\x04\x64isk\x12\x0c\n\x04\x64isk\x18\x01 \x01(\t\x12\x0c\n\x04pool\x18\x02 \x01(\t\x12\x0c\n\x04path\x18\x03 \x01(\t\"!\n\tdiskslist\x12\x14\n\x05\x64isks\x18\x01 \x03(\x0b\x32\x05.disk\"!\n\x04plan\x12\x0c\n\x04plan\x18\x01 \x01(\t\x12\x0b\n\x03vms\x18\x02 \x01(\t\"!\n\tplanslist\x12\x14\n\x05plans\x18\x01 \x03(\x0b\x32\x05.plan\")\n\x07keyword\x12\x0f\n\x07keyword\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t\"*\n\x0ckeywordslist\x12\x1a\n\x08keywords\x18\x01 \x03(\x0b\x32\x08.keyword\"\"\n\x04pool\x12\x0c\n\x04pool\x18\x01 \x01(\t\x12\x0c\n\x04path\x18\x02 \x01(\t\"!\n\tpoolslist\x12\x14\n\x05pools\x18\x01 \x03(\x0b\x32\x05.pool\"|\n\x07network\x12\x0f\n\x07network\x18\x01 \x01(\t\x12\x0c\n\x04type\x18\x02 \x01(\t\x12\x0c\n\x04\x63idr\x18\x03 \x01(\t\x12\x0c\n\x04\x64hcp\x18\x04 \x01(\t\x12\x0e\n\x06\x64omain\x18\x05 \x01(\t\x12\x0c\n\x04mode\x18\x06 \x01(\t\x12\x0c\n\x04plan\x18\x07 \x01(\t\x12\n\n\x02ip\x18\x08 \x01(\t\"*\n\x0cnetworkslist\x12\x1a\n\x08networks\x18\x01 \x03(\x0b\x32\x08.network\"C\n\x06subnet\x12\x0e\n\x06subnet\x18\x01 \x01(\t\x12\n\n\x02\x61z\x18\x02 \x01(\t\x12\x0c\n\x04\x63idr\x18\x03 \x01(\t\x12\x0f\n\x07network\x18\x04 \x01(\t\"\'\n\x0bsubnetslist\x12\x18\n\x07subnets\x18\x01 \x03(\x0b\x32\x07.subnet\"/\n\x04kube\x12\x0c\n\x04kube\x18\x01 \x01(\t\x12\x0c\n\x04type\x18\x02 \x01(\t\x12\x0b\n\x03vms\x18\x03 \x01(\t\"!\n\tkubeslist\x12\x14\n\x05kubes\x18\x01 \x03(\x0b\x32\x05.kube\"M\n\x02lb\x12\n\n\x02lb\x18\x01 \x01(\t\x12\n\n\x02ip\x18\x02 \x01(\t\x12\x10\n\x08protocol\x18\x03 \x01(\t\x12\r\n\x05ports\x18\x04 \x01(\t\x12\x0e\n\x06target\x18\x05 \x01(\t\"\x1b\n\x07lbslist\x12\x10\n\x03lbs\x18\x01 \x03(\x0b\x32\x03.lb\"9\n\x06\x66lavor\x12\x0e\n\x06\x66lavor\x18\x01 \x01(\t\x12\x0f\n\x07numcpus\x18\x02 \x01(\x05\x12\x0e\n\x06memory\x18\x03 \x01(\x05\"\'\n\x0b\x66lavorslist\x12\x18\n\x07\x66lavors\x18\x01 \x03(\x0b\x32\x07.flavor\"!\n\x04repo\x12\x0c\n\x04repo\x18\x01 \x01(\t\x12\x0b\n\x03url\x18\x02 \x01(\t\"!\n\treposlist\x12\x14\n\x05repos\x18\x01 \x03(\x0b\x32\x05.repo\"l\n\x07product\x12\x0f\n\x07product\x18\x01 \x01(\t\x12\x0c\n\x04repo\x18\x02 \x01(\t\x12\r\n\x05group\x18\x03 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x04 \x01(\t\x12\x0e\n\x06numvms\x18\x05 \x01(\t\x12\x0e\n\x06memory\x18\x06 \x01(\t\"*\n\x0cproductslist\x12\x1a\n\x08products\x18\x01 \x03(\x0b\x32\x08.product\".\n\x06\x63onfig\x12\x0e\n\x06\x63lient\x18\x01 \x01(\t\x12\x14\n\x0c\x65xtraclients\x18\x02 \x03(\t\"{\n\tcontainer\x12\x11\n\tcontainer\x18\x01 \x01(\t\x12\x0e\n\x06status\x18\x02 \x01(\t\x12\r\n\x05image\x18\x03 \x01(\t\x12\x0c\n\x04plan\x18\x04 \x01(\t\x12\x0f\n\x07\x63ommand\x18\x05 \x01(\t\x12\r\n\x05ports\x18\x06 \x01(\t\x12\x0e\n\x06\x64\x65ploy\x18\x07 \x01(\t\"0\n\x0e\x63ontainerslist\x12\x1e\n\ncontainers\x18\x01 \x03(\x0b\x32\n.container\"\x18\n\x06sshcmd\x12\x0e\n\x06sshcmd\x18\x01 \x01(\t\"r\n\nscpdetails\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0e\n\x06source\x18\x02 \x01(\t\x12\x13\n\x0b\x64\x65stination\x18\x03 \x01(\t\x12\x0c\n\x04user\x18\x04 \x01(\t\x12\x11\n\trecursive\x18\x05 \x01(\x08\x12\x10\n\x08\x64ownload\x18\x06 \x01(\x08\x32\xc7\x04\n\x04Kcli\x12\x16\n\x04info\x12\x03.vm\x1a\x07.vminfo\"\x00\x12\x19\n\x04list\x12\x06.empty\x1a\x07.vmlist\"\x00\x12\"\n\nlist_disks\x12\x06.empty\x1a\n.diskslist\"\x00\x12&\n\x0clist_flavors\x12\x06.empty\x1a\x0c.flavorslist\"\x00\x12$\n\x0blist_images\x12\x06.empty\x1a\x0b.imageslist\"\x00\x12(\n\rlist_networks\x12\x06.empty\x1a\r.networkslist\"\x00\x12 \n\tlist_isos\x12\x06.empty\x1a\t.isoslist\"\x00\x12\"\n\nlist_pools\x12\x06.empty\x1a\n.poolslist\"\x00\x12&\n\x0clist_subnets\x12\x06.empty\x1a\x0c.subnetslist\"\x00\x12\x19\n\x07restart\x12\x03.vm\x1a\x07.result\"\x00\x12\x15\n\x03ssh\x12\x03.vm\x1a\x07.sshcmd\"\x00\x12\x1d\n\x03scp\x12\x0b.scpdetails\x1a\x07.sshcmd\"\x00\x12\x17\n\x05start\x12\x03.vm\x1a\x07.result\"\x00\x12\x16\n\x04stop\x12\x03.vm\x1a\x07.result\"\x00\x12\x18\n\x06\x64\x65lete\x12\x03.vm\x1a\x07.result\"\x00\x12\x1c\n\nget_lastvm\x12\x07.client\x1a\x03.vm\"\x00\x12!\n\x0c\x64\x65lete_image\x12\x06.image\x1a\x07.result\"\x00\x12%\n\x0e\x64\x65lete_network\x12\x08.network\x1a\x07.result\"\x00\x32\xd6\x06\n\x07Kconfig\x12\x1f\n\nget_config\x12\x06.empty\x1a\x07.config\"\x00\x12!\n\x0bget_version\x12\x06.empty\x1a\x08.version\"\x00\x12!\n\x0b\x64\x65lete_host\x12\x07.client\x1a\x07.result\"\x00\x12)\n\x10\x64\x65lete_container\x12\n.container\x1a\x07.result\"\x00\x12,\n\x0flist_containers\x12\x06.empty\x1a\x0f.containerslist\"\x00\x12.\n\x15list_container_images\x12\x06.empty\x1a\x0b.imageslist\"\x00\x12$\n\nlist_hosts\x12\x06.empty\x1a\x0c.clientslist\"\x00\x12(\n\rlist_keywords\x12\x06.empty\x1a\r.keywordslist\"\x00\x12\"\n\nlist_kubes\x12\x06.empty\x1a\n.kubeslist\"\x00\x12\x1e\n\x08list_lbs\x12\x06.empty\x1a\x08.lbslist\"\x00\x12\"\n\nlist_plans\x12\x06.empty\x1a\n.planslist\"\x00\x12(\n\rlist_profiles\x12\x06.empty\x1a\r.profileslist\"\x00\x12*\n\rlist_products\x12\x08.product\x1a\r.productslist\"\x00\x12\"\n\nlist_repos\x12\x06.empty\x1a\n.reposlist\"\x00\x12*\n\x11restart_container\x12\n.container\x1a\x07.result\"\x00\x12(\n\x0fstart_container\x12\n.container\x1a\x07.result\"\x00\x12\'\n\x0estop_container\x12\n.container\x1a\x07.result\"\x00\x12\"\n\x0e\x61utostart_plan\x12\x05.plan\x1a\x07.result\"\x00\x12$\n\x10noautostart_plan\x12\x05.plan\x1a\x07.result\"\x00\x12\x1e\n\nstart_plan\x12\x05.plan\x1a\x07.result\"\x00\x12\x1d\n\tstop_plan\x12\x05.plan\x1a\x07.result\"\x00\x12!\n\x0bswitch_host\x12\x07.client\x1a\x07.result\"\x00\x62\x06proto3'
+  serialized_pb=b'\n\nkcli.proto\"\x07\n\x05\x65mpty\"/\n\x07version\x12\x0f\n\x07version\x18\x01 \x01(\t\x12\x13\n\x0bgit_version\x18\x02 \x01(\t\"\xd7\x03\n\x06\x63lient\x12\x0e\n\x06\x63lient\x18\x01 \x01(\t\x12\x0c\n\x04type\x18\x02 \x01(\t\x12\x0f\n\x07\x63urrent\x18\x03 \x01(\x08\x12\x0c\n\x04name\x18\x04 \x01(\t\x12\x15\n\raccess_key_id\x18\x05 \x01(\t\x12\x19\n\x11\x61\x63\x63\x65ss_key_secret\x18\x06 \x01(\t\x12\x0e\n\x06region\x18\x07 \x01(\t\x12\x0f\n\x07keypair\x18\x08 \x01(\t\x12\x0c\n\x04host\x18\t \x01(\t\x12\x0c\n\x04port\x18\n \x01(\t\x12\x0c\n\x04user\x18\x0b \x01(\t\x12\x10\n\x08protocol\x18\x0c \x01(\t\x12\x0b\n\x03url\x18\r \x01(\t\x12\x0c\n\x04pool\x18\x0e \x01(\t\x12\x12\n\ndatacenter\x18\x0f \x01(\t\x12\x0f\n\x07\x63\x61_file\x18\x10 \x01(\t\x12\x0f\n\x07\x63luster\x18\x11 \x01(\t\x12\x0b\n\x03org\x18\x12 \x01(\t\x12\x10\n\x08password\x18\x13 \x01(\t\x12\x13\n\x0b\x63redentials\x18\x14 \x01(\t\x12\x0f\n\x07project\x18\x15 \x01(\t\x12\x0c\n\x04zone\x18\x16 \x01(\t\x12\x0e\n\x06\x64omain\x18\x17 \x01(\t\x12\x10\n\x08\x61uth_url\x18\x18 \x01(\t\x12\r\n\x05token\x18\x19 \x01(\t\x12\x0e\n\x06multus\x18\x1a \x01(\x08\x12\x0b\n\x03\x63\x64i\x18\x1b \x01(\x08\x12\x0f\n\x07\x65nabled\x18\x1c \x01(\x08\"\'\n\x0b\x63lientslist\x12\x18\n\x07\x63lients\x18\x01 \x03(\x0b\x32\x07.client\"\x86\x01\n\x02vm\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\r\n\x05\x64\x65\x62ug\x18\x02 \x01(\x08\x12\x11\n\tsnapshots\x18\x03 \x01(\x08\x12\x0c\n\x04user\x18\x04 \x01(\t\x12\t\n\x01l\x18\x05 \x01(\t\x12\t\n\x01r\x18\x06 \x01(\t\x12\t\n\x01X\x18\x07 \x01(\x08\x12\t\n\x01Y\x18\x08 \x01(\x08\x12\t\n\x01\x44\x18\t \x01(\t\x12\x0b\n\x03\x63md\x18\n \x01(\t\"-\n\x08snapshot\x12\x10\n\x08snapshot\x18\x01 \x01(\t\x12\x0f\n\x07\x63urrent\x18\x02 \x01(\x08\"A\n\x07netinfo\x12\x0e\n\x06\x64\x65vice\x18\x01 \x01(\t\x12\x0b\n\x03mac\x18\x02 \x01(\t\x12\x0b\n\x03net\x18\x03 \x01(\t\x12\x0c\n\x04type\x18\x04 \x01(\t\"T\n\x08\x64iskinfo\x12\x0e\n\x06\x64\x65vice\x18\x01 \x01(\t\x12\x0e\n\x06\x66ormat\x18\x02 \x01(\t\x12\x0c\n\x04path\x18\x03 \x01(\t\x12\x0c\n\x04size\x18\x04 \x01(\x05\x12\x0c\n\x04type\x18\x05 \x01(\t\"\xdd\x03\n\x06vminfo\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\r\n\x05image\x18\x02 \x01(\t\x12\x0c\n\x04\x63pus\x18\x03 \x01(\x05\x12\x0e\n\x06memory\x18\x04 \x01(\x05\x12\x0c\n\x04plan\x18\x05 \x01(\t\x12\x0f\n\x07profile\x18\x06 \x01(\t\x12\x0e\n\x06status\x18\x07 \x01(\t\x12\n\n\x02ip\x18\x08 \x01(\t\x12\x16\n\x04nets\x18\t \x03(\x0b\x32\x08.netinfo\x12\x18\n\x05\x64isks\x18\n \x03(\x0b\x32\t.diskinfo\x12\x14\n\x0c\x63reationdate\x18\x0b \x01(\t\x12\x0c\n\x04user\x18\x0c \x01(\t\x12\x11\n\tautostart\x18\r \x01(\x08\x12\r\n\x05\x64\x65\x62ug\x18\x0e \x01(\t\x12\x1c\n\tsnapshots\x18\x0f \x03(\x0b\x32\t.snapshot\x12\x0c\n\x04kube\x18\x10 \x01(\t\x12\x10\n\x08kubetype\x18\x11 \x01(\t\x12\x12\n\ninstanceid\x18\x12 \x01(\t\x12\x0c\n\x04host\x18\x13 \x01(\t\x12\x11\n\tprivateip\x18\x14 \x01(\t\x12\n\n\x02\x61z\x18\x15 \x01(\t\x12\x0e\n\x06\x66lavor\x18\x16 \x01(\t\x12\x0c\n\x04tags\x18\x17 \x01(\t\x12\x10\n\x08nodeport\x18\x18 \x01(\t\x12\x11\n\tnamespace\x18\x19 \x01(\t\x12\x14\n\x0cloadbalancer\x18\x1a \x01(\t\x12\r\n\x05\x65rror\x18\x1b \x01(\t\"\x1e\n\x06vmlist\x12\x14\n\x03vms\x18\x01 \x03(\x0b\x32\x07.vminfo\";\n\x06result\x12\x0e\n\x06result\x18\x01 \x01(\t\x12\x0e\n\x06reason\x18\x02 \x01(\t\x12\x11\n\tdeletedvm\x18\x03 \x03(\t\"\xad\x01\n\x07profile\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0e\n\x06\x66lavor\x18\x02 \x01(\t\x12\x0c\n\x04pool\x18\x03 \x01(\t\x12\r\n\x05\x64isks\x18\x04 \x01(\t\x12\r\n\x05image\x18\x05 \x01(\t\x12\x0c\n\x04nets\x18\x06 \x01(\t\x12\x11\n\tcloudinit\x18\x07 \x01(\x08\x12\x0e\n\x06nested\x18\x08 \x01(\x08\x12\x12\n\nreservedns\x18\t \x01(\x08\x12\x13\n\x0breservehost\x18\n \x01(\x08\"*\n\x0cprofileslist\x12\x1a\n\x08profiles\x18\x01 \x03(\x0b\x32\x08.profile\"\x18\n\x08isoslist\x12\x0c\n\x04isos\x18\x01 \x03(\t\"\x16\n\x05image\x12\r\n\x05image\x18\x01 \x01(\t\"\x1c\n\nimageslist\x12\x0e\n\x06images\x18\x01 \x03(\t\"0\n\x04\x64isk\x12\x0c\n\x04\x64isk\x18\x01 \x01(\t\x12\x0c\n\x04pool\x18\x02 \x01(\t\x12\x0c\n\x04path\x18\x03 \x01(\t\"!\n\tdiskslist\x12\x14\n\x05\x64isks\x18\x01 \x03(\x0b\x32\x05.disk\"!\n\x04plan\x12\x0c\n\x04plan\x18\x01 \x01(\t\x12\x0b\n\x03vms\x18\x02 \x01(\t\"!\n\tplanslist\x12\x14\n\x05plans\x18\x01 \x03(\x0b\x32\x05.plan\")\n\x07keyword\x12\x0f\n\x07keyword\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t\"*\n\x0ckeywordslist\x12\x1a\n\x08keywords\x18\x01 \x03(\x0b\x32\x08.keyword\"0\n\x04pool\x12\x0c\n\x04pool\x18\x01 \x01(\t\x12\x0c\n\x04path\x18\x02 \x01(\t\x12\x0c\n\x04\x66ull\x18\x03 \x01(\x08\"!\n\tpoolslist\x12\x14\n\x05pools\x18\x01 \x03(\x0b\x32\x05.pool\"|\n\x07network\x12\x0f\n\x07network\x18\x01 \x01(\t\x12\x0c\n\x04type\x18\x02 \x01(\t\x12\x0c\n\x04\x63idr\x18\x03 \x01(\t\x12\x0c\n\x04\x64hcp\x18\x04 \x01(\t\x12\x0e\n\x06\x64omain\x18\x05 \x01(\t\x12\x0c\n\x04mode\x18\x06 \x01(\t\x12\x0c\n\x04plan\x18\x07 \x01(\t\x12\n\n\x02ip\x18\x08 \x01(\t\"*\n\x0cnetworkslist\x12\x1a\n\x08networks\x18\x01 \x03(\x0b\x32\x08.network\"C\n\x06subnet\x12\x0e\n\x06subnet\x18\x01 \x01(\t\x12\n\n\x02\x61z\x18\x02 \x01(\t\x12\x0c\n\x04\x63idr\x18\x03 \x01(\t\x12\x0f\n\x07network\x18\x04 \x01(\t\"\'\n\x0bsubnetslist\x12\x18\n\x07subnets\x18\x01 \x03(\x0b\x32\x07.subnet\"/\n\x04kube\x12\x0c\n\x04kube\x18\x01 \x01(\t\x12\x0c\n\x04type\x18\x02 \x01(\t\x12\x0b\n\x03vms\x18\x03 \x01(\t\"!\n\tkubeslist\x12\x14\n\x05kubes\x18\x01 \x03(\x0b\x32\x05.kube\"M\n\x02lb\x12\n\n\x02lb\x18\x01 \x01(\t\x12\n\n\x02ip\x18\x02 \x01(\t\x12\x10\n\x08protocol\x18\x03 \x01(\t\x12\r\n\x05ports\x18\x04 \x01(\t\x12\x0e\n\x06target\x18\x05 \x01(\t\"\x1b\n\x07lbslist\x12\x10\n\x03lbs\x18\x01 \x03(\x0b\x32\x03.lb\"9\n\x06\x66lavor\x12\x0e\n\x06\x66lavor\x18\x01 \x01(\t\x12\x0f\n\x07numcpus\x18\x02 \x01(\x05\x12\x0e\n\x06memory\x18\x03 \x01(\x05\"\'\n\x0b\x66lavorslist\x12\x18\n\x07\x66lavors\x18\x01 \x03(\x0b\x32\x07.flavor\"!\n\x04repo\x12\x0c\n\x04repo\x18\x01 \x01(\t\x12\x0b\n\x03url\x18\x02 \x01(\t\"!\n\treposlist\x12\x14\n\x05repos\x18\x01 \x03(\x0b\x32\x05.repo\"l\n\x07product\x12\x0f\n\x07product\x18\x01 \x01(\t\x12\x0c\n\x04repo\x18\x02 \x01(\t\x12\r\n\x05group\x18\x03 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x04 \x01(\t\x12\x0e\n\x06numvms\x18\x05 \x01(\t\x12\x0e\n\x06memory\x18\x06 \x01(\t\"*\n\x0cproductslist\x12\x1a\n\x08products\x18\x01 \x03(\x0b\x32\x08.product\".\n\x06\x63onfig\x12\x0e\n\x06\x63lient\x18\x01 \x01(\t\x12\x14\n\x0c\x65xtraclients\x18\x02 \x03(\t\"{\n\tcontainer\x12\x11\n\tcontainer\x18\x01 \x01(\t\x12\x0e\n\x06status\x18\x02 \x01(\t\x12\r\n\x05image\x18\x03 \x01(\t\x12\x0c\n\x04plan\x18\x04 \x01(\t\x12\x0f\n\x07\x63ommand\x18\x05 \x01(\t\x12\r\n\x05ports\x18\x06 \x01(\t\x12\x0e\n\x06\x64\x65ploy\x18\x07 \x01(\t\"0\n\x0e\x63ontainerslist\x12\x1e\n\ncontainers\x18\x01 \x03(\x0b\x32\n.container\"\x18\n\x06sshcmd\x12\x0e\n\x06sshcmd\x18\x01 \x01(\t\"\x12\n\x03\x63md\x12\x0b\n\x03\x63md\x18\x01 \x01(\t\"r\n\nscpdetails\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0e\n\x06source\x18\x02 \x01(\t\x12\x13\n\x0b\x64\x65stination\x18\x03 \x01(\t\x12\x0c\n\x04user\x18\x04 \x01(\t\x12\x11\n\trecursive\x18\x05 \x01(\x08\x12\x10\n\x08\x64ownload\x18\x06 \x01(\x08\x32\xa0\x05\n\x04Kcli\x12\x16\n\x07\x63onsole\x12\x03.vm\x1a\x04.cmd\"\x00\x12\x16\n\x04info\x12\x03.vm\x1a\x07.vminfo\"\x00\x12\x1a\n\x04list\x12\x07.client\x1a\x07.vmlist\"\x00\x12\"\n\nlist_disks\x12\x06.empty\x1a\n.diskslist\"\x00\x12&\n\x0clist_flavors\x12\x06.empty\x1a\x0c.flavorslist\"\x00\x12$\n\x0blist_images\x12\x06.empty\x1a\x0b.imageslist\"\x00\x12(\n\rlist_networks\x12\x06.empty\x1a\r.networkslist\"\x00\x12 \n\tlist_isos\x12\x06.empty\x1a\t.isoslist\"\x00\x12\"\n\nlist_pools\x12\x06.empty\x1a\n.poolslist\"\x00\x12&\n\x0clist_subnets\x12\x06.empty\x1a\x0c.subnetslist\"\x00\x12\x19\n\x07restart\x12\x03.vm\x1a\x07.result\"\x00\x12\x1d\n\x0eserial_console\x12\x03.vm\x1a\x04.cmd\"\x00\x12\x15\n\x03ssh\x12\x03.vm\x1a\x07.sshcmd\"\x00\x12\x1d\n\x03scp\x12\x0b.scpdetails\x1a\x07.sshcmd\"\x00\x12\x17\n\x05start\x12\x03.vm\x1a\x07.result\"\x00\x12\x16\n\x04stop\x12\x03.vm\x1a\x07.result\"\x00\x12\x18\n\x06\x64\x65lete\x12\x03.vm\x1a\x07.result\"\x00\x12\x1c\n\nget_lastvm\x12\x07.client\x1a\x03.vm\"\x00\x12!\n\x0c\x64\x65lete_image\x12\x06.image\x1a\x07.result\"\x00\x12%\n\x0e\x64\x65lete_network\x12\x08.network\x1a\x07.result\"\x00\x12\x1f\n\x0b\x64\x65lete_pool\x12\x05.pool\x1a\x07.result\"\x00\x32\xa0\x08\n\x07Kconfig\x12\x1f\n\nget_config\x12\x06.empty\x1a\x07.config\"\x00\x12!\n\x0bget_version\x12\x06.empty\x1a\x08.version\"\x00\x12!\n\x0b\x63reate_host\x12\x07.client\x1a\x07.result\"\x00\x12!\n\x0b\x64\x65lete_host\x12\x07.client\x1a\x07.result\"\x00\x12)\n\x10\x64\x65lete_container\x12\n.container\x1a\x07.result\"\x00\x12\x1b\n\tdelete_lb\x12\x03.lb\x1a\x07.result\"\x00\x12\x1f\n\x0b\x64\x65lete_kube\x12\x05.kube\x1a\x07.result\"\x00\x12\x1f\n\x0b\x64\x65lete_plan\x12\x05.plan\x1a\x07.result\"\x00\x12%\n\x0e\x64\x65lete_profile\x12\x08.profile\x1a\x07.result\"\x00\x12\x1f\n\x0b\x64\x65lete_repo\x12\x05.repo\x1a\x07.result\"\x00\x12,\n\x0flist_containers\x12\x06.empty\x1a\x0f.containerslist\"\x00\x12.\n\x15list_container_images\x12\x06.empty\x1a\x0b.imageslist\"\x00\x12$\n\nlist_hosts\x12\x06.empty\x1a\x0c.clientslist\"\x00\x12(\n\rlist_keywords\x12\x06.empty\x1a\r.keywordslist\"\x00\x12\"\n\nlist_kubes\x12\x06.empty\x1a\n.kubeslist\"\x00\x12\x1e\n\x08list_lbs\x12\x06.empty\x1a\x08.lbslist\"\x00\x12\"\n\nlist_plans\x12\x06.empty\x1a\n.planslist\"\x00\x12(\n\rlist_profiles\x12\x06.empty\x1a\r.profileslist\"\x00\x12*\n\rlist_products\x12\x08.product\x1a\r.productslist\"\x00\x12\"\n\nlist_repos\x12\x06.empty\x1a\n.reposlist\"\x00\x12*\n\x11restart_container\x12\n.container\x1a\x07.result\"\x00\x12(\n\x0fstart_container\x12\n.container\x1a\x07.result\"\x00\x12\'\n\x0estop_container\x12\n.container\x1a\x07.result\"\x00\x12\"\n\x0e\x61utostart_plan\x12\x05.plan\x1a\x07.result\"\x00\x12$\n\x10noautostart_plan\x12\x05.plan\x1a\x07.result\"\x00\x12\x1e\n\nstart_plan\x12\x05.plan\x1a\x07.result\"\x00\x12\x1d\n\tstop_plan\x12\x05.plan\x1a\x07.result\"\x00\x12!\n\x0bswitch_host\x12\x07.client\x1a\x07.result\"\x00\x62\x06proto3'
 )
 
 
@@ -108,15 +108,183 @@ _CLIENT = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='enabled', full_name='client.enabled', index=2,
+      name='current', full_name='client.current', index=2,
       number=3, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='current', full_name='client.current', index=3,
-      number=4, type=8, cpp_type=7, label=1,
+      name='name', full_name='client.name', index=3,
+      number=4, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='access_key_id', full_name='client.access_key_id', index=4,
+      number=5, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='access_key_secret', full_name='client.access_key_secret', index=5,
+      number=6, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='region', full_name='client.region', index=6,
+      number=7, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='keypair', full_name='client.keypair', index=7,
+      number=8, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='host', full_name='client.host', index=8,
+      number=9, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='port', full_name='client.port', index=9,
+      number=10, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='user', full_name='client.user', index=10,
+      number=11, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='protocol', full_name='client.protocol', index=11,
+      number=12, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='url', full_name='client.url', index=12,
+      number=13, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='pool', full_name='client.pool', index=13,
+      number=14, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='datacenter', full_name='client.datacenter', index=14,
+      number=15, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='ca_file', full_name='client.ca_file', index=15,
+      number=16, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='cluster', full_name='client.cluster', index=16,
+      number=17, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='org', full_name='client.org', index=17,
+      number=18, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='password', full_name='client.password', index=18,
+      number=19, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='credentials', full_name='client.credentials', index=19,
+      number=20, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='project', full_name='client.project', index=20,
+      number=21, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='zone', full_name='client.zone', index=21,
+      number=22, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='domain', full_name='client.domain', index=22,
+      number=23, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='auth_url', full_name='client.auth_url', index=23,
+      number=24, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='token', full_name='client.token', index=24,
+      number=25, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='multus', full_name='client.multus', index=25,
+      number=26, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='cdi', full_name='client.cdi', index=26,
+      number=27, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='enabled', full_name='client.enabled', index=27,
+      number=28, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -133,8 +301,8 @@ _CLIENT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=72,
-  serialized_end=144,
+  serialized_start=73,
+  serialized_end=544,
 )
 
 
@@ -164,8 +332,8 @@ _CLIENTSLIST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=146,
-  serialized_end=185,
+  serialized_start=546,
+  serialized_end=585,
 )
 
 
@@ -258,8 +426,8 @@ _VM = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=188,
-  serialized_end=322,
+  serialized_start=588,
+  serialized_end=722,
 )
 
 
@@ -296,8 +464,8 @@ _SNAPSHOT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=324,
-  serialized_end=369,
+  serialized_start=724,
+  serialized_end=769,
 )
 
 
@@ -348,8 +516,8 @@ _NETINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=371,
-  serialized_end=436,
+  serialized_start=771,
+  serialized_end=836,
 )
 
 
@@ -407,8 +575,8 @@ _DISKINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=438,
-  serialized_end=522,
+  serialized_start=838,
+  serialized_end=922,
 )
 
 
@@ -620,8 +788,8 @@ _VMINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=525,
-  serialized_end=1002,
+  serialized_start=925,
+  serialized_end=1402,
 )
 
 
@@ -651,8 +819,8 @@ _VMLIST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1004,
-  serialized_end=1034,
+  serialized_start=1404,
+  serialized_end=1434,
 )
 
 
@@ -677,6 +845,13 @@ _RESULT = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='deletedvm', full_name='result.deletedvm', index=2,
+      number=3, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -689,8 +864,8 @@ _RESULT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1036,
-  serialized_end=1076,
+  serialized_start=1436,
+  serialized_end=1495,
 )
 
 
@@ -783,8 +958,8 @@ _PROFILE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1079,
-  serialized_end=1252,
+  serialized_start=1498,
+  serialized_end=1671,
 )
 
 
@@ -814,8 +989,8 @@ _PROFILESLIST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1254,
-  serialized_end=1296,
+  serialized_start=1673,
+  serialized_end=1715,
 )
 
 
@@ -845,8 +1020,8 @@ _ISOSLIST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1298,
-  serialized_end=1322,
+  serialized_start=1717,
+  serialized_end=1741,
 )
 
 
@@ -876,8 +1051,8 @@ _IMAGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1324,
-  serialized_end=1346,
+  serialized_start=1743,
+  serialized_end=1765,
 )
 
 
@@ -907,8 +1082,8 @@ _IMAGESLIST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1348,
-  serialized_end=1376,
+  serialized_start=1767,
+  serialized_end=1795,
 )
 
 
@@ -952,8 +1127,8 @@ _DISK = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1378,
-  serialized_end=1426,
+  serialized_start=1797,
+  serialized_end=1845,
 )
 
 
@@ -983,8 +1158,8 @@ _DISKSLIST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1428,
-  serialized_end=1461,
+  serialized_start=1847,
+  serialized_end=1880,
 )
 
 
@@ -1021,8 +1196,8 @@ _PLAN = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1463,
-  serialized_end=1496,
+  serialized_start=1882,
+  serialized_end=1915,
 )
 
 
@@ -1052,8 +1227,8 @@ _PLANSLIST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1498,
-  serialized_end=1531,
+  serialized_start=1917,
+  serialized_end=1950,
 )
 
 
@@ -1090,8 +1265,8 @@ _KEYWORD = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1533,
-  serialized_end=1574,
+  serialized_start=1952,
+  serialized_end=1993,
 )
 
 
@@ -1121,8 +1296,8 @@ _KEYWORDSLIST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1576,
-  serialized_end=1618,
+  serialized_start=1995,
+  serialized_end=2037,
 )
 
 
@@ -1147,6 +1322,13 @@ _POOL = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='full', full_name='pool.full', index=2,
+      number=3, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -1159,8 +1341,8 @@ _POOL = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1620,
-  serialized_end=1654,
+  serialized_start=2039,
+  serialized_end=2087,
 )
 
 
@@ -1190,8 +1372,8 @@ _POOLSLIST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1656,
-  serialized_end=1689,
+  serialized_start=2089,
+  serialized_end=2122,
 )
 
 
@@ -1270,8 +1452,8 @@ _NETWORK = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1691,
-  serialized_end=1815,
+  serialized_start=2124,
+  serialized_end=2248,
 )
 
 
@@ -1301,8 +1483,8 @@ _NETWORKSLIST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1817,
-  serialized_end=1859,
+  serialized_start=2250,
+  serialized_end=2292,
 )
 
 
@@ -1353,8 +1535,8 @@ _SUBNET = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1861,
-  serialized_end=1928,
+  serialized_start=2294,
+  serialized_end=2361,
 )
 
 
@@ -1384,8 +1566,8 @@ _SUBNETSLIST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1930,
-  serialized_end=1969,
+  serialized_start=2363,
+  serialized_end=2402,
 )
 
 
@@ -1429,8 +1611,8 @@ _KUBE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1971,
-  serialized_end=2018,
+  serialized_start=2404,
+  serialized_end=2451,
 )
 
 
@@ -1460,8 +1642,8 @@ _KUBESLIST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2020,
-  serialized_end=2053,
+  serialized_start=2453,
+  serialized_end=2486,
 )
 
 
@@ -1519,8 +1701,8 @@ _LB = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2055,
-  serialized_end=2132,
+  serialized_start=2488,
+  serialized_end=2565,
 )
 
 
@@ -1550,8 +1732,8 @@ _LBSLIST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2134,
-  serialized_end=2161,
+  serialized_start=2567,
+  serialized_end=2594,
 )
 
 
@@ -1595,8 +1777,8 @@ _FLAVOR = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2163,
-  serialized_end=2220,
+  serialized_start=2596,
+  serialized_end=2653,
 )
 
 
@@ -1626,8 +1808,8 @@ _FLAVORSLIST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2222,
-  serialized_end=2261,
+  serialized_start=2655,
+  serialized_end=2694,
 )
 
 
@@ -1664,8 +1846,8 @@ _REPO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2263,
-  serialized_end=2296,
+  serialized_start=2696,
+  serialized_end=2729,
 )
 
 
@@ -1695,8 +1877,8 @@ _REPOSLIST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2298,
-  serialized_end=2331,
+  serialized_start=2731,
+  serialized_end=2764,
 )
 
 
@@ -1761,8 +1943,8 @@ _PRODUCT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2333,
-  serialized_end=2441,
+  serialized_start=2766,
+  serialized_end=2874,
 )
 
 
@@ -1792,8 +1974,8 @@ _PRODUCTSLIST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2443,
-  serialized_end=2485,
+  serialized_start=2876,
+  serialized_end=2918,
 )
 
 
@@ -1830,8 +2012,8 @@ _CONFIG = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2487,
-  serialized_end=2533,
+  serialized_start=2920,
+  serialized_end=2966,
 )
 
 
@@ -1903,8 +2085,8 @@ _CONTAINER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2535,
-  serialized_end=2658,
+  serialized_start=2968,
+  serialized_end=3091,
 )
 
 
@@ -1934,8 +2116,8 @@ _CONTAINERSLIST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2660,
-  serialized_end=2708,
+  serialized_start=3093,
+  serialized_end=3141,
 )
 
 
@@ -1965,8 +2147,39 @@ _SSHCMD = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2710,
-  serialized_end=2734,
+  serialized_start=3143,
+  serialized_end=3167,
+)
+
+
+_CMD = _descriptor.Descriptor(
+  name='cmd',
+  full_name='cmd',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='cmd', full_name='cmd.cmd', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=3169,
+  serialized_end=3187,
 )
 
 
@@ -2031,8 +2244,8 @@ _SCPDETAILS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2736,
-  serialized_end=2850,
+  serialized_start=3189,
+  serialized_end=3303,
 )
 
 _CLIENTSLIST.fields_by_name['clients'].message_type = _CLIENT
@@ -2095,6 +2308,7 @@ DESCRIPTOR.message_types_by_name['config'] = _CONFIG
 DESCRIPTOR.message_types_by_name['container'] = _CONTAINER
 DESCRIPTOR.message_types_by_name['containerslist'] = _CONTAINERSLIST
 DESCRIPTOR.message_types_by_name['sshcmd'] = _SSHCMD
+DESCRIPTOR.message_types_by_name['cmd'] = _CMD
 DESCRIPTOR.message_types_by_name['scpdetails'] = _SCPDETAILS
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -2392,6 +2606,13 @@ sshcmd = _reflection.GeneratedProtocolMessageType('sshcmd', (_message.Message,),
   })
 _sym_db.RegisterMessage(sshcmd)
 
+cmd = _reflection.GeneratedProtocolMessageType('cmd', (_message.Message,), {
+  'DESCRIPTOR' : _CMD,
+  '__module__' : 'kcli_pb2'
+  # @@protoc_insertion_point(class_scope:cmd)
+  })
+_sym_db.RegisterMessage(cmd)
+
 scpdetails = _reflection.GeneratedProtocolMessageType('scpdetails', (_message.Message,), {
   'DESCRIPTOR' : _SCPDETAILS,
   '__module__' : 'kcli_pb2'
@@ -2407,13 +2628,22 @@ _KCLI = _descriptor.ServiceDescriptor(
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
-  serialized_start=2853,
-  serialized_end=3436,
+  serialized_start=3306,
+  serialized_end=3978,
   methods=[
+  _descriptor.MethodDescriptor(
+    name='console',
+    full_name='Kcli.console',
+    index=0,
+    containing_service=None,
+    input_type=_VM,
+    output_type=_CMD,
+    serialized_options=None,
+  ),
   _descriptor.MethodDescriptor(
     name='info',
     full_name='Kcli.info',
-    index=0,
+    index=1,
     containing_service=None,
     input_type=_VM,
     output_type=_VMINFO,
@@ -2422,16 +2652,16 @@ _KCLI = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='list',
     full_name='Kcli.list',
-    index=1,
+    index=2,
     containing_service=None,
-    input_type=_EMPTY,
+    input_type=_CLIENT,
     output_type=_VMLIST,
     serialized_options=None,
   ),
   _descriptor.MethodDescriptor(
     name='list_disks',
     full_name='Kcli.list_disks',
-    index=2,
+    index=3,
     containing_service=None,
     input_type=_EMPTY,
     output_type=_DISKSLIST,
@@ -2440,7 +2670,7 @@ _KCLI = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='list_flavors',
     full_name='Kcli.list_flavors',
-    index=3,
+    index=4,
     containing_service=None,
     input_type=_EMPTY,
     output_type=_FLAVORSLIST,
@@ -2449,7 +2679,7 @@ _KCLI = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='list_images',
     full_name='Kcli.list_images',
-    index=4,
+    index=5,
     containing_service=None,
     input_type=_EMPTY,
     output_type=_IMAGESLIST,
@@ -2458,7 +2688,7 @@ _KCLI = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='list_networks',
     full_name='Kcli.list_networks',
-    index=5,
+    index=6,
     containing_service=None,
     input_type=_EMPTY,
     output_type=_NETWORKSLIST,
@@ -2467,7 +2697,7 @@ _KCLI = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='list_isos',
     full_name='Kcli.list_isos',
-    index=6,
+    index=7,
     containing_service=None,
     input_type=_EMPTY,
     output_type=_ISOSLIST,
@@ -2476,7 +2706,7 @@ _KCLI = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='list_pools',
     full_name='Kcli.list_pools',
-    index=7,
+    index=8,
     containing_service=None,
     input_type=_EMPTY,
     output_type=_POOLSLIST,
@@ -2485,7 +2715,7 @@ _KCLI = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='list_subnets',
     full_name='Kcli.list_subnets',
-    index=8,
+    index=9,
     containing_service=None,
     input_type=_EMPTY,
     output_type=_SUBNETSLIST,
@@ -2494,16 +2724,25 @@ _KCLI = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='restart',
     full_name='Kcli.restart',
-    index=9,
+    index=10,
     containing_service=None,
     input_type=_VM,
     output_type=_RESULT,
     serialized_options=None,
   ),
   _descriptor.MethodDescriptor(
+    name='serial_console',
+    full_name='Kcli.serial_console',
+    index=11,
+    containing_service=None,
+    input_type=_VM,
+    output_type=_CMD,
+    serialized_options=None,
+  ),
+  _descriptor.MethodDescriptor(
     name='ssh',
     full_name='Kcli.ssh',
-    index=10,
+    index=12,
     containing_service=None,
     input_type=_VM,
     output_type=_SSHCMD,
@@ -2512,7 +2751,7 @@ _KCLI = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='scp',
     full_name='Kcli.scp',
-    index=11,
+    index=13,
     containing_service=None,
     input_type=_SCPDETAILS,
     output_type=_SSHCMD,
@@ -2521,7 +2760,7 @@ _KCLI = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='start',
     full_name='Kcli.start',
-    index=12,
+    index=14,
     containing_service=None,
     input_type=_VM,
     output_type=_RESULT,
@@ -2530,7 +2769,7 @@ _KCLI = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='stop',
     full_name='Kcli.stop',
-    index=13,
+    index=15,
     containing_service=None,
     input_type=_VM,
     output_type=_RESULT,
@@ -2539,7 +2778,7 @@ _KCLI = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='delete',
     full_name='Kcli.delete',
-    index=14,
+    index=16,
     containing_service=None,
     input_type=_VM,
     output_type=_RESULT,
@@ -2548,7 +2787,7 @@ _KCLI = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='get_lastvm',
     full_name='Kcli.get_lastvm',
-    index=15,
+    index=17,
     containing_service=None,
     input_type=_CLIENT,
     output_type=_VM,
@@ -2557,7 +2796,7 @@ _KCLI = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='delete_image',
     full_name='Kcli.delete_image',
-    index=16,
+    index=18,
     containing_service=None,
     input_type=_IMAGE,
     output_type=_RESULT,
@@ -2566,9 +2805,18 @@ _KCLI = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='delete_network',
     full_name='Kcli.delete_network',
-    index=17,
+    index=19,
     containing_service=None,
     input_type=_NETWORK,
+    output_type=_RESULT,
+    serialized_options=None,
+  ),
+  _descriptor.MethodDescriptor(
+    name='delete_pool',
+    full_name='Kcli.delete_pool',
+    index=20,
+    containing_service=None,
+    input_type=_POOL,
     output_type=_RESULT,
     serialized_options=None,
   ),
@@ -2584,8 +2832,8 @@ _KCONFIG = _descriptor.ServiceDescriptor(
   file=DESCRIPTOR,
   index=1,
   serialized_options=None,
-  serialized_start=3439,
-  serialized_end=4293,
+  serialized_start=3981,
+  serialized_end=5037,
   methods=[
   _descriptor.MethodDescriptor(
     name='get_config',
@@ -2606,9 +2854,18 @@ _KCONFIG = _descriptor.ServiceDescriptor(
     serialized_options=None,
   ),
   _descriptor.MethodDescriptor(
+    name='create_host',
+    full_name='Kconfig.create_host',
+    index=2,
+    containing_service=None,
+    input_type=_CLIENT,
+    output_type=_RESULT,
+    serialized_options=None,
+  ),
+  _descriptor.MethodDescriptor(
     name='delete_host',
     full_name='Kconfig.delete_host',
-    index=2,
+    index=3,
     containing_service=None,
     input_type=_CLIENT,
     output_type=_RESULT,
@@ -2617,16 +2874,61 @@ _KCONFIG = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='delete_container',
     full_name='Kconfig.delete_container',
-    index=3,
+    index=4,
     containing_service=None,
     input_type=_CONTAINER,
     output_type=_RESULT,
     serialized_options=None,
   ),
   _descriptor.MethodDescriptor(
+    name='delete_lb',
+    full_name='Kconfig.delete_lb',
+    index=5,
+    containing_service=None,
+    input_type=_LB,
+    output_type=_RESULT,
+    serialized_options=None,
+  ),
+  _descriptor.MethodDescriptor(
+    name='delete_kube',
+    full_name='Kconfig.delete_kube',
+    index=6,
+    containing_service=None,
+    input_type=_KUBE,
+    output_type=_RESULT,
+    serialized_options=None,
+  ),
+  _descriptor.MethodDescriptor(
+    name='delete_plan',
+    full_name='Kconfig.delete_plan',
+    index=7,
+    containing_service=None,
+    input_type=_PLAN,
+    output_type=_RESULT,
+    serialized_options=None,
+  ),
+  _descriptor.MethodDescriptor(
+    name='delete_profile',
+    full_name='Kconfig.delete_profile',
+    index=8,
+    containing_service=None,
+    input_type=_PROFILE,
+    output_type=_RESULT,
+    serialized_options=None,
+  ),
+  _descriptor.MethodDescriptor(
+    name='delete_repo',
+    full_name='Kconfig.delete_repo',
+    index=9,
+    containing_service=None,
+    input_type=_REPO,
+    output_type=_RESULT,
+    serialized_options=None,
+  ),
+  _descriptor.MethodDescriptor(
     name='list_containers',
     full_name='Kconfig.list_containers',
-    index=4,
+    index=10,
     containing_service=None,
     input_type=_EMPTY,
     output_type=_CONTAINERSLIST,
@@ -2635,7 +2937,7 @@ _KCONFIG = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='list_container_images',
     full_name='Kconfig.list_container_images',
-    index=5,
+    index=11,
     containing_service=None,
     input_type=_EMPTY,
     output_type=_IMAGESLIST,
@@ -2644,7 +2946,7 @@ _KCONFIG = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='list_hosts',
     full_name='Kconfig.list_hosts',
-    index=6,
+    index=12,
     containing_service=None,
     input_type=_EMPTY,
     output_type=_CLIENTSLIST,
@@ -2653,7 +2955,7 @@ _KCONFIG = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='list_keywords',
     full_name='Kconfig.list_keywords',
-    index=7,
+    index=13,
     containing_service=None,
     input_type=_EMPTY,
     output_type=_KEYWORDSLIST,
@@ -2662,7 +2964,7 @@ _KCONFIG = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='list_kubes',
     full_name='Kconfig.list_kubes',
-    index=8,
+    index=14,
     containing_service=None,
     input_type=_EMPTY,
     output_type=_KUBESLIST,
@@ -2671,7 +2973,7 @@ _KCONFIG = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='list_lbs',
     full_name='Kconfig.list_lbs',
-    index=9,
+    index=15,
     containing_service=None,
     input_type=_EMPTY,
     output_type=_LBSLIST,
@@ -2680,7 +2982,7 @@ _KCONFIG = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='list_plans',
     full_name='Kconfig.list_plans',
-    index=10,
+    index=16,
     containing_service=None,
     input_type=_EMPTY,
     output_type=_PLANSLIST,
@@ -2689,7 +2991,7 @@ _KCONFIG = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='list_profiles',
     full_name='Kconfig.list_profiles',
-    index=11,
+    index=17,
     containing_service=None,
     input_type=_EMPTY,
     output_type=_PROFILESLIST,
@@ -2698,7 +3000,7 @@ _KCONFIG = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='list_products',
     full_name='Kconfig.list_products',
-    index=12,
+    index=18,
     containing_service=None,
     input_type=_PRODUCT,
     output_type=_PRODUCTSLIST,
@@ -2707,7 +3009,7 @@ _KCONFIG = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='list_repos',
     full_name='Kconfig.list_repos',
-    index=13,
+    index=19,
     containing_service=None,
     input_type=_EMPTY,
     output_type=_REPOSLIST,
@@ -2716,7 +3018,7 @@ _KCONFIG = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='restart_container',
     full_name='Kconfig.restart_container',
-    index=14,
+    index=20,
     containing_service=None,
     input_type=_CONTAINER,
     output_type=_RESULT,
@@ -2725,7 +3027,7 @@ _KCONFIG = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='start_container',
     full_name='Kconfig.start_container',
-    index=15,
+    index=21,
     containing_service=None,
     input_type=_CONTAINER,
     output_type=_RESULT,
@@ -2734,7 +3036,7 @@ _KCONFIG = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='stop_container',
     full_name='Kconfig.stop_container',
-    index=16,
+    index=22,
     containing_service=None,
     input_type=_CONTAINER,
     output_type=_RESULT,
@@ -2743,7 +3045,7 @@ _KCONFIG = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='autostart_plan',
     full_name='Kconfig.autostart_plan',
-    index=17,
+    index=23,
     containing_service=None,
     input_type=_PLAN,
     output_type=_RESULT,
@@ -2752,7 +3054,7 @@ _KCONFIG = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='noautostart_plan',
     full_name='Kconfig.noautostart_plan',
-    index=18,
+    index=24,
     containing_service=None,
     input_type=_PLAN,
     output_type=_RESULT,
@@ -2761,7 +3063,7 @@ _KCONFIG = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='start_plan',
     full_name='Kconfig.start_plan',
-    index=19,
+    index=25,
     containing_service=None,
     input_type=_PLAN,
     output_type=_RESULT,
@@ -2770,7 +3072,7 @@ _KCONFIG = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='stop_plan',
     full_name='Kconfig.stop_plan',
-    index=20,
+    index=26,
     containing_service=None,
     input_type=_PLAN,
     output_type=_RESULT,
@@ -2779,7 +3081,7 @@ _KCONFIG = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='switch_host',
     full_name='Kconfig.switch_host',
-    index=21,
+    index=27,
     containing_service=None,
     input_type=_CLIENT,
     output_type=_RESULT,

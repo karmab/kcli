@@ -197,7 +197,7 @@ class Kbase(object):
         print("not implemented")
         return
 
-    def serialconsole(self, name):
+    def serialconsole(self, name, web=False):
         """
 
         :param name:

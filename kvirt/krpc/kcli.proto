@@ -12,8 +12,32 @@ message version {
 message client {
  string client = 1 ; 
  string type = 2 ;
- bool enabled = 3 ; 
- bool current = 4 ; 
+ bool current = 3 ; 
+ string name = 4 ; 
+ string access_key_id = 5 ; 
+ string access_key_secret = 6 ;
+ string region = 7 ; 
+ string keypair = 8 ; 
+ string host = 9 ;
+ string port = 10 ; 
+ string user = 11  ;
+ string protocol = 12 ; 
+ string url = 13 ; 
+ string pool = 14 ; 
+ string datacenter = 15 ; 
+ string ca_file = 16 ; 
+ string cluster = 17 ; 
+ string org = 18 ; 
+ string password = 19 ; 
+ string credentials = 20 ;
+ string project = 21 ; 
+ string zone = 22 ; 
+ string domain = 23 ; 
+ string auth_url = 24 ; 
+ string token = 25 ; 
+ bool multus = 26 ; 
+ bool cdi = 27 ;  
+ bool enabled = 28 ;  
 }
 
 message clientslist {
@@ -90,6 +114,7 @@ message vmlist{
 message result{
     string result = 1 ;
     string reason = 2 ;
+    repeated string deletedvm = 3 ;
 }
 
 message profile{
@@ -153,6 +178,7 @@ message keywordslist {
 message pool {
     string pool = 1 ; 
     string path = 2 ; 
+    bool full = 3 ; 
 }
 
 message poolslist {
@@ -261,6 +287,9 @@ message containerslist {
 message sshcmd {
     string sshcmd = 1 ; 
 }
+message cmd {
+    string cmd = 1 ; 
+}
 
 message scpdetails {
     string name = 1 ; 
@@ -272,8 +301,9 @@ message scpdetails {
 }
 
 service Kcli {
+    rpc console(vm) returns (cmd) {}
     rpc info(vm) returns (vminfo) {}
-    rpc list(empty) returns (vmlist) {}
+    rpc list(client) returns (vmlist) {}
     rpc list_disks(empty) returns (diskslist) {}
     rpc list_flavors(empty) returns (flavorslist) {}
     rpc list_images(empty) returns (imageslist) {}
@@ -282,6 +312,7 @@ service Kcli {
     rpc list_pools(empty) returns (poolslist) {}
     rpc list_subnets(empty) returns (subnetslist) {}
     rpc restart(vm) returns (result) {}
+    rpc serial_console(vm) returns (cmd) {}
     rpc ssh(vm) returns (sshcmd) {}
     rpc scp(scpdetails) returns (sshcmd) {}
     rpc start(vm) returns (result) {}
@@ -290,13 +321,20 @@ service Kcli {
     rpc get_lastvm(client) returns (vm) {}
     rpc delete_image(image) returns (result) {}
     rpc delete_network(network) returns (result) {}
+    rpc delete_pool(pool) returns (result) {}
 }
 
 service Kconfig {
     rpc get_config(empty) returns (config) {}
     rpc get_version(empty) returns (version) {}
+    rpc create_host(client) returns (result) {}
     rpc delete_host(client) returns (result) {}
     rpc delete_container(container) returns (result) {}
+    rpc delete_lb(lb) returns (result) {}
+    rpc delete_kube(kube) returns (result) {}
+    rpc delete_plan(plan) returns (result) {}
+    rpc delete_profile(profile) returns (result) {}
+    rpc delete_repo(repo) returns (result) {}
     rpc list_containers(empty) returns (containerslist) {}
     rpc list_container_images(empty) returns (imageslist) {}
     rpc list_hosts(empty) returns (clientslist) {}

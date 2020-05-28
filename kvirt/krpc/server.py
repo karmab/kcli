@@ -21,6 +21,22 @@ class KcliServicer(kcli_pb2_grpc.KcliServicer):
         response = kcli_pb2.vm(name=name)
         return response
 
+    def console(self, request, context):
+        print("Handling console call for:\n%s" % request)
+        config = Kconfig()
+        tunnel = config.tunnel
+        cmd = config.k.console(request.name, tunnel=tunnel, web=True)
+        response = kcli_pb2.cmd(cmd=cmd)
+        return response
+
+    def serial_console(self, request, context):
+        print("Handling serial_console call for:\n%s" % request)
+        config = Kconfig()
+        cmd = config.k.serialconsole(request.name, web=True)
+        print(cmd)
+        response = kcli_pb2.cmd(cmd=cmd)
+        return response
+
     def delete(self, request, context):
         print("Handling delete call for:\n%s" % request)
         config = Kconfig()
@@ -39,6 +55,14 @@ class KcliServicer(kcli_pb2_grpc.KcliServicer):
         print("Handling delete_network call for:\n%s" % request)
         config = Kconfig()
         result = config.k.delete_network(request.network)
+        response = kcli_pb2.result(**result)
+        return response
+
+    def delete_pool(self, request, context):
+        print("Handing delete_pool call for:\n%s" % request)
+        config = Kconfig()
+        k = config.k
+        result = k.delete_pool(name=request.pool, full=request.full)
         response = kcli_pb2.result(**result)
         return response
 
@@ -212,6 +236,67 @@ class KconfigServicer(kcli_pb2_grpc.KconfigServicer):
         response = kcli_pb2.version(**ver)
         return response
 
+    def create_host(self, request, context):
+        print("Handling create_host call")
+        data = {}
+        if request.client != '':
+            data['client'] = request.client
+        if request.type != '':
+            data['_type'] = request.type
+        if request.current != '':
+            data['current'] = request.current
+        if request.name != '':
+            data['name'] = request.name
+        if request.access_key_id != '':
+            data['access_key_id'] = request.access_key_id
+        if request.access_key_secret != '':
+            data['access_key_secret'] = request.access_key_secret
+        if request.region != '':
+            data['region'] = request.region
+        if request.keypair != '':
+            data['keypair'] = request.keypair
+        if request.host != '':
+            data['host'] = request.host
+        if request.port != '':
+            data['port'] = request.port
+        if request.user != '':
+            data['user'] = request.user
+        if request.protocol != '':
+            data['protocol'] = request.protocol
+        if request.url != '':
+            data['url'] = request.url
+        if request.pool != '':
+            data['pool'] = request.pool
+        if request.datacenter != '':
+            data['datacenter'] = request.datacenter
+        if request.ca_file != '':
+            data['ca_file'] = request.ca_file
+        if request.cluster != '':
+            data['cluster'] = request.cluster
+        if request.org != '':
+            data['org'] = request.org
+        if request.password != '':
+            data['password'] = request.password
+        if request.credentials != '':
+            data['credentials'] = request.credentials
+        if request.project != '':
+            data['project'] = request.project
+        if request.zone != '':
+            data['zone'] = request.zone
+        if request.domain != '':
+            data['domain'] = request.domain
+        if request.auth_url != '':
+            data['auth_url'] = request.auth_url
+        if request.token != '':
+            data['token'] = request.token
+        if request.type == 'kubevirt':
+            data['multus'] = request.multus
+            data['cdi'] = request.cdi
+        common.create_host(data)
+        result = {'result': 'success'}
+        response = kcli_pb2.result(**result)
+        return response
+
     def get_config(self, request, context):
         print("Handling get_config call")
         config = Kconfig()
@@ -231,6 +316,43 @@ class KconfigServicer(kcli_pb2_grpc.KconfigServicer):
         config = Kconfig()
         cont = Kcontainerconfig(config).cont
         result = cont.delete_container(request.container)
+        response = kcli_pb2.result(**result)
+        return response
+
+    def delete_plan(self, request, context):
+        print("Handling delete_plan call for:\n%s" % request)
+        config = Kconfig()
+        result = config.plan(request.plan, delete=True)
+        response = kcli_pb2.result(**result)
+        return response
+
+    def delete_profile(self, request, context):
+        print("Handing delete_profile call for:\n%s" % request)
+        baseconfig = Kconfig()
+        result = baseconfig.delete_profile(request.name)
+        response = kcli_pb2.result(**result)
+        return response
+
+    def delete_repo(self, request, context):
+        print("Handing delete_profile call for:\n%s" % request)
+        baseconfig = Kconfig()
+        result = baseconfig.delete_repo(request.repo)
+        response = kcli_pb2.result(**result)
+        return response
+
+    def delete_kube(self, request, context):
+        print("Handling delete_kube call for:\n%s" % request)
+        config = Kconfig()
+        config.delete_kube(request.kube, overrides={})
+        result = {'result': 'success'}
+        response = kcli_pb2.result(**result)
+        return response
+
+    def delete_lb(self, request, context):
+        print("Handling delete_lb call for:\n%s" % request)
+        config = Kconfig()
+        config.handle_loadbalancer(request.lb, delete=True)
+        result = {'result': 'success'}
         response = kcli_pb2.result(**result)
         return response
 

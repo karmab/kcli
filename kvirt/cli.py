@@ -1060,21 +1060,12 @@ def create_lb(args):
 
 def delete_lb(args):
     """Delete loadbalancer"""
-    checkpath = args.checkpath
-    checkport = args.checkport
     yes = args.yes
     yes_top = args.yes_top
-    ports = args.ports
-    domain = args.domain
-    internal = args.internal
-    vms = args.vms.split(',') if args.vms is not None else []
-    ports = args.ports.split(',') if args.ports is not None else []
-    name = nameutils.get_random_name().replace('_', '-') if args.name is None else args.name
     if not yes and not yes_top:
         common.confirm("Are you sure?")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.handle_loadbalancer(name, ports=ports, checkpath=checkpath, vms=vms, delete=True, domain=domain,
-                               checkport=checkport, internal=internal)
+    config.handle_loadbalancer(args.name, delete=True)
     return 0
 
 
@@ -2400,15 +2391,8 @@ def cli():
 
     lbdelete_desc = 'Delete Load Balancer'
     lbdelete_parser = delete_subparsers.add_parser('lb', description=lbdelete_desc, help=lbdelete_desc)
-    lbdelete_parser.add_argument('--checkpath', default='/index.html', help="Path to check. Defaults to /index.html")
-    lbdelete_parser.add_argument('--checkport', default=80, help="Port to check. Defaults to 80")
-    lbdelete_parser.add_argument('-d', '--delete', action='store_true')
-    lbdelete_parser.add_argument('--domain', help='Domain to create a dns entry associated to the load balancer')
-    lbdelete_parser.add_argument('-i', '--internal', action='store_true')
-    lbdelete_parser.add_argument('-p', '--ports', default='443', help='Load Balancer Ports. Defaults to 443')
-    lbdelete_parser.add_argument('-v', '--vms', help='Vms to add to the pool')
     lbdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    lbdelete_parser.add_argument('name', metavar='NAME', nargs='?')
+    lbdelete_parser.add_argument('name', metavar='NAME')
     lbdelete_parser.set_defaults(func=delete_lb)
 
     lblist_desc = 'List Load Balancers'

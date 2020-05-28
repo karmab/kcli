@@ -429,7 +429,7 @@ class Kgcp(object):
             webbrowser.open(url, new=2, autoraise=True)
         return
 
-    def serialconsole(self, name):
+    def serialconsole(self, name, web=False):
         project = self.project
         zone = self.zone
         user, ip = common._ssh_credentials(self. name)
@@ -442,6 +442,8 @@ class Kgcp(object):
         if identityfile is not None:
             sshcommand += " -i %s" % identityfile
         sshcommand = "%s -p 9600 %s.%s.%s.%s@ssh-serialport.googleapis.com" % (sshcommand, project, zone, name, user)
+        if web:
+            return sshcommand
         if self.debug:
             print(sshcommand)
         os.system(sshcommand)

@@ -280,7 +280,7 @@ class Kaws(object):
         print("not implemented")
         return
 
-    def serialconsole(self, name):
+    def serialconsole(self, name, web=False):
         conn = self.conn
         try:
             Filters = {'Name': "tag:Name", 'Values': [name]}
@@ -289,6 +289,8 @@ class Kaws(object):
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         instanceid = vm['InstanceId']
         response = conn.get_console_output(InstanceId=instanceid, DryRun=False, Latest=False)
+        if web:
+            return response['Output']
         print(response['Output'])
         return
 
