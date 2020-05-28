@@ -1344,6 +1344,7 @@ def create_plan(args):
 def update_plan(args):
     """Update plan"""
     autostart = args.autostart
+    noautostart = args.noautostart
     plan = args.plan
     url = args.url
     path = args.path
@@ -1357,7 +1358,14 @@ def update_plan(args):
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if autostart:
-        config.plan(plan, autostart=autostart)
+        common.pprint("Setting vms from plan %s to autostart" % plan)
+        config.config.autostart_plan(kcli_pb2.plan(plan=plan))
+        common.pprint("Plan %s set with autostart" % plan)
+        return 0
+    if noautostart:
+        common.pprint("Setting vms from plan %s to noautostart" % plan)
+        config.config.noautostart_plan(kcli_pb2.plan(plan=plan))
+        common.pprint("Plan %s set with noautostart" % plan)
         return 0
     config.plan(plan, url=url, path=path, container=container, inputfile=inputfile, overrides=overrides, update=True)
     return 0
@@ -1379,15 +1387,19 @@ def start_plan(args):
     """Start plan"""
     plan = args.plan
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.plan(plan, start=True)
+    common.pprint("Starting vms from plan %s" % plan)
+    config.config.start_plan(kcli_pb2.plan(plan=plan))
+    common.pprint("Plan %s started" % plan)
     return 0
 
 
 def stop_plan(args):
     """Stop plan"""
     plan = args.plan
+    common.pprint("Stopping vms from plan %s" % plan)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.plan(plan, stop=True)
+    config.config.stop_plan(kcli_pb2.plan(plan=plan))
+    common.pprint("Plan %s stopped" % plan)
     return 0
 
 
@@ -1395,7 +1407,9 @@ def autostart_plan(args):
     """Autostart plan"""
     plan = args.plan
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.plan(plan, autostart=True)
+    common.pprint("Setting vms from plan %s to autostart" % plan)
+    config.config.autostart_plan(kcli_pb2.plan(plan=plan))
+    common.pprint("Plan %s set with autostart" % plan)
     return 0
 
 
@@ -1403,7 +1417,9 @@ def noautostart_plan(args):
     """Noautostart plan"""
     plan = args.plan
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.plan(plan, autostart=False)
+    common.pprint("Setting vms from plan %s to noautostart" % plan)
+    config.config.noautostart_plan(kcli_pb2.plan(plan=plan))
+    common.pprint("Plan %s set with noautostart" % plan)
     return 0
 
 
@@ -2628,6 +2644,7 @@ def cli():
     planupdate_desc = 'Update Plan'
     planupdate_parser = update_subparsers.add_parser('plan', description=planupdate_desc, help=planupdate_desc)
     planupdate_parser.add_argument('--autostart', action='store_true', help='Set autostart for vms of the plan')
+    planupdate_parser.add_argument('--noautostart', action='store_true', help='Remove autostart for vms of the plan')
     planupdate_parser.add_argument('-u', '--url', help='Url for plan', metavar='URL')
     planupdate_parser.add_argument('-p', '--path', help='Path where to download plans. Defaults to plan',
                                    metavar='PATH')

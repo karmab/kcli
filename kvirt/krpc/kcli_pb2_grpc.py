@@ -702,6 +702,26 @@ class KconfigStub(object):
                 request_serializer=kcli__pb2.container.SerializeToString,
                 response_deserializer=kcli__pb2.result.FromString,
                 )
+        self.autostart_plan = channel.unary_unary(
+                '/Kconfig/autostart_plan',
+                request_serializer=kcli__pb2.plan.SerializeToString,
+                response_deserializer=kcli__pb2.result.FromString,
+                )
+        self.noautostart_plan = channel.unary_unary(
+                '/Kconfig/noautostart_plan',
+                request_serializer=kcli__pb2.plan.SerializeToString,
+                response_deserializer=kcli__pb2.result.FromString,
+                )
+        self.start_plan = channel.unary_unary(
+                '/Kconfig/start_plan',
+                request_serializer=kcli__pb2.plan.SerializeToString,
+                response_deserializer=kcli__pb2.result.FromString,
+                )
+        self.stop_plan = channel.unary_unary(
+                '/Kconfig/stop_plan',
+                request_serializer=kcli__pb2.plan.SerializeToString,
+                response_deserializer=kcli__pb2.result.FromString,
+                )
         self.switch_host = channel.unary_unary(
                 '/Kconfig/switch_host',
                 request_serializer=kcli__pb2.client.SerializeToString,
@@ -814,6 +834,30 @@ class KconfigServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def autostart_plan(self, request, context):
+        """Missing associated documentation comment in .proto file"""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def noautostart_plan(self, request, context):
+        """Missing associated documentation comment in .proto file"""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def start_plan(self, request, context):
+        """Missing associated documentation comment in .proto file"""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def stop_plan(self, request, context):
+        """Missing associated documentation comment in .proto file"""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def switch_host(self, request, context):
         """Missing associated documentation comment in .proto file"""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -906,6 +950,26 @@ def add_KconfigServicer_to_server(servicer, server):
             'stop_container': grpc.unary_unary_rpc_method_handler(
                     servicer.stop_container,
                     request_deserializer=kcli__pb2.container.FromString,
+                    response_serializer=kcli__pb2.result.SerializeToString,
+            ),
+            'autostart_plan': grpc.unary_unary_rpc_method_handler(
+                    servicer.autostart_plan,
+                    request_deserializer=kcli__pb2.plan.FromString,
+                    response_serializer=kcli__pb2.result.SerializeToString,
+            ),
+            'noautostart_plan': grpc.unary_unary_rpc_method_handler(
+                    servicer.noautostart_plan,
+                    request_deserializer=kcli__pb2.plan.FromString,
+                    response_serializer=kcli__pb2.result.SerializeToString,
+            ),
+            'start_plan': grpc.unary_unary_rpc_method_handler(
+                    servicer.start_plan,
+                    request_deserializer=kcli__pb2.plan.FromString,
+                    response_serializer=kcli__pb2.result.SerializeToString,
+            ),
+            'stop_plan': grpc.unary_unary_rpc_method_handler(
+                    servicer.stop_plan,
+                    request_deserializer=kcli__pb2.plan.FromString,
                     response_serializer=kcli__pb2.result.SerializeToString,
             ),
             'switch_host': grpc.unary_unary_rpc_method_handler(
@@ -1191,6 +1255,70 @@ class Kconfig(object):
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/Kconfig/stop_container',
             kcli__pb2.container.SerializeToString,
+            kcli__pb2.result.FromString,
+            options, channel_credentials,
+            call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def autostart_plan(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/Kconfig/autostart_plan',
+            kcli__pb2.plan.SerializeToString,
+            kcli__pb2.result.FromString,
+            options, channel_credentials,
+            call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def noautostart_plan(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/Kconfig/noautostart_plan',
+            kcli__pb2.plan.SerializeToString,
+            kcli__pb2.result.FromString,
+            options, channel_credentials,
+            call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def start_plan(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/Kconfig/start_plan',
+            kcli__pb2.plan.SerializeToString,
+            kcli__pb2.result.FromString,
+            options, channel_credentials,
+            call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def stop_plan(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/Kconfig/stop_plan',
+            kcli__pb2.plan.SerializeToString,
             kcli__pb2.result.FromString,
             options, channel_credentials,
             call_credentials, compression, wait_for_ready, timeout, metadata)

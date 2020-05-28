@@ -310,5 +310,9 @@ service Kconfig {
     rpc restart_container(container) returns (result) {}
     rpc start_container(container) returns (result) {}
     rpc stop_container(container) returns (result) {}
+    rpc autostart_plan(plan) returns (result) {}
+    rpc noautostart_plan(plan) returns (result) {}
+    rpc start_plan(plan) returns (result) {}
+    rpc stop_plan(plan) returns (result) {}
     rpc switch_host(client) returns (result) {}
 }

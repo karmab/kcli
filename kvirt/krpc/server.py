@@ -390,6 +390,38 @@ class KconfigServicer(kcli_pb2_grpc.KconfigServicer):
         response = kcli_pb2.result(**result)
         return response
 
+    def autostart_plan(self, request, context):
+        print("Handling autostart_plan call for:\n%s" % request)
+        config = Kconfig()
+        config.plan(request.plan, autostart=True)
+        result = {'result': 'success'}
+        response = kcli_pb2.result(**result)
+        return response
+
+    def noautostart_plan(self, request, context):
+        print("Handling autostart_plan call for:\n%s" % request)
+        config = Kconfig()
+        config.plan(request.plan, noautostart=True)
+        result = {'result': 'success'}
+        response = kcli_pb2.result(**result)
+        return response
+
+    def start_plan(self, request, context):
+        print("Handling start_plan call for:\n%s" % request)
+        config = Kconfig()
+        config.plan(request.plan, start=True)
+        result = {'result': 'success'}
+        response = kcli_pb2.result(**result)
+        return response
+
+    def stop_plan(self, request, context):
+        print("Handling stop_plan call for:\n%s" % request)
+        config = Kconfig()
+        config.plan(request.plan, stop=True)
+        result = {'result': 'success'}
+        response = kcli_pb2.result(**result)
+        return response
+
     def switch_host(self, request, context):
         print("Handling switch_host call for:\n%s" % request)
         baseconfig = Kbaseconfig()

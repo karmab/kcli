@@ -1265,6 +1265,7 @@ def create_plan(args):
 def update_plan(args):
     """Update plan"""
     autostart = args.autostart
+    noautostart = args.noautostart
     plan = args.plan
     url = args.url
     path = args.path
@@ -1279,6 +1280,9 @@ def update_plan(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if autostart:
         config.plan(plan, autostart=autostart)
+        return 0
+    elif noautostart:
+        config.plan(plan, noautostart=noautostart)
         return 0
     config.plan(plan, url=url, path=path, container=container, inputfile=inputfile, overrides=overrides, update=True)
     return 0
@@ -2567,6 +2571,7 @@ def cli():
     planupdate_desc = 'Update Plan'
     planupdate_parser = update_subparsers.add_parser('plan', description=planupdate_desc, help=planupdate_desc)
     planupdate_parser.add_argument('--autostart', action='store_true', help='Set autostart for vms of the plan')
+    planupdate_parser.add_argument('--noautostart', action='store_true', help='Remove autostart for vms of the plan')
     planupdate_parser.add_argument('-u', '--url', help='Url for plan', metavar='URL')
     planupdate_parser.add_argument('-p', '--path', help='Path where to download plans. Defaults to plan',
                                    metavar='PATH')
