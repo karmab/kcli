@@ -290,11 +290,17 @@ def delete_image(args):
         codes = []
         for image in images:
             clientprofile = "%s_%s" % (cli, image)
+            imgprofiles = [p for p in config.profiles if config.profiles[p]['image'] == os.path.basename(image) and
+                           p.startswith('%s_' % cli)]
             common.pprint("Deleting image %s on %s" % (image, cli))
             if clientprofile in config.profiles and 'image' in config.profiles[clientprofile]:
                 profileimage = config.profiles[clientprofile]['image']
                 config.delete_profile(clientprofile, quiet=True)
                 result = k.delete_image(profileimage)
+            elif imgprofiles:
+                imgprofile = imgprofiles[0]
+                config.delete_profile(imgprofile, quiet=True)
+                result = k.delete_image(image)
             else:
                 result = k.delete_image(image)
             if result['result'] == 'success':
