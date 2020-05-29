@@ -937,10 +937,13 @@ def create_vm(args):
             with open(_fil) as f:
                 content = f.read()
                 vmfiles.append(kcli_pb2.vmfile(origin=origin, content=content))
+    ignitionfile = None
+    if os.path.exists("%s.ign" % name):
+        with open("%s.ign" % name) as f:
+            ignitionfile = f.read()
     profile = str(profile)
     customprofile = str(customprofile)
     overrides = str(overrides)
-    ignitionfile = None
     vmprofile = kcli_pb2.vmprofile(name=name, image=image, profile=profile, overrides=overrides,
                                    customprofile=customprofile, wait=wait, vmfiles=vmfiles,
                                    ignitionfile=ignitionfile)
@@ -949,7 +952,7 @@ def create_vm(args):
         if name is None:
             name = result.vm
             common.pprint("Using %s as name of the vm" % name)
-    if profile is None:
+    if profile == '':
         profile = image
     common.pprint("Deploying vm %s from profile %s..." % (name, profile))
     code = common.handle_response(result, name, element='', action='created', client=config.client)

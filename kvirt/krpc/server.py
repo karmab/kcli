@@ -231,7 +231,7 @@ class KcliServicer(kcli_pb2_grpc.KcliServicer):
 class KconfigServicer(kcli_pb2_grpc.KconfigServicer):
 
     def create_vm(self, request, context):
-        print("Handling restart call for:\n%s" % request)
+        print("Handling create_vm call for:\n%s" % request)
         config = Kconfig()
         overrides = ast.literal_eval(request.overrides)
         profile = ast.literal_eval(request.profile)
@@ -285,6 +285,9 @@ class KconfigServicer(kcli_pb2_grpc.KconfigServicer):
                 content = _fil.content
                 with open(origin, 'w') as f:
                     f.write(content)
+        if request.ignitionfile != '':
+            with open("%s.ign" % name, 'w') as f:
+                f.write(request.ignitionfile)
         result = config.create_vm(name, profile, overrides=overrides,
                                   customprofile=customprofile)
         response = kcli_pb2.result(**result)

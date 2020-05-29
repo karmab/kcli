@@ -1300,7 +1300,9 @@ def mergeignition(name, ignitionextrapath, data):
                                     if x['name'] == user:
                                         sshkey2 = x['sshAuthorizedKeys'] if 'sshAuthorizedKeys' in x else []
                                         password = x.get('passwordHash')
-                                sshkeys = sshkey1 + sshkey2
+                                sshkeys = sshkey1
+                                if sshkey2 != sshkey1:
+                                    sshkeys += sshkey2
                                 if sshkeys:
                                     newuser['sshAuthorizedKeys'] = sshkeys
                                 if password is not None:
