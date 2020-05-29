@@ -921,8 +921,14 @@ def create_vm(args):
     vmfiles = []
     if 'files' in overrides:
         for _fil in overrides['files']:
-            with open(_fil) as f:
+            if isinstance(_fil, dict):
+                origin = _fil.get('origin')
+                if origin is None:
+                    common.pprint("Missing origin field in files section. Leaving")
+                    os._exit(1)
+            else:
                 origin = _fil
+            with open(origin) as f:
                 content = f.read()
                 vmfiles.append(kcli_pb2.vmfile(origin=origin, content=content))
     profile = str(profile)
@@ -934,7 +940,12 @@ def create_vm(args):
                                    ignitionfile=ignitionfile)
     result = config.config.create_vm(vmprofile)
     if result.result == 'success':
-        name = result.vm
+        if name is None:
+            name = result.vm
+            common.pprint("Using %s as name of the vm" % name)
+    if profile is None:
+        profile = image
+    common.pprint("Deploying vm %s from profile %s..." % (name, profile))
     code = common.handle_response(result, name, element='', action='created', client=config.client)
     return code
 
@@ -1644,14 +1655,16 @@ def ssh_vm(args):
     user = args.user
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
-    name = k.get_lastvm(kcli_pb2.client(client=config.client)).name if args.name is None else args.name
-    if args.name is not None and name is not None:
-        common.pprint("Using %s from %s as vm" % (name, config.client))
     if len(args.name) > 1:
         cmd = ' '.join(args.name[1:])
-        name = args.name[0]
     else:
         cmd = None
+    name = k.get_lastvm(kcli_pb2.client(client=config.client)).name if not args.name else args.name
+    if not args.name:
+        name = k.get_lastvm(kcli_pb2.client(client=config.client)).name
+        common.pprint("Using %s from %s as vm" % (name, config.client))
+    else:
+        name = args.name[0]
     sshcommand = k.ssh(kcli_pb2.vm(name=name, user=user, l=l, r=r, X=X, Y=Y, D=D, cmd=cmd)).sshcmd
     if args.debug:
         print(sshcommand)
