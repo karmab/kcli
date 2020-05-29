@@ -1,3 +1,4 @@
+import ast
 import grpc
 from grpc_reflection.v1alpha import reflection
 from concurrent import futures
@@ -6,10 +7,11 @@ import kvirt.krpc.kcli_pb2 as kcli_pb2
 import kvirt.krpc.kcli_pb2_grpc as kcli_pb2_grpc
 
 from kvirt.config import Kconfig, Kbaseconfig, Kcontainerconfig
-from kvirt import common
+from kvirt import common, nameutils
 from kvirt import version
 from kvirt.defaults import VERSION
 import os
+import yaml
 
 
 class KcliServicer(kcli_pb2_grpc.KcliServicer):
@@ -33,7 +35,6 @@ class KcliServicer(kcli_pb2_grpc.KcliServicer):
         print("Handling serial_console call for:\n%s" % request)
         config = Kconfig()
         cmd = config.k.serialconsole(request.name, web=True)
-        print(cmd)
         response = kcli_pb2.cmd(cmd=cmd)
         return response
 
@@ -42,6 +43,7 @@ class KcliServicer(kcli_pb2_grpc.KcliServicer):
         config = Kconfig()
         result = config.k.delete(request.name, snapshots=request.snapshots)
         response = kcli_pb2.result(**result)
+        common.set_lastvm(request.name, config.client, delete=True)
         return response
 
     def delete_image(self, request, context):
@@ -227,6 +229,60 @@ class KcliServicer(kcli_pb2_grpc.KcliServicer):
 
 
 class KconfigServicer(kcli_pb2_grpc.KconfigServicer):
+
+    def create_vm(self, request, context):
+        print("Handling restart call for:\n%s" % request)
+        config = Kconfig()
+        overrides = ast.literal_eval(request.overrides)
+        profile = ast.literal_eval(request.profile)
+        customprofile = ast.literal_eval(request.customprofile)
+        name = request.name
+        if name == '':
+            name = nameutils.get_random_name()
+            if config.type in ['gcp', 'kubevirt']:
+                name = name.replace('_', '-')
+            if config.type != 'aws':
+                common.pprint("Using %s as name of the vm" % name)
+        if request.image != '':
+            if request.image in config.profiles:
+                common.pprint("Using %s as profile" % request.image)
+            profile = request.image
+        elif profile is not None:
+            if profile.endswith('.yml'):
+                profilefile = profile
+                profile = None
+                if not os.path.exists(profilefile):
+                    common.pprint("Missing profile file %s" % profilefile, color='red')
+                    result = {'result': 'failure', 'reason': "Missing profile file %s" % profilefile}
+                    response = kcli_pb2.result(**result)
+                    return response
+                else:
+                    with open(profilefile, 'r') as entries:
+                        entries = yaml.safe_load(entries)
+                        entrieskeys = list(entries.keys())
+                        if len(entrieskeys) == 1:
+                            profile = entrieskeys[0]
+                            customprofile = entries[profile]
+                            common.pprint("Using data from %s as profile" % profilefile, color='blue')
+                        else:
+                            common.pprint("Cant' parse %s as profile file" % profilefile, color='red')
+                            result = {'result': 'failure', 'reason': "Missing profile file %s" % profilefile}
+                            response = kcli_pb2.result(**result)
+                            return response
+        elif overrides:
+            profile = 'kvirt'
+            config.profiles[profile] = {}
+        else:
+            common.pprint("You need to either provide a profile, an image or some parameters", color='red')
+            result = {'result': 'failure',
+                      'reason': "You need to either provide a profile, an image or some parameters"}
+            response = kcli_pb2.result(**result)
+            response = kcli_pb2.result(**result)
+            return response
+        result = config.create_vm(name, profile, overrides=overrides,
+                                  customprofile=customprofile)
+        response = kcli_pb2.result(**result)
+        return response
 
     def get_version(self, request, context):
         print("Handling get_version call")

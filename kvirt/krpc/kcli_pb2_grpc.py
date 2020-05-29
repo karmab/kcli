@@ -713,6 +713,11 @@ class KconfigStub(object):
         Args:
             channel: A grpc.Channel.
         """
+        self.create_vm = channel.unary_unary(
+                '/Kconfig/create_vm',
+                request_serializer=kcli__pb2.vmprofile.SerializeToString,
+                response_deserializer=kcli__pb2.result.FromString,
+                )
         self.get_config = channel.unary_unary(
                 '/Kconfig/get_config',
                 request_serializer=kcli__pb2.empty.SerializeToString,
@@ -857,6 +862,12 @@ class KconfigStub(object):
 
 class KconfigServicer(object):
     """Missing associated documentation comment in .proto file"""
+
+    def create_vm(self, request, context):
+        """Missing associated documentation comment in .proto file"""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
 
     def get_config(self, request, context):
         """Missing associated documentation comment in .proto file"""
@@ -1029,6 +1040,11 @@ class KconfigServicer(object):
 
 def add_KconfigServicer_to_server(servicer, server):
     rpc_method_handlers = {
+            'create_vm': grpc.unary_unary_rpc_method_handler(
+                    servicer.create_vm,
+                    request_deserializer=kcli__pb2.vmprofile.FromString,
+                    response_serializer=kcli__pb2.result.SerializeToString,
+            ),
             'get_config': grpc.unary_unary_rpc_method_handler(
                     servicer.get_config,
                     request_deserializer=kcli__pb2.empty.FromString,
@@ -1178,6 +1194,22 @@ def add_KconfigServicer_to_server(servicer, server):
  # This class is part of an EXPERIMENTAL API.
 class Kconfig(object):
     """Missing associated documentation comment in .proto file"""
+
+    @staticmethod
+    def create_vm(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/Kconfig/create_vm',
+            kcli__pb2.vmprofile.SerializeToString,
+            kcli__pb2.result.FromString,
+            options, channel_credentials,
+            call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
     def get_config(request,

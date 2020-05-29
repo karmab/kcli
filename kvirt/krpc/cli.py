@@ -24,7 +24,6 @@ import os
 import random
 import re
 import sys
-import yaml
 from urllib.request import urlopen
 
 
@@ -261,7 +260,6 @@ def delete_vm(args):
             if result.result == 'success':
                 common.pprint("%s deleted" % name)
                 codes.append(0)
-                common.set_lastvm(name, cli, delete=True)
             else:
                 reason = result.reason
                 common.pprint("Could not delete %s because %s" % (name, reason), color='red')
@@ -909,7 +907,7 @@ def create_vm(args):
     name = args.name
     image = args.image
     profile = args.profile
-    profilefile = args.profilefile
+    # profilefile = args.profilefile
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
     wait = args.wait
     customprofile = {}
@@ -919,43 +917,15 @@ def create_vm(args):
             key_type = str(type(vars(config)[key]))
             common.pprint("The provided parameter %s has a wrong type, it should be %s" % (key, key_type), color='red')
             os._exit(1)
-    if 'name' in overrides:
-        name = overrides['name']
-    if name is None:
-        name = nameutils.get_random_name()
-        if config.type in ['gcp', 'kubevirt']:
-            name = name.replace('_', '-')
-        if config.type != 'aws':
-            common.pprint("Using %s as name of the vm" % name)
-    if image is not None:
-        if image in config.profiles:
-            common.pprint("Using %s as profile" % image)
-        profile = image
-    elif profile is not None:
-        if profile.endswith('.yml'):
-            profilefile = profile
-            profile = None
-            if not os.path.exists(profilefile):
-                common.pprint("Missing profile file %s" % profilefile, color='red')
-                os._exit(1)
-            else:
-                with open(profilefile, 'r') as entries:
-                    entries = yaml.safe_load(entries)
-                    entrieskeys = list(entries.keys())
-                    if len(entrieskeys) == 1:
-                        profile = entrieskeys[0]
-                        customprofile = entries[profile]
-                        common.pprint("Using data from %s as profile" % profilefile, color='blue')
-                    else:
-                        common.pprint("Cant' parse %s as profile file" % profilefile, color='red')
-                        os._exit(1)
-    elif overrides:
-        profile = 'kvirt'
-        config.profiles[profile] = {}
-    else:
-        common.pprint("You need to either provide a profile, an image or some parameters", color='red')
-        os._exit(1)
-    result = config.create_vm(name, profile, overrides=overrides, customprofile=customprofile, wait=wait)
+    wait = False
+    profile = str(profile)
+    customprofile = str(customprofile)
+    overrides = str(overrides)
+    vmprofile = kcli_pb2.vmprofile(name=name, image=image, profile=profile, overrides=overrides,
+                                   customprofile=customprofile, wait=wait)
+    result = config.config.create_vm(vmprofile)
+    if result.result == 'success':
+        name = result.vm
     code = common.handle_response(result, name, element='', action='created', client=config.client)
     return code
 

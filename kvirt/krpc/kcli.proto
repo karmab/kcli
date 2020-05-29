@@ -115,6 +115,7 @@ message result{
     string result = 1 ;
     string reason = 2 ;
     repeated string deletedvm = 3 ;
+    string vm = 4 ; 
 }
 
 message profile{
@@ -300,6 +301,15 @@ message scpdetails {
     bool download = 6 ;
 }
 
+message vmprofile {
+    string name = 1 ; 
+    string profile = 2 ;
+    string image = 3 ;
+    string customprofile = 4 ;
+    string overrides = 5 ; 
+    bool wait = 6 ;
+}
+
 service Kcli {
     rpc console(vm) returns (cmd) {}
     rpc info(vm) returns (vminfo) {}
@@ -325,6 +335,7 @@ service Kcli {
 }
 
 service Kconfig {
+    rpc create_vm(vmprofile) returns (result) {}
     rpc get_config(empty) returns (config) {}
     rpc get_version(empty) returns (version) {}
     rpc create_host(client) returns (result) {}
