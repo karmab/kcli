@@ -918,11 +918,20 @@ def create_vm(args):
             common.pprint("The provided parameter %s has a wrong type, it should be %s" % (key, key_type), color='red')
             os._exit(1)
     wait = False
+    vmfiles = []
+    if 'files' in overrides:
+        for _fil in overrides['files']:
+            with open(_fil) as f:
+                origin = _fil
+                content = f.read()
+                vmfiles.append(kcli_pb2.vmfile(origin=origin, content=content))
     profile = str(profile)
     customprofile = str(customprofile)
     overrides = str(overrides)
+    ignitionfile = None
     vmprofile = kcli_pb2.vmprofile(name=name, image=image, profile=profile, overrides=overrides,
-                                   customprofile=customprofile, wait=wait)
+                                   customprofile=customprofile, wait=wait, vmfiles=vmfiles,
+                                   ignitionfile=ignitionfile)
     result = config.config.create_vm(vmprofile)
     if result.result == 'success':
         name = result.vm

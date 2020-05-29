@@ -301,6 +301,11 @@ message scpdetails {
     bool download = 6 ;
 }
 
+message vmfile {
+    string origin = 1 ;
+    string content = 3 ; 
+}
+
 message vmprofile {
     string name = 1 ; 
     string profile = 2 ;
@@ -308,6 +313,8 @@ message vmprofile {
     string customprofile = 4 ;
     string overrides = 5 ; 
     bool wait = 6 ;
+    repeated vmfile vmfiles = 7 ;
+    string ignitionfile = 8 ;
 }
 
 service Kcli {

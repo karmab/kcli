@@ -279,6 +279,12 @@ class KconfigServicer(kcli_pb2_grpc.KconfigServicer):
             response = kcli_pb2.result(**result)
             response = kcli_pb2.result(**result)
             return response
+        if request.vmfiles:
+            for _fil in request.vmfiles:
+                origin = _fil.origin
+                content = _fil.content
+                with open(origin, 'w') as f:
+                    f.write(content)
         result = config.create_vm(name, profile, overrides=overrides,
                                   customprofile=customprofile)
         response = kcli_pb2.result(**result)
