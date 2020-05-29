@@ -931,6 +931,12 @@ def create_vm(args):
             with open(origin) as f:
                 content = f.read()
                 vmfiles.append(kcli_pb2.vmfile(origin=origin, content=content))
+    if 'scripts' in overrides:
+        for _fil in overrides['scripts']:
+            origin = os.path.basename(_fil)
+            with open(_fil) as f:
+                content = f.read()
+                vmfiles.append(kcli_pb2.vmfile(origin=origin, content=content))
     profile = str(profile)
     customprofile = str(customprofile)
     overrides = str(overrides)
