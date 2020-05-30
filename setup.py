@@ -10,8 +10,9 @@ OPENSTACK = ['python-cinderclient', 'python-neutronclient', 'python-glanceclient
              'python-novaclient']
 OVIRT = ['ovirt-engine-sdk-python']
 VSPHERE = ['requests', 'pyvmomi']
-EXTRAS = ['pyghmi', 'grpcio', 'grpcio-reflection']
-ALL = ['docker>=2.0'] + ['podman'] + ['websockify'] + EXTRAS + AWS + GCP + KUBEVIRT + OPENSTACK + OVIRT + VSPHERE
+GRPC = ['grpcio', 'grpcio-reflection']
+EXTRAS = ['pyghmi']
+ALL = ['docker>=2.0'] + ['podman'] + ['websockify'] + GRPC + EXTRAS + AWS + GCP + KUBEVIRT + OPENSTACK + OVIRT + VSPHERE
 
 description = 'Provisioner/Manager for Libvirt/Ovirt/Gcp/Aws/Openstack/Kubevirt and containers'
 long_description = description
@@ -39,6 +40,7 @@ setup(
         'openstack': OPENSTACK,
         'ovirt': OVIRT,
         'vsphere': VSPHERE,
+        'grpc': GRPC,
     },
     entry_points='''
         [console_scripts]
