@@ -948,10 +948,9 @@ def create_vm(args):
                                    customprofile=customprofile, wait=wait, vmfiles=vmfiles,
                                    ignitionfile=ignitionfile)
     result = config.config.create_vm(vmprofile)
-    if result.result == 'success':
-        if name is None:
-            name = result.vm
-            common.pprint("Using %s as name of the vm" % name)
+    if name is None:
+        name = result.vm
+        common.pprint("Using %s as name of the vm" % name)
     if profile == '':
         profile = image
     common.pprint("Deploying vm %s from profile %s..." % (name, profile))

@@ -290,6 +290,7 @@ class KconfigServicer(kcli_pb2_grpc.KconfigServicer):
                 f.write(request.ignitionfile)
         result = config.create_vm(name, profile, overrides=overrides,
                                   customprofile=customprofile)
+        result['vm'] = name
         response = kcli_pb2.result(**result)
         return response
 
