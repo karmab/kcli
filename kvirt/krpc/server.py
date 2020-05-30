@@ -1,6 +1,5 @@
 import ast
 import grpc
-from grpc_reflection.v1alpha import reflection
 from concurrent import futures
 import time
 import kvirt.krpc.kcli_pb2 as kcli_pb2
@@ -623,11 +622,15 @@ def main():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     kcli_pb2_grpc.add_KcliServicer_to_server(KcliServicer(), server)
     kcli_pb2_grpc.add_KconfigServicer_to_server(KconfigServicer(), server)
-    SERVICE_NAMES = (
-        kcli_pb2.DESCRIPTOR.services_by_name['Kcli'].full_name,
-        kcli_pb2.DESCRIPTOR.services_by_name['Kconfig'].full_name,
-        reflection.SERVICE_NAME,
-    )
+    try:
+        from grpc_reflection.v1alpha import reflection
+        SERVICE_NAMES = (
+            kcli_pb2.DESCRIPTOR.services_by_name['Kcli'].full_name,
+            kcli_pb2.DESCRIPTOR.services_by_name['Kconfig'].full_name,
+            reflection.SERVICE_NAME,
+        )
+    except:
+        pass
     reflection.enable_server_reflection(SERVICE_NAMES, server)
     server.add_insecure_port('[::]:50051')
     server.start()
