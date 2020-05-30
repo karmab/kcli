@@ -233,9 +233,9 @@ class KconfigServicer(kcli_pb2_grpc.KconfigServicer):
     def create_vm(self, request, context):
         print("Handling create_vm call for:\n%s" % request)
         config = Kconfig()
-        overrides = ast.literal_eval(request.overrides)
-        profile = ast.literal_eval(request.profile)
-        customprofile = ast.literal_eval(request.customprofile)
+        overrides = ast.literal_eval(request.overrides) if request.overrides != '' else {}
+        profile = request.profile
+        customprofile = ast.literal_eval(request.customprofile) if request.customprofile != '' else {}
         name = request.name
         if name == '':
             name = nameutils.get_random_name()
