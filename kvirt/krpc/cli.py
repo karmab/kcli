@@ -1295,19 +1295,23 @@ def create_pool(args):
     if path is None:
         common.pprint("Missing path. Leaving...", color='red')
         os._exit(1)
-    common.pprint("Adding pool %s..." % pool)
-    k.create_pool(name=pool, poolpath=path, pooltype=pooltype, thinpool=thinpool)
+    common.pprint("Creating pool %s..." % pool)
+    k.create_pool(kcli_pb2.pool(pool=pool, path=path, type=pooltype, thinpool=thinpool))
 
 
 def delete_pool(args):
     """Delete pool"""
     pool = args.pool
     full = args.full
+    yes = args.yes
+    yes_top = args.yes_top
+    if not yes and not yes_top:
+        common.confirm("Are you sure?")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     common.pprint("Deleting pool %s..." % pool)
-    k.delete_pool(kcli_pb2.pool(pool=pool, full=full))
-    return
+    result = k.delete_pool(kcli_pb2.pool(pool=pool, full=full))
+    common.handle_response(result, pool, element='Pool', action='deleted')
 
 
 def create_plan(args):
@@ -2688,6 +2692,7 @@ def cli():
     pooldelete_parser.add_argument('-f', '--full', action='store_true')
     pooldelete_parser.add_argument('-p', '--path', help='Path of the pool', metavar='PATH')
     pooldelete_parser.add_argument('--thinpool', help='Existing thin pool to use with lvm', metavar='THINPOOL')
+    pooldelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     pooldelete_parser.add_argument('pool')
     pooldelete_parser.set_defaults(func=delete_pool)
 

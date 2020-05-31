@@ -118,6 +118,11 @@ class KcliStub(object):
                 request_serializer=kcli__pb2.network.SerializeToString,
                 response_deserializer=kcli__pb2.result.FromString,
                 )
+        self.create_pool = channel.unary_unary(
+                '/Kcli/create_pool',
+                request_serializer=kcli__pb2.pool.SerializeToString,
+                response_deserializer=kcli__pb2.result.FromString,
+                )
         self.delete_pool = channel.unary_unary(
                 '/Kcli/delete_pool',
                 request_serializer=kcli__pb2.pool.SerializeToString,
@@ -254,6 +259,12 @@ class KcliServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def create_pool(self, request, context):
+        """Missing associated documentation comment in .proto file"""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def delete_pool(self, request, context):
         """Missing associated documentation comment in .proto file"""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -366,6 +377,11 @@ def add_KcliServicer_to_server(servicer, server):
             'delete_network': grpc.unary_unary_rpc_method_handler(
                     servicer.delete_network,
                     request_deserializer=kcli__pb2.network.FromString,
+                    response_serializer=kcli__pb2.result.SerializeToString,
+            ),
+            'create_pool': grpc.unary_unary_rpc_method_handler(
+                    servicer.create_pool,
+                    request_deserializer=kcli__pb2.pool.FromString,
                     response_serializer=kcli__pb2.result.SerializeToString,
             ),
             'delete_pool': grpc.unary_unary_rpc_method_handler(
@@ -715,6 +731,22 @@ class Kcli(object):
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/Kcli/delete_network',
             kcli__pb2.network.SerializeToString,
+            kcli__pb2.result.FromString,
+            options, channel_credentials,
+            call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def create_pool(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/Kcli/create_pool',
+            kcli__pb2.pool.SerializeToString,
             kcli__pb2.result.FromString,
             options, channel_credentials,
             call_credentials, compression, wait_for_ready, timeout, metadata)

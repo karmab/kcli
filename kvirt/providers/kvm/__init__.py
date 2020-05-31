@@ -2688,7 +2688,6 @@ class Kvirt(object):
         try:
             pool = conn.storagePoolLookupByName(name)
         except:
-            print("Pool %s not found. Leaving..." % name)
             return {'result': 'failure', 'reason': "Pool %s not found" % name}
         if pool.isActive() and full:
             for vol in pool.listAllVolumes():

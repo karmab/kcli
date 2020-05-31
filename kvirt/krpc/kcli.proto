@@ -180,6 +180,8 @@ message pool {
     string pool = 1 ; 
     string path = 2 ; 
     bool full = 3 ; 
+    string type = 4 ; 
+    bool thinpool = 5 ; 
 }
 
 message poolslist {
@@ -341,6 +343,7 @@ service Kcli {
     rpc delete_image(image) returns (result) {}
     rpc create_network(network) returns (result) {}
     rpc delete_network(network) returns (result) {}
+    rpc create_pool(pool) returns (result) {}
     rpc delete_pool(pool) returns (result) {}
 }
 

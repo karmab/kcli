@@ -19,7 +19,7 @@
 |create\_openshift_kube       |      |
 |create_pipeline              |      |
 |create_plan                  |      |
-|create_pool                  |      |
+|create_pool                  | X    |
 |create_product               |      |
 |create_profile               |      |
 |create_repo                  |      |

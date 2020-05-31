@@ -32,6 +32,15 @@ class KcliServicer(kcli_pb2_grpc.KcliServicer):
         response = kcli_pb2.result(**result)
         return response
 
+    def create_pool(self, request, context):
+        print("Handling create_pool call for:\n%s" % request)
+        config = Kconfig()
+        k = config.k
+        result = k.create_pool(name=request.pool, poolpath=request.path, pooltype=request.type,
+                               thinpool=request.thinpool)
+        response = kcli_pb2.result(**result)
+        return response
+
     def console(self, request, context):
         print("Handling console call for:\n%s" % request)
         config = Kconfig()
