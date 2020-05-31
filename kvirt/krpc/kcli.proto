@@ -195,6 +195,8 @@ message network {
     string mode = 6 ; 
     string plan = 7 ; 
     string ip = 8 ; 
+    bool nat = 9 ; 
+    string overrides = 10 ; 
 }
 
 message networkslist {
@@ -337,6 +339,7 @@ service Kcli {
     rpc delete(vm) returns (result) {}
     rpc get_lastvm(client) returns (vm) {}
     rpc delete_image(image) returns (result) {}
+    rpc create_network(network) returns (result) {}
     rpc delete_network(network) returns (result) {}
     rpc delete_pool(pool) returns (result) {}
 }

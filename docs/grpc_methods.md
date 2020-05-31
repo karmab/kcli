@@ -15,7 +15,7 @@
 |create\_host_ovirt           | X    |
 |create\_host_vsphere         | X    |
 |create_lb                    |      |
-|create_network               |      |
+|create_network               | X    |
 |create\_openshift_kube       |      |
 |create_pipeline              |      |
 |create_plan                  |      |

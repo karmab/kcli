@@ -108,6 +108,11 @@ class KcliStub(object):
                 request_serializer=kcli__pb2.image.SerializeToString,
                 response_deserializer=kcli__pb2.result.FromString,
                 )
+        self.create_network = channel.unary_unary(
+                '/Kcli/create_network',
+                request_serializer=kcli__pb2.network.SerializeToString,
+                response_deserializer=kcli__pb2.result.FromString,
+                )
         self.delete_network = channel.unary_unary(
                 '/Kcli/delete_network',
                 request_serializer=kcli__pb2.network.SerializeToString,
@@ -237,6 +242,12 @@ class KcliServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def create_network(self, request, context):
+        """Missing associated documentation comment in .proto file"""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def delete_network(self, request, context):
         """Missing associated documentation comment in .proto file"""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -345,6 +356,11 @@ def add_KcliServicer_to_server(servicer, server):
             'delete_image': grpc.unary_unary_rpc_method_handler(
                     servicer.delete_image,
                     request_deserializer=kcli__pb2.image.FromString,
+                    response_serializer=kcli__pb2.result.SerializeToString,
+            ),
+            'create_network': grpc.unary_unary_rpc_method_handler(
+                    servicer.create_network,
+                    request_deserializer=kcli__pb2.network.FromString,
                     response_serializer=kcli__pb2.result.SerializeToString,
             ),
             'delete_network': grpc.unary_unary_rpc_method_handler(
@@ -667,6 +683,22 @@ class Kcli(object):
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/Kcli/delete_image',
             kcli__pb2.image.SerializeToString,
+            kcli__pb2.result.FromString,
+            options, channel_credentials,
+            call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def create_network(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/Kcli/create_network',
+            kcli__pb2.network.SerializeToString,
             kcli__pb2.result.FromString,
             options, channel_credentials,
             call_credentials, compression, wait_for_ready, timeout, metadata)

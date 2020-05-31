@@ -22,6 +22,16 @@ class KcliServicer(kcli_pb2_grpc.KcliServicer):
         response = kcli_pb2.vm(name=name)
         return response
 
+    def create_network(self, request, context):
+        print("Handling create_network call for:\n%s" % request)
+        config = Kconfig()
+        k = config.k
+        overrides = ast.literal_eval(request.overrides) if request.overrides != '' else {}
+        result = k.create_network(name=request.network, cidr=request.cidr, dhcp=request.dhcp, nat=request.nat,
+                                  domain=request.domain, overrides=overrides)
+        response = kcli_pb2.result(**result)
+        return response
+
     def console(self, request, context):
         print("Handling console call for:\n%s" % request)
         config = Kconfig()

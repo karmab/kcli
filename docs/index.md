@@ -1340,7 +1340,7 @@ To make use of it:
    - is available through [RDO repo](https://trunk.rdoproject.org/rhel8-master/deps/latest) for centos8/rhel8
 - On the client side, you can then access the api by targetting port 50051 of the server node (in insecure mode)
 
-Note that the server doesn't implement all the features yet. Most notably, *create_plan* and *create_network* aren't available at the moment. Check the following [doc](https://github.com/karmab/kcli/blob/master/docs/grpc_methods.md) to see the status of the implementation.
+Note that the server doesn't implement all the features yet. Most notably, *create_plan* and *create_pool* aren't available at the moment. Check the following [doc](https://github.com/karmab/kcli/blob/master/docs/grpc_methods.md) to see the status of the implementation.
 
 ### Client side
 

@@ -1731,20 +1731,25 @@ def create_network(args):
         nat = False
     else:
         nat = True
-    dhcp = not nodhcp
-    result = k.create_network(name=name, cidr=cidr, dhcp=dhcp, nat=nat, domain=domain, overrides=overrides)
+    dhcp = str(not nodhcp)
+    network = kcli_pb2.network(network=name, cidr=cidr, dhcp=dhcp, nat=nat, domain=domain, overrides=str(overrides))
+    result = k.create_network(network)
     common.handle_response(result, name, element='Network')
 
 
 def delete_network(args):
     """Delete Network"""
     name = args.name
+    yes = args.yes
+    yes_top = args.yes_top
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                      namespace=args.namespace)
     k = config.k
     if name is None:
         common.pprint("Missing Network", color='red')
         os._exit(1)
+    if not yes and not yes_top:
+        common.confirm("Are you sure?")
     result = k.delete_network(kcli_pb2.network(network=name))
     common.handle_response(result, name, element='Network', action='deleted')
 
@@ -2570,6 +2575,7 @@ def cli():
     networkdelete_desc = 'Delete Network'
     networkdelete_parser = delete_subparsers.add_parser('network', description=networkdelete_desc,
                                                         help=networkdelete_desc)
+    networkdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     networkdelete_parser.add_argument('name', metavar='NETWORK')
     networkdelete_parser.set_defaults(func=delete_network)
 
