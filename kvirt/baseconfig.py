@@ -35,6 +35,7 @@ class Kbaseconfig:
 
     """
     def __init__(self, client=None, containerclient=None, debug=False, quiet=False):
+        self.debug = debug
         homedir = os.environ.get('HOME')
         cmdir = "%s/.kcli_cm" % homedir
         kclidir = "%s/.kcli" % homedir

@@ -13,13 +13,14 @@ class Kcontainer():
 
     """
 
-    def __init__(self, host='127.0.0.1', user='root', port=22, engine='podman', debug=False):
+    def __init__(self, host='127.0.0.1', user='root', port=22, engine='podman', debug=False, insecure=False):
         self.host = host
         self.user = user
         self.port = port
         self.debug = debug
         self.containermode = False
         self.engine = engine
+        self.insecure = insecure
         if self.host == '127.0.0.1' and not find_executable(engine):
             reason = "executable %s not found in path" % engine
             return {'result': 'failure', 'reason': reason}
@@ -39,14 +40,14 @@ class Kcontainer():
                 from docker import DockerClient as dockerclient
                 self.d = dockerclient(base_url='unix://var/run/docker.sock', version='1.22')
 
-    def create_container(self, name, image, nets=None, cmd=None, ports=[], volumes=[], environment=[], label=None,
+    def create_container(self, name, image, nets=None, cmds=[], ports=[], volumes=[], environment=[], label=None,
                          overrides={}):
         """
         :param self:
         :param name:
         :param image:
         :param nets:
-        :param cmd:
+        :param cmds:
         :param ports:
         :param volumes:
         :param environment:
@@ -101,6 +102,7 @@ class Kcontainer():
                             continue
             if ':' not in image:
                 image = '%s:latest' % image
+            cmd = ';'.join(cmds) if cmds else None
             self.d.containers.run(image, name=name, command=cmd, detach=True, ports=ports, volumes=finalvolumes,
                                   stdin_open=True, tty=True, labels=labels, environment=finalenv, stdout=True)
         else:
@@ -160,12 +162,13 @@ class Kcontainer():
             if 'labels' in overrides:
                 labels = overrides['labels']
                 labelcmd = ' '.join('-l %s=%s' % (label.split('=')[0], label.split('=')[1]) for label in labels)
-            runcommand = "%s run -it %s %s %s --name %s %s -d %s" % (engine, volumeinfo, envinfo, portinfo, name,
-                                                                     labelcmd, image)
-            if cmd is not None:
-                runcommand = "%s %s" % (runcommand, cmd)
+            selinux = "--security-opt label=disable" if self.insecure else ""
+            runcommand = "%s run %s -it %s %s %s --name %s %s -d %s" % (engine, selinux, volumeinfo, envinfo, portinfo,
+                                                                        name, labelcmd, image)
+            if cmds:
+                runcommand = '%s sh -c \\"%s\\"' % (runcommand, ';'.join(cmds))
             if self.host != '127.0.0.1':
-                runcommand = "ssh -p %s %s@%s %s" % (self.port, self.user, self.host, runcommand)
+                runcommand = 'ssh -p %s %s@%s "%s"' % (self.port, self.user, self.host, runcommand)
             if self.debug:
                 print(runcommand)
             os.system(runcommand)

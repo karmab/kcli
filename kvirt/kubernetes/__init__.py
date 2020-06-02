@@ -18,21 +18,23 @@ class Kubernetes():
     """
 
     def __init__(self, host='127.0.0.1', user='root', port=443, token=None, ca_file=None, context=None,
-                 namespace='default', readwritemany=False, debug=False):
+                 namespace='default', readwritemany=False, debug=False, insecure=False):
         Kubecommon.__init__(self, token=token, ca_file=ca_file, context=context, host=host, port=port,
                             namespace=namespace, readwritemany=readwritemany)
         self.host = host
         self.user = user
         self.port = port
+        self.debug = debug
+        self.insecure = insecure
 
-    def create_container(self, name, image, nets=None, cmd=None, ports=[], volumes=[], environment=[], label=None,
+    def create_container(self, name, image, nets=None, cmd=[], ports=[], volumes=[], environment=[], label=None,
                          overrides={}):
         """
         :param self:
         :param name:
         :param image:
         :param nets:
-        :param cmd:
+        :param cmds:
         :param ports:
         :param volumes:
         :param environment:

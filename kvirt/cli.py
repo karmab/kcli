@@ -107,7 +107,7 @@ def start_container(args):
     """Start containers"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     names = [common.get_lastvm(config.client)] if not args.names else args.names
-    cont = Kcontainerconfig(config, client=args.containerclient, debug=args.debug).cont
+    cont = Kcontainerconfig(config, client=args.containerclient).cont
     for name in names:
         common.pprint("Starting container %s..." % name)
         cont.start_container(name)
@@ -143,7 +143,7 @@ def stop_container(args):
     else:
         ks = {config.client: config.k}
     for cli in ks:
-        cont = Kcontainerconfig(config, client=args.containerclient, debug=args.debug).cont
+        cont = Kcontainerconfig(config, client=args.containerclient).cont
         for name in names:
             common.pprint("Stopping container %s in %s..." % (name, cli))
             cont.stop_container(name)
@@ -167,7 +167,7 @@ def restart_container(args):
     """Restart containers"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     names = [common.get_lastvm(config.client)] if not args.names else args.names
-    cont = Kcontainerconfig(config, client=args.containerclient, debug=args.debug).cont
+    cont = Kcontainerconfig(config, client=args.containerclient).cont
     for name in names:
         common.pprint("Restarting container %s..." % name)
         cont.stop_container(name)
@@ -191,7 +191,7 @@ def console_container(args):
     """Container console"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     name = common.get_lastvm(config.client) if not args.name else args.name
-    cont = Kcontainerconfig(config, client=args.containerclient, debug=args.debug).cont
+    cont = Kcontainerconfig(config, client=args.containerclient).cont
     cont.console_container(name)
     return
 
@@ -251,7 +251,7 @@ def delete_container(args):
         if not yes and not yes_top:
             common.confirm("Are you sure?")
         codes = [0]
-        cont = Kcontainerconfig(config, client=args.containerclient, debug=args.debug).cont
+        cont = Kcontainerconfig(config, client=args.containerclient).cont
         for name in names:
             common.pprint("Deleting container %s on %s" % (name, cli))
             cont.delete_container(name)
@@ -449,7 +449,7 @@ def list_container(args):
     """List containers"""
     filters = args.filters
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    cont = Kcontainerconfig(config, client=args.containerclient, debug=args.debug).cont
+    cont = Kcontainerconfig(config, client=args.containerclient).cont
     common.pprint("Listing containers...")
     containers = PrettyTable(["Name", "Status", "Image", "Plan", "Command", "Ports", "Deploy"])
     for container in cont.list_containers():
@@ -488,7 +488,7 @@ def list_containerimage(args):
     if config.type != 'kvm':
         common.pprint("Operation not supported on this kind of client.Leaving...", color='red')
         os._exit(1)
-    cont = Kcontainerconfig(config, client=args.containerclient, debug=args.debug).cont
+    cont = Kcontainerconfig(config, client=args.containerclient).cont
     common.pprint("Listing images...")
     images = PrettyTable(["Name"])
     for image in cont.list_images():
@@ -1796,7 +1796,7 @@ def create_container(args):
     profile = args.profile
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    cont = Kcontainerconfig(config, client=args.containerclient, debug=args.debug).cont
+    cont = Kcontainerconfig(config, client=args.containerclient).cont
     containerprofiles = {k: v for k, v in config.profiles.items() if 'type' in v and v['type'] == 'container'}
     if name is None:
         name = nameutils.get_random_name()

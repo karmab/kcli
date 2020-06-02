@@ -6,6 +6,7 @@ from flask import Flask, render_template, request, jsonify, redirect, Response
 from kvirt.config import Kconfig
 from kvirt.common import print_info, get_free_port
 from kvirt.baseconfig import Kbaseconfig
+from kvirt.containerconfig import Kcontainerconfig
 from kvirt.defaults import IMAGES, WEBSOCKIFYCERT
 from kvirt import nameutils
 import os
@@ -457,10 +458,9 @@ def containerstable():
     """
     retrieves all containers in table
     """
-    from kvirt import dockerutils
     config = Kconfig()
-    k = config.k
-    containers = dockerutils.list_containers(k)
+    cont = Kcontainerconfig(config).cont
+    containers = cont.list_containers()
     return render_template('containerstable.html', containers=containers)
 
 
@@ -770,8 +770,8 @@ def containeraction():
     """
     start/stop/delete container
     """
-    from kvirt import dockerutils
     config = Kconfig()
+    cont = Kcontainerconfig(config).cont
     k = config.k
     if 'name' in request.form:
         name = request.form['name']
@@ -782,19 +782,19 @@ def containeraction():
             response.status_code = 400
         else:
             if action == 'start':
-                result = dockerutils.start_container(k, name)
+                result = cont.start_container(name)
             elif action == 'stop':
-                result = dockerutils.stop_container(k, name)
+                result = cont.stop_container(name)
             elif action == 'delete':
-                result = dockerutils.delete_container(k, name)
+                result = cont.delete_container(name)
             elif action == 'create' and 'profile' in request.form:
                 profile = [prof for prof in config.list_containerprofiles() if prof[0] == request.form['profile']][0]
                 if name is None:
                     name = nameutils.get_random_name()
                 image, nets, ports, volumes, cmd = profile[1:]
-                result = dockerutils.create_container(k, name=name, image=image, nets=nets, cmd=cmd, ports=ports,
-                                                      volumes=volumes)
-                result = dockerutils.create_container(k, name, profile)
+                result = cont.create_container(k, name=name, image=image, nets=nets, cmds=[cmd], ports=ports,
+                                               volumes=volumes)
+                result = cont.create_container(name, profile)
             response = jsonify(result)
             response.status_code = 200
     else:

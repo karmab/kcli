@@ -1584,9 +1584,9 @@ $INFO
                                 if e is not None), None)
                 environment = next((e for e in [profile.get('environment'), customprofile.get('environment')]
                                     if e is not None), None)
-                cmd = next((e for e in [profile.get('cmd'), customprofile.get('cmd')] if e is not None), None)
+                cmds = next((e for e in [profile.get('cmds'), customprofile.get('cmds')] if e is not None), [])
                 common.pprint("Container %s deployed!" % container)
-                cont.create_container(name=container, image=containerimage, nets=nets, cmd=cmd, ports=ports,
+                cont.create_container(name=container, image=containerimage, nets=nets, cmds=cmds, ports=ports,
                                       volumes=volumes, environment=environment, label=label)
         if ansibleentries:
             if not newvms:
