@@ -748,7 +748,9 @@ class Kvirt(object):
                 sharedxml += "</filesystem>"
                 foldercmd = "sudo mkdir %s ; sudo chmod 777 %s" % (folder, folder)
                 if self.host == 'localhost' or self.host == '127.0.0.1' and not os.path.exists(folder):
-                    os.mkdir(foldercmd)
+                    oldmask = os.umask(000)
+                    os.makedirs(folder)
+                    r = os.umask(oldmask)
                 elif self.protocol == 'ssh':
                     foldercmd = 'ssh %s -p %s %s@%s "test -d %s || (%s)"' % (self.identitycommand, self.port,
                                                                              self.user, self.host, folder, foldercmd)
