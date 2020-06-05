@@ -1303,8 +1303,8 @@ def expose_plan(args):
     if os.path.exists("/i_am_a_container"):
         inputfile = "/workdir/%s" % inputfile
     overrides = common.get_overrides(param=args.param)
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-    baseconfig.expose_plan(plan, inputfile=inputfile, overrides=overrides)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config.expose_plan(plan, inputfile=inputfile, overrides=overrides)
     return 0
 
 

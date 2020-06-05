@@ -1,0 +1,14 @@
+
+#wheel
+{
+       background:#fff url('/static/images/wheel.gif') no-repeat center center;
+       height: 150px;
+       width:  150px;
+       position: fixed;
+       z-index: 1000;
+       left: 50%;
+       top: 20%;
+       margin: -25px 0 0 -25px;
+       display:none;
+}
+

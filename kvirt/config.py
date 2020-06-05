@@ -13,6 +13,7 @@ from kvirt import ansibleutils
 from kvirt import nameutils
 from kvirt import common
 from kvirt import kubeadm
+from kvirt.expose import Kexposer
 from kvirt import openshift
 from kvirt.internalplans import haproxy as haproxyplan
 from kvirt.baseconfig import Kbaseconfig
@@ -1922,3 +1923,12 @@ $INFO
         upstream = overrides.get('upstream', False)
         macosx = True if os.path.exists('/Users') else False
         openshift.get_ci_installer(pull_secret, tag=tag, macosx=macosx, upstream=upstream)
+
+    def expose_plan(self, plan, inputfile=None, overrides={}):
+        inputfile = os.path.expanduser(inputfile)
+        if not os.path.exists(inputfile):
+            common.pprint("No input file found nor default kcli_plan.yml.Leaving....", color='red')
+            os._exit(1)
+        common.pprint("Handling expose of plan with name %s and inputfile %s" % (plan, inputfile))
+        kexposer = Kexposer(self, inputfile, overrides=overrides)
+        kexposer.run()
