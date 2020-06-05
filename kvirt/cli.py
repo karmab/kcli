@@ -1295,6 +1295,19 @@ def delete_plan(args):
     return 0
 
 
+def expose_plan(args):
+    plan = args.plan
+    inputfile = args.inputfile
+    if inputfile is None:
+        inputfile = 'kcli_plan.yml'
+    if os.path.exists("/i_am_a_container"):
+        inputfile = "/workdir/%s" % inputfile
+    overrides = common.get_overrides(param=args.param)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    baseconfig.expose_plan(plan, inputfile=inputfile, overrides=overrides)
+    return 0
+
+
 def start_plan(args):
     """Start plan"""
     plan = args.plan
@@ -1980,6 +1993,10 @@ def cli():
     vmexport_parser.add_argument('names', metavar='VMNAMES', nargs='*')
     vmexport_parser.set_defaults(func=export_vm)
 
+    expose_desc = 'Expose Object'
+    expose_parser = subparsers.add_parser('expose', description=expose_desc, help=expose_desc)
+    expose_subparsers = expose_parser.add_subparsers(metavar='', dest='subcommand_expose')
+
     hostlist_desc = 'List Hosts'
 
     info_desc = 'Info Host/Kube/Plan/Vm'
@@ -2517,6 +2534,17 @@ def cli():
     plandelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     plandelete_parser.add_argument('plan', metavar='PLAN')
     plandelete_parser.set_defaults(func=delete_plan)
+
+    planexpose_desc = 'Expose plan'
+    planexpose_epilog = None
+    planexpose_parser = argparse.ArgumentParser(add_help=False)
+    planexpose_parser.add_argument('-f', '--inputfile', help='Input Plan file')
+    planexpose_parser.add_argument('-P', '--param', action='append',
+                                   help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    planexpose_parser.add_argument('plan', metavar='PLAN')
+    planexpose_parser.set_defaults(func=expose_plan)
+    expose_subparsers.add_parser('plan', parents=[planexpose_parser], description=vmssh_desc, help=planexpose_desc,
+                                 epilog=planexpose_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
 
     planinfo_desc = 'Info Plan'
     planinfo_epilog = "examples:\n%s" % planinfo

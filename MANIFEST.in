@@ -10,3 +10,4 @@ recursive-include kvirt/kubeadm *
 recursive-include kvirt/openshift *
 recursive-include kvirt/version *
 recursive-include kvirt/common *
+recursive-include kvirt/expose *

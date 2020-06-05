@@ -957,3 +957,12 @@ class Kbaseconfig:
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
         inputfile = '%s/masters.yml' % plandir
         return self.info_plan(inputfile, quiet=quiet, web=web)
+
+    def expose_plan(self, plan, inputfile=None, overrides={}):
+        inputfile = os.path.expanduser(inputfile)
+        if not os.path.exists(inputfile):
+            common.pprint("No input file found nor default kcli_plan.yml.Leaving....", color='red')
+            os._exit(1)
+        print("Handling expose of plan with name %s and inputfile %s" % (plan, inputfile))
+        from kvirt.expose import app
+        app.run(host='0.0.0.0', port=9000)
