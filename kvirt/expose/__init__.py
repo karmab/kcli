@@ -79,17 +79,20 @@ class Kexposer():
                     if "parameters_%s.yml" % plan in self.parametersfiles:
                         fileoverrides = get_overrides(paramfile="parameters_%s.yml" % plan)
                         overrides.update(fileoverrides)
-                    print(overrides)
-                    if 'mail' in config.notifymethods and 'mailto' in overrides:
-                        newmails = overrides.mailto.split(',')
+                    if 'mail' in config.notifymethods and 'mailto' in overrides and overrides['mailto'] != "":
+                        newmails = overrides['mailto'].split(',')
                         if config.mailto:
                             config.mailto.extend(newmails)
                         else:
                             config.mailto = newmails
                     result = config.plan(plan, inputfile=inputfile, overrides=overrides)
                 except Exception as e:
-                    return 'Hit issue when running plan: %s' % str(e)
-                return render_template('result.html', plan=plan, result=result)
+                    error = 'Hit issue when running plan: %s' % str(e)
+                    return render_template('error.html', plan=plan, error=error)
+                if result['result'] == 'success':
+                    return render_template('success.html', plan=plan)
+                else:
+                    return render_template('error.html', plan=plan, error=result['reason'])
             else:
                 return 'Invalid data'
 
