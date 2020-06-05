@@ -1,0 +1,37 @@
+{% include "head.html" %}
+<div id="wheel"></div>
+<p>
+{% for plan in plans %}
+<table class="table table-bordered table-hover">
+  <tbody>
+  <tr class="table-primary">
+    <th>Plan name</th>
+    <th>Creation Date</th>
+    <th>Actions</th>
+  <tr>
+  <th>{{ plan['name'] }}</th>
+  <th>{{ creationdate }}</th>
+  <th><button type="button" class="btn btn-success" onclick="location.href='{{ url_for('exposeform', plan=plan['name']) }}'" target="_blank" >Reprovision</button><button type="button" class="btn btn-danger" onclick="exposedelete('{{ plan['name'] }}');">Delete</button></th>
+    <th></th>
+  </tr>
+{% if plan['vms'] %}
+  <tr class="table-info">
+    <th>Vm name</th>
+    <th>Status</th>
+    <th>Ip</th>
+  </tr>
+{% for vm in plan['vms'] %}
+  <tr>
+    <td>{{ vm['name'] }}</td>
+    <td>{{ vm['status'] }}</td>
+    <td>{{ vm['ip'] }}</td>
+  </tr>
+{% endfor %}
+{% endif %}
+  </tbody>
+</table>
+<br>
+{% endfor %}
+
+</body>
+</html>

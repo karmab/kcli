@@ -1,6 +1,7 @@
 from flask import Flask
 from flask import render_template, request, jsonify
 from glob import glob
+from kvirt.common import pprint, get_overrides
 import os
 import re
 
@@ -8,29 +9,37 @@ import re
 class Kexposer():
     def __init__(self, config, inputfile, overrides={}):
         app = Flask(__name__)
+        self.parametersfiles = glob("parameters_*.yml")
+        if self.parametersfiles:
+            plans = []
+            for parameterfile in self.parametersfiles:
+                search = re.match('parameters_(.*)\.ya?ml', parameterfile)
+                plans.append(search.group(1))
+        else:
+            if 'PLAN' in os.environ:
+                plans = [os.environ['PLAN']]
+            else:
+                pprint('Plan needs to be defined for the service to work.\
+                              Define it as an env variable or create parameters files', color='red')
+                os._exit(1)
+        self.plans = plans
+        self.overrides = overrides
 
         @app.route('/')
-        def main():
-            parametersfiles = glob("parameters_*.yml")
-            if parametersfiles:
-                plans = []
-                for parameterfile in parametersfiles:
-                    search = re.match('parameters_(.*)\.ya?ml', parameterfile)
-                    plans.append(search.group(1))
-            else:
-                if 'PLAN' in os.environ:
-                    plans = [os.environ['PLAN']]
-                else:
-                    return 'Plan needs to be defined for the service to work.\
-                        Define it as an env variable or create parameters files'
-            plans = {plan: [] for plan in plans}
+        def index():
+            creationdate = ""
+            plans = {plan: [] for plan in self.plans}
             for vm in config.k.list():
                 if vm['plan'] in plans:
+                    if creationdate == "":
+                        creationdate = vm['creationdate']
+                        print(creationdate)
                     plans[vm['plan']].append(vm)
             finalplans = []
             for plan in plans:
                 finalplans.append({'name': plan, 'vms': plans[plan]})
-            return render_template('main.html', plans=sorted(finalplans, key=lambda p: p['name']))
+            return render_template('list.html', plans=sorted(finalplans, key=lambda p: p['name']),
+                                   creationdate=creationdate)
 
         @app.route("/exposedelete", methods=['POST'])
         def exposedelete():
@@ -51,19 +60,49 @@ class Kexposer():
         @app.route("/exposecreate", methods=['POST'])
         def exposecreate():
             """
-            delete plan
+            create plan
             """
-            if 'name' in request.form:
-                plan = request.form['name']
-                overrides = request.form['overrides'] if 'overrides' in request.form else {}
-                result = config.plan(plan, inputfile=inputfile, overrides=overrides)
-                response = jsonify(result)
-                response.status_code = 200
-                return response
+            if 'plan' in request.form:
+                plan = request.form['plan']
+                if plan not in self.plans:
+                    return 'Invalid plan name %s' % plan
+                parameters = {}
+                for p in request.form:
+                    if p.startswith('parameter'):
+                        value = request.form[p]
+                        if value.isdigit():
+                            value = int(value)
+                        key = p.replace('parameter_', '')
+                        parameters[key] = value
+                try:
+                    overrides = parameters
+                    if "parameters_%s.yml" % plan in self.parametersfiles:
+                        fileoverrides = get_overrides(paramfile="parameters_%s.yml" % plan)
+                        overrides.update(fileoverrides)
+                    print(overrides)
+                    if 'mail' in config.notifymethods and 'mailto' in overrides:
+                        newmails = overrides.mailto.split(',')
+                        if config.mailto:
+                            config.mailto.extend(newmails)
+                        else:
+                            config.mailto = newmails
+                    result = config.plan(plan, inputfile=inputfile, overrides=overrides)
+                except Exception as e:
+                    return 'Hit issue when running plan: %s' % str(e)
+                return render_template('result.html', plan=plan, result=result)
             else:
-                result = {'result': 'failure', 'reason': "Invalid Data"}
-                response = jsonify(result)
-                response.status_code = 400
+                return 'Invalid data'
+
+        @app.route("/exposeform/<string:plan>", methods=['GET'])
+        def exposeform(plan):
+            """
+            form plan
+            """
+            parameters = self.overrides
+            if plan not in self.plans:
+                return 'Invalid plan name %s' % plan
+            return render_template('form.html', parameters=parameters, plan=plan)
+
         self.app = app
         self.config = config
         self.overrides = overrides

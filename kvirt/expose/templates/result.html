@@ -1,0 +1,14 @@
+{% include "head.html" %}
+
+{% if result['result'] == 'success' %}
+<div class="alert alert-success" role="alert">
+Plan {{ plan }} created!
+</div>
+{% else %}
+<div class="alert alert-danger" role="alert">
+Plan {{ plan }} not created because {{ result['reason'] }}
+</div>
+{% endif %}
+<p><a href="{{ url_for('index') }}">Back to listing</a>
+</body>
+</html>

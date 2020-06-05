@@ -1,0 +1,22 @@
+{% include "head.html" %}
+<div id="wheel"></div>
+<div class='notifications top-right'></div>
+<form id="exposecreate" action="{{ url_for('exposecreate') }}" method="post">
+    <div class="form-group">
+        <label for="inputName">Plan</label>
+        <input readonly="readonly" class="form-control" name="plan" id="plan" value="{{ plan }}">
+    <div>
+    <div class="form-group">
+        <label for="inputName">Mailto</label>
+        <input class="form-control" name="parameter_mailto" id="parameter_mailto" value="{{ mailto }}">
+    <div>
+    <div class="form-group">
+    {% for parameter in parameters %}
+        <label for="inputName">{{ parameter }}</label>
+        <input required="true" class="form-control" name="parameter_{{ parameter }}" id="{{ parameter }}" value="{{ parameters[parameter] }}">
+    </div>
+    {% endfor %}
+    <button type="submit" class="btn btn-success">Create</button>
+</form>
+</body>
+</html>

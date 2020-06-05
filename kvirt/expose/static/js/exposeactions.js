@@ -20,23 +20,23 @@ function exposedelete(plan){
     });
 }
 
-function exposecreate(name){
-  $("#wheel").show();
-  data = {'name': name};
-  $.ajax({
-       type: "POST",
-        url: '/exposecreate',
-        data: data,
-        success: function(data) {
-            $("#wheel").hide();
-            if (data.result == 'success') {
-                if ( name == '' ) {
-                  name = data.plan
-                }
-                $('.top-right').notify({message: { text: "Plan "+name+" created!!!" }, type: 'success'}).show();
-            } else {
-                $('.top-right').notify({message: { text: "Plan "+name+" Failed to Create because "+data.reason }, type: 'danger'}).show();
-            };
-        }
-    });
-}
+//function exposecreate(name){
+//  $("#wheel").show();
+//  data = {'name': name};
+//  $.ajax({
+//       type: "POST",
+//        url: '/exposecreate',
+//        data: data,
+//        success: function(data) {
+//            $("#wheel").hide();
+//            if (data.result == 'success') {
+//                if ( name == '' ) {
+//                  name = data.plan
+//                }
+//                $('.top-right').notify({message: { text: "Plan "+name+" created!!!" }, type: 'success'}).show();
+//            } else {
+//                $('.top-right').notify({message: { text: "Plan "+name+" Failed to Create because "+data.reason }, type: 'danger'}).show();
+//            };
+//        }
+//    });
+//}
