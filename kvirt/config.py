@@ -1672,6 +1672,9 @@ $INFO
         returndata['newvms'] = newvms if newvms else []
         returndata['existingvms'] = existingvms if existingvms else []
         returndata['failedvms'] = failedvms if failedvms else []
+        if failedvms:
+            returndata['result'] = 'failure'
+            returndata['reason'] = 'The following vm failed: %s' % ','.join(failedvms)
         if getback or toclean:
             os.chdir('..')
         if toclean:

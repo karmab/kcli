@@ -253,7 +253,7 @@ def create(config, plandir, cluster, overrides):
             sys.exit(1)
     clusterdir = pwd_path("clusters/%s" % cluster)
     if os.path.exists(clusterdir):
-        pprint("Please Remove existing %s first..." % clusterdir, color='red')
+        pprint("Please remove existing directory %s first..." % clusterdir, color='red')
         sys.exit(1)
     os.environ['KUBECONFIG'] = "%s/auth/kubeconfig" % clusterdir
     if find_executable('oc') is None:
@@ -373,7 +373,9 @@ def create(config, plandir, cluster, overrides):
         pprint("Deploying helper dhcp node" % image, color='green')
         staticdata.update({'network': network, 'dhcp_image': helper_image, 'prefix': cluster,
                           domain: '%s.%s' % (cluster, domain)})
-        config.plan(cluster, inputfile='%s/dhcp.yml' % plandir, overrides=staticdata)
+        result = config.plan(cluster, inputfile='%s/dhcp.yml' % plandir, overrides=staticdata)
+        if result['result'] != 'success':
+            os._exit(1)
     if platform in virtplatforms:
         if 'virtual_router_id' not in data:
             data['virtual_router_id'] = randint(1, 255)
@@ -501,7 +503,9 @@ def create(config, plandir, cluster, overrides):
             disconnected_vm = "%s-disconnecter" % cluster
             cmd = "cat /opt/registry/certs/domain.crt"
             pprint("Deploying disconnected vm %s" % disconnected_vm, color='blue')
-            config.plan(cluster, inputfile='%s/disconnected' % plandir, overrides=overrides, wait=True)
+            result = config.plan(cluster, inputfile='%s/disconnected' % plandir, overrides=overrides, wait=True)
+            if result['result'] != 'success':
+                os._exit(1)
             cacmd = k.ssh(disconnected_vm, user='root', tunnel=config.tunnel,
                           tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
                           insecure=True, cmd=cmd)
@@ -511,7 +515,9 @@ def create(config, plandir, cluster, overrides):
             else:
                 overrides['ca'] = disconnected_ca
         pprint("Deploying masters", color='blue')
-        config.plan(cluster, inputfile='%s/masters.yml' % plandir, overrides=overrides)
+        result = config.plan(cluster, inputfile='%s/masters.yml' % plandir, overrides=overrides)
+        if result['result'] != 'success':
+            os._exit(1)
         run = call('openshift-install --dir=%s wait-for bootstrap-complete' % clusterdir, shell=True)
         if run != 0:
             pprint("Leaving environment for debugging purposes", color='red')
@@ -521,7 +527,9 @@ def create(config, plandir, cluster, overrides):
         if platform in ['kubevirt', 'openstack', 'vsphere']:
             todelete.append("%s-bootstrap-helper" % cluster)
     else:
-        config.plan(cluster, inputfile='%s/cloud.yml' % plandir, overrides=overrides)
+        result = config.plan(cluster, inputfile='%s/cloud.yml' % plandir, overrides=overrides)
+        if result['result'] != 'success':
+            os._exit(1)
         call('openshift-install --dir=%s wait-for bootstrap-complete || exit 1' % clusterdir, shell=True)
         todelete = ["%s-bootstrap" % cluster, "%s-bootstrap-helper" % cluster]
     if platform in virtplatforms:
@@ -546,7 +554,9 @@ def create(config, plandir, cluster, overrides):
             pprint("Deploying workers", color='blue')
             if 'name' in overrides:
                 del overrides['name']
-            config.plan(cluster, inputfile='%s/workers.yml' % plandir, overrides=overrides)
+            result = config.plan(cluster, inputfile='%s/workers.yml' % plandir, overrides=overrides)
+            if result['result'] != 'success':
+                os._exit(1)
     if not minimal:
         installcommand = 'openshift-install --dir=%s wait-for install-complete' % clusterdir
         installcommand = "%s | %s" % (installcommand, installcommand)

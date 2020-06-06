@@ -36,7 +36,7 @@ def create(config, plandir, cluster, overrides):
     clusterdir = pwd_path("clusters/%s" % cluster)
     firstmaster = "%s-master-0" % cluster
     if os.path.exists(clusterdir):
-        pprint("Please Remove existing %s first..." % clusterdir, color='red')
+        pprint("Please remove existing directory %s first..." % clusterdir, color='red')
         sys.exit(1)
     if find_executable('kubectl') is None:
         get_kubectl()
@@ -44,7 +44,9 @@ def create(config, plandir, cluster, overrides):
         os.makedirs(clusterdir)
         os.mkdir("%s/auth" % clusterdir)
     k = config.k
-    config.plan(cluster, inputfile='%s/masters.yml' % plandir, overrides=data, wait=True)
+    result = config.plan(cluster, inputfile='%s/masters.yml' % plandir, overrides=data, wait=True)
+    if result['result'] != "success":
+        os._exit(1)
     source, destination = "/root/join.sh", "%s/join.sh" % clusterdir
     scpcmd = k.scp(firstmaster, user='root', source=source, destination=destination, tunnel=config.tunnel,
                    tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
