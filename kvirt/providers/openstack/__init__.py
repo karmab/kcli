@@ -162,7 +162,7 @@ class Kopenstack(object):
                 version = common.ignition_version(image)
                 userdata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                            domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
-                                           overrides=overrides, version=version, plan=plan)
+                                           overrides=overrides, version=version, plan=plan, image=image)
             else:
                 common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
                                  reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides,

@@ -124,7 +124,7 @@ class KOvirt(object):
                 ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                                domain=domain, reserveip=reserveip, files=files,
                                                enableroot=enableroot, overrides=overrides, version=version, plan=plan,
-                                               compact=False, removetls=True)
+                                               compact=False, removetls=True, image=image)
                 ignitiondata = ignitiondata.replace('\n', '')
                 initialization = types.Initialization(custom_script=ignitiondata)
         else:

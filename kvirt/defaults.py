@@ -25,6 +25,7 @@ AUTOSTART = False
 TUNNEL = False
 TUNNELHOST = None
 TUNNELUSER = 'root'
+TUNNELDIR = '/var/www/html'
 TUNNELPORT = 22
 IMAGES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-image-bootstrap.qcow2',
           'centos6': 'https://cloud.centos.org/centos/6/images/CentOS-6-x86_64-GenericCloud.qcow2',

@@ -298,7 +298,7 @@ class Kubevirt(Kubecommon):
                 ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                                domain=domain, reserveip=reserveip, files=files,
                                                enableroot=enableroot, overrides=overrides, version=version,
-                                               plan=plan, compact=True)
+                                               plan=plan, compact=True, image=image)
                 vm['spec']['template']['metadata']['annotations'] = {'kubevirt.io/ignitiondata': ignitiondata}
             else:
                 common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,

@@ -303,7 +303,7 @@ class Kgcp(object):
             version = common.ignition_version(image)
             userdata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                        domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
-                                       overrides=overrides, version=version, plan=plan)
+                                       overrides=overrides, version=version, plan=plan, image=image)
             newval = {'key': 'user-data', 'value': userdata}
             body['metadata']['items'].append(newval)
         newval = {'key': 'serial-port-enable', 'value': 1}
@@ -432,7 +432,7 @@ class Kgcp(object):
     def serialconsole(self, name, web=False):
         project = self.project
         zone = self.zone
-        user, ip = common._ssh_credentials(self. name)
+        user, ip = common._ssh_credentials(self, name)
         sshcommand = "ssh"
         identityfile = None
         if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
