@@ -37,6 +37,7 @@ def create(config, plandir, cluster, overrides):
         os._exit(1)
     data['basedir'] = '/workdir' if os.path.exists("/i_am_a_container") else '.'
     cluster = data.get('cluster')
+    domain = data.get('domain', 'karmalabs.com')
     clusterdir = pwd_path("clusters/%s" % cluster)
     firstmaster = "%s-master-0" % cluster
     if os.path.exists(clusterdir):
@@ -72,6 +73,7 @@ def create(config, plandir, cluster, overrides):
     master_node = "%s-master" % cluster if masters > 1 else "%s-master-0" % cluster
     master_ip = k.info(master_node)['ip']
     info("Create the following /etc/hosts entry if needed")
-    info("%s %s" % (master_ip, master_node))
+    info("%s %s %s.%s" % (master_ip, master_node, master_node, domain))
     info("Use The following command to interact with this cluster")
     info("export KUBECONFIG=clusters/%s/auth/kubeconfig" % cluster)
+    info("export PATH=$PWD:$PATH")

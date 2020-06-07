@@ -6,7 +6,9 @@
  type: loadbalancer
  nets:
  - name: {{ network }}
-   alias: {{ cluster }}-master.{{ domain }}
+   alias: 
+   - {{ cluster }}-master.{{ domain }}
+   - {{ cluster }}-master.{{ network }}
    reservedns: true
  ports:
  - 6443
