@@ -31,6 +31,10 @@ def create(config, plandir, cluster, overrides):
     if masters == 0:
         pprint("Invalid number of masters", color='red')
         os._exit(1)
+    version = data.get('version')
+    if version is not None and not version.startswith('1.'):
+        pprint("Invalid version %s" % version, color='red')
+        os._exit(1)
     data['basedir'] = '/workdir' if os.path.exists("/i_am_a_container") else '.'
     cluster = data.get('cluster')
     clusterdir = pwd_path("clusters/%s" % cluster)
