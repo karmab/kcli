@@ -12,6 +12,7 @@ masters: 1
 workers: 0
 image: rhcos44
 network: default
+fips: false
 cluster: testk
 domain: karmalabs.com
 network_type: OpenShiftSDN
