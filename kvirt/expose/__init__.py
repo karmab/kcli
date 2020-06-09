@@ -28,19 +28,18 @@ class Kexposer():
 
         @app.route('/')
         def index():
-            creationdate = ""
+            creationdates = {}
             plans = {plan: [] for plan in self.plans}
             for vm in config.k.list():
                 if vm['plan'] in plans:
-                    if creationdate == "":
-                        creationdate = vm['creationdate']
-                        print(creationdate)
+                    if vm['plan'] not in creationdates:
+                        creationdates[vm['plan']] = vm['creationdate']
                     plans[vm['plan']].append(vm)
             finalplans = []
             for plan in plans:
                 finalplans.append({'name': plan, 'vms': plans[plan]})
             return render_template('list.html', plans=sorted(finalplans, key=lambda p: p['name']),
-                                   creationdate=creationdate)
+                                   creationdates=creationdates)
 
         @app.route("/exposedelete", methods=['POST'])
         def exposedelete():
