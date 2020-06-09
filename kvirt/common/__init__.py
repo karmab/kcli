@@ -562,6 +562,9 @@ def get_lastvm(client):
     :param client:
     :return:
     """
+    if 'HOME' not in os.environ:
+        pprint("HOME variable not set", color='red')
+        os._exit(1)
     lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
     if os.path.exists(lastvm) and os.stat(lastvm).st_size > 0:
         for line in open(lastvm).readlines():
@@ -585,6 +588,8 @@ def set_lastvm(name, client, delete=False):
     :param delete:
     :return:
     """
+    if 'HOME' not in os.environ:
+        return
     configdir = "%s/.kcli/" % os.environ.get('HOME')
     vmfile = "%s/vm" % configdir
     if not os.path.exists(configdir):
