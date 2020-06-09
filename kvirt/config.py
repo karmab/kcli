@@ -675,6 +675,9 @@ $INFO
         netmasks = [overrides[key] for key in overrides if key.startswith('netmask')]
         if privatekey:
             privatekeyfile = None
+            if 'HOME' not in os.environ:
+                msg = "HOME env variable not set and needed for privatekey"
+                return {'result': 'failure', 'reason': msg}
             sshdir = "%s/.ssh" % os.environ['HOME']
             if os.path.exists("%s/id_rsa" % sshdir) and os.path.exists("%s/id_rsa.pub" % sshdir):
                 privatekeyfile = "%s/id_rsa" % sshdir
