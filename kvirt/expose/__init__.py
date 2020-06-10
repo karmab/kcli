@@ -78,7 +78,8 @@ class Kexposer():
                     overrides = parameters
                     if "%s/parameters_%s.yml" % (self.basedir, plan) in self.parametersfiles:
                         fileoverrides = get_overrides(paramfile="%s/parameters_%s.yml" % (self.basedir, plan))
-                        overrides.update(fileoverrides)
+                        fileoverrides.updates(overrides)
+                        overrides = fileoverrides
                     if 'mail' in config.notifymethods and 'mailto' in overrides and overrides['mailto'] != "":
                         newmails = overrides['mailto'].split(',')
                         if config.mailto:
