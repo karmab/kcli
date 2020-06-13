@@ -6,12 +6,18 @@
 
 # About
 
-This tool is meant to interact with existing virtualization providers (libvirt, kubevirt, ovirt, openstack, gcp and aws, vsphere) and to easily deploy and customize vms from cloud images.
+This tool is meant to ease interaction with virtualization providers:
 
-You can also interact with those vms (list, info, ssh, start, stop, delete, console, serialconsole, add/delete disk, add/delete nic,...).
+- libvirt
+- kubevirt
+- ovirt
+- openstack
+- gcp
+- aws
+- vsphere
+- packet
 
-Futhermore, you can deploy vms using predefined profiles, several at once using plan files or entire products for which plans were already created for you.
-
+You can manage those vms (list, info, ssh, start, stop, delete, console, serialconsole, add/delete disk, add/delete nic,...), deploy them using predefined profiles or define more complext workflows using *plans* and products.
 
 # Installation
 
@@ -434,6 +440,27 @@ Note that pool in Vsphere context refers to datastore.
 To use this provider with kcli rpm, you'll need to install *python3-pyvmomi* and *python3-requests*
 
 Also note that kcli download will only upload OVAS, either from specified urls or gathering them in the case of rhcos/fcos.If not present, govc binary is downloaded on the fly in */var/tmp* to provide this functionality.
+
+## Packet
+
+```
+myvpacket:
+  type: packet
+  auth_token: xxxx
+  project: kcli
+  facility: ams1
+  tunnelhost: wilibonka.mooo.com
+```
+
+The following parameters are specific to packet:
+
+- auth_token. 
+- project
+- facility. Can be omitted in which case you will have to specify on which facility to deploy vms.
+- tunnelhost. Optional. When creating vms using ignition, the generated ignition file will be copied to the tunnelhost so it can be served (typically via web)
+- tunneldir. Where to copy the ignition files when using a tunnelhost. Defaults to */var/www/html*
+
+To use this provider with kcli rpm, you'll need to install *python3-packet*
 
 # Storing secrets
 
