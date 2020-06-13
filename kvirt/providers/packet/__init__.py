@@ -278,7 +278,7 @@ class Kpacket(object):
                 continue
             elif 'cluster' in overrides and name.startswith("%s-" % overrides['cluster']):
                 common.pprint("Not applying custom vlan to speed process for openshift...", color='blue')
-                common.pprint("This will be applied manually later..." % name, color='blue')
+                common.pprint("This will be applied manually later...", color='blue')
                 continue
             status = 'provisioning'
             while status != 'active':

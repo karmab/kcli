@@ -1174,16 +1174,17 @@ def get_latest_rhcos_metal(url):
                 kernel = "%s/%s/x86_64/rhcos-%s-installer-kernel-x86_64" % (url, build, build)
                 initrd = "%s/%s/x86_64/rhcos-%s-installer-initramfs.x86_64.img" % (url, build, build)
                 metal = "%s/%s/x86_64/rhcos-%s-metal.x86_64.raw.gz" % (url, build, build)
+                return kernel, initrd, metal
             else:
                 metaurl = '%s/%s/meta.json' % (url, build)
                 with urlopen(metaurl) as m:
                     data = json.loads(m.read().decode())
                     if 'qemu' in data['images']:
-                        baseimg = "%s/%s/%s" % (url, build, data['images']['qemu']['path']).replace('-qemu.qcow2', '')
+                        baseimg = "%s/%s/%s" % (url, build, data['images']['qemu']['path'].replace('-qemu.qcow2', ''))
                         kernel = "%s-installer-kernel-x86_64" % baseimg
                         initrd = "%s-installer-initramfs.x86_64.img" % baseimg
                         metal = "%s-metal.x86_64.raw.gz" % baseimg
-        return kernel, initrd, metal
+                        return kernel, initrd, metal
 
 
 def find_ignition_files(role, plan):
