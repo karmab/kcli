@@ -875,8 +875,7 @@ class Kpacket(object):
         :param size:
         :return:
         """
-        print("not implemented")
-        return {'result': 'success'}
+        return {'result': 'failure', 'reason': "not implemented"}
 
     def _create_network(self, name, facility, vlan=None, vxlan=None):
         data = {"project_id": self.project, "description": name, "facility": facility}
