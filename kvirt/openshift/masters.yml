@@ -9,6 +9,12 @@
 {% if bootstrap_mac != None %}
     mac: {{ bootstrap_mac }}
 {% endif %}
+{% if config_type == 'packet' %}
+    ip: 192.168.122.99
+    mask: 255.255.255.0
+    gateway: 192.168.122.1
+    dns: 8.8.8.8
+{% endif %}
  disks:
   - size: {{ disk_size }}
  files:
@@ -42,6 +48,8 @@
 {% for num in range(0, masters) %}
 {% if master_macs and master_macs|length >= masters %}
  {% set net0 = {"name": network, "mac": master_macs[num]} %}
+{% elif config_type == 'packet' %}
+ {% set net0 = {"name": network, "ip": "192.168.122.10" + num, "mask": "255.255.255.0", "gateway": "192.168.122.1"} %}
 {% else %}
  {% set net0 = network %}
 {% endif %}

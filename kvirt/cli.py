@@ -2710,7 +2710,7 @@ def cli():
     delete_subparsers.add_parser('image', parents=[imagedelete_parser], description=imagedelete_desc,
                                  help=imagedelete_desc)
 
-    imagedownload_desc = 'Download Cloud Image'
+    imagedownload_desc = 'Download Cloud Image/Iso'
     imagedownload_help = "Image to download. Choose between \n%s" % '\n'.join(IMAGES.keys())
     imagedownload_parser = argparse.ArgumentParser(add_help=False)
     imagedownload_parser.add_argument('-c', '--cmd', help='Extra command to launch after downloading', metavar='CMD')
@@ -2720,7 +2720,7 @@ def cli():
     imagedownload_parser.add_argument('image', help=imagedownload_help, metavar='IMAGE')
     imagedownload_parser.set_defaults(func=download_image)
     download_subparsers.add_parser('image', parents=[imagedownload_parser], description=imagedownload_desc,
-                                   help=imagedownload_desc)
+                                   help=imagedownload_desc, aliases=['iso'])
 
     openshiftdownload_desc = 'Download Openshift Installer'
     openshiftdownload_parser = argparse.ArgumentParser(add_help=False)
