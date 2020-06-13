@@ -817,6 +817,7 @@ def create_vm(args):
     name = args.name
     image = args.image
     profile = args.profile
+    count = args.count
     profilefile = args.profilefile
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
     wait = args.wait
@@ -863,9 +864,17 @@ def create_vm(args):
     else:
         common.pprint("You need to either provide a profile, an image or some parameters", color='red')
         os._exit(1)
-    result = config.create_vm(name, profile, overrides=overrides, customprofile=customprofile, wait=wait)
-    code = common.handle_response(result, name, element='', action='created', client=config.client)
-    return code
+    if count == 1:
+        result = config.create_vm(name, profile, overrides=overrides, customprofile=customprofile, wait=wait)
+        code = common.handle_response(result, name, element='', action='created', client=config.client)
+        return code
+    else:
+        codes = []
+        for number in range(count):
+            currentname = "%s-%0.2d" % (name, number + 1)
+            result = config.create_vm(currentname, profile, overrides=overrides, customprofile=customprofile, wait=wait)
+            codes.append(common.handle_response(result, name, element='', action='created', client=config.client))
+        return max(codes)
 
 
 def clone_vm(args):
@@ -2760,6 +2769,7 @@ def cli():
     vmcreate_epilog = "examples:\n%s" % vmcreate
     vmcreate_parser = argparse.ArgumentParser(add_help=False)
     vmcreate_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
+    vmcreate_parser.add_argument('-c', '--count', help='How many vms to create', type=int, default=1, metavar='COUNT')
     vmcreate_parser.add_argument('-i', '--image', help='Image to use', metavar='IMAGE')
     vmcreate_parser.add_argument('--profilefile', help='File to load profiles from', metavar='PROFILEFILE')
     vmcreate_parser.add_argument('-P', '--param', action='append',
