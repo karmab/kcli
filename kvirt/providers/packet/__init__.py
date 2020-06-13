@@ -276,14 +276,15 @@ class Kpacket(object):
         for networkid in networkids:
             if networkid is None:
                 continue
+            elif 'cluster' in overrides and name.startswith("%s-" % overrides['cluster']):
+                common.pprint("Not applying custom vlan to speed process for openshift...", color='blue')
+                common.pprint("This will be applied manually later..." % name, color='blue')
+                continue
             status = 'provisioning'
             while status != 'active':
                 status = self.info(name).get('status')
                 common.pprint("Waiting 5s for %s to be active..." % name, color='blue')
                 sleep(5)
-            # if kernel is not None:
-            #    common.pprint("Waiting 120s more to avoid race conditions", color='blue')
-            #    sleep(120)
             device_port_id = device["network_ports"][2]["id"]
             self.conn.disbond_ports(device_port_id, False)
             self.conn.assign_port(device_port_id, networkid)

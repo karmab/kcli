@@ -226,6 +226,9 @@ def create(config, plandir, cluster, overrides):
     bootstrap_api_ip = data.get('bootstrap_api_ip')
     domain = data.get('domain')
     network = data.get('network')
+    if platform == 'packet' and network == 'default':
+        pprint("You need to indicate a specific vlan network", color='red')
+        os._exit(1)
     masters = data.get('masters')
     workers = data.get('workers')
     disconnected_deploy = data.get('disconnected_deploy', False)
