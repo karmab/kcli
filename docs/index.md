@@ -17,7 +17,11 @@ This tool is meant to ease interaction with virtualization providers:
 - vsphere
 - packet
 
-You can manage those vms (list, info, ssh, start, stop, delete, console, serialconsole, add/delete disk, add/delete nic,...), deploy them using predefined profiles or define more complext workflows using *plans* and products.
+You can: 
+
+- manage those vms (create, delete, list, info, ssh, start, stop, console, serialconsole, add/delete disk, add/delete nic,...)
+- deploy them using profiles
+- define more complex workflows using *plans* and products.
 
 # Installation
 
@@ -460,7 +464,7 @@ The following parameters are specific to packet:
 - tunnelhost. Optional. When creating vms using ignition, the generated ignition file will be copied to the tunnelhost so it can be served (typically via web)
 - tunneldir. Where to copy the ignition files when using a tunnelhost. Defaults to */var/www/html*
 
-To use this provider with kcli rpm, you'll need to install *python3-packet*
+To use this provider with kcli rpm, you'll need to install packet-python from pip.
 
 # Storing secrets
 
