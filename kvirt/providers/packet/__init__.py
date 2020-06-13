@@ -264,6 +264,9 @@ class Kpacket(object):
         tags = ['plan_%s' % plan, 'profile_%s' % profile]
         if userdata is not None and 'ignition' in userdata:
             tags.append("kernel_%s" % os.path.basename(kernel))
+        if kube is not None and kubetype is not None:
+            tags.append("kube_%s" % kube)
+            tags.append("kubetype_%s" % kubetype)
         # ip_addresses = [{"address_family": 4, "public": True}, {"address_family": 6, "public": False}]
         data = {'project_id': self.project, 'hostname': name, 'plan': flavor, 'facility': facility,
                 'operating_system': image, 'userdata': userdata, 'features': features, 'tags': tags}
@@ -471,6 +474,7 @@ class Kpacket(object):
             mac = entry['data']['mac']
             nets.append({'device': dev, 'mac': mac, 'net': network, 'type': networktype})
         plan, profile = 'kvirt', 'kvirt'
+        kube, kubetype = None, None
         kernel = None
         tags = device.tags
         if tags:
@@ -481,6 +485,10 @@ class Kpacket(object):
                     profile = tag.replace('profile_', '')
                 if tag.startswith('kernel_'):
                     kernel = tag.replace('kernel_', '')
+                if tag.startswith('kube_'):
+                    kube = tag.replace('kube_', '')
+                if tag.startswith('kubetype_'):
+                    kubetype = tag.replace('kubetype_', '')
         source = device.operating_system['slug']
         flavor = device.plan
         flavorname = device.plan['slug']
@@ -513,6 +521,10 @@ class Kpacket(object):
         if ip is not None:
             yamlinfo['ip'] = ip
         yamlinfo['user'] = common.get_user(kernel) if kernel is not None else 'root'
+        if kube is not None:
+            yamlinfo['kube'] = kube
+        if kubetype is not None:
+            yamlinfo['kubetype'] = kubetype
         # for entry in device.network_ports:
         #    print(entry)
         return yamlinfo
