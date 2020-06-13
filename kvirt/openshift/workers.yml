@@ -2,7 +2,7 @@
 {% if worker_macs and worker_macs|length >= workers %}
  {% set net0 = {"name": network, "mac": worker_macs[num]} %}
 {% elif config_type == 'packet' %}
- {% set net0 = {"name": network, "ip": "192.168.122.20" + num, "mask": "255.255.255.0", "gateway": "192.168.122.1"} %}
+ {% set net0 = {"name": network, "ip": "192.168.122.20" + num|string, "mask": "255.255.255.0", "gateway": "192.168.122.1"} %}
 {% else %}
  {% set net0 = network %}
 {% endif %}

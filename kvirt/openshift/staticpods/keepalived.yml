@@ -40,11 +40,11 @@ spec:
         {%- endif %}
         sed -i "s@NIC@$NIC@" /etc/keepalived/keepalived.conf
         if [ "$NETMASK" != "" ] ; then
-          sed -i "s@{{ api_ip }}@{{ api_ip }}/$NETMASK@" /etc/keepalived/keepalived.conf
           {% if config_type == 'packet' %}
           NIC_PUBLIC={{ 'eth0' if 'fcos' in image else 'enp1s0f0' }}
           sed -i "s@{{ api_ip }}@{{ api_ip }} dev $NIC_PUBLIC@" /etc/keepalived/keepalived.conf
           {% endif %}
+          sed -i "s@{{ api_ip }}@{{ api_ip }}/$NETMASK@" /etc/keepalived/keepalived.conf
           {% if ingress_ip != None %}
           sed -i "s@{{ ingress_ip }}@{{ ingress_ip }}/$NETMASK@" /etc/keepalived/keepalived.conf
           {% endif %}

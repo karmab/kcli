@@ -49,7 +49,7 @@
 {% if master_macs and master_macs|length >= masters %}
  {% set net0 = {"name": network, "mac": master_macs[num]} %}
 {% elif config_type == 'packet' %}
- {% set net0 = {"name": network, "ip": "192.168.122.10" + num, "mask": "255.255.255.0", "gateway": "192.168.122.1"} %}
+ {% set net0 = {"name": network, "ip": "192.168.122.10" + num|string, "mask": "255.255.255.0", "gateway": "192.168.122.1"} %}
 {% else %}
  {% set net0 = network %}
 {% endif %}

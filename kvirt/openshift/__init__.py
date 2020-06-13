@@ -415,8 +415,8 @@ def create(config, plandir, cluster, overrides):
             call("sh -c 'echo %s %s >> /etc/hosts'" % (host_ip, entries), shell=True)
             if os.path.exists('/etcdir/hosts'):
                 call("sh -c 'echo %s %s >> /etcdir/hosts'" % (host_ip, entries), shell=True)
-        if platform in ['kubevirt', 'openstack', 'vsphere', 'packet']:
-            # bootstrap ignition is too big for kubevirt/openstack/vsphere so we deploy a temporary web server
+        if platform in ['kubevirt', 'openstack', 'vsphere'] or (platform == 'packet' and config.k.tunnelhost is None):
+            # bootstrap ignition is too big in those platforms so we deploy a temporary web server to serve it
             helper_overrides = {}
             if platform == 'kubevirt':
                 helper_overrides['helper_image'] = "kubevirt/fedora-cloud-container-disk-demo"
@@ -452,7 +452,7 @@ def create(config, plandir, cluster, overrides):
                 sleep(5)
             cmd = "iptables -F ; yum -y install httpd"
             if platform == 'packet':
-                cmd += "; sed 's/apache/root' /etc/httpd/conf/httpd.conf"
+                cmd += "; sed 's/apache/root/' /etc/httpd/conf/httpd.conf"
                 status = 'provisioning'
                 config.k.tunnelhost = bootstrap_api_ip
                 while status != 'active':
