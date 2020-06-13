@@ -178,6 +178,20 @@ class Kconfig(Kbaseconfig):
                 from kvirt.providers.vsphere import Ksphere
                 k = Ksphere(self.host, user, password, datacenter, cluster, debug=debug, filtervms=filtervms,
                             filteruser=filteruser, filtertag=filtertag)
+            elif self.type == 'packet':
+                auth_token = self.options.get('auth_token')
+                if auth_token is None:
+                    common.pprint("Missing auth_token in the configuration. Leaving", color='red')
+                    os._exit(1)
+                project = self.options.get('project')
+                if project is None:
+                    common.pprint("Missing project in the configuration. Leaving", color='red')
+                    os._exit(1)
+                facility = self.options.get('facility')
+                from kvirt.providers.packet import Kpacket
+                k = Kpacket(auth_token, project, facility=facility, debug=debug,
+                            tunnelhost=self.tunnelhost, tunneluser=self.tunneluser, tunnelport=self.tunnelport,
+                            tunneldir=self.tunneldir)
             else:
                 if self.host is None:
                     common.pprint("Problem parsing your configuration file", color='red')
@@ -238,7 +252,7 @@ class Kconfig(Kbaseconfig):
                 clientprofile = "%s_%s" % (self.client, customprofileimage)
                 if clientprofile in vmprofiles and 'image' in vmprofiles[clientprofile]:
                     vmprofiles[profile]['image'] = vmprofiles[clientprofile]['image']
-                elif customprofileimage in IMAGES and\
+                elif customprofileimage in IMAGES and self.type != 'packet' and\
                         IMAGES[customprofileimage] not in [os.path.basename(v) for v in self.k.volumes()]:
                     common.pprint("Image %s not found. Downloading" % customprofileimage, color='blue')
                     self.handle_host(pool=self.pool, image=customprofileimage, download=True, update_profile=True)
@@ -249,7 +263,8 @@ class Kconfig(Kbaseconfig):
             clientprofile = "%s_%s" % (self.client, profile)
             if clientprofile in vmprofiles and 'image' in vmprofiles[clientprofile]:
                 vmprofiles[profile] = {'image': vmprofiles[clientprofile]['image']}
-            elif profile in IMAGES and IMAGES[profile] not in [os.path.basename(v) for v in self.k.volumes()]:
+            elif profile in IMAGES and IMAGES[profile] not in [os.path.basename(v) for v in self.k.volumes()]\
+                    and self.type not in ['aws', 'gcp', 'packet']:
                 common.pprint("Image %s not found. Downloading" % profile, color='blue')
                 self.handle_host(pool=self.pool, image=profile, download=True, update_profile=True)
                 vmprofiles[profile] = {'image': os.path.basename(IMAGES[profile])}
@@ -512,6 +527,9 @@ class Kconfig(Kbaseconfig):
         cpuhotplug = profile.get('cpuhotplug', default_cpuhotplug)
         memoryhotplug = profile.get('memoryhotplug', default_memoryhotplug)
         virttype = profile.get('virttype', default_virttype)
+        # TODO MOVE TO DEDICATED PARAMETER
+        if 'ignition_url' in profile:
+            overrides['ignition_url'] = profile['ignition_url']
         scriptcmds = []
         skip_rhnregister_script = False
         if rhnregister and image is not None and image.lower().startswith('rhel'):
@@ -1510,7 +1528,7 @@ $INFO
                             profile['image'] = entry[4]
                             break
                     imageprofile = profile['image']
-                    if imageprofile in IMAGES and\
+                    if imageprofile in IMAGES and self.type != 'packet' and\
                             IMAGES[imageprofile] not in [os.path.basename(v) for v in self.k.volumes()]:
                         common.pprint("Image %s not found. Downloading" % imageprofile, color='blue')
                         self.handle_host(pool=self.pool, image=imageprofile, download=True, update_profile=True)
@@ -1715,6 +1733,7 @@ $INFO
                         common.pprint("Image %s has no associated url" % image, color='red')
                         return {'result': 'failure', 'reason': "Incorrect image"}
                     url = IMAGES[image]
+                    print(url)
                     if 'rhcos' in image:
                         url = common.get_latest_rhcos(url, _type=self.type)
                     if 'fcos' in image:

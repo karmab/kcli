@@ -8,7 +8,7 @@ from distutils.spawn import find_executable
 from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID,
                             VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, RESERVEHOST,
-                            START, AUTOSTART, NESTED, TUNNEL, TUNNELHOST, TUNNELPORT, TUNNELUSER,
+                            START, AUTOSTART, NESTED, TUNNEL, TUNNELHOST, TUNNELPORT, TUNNELUSER, TUNNELDIR,
                             INSECURE, KEYS, CMDS, DNS, DOMAIN, SCRIPTS, FILES, ISO,
                             NETMASKS, GATEWAY, SHAREDKEY, IMAGE, ENABLEROOT,
                             PLANVIEW, PRIVATEKEY, TAGS, RHNREGISTER, RHNUSER, RHNPASSWORD, RHNAK, RHNORG, RHNPOOL,
@@ -118,6 +118,7 @@ class Kbaseconfig:
         defaults['tunnelhost'] = default.get('tunnelhost', TUNNELHOST)
         defaults['tunnelport'] = default.get('tunnelport', TUNNELPORT)
         defaults['tunneluser'] = default.get('tunneluser', TUNNELUSER)
+        defaults['tunneldir'] = default.get('tunneldir', TUNNELDIR)
         defaults['insecure'] = bool(default.get('insecure', INSECURE))
         defaults['keys'] = default.get('keys', KEYS)
         defaults['cmds'] = default.get('cmds', CMDS)
@@ -233,6 +234,7 @@ class Kbaseconfig:
             self.tunnelhost = self.host
         self.tunnelport = options.get('tunnelport', self.default['tunnelport'])
         self.tunneluser = options.get('tunneluser', self.default['tunneluser'])
+        self.tunneldir = options.get('tunneldir', self.default['tunneldir'])
         self.insecure = bool(options.get('insecure', self.default['insecure']))
         self.nets = options.get('nets', self.default['nets'])
         self.cpumodel = options.get('cpumodel', self.default['cpumodel'])

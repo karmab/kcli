@@ -10,13 +10,13 @@ from kvirt.common import info, pprint, gen_mac, get_oc, get_values, pwd_path, in
 from kvirt.openshift.calico import calicoassets
 from random import randint
 import re
-from shutil import copy2, move
+from shutil import copy2, move, rmtree
 from subprocess import call
 from time import sleep
 from urllib.request import urlopen
 
 
-virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere']
+virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere', 'packet']
 cloudplatforms = ['aws', 'gcp']
 
 
@@ -253,8 +253,12 @@ def create(config, plandir, cluster, overrides):
             sys.exit(1)
     clusterdir = pwd_path("clusters/%s" % cluster)
     if os.path.exists(clusterdir):
-        pprint("Please remove existing directory %s first..." % clusterdir, color='red')
-        sys.exit(1)
+        if [v for v in config.k.list() if v['plan'] == cluster]:
+            pprint("Please remove existing directory %s first..." % clusterdir, color='red')
+            sys.exit(1)
+        else:
+            pprint("Removing directory %s" % clusterdir, color='blue')
+            rmtree(clusterdir)
     os.environ['KUBECONFIG'] = "%s/auth/kubeconfig" % clusterdir
     if find_executable('oc') is None:
         get_oc(macosx)
@@ -292,6 +296,9 @@ def create(config, plandir, cluster, overrides):
         version_match = re.match("4.([0-9]*).*", INSTALLER_VERSION)
         COS_VERSION = "4%s" % version_match.group(1) if version_match is not None else '45'
     if image is None:
+        if platform == 'packet':
+            pprint("Missing image in your parameters file. This is required for packet" % image, color='red')
+            os._exit(1)
         images = [v for v in k.volumes() if COS_TYPE in v and COS_VERSION in v]
         if images:
             image = os.path.basename(images[0])
@@ -304,7 +311,7 @@ def create(config, plandir, cluster, overrides):
             images = [v for v in k.volumes() if "%s-%s" % (COS_TYPE, COS_VERSION) in v]
             image = images[0]
         pprint("Using image %s" % image, color='blue')
-    else:
+    elif platform != 'packet':
         pprint("Checking if image %s is available" % image, color='blue')
         images = [v for v in k.volumes() if image in v]
         if not images:
@@ -408,11 +415,11 @@ def create(config, plandir, cluster, overrides):
             call("sh -c 'echo %s %s >> /etc/hosts'" % (host_ip, entries), shell=True)
             if os.path.exists('/etcdir/hosts'):
                 call("sh -c 'echo %s %s >> /etcdir/hosts'" % (host_ip, entries), shell=True)
-        if platform in ['kubevirt', 'openstack', 'vsphere']:
+        if platform in ['kubevirt', 'openstack', 'vsphere', 'packet']:
             # bootstrap ignition is too big for kubevirt/openstack/vsphere so we deploy a temporary web server
-            overrides = {}
+            helper_overrides = {}
             if platform == 'kubevirt':
-                overrides['helper_image'] = "kubevirt/fedora-cloud-container-disk-demo"
+                helper_overrides['helper_image'] = "kubevirt/fedora-cloud-container-disk-demo"
                 iptype = "ip"
             else:
                 if helper_image is None:
@@ -433,18 +440,27 @@ def create(config, plandir, cluster, overrides):
                         os._exit(1)
                 iptype = 'ip'
                 if platform == 'openstack':
-                    overrides['flavor'] = "m1.medium"
+                    helper_overrides['flavor'] = "m1.medium"
                     iptype = "privateip"
-            overrides['nets'] = [network]
-            overrides['plan'] = cluster
+            helper_overrides['nets'] = [network]
+            helper_overrides['plan'] = cluster
             bootstrap_helper_name = "%s-bootstrap-helper" % cluster
-            config.create_vm("%s-bootstrap-helper" % cluster, helper_image, overrides=overrides)
+            config.create_vm("%s-bootstrap-helper" % cluster, helper_image, overrides=helper_overrides)
             while bootstrap_api_ip is None:
                 bootstrap_api_ip = k.info(bootstrap_helper_name).get(iptype)
-                pprint("Waiting 5s for bootstrap helper node to be running...", color='blue')
+                pprint("Waiting 5s for bootstrap helper node to get an ip...", color='blue')
                 sleep(5)
+            cmd = "iptables -F ; yum -y install httpd"
+            if platform == 'packet':
+                cmd += "; sed 's/apache/root' /etc/httpd/conf/httpd.conf"
+                status = 'provisioning'
+                config.k.tunnelhost = bootstrap_api_ip
+                while status != 'active':
+                    status = k.info(bootstrap_helper_name).get('status')
+                    pprint("Waiting 5s for bootstrap helper node to be fully provisioned...", color='blue')
+                    sleep(5)
             sleep(5)
-            cmd = "iptables -F ; yum -y install httpd ; systemctl start httpd"
+            cmd += "; systemctl start httpd"
             sshcmd = k.ssh(bootstrap_helper_name, user='root', tunnel=config.tunnel,
                            tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
                            insecure=True, cmd=cmd)
@@ -464,7 +480,6 @@ def create(config, plandir, cluster, overrides):
             sedcmd = 'sed -i "s@https://192.168.125.1:22623/config@http://%s@"' % new_api_ip
             sedcmd += ' %s/master.ign' % clusterdir
             call(sedcmd, shell=True)
-
         else:
             new_api_ip = api_ip if not ipv6 else "[%s]" % api_ip
             sedcmd = 'sed -i "s@https://api-int.%s.%s:22623/config@http://%s@"' % (cluster, domain, new_api_ip)
@@ -472,9 +487,9 @@ def create(config, plandir, cluster, overrides):
             call(sedcmd, shell=True)
     if platform in cloudplatforms:
         bootstrap_helper_name = "%s-bootstrap-helper" % cluster
-        overrides = {'reservedns': True, 'domain': '%s.%s' % (cluster, domain), 'tags': [tag], 'plan': cluster,
-                     'nets': [network]}
-        config.create_vm("%s-bootstrap-helper" % cluster, helper_image, overrides=overrides)
+        helper_overrides = {'reservedns': True, 'domain': '%s.%s' % (cluster, domain), 'tags': [tag], 'plan': cluster,
+                            'nets': [network]}
+        config.create_vm("%s-bootstrap-helper" % cluster, helper_image, overrides=helper_overrides)
         status = ""
         while status != "running":
             status = k.info(bootstrap_helper_name).get('status')
@@ -524,7 +539,7 @@ def create(config, plandir, cluster, overrides):
             pprint("You can delete it with kcli delete kube --yes %s" % cluster, color='red')
             os._exit(run)
         todelete = ["%s-bootstrap" % cluster]
-        if platform in ['kubevirt', 'openstack', 'vsphere']:
+        if platform in ['kubevirt', 'openstack', 'vsphere', 'packet']:
             todelete.append("%s-bootstrap-helper" % cluster)
     else:
         result = config.plan(cluster, inputfile='%s/cloud.yml' % plandir, overrides=overrides)

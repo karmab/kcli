@@ -33,6 +33,11 @@
     origin: staticpods/nginx.yml
   - path: /etc/kubernetes/nginx.conf
     origin: nginx.conf
+{% if config_type == 'packet' %}
+  - path: /etc/kubernetes/packet-hack.sh
+    origin: packet-hack.sh
+    mode: 700
+{% endif %}
 
 {% for num in range(0, masters) %}
 {% if master_macs and master_macs|length >= masters %}
@@ -70,6 +75,11 @@
     origin: config.hcl.templ
   - path: /etc/kubernetes/apps.db
     origin: apps.db
+{% if config_type == 'packet' %}
+  - path: /etc/kubernetes/packet-hack.sh
+    origin: packet-hack.sh
+    mode: 700
+{% endif %}
 {%- if workers > 0 %}
   - path: /etc/kubernetes/manifests/haproxy.yml
     origin: staticpods/haproxy.yml

@@ -550,7 +550,7 @@ class Kvirt(object):
                 ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                                domain=domain, reserveip=reserveip, files=files,
                                                enableroot=enableroot, overrides=overrides, version=version, plan=plan,
-                                               ipv6=ipv6)
+                                               ipv6=ipv6, image=image)
                 with open('%s/%s.ign' % (ignitiondir, name), 'w') as ignitionfile:
                     ignitionfile.write(ignitiondata)
                     identityfile = None
@@ -750,7 +750,7 @@ class Kvirt(object):
                 if self.host == 'localhost' or self.host == '127.0.0.1' and not os.path.exists(folder):
                     oldmask = os.umask(000)
                     os.makedirs(folder)
-                    r = os.umask(oldmask)
+                    os.umask(oldmask)
                 elif self.protocol == 'ssh':
                     foldercmd = 'ssh %s -p %s %s@%s "test -d %s || (%s)"' % (self.identitycommand, self.port,
                                                                              self.user, self.host, folder, foldercmd)

@@ -68,7 +68,8 @@ class Kbase(object):
                netmasks=None, gateway=None, nested=True, dns=None, domain=None,
                tunnel=False, files=[], enableroot=True, alias=[], overrides={},
                tags=[], dnsclient=None, storemetadata=False, sharedfolders=[], kernel=None, initrd=None,
-               cmdline=None, cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False):
+               cmdline=None, cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False,
+               placement=[], autostart=False, rng=False, kube=None, kubetype=None):
         """
 
         :param name:
@@ -437,8 +438,8 @@ class Kbase(object):
 # hostuser=self.user, user=u, local=local,
 # remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X,
 # debug=self.debug)
-    def ssh(self, name, user=None, local=None, remote=None, tunnel=False,
-            insecure=False, cmd=None, X=False, Y=False, D=None):
+    def ssh(self, name, user=None, local=None, remote=None, tunnel=False, tunnelhost=None, tunnelport=22,
+            tunneluser='root', insecure=False, cmd=None, X=False, Y=False, D=None):
         """
 
         :param name:
@@ -463,8 +464,8 @@ class Kbase(object):
 # hostuser=self.user, user=user,
 # source=source, destination=destination, recursive=recursive, tunnel=tunnel,
 # debug=self.debug, download=False)
-    def scp(self, name, user=None, source=None, destination=None, tunnel=False,
-            download=False, recursive=False, insecure=False):
+    def scp(self, name, user=None, source=None, destination=None, tunnel=False, tunnelhost=None, tunnelport=22,
+            tunneluser='root', download=False, recursive=False, insecure=False):
         """
 
         :param name:
@@ -530,7 +531,7 @@ class Kbase(object):
         :return:
         """
         print("not implemented")
-        return
+        return {'result': 'success'}
 
     def delete_network(self, name=None, cidr=None):
         """
@@ -540,7 +541,8 @@ class Kbase(object):
         :return:
         """
         print("not implemented")
-        return
+        return {'result': 'success'}
+
 
 # should return a dict of pool strings
     def list_pools(self):
@@ -614,7 +616,7 @@ class Kbase(object):
         return []
 
 # export the primary disk of the corresponding instance so it's available as a image
-    def export(name, image=None):
+    def export(self, name, image=None):
         """
 
         :param image:

@@ -28,6 +28,7 @@ if [ ! -f /etc/sysconfig/network-scripts/ifcfg-{nicname} ] ; then
 echo -e \"\"\"{data}\"\"\" > /etc/sysconfig/network-scripts/ifcfg-{nicname}
 systemctl restart NetworkManager
 fi"""
+static_nic_fcos = "{data}"
 
 ceo_yaml = """apiVersion: operator.openshift.io/v1
 kind: Etcd
@@ -932,7 +933,7 @@ def get_cloudinitfile(image):
 
 def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[],
              enableroot=True, overrides={}, iso=True, fqdn=False, version='3.0.0', plan=None, compact=False,
-             removetls=False, ipv6=[]):
+             removetls=False, ipv6=[], image=None):
     """
 
     :param name:
@@ -991,22 +992,33 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
                                  "contents": {"source": "data:,%s" % dnsline, "verification": {}}, "mode": 420})
     if nets:
         for index, net in enumerate(nets):
+            static_nic_file = static_nic
             netdata = ''
             if isinstance(net, str):
                 if index == 0:
                     continue
-                nicname = "ens%d" % (index + 3)
+                if image is not None and ('fcos' in image or 'fedora-coreos' in image):
+                    nicname = "eth%d" % index
+                else:
+                    nicname = "ens%d" % index + 3
                 ip = None
                 netmask = None
                 noconf = None
                 vips = []
             elif isinstance(net, dict):
-                nicname = net.get('nic', "ens%d" % (index + 3))
+                if image is not None and ('fcos' in image or 'fedora-coreos' in image):
+                    default_nicname = "eth%s" % index
+                else:
+                    default_nicname = "ens%d" % (index + 3)
+                if image == 'custom_ipxe':
+                    default_nicname = "enp1s0f1"
+                nicname = net.get('nic', default_nicname)
                 ip = net.get('ip')
                 gateway = net.get('gateway')
                 netmask = next((e for e in [net.get('mask'), net.get('netmask')] if e is not None), None)
                 noconf = net.get('noconf')
                 vips = net.get('vips')
+            nicpath = "/etc/NetworkManager/dispatcher.d/static_%s" % nicname
             if noconf is not None:
                 netdata = "DEVICE=%s\nNAME=%s\nONBOOT=no" % (nicname, nicname)
             elif ip is not None and netmask is not None and not reserveip and gateway is not None:
@@ -1020,10 +1032,16 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
                 if isinstance(vips, list) and vips:
                     for vip in vips:
                         netdata += "[Network]\nAddress=%s/%s\nGateway=%s\n" % (vip, netmask, gateway)
+                if image is not None and ('fcos' in image or 'fedora-coreos' in image):
+                    netdata = "[connection]\ntype=ethernet\ninterface-name=%s\n" % nicname
+                    netdata += "match-device=interface-name:%s\n\n" % nicname
+                    netdata += "[ipv4]\nmethod=manual\naddresses=%s/%s\ngateway=%s\n" % (ip, netmask, gateway)
+                    nicpath = "/etc/NetworkManager/system-connections/%s.nmconnection" % nicname
+                    static_nic_file = static_nic_fcos
             if netdata != '':
-                static = quote(static_nic.format(nicname=nicname, data=netdata))
+                static = quote(static_nic_file.format(nicname=nicname, data=netdata))
                 storage["files"].append({"filesystem": "root",
-                                         "path": "/etc/NetworkManager/dispatcher.d/static_%s" % nicname,
+                                         "path": nicpath,
                                          "contents": {"source": "data:,%s" % static, "verification": {}},
                                          "mode": int('755', 8)})
     if files:
@@ -1113,6 +1131,16 @@ def get_latest_fcos(url, _type='kvm'):
         return data['architectures']['x86_64']['artifacts'][key]["formats"][_format]['disk']['location']
 
 
+def get_latest_fcos_metal(url):
+    with urlopen(url) as u:
+        data = json.loads(u.read().decode())
+        formats = data['architectures']['x86_64']['artifacts']['metal']['formats']
+        kernel = formats['pxe']['kernel']['location']
+        initrd = formats['pxe']['initramfs']['location']
+        metal = formats['raw.xz']['disk']['location']
+        return kernel, initrd, metal
+
+
 def get_latest_rhcos(url, _type='kvm'):
     keys = {'ovirt': 'openstack', 'kvm': 'qemu', 'vsphere': 'vmware'}
     key = keys.get(_type, _type)
@@ -1134,6 +1162,28 @@ def get_latest_rhcos(url, _type='kvm'):
                     data = json.loads(m.read().decode())
                     if key in data['images']:
                         return "%s/%s/%s" % (url, build, data['images'][key]['path'])
+
+
+def get_latest_rhcos_metal(url):
+    buildurl = '%s/builds.json' % url
+    with urlopen(buildurl) as b:
+        data = json.loads(b.read().decode())
+        for build in data['builds']:
+            if isinstance(build, dict):
+                build = build['id']
+                kernel = "%s/%s/x86_64/rhcos-%s-installer-kernel-x86_64" % (url, build, build)
+                initrd = "%s/%s/x86_64/rhcos-%s-installer-initramfs.x86_64.img" % (url, build, build)
+                metal = "%s/%s/x86_64/rhcos-%s-metal.x86_64.raw.gz" % (url, build, build)
+            else:
+                metaurl = '%s/%s/meta.json' % (url, build)
+                with urlopen(metaurl) as m:
+                    data = json.loads(m.read().decode())
+                    if 'qemu' in data['images']:
+                        baseimg = "%s/%s/%s" % (url, build, data['images']['qemu']['path']).replace('-qemu.qcow2', '')
+                        kernel = "%s-installer-kernel-x86_64" % baseimg
+                        initrd = "%s-installer-initramfs.x86_64.img" % baseimg
+                        metal = "%s-metal.x86_64.raw.gz" % baseimg
+        return kernel, initrd, metal
 
 
 def find_ignition_files(role, plan):
