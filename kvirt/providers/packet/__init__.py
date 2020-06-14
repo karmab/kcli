@@ -141,6 +141,17 @@ class Kpacket(object):
         :param tpm:
         :return:
         """
+        reservation_id = overrides.get('hardware_reservation_id')
+        if reservation_id is not None:
+            reservations = self.conn.list_hardware_reservations(self.project)
+            if not reservations:
+                return {'result': 'failure', 'reason': "No reserved hardware found"}
+            elif reservation_id != 'next-available':
+                matching_ids = [r.id for r in reservations if r.id == reservation_id or r.short_id == reservation_id]
+                if not matching_ids:
+                    return {'result': 'failure', 'reason': "Reserved hardware with id %s not found" % reservation_id}
+                else:
+                    reservation_id = matching_ids[0]
         ipxe_script_url = None
         userdata = None
         networkid = None
@@ -272,6 +283,8 @@ class Kpacket(object):
                 'operating_system': image, 'userdata': userdata, 'features': features, 'tags': tags}
         if ipxe_script_url is not None:
             data['ipxe_script_url'] = ipxe_script_url
+        if reservation_id is not None:
+            data['hardware_reservation_id'] = reservation_id
         try:
             device = self.conn.create_device(**data)
         except Exception as e:
