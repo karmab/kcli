@@ -530,6 +530,8 @@ class Kconfig(Kbaseconfig):
         # TODO MOVE TO DEDICATED PARAMETER
         if 'ignition_url' in profile:
             overrides['ignition_url'] = profile['ignition_url']
+        if 'hardware_reservation_id' in profile:
+            overrides['hardware_reservation_id'] = profile['hardware_reservation_id']
         scriptcmds = []
         skip_rhnregister_script = False
         if rhnregister and image is not None and image.lower().startswith('rhel'):
