@@ -527,11 +527,7 @@ class Kconfig(Kbaseconfig):
         cpuhotplug = profile.get('cpuhotplug', default_cpuhotplug)
         memoryhotplug = profile.get('memoryhotplug', default_memoryhotplug)
         virttype = profile.get('virttype', default_virttype)
-        # TODO MOVE TO DEDICATED PARAMETER
-        if 'ignition_url' in profile:
-            overrides['ignition_url'] = profile['ignition_url']
-        if 'hardware_reservation_id' in profile:
-            overrides['hardware_reservation_id'] = profile['hardware_reservation_id']
+        overrides.update(profile)
         scriptcmds = []
         skip_rhnregister_script = False
         if rhnregister and image is not None and image.lower().startswith('rhel'):
@@ -1535,7 +1531,8 @@ $INFO
                         common.pprint("Image %s not found. Downloading" % imageprofile, color='blue')
                         self.handle_host(pool=self.pool, image=imageprofile, download=True, update_profile=True)
                         profile['image'] = os.path.basename(IMAGES[imageprofile])
-                result = self.create_vm(name, profilename, overrides=overrides, customprofile=profile, k=z,
+                currentoverrides = overrides.copy()
+                result = self.create_vm(name, profilename, overrides=currentoverrides, customprofile=profile, k=z,
                                         plan=plan, basedir=currentplandir, client=vmclient, onfly=onfly, planmode=True)
                 common.handle_response(result, name, client=vmclient)
                 if result['result'] == 'success':
