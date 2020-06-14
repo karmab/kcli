@@ -206,8 +206,8 @@ class Kpacket(object):
                 ignitionfile.write(ignitiondata)
             if self.tunnelhost is not None:
                 common.pprint("Copying ignition data to %s" % self.tunnelhost, color='blue')
-                scpcmd = "scp -P %s /tmp/%s.ign %s@%s:%s/%s.ign" % (self.tunnelport, name, self.tunneluser,
-                                                                    self.tunnelhost, self.tunneldir, name)
+                scpcmd = "scp -qP %s /tmp/%s.ign %s@%s:%s/%s.ign" % (self.tunnelport, name, self.tunneluser,
+                                                                     self.tunnelhost, self.tunneldir, name)
                 os.system(scpcmd)
         if flavor is None:
             # if f[1] >= numcpus and f[2] >= memory:
