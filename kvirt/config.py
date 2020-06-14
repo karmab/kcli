@@ -611,8 +611,12 @@ class Kconfig(Kbaseconfig):
                     notifycmd = "tail -100 %s" % cloudinitfile
             if notifyscript is not None:
                 notifyscript = os.path.expanduser(notifyscript)
+                if basedir != '.':
+                    notifyscript = '%s/%s' % (basedir, notifyscript)
                 if not os.path.exists(notifyscript):
                     notifycmd = None
+                    notifyscript = None
+                    common.pprint("Notification required but missing notifyscript", color='red')
                 else:
                     files.append({'path': '/root/.notify.sh', 'origin': notifyscript})
                     notifycmd = "bash /root/.notify.sh"
@@ -621,7 +625,7 @@ class Kconfig(Kbaseconfig):
                     if pushbullettoken is None:
                         common.pprint("Notification required but missing pushbullettoken", color='red')
                     elif notifyscript is None and notifycmd is None:
-                        common.pprint("Notification required but missing notifyscript", color='red')
+                        continue
                     else:
                         title = "Vm %s on %s report" % (name, self.client)
                         token = pushbullettoken
@@ -653,11 +657,11 @@ class Kconfig(Kbaseconfig):
                             cmds.append(slackcmd)
                 elif notifymethod == 'mail':
                     if mailserver is None:
-                        common.pprint("Notification required but missing mail server", color='red')
+                        common.pprint("Notification required but missing mailserver", color='red')
                     elif mailfrom is None:
-                        common.pprint("Notification required but missing mail from", color='red')
+                        common.pprint("Notification required but missing mailfrom", color='red')
                     elif not mailto:
-                        common.pprint("Notification required but missing mail to", color='red')
+                        common.pprint("Notification required but missing mailto", color='red')
                     else:
                         title = "Vm %s on %s report" % (name, self.client)
                         now = datetime.now()
