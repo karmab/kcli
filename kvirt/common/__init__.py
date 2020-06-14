@@ -863,7 +863,7 @@ def scp(name, ip='', user=None, source=None, destination=None, recursive=None, t
             arguments += "-o ProxyCommand='ssh -qp %s -W %%h:%%p %s@%s'" % (tunnelport, tunneluser, tunnelhost)
         if insecure:
             arguments += " -o LogLevel=quiet -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-        scpcommand = 'scp'
+        scpcommand = 'scp -q'
         identityfile = None
         if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
             identityfile = os.path.expanduser("~/.kcli/id_rsa")

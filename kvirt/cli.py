@@ -1637,6 +1637,10 @@ def scp_vm(args):
         return
     if '@' in name and len(name.split('@')) == 2:
         user, name = name.split('@')
+    if download:
+        common.pprint("Retrieving file %s from %s" % (source, name), color='green')
+    else:
+        common.pprint("Copying file %s to %s" % (source, name), color='green')
     scpcommand = k.scp(name, user=user, source=source, destination=destination,
                        tunnel=tunnel, tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser,
                        download=download, recursive=recursive, insecure=insecure)
