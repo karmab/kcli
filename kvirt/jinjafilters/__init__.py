@@ -29,10 +29,18 @@ def _type(value):
 def ocpnodes(cluster, platform, masters, workers):
     masters = ['%s-master-%d' % (cluster, num) for num in range(masters)]
     workers = ['%s-worker-%d' % (cluster, num) for num in range(workers)]
-    if platform in ['kubevirt', 'openstack', 'vsphere']:
+    if platform in ['kubevirt', 'openstack', 'vsphere', 'packet']:
         return ["%s-bootstrap-helper" % cluster] + ["%s-bootstrap" % cluster] + masters + workers
     else:
         return ["%s-bootstrap" % cluster] + masters + workers
 
 
-jinjafilters = {'basename': basename, 'dirname': dirname, 'ocpnodes': ocpnodes, 'none': none, 'type': _type}
+def certificate(value):
+    if 'BEGIN CERTIFICATE' in value:
+        return value
+    else:
+        return "-----BEGIN CERTIFICATE-----\n%s\n-----END CERTIFICATE-----" % value
+
+
+jinjafilters = {'basename': basename, 'dirname': dirname, 'ocpnodes': ocpnodes, 'none': none, 'type': _type,
+                'certificate': certificate}
