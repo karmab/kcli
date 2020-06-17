@@ -10,7 +10,7 @@ class Kexposer():
     def __init__(self, config, inputfile, overrides={}):
         app = Flask(__name__)
         self.basedir = os.path.dirname(inputfile)
-        self.parametersfiles = glob("%s/parameters_*.yml" % self.basedir)
+        self.parametersfiles = glob("%s/parameters_*.ya?ml" % self.basedir)
         if self.parametersfiles:
             plans = []
             for parameterfile in self.parametersfiles:
@@ -76,9 +76,11 @@ class Kexposer():
                         parameters[key] = value
                 try:
                     overrides = parameters
-                    if "%s/parameters_%s.yml" % (self.basedir, plan) in self.parametersfiles:
-                        fileoverrides = get_overrides(paramfile="%s/parameters_%s.yml" % (self.basedir, plan))
-                        fileoverrides.update(overrides)
+                    if self.parametersfiles:
+                        for paramfile in self.parametersfiles:
+                            if paramfile.startswith("%s/parameters_%s" % (self.basedir, plan)):
+                                fileoverrides = get_overrides(paramfile=paramfile)
+                                fileoverrides.update(overrides)
                         overrides = fileoverrides
                     if 'mail' in config.notifymethods and 'mailto' in overrides and overrides['mailto'] != "":
                         newmails = overrides['mailto'].split(',')
