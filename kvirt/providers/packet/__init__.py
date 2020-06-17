@@ -469,23 +469,24 @@ class Kpacket(object):
                 network = entry['network']
                 networktype = 'public' if entry['public'] else 'private'
                 nets.append({'device': dev, 'mac': mac, 'net': network, 'type': networktype})
-        for entry in device.network_ports:
-            if entry['type'] == 'NetworkBondPort':
-                continue
-            dev = entry['name']
-            bonded = entry['data']['bonded']
-            networktype = 'bonded' if bonded else 'vlan'
-            network = 'default'
-            if not bonded:
-                virtual_networks = entry['virtual_networks']
-                virtual_network_ids = [os.path.basename(vn['href']) for vn in virtual_networks]
-                vlans = []
-                for vlan in self.conn.list_vlans(self.project):
-                    if vlan.id in virtual_network_ids:
-                        vlans.append(vlan.description if vlan.description is not None else vlan.vxlan)
-                network = ','.join(vlans)
-            mac = entry['data']['mac']
-            nets.append({'device': dev, 'mac': mac, 'net': network, 'type': networktype})
+        if device.network_ports is not None:
+            for entry in device.network_ports:
+                if entry['type'] == 'NetworkBondPort':
+                    continue
+                dev = entry['name']
+                bonded = entry['data']['bonded']
+                networktype = 'bonded' if bonded else 'vlan'
+                network = 'default'
+                if not bonded:
+                    virtual_networks = entry['virtual_networks']
+                    virtual_network_ids = [os.path.basename(vn['href']) for vn in virtual_networks]
+                    vlans = []
+                    for vlan in self.conn.list_vlans(self.project):
+                        if vlan.id in virtual_network_ids:
+                            vlans.append(vlan.description if vlan.description is not None else vlan.vxlan)
+                    network = ','.join(vlans)
+                mac = entry['data']['mac']
+                nets.append({'device': dev, 'mac': mac, 'net': network, 'type': networktype})
         plan, profile = 'kvirt', 'kvirt'
         kube, kubetype = None, None
         kernel = None
