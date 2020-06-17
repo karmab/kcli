@@ -1736,7 +1736,6 @@ $INFO
                         common.pprint("Image %s has no associated url" % image, color='red')
                         return {'result': 'failure', 'reason': "Incorrect image"}
                     url = IMAGES[image]
-                    print(url)
                     if 'rhcos' in image:
                         url = common.get_latest_rhcos(url, _type=self.type)
                     if 'fcos' in image:

@@ -31,7 +31,7 @@ IMAGES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-i
           'centos6': 'https://cloud.centos.org/centos/6/images/CentOS-6-x86_64-GenericCloud.qcow2',
           'centos7': 'https://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2',
           'centos8': 'https://cloud.centos.org/centos/8/x86_64/images/'
-          'CentOS-8-GenericCloud-8.1.1911-20200113.3.x86_64.qcow2',
+          'CentOS-8-GenericCloud-8.2.2004-20200611.2.x86_64.qcow2',
           'cirros': 'http://download.cirros-cloud.net/0.4.0/cirros-0.4.0-x86_64-disk.img',
           'coreos': 'https://stable.release.core-os.net/amd64-usr/current/coreos_production_qemu_image.img.bz2',
           'debian8': 'https://cdimage.debian.org/cdimage/openstack/archive/8.11.0/'
