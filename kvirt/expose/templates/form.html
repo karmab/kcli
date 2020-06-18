@@ -11,6 +11,10 @@
         <input class="form-control" name="parameter_mailto" id="parameter_mailto" value="{{ mailto }}">
     <div>
     <div class="form-group">
+        <label for="inputName">Owner</label>
+        <input class="form-control" name="parameter_owner" id="parameter_owner" value="">
+    <div>
+    <div class="form-group">
     {% for parameter in parameters %}
         <label for="inputName">{{ parameter }}</label>
         <input required="true" class="form-control" name="parameter_{{ parameter }}" id="{{ parameter }}" value="{{ parameters[parameter] }}">

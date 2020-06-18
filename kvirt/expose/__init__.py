@@ -9,19 +9,19 @@ import re
 class Kexposer():
     def __init__(self, config, inputfile, overrides={}):
         app = Flask(__name__)
-        self.basedir = os.path.dirname(inputfile)
-        self.parametersfiles = glob("%s/parameters_*.ya?ml" % self.basedir)
+        self.basedir = os.path.dirname(inputfile) if '/' in inputfile else '.'
+        self.parametersfiles = glob("%s/parameters_*.y*ml" % self.basedir)
         if self.parametersfiles:
             plans = []
             for parameterfile in self.parametersfiles:
-                search = re.match('.*parameters_(.*)\.ya?ml', parameterfile)
+                search = re.match('.*parameters_(.*)\.y*ml', parameterfile)
                 plans.append(search.group(1))
         else:
             if 'PLAN' in os.environ:
                 plans = [os.environ['PLAN']]
             else:
-                pprint('Plan needs to be defined for the service to work.\
-                              Define it as an env variable or create parameters files', color='red')
+                msg = 'Define plan as an env variable or create parameters files'
+                pprint(msg, color='red')
                 os._exit(1)
         self.plans = plans
         self.overrides = overrides
@@ -30,16 +30,19 @@ class Kexposer():
         def index():
             creationdates = {}
             plans = {plan: [] for plan in self.plans}
+            planowners = {}
             for vm in config.k.list():
                 if vm['plan'] in plans:
                     if vm['plan'] not in creationdates:
                         creationdates[vm['plan']] = vm['creationdate']
                     plans[vm['plan']].append(vm)
+                    if 'owner' in vm and vm['plan'] not in planowners:
+                        planowners[vm['plan']] = vm['owner']
             finalplans = []
             for plan in plans:
                 finalplans.append({'name': plan, 'vms': plans[plan]})
             return render_template('list.html', plans=sorted(finalplans, key=lambda p: p['name']),
-                                   creationdates=creationdates)
+                                   planowners=planowners, creationdates=creationdates)
 
         @app.route("/exposedelete", methods=['POST'])
         def exposedelete():
@@ -88,6 +91,9 @@ class Kexposer():
                             config.mailto.extend(newmails)
                         else:
                             config.mailto = newmails
+                    if 'owner' in overrides and overrides['owner'] == '':
+                        del overrides['owner']
+                    config.plan(plan, delete=True)
                     result = config.plan(plan, inputfile=inputfile, overrides=overrides)
                 except Exception as e:
                     error = 'Hit issue when running plan: %s' % str(e)

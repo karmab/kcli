@@ -2,6 +2,11 @@
 <div id="wheel"></div>
 <p>
 {% for plan in plans %}
+{% if plan['name'] in planowners %}
+{% set owner = "(" + planowners[plan['name']] + ")" %}
+{% else %}
+{% set owner = '' %}
+{% endif %}
 <table class="table table-bordered table-hover">
   <tbody>
   <tr class="table-primary">
@@ -10,7 +15,7 @@
     <th>Actions</th>
   <tr>
   <th>{{ plan['name'] }}</th>
-  <th>{{ creationdates[plan['name']] }}</th>
+  <th>{{ creationdates[plan['name']] }} {{ owner }}</th>
   <th><button type="button" class="btn btn-success" onclick="location.href='{{ url_for('exposeform', plan=plan['name']) }}'" target="_blank" >Reprovision</button><button type="button" class="btn btn-danger" onclick="exposedelete('{{ plan['name'] }}');">Delete</button></th>
     <th></th>
   </tr>
