@@ -105,6 +105,7 @@ message vminfo{
     string namespace = 25 ; 
     string loadbalancer = 26 ; 
     string error = 27 ; 
+    string owner = 28 ;
 }
 
 message vmlist{

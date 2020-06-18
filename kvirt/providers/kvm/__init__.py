@@ -184,6 +184,7 @@ class Kvirt(object):
         macosx = False
         diskpath = None
         qemuextra = overrides.get('qemuextra')
+        owner = overrides.get('owner')
         if 'session' in self.url:
             usermode = True
             userport = common.get_free_port()
@@ -206,20 +207,17 @@ class Kvirt(object):
         <kvirt:creationdate>%s</kvirt:creationdate>
         <kvirt:profile>%s</kvirt:profile>""" % (creationdate, profile)
         if usermode:
-            metadata = """%s<kvirt:ip >%s</kvirt:ip>""" % (metadata, userport)
+            metadata += "\n<kvirt:ip >%s</kvirt:ip>" % userport
         if domain is not None:
-            metadata = """%s
-                        <kvirt:domain>%s</kvirt:domain>""" % (metadata, domain)
+            metadata += "\n<kvirt:domain>%s</kvirt:domain>" % domain
         if image is not None:
-            metadata = """%s
-                        <kvirt:image>%s</kvirt:image>""" % (metadata, image)
+            metadata += "\n<kvirt:image>%s</kvirt:image>" % image
         if dnsclient is not None:
-            metadata = """%s
-                        <kvirt:dnsclient>%s</kvirt:dnsclient>""" % (metadata, dnsclient)
+            metadata += "\n<kvirt:dnsclient>%s</kvirt:dnsclient>" % dnsclient
+        if owner is not None:
+            metadata += "\n<kvirt:owner>%s</kvirt:owner>" % owner
         if kube is not None and kubetype is not None:
-            metadata = """%s
-                        <kvirt:kubetype>%s</kvirt:kubetype>
-                        <kvirt:kube>%s</kvirt:kube>""" % (metadata, kubetype, kube)
+            metadata += "<kvirt:kubetype>%s</kvirt:kubetype>\n<kvirt:kube>%s</kvirt:kube>" % (kubetype, kube)
         default_poolxml = default_storagepool.XMLDesc(0)
         root = ET.fromstring(default_poolxml)
         default_pooltype = list(root.getiterator('pool'))[0].get('type')
@@ -1274,6 +1272,9 @@ class Kvirt(object):
             e = element.find('{kvirt}creationdate')
             if e is not None:
                 creationdate = e.text
+            e = element.find('{kvirt}owner')
+            if e is not None:
+                yamlinfo['owner'] = e.text
         if image is not None:
             yamlinfo['image'] = image
         yamlinfo['plan'] = plan

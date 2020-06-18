@@ -403,6 +403,8 @@ def info_vm(args):
             data['user'] = vm.user
             data['plan'] = vm.plan
             data['profile'] = vm.profile
+            if vm.owner:
+                data['owner'] = vm.owner
             if vm.nets:
                 data['nets'] = [{'device': net.device, 'mac': net.mac, 'net': net.net, 'type': net.type}
                                 for net in vm.nets]

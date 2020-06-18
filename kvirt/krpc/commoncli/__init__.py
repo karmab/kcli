@@ -209,9 +209,9 @@ def print_info(yamlinfo, output='plain', fields=[], values=False, pretty=True):
             return yamlinfo
     else:
         result = ''
-        orderedfields = ['debug', 'name', 'project', 'namespace', 'instanceid', 'creationdate', 'host', 'status',
-                         'description', 'autostart', 'image', 'user', 'plan', 'profile', 'flavor', 'cpus', 'memory',
-                         'nets', 'ip', 'disks', 'snapshots']
+        orderedfields = ['debug', 'name', 'project', 'namespace', 'instanceid', 'creationdate', 'owner', 'host',
+                         'status', 'description', 'autostart', 'image', 'user', 'plan', 'profile', 'flavor', 'cpus',
+                         'memory', 'nets', 'ip', 'disks', 'snapshots']
         otherfields = [key for key in yamlinfo if key not in orderedfields]
         for key in orderedfields + sorted(otherfields):
             if key not in yamlinfo or (fields and key not in fields):
