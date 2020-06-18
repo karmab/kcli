@@ -183,6 +183,7 @@ class Kvirt(object):
         usermode = False
         macosx = False
         diskpath = None
+        qemuextra = overrides.get('qemuextra')
         if 'session' in self.url:
             usermode = True
             userport = common.get_free_port()
@@ -709,7 +710,7 @@ class Kvirt(object):
         else:
             vcpuxml = "<vcpu>%d</vcpu>" % numcpus
         qemuextraxml = ''
-        if ignition or usermode or macosx or tpm:
+        if ignition or usermode or macosx or tpm or qemuextra is not None:
             namespace = "xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'"
             ignitionxml = ""
             if ignition:
@@ -733,11 +734,19 @@ class Kvirt(object):
                               <qemu:arg value='isa-applesmc,osk=%s'/>
                              <qemu:arg value='-smbios'/>
                              <qemu:arg value='type=2'/>""" % (cpuinfo, osk)
+            if qemuextra is not None:
+                freeformxml = ""
+                freeform = qemuextra.split(" ")
+                for entry in freeform:
+                    freeformxml += "<qemu:arg value='%s'/>\n" % entry
+            else:
+                freeformxml = ""
             qemuextraxml = """<qemu:commandline>
                               %s
                               %s
                               %s
-                              </qemu:commandline>""" % (ignitionxml, usermodexml, macosxml)
+                              %s
+                              </qemu:commandline>""" % (ignitionxml, usermodexml, macosxml, freeformxml)
         sharedxml = ""
         if sharedfolders:
             for folder in sharedfolders:

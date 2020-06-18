@@ -1062,6 +1062,7 @@ class Kpacket(object):
     def _ipxe(self, kernel, initrd, metal, ignition_url):
         ipxeparameters = "ip=dhcp rd.neednet=1 console=ttyS1,115200n8 coreos.inst=yes coreos.inst.install_dev=sda"
         return """#!ipxe
+
 kernel %s %s initrd=%s coreos.inst.image_url=%s coreos.inst.ignition_url=%s
 initrd %s
 boot""" % (kernel, ipxeparameters, initrd, metal, ignition_url, initrd)
