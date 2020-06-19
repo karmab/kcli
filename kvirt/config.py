@@ -1957,5 +1957,5 @@ $INFO
             common.pprint("No input file found nor default kcli_plan.yml.Leaving....", color='red')
             os._exit(1)
         common.pprint("Handling expose of plan with name %s and inputfile %s" % (plan, inputfile))
-        kexposer = Kexposer(self, inputfile, overrides=overrides)
+        kexposer = Kexposer(self, inputfile, overrides=overrides, plan=plan)
         kexposer.run()

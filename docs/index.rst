@@ -828,11 +828,12 @@ hosts/clients:
 Using plans
 -----------
 
-You can also define plan files in yaml with a list of profiles, vms,
-disks, and networks and vms to deploy and deploy it with kcli plan. The
-following type can be used within a plan:
+You can also define *plan* which are files in yaml with a list of
+profiles, vms, disks, and networks and vms to deploy.
 
--  vm ( this is the type used when none is specified )
+The following types can be used within a plan:
+
+-  vm (this is the type used when none is specified)
 -  image
 -  network
 -  disk
@@ -841,13 +842,12 @@ following type can be used within a plan:
 -  ansible
 -  container
 -  dns
--  plan ( so you can compose plans from several urls)
+-  plan (so you can compose plans from several urls)
 -  kube
 
-Here are some examples of each type ( additional ones can be found in
+Here are some examples of each type (additional ones can be found in
 this `samples
-directory <https://github.com/karmab/kcli-plans/tree/master/samples>`__
-):
+directory <https://github.com/karmab/kcli-plans/tree/master/samples>`__):
 
 network
 ~~~~~~~
@@ -870,12 +870,10 @@ image
      type: image
      url: http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2
 
-It will only be downloaded only if not present
-
-If you point to an url not ending in qcow2/qc2 ( or img), your browser
+If you point to an url not ending in qcow2/qc2 (or img), your browser
 will be opened for you to proceed. Also note that you can specify a
 command with the *cmd* key, so that virt-customize is used on the
-template once it’s downloaded
+template once it’s downloaded.
 
 disk
 ~~~~
@@ -1009,29 +1007,18 @@ Specific scripts and IPS arrays can be used directly in the plan file
 (or in profiles one).
 
 The `kcli-plans repo <https://github.com/karmab/kcli-plans>`__ contains
-samples to get you started, along with plans for projects i often use
-(openshift, kubevirt,openstack, ovirt, …) .
-
-The description of the vm will automatically be set to the plan name,
-and this value will be used when deleting the entire plan as a way to
-locate matching vms.
+samples to get you started, along with plans for projects I often use
+(openshift, kubevirt,openstack, ovirt, …).
 
 When launching a plan, the plan name is optional. If not is provided, a
-random generated keyword will be used.
+random one will be used.
 
-If a file with the plan isn’t specified with -f , the file kcli_plan.yml
-in the current directory will be used, if available.
+If a file with the plan isn’t specified with -f , the file
+``kcli_plan.yml`` in the current directory will be used.
 
 When deleting a plan, the network of the vms will also be deleted if no
 other vm are using them. You can prevent this by using the keep (-k)
 flag.
-
-For an advanced use of plans, check the
-`kcli-plans <https://github.com/karmab/kcli-plans>`__ repository to
-deploy all upstream/downstream projects associated with Red Hat Cloud
-Infrastructure products or
-`kcli-openshift4 <https://github.com/karmab/kcli-openshift4>`__ which
-leverages kcli to deploy openshift4 anywhere.
 
 Remote plans
 ------------
@@ -1085,7 +1072,7 @@ alias as keys. type defaults to virtio but you can specify anyone
 (e1000,….).
 
 You can also use *noconf: true* to only add the nic with no
-configuration done in the vmñ
+configuration done in the vm.
 
 Fore coreos based vms, You can also use *etcd: true* to auto configure
 etcd on the corresponding nic.
@@ -1172,6 +1159,49 @@ Finally, note that if using the docker version of kcli against your
 local hypervisor , you’ll need to pass a docker socket:
 
 ``docker run --rm -v /var/run/libvirt:/var/run/libvirt -v ~/.ssh:/root/.ssh -v /var/run/docker.sock:/var/run/docker.sock karmab/kcli``
+
+Exposing a plan
+---------------
+
+Basic functionality
+~~~~~~~~~~~~~~~~~~~
+
+You can expose through web a single plan with ``kcli expose`` so that
+others can make use of some infrastructure you own without having to
+deal with kcli themseleves.
+
+The user will be presented with a simple UI with a listing of the
+current vms of the plan and buttons allowing to either delete the plan
+or reprovision it.
+
+To expose your plan (with an optional list of parameters):
+
+::
+
+    kcli expose plan -f your_plan.yml -P param1=value1 -P param2=value plan_name
+
+The indicated parameters are the ones from the plan that you want to
+expose to the user upon provisioning, with their corresponding default
+value.
+
+When the user reprovisions, In addition to those parameters, he will be
+able to specify:
+
+-  a list of mail addresses to notify upon completion of the lab
+   provisioning. Note it requires to properly set notifications in your
+   kcli config.
+-  an optional owner which will be added as metadata to the vms, so that
+   it’s easy to know who provisioned a given plan
+
+Precreating a list of plans
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you’re running the same plan with different parameter files, you can
+simply create them in the directory where your plan lives, naming them
+parameters_XXX.yml (or .yaml). The UI will then show you those as
+separated plans so that they can be provisioned individually applying
+the corresponding values from the parameter files (after merging them
+with the user provided data).
 
 Ansible support
 ---------------

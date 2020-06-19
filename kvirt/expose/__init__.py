@@ -7,7 +7,7 @@ import re
 
 
 class Kexposer():
-    def __init__(self, config, inputfile, overrides={}):
+    def __init__(self, config, inputfile, overrides={}, plan=None):
         app = Flask(__name__)
         self.basedir = os.path.dirname(inputfile) if '/' in inputfile else '.'
         self.parametersfiles = glob("%s/parameters_*.y*ml" % self.basedir)
@@ -16,6 +16,8 @@ class Kexposer():
             for parameterfile in self.parametersfiles:
                 search = re.match('.*parameters_(.*)\.y*ml', parameterfile)
                 plans.append(search.group(1))
+        elif plan is not None:
+            plans = [plan]
         else:
             if 'PLAN' in os.environ:
                 plans = [os.environ['PLAN']]
