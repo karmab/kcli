@@ -16,6 +16,7 @@ from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_AGENT as vir_src_agent
 from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE as vir_src_lease
 from libvirt import (VIR_DOMAIN_NOSTATE, VIR_DOMAIN_RUNNING, VIR_DOMAIN_BLOCKED, VIR_DOMAIN_PAUSED,
                      VIR_DOMAIN_SHUTDOWN, VIR_DOMAIN_SHUTOFF, VIR_DOMAIN_CRASHED)
+from pwd import getpwuid
 import json
 import os
 from subprocess import call
@@ -2478,7 +2479,13 @@ class Kvirt(object):
         code = call(downloadcmd, shell=True)
         if code == 23:
             common.pprint("Consider running the following command on the hypervisor:", color="blue")
-            common.pprint("sudo setfacl -m u:%s:rwx %s" % (self.user, downloadpath), color="blue")
+            setfacluser = self.user
+            if self.host in ['localhost', '127.0.0.1']:
+                if not os.path.exists("/i_am_a_container"):
+                    setfacluser = getpwuid(os.getuid()).pw_name
+                else:
+                    setfacluser = "your_user"
+            common.pprint("sudo setfacl -m u:%s:rwx %s" % (setfacluser, downloadpath), color="blue")
             return {'result': 'failure', 'reason': "of Permission issues"}
         elif code != 0:
             return {'result': 'failure', 'reason': "Unable to download indicated image"}
