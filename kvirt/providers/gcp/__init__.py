@@ -759,7 +759,7 @@ class Kgcp(object):
         try:
             conn.disks().delete(zone=zone, project=project, disk=diskname).execute()
         except:
-            return {'result': 'failure', 'reason': "Disk %s not found" % name}
+            return {'result': 'failure', 'reason': "Disk %s not found" % diskname}
         return
 
     def list_disks(self):

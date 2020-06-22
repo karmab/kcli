@@ -993,15 +993,12 @@ def create_vmdisk(args):
 
 def delete_vmdisk(args):
     """Delete disk of vm"""
-    name = args.name
+    name = args.vm
     diskname = args.diskname
     pool = args.pool
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
-    if diskname is None:
-        common.pprint("Missing diskname. Leaving...", color='red')
-        os._exit(1)
-    common.pprint("Deleting disk %s from vm %s" % (diskname, name))
+    common.pprint("Deleting disk %s" % diskname)
     k.delete_disk(name=name, diskname=diskname, pool=pool)
     return
 
@@ -2812,9 +2809,9 @@ def cli():
     vmdiskdelete_desc = 'Delete Vm Disk'
     diskdelete_epilog = "examples:\n%s" % diskdelete
     vmdiskdelete_parser = argparse.ArgumentParser(add_help=False)
-    vmdiskdelete_parser.add_argument('-n', '--diskname', help='Name or Path of the disk', metavar='DISKNAME')
+    vmdiskdelete_parser.add_argument('--vm', help='Name of the vm', metavar='VMNAME')
     vmdiskdelete_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
-    vmdiskdelete_parser.add_argument('name', metavar='VMNAME')
+    vmdiskdelete_parser.add_argument('diskname', metavar='DISKNAME')
     vmdiskdelete_parser.set_defaults(func=delete_vmdisk)
     delete_subparsers.add_parser('disk', parents=[vmdiskdelete_parser], description=vmdiskdelete_desc,
                                  aliases=['vm-disk'], help=vmdiskdelete_desc, epilog=diskdelete_epilog,

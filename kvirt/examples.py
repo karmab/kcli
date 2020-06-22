@@ -5,8 +5,11 @@ $ kcli create disk -s 10 vm1
 $ kcli create disk -s 5 -p images vm2
 """
 
-diskdelete = """# Delete disk named vm1_2.img from vm vm1
-$ kcli delete disk -n vm1_2.img vm1
+diskdelete = """# Delete disk named xxx.img
+$ kcli delete disk xxx.img
+
+# Delete disk named vm1_2.img from vm vm1
+$ kcli delete disk --vm vm1 vm1_2.img
 """
 
 dnscreate = """# Create a dns entry
