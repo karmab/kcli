@@ -58,7 +58,7 @@
 {% endif %}
 
 {{ cluster }}-master-{{ num }}:
- domain: {{ cluster }}.{{ domain }} 
+ domain: {{ domain }} 
  image: {{ image }}
  enableroot: false 
  keys: {{ keys }}

@@ -7,7 +7,7 @@
  {% set net0 = network %}
 {% endif %}
 {{ cluster }}-worker-{{ num }}:
- domain: {{ cluster }}.{{ domain }} 
+ domain: {{ domain }} 
  image: {{ image }}
  keys: {{ keys }}
  enableroot: false 

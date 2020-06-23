@@ -1,0 +1,13 @@
+{% for num in range(0, workers) %}
+{{ cluster }}-worker-{{ num }}:
+ domain: {{ domain }} 
+ image: {{ image }}
+ enableroot: {{ enableroot }}
+ numcpus: {{ numcpus }}
+ memory: {{ worker_memory }}
+ nets:
+ - name: {{ network }}
+ reservedns: true
+ disks: {{ [disk_size] + extra_disks }}
+ tags: [{{ tag }}]
+{% endfor %}

@@ -50,7 +50,6 @@ apps.{{ cluster }}:
 {% endfor %}
 {% endif %}
 
-{% if not cloud_scale %}
 {{ cluster }}-bootstrap:
  image: {{ image }}
  enableroot: {{ enableroot }}
@@ -65,7 +64,7 @@ apps.{{ cluster }}:
 
 {% for num in range(0, masters) %}
 {{ cluster }}-master-{{ num }}:
- domain: {{ cluster }}.{{ domain }} 
+ domain: {{ domain }} 
  image: {{ image }}
  enableroot: {{ enableroot }}
  numcpus: {{ numcpus }}
@@ -87,21 +86,5 @@ apps.{{ cluster }}:
    origin: gcp-hack.preset
    mode: 644
 {% endif %}
- tags: [{{ tag }}]
-{% endfor %}
-
-{% endif %}
-
-{% for num in range(0, workers) %}
-{{ cluster }}-worker-{{ num }}:
- domain: {{ cluster }}.{{ domain }} 
- image: {{ image }}
- enableroot: {{ enableroot }}
- numcpus: {{ numcpus }}
- memory: {{ worker_memory }}
- nets:
- - name: {{ network }}
- reservedns: true
- disks: {{ [disk_size] + extra_disks }}
  tags: [{{ tag }}]
 {% endfor %}

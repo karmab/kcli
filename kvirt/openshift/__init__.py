@@ -166,7 +166,7 @@ def scale(config, plandir, cluster, overrides):
     if platform in virtplatforms:
         config.plan(cluster, inputfile='%s/workers.yml' % plandir, overrides=overrides)
     elif platform in cloudplatforms:
-        config.plan(cluster, inputfile='%s/cloud.yml' % plandir, overrides=overrides)
+        config.plan(cluster, inputfile='%s/cloud_workers.yml' % plandir, overrides=overrides)
 
 
 def create(config, plandir, cluster, overrides):
@@ -545,7 +545,7 @@ def create(config, plandir, cluster, overrides):
         if platform in ['kubevirt', 'openstack', 'vsphere', 'packet']:
             todelete.append("%s-bootstrap-helper" % cluster)
     else:
-        result = config.plan(cluster, inputfile='%s/cloud.yml' % plandir, overrides=overrides)
+        result = config.plan(cluster, inputfile='%s/cloud_masters.yml' % plandir, overrides=overrides)
         if result['result'] != 'success':
             os._exit(1)
         call('openshift-install --dir=%s wait-for bootstrap-complete || exit 1' % clusterdir, shell=True)
@@ -572,7 +572,10 @@ def create(config, plandir, cluster, overrides):
             pprint("Deploying workers", color='blue')
             if 'name' in overrides:
                 del overrides['name']
-            result = config.plan(cluster, inputfile='%s/workers.yml' % plandir, overrides=overrides)
+            if platform in virtplatforms:
+                result = config.plan(cluster, inputfile='%s/workers.yml' % plandir, overrides=overrides)
+            elif platform in cloudplatforms:
+                result = config.plan(cluster, inputfile='%s/cloud_workers.yml' % plandir, overrides=overrides)
             if result['result'] != 'success':
                 os._exit(1)
     if not minimal:
