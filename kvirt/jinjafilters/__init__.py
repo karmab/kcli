@@ -1,3 +1,4 @@
+from base64 import b64encode
 import os
 
 
@@ -11,6 +12,12 @@ def dirname(path):
 
 def none(value):
     return value if value is not None else ''
+
+
+def base64(value):
+    if value is None:
+        return None
+    return str(b64encode(value.encode('utf-8')), 'utf-8')
 
 
 def _type(value):
@@ -43,4 +50,4 @@ def certificate(value):
 
 
 jinjafilters = {'basename': basename, 'dirname': dirname, 'ocpnodes': ocpnodes, 'none': none, 'type': _type,
-                'certificate': certificate}
+                'certificate': certificate, 'base64': base64}
