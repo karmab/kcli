@@ -346,6 +346,7 @@ class Kconfig(Kbaseconfig):
             default_pcidevices = father.get('pcidevices', self.pcidevices)
             default_tpm = father.get('tpm', self.tpm)
             default_rng = father.get('rng', self.rng)
+            default_zerotier = father.get('zerotier', self.zerotier)
             default_virttype = father.get('virttype', self.virttype)
         else:
             default_numcpus = self.numcpus
@@ -366,6 +367,7 @@ class Kconfig(Kbaseconfig):
             default_pcidevices = self.pcidevices
             default_tpm = self.tpm
             default_rng = self.rng
+            default_zerotier = self.zerotier
             default_disksize = self.disksize
             default_diskinterface = self.diskinterface
             default_diskthin = self.diskthin
@@ -427,6 +429,7 @@ class Kconfig(Kbaseconfig):
         pcidevices = profile.get('pcidevices', default_pcidevices)
         tpm = profile.get('tpm', default_tpm)
         rng = profile.get('rng', default_rng)
+        zerotier = profile.get('zerotier', default_zerotier)
         numcpus = profile.get('numcpus', default_numcpus)
         memory = profile.get('memory', default_memory)
         pool = profile.get('pool', default_pool)
@@ -602,7 +605,12 @@ class Kconfig(Kbaseconfig):
                 sharedfoldercmds.append(cmd2)
         if sharedfoldercmds:
             sharedfoldercmds.append("mount -a")
-        cmds = rhncommands + sharedfoldercmds + cmds + scriptcmds
+        zerotiercmds = []
+        if zerotier:
+            zerotiercmds.append("curl -s https://install.zerotier.com | bash")
+            for entry in zerotier:
+                zerotiercmds.append("zerotier-cli join %s" % entry)
+        cmds = rhncommands + sharedfoldercmds + zerotiercmds + cmds + scriptcmds
         if notify:
             if notifycmd is None and notifyscript is None:
                 if 'cos' in image:
