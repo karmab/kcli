@@ -155,6 +155,11 @@ def scale(config, plandir, cluster, overrides):
     k = config.k
     pprint("Scaling on client %s" % client, color='blue')
     cluster = overrides.get('cluster', 'testk')
+    if platform == 'packet':
+        network = overrides.get('network')
+        if network is None:
+            pprint("You need to indicate a specific vlan network", color='red')
+            os._exit(1)
     image = k.info("%s-master-0" % cluster).get('image')
     if image is None:
         pprint("Missing image...", color='red')
@@ -162,11 +167,15 @@ def scale(config, plandir, cluster, overrides):
     else:
         pprint("Using image %s" % image, color='blue')
     overrides['image'] = image
-    overrides['scale'] = True
     if platform in virtplatforms:
-        config.plan(cluster, inputfile='%s/workers.yml' % plandir, overrides=overrides)
+        result = config.plan(cluster, inputfile='%s/workers.yml' % plandir, overrides=overrides)
     elif platform in cloudplatforms:
-        config.plan(cluster, inputfile='%s/cloud_workers.yml' % plandir, overrides=overrides)
+        result = config.plan(cluster, inputfile='%s/cloud_workers.yml' % plandir, overrides=overrides)
+    if result['result'] != 'success':
+        os._exit(1)
+    elif platform == 'packet' and 'newvms' in result and result['newvms']:
+        for node in result['newvms']:
+            k.add_nic(node, network)
 
 
 def create(config, plandir, cluster, overrides):
@@ -536,6 +545,10 @@ def create(config, plandir, cluster, overrides):
         result = config.plan(cluster, inputfile='%s/masters.yml' % plandir, overrides=overrides)
         if result['result'] != 'success':
             os._exit(1)
+        if platform == 'packet':
+            allnodes = ["%s-bootstrap" % cluster] + ["%s-master-%s" % (cluster, num) for num in range(masters)]
+            for node in allnodes:
+                k.add_nic(node, network)
         run = call('openshift-install --dir=%s wait-for bootstrap-complete' % clusterdir, shell=True)
         if run != 0:
             pprint("Leaving environment for debugging purposes", color='red')
@@ -578,6 +591,10 @@ def create(config, plandir, cluster, overrides):
                 result = config.plan(cluster, inputfile='%s/cloud_workers.yml' % plandir, overrides=overrides)
             if result['result'] != 'success':
                 os._exit(1)
+            if platform == 'packet':
+                allnodes = ["%s-worker-%s" % (cluster, num) for num in range(workers)]
+                for node in allnodes:
+                    k.add_nic(node, network)
     if not minimal:
         installcommand = 'openshift-install --dir=%s wait-for install-complete' % clusterdir
         installcommand = "%s | %s" % (installcommand, installcommand)

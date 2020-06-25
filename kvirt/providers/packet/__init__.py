@@ -990,7 +990,8 @@ class Kpacket(object):
                                'dhcp': True, 'domain': facility, 'type': 'ipv%s' % ip.address_family, 'mode': mode}
         for vlan in self.conn.list_vlans(self.project):
             cidr = vlan.description if vlan.description is not None else 'N/A'
-            networks[vlan.id] = {'cidr': cidr, 'dhcp': False, 'domain': facility, 'type': 'vlan', 'mode': vlan.vxlan}
+            networks[vlan.id] = {'cidr': cidr, 'dhcp': False, 'domain': vlan.facility_code, 'type': 'vlan',
+                                 'mode': vlan.vxlan}
         return networks
 
     def list_subnets(self):

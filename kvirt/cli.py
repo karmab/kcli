@@ -949,7 +949,7 @@ def update_vm(args):
             k.update_start(name, start=False)
         elif information:
             common.pprint("Setting information for vm %s..." % name)
-            k.update_descrmation(name, information)
+            k.update_information(name, information)
         elif iso is not None:
             common.pprint("Switching iso for vm %s to %s..." % (name, iso))
             k.update_iso(name, iso)
