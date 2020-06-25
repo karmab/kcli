@@ -559,7 +559,8 @@ class Kconfig(Kbaseconfig):
                     return {'result': 'failure', 'reason': "Script %s not found" % script}
                 else:
                     scriptbasedir = os.path.dirname(script) if os.path.dirname(script) != '' else '.'
-                    env = Environment(loader=FileSystemLoader(scriptbasedir), undefined=undefined)
+                    env = Environment(loader=FileSystemLoader(scriptbasedir), undefined=undefined,
+                                      extensions=['jinja2.ext.do'])
                     try:
                         templ = env.get_template(os.path.basename(script))
                         scriptentries = templ.render(overrides)

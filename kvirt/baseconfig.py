@@ -643,7 +643,7 @@ class Kbaseconfig:
         basedir = os.path.dirname(inputfile) if os.path.dirname(inputfile) != '' else '.'
         basefile = None
         undefined = strictundefined if not ignore else defaultundefined
-        env = Environment(loader=FileSystemLoader(basedir), undefined=undefined)
+        env = Environment(loader=FileSystemLoader(basedir), undefined=undefined, extensions=['jinja2.ext.do'])
         for jinjafilter in jinjafilters.jinjafilters:
             env.filters[jinjafilter] = jinjafilters.jinjafilters[jinjafilter]
         try:
@@ -933,7 +933,7 @@ class Kbaseconfig:
             parameters = {}
         parameters.update(overrides)
         jenkinsdir = os.path.dirname(common.__file__)
-        env = Environment(loader=FileSystemLoader(jenkinsdir))
+        env = Environment(loader=FileSystemLoader(jenkinsdir), extensions=['jinja2.ext.do'])
         for jinjafilter in jinjafilters.jinjafilters:
             env.filters[jinjafilter] = jinjafilters.jinjafilters[jinjafilter]
         try:
