@@ -45,11 +45,16 @@ def get_minimal_rhcos():
 
 def get_downstream_installer(nightly=False, macosx=False, tag=None):
     repo = 'ocp-dev-preview' if nightly else 'ocp'
-    latest = 'latest' if tag is None else 'latest-%s' % tag
+    if tag is None:
+        repo += '/latest'
+    elif tag.count('.') == 1:
+        repo += '/latest-%s' % tag
+    else:
+        repo += '/%s' % tag
     INSTALLSYSTEM = 'mac' if os.path.exists('/Users') or macosx else 'linux'
     msg = 'Downloading openshift-install from https://mirror.openshift.com/pub/openshift-v4/clients/%s' % repo
     pprint(msg, color='blue')
-    r = urlopen("https://mirror.openshift.com/pub/openshift-v4/clients/%s/latest/release.txt" % repo).readlines()
+    r = urlopen("https://mirror.openshift.com/pub/openshift-v4/clients/%s/release.txt" % repo).readlines()
     version = None
     for line in r:
         if 'Name' in str(line):
@@ -58,7 +63,7 @@ def get_downstream_installer(nightly=False, macosx=False, tag=None):
     if version is None:
         pprint("Coudldn't find version", color='red')
         os._exit(1)
-    cmd = "curl -s https://mirror.openshift.com/pub/openshift-v4/clients/%s/%s/" % (repo, latest)
+    cmd = "curl -s https://mirror.openshift.com/pub/openshift-v4/clients/%s/" % repo
     cmd += "openshift-install-%s-%s.tar.gz " % (INSTALLSYSTEM, version)
     cmd += "| tar zxf - openshift-install"
     cmd += "; chmod 700 openshift-install"
