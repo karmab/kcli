@@ -858,7 +858,7 @@ class Kvirt(object):
         rngxml = ""
         if rng:
             rngxml = """<rng model='virtio'>
-                        <rate bytes='192' period='300000'/>
+                        <rate bytes='1024' period='1000'/>
                         <backend model='random'>/dev/random</backend>
                         <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0'/>
                         </rng>"""
