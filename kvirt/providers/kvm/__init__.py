@@ -426,6 +426,7 @@ class Kvirt(object):
             if usermode:
                 continue
             ovs = False
+            nicnuma = None
             macxml = ''
             ovsxml = ''
             nettype = 'virtio'
@@ -446,6 +447,8 @@ class Kvirt(object):
                     ovs = True
                 if 'ip' in nets[index] and index == 0:
                     metadata = """%s<kvirt:ip >%s</kvirt:ip>""" % (metadata, nets[index]['ip'])
+                if 'numa' in nets[index]:
+                    nicnuma = nets[index]['numa']
             if ips and len(ips) > index and ips[index] is not None and\
                     netmasks and len(netmasks) > index and netmasks[index] is not None and gateway is not None:
                 nets[index]['ip'] = ips[index]
@@ -476,13 +479,18 @@ class Kvirt(object):
                     ovsxml.format(port_name)
                 else:
                     ovsxml.format("")
+            if nicnuma is not None:
+                nicnumaxml = "<address type='pci' domain='0x0000' bus='0x0%s' function='0x0'/>" % (nicnuma + 1)
+            else:
+                nicnumaxml = ""
             netxml = """%s
                      <interface type='%s'>
                      %s
                      %s
                      %s
+                     %s
                      <model type='%s'/>
-                     </interface>""" % (netxml, iftype, macxml, sourcexml, ovsxml, nettype)
+                     </interface>""" % (netxml, iftype, macxml, sourcexml, ovsxml, nicnumaxml, nettype)
         metadata = """%s
                     <kvirt:plan>%s</kvirt:plan>
                     </kvirt:info>
@@ -626,6 +634,7 @@ class Kvirt(object):
                         continue
                     elif policy in ['force', 'require', 'optional', 'disable', 'forbid']:
                         cpuxml += "<feature policy='%s' name='%s'/>" % (policy, feature)
+        busxml = ""
         if cpuxml != '':
             if numa:
                 numamemory = 0
@@ -643,6 +652,14 @@ class Kvirt(object):
                             return {'result': 'failure', 'reason': msg}
                         numaxml += "<cell id='%s' cpus='%s' memory='%s' unit='MiB'/>" % (cellid, cellcpus, cellmemory)
                         numamemory += int(cellmemory)
+                        busxml += """<controller type='pci' index='%s' model='pci-expander-bus'>
+                        <model name='pxb'/>
+                        <target busNr='%s'>
+                        <node>%s</node>
+                        </target>
+                        <alias name='pci.%s'/>
+                        <address type='pci' domain='0x0000' bus='0x00' function='0x0'/>
+                        </controller>""" % (index + 1, 254 - index * 2, cellid, index + 1)
                 cpuxml += '%s</numa>' % numaxml
                 if numamemory > memory:
                     msg = "Can't use more memory for numa than assigned memory"
@@ -904,13 +921,14 @@ class Kvirt(object):
                     %s
                     %s
                     %s
+                    %s
                   </devices>
                     %s
                     %s
                     </domain>""" % (virttype, namespace, name, metadata, memoryhotplugxml, cpupinningxml, numatunexml,
-                                    memory, vcpuxml, machine, firmwarexml, bootdev, kernelxml, disksxml, netxml, isoxml,
-                                    displayxml, serialxml, sharedxml, guestxml, videoxml, hostdevxml, rngxml, tpmxml,
-                                    cpuxml, qemuextraxml)
+                                    memory, vcpuxml, machine, firmwarexml, bootdev, kernelxml, disksxml, busxml,
+                                    netxml, isoxml, displayxml, serialxml, sharedxml, guestxml, videoxml, hostdevxml,
+                                    rngxml, tpmxml, cpuxml, qemuextraxml)
         if self.debug:
             print(vmxml)
         conn.defineXML(vmxml)
