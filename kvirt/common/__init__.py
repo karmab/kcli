@@ -1008,6 +1008,8 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
             elif isinstance(net, dict):
                 if image is not None and ('fcos' in image or 'fedora-coreos' in image):
                     default_nicname = "eth%s" % index
+                elif net.get('numa') is not None:
+                    default_nicname = "enp%ds0" % (255 - 2 * index)
                 else:
                     default_nicname = "ens%d" % (index + 3)
                 if image == 'custom_ipxe':
