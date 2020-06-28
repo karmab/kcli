@@ -6,6 +6,13 @@
 {% else %}
  {% set net0 = network %}
 {% endif %}
+{% if extra_workers_networks %}
+ {% set extra_networks = extra_workers_networks %}
+{% endif %}
+{% if extra_workers_disks %}
+ {% set extra_disks = extra_workers_disks %}
+{% endif %}
+
 {{ cluster }}-worker-{{ num }}:
  domain: {{ domain }} 
  image: {{ image }}

@@ -11,6 +11,7 @@ master_memory: 6144
 master_tpm: false
 master_rng: false
 worker_memory: 4096
+disk_size: 30
 worker_tpm: false
 worker_rng: false
 deploy_app: false
@@ -20,7 +21,11 @@ multus: false
 notifycmd: "kubectl get pod -A"
 notify: false
 extra_disks: []
+extra_masters_disks: []
+extra_workers_disks: []
 extra_networks: []
+extra_masters_networks: []
+extra_workers_networks: []
 info: |
     Deploys kubernetes using kubeadm on an arbitrary number of masters and workers.
     when using more than a master, a load balancer gets deployed (as an haproxy vm if not running on cloud)

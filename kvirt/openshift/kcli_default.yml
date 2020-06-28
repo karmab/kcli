@@ -32,7 +32,11 @@ keys: []
 api_ip: 
 ingress_ip: 
 extra_disks: []
+extra_masters_disks: []
+extra_workers_disks: []
 extra_networks: []
+extra_masters_networks: []
+extra_workers_networks: []
 master_macs: []
 master_ips: []
 bootstrap_mac: 

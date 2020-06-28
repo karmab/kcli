@@ -56,6 +56,12 @@
 {% if baremetal and not extra_networks %}
  {% set extra_networks = [provisioning_net] %}
 {% endif %}
+{% if extra_masters_networks %}
+ {% set extra_networks = extra_masters_networks %}
+{% endif %}
+{% if extra_masters_disks %}
+ {% set extra_disks = extra_masters_disks %}
+{% endif %}
 
 {{ cluster }}-master-{{ num }}:
  domain: {{ domain }} 

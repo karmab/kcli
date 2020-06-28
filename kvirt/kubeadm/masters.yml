@@ -19,6 +19,13 @@
 {%endif %}
 
 {% for number in range(0, masters) %}
+{% if extra_masters_networks %}
+ {% set extra_networks = extra_masters_networks %}
+{% endif %}
+{% if extra_masters_disks %}
+ {% set extra_disks = extra_masters_disks %}
+{% endif %}
+
 {{cluster}}-master-{{ number }}:
  image: {{ image }}
  numcpus: {{ numcpus }}
@@ -32,10 +39,8 @@
  notify: {{ notify }}
  notifycmd: {{ notifycmd }}
 {% endif %}
- nets:
-  - {{ network }}
- disks:
-  - size: 50
+ nets: {{ [network] + extra_networks }}
+ disks: {{ [disk_size] + extra_disks }}
  pool: {{ pool }}
  files:
 {% if config_type == 'ovirt' %}
