@@ -7,9 +7,11 @@ cluster: testk
 domain: karmalabs.com
 pool: default
 numcpus: 4
+master_numcpus:
 master_memory: 6144
 master_tpm: false
 master_rng: false
+worker_numcpus:
 worker_memory: 4096
 disk_size: 30
 worker_tpm: false
@@ -20,12 +22,21 @@ sdn: flannel
 multus: false
 notifycmd: "kubectl get pod -A"
 notify: false
+numa:
+numa_master:
+numa_worker:
+numamode:
+numamode_master:
+numamode_worker:
+cpupinning:
+cpupinning_master:
+cpupinning_worker:
 extra_disks: []
-extra_masters_disks: []
-extra_workers_disks: []
+extra_master_disks: []
+extra_worker_disks: []
 extra_networks: []
-extra_masters_networks: []
-extra_workers_networks: []
+extra_master_networks: []
+extra_worker_networks: []
 info: |
     Deploys kubernetes using kubeadm on an arbitrary number of masters and workers.
     when using more than a master, a load balancer gets deployed (as an haproxy vm if not running on cloud)

@@ -18,14 +18,16 @@ domain: karmalabs.com
 network_type: OpenShiftSDN
 minimal: false
 numcpus: 4
+master_numcpus:
 master_memory: 8192
 master_tpm: false
 master_rng: false
+worker_numcpus:
 worker_memory: 8192
 worker_tpm: false
 worker_rng: false
+bootstrap_numcpus:
 bootstrap_memory: 6144
-bootstrap_numcpus: 4
 disk_size: 30
 autostart: false
 keys: []
@@ -35,18 +37,24 @@ extra_disks: []
 extra_masters_disks: []
 extra_workers_disks: []
 extra_networks: []
-extra_masters_networks: []
-extra_workers_networks: []
+extra_master_networks: []
+extra_worker_networks: []
 master_macs: []
 master_ips: []
 bootstrap_mac: 
 bootstrap_ip: 
 worker_macs: []
 worker_ips: []
-numa:
-numamode:
-cpupinning:
 pcidevices:
+numa:
+numa_master:
+numa_worker:
+numamode:
+numamode_master:
+numamode_worker:
+cpupinning:
+cpupinning_master:
+cpupinning_workers:
 disconnected_url:
 disconnected_user:
 disconnected_password:

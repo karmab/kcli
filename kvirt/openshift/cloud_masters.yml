@@ -53,7 +53,7 @@ apps.{{ cluster }}:
 {{ cluster }}-bootstrap:
  image: {{ image }}
  enableroot: {{ enableroot }}
- numcpus: 2
+ numcpus: {{ bootstrap_numcpus | default(numcpus) }}
  memory: {{ bootstrap_memory }}
  nets:
  - name: {{ network }}
@@ -67,7 +67,7 @@ apps.{{ cluster }}:
  domain: {{ domain }} 
  image: {{ image }}
  enableroot: {{ enableroot }}
- numcpus: {{ numcpus }}
+ numcpus: {{ master_numcpus | default(numcpus) }}
  memory: {{ master_memory }}
  nets:
  - name: {{ network }}

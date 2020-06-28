@@ -19,16 +19,25 @@
 {%endif %}
 
 {% for number in range(0, masters) %}
-{% if extra_masters_networks %}
- {% set extra_networks = extra_masters_networks %}
+{% if extra_master_networks %}
+ {% set extra_networks = extra_master_networks %}
 {% endif %}
-{% if extra_masters_disks %}
- {% set extra_disks = extra_masters_disks %}
+{% if extra_master_disks %}
+ {% set extra_disks = extra_master_disks %}
+{% endif %}
+{% if numa_master != None %}
+ {% set numa = numa_master %}
+{% endif %}
+{% if numamode_master != None %}
+ {% set numa_mode = numamode_master %}
+{% endif %}
+{% if cpupinning_master != None %}
+ {% set cpupinning = cpupinning_master %}
 {% endif %}
 
 {{cluster}}-master-{{ number }}:
  image: {{ image }}
- numcpus: {{ numcpus }}
+ numcpus: {{ master_numcpus | default(numcpus) }}
  memory: {{ master_memory }}
 {% if masters > 1 %}
  reservedns: true
@@ -74,5 +83,14 @@
 {% if nfs %}
   - nfs.sh
 {% endif %}
+{% endif %}
+{% if numa != None %}
+ numa: {{ numa }}
+{% endif %}
+{% if numamode != None %}
+ numamode: {{ numamode }}
+{% endif %}
+{% if cpupinning != None %}
+ cpupinning: {{ cpupinning }}
 {% endif %}
 {% endfor %}

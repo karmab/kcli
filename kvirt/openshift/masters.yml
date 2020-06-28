@@ -1,7 +1,7 @@
 {{ cluster }}-bootstrap:
  image: {{ image }}
  keys: {{ keys }}
- numcpus: {{ bootstrap_numcpus }}
+ numcpus: {{ bootstrap_numcpus | default(numcpus) }}
  enableroot: false 
  memory: {{ bootstrap_memory }}
  nets:
@@ -56,11 +56,20 @@
 {% if baremetal and not extra_networks %}
  {% set extra_networks = [provisioning_net] %}
 {% endif %}
-{% if extra_masters_networks %}
- {% set extra_networks = extra_masters_networks %}
+{% if extra_master_networks %}
+ {% set extra_networks = extra_master_networks %}
 {% endif %}
-{% if extra_masters_disks %}
- {% set extra_disks = extra_masters_disks %}
+{% if extra_master_disks %}
+ {% set extra_disks = extra_master_disks %}
+{% endif %}
+{% if numa_master != None %}
+ {% set numa = numa_master %}
+{% endif %}
+{% if numamode_master != None %}
+ {% set numamode = numamode_master %}
+{% endif %}
+{% if cpupinning_master != None %}
+ {% set cpupinning = cpupinning_master %}
 {% endif %}
 
 {{ cluster }}-master-{{ num }}:
@@ -68,7 +77,7 @@
  image: {{ image }}
  enableroot: false 
  keys: {{ keys }}
- numcpus: {{ numcpus }}
+ numcpus: {{ master_numcpus | default(numcpus) }}
  memory: {{ master_memory }}
  rng: {{ master_rng }}
  tpm: {{ master_tpm }}
@@ -106,4 +115,15 @@
     origin: staticpods/keepalived.yml
   - path: /etc/kubernetes/keepalived.conf
     origin: keepalived.conf
+{% if numa != None %}
+ numa: {{ numa }}
+{% endif %}
+{% if numamode != None %}
+ numamode: {{ numamode }}
+{% endif %}
+{% if cpupinning != None %}
+ cpupinning: {{ cpupinning }}
+{% endif %}
+{% if pcidevices != None and num == 0 %}
+ pcidevices: {{ pcidevices }}
 {% endfor %}

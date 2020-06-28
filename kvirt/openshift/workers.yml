@@ -6,11 +6,20 @@
 {% else %}
  {% set net0 = network %}
 {% endif %}
-{% if extra_workers_networks %}
- {% set extra_networks = extra_workers_networks %}
+{% if extra_worker_networks %}
+ {% set extra_networks = extra_worker_networks %}
 {% endif %}
-{% if extra_workers_disks %}
- {% set extra_disks = extra_workers_disks %}
+{% if extra_worker_disks %}
+ {% set extra_disks = extra_worker_disks %}
+{% endif %}
+{% if numa_worker != None %}
+ {% set numa = numa_worker %}
+{% endif %}
+{% if numamode_worker != None %}
+ {% set numamode = numamode_worker %}
+{% endif %}
+{% if cpupinning_worker != None %}
+ {% set cpupinning = cpupinning_worker %}
 {% endif %}
 
 {{ cluster }}-worker-{{ num }}:
@@ -18,7 +27,7 @@
  image: {{ image }}
  keys: {{ keys }}
  enableroot: false 
- numcpus: {{ numcpus }}
+ numcpus: {{ worker_numcpus | default(numcpus) }}
  memory: {{ worker_memory }}
  rng: {{ worker_rng }}
  tpm: {{ worker_tpm }}
@@ -50,8 +59,5 @@
 {% endif %}
 {% if pcidevices != None and num == 0 %}
  pcidevices: {{ pcidevices }}
-{% endif %}
-{% if cloud_tag != None %}
- tags: [{{ cloud_tag }}]
 {% endif %}
 {% endfor %}
