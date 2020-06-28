@@ -420,6 +420,7 @@ class Kvirt(object):
                     </disk>""" % (disksxml, dtype, diskformat, dsource, diskpath, backingxml, diskdev, diskbus,
                                   diskwwn)
         netxml = ''
+        nicslots = {k: 0 for k in range(0, 20)}
         alias = []
         guestagent = False
         for index, net in enumerate(nets):
@@ -480,7 +481,11 @@ class Kvirt(object):
                 else:
                     ovsxml.format("")
             if nicnuma is not None:
-                nicnumaxml = "<address type='pci' domain='0x0000' bus='0x0%s' function='0x0'/>" % (nicnuma + 1)
+                bus = nicnuma + 1
+                slot = nicslots[int(nicnuma)]
+                nicnumaxml = "<address type='pci' domain='0x0000' bus='0x0%s' slot='0x0%s' function='0x0'/>" % (bus,
+                                                                                                                slot)
+                nicslots[int(nicnuma)] += 1
             else:
                 nicnumaxml = ""
             netxml = """%s
