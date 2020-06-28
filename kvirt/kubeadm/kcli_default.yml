@@ -19,6 +19,8 @@ sdn: flannel
 multus: false
 notifycmd: "kubectl get pod -A"
 notify: false
+extra_disks: []
+extra_networks: []
 info: |
     Deploys kubernetes using kubeadm on an arbitrary number of masters and workers.
     when using more than a master, a load balancer gets deployed (as an haproxy vm if not running on cloud)

@@ -447,7 +447,7 @@ class Kvirt(object):
                     ovs = True
                 if 'ip' in nets[index] and index == 0:
                     metadata = """%s<kvirt:ip >%s</kvirt:ip>""" % (metadata, nets[index]['ip'])
-                if 'numa' in nets[index]:
+                if 'numa' in nets[index] and numa:
                     nicnuma = nets[index]['numa']
             if ips and len(ips) > index and ips[index] is not None and\
                     netmasks and len(netmasks) > index and netmasks[index] is not None and gateway is not None:
