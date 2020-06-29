@@ -1816,7 +1816,7 @@ class Kvirt(object):
                     ip = net.get('ip')
                 if ip is None:
                     counter = 0
-                    while counter != 100:
+                    while counter != 240:
                         ip = self.ip(name)
                         if ip is None:
                             time.sleep(5)
