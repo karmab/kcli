@@ -617,7 +617,7 @@ A similar mechanism allows customization for other providers.
 - Delete nic eth2 from vm
   - `kcli delete nic -i eth2 myvm`
 - Create snapshot snap of vm:
-  - `kcli snapshot vm -n vm1 snap1`
+  - `kcli create snapshot vm -n vm1 snap1`
 - Get info on your kvm setup
   - `kcli info host`
 - Export vm:

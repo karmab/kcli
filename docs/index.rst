@@ -783,7 +783,7 @@ Typical commands
 
 -  Create snapshot snap of vm:
 
-   -  ``kcli snapshot vm -n vm1 snap1``
+   -  ``kcli create snapshot vm -n vm1 snap1``
 
 -  Get info on your kvm setup
 

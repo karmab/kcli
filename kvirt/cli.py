@@ -2868,7 +2868,7 @@ def cli():
 
     vmsnapshotcreate_desc = 'Create Snapshot Of Vm'
     vmsnapshotcreate_parser = create_subparsers.add_parser('vm-snapshot', description=vmsnapshotcreate_desc,
-                                                           help=vmsnapshotcreate_desc)
+                                                           help=vmsnapshotcreate_desc, aliases=['snapshot'])
     vmsnapshotcreate_parser.add_argument('-n', '--name', help='vm name', required=True, metavar='VMNAME')
     vmsnapshotcreate_parser.add_argument('snapshot')
     vmsnapshotcreate_parser.set_defaults(func=snapshotcreate_vm)
