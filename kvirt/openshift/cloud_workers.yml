@@ -3,7 +3,7 @@
  domain: {{ domain }} 
  image: {{ image }}
  enableroot: {{ enableroot }}
- numcpus: {{ worker_numcpus | default(numcpus) }}
+ numcpus: {{ worker_numcpus | default(numcpus, numcpus) }}
  memory: {{ worker_memory }}
  nets:
  - name: {{ network }}

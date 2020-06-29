@@ -34,8 +34,8 @@ keys: []
 api_ip: 
 ingress_ip: 
 extra_disks: []
-extra_masters_disks: []
-extra_workers_disks: []
+extra_master_disks: []
+extra_worker_disks: []
 extra_networks: []
 extra_master_networks: []
 extra_worker_networks: []

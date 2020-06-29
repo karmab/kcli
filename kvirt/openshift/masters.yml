@@ -1,20 +1,20 @@
 {{ cluster }}-bootstrap:
  image: {{ image }}
  keys: {{ keys }}
- numcpus: {{ bootstrap_numcpus | default(numcpus) }}
+ numcpus: {{ bootstrap_numcpus | default(numcpus, numcpus) }}
  enableroot: false 
  memory: {{ bootstrap_memory }}
  nets:
   - name: {{ network }}
-{% if bootstrap_mac != None %}
+{%- if bootstrap_mac != None %}
     mac: {{ bootstrap_mac }}
-{% endif %}
-{% if config_type == 'packet' %}
+{%- endif %}
+{%- if config_type == 'packet' %}
     ip: 192.168.122.99
     mask: 255.255.255.0
     gateway: 192.168.122.1
     dns: 8.8.8.8
-{% endif %}
+{%- endif %}
  disks:
   - size: {{ disk_size }}
  files:
@@ -39,45 +39,45 @@
     origin: staticpods/nginx.yml
   - path: /etc/kubernetes/nginx.conf
     origin: nginx.conf
-{% if config_type == 'packet' %}
+{%- if config_type == 'packet' %}
   - path: /etc/kubernetes/packet-hack.sh
     origin: packet-hack.sh
     mode: 700
-{% endif %}
+{%- endif %}
 
-{% for num in range(0, masters) %}
-{% if master_macs and master_macs|length >= masters %}
+{%- for num in range(0, masters) %}
+{%- if master_macs and master_macs|length >= masters %}
  {% set net0 = {"name": network, "mac": master_macs[num]} %}
-{% elif config_type == 'packet' %}
+{%- elif config_type == 'packet' %}
  {% set net0 = {"name": network, "ip": "192.168.122.10" + num|string, "mask": "255.255.255.0", "gateway": "192.168.122.1"} %}
-{% else %}
+{%- else %}
  {% set net0 = network %}
-{% endif %}
-{% if baremetal and not extra_networks %}
+{%- endif %}
+{%- if baremetal and not extra_networks %}
  {% set extra_networks = [provisioning_net] %}
-{% endif %}
-{% if extra_master_networks %}
+{%- endif %}
+{%- if extra_master_networks %}
  {% set extra_networks = extra_master_networks %}
-{% endif %}
-{% if extra_master_disks %}
+{%- endif %}
+{%- if extra_master_disks %}
  {% set extra_disks = extra_master_disks %}
-{% endif %}
-{% if numa_master != None %}
+{%- endif %}
+{%- if numa_master != None %}
  {% set numa = numa_master %}
-{% endif %}
-{% if numamode_master != None %}
+{%- endif %}
+{%- if numamode_master != None %}
  {% set numamode = numamode_master %}
-{% endif %}
-{% if cpupinning_master != None %}
+{%- endif %}
+{%- if cpupinning_master != None %}
  {% set cpupinning = cpupinning_master %}
-{% endif %}
+{%- endif %}
 
 {{ cluster }}-master-{{ num }}:
  domain: {{ domain }} 
  image: {{ image }}
  enableroot: false 
  keys: {{ keys }}
- numcpus: {{ master_numcpus | default(numcpus) }}
+ numcpus: {{ master_numcpus | default(numcpus, numcpus) }}
  memory: {{ master_memory }}
  rng: {{ master_rng }}
  tpm: {{ master_tpm }}
@@ -98,11 +98,11 @@
     origin: config.hcl.templ
   - path: /etc/kubernetes/apps.db
     origin: apps.db
-{% if config_type == 'packet' %}
+{%- if config_type == 'packet' %}
   - path: /etc/kubernetes/packet-hack.sh
     origin: packet-hack.sh
     mode: 700
-{% endif %}
+{%- endif %}
 {%- if workers > 0 %}
   - path: /etc/kubernetes/manifests/haproxy.yml
     origin: staticpods/haproxy.yml
@@ -115,15 +115,16 @@
     origin: staticpods/keepalived.yml
   - path: /etc/kubernetes/keepalived.conf
     origin: keepalived.conf
-{% if numa != None %}
+{%- if numa != None %}
  numa: {{ numa }}
-{% endif %}
-{% if numamode != None %}
+{%- endif %}
+{%- if numamode != None %}
  numamode: {{ numamode }}
-{% endif %}
-{% if cpupinning != None %}
+{%- endif %}
+{%- if cpupinning != None %}
  cpupinning: {{ cpupinning }}
-{% endif %}
-{% if pcidevices != None and num == 0 %}
+{%- endif %}
+{%- if pcidevices != None and num == 0 %}
  pcidevices: {{ pcidevices }}
-{% endfor %}
+{%- endif %}
+{%- endfor %}

@@ -1,23 +1,23 @@
-{% for number in range(0, workers) %}
-{% if extra_worker_networks %}
+{%- for number in range(0, workers) %}
+{%- if extra_worker_networks %}
  {% set extra_networks = extra_worker_networks %}
-{% endif %}
-{% if extra_worker_disks %}
+{%- endif %}
+{%- if extra_worker_disks %}
  {% set extra_disks = extra_worker_disks %}
-{% endif %}
-{% if numa_worker != None %}
+{%- endif %}
+{%- if numa_worker != None %}
  {% set numa = numa_worker %}
-{% endif %}
-{% if numamode_worker != None %}
+{%- endif %}
+{%- if numamode_worker != None %}
  {% set numamode = numamode_worker %}
-{% endif %}
-{% if cpupinning_worker != None %}
+{%- endif %}
+{%- if cpupinning_worker != None %}
  {% set cpupinning = cpupinning_worker %}
-{% endif %}
+{%- endif %}
 
 {{cluster }}-worker-{{ number }}:
  image: {{ image }}
- numcpus: {{ worker_numcpus | default(numcpus) }}
+ numcpus: {{ worker_numcpus | default(numcpus, numcpus) }}
  memory: {{ worker_memory }}
  reservedns: false
  domain: {{ domain }}
@@ -32,19 +32,19 @@
   - path: /root/admin.conf
     origin: {{ basedir }}/clusters/{{ cluster }}/auth/kubeconfig
  scripts: 
-{% if 'ubuntu' in image or 'xenial' in image or 'yaketty' in image or 'zesty' in image or 'artful' in image or 'bionic' in image or 'cosmic' in image %}
+{%- if 'ubuntu' in image or 'xenial' in image or 'yaketty' in image or 'zesty' in image or 'artful' in image or 'bionic' in image or 'cosmic' in image %}
   - pre_ubuntu.sh
-{% else %}
+{%- else %}
   - pre.sh
-{% endif %}
+{%- endif %}
   - workers.sh
-{% if numa != None %}
+{%- if numa != None %}
  numa: {{ numa }}
-{% endif %}
-{% if numamode != None %}
+{%- endif %}
+{%- if numamode != None %}
  numamode: {{ numamode }}
-{% endif %}
-{% if cpupinning != None %}
+{%- endif %}
+{%- if cpupinning != None %}
  cpupinning: {{ cpupinning }}
-{% endif %}
-{% endfor %}
+{%- endif %}
+{%- endfor %}

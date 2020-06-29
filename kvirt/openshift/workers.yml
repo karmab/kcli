@@ -1,33 +1,33 @@
-{% for num in range(0, workers) %}
-{% if worker_macs and worker_macs|length >= workers %}
+{%- for num in range(0, workers) %}
+{%- if worker_macs and worker_macs|length >= workers %}
  {% set net0 = {"name": network, "mac": worker_macs[num]} %}
-{% elif config_type == 'packet' %}
+{%- elif config_type == 'packet' %}
  {% set net0 = {"name": network, "ip": "192.168.122.20" + num|string, "mask": "255.255.255.0", "gateway": "192.168.122.1"} %}
-{% else %}
+{%- else %}
  {% set net0 = network %}
-{% endif %}
-{% if extra_worker_networks %}
+{%- endif %}
+{%- if extra_worker_networks %}
  {% set extra_networks = extra_worker_networks %}
-{% endif %}
-{% if extra_worker_disks %}
+{%- endif %}
+{%- if extra_worker_disks %}
  {% set extra_disks = extra_worker_disks %}
-{% endif %}
-{% if numa_worker != None %}
+{%- endif %}
+{%- if numa_worker != None %}
  {% set numa = numa_worker %}
-{% endif %}
-{% if numamode_worker != None %}
+{%- endif %}
+{%- if numamode_worker != None %}
  {% set numamode = numamode_worker %}
-{% endif %}
-{% if cpupinning_worker != None %}
+{%- endif %}
+{%- if cpupinning_worker != None %}
  {% set cpupinning = cpupinning_worker %}
-{% endif %}
+{%- endif %}
 
 {{ cluster }}-worker-{{ num }}:
  domain: {{ domain }} 
  image: {{ image }}
  keys: {{ keys }}
  enableroot: false 
- numcpus: {{ worker_numcpus | default(numcpus) }}
+ numcpus: {{ worker_numcpus | default(numcpus, numcpus) }}
  memory: {{ worker_memory }}
  rng: {{ worker_rng }}
  tpm: {{ worker_tpm }}
@@ -48,16 +48,16 @@
     origin: config.hcl.templ
   - path: /etc/kubernetes/apps.db
     origin: apps.db
-{% if numa != None %}
+{%- if numa != None %}
  numa: {{ numa }}
-{% endif %}
-{% if numamode != None %}
+{%- endif %}
+{%- if numamode != None %}
  numamode: {{ numamode }}
-{% endif %}
-{% if cpupinning != None %}
+{%- endif %}
+{%- if cpupinning != None %}
  cpupinning: {{ cpupinning }}
-{% endif %}
-{% if pcidevices != None and num == 0 %}
+{%- endif %}
+{%- if pcidevices != None and num == 0 %}
  pcidevices: {{ pcidevices }}
-{% endif %}
-{% endfor %}
+{%- endif %}
+{%- endfor %}

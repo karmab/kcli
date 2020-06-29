@@ -16,7 +16,6 @@ worker_memory: 4096
 disk_size: 30
 worker_tpm: false
 worker_rng: false
-deploy_app: false
 nfs: true
 sdn: flannel
 multus: false
