@@ -32,7 +32,7 @@ spec:
         IP=$(ip -6 -o addr show $NIC | awk '{print $4}' | cut -d "/" -f 1 | head -1)
         NETMASK=$(ip -o -f inet6 addr show | grep $IP | sed "s@.*$IP/\(.*\) scope.*@\1@")
         {%- elif config_type == 'packet' %}
-        NIC={{ 'eth1' if 'fcos' in image else 'enp1s0f1' }}
+        NIC={{ 'eth1' if 'fcos' in image else 'ens3f1' }}
         NETMASK=32
         {%- else %}
         NIC=$(ip r | grep default | tail -1 | sed 's/.*dev \(.*\) \(proto\|metric\).*/\1/')
@@ -41,7 +41,7 @@ spec:
         sed -i "s@NIC@$NIC@" /etc/keepalived/keepalived.conf
         if [ "$NETMASK" != "" ] ; then
           {% if config_type == 'packet' %}
-          NIC_PUBLIC={{ 'eth0' if 'fcos' in image else 'enp1s0f0' }}
+          NIC_PUBLIC={{ 'eth0' if 'fcos' in image else 'ens3f0' }}
           sed -i "s@{{ api_ip }}@{{ api_ip }} dev $NIC_PUBLIC@" /etc/keepalived/keepalived.conf
           {% endif %}
           sed -i "s@{{ api_ip }}@{{ api_ip }}/$NETMASK@" /etc/keepalived/keepalived.conf

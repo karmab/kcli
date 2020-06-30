@@ -1013,7 +1013,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
                 else:
                     default_nicname = "ens%d" % (index + 3)
                 if image == 'custom_ipxe':
-                    default_nicname = "enp1s0f1"
+                    default_nicname = "ens3f1"
                 nicname = net.get('nic', default_nicname)
                 ip = net.get('ip')
                 gateway = net.get('gateway')
@@ -1165,6 +1165,22 @@ def get_latest_rhcos(url, _type='kvm'):
                     if key in data['images']:
                         return "%s/%s/%s" % (url, build, data['images'][key]['path'])
 
+
+# def get_latest_rhcos_metal(version='4.5'):
+#    url = "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/%s/latest" % version
+#    with urlopen(url) as b:
+#        data = b.read().decode()
+#    for x in data.split(' '):
+#        if 'installer-kernel' in x:
+#            match = search('.*href="(.*)">rhcos.*', x)
+#            kernel = "%s/%s" % (url, match.group(1))
+#        elif 'installer-initramfs' in x:
+#            match = search('.*href="(.*)">rhcos.*', x)
+#            initrd = "%s/%s" % (url, match.group(1))
+#        elif 'metal' in x:
+#            match = search('.*href="(.*)">rhcos.*', x)
+#            metal = "%s/%s" % (url, match.group(1))
+#    return kernel, initrd, metal
 
 def get_latest_rhcos_metal(url):
     buildurl = '%s/builds.json' % url

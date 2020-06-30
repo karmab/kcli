@@ -201,10 +201,14 @@ class Kpacket(object):
                     return {'result': 'failure', 'reason': 'You need to define ignition_url as parameter'}
             url = IMAGES[image]
             if 'rhcos' in image:
+                # rhcosversion = image.replace('rhcos', '')
+                # rhcosversion = rhcosversion[0] + '.' + rhcosversion[1]
+                # kernel, initrd, metal = common.get_latest_rhcos_metal(rhcosversion)
                 kernel, initrd, metal = common.get_latest_rhcos_metal(url)
             elif 'fcos' in image:
                 kernel, initrd, metal = common.get_latest_fcos_metal(url)
-            userdata = self._ipxe(kernel, initrd, metal, ignition_url)
+            interface = 'eth0' if 'fcos' in image else 'ens3f0'
+            userdata = self._ipxe(kernel, initrd, metal, ignition_url, interface)
             version = common.ignition_version(image)
             image = 'custom_ipxe'
             ignitiondir = '/tmp'
@@ -220,14 +224,6 @@ class Kpacket(object):
                 scpcmd = "scp -qP %s /tmp/%s.ign %s@%s:%s/%s.ign" % (self.tunnelport, name, self.tunneluser,
                                                                      self.tunnelhost, self.tunneldir, name)
                 os.system(scpcmd)
-                # with open("/tmp/%s.ipxe" % name) as ipxefile:
-                #    ipxefile.write(userdata)
-                # common.pprint("Copying pxe script to %s" % self.tunnelhost, color='blue')
-                # scpcmd = "scp -qP %s /tmp/%s.ipxe %s@%s:%s/%s.ipxe" % (self.tunnelport, name, self.tunneluser,
-                #                                                       self.tunnelhost, self.tunneldir, name)
-                # os.system(scpcmd)
-                # userdata = None
-                # ipxe_script_url = "http://%s/%s.ipxe" % (self.tunnelhost, name)
         if flavor is None:
             # if f[1] >= numcpus and f[2] >= memory:
             minmemory = 512000
@@ -1068,10 +1064,11 @@ class Kpacket(object):
         """
         return
 
-    def _ipxe(self, kernel, initrd, metal, ignition_url):
-        ipxeparameters = "ip=dhcp rd.neednet=1 console=ttyS1,115200n8 coreos.inst=yes coreos.inst.install_dev=sda"
+    def _ipxe(self, kernel, initrd, metal, ignition_url, interface):
+        ipxeparameters = "ip=%s:dhcp " % interface
+        ipxeparameters += "rd.neednet=1 initrd=%s console=ttyS1,115200n8 " % initrd
+        ipxeparameters += "coreos.inst=yes coreos.inst.insecure=yes coreos.inst.install_dev=sda"
         return """#!ipxe
-
-kernel %s %s initrd=%s coreos.inst.image_url=%s coreos.inst.ignition_url=%s
+kernel %s %s coreos.inst.image_url=%s coreos.inst.ignition_url=%s
 initrd %s
-boot""" % (kernel, ipxeparameters, initrd, metal, ignition_url, initrd)
+boot || reboot""" % (kernel, ipxeparameters, metal, ignition_url, initrd)
