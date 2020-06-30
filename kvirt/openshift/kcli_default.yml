@@ -54,7 +54,7 @@ numamode_master:
 numamode_worker:
 cpupinning:
 cpupinning_master:
-cpupinning_workers:
+cpupinning_worker:
 disconnected_url:
 disconnected_user:
 disconnected_password:
