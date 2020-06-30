@@ -220,6 +220,14 @@ class Kpacket(object):
                 scpcmd = "scp -qP %s /tmp/%s.ign %s@%s:%s/%s.ign" % (self.tunnelport, name, self.tunneluser,
                                                                      self.tunnelhost, self.tunneldir, name)
                 os.system(scpcmd)
+                # with open("/tmp/%s.ipxe" % name) as ipxefile:
+                #    ipxefile.write(userdata)
+                # common.pprint("Copying pxe script to %s" % self.tunnelhost, color='blue')
+                # scpcmd = "scp -qP %s /tmp/%s.ipxe %s@%s:%s/%s.ipxe" % (self.tunnelport, name, self.tunneluser,
+                #                                                       self.tunnelhost, self.tunneldir, name)
+                # os.system(scpcmd)
+                # userdata = None
+                # ipxe_script_url = "http://%s/%s.ipxe" % (self.tunnelhost, name)
         if flavor is None:
             # if f[1] >= numcpus and f[2] >= memory:
             minmemory = 512000

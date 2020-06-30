@@ -17,6 +17,10 @@ cluster: testk
 domain: karmalabs.com
 network_type: OpenShiftSDN
 minimal: false
+flavor:
+flavor_bootstrap:
+flavor_master:
+flavor_worker:
 numcpus: 4
 master_numcpus:
 master_memory: 8192

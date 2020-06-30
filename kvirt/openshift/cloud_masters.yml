@@ -50,8 +50,13 @@ apps.{{ cluster }}:
 {% endfor %}
 {% endif %}
 
+{%- if flavor_master != None %}
+ {% set flavor = flavor_master %}
+{%- endif %}
+
 {{ cluster }}-bootstrap:
  image: {{ image }}
+ flavor: {{ flavor }}
  enableroot: {{ enableroot }}
  numcpus: {{ bootstrap_numcpus | default(numcpus, numcpus) }}
  memory: {{ bootstrap_memory }}
@@ -63,9 +68,15 @@ apps.{{ cluster }}:
  tags: [{{ cloud_tag }}]
 
 {% for num in range(0, masters) %}
-{{ cluster }}-master-{{ num }}:
+
+{%- if flavor_master != None %}
+ {% set flavor = flavor_master %}
+{%- endif %}
+
+ {{ cluster }}-master-{{ num }}:
  domain: {{ domain }} 
  image: {{ image }}
+ flavor: {{ flavor }}
  enableroot: {{ enableroot }}
  numcpus: {{ master_numcpus | default(numcpus, numcpus) }}
  memory: {{ master_memory }}

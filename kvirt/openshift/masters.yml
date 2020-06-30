@@ -1,8 +1,12 @@
+{%- if flavor_bootstrap != None %}
+ {% set flavor = flavor_bootstrap %}
+{%- endif %}
 {{ cluster }}-bootstrap:
  image: {{ image }}
+ enableroot: false 
  keys: {{ keys }}
  numcpus: {{ bootstrap_numcpus | default(numcpus, numcpus) }}
- enableroot: false 
+ flavor: {{ flavor }}
  memory: {{ bootstrap_memory }}
  nets:
   - name: {{ network }}
@@ -71,11 +75,15 @@
 {%- if cpupinning_master != None %}
  {% set cpupinning = cpupinning_master %}
 {%- endif %}
+{%- if flavor_master != None %}
+ {% set flavor = flavor_master %}
+{%- endif %}
 
 {{ cluster }}-master-{{ num }}:
  domain: {{ domain }} 
  image: {{ image }}
  enableroot: false 
+ flavor: {{ flavor }}
  keys: {{ keys }}
  numcpus: {{ master_numcpus | default(numcpus, numcpus) }}
  memory: {{ master_memory }}

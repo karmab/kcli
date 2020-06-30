@@ -1,8 +1,14 @@
 {% for num in range(0, workers) %}
+
+{%- if flavor_worker != None %}
+ {% set flavor = flavor_worker %}
+{%- endif %}
+
 {{ cluster }}-worker-{{ num }}:
  domain: {{ domain }} 
- image: {{ image }}
  enableroot: {{ enableroot }}
+ image: {{ image }}
+ flavor: {{ flavor }}
  numcpus: {{ worker_numcpus | default(numcpus, numcpus) }}
  memory: {{ worker_memory }}
  nets:

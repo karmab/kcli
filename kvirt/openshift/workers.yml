@@ -21,11 +21,15 @@
 {%- if cpupinning_worker != None %}
  {% set cpupinning = cpupinning_worker %}
 {%- endif %}
+{%- if flavor_worker != None %}
+ {% set flavor = flavor_worker %}
+{%- endif %}
 
 {{ cluster }}-worker-{{ num }}:
  domain: {{ domain }} 
  image: {{ image }}
  keys: {{ keys }}
+ flavor: {{ flavor }}
  enableroot: false 
  numcpus: {{ worker_numcpus | default(numcpus, numcpus) }}
  memory: {{ worker_memory }}
