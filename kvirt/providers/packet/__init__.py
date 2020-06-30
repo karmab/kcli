@@ -371,7 +371,13 @@ class Kpacket(object):
 
         :return:
         """
-        print("Project: %s" % self.project)
+        projects = [proj for proj in self.conn.list_projects() if proj.name == self.project or proj.id == self.project]
+        if not projects:
+            common.pprint("Project %s not found" % self.project, code='red')
+            return
+        project = projects[0]
+        print("Project name: %s" % project.name)
+        print("Project id: %s" % project.id)
         if self.facility is not None:
             print("Facility: %s" % self.facility)
         print("Vms Running: %s" % len(self.conn.list_devices(self.project)))
@@ -514,7 +520,11 @@ class Kpacket(object):
         for index0, entry in enumerate(flavor['specs']['drives']):
             for index1 in range(entry['count']):
                 dev = "disk%s_%s" % (index0, index1)
-                disksize = int(entry['size'].replace('GB', ''))
+                disksize = entry['size'].replace('GB', '')
+                if 'TB' in entry['size']:
+                    disksize = int(float(disksize.replace('TB', '')) * 1000)
+                else:
+                    disksize = int(disksize)
                 diskformat = entry['type']
                 drivertype = entry['category']
                 path = ''
