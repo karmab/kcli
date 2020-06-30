@@ -25,8 +25,10 @@ def scale(config, plandir, cluster, overrides):
 
 
 def create(config, plandir, cluster, overrides):
-    data = {'cluster': cluster, 'kubetype': 'generic', 'kube': cluster}
+    data = {'kubetype': 'generic'}
     data.update(overrides)
+    data['cluster'] = overrides['cluster'] if 'cluster' in overrides else cluster
+    data['kube'] = data['cluster']
     masters = data.get('masters', 1)
     if masters == 0:
         pprint("Invalid number of masters", color='red')

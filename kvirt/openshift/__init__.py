@@ -188,8 +188,7 @@ def create(config, plandir, cluster, overrides):
     client = config.client
     platform = config.type
     pprint("Deploying on client %s" % client, color='blue')
-    data = {'cluster': cluster,
-            'helper_image': 'CentOS-7-x86_64-GenericCloud.qcow2',
+    data = {'helper_image': 'CentOS-7-x86_64-GenericCloud.qcow2',
             'domain': 'karmalabs.com',
             'network': 'default',
             'masters': 1,
@@ -207,7 +206,8 @@ def create(config, plandir, cluster, overrides):
             'minimal': False}
     data.update(overrides)
     overrides['kubetype'] = 'openshift'
-    overrides['kube'] = cluster
+    data['cluster'] = overrides['cluster'] if 'cluster' in overrides else cluster
+    overrides['kube'] = data['cluster']
     masters = data.get('masters', 1)
     if masters == 0:
         pprint("Invalid number of masters", color='red')
