@@ -1,5 +1,5 @@
 {%- if flavor_bootstrap != None %}
- {% set flavor = flavor_bootstrap %}
+{% set flavor = flavor_bootstrap %}
 {%- endif %}
 {{ cluster }}-bootstrap:
  image: {{ image }}
@@ -15,6 +15,7 @@
     mac: {{ bootstrap_mac }}
 {%- endif %}
 {%- if config_type == 'packet' %}
+  - name: {{ network }}
     ip: 192.168.122.99
     mask: 255.255.255.0
     gateway: 192.168.122.1
@@ -52,32 +53,33 @@
 
 {%- for num in range(0, masters) %}
 {%- if master_macs and master_macs|length >= masters %}
- {% set net0 = {"name": network, "mac": master_macs[num]} %}
-{%- elif config_type == 'packet' %}
- {% set net0 = {"name": network, "ip": "192.168.122.10" + num|string, "mask": "255.255.255.0", "gateway": "192.168.122.1"} %}
+{% set net0 = {"name": network, "mac": master_macs[num]} %}
 {%- else %}
- {% set net0 = network %}
+{% set net0 = network %}
 {%- endif %}
 {%- if baremetal and not extra_networks %}
- {% set extra_networks = [provisioning_net] %}
+{% set extra_networks = [provisioning_net] %}
 {%- endif %}
 {%- if extra_master_networks %}
- {% set extra_networks = extra_master_networks %}
+{% set extra_networks = extra_master_networks %}
 {%- endif %}
 {%- if extra_master_disks %}
- {% set extra_disks = extra_master_disks %}
+% set extra_disks = extra_master_disks %}
 {%- endif %}
 {%- if numa_master != None %}
- {% set numa = numa_master %}
+{% set numa = numa_master %}
 {%- endif %}
 {%- if numamode_master != None %}
- {% set numamode = numamode_master %}
+{% set numamode = numamode_master %}
 {%- endif %}
 {%- if cpupinning_master != None %}
- {% set cpupinning = cpupinning_master %}
+{% set cpupinning = cpupinning_master %}
 {%- endif %}
 {%- if flavor_master != None %}
- {% set flavor = flavor_master %}
+{% set flavor = flavor_master %}
+{%- endif %}
+{%- if config_type == 'packet' %}
+{% set extra_networks = [{"name": network, "ip": "192.168.122.10" + num|string, "mask": "255.255.255.0", "gateway": "192.168.122.1"}] %}
 {%- endif %}
 
 {{ cluster }}-master-{{ num }}:

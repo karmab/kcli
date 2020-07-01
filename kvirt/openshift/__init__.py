@@ -567,7 +567,11 @@ def create(config, plandir, cluster, overrides):
         if platform == 'packet':
             allnodes = ["%s-bootstrap" % cluster] + ["%s-master-%s" % (cluster, num) for num in range(masters)]
             for node in allnodes:
-                k.add_nic(node, network)
+                try:
+                    k.add_nic(node, network)
+                except Exception as e:
+                    pprint("Hit %s. Continuing still" % str(e), color='red')
+                    continue
         run = call('openshift-install --dir=%s wait-for bootstrap-complete' % clusterdir, shell=True)
         if run != 0:
             pprint("Leaving environment for debugging purposes", color='red')

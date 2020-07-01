@@ -51,7 +51,7 @@ apps.{{ cluster }}:
 {% endif %}
 
 {%- if flavor_master != None %}
- {% set flavor = flavor_master %}
+{% set flavor = flavor_master %}
 {%- endif %}
 
 {{ cluster }}-bootstrap:
@@ -71,10 +71,10 @@ apps.{{ cluster }}:
 {% for num in range(0, masters) %}
 
 {%- if flavor_master != None %}
- {% set flavor = flavor_master %}
+{% set flavor = flavor_master %}
 {%- endif %}
 
- {{ cluster }}-master-{{ num }}:
+{{ cluster }}-master-{{ num }}:
  domain: {{ domain }} 
  image: {{ image }}
  pool: {{ pool }}

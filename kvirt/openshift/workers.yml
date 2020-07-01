@@ -1,28 +1,29 @@
 {%- for num in range(0, workers) %}
 {%- if worker_macs and worker_macs|length >= workers %}
- {% set net0 = {"name": network, "mac": worker_macs[num]} %}
-{%- elif config_type == 'packet' %}
- {% set net0 = {"name": network, "ip": "192.168.122.20" + num|string, "mask": "255.255.255.0", "gateway": "192.168.122.1"} %}
+{% set net0 = {"name": network, "mac": worker_macs[num]} %}
 {%- else %}
- {% set net0 = network %}
+{% set net0 = network %}
 {%- endif %}
 {%- if extra_worker_networks %}
- {% set extra_networks = extra_worker_networks %}
+{% set extra_networks = extra_worker_networks %}
 {%- endif %}
 {%- if extra_worker_disks %}
- {% set extra_disks = extra_worker_disks %}
+{% set extra_disks = extra_worker_disks %}
 {%- endif %}
 {%- if numa_worker != None %}
- {% set numa = numa_worker %}
+{% set numa = numa_worker %}
 {%- endif %}
 {%- if numamode_worker != None %}
- {% set numamode = numamode_worker %}
+{% set numamode = numamode_worker %}
 {%- endif %}
 {%- if cpupinning_worker != None %}
- {% set cpupinning = cpupinning_worker %}
+{% set cpupinning = cpupinning_worker %}
 {%- endif %}
 {%- if flavor_worker != None %}
- {% set flavor = flavor_worker %}
+{% set flavor = flavor_worker %}
+{%- endif %}
+{%- if config_type == 'packet' %}
+{% set extra_networks = [{"name": network, "ip": "192.168.122.20" + num|string, "mask": "255.255.255.0", "gateway": "192.168.122.1"}] %}
 {%- endif %}
 
 {{ cluster }}-worker-{{ num }}:

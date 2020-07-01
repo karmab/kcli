@@ -1,7 +1,7 @@
 {% for num in range(0, workers) %}
 
 {%- if flavor_worker != None %}
- {% set flavor = flavor_worker %}
+{% set flavor = flavor_worker %}
 {%- endif %}
 
 {{ cluster }}-worker-{{ num }}:

@@ -210,13 +210,13 @@ class Kpacket(object):
             interface = 'eth0' if 'fcos' in image else 'ens3f0'
             userdata = self._ipxe(kernel, initrd, metal, ignition_url, interface)
             version = common.ignition_version(image)
-            image = 'custom_ipxe'
             ignitiondir = '/tmp'
             ipv6 = []
             ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                            domain=domain, reserveip=reserveip, files=files,
                                            enableroot=enableroot, overrides=overrides, version=version, plan=plan,
                                            ipv6=ipv6, image=image)
+            image = 'custom_ipxe'
             with open('%s/%s.ign' % (ignitiondir, name), 'w') as ignitionfile:
                 ignitionfile.write(ignitiondata)
             if self.tunnelhost is not None:
