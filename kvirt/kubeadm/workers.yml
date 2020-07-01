@@ -19,7 +19,7 @@
  image: {{ image }}
  pool: {{ pool }}
  numcpus: {{ worker_numcpus | default(numcpus, numcpus) }}
- memory: {{ worker_memory }}
+ memory: {{ worker_memory | default(memory, memory) }}
  reservedns: false
  domain: {{ domain }}
  nets: {{ [network] + extra_networks }}

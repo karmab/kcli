@@ -60,7 +60,7 @@ apps.{{ cluster }}:
  flavor: {{ flavor }}
  enableroot: {{ enableroot }}
  numcpus: {{ bootstrap_numcpus | default(numcpus, numcpus) }}
- memory: {{ bootstrap_memory }}
+ memory: {{ bootstrap_memory | default(memory, memory) }}
  nets:
  - name: {{ network }}
  reservedns: true
@@ -81,7 +81,7 @@ apps.{{ cluster }}:
  flavor: {{ flavor }}
  enableroot: {{ enableroot }}
  numcpus: {{ master_numcpus | default(numcpus, numcpus) }}
- memory: {{ master_memory }}
+ memory: {{ master_memory | default(memory, memory) }}
  nets:
  - name: {{ network }}
  reservedns: true

@@ -11,7 +11,7 @@
  pool: {{ pool }}
  flavor: {{ flavor }}
  numcpus: {{ worker_numcpus | default(numcpus, numcpus) }}
- memory: {{ worker_memory }}
+ memory: {{ worker_memory | default(memory, memory) }}
  nets:
  - name: {{ network }}
  reservedns: true

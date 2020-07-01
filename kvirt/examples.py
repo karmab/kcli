@@ -13,10 +13,13 @@ $ kcli delete disk --vm vm1 vm1_2.img
 """
 
 dnscreate = """# Create a dns entry
-$ kcli create dns -n mydomain.com -i 104.197.157.226 api.jhendrix
+$ kcli create dns -d karmalabs.com -i 192.168.122.253 api.jhendrix
+
+# Do the same for a different network
+$ kcli create dns -n network2 -d karmalabs.com -i 192.168.122.253 api.jhendrix
 
 # Do the same with an extra wildcard alias
-$ kcli create dns -n mydomain.com -i 104.197.157.226 -a '*' api.jhendrix
+$ kcli create dns -d karmalabs.com -i 104.197.157.226 -a '*' api.jhendrix
 """
 
 hostcreate = """# Add a kvm host

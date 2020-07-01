@@ -39,7 +39,7 @@
  image: {{ image }}
  pool: {{ pool }}
  numcpus: {{ master_numcpus | default(numcpus, numcpus) }}
- memory: {{ master_memory }}
+ memory: {{ master_memory | default(memory, memory) }}
 {%- if masters > 1 %}
  reservedns: true
  sharedkey: true

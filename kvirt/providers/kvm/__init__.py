@@ -1806,7 +1806,9 @@ class Kvirt(object):
             if not reservedns:
                 continue
             netname = net.get('name')
-            common.pprint("Creating Dns entry for net %s of vm %s" % (index, name), color='blue')
+            common.pprint("Creating Dns entry for %s.%s" % (name, netname), color='blue')
+            if domain is not None:
+                common.pprint("Creating Dns entry for %s.%s" % (name, domain), color='blue')
             try:
                 network = conn.networkLookupByName(netname)
             except:

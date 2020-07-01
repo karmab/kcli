@@ -8,7 +8,7 @@
  keys: {{ keys }}
  numcpus: {{ bootstrap_numcpus | default(numcpus, numcpus) }}
  flavor: {{ flavor }}
- memory: {{ bootstrap_memory }}
+ memory: {{ bootstrap_memory | default(memory, memory) }}
  nets:
   - name: {{ network }}
 {%- if bootstrap_mac != None %}
@@ -88,7 +88,7 @@
  flavor: {{ flavor }}
  keys: {{ keys }}
  numcpus: {{ master_numcpus | default(numcpus, numcpus) }}
- memory: {{ master_memory }}
+ memory: {{ master_memory | default(memory, memory) }}
  rng: {{ master_rng }}
  tpm: {{ master_tpm }}
  autostart: {{ autostart }}

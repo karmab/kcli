@@ -1007,7 +1007,7 @@ def create_dns(args):
     """Create dns entries"""
     name = args.name
     net = args.net
-    domain = net
+    domain = args.domain if args.domain is not None else net
     ip = args.ip
     alias = args.alias
     if alias is None:
@@ -1015,7 +1015,7 @@ def create_dns(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     common.pprint("Creating dns entry for %s..." % name)
-    k.reserve_dns(name=name, nets=[net], domain=domain, ip=ip, alias=alias)
+    k.reserve_dns(name=name, nets=[net], domain=domain, ip=ip, alias=alias, primary=True)
 
 
 def delete_dns(args):
@@ -2167,7 +2167,9 @@ def cli():
                                                     formatter_class=argparse.RawDescriptionHelpFormatter)
     dnscreate_parser.add_argument('-a', '--alias', action='append', help='specify alias (can specify multiple)',
                                   metavar='ALIAS')
-    dnscreate_parser.add_argument('-n', '--net', help='Domain where to create entry', metavar='NET')
+    dnscreate_parser.add_argument('-d', '--domain', help='Domain where to create entry', metavar='DOMAIN')
+    dnscreate_parser.add_argument('-n', '--net', help='Network where to create entry. Defaults to default',
+                                  default='default', metavar='NET')
     dnscreate_parser.add_argument('-i', '--ip', help='Ip', metavar='IP')
     dnscreate_parser.add_argument('name', metavar='NAME', nargs='?')
     dnscreate_parser.set_defaults(func=create_dns)

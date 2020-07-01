@@ -23,16 +23,17 @@ flavor_bootstrap:
 flavor_master:
 flavor_worker:
 numcpus: 4
+bootstrap_numcpus:
 master_numcpus:
-master_memory: 8192
+worker_numcpus:
+memory: 8192
+bootstrap_memory:
+master_memory:
+worker_memory:
 master_tpm: false
 master_rng: false
-worker_numcpus:
-worker_memory: 8192
 worker_tpm: false
 worker_rng: false
-bootstrap_numcpus:
-bootstrap_memory: 6144
 disk_size: 30
 autostart: false
 keys: []
