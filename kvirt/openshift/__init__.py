@@ -363,6 +363,9 @@ def create(config, plandir, cluster, overrides):
         f.write(installconfig)
     with open("%s/install-config.yaml.bck" % clusterdir, 'w') as f:
         f.write(installconfig)
+    autoapprover = config.process_inputfile(cluster, "%s/autoapprovercron.yml" % plandir, overrides=data)
+    with open("%s/autoapprovercron.yml" % clusterdir, 'w') as f:
+        f.write(autoapprover)
     run = call('openshift-install --dir=%s create manifests' % clusterdir, shell=True)
     if run != 0:
         pprint("Leaving environment for debugging purposes", color='red')
@@ -583,9 +586,6 @@ def create(config, plandir, cluster, overrides):
         sleep(wait_time)
     call("oc adm taint nodes -l node-role.kubernetes.io/master node-role.kubernetes.io/master:NoSchedule-", shell=True)
     pprint("Deploying certs autoapprover cronjob", color='blue')
-    autoapprover = config.process_inputfile(cluster, "%s/autoapprovercron.yml" % plandir, overrides=data)
-    with open("%s/autoapprovercron.yml" % clusterdir, 'w') as f:
-        f.write(autoapprover)
     call("oc create -f %s/autoapprovercron.yml" % clusterdir, shell=True)
     if platform in virtplatforms:
         ignitionworkerfile = "%s/worker.ign" % clusterdir
