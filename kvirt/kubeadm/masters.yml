@@ -37,6 +37,7 @@
 
 {{cluster}}-master-{{ number }}:
  image: {{ image }}
+ pool: {{ pool }}
  numcpus: {{ master_numcpus | default(numcpus, numcpus) }}
  memory: {{ master_memory }}
 {%- if masters > 1 %}
@@ -50,7 +51,6 @@
 {%- endif %}
  nets: {{ [network] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
- pool: {{ pool }}
  files:
 {%- if config_type == 'ovirt' %}
   - ovirt_fix.sh

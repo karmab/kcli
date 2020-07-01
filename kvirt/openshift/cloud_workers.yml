@@ -8,6 +8,7 @@
  domain: {{ domain }} 
  enableroot: {{ enableroot }}
  image: {{ image }}
+ pool: {{ pool }}
  flavor: {{ flavor }}
  numcpus: {{ worker_numcpus | default(numcpus, numcpus) }}
  memory: {{ worker_memory }}

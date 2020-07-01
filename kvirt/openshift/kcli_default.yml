@@ -17,6 +17,7 @@ cluster: testk
 domain: karmalabs.com
 network_type: OpenShiftSDN
 minimal: false
+pool: default
 flavor:
 flavor_bootstrap:
 flavor_master:

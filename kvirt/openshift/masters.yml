@@ -3,6 +3,7 @@
 {%- endif %}
 {{ cluster }}-bootstrap:
  image: {{ image }}
+ pool: {{ pool }}
  enableroot: false 
  keys: {{ keys }}
  numcpus: {{ bootstrap_numcpus | default(numcpus, numcpus) }}
@@ -82,6 +83,7 @@
 {{ cluster }}-master-{{ num }}:
  domain: {{ domain }} 
  image: {{ image }}
+ pool: {{ pool }}
  enableroot: false 
  flavor: {{ flavor }}
  keys: {{ keys }}

@@ -28,6 +28,7 @@
 {{ cluster }}-worker-{{ num }}:
  domain: {{ domain }} 
  image: {{ image }}
+ pool: {{ pool }}
  keys: {{ keys }}
  flavor: {{ flavor }}
  enableroot: false 

@@ -1,11 +1,11 @@
 masters: 1
 workers: 0
 version:
+pool: default
 image: centos7
 network: default
 cluster: testk
 domain: karmalabs.com
-pool: default
 numcpus: 4
 master_numcpus:
 master_memory: 6144

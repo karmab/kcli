@@ -17,13 +17,13 @@
 
 {{cluster }}-worker-{{ number }}:
  image: {{ image }}
+ pool: {{ pool }}
  numcpus: {{ worker_numcpus | default(numcpus, numcpus) }}
  memory: {{ worker_memory }}
  reservedns: false
  domain: {{ domain }}
  nets: {{ [network] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
- pool: {{ pool }}
  files:
   - path: /etc/yum.repos.d/kubernetes.repo
     origin: kubernetes.repo
