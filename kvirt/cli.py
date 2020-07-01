@@ -1022,7 +1022,7 @@ def delete_dns(args):
     """Delete dns entries"""
     name = args.name
     net = args.net
-    domain = net
+    domain = args.domain if args.domain is not None else net
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     common.pprint("Deleting Dns entry for %s..." % name)
@@ -2176,7 +2176,9 @@ def cli():
 
     dnsdelete_desc = 'Delete Dns Entries'
     dnsdelete_parser = delete_subparsers.add_parser('dns', description=dnsdelete_desc, help=dnsdelete_desc)
-    dnsdelete_parser.add_argument('-n', '--net', help='Domain where to create entry', metavar='NET')
+    dnsdelete_parser.add_argument('-d', '--domain', help='Domain of the entry', metavar='DOMAIN')
+    dnsdelete_parser.add_argument('-n', '--net', help='Network where to delete entry. Defaults to default',
+                                  default='default', metavar='NET')
     dnsdelete_parser.add_argument('name', metavar='NAME', nargs='?')
     dnsdelete_parser.set_defaults(func=delete_dns)
 

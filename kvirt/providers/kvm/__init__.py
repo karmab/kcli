@@ -2929,7 +2929,8 @@ class Kvirt(object):
         try:
             network = conn.networkLookupByName(domain)
         except:
-            return {'result': 'failure', 'reason': "Network %s not found" % domain}
+            common.pprint("Network %s not found" % domain)
+            return
         netxml = network.XMLDesc()
         netroot = ET.fromstring(netxml)
         for host in list(netroot.getiterator('host')):
