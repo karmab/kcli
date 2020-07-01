@@ -316,7 +316,7 @@ def create(config, plandir, cluster, overrides):
     pprint("Using installer version %s" % INSTALLER_VERSION, color='blue')
     if upstream:
         COS_VERSION = ""
-        COS_TYPE = "fcos"
+        COS_TYPE = "fedora-coreos"
     else:
         COS_TYPE = "rhcos"
         version_match = re.match("4.([0-9]*).*", INSTALLER_VERSION)
