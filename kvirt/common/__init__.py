@@ -993,6 +993,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     if nets:
         for index, net in enumerate(nets):
             static_nic_file = static_nic
+            static_nic_file_mode = '755'
             netdata = ''
             if isinstance(net, str):
                 if index == 0:
@@ -1040,12 +1041,13 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
                     netdata += "[ipv4]\nmethod=manual\naddresses=%s/%s\ngateway=%s\n" % (ip, netmask, gateway)
                     nicpath = "/etc/NetworkManager/system-connections/%s.nmconnection" % nicname
                     static_nic_file = static_nic_fcos
+                    static_nic_file_mode = '0600'
             if netdata != '':
                 static = quote(static_nic_file.format(nicname=nicname, data=netdata))
                 storage["files"].append({"filesystem": "root",
                                          "path": nicpath,
                                          "contents": {"source": "data:,%s" % static, "verification": {}},
-                                         "mode": int('755', 8)})
+                                         "mode": int(static_nic_file_mode, 8)})
     if files:
         filesdata = process_ignition_files(files=files, overrides=overrides)
         if filesdata:
