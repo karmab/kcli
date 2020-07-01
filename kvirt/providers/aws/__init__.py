@@ -776,6 +776,8 @@ class Kaws(object):
         return image
 
     def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, primary=False, instanceid=None):
+        if domain is None:
+            domain = nets[0]
         internalip = None
         common.pprint("Using domain %s..." % domain)
         dns = self.dns

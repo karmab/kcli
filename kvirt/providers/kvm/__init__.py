@@ -1807,7 +1807,7 @@ class Kvirt(object):
                 continue
             netname = net.get('name')
             common.pprint("Creating Dns entry for %s.%s" % (name, netname), color='blue')
-            if domain is not None:
+            if domain is not None and domain != netname:
                 common.pprint("Creating Dns entry for %s.%s" % (name, domain), color='blue')
             try:
                 network = conn.networkLookupByName(netname)
@@ -1843,7 +1843,7 @@ class Kvirt(object):
                     conn.networkDefineXML(newxml.decode("utf-8"))
                 dnsentry = '<host ip="%s"><hostname>%s</hostname>' % (ip, name)
                 dnsentry += '<hostname>%s.%s</hostname>' % (name, netname)
-                if domain is not None:
+                if domain is not None and domain != netname:
                     dnsentry += '<hostname>%s.%s</hostname>' % (name, domain)
                 for entry in alias:
                     dnsentry += "%s<hostname>%s</hostname>" % (entry, entry)

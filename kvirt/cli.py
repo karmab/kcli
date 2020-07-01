@@ -1007,7 +1007,7 @@ def create_dns(args):
     """Create dns entries"""
     name = args.name
     net = args.net
-    domain = args.domain if args.domain is not None else net
+    domain = args.domain
     ip = args.ip
     alias = args.alias
     if alias is None:

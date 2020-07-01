@@ -962,6 +962,8 @@ class Kgcp(object):
             return image
 
     def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, primary=False):
+        if domain is None:
+            domain = nets[0]
         internalip = None
         project = self.project
         zone = self.zone
