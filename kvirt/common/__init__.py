@@ -14,7 +14,7 @@ import random
 import socket
 import ssl
 from urllib.parse import quote
-from urllib.request import urlretrieve, urlopen
+from urllib.request import urlretrieve, urlopen, Request
 import json
 import os
 from subprocess import call
@@ -1417,9 +1417,15 @@ def real_path(x):
     return x.replace('/workdir/', '')
 
 
-def insecure_fetch(url):
+def insecure_fetch(url, headers=[]):
     context = ssl._create_unverified_context()
-    response = urlopen(url, timeout=5, context=context)
+    req = Request(url)
+    if headers:
+        for header in headers:
+            key, value = header.split(' ')
+            key = key.replace(':', '')
+            req.add_header(key, value)
+    response = urlopen(req, timeout=5, context=context)
     data = response.read()
     return data.decode('utf-8')
 

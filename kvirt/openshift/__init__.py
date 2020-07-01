@@ -217,6 +217,8 @@ def create(config, plandir, cluster, overrides):
     version = data.get('version')
     baremetal = data.get('baremetal')
     minimal = data.get('minimal')
+    user_agent = "User-Agent: Ignition/2.3.0" if upstream else "User-Agent: Ignition/0.35.0"
+    overrides['user_agent'] = user_agent
     if version not in ['ci', 'nightly']:
         pprint("Using stable version", color='blue')
     else:
@@ -592,7 +594,8 @@ def create(config, plandir, cluster, overrides):
         os.remove(ignitionworkerfile)
         while not os.path.exists(ignitionworkerfile) or os.stat(ignitionworkerfile).st_size == 0:
             with open(ignitionworkerfile, 'w') as w:
-                workerdata = insecure_fetch("https://api.%s.%s:22623/config/worker" % (cluster, domain))
+                workerdata = insecure_fetch("https://api.%s.%s:22623/config/worker" % (cluster, domain),
+                                            headers=[user_agent])
                 w.write(workerdata)
             sleep(5)
         if workers > 0:

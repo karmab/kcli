@@ -24,6 +24,8 @@ spec:
     - "curl"
     args:
     - "-gkL"
+    - "-H"
+    - "{{ user_agent }}"
 {%- if ipv6 %}
     - "https://[{{ api_ip}}]:22623/config/master"
 {%- else %}
