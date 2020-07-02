@@ -276,7 +276,7 @@ class Kpacket(object):
             facility = self.facility
         else:
             facility = validfacilities[0]
-        tags = ['plan_%s' % plan, 'profile_%s' % profile]
+        tags = ['plan_%s' % plan, 'profile_%s' % profile, 'project_%s' % self.project]
         if userdata is not None and 'ignition' in userdata:
             tags.append("kernel_%s" % os.path.basename(kernel))
         if kube is not None and kubetype is not None:

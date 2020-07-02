@@ -1168,43 +1168,27 @@ def get_latest_rhcos(url, _type='kvm'):
                         return "%s/%s/%s" % (url, build, data['images'][key]['path'])
 
 
-# def get_latest_rhcos_metal(version='4.5'):
-#    url = "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/%s/latest" % version
-#    with urlopen(url) as b:
-#        data = b.read().decode()
-#    for x in data.split(' '):
-#        if 'installer-kernel' in x:
-#            match = search('.*href="(.*)">rhcos.*', x)
-#            kernel = "%s/%s" % (url, match.group(1))
-#        elif 'installer-initramfs' in x:
-#            match = search('.*href="(.*)">rhcos.*', x)
-#            initrd = "%s/%s" % (url, match.group(1))
-#        elif 'metal' in x:
-#            match = search('.*href="(.*)">rhcos.*', x)
-#            metal = "%s/%s" % (url, match.group(1))
-#    return kernel, initrd, metal
+def get_commit_rhcos_metal(commitid):
+    buildurl = "https://raw.githubusercontent.com/openshift/installer/%s/data/data/rhcos.json" % commitid
+    with urlopen(buildurl) as b:
+        data = json.loads(b.read().decode())
+        baseuri = data['baseURI']
+        kernel = "%s%s" % (baseuri, data['images']['initramfs']['path'])
+        initrd = "%s%s" % (baseuri, data['images']['kernel']['path'])
+        metal = "%s%s" % (baseuri, data['images']['metal']['path'])
+        return kernel, initrd, metal
+
 
 def get_latest_rhcos_metal(url):
     buildurl = '%s/builds.json' % url
     with urlopen(buildurl) as b:
         data = json.loads(b.read().decode())
         for build in data['builds']:
-            if isinstance(build, dict):
-                build = build['id']
-                kernel = "%s/%s/x86_64/rhcos-%s-installer-kernel-x86_64" % (url, build, build)
-                initrd = "%s/%s/x86_64/rhcos-%s-installer-initramfs.x86_64.img" % (url, build, build)
-                metal = "%s/%s/x86_64/rhcos-%s-metal.x86_64.raw.gz" % (url, build, build)
-                return kernel, initrd, metal
-            else:
-                metaurl = '%s/%s/meta.json' % (url, build)
-                with urlopen(metaurl) as m:
-                    data = json.loads(m.read().decode())
-                    if 'qemu' in data['images']:
-                        baseimg = "%s/%s/%s" % (url, build, data['images']['qemu']['path'].replace('-qemu.qcow2', ''))
-                        kernel = "%s-installer-kernel-x86_64" % baseimg
-                        initrd = "%s-installer-initramfs.x86_64.img" % baseimg
-                        metal = "%s-metal.x86_64.raw.gz" % baseimg
-                        return kernel, initrd, metal
+            build = build['id']
+            kernel = "%s/%s/x86_64/rhcos-%s-installer-kernel-x86_64" % (url, build, build)
+            initrd = "%s/%s/x86_64/rhcos-%s-installer-initramfs.x86_64.img" % (url, build, build)
+            metal = "%s/%s/x86_64/rhcos-%s-metal.x86_64.raw.gz" % (url, build, build)
+            return kernel, initrd, metal
 
 
 def find_ignition_files(role, plan):
