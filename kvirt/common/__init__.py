@@ -1175,8 +1175,8 @@ def get_commit_rhcos_metal(commitid):
     with urlopen(buildurl) as b:
         data = json.loads(b.read().decode())
         baseuri = data['baseURI']
-        kernel = "%s%s" % (baseuri, data['images']['initramfs']['path'])
-        initrd = "%s%s" % (baseuri, data['images']['kernel']['path'])
+        kernel = "%s%s" % (baseuri, data['images']['kernel']['path'])
+        initrd = "%s%s" % (baseuri, data['images']['initramfs']['path'])
         metal = "%s%s" % (baseuri, data['images']['metal']['path'])
         return kernel, initrd, metal
 
