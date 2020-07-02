@@ -1,8 +1,5 @@
 #!/usr/bin/bash
 
-#TYPE=$1
-#NAME=$2
-STATE=$3
 TOKEN="{{ config_auth_token }}"
 CURRENTDEVICEID=$(curl -s https://metadata.packet.net/2009-04-04/meta-data/instance-id)
 export PATH=/root:$PATH
@@ -13,38 +10,19 @@ if [ "$?" != "0" ] ; then
   chmod u+x /root/jq
 fi
 
-case $STATE in
-"MASTER")
-  PROJECT_ID="$(curl -s https://metadata.packet.net/2009-04-04/meta-data/tags | grep project | sed 's/project_//')"
-  DEVICEIDS=$(curl -H "X-Auth-Token: $TOKEN" -H "Content-Type: application/json" https://api.packet.net/projects/$PROJECT_ID/devices | jq -r '.devices[] | select(.hostname | startswith("{{ cluster }}-")) | .id')
-  for DEVICEID in $DEVICEIDS ; do
-    RESERVATIONID=$(curl -sH "X-Auth-Token: $TOKEN" -H "Content-Type: application/json" https://api.packet.net/devices/$DEVICEID/ips | jq -r '.ip_addresses[] | select(.address == "{{ api_ip }}") | .id')
-    if [ "$RESERVATIONID" != "" ] ; then
-      if [ "$DEVICEID" == "$CURRENTDEVICEID" ] ; then
-        exit 0
-      fi
-      echo "Deleting old reservation $RESERVATIONID in device $DEVICEID"
-      curl -H "X-Auth-Token: $TOKEN" -H "Content-Type: application/json" -X DELETE https://api.packet.net/ips/$RESERVATIONID
-      break
-    fi
-  done
-  echo "Creating new reservation for $CURRENTDEVICEID"
-  curl -sH "X-Auth-Token: $TOKEN" -H "Content-Type: application/json" -X POST -d "{\"address\": \"{{ api_ip }}/32\",\"manageable\": \"true\"}" https://api.packet.net/devices/$CURRENTDEVICEID/ips
-  exit 0
-  ;;
-"BACKUP")
-  RESERVATIONID=$(curl -sH "X-Auth-Token: $TOKEN" -H "Content-Type: application/json" https://api.packet.net/devices/$CURRENTDEVICEID/ips | jq -r '.ip_addresses[] | select(.address == "{{ api_ip }}") | .id')
+PROJECT_ID="$(curl -s https://metadata.packet.net/2009-04-04/meta-data/tags | grep project | sed 's/project_//')"
+DEVICEIDS=$(curl -H "X-Auth-Token: $TOKEN" -H "Content-Type: application/json" https://api.packet.net/projects/$PROJECT_ID/devices | jq -r '.devices[] | select(.hostname | startswith("{{ cluster }}-")) | .id')
+for DEVICEID in $DEVICEIDS ; do
+  RESERVATIONID=$(curl -sH "X-Auth-Token: $TOKEN" -H "Content-Type: application/json" https://api.packet.net/devices/$DEVICEID/ips | jq -r '.ip_addresses[] | select(.address == "{{ api_ip }}") | .id')
   if [ "$RESERVATIONID" != "" ] ; then
-    echo "Deleting old reservation $RESERVATIONID in device $CURRENTDEVICEID"
+    if [ "$DEVICEID" == "$CURRENTDEVICEID" ] ; then
+      exit 0
+    fi
+    echo "Deleting old reservation $RESERVATIONID in device $DEVICEID"
     curl -H "X-Auth-Token: $TOKEN" -H "Content-Type: application/json" -X DELETE https://api.packet.net/ips/$RESERVATIONID
+    break
   fi
-  exit 0
-  ;;
-"FAULT")
-  exit 0
-  ;;
-*)
-  echo "unknown state"
-  exit 1
-  ;;
-esac
+done
+echo "Creating new reservation for $CURRENTDEVICEID"
+curl -sH "X-Auth-Token: $TOKEN" -H "Content-Type: application/json" -X POST -d "{\"address\": \"{{ api_ip }}/32\",\"manageable\": \"true\"}" https://api.packet.net/devices/$CURRENTDEVICEID/ips
+exit 0

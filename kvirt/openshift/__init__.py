@@ -328,7 +328,7 @@ def create(config, plandir, cluster, overrides):
         COS_VERSION = "4%s" % version_match.group(1) if version_match is not None else '45'
     if image is None:
         if platform == 'packet':
-            pprint("Missing image in your parameters file. This is required for packet" % image, color='red')
+            pprint("Missing image in your parameters file. This is required for packet", color='red')
             os._exit(1)
         images = [v for v in k.volumes() if COS_TYPE in v and COS_VERSION in v]
         if images:
