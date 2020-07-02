@@ -207,7 +207,8 @@ class Kpacket(object):
                     kernel, initrd, metal = common.get_latest_rhcos_metal(url)
             elif 'fcos' in image:
                 kernel, initrd, metal = common.get_latest_fcos_metal(url)
-            userdata = self._ipxe(kernel, initrd, metal, ignition_url)
+            interface = 'eth0' if 'fcos' in image else 'ens3f0'
+            userdata = self._ipxe(kernel, initrd, metal, ignition_url, interface)
             version = common.ignition_version(image)
             ignitiondir = '/tmp'
             ipv6 = []
@@ -1073,9 +1074,10 @@ class Kpacket(object):
         """
         return
 
-    def _ipxe(self, kernel, initrd, metal, ignition_url):
-        ipxeparameters = "ip=dhcp rd.neednet=1 initrd=%s console=ttyS1,115200n8 " % initrd
-        ipxeparameters += "coreos.inst=yes coreos.inst.install_dev=sda"
+    def _ipxe(self, kernel, initrd, metal, ignition_url, interface):
+        ipxeparameters = "ip=%s:dhcp " % interface
+        ipxeparameters += "rd.neednet=1 initrd=%s console=ttyS1,115200n8 " % initrd
+        ipxeparameters += "coreos.inst=yes coreos.inst.insecure=yes coreos.inst.install_dev=sda"
         return """#!ipxe
 kernel %s %s coreos.inst.image_url=%s coreos.inst.ignition_url=%s
 initrd %s
