@@ -201,10 +201,10 @@ class Kpacket(object):
                     return {'result': 'failure', 'reason': 'You need to define ignition_url as parameter'}
             url = IMAGES[image]
             if 'rhcos' in image:
-                # rhcosversion = image.replace('rhcos', '')
-                # rhcosversion = rhcosversion[0] + '.' + rhcosversion[1]
-                # kernel, initrd, metal = common.get_latest_rhcos_metal(rhcosversion)
-                kernel, initrd, metal = common.get_latest_rhcos_metal(url)
+                if 'commit_id' in overrides:
+                    kernel, initrd, metal = common.get_latest_rhcos_metal(url)
+                else:
+                    kernel, initrd, metal = common.get_commit_rhcos_metal(overrides['commit_id'])
             elif 'fcos' in image:
                 kernel, initrd, metal = common.get_latest_fcos_metal(url)
             interface = 'eth0' if 'fcos' in image else 'ens3f0'

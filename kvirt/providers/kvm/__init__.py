@@ -1314,6 +1314,8 @@ class Kvirt(object):
         ifaces = []
         if vm.isActive():
             networktypes = [element.get('type') for element in list(root.getiterator('interface'))]
+            for networktype in networktypes:
+                print(networktype)
             guestagent = vir_src_agent if 'bridge' in networktypes else vir_src_lease
             try:
                 gfaces = vm.interfaceAddresses(guestagent, 0)

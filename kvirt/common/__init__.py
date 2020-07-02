@@ -98,6 +98,8 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 if index == 0:
                     if not legacy and netname in ipv6:
                         netdata[nicname] = {'dhcp6': True}
+                    # if not legacy:
+                    #    netdata[nicname] = {'dhcp6': True} if netname in ipv6 else {'dhcp4': True}
                     continue
                 ip = None
                 netmask = None

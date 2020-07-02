@@ -4,6 +4,7 @@
 #NAME=$2
 STATE=$3
 TOKEN="{{ config_auth_token }}"
+CURRENTDEVICEID=$(curl -s https://metadata.packet.net/2009-04-04/meta-data/instance-id)
 export PATH=/root:$PATH
 
 which jq >/dev/null 2>&1
@@ -14,7 +15,6 @@ fi
 
 case $STATE in
 "MASTER")
-  CURRENTDEVICEID=$(curl -s https://metadata.packet.net/2009-04-04/meta-data/instance-id)
   PROJECT_ID="$(curl -s https://metadata.packet.net/2009-04-04/meta-data/tags | grep project | sed 's/project_//')"
   DEVICEIDS=$(curl -H "X-Auth-Token: $TOKEN" -H "Content-Type: application/json" https://api.packet.net/projects/$PROJECT_ID/devices | jq -r '.devices[] | select(.hostname | startswith("{{ cluster }}-")) | .id')
   for DEVICEID in $DEVICEIDS ; do
@@ -33,6 +33,11 @@ case $STATE in
   exit 0
   ;;
 "BACKUP")
+  RESERVATIONID=$(curl -sH "X-Auth-Token: $TOKEN" -H "Content-Type: application/json" https://api.packet.net/devices/$CURRENTDEVICEID/ips | jq -r '.ip_addresses[] | select(.address == "{{ api_ip }}") | .id')
+  if [ "$RESERVATIONID" != "" ] ; then
+    echo "Deleting old reservation $RESERVATIONID in device $CURRENTDEVICEID"
+    curl -H "X-Auth-Token: $TOKEN" -H "Content-Type: application/json" -X DELETE https://api.packet.net/ips/$RESERVATIONID
+  fi
   exit 0
   ;;
 "FAULT")

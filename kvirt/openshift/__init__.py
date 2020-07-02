@@ -315,6 +315,9 @@ def create(config, plandir, cluster, overrides):
     INSTALLER_VERSION = os.popen('openshift-install version').readlines()[0].split(" ")[1].strip()
     if INSTALLER_VERSION.startswith('v'):
         INSTALLER_VERSION = INSTALLER_VERSION[1:]
+    if platform == 'packet' and not upstream:
+        COMMIT_ID = os.popen('openshift-install version').readlines()[1].replace('built from commit', '').strip()
+        overrides['commit_id'] = COMMIT_ID
     pprint("Using installer version %s" % INSTALLER_VERSION, color='blue')
     if upstream:
         COS_VERSION = ""
