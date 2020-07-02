@@ -6,7 +6,7 @@ STATE=$3
 
 case $STATE in
 "MASTER")
-  ip a l enp1s0f0 | grep -q {{ api_ip }}
+  ip a l {{ 'eth0' if upstream else 'enp1s0f0' }} | grep -q {{ api_ip }}
   if [ "$?" == "0" ] ; then
     TOKEN="{{ config_auth_token }}"
     DEVICEID=$(curl -s https://metadata.packet.net/2009-04-04/meta-data/instance-id)
