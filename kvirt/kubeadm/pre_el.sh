@@ -1,3 +1,9 @@
+echo """[kubernetes]
+name=Kubernetes
+baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+enabled=1
+gpgcheck=0
+repo_gpgcheck=0""" >/etc/yum.repos.d/kubernetes.repo
 yum -y install git
 echo net.bridge.bridge-nf-call-iptables=1 >> /etc/sysctl.d/99-sysctl.conf
 sysctl -p

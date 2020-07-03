@@ -2,6 +2,7 @@
 
 from distutils.spawn import find_executable
 from kvirt.common import info, pprint, pwd_path, get_kubectl
+from kvirt.defaults import UBUNTUS
 import os
 import sys
 
@@ -39,6 +40,7 @@ def create(config, plandir, cluster, overrides):
         os._exit(1)
     data['basedir'] = '/workdir' if os.path.exists("/i_am_a_container") else '.'
     cluster = data.get('cluster')
+    image = data.get('image', 'centos7')
     domain = data.get('domain', 'karmalabs.com')
     clusterdir = pwd_path("clusters/%s" % cluster)
     firstmaster = "%s-master-0" % cluster
@@ -79,3 +81,7 @@ def create(config, plandir, cluster, overrides):
     info("Use The following command to interact with this cluster")
     info("export KUBECONFIG=clusters/%s/auth/kubeconfig" % cluster)
     info("export PATH=$PWD:$PATH")
+    prefile = 'pre_ubuntu.sh' if image in UBUNTUS else 'pre_el.sh'
+    predata = config.process_inputfile(cluster, "%s/%s" % (plandir, prefile), overrides=data)
+    with open("%s/pre.sh" % clusterdir, 'w') as f:
+        f.write(predata)

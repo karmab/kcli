@@ -25,8 +25,6 @@
  nets: {{ [network] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
  files:
-  - path: /etc/yum.repos.d/kubernetes.repo
-    origin: kubernetes.repo
   - path: /root/join.sh
     origin: {{ basedir }}/clusters/{{ cluster }}/join.sh
   - path: /root/admin.conf
@@ -35,7 +33,7 @@
 {%- if 'ubuntu' in image or 'xenial' in image or 'yaketty' in image or 'zesty' in image or 'artful' in image or 'bionic' in image or 'cosmic' in image %}
   - pre_ubuntu.sh
 {%- else %}
-  - pre.sh
+  - pre_el.sh
 {%- endif %}
   - workers.sh
 {%- if numa != None %}

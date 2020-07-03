@@ -55,8 +55,6 @@
 {%- if config_type == 'ovirt' %}
   - ovirt_fix.sh
 {%- endif %}
-  - path: /etc/yum.repos.d/kubernetes.repo
-    origin: kubernetes.repo
 {%- if nfs and number == 0 %}
   - nfs.yml
   - nfs.sh
@@ -70,7 +68,7 @@
 {%- if 'ubuntu' in image or 'xenial' in image or 'yaketty' in image or 'zesty' in image or 'artful' in image or 'bionic' in image or 'cosmic' in image %}
   - pre_ubuntu.sh
 {%- else %}
-  - pre.sh
+  - pre_el.sh
 {%- endif %}
 {%- if number == 0 %}
   - masters.sh
