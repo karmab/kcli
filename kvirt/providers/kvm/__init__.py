@@ -8,6 +8,7 @@ from distutils.spawn import find_executable
 # from urllib.request import urlopen, urlretrieve
 from urllib.request import urlopen
 from kvirt import defaults
+from kvirt.defaults import UBUNTUS
 from kvirt import common
 from netaddr import IPAddress, IPNetwork
 from libvirt import open as libvirtopen, registerErrorHandler
@@ -63,7 +64,6 @@ guestwindows2003 = "windows_2003"
 guestwindows200364 = "windows_2003x64"
 guestwindows2008 = "windows_2008"
 guestwindows200864 = "windows_2008x64"
-ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety', 'zesty', 'artful', 'bionic', 'cosmic']
 states = {VIR_DOMAIN_NOSTATE: 'nostate', VIR_DOMAIN_RUNNING: 'up',
           VIR_DOMAIN_BLOCKED: 'blocked', VIR_DOMAIN_PAUSED: 'paused',
           VIR_DOMAIN_SHUTDOWN: 'shuttingdown', VIR_DOMAIN_SHUTOFF: 'down',
@@ -504,15 +504,11 @@ class Kvirt(object):
             gcmds = []
             if image is not None:
                 lower = image.lower()
-                if lower.startswith('debian'):
-                    gcmds.append('apt-get -f install qemu-guest-agent')
-                    gcmds.append('/etc/init.d/qemu-guest-agent start')
-                    gcmds.append('update-rc.d  qemu-guest-agent defaults')
-                elif lower.startswith('fedora') or lower.startswith('rhel') or lower.startswith('centos'):
+                if lower.startswith('fedora') or lower.startswith('rhel') or lower.startswith('centos'):
                     gcmds.append('yum -y install qemu-guest-agent')
                     gcmds.append('systemctl enable qemu-guest-agent')
                     gcmds.append('systemctl start qemu-guest-agent')
-                elif [x for x in ubuntus if x in lower] or 'ubuntu' in lower:
+                elif lower.startswith('debian') or [x for x in UBUNTUS if x in lower] or 'ubuntu' in lower:
                     gcmds.append('apt-get update')
                     gcmds.append('apt-get -f install qemu-guest-agent')
                     gcmds.append('/etc/init.d/qemu-guest-agent start')
@@ -1311,15 +1307,19 @@ class Kvirt(object):
             yamlinfo['creationdate'] = creationdate
         yamlinfo['cpus'] = numcpus
         yamlinfo['memory'] = memory
-        ifaces = []
+        agentfaces = {}
+        leasefaces = {}
+        ifaces = {}
         if vm.isActive():
             networktypes = [element.get('type') for element in list(root.getiterator('interface'))]
-            guestagent = vir_src_agent if 'bridge' in networktypes else vir_src_lease
-            try:
-                gfaces = vm.interfaceAddresses(guestagent, 0)
-                ifaces = gfaces
-            except:
-                pass
+            if 'bridge' in networktypes:
+                try:
+                    agentfaces = vm.interfaceAddresses(vir_src_agent, 0)
+                except:
+                    pass
+            if 'network' in networktypes:
+                leasefaces = vm.interfaceAddresses(vir_src_lease, 0)
+            ifaces = {**agentfaces, **leasefaces}
         interfaces = list(root.getiterator('interface'))
         for index, element in enumerate(interfaces):
             networktype = element.get('type').replace('network', 'routed')

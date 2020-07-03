@@ -6,6 +6,7 @@ Ovirt Provider Class
 
 from distutils.spawn import find_executable
 from kvirt import common
+from kvirt.defaults import UBUNTUS
 from kvirt.providers.ovirt.helpers import IMAGES as oimages
 from kvirt.providers.ovirt.helpers import get_home_ssh_key
 import ovirtsdk4 as sdk
@@ -298,7 +299,7 @@ class KOvirt(object):
                 gcmds.append('sed -i "s/# ignored_nics.*/ignored_nics = %s/" /etc/ovirt-guest-agent.conf' % ignorednics)
                 gcmds.append('service ovirt-guest-agent enable')
                 gcmds.append('service ovirt-guest-agent restart')
-            if image is not None and [x for x in common.ubuntus if x in image.lower()]:
+            if image is not None and [x for x in UBUNTUS if x in image.lower()]:
                 gcmds.append('echo deb http://download.opensuse.org/repositories/home:/evilissimo:/ubuntu:/16.04/'
                              'xUbuntu_16.04/ /')
                 gcmds.append('wget http://download.opensuse.org/repositories/home:/evilissimo:/ubuntu:/16.04/'

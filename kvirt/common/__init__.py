@@ -3,6 +3,7 @@
 
 from ast import literal_eval
 from kvirt import jinjafilters
+from kvirt.defaults import UBUNTUS
 from random import randint
 import base64
 from jinja2 import Environment, FileSystemLoader
@@ -22,7 +23,6 @@ from shutil import move
 import yaml
 
 binary_types = ['bz2', 'deb', 'jpg', 'gz', 'jpeg', 'iso', 'png', 'rpm', 'tgz', 'zip', 'ks']
-ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety', 'zesty', 'artful', 'bionic', 'cosmic', 'eoan', 'focal']
 static_nic = """#!/usr/bin/env bash
 if [ ! -f /etc/sysconfig/network-scripts/ifcfg-{nicname} ] ; then
 echo -e \"\"\"{data}\"\"\" > /etc/sysconfig/network-scripts/ifcfg-{nicname}
@@ -898,7 +898,7 @@ def get_user(image):
         user = 'core'
     elif 'cirros' in image.lower():
         user = 'cirros'
-    elif [x for x in ubuntus if x in image.lower()] or 'ubuntu' in image.lower():
+    elif [x for x in UBUNTUS if x in image.lower()] or 'ubuntu' in image.lower():
         user = 'ubuntu'
     elif 'fedora' in image.lower():
         user = 'fedora'
@@ -926,7 +926,7 @@ def get_cloudinitfile(image):
     :return:
     """
     lower = image.lower()
-    if 'fedora' in lower or 'debian' in lower or 'ubuntu' in lower or [x for x in ubuntus if x in lower]:
+    if 'fedora' in lower or 'debian' in lower or 'ubuntu' in lower or [x for x in UBUNTUS if x in lower]:
         cloudinitfile = '/var/log/cloud-init-output.log'
     else:
         cloudinitfile = '/var/log/messages'
@@ -1427,7 +1427,7 @@ def get_values(data, element, field):
 
 
 def is_debian(image):
-    if [x for x in ubuntus if x in image.lower()] or 'ubuntu' in image.lower() or 'debian' in image.lower():
+    if [x for x in UBUNTUS if x in image.lower()] or 'ubuntu' in image.lower() or 'debian' in image.lower():
         return True
     else:
         return False

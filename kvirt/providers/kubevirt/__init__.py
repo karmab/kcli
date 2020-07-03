@@ -9,7 +9,7 @@ from kubernetes import client
 from kvirt.kubecommon import Kubecommon
 from netaddr import IPAddress
 from kvirt import common
-from kvirt.defaults import IMAGES
+from kvirt.defaults import IMAGES, UBUNTUS
 import datetime
 import os
 import time
@@ -27,7 +27,6 @@ CONTAINERDISKS = ['kubevirt/alpine-container-disk-demo', 'kubevirt/cirros-contai
                   'karmab/debian-container-disk-demo', 'kubevirt/fedora-cloud-container-disk-demo',
                   'karmab/fedora-coreos-container-disk-demo', 'karmab/gentoo-container-disk-demo',
                   'karmab/ubuntu-container-disk-demo']
-ubuntus = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety', 'zesty', 'artful', 'bionic', 'cosmic']
 KUBECTL_LINUX = "https://storage.googleapis.com/kubernetes-release/release/v1.16.1/bin/linux/amd64/kubectl"
 KUBECTL_MACOSX = KUBECTL_LINUX.replace('linux', 'darwin')
 
@@ -283,7 +282,7 @@ class Kubevirt(Kubecommon):
                 gcmds.append('systemctl restart qemu-guest-agent')
             elif image.lower().startswith('debian') or 'debian-' in image.lower():
                 gcmds.append('apt-get -f install qemu-guest-agent')
-            elif [x for x in ubuntus if x in image.lower()]:
+            elif [x for x in UBUNTUS if x in image.lower()]:
                 gcmds.append('apt-get update')
                 gcmds.append('apt-get -f install qemu-guest-agent')
             idx = 1

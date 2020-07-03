@@ -8,6 +8,7 @@ from jinja2 import Environment, FileSystemLoader
 from jinja2 import StrictUndefined as undefined
 from jinja2.exceptions import TemplateSyntaxError, TemplateError
 from kvirt import common
+from kvirt.defaults import UBUNTUS
 from dateutil import parser as dateparser
 from getpass import getuser
 import googleapiclient.discovery
@@ -956,7 +957,7 @@ class Kgcp(object):
             return 'rhel-7'
         elif 'rhel-guest-image-8' in image.lower() or 'rhel-server-8' in image.lower():
             return 'rhel-8'
-        elif [x for x in common.ubuntus if x in image.lower()]:
+        elif [x for x in UBUNTUS if x in image.lower()]:
             return 'ubuntu-1804-lts'
         else:
             return image
