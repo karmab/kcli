@@ -437,7 +437,6 @@ class Kpacket(object):
         if devices:
             device = devices[0]
         else:
-            common.pprint("VM %s not found" % name, color='red')
             return
         serverid = device.id
         facilitycode = [f.code for f in self.conn.list_facilities() if f.id == device['facility']['id']][0]
