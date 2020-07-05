@@ -993,6 +993,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
                                  "overwrite": True,
                                  "contents": {"source": "data:,%s" % dnsline, "verification": {}}, "mode": 420})
     if nets:
+        enpindex = 255
         for index, net in enumerate(nets):
             static_nic_file = static_nic
             static_nic_file_mode = '755'
@@ -1012,7 +1013,8 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
                 if image is not None and ('fcos' in image or 'fedora-coreos' in image):
                     default_nicname = "eth%s" % index
                 elif net.get('numa') is not None:
-                    default_nicname = "enp%ds0" % (255 - 2 * index)
+                    default_nicname = "enp%ds0" % enpindex
+                    enpindex -= 2
                 else:
                     default_nicname = "ens%d" % (index + 3)
                 if image == 'custom_ipxe':
