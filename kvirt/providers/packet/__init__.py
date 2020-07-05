@@ -159,7 +159,7 @@ class Kpacket(object):
         vlan = False
         for index, network in enumerate(nets):
             if index > 1:
-                common.pprint("Ignoring net higher than %s" % index, color='blue')
+                common.pprint("Ignoring net higher than %s" % index, color='yellow')
                 break
             if isinstance(network, str):
                 networkname = network
@@ -297,8 +297,8 @@ class Kpacket(object):
             if networkid is None:
                 continue
             elif 'cluster' in overrides and name.startswith("%s-" % overrides['cluster']):
-                common.pprint("Not applying custom vlan to speed process for openshift...", color='blue')
-                common.pprint("This will be applied manually later...", color='blue')
+                common.pprint("Not applying custom vlan to speed process for openshift...", color='yellow')
+                common.pprint("This will be applied manually later...", color='yellow')
                 continue
             status = 'provisioning'
             while status != 'active':

@@ -1047,7 +1047,7 @@ $INFO
             if stopfound:
                 common.pprint("Plan %s stopped!" % plan)
             else:
-                common.pprint("No matching objects found", color='blue')
+                common.pprint("No matching objects found", color='yellow')
             if not restart:
                 return {'result': 'success'}
         if start or restart:
@@ -1079,7 +1079,7 @@ $INFO
             if startfound:
                 common.pprint("Plan %s started!" % plan)
             else:
-                common.pprint("No matching objects found", color='blue')
+                common.pprint("No matching objects found", color='yellow')
             return {'result': 'success'}
         if snapshot:
             snapshotfound = False
@@ -1240,7 +1240,7 @@ $INFO
                 planurl = details.get('url')
                 planfile = details.get('file')
                 if planurl is None and planfile is None:
-                    common.pprint("Missing Url/File for plan %s. Not creating it..." % planentry, color='blue')
+                    common.pprint("Missing Url/File for plan %s. Not creating it..." % planentry, color='yellow')
                     continue
                 elif planurl is not None:
                     path = planentry
@@ -1270,7 +1270,7 @@ $INFO
                 cidr = netprofile.get('cidr')
                 nat = bool(netprofile.get('nat', True))
                 if cidr is None:
-                    common.pprint("Missing Cidr for network %s. Not creating it..." % net, color='blue')
+                    common.pprint("Missing Cidr for network %s. Not creating it..." % net, color='yellow')
                     continue
                 dhcp = netprofile.get('dhcp', True)
                 domain = netprofile.get('domain')
@@ -1288,7 +1288,7 @@ $INFO
                     poolprofile = entries[pool]
                     poolpath = poolprofile.get('path')
                     if poolpath is None:
-                        common.pprint("Pool %s skipped as path is missing!" % pool, color='blue')
+                        common.pprint("Pool %s skipped as path is missing!" % pool, color='yellow')
                         continue
                     k.create_pool(pool, poolpath)
         if imageentries:
@@ -1326,13 +1326,13 @@ $INFO
                     z = Kconfig(client=dnsclient).k
                     dnsclients[dnsclient] = z
                 else:
-                    common.pprint("Client %s not found. Skipping" % dnsclient, color='blue')
+                    common.pprint("Client %s not found. Skipping" % dnsclient, color='yellow')
                     return
                 if dnsip is None:
-                    common.pprint("Missing ip. Skipping!", color='blue')
+                    common.pprint("Missing ip. Skipping!", color='yellow')
                     return
                 if dnsnet is None:
-                    common.pprint("Missing net. Skipping!", color='blue')
+                    common.pprint("Missing net. Skipping!", color='yellow')
                     return
                 z.reserve_dns(name=dnsentry, nets=[dnsnet], domain=dnsdomain, ip=dnsip, alias=dnsalias, force=True,
                               primary=True)
@@ -1624,7 +1624,7 @@ $INFO
                                       volumes=volumes, environment=environment, label=label)
         if ansibleentries:
             if not newvms:
-                common.pprint("Ansible skipped as no new vm within playbook provisioned", color='blue')
+                common.pprint("Ansible skipped as no new vm within playbook provisioned", color='yellow')
                 return
             for entry in sorted(ansibleentries):
                 _ansible = entries[entry]
@@ -1645,7 +1645,7 @@ $INFO
                 else:
                     vms = newvms
                 if not vms:
-                    common.pprint("Ansible skipped as no new vm within playbook provisioned", color='blue')
+                    common.pprint("Ansible skipped as no new vm within playbook provisioned", color='yellow')
                     return
                 ansiblecommand = "ansible-playbook"
                 if verbose:
@@ -1808,7 +1808,7 @@ $INFO
         elif sync:
             k = self.k
             if not self.extraclients:
-                common.pprint("Nothing to do. Leaving...", color='blue')
+                common.pprint("Nothing to do. Leaving...", color='yellow')
                 return {'result': 'success'}
             for cli in self.extraclients:
                 dest = self.extraclients[cli]
@@ -1817,7 +1817,7 @@ $INFO
             for vol in k.volumes():
                 image = os.path.basename(vol)
                 if image in [os.path.basename(v) for v in dest.volumes()]:
-                    common.pprint("Ignoring %s as it's already there" % image, color='blue')
+                    common.pprint("Ignoring %s as it's already there" % image, color='yellow')
                     continue
                 url = None
                 for n in list(IMAGES.values()):

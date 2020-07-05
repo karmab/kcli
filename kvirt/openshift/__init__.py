@@ -377,7 +377,7 @@ def create(config, plandir, cluster, overrides):
         pprint("You can delete it with kcli delete kube --yes %s" % cluster, color='red')
         os._exit(run)
     if minimal:
-        pprint("Deploying cvo overrides to provide a minimal install", color='blue')
+        pprint("Deploying cvo overrides to provide a minimal install", color='yellow')
         with open("%s/cvo-overrides.yaml" % plandir) as f:
             cvo_override = f.read()
         with open("%s/manifests/cvo-overrides.yaml" % clusterdir, "a") as f:
@@ -424,7 +424,7 @@ def create(config, plandir, cluster, overrides):
         pprint("Using %s for api vip...." % api_ip, color='blue')
         ignore_hosts = data.get('ignore_hosts', False)
         if ignore_hosts:
-            pprint("Ignoring /etc/hosts as per your request", color='blue')
+            pprint("Ignoring /etc/hosts", color='yellow')
         elif not os.path.exists("/i_am_a_container"):
             hosts = open("/etc/hosts").readlines()
             wronglines = [e for e in hosts if not e.startswith('#') and "api.%s.%s" % (cluster, domain) in e and

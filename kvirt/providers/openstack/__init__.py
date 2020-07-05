@@ -455,7 +455,7 @@ class Kopenstack(object):
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         currentflavor = nova.flavors.get(vm.flavor['id'])
         if currentflavor.ram >= int(memory):
-            common.pprint("No need to resize", color='blue')
+            common.pprint("No need to resize", color='yellow')
             return {'result': 'success'}
         allflavors = [f for f in nova.flavors.list() if f != currentflavor]
         flavors = [flavor for flavor in allflavors if flavor.ram >= int(memory) and flavor.vcpus >= currentflavor.vcpus]
@@ -522,7 +522,7 @@ class Kopenstack(object):
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         currentflavor = nova.flavors.get(vm.flavor['id'])
         if currentflavor.vcpus >= numcpus:
-            common.pprint("No need to resize", color='blue')
+            common.pprint("No need to resize", color='yellow')
             return {'result': 'success'}
         allflavors = [f for f in nova.flavors.list() if f != currentflavor]
         flavors = [flavor for flavor in allflavors if flavor.ram >= currentflavor.ram and flavor.vcpus >= numcpus]
@@ -718,7 +718,7 @@ class Kopenstack(object):
             network_id = network['network']['id']
             tenant_id = network['network']['tenant_id']
         else:
-            common.pprint("Network already there. Creating subnet", color='blue')
+            common.pprint("Network already there. Creating subnet", color='yellow')
         if cidr is not None:
             if network_id is None:
                 network_id = networks[name]
@@ -731,7 +731,7 @@ class Kopenstack(object):
                 subnet_id = subnet['subnet']['id']
                 tenant_id = subnet['subnet']['tenant_id']
             else:
-                common.pprint("Subnet already there. Leaving", color='blue')
+                common.pprint("Subnet already there. Leaving", color='yellow')
                 return {'result': 'success'}
         if nat:
             if externalnet_id is not None:

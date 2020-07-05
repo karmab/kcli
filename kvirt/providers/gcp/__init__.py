@@ -681,7 +681,7 @@ class Kgcp(object):
             body = {"machineType": newmachinetype}
             conn.instances().setMachineType(project=project, zone=zone, instance=name, body=body).execute()
         else:
-            common.pprint("No custom machine type found. Not updating memory of %s" % name, color='blue')
+            common.pprint("No custom machine type found. Not updating memory of %s" % name, color='yellow')
         return {'result': 'success'}
 
     def update_cpus(self, name, numcpus):
@@ -706,7 +706,7 @@ class Kgcp(object):
             body = {"machineType": newmachinetype}
             conn.instances().setMachineType(project=project, zone=zone, instance=name, body=body).execute()
         else:
-            common.pprint("No custom machine type found. Not updating memory of %s" % name)
+            common.pprint("No custom machine type found. Not updating memory of %s" % name, color='yellow')
         return {'result': 'success'}
 
     def update_start(self, name, start=True):

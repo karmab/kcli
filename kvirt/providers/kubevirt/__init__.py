@@ -755,7 +755,7 @@ class Kubevirt(Kubecommon):
         t = 'Template' if 'Template' in vm['spec'] else 'template'
         vm['spec'][t]['spec']['domain']['resources']['requests']['memory'] = "%sM" % memory
         crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
-        common.pprint("Change will only appear next full lifeclyclereboot", color='blue')
+        common.pprint("Change will only appear next full lifeclyclereboot", color='yellow')
         return
 
     def update_cpus(self, name, numcpus):
@@ -768,7 +768,7 @@ class Kubevirt(Kubecommon):
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         t = 'Template' if 'Template' in vm['spec'] else 'template'
         vm['spec'][t]['spec']['domain']['cpu']['cores'] = int(numcpus)
-        common.pprint("Change will only appear next full lifeclyclereboot", color='blue')
+        common.pprint("Change will only appear next full lifeclyclereboot", color='yellow')
         crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
         return
 

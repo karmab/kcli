@@ -17,7 +17,7 @@ def scale(config, plandir, cluster, overrides):
     pprint("Scaling on client %s" % client, color='blue')
     image = k.info("%s-master-0" % cluster).get('image')
     if image is None:
-        pprint("Missing image...", color='blue')
+        pprint("Missing image...", color='red')
         sys.exit(1)
     else:
         pprint("Using image %s" % image, color='blue')

@@ -639,7 +639,8 @@ def get_overrides(paramfile=None, param=[]):
             try:
                 overrides = yaml.safe_load(f)
             except:
-                pprint("Couldnt parse your parameters file %s. Not using it" % paramfile, color='blue')
+                pprint("Couldn't parse your parameters file %s. Leaving" % paramfile, color='red')
+                os._exit(1)
     if param is not None:
         for x in param:
             if len(x.split('=')) < 2:
@@ -1105,7 +1106,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     for fileentry in data['storage']['files']:
         if fileentry['path'] not in paths:
             if fix_ceo and 'bootstrap' in name and fileentry['path'] == '/usr/local/bin/bootkube.sh':
-                pprint("Patching bootkube in bootstrap ignition to handle single master", color='blue')
+                pprint("Patching bootkube in bootstrap ignition to handle single master", color='yellow')
                 content = base64.b64decode(fileentry['contents']['source'].split(',')[1])
                 ceofix = """cp etcd-bootstrap/manifests/* manifests/
                 cp /root/ceo.yaml manifests/0000_12_etcd-operator_01_operator.cr.yaml"""

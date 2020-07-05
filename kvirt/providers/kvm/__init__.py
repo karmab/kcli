@@ -1920,7 +1920,7 @@ class Kvirt(object):
             print("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if vm.isActive() == 1:
-            common.pprint("Machine up. Change will only appear upon next reboot", color='blue')
+            common.pprint("Machine up. Change will only appear upon next reboot", color='yellow')
         metadata = root.find('metadata')
         kroot, kmeta = None, None
         for element in list(root.getiterator('{kvirt}info')):
@@ -1994,7 +1994,7 @@ class Kvirt(object):
                 vm.setVcpus(numcpus)
                 return {'result': 'success'}
         else:
-            common.pprint("Note it will only be effective upon next start", color='blue')
+            common.pprint("Note it will only be effective upon next start", color='yellow')
             cpunode.text = str(numcpus)
             newxml = ET.tostring(root)
             conn.defineXML(newxml.decode("utf-8"))
@@ -2020,14 +2020,14 @@ class Kvirt(object):
                 xml = "<memory model='dimm'><target><size unit='KiB'>%s</size><node>0</node></target></memory>" % diff
                 vm.attachDeviceFlags(xml, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
         elif vm.isActive():
-            common.pprint("Note this will only be effective upon next start", color='blue')
+            common.pprint("Note it will only be effective upon next start", color='yellow')
         currentmemory.text = memory
         newxml = ET.tostring(root)
         conn.defineXML(newxml.decode("utf-8"))
         return {'result': 'success'}
 
     def update_iso(self, name, iso):
-        common.pprint("Note it will only be effective upon next start", color='blue')
+        common.pprint("Note it will only be effective upon next start", color='yellow')
         isos = self.volumes(iso=True)
         isofound = False
         for i in isos:
@@ -2904,7 +2904,7 @@ class Kvirt(object):
         oldentry = "%s %s.* # KVIRT" % (ip, name)
         for line in open('/etc/hosts'):
             if re.findall(oldentry, line):
-                common.pprint("Old entry found.Leaving...", color='blue')
+                common.pprint("Old entry found.Leaving...", color='yellow')
                 return
         if not dnsmasq:
             hostscmd = "sh -c 'echo %s >>/etc/hosts'" % hosts

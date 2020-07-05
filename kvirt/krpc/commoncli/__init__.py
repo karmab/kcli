@@ -126,7 +126,8 @@ def get_overrides(paramfile=None, param=[]):
             try:
                 overrides = yaml.safe_load(f)
             except:
-                pprint("Couldnt parse your parameters file %s. Not using it" % paramfile, color='blue')
+                pprint("Couldn't parse your parameters file %s. Not using it" % paramfile, color='red')
+                os._exit(1)
     if param is not None:
         for x in param:
             if len(x.split('=')) < 2:
