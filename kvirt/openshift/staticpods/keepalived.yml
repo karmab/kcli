@@ -59,7 +59,7 @@ spec:
   - name: keepalived
     securityContext:
       privileged: true
-    image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/openshift/origin-keepalived-ipfailover:latest
+    image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/openshift/origin-keepalived-ipfailover:{{ keepalived_tag }}
     command:
     - /usr/sbin/keepalived
     args:

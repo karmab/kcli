@@ -73,3 +73,4 @@ provisioning_nic: ens4
 cloud_tag:
 cloud_scale: false
 cloud_api_internal: false
+keepalived_tag: 4.5
