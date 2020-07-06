@@ -502,7 +502,7 @@ class Kvirt(object):
                     </metadata>""" % (metadata, plan)
         if guestagent:
             gcmds = []
-            if image is not None:
+            if image is not None and 'cos' not in image and 'fedora-coreos' not in image:
                 lower = image.lower()
                 if lower.startswith('fedora') or lower.startswith('rhel') or lower.startswith('centos'):
                     gcmds.append('yum -y install qemu-guest-agent')
