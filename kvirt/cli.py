@@ -873,7 +873,8 @@ def create_vm(args):
         for number in range(count):
             currentname = "%s-%0.2d" % (name, number + 1)
             result = config.create_vm(currentname, profile, overrides=overrides, customprofile=customprofile, wait=wait)
-            codes.append(common.handle_response(result, name, element='', action='created', client=config.client))
+            codes.append(common.handle_response(result, currentname, element='', action='created',
+                                                client=config.client))
         return max(codes)
 
 
