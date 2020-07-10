@@ -74,11 +74,12 @@ def create(config, plandir, cluster, overrides):
         config.plan(cluster, inputfile='%s/workers.yml' % plandir, overrides=data)
     pprint("Kubernetes cluster %s deployed!!!" % cluster)
     masters = data.get('masters', 1)
-    master_node = "%s-master" % cluster if masters > 1 else "%s-master-0" % cluster
-    master_ip = k.info(master_node)['ip']
-    info("Create the following /etc/hosts entry if needed")
-    info("%s %s %s.%s" % (master_ip, master_node, master_node, domain))
-    info("Use The following command to interact with this cluster")
+    if masters > 1:
+        master_node = "%s-master" % cluster if masters > 1 else "%s-master-0" % cluster
+        master_ip = k.info(master_node)['ip']
+        info("Create the following /etc/hosts entry")
+        info("%s %s %s.%s" % (master_ip, master_node, master_node, domain))
+        info("Use The following command to interact with this cluster")
     info("export KUBECONFIG=clusters/%s/auth/kubeconfig" % cluster)
     info("export PATH=$PWD:$PATH")
     prefile = 'pre_ubuntu.sh' if image in UBUNTUS else 'pre_el.sh'
