@@ -19,7 +19,10 @@ worker_tpm: false
 worker_rng: false
 nfs: true
 sdn: flannel
+ingress: true
+ingress_method: nginx
 metallb: false
+metallb_version: v0.9.3
 metallb_range: 192.168.122.240-192.168.122.250
 multus: false
 notifycmd: "kubectl get pod -A"

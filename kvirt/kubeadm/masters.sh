@@ -24,7 +24,6 @@ kubectl apply -f https://raw.githubusercontent.com/romana/romana/master/containe
 mkdir -p /root/.kube
 cp -i /etc/kubernetes/admin.conf /root/.kube/config
 chown root:root /root/.kube/config
-# IP=`ip -4 addr show eth0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}'`
 IP=`hostname -I | cut -f1 -d" "`
 TOKEN=`kubeadm token create --ttl 0`
 HASH=`openssl x509 -in /etc/kubernetes/pki/ca.crt -noout -pubkey | openssl rsa -pubin -outform DER 2>/dev/null | sha256sum | cut -d' ' -f1`
@@ -49,3 +48,13 @@ ssh {{ cluster }}-master-{{ number }} chown root:root /root/.kube/config
 {% endif %}
 
 echo ${CMD} > /root/join.sh
+
+{%- if metallb %}
+bash /root/metal_lb.sh
+{%- endif %}
+
+{%- if ingress %}
+{% if ingress_method == 'nginx' %}
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/provider/{{ 'cloud' if metallb else 'baremetal' }}/deploy.yaml
+{%- endif %}
+{%- endif %}
