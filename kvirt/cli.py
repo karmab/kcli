@@ -24,6 +24,26 @@ import yaml
 from urllib.request import urlopen
 
 
+def cache_vms(baseconfig, region, zone, namespace):
+    cache_file = "%s/.kcli/%s_vms.yml" % (os.environ['HOME'], baseconfig.client)
+    if os.path.exists(cache_file):
+        with open(cache_file, 'r') as vms:
+            _list = yaml.safe_load(vms)
+    else:
+        config = Kconfig(client=baseconfig.client, debug=baseconfig.debug, region=region, zone=zone,
+                         namespace=namespace)
+        _list = config.k.list()
+        with open(cache_file, 'w') as c:
+            common.pprint("Caching results for %s..." % baseconfig.client)
+            try:
+                yaml.safe_dump(_list, c, default_flow_style=False, encoding='utf-8', allow_unicode=True,
+                               sort_keys=False)
+            except:
+                yaml.safe_dump(_list, c, default_flow_style=False, encoding='utf-8', allow_unicode=True,
+                               sort_keys=False)
+    return _list
+
+
 def valid_fqdn(name):
     if name is not None and '/' in name:
         msg = "Vm name can't include /"
@@ -87,6 +107,20 @@ def get_version(args):
                 break
     full_version += " Available Updates: %s" % update
     print(full_version)
+
+
+def delete_cache(args):
+    yes_top = args.yes_top
+    yes = args.yes
+    if not yes and not yes_top:
+        common.confirm("Are you sure?")
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    cache_file = "%s/.kcli/%s_vms.yml" % (os.environ['HOME'], baseconfig.client)
+    if os.path.exists(cache_file):
+        common.pprint("Deleting cache on %s" % baseconfig.client)
+        os.remove(cache_file)
+    else:
+        common.pprint("No cache file found for %s" % baseconfig.client, color='yellow')
 
 
 def start_vm(args):
@@ -352,11 +386,21 @@ def info_vm(args):
     output = args.output
     fields = args.fields.split(',') if args.fields is not None else []
     values = args.values
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    names = [common.get_lastvm(config.client)] if not args.names else args.names
-    k = config.k
+    k = None
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    names = [common.get_lastvm(baseconfig.client)] if not args.names else args.names
+    if baseconfig.cache:
+        _list = cache_vms(baseconfig, args.region, args.zone, args.namespace)
+        vms = {vm['name']: vm for vm in _list}
     for name in names:
-        data = k.info(name, debug=args.debug)
+        if baseconfig.cache and name in vms:
+            data = vms[name]
+        else:
+            if k is None:
+                config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
+                                 namespace=args.namespace)
+                k = config.k
+            data = k.info(name, debug=args.debug)
         if data:
             print(common.print_info(data, output=output, fields=fields, values=values, pretty=True))
 
@@ -402,22 +446,24 @@ def sync_host(args):
 def list_vm(args):
     """List vms"""
     filters = args.filters
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    if config.client != 'all':
-        k = config.k
-    if config.extraclients:
-        allclients = config.extraclients.copy()
-        allclients.update({config.client: config.k})
+    if args.client is not None and ',' in args.client:
         vms = PrettyTable(["Name", "Host", "Status", "Ips", "Source", "Plan", "Profile"])
-        for cli in sorted(allclients):
-            for vm in allclients[cli].list():
+        for client in args.client.split(','):
+            config = Kbaseconfig(client=client, debug=args.debug)
+            if config.cache:
+                _list = cache_vms(config, args.region, args.zone, args.namespace)
+            else:
+                config = Kconfig(client=client, debug=args.debug, region=args.region,
+                                 zone=args.zone, namespace=args.namespace)
+                _list = config.k.list()
+            for vm in _list:
                 name = vm.get('name')
                 status = vm.get('status')
                 ip = vm.get('ip', '')
                 source = vm.get('image', '')
                 plan = vm.get('plan', '')
                 profile = vm.get('profile', '')
-                vminfo = [name, cli, status, ip, source, plan, profile]
+                vminfo = [name, client, status, ip, source, plan, profile]
                 if filters:
                     if status == filters:
                         vms.add_row(vminfo)
@@ -426,7 +472,14 @@ def list_vm(args):
         print(vms)
     else:
         vms = PrettyTable(["Name", "Status", "Ips", "Source", "Plan", "Profile"])
-        for vm in k.list():
+        baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+        if baseconfig.cache:
+            _list = cache_vms(config, args.region, args.zone, args.namespace)
+        else:
+            config = Kconfig(client=args.client, debug=args.debug, region=args.region,
+                             zone=args.zone, namespace=args.namespace)
+            _list = config.k.list()
+        for vm in _list:
             name = vm.get('name')
             status = vm.get('status')
             ip = vm.get('ip', '')
@@ -434,7 +487,7 @@ def list_vm(args):
             plan = vm.get('plan', '')
             profile = vm.get('profile', '')
             vminfo = [name, status, ip, source, plan, profile]
-            if config.planview and vm[4] != config.currentplan:
+            if baseconfig.planview and vm[4] != baseconfig.currentplan:
                 continue
             if filters:
                 if status == filters:
@@ -1574,17 +1627,16 @@ def ssh_vm(args):
     X = args.X
     Y = args.Y
     user = args.user
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    name = [common.get_lastvm(config.client)] if not args.name else args.name
-    k = config.k
-    tunnel = config.tunnel
-    tunnelhost = config.tunnelhost if config.tunnelhost is not None else config.host
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    name = [common.get_lastvm(baseconfig.client)] if not args.name else args.name
+    tunnel = baseconfig.tunnel
+    tunnelhost = baseconfig.tunnelhost if baseconfig.tunnelhost is not None else baseconfig.host
     if tunnel and tunnelhost == '127.0.0.1':
         common.pprint("Tunnel requested but invalid tunnelhost", color='red')
         os._exit(1)
-    tunnelport = config.tunnelport if config.tunnelport is not None else 22
-    tunneluser = config.tunneluser if config.tunneluser is not None else 'root'
-    insecure = config.insecure
+    tunnelport = baseconfig.tunnelport if baseconfig.tunnelport is not None else 22
+    tunneluser = baseconfig.tunneluser if baseconfig.tunneluser is not None else 'root'
+    insecure = baseconfig.insecure
     if len(name) > 1:
         cmd = ' '.join(name[1:])
     else:
@@ -1596,8 +1648,27 @@ def ssh_vm(args):
     if os.path.exists("/i_am_a_container") and not os.path.exists("/root/.kcli/config.yml")\
             and not os.path.exists("/root/.ssh/config"):
         insecure = True
-    sshcommand = k.ssh(name, user=user, local=l, remote=r, tunnel=tunnel, tunnelhost=tunnelhost, tunnelport=tunnelport,
-                       tunneluser=tunneluser, insecure=insecure, cmd=cmd, X=X, Y=Y, D=D)
+    sshcommand = None
+    if baseconfig.cache:
+        _list = cache_vms(baseconfig, args.region, args.zone, args.namespace)
+        vms = [vm for vm in _list if vm['name'] == name]
+        if vms:
+            vm = vms[0]
+            ip = vm.get('ip')
+            if ip is None:
+                common.pprint("No ip found in cache for %s" % name, color='red')
+            if user is None:
+                user = vm.get('user')
+            vmport = vm.get('vmport')
+            sshcommand = common.ssh(name, ip=ip, user=user, local=l, remote=r, tunnel=tunnel,
+                                    tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser,
+                                    insecure=insecure, cmd=cmd, X=X, Y=Y, D=D, debug=args.debug, vmport=vmport)
+    if sshcommand is None:
+        config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
+                         namespace=args.namespace)
+        k = config.k
+        sshcommand = k.ssh(name, user=user, local=l, remote=r, tunnel=tunnel, tunnelhost=tunnelhost,
+                           tunnelport=tunnelport, tunneluser=tunneluser, insecure=insecure, cmd=cmd, X=X, Y=Y, D=D)
     if sshcommand is not None:
         if find_executable('ssh') is not None:
             os.system(sshcommand)
@@ -1614,16 +1685,15 @@ def scp_vm(args):
     source = source if not os.path.exists("/i_am_a_container") else "/workdir/%s" % source
     destination = args.destination[0]
     user = args.user
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    k = config.k
-    tunnel = config.tunnel
-    tunnelhost = config.tunnelhost if config.tunnelhost is not None else config.host
-    tunnelport = config.tunnelport if config.tunnelport is not None else 22
-    tunneluser = config.tunneluser if config.tunneluser is not None else 'root'
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    tunnel = baseconfig.tunnel
+    tunnelhost = baseconfig.tunnelhost if baseconfig.tunnelhost is not None else baseconfig.host
+    tunnelport = baseconfig.tunnelport if baseconfig.tunnelport is not None else 22
+    tunneluser = baseconfig.tunneluser if baseconfig.tunneluser is not None else 'root'
     if tunnel and tunnelhost == '127.0.0.1':
         common.pprint("Tunnel requested but invalid tunnelhost", color='red')
         os._exit(1)
-    insecure = config.insecure
+    insecure = baseconfig.insecure
     if len(source.split(':')) == 2:
         name, source = source.split(':')
         download = True
@@ -1639,9 +1709,28 @@ def scp_vm(args):
         common.pprint("Retrieving file %s from %s" % (source, name), color='green')
     else:
         common.pprint("Copying file %s to %s" % (source, name), color='green')
-    scpcommand = k.scp(name, user=user, source=source, destination=destination,
-                       tunnel=tunnel, tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser,
-                       download=download, recursive=recursive, insecure=insecure)
+    scpcommand = None
+    if baseconfig.cache:
+        _list = cache_vms(baseconfig, args.region, args.zone, args.namespace)
+        vms = [vm for vm in _list if vm['name'] == name]
+        if vms:
+            vm = vms[0]
+            ip = vm.get('ip')
+            if ip is None:
+                common.pprint("No ip found in cache for %s" % name, color='red')
+            if user is None:
+                user = vm.get('user')
+            vmport = vm.get('vmport')
+            scpcommand = common.scp(name, ip=ip, user=user, source=source, destination=destination, recursive=recursive,
+                                    tunnel=tunnel, tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser,
+                                    debug=args.debug, download=download, vmport=vmport, insecure=insecure)
+    if scpcommand is None:
+        config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
+                         namespace=args.namespace)
+        k = config.k
+        scpcommand = k.scp(name, user=user, source=source, destination=destination,
+                           tunnel=tunnel, tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser,
+                           download=download, recursive=recursive, insecure=insecure)
     if scpcommand is not None:
         if find_executable('scp') is not None:
             os.system(scpcommand)
@@ -2101,6 +2190,10 @@ def cli():
                           epilog=version_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
 
     # sub subcommands
+    cachedelete_desc = 'Delete Container'
+    cachedelete_parser = delete_subparsers.add_parser('cache', description=cachedelete_desc, help=cachedelete_desc)
+    cachedelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    cachedelete_parser.set_defaults(func=delete_cache)
 
     containercreate_desc = 'Create Container'
     containercreate_epilog = None
