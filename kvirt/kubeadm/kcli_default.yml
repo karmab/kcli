@@ -19,6 +19,8 @@ worker_tpm: false
 worker_rng: false
 nfs: true
 sdn: flannel
+metallb: false
+metallb_range: 192.168.122.240-192.168.122.250
 multus: false
 notifycmd: "kubectl get pod -A"
 notify: false

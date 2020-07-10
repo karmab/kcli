@@ -212,6 +212,7 @@ def create(config, plandir, cluster, overrides):
     if masters == 0:
         pprint("Invalid number of masters", color='red')
         os._exit(1)
+    network = data.get('network')
     ipv6 = data['ipv6']
     upstream = data.get('upstream')
     version = data.get('version')
@@ -228,8 +229,12 @@ def create(config, plandir, cluster, overrides):
     image = data.get('image')
     api_ip = data.get('api_ip')
     if platform in virtplatforms and api_ip is None:
-        pprint("You need to define api_ip in your parameters file", color='red')
-        os._exit(1)
+        if network == 'default' and platform == 'kvm':
+            pprint("Using 192.168.122.253 as api_ip", color='yellow')
+            api_ip = "192.168.122.253"
+        else:
+            pprint("You need to define api_ip in your parameters file", color='red')
+            os._exit(1)
     if platform in virtplatforms and baremetal and data.get('baremetal_machine_cidr') is None:
         pprint("You need to define baremetal_machine_cidr in your parameters file", color='red')
         os._exit(1)
