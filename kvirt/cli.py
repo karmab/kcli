@@ -474,7 +474,7 @@ def list_vm(args):
         vms = PrettyTable(["Name", "Status", "Ips", "Source", "Plan", "Profile"])
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
         if baseconfig.cache:
-            _list = cache_vms(config, args.region, args.zone, args.namespace)
+            _list = cache_vms(baseconfig, args.region, args.zone, args.namespace)
         else:
             config = Kconfig(client=args.client, debug=args.debug, region=args.region,
                              zone=args.zone, namespace=args.namespace)
