@@ -1166,6 +1166,8 @@ def create_openshift_kube(args):
         common.pprint("Using default parameter file kcli_parameters.yml")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    if args.subcommand_create_kube == 'okd':
+        overrides['upstream'] = True
     if force:
         config.delete_kube(cluster, overrides=overrides)
     config.create_kube_openshift(cluster, overrides=overrides)
@@ -2451,7 +2453,7 @@ def cli():
                                      description=kubeopenshiftcreate_desc,
                                      help=kubeopenshiftcreate_desc,
                                      epilog=kubeopenshiftcreate_epilog,
-                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+                                     formatter_class=argparse.RawDescriptionHelpFormatter, aliases=['okd'])
 
     kubedelete_desc = 'Delete Kube'
     kubedelete_parser = argparse.ArgumentParser(add_help=False)
@@ -2475,7 +2477,7 @@ def cli():
 
     kubeopenshiftinfo_desc = 'Info Openshift Kube'
     kubeopenshiftinfo_parser = kubeinfo_subparsers.add_parser('openshift', description=kubeopenshiftinfo_desc,
-                                                              help=kubeopenshiftinfo_desc)
+                                                              help=kubeopenshiftinfo_desc, aliases=['okd'])
     kubeopenshiftinfo_parser.set_defaults(func=info_openshift_kube)
 
     kubelist_desc = 'List Kubes'
@@ -2509,7 +2511,7 @@ def cli():
     kubeopenshiftscale_parser.set_defaults(func=scale_openshift_kube)
     kubescale_subparsers.add_parser('openshift', parents=[kubeopenshiftscale_parser],
                                     description=kubeopenshiftscale_desc,
-                                    help=kubeopenshiftscale_desc)
+                                    help=kubeopenshiftscale_desc, aliases=['okd'])
 
     lbcreate_desc = 'Create Load Balancer'
     lbcreate_parser = create_subparsers.add_parser('lb', description=lbcreate_desc, help=lbcreate_desc)

@@ -1244,28 +1244,14 @@ class Kvirt(object):
         root = ET.fromstring(xml)
         status = 'down'
         autostart = starts[vm.autostart()]
-        # memory = list(root.getiterator('memory'))[0]
-        # unit = memory.attrib['unit']
-        # memory = memory.text
-        # if unit == 'KiB':
-        #    memory = float(memory) / 1024
-        #    memory = int(memory)
         description = list(root.getiterator('description'))
         if description:
             description = description[0].text
         else:
             description = ''
-        # if vm.isActive():
-        #    status = 'up'
         [state, maxmem, memory, numcpus, cputime] = vm.info()
         status = states.get(state)
         memory = int(float(memory) / 1024)
-        # numcpus = list(root.getiterator('vcpu'))[0]
-        # cpuattributes = numcpus.attrib
-        # if 'current' in cpuattributes:
-        #    numcpus = cpuattributes['current']
-        # else:
-        #    numcpus = numcpus.text
         yamlinfo = {'name': name, 'autostart': autostart, 'nets': [], 'disks': [], 'status': status}
         plan, profile, image, ip, creationdate = '', None, None, None, None
         kube, kubetype = None, None
