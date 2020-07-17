@@ -19,6 +19,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             ZEROTIER, CACHE)
 from kvirt import common
 from kvirt import jinjafilters
+from kvirt import k3s
 from kvirt import kubeadm
 from kvirt import openshift
 import os
@@ -957,6 +958,11 @@ class Kbaseconfig:
 
     def info_kube_generic(self, quiet, web=False):
         plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
+        inputfile = '%s/masters.yml' % plandir
+        return self.info_plan(inputfile, quiet=quiet, web=web)
+
+    def info_kube_k3s(self, quiet, web=False):
+        plandir = os.path.dirname(k3s.create.__code__.co_filename)
         inputfile = '%s/masters.yml' % plandir
         return self.info_plan(inputfile, quiet=quiet, web=web)
 

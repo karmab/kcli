@@ -6,6 +6,7 @@ recursive-include tests *
 recursive-include kvirt/web/static *
 recursive-include kvirt/web/templates *
 recursive-include kvirt/internalplans *
+recursive-include kvirt/k3s *
 recursive-include kvirt/kubeadm *
 recursive-include kvirt/openshift *
 recursive-include kvirt/version *

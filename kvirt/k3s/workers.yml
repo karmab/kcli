@@ -1,0 +1,38 @@
+{%- for number in range(0, workers) %}
+{%- if extra_worker_networks %}
+ {% set extra_networks = extra_worker_networks %}
+{%- endif %}
+{%- if extra_worker_disks %}
+ {% set extra_disks = extra_worker_disks %}
+{%- endif %}
+{%- if numa_worker != None %}
+ {% set numa = numa_worker %}
+{%- endif %}
+{%- if numamode_worker != None %}
+ {% set numamode = numamode_worker %}
+{%- endif %}
+{%- if cpupinning_worker != None %}
+ {% set cpupinning = cpupinning_worker %}
+{%- endif %}
+
+{{cluster }}-worker-{{ number }}:
+ image: {{ image }}
+ pool: {{ pool }}
+ numcpus: {{ worker_numcpus | default(numcpus, numcpus) }}
+ memory: {{ worker_memory | default(memory, memory) }}
+ files:
+  - path: /root/join.sh
+    origin: {{ basedir }}/clusters/{{ cluster }}/join.sh
+ cmds:
+ - apt-get -y install curl
+ - bash /root/join.sh
+{%- if numa != None %}
+ numa: {{ numa }}
+{%- endif %}
+{%- if numamode != None %}
+ numamode: {{ numamode }}
+{%- endif %}
+{%- if cpupinning != None %}
+ cpupinning: {{ cpupinning }}
+{%- endif %}
+{%- endfor %}
