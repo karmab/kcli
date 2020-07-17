@@ -923,8 +923,10 @@ def create_vm(args):
         return code
     else:
         codes = []
+        if 'plan' not in overrides:
+            overrides['plan'] = name
         for number in range(count):
-            currentname = "%s-%0.2d" % (name, number + 1)
+            currentname = "%s-%d" % (name, number)
             result = config.create_vm(currentname, profile, overrides=overrides, customprofile=customprofile, wait=wait)
             codes.append(common.handle_response(result, currentname, element='', action='created',
                                                 client=config.client))
