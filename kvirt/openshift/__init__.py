@@ -231,6 +231,7 @@ def create(config, plandir, cluster, overrides):
     if platform in virtplatforms and api_ip is None:
         if network == 'default' and platform == 'kvm':
             pprint("Using 192.168.122.253 as api_ip", color='yellow')
+            data['api_ip'] = "192.168.122.253"
             api_ip = "192.168.122.253"
         else:
             pprint("You need to define api_ip in your parameters file", color='red')

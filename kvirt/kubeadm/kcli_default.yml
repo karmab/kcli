@@ -1,9 +1,17 @@
+info: |
+    Deploys kubernetes using kubeadm on an arbitrary number of masters and workers.
+    when using more than a master, a vip is used with keepalived
+    default image is centos7, but there's also support for ubuntu based ones
+    version can be let blank to get latest, or specified as x.yy or x.yy.z
+    sdn can be choosen between flannel, weavenet, calico, canal or romana
+    nfs can be set to deploy an initial set of pvcs on the first master node
+image: centos7
+network: default
+api_ip:
 masters: 1
 workers: 0
 version:
 pool: default
-image: centos7
-network: default
 cluster: testk
 domain: karmalabs.com
 numcpus: 4
@@ -42,10 +50,3 @@ extra_worker_disks: []
 extra_networks: []
 extra_master_networks: []
 extra_worker_networks: []
-info: |
-    Deploys kubernetes using kubeadm on an arbitrary number of masters and workers.
-    when using more than a master, a load balancer gets deployed (as an haproxy vm if not running on cloud)
-    default image is centos7, but there's also support for ubuntu based ones
-    version can be let blank to get latest, or specified as x.yy or x.yy.z
-    sdn can be choosen between flannel, weavenet, calico, canal or romana
-    nfs can be set to deploy an initial set of pvcs on the first master node

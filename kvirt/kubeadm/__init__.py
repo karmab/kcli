@@ -6,6 +6,9 @@ from kvirt.defaults import UBUNTUS
 import os
 import sys
 
+# virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere', 'packet']
+cloudplatforms = ['aws', 'gcp']
+
 
 def scale(config, plandir, cluster, overrides):
     data = {'cluster': cluster}
@@ -26,6 +29,7 @@ def scale(config, plandir, cluster, overrides):
 
 
 def create(config, plandir, cluster, overrides):
+    platform = config.type
     data = {'kubetype': 'generic'}
     data.update(overrides)
     data['cluster'] = overrides['cluster'] if 'cluster' in overrides else cluster
@@ -34,6 +38,19 @@ def create(config, plandir, cluster, overrides):
     if masters == 0:
         pprint("Invalid number of masters", color='red')
         os._exit(1)
+    network = data.get('network', 'default')
+    api_ip = data.get('api_ip')
+    if masters > 1:
+        if platform in cloudplatforms:
+            domain = data.get('domain', 'karmalabs.com')
+            api_ip = "%s-master.%s" % (cluster, domain)
+        elif api_ip is None:
+            if network == 'default' and platform == 'kvm':
+                pprint("Using 192.168.122.253 as api_ip", color='yellow')
+                data['api_ip'] = "192.168.122.253"
+            else:
+                pprint("You need to define api_ip in your parameters file", color='red')
+                os._exit(1)
     version = data.get('version')
     if version is not None and not version.startswith('1.'):
         pprint("Invalid version %s" % version, color='red')
@@ -41,7 +58,7 @@ def create(config, plandir, cluster, overrides):
     data['basedir'] = '/workdir' if os.path.exists("/i_am_a_container") else '.'
     cluster = data.get('cluster')
     image = data.get('image', 'centos7')
-    domain = data.get('domain', 'karmalabs.com')
+    data['ubuntu'] = True if image in UBUNTUS or 'ubuntu' in image.lower() else False
     clusterdir = pwd_path("clusters/%s" % cluster)
     firstmaster = "%s-master-0" % cluster
     if os.path.exists(clusterdir):
@@ -74,15 +91,9 @@ def create(config, plandir, cluster, overrides):
         config.plan(cluster, inputfile='%s/workers.yml' % plandir, overrides=data)
     pprint("Kubernetes cluster %s deployed!!!" % cluster)
     masters = data.get('masters', 1)
-    if masters > 1:
-        master_node = "%s-master" % cluster if masters > 1 else "%s-master-0" % cluster
-        master_ip = k.info(master_node)['ip']
-        info("Create the following /etc/hosts entry")
-        info("%s %s %s.%s" % (master_ip, master_node, master_node, domain))
-        info("Use The following command to interact with this cluster")
     info("export KUBECONFIG=clusters/%s/auth/kubeconfig" % cluster)
     info("export PATH=$PWD:$PATH")
-    prefile = 'pre_ubuntu.sh' if image in UBUNTUS else 'pre_el.sh'
+    prefile = 'pre_ubuntu.sh' if data['ubuntu'] else 'pre_el.sh'
     predata = config.process_inputfile(cluster, "%s/%s" % (plandir, prefile), overrides=data)
     with open("%s/pre.sh" % clusterdir, 'w') as f:
         f.write(predata)

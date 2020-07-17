@@ -1,4 +1,4 @@
-{% if 'ubuntu' in image or 'xenial' in image or 'yaketty' in image or 'zesty' in image or 'artful' in image or 'bionic' in image or 'cosmic' in image %} 
+{% if ubuntu %} 
 apt-get -y install nfs-kernel-server
 {% else %}
 yum -y install nfs-utils

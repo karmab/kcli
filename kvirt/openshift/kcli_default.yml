@@ -8,10 +8,12 @@ info: |
     Upstream okd version can be specified with the upstream flag.
     the baremetal flag allows to get the baremetal operator deployed, so that you can deploy physical workers afterwards.
     Sdn defaults to OpenShiftSDN but OVNKubernetes or Calico can be specified instead
-masters: 1
-workers: 0
 image: rhcos44
 network: default
+api_ip: 
+ingress_ip: 
+masters: 1
+workers: 0
 fips: false
 cluster: testk
 domain: karmalabs.com
@@ -37,8 +39,6 @@ worker_rng: false
 disk_size: 30
 autostart: false
 keys: []
-api_ip: 
-ingress_ip: 
 extra_disks: []
 extra_master_disks: []
 extra_worker_disks: []
