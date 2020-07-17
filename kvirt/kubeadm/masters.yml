@@ -51,6 +51,7 @@
 {%- endif %}
  nets: {{ [network] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
+{%- if number == 0 %}
  files:
 {%- if metallb %}
   - metal_lb.sh
@@ -59,14 +60,15 @@
 {%- if config_type == 'ovirt' %}
   - ovirt_fix.sh
 {%- endif %}
-{%- if nfs and number == 0 %}
+{%- if nfs %}
   - nfs.yml
   - nfs.sh
 {%- endif %}
-{%- if multus and number == 0 %}
+{%- if multus %}
   - multus.yml
   - cni-plugins.yml
   - l2-bridge.yml
+{%- endif %}
 {%- endif %}
  scripts: 
 {%- if 'ubuntu' in image or 'xenial' in image or 'yaketty' in image or 'zesty' in image or 'artful' in image or 'bionic' in image or 'cosmic' in image %}
