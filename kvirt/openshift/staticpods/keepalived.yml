@@ -35,7 +35,7 @@ spec:
         NIC={{ 'eth1' if 'fcos' in image else 'ens3f1' }}
         NETMASK=32
         {%- else %}
-        NIC=$(ip r | grep default | tail -1 | sed 's/.*dev \(.*\) \(proto\|metric\).*/\1/')
+        NIC=$(ip r | grep default | head -1 | sed 's/.*dev \(.*\) \(proto\|metric\).*/\1/')
         NETMASK=$(ip -o -f inet addr show | awk '/scope global/ {print $4}' | head -1 | cut -d'/' -f2)
         {%- endif %}
         sed -i "s@NIC@$NIC@" /etc/keepalived/keepalived.conf

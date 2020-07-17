@@ -1779,12 +1779,13 @@ $INFO
                     if self.type == 'vsphere':
                         shortname = image
                     clientprofile = "%s_%s" % (self.client, imagename)
-                    if clientprofile not in self.profiles:
-                        common.pprint("Adding a profile named %s with default values" % clientprofile)
-                        self.create_profile(clientprofile, {'image': shortname}, quiet=True)
-                    else:
-                        common.pprint("Updating profile %s with image %s" % (clientprofile, shortname))
-                        self.update_profile(clientprofile, {'image': shortname}, quiet=True)
+                    if not clientprofile.endswith('.iso'):
+                        if clientprofile not in self.profiles:
+                            common.pprint("Adding a profile named %s with default values" % clientprofile)
+                            self.create_profile(clientprofile, {'image': shortname}, quiet=True)
+                        else:
+                            common.pprint("Updating profile %s with image %s" % (clientprofile, shortname))
+                            self.update_profile(clientprofile, {'image': shortname}, quiet=True)
             return {'result': 'success'}
         elif switch:
             if switch not in self.clients:
