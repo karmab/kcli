@@ -896,6 +896,8 @@ class Kgcp(object):
         project = self.project
         region = self.region
         nets = conn.networks().list(project=project).execute()
+        if 'items' not in nets:
+            return {}
         subnets = conn.subnetworks().list(region=region, project=project).execute()['items']
         networks = {}
         for net in nets['items']:
