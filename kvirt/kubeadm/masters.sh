@@ -1,6 +1,6 @@
 CIDR="10.244.0.0/16"
 {% if masters > 1 %}
-kubeadm init --control-plane-endpoint "{{ cluster }}-master.{{ domain }}:6443" --pod-network-cidr $CIDR --upload-certs
+kubeadm init --control-plane-endpoint "{{ api_ip }}:6443" --pod-network-cidr $CIDR --upload-certs
 {% else %}
 kubeadm init --pod-network-cidr $CIDR
 {% endif %}
@@ -32,19 +32,10 @@ CMD="kubeadm join $IP:6443 --token $TOKEN --discovery-token-ca-cert-hash sha256:
 sleep 60
 
 {% if masters > 1 %}
-{% for number in range(1,masters) %}
-CERTKEY=$(grep certificate-key /var/log/messages | head -1 | sed 's/.*certificate-key \(.*\)/\1/')
+LOGFILE="{{ '/var/log/cloud-init-output.log' if ubuntu else '/var/log/messages' }}"
+CERTKEY=$(grep certificate-key $LOGFILE | head -1 | sed 's/.*certificate-key \(.*\)/\1/')
 MASTERCMD="$CMD --control-plane --certificate-key $CERTKEY"
 echo $MASTERCMD > /root/mastercmd.sh
-ssh-keyscan -H {{ cluster }}-master-{{ number }} >> ~/.ssh/known_hosts 
-scp /etc/kubernetes/admin.conf root@{{ cluster }}-master-{{ number }}:/etc/kubernetes/
-echo ssh root@{{ cluster }}-master-0{{ number }} $MASTERCMD > /root/{{ cluster }}-master-{{ number }}.log 2>&1
-ssh root@{{ cluster }}-master-{{ number }} $MASTERCMD >> /root/{{ cluster }}-master-{{ number }}.log 2>&1
-scp /etc/kubernetes/admin.conf {{ cluster }}-master-{{ number }}:/root
-ssh {{ cluster }}-master-{{ number }} mkdir -p /root/.kube
-ssh {{ cluster }}-master-{{ number }} cp -i /root/admin.conf /root/.kube/config
-ssh {{ cluster }}-master-{{ number }} chown root:root /root/.kube/config
-{% endfor %}
 {% endif %}
 
 echo ${CMD} > /root/join.sh

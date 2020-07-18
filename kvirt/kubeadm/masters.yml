@@ -1,12 +1,12 @@
 {{ image }}:
  type: image
 
-{%- if masters > 1 %}
+{%- if masters > 1 and config_type in ['aws', 'gcp'] %}
 {{ cluster }}-master:
  type: loadbalancer
  nets:
  - name: {{ network }}
-   alias: 
+   alias:
    - {{ cluster }}-master.{{ domain }}
    - {{ cluster }}-master.{{ network }}
    reservedns: true
@@ -17,6 +17,7 @@
   - {{cluster}}-master-{{ number }}
 {%- endfor %}
 {%- endif %}
+
 
 {%- for number in range(0, masters) %}
 {%- if extra_master_networks %}
@@ -41,7 +42,6 @@
  numcpus: {{ master_numcpus | default(numcpus, numcpus) }}
  memory: {{ master_memory | default(memory, memory) }}
 {%- if masters > 1 %}
- reservedns: true
  sharedkey: true
 {%- endif %}
  domain: {{ domain }}
@@ -51,8 +51,9 @@
 {%- endif %}
  nets: {{ [network] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
-{%- if number == 0 %}
  files:
+  - keepalived.conf
+{%- if number == 0 %}
 {%- if metallb %}
   - metal_lb.sh
   - metal_lb_cm.yml
@@ -71,10 +72,13 @@
 {%- endif %}
 {%- endif %}
  scripts: 
-{%- if 'ubuntu' in image or 'xenial' in image or 'yaketty' in image or 'zesty' in image or 'artful' in image or 'bionic' in image or 'cosmic' in image %}
+{%- if ubuntu %}
   - pre_ubuntu.sh
 {%- else %}
   - pre_el.sh
+{%- endif %}
+{%- if masters > 1 and config_type not in ['aws', 'gcp'] %}
+  - keepalived.sh
 {%- endif %}
 {%- if number == 0 %}
   - masters.sh
@@ -84,6 +88,8 @@
 {%- if nfs %}
   - nfs.sh
 {%- endif %}
+{% else %}
+  - masters_extra.sh
 {% endif %}
 {%- if numa != None %}
  numa: {{ numa }}
