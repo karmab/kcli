@@ -1818,16 +1818,14 @@ def delete_network(args):
     """Delete Network"""
     yes = args.yes
     yes_top = args.yes_top
-    name = args.name
+    names = args.names
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
-    if name is None:
-        common.pprint("Missing Network", color='red')
-        os._exit(1)
     if not yes and not yes_top:
         common.confirm("Are you sure?")
-    result = k.delete_network(name=name)
-    common.handle_response(result, name, element='Network', action='deleted')
+    for name in names:
+        result = k.delete_network(name=name)
+        common.handle_response(result, name, element='Network', action='deleted')
 
 
 def create_host_kvm(args):
@@ -2689,7 +2687,7 @@ def cli():
     networkdelete_parser = delete_subparsers.add_parser('network', description=networkdelete_desc,
                                                         help=networkdelete_desc)
     networkdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    networkdelete_parser.add_argument('name', metavar='NETWORK')
+    networkdelete_parser.add_argument('name', metavar='NETWORK', nargs='+')
     networkdelete_parser.set_defaults(func=delete_network)
 
     pipelinecreate_desc = 'Create Pipeline'
