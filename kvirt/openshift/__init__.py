@@ -581,7 +581,9 @@ def create(config, plandir, cluster, overrides):
                 except Exception as e:
                     pprint("Hit %s. Continuing still" % str(e), color='red')
                     continue
-        run = call('openshift-install --dir=%s wait-for bootstrap-complete' % clusterdir, shell=True)
+        bootstrapcommand = 'openshift-install --dir=%s wait-for bootstrap-complete' % clusterdir
+        bootstrapcommand += ' || %s' % bootstrapcommand
+        run = call(bootstrapcommand, shell=True)
         if run != 0:
             pprint("Leaving environment for debugging purposes", color='red')
             pprint("You can delete it with kcli delete kube --yes %s" % cluster, color='red')
@@ -596,7 +598,7 @@ def create(config, plandir, cluster, overrides):
         call('openshift-install --dir=%s wait-for bootstrap-complete || exit 1' % clusterdir, shell=True)
         todelete = ["%s-bootstrap" % cluster, "%s-bootstrap-helper" % cluster]
     if platform in virtplatforms:
-        wait_time = 90 if masters > 1 else 180
+        wait_time = 90 if masters > 1 else 240
         pprint("Waiting %ss before retrieving workers ignition data" % wait_time, color='blue')
         sleep(wait_time)
     call("oc adm taint nodes -l node-role.kubernetes.io/master node-role.kubernetes.io/master:NoSchedule-", shell=True)
@@ -627,8 +629,8 @@ def create(config, plandir, cluster, overrides):
                     k.add_nic(node, network)
     if not minimal:
         installcommand = 'openshift-install --dir=%s wait-for install-complete' % clusterdir
-        installcommand = "%s | %s" % (installcommand, installcommand)
-        pprint("Launching install-complete step. Note it will be retried one extra time in case of timeouts",
+        installcommand += " || %s" % installcommand
+        pprint("Launching install-complete step. It will be retried one extra time in case of timeouts",
                color='blue')
         call(installcommand, shell=True)
     else:
