@@ -73,6 +73,9 @@ class Kbaseconfig:
                 except:
                     self.host = None
                     return
+            if self.ini is None:
+                common.pprint("Couldn't parse empty .kcli/config.yml", color='red')
+                os._exit(1)
             for key1 in self.ini:
                 for key2 in self.ini[key1]:
                     if isinstance(self.ini[key1][key2], str) and self.ini[key1][key2] == '?secret':

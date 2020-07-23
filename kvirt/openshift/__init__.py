@@ -346,6 +346,9 @@ def create(config, plandir, cluster, overrides):
             if result['result'] != 'success':
                 os._exit(1)
             images = [v for v in k.volumes() if "%s-%s" % (COS_TYPE, COS_VERSION) in v]
+            if not images:
+                pprint("Something went wrong with the image download.Leaving...", color='red')
+                os._exit(1)
             image = images[0]
         pprint("Using image %s" % image, color='blue')
     elif platform != 'packet':
