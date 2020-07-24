@@ -1,3 +1,4 @@
+{%- for number in range(0, masters) %}
 {%- if extra_master_networks %}
  {% set extra_networks = extra_master_networks %}
 {%- endif %}
@@ -14,20 +15,19 @@
  {% set cpupinning = cpupinning_master %}
 {%- endif %}
 
-{{cluster}}-master-0:
+{{cluster}}-master-{{ number }}:
  image: {{ image }}
  pool: {{ pool }}
  numcpus: {{ master_numcpus | default(numcpus, numcpus) }}
  memory: {{ master_memory | default(memory, memory) }}
  nets: {{ [network] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
- cmds:
- - apt-get -y install curl
- - curl -sfL https://get.k3s.io | sh -
- - export K3S_TOKEN=$(cat /var/lib/rancher/k3s/server/node-token)
- - export IP=$(hostname -I | cut -f1 -d" ")
- - echo "curl -sfL https://get.k3s.io | K3S_URL=https://$IP:6443 K3S_TOKEN=$K3S_TOKEN sh -" > /root/join.sh
- - sed "s/127.0.0.1/$IP/" /etc/rancher/k3s/k3s.yaml > /root/kubeconfig
+ files: [keepalived.conf]
+ scripts:
+  - masters.sh
+{%- if masters > 1 and config_type not in ['aws', 'gcp'] %}
+  - keepalived.sh
+{%- endif %}
 {%- if numa != None %}
  numa: {{ numa }}
 {%- endif %}
@@ -37,3 +37,4 @@
 {%- if cpupinning != None %}
  cpupinning: {{ cpupinning }}
 {%- endif %}
+{%- endfor %}

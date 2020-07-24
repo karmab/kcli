@@ -1,0 +1,3 @@
+create database {{ datastore_name }};
+create user {{ datastore_user }} with encrypted password '{{ datastore_password }}';
+grant all privileges on database {{ datastore_name }} to {{ datastore_user }};
