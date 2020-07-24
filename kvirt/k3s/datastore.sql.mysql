@@ -1,0 +1,2 @@
+CREATE DATABASE {{ datastore_name }} character set utf8 collate utf8_general_ci;
+GRANT ALL ON *.* TO '{{ datastore_user }}'@'%' IDENTIFIED BY '{{ datastore_password }}';

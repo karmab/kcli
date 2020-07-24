@@ -1,0 +1,10 @@
+{{cluster}}-datastore:
+ image: {{ image }}
+ pool: {{ pool }}
+ numcpus: {{ datastore_numcpus | default(numcpus, numcpus) }}
+ memory: {{ datastore_memory | default(memory, memory) }}
+ scripts:
+ - datastore.sh.{{ datastore_type }}
+ files:
+ - path: /root/datastore.sql
+   origin: datastore.sql.{{ datastore_type }}

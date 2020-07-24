@@ -1,5 +1,11 @@
 masters: 1
 workers: 0
+api_ip:
+datastore_endpoint:
+datastore_type: postgres
+datastore_name: k3s
+datastore_user: admin
+datastore_password: password
 version:
 pool: default
 image: debian9

@@ -5,6 +5,8 @@ from kvirt.common import info, pprint, pwd_path, get_kubectl
 import os
 import sys
 
+cloudplatforms = ['aws', 'gcp']
+
 
 def scale(config, plandir, cluster, overrides):
     data = {'cluster': cluster}
@@ -25,14 +27,25 @@ def scale(config, plandir, cluster, overrides):
 
 
 def create(config, plandir, cluster, overrides):
+    platform = config.type
     data = {'kubetype': 'k3s'}
     data.update(overrides)
     data['cluster'] = overrides['cluster'] if 'cluster' in overrides else cluster
     data['kube'] = data['cluster']
     masters = data.get('masters', 1)
-    if masters != 1:
-        pprint("Invalid number of masters", color='red')
-        os._exit(1)
+    network = data.get('network', 'default')
+    api_ip = data.get('api_ip')
+    if masters > 1:
+        if platform in cloudplatforms:
+            domain = data.get('domain', 'karmalabs.com')
+            api_ip = "%s-master.%s" % (cluster, domain)
+        elif api_ip is None:
+            if network == 'default' and platform == 'kvm':
+                pprint("Using 192.168.122.253 as api_ip", color='yellow')
+                data['api_ip'] = "192.168.122.253"
+            else:
+                pprint("You need to define api_ip in your parameters file", color='red')
+                os._exit(1)
     version = data.get('version')
     if version is not None and not version.startswith('1.'):
         pprint("Invalid version %s" % version, color='red')
@@ -49,6 +62,22 @@ def create(config, plandir, cluster, overrides):
     if not os.path.exists(clusterdir):
         os.makedirs(clusterdir)
         os.mkdir("%s/auth" % clusterdir)
+    if masters > 1:
+        datastore_endpoint = data.get('datastore_endpoint')
+        if datastore_endpoint is None:
+            result = config.plan(cluster, inputfile='%s/datastore.yml' % plandir, overrides=data, wait=True)
+            if result['result'] != "success":
+                os._exit(1)
+            datastore_type = data['datastore_type']
+            datastore_user = data['datastore_user']
+            datastore_password = data['datastore_password']
+            datastore_ip = config.k.info("%s-datastore" % cluster).get('ip')
+            datastore_name = data['datastore_name']
+            if datastore_type == 'mysql':
+                datastore_name = "tcp(%s)" % datastore_name
+            datastore_endpoint = "%s://%s:%s@%s/%s" % (datastore_type, datastore_user, datastore_password,
+                                                       datastore_ip, datastore_name)
+        data['datastore_endpoint'] = datastore_endpoint
     k = config.k
     result = config.plan(cluster, inputfile='%s/masters.yml' % plandir, overrides=data, wait=True)
     if result['result'] != "success":

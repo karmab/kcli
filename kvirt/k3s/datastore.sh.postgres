@@ -1,0 +1,8 @@
+apt-get update 
+apt-get -y install postgresql
+echo "listen_addresses = '*'" >> /etc/postgresql/9.6/main/postgresql.conf
+echo host {{ datastore_name }} all 0.0.0.0/0 md5 >> /etc/postgresql/9.6/main/pg_hba.conf
+systemctl restart postgresql
+cp /root/datastore.sql /tmp
+chown postgres.postgres /tmp/datastore.sql
+su - postgres -c "psql -f /tmp/datastore.sql"
