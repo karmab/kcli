@@ -6,7 +6,7 @@ interact with a local/remote libvirt daemon
 
 import os
 import time
-from kvirt.common import pprint
+from kvirt.common import pprint, _ssh_credentials
 from yaml import dump
 
 
@@ -32,7 +32,7 @@ def play(k, name, playbook, variables=[], verbose=False, user=None, tunnel=False
             counter += 10
         else:
             break
-    login = k._ssh_credentials(name)[0] if user is None else user
+    login = _ssh_credentials(k, name)[0] if user is None else user
     if yamlinventory:
         info = {'ansible_user': login}
         inventoryfile = "/tmp/%s.inv.yaml" % name

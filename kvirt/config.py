@@ -781,16 +781,19 @@ $INFO
                 common.pprint("Client %s not found. Skipping" % dnsclient, color='blue')
         ansibleprofile = profile.get('ansible')
         if ansibleprofile is not None:
-            for element in ansibleprofile:
-                if 'playbook' not in element:
-                    continue
-                playbook = element['playbook']
-                variables = element.get('variables', {})
-                verbose = element.get('verbose', False)
-                user = element.get('user')
-                ansibleutils.play(k, name, playbook=playbook, variables=variables, verbose=verbose, user=user,
-                                  tunnel=self.tunnel, tunnelhost=self.host, tunnelport=self.port, tunneluser=self.user,
-                                  yamlinventory=yamlinventory)
+            if find_executable('ansible-playbook') is None:
+                common.pprint("ansible-playbook executable not found. Skipping ansible play", color='yellow')
+            else:
+                for element in ansibleprofile:
+                    if 'playbook' not in element:
+                        continue
+                    playbook = element['playbook']
+                    variables = element.get('variables', {})
+                    verbose = element.get('verbose', False)
+                    user = element.get('user')
+                    ansibleutils.play(k, name, playbook=playbook, variables=variables, verbose=verbose, user=user,
+                                      tunnel=self.tunnel, tunnelhost=self.host, tunnelport=self.port,
+                                      tunneluser=self.user, yamlinventory=yamlinventory)
         if os.access(os.path.expanduser('~/.kcli'), os.W_OK):
             client = client if client is not None else self.client
             common.set_lastvm(name, client)
