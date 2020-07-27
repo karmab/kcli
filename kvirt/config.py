@@ -793,7 +793,7 @@ $INFO
                     user = element.get('user')
                     ansibleutils.play(k, name, playbook=playbook, variables=variables, verbose=verbose, user=user,
                                       tunnel=self.tunnel, tunnelhost=self.host, tunnelport=self.port,
-                                      tunneluser=self.user, yamlinventory=yamlinventory)
+                                      tunneluser=self.user, yamlinventory=yamlinventory, insecure=self.insecure)
         if os.access(os.path.expanduser('~/.kcli'), os.W_OK):
             client = client if client is not None else self.client
             common.set_lastvm(name, client)
@@ -1655,11 +1655,8 @@ $INFO
                 if verbose:
                     ansiblecommand += " -vvv"
                 inventoryfile = "/tmp/%s.inv.yaml" % plan if self.yamlinventory else "/tmp/%s.inv" % plan
-                if os.path.exists(inventoryfile):
-                    common.pprint("Inventory in %s skipped!" % inventoryfile, color='blue')
-                else:
-                    ansibleutils.make_plan_inventory(vms_to_host, plan, newvms, groups=groups, user=user,
-                                                     yamlinventory=self.yamlinventory)
+                ansibleutils.make_plan_inventory(vms_to_host, plan, newvms, groups=groups, user=user,
+                                                 yamlinventory=self.yamlinventory, insecure=self.insecure)
                 if not os.path.exists('~/.ansible.cfg'):
                     ansibleconfig = os.path.expanduser('~/.ansible.cfg')
                     with open(ansibleconfig, "w") as f:
@@ -1670,10 +1667,10 @@ $INFO
                         yaml.dump(variables, f, default_flow_style=False)
                     ansiblecommand += " --extra-vars @%s" % (varsfile)
                 ansiblecommand += " -i  %s %s" % (inventoryfile, playbook)
-                print("Running: %s" % (ansiblecommand))
+                common.pprint("Running: %s" % ansiblecommand, color='blue')
                 os.system(ansiblecommand)
         if ansible:
-            common.pprint("Deploying Ansible Inventory...")
+            common.pprint("Deploying Ansible Inventory...", color='blue')
             inventoryfile = "/tmp/%s.inv.yaml" % plan if self.yamlinventory else "/tmp/%s.inv" % plan
             if os.path.exists(inventoryfile):
                 common.pprint("Inventory in %s skipped!" % inventoryfile, color='blue')
@@ -1685,7 +1682,8 @@ $INFO
                     description = vm['plan']
                     if description == plan:
                         vms.append(name)
-                ansibleutils.make_plan_inventory(vms_to_host, plan, vms, yamlinventory=self.yamlinventory)
+                ansibleutils.make_plan_inventory(vms_to_host, plan, vms, yamlinventory=self.yamlinventory,
+                                                 insecure=self.insecure)
                 return
         if lbs:
             common.pprint("Deploying Loadbalancers...")

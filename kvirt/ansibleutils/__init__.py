@@ -11,7 +11,7 @@ from yaml import dump
 
 
 def play(k, name, playbook, variables=[], verbose=False, user=None, tunnel=False, tunnelhost=None, tunnelport=None,
-         tunneluser=None, yamlinventory=False):
+         tunneluser=None, yamlinventory=False, insecure=True):
     """
 
     :param k:
@@ -67,12 +67,14 @@ def play(k, name, playbook, variables=[], verbose=False, user=None, tunnel=False
                     inventory['ungrouped']['hosts'][name][key] = value
                 else:
                     inventory += " %s=%s" % (key, value)
+    ssh_args = "-o CheckHostIP=no -o StrictHostKeyChecking=no" if insecure else ""
     if tunnel and tunnelport and tunneluser:
         tunnelinfo = "-o ProxyCommand=\"ssh -p %s -W %%h:%%p %s@%s\"" % (tunnelport, tunneluser, tunnelhost)
-        if yamlinventory:
-            inventory['ungrouped']['hosts'][name]['ansible_ssh_common_args'] = tunnelinfo
-        else:
-            inventory += " ansible_ssh_common_args='%s'" % tunnelinfo
+        ssh_args += " %s" % tunnelinfo
+    if yamlinventory:
+        inventory['ungrouped']['hosts'][name]['ansible_ssh_common_args'] = ssh_args
+    else:
+        inventory += " ansible_ssh_common_args='%s'" % ssh_args
     with open(inventoryfile, 'w') as f:
         if yamlinventory:
             dump(inventory, f, default_flow_style=False)
@@ -83,7 +85,7 @@ def play(k, name, playbook, variables=[], verbose=False, user=None, tunnel=False
     os.system("%s -T 20 -i %s %s" % (ansiblecommand, inventoryfile, playbook))
 
 
-def vm_inventory(k, name, user=None, yamlinventory=False):
+def vm_inventory(k, name, user=None, yamlinventory=False, insecure=True):
     """
 
     :param self:
@@ -102,25 +104,27 @@ def vm_inventory(k, name, user=None, yamlinventory=False):
             counter += 10
         else:
             break
+    ssh_args = "-o CheckHostIP=no -o StrictHostKeyChecking=no" if insecure else ""
     info = {'ansible_user': user} if yamlinventory else ''
     if ip is not None:
         if '.' in ip:
             if yamlinventory:
                 info['ansible_host'] = ip
             else:
-                info = "%s ansible_host=%s ansible_user=%s" % (name, ip, user)
+                info = "%s ansible_host=%s ansible_user=%s ansible_ssh_common_args='%s'" % (name, ip, user, ssh_args)
         else:
             if yamlinventory:
                 info['ansible_host'] = '127.0.0.1'
                 info['ansible_port'] = ip
             else:
-                info = "%s ansible_host=127.0.0.1 ansible_user=%s ansible_port=%s" % (name, user, ip)
+                info = "%s ansible_host=127.0.0.1 ansible_user=%s ansible_port=%s " % (name, user, ip)
+                info += "ansible_ssh_common_args='%s'" % ssh_args
         return info
     else:
         return None
 
 
-def make_plan_inventory(vms_to_host, plan, vms, groups={}, user=None, yamlinventory=False):
+def make_plan_inventory(vms_to_host, plan, vms, groups={}, user=None, yamlinventory=False, insecure=True):
     """
 
     :param vms_per_host:
@@ -130,6 +134,7 @@ def make_plan_inventory(vms_to_host, plan, vms, groups={}, user=None, yamlinvent
     :param user:
     :param yamlinventory:
     """
+    ssh_args = "-o CheckHostIP=no -o StrictHostKeyChecking=no" if insecure else ""
     inventory = {}
     inventoryfile = "/tmp/%s.inv.yaml" % plan if yamlinventory else "/tmp/%s.inv" % plan
     pprint("Generating inventory %s" % inventoryfile, color='blue')
@@ -145,7 +150,7 @@ def make_plan_inventory(vms_to_host, plan, vms, groups={}, user=None, yamlinvent
             for name in nodes:
                 allvms.remove(name)
                 k = vms_to_host[name].k
-                inv = vm_inventory(k, name, user=user, yamlinventory=yamlinventory)
+                inv = vm_inventory(k, name, user=user, yamlinventory=yamlinventory, insecure=insecure)
                 if inv is not None:
                     inventory[plan]['children'][group]['hosts'][name] = inv
                 if vms_to_host[name].tunnel:
@@ -153,15 +158,16 @@ def make_plan_inventory(vms_to_host, plan, vms, groups={}, user=None, yamlinvent
                         vms_to_host[name].port,
                         vms_to_host[name].user,
                         vms_to_host[name].host)
-                    if yamlinventory:
-                        inventory[plan]['children'][group]['hosts'][name]['ansible_ssh_common_args'] = tunnelinfo
-                    else:
-                        inventory[plan]['hosts'][name] += " ansible_ssh_common_args='%s'" % tunnelinfo
+                ssh_args += " %s" % tunnelinfo
+                if yamlinventory:
+                    inventory[plan]['children'][group]['hosts'][name]['ansible_ssh_common_args'] = ssh_args
+                else:
+                    inventory[plan]['hosts'][name] += " ansible_ssh_common_args='%s'" % ssh_args
 
     inventory[plan]['hosts'] = {}
     for name in allvms:
         k = vms_to_host[name].k
-        inv = vm_inventory(k, name, user=user, yamlinventory=yamlinventory)
+        inv = vm_inventory(k, name, user=user, yamlinventory=yamlinventory, insecure=insecure)
         if inv is not None:
             inventory[plan]['hosts'][name] = inv
         if vms_to_host[name].tunnel:
@@ -169,10 +175,11 @@ def make_plan_inventory(vms_to_host, plan, vms, groups={}, user=None, yamlinvent
                 vms_to_host[name].port,
                 vms_to_host[name].user,
                 vms_to_host[name].host)
-            if yamlinventory:
-                inventory[plan]['hosts'][name]['ansible_ssh_common_args'] = tunnelinfo
-            else:
-                inventory[plan]['hosts'][name] += " ansible_ssh_common_args='%s'" % tunnelinfo
+            ssh_args += " %s" % tunnelinfo
+        if yamlinventory:
+            inventory[plan]['hosts'][name]['ansible_ssh_common_args'] = ssh_args
+        else:
+            inventory[plan]['hosts'][name] += " ansible_ssh_common_args='%s'" % ssh_args
     with open(inventoryfile, "w") as f:
         if yamlinventory:
             dump({'all': {'children': inventory}}, f, default_flow_style=False)
