@@ -28,7 +28,7 @@ def play(k, name, playbook, variables=[], verbose=False, user=None, tunnel=False
         user = info.get('user', 'root')
     ip = None
     counter = 0
-    while counter != 120:
+    while counter != 180:
         ip = k.ip(name)
         if ip is not None:
             break
@@ -96,7 +96,7 @@ def vm_inventory(k, name, user=None, yamlinventory=False, insecure=True):
         info = k.info(name, debug=False)
         user = info.get('user', 'root')
     counter = 0
-    while counter != 120:
+    while counter != 180:
         ip = k.ip(name)
         if ip is None:
             time.sleep(5)
