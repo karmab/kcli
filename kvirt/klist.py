@@ -81,11 +81,7 @@ class KcliInventory(object):
                 hostvalues[name]['ansible_ssh_common_args'] = \
                     "-o ProxyCommand='ssh -p %s -W %%h:%%p %s@%s'" % (self.port, self.user, self.host)
             if ip != '':
-                if self.type == 'vbox':
-                    hostvalues[name]['ansible_host'] = '127.0.0.1'
-                    hostvalues[name]['ansible_port'] = ip
-                else:
-                    hostvalues[name]['ansible_host'] = ip
+                hostvalues[name]['ansible_host'] = ip
                 if image != '':
                     user = get_user(image)
                     hostvalues[name]['ansible_user'] = user
@@ -109,11 +105,7 @@ class KcliInventory(object):
                 "-o ProxyCommand='ssh -p %s -W %%h:%%p %s@%s'" % (self.port, self.user, self.host)
         ip = metadata['ip']
         if ip != '':
-            if self.type == 'vbox':
-                metadata['ansible_host'] = '127.0.0.1'
-                metadata['ansible_port'] = ip
-            else:
-                metadata['ansible_host'] = ip
+            metadata['ansible_host'] = ip
             template = metadata['template']
             if template != '':
                 user = get_user(template)
