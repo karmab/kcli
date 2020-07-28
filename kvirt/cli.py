@@ -29,12 +29,13 @@ def cache_vms(baseconfig, region, zone, namespace):
     if os.path.exists(cache_file):
         with open(cache_file, 'r') as vms:
             _list = yaml.safe_load(vms)
+        common.pprint("Using cache information...", color='blue')
     else:
         config = Kconfig(client=baseconfig.client, debug=baseconfig.debug, region=region, zone=zone,
                          namespace=namespace)
         _list = config.k.list()
         with open(cache_file, 'w') as c:
-            common.pprint("Caching results for %s..." % baseconfig.client)
+            common.pprint("Caching results for %s..." % baseconfig.client, color='blue')
             try:
                 yaml.safe_dump(_list, c, default_flow_style=False, encoding='utf-8', allow_unicode=True,
                                sort_keys=False)
@@ -1708,13 +1709,14 @@ def ssh_vm(args):
             vm = vms[0]
             ip = vm.get('ip')
             if ip is None:
-                common.pprint("No ip found in cache for %s" % name, color='red')
-            if user is None:
-                user = vm.get('user')
-            vmport = vm.get('vmport')
-            sshcommand = common.ssh(name, ip=ip, user=user, local=l, remote=r, tunnel=tunnel,
-                                    tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser,
-                                    insecure=insecure, cmd=cmd, X=X, Y=Y, D=D, debug=args.debug, vmport=vmport)
+                common.pprint("No ip found in cache for %s..." % name, color='red')
+            else:
+                if user is None:
+                    user = vm.get('user')
+                vmport = vm.get('vmport')
+                sshcommand = common.ssh(name, ip=ip, user=user, local=l, remote=r, tunnel=tunnel,
+                                        tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser,
+                                        insecure=insecure, cmd=cmd, X=X, Y=Y, D=D, debug=args.debug, vmport=vmport)
     if sshcommand is None:
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
@@ -1769,13 +1771,15 @@ def scp_vm(args):
             vm = vms[0]
             ip = vm.get('ip')
             if ip is None:
-                common.pprint("No ip found in cache for %s" % name, color='red')
-            if user is None:
-                user = vm.get('user')
-            vmport = vm.get('vmport')
-            scpcommand = common.scp(name, ip=ip, user=user, source=source, destination=destination, recursive=recursive,
-                                    tunnel=tunnel, tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser,
-                                    debug=args.debug, download=download, vmport=vmport, insecure=insecure)
+                common.pprint("No ip found in cache for %s..." % name, color='red')
+            else:
+                if user is None:
+                    user = vm.get('user')
+                vmport = vm.get('vmport')
+                scpcommand = common.scp(name, ip=ip, user=user, source=source, destination=destination,
+                                        recursive=recursive, tunnel=tunnel, tunnelhost=tunnelhost,
+                                        tunnelport=tunnelport, tunneluser=tunneluser, debug=args.debug,
+                                        download=download, vmport=vmport, insecure=insecure)
     if scpcommand is None:
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
@@ -2240,7 +2244,7 @@ def cli():
                           epilog=version_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
 
     # sub subcommands
-    cachedelete_desc = 'Delete Container'
+    cachedelete_desc = 'Delete Cache'
     cachedelete_parser = delete_subparsers.add_parser('cache', description=cachedelete_desc, help=cachedelete_desc)
     cachedelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     cachedelete_parser.set_defaults(func=delete_cache)
