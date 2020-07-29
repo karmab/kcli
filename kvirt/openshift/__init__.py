@@ -10,7 +10,7 @@ from kvirt.common import info, pprint, gen_mac, get_oc, get_values, pwd_path, in
 from kvirt.openshift.calico import calicoassets
 from random import randint
 import re
-from shutil import copy2, move, rmtree
+from shutil import copy2, rmtree
 from subprocess import call
 from time import sleep
 from urllib.request import urlopen
@@ -18,6 +18,13 @@ from urllib.request import urlopen
 
 virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere', 'packet']
 cloudplatforms = ['aws', 'gcp']
+
+
+def get_installer_version():
+    INSTALLER_VERSION = os.popen('openshift-install version').readlines()[0].split(" ")[1].strip()
+    if INSTALLER_VERSION.startswith('v'):
+        INSTALLER_VERSION = INSTALLER_VERSION[1:]
+    return INSTALLER_VERSION
 
 
 def get_rhcos_openstack_url():
@@ -216,6 +223,10 @@ def create(config, plandir, cluster, overrides):
     ipv6 = data['ipv6']
     upstream = data.get('upstream')
     version = data.get('version')
+    tag = data.get('tag')
+    if os.path.exists('openshift-install'):
+        pprint("Removing old openshift-install", color='blue')
+        os.path.remove('openshift-install')
     baremetal = data.get('baremetal')
     minimal = data.get('minimal')
     user_agent = "User-Agent: Ignition/2.3.0" if upstream else "User-Agent: Ignition/0.35.0"
@@ -316,11 +327,8 @@ def create(config, plandir, cluster, overrides):
             get_upstream_installer(tag=tag)
         else:
             get_downstream_installer(tag=tag)
-        if not macosx and os.path.exists('/i_am_a_container'):
-            move('openshift-install', '/workdir')
-    INSTALLER_VERSION = os.popen('openshift-install version').readlines()[0].split(" ")[1].strip()
-    if INSTALLER_VERSION.startswith('v'):
-        INSTALLER_VERSION = INSTALLER_VERSION[1:]
+        pprint("Move downloaded openshift-install somewhere in your path if you want to reuse it", color='blue')
+    INSTALLER_VERSION = get_installer_version()
     if platform == 'packet' and not upstream:
         COMMIT_ID = os.popen('openshift-install version').readlines()[1].replace('built from commit', '').strip()
         overrides['commit_id'] = COMMIT_ID

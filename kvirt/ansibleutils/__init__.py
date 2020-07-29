@@ -119,7 +119,6 @@ def make_plan_inventory(vms_to_host, plan, vms, groups={}, user=None, yamlinvent
     :param user:
     :param yamlinventory:
     """
-    ssh_args = "-o CheckHostIP=no -o StrictHostKeyChecking=no" if insecure else ""
     inventory = {}
     inventoryfile = "/tmp/%s.inv.yaml" % plan if yamlinventory else "/tmp/%s.inv" % plan
     pprint("Generating inventory %s" % inventoryfile, color='blue')
@@ -138,33 +137,12 @@ def make_plan_inventory(vms_to_host, plan, vms, groups={}, user=None, yamlinvent
                 inv = vm_inventory(k, name, user=user, yamlinventory=yamlinventory, insecure=insecure)
                 if inv is not None:
                     inventory[plan]['children'][group]['hosts'][name] = inv
-                if vms_to_host[name].tunnel:
-                    tunnelinfo = "-o ProxyCommand=\"ssh -p %s -W %%h:%%p %s@%s\"" % (
-                        vms_to_host[name].port,
-                        vms_to_host[name].user,
-                        vms_to_host[name].host)
-                ssh_args += " %s" % tunnelinfo
-                if yamlinventory:
-                    inventory[plan]['children'][group]['hosts'][name]['ansible_ssh_common_args'] = ssh_args
-                else:
-                    inventory[plan]['hosts'][name] += " ansible_ssh_common_args='%s'" % ssh_args
-
     inventory[plan]['hosts'] = {}
     for name in allvms:
         k = vms_to_host[name].k
         inv = vm_inventory(k, name, user=user, yamlinventory=yamlinventory, insecure=insecure)
         if inv is not None:
             inventory[plan]['hosts'][name] = inv
-            if vms_to_host[name].tunnel:
-                tunnelinfo = "-o ProxyCommand=\"ssh -p %s -W %%h:%%p %s@%s\"" % (
-                    vms_to_host[name].port,
-                    vms_to_host[name].user,
-                    vms_to_host[name].host)
-                ssh_args += " %s" % tunnelinfo
-            if yamlinventory:
-                inventory[plan]['hosts'][name]['ansible_ssh_common_args'] = ssh_args
-            else:
-                inventory[plan]['hosts'][name] += " ansible_ssh_common_args='%s'" % ssh_args
     with open(inventoryfile, "w") as f:
         if yamlinventory:
             dump({'all': {'children': inventory}}, f, default_flow_style=False)

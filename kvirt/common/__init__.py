@@ -12,6 +12,7 @@ from jinja2.exceptions import TemplateSyntaxError, TemplateError
 from distutils.spawn import find_executable
 from netaddr import IPAddress
 import random
+import re
 import socket
 import ssl
 from urllib.parse import quote
@@ -1455,6 +1456,10 @@ def ignition_version(image):
         version = '3.0.0'
     else:
         version = '2.2.0'
+        image = os.path.basename(image)
+        version_match = re.match('rhcos-*(..).*', image)
+        if version_match is not None and int(version_match.group(1)) >= 46:
+            version = '3.0.0'
     return version
 
 
