@@ -226,7 +226,7 @@ def create(config, plandir, cluster, overrides):
     tag = data.get('tag')
     if os.path.exists('openshift-install'):
         pprint("Removing old openshift-install", color='blue')
-        os.path.remove('openshift-install')
+        os.remove('openshift-install')
     baremetal = data.get('baremetal')
     minimal = data.get('minimal')
     user_agent = "User-Agent: Ignition/2.3.0" if upstream else "User-Agent: Ignition/0.35.0"
