@@ -1384,7 +1384,6 @@ class Kvirt(object):
         return yamlinfo
 
     def ip(self, name):
-        ip = None
         ifaces = []
         conn = self.conn
         try:
@@ -1396,41 +1395,53 @@ class Kvirt(object):
         if not vm.isActive():
             return None
         else:
-            networktypes = [element.get('type') for element in list(root.getiterator('interface'))]
-            guestagent = vir_src_agent if 'bridge' in networktypes else vir_src_lease
-            try:
-                gfaces = vm.interfaceAddresses(guestagent, 0)
-                ifaces = gfaces
-            except:
-                pass
-        interfaces = list(root.getiterator('interface'))
-        for element in interfaces:
-            networktype = element.get('type')
-            mac = element.find('mac').get('address')
-            if networktype == 'user':
-                continue
-            if networktype == 'bridge':
-                network = element.find('source').get('bridge')
-            else:
-                network = element.find('source').get('network')
-                try:
-                    networkdata = conn.networkLookupByName(network)
-                    netxml = networkdata.XMLDesc()
-                    netroot = ET.fromstring(netxml)
-                    hostentries = list(netroot.getiterator('host'))
-                    for host in hostentries:
-                        if host.get('mac') == mac:
-                            ip = host.get('ip')
-                except:
+            interfaces = list(root.getiterator('interface'))
+            for element in interfaces:
+                networktype = element.get('type')
+                mac = element.find('mac').get('address')
+                if networktype == 'user':
                     continue
-            if ifaces:
-                for x in ifaces:
-                    if ifaces[x]['hwaddr'] == mac and ifaces[x]['addrs'] is not None:
-                        for entry in ifaces[x]['addrs']:
-                            ip = entry['addr']
-                            if len(interfaces) > 1:
-                                break
-            return ip
+                if networktype == 'bridge':
+                    network = element.find('source').get('bridge')
+                else:
+                    network = element.find('source').get('network')
+                    try:
+                        networkdata = conn.networkLookupByName(network)
+                        netxml = networkdata.XMLDesc()
+                        netroot = ET.fromstring(netxml)
+                        hostentries = list(netroot.getiterator('host'))
+                        for host in hostentries:
+                            if host.get('mac') == mac:
+                                return host.get('ip')
+                    except:
+                        continue
+            agentfaces = {}
+            leasefaces = {}
+            ifaces = {}
+            networktypes = [element.get('type') for element in list(root.getiterator('interface'))]
+            if 'bridge' in networktypes:
+                try:
+                    agentfaces = vm.interfaceAddresses(vir_src_agent, 0)
+                except:
+                    pass
+            if 'network' in networktypes:
+                leasefaces = vm.interfaceAddresses(vir_src_lease, 0)
+            ifaces = {**agentfaces, **leasefaces}
+            ips = []
+            for x in ifaces:
+                if ifaces[x]['hwaddr'] == mac and ifaces[x]['addrs'] is not None:
+                    for entry in ifaces[x]['addrs']:
+                        if entry['addr'].startswith('fe80::'):
+                            continue
+                        ip = entry['addr']
+                        ips.append(ip)
+            if ips:
+                ip4s = [i for i in ips if ':' not in i]
+                ip6s = [i for i in ips if i not in ip4s]
+                ip = ip4s[0] if ip4s else ip6s[0]
+                return ip
+            else:
+                return None
 
     def volumes(self, iso=False):
         isos = []
