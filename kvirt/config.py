@@ -1722,7 +1722,7 @@ $INFO
         return returndata
 
     def handle_host(self, pool=None, image=None, switch=None, download=False,
-                    url=None, cmd=None, sync=False, update_profile=False):
+                    url=None, cmd=None, sync=False, update_profile=False, commit=None):
         """
 
         :param pool:
@@ -1748,7 +1748,10 @@ $INFO
                         return {'result': 'failure', 'reason': "Incorrect image"}
                     url = IMAGES[image]
                     if 'rhcos' in image:
-                        url = common.get_latest_rhcos(url, _type=self.type)
+                        if commit is not None:
+                            url = common.get_commit_rhcos(commit, _type=self.type)
+                        else:
+                            url = common.get_latest_rhcos(url, _type=self.type)
                     if 'fcos' in image:
                         url = common.get_latest_fcos(url, _type=self.type)
                     image = os.path.basename(image)

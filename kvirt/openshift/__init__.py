@@ -350,7 +350,7 @@ def create(config, plandir, cluster, overrides):
         else:
             pprint("Downloading %s image" % COS_TYPE, color='blue')
             result = config.handle_host(pool=config.pool, image="%s%s" % (COS_TYPE, COS_VERSION),
-                                        download=True, update_profile=False)
+                                        download=True, update_profile=False, commit=COMMIT_ID)
             if result['result'] != 'success':
                 os._exit(1)
             images = [v for v in k.volumes() if "%s-%s" % (COS_TYPE, COS_VERSION) in v]
