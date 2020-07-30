@@ -8,7 +8,11 @@ info: |
     Upstream okd version can be specified with the upstream flag.
     the baremetal flag allows to get the baremetal operator deployed, so that you can deploy physical workers afterwards.
     Sdn defaults to OpenShiftSDN but OVNKubernetes or Calico can be specified instead
-image: rhcos44
+version: nightly
+tag: '4.5'
+pull_secret: openshift_pull.json
+image: rhcos45
+helper_image: CentOS-7-x86_64-GenericCloud.qcow2
 network: default
 api_ip: 
 ingress_ip: 
@@ -65,6 +69,7 @@ disconnected_url:
 disconnected_user:
 disconnected_password:
 imagecontentsources: []
+ca:
 ipv6: false
 baremetal: false
 baremetal_machine_cidr:

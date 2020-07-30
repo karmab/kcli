@@ -342,9 +342,14 @@ def create(config, plandir, cluster, overrides):
         else:
             image_url = get_commit_rhcos(COMMIT_ID, _type=config.type)
         image = os.path.basename(os.path.splitext(image_url)[0])
-        result = config.handle_host(pool=config.pool, image=image, download=True, update_profile=False, url=image_url)
-        if result['result'] != 'success':
-            os._exit(1)
+        images = [v for v in k.volumes() if image in v]
+        if not images:
+            result = config.handle_host(pool=config.pool, image=image, download=True, update_profile=False,
+                                        url=image_url)
+            if result['result'] != 'success':
+                os._exit(1)
+        else:
+            pprint("Using image %s" % image, color='blue')
     elif platform != 'packet':
         pprint("Checking if image %s is available" % image, color='blue')
         images = [v for v in k.volumes() if image in v]

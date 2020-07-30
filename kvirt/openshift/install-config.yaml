@@ -54,7 +54,7 @@ platform:
 {%- else %} 
   none: {}
 {%- endif %}
-{%- if ca is defined %}
+{%- if ca != None %}
 additionalTrustBundle: |
  {{ ca | replace('\n', '\n ') }}
 {%- endif %}
