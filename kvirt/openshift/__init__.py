@@ -7,6 +7,7 @@ import json
 import os
 import sys
 from kvirt.common import info, pprint, gen_mac, get_oc, get_values, pwd_path, insecure_fetch, fetch
+from kvirt.common import get_commit_rhcos, get_latest_fcos
 from kvirt.openshift.calico import calicoassets
 from random import randint
 import re
@@ -329,42 +330,30 @@ def create(config, plandir, cluster, overrides):
             get_downstream_installer(tag=tag)
         pprint("Move downloaded openshift-install somewhere in your path if you want to reuse it", color='blue')
     INSTALLER_VERSION = get_installer_version()
+    COMMIT_ID = os.popen('openshift-install version').readlines()[1].replace('built from commit', '').strip()
     if platform == 'packet' and not upstream:
-        COMMIT_ID = os.popen('openshift-install version').readlines()[1].replace('built from commit', '').strip()
         overrides['commit_id'] = COMMIT_ID
     pprint("Using installer version %s" % INSTALLER_VERSION, color='blue')
-    if upstream:
-        COS_VERSION = ""
-        COS_TYPE = "fedora-coreos"
-    else:
-        COS_TYPE = "rhcos"
-        version_match = re.match("4.([0-9]*).*", INSTALLER_VERSION)
-        COS_VERSION = "4%s" % version_match.group(1) if version_match is not None else '45'
     if image is None:
-        if platform == 'packet':
-            pprint("Missing image in your parameters file. This is required for packet", color='red')
-            os._exit(1)
-        images = [v for v in k.volumes() if COS_TYPE in v and COS_VERSION in v]
-        if images:
-            image = os.path.basename(images[0])
+        if upstream:
+            fcos_base = 'stable' if version == 'stable' else 'testing'
+            fcos_url = "https://builds.coreos.fedoraproject.org/streams/%s.json" % fcos_base
+            image_url = get_latest_fcos(fcos_url, _type=config.type)
         else:
-            pprint("Downloading %s image" % COS_TYPE, color='blue')
-            result = config.handle_host(pool=config.pool, image="%s%s" % (COS_TYPE, COS_VERSION),
-                                        download=True, update_profile=False, commit=COMMIT_ID)
-            if result['result'] != 'success':
-                os._exit(1)
-            images = [v for v in k.volumes() if "%s-%s" % (COS_TYPE, COS_VERSION) in v]
-            if not images:
-                pprint("Something went wrong with the image download.Leaving...", color='red')
-                os._exit(1)
-            image = images[0]
-        pprint("Using image %s" % image, color='blue')
+            image_url = get_commit_rhcos(COMMIT_ID, _type=config.type)
+        image = os.path.basename(os.path.splitext(image_url)[0])
+        result = config.handle_host(pool=config.pool, image=image, download=True, update_profile=False, url=image_url)
+        if result['result'] != 'success':
+            os._exit(1)
     elif platform != 'packet':
         pprint("Checking if image %s is available" % image, color='blue')
         images = [v for v in k.volumes() if image in v]
         if not images:
             pprint("Missing %s. Indicate correct image in your parameters file..." % image, color='red')
             os._exit(1)
+    else:
+        pprint("Missing image in your parameters file. This is required for packet", color='red')
+        os._exit(1)
     overrides['image'] = image
     overrides['cluster'] = cluster
     if not os.path.exists(clusterdir):
@@ -562,8 +551,11 @@ def create(config, plandir, cluster, overrides):
         sedcmd += '%s/master.ign' % clusterdir
         sedcmd += ' > %s/bootstrap.ign' % clusterdir
         call(sedcmd, shell=True)
-    if masters == 1 and (upstream or int(COS_VERSION) > 43):
-        overrides['fix_ceo'] = True
+    if masters == 1:
+        version_match = re.match("4.([0-9]*).*", INSTALLER_VERSION)
+        COS_VERSION = "4%s" % version_match.group(1) if version_match is not None else '45'
+        if upstream or int(COS_VERSION) > 43:
+            overrides['fix_ceo'] = True
     if platform in virtplatforms:
         if disconnected_deploy:
             disconnected_vm = "%s-disconnecter" % cluster

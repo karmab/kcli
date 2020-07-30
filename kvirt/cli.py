@@ -1534,6 +1534,25 @@ def download_openshift_installer(args):
     return 0
 
 
+def download_okd_installer(args):
+    """Download Okd Installer"""
+    paramfile = args.paramfile
+    if os.path.exists("/i_am_a_container"):
+        if paramfile is not None:
+            paramfile = "/workdir/%s" % paramfile
+        elif os.path.exists("/workdir/kcli_parameters.yml"):
+            paramfile = "/workdir/kcli_parameters.yml"
+            common.pprint("Using default parameter file kcli_parameters.yml")
+    elif paramfile is None and os.path.exists("kcli_parameters.yml"):
+        paramfile = "kcli_parameters.yml"
+        common.pprint("Using default parameter file kcli_parameters.yml")
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    overrides['upstream'] = True
+    config.download_openshift_installer(overrides)
+    return 0
+
+
 def create_pipeline(args):
     """Create Pipeline"""
     inputfile = args.inputfile
@@ -2906,6 +2925,16 @@ def cli():
     imagedownload_parser.set_defaults(func=download_image)
     download_subparsers.add_parser('image', parents=[imagedownload_parser], description=imagedownload_desc,
                                    help=imagedownload_desc, aliases=['iso'])
+
+    okddownload_desc = 'Download Okd Installer'
+    okddownload_parser = argparse.ArgumentParser(add_help=False)
+    okddownload_parser.add_argument('-P', '--param', action='append',
+                                          help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    okddownload_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    okddownload_parser.set_defaults(func=download_okd_installer)
+    download_subparsers.add_parser('okd-installer', parents=[okddownload_parser],
+                                   description=okddownload_desc,
+                                   help=okddownload_desc)
 
     openshiftdownload_desc = 'Download Openshift Installer'
     openshiftdownload_parser = argparse.ArgumentParser(add_help=False)
