@@ -383,6 +383,9 @@ class Kvirt(object):
             else:
                 backing = None
                 backingxml = '<backingStore/>'
+            if backing is not None and not diskthin:
+                diskformat = 'qcow2'
+                common.pprint("Raw disks don't support a backing, so using thin mode instead", color='yellow')
             volxml = self._xmlvolume(path=diskpath, size=disksize, pooltype=diskpooltype, backing=backing,
                                      diskformat=diskformat)
             if index == 0 and image is not None and diskpooltype in ['logical', 'zfs']\
