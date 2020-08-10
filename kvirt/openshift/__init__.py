@@ -611,21 +611,17 @@ def create(config, plandir, cluster, overrides):
         call('openshift-install --dir=%s wait-for bootstrap-complete || exit 1' % clusterdir, shell=True)
         todelete = ["%s-bootstrap" % cluster, "%s-bootstrap-helper" % cluster]
     if platform in virtplatforms:
-        wait_time = 90 if masters > 1 else 240
-        pprint("Waiting %ss before retrieving workers ignition data" % wait_time, color='blue')
-        sleep(wait_time)
-    call("oc adm taint nodes -l node-role.kubernetes.io/master node-role.kubernetes.io/master:NoSchedule-", shell=True)
-    pprint("Deploying certs autoapprover cronjob", color='blue')
-    call("oc create -f %s/autoapprovercron.yml" % clusterdir, shell=True)
-    if platform in virtplatforms:
         ignitionworkerfile = "%s/worker.ign" % clusterdir
         os.remove(ignitionworkerfile)
         while not os.path.exists(ignitionworkerfile) or os.stat(ignitionworkerfile).st_size == 0:
-            with open(ignitionworkerfile, 'w') as w:
-                workerdata = insecure_fetch("https://api.%s.%s:22623/config/worker" % (cluster, domain),
-                                            headers=[curl_header])
-                w.write(workerdata)
-            sleep(5)
+            try:
+                with open(ignitionworkerfile, 'w') as w:
+                    workerdata = insecure_fetch("https://api.%s.%s:22623/config/worker" % (cluster, domain),
+                                                headers=[curl_header])
+                    w.write(workerdata)
+            except:
+                pprint("Waiting 5s before retrieving workers ignition data", color='blue')
+                sleep(5)
         if workers > 0:
             pprint("Deploying workers", color='blue')
             if 'name' in overrides:
@@ -640,6 +636,9 @@ def create(config, plandir, cluster, overrides):
                 allnodes = ["%s-worker-%s" % (cluster, num) for num in range(workers)]
                 for node in allnodes:
                     k.add_nic(node, network)
+    call("oc adm taint nodes -l node-role.kubernetes.io/master node-role.kubernetes.io/master:NoSchedule-", shell=True)
+    pprint("Deploying certs autoapprover cronjob", color='blue')
+    call("oc create -f %s/autoapprovercron.yml" % clusterdir, shell=True)
     if not minimal:
         installcommand = 'openshift-install --dir=%s wait-for install-complete' % clusterdir
         installcommand += " || %s" % installcommand
