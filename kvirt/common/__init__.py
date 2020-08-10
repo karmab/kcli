@@ -1425,8 +1425,9 @@ def insecure_fetch(url, headers=[]):
     req = Request(url)
     if headers:
         for header in headers:
-            key, value = header.split(' ')
-            key = key.replace(':', '')
+            header_split = header.split(' ')
+            key = header_split[0].replace(':', '')
+            value = ' '.join(header_split[1:])
             req.add_header(key, value)
     response = urlopen(req, timeout=5, context=context)
     data = response.read()

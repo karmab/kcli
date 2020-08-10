@@ -19,6 +19,7 @@ from urllib.request import urlopen
 
 virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere', 'packet']
 cloudplatforms = ['aws', 'gcp']
+DEFAULT_TAG = '4.5'
 
 
 def get_installer_version():
@@ -201,8 +202,7 @@ def create(config, plandir, cluster, overrides):
             'network': 'default',
             'masters': 1,
             'workers': 0,
-            'cloud_tag': 'cnvlab',
-            'tag': '4.5',
+            'tag': DEFAULT_TAG,
             'ipv6': False,
             'pub_key': '%s/.ssh/id_rsa.pub' % os.environ['HOME'],
             'pull_secret': 'openshift_pull.json',
@@ -225,13 +225,18 @@ def create(config, plandir, cluster, overrides):
     upstream = data.get('upstream')
     version = data.get('version')
     tag = data.get('tag')
+    openshift_version = int(str(tag).replace('.', ''))
     if os.path.exists('openshift-install'):
         pprint("Removing old openshift-install", color='blue')
         os.remove('openshift-install')
     baremetal = data.get('baremetal')
     minimal = data.get('minimal')
-    user_agent = "User-Agent: Ignition/2.3.0" if upstream else "User-Agent: Ignition/0.35.0"
-    overrides['user_agent'] = user_agent
+    curl_header = "User-Agent: Ignition/0.35.0"
+    if upstream:
+        curl_header = "User-Agent: Ignition/2.3.0"
+    elif openshift_version >= 46:
+        curl_header = "Accept: application/vnd.coreos.ignition+json; version=3.1.0"
+    overrides['curl_header'] = curl_header
     if version not in ['ci', 'nightly']:
         pprint("Using stable version", color='blue')
     else:
@@ -618,7 +623,7 @@ def create(config, plandir, cluster, overrides):
         while not os.path.exists(ignitionworkerfile) or os.stat(ignitionworkerfile).st_size == 0:
             with open(ignitionworkerfile, 'w') as w:
                 workerdata = insecure_fetch("https://api.%s.%s:22623/config/worker" % (cluster, domain),
-                                            headers=[user_agent])
+                                            headers=[curl_header])
                 w.write(workerdata)
             sleep(5)
         if workers > 0:

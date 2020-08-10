@@ -66,7 +66,9 @@ apps.{{ cluster }}:
  reservedns: true
  disks:
  - size: {{ disk_size }}
+{%- if cloud_tag != None %}
  tags: [{{ cloud_tag }}]
+{%- endif %}
 
 {% for num in range(0, masters) %}
 
@@ -99,5 +101,7 @@ apps.{{ cluster }}:
    origin: gcp-hack.preset
    mode: 644
 {% endif %}
- tags: [{{ tag }}]
+{%- if cloud_tag != None %}
+ tags: [{{ cloud_tag }}]
+{% endif %}
 {% endfor %}

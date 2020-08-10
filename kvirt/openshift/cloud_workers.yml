@@ -16,5 +16,7 @@
  - name: {{ network }}
  reservedns: true
  disks: {{ [disk_size] + extra_disks }}
- tags: [{{ tag }}]
+{%- if cloud_tag != None %}
+ tags: [{{ cloud_tag }}]
+{%- endif %}
 {% endfor %}
