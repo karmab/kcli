@@ -815,7 +815,7 @@ $INFO
         for vm in k.list():
             vmname = vm['name']
             plan = vm.get('plan')
-            if plan is None or plan == 'kvirt':
+            if plan is None or plan == 'kvirt' or plan == '':
                 continue
             elif plan not in plans:
                 plans[plan] = [vmname]
