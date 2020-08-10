@@ -1,0 +1,17 @@
+  
+FROM alpine:3.8
+
+MAINTAINER Karim Boumedhel <karimboumedhel@gmail.com>
+
+LABEL name="karmab/kubectl" \
+      maintainer="karimboumedhel@gmail.com" \
+      vendor="Karmalabs" \
+      version="latest" \
+      release="1" \
+      summary="kubectl in a container" \
+      description="kubectl in a container"
+
+# ADD https://storage.googleapis.com/kubernetes-release/release/v1.15.0/bin/linux/amd64/kubectl /usr/local/bin/kubectl
+ADD kubectl /usr/local/bin/kubectl
+
+RUN chmod 700 /usr/local/bin/kubectl
