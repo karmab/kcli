@@ -450,7 +450,7 @@ def list_vm(args):
     if args.client is not None and ',' in args.client:
         vms = PrettyTable(["Name", "Host", "Status", "Ips", "Source", "Plan", "Profile"])
         for client in args.client.split(','):
-            config = Kbaseconfig(client=client, debug=args.debug)
+            config = Kbaseconfig(client=client, debug=args.debug, quiet=True)
             if config.cache:
                 _list = cache_vms(config, args.region, args.zone, args.namespace)
             else:
@@ -473,7 +473,7 @@ def list_vm(args):
         print(vms)
     else:
         vms = PrettyTable(["Name", "Status", "Ips", "Source", "Plan", "Profile"])
-        baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+        baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
         if baseconfig.cache:
             _list = cache_vms(baseconfig, args.region, args.zone, args.namespace)
         else:
