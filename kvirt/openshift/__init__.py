@@ -225,18 +225,11 @@ def create(config, plandir, cluster, overrides):
     upstream = data.get('upstream')
     version = data.get('version')
     tag = data.get('tag')
-    openshift_version = int(str(tag).replace('.', ''))
     if os.path.exists('openshift-install'):
         pprint("Removing old openshift-install", color='blue')
         os.remove('openshift-install')
     baremetal = data.get('baremetal')
     minimal = data.get('minimal')
-    curl_header = "User-Agent: Ignition/0.35.0"
-    if upstream:
-        curl_header = "User-Agent: Ignition/2.3.0"
-    elif openshift_version >= 46:
-        curl_header = "Accept: application/vnd.coreos.ignition+json; version=3.1.0"
-    overrides['curl_header'] = curl_header
     if version not in ['ci', 'nightly']:
         pprint("Using stable version", color='blue')
     else:
@@ -339,6 +332,13 @@ def create(config, plandir, cluster, overrides):
     if platform == 'packet' and not upstream:
         overrides['commit_id'] = COMMIT_ID
     pprint("Using installer version %s" % INSTALLER_VERSION, color='blue')
+    OPENSHIFT_VERSION = INSTALLER_VERSION[0:3].replace('.', '')
+    curl_header = "Accept: application/vnd.coreos.ignition+json; version=3.1.0"
+    if upstream:
+        curl_header = "User-Agent: Ignition/2.3.0"
+    elif OPENSHIFT_VERSION.isdigit() and OPENSHIFT_VERSION < 46:
+        curl_header = "User-Agent: Ignition/0.35.0"
+    overrides['curl_header'] = curl_header
     if image is None:
         if upstream:
             fcos_base = 'stable' if version == 'stable' else 'testing'
