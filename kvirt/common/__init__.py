@@ -335,12 +335,12 @@ def process_files(files=[], overrides={}):
                     pprint("Error rendering file %s. Got: %s" % (origin, e.message), color='red')
                     os._exit(1)
                 content = [line.rstrip() for line in fileentries.split('\n')]
-                with open("/tmp/%s" % os.path.basename(path), 'w') as f:
-                    for line in fileentries.split('\n'):
-                        if line.rstrip() == '':
-                            f.write("\n")
-                        else:
-                            f.write("%s\n" % line.rstrip())
+                # with open("/tmp/%s" % os.path.basename(path), 'w') as f:
+                #     for line in fileentries.split('\n'):
+                #         if line.rstrip() == '':
+                #             f.write("\n")
+                #         else:
+                #             f.write("%s\n" % line.rstrip())
             else:
                 content = [line.rstrip() for line in open(origin, 'r').readlines()]
         data += "- owner: %s:%s\n" % (owner, owner)
