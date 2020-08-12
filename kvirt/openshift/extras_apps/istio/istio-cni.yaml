@@ -1,0 +1,17 @@
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+spec:
+  components:
+    cni:
+      enabled: true
+      namespace: kube-system
+  values:
+    cni:
+      chained: false
+      cniBinDir: /var/lib/cni/bin
+      cniConfDir: /etc/cni/multus/net.d
+      cniConfFileName: istio-cni.conf
+      excludeNamespaces:
+       - istio-system
+       - kube-system
+      logLevel: info

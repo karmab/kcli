@@ -973,3 +973,33 @@ class Kbaseconfig:
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
         inputfile = '%s/masters.yml' % plandir
         return self.info_plan(inputfile, quiet=quiet, web=web)
+
+    def list_apps_generic(self, quiet=True):
+        plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
+        appdir = plandir + '/extras_apps'
+        return sorted([x for x in os.listdir(appdir) if os.path.isdir("%s/%s" % (appdir, x)) and x != '__pycache__'])
+
+    def list_apps_openshift(self, quiet=True):
+        plandir = os.path.dirname(openshift.create.__code__.co_filename)
+        appdir = plandir + '/extras_apps'
+        return sorted([x for x in os.listdir(appdir) if os.path.isdir("%s/%s" % (appdir, x)) and x != '__pycache__'])
+
+    def create_app_generic(self, app, overrides={}):
+        plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
+        appdir = "%s/extras_apps/%s" % (plandir, app)
+        common.kube_create_extra_app(self, appdir, overrides=overrides)
+
+    def delete_app_generic(self, app, overrides={}):
+        plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
+        appdir = "%s/extras_apps/%s" % (plandir, app)
+        common.kube_delete_extra_app(self, appdir, overrides=overrides)
+
+    def create_app_openshift(self, app, overrides={}):
+        plandir = os.path.dirname(openshift.create.__code__.co_filename)
+        appdir = "%s/extras_apps/%s" % (plandir, app)
+        common.kube_create_extra_app(self, appdir, overrides=overrides)
+
+    def delete_app_openshift(self, app, overrides={}):
+        plandir = os.path.dirname(openshift.create.__code__.co_filename)
+        appdir = "%s/extras_apps/%s" % (plandir, app)
+        common.kube_delete_extra_app(self, appdir, overrides=overrides)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from distutils.spawn import find_executable
-from kvirt.common import info, pprint, pwd_path, get_kubectl
+from kvirt.common import info, pprint, pwd_path, get_kubectl, kube_create_extra_app
 from kvirt.defaults import UBUNTUS
 import os
 import sys
@@ -97,3 +97,13 @@ def create(config, plandir, cluster, overrides):
     predata = config.process_inputfile(cluster, "%s/%s" % (plandir, prefile), overrides=data)
     with open("%s/pre.sh" % clusterdir, 'w') as f:
         f.write(predata)
+    os.environ['KUBECONFIG'] = "%s/%s/auth/kubeconfig" % (os.getcwd(), clusterdir)
+    extras = data.get('extra_apps', [])
+    if extras:
+        for extra in extras:
+            appdir = "%s/extras_apps/%s" % (plandir, extra)
+            if not os.path.exists(appdir):
+                pprint("Skipping unsupported extra app %s" % extra, color='yellow')
+            else:
+                pprint("Adding extra app %s" % extra, color='blue')
+                kube_create_extra_app(config, appdir, overrides=data)

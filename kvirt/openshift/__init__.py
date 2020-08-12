@@ -7,7 +7,7 @@ import json
 import os
 import sys
 from kvirt.common import info, pprint, gen_mac, get_oc, get_values, pwd_path, insecure_fetch, fetch
-from kvirt.common import get_commit_rhcos, get_latest_fcos
+from kvirt.common import get_commit_rhcos, get_latest_fcos, kube_create_extra_app
 from kvirt.openshift.calico import calicoassets
 from random import randint
 import re
@@ -211,6 +211,7 @@ def create(config, plandir, cluster, overrides):
             'upstream': False,
             'baremetal': False,
             'fips': False,
+            'extra_apps': [],
             'minimal': False}
     data.update(overrides)
     overrides['kubetype'] = 'openshift'
@@ -656,3 +657,13 @@ def create(config, plandir, cluster, overrides):
     for vm in todelete:
         pprint("Deleting %s" % vm)
         k.delete(vm)
+    os.environ['KUBECONFIG'] = "%s/%s/auth/kubeconfig" % (os.getcwd(), clusterdir)
+    extras = overrides['extra_apps']
+    if extras:
+        for extra in extras:
+            appdir = "%s/extras_apps/%s" % (plandir, extra)
+            pprint("Adding extra app %s" % extra, color='blue')
+            if not os.path.exists(appdir):
+                pprint("Skipping unsupported extra app %s" % extra, color='yellow')
+            else:
+                kube_create_extra_app(config, appdir, overrides=overrides)

@@ -43,6 +43,7 @@ worker_rng: false
 disk_size: 30
 autostart: false
 keys: []
+extra_apps: []
 extra_disks: []
 extra_master_disks: []
 extra_worker_disks: []

@@ -1,5 +1,7 @@
 from base64 import b64encode
 import os
+from distutils.version import LooseVersion
+import requests
 
 
 def basename(path):
@@ -49,5 +51,17 @@ def certificate(value):
         return "-----BEGIN CERTIFICATE-----\n%s\n-----END CERTIFICATE-----" % value
 
 
+def latestversion(repo):
+    data = requests.get("https://api.github.com/repos/%s/releases" % repo).json()
+    tags = sorted([x['tag_name'] for x in data], key=LooseVersion)
+    if len(tags) == 1:
+        tag = tags[0]
+    else:
+        tag1 = tags[-2]
+        tag2 = tags[-1]
+        tag = tag1 if tag1 in tag2 else tag2
+    return tag
+
+
 jinjafilters = {'basename': basename, 'dirname': dirname, 'ocpnodes': ocpnodes, 'none': none, 'type': _type,
-                'certificate': certificate, 'base64': base64}
+                'certificate': certificate, 'base64': base64, 'latestversion': latestversion}

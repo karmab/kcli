@@ -14,6 +14,7 @@ from kvirt.defaults import IMAGES, VERSION
 from prettytable import PrettyTable
 import argcomplete
 import argparse
+from argparse import RawDescriptionHelpFormatter as rawhelp
 from kvirt import common
 from kvirt import nameutils
 import os
@@ -747,6 +748,82 @@ def list_plan(args):
             plans.add_row([planname, planvms])
     print(plans)
     return
+
+
+def create_app_generic(args):
+    app = args.app
+    paramfile = args.paramfile
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    available_apps = baseconfig.list_apps_generic(quiet=True)
+    if app not in available_apps:
+        common.pprint("app %s not available" % app, color='red')
+        os._exit(1)
+    if 'KUBECONFIG' not in os.environ:
+        common.pprint("KUBECONFIG env variable needs to be set", color='red')
+        os._exit(1)
+    elif not os.path.isabs(os.environ['KUBECONFIG']):
+        os.environ['KUBECONFIG'] = "%s/%s" % (os.getcwd(), os.environ['KUBECONFIG'])
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    baseconfig.create_app_generic(app, overrides)
+
+
+def create_app_openshift(args):
+    app = args.app
+    paramfile = args.paramfile
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    available_apps = baseconfig.list_apps_openshift(quiet=True)
+    if app not in available_apps:
+        common.pprint("app %s not available" % app, color='red')
+        os._exit(1)
+    if 'KUBECONFIG' not in os.environ:
+        common.pprint("KUBECONFIG env variable needs to be set", color='red')
+        os._exit(1)
+    elif not os.path.isabs(os.environ['KUBECONFIG']):
+        os.environ['KUBECONFIG'] = "%s/%s" % (os.getcwd(), os.environ['KUBECONFIG'])
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    baseconfig.create_app_generic(app, overrides)
+
+
+def delete_app_generic(args):
+    app = args.app
+    paramfile = args.paramfile
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    available_apps = baseconfig.list_apps_generic(quiet=True)
+    if app not in available_apps:
+        common.pprint("app %s not available" % app, color='red')
+        os._exit(1)
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    baseconfig.delete_app_generic(app, overrides)
+
+
+def delete_app_openshift(args):
+    app = args.app
+    paramfile = args.paramfile
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    available_apps = baseconfig.list_apps_openshift(quiet=True)
+    if app not in available_apps:
+        common.pprint("app %s not available" % app, color='red')
+        os._exit(1)
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    baseconfig.delete_app_openshift(app, overrides)
+
+
+def list_apps_generic(args):
+    """List generic kube apps"""
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    apps = PrettyTable(["Name"])
+    for app in baseconfig.list_apps_generic(quiet=True):
+        apps.add_row([app])
+    print(apps)
+
+
+def list_apps_openshift(args):
+    """List openshift kube apps"""
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    apps = PrettyTable(["Name"])
+    for app in baseconfig.list_apps_openshift(quiet=True):
+        apps.add_row([app])
+    print(apps)
 
 
 def list_kube(args):
@@ -2099,6 +2176,7 @@ def cli():
     """
 
     """
+    PARAMETERS_HELP = 'specify parameter or keyword for rendering (multiple can be specified)'
     parser = argparse.ArgumentParser(description='Libvirt/Ovirt/Vsphere/Gcp/Aws/Openstack/Kubevirt Wrapper')
     parser.add_argument('-C', '--client')
     parser.add_argument('--containerclient', help='Containerclient to use')
@@ -2123,7 +2201,7 @@ def cli():
     vmclone_desc = 'Clone Vm'
     vmclone_epilog = None
     vmclone_parser = subparsers.add_parser('clone', description=vmclone_desc, help=vmclone_desc, epilog=vmclone_epilog,
-                                           formatter_class=argparse.RawDescriptionHelpFormatter)
+                                           formatter_class=rawhelp)
     vmclone_parser.add_argument('-b', '--base', help='Base VM', metavar='BASE')
     vmclone_parser.add_argument('-f', '--full', action='store_true', help='Full Clone')
     vmclone_parser.add_argument('-s', '--start', action='store_true', help='Start cloned VM')
@@ -2137,7 +2215,7 @@ def cli():
     vmconsole_parser.add_argument('name', metavar='VMNAME', nargs='?')
     vmconsole_parser.set_defaults(func=console_vm)
     subparsers.add_parser('console', parents=[vmconsole_parser], description=vmconsole_desc, help=vmconsole_desc,
-                          epilog=vmconsole_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
+                          epilog=vmconsole_epilog, formatter_class=rawhelp)
 
     delete_desc = 'Delete Object'
     delete_parser = subparsers.add_parser('delete', description=delete_desc, help=delete_desc, aliases=['remove'])
@@ -2160,7 +2238,7 @@ def cli():
     vmexport_epilog = "examples:\n%s" % vmexport
     vmexport_parser = subparsers.add_parser('export', description=vmexport_desc, help=vmexport_desc,
                                             epilog=vmexport_epilog,
-                                            formatter_class=argparse.RawDescriptionHelpFormatter)
+                                            formatter_class=rawhelp)
     vmexport_parser.add_argument('-i', '--image', help='Name for the generated image. Uses the vm name otherwise',
                                  metavar='IMAGE')
     vmexport_parser.add_argument('names', metavar='VMNAMES', nargs='*')
@@ -2180,7 +2258,7 @@ def cli():
     list_epilog = "examples:\n%s" % _list
     list_parser = subparsers.add_parser('list', description=list_desc, help=list_desc, aliases=['get'],
                                         epilog=list_epilog,
-                                        formatter_class=argparse.RawDescriptionHelpFormatter)
+                                        formatter_class=rawhelp)
     list_subparsers = list_parser.add_subparsers(metavar='', dest='subcommand_list')
 
     render_desc = 'Render Plan/file'
@@ -2213,7 +2291,7 @@ def cli():
     vmscp_parser.add_argument('destination', nargs=1)
     vmscp_parser.set_defaults(func=scp_vm)
     subparsers.add_parser('scp', parents=[vmscp_parser], description=vmscp_desc, help=vmscp_desc, epilog=vmscp_epilog,
-                          formatter_class=argparse.RawDescriptionHelpFormatter)
+                          formatter_class=rawhelp)
 
     snapshot_desc = 'Snapshot Vm/Plan'
     snapshot_parser = subparsers.add_parser('snapshot', description=snapshot_desc, help=snapshot_desc)
@@ -2231,12 +2309,12 @@ def cli():
     vmssh_parser.add_argument('name', metavar='VMNAME', nargs='*')
     vmssh_parser.set_defaults(func=ssh_vm)
     subparsers.add_parser('ssh', parents=[vmssh_parser], description=vmssh_desc, help=vmssh_desc, epilog=vmssh_epilog,
-                          formatter_class=argparse.RawDescriptionHelpFormatter)
+                          formatter_class=rawhelp)
 
     start_desc = 'Start Vm/Plan/Container'
     start_epilog = "examples:\n%s" % start
     start_parser = subparsers.add_parser('start', description=start_desc, help=start_desc, epilog=start_epilog,
-                                         formatter_class=argparse.RawDescriptionHelpFormatter)
+                                         formatter_class=rawhelp)
     start_subparsers = start_parser.add_subparsers(metavar='', dest='subcommand_start')
 
     stop_desc = 'Stop Vm/Plan/Container'
@@ -2260,7 +2338,7 @@ def cli():
     version_parser = argparse.ArgumentParser(add_help=False)
     version_parser.set_defaults(func=get_version)
     subparsers.add_parser('version', parents=[version_parser], description=version_desc, help=version_desc,
-                          epilog=version_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
+                          epilog=version_epilog, formatter_class=rawhelp)
 
     # sub subcommands
     cachedelete_desc = 'Delete Cache'
@@ -2268,11 +2346,85 @@ def cli():
     cachedelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     cachedelete_parser.set_defaults(func=delete_cache)
 
+    createapp_desc = 'Create Kube Apps'
+    createapp_parser = create_subparsers.add_parser('app', description=createapp_desc,
+                                                    help=createapp_desc, aliases=['apps'])
+    createapp_subparsers = createapp_parser.add_subparsers(metavar='', dest='subcommand_create_app')
+
+    appgenericcreate_desc = 'Create Kube App Generic'
+    appgenericcreate_epilog = None
+    appgenericcreate_parser = createapp_subparsers.add_parser('generic', description=appgenericcreate_desc,
+                                                              help=appgenericcreate_desc,
+                                                              epilog=appgenericcreate_epilog, formatter_class=rawhelp)
+    appgenericcreate_parser.add_argument('-P', '--param', action='append',
+                                         help='specify parameter or keyword for rendering (multiple can be specified)',
+                                         metavar='PARAM')
+    appgenericcreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    appgenericcreate_parser.add_argument('app', metavar='APP')
+    appgenericcreate_parser.set_defaults(func=create_app_generic)
+
+    appopenshiftcreate_desc = 'Create Kube App Openshift'
+    appopenshiftcreate_epilog = None
+    appopenshiftcreate_parser = createapp_subparsers.add_parser('openshift', description=appopenshiftcreate_desc,
+                                                                help=appopenshiftcreate_desc,
+                                                                epilog=appopenshiftcreate_epilog,
+                                                                formatter_class=rawhelp)
+    appopenshiftcreate_parser.add_argument('-P', '--param', action='append',
+                                           help=PARAMETERS_HELP, metavar='PARAM')
+    appopenshiftcreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    appopenshiftcreate_parser.add_argument('app', metavar='APP')
+    appopenshiftcreate_parser.set_defaults(func=create_app_openshift)
+
+    deleteapp_desc = 'Delete Kube App'
+    deleteapp_parser = delete_subparsers.add_parser('app', description=deleteapp_desc,
+                                                    help=deleteapp_desc, aliases=['apps'])
+    deleteapp_subparsers = deleteapp_parser.add_subparsers(metavar='', dest='subcommand_delete_app')
+
+    appgenericdelete_desc = 'Delete Kube App Generic'
+    appgenericdelete_epilog = None
+    appgenericdelete_parser = deleteapp_subparsers.add_parser('generic', description=appgenericdelete_desc,
+                                                              help=appgenericdelete_desc,
+                                                              epilog=appgenericdelete_epilog, formatter_class=rawhelp)
+    appgenericdelete_parser.add_argument('-P', '--param', action='append',
+                                         help=PARAMETERS_HELP,
+                                         metavar='PARAM')
+    appgenericdelete_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    appgenericdelete_parser.add_argument('app', metavar='APP')
+    appgenericdelete_parser.set_defaults(func=delete_app_generic)
+
+    appopenshiftdelete_desc = 'Delete Kube App Openshift'
+    appopenshiftdelete_epilog = None
+    appopenshiftdelete_parser = deleteapp_subparsers.add_parser('openshift', description=appopenshiftdelete_desc,
+                                                                help=appopenshiftdelete_desc,
+                                                                epilog=appopenshiftdelete_epilog,
+                                                                formatter_class=rawhelp)
+    appopenshiftdelete_parser.add_argument('-P', '--param', action='append',
+                                           help=PARAMETERS_HELP,
+                                           metavar='PARAM')
+    appopenshiftdelete_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    appopenshiftdelete_parser.add_argument('app', metavar='APP')
+    appopenshiftdelete_parser.set_defaults(func=delete_app_openshift)
+
+    listapp_desc = 'List Available Kube Apps'
+    listapp_parser = list_subparsers.add_parser('app', description=listapp_desc,
+                                                help=listapp_desc, aliases=['apps'])
+    listapp_subparsers = listapp_parser.add_subparsers(metavar='', dest='subcommand_list_app')
+
+    appgenericlist_desc = 'List Available Kube Apps Generic'
+    appgenericlist_parser = listapp_subparsers.add_parser('generic', description=appgenericlist_desc,
+                                                          help=appgenericlist_desc)
+    appgenericlist_parser.set_defaults(func=list_apps_generic)
+
+    appopenshiftlist_desc = 'List Available Kube Components Openshift'
+    appopenshiftlist_parser = listapp_subparsers.add_parser('openshift', description=appopenshiftlist_desc,
+                                                            help=appopenshiftlist_desc)
+    appopenshiftlist_parser.set_defaults(func=list_apps_openshift)
+
     containercreate_desc = 'Create Container'
     containercreate_epilog = None
     containercreate_parser = create_subparsers.add_parser('container', description=containercreate_desc,
                                                           help=containercreate_desc, epilog=containercreate_epilog,
-                                                          formatter_class=argparse.RawDescriptionHelpFormatter)
+                                                          formatter_class=rawhelp)
     containercreate_parser_group = containercreate_parser.add_mutually_exclusive_group(required=True)
     containercreate_parser_group.add_argument('-i', '--image', help='Image to use', metavar='Image')
     containercreate_parser_group.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
@@ -2331,7 +2483,7 @@ def cli():
     dnscreate_epilog = "examples:\n%s" % dnscreate
     dnscreate_parser = create_subparsers.add_parser('dns', description=dnscreate_desc, help=dnscreate_desc,
                                                     epilog=dnscreate_epilog,
-                                                    formatter_class=argparse.RawDescriptionHelpFormatter)
+                                                    formatter_class=rawhelp)
     dnscreate_parser.add_argument('-a', '--alias', action='append', help='specify alias (can specify multiple)',
                                   metavar='ALIAS')
     dnscreate_parser.add_argument('-d', '--domain', help='Domain where to create entry', metavar='DOMAIN')
@@ -2360,7 +2512,7 @@ def cli():
     hostcreate_epilog = "examples:\n%s" % hostcreate
     hostcreate_parser = create_subparsers.add_parser('host', help=hostcreate_desc, description=hostcreate_desc,
                                                      aliases=['client'], epilog=hostcreate_epilog,
-                                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+                                                     formatter_class=rawhelp)
     hostcreate_subparsers = hostcreate_parser.add_subparsers(metavar='', dest='subcommand_create_host')
 
     awshostcreate_desc = 'Create Aws Host'
@@ -2509,7 +2661,7 @@ def cli():
                                      description=kubegenericcreate_desc,
                                      help=kubegenericcreate_desc,
                                      epilog=kubegenericcreate_epilog,
-                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+                                     formatter_class=rawhelp)
 
     kubek3screate_desc = 'Create K3s Kube'
     kubek3screate_epilog = "examples:\n%s" % kubek3screate
@@ -2525,7 +2677,7 @@ def cli():
                                      description=kubek3screate_desc,
                                      help=kubek3screate_desc,
                                      epilog=kubek3screate_epilog,
-                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+                                     formatter_class=rawhelp)
 
     parameterhelp = "specify parameter or keyword for rendering (multiple can be specified)"
     kubeopenshiftcreate_desc = 'Create Openshift Kube'
@@ -2540,7 +2692,7 @@ def cli():
                                      description=kubeopenshiftcreate_desc,
                                      help=kubeopenshiftcreate_desc,
                                      epilog=kubeopenshiftcreate_epilog,
-                                     formatter_class=argparse.RawDescriptionHelpFormatter, aliases=['okd'])
+                                     formatter_class=rawhelp, aliases=['okd'])
 
     kubedelete_desc = 'Delete Kube'
     kubedelete_parser = argparse.ArgumentParser(add_help=False)
@@ -2727,7 +2879,7 @@ def cli():
     plancreate_epilog = "examples:\n%s" % plancreate
     plancreate_parser = create_subparsers.add_parser('plan', description=plancreate_desc, help=plancreate_desc,
                                                      epilog=plancreate_epilog,
-                                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+                                                     formatter_class=rawhelp)
     plancreate_parser.add_argument('-A', '--ansible', help='Generate ansible inventory', action='store_true')
     plancreate_parser.add_argument('-u', '--url', help='Url for plan', metavar='URL')
     plancreate_parser.add_argument('-p', '--path', help='Path where to download plans. Defaults to plan',
@@ -2757,13 +2909,13 @@ def cli():
     planexpose_parser.add_argument('plan', metavar='PLAN')
     planexpose_parser.set_defaults(func=expose_plan)
     expose_subparsers.add_parser('plan', parents=[planexpose_parser], description=vmssh_desc, help=planexpose_desc,
-                                 epilog=planexpose_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
+                                 epilog=planexpose_epilog, formatter_class=rawhelp)
 
     planinfo_desc = 'Info Plan'
     planinfo_epilog = "examples:\n%s" % planinfo
     planinfo_parser = info_subparsers.add_parser('plan', description=planinfo_desc, help=planinfo_desc,
                                                  epilog=planinfo_epilog,
-                                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+                                                 formatter_class=rawhelp)
     planinfo_parser.add_argument('--doc', action='store_true', help='Render info as markdown table')
     planinfo_parser.add_argument('-f', '--inputfile', help='Input Plan file')
     planinfo_parser.add_argument('-p', '--path', help='Path where to download plans. Defaults to plan', metavar='PATH')
@@ -2869,7 +3021,7 @@ def cli():
     productinfo_parser.add_argument('product', metavar='PRODUCT')
     info_subparsers.add_parser('product', parents=[productinfo_parser], description=productinfo_desc,
                                help=productinfo_desc,
-                               epilog=productinfo_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
+                               epilog=productinfo_epilog, formatter_class=rawhelp)
 
     productlist_desc = 'List Products'
     productlist_parser = list_subparsers.add_parser('product', description=productlist_desc, help=productlist_desc,
@@ -2885,7 +3037,7 @@ def cli():
     repocreate_epilog = "examples:\n%s" % repocreate
     repocreate_parser = create_subparsers.add_parser('repo', description=repocreate_desc, help=repocreate_desc,
                                                      epilog=repocreate_epilog,
-                                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+                                                     formatter_class=rawhelp)
     repocreate_parser.add_argument('-u', '--url', help='URL of the repo', metavar='URL')
     repocreate_parser.add_argument('repo')
     repocreate_parser.set_defaults(func=create_repo)
@@ -2994,7 +3146,7 @@ def cli():
     vmcreate_parser.add_argument('name', metavar='VMNAME', nargs='?', type=valid_fqdn)
     vmcreate_parser.set_defaults(func=create_vm)
     create_subparsers.add_parser('vm', parents=[vmcreate_parser], description=vmcreate_desc, help=vmcreate_desc,
-                                 epilog=vmcreate_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
+                                 epilog=vmcreate_epilog, formatter_class=rawhelp)
 
     vmdelete_desc = 'Delete Vm'
     vmdelete_parser = argparse.ArgumentParser(add_help=False)
@@ -3017,7 +3169,7 @@ def cli():
     vmdiskadd_parser.set_defaults(func=create_vmdisk)
     create_subparsers.add_parser('disk', parents=[vmdiskadd_parser], description=vmdiskadd_desc, help=vmdiskadd_desc,
                                  aliases=['vm-disk'], epilog=diskcreate_epilog,
-                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+                                 formatter_class=rawhelp)
 
     vmdiskdelete_desc = 'Delete Vm Disk'
     diskdelete_epilog = "examples:\n%s" % diskdelete
@@ -3028,7 +3180,7 @@ def cli():
     vmdiskdelete_parser.set_defaults(func=delete_vmdisk)
     delete_subparsers.add_parser('disk', parents=[vmdiskdelete_parser], description=vmdiskdelete_desc,
                                  aliases=['vm-disk'], help=vmdiskdelete_desc, epilog=diskdelete_epilog,
-                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+                                 formatter_class=rawhelp)
 
     vmdisklist_desc = 'List All Vm Disks'
     vmdisklist_parser = argparse.ArgumentParser(add_help=False)
@@ -3061,7 +3213,7 @@ def cli():
     create_vmnic_parser.set_defaults(func=create_vmnic)
     create_subparsers.add_parser('nic', parents=[create_vmnic_parser], description=create_vmnic_desc,
                                  help=create_vmnic_desc, aliases=['vm-nic'],
-                                 epilog=create_vmnic_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
+                                 epilog=create_vmnic_epilog, formatter_class=rawhelp)
 
     delete_vmnic_desc = 'Delete Nic From vm'
     delete_vmnic_epilog = "examples:\n%s" % nicdelete
@@ -3072,7 +3224,7 @@ def cli():
     delete_vmnic_parser.set_defaults(func=delete_vmnic)
     delete_subparsers.add_parser('nic', parents=[delete_vmnic_parser], description=delete_vmnic_desc,
                                  help=delete_vmnic_desc, aliases=['vm-nic'],
-                                 epilog=delete_vmnic_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
+                                 epilog=delete_vmnic_epilog, formatter_class=rawhelp)
 
     vmrestart_desc = 'Restart Vms'
     vmrestart_parser = restart_subparsers.add_parser('vm', description=vmrestart_desc, help=vmrestart_desc)

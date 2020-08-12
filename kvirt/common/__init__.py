@@ -21,6 +21,7 @@ import json
 import os
 from subprocess import call
 from shutil import move
+from tempfile import TemporaryDirectory
 import yaml
 
 binary_types = ['bz2', 'deb', 'jpg', 'gz', 'jpeg', 'iso', 'png', 'rpm', 'tgz', 'zip', 'ks']
@@ -1500,3 +1501,42 @@ def get_oc(macosx=False):
             call(occmd, shell=True)
         else:
             move('oc', '/workdir/oc')
+
+
+def kube_create_extra_app(config, appdir, overrides={}):
+    cluster = 'xxx'
+    cwd = os.getcwd()
+    with TemporaryDirectory() as tmpdir:
+        for root, dirs, files in os.walk(appdir):
+            for name in files:
+                # pprint("Copying %s to tmpdir %s" % (name, tmpdir), color='blue')
+                rendered = config.process_inputfile(cluster, "%s/%s" % (appdir, name), overrides=overrides)
+                with open("%s/%s" % (tmpdir, name), 'w') as f:
+                    f.write(rendered)
+        os.chdir(tmpdir)
+        result = call('bash %s/install.sh' % tmpdir, shell=True)
+    os.chdir(cwd)
+    return result
+
+
+def kube_delete_extra_app(config, appdir, overrides={}):
+    found = False
+    cluster = 'xxx'
+    cwd = os.getcwd()
+    with TemporaryDirectory() as tmpdir:
+        for root, dirs, files in os.walk(appdir):
+            for name in files:
+                # pprint("Copying %s to tmpdir %s" % (name, tmpdir), color='blue')
+                if name == 'uninstall.sh':
+                    found = True
+                rendered = config.process_inputfile(cluster, "%s/%s" % (appdir, name), overrides=overrides)
+                with open("%s/%s" % (tmpdir, name), 'w') as f:
+                    f.write(rendered)
+        os.chdir(tmpdir)
+        if not found:
+            pprint("Uninstall not supported for this app", color='yellow')
+            result = 1
+        else:
+            result = call('bash %s/uninstall.sh' % tmpdir, shell=True)
+    os.chdir(cwd)
+    return result
