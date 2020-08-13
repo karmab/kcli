@@ -53,6 +53,8 @@ def certificate(value):
 
 def latestversion(repo):
     data = requests.get("https://api.github.com/repos/%s/releases" % repo).json()
+    if 'message' in data and data['message'] == 'Not Found':
+        return ''
     tags = sorted([x['tag_name'] for x in data], key=LooseVersion)
     if len(tags) == 1:
         tag = tags[0]
