@@ -7,7 +7,7 @@ import re
 
 
 class Kexposer():
-    def __init__(self, config, inputfile, overrides={}, plan=None):
+    def __init__(self, config, inputfile, overrides={}, plan=None, port=9000):
         app = Flask(__name__)
         self.basedir = os.path.dirname(inputfile) if '/' in inputfile else '.'
         self.parametersfiles = glob("%s/parameters_*.y*ml" % self.basedir)
@@ -120,6 +120,7 @@ class Kexposer():
         self.app = app
         self.config = config
         self.overrides = overrides
+        self.port = port
 
     def run(self):
-        self.app.run(host='0.0.0.0', port=9000)
+        self.app.run(host='0.0.0.0', port=self.port)

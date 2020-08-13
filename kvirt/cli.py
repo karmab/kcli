@@ -1481,6 +1481,7 @@ def delete_plan(args):
 
 def expose_plan(args):
     plan = args.plan
+    port = args.port
     inputfile = args.inputfile
     if inputfile is None:
         inputfile = 'kcli_plan.yml'
@@ -1488,7 +1489,7 @@ def expose_plan(args):
         inputfile = "/workdir/%s" % inputfile
     overrides = common.get_overrides(param=args.param)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.expose_plan(plan, inputfile=inputfile, overrides=overrides)
+    config.expose_plan(plan, inputfile=inputfile, overrides=overrides, port=port)
     return 0
 
 
@@ -2906,6 +2907,7 @@ def cli():
     planexpose_parser.add_argument('-f', '--inputfile', help='Input Plan file')
     planexpose_parser.add_argument('-P', '--param', action='append',
                                    help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    planexpose_parser.add_argument('--port', help='Port where to listen', type=int, default=9000, metavar='PORT')
     planexpose_parser.add_argument('plan', metavar='PLAN')
     planexpose_parser.set_defaults(func=expose_plan)
     expose_subparsers.add_parser('plan', parents=[planexpose_parser], description=vmssh_desc, help=planexpose_desc,
