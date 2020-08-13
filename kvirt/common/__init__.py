@@ -1506,6 +1506,7 @@ def get_oc(macosx=False):
 def kube_create_extra_app(config, appdir, overrides={}):
     cluster = 'xxx'
     cwd = os.getcwd()
+    overrides['cwd'] = cwd
     with TemporaryDirectory() as tmpdir:
         for root, dirs, files in os.walk(appdir):
             for name in files:
@@ -1523,6 +1524,7 @@ def kube_delete_extra_app(config, appdir, overrides={}):
     found = False
     cluster = 'xxx'
     cwd = os.getcwd()
+    overrides['cwd'] = cwd
     with TemporaryDirectory() as tmpdir:
         for root, dirs, files in os.walk(appdir):
             for name in files:
