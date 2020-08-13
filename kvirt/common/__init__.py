@@ -1503,7 +1503,7 @@ def get_oc(macosx=False):
             move('oc', '/workdir/oc')
 
 
-def kube_create_extra_app(config, appdir, overrides={}):
+def kube_create_app(config, appdir, overrides={}):
     cluster = 'xxx'
     cwd = os.getcwd()
     overrides['cwd'] = cwd
@@ -1520,7 +1520,7 @@ def kube_create_extra_app(config, appdir, overrides={}):
     return result
 
 
-def kube_delete_extra_app(config, appdir, overrides={}):
+def kube_delete_app(config, appdir, overrides={}):
     found = False
     cluster = 'xxx'
     cwd = os.getcwd()
