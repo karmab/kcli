@@ -237,10 +237,12 @@ class Kbaseconfig:
         self.image = options.get('image', self.default['image'])
         self.tunnel = bool(options.get('tunnel', self.default['tunnel']))
         self.tunnelhost = options.get('tunnelhost', self.default['tunnelhost'])
-        if self.tunnelhost is None and self.type == 'kvm':
-            self.tunnelhost = self.host
         self.tunnelport = options.get('tunnelport', self.default['tunnelport'])
         self.tunneluser = options.get('tunneluser', self.default['tunneluser'])
+        if self.tunnelhost is None and self.type == 'kvm' and self.host != '127.0.0.1':
+            self.tunnelhost = self.host
+            self.tunnelport = self.port
+            self.tunneluser = self.user
         self.tunneldir = options.get('tunneldir', self.default['tunneldir'])
         self.insecure = bool(options.get('insecure', self.default['insecure']))
         self.nets = options.get('nets', self.default['nets'])

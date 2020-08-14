@@ -1781,12 +1781,12 @@ def ssh_vm(args):
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     name = [common.get_lastvm(baseconfig.client)] if not args.name else args.name
     tunnel = baseconfig.tunnel
-    tunnelhost = baseconfig.tunnelhost if baseconfig.tunnelhost is not None else baseconfig.host
-    if tunnel and tunnelhost == '127.0.0.1':
-        common.pprint("Tunnel requested but invalid tunnelhost", color='red')
+    tunnelhost = baseconfig.tunnelhost
+    tunneluser = baseconfig.tunneluser
+    tunnelport = baseconfig.tunnelport
+    if tunnel and tunnelhost is None:
+        common.pprint("Tunnel requested but no tunnelhost defined", color='red')
         os._exit(1)
-    tunnelport = baseconfig.tunnelport if baseconfig.tunnelport is not None else baseconfig.port
-    tunneluser = baseconfig.tunneluser if baseconfig.tunneluser is not None else baseconfig.user
     insecure = baseconfig.insecure
     if len(name) > 1:
         cmd = ' '.join(name[1:])
@@ -1856,11 +1856,11 @@ def scp_vm(args):
     vmport = args.port
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     tunnel = baseconfig.tunnel
-    tunnelhost = baseconfig.tunnelhost if baseconfig.tunnelhost is not None else baseconfig.host
-    tunnelport = baseconfig.tunnelport if baseconfig.tunnelport is not None else baseconfig.port
-    tunneluser = baseconfig.tunneluser if baseconfig.tunneluser is not None else baseconfig.user
-    if tunnel and tunnelhost == '127.0.0.1':
-        common.pprint("Tunnel requested but invalid tunnelhost", color='red')
+    tunnelhost = baseconfig.tunnelhost
+    tunneluser = baseconfig.tunneluser
+    tunnelport = baseconfig.tunnelport
+    if tunnel and tunnelhost is None:
+        common.pprint("Tunnel requested but no tunnelhost defined", color='red')
         os._exit(1)
     insecure = baseconfig.insecure
     if len(source.split(':')) == 2:
