@@ -432,32 +432,6 @@ class Kbase(object):
         return
 
 # should leverage if possible
-# should return a sshcommand string
-# u, ip = common._ssh_credentials(self, name)
-# sshcommand = common.ssh(name, ip=ip, host=self.host, port=self.port,
-# hostuser=self.user, user=u, local=local,
-# remote=remote, tunnel=tunnel, insecure=insecure, cmd=cmd, X=X,
-# debug=self.debug)
-    def ssh(self, name, user=None, local=None, remote=None, tunnel=False, tunnelhost=None, tunnelport=22,
-            tunneluser='root', insecure=False, cmd=None, X=False, Y=False, D=None):
-        """
-
-        :param name:
-        :param user:
-        :param local:
-        :param remote:
-        :param tunnel:
-        :param insecure:
-        :param cmd:
-        :param X:
-        :param Y:
-        :param D:
-        :return:
-        """
-        print("not implemented")
-        return
-
-# should leverage if possible
 # should return a scpcommand string
 # u, ip = self._ssh_credentials(name)
 # scpcommand = common.scp(name, ip='', host=self.host, port=self.port,

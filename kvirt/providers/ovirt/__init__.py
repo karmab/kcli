@@ -934,31 +934,6 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         common.pprint("VM %s not found" % name, color='red')
         return {'result': 'failure', 'reason': "VM %s not found" % name}
 
-    def ssh(self, name, user=None, vmport=None, local=None, remote=None, tunnel=False, tunnelhost=None, tunnelport=22,
-            tunneluser='root', insecure=False, cmd=None, X=False, Y=False, D=None):
-        u, ip = common._ssh_credentials(self, name)
-        if user is None:
-            user = u
-        if ip == '':
-            return None
-        sshcommand = common.ssh(name, ip=ip, user=user, local=local, remote=remote, tunnel=tunnel,
-                                tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser, insecure=insecure,
-                                cmd=cmd, X=X, Y=Y, D=D, debug=self.debug, vmport=vmport)
-        return sshcommand
-
-    def scp(self, name, user=None, vmport=None, source=None, destination=None, tunnel=False, tunnelhost=None,
-            tunnelport=22, tunneluser='root', download=False, recursive=False, insecure=False):
-        u, ip = common._ssh_credentials(self, name)
-        if user is None:
-            user = u
-        if ip == '':
-            return None
-        scpcommand = common.scp(name, ip=ip, user=user, source=source, destination=destination,
-                                recursive=recursive, tunnel=tunnel, tunnelhost=tunnelhost, tunnelport=tunnelport,
-                                tunneluser=tunneluser, debug=self.debug, download=download, insecure=insecure,
-                                vmport=vmport)
-        return scpcommand
-
     def create_pool(self, name, poolpath, pooltype='dir', user='qemu', thinpool=None):
         print("not implemented")
         return

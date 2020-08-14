@@ -952,30 +952,6 @@ class Ksphere:
     def get_pool_path(self, pool):
         return pool
 
-    def ssh(self, name, user=None, vmport=None, local=None, remote=None, tunnel=False, tunnelhost=None, tunnelport=22,
-            tunneluser='root', insecure=False, cmd=None, X=False, Y=False, D=None):
-        u, ip = common._ssh_credentials(self, name)
-        if ip is None:
-            return None
-        if user is None:
-            user = u
-        sshcommand = common.ssh(name, ip=ip, user=user, local=local, remote=remote, tunnel=tunnel,
-                                tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser, insecure=insecure,
-                                cmd=cmd, X=X, Y=Y, D=D, debug=self.debug, vmport=vmport)
-        return sshcommand
-
-    def scp(self, name, user=None, vmport=None, source=None, destination=None, tunnel=False, tunnelhost=None,
-            tunnelport=22, tunneluser='root', download=False, recursive=False, insecure=False):
-        u, ip = common._ssh_credentials(self, name)
-        if ip is None:
-            return None
-        if user is None:
-            user = u
-        scpcommand = common.scp(name, ip=ip, user=user, source=source, destination=destination, recursive=recursive,
-                                tunnel=tunnel, tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser,
-                                debug=self.debug, download=download, insecure=insecure, vmport=vmport)
-        return scpcommand
-
     def add_disk(self, name, size=1, pool=None, thin=True, image=None, shareable=False, existing=None,
                  interface='virtio'):
         si = self.si

@@ -1820,9 +1820,23 @@ def ssh_vm(args):
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
         k = config.k
-        sshcommand = k.ssh(name, user=user, local=l, remote=r, tunnel=tunnel, tunnelhost=tunnelhost,
-                           tunnelport=tunnelport, tunneluser=tunneluser, insecure=insecure, cmd=cmd, X=X, Y=Y, D=D,
-                           vmport=vmport)
+        u, ip = common._ssh_credentials(k, name)
+        if ip is None:
+            common.pprint("No ip found for %s..." % name, color='red')
+            return
+        if user is None:
+            user = u
+        if config.type in ['kvm', 'packet'] and '.' not in ip and ':' not in ip:
+            vmport = ip
+            ip = config.host
+        if config.type == 'kubevirt' and not tunnel:
+            nodeport = k._node_port(name, k.namespace)
+            if nodeport is not None:
+                ip = k.host
+                vmport = nodeport
+        sshcommand = common.ssh(name, ip=ip, user=user, local=l, remote=r, tunnel=tunnel,
+                                tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser,
+                                insecure=insecure, cmd=cmd, X=X, Y=Y, D=D, debug=args.debug, vmport=vmport)
     if sshcommand is not None:
         if find_executable('ssh') is not None:
             os.system(sshcommand)
@@ -1886,9 +1900,18 @@ def scp_vm(args):
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
         k = config.k
-        scpcommand = k.scp(name, user=user, source=source, destination=destination,
-                           tunnel=tunnel, tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser,
-                           download=download, recursive=recursive, insecure=insecure, vmport=vmport)
+        u, ip = common._ssh_credentials(k, name)
+        if ip is None:
+            common.pprint("No ip found for %s..." % name, color='red')
+            return
+        if user is None:
+            user = u
+        if config.type in ['kvm', 'packet'] and '.' not in ip:
+            vmport = ip
+            ip = '127.0.0.1'
+        scpcommand = common.scp(name, ip=ip, user=user, source=source, destination=destination, recursive=recursive,
+                                tunnel=tunnel, tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser,
+                                debug=config.debug, download=download, vmport=vmport, insecure=insecure)
     if scpcommand is not None:
         if find_executable('scp') is not None:
             os.system(scpcommand)

@@ -892,33 +892,6 @@ class Kubevirt(Kubecommon):
         print("not implemented")
         return
 
-    def ssh(self, name, user=None, vmport=None, local=None, remote=None, tunnel=False, tunnelhost=None, tunnelport=22,
-            tunneluser='root', insecure=False, cmd=None, X=False, Y=False, D=None):
-        u, ip = common._ssh_credentials(self, name)
-        if user is None:
-            user = u
-        elif not tunnel:
-            nodeport = self._node_port(name, self.namespace)
-            if nodeport is not None:
-                ip = self.host
-                vmport = nodeport
-        sshcommand = common.ssh(name, ip=ip, user=user, local=local, remote=remote, tunnel=tunnel,
-                                tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser, insecure=insecure,
-                                cmd=cmd, X=X, Y=Y, debug=self.debug, D=D, vmport=vmport)
-        return sshcommand
-
-    def scp(self, name, user=None, source=None, destination=None, tunnel=False, tunnelhost=None, tunnelport=22,
-            tunneluser='root', download=False, recursive=False, vmport=None, insecure=False):
-        u, ip = common._ssh_credentials(self, name)
-        if ip is None:
-            return None
-        if user is None:
-            user = u
-        scpcommand = common.scp(name, ip=ip, user=user, vmport=vmport, source=source, destination=destination,
-                                recursive=recursive, tunnel=tunnel, tunnelhost=tunnelhost, tunnelport=tunnelport,
-                                tunneluser=tunneluser, debug=self.debug, download=download, insecure=insecure)
-        return scpcommand
-
     def create_pool(self, name, poolpath, pooltype='dir', user='qemu', thinpool=None):
         print("not implemented")
         return

@@ -836,7 +836,7 @@ def ssh(name, ip='', user=None, local=None, remote=None, tunnel=False, tunnelhos
         else:
             sshcommand = "ssh %s" % sshcommand
         if debug:
-            print(sshcommand)
+            pprint(sshcommand, color='blue')
         return sshcommand
 
 
@@ -885,7 +885,7 @@ def scp(name, ip='', user=None, source=None, destination=None, recursive=None, t
         else:
             scpcommand = "%s %s %s %s@%s:%s" % (scpcommand, arguments, source, user, ip, destination)
         if debug:
-            print(scpcommand)
+            pprint(scpcommand, color='blue')
         return scpcommand
 
 
