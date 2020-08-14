@@ -2344,14 +2344,13 @@ class Kvirt(object):
         conn.defineXML(vmxml)
         return {'result': 'success'}
 
-    def ssh(self, name, user=None, local=None, remote=None, tunnel=False, tunnelhost=None, tunnelport=22,
+    def ssh(self, name, user=None, vmport=None, local=None, remote=None, tunnel=False, tunnelhost=None, tunnelport=22,
             tunneluser='root', insecure=False, cmd=None, X=False, Y=False, D=None):
         u, ip = common._ssh_credentials(self, name)
         if ip is None:
             return None
         if user is None:
             user = u
-        vmport = None
         if '.' not in ip and ':' not in ip:
             vmport = ip
             ip = self.host
@@ -2361,13 +2360,12 @@ class Kvirt(object):
         return sshcommand
 
     def scp(self, name, user=None, source=None, destination=None, tunnel=False, tunnelhost=None, tunnelport=22,
-            tunneluser='root', download=False, recursive=False, insecure=False):
+            tunneluser='root', download=False, recursive=False, insecure=False, vmport=None):
         u, ip = common._ssh_credentials(self, name)
         if ip is None:
             return None
         if user is None:
             user = u
-        vmport = None
         if '.' not in ip:
             vmport = ip
             ip = '127.0.0.1'

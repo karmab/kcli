@@ -636,7 +636,7 @@ class Kopenstack(object):
         print("not implemented")
         return
 
-    def ssh(self, name, user=None, local=None, remote=None, tunnel=False, tunnelhost=None, tunnelport=22,
+    def ssh(self, name, user=None, vmport=None, local=None, remote=None, tunnel=False, tunnelhost=None, tunnelport=22,
             tunneluser='root', insecure=False, cmd=None, X=False, Y=False, D=None):
         u, ip = common._ssh_credentials(self, name)
         if user is None:
@@ -644,20 +644,20 @@ class Kopenstack(object):
         tunnel = False
         sshcommand = common.ssh(name, ip=ip, user=user, local=local, remote=remote,
                                 tunnel=tunnel, tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser,
-                                insecure=insecure, cmd=cmd, X=X, Y=Y, debug=self.debug)
+                                insecure=insecure, cmd=cmd, X=X, Y=Y, debug=self.debug, vmport=vmport)
         if self.debug:
             print(sshcommand)
         return sshcommand
 
-    def scp(self, name, user=None, source=None, destination=None, tunnel=False, tunnelhost=None, tunnelport=22,
-            tunneluser='root', download=False, recursive=False, insecure=False):
+    def scp(self, name, user=None, vmport=None, source=None, destination=None, tunnel=False, tunnelhost=None,
+            tunnelport=22, tunneluser='root', download=False, recursive=False, insecure=False):
         u, ip = common._ssh_credentials(self, name)
         if user is None:
             user = u
         scpcommand = common.scp(name, ip=ip, user=user, source=source,
                                 destination=destination, recursive=recursive, tunnel=tunnel, tunnelhost=tunnelhost,
                                 tunnelport=tunnelport, tunneluser=tunneluser, debug=self.debug, download=download,
-                                insecure=insecure)
+                                insecure=insecure, vmport=vmport)
         if self.debug:
             print(scpcommand)
         return scpcommand

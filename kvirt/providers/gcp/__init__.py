@@ -786,7 +786,7 @@ class Kgcp(object):
         print("not implemented")
         return
 
-    def ssh(self, name, user=None, local=None, remote=None, tunnel=False,
+    def ssh(self, name, user=None, vmport=None, local=None, remote=None, tunnel=False,
             tunnelhost=None, tunnelport=22, tunneluser='root', insecure=False, cmd=None, X=False, Y=False,
             D=None):
         u, ip = common._ssh_credentials(self, name)
@@ -796,11 +796,11 @@ class Kgcp(object):
             user = u
         sshcommand = common.ssh(name, ip=ip, user=user, local=local, remote=remote, tunnel=tunnel,
                                 tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser, insecure=insecure,
-                                cmd=cmd, X=X, Y=Y, D=D, debug=self.debug)
+                                cmd=cmd, X=X, Y=Y, D=D, debug=self.debug, vmport=vmport)
         return sshcommand
 
-    def scp(self, name, user=None, source=None, destination=None, tunnel=False, tunnelhost=None, tunnelport=22,
-            tunneluser='root', download=False, recursive=False, insecure=False):
+    def scp(self, name, user=None, vmport=None, source=None, destination=None, tunnel=False, tunnelhost=None,
+            tunnelport=22, tunneluser='root', download=False, recursive=False, insecure=False):
         u, ip = common._ssh_credentials(self, name)
         if ip is None:
             return None
@@ -808,7 +808,7 @@ class Kgcp(object):
             user = u
         scpcommand = common.scp(name, ip=ip, user=user, source=source, destination=destination, recursive=recursive,
                                 tunnel=tunnel, tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser,
-                                debug=self.debug, download=False, insecure=insecure)
+                                debug=self.debug, download=False, insecure=insecure, vmport=vmport)
         return scpcommand
 
     def create_pool(self, name, poolpath, pooltype='dir', user='qemu', thinpool=None):

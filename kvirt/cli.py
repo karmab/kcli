@@ -1821,7 +1821,8 @@ def ssh_vm(args):
                          namespace=args.namespace)
         k = config.k
         sshcommand = k.ssh(name, user=user, local=l, remote=r, tunnel=tunnel, tunnelhost=tunnelhost,
-                           tunnelport=tunnelport, tunneluser=tunneluser, insecure=insecure, cmd=cmd, X=X, Y=Y, D=D)
+                           tunnelport=tunnelport, tunneluser=tunneluser, insecure=insecure, cmd=cmd, X=X, Y=Y, D=D,
+                           vmport=vmport)
     if sshcommand is not None:
         if find_executable('ssh') is not None:
             os.system(sshcommand)
@@ -1838,11 +1839,12 @@ def scp_vm(args):
     source = source if not os.path.exists("/i_am_a_container") else "/workdir/%s" % source
     destination = args.destination[0]
     user = args.user
+    vmport = args.port
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     tunnel = baseconfig.tunnel
     tunnelhost = baseconfig.tunnelhost if baseconfig.tunnelhost is not None else baseconfig.host
-    tunnelport = baseconfig.tunnelport if baseconfig.tunnelport is not None else 22
-    tunneluser = baseconfig.tunneluser if baseconfig.tunneluser is not None else 'root'
+    tunnelport = baseconfig.tunnelport if baseconfig.tunnelport is not None else baseconfig.port
+    tunneluser = baseconfig.tunneluser if baseconfig.tunneluser is not None else baseconfig.user
     if tunnel and tunnelhost == '127.0.0.1':
         common.pprint("Tunnel requested but invalid tunnelhost", color='red')
         os._exit(1)
@@ -1874,7 +1876,8 @@ def scp_vm(args):
             else:
                 if user is None:
                     user = vm.get('user')
-                vmport = vm.get('vmport')
+                if vmport is None:
+                    vmport = vm.get('vmport')
                 scpcommand = common.scp(name, ip=ip, user=user, source=source, destination=destination,
                                         recursive=recursive, tunnel=tunnel, tunnelhost=tunnelhost,
                                         tunnelport=tunnelport, tunneluser=tunneluser, debug=args.debug,
@@ -1885,7 +1888,7 @@ def scp_vm(args):
         k = config.k
         scpcommand = k.scp(name, user=user, source=source, destination=destination,
                            tunnel=tunnel, tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser,
-                           download=download, recursive=recursive, insecure=insecure)
+                           download=download, recursive=recursive, insecure=insecure, vmport=vmport)
     if scpcommand is not None:
         if find_executable('scp') is not None:
             os.system(scpcommand)
@@ -2290,6 +2293,7 @@ def cli():
     vmscp_parser = argparse.ArgumentParser(add_help=False)
     vmscp_parser.add_argument('-r', '--recursive', help='Recursive', action='store_true')
     vmscp_parser.add_argument('-u', '-l', '--user', help='User for ssh')
+    vmscp_parser.add_argument('-p', '-p', '--port', help='Port for ssh')
     vmscp_parser.add_argument('source', nargs=1)
     vmscp_parser.add_argument('destination', nargs=1)
     vmscp_parser.set_defaults(func=scp_vm)

@@ -823,7 +823,7 @@ class Kpacket(object):
         print("not implemented")
         return
 
-    def ssh(self, name, user=None, local=None, remote=None, tunnel=False, tunnelhost=None, tunnelport=22,
+    def ssh(self, name, user=None, vmport=None, local=None, remote=None, tunnel=False, tunnelhost=None, tunnelport=22,
             tunneluser='root', insecure=False, cmd=None, X=False, Y=False, D=None):
         """
 
@@ -844,7 +844,6 @@ class Kpacket(object):
             return None
         if user is None:
             user = u
-        vmport = None
         if '.' not in ip and ':' not in ip:
             vmport = ip
             ip = self.host
@@ -853,8 +852,8 @@ class Kpacket(object):
                                 cmd=cmd, X=X, Y=Y, D=D, debug=self.debug, vmport=vmport)
         return sshcommand
 
-    def scp(self, name, user=None, source=None, destination=None, tunnel=False, tunnelhost=None, tunnelport=22,
-            tunneluser='root', download=False, recursive=False, insecure=False):
+    def scp(self, name, user=None, vmport=None, source=None, destination=None, tunnel=False, tunnelhost=None,
+            tunnelport=22, tunneluser='root', download=False, recursive=False, insecure=False):
         """
 
         :param name:
@@ -872,7 +871,6 @@ class Kpacket(object):
             return None
         if user is None:
             user = u
-        vmport = None
         if '.' not in ip:
             vmport = ip
             ip = '127.0.0.1'
