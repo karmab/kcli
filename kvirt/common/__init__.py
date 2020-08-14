@@ -878,7 +878,7 @@ def scp(name, ip='', user=None, source=None, destination=None, recursive=None, t
             scpcommand = "%s -i %s" % (scpcommand, identityfile)
         if recursive:
             scpcommand = "%s -r" % scpcommand
-        if vmport is not None and tunnelhost == '127.0.0.1':
+        if vmport is not None:
             scpcommand = "%s -P %s" % (scpcommand, vmport)
         if download:
             scpcommand = "%s %s %s@%s:%s %s" % (scpcommand, arguments, user, ip, source, destination)

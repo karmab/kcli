@@ -2293,7 +2293,7 @@ def cli():
     vmscp_parser = argparse.ArgumentParser(add_help=False)
     vmscp_parser.add_argument('-r', '--recursive', help='Recursive', action='store_true')
     vmscp_parser.add_argument('-u', '-l', '--user', help='User for ssh')
-    vmscp_parser.add_argument('-p', '-p', '--port', help='Port for ssh')
+    vmscp_parser.add_argument('-p', '-P', '--port', help='Port for ssh')
     vmscp_parser.add_argument('source', nargs=1)
     vmscp_parser.add_argument('destination', nargs=1)
     vmscp_parser.set_defaults(func=scp_vm)
