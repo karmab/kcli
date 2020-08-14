@@ -1777,6 +1777,7 @@ def ssh_vm(args):
     X = args.X
     Y = args.Y
     user = args.user
+    vmport = args.port
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     name = [common.get_lastvm(baseconfig.client)] if not args.name else args.name
     tunnel = baseconfig.tunnel
@@ -1784,8 +1785,8 @@ def ssh_vm(args):
     if tunnel and tunnelhost == '127.0.0.1':
         common.pprint("Tunnel requested but invalid tunnelhost", color='red')
         os._exit(1)
-    tunnelport = baseconfig.tunnelport if baseconfig.tunnelport is not None else 22
-    tunneluser = baseconfig.tunneluser if baseconfig.tunneluser is not None else 'root'
+    tunnelport = baseconfig.tunnelport if baseconfig.tunnelport is not None else baseconfig.port
+    tunneluser = baseconfig.tunneluser if baseconfig.tunneluser is not None else baseconfig.user
     insecure = baseconfig.insecure
     if len(name) > 1:
         cmd = ' '.join(name[1:])
@@ -1810,7 +1811,8 @@ def ssh_vm(args):
             else:
                 if user is None:
                     user = vm.get('user')
-                vmport = vm.get('vmport')
+                if vmport is None:
+                    vmport = vm.get('vmport')
                 sshcommand = common.ssh(name, ip=ip, user=user, local=l, remote=r, tunnel=tunnel,
                                         tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser,
                                         insecure=insecure, cmd=cmd, X=X, Y=Y, D=D, debug=args.debug, vmport=vmport)
@@ -2306,6 +2308,7 @@ def cli():
     vmssh_parser.add_argument('-R', help='Remote Forwarding', metavar='REMOTE')
     vmssh_parser.add_argument('-X', action='store_true', help='Enable X11 Forwarding')
     vmssh_parser.add_argument('-Y', action='store_true', help='Enable X11 Forwarding(Insecure)')
+    vmssh_parser.add_argument('-p', '--port', '--port', help='Port for ssh')
     vmssh_parser.add_argument('-u', '-l', '--user', help='User for ssh')
     vmssh_parser.add_argument('name', metavar='VMNAME', nargs='*')
     vmssh_parser.set_defaults(func=ssh_vm)
