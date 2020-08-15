@@ -118,16 +118,21 @@ class KcliServicer(kcli_pb2_grpc.KcliServicer):
         config = Kconfig()
         k = config.k
         tunnel = config.tunnel
-        tunnelhost = config.tunnelhost if config.tunnelhost is not None else config.host
-        tunnelport = config.tunnelport if config.tunnelport is not None else 22
-        tunneluser = config.tunneluser if config.tunneluser is not None else 'root'
-        if tunnel and tunnelhost == '127.0.0.1':
+        tunnelhost = config.tunnelhost
+        tunnelport = config.tunnelport
+        tunneluser = config.tunneluser
+        if tunnel and tunnelhost is None:
             common.pprint("Tunnel requested but invalid tunnelhost", color='red')
             os._exit(1)
         insecure = config.insecure
-        scpcommand = k.scp(name, user=user, source=source, destination=destination,
-                           tunnel=tunnel, tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser,
-                           download=download, recursive=recursive, insecure=insecure)
+        u, ip = common._ssh_credentials(k, name)
+        if ip is None:
+            return
+        if user is None:
+            user = config.vmuser if config.vmuser is not None else u
+        scpcommand = common.scp(name, ip=ip, user=user, source=source, destination=destination,
+                                tunnel=tunnel, tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser,
+                                download=download, recursive=recursive, insecure=insecure)
         response = kcli_pb2.sshcmd(sshcmd=scpcommand)
         return response
 
@@ -144,12 +149,12 @@ class KcliServicer(kcli_pb2_grpc.KcliServicer):
         user = request.user if request.user != '' else None
         cmd = request.cmd if request.cmd != '' else None
         tunnel = config.tunnel
-        tunnelhost = config.tunnelhost if config.tunnelhost is not None else config.host
-        if tunnel and tunnelhost == '127.0.0.1':
+        tunnelhost = config.tunnelhost
+        if tunnel and tunnelhost is None:
             common.pprint("Tunnel requested but invalid tunnelhost", color='red')
             os._exit(1)
-        tunnelport = config.tunnelport if config.tunnelport is not None else 22
-        tunneluser = config.tunneluser if config.tunneluser is not None else 'root'
+        tunnelport = config.tunnelport
+        tunneluser = config.tunneluser
         insecure = config.insecure
         if '@' in name and len(name.split('@')) == 2:
             user = name.split('@')[0]
@@ -157,8 +162,13 @@ class KcliServicer(kcli_pb2_grpc.KcliServicer):
         if os.path.exists("/i_am_a_container") and not os.path.exists("/root/.kcli/config.yml")\
                 and not os.path.exists("/root/.ssh/config"):
             insecure = True
-        sshcmd = k.ssh(name, user=user, local=l, remote=r, tunnel=tunnel, tunnelhost=tunnelhost, tunnelport=tunnelport,
-                       tunneluser=tunneluser, insecure=insecure, cmd=cmd, X=X, Y=Y, D=D)
+        u, ip = common._ssh_credentials(k, name)
+        if ip is None:
+            return
+        if user is None:
+            user = config.vmuser if config.vmuser is not None else u
+        sshcmd = common.ssh(name, ip=ip, user=user, local=l, remote=r, tunnel=tunnel, tunnelhost=tunnelhost,
+                            tunnelport=tunnelport, tunneluser=tunneluser, insecure=insecure, cmd=cmd, X=X, Y=Y, D=D)
         response = kcli_pb2.sshcmd(sshcmd=sshcmd)
         return response
 

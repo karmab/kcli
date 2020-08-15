@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from distutils.spawn import find_executable
-from kvirt.common import info, pprint, pwd_path, get_kubectl
+from kvirt.common import info, pprint, pwd_path, get_kubectl, scp
 import os
 import sys
 
@@ -83,14 +83,15 @@ def create(config, plandir, cluster, overrides):
     if result['result'] != "success":
         os._exit(1)
     source, destination = "/root/join.sh", "%s/join.sh" % clusterdir
-    scpcmd = k.scp(firstmaster, user='root', source=source, destination=destination, tunnel=config.tunnel,
-                   tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
-                   download=True, insecure=True)
+    firstmasterip = k.info(firstmaster)['ip']
+    scpcmd = scp(firstmaster, ip=firstmasterip, user='root', source=source, destination=destination,
+                 tunnel=config.tunnel, tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
+                 tunneluser=config.tunneluser, download=True, insecure=True)
     os.system(scpcmd)
     source, destination = "/root/kubeconfig", "%s/auth/kubeconfig" % clusterdir
-    scpcmd = k.scp(firstmaster, user='root', source=source, destination=destination, tunnel=config.tunnel,
-                   tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
-                   download=True, insecure=True)
+    scpcmd = scp(firstmaster, ip=firstmasterip, user='root', source=source, destination=destination,
+                 tunnel=config.tunnel, tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
+                 tunneluser=config.tunneluser, download=True, insecure=True)
     os.system(scpcmd)
     workers = data.get('workers', 0)
     if workers > 0:

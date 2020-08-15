@@ -51,7 +51,9 @@ def certificate(value):
         return "-----BEGIN CERTIFICATE-----\n%s\n-----END CERTIFICATE-----" % value
 
 
-def latestversion(repo):
+def githubversion(repo, version=None):
+    if version is not None and version != 'latest':
+        return version
     data = requests.get("https://api.github.com/repos/%s/releases" % repo).json()
     if 'message' in data and data['message'] == 'Not Found':
         return ''
@@ -66,4 +68,4 @@ def latestversion(repo):
 
 
 jinjafilters = {'basename': basename, 'dirname': dirname, 'ocpnodes': ocpnodes, 'none': none, 'type': _type,
-                'certificate': certificate, 'base64': base64, 'latestversion': latestversion}
+                'certificate': certificate, 'base64': base64, 'githubversion': githubversion}

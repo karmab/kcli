@@ -764,6 +764,7 @@ def create_app_generic(args):
     elif not os.path.isabs(os.environ['KUBECONFIG']):
         os.environ['KUBECONFIG'] = "%s/%s" % (os.getcwd(), os.environ['KUBECONFIG'])
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    overrides['%s_version' % app] = overrides['version'] if 'version' in overrides else 'latest'
     baseconfig.create_app_generic(app, overrides)
 
 
@@ -781,6 +782,7 @@ def create_app_openshift(args):
     elif not os.path.isabs(os.environ['KUBECONFIG']):
         os.environ['KUBECONFIG'] = "%s/%s" % (os.getcwd(), os.environ['KUBECONFIG'])
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    overrides['%s_version' % app] = overrides['version'] if 'version' in overrides else 'latest'
     baseconfig.create_app_generic(app, overrides)
 
 
@@ -793,6 +795,7 @@ def delete_app_generic(args):
         common.pprint("app %s not available" % app, color='red')
         os._exit(1)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    overrides['%s_version' % app] = overrides['version'] if 'version' in overrides else 'latest'
     baseconfig.delete_app_generic(app, overrides)
 
 
@@ -805,6 +808,7 @@ def delete_app_openshift(args):
         common.pprint("app %s not available" % app, color='red')
         os._exit(1)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    overrides['%s_version' % app] = overrides['version'] if 'version' in overrides else 'latest'
     baseconfig.delete_app_openshift(app, overrides)
 
 
@@ -952,6 +956,8 @@ def create_vm(args):
     profilefile = args.profilefile
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
     wait = args.wait
+    if 'wait' in overrides and isinstance(overrides['wait'], bool) and overrides['wait']:
+        wait = True
     customprofile = {}
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     for key in overrides:

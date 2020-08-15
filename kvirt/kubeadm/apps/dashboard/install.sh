@@ -1,4 +1,4 @@
-export DASHBOARD_VERSION={{ 'kubernetes/dashboard' | latestversion }}
+export DASHBOARD_VERSION={{ 'kubernetes/dashboard' | githubversion(dashboard_version) }}
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/$DASHBOARD_VERSION/aio/deploy/recommended.yaml
 kubectl create -f ingress.yml
 kubectl create -f user.yml

@@ -8,6 +8,7 @@ import os
 import sys
 from kvirt.common import info, pprint, gen_mac, get_oc, get_values, pwd_path, insecure_fetch, fetch
 from kvirt.common import get_commit_rhcos, get_latest_fcos, kube_create_app
+from kvirt.common import ssh, scp, _ssh_credentials
 from kvirt.openshift.calico import calicoassets
 from random import randint
 import re
@@ -512,14 +513,14 @@ def create(config, plandir, cluster, overrides):
                     sleep(5)
             sleep(5)
             cmd += "; systemctl start httpd"
-            sshcmd = k.ssh(bootstrap_helper_name, user='root', tunnel=config.tunnel,
-                           tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
-                           insecure=True, cmd=cmd)
+            sshcmd = ssh(bootstrap_helper_name, ip=bootstrap_api_ip, user='root', tunnel=config.tunnel,
+                         tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
+                         tunneluser=config.tunneluser, insecure=True, cmd=cmd)
             os.system(sshcmd)
             source, destination = "%s/bootstrap.ign" % clusterdir, "/var/www/html/bootstrap"
-            scpcmd = k.scp(bootstrap_helper_name, user='root', source=source, destination=destination,
-                           tunnel=config.tunnel, tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
-                           tunneluser=config.tunneluser, download=False, insecure=True)
+            scpcmd = scp(bootstrap_helper_name, ip=bootstrap_api_ip, user='root', source=source,
+                         destination=destination, tunnel=config.tunnel, tunnelhost=config.tunnelhost,
+                         tunnelport=config.tunnelport, tunneluser=config.tunneluser, download=False, insecure=True)
             os.system(scpcmd)
             sedcmd = 'sed "s@https://api-int.%s.%s:22623/config/master@http://%s/bootstrap@" ' % (cluster, domain,
                                                                                                   bootstrap_api_ip)
@@ -547,15 +548,16 @@ def create(config, plandir, cluster, overrides):
             pprint("Waiting 5s for bootstrap helper node to be running...", color='blue')
             sleep(5)
         sleep(5)
+        bootstrap_helper_ip = _ssh_credentials(k, bootstrap_helper_name)[1]
         cmd = "iptables -F ; yum -y install httpd ; systemctl start httpd"
-        sshcmd = k.ssh(bootstrap_helper_name, user='root', tunnel=config.tunnel,
-                       tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
-                       insecure=True, cmd=cmd)
+        sshcmd = ssh(bootstrap_helper_name, ip=bootstrap_helper_ip, user='root', tunnel=config.tunnel,
+                     tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
+                     insecure=True, cmd=cmd)
         os.system(sshcmd)
         source, destination = "%s/bootstrap.ign" % clusterdir, "/var/www/html/bootstrap"
-        scpcmd = k.scp(bootstrap_helper_name, user='root', source=source, destination=destination,
-                       tunnel=config.tunnel, tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
-                       tunneluser=config.tunneluser, download=False, insecure=True)
+        scpcmd = scp(bootstrap_helper_name, ip=bootstrap_helper_ip, user='root', source=source, destination=destination,
+                     tunnel=config.tunnel, tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
+                     tunneluser=config.tunneluser, download=False, insecure=True)
         os.system(scpcmd)
         sedcmd = 'sed "s@https://api-int.%s.%s:22623/config/master@' % (cluster, domain)
         sedcmd += 'http://%s-bootstrap-helper.%s.%s/bootstrap@ "' % (cluster, domain)
@@ -575,9 +577,10 @@ def create(config, plandir, cluster, overrides):
             result = config.plan(cluster, inputfile='%s/disconnected' % plandir, overrides=overrides, wait=True)
             if result['result'] != 'success':
                 os._exit(1)
-            cacmd = k.ssh(disconnected_vm, user='root', tunnel=config.tunnel,
-                          tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
-                          insecure=True, cmd=cmd)
+            disconnected_ip = _ssh_credentials(k, disconnected_vm)[1]
+            cacmd = ssh(disconnected_vm, ip=disconnected_ip, user='root', tunnel=config.tunnel,
+                        tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
+                        insecure=True, cmd=cmd)
             disconnected_ca = os.popen(cacmd).read()
             if 'ca' in overrides:
                 overrides['ca'] += disconnected_ca
@@ -660,10 +663,14 @@ def create(config, plandir, cluster, overrides):
     os.environ['KUBECONFIG'] = "%s/%s/auth/kubeconfig" % (os.getcwd(), clusterdir)
     apps = overrides['apps']
     if apps:
+        overrides['openshift_version'] = INSTALLER_VERSION[0:3]
         for app in apps:
             appdir = "%s/apps/%s" % (plandir, app)
             pprint("Adding app %s" % app, color='blue')
             if not os.path.exists(appdir):
                 pprint("Skipping unsupported app %s" % app, color='yellow')
             else:
+                pprint("Adding app %s" % app, color='blue')
+                if '%s_version' % app not in overrides:
+                    overrides['app_version' % app] = 'latest'
                 kube_create_app(config, appdir, overrides=overrides)

@@ -1909,17 +1909,18 @@ $INFO
                 cmd = "sudo grep -A5000 -i cloud-init %s" % cloudinitfile
             else:
                 cmd = "sudo grep -i cloud-init %s" % cloudinitfile
-        ip = None
+        user, ip = None, None
         while ip is None:
-            ip = k.info(name).get('ip')
+            info = k.info(name)
+            user, ip = info.get('user'), info.get('ip')
             common.pprint("Waiting for vm to be accessible...", color='blue')
             sleep(5)
         sleep(5)
         done = False
         oldoutput = ''
         while not done:
-            sshcmd = k.ssh(name, tunnel=self.tunnel, tunnelhost=self.tunnelhost, tunnelport=self.tunnelport,
-                           tunneluser=self.tunneluser, insecure=self.insecure, cmd=cmd)
+            sshcmd = common.ssh(name, user=user, ip=ip, tunnel=self.tunnel, tunnelhost=self.tunnelhost,
+                                tunnelport=self.tunnelport, tunneluser=self.tunneluser, insecure=self.insecure, cmd=cmd)
             output = os.popen(sshcmd).read()
             if 'finished' in output:
                 done = True
