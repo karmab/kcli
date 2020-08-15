@@ -1344,9 +1344,11 @@ def _ssh_credentials(k, name):
     info = k.info(name, debug=False)
     if not info:
         return None, None
-    user, ip = info.get('user', 'root'), info.get('ip')
-    if ip is None:
-        pprint("No ip found. Cannot ssh...", color='red')
+    user, ip, status = info.get('user', 'root'), info.get('ip'), info.get('status')
+    if status in ['down', 'suspended', 'unknown']:
+        pprint("%s down" % name, color='red')
+    elif ip is None:
+        pprint("No ip found for %s" % name, color='red')
     return user, ip
 
 

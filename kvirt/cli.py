@@ -1810,9 +1810,9 @@ def ssh_vm(args):
                 common.pprint("No ip found in cache for %s..." % name, color='red')
             else:
                 if user is None:
-                    user = vm.get('user')
+                    user = baseconfig.vmuser if baseconfig.vmuser is not None else vm.get('user')
                 if vmport is None:
-                    vmport = vm.get('vmport')
+                    vmport = baseconfig.vmport if baseconfig.vmport is not None else vm.get('vmport')
                 sshcommand = common.ssh(name, ip=ip, user=user, local=l, remote=r, tunnel=tunnel,
                                         tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser,
                                         insecure=insecure, cmd=cmd, X=X, Y=Y, D=D, debug=args.debug, vmport=vmport)
@@ -1822,10 +1822,11 @@ def ssh_vm(args):
         k = config.k
         u, ip = common._ssh_credentials(k, name)
         if ip is None:
-            common.pprint("No ip found for %s..." % name, color='red')
             return
         if user is None:
-            user = u
+            user = config.vmuser if config.vmuser is not None else u
+        if vmport is None and config.vmport is not None:
+            vmport = config.vmport
         if config.type in ['kvm', 'packet'] and '.' not in ip and ':' not in ip:
             vmport = ip
             ip = config.host
@@ -1889,9 +1890,9 @@ def scp_vm(args):
                 common.pprint("No ip found in cache for %s..." % name, color='red')
             else:
                 if user is None:
-                    user = vm.get('user')
+                    user = baseconfig.vmuser if baseconfig.vmuser is not None else vm.get('user')
                 if vmport is None:
-                    vmport = vm.get('vmport')
+                    vmport = baseconfig.vmport if baseconfig.vmport is not None else vm.get('vmport')
                 scpcommand = common.scp(name, ip=ip, user=user, source=source, destination=destination,
                                         recursive=recursive, tunnel=tunnel, tunnelhost=tunnelhost,
                                         tunnelport=tunnelport, tunneluser=tunneluser, debug=args.debug,
@@ -1902,10 +1903,11 @@ def scp_vm(args):
         k = config.k
         u, ip = common._ssh_credentials(k, name)
         if ip is None:
-            common.pprint("No ip found for %s..." % name, color='red')
             return
         if user is None:
-            user = u
+            user = config.vmuser if config.vmuser is not None else u
+        if vmport is None and config.vmport is not None:
+            vmport = config.vmport
         if config.type in ['kvm', 'packet'] and '.' not in ip:
             vmport = ip
             ip = '127.0.0.1'
