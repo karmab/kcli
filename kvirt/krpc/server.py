@@ -164,7 +164,7 @@ class KcliServicer(kcli_pb2_grpc.KcliServicer):
             insecure = True
         u, ip = common._ssh_credentials(k, name)
         if ip is None:
-            return
+            return kcli_pb2.sshcmd(sshcmd='')
         if user is None:
             user = config.vmuser if config.vmuser is not None else u
         sshcmd = common.ssh(name, ip=ip, user=user, local=l, remote=r, tunnel=tunnel, tunnelhost=tunnelhost,

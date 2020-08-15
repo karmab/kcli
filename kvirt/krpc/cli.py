@@ -1680,12 +1680,15 @@ def ssh_vm(args):
     else:
         name = args.name[0]
     sshcommand = k.ssh(kcli_pb2.vm(name=name, user=user, l=l, r=r, X=X, Y=Y, D=D, cmd=cmd)).sshcmd
-    if args.debug:
-        print(sshcommand)
-    if find_executable('ssh') is not None:
-        os.system(sshcommand)
+    if sshcommand != '':
+        if args.debug:
+            print(sshcommand)
+        if find_executable('ssh') is not None:
+            os.system(sshcommand)
+        else:
+            print(sshcommand)
     else:
-        print(sshcommand)
+        common.pprint("Couldn't run ssh", color='red')
 
 
 def scp_vm(args):
@@ -1708,10 +1711,14 @@ def scp_vm(args):
         return
     if '@' in name and len(name.split('@')) == 2:
         user, name = name.split('@')
+    if download:
+        common.pprint("Retrieving file %s from %s" % (source, name), color='green')
+    else:
+        common.pprint("Copying file %s to %s" % (source, name), color='green')
     scpdetails = kcli_pb2.scpdetails(name=name, user=user, source=source, destination=destination, download=download,
                                      recursive=recursive)
     scpcommand = k.scp(scpdetails).sshcmd
-    if scpcommand is not None:
+    if scpcommand != '':
         if find_executable('scp') is not None:
             os.system(scpcommand)
         else:
