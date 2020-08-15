@@ -1225,10 +1225,10 @@ def create_generic_kube(args):
             paramfile = "/workdir/%s" % paramfile
         elif os.path.exists("/workdir/kcli_parameters.yml"):
             paramfile = "/workdir/kcli_parameters.yml"
-            common.pprint("Using default parameter file kcli_parameters.yml")
+            common.pprint("Using default parameter file kcli_parameters.yml", color='blue')
     elif paramfile is None and os.path.exists("kcli_parameters.yml"):
         paramfile = "kcli_parameters.yml"
-        common.pprint("Using default parameter file kcli_parameters.yml")
+        common.pprint("Using default parameter file kcli_parameters.yml", color='blue')
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     if force:
@@ -1246,10 +1246,10 @@ def create_k3s_kube(args):
             paramfile = "/workdir/%s" % paramfile
         elif os.path.exists("/workdir/kcli_parameters.yml"):
             paramfile = "/workdir/kcli_parameters.yml"
-            common.pprint("Using default parameter file kcli_parameters.yml")
+            common.pprint("Using default parameter file kcli_parameters.yml", color='blue')
     elif paramfile is None and os.path.exists("kcli_parameters.yml"):
         paramfile = "kcli_parameters.yml"
-        common.pprint("Using default parameter file kcli_parameters.yml")
+        common.pprint("Using default parameter file kcli_parameters.yml", color='blue')
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     if force:
@@ -1267,10 +1267,10 @@ def create_openshift_kube(args):
             paramfile = "/workdir/%s" % paramfile
         elif os.path.exists("/workdir/kcli_parameters.yml"):
             paramfile = "/workdir/kcli_parameters.yml"
-            common.pprint("Using default parameter file kcli_parameters.yml")
+            common.pprint("Using default parameter file kcli_parameters.yml", color='blue')
     elif paramfile is None and os.path.exists("kcli_parameters.yml"):
         paramfile = "kcli_parameters.yml"
-        common.pprint("Using default parameter file kcli_parameters.yml")
+        common.pprint("Using default parameter file kcli_parameters.yml", color='blue')
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     if args.subcommand_create_kube == 'okd':
@@ -1302,10 +1302,10 @@ def scale_generic_kube(args):
             paramfile = "/workdir/%s" % paramfile
         elif os.path.exists("/workdir/kcli_parameters.yml"):
             paramfile = "/workdir/kcli_parameters.yml"
-            common.pprint("Using default parameter file kcli_parameters.yml")
+            common.pprint("Using default parameter file kcli_parameters.yml", color='blue')
     elif paramfile is None and os.path.exists("kcli_parameters.yml"):
         paramfile = "kcli_parameters.yml"
-        common.pprint("Using default parameter file kcli_parameters.yml")
+        common.pprint("Using default parameter file kcli_parameters.yml", color='blue')
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     if workers > 0:
@@ -1323,10 +1323,10 @@ def scale_k3s_kube(args):
             paramfile = "/workdir/%s" % paramfile
         elif os.path.exists("/workdir/kcli_parameters.yml"):
             paramfile = "/workdir/kcli_parameters.yml"
-            common.pprint("Using default parameter file kcli_parameters.yml")
+            common.pprint("Using default parameter file kcli_parameters.yml", color='blue')
     elif paramfile is None and os.path.exists("kcli_parameters.yml"):
         paramfile = "kcli_parameters.yml"
-        common.pprint("Using default parameter file kcli_parameters.yml")
+        common.pprint("Using default parameter file kcli_parameters.yml", color='blue')
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     if workers > 0:
@@ -1344,10 +1344,10 @@ def scale_openshift_kube(args):
             paramfile = "/workdir/%s" % paramfile
         elif os.path.exists("/workdir/kcli_parameters.yml"):
             paramfile = "/workdir/kcli_parameters.yml"
-            common.pprint("Using default parameter file kcli_parameters.yml")
+            common.pprint("Using default parameter file kcli_parameters.yml", color='blue')
     elif paramfile is None and os.path.exists("kcli_parameters.yml"):
         paramfile = "kcli_parameters.yml"
-        common.pprint("Using default parameter file kcli_parameters.yml")
+        common.pprint("Using default parameter file kcli_parameters.yml", color='blue')
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     if workers > 0:
@@ -1428,10 +1428,10 @@ def create_plan(args):
             paramfile = "/workdir/%s" % paramfile
         elif os.path.exists("/workdir/kcli_parameters.yml"):
             paramfile = "/workdir/kcli_parameters.yml"
-            common.pprint("Using default parameter file kcli_parameters.yml")
+            common.pprint("Using default parameter file kcli_parameters.yml", color='blue')
     elif paramfile is None and os.path.exists("kcli_parameters.yml"):
         paramfile = "kcli_parameters.yml"
-        common.pprint("Using default parameter file kcli_parameters.yml")
+        common.pprint("Using default parameter file kcli_parameters.yml", color='blue')
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     _type = config.ini[config.client].get('type', 'kvm')
@@ -1608,10 +1608,10 @@ def download_openshift_installer(args):
             paramfile = "/workdir/%s" % paramfile
         elif os.path.exists("/workdir/kcli_parameters.yml"):
             paramfile = "/workdir/kcli_parameters.yml"
-            common.pprint("Using default parameter file kcli_parameters.yml")
+            common.pprint("Using default parameter file kcli_parameters.yml", color='blue')
     elif paramfile is None and os.path.exists("kcli_parameters.yml"):
         paramfile = "kcli_parameters.yml"
-        common.pprint("Using default parameter file kcli_parameters.yml")
+        common.pprint("Using default parameter file kcli_parameters.yml", color='blue')
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     config.download_openshift_installer(overrides)
@@ -1626,10 +1626,10 @@ def download_okd_installer(args):
             paramfile = "/workdir/%s" % paramfile
         elif os.path.exists("/workdir/kcli_parameters.yml"):
             paramfile = "/workdir/kcli_parameters.yml"
-            common.pprint("Using default parameter file kcli_parameters.yml")
+            common.pprint("Using default parameter file kcli_parameters.yml", color='blue')
     elif paramfile is None and os.path.exists("kcli_parameters.yml"):
         paramfile = "kcli_parameters.yml"
-        common.pprint("Using default parameter file kcli_parameters.yml")
+        common.pprint("Using default parameter file kcli_parameters.yml", color='blue')
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     overrides['upstream'] = True
@@ -1674,10 +1674,8 @@ def render_file(args):
             paramfile = "/workdir/%s" % paramfile
         elif os.path.exists("/workdir/kcli_parameters.yml"):
             paramfile = "/workdir/kcli_parameters.yml"
-            # common.pprint("Using default parameter file kcli_parameters.yml")
     elif paramfile is None and os.path.exists("kcli_parameters.yml"):
         paramfile = "kcli_parameters.yml"
-        # common.pprint("Using default parameter file kcli_parameters.yml")
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     config_data = {'config_%s' % k: baseconfig.ini[baseconfig.client][k] for k in baseconfig.ini[baseconfig.client]}
