@@ -1,5 +1,8 @@
+set -euo pipefail
+export ARGOCD_VERSION={{ 'argoproj/argo-cd' | githubversion(argocd_version) }}
+echo "Deploying Rook $ARGOCD_VERSION"
 kubectl create namespace argocd
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/$ARGOCD_VERSION/manifests/install.yaml
 echo Giving sometime for ingress controller to get ready...
 sleep 30
 kubectl apply -f ingress.yml
