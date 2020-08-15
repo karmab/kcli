@@ -661,7 +661,7 @@ def create(config, plandir, cluster, overrides):
         pprint("Deleting %s" % vm)
         k.delete(vm)
     os.environ['KUBECONFIG'] = "%s/%s/auth/kubeconfig" % (os.getcwd(), clusterdir)
-    apps = overrides['apps']
+    apps = overrides.get('apps', [])
     if apps:
         overrides['openshift_version'] = INSTALLER_VERSION[0:3]
         for app in apps:
