@@ -758,6 +758,9 @@ def create_app_generic(args):
     if app not in available_apps:
         common.pprint("app %s not available" % app, color='red')
         os._exit(1)
+    if find_executable('kubectl') is None:
+        common.pprint("You need kubectl to install apps", color='red')
+        os._exit(1)
     if 'KUBECONFIG' not in os.environ:
         common.pprint("KUBECONFIG env variable needs to be set", color='red')
         os._exit(1)
@@ -776,13 +779,18 @@ def create_app_openshift(args):
     if app not in available_apps:
         common.pprint("app %s not available" % app, color='red')
         os._exit(1)
+    if find_executable('oc') is None:
+        common.pprint("You need oc to install apps", color='red')
+        os._exit(1)
     if 'KUBECONFIG' not in os.environ:
         common.pprint("KUBECONFIG env variable needs to be set", color='red')
         os._exit(1)
     elif not os.path.isabs(os.environ['KUBECONFIG']):
         os.environ['KUBECONFIG'] = "%s/%s" % (os.getcwd(), os.environ['KUBECONFIG'])
+    OPENSHIFT_VERSION = os.popen('oc version').readlines()[1].split(" ")[2].strip().replace('v', '')[:3]
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     overrides['%s_version' % app] = overrides['version'] if 'version' in overrides else 'latest'
+    overrides['openshift_version'] = OPENSHIFT_VERSION
     baseconfig.create_app_generic(app, overrides)
 
 
