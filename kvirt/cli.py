@@ -19,10 +19,9 @@ from kvirt import common
 from kvirt import nameutils
 import os
 import random
-import re
+import requests
 import sys
 import yaml
-from urllib.request import urlopen
 
 
 def cache_vms(baseconfig, region, zone, namespace):
@@ -90,23 +89,17 @@ def get_subparser(parser, subcommand):
 
 
 def get_version(args):
-    url = "https://github.com/karmab/kcli"
     full_version = "version: %s" % VERSION
     versiondir = os.path.dirname(version.__file__)
     git_version = open('%s/git' % versiondir).read().rstrip() if os.path.exists('%s/git' % versiondir) else 'N/A'
     full_version += " commit: %s" % git_version
     update = 'N/A'
     if git_version != 'N/A':
-        update = False
-        r = urlopen("%s/commits/master" % url)
-        for line in r.readlines():
-            if '%s/commits/master?' % url in str(line, 'utf-8').strip():
-                tag_match = re.match('.*=(.*)\\+..".*', str(line, 'utf-8'))
-                if tag_match is not None:
-                    upstream_version = tag_match.group(1)[:7]
-                    if upstream_version != git_version:
-                        update = True
-                break
+        try:
+            upstream_version = requests.get("https://api.github.com/repos/karmab/kcli/commits/master").json()['sha'][:7]
+            update = True if upstream_version != git_version else False
+        except:
+            pass
     full_version += " Available Updates: %s" % update
     print(full_version)
 
