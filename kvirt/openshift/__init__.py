@@ -666,11 +666,10 @@ def create(config, plandir, cluster, overrides):
         overrides['openshift_version'] = INSTALLER_VERSION[0:3]
         for app in apps:
             appdir = "%s/apps/%s" % (plandir, app)
-            pprint("Adding app %s" % app, color='blue')
             if not os.path.exists(appdir):
                 pprint("Skipping unsupported app %s" % app, color='yellow')
             else:
                 pprint("Adding app %s" % app, color='blue')
                 if '%s_version' % app not in overrides:
-                    overrides['app_version' % app] = 'latest'
+                    overrides['%s_version' % app] = 'latest'
                 kube_create_app(config, appdir, overrides=overrides)
