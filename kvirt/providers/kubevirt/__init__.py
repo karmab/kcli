@@ -707,10 +707,13 @@ class Kubevirt(Kubecommon):
         namespace = self.namespace
         try:
             vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
+        except:
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        try:
             crds.delete_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name,
                                                  client.V1DeleteOptions())
         except:
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            crds.delete_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
         pvcvolumes = [v['persistentVolumeClaim']['claimName'] for v in vm['spec']['template']['spec']['volumes'] if
                       'persistentVolumeClaim' in v]
         pvcs = [pvc for pvc in core.list_namespaced_persistent_volume_claim(namespace).items
