@@ -2274,7 +2274,7 @@ def cli():
     containerconsole_parser.set_defaults(func=console_container)
 
     create_desc = 'Create Object'
-    create_parser = subparsers.add_parser('create', description=create_desc, help=create_desc)
+    create_parser = subparsers.add_parser('create', description=create_desc, help=create_desc, aliases=['add'])
     create_subparsers = create_parser.add_subparsers(metavar='', dest='subcommand_create')
 
     vmclone_desc = 'Clone Vm'
