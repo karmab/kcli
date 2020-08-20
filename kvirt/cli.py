@@ -791,7 +791,7 @@ def create_app_openshift(args):
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     overrides['%s_version' % app] = overrides['version'] if 'version' in overrides else 'latest'
     overrides['openshift_version'] = OPENSHIFT_VERSION
-    baseconfig.create_app_generic(app, overrides)
+    baseconfig.create_app_openshift(app, overrides)
 
 
 def delete_app_generic(args):
