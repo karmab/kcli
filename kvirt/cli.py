@@ -753,6 +753,15 @@ def list_plan(args):
 def create_app_generic(args):
     app = args.app
     paramfile = args.paramfile
+    if os.path.exists("/i_am_a_container"):
+        if paramfile is not None:
+            paramfile = "/workdir/%s" % paramfile
+        elif os.path.exists("/workdir/kcli_parameters.yml"):
+            paramfile = "/workdir/kcli_parameters.yml"
+            common.pprint("Using default parameter file kcli_parameters.yml", color='blue')
+    elif paramfile is None and os.path.exists("kcli_parameters.yml"):
+        paramfile = "kcli_parameters.yml"
+        common.pprint("Using default parameter file kcli_parameters.yml", color='blue')
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     available_apps = baseconfig.list_apps_generic(quiet=True)
     if app not in available_apps:
@@ -774,6 +783,15 @@ def create_app_generic(args):
 def create_app_openshift(args):
     app = args.app
     paramfile = args.paramfile
+    if os.path.exists("/i_am_a_container"):
+        if paramfile is not None:
+            paramfile = "/workdir/%s" % paramfile
+        elif os.path.exists("/workdir/kcli_parameters.yml"):
+            paramfile = "/workdir/kcli_parameters.yml"
+            common.pprint("Using default parameter file kcli_parameters.yml", color='blue')
+    elif paramfile is None and os.path.exists("kcli_parameters.yml"):
+        paramfile = "kcli_parameters.yml"
+        common.pprint("Using default parameter file kcli_parameters.yml", color='blue')
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     available_apps = baseconfig.list_apps_openshift(quiet=True)
     if app not in available_apps:
@@ -797,6 +815,15 @@ def create_app_openshift(args):
 def delete_app_generic(args):
     app = args.app
     paramfile = args.paramfile
+    if os.path.exists("/i_am_a_container"):
+        if paramfile is not None:
+            paramfile = "/workdir/%s" % paramfile
+        elif os.path.exists("/workdir/kcli_parameters.yml"):
+            paramfile = "/workdir/kcli_parameters.yml"
+            common.pprint("Using default parameter file kcli_parameters.yml", color='blue')
+    elif paramfile is None and os.path.exists("kcli_parameters.yml"):
+        paramfile = "kcli_parameters.yml"
+        common.pprint("Using default parameter file kcli_parameters.yml", color='blue')
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     available_apps = baseconfig.list_apps_generic(quiet=True)
     if app not in available_apps:
@@ -810,6 +837,15 @@ def delete_app_generic(args):
 def delete_app_openshift(args):
     app = args.app
     paramfile = args.paramfile
+    if os.path.exists("/i_am_a_container"):
+        if paramfile is not None:
+            paramfile = "/workdir/%s" % paramfile
+        elif os.path.exists("/workdir/kcli_parameters.yml"):
+            paramfile = "/workdir/kcli_parameters.yml"
+            common.pprint("Using default parameter file kcli_parameters.yml", color='blue')
+    elif paramfile is None and os.path.exists("kcli_parameters.yml"):
+        paramfile = "kcli_parameters.yml"
+        common.pprint("Using default parameter file kcli_parameters.yml", color='blue')
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     available_apps = baseconfig.list_apps_openshift(quiet=True)
     if app not in available_apps:

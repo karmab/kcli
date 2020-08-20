@@ -8,8 +8,8 @@ PATCH='{"spec":{"template":{"spec":{"$setElementOrder/containers":[{"name":"argo
 oc -n argocd patch deployment argocd-server -p $PATCH
 oc -n argocd create route edge argocd-server --service=argocd-server --port=http --insecure-policy=Redirect
 ARGOCD_HOST=$(oc get route -n argocd argocd-server -o=jsonpath='{ .spec.host }')
-echo argo ui available at https://$ARGOCD_HOST
-echo Use Initial Password $ARGOCD_PASSWORD
 oc patch serviceaccount -n argocd argocd-dex-server --type='json' -p="[{\"op\": \"add\", \"path\": \"/metadata/annotations/serviceaccounts.openshift.io~1oauth-redirecturi.argocd\", \"value\":\"https://$ARGOCD_HOST/api/dex/callback\"}]"
 ARGOCD_SECRET=$(oc serviceaccounts get-token argocd-dex-server -n argocd)
 sed "s/SECRET/$ARGOCD_SECRET/" configmap.yml | oc replace -f - -n argocd
+echo argo ui available at https://$ARGOCD_HOST
+echo Use Initial Password $ARGOCD_PASSWORD or Openshift credentials
