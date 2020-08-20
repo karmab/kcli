@@ -1,3 +1,4 @@
+export PATH=.:$PATH
 oc adm policy add-scc-to-group anyuid system:serviceaccounts:istio-system
 curl -L https://istio.io/downloadIstio | sh -
 mv istio-*/bin/istioctl .
