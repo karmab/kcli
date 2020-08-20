@@ -63,7 +63,8 @@ def githubversion(repo, version=None):
     else:
         tag1 = tags[-2]
         tag2 = tags[-1]
-        tag = tag1 if tag1 in tag2 else tag2
+        # tag = tag1 if tag1 in tag2 else tag2
+        tag = tag1 if tag1 in tag2 or 'rc' in tag2 else tag2
     return tag
 
 
