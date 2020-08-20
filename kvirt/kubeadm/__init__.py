@@ -30,8 +30,9 @@ def scale(config, plandir, cluster, overrides):
 
 def create(config, plandir, cluster, overrides):
     platform = config.type
-    data = {'kubetype': 'generic'}
+    data = {'kubetype': 'generic', 'xip': False}
     data.update(overrides)
+    xip = data['xip']
     data['cluster'] = overrides['cluster'] if 'cluster' in overrides else cluster
     data['kube'] = data['cluster']
     masters = data.get('masters', 1)
@@ -51,6 +52,8 @@ def create(config, plandir, cluster, overrides):
             else:
                 pprint("You need to define api_ip in your parameters file", color='red')
                 os._exit(1)
+    if xip:
+        data['domain'] = "%s.xip.io" % api_ip
     version = data.get('version')
     if version is not None and not version.startswith('1.'):
         pprint("Invalid version %s" % version, color='red')

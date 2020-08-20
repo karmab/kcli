@@ -7,7 +7,8 @@ info: |
     Default version is latest stable but you can instead use ci, for which you will need a specific pull secret
     Upstream okd version can be specified with the upstream flag.
     the baremetal flag allows to get the baremetal operator deployed, so that you can deploy physical workers afterwards.
-    Sdn defaults to OpenShiftSDN but OVNKubernetes or Calico can be specified instead
+    Sdn defaults to OpenShiftSDN but OVNKubernetes or Calico can be specified instead.
+    You can set xip to true to use $api_ip.xip.io as base domain
 version: nightly
 tag: '4.5'
 pull_secret: openshift_pull.json
@@ -79,3 +80,4 @@ provisioning_nic: ens4
 cloud_tag:
 cloud_scale: false
 cloud_api_internal: false
+xip: false

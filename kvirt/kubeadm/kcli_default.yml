@@ -5,6 +5,7 @@ info: |
     version can be let blank to get latest, or specified as x.yy or x.yy.z
     sdn can be choosen between flannel, weavenet, calico, canal or romana
     nfs can be set to deploy an initial set of pvcs on the first master node
+    You can set xip to true to use $api_ip.xip.io as base domain
 image: centos7
 network: default
 api_ip:
@@ -51,3 +52,4 @@ extra_worker_disks: []
 extra_networks: []
 extra_master_networks: []
 extra_worker_networks: []
+xip: false

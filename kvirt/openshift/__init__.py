@@ -213,7 +213,8 @@ def create(config, plandir, cluster, overrides):
             'baremetal': False,
             'fips': False,
             'apps': [],
-            'minimal': False}
+            'minimal': False,
+            'xip': False}
     data.update(overrides)
     overrides['kubetype'] = 'openshift'
     data['cluster'] = overrides['cluster'] if 'cluster' in overrides else cluster
@@ -226,6 +227,7 @@ def create(config, plandir, cluster, overrides):
     ipv6 = data['ipv6']
     upstream = data.get('upstream')
     version = data.get('version')
+    xip = data['xip']
     tag = data.get('tag')
     if os.path.exists('openshift-install'):
         pprint("Removing old openshift-install", color='blue')
@@ -248,6 +250,9 @@ def create(config, plandir, cluster, overrides):
         else:
             pprint("You need to define api_ip in your parameters file", color='red')
             os._exit(1)
+    if xip:
+        overrides['domain'] = "%s.xip.io" % api_ip
+        data['domain'] = "%s.xip.io" % api_ip
     if platform in virtplatforms and baremetal and data.get('baremetal_machine_cidr') is None:
         pprint("You need to define baremetal_machine_cidr in your parameters file", color='red')
         os._exit(1)
@@ -256,9 +261,11 @@ def create(config, plandir, cluster, overrides):
     ingress_ip = data.get('ingress_ip')
     if ingress_ip is None:
         ingress_ip = api_ip
+    elif xip:
+        pprint("You can't use xip mode along with a dedicated ingress vip", color='red')
+        os._exit(1)
     public_api_ip = data.get('public_api_ip')
     bootstrap_api_ip = data.get('bootstrap_api_ip')
-    domain = data.get('domain')
     network = data.get('network')
     if platform == 'packet':
         if network == 'default':
@@ -428,6 +435,7 @@ def create(config, plandir, cluster, overrides):
             fetch(asset, manifestsdir)
     call('openshift-install --dir=%s create ignition-configs' % clusterdir, shell=True)
     staticdata = gather_dhcp(data, platform)
+    domain = data.get('domain')
     if staticdata:
         pprint("Deploying helper dhcp node" % image, color='green')
         staticdata.update({'network': network, 'dhcp_image': helper_image, 'prefix': cluster,
@@ -441,7 +449,7 @@ def create(config, plandir, cluster, overrides):
         host_ip = ingress_ip if platform != "openstack" else public_api_ip
         pprint("Using %s for api vip...." % api_ip, color='blue')
         ignore_hosts = data.get('ignore_hosts', False)
-        if ignore_hosts:
+        if ignore_hosts or xip:
             pprint("Ignoring /etc/hosts", color='yellow')
         elif not os.path.exists("/i_am_a_container"):
             hosts = open("/etc/hosts").readlines()
