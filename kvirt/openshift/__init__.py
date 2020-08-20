@@ -182,6 +182,8 @@ def scale(config, plandir, cluster, overrides):
     else:
         pprint("Using image %s" % image, color='blue')
     overrides['image'] = image
+    if overrides.get('xip', False):
+        pprint("Note that your workers won't have a xip.io domain", color='yellow')
     if platform in virtplatforms:
         result = config.plan(cluster, inputfile='%s/workers.yml' % plandir, overrides=overrides)
     elif platform in cloudplatforms:
@@ -227,7 +229,6 @@ def create(config, plandir, cluster, overrides):
     ipv6 = data['ipv6']
     upstream = data.get('upstream')
     version = data.get('version')
-    xip = data['xip']
     tag = data.get('tag')
     if os.path.exists('openshift-install'):
         pprint("Removing old openshift-install", color='blue')
@@ -250,6 +251,7 @@ def create(config, plandir, cluster, overrides):
         else:
             pprint("You need to define api_ip in your parameters file", color='red')
             os._exit(1)
+    xip = data['xip']
     if xip:
         overrides['domain'] = "%s.xip.io" % api_ip
         data['domain'] = "%s.xip.io" % api_ip

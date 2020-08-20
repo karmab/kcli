@@ -11,7 +11,7 @@ cloudplatforms = ['aws', 'gcp']
 
 
 def scale(config, plandir, cluster, overrides):
-    data = {'cluster': cluster}
+    data = {'cluster': cluster, 'xip': False}
     data.update(overrides)
     data['basedir'] = '/workdir' if os.path.exists("/i_am_a_container") else '.'
     cluster = data.get('cluster')
@@ -25,14 +25,15 @@ def scale(config, plandir, cluster, overrides):
     else:
         pprint("Using image %s" % image, color='blue')
     data['image'] = image
+    if data['xip'] and data['masters'] > 1:
+        pprint("Note that your workers won't have a xip.io domain", color='yellow')
     config.plan(cluster, inputfile='%s/workers.yml' % plandir, overrides=data)
 
 
 def create(config, plandir, cluster, overrides):
     platform = config.type
-    data = {'kubetype': 'generic', 'xip': False}
+    data = {'kubetype': 'generic', 'xip': False, 'domain': 'karmalabs.com'}
     data.update(overrides)
-    xip = data['xip']
     data['cluster'] = overrides['cluster'] if 'cluster' in overrides else cluster
     data['kube'] = data['cluster']
     masters = data.get('masters', 1)
@@ -40,6 +41,7 @@ def create(config, plandir, cluster, overrides):
         pprint("Invalid number of masters", color='red')
         os._exit(1)
     network = data.get('network', 'default')
+    xip = data['xip']
     api_ip = data.get('api_ip')
     if masters > 1:
         if platform in cloudplatforms:
@@ -49,11 +51,12 @@ def create(config, plandir, cluster, overrides):
             if network == 'default' and platform == 'kvm':
                 pprint("Using 192.168.122.253 as api_ip", color='yellow')
                 data['api_ip'] = "192.168.122.253"
+                api_ip = "192.168.122.253"
             else:
                 pprint("You need to define api_ip in your parameters file", color='red')
                 os._exit(1)
-    if xip:
-        data['domain'] = "%s.xip.io" % api_ip
+        if xip and platform not in cloudplatforms:
+            data['domain'] = "%s.xip.io" % api_ip
     version = data.get('version')
     if version is not None and not version.startswith('1.'):
         pprint("Invalid version %s" % version, color='red')
