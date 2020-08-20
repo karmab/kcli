@@ -5,6 +5,8 @@ info: |
     version can be let blank to get latest, or specified as x.yy or x.yy.z
     sdn can be choosen between flannel, weavenet, calico, canal or romana
     nfs can be set to deploy an initial set of pvcs on the first master node
+    You can deploy extra apps with the apps array and for each of the supported app, indicate with the variable
+    ${app}_version with version to target (instead of latest)
     You can set xip to true to use $api_ip.xip.io as base domain
 image: centos7
 network: default
@@ -45,7 +47,7 @@ numamode_worker:
 cpupinning:
 cpupinning_master:
 cpupinning_worker:
-extra_apps: []
+apps: []
 extra_disks: []
 extra_master_disks: []
 extra_worker_disks: []

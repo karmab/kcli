@@ -8,7 +8,8 @@ info: |
     Upstream okd version can be specified with the upstream flag.
     the baremetal flag allows to get the baremetal operator deployed, so that you can deploy physical workers afterwards.
     Sdn defaults to OpenShiftSDN but OVNKubernetes or Calico can be specified instead.
-    You can set xip to true to use $api_ip.xip.io as base domain
+    You can deploy extra apps with the apps array and for each of the supported app, indicate with the variable
+    ${app}_version with version to target (instead of latest)
 version: nightly
 tag: '4.5'
 pull_secret: openshift_pull.json
@@ -44,7 +45,7 @@ worker_rng: false
 disk_size: 30
 autostart: false
 keys: []
-extra_apps: []
+apps: []
 extra_disks: []
 extra_master_disks: []
 extra_worker_disks: []
