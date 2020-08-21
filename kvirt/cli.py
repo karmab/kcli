@@ -2483,7 +2483,7 @@ def cli():
                                            help=PARAMETERS_HELP,
                                            metavar='PARAM')
     appopenshiftdelete_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
-    appopenshiftdelete_parser.add_argument('appS', metavar='APPS', nargs='*')
+    appopenshiftdelete_parser.add_argument('apps', metavar='APPS', nargs='*')
     appopenshiftdelete_parser.set_defaults(func=delete_app_openshift)
 
     appinfo_desc = 'Info App'
