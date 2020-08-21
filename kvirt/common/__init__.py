@@ -1506,14 +1506,21 @@ def get_oc(macosx=False):
 
 
 def kube_create_app(config, appdir, overrides={}):
-    cluster = 'xxx'
+    appdata = {'cluster': 'testk', 'domain': 'karmalabs.com', 'masters': 1}
+    cluster = appdata['cluster']
     cwd = os.getcwd()
     overrides['cwd'] = cwd
+    default_parameter_file = "%s/kcli_default.yml" % appdir
+    if os.path.exists(default_parameter_file):
+        with open(default_parameter_file, 'r') as entries:
+            appdefault = yaml.safe_load(entries)
+            appdata.update(appdefault)
+    appdata.update(overrides)
     with TemporaryDirectory() as tmpdir:
         for root, dirs, files in os.walk(appdir):
             for name in files:
                 # pprint("Copying %s to tmpdir %s" % (name, tmpdir), color='blue')
-                rendered = config.process_inputfile(cluster, "%s/%s" % (appdir, name), overrides=overrides)
+                rendered = config.process_inputfile(cluster, "%s/%s" % (appdir, name), overrides=appdata)
                 with open("%s/%s" % (tmpdir, name), 'w') as f:
                     f.write(rendered)
         os.chdir(tmpdir)

@@ -22,6 +22,6 @@ metadata:
 spec:
   sourceNamespace: openshift-marketplace
   source: redhat-operators
-  channel: {{ acm_version | default('release-2.0') }}
+  channel: {{ acm_version }}
   installPlanApproval: Automatic
   name: advanced-cluster-management

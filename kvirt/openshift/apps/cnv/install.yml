@@ -21,6 +21,6 @@ spec:
   source: redhat-operators
   sourceNamespace: openshift-marketplace
   name: kubevirt-hyperconverged
-  startingCSV: "kubevirt-hyperconverged-operator.v{{ kubevirt_version | default('2.4') }}.0"
-  channel: "{{ kubevirt_version | default('2.4') }}"
+  startingCSV: "kubevirt-hyperconverged-operator.v{{ kubevirt_version }}.0"
+  channel: "{{ kubevirt_version }}"
   installPlanApproval: "Automatic"

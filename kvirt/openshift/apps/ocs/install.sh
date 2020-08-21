@@ -1,12 +1,12 @@
-{%- if ocs_nodes is defined %}
+{%- if ocs_nodes %}
 {%- for node in ocs_nodes %}
 OCS_NODE={{ node }}
 oc label $OCS_NODE cluster.ocs.openshift.io/openshift-storage=''
 oc label node $OCS_NODE topology.rook.io/rack=rack{{ loop.index }}
 {%- endfor %}
 {%- else %}
-{%- for num in range(masters|default(3)) %}
-OCS_NODE={{ cluster | default('testk') }}.master-{{ num }}.{{ cluster | default('testk') }}.{{ domain | default('karmalabs.com') }}
+{%- for num in range(masters) %}
+OCS_NODE={{ cluster }}.master-{{ num }}.{{ cluster }}.{{ domain }}
 oc label $OCS_NODE cluster.ocs.openshift.io/openshift-storage=''
 oc label node $OCS_NODE topology.rook.io/rack=rack{{ num }}
 {%- endfor %}

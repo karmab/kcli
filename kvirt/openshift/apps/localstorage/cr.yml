@@ -10,13 +10,13 @@ spec:
         - key: kubernetes.io/hostname
           operator: In
           values:
-{%- if localstorage_nodes is defined %}
+{%- if localstorage_nodes %}
 {%- for node in localstorage_nodes %}
           - {{ node }}
 {%- endfor %}
 {%- else %}
-{%- for num in range(masters|default(3)) %}
-          - {{ cluster | default('testk') }}.master-{{ num }}.{{ cluster | default('testk') }}.{{ domain | default('karmalabs.com') }}
+{%- for num in range(masters) %}
+          - {{ cluster }}.master-{{ num }}.{{ cluster }}.{{ domain }}
 {%- endfor %}
 {%- endif %}
   storageClassDevices:
@@ -24,6 +24,6 @@ spec:
       volumeMode: Filesystem
       fsType: xfs
       devicePaths:
-{%- for disk in localstorage_disks | default(['vdb']) %}
+{%- for disk in localstorage_disks %}
       - /dev/{{ disk | replace('/dev/', '') }}
 {%- endfor %}

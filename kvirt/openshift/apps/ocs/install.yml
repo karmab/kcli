@@ -23,7 +23,7 @@ metadata:
 spec:
   sourceNamespace: openshift-marketplace
   source: redhat-operators
-  startingCSV: ocs-operator.v{{ ocs_version | default('4.4.2') }}
-  channel: stable-{{ ocs_version | default('4.4') }}
+  startingCSV: ocs-operator.v{{ ocs_version }}
+  channel: stable-{{ ocs_channel }}
   installPlanApproval: Automatic
   name: ocs-operator
