@@ -1,6 +1,6 @@
-NAMESPACE="openshift-storage"
-SUBCRIPTION="ocs-operator"
-OPERATORGROUP="openshift-storage-operatorgroup"
+NAMESPACE="open-cluster-management"
+SUBCRIPTION="acm-operator-subscription"
+OPERATORGROUP="advanced-cluster-management"
 CR="cr.yml"
 oc delete -f $CR
 oc delete subscription.operators.coreos.com -n $NAMESPACE $SUBCRIPTION

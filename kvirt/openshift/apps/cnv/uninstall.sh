@@ -1,6 +1,6 @@
-NAMESPACE="openshift-storage"
-SUBCRIPTION="ocs-operator"
-OPERATORGROUP="openshift-storage-operatorgroup"
+NAMESPACE="openshift-cnv"
+SUBCRIPTION="hco-operatorhub"
+OPERATORGROUP="cnv-operators"
 CR="cr.yml"
 oc delete -f $CR
 oc delete subscription.operators.coreos.com -n $NAMESPACE $SUBCRIPTION
