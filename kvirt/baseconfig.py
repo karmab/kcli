@@ -1000,6 +1000,18 @@ class Kbaseconfig:
         appdir = "%s/apps/%s" % (plandir, app)
         common.kube_delete_app(self, appdir, overrides=overrides)
 
+    def info_app_generic(self, app):
+        plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
+        appdir = "%s/apps/%s" % (plandir, app)
+        default_parameter_file = "%s/kcli_default.yml" % appdir
+        if not os.path.exists(appdir):
+            common.pprint("App %s not supported" % app, color='yellow')
+        elif not os.path.exists(default_parameter_file):
+            print("%s_version: latest" % app)
+        else:
+            with open(default_parameter_file, 'r') as f:
+                print(f.read().strip())
+
     def create_app_openshift(self, app, overrides={}):
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
         appdir = "%s/apps/%s" % (plandir, app)
@@ -1009,3 +1021,15 @@ class Kbaseconfig:
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
         appdir = "%s/apps/%s" % (plandir, app)
         common.kube_delete_app(self, appdir, overrides=overrides)
+
+    def info_app_openshift(self, app):
+        plandir = os.path.dirname(openshift.create.__code__.co_filename)
+        appdir = "%s/apps/%s" % (plandir, app)
+        default_parameter_file = "%s/kcli_default.yml" % appdir
+        if not os.path.exists(appdir):
+            common.pprint("App %s not supported" % app, color='yellow')
+        elif not os.path.exists(default_parameter_file):
+            return
+        else:
+            with open(default_parameter_file, 'r') as f:
+                print(f.read().strip())

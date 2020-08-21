@@ -1576,6 +1576,16 @@ def restart_plan(args):
     return 0
 
 
+def info_generic_app(args):
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    baseconfig.info_app_generic(args.app)
+
+
+def info_openshift_app(args):
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    baseconfig.info_app_openshift(args.app)
+
+
 def info_plan(args):
     """Info plan """
     plan = args.plan
@@ -2478,6 +2488,23 @@ def cli():
     appopenshiftdelete_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
     appopenshiftdelete_parser.add_argument('app', metavar='APP')
     appopenshiftdelete_parser.set_defaults(func=delete_app_openshift)
+
+    appinfo_desc = 'Info App'
+    appinfo_parser = info_subparsers.add_parser('app', description=appinfo_desc, help=appinfo_desc)
+    appinfo_subparsers = appinfo_parser.add_subparsers(metavar='', dest='subcommand_info_app')
+
+    appgenericinfo_desc = 'Info Generic App'
+    appgenericinfo_parser = appinfo_subparsers.add_parser('generic', description=appgenericinfo_desc,
+                                                          help=appgenericinfo_desc)
+
+    appgenericinfo_parser.add_argument('app', metavar='APP')
+    appgenericinfo_parser.set_defaults(func=info_generic_app)
+
+    appopenshiftinfo_desc = 'Info Openshift App'
+    appopenshiftinfo_parser = appinfo_subparsers.add_parser('openshift', description=appopenshiftinfo_desc,
+                                                            help=appopenshiftinfo_desc)
+    appopenshiftinfo_parser.add_argument('app', metavar='APP')
+    appopenshiftinfo_parser.set_defaults(func=info_openshift_app)
 
     listapp_desc = 'List Available Kube Apps'
     listapp_parser = list_subparsers.add_parser('app', description=listapp_desc,
