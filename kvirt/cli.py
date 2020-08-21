@@ -743,9 +743,7 @@ def list_plan(args):
     return
 
 
-def create_app_generic(args):
-    app = args.app
-    paramfile = args.paramfile
+def choose_parameter_file(paramfile):
     if os.path.exists("/i_am_a_container"):
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
@@ -755,11 +753,12 @@ def create_app_generic(args):
     elif paramfile is None and os.path.exists("kcli_parameters.yml"):
         paramfile = "kcli_parameters.yml"
         common.pprint("Using default parameter file kcli_parameters.yml", color='blue')
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-    available_apps = baseconfig.list_apps_generic(quiet=True)
-    if app not in available_apps:
-        common.pprint("app %s not available" % app, color='red')
-        os._exit(1)
+    return paramfile
+
+
+def create_app_generic(args):
+    apps = args.apps
+    paramfile = choose_parameter_file(args.paramfile)
     if find_executable('kubectl') is None:
         common.pprint("You need kubectl to install apps", color='red')
         os._exit(1)
@@ -769,27 +768,19 @@ def create_app_generic(args):
     elif not os.path.isabs(os.environ['KUBECONFIG']):
         os.environ['KUBECONFIG'] = "%s/%s" % (os.getcwd(), os.environ['KUBECONFIG'])
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
-    overrides['%s_version' % app] = overrides['version'] if 'version' in overrides else 'latest'
-    baseconfig.create_app_generic(app, overrides)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    available_apps = baseconfig.list_apps_generic(quiet=True)
+    for app in apps:
+        if app not in available_apps:
+            common.pprint("app %s not available. Skipping..." % app, color='red')
+            continue
+        overrides['%s_version' % app] = overrides['version'] if 'version' in overrides else 'latest'
+        baseconfig.create_app_generic(app, overrides)
 
 
 def create_app_openshift(args):
-    app = args.app
-    paramfile = args.paramfile
-    if os.path.exists("/i_am_a_container"):
-        if paramfile is not None:
-            paramfile = "/workdir/%s" % paramfile
-        elif os.path.exists("/workdir/kcli_parameters.yml"):
-            paramfile = "/workdir/kcli_parameters.yml"
-            common.pprint("Using default parameter file kcli_parameters.yml", color='blue')
-    elif paramfile is None and os.path.exists("kcli_parameters.yml"):
-        paramfile = "kcli_parameters.yml"
-        common.pprint("Using default parameter file kcli_parameters.yml", color='blue')
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-    available_apps = baseconfig.list_apps_openshift(quiet=True)
-    if app not in available_apps:
-        common.pprint("app %s not available" % app, color='red')
-        os._exit(1)
+    apps = args.apps
+    paramfile = choose_parameter_file(args.paramfile)
     if find_executable('oc') is None:
         common.pprint("You need oc to install apps", color='red')
         os._exit(1)
@@ -800,53 +791,59 @@ def create_app_openshift(args):
         os.environ['KUBECONFIG'] = "%s/%s" % (os.getcwd(), os.environ['KUBECONFIG'])
     OPENSHIFT_VERSION = os.popen('oc version').readlines()[1].split(" ")[2].strip().replace('v', '')[:3]
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
-    overrides['%s_version' % app] = overrides['version'] if 'version' in overrides else 'latest'
     overrides['openshift_version'] = OPENSHIFT_VERSION
-    baseconfig.create_app_openshift(app, overrides)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    available_apps = baseconfig.list_apps_openshift(quiet=True)
+    for app in apps:
+        if app not in available_apps:
+            common.pprint("app %s not available. Skipping..." % app, color='red')
+            continue
+        baseconfig.create_app_openshift(app, overrides)
 
 
 def delete_app_generic(args):
-    app = args.app
+    apps = args.apps
     paramfile = args.paramfile
-    if os.path.exists("/i_am_a_container"):
-        if paramfile is not None:
-            paramfile = "/workdir/%s" % paramfile
-        elif os.path.exists("/workdir/kcli_parameters.yml"):
-            paramfile = "/workdir/kcli_parameters.yml"
-            common.pprint("Using default parameter file kcli_parameters.yml", color='blue')
-    elif paramfile is None and os.path.exists("kcli_parameters.yml"):
-        paramfile = "kcli_parameters.yml"
-        common.pprint("Using default parameter file kcli_parameters.yml", color='blue')
+    if find_executable('kubectl') is None:
+        common.pprint("You need kubectl to install apps", color='red')
+        os._exit(1)
+    if 'KUBECONFIG' not in os.environ:
+        common.pprint("KUBECONFIG env variable needs to be set", color='red')
+        os._exit(1)
+    elif not os.path.isabs(os.environ['KUBECONFIG']):
+        os.environ['KUBECONFIG'] = "%s/%s" % (os.getcwd(), os.environ['KUBECONFIG'])
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     available_apps = baseconfig.list_apps_generic(quiet=True)
-    if app not in available_apps:
-        common.pprint("app %s not available" % app, color='red')
-        os._exit(1)
-    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
-    overrides['%s_version' % app] = overrides['version'] if 'version' in overrides else 'latest'
-    baseconfig.delete_app_generic(app, overrides)
+    for app in apps:
+        if app not in available_apps:
+            common.pprint("app %s not available. Skipping..." % app, color='red')
+            continue
+        overrides['%s_version' % app] = overrides['version'] if 'version' in overrides else 'latest'
+        baseconfig.delete_app_generic(app, overrides)
 
 
 def delete_app_openshift(args):
-    app = args.app
-    paramfile = args.paramfile
-    if os.path.exists("/i_am_a_container"):
-        if paramfile is not None:
-            paramfile = "/workdir/%s" % paramfile
-        elif os.path.exists("/workdir/kcli_parameters.yml"):
-            paramfile = "/workdir/kcli_parameters.yml"
-            common.pprint("Using default parameter file kcli_parameters.yml", color='blue')
-    elif paramfile is None and os.path.exists("kcli_parameters.yml"):
-        paramfile = "kcli_parameters.yml"
-        common.pprint("Using default parameter file kcli_parameters.yml", color='blue')
+    apps = args.apps
+    paramfile = choose_parameter_file(args.paramfile)
+    if find_executable('oc') is None:
+        common.pprint("You need oc to install apps", color='red')
+        os._exit(1)
+    if 'KUBECONFIG' not in os.environ:
+        common.pprint("KUBECONFIG env variable needs to be set", color='red')
+        os._exit(1)
+    elif not os.path.isabs(os.environ['KUBECONFIG']):
+        os.environ['KUBECONFIG'] = "%s/%s" % (os.getcwd(), os.environ['KUBECONFIG'])
+    OPENSHIFT_VERSION = os.popen('oc version').readlines()[1].split(" ")[2].strip().replace('v', '')[:3]
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    overrides['openshift_version'] = OPENSHIFT_VERSION
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     available_apps = baseconfig.list_apps_openshift(quiet=True)
-    if app not in available_apps:
-        common.pprint("app %s not available" % app, color='red')
-        os._exit(1)
-    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
-    overrides['%s_version' % app] = overrides['version'] if 'version' in overrides else 'latest'
-    baseconfig.delete_app_openshift(app, overrides)
+    for app in apps:
+        if app not in available_apps:
+            common.pprint("app %s not available. Skipping..." % app, color='red')
+            continue
+        baseconfig.delete_app_openshift(app, overrides)
 
 
 def list_apps_generic(args):
@@ -2444,7 +2441,7 @@ def cli():
                                          help='specify parameter or keyword for rendering (multiple can be specified)',
                                          metavar='PARAM')
     appgenericcreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
-    appgenericcreate_parser.add_argument('app', metavar='APP')
+    appgenericcreate_parser.add_argument('apps', metavar='APPS', nargs='*')
     appgenericcreate_parser.set_defaults(func=create_app_generic)
 
     appopenshiftcreate_desc = 'Create Kube App Openshift'
@@ -2456,7 +2453,7 @@ def cli():
     appopenshiftcreate_parser.add_argument('-P', '--param', action='append',
                                            help=PARAMETERS_HELP, metavar='PARAM')
     appopenshiftcreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
-    appopenshiftcreate_parser.add_argument('app', metavar='APP')
+    appopenshiftcreate_parser.add_argument('apps', metavar='APPS', nargs='*')
     appopenshiftcreate_parser.set_defaults(func=create_app_openshift)
 
     deleteapp_desc = 'Delete Kube App'
@@ -2473,7 +2470,7 @@ def cli():
                                          help=PARAMETERS_HELP,
                                          metavar='PARAM')
     appgenericdelete_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
-    appgenericdelete_parser.add_argument('app', metavar='APP')
+    appgenericdelete_parser.add_argument('apps', metavar='APPS', nargs='*')
     appgenericdelete_parser.set_defaults(func=delete_app_generic)
 
     appopenshiftdelete_desc = 'Delete Kube App Openshift'
@@ -2486,7 +2483,7 @@ def cli():
                                            help=PARAMETERS_HELP,
                                            metavar='PARAM')
     appopenshiftdelete_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
-    appopenshiftdelete_parser.add_argument('app', metavar='APP')
+    appopenshiftdelete_parser.add_argument('appS', metavar='APPS', nargs='*')
     appopenshiftdelete_parser.set_defaults(func=delete_app_openshift)
 
     appinfo_desc = 'Info App'

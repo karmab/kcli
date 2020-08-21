@@ -1,4 +1,4 @@
-export ARGOCD_VERSION={{ 'argoproj/argo-cd' | githubversion(argocd_version) }}
+export ARGOCD_VERSION={{ 'argoproj/argo-cd' | githubversion(argocd_version| default('latest')) }}
 echo "Deploying Argocd $ARGOCD_VERSION"
 oc create namespace argocd
 oc -n argocd apply -f https://raw.githubusercontent.com/argoproj/argo-cd/$ARGOCD_VERSION/manifests/install.yaml
