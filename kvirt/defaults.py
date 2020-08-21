@@ -57,6 +57,7 @@ IMAGES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-i
           'netbsd81': 'https://bsd-cloud-image.org/images/netbsd/8.1/netbsd-8.1.qcow2',
           'netbsd90': 'https://bsd-cloud-image.org/images/netbsd/9.0/netbsd-9.0.qcow2',
           'openbsd66': 'https://bsd-cloud-image.org/images/openbsd/6.6/openbsd-6.6.qcow2',
+          'openbsd67': 'https://bsd-cloud-image.org/images/openbsd/6.7/openbsd-6.7.qcow2',
           'gentoo': 'https://gentoo.osuosl.org/experimental/amd64/openstack/gentoo-openstack-amd64-default-20180621.'
           'qcow2',
           'opensuse': 'https://download.opensuse.org/repositories/Cloud:/Images:/Leap_15.2/images/'
