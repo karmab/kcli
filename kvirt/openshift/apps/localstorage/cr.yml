@@ -1,0 +1,29 @@
+apiVersion: "local.storage.openshift.io/v1"
+kind: "LocalVolume"
+metadata:
+  name: "local-disks"
+  namespace: "local-storage"
+spec:
+  nodeSelector:
+    nodeSelectorTerms:
+    - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+{%- if localstorage_nodes is defined %}
+{%- for node in localstorage_nodes %}
+          - {{ node }}
+{%- endfor %}
+{%- else %}
+{%- for num in range(masters|default(3)) %}
+          - {{ cluster | default('testk') }}.master-{{ num }}.{{ cluster | default('testk') }}.{{ domain | default('karmalabs.com') }}
+{%- endfor %}
+{%- endif %}
+  storageClassDevices:
+    - storageClassName: ${storageClassName}
+      volumeMode: Filesystem
+      fsType: xfs
+      devicePaths:
+{%- for disk in localstorage_disks | default(['vdb']) %}
+      - /dev/{{ disk | replace('/dev/', '') }}
+{%- endfor %}
