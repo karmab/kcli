@@ -18,7 +18,7 @@ spec:
 {%- endfor %}
   storageClassDevices:
     - storageClassName: {{ localstorage_storageclass }}
-      volumeMode: Filesystem
+      volumeMode: {{ localstorage_volumemode | capitalize }}
       fsType: xfs
       devicePaths:
 {%- for disk in localstorage_disks %}

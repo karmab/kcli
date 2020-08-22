@@ -12,7 +12,7 @@ Summary:        Wrapper for libvirt,gcp,aws,ovirt,openstack,kubevirt and vsphere
 License:        ASL 2.0
 Group:          Development/Languages/Python
 VCS:            {{{ git_dir_vcs }}}
-Source:         {{{ git_dir_pack }}}
+Source:         kcli-{{{ git_custom_version }}}.tar.gz
 AutoReq:        no
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildRequires:  python3-devel rubygem-ronn gzip
@@ -27,7 +27,7 @@ openstack, vsphere and kubevirt and to easily deploy single vms from cloud image
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "import sys; from distutils.sysconfig import get_python_lib; sys.stdout.write(get_python_lib())")}
 
 %prep
-%setup -q -n kcli-{{{ git_custom_version }}}
+%setup -q -n kcli-99.{{{ git_custom_version }}}
 
 %build
 sed -i "s/, 'libvirt.*/\]/" setup.py
