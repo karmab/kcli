@@ -670,6 +670,4 @@ def create(config, plandir, cluster, overrides):
                 pprint("Skipping unsupported app %s" % app, color='yellow')
             else:
                 pprint("Adding app %s" % app, color='blue')
-                if '%s_version' % app not in overrides:
-                    overrides['%s_version' % app] = 'latest'
                 kube_create_app(config, appdir, overrides=overrides)

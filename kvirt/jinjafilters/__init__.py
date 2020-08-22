@@ -2,6 +2,7 @@ from base64 import b64encode
 import os
 from distutils.version import LooseVersion
 import requests
+from kvirt.common import pprint
 
 
 def basename(path):
@@ -52,20 +53,19 @@ def certificate(value):
 
 
 def githubversion(repo, version=None):
-    if version is not None and version != 'latest':
-        return version
-    data = requests.get("https://api.github.com/repos/%s/releases" % repo).json()
-    if 'message' in data and data['message'] == 'Not Found':
-        return ''
-    tags = sorted([x['tag_name'] for x in data], key=LooseVersion)
-    if len(tags) == 1:
-        tag = tags[0]
-    else:
-        tag1 = tags[-2]
-        tag2 = tags[-1]
-        # tag = tag1 if tag1 in tag2 else tag2
-        tag = tag1 if tag1 in tag2 or 'rc' in tag2 else tag2
-    return tag
+    if version is None or version == 'latest':
+        data = requests.get("https://api.github.com/repos/%s/releases" % repo).json()
+        if 'message' in data and data['message'] == 'Not Found':
+            return ''
+        tags = sorted([x['tag_name'] for x in data], key=LooseVersion)
+        if len(tags) == 1:
+            version = tags[0]
+        else:
+            tag1 = tags[-2]
+            tag2 = tags[-1]
+            version = tag1 if tag1 in tag2 or 'rc' in tag2 else tag2
+    pprint("Using version %s" % version)
+    return version
 
 
 jinjafilters = {'basename': basename, 'dirname': dirname, 'ocpnodes': ocpnodes, 'none': none, 'type': _type,

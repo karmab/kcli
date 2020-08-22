@@ -1,4 +1,4 @@
-ocs_disksize: 100
+ocs_disksize: 60
 ocs_channel: '4.4.2'
 ocs_version: '4.4'
 ocs_nodes: []

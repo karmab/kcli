@@ -774,6 +774,7 @@ def create_app_generic(args):
         if app not in available_apps:
             common.pprint("app %s not available. Skipping..." % app, color='red')
             continue
+        common.pprint("Adding app %s" % app, color='blue')
         overrides['%s_version' % app] = overrides['version'] if 'version' in overrides else 'latest'
         baseconfig.create_app_generic(app, overrides)
 
@@ -798,6 +799,7 @@ def create_app_openshift(args):
         if app not in available_apps:
             common.pprint("app %s not available. Skipping..." % app, color='red')
             continue
+        common.pprint("Adding app %s" % app, color='blue')
         baseconfig.create_app_openshift(app, overrides)
 
 
@@ -819,6 +821,7 @@ def delete_app_generic(args):
         if app not in available_apps:
             common.pprint("app %s not available. Skipping..." % app, color='red')
             continue
+        common.pprint("Deleting app %s" % app, color='blue')
         overrides['%s_version' % app] = overrides['version'] if 'version' in overrides else 'latest'
         baseconfig.delete_app_generic(app, overrides)
 
@@ -843,6 +846,7 @@ def delete_app_openshift(args):
         if app not in available_apps:
             common.pprint("app %s not available. Skipping..." % app, color='red')
             continue
+        common.pprint("Deleting app %s" % app, color='blue')
         baseconfig.delete_app_openshift(app, overrides)
 
 
