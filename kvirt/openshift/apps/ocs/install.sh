@@ -3,6 +3,9 @@ oc create -f install.yml
 exit
 {% endif %}
 sleep 10
+{%- if ocs_replicas == None %}
+{%- set ocs_replicas = masters + workers %}
+{%- endif %}
 {%- if not ocs_nodes %}
 {%- set ocs_nodes = ocs_replicas|defaultnodes(cluster, domain, masters,workers) %}
 {%- endif %}

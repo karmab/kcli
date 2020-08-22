@@ -1,10 +1,10 @@
 ocs_disksize: 60
-ocs_channel: '4.4'
+ocs_channel: 'stable-4.4'
 ocs_version: '4.4.2'
 ocs_nodes: []
 ocs_devicesets: 1
 ocs_storageclass: localstorage-sc
-ocs_replicas: 1
+ocs_replicas:
 ocs_accessmode: ReadWriteOnce
 ocs_portable: false
 ocs_deploycluster: true
