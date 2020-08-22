@@ -5,7 +5,7 @@
 #
 
 Name:           {{{ git_dir_name }}}
-Version:        99.{{{ git_dir_version }}}
+Version:        {{{ git_custom_version }}}
 Release:        1%{?dist}
 Url:            http://github.com/karmab/kcli
 Summary:        Wrapper for libvirt,gcp,aws,ovirt,openstack,kubevirt and vsphere
@@ -27,7 +27,7 @@ openstack, vsphere and kubevirt and to easily deploy single vms from cloud image
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "import sys; from distutils.sysconfig import get_python_lib; sys.stdout.write(get_python_lib())")}
 
 %prep
-%setup -q -n kcli-{{{ git_dir_version }}}
+%setup -q -n kcli-{{{ git_custom_version }}}
 
 %build
 sed -i "s/, 'libvirt.*/\]/" setup.py
