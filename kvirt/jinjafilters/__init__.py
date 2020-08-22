@@ -2,7 +2,6 @@ from base64 import b64encode
 import os
 from distutils.version import LooseVersion
 import requests
-from kvirt.common import pprint
 
 
 def basename(path):
@@ -64,7 +63,7 @@ def githubversion(repo, version=None):
             tag1 = tags[-2]
             tag2 = tags[-1]
             version = tag1 if tag1 in tag2 or 'rc' in tag2 else tag2
-    pprint("Using version %s" % version)
+    print('\033[0;36mUsing version %s\033[0;0m' % version)
     return version
 
 
