@@ -11,7 +11,7 @@ echo "Number of available nodes is lower than expected number of replicas"
 exit 1
 {%- endif %}
 {%- for node in ocs_nodes %}
-oc label {{ node }} cluster.ocs.openshift.io/openshift-storage=''
+oc label node {{ node }} cluster.ocs.openshift.io/openshift-storage=''
 oc label node {{ node }} topology.rook.io/rack=rack{{ loop.index }}
 {%- endfor %}
 oc wait --for=condition=Ready pod -l name=ocs-operator -n openshift-storage

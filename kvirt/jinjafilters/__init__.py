@@ -71,10 +71,10 @@ def defaultnodes(replicas, cluster, domain, masters, workers):
     nodes = []
     for num in range(workers):
         if len(nodes) < replicas:
-            nodes.append('%s-worker-%d.%s.%s' % (cluster, num, cluster, domain))
+            nodes.append('%s-worker-%d.%s' % (cluster, num, domain))
     for num in range(masters):
         if len(nodes) < replicas:
-            nodes.append('%s-master-%d.%s.%s' % (cluster, num, cluster, domain))
+            nodes.append('%s-master-%d.%s' % (cluster, num, domain))
     return nodes
 
 
