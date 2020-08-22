@@ -7,18 +7,18 @@ spec:
   manageNodes: false
   monDataDirHostPath: /var/lib/rook
   storageDeviceSets:
-  - count: 2
+  - count: {{ ocs_devicesets }}
     dataPVCTemplate:
       spec:
         accessModes:
-        - ReadWriteOnce
+        - {{ ocs_accessmode }}
         resources:
           requests:
             storage: {{ ocs_disksize }}Gi
-        storageClassName: localstorage-sc
+        storageClassName: {{ ocs_storageclass }}
         volumeMode: Block
     name: ocs-deviceset
     placement: {}
-    portable: false
-    replica: 3
+    portable: {{ ocs_portable }}
+    replica: {{ ocs_replicas }}
     resources: {}

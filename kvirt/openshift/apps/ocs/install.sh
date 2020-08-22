@@ -1,16 +1,24 @@
-{%- if ocs_nodes %}
-{%- for node in ocs_nodes %}
-OCS_NODE={{ node }}
-oc label $OCS_NODE cluster.ocs.openshift.io/openshift-storage=''
-oc label node $OCS_NODE topology.rook.io/rack=rack{{ loop.index }}
+{%- if not ocs_nodes %}
+{%- set ocs_nodes = [] %}
+{%- for num in range(0, workers) %}
+{%- if ocs_nodes|length < replicas %}
+{%- do ocs_nodes.append("%s-worker-%s.%s.%s" % (cluster, num|string, cluster, domain)) %}
+{% endif %}
 {%- endfor %}
-{%- else %}
-{%- for num in range(masters) %}
-OCS_NODE={{ cluster }}.master-{{ num }}.{{ cluster }}.{{ domain }}
-oc label $OCS_NODE cluster.ocs.openshift.io/openshift-storage=''
-oc label node $OCS_NODE topology.rook.io/rack=rack{{ num }}
+{%- for num in range(0, masters) %}
+{%- if ocs_nodes|length < replicas %}
+{%- do ocs_nodes.append("%s-master-%s.%s.%s" % (cluster, num|string, cluster, domain)) %}
+{%- endif %}
 {%- endfor %}
 {%- endif %}
+{%- if ocs_nodes|length < replicas %}
+echo "Number of available nodes is lower than expected number of replicas"
+exit 1
+{%- endif %}
+{%- for node in ocs_nodes %}
+oc label {{ node }} cluster.ocs.openshift.io/openshift-storage=''
+oc label node {{ node }} topology.rook.io/rack=rack{{ loop.index }}
+{%- endfor %}
 oc create -f install.yml
 sleep 10
 oc wait --for=condition=Ready pod -l name=ocs-operator -n openshift-storage
