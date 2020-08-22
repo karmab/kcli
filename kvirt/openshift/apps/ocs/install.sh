@@ -16,5 +16,7 @@ oc label node {{ node }} topology.rook.io/rack=rack{{ loop.index }}
 {%- endfor %}
 oc wait --for=condition=Ready pod -l name=ocs-operator -n openshift-storage
 oc create -f cr.yml
-oc patch storageclass ocs-storagecluster-cephfs -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
-oc patch OCSInitialization ocsinit -n openshift-storage --type json --patch  '[{ "op": "replace", "path": "/spec/enableCephTools", "value": true }]'
+echo Run the following command to make ocs your default storage class
+# oc patch storageclass ocs-storagecluster-ceph-rbd -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+echo oc patch storageclass ocs-storagecluster-ceph-rbd -p \'{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}\'
+# oc patch OCSInitialization ocsinit -n openshift-storage --type json --patch  '[{ "op": "replace", "path": "/spec/enableCephTools", "value": true }]'

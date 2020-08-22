@@ -1,0 +1,12 @@
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: serverless-operator
+  namespace: openshift-operators
+spec:
+  channel: "{{ openshift_version }}"
+  installPlanApproval: Automatic
+  name: serverless-operator
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
