@@ -4,6 +4,7 @@ ocs_version: '4.4'
 ocs_nodes: []
 ocs_devicesets: 1
 ocs_storageclass: localstorage-sc
-ocs_replicas: 3
+ocs_replicas: 1
 ocs_accessmode: ReadWriteOnce
 ocs_portable: false
+ocs_deploycluster: true
