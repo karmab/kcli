@@ -67,5 +67,17 @@ def githubversion(repo, version=None):
     return version
 
 
+def defaultnodes(replicas, cluster, domain, masters, workers):
+    nodes = []
+    for num in range(workers):
+        if len(nodes) < replicas:
+            nodes.append('%s-worker-%d.%s.%s' % (cluster, num, cluster, domain))
+    for num in range(masters):
+        if len(nodes) < replicas:
+            nodes.append('%s-master-%d.%s.%s' % (cluster, num, cluster, domain))
+    return nodes
+
+
 jinjafilters = {'basename': basename, 'dirname': dirname, 'ocpnodes': ocpnodes, 'none': none, 'type': _type,
-                'certificate': certificate, 'base64': base64, 'githubversion': githubversion}
+                'certificate': certificate, 'base64': base64, 'githubversion': githubversion,
+                'defaultnodes': defaultnodes}

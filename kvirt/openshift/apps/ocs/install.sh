@@ -4,19 +4,9 @@ exit
 {% endif %}
 sleep 10
 {%- if not ocs_nodes %}
-{%- set ocs_nodes = [] %}
-{%- for num in range(0, workers) %}
-{%- if ocs_nodes|length < replicas %}
-{%- do ocs_nodes.append("%s-worker-%s.%s.%s" % (cluster, num|string, cluster, domain)) %}
-{% endif %}
-{%- endfor %}
-{%- for num in range(0, masters) %}
-{%- if ocs_nodes|length < replicas %}
-{%- do ocs_nodes.append("%s-master-%s.%s.%s" % (cluster, num|string, cluster, domain)) %}
+{%- set ocs_nodes = ocs_replicas|defaultnodes(cluster, domain, masters,workers) %}
 {%- endif %}
-{%- endfor %}
-{%- endif %}
-{%- if ocs_nodes|length < replicas %}
+{%- if ocs_nodes|length < ocs_replicas %}
 echo "Number of available nodes is lower than expected number of replicas"
 exit 1
 {%- endif %}

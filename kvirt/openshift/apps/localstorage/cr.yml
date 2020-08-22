@@ -10,15 +10,12 @@ spec:
         - key: kubernetes.io/hostname
           operator: In
           values:
-{%- if localstorage_nodes %}
+{%- if not localstorage_nodes %}
+{%- set localstorage_nodes = 99|defaultnodes(cluster, domain, masters,workers) %}
+{%- endif %}
 {%- for node in localstorage_nodes %}
           - {{ node }}
 {%- endfor %}
-{%- else %}
-{%- for num in range(masters) %}
-          - {{ cluster }}.master-{{ num }}.{{ cluster }}.{{ domain }}
-{%- endfor %}
-{%- endif %}
   storageClassDevices:
     - storageClassName: {{ localstorage_storageclass }}
       volumeMode: Filesystem
