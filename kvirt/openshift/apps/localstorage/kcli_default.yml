@@ -1,3 +1,5 @@
 localstorage_disks:
 - vdb
 localstorage_nodes: []
+localstorage_storageclass: localstorage-sc
+localstorage_name: localstorage-disks

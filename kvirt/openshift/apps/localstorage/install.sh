@@ -6,10 +6,8 @@ while true; do
 done
 oc create -f cr.yml
 while true; do
-  oc get sc/localstorage-sc 2>/dev/null && break;
+  oc get sc/{{ localstorage_storageclass }} 2>/dev/null && break;
   echo "Waiting for the storageclass to be created"
   sleep 5
 done
-oc patch storageclass localstorage-sc  -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
-
-
+oc patch storageclass {{ localstorage_storageclass }} -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
