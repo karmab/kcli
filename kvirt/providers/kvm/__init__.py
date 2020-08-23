@@ -670,7 +670,7 @@ class Kvirt(object):
                     return {'result': 'failure', 'reason': msg}
             elif memoryhotplug:
                 lastcpu = int(numcpus) - 1
-                cpuxml += "<numa><cell id='0' cpus='0-%s' memory='1048576' unit='KiB'/></numa>" % lastcpu
+                cpuxml += "<numa><cell id='0' cpus='0-%s' memory='%d' unit='KiB'/></numa>" % (lastcpu, memory * 1024)
             cpuxml += "</cpu>"
         cpupinningxml = ''
         if cpupinning:
