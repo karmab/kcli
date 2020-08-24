@@ -577,6 +577,30 @@ def list_lb(args):
     return
 
 
+def info_profile(args):
+    """List profiles"""
+    profile = args.profile
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    profiles = baseconfig.list_profiles()
+    for entry in profiles:
+        if entry[0] == profile:
+            profile, flavor, pool, disks, image, nets, cloudinit, nested, reservedns, reservehost = entry
+            print("profile: %s" % profile)
+            print("flavor: %s" % flavor)
+            print("pool: %s" % pool)
+            print("disks: %s" % disks)
+            print("image: %s" % image)
+            print("nets: %s" % nets)
+            print("cloudinit: %s" % cloudinit)
+            print("nested: %s" % nested)
+            print("reservedns: %s" % reservedns)
+            print("reservehost: %s" % reservehost)
+            os._exit(0)
+            break
+    common.pprint("Profile %s doesn't exist" % profile, color='red')
+    os._exit(1)
+
+
 def list_profile(args):
     """List profiles"""
     short = args.short
@@ -2899,6 +2923,11 @@ def cli():
     profilecreate_parser.set_defaults(func=create_profile)
     create_subparsers.add_parser('profile', parents=[profilecreate_parser], description=profilecreate_desc,
                                  help=profilecreate_desc)
+
+    profileinfo_desc = 'Info Profile'
+    profileinfo_parser = info_subparsers.add_parser('profile', description=profileinfo_desc, help=profileinfo_desc)
+    profileinfo_parser.add_argument('profile', metavar='PROFILE')
+    profileinfo_parser.set_defaults(func=info_profile)
 
     profilelist_desc = 'List Profiles'
     profilelist_parser = list_subparsers.add_parser('profile', description=profilelist_desc, help=profilelist_desc,
