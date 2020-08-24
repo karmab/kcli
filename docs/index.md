@@ -1199,74 +1199,76 @@ Basic testing can be run with pytest, which leverages your existing kcli config:
 
 # Available parameters for client/profile/plan files
 
-- *virttype* Defaults to None. Only used for libvirt where it evaluates to kvm if acceleration shows in capabilities, or qemu emulation otherwise. If a value is provided, it must be either kvm, qemu, xen or lxc.
-- *cpumodel* Defaults to host-model
-- *cpuflags* (optional). You can specify a list of strings with features to enable or use dict entries with *name* of the feature and *policy* either set to require,disable, optional or force. The value for vmx is ignored, as it's handled by the nested flag.
-- *numcpus* Defaults to 2
-- *cpuhotplug* Defaults to False
-- *memory* Defaults to 512M
-- *memoryhotplug* Defaults to False
-- *flavor* For gcp, aws and openstack, You can specify an existing flavor so that cpu and memory is derived from it.
-- *guestid* Defaults to guestrhel764
-- *pool* Defaults to default
-- *template* Should point to your base cloud image(optional). You can either specify short name or complete path. If you omit the full path and your image lives in several pools, the one from last (alphabetical) pool will be used.
-- *disksize* Defaults to 10GB
-- *diskinterface* Defaults to virtio. You can set it to ide if using legacy operating systems
-- *diskthin* Defaults to True
-- *disks* Array of disks to define. For each of them, you can specify pool, size, thin (as boolean), interface (either ide or virtio) and a wwn.If you omit parameters, default values will be used from config or profile file (You can actually let the entire entry blank or just indicate a size number directly)
-- *iso* (optional)
-- *nets* Array of networks to define. For each of them, you can specify just a string for the name, or a dict containing name, public and alias and ip, mask and gateway
-- *gateway* (optional)
-- *dns* (optional) Dns servers
-- *domain* (optional) Dns search domain
-- *start* Defaults to true
-- *vnc* Defaults to false (use spice instead)
-- *cloudinit* Defaults to true
-- *reserveip* Defaults to false
-- *reservedns* Defaults to false
-- *reservehost* Defaults to false
-- *keys* (optional). Array of ssh public keys to inject to th vm
-- *cmds* (optional). Array of commands to run
-- *profile* name of one of your profile. Only checked in plan file
-- *scripts* array of paths of custom script to inject with cloudinit. It will be merged with cmds parameter. You can either specify full paths or relative to where you're running kcli. Only checked in profile or plan file
-- *nested* Defaults to True
-- *sharedkey* Defaults to False. Set it to true so that a private/public key gets shared between all the nodes of your plan. Additionally, root access will be allowed
-- *privatekey* Defaults to False. Set it to true so that your private key is passed to the nodes of your plan. If you need this, you know why :)
-- *files* (optional)- Array of files to inject to the vm. For each of them, you can specify path, owner ( root by default) , permissions (600 by default ) and either origin or content to gather content data directly or from specified origin. When specifying a directory as origin, all the files it contains will be parsed and added.
-- *insecure* (optional) Defaults to True. Handles all the ssh option details so you dont get any warnings about man in the middle.
-- *client* (optional) Allows you to create the vm on a specific client. This field is not used for other types like network, so expect to use this in relatively simple plans only
-- *base* (optional) Allows you to point to a parent profile so that values are taken from parent when not found in the current profile. Scripts and commands are rather concatenated between default, father and children ( so you have a happy family...)
-- *tags* (optional) Array of tags to apply to gcp instances (usefull when matched in a firewall rule). In the case of kubevirt, it s rather a dict of key=value used as node selector (allowing to force vms to be scheduled on a matching node)
-- <a name="rhnregister">*rhnregister*</a> (optional). Auto registers vms whose template starts with rhel Defaults to false. Requires to either rhnuser and rhnpassword, or rhnactivationkey and rhnorg, and an optional rhnpool
-- *rhnuser* (optional). Red Hat network user
-- *rhnpassword* (optional). Red Hat network password
-- *rhnactivationkey* (optional). Red Hat network activation key
-- *rhnorg* (optional). Red Hat network organization
-- *rhnpool* (optional). Red Hat network pool
-- *rhnwait* (optional). Defaults to 0. Delay in seconds before attempting to subscribe machine, to be used in environment where networking takes more time to come up.
-- *enableroot* (optional). Defaults to true. Allows ssh access as root user
-- *storemetadata* (optional). Defaults to false. creates a /root/.metadata yaml file whith all the overrides applied. On gcp, those overrides are also stored as extra metadata
-- *sharedfolders* (optional). Defaults to a blank array. List of paths to share between a kvm hypervisor and vm. You will also make sure that the path is accessible as qemu user (typically with id 107) and use an hypervisor and a guest with 9p support (centos/rhel lack it)
-- *yamlinventory* (optional). Defaults to false. If set to true, ansible generated inventory for single vms or for plans containing ansible entries will be yaml based.
-- *autostart* (optional). Defaults to false. Autostarts vm (only applies for libvirt)
-- *kernel* (optional). Kernel location to pass to the vm. Needs to be local to the hypervisor.
-- *initrd* (optional). Initrd location to pass to the vm. Needs to be local to the hypervisor.
-- *cmdline* (optional). Cmdline to pass to the vm.
-- *numamode* optional numamode to apply to the workers only.
-- *cpupinning* optional cpupinning conf to apply to the workers only.
-- *pcidevices* optional array of pcidevices to passthrough to the first worker only. Check [here](https://github.com/karmab/kcli-plans/blob/master/samples/pcipassthrough/pci.yml) for an example.
-- *tpm* (optional). Defaults to false. Enables a TPM device in the vm, using emulator mode. Requires swtpm in the host.
-- *rng (optional). Defaults to false. Enables a RNG device in the vm.
-- *notify* (optional). Defaults to false. Sends result of a command or a script run from the vm to one of the supported notify engines.
-- *notifymethod* (optional). Array of notify engines. Defaults to [pushbullet]. Other options are slack and mail.
-- *notifycmd* (optional). Which command to run for notification. If none is provided and no notifyscript either, defaults to sending last 100 lines of the cloudinit file of the machine, or ignition for coreos based vms.
-- *notifyscript* Script to execute on the vm and whose output will be sent to notification engines.
-- *pushbullettoken*. Token to use when notifying through pushbullet.
-- *slacktoken*. Token to use when notifying through slack. Should be the token of an app generated in your workspace.
-- *slackchannel*. Slack Channel where to send the notification.
-- *mailserver*. Mail server where to send the notification (on port 25).
-- *mailfrom*. Mail address to send mail from.
-- *mailto*. List of mail addresses to send mail to.
+|Parameter                 |Default Value                                |Comments|
+|--------------------------|---------------------------------------------|--------|
+|*virttype*|None|Only used for libvirt where it evaluates to kvm if acceleration shows in capabilities, or qemu emulation otherwise. If a value is provided, it must be either kvm, qemu, xen or lxc|
+|*cpumodel*|host-model||
+|*cpuflags*|[]| You can specify a list of strings with features to enable or use dict entries with *name* of the feature and *policy* either set to require,disable, optional or force. The value for vmx is ignored, as it's handled by the nested flag|
+|*numcpus*|2||
+|*cpuhotplug*|False||
+|*numamode*|None|numamode to apply to the workers only.|
+|*cpupinning*|[]|cpupinning conf to apply|
+|*memory*|512M||
+|*memoryhotplug*|False||
+|*flavor*|| Specific to gcp, aws, openstack and packet|
+|*guestid*|guestrhel764||
+|*pool*|default||
+|*image*|None|Should point to your base cloud image(optional). You can either specify short name or complete path. If you omit the full path and your image lives in several pools, the one from last (alphabetical) pool will be used\
+|*disksize*|10GB||
+|*diskinterface*|virtio|You can set it to ide if using legacy operating systems|
+|*diskthin*|True||
+|*disks*|[]|Array of disks to define. For each of them, you can specify pool, size, thin (as boolean), interface (either ide or virtio) and a wwn.If you omit parameters, default values will be used from config or profile file (You can actually let the entire entry blank or just indicate a size number directly)|
+|*iso*|None||
+|*nets*|[]|Array of networks to define. For each of them, you can specify just a string for the name, or a dict containing name, public and alias and ip, mask and gateway. Any visible network is valid, in particular bridge networks can be used on libvirt, beyond regular nat networks|
+|*gateway*|None||
+|*dns*|None|Dns server|
+|*domain*|None|Dns search domain|
+|*start*|true||
+|*vnc*|false| if set to true, vnc is used for console instead of spice|
+|*cloudinit*|true||
+|*reserveip*|false||
+|*reservedns*|false||
+|*reservehost*|false||
+|*keys*|[]|Array of ssh public keys to inject to th vm|
+|*cmds*|[]|Array of commands to run|
+|*profile*|None|name of one of your profile|
+|*scripts*|[]|array of paths of custom script to inject with cloudinit. It will be merged with cmds parameter. You can either specify full paths or relative to where you're running kcli. Only checked in profile or plan file|
+|*nested*|True||
+|*sharedkey*|False| Share a private/public key between all the nodes of your plan. Additionally, root access will be allowed|
+|*privatekey*|False| Inject your private key to the nodes of your plan|
+|*files*|[]|Array of files to inject to the vm. For each of them, you can specify path, owner ( root by default) , permissions (600 by default ) and either origin or content to gather content data directly or from specified origin. When specifying a directory as origin, all the files it contains will be parsed and added|
+|*insecure*|True|Handles all the ssh option details so you don't get any warnings about man in the middle|
+|*client*|None|Allows you to create the vm on a specific client. This field is not used for other types like network|
+|*base*|None|Allows you to point to a parent profile so that values are taken from parent when not found in the current profile. Scripts and commands are rather concatenated between default, father and children|
+|*tags*|[]|Array of tags to apply to gcp instances (usefull when matched in a firewall rule). In the case of kubevirt, it s rather a dict of key=value used as node selector (allowing to force vms to be scheduled on a matching node)|
+|*rhnregister*|None|Auto registers vms whose template starts with rhel Defaults to false. Requires to either rhnuser and rhnpassword, or rhnactivationkey and rhnorg, and an optional rhnpool|
+|*rhnuser*|None|Red Hat Network user|
+|*rhnpassword*|None|Red Hat Network password|
+|*rhnactivationkey*|None|Red Hat Network activation key|
+|*rhnorg*|None|Red Hat Network organization|
+|*rhnpool*|None|Red Hat Network pool|
+|*rhnwait*|0|Delay in seconds before attempting to subscribe machine, to be used in environments where networking takes more time to come up|
+|*enableroot*|true|Allows ssh access as root user|
+|*storemetadata*|false|Creates a /root/.metadata yaml file whith all the overrides applied. On gcp, those overrides are also stored as extra metadata|
+|*sharedfolders*|[]|List of paths to share between a kvm hypervisor and vm. You will also make sure that the path is accessible as qemu user (typically with id 107) and use an hypervisor and a guest with 9p support (centos/rhel lack it)|
+|*yamlinventory*|false|Ansible generated inventory for single vms or for plans containing ansible entries will be yaml based.|
+|*autostart*|false|Autostarts vm (libvirt specific)|
+|*kernel*|None|Kernel location to pass to the vm. Needs to be local to the hypervisor|
+|*initrd*|None|Initrd location to pass to the vm. Needs to be local to the hypervisor|
+|*cmdline*|None|Cmdline to pass to the vm|
+|*pcidevices*|[]|array of pcidevices to passthrough to the first worker only. Check [here](https://github.com/karmab/kcli-plans/blob/master/samples/pcipassthrough/pci.yml) for an example|
+|*tpm*|false|Enables a TPM device in the vm, using emulator mode. Requires swtpm in the host|
+|*rng*|false|Enables a RNG device in the vm|
+|*notify*|false|Sends result of a command or a script run from the vm to one of the supported notify engines|
+|*notifymethod*|[pushbullet]|Array of notify engines. Other options are slack and mail|
+|*notifycmd*|None|Which command to run for notification. If none is provided and no notifyscript either, defaults to sending last 100 lines of the cloudinit file of the machine, or ignition for coreos based vms|
+|*notifyscript*|None|Script to execute on the vm and whose output will be sent to notification engines|
+|*pushbullettoken*|None|Token to use when notifying through pushbullet|
+|*slacktoken*|None|Token to use when notifying through slack. Should be the token of an app generated in your workspace|
+|*slackchannel*|None|Slack Channel where to send the notification|
+|*mailserver*|None|Mail server where to send the notification (on port 25)|
+|*mailfrom*|None|Mail address to send mail from|
+|*mailto*|[]|List of mail addresses to send mail to|
 
 ## Overriding parameters
 
