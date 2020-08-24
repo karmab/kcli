@@ -34,7 +34,6 @@ class Kconfig():
         self.baseconfig = self.config
         clientinfo = self.config.get_config(empty())
         currentclient = clientinfo.client
-        self.planview = False
         self.client = clientinfo.client
         self.extraclients = [c for c in clientinfo.extraclients]
         if client is not None:
@@ -494,8 +493,6 @@ def list_vm(args):
             plan = vm.plan
             profile = vm.profile
             vminfo = [name, status, ip, source, plan, profile]
-            if config.planview and vm[4] != config.currentplan:
-                continue
             if filters:
                 if status == filters:
                     vms.add_row(vminfo)

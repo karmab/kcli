@@ -11,7 +11,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             START, AUTOSTART, NESTED, TUNNEL, TUNNELHOST, TUNNELPORT, TUNNELUSER, TUNNELDIR,
                             INSECURE, KEYS, CMDS, DNS, DOMAIN, SCRIPTS, FILES, ISO,
                             NETMASKS, GATEWAY, SHAREDKEY, IMAGE, ENABLEROOT,
-                            PLANVIEW, PRIVATEKEY, TAGS, RHNREGISTER, RHNUSER, RHNPASSWORD, RHNAK, RHNORG, RHNPOOL,
+                            PRIVATEKEY, TAGS, RHNREGISTER, RHNUSER, RHNPASSWORD, RHNAK, RHNORG, RHNPOOL,
                             RHNWAIT, FLAVOR, KEEP_NETWORKS, DNSCLIENT, STORE_METADATA, NOTIFY, PUSHBULLETTOKEN,
                             NOTIFYSCRIPT, SLACKTOKEN, NOTIFYCMD, NOTIFYMETHODS, SLACKCHANNEL, SHAREDFOLDERS, KERNEL,
                             INITRD, CMDLINE, PLACEMENT, YAMLINVENTORY, CPUHOTPLUG, MEMORYHOTPLUG, CPUFLAGS, CPUPINNING,
@@ -136,7 +136,6 @@ class Kbaseconfig:
         defaults['gateway'] = default.get('gateway', GATEWAY)
         defaults['sharedkey'] = default.get('sharedkey', SHAREDKEY)
         defaults['enableroot'] = default.get('enableroot', ENABLEROOT)
-        defaults['planview'] = default.get('planview', PLANVIEW)
         defaults['privatekey'] = default.get('privatekey', PRIVATEKEY)
         defaults['rhnregister'] = default.get('rhnregister', RHNREGISTER)
         defaults['rhnuser'] = default.get('rhnuser', RHNUSER)
@@ -283,7 +282,6 @@ class Kbaseconfig:
         self.gateway = options.get('gateway', self.default['gateway'])
         self.sharedkey = options.get('sharedkey', self.default['sharedkey'])
         self.enableroot = options.get('enableroot', self.default['enableroot'])
-        self.planview = options.get('planview', self.default['planview'])
         self.dns = options.get('dns', self.default['dns'])
         self.domain = options.get('domain', self.default['domain'])
         self.scripts = options.get('scripts', self.default['scripts'])

@@ -221,7 +221,7 @@ class Kconfig(Kbaseconfig):
         self.overrides.update(config_data)
 
     def create_vm(self, name, profile, overrides={}, customprofile={}, k=None,
-                  plan='kvirt', basedir='.', client=None, onfly=None, wait=False, planmode=False):
+                  plan='kvirt', basedir='.', client=None, onfly=None, wait=False):
         """
 
         :param k:
@@ -274,10 +274,7 @@ class Kconfig(Kbaseconfig):
                 vmprofiles[profile] = {'image': profile}
         profilename = profile
         profile = vmprofiles[profile]
-        if not planmode:
-            for key in overrides:
-                if key not in profile:
-                    profile[key] = overrides[key]
+        profile.update(overrides)
         if 'base' in profile:
             father = vmprofiles[profile['base']]
             default_numcpus = father.get('numcpus', self.numcpus)
@@ -1550,7 +1547,7 @@ $INFO
                         profile['image'] = os.path.basename(IMAGES[imageprofile])
                 currentoverrides = overrides.copy()
                 result = self.create_vm(name, profilename, overrides=currentoverrides, customprofile=profile, k=z,
-                                        plan=plan, basedir=currentplandir, client=vmclient, onfly=onfly, planmode=True)
+                                        plan=plan, basedir=currentplandir, client=vmclient, onfly=onfly)
                 common.handle_response(result, name, client=vmclient)
                 if result['result'] == 'success':
                     newvms.append(name)

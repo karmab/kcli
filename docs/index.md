@@ -1194,7 +1194,6 @@ Basic testing can be run with pytest, which leverages your existing kcli config:
 - *protocol* Defaults to ssh
 - *url* can be used to specify an exotic qemu url
 - *tunnel* Defaults to False. Setting it to true will make kcli use tunnels for console and for ssh access. You want that if you only open ssh port to your client!
-- *planview* Defaults to False. Setting it to true will make kcli use the value specified in *~/.kcli/plan* as default plan upon starting and stopping plan. Additionally, vms not belonging to the set plan wont show up when listing
 - *keep_networks* Defaults to False. Setting it to true will make kcli keeps networks when deleting plan
 
 # Available parameters for client/profile/plan files

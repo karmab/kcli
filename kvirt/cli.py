@@ -482,8 +482,6 @@ def list_vm(args):
             plan = vm.get('plan', '')
             profile = vm.get('profile', '')
             vminfo = [name, status, ip, source, plan, profile]
-            if baseconfig.planview and vm[4] != baseconfig.currentplan:
-                continue
             if filters:
                 if status == filters:
                     vms.add_row(vminfo)
