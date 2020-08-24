@@ -2,7 +2,7 @@
 from setuptools import setup, find_packages
 
 import os
-INSTALL = ['argcomplete', 'netaddr', 'PyYAML', 'prettytable', 'jinja2', 'flask', 'libvirt-python>=2.0.0']
+INSTALL = ['argcomplete', 'netaddr', 'PyYAML', 'prettytable', 'jinja2', 'flask', 'libvirt-python>=2.0.0', 'requests']
 AWS = ['boto3']
 GCP = ['google-api-python-client', 'google-auth-httplib2', 'google-cloud-dns']
 KUBEVIRT = ['kubernetes']
