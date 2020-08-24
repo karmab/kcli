@@ -216,6 +216,10 @@ def create(config, plandir, cluster, overrides):
             'minimal': False}
     data.update(overrides)
     overrides['kubetype'] = 'openshift'
+    apps = overrides.get('apps', [])
+    if ('localstorage' in apps or 'ocs' in apps) and 'extra_disks' not in overrides\
+            and 'extra_master_disks' not in overrides and 'extra_worker_disks' not in overrides:
+        pprint("Storage apps require extra disks to be set", color='yellow')
     data['cluster'] = overrides['cluster'] if 'cluster' in overrides else cluster
     overrides['kube'] = data['cluster']
     masters = data.get('masters', 1)
@@ -661,7 +665,6 @@ def create(config, plandir, cluster, overrides):
         pprint("Deleting %s" % vm)
         k.delete(vm)
     os.environ['KUBECONFIG'] = "%s/%s/auth/kubeconfig" % (os.getcwd(), clusterdir)
-    apps = overrides.get('apps', [])
     if apps:
         overrides['openshift_version'] = INSTALLER_VERSION[0:3]
         for app in apps:
