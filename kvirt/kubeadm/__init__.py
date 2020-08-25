@@ -1,20 +1,31 @@
 #!/usr/bin/env python
 
 from distutils.spawn import find_executable
-from kvirt.common import info, pprint, pwd_path, get_kubectl, kube_create_app, scp
+from kvirt.common import info, pprint, get_kubectl, kube_create_app, scp
 from kvirt.defaults import UBUNTUS, IMAGES
 import os
 import sys
+import yaml
 
 # virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere', 'packet']
 cloudplatforms = ['aws', 'gcp']
 
 
 def scale(config, plandir, cluster, overrides):
-    data = {'cluster': cluster, 'xip': False}
-    data.update(overrides)
+    plan = cluster
+    data = {'cluster': cluster, 'xip': False, 'kube': cluster, 'kubetype': 'generic'}
     data['basedir'] = '/workdir' if os.path.exists("/i_am_a_container") else '.'
     cluster = data.get('cluster')
+    clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
+    if not os.path.exists(clusterdir):
+        pprint("Cluster directory %s not found..." % clusterdir, color='red')
+        sys.exit(1)
+    if os.path.exists("%s/kcli_parameters.yml" % clusterdir):
+        with open("%s/kcli_parameters.yml" % clusterdir, 'r') as install:
+            installparam = yaml.safe_load(install)
+            data.update(installparam)
+            plan = installparam.get('plan', plan)
+    data.update(overrides)
     client = config.client
     k = config.k
     pprint("Scaling on client %s" % client, color='blue')
@@ -25,12 +36,15 @@ def scale(config, plandir, cluster, overrides):
     else:
         pprint("Using image %s" % image, color='blue')
     data['image'] = image
-    if data['xip'] and data['masters'] > 1:
+    data['ubuntu'] = True if image in UBUNTUS or 'ubuntu' in image.lower() else False
+    if data['xip'] and data.get('masters', 1) > 1:
         pprint("Note that your workers won't have a xip.io domain", color='yellow')
-    config.plan(cluster, inputfile='%s/workers.yml' % plandir, overrides=data)
+    os.chdir(os.path.expanduser("~/.kcli"))
+    config.plan(plan, inputfile='%s/workers.yml' % plandir, overrides=data)
 
 
 def create(config, plandir, cluster, overrides):
+    plan = cluster
     platform = config.type
     k = config.k
     data = {'kubetype': 'generic', 'xip': False, 'domain': 'karmalabs.com'}
@@ -76,7 +90,7 @@ def create(config, plandir, cluster, overrides):
         if not existing_images:
             config.handle_host(pool=config.pool, image=image, download=True, url=imageurl, update_profile=False)
         data['image'] = shortimage
-    clusterdir = pwd_path("clusters/%s" % cluster)
+    clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
     firstmaster = "%s-master-0" % cluster
     if os.path.exists(clusterdir):
         pprint("Please remove existing directory %s first..." % clusterdir, color='red')
@@ -86,7 +100,11 @@ def create(config, plandir, cluster, overrides):
     if not os.path.exists(clusterdir):
         os.makedirs(clusterdir)
         os.mkdir("%s/auth" % clusterdir)
-    result = config.plan(cluster, inputfile='%s/masters.yml' % plandir, overrides=data, wait=True)
+        with open("%s/kcli_parameters.yml" % clusterdir, 'w') as p:
+            installparam = overrides.copy()
+            installparam['plan'] = plan
+            yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
+    result = config.plan(plan, inputfile='%s/masters.yml' % plandir, overrides=data, wait=True)
     if result['result'] != "success":
         os._exit(1)
     source, destination = "/root/join.sh", "%s/join.sh" % clusterdir
@@ -105,16 +123,16 @@ def create(config, plandir, cluster, overrides):
         pprint("Deploying workers", color='blue')
         if 'name' in data:
             del data['name']
-        config.plan(cluster, inputfile='%s/workers.yml' % plandir, overrides=data)
+        config.plan(plan, inputfile='%s/workers.yml' % plandir, overrides=data)
     pprint("Kubernetes cluster %s deployed!!!" % cluster)
     masters = data.get('masters', 1)
-    info("export KUBECONFIG=clusters/%s/auth/kubeconfig" % cluster)
+    info("export KUBECONFIG=$HOME/.kcli/clusters/%s/auth/kubeconfig" % cluster)
     info("export PATH=$PWD:$PATH")
     prefile = 'pre_ubuntu.sh' if data['ubuntu'] else 'pre_el.sh'
-    predata = config.process_inputfile(cluster, "%s/%s" % (plandir, prefile), overrides=data)
+    predata = config.process_inputfile(plan, "%s/%s" % (plandir, prefile), overrides=data)
     with open("%s/pre.sh" % clusterdir, 'w') as f:
         f.write(predata)
-    os.environ['KUBECONFIG'] = "%s/%s/auth/kubeconfig" % (os.getcwd(), clusterdir)
+    os.environ['KUBECONFIG'] = "%s/auth/kubeconfig" % clusterdir
     apps = data.get('apps', [])
     if apps:
         for app in apps:

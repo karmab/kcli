@@ -1951,11 +1951,16 @@ $INFO
         openshift.create(self, plandir, cluster, overrides)
 
     def delete_kube(self, cluster, overrides={}):
-        self.plan(cluster, delete=True)
-        clusterdir = common.pwd_path("clusters/%s" % cluster)
+        plan = cluster
+        clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
         if os.path.exists(clusterdir):
-            common.pprint("Deleting %s" % common.real_path(clusterdir), color='green')
+            if os.path.exists("%s/kcli_parameters.yml" % clusterdir):
+                with open("%s/kcli_parameters.yml" % clusterdir, 'r') as install:
+                    installparam = yaml.safe_load(install)
+                    plan = installparam.get('plan', plan)
+            common.pprint("Deleting %s" % clusterdir, color='green')
             rmtree(clusterdir)
+        self.plan(plan, delete=True)
 
     def scale_kube_generic(self, cluster, overrides={}):
         plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
