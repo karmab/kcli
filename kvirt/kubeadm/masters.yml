@@ -1,6 +1,3 @@
-{{ image }}:
- type: image
-
 {%- if masters > 1 and config_type in ['aws', 'gcp'] %}
 {{ cluster }}-master:
  type: loadbalancer
