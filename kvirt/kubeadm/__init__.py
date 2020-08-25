@@ -44,12 +44,16 @@ def scale(config, plandir, cluster, overrides):
 
 
 def create(config, plandir, cluster, overrides):
-    plan = cluster
     platform = config.type
     k = config.k
     data = {'kubetype': 'generic', 'xip': False, 'domain': 'karmalabs.com'}
     data.update(overrides)
-    data['cluster'] = overrides['cluster'] if 'cluster' in overrides else cluster
+    datacluster = overrides.get('cluster')
+    if datacluster is None:
+        data['cluster'] = cluster if cluster is not None else 'testk'
+    else:
+        data['cluster'] = datacluster
+    plan = cluster if cluster is not None else data['cluster']
     data['kube'] = data['cluster']
     masters = data.get('masters', 1)
     if masters == 0:

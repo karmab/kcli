@@ -1279,7 +1279,7 @@ def create_generic_kube(args):
     """Create Generic kube"""
     paramfile = args.paramfile
     force = args.force
-    cluster = args.cluster if args.cluster is not None else 'testk'
+    cluster = args.cluster
     if os.path.exists("/i_am_a_container"):
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
@@ -1321,7 +1321,7 @@ def create_openshift_kube(args):
     """Create Generic kube"""
     paramfile = args.paramfile
     force = args.force
-    cluster = args.cluster if args.cluster is not None else 'testk'
+    cluster = args.cluster
     if os.path.exists("/i_am_a_container"):
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
