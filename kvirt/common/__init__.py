@@ -1213,13 +1213,17 @@ def find_ignition_files(role, plan):
     if os.path.exists('/i_am_a_container'):
         clusterpath = "/workdir/clusters/%s/%s.ign" % (plan, role)
         rolepath = "/workdir/%s/%s.ign" % (plan, role)
+        scalepath = "/workdir/%s.ign" % role
     else:
         clusterpath = "clusters/%s/%s.ign" % (plan, role)
         rolepath = "%s/%s.ign" % (plan, role)
+        scalepath = "%s.ign" % role
     if os.path.exists(clusterpath):
         return clusterpath
     elif os.path.exists(rolepath):
         return rolepath
+    elif os.path.exists(scalepath):
+        return scalepath
     else:
         return None
 
