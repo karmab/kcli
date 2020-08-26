@@ -1,3 +1,6 @@
+{{ image }}:
+  type: image
+
 {%- if masters > 1 and config_type in ['aws', 'gcp'] %}
 {{ cluster }}-master:
  type: loadbalancer
@@ -69,7 +72,7 @@
 {%- endif %}
 {%- endif %}
  scripts: 
-{%- if ubuntu %}
+{%- if ubuntu|default(False) %}
   - pre_ubuntu.sh
 {%- else %}
   - pre_el.sh

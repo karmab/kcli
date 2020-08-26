@@ -274,7 +274,8 @@ class Kconfig(Kbaseconfig):
                 vmprofiles[profile] = {'image': profile}
         profilename = profile
         profile = vmprofiles[profile]
-        profile.update(overrides)
+        if not customprofile:
+            profile.update(overrides)
         if 'base' in profile:
             father = vmprofiles[profile['base']]
             default_numcpus = father.get('numcpus', self.numcpus)
@@ -1531,6 +1532,7 @@ $INFO
                     if vmcounter >= len(vmentries):
                         os.remove("%s.key.pub" % plan)
                         os.remove("%s.key" % plan)
+                currentoverrides = overrides.copy()
                 if 'image' in profile:
                     for entry in self.list_profiles():
                         currentimage = profile['image']
@@ -1538,6 +1540,7 @@ $INFO
                         clientprofile = "%s_%s" % (self.client, currentimage)
                         if entryprofile == currentimage or entryprofile == clientprofile:
                             profile['image'] = entry[4]
+                            currentoverrides['image'] = profile['image']
                             break
                     imageprofile = profile['image']
                     if imageprofile in IMAGES and self.type != 'packet' and\
@@ -1545,7 +1548,7 @@ $INFO
                         common.pprint("Image %s not found. Downloading" % imageprofile, color='blue')
                         self.handle_host(pool=self.pool, image=imageprofile, download=True, update_profile=True)
                         profile['image'] = os.path.basename(IMAGES[imageprofile])
-                currentoverrides = overrides.copy()
+                        currentoverrides['image'] = profile['image']
                 result = self.create_vm(name, profilename, overrides=currentoverrides, customprofile=profile, k=z,
                                         plan=plan, basedir=currentplandir, client=vmclient, onfly=onfly)
                 common.handle_response(result, name, client=vmclient)
@@ -1951,6 +1954,7 @@ $INFO
         openshift.create(self, plandir, cluster, overrides)
 
     def delete_kube(self, cluster, overrides={}):
+        cluster = overrides.get('cluster', cluster)
         plan = cluster
         clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
         if os.path.exists(clusterdir):
