@@ -1933,7 +1933,7 @@ $INFO
         if os.path.exists('/i_am_a_container'):
             os.environ['PATH'] += ':/workdir'
         else:
-            os.environ['PATH'] += ':.'
+            os.environ['PATH'] += ':%s' % os.getcwd()
         plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
         kubeadm.create(self, plandir, cluster, overrides)
 
@@ -1941,7 +1941,7 @@ $INFO
         if os.path.exists('/i_am_a_container'):
             os.environ['PATH'] += ':/workdir'
         else:
-            os.environ['PATH'] += ':.'
+            os.environ['PATH'] += ':%s' % os.getcwd()
         plandir = os.path.dirname(k3s.create.__code__.co_filename)
         k3s.create(self, plandir, cluster, overrides)
 
@@ -1949,7 +1949,7 @@ $INFO
         if os.path.exists('/i_am_a_container'):
             os.environ['PATH'] += ':/workdir'
         else:
-            os.environ['PATH'] += ':.'
+            os.environ['PATH'] += ':%s' % os.getcwd()
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
         openshift.create(self, plandir, cluster, overrides)
 

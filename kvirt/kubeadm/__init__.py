@@ -85,16 +85,6 @@ def create(config, plandir, cluster, overrides):
     cluster = data.get('cluster')
     image = data.get('image', 'centos7')
     data['ubuntu'] = True if image in UBUNTUS or 'ubuntu' in image.lower() else False
-    # if image in IMAGES:
-    #     if not image.startswith('ubuntu') and image != 'centos7':
-    #         pprint("Only centos7 or ubuntu based images are supported", color='red')
-    #         sys.exit(1)
-    #     imageurl = IMAGES[image]
-    #     shortimage = os.path.basename(imageurl)
-    #     existing_images = [os.path.basename(i) for i in k.volumes() if os.path.basename(i) == shortimage]
-    #     if not existing_images:
-    #         config.handle_host(pool=config.pool, image=image, download=True, url=imageurl, update_profile=False)
-    #     data['image'] = shortimage
     clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
     firstmaster = "%s-master-0" % cluster
     if os.path.exists(clusterdir):
@@ -128,6 +118,7 @@ def create(config, plandir, cluster, overrides):
         pprint("Deploying workers", color='blue')
         if 'name' in data:
             del data['name']
+        os.chdir(os.path.expanduser("~/.kcli"))
         config.plan(plan, inputfile='%s/workers.yml' % plandir, overrides=data)
     pprint("Kubernetes cluster %s deployed!!!" % cluster)
     masters = data.get('masters', 1)

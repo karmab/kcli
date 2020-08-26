@@ -1382,6 +1382,10 @@ def scale_k3s_kube(args):
     workers = args.workers
     paramfile = args.paramfile
     cluster = args.cluster if args.cluster is not None else 'testk'
+    clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
+    if not os.path.exists(clusterdir):
+        common.pprint("Cluster directory %s not found..." % clusterdir, color='red')
+        sys.exit(1)
     if os.path.exists("/i_am_a_container"):
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
