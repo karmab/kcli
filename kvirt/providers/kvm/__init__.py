@@ -1398,10 +1398,12 @@ class Kvirt(object):
         if not vm.isActive():
             return None
         else:
+            mac = None
             interfaces = list(root.getiterator('interface'))
             for element in interfaces:
                 networktype = element.get('type')
-                mac = element.find('mac').get('address')
+                if mac is None:
+                    mac = element.find('mac').get('address')
                 if networktype == 'user':
                     continue
                 if networktype == 'bridge':
