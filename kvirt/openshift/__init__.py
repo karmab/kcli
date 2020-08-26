@@ -229,11 +229,7 @@ def create(config, plandir, cluster, overrides):
             'apps': [],
             'minimal': False}
     data.update(overrides)
-    datacluster = overrides.get('cluster')
-    if datacluster is None:
-        data['cluster'] = cluster if cluster is not None else 'testk'
-    else:
-        data['cluster'] = datacluster
+    data['cluster'] = overrides.get('cluster', cluster if cluster is not None else 'testk')
     plan = cluster if cluster is not None else data['cluster']
     overrides['kubetype'] = 'openshift'
     apps = overrides.get('apps', [])

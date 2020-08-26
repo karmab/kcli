@@ -42,11 +42,7 @@ def create(config, plandir, cluster, overrides):
     platform = config.type
     data = {'kubetype': 'k3s'}
     data.update(overrides)
-    datacluster = overrides.get('cluster')
-    if datacluster is None:
-        data['cluster'] = cluster if cluster is not None else 'testk'
-    else:
-        data['cluster'] = datacluster
+    data['cluster'] = overrides.get('cluster', cluster if cluster is not None else 'testk')
     plan = cluster if cluster is not None else data['cluster']
     data['kube'] = data['cluster']
     masters = data.get('masters', 1)
