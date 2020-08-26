@@ -1074,15 +1074,14 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
             'networkd': {}, 'passwd': {'users': [{'name': 'core', 'sshAuthorizedKeys': publickeys}]}}
     if enableroot:
         pprint("Ignoring request to add ssh keys for root user as ignition currently complains about it", color='blue')
-        # rootdata = {'name': 'root', 'sshAuthorizedKeys': publickeys}
-        # data['passwd']['users'].append(rootdata)
     role = None
     if len(name.split('-')) == 3 and name.split('-')[1] in ['master', 'worker']:
         role = name.split('-')[1]
     elif len(name.split('-')) == 2 and name.split('-')[1] == 'bootstrap':
         role = name.split('-')[1]
     if role is not None:
-        ignitionclusterpath = find_ignition_files(role, plan=plan)
+        cluster = overrides.get('cluster', plan)
+        ignitionclusterpath = find_ignition_files(role, cluster=cluster)
         if ignitionclusterpath is not None:
             data = mergeignition(name, ignitionclusterpath, data)
         rolepath = "/workdir/%s-%s.ign" % (plan, role) if os.path.exists('/i_am_a_container') else "%s-%s.ign" % (plan,
@@ -1209,15 +1208,18 @@ def get_latest_rhcos_metal(url):
             return kernel, initrd, metal
 
 
-def find_ignition_files(role, plan):
+def find_ignition_files(role, cluster):
+    clusterpath = os.path.expanduser("~/.kcli/clusters/%s/%s.ign" % (cluster, role))
     if os.path.exists('/i_am_a_container'):
-        clusterpath = "/workdir/clusters/%s/%s.ign" % (plan, role)
-        rolepath = "/workdir/%s/%s.ign" % (plan, role)
+        oldclusterpath = "/workdir/clusters/%s/%s.ign" % (cluster, role)
+        rolepath = "/workdir/%s/%s.ign" % (cluster, role)
     else:
-        clusterpath = "clusters/%s/%s.ign" % (plan, role)
-        rolepath = "%s/%s.ign" % (plan, role)
+        oldclusterpath = "clusters/%s/%s.ign" % (cluster, role)
+        rolepath = "%s/%s.ign" % (cluster, role)
     if os.path.exists(clusterpath):
         return clusterpath
+    elif os.path.exists(oldclusterpath):
+        return oldclusterpath
     elif os.path.exists(rolepath):
         return rolepath
     else:
