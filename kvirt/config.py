@@ -1354,17 +1354,19 @@ $INFO
                     continue
                 kubetype = kubeprofile.get('kubetype', 'generic')
                 overrides = kubeprofile
-                if kubetype not in ['generic', 'openshift']:
-                    common.pprint("Incorrect kubetype %s specified. skipped!" % kubetype, color='blue')
-                    continue
                 existing_masters = [v for v in currentconfig.k.list() if '%s-master' % cluster in v['name']]
                 if existing_masters:
                     common.pprint("Cluster %s found. skipped!" % cluster, color='blue')
                     continue
-                if kubetype == 'generic':
+                if kubetype == 'openshift':
+                    currentconfig.create_kube_openshift(cluster, overrides=overrides)
+                elif kubetype == 'k3s':
+                    currentconfig.create_kube_k3s(cluster, overrides=overrides)
+                elif kubetype == 'generic':
                     currentconfig.create_kube_generic(cluster, overrides=overrides)
                 else:
-                    currentconfig.create_kube_openshift(cluster, overrides=overrides)
+                    common.pprint("Incorrect kubetype %s specified. skipped!" % kubetype, color='blue')
+                    continue
         if vmentries:
             common.pprint("Deploying Vms...")
             vmcounter = 0
