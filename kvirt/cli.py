@@ -894,7 +894,7 @@ def list_kube(args):
     """List kube"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.extraclients:
-        kubestable = PrettyTable(["Cluster", "Type", "Host", "Vms"])
+        kubestable = PrettyTable(["Cluster", "Type", "Plan", "Host", "Vms"])
         allclients = config.extraclients.copy()
         allclients.update({config.client: config.k})
         for cli in sorted(allclients):
@@ -904,16 +904,18 @@ def list_kube(args):
             for kubename in kubes:
                 kube = kubes[kubename]
                 kubetype = kube['type']
+                kubeplan = kube['plan']
                 kubevms = kube['vms']
-                kubestable.add_row([kubename, kubetype, cli, kubevms])
+                kubestable.add_row([kubename, kubetype, kubeplan, cli, kubevms])
     else:
-        kubestable = PrettyTable(["Cluster", "Type", "Vms"])
+        kubestable = PrettyTable(["Cluster", "Type", "Plan", "Vms"])
         kubes = config.list_kubes()
         for kubename in kubes:
             kube = kubes[kubename]
             kubetype = kube['type']
             kubevms = kube['vms']
-            kubestable.add_row([kubename, kubetype, kubevms])
+            kubeplan = kube['plan']
+            kubestable.add_row([kubename, kubetype, kubeplan, kubevms])
     print(kubestable)
     return
 

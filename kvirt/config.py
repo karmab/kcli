@@ -835,8 +835,9 @@ $INFO
                 vmname = vm['name']
                 kube = vm['kube']
                 kubetype = vm['kubetype']
+                kubeplan = vm['plan']
                 if kube not in kubes:
-                    kubes[kube] = {'type': kubetype, 'vms': [vmname]}
+                    kubes[kube] = {'type': kubetype, 'plan': kubeplan, 'vms': [vmname]}
                 else:
                     kubes[kube]['vms'].append(vmname)
         for kube in kubes:
@@ -1354,16 +1355,17 @@ $INFO
                     continue
                 kubetype = kubeprofile.get('kubetype', 'generic')
                 overrides = kubeprofile
+                overrides['cluster'] = cluster
                 existing_masters = [v for v in currentconfig.k.list() if '%s-master' % cluster in v['name']]
                 if existing_masters:
                     common.pprint("Cluster %s found. skipped!" % cluster, color='blue')
                     continue
                 if kubetype == 'openshift':
-                    currentconfig.create_kube_openshift(cluster, overrides=overrides)
+                    currentconfig.create_kube_openshift(plan, overrides=overrides)
                 elif kubetype == 'k3s':
-                    currentconfig.create_kube_k3s(cluster, overrides=overrides)
+                    currentconfig.create_kube_k3s(plan, overrides=overrides)
                 elif kubetype == 'generic':
-                    currentconfig.create_kube_generic(cluster, overrides=overrides)
+                    currentconfig.create_kube_generic(plan, overrides=overrides)
                 else:
                     common.pprint("Incorrect kubetype %s specified. skipped!" % kubetype, color='blue')
                     continue
