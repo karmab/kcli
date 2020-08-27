@@ -58,7 +58,7 @@ def get_downstream_installer(nightly=False, macosx=False, tag=None):
     repo = 'ocp-dev-preview' if nightly else 'ocp'
     if tag is None:
         repo += '/latest'
-    elif tag.count('.') == 1:
+    elif str(tag).count('.') == 1:
         repo += '/latest-%s' % tag
     else:
         repo += '/%s' % tag
