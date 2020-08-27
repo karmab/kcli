@@ -1018,6 +1018,12 @@ def create_vm(args):
     wait = args.wait
     if 'wait' in overrides and isinstance(overrides['wait'], bool) and overrides['wait']:
         wait = True
+    if wait and 'keys' not in overrides and not os.path.exists(os.path.expanduser("~/.ssh/id_rsa.pub"))\
+            and not os.path.exists(os.path.expanduser("~/.ssh/id_dsa.pub"))\
+            and not os.path.exists(os.path.expanduser("~/.kcli/id_rsa.pub"))\
+            and not os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub")):
+                common.pprint("No usable public key found, which is mandatory when using wait", color='red')
+                os._exit(1)
     customprofile = {}
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     for key in overrides:

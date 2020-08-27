@@ -43,5 +43,5 @@ def get_home_ssh_key():
             key = ssh.read().rstrip()
     else:
         pprint("neither id_rsa or id_dsa public keys found in your .ssh or .kcli directory, you might have trouble "
-               "accessing the vm", color='red')
+               "accessing the vm", color='yellow')
     return key

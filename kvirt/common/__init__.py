@@ -214,7 +214,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 userdata.write("ssh_authorized_keys:\n")
             else:
                 pprint("neither id_rsa or id_dsa public keys found in your .ssh or .kcli directory, you might have "
-                       "trouble accessing the vm", color='red')
+                       "trouble accessing the vm", color='yellow')
             if keys:
                 for key in list(set(keys)):
                     userdata.write("- %s\n" % key)

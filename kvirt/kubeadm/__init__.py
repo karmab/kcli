@@ -49,6 +49,12 @@ def create(config, plandir, cluster, overrides):
     k = config.k
     data = {'kubetype': 'generic', 'xip': False, 'domain': 'karmalabs.com'}
     data.update(overrides)
+    if 'keys' not in overrides and not os.path.exists(os.path.expanduser("~/.ssh/id_rsa.pub"))\
+            and not os.path.exists(os.path.expanduser("~/.ssh/id_dsa.pub"))\
+            and not os.path.exists(os.path.expanduser("~/.kcli/id_rsa.pub"))\
+            and not os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub")):
+        pprint("No usable public key found, which is required for the deployment", color='red')
+        os._exit(1)
     data['cluster'] = overrides.get('cluster', cluster if cluster is not None else 'testk')
     plan = cluster if cluster is not None else data['cluster']
     data['kube'] = data['cluster']
