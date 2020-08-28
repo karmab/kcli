@@ -15,6 +15,24 @@
 # sys.path.insert(0, os.path.abspath('..'))
 # sys.setrecursionlimit(1500)
 
+# import pdoc
+# from typing import Sequence
+#
+#
+# def _flatten_submodules(modules: Sequence[pdoc.Module]):
+#    for module in modules:
+#        yield module
+#        for submodule in module.submodules():
+#            yield from _flatten_submodules((submodule,))
+#
+#
+# context = pdoc.Context()
+# module = pdoc.Module('kvirt', context=context)
+# modules = list(_flatten_submodules([module]))
+#
+# with open('docs/index.md', 'a+') as d:
+#    d.write(pdoc._render_template('/pdf.mako', modules=modules))
+
 
 # -- Project information -----------------------------------------------------
 
@@ -35,7 +53,7 @@ master_doc = 'index'
 # extensions = ['autoapi.extension']
 # extensions = ['sphinx.ext.autodoc', 'autoapi.extension', 'sphinx_rtd_theme', 'sphinx.ext.napoleon']
 # extensions = ['autoapi.extension', 'sphinx_rtd_theme', 'sphinx.ext.napoleon']
-extensions = ['autoapi.extension', 'sphinx_rtd_theme', 'sphinx.ext.napoleon']
+extensions = ['sphinx_rtd_theme', 'sphinx.ext.napoleon']
 
 
 # Add any paths that contain templates here, relative to this directory.
@@ -58,10 +76,3 @@ html_theme = 'sphinx_rtd_theme'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
-
-# -- Extension configuration -------------------------------------------------
-# autoapi
-autoapi_type = 'python'
-autoapi_dirs = ['../kvirt']
-autoapi_options = ['members', 'show-inheritance']
-autoapi_add_toctree_entry = False

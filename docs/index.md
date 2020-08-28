@@ -1616,11 +1616,5 @@ Note that the server doesn't implement all the features yet. Most notably, *crea
 - `kclirpc` can be used as a cli mimicking kcli but with grpc calls.
 - There is also a terraform provider for kcli using GRPC you can get from [here](https://github.com/karmab/terraform-provider-kcli)
 
-```{=rst}
-API documentation
------------------
+# API documentation
 
-* :ref:`genindex`
-* :ref:`modindex`
-
-```

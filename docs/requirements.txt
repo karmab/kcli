@@ -1,2 +1,2 @@
 sphinx ==2.4.4
-sphinx-autoapi == 1.2.1
+pdoc3

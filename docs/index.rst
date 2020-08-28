@@ -1664,7 +1664,7 @@ The procedure is the same independently of the type of cluster used.
     kcli delete kube $cluster
 
 Deploying applications on top of kubernetes/openshift
------------------------------------------------------
+=====================================================
 
 You can use kcli to deploy applications on your kubernetes/openshift (regardless of whether it was deployed with kcli)
 
@@ -1730,8 +1730,8 @@ Then:
 
 Alternatively, look at https://github.com/karmab/kcli-controller for a controller/operator handling vms and plans as crds and creating the corresponding assets with kcli/kvirt library.
 
-Using Jenkins with kcli
-=======================
+Using Jenkins
+=============
 
 Requisites
 ----------
@@ -1889,10 +1889,7 @@ Client side
 -  There is also a terraform provider for kcli using GRPC you can get from `here <https://github.com/karmab/terraform-provider-kcli>`__
 
 API documentation
------------------
-
-* :ref:`genindex`
-* :ref:`modindex`
+=================
 
 .. |Build Status| image:: https://travis-ci.org/karmab/kcli.svg?branch=master
    :target: https://travis-ci.org/karmab/kcli
