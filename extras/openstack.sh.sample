@@ -1,0 +1,21 @@
+#!/bin/bash
+
+private="default"
+public="extnet"
+api_ip="13.0.0.200"
+subnet="13.0.0.0/24"
+start="13.0.0.2"
+end="13.0.0.254"
+gateway="13.0.0.1"
+
+dns="8.8.8.8"
+#with kcli
+#kcli network -c 13.0.0.0/24 -P port_security_enabled=false $private
+neutron net-create $private -- --port_security_enabled=False
+neutron subnet-create --name $subnet --allocation-pool start=$start,end=$end --gateway $gateway --dns-nameserver $dns $private $subnet
+neutron router-interface-add router $subnet
+portid=$(neutron port-create $private --fixed-ip ip_address=$api_ip -f value -c id)
+floatingipid=$(neutron floatingip-create $public -f value -c id)
+neutron floatingip-associate $floatingipid $portid
+echo "api_ip: $api_ip"
+echo "public_api_ip: $(neutron floatingip-show $floatingipid -f value -c floating_ip_address)"
