@@ -934,7 +934,7 @@ class Kvirt(object):
                                     netxml, isoxml, displayxml, serialxml, sharedxml, guestxml, videoxml, hostdevxml,
                                     rngxml, tpmxml, cpuxml, qemuextraxml)
         if self.debug:
-            print(vmxml)
+            common.pprint(vmxml, color='blue')
         conn.defineXML(vmxml)
         vm = conn.lookupByName(name)
         autostart = 1 if autostart else 0
@@ -1154,7 +1154,7 @@ class Kvirt(object):
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if not vm.isActive():
-            print("VM down")
+            common.pprint("VM down", color='red')
             return
         else:
             xml = vm.XMLDesc(0)
@@ -1197,14 +1197,14 @@ class Kvirt(object):
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if not vm.isActive():
-            print("VM down")
+            common.pprint("VM down", color='red')
             return
         else:
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
             serial = list(root.getiterator('serial'))
             if not serial:
-                print("No serial Console found. Leaving...")
+                common.pprint("No serial Console found. Leaving...", color='red')
                 return
             elif self.host in ['localhost', '127.0.0.1']:
                 cmd = 'virsh -c %s console %s' % (self.url, name)
@@ -1218,7 +1218,7 @@ class Kvirt(object):
                     serialport = element.find('source').get('service')
                     if serialport:
                         if self.protocol != 'ssh':
-                            print("Remote serial Console requires using ssh . Leaving...")
+                            common.pprint("Remote serial Console requires using ssh . Leaving...", color='red')
                             return
                         else:
                             if os.path.exists("/i_am_a_container"):
@@ -1882,12 +1882,12 @@ class Kvirt(object):
                 ip = self.ip(name)
                 if ip is None:
                     time.sleep(5)
-                    print("Waiting 5 seconds to grab ip and create Host record...")
+                    common.pprint("Waiting 5 seconds to grab ip and create Host record...", color='blue')
                     counter += 10
                 else:
                     break
         if ip is None:
-            print("Couldn't assign Host")
+            common.pprint("Couldn't assign Host", color='red')
             return
         self._create_host_entry(name, ip, netname, domain)
 
@@ -1919,7 +1919,7 @@ class Kvirt(object):
         xml = vm.XMLDesc(0)
         root = ET.fromstring(xml)
         if not vm:
-            print("VM %s not found" % name)
+            common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if vm.isActive() == 1:
             common.pprint("Machine up. Change will only appear upon next reboot", color='yellow')
@@ -2008,7 +2008,7 @@ class Kvirt(object):
         try:
             vm = conn.lookupByName(name)
         except:
-            print("VM %s not found" % name)
+            common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         xml = vm.XMLDesc(0)
         root = ET.fromstring(xml)
@@ -2041,7 +2041,7 @@ class Kvirt(object):
                 isofound = True
                 break
         if not isofound:
-            print("Iso %s not found.Leaving..." % iso)
+            common.pprint("Iso %s not found.Leaving..." % iso, color='red')
             return {'result': 'failure', 'reason': "Iso %s not found" % iso}
         conn = self.conn
         try:
@@ -2049,7 +2049,7 @@ class Kvirt(object):
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
         except:
-            print("VM %s not found" % name)
+            common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         for element in list(root.getiterator('disk')):
             disktype = element.get('device')
@@ -2073,7 +2073,7 @@ class Kvirt(object):
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
         except:
-            print("VM %s not found" % name)
+            common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         for element in list(root.getiterator('disk')):
             disktype = element.get('device')
@@ -2093,7 +2093,7 @@ class Kvirt(object):
         try:
             vm = conn.lookupByName(name)
         except:
-            print("VM %s not found" % name)
+            common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if start:
             vm.setAutostart(1)
@@ -2215,25 +2215,30 @@ class Kvirt(object):
 
     def delete_disk_by_name(self, name, pool):
         conn = self.conn
+        poolname = pool
         try:
             pool = conn.storagePoolLookupByName(pool)
         except:
-            print("Pool %s not found. Leaving..." % pool)
-            return {'result': 'failure', 'reason': "Pool %s not found" % pool}
-        volume = pool.storageVolLookupByName(name)
-        volume.delete()
+            common.pprint("Pool %s not found. Leaving..." % poolname, color='red')
+            return {'result': 'failure', 'reason': "Pool %s not found" % poolname}
+        try:
+            volume = pool.storageVolLookupByName(name)
+            volume.delete()
+        except:
+            common.pprint("Disk %s not found in pool %s. Leaving..." % (name, poolname), color='red')
+            return {'result': 'failure', 'reason': "Disk %s not found in pool %s. Leaving..." % (name, poolname)}
 
     def delete_disk(self, name=None, diskname=None, pool=None):
+        conn = self.conn
         if name is None:
             result = self.delete_disk_by_name(diskname, pool)
             return result
-        conn = self.conn
         try:
             vm = conn.lookupByName(name)
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
         except:
-            print("VM %s not found" % name)
+            common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         for element in list(root.getiterator('disk')):
             disktype = element.get('device')
@@ -2252,7 +2257,7 @@ class Kvirt(object):
                 vmxml = vm.XMLDesc(0)
                 conn.defineXML(vmxml)
                 return {'result': 'success'}
-        print("Disk %s not found in %s" % (diskname, name))
+        common.pprint("Disk %s not found in %s" % (diskname, name), color='red')
         return {'result': 'failure', 'reason': "Disk %s not found in %s" % (diskname, name)}
 
     def list_disks(self):
@@ -2694,7 +2699,7 @@ class Kvirt(object):
         return networks
 
     def list_subnets(self):
-        print("not implemented")
+        common.pprint("not implemented", color='blue')
         return {}
 
     def delete_pool(self, name, full=False):
@@ -2880,7 +2885,7 @@ class Kvirt(object):
             hostscmd = "sh -c 'echo %s >>/etc/hosts'" % hosts
         else:
             hostscmd = "sh -c 'echo %s >>/etc/hosts'" % hosts.replace('"', '\\"')
-        print("Creating hosts entry. Password for sudo might be asked")
+        common.pprint("Creating hosts entry. Password for sudo might be asked", color='blue')
         if not dnsmasq or self.user != 'root':
             hostscmd = "sudo %s" % hostscmd
         elif self.protocol == 'ssh' and self.host not in ['localhost', '127.0.0.1']:
