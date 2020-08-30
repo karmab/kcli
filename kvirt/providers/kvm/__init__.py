@@ -2231,8 +2231,13 @@ class Kvirt(object):
     def delete_disk(self, name=None, diskname=None, pool=None):
         conn = self.conn
         if name is None:
-            result = self.delete_disk_by_name(diskname, pool)
-            return result
+            if '_' in os.path.basename(diskname) and diskname.endswith('.img'):
+                name = os.path.basename(diskname).split('_')[0]
+                common.pprint("Using %s as vm associated to this disk" % name, color='blue')
+            else:
+                common.pprint("Couldn't find a vm associated to this disk", color='yellow')
+                result = self.delete_disk_by_name(diskname, pool)
+                return result
         try:
             vm = conn.lookupByName(name)
             xml = vm.XMLDesc(0)
@@ -2248,7 +2253,11 @@ class Kvirt(object):
             if disktype == 'cdrom':
                 continue
             diskpath = element.find('source').get('file')
-            volume = self.conn.storageVolLookupByPath(diskpath)
+            try:
+                volume = self.conn.storageVolLookupByPath(diskpath)
+            except:
+                common.pprint("Skipping %s as it wasn't found" % diskpath, color='yellow')
+                continue
             if volume.name() == diskname or volume.path() == diskname or diskdev == diskname:
                 diskxml = self._xmldisk(diskpath=diskpath, diskdev=diskdev, diskbus=diskbus, diskformat=diskformat)
                 vm.detachDevice(diskxml)
