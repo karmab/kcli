@@ -2245,6 +2245,8 @@ class Kvirt(object):
         except:
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
+        found = False
+        missing_disks = []
         for element in list(root.getiterator('disk')):
             disktype = element.get('device')
             diskdev = element.find('target').get('dev')
@@ -2255,8 +2257,11 @@ class Kvirt(object):
             diskpath = element.find('source').get('file')
             try:
                 volume = self.conn.storageVolLookupByPath(diskpath)
+                volume.info()
             except:
-                common.pprint("Skipping %s as it wasn't found" % diskpath, color='yellow')
+                common.pprint("Disk %s was not found.Removing it from vm's definition" % diskpath, color='yellow')
+                diskxml = self._xmldisk(diskpath=diskpath, diskdev=diskdev, diskbus=diskbus, diskformat=diskformat)
+                missing_disks.append(diskxml)
                 continue
             if volume.name() == diskname or volume.path() == diskname or diskdev == diskname:
                 diskxml = self._xmldisk(diskpath=diskpath, diskdev=diskdev, diskbus=diskbus, diskformat=diskformat)
@@ -2265,9 +2270,17 @@ class Kvirt(object):
                 vm = conn.lookupByName(name)
                 vmxml = vm.XMLDesc(0)
                 conn.defineXML(vmxml)
-                return {'result': 'success'}
-        common.pprint("Disk %s not found in %s" % (diskname, name), color='red')
-        return {'result': 'failure', 'reason': "Disk %s not found in %s" % (diskname, name)}
+                found = True
+        if missing_disks:
+            for diskxml in missing_disks:
+                vm.detachDevice(diskxml)
+            vm = conn.lookupByName(name)
+            vmxml = vm.XMLDesc(0)
+            conn.defineXML(vmxml)
+        if not found:
+            common.pprint("Disk %s not found in %s" % (diskname, name), color='red')
+            return {'result': 'failure', 'reason': "Disk %s not found in %s" % (diskname, name)}
+        return {'result': 'success'}
 
     def list_disks(self):
         volumes = {}
