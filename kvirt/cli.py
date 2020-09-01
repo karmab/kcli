@@ -2671,7 +2671,7 @@ def cli():
                                       required=True)
     awshostcreate_parser.add_argument('-k', '--keypair', help='Keypair', metavar='KEYPAIR', required=True)
     awshostcreate_parser.add_argument('-r', '--region', help='Region', metavar='REGION', required=True)
-    awshostcreate_parser.add_argument('name', metavar='NAME', nargs='?')
+    awshostcreate_parser.add_argument('name', metavar='NAME')
     awshostcreate_parser.set_defaults(func=create_host_aws)
 
     gcphostcreate_desc = 'Create Gcp Host'
@@ -2680,7 +2680,7 @@ def cli():
     gcphostcreate_parser.add_argument('--credentials', help='Path to credentials file', metavar='credentials')
     gcphostcreate_parser.add_argument('--project', help='Project', metavar='project', required=True)
     gcphostcreate_parser.add_argument('--zone', help='Zone', metavar='zone', required=True)
-    gcphostcreate_parser.add_argument('name', metavar='NAME', nargs='?')
+    gcphostcreate_parser.add_argument('name', metavar='NAME')
     gcphostcreate_parser.set_defaults(func=create_host_gcp)
 
     kvmhostcreate_desc = 'Create Kvm Host'
