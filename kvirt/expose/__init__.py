@@ -37,7 +37,8 @@ class Kexposer():
                 if vm['plan'] in plans:
                     if vm['plan'] not in creationdates:
                         creationdates[vm['plan']] = vm['creationdate']
-                    plans[vm['plan']].append(vm)
+                    if vm not in plans[vm['plan']]:
+                        plans[vm['plan']].append(vm)
                     if 'owner' in vm and vm['plan'] not in planowners:
                         planowners[vm['plan']] = vm['owner']
             for extraclient in config.extraclients:
@@ -45,7 +46,8 @@ class Kexposer():
                     if vm['plan'] in plans:
                         if vm['plan'] not in creationdates:
                             creationdates[vm['plan']] = vm['creationdate']
-                        plans[vm['plan']].append(vm)
+                        if vm not in plans[vm['plan']]:
+                            plans[vm['plan']].append(vm)
                         if 'owner' in vm and vm['plan'] not in planowners:
                             planowners[vm['plan']] = vm['owner']
             finalplans = []
