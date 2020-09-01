@@ -7,6 +7,7 @@ Openstack Provider Class
 from distutils.spawn import find_executable
 from netaddr import IPNetwork
 from kvirt import common
+from kvirt.defaults import METADATA_FIELDS
 from keystoneauth1 import loading
 from keystoneauth1 import session
 from glanceclient import Client as glanceclient
@@ -65,9 +66,9 @@ class Kopenstack(object):
                reservehost=False, start=True, keys=None, cmds=[], ips=None,
                netmasks=None, gateway=None, nested=True, dns=None, domain=None,
                tunnel=False, files=[], enableroot=True, alias=[], overrides={},
-               tags={}, dnsclient=None, storemetadata=False, sharedfolders=[], kernel=None, initrd=None,
+               tags={}, storemetadata=False, sharedfolders=[], kernel=None, initrd=None,
                cmdline=None, placement=[], autostart=False, cpuhotplug=False, memoryhotplug=False, numamode=None,
-               numa=[], pcidevices=[], tpm=False, rng=False, kube=None, kubetype=None):
+               numa=[], pcidevices=[], tpm=False, rng=False, metadata={}):
         glance = self.glance
         nova = self.nova
         neutron = self.neutron
@@ -147,14 +148,6 @@ class Kopenstack(object):
         else:
             common.pprint('Couldnt locate or create keypair for use. Leaving...', color='red')
             return {'result': 'failure', 'reason': "No usable keypair found"}
-        meta = {'plan': plan, 'profile': profile}
-        if dnsclient is not None:
-            meta['dnsclient'] = dnsclient
-        if domain is not None:
-            meta['domain'] = domain
-        if kube is not None and kubetype is not None:
-            meta['kube'] = kube
-            meta['kubetype'] = kubetype
         userdata = None
         if cloudinit:
             if image is not None and common.needs_ignition(image):
@@ -167,6 +160,7 @@ class Kopenstack(object):
                                  reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides,
                                  iso=False, storemetadata=storemetadata)
                 userdata = open('/tmp/user-data', 'r').read().strip()
+        meta = {x: metadata[x] for x in metadata if x in METADATA_FIELDS}
         instance = nova.servers.create(name=name, image=glanceimage, flavor=flavor, key_name=key_name, nics=nics,
                                        meta=meta, userdata=userdata, block_device_mapping=block_dev_mapping)
         tenant_id = instance.tenant_id
@@ -380,15 +374,8 @@ class Kopenstack(object):
             yamlinfo['disks'] = disks
         metadata = vm.metadata
         if metadata is not None:
-            if 'plan' in metadata:
-                yamlinfo['plan'] = metadata['plan']
-            if 'kube' in metadata and 'kubetype' in metadata:
-                yamlinfo['kube'] = metadata['kube']
-                yamlinfo['kubetype'] = metadata['kubetype']
-            if 'profile' in metadata:
-                yamlinfo['profile'] = metadata['profile']
-            if 'loadbalancer' in metadata:
-                yamlinfo['loadbalancer'] = metadata['loadbalancer']
+            for entry in metadata:
+                yamlinfo[entry] = metadata[entry]
         if debug:
             yamlinfo['debug'] = str(vars(vm))
         return yamlinfo

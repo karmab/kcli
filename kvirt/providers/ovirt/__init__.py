@@ -6,7 +6,7 @@ Ovirt Provider Class
 
 from distutils.spawn import find_executable
 from kvirt import common
-from kvirt.defaults import UBUNTUS
+from kvirt.defaults import UBUNTUS, METADATA_FIELDS
 from kvirt.providers.ovirt.helpers import IMAGES as oimages
 from kvirt.providers.ovirt.helpers import get_home_ssh_key
 import ovirtsdk4 as sdk
@@ -97,9 +97,9 @@ class KOvirt(object):
                reservehost=False, start=True, keys=None, cmds=[], ips=None,
                netmasks=None, gateway=None, nested=True, dns=None, domain=None,
                tunnel=False, files=[], enableroot=True, alias=[], overrides={},
-               tags=[], dnsclient=None, storemetadata=False, sharedfolders=[], kernel=None, initrd=None,
+               tags=[], storemetadata=False, sharedfolders=[], kernel=None, initrd=None,
                cmdline=None, placement=[], autostart=False, cpuhotplug=False, memoryhotplug=False, numamode=None,
-               numa=[], pcidevices=[], tpm=False, rng=False, kube=None, kubetype=None):
+               numa=[], pcidevices=[], tpm=False, rng=False, metadata={}):
         ip = None
         initialization = None
         memory = memory * 1024 * 1024
@@ -132,10 +132,10 @@ class KOvirt(object):
             _template = types.Template(name='Blank')
         _os = types.OperatingSystem(boot=types.Boot(devices=[types.BootDevice.HD, types.BootDevice.CDROM]))
         console = types.Console(enabled=True)
-        if self.filtertag is not None:
-            description = "plan=%s,profile=%s,filter=%s" % (plan, profile, self.filtertag)
-        else:
-            description = "plan=%s,profile=%s" % (plan, profile)
+        description = ["filter=%s" % self.filtertag] if self.filtertag is not None else []
+        for entry in [field for field in metadata if field in METADATA_FIELDS]:
+            description.append('%s=%s' % (entry, metadata[entry]))
+        description = ','.join(description)
         profiles_service = self.conn.system_service().vnic_profiles_service()
         if not self.netprofiles:
             for prof in profiles_service.list():
@@ -143,13 +143,6 @@ class KOvirt(object):
                 netdatacenter = self.conn.follow_link(networkinfo.data_center)
                 if netdatacenter.name == self.datacenter:
                     self.netprofiles[prof.name] = prof.id
-        if dnsclient is not None:
-            description += ',dnsclient=%s' % dnsclient
-        if domain is not None:
-            description += ',domain=%s' % domain
-        if kube is not None and kubetype is not None:
-            description += ',kube=%s' % kube
-            description += ',kubetype=%s' % kubetype
         cpu = types.Cpu(topology=types.CpuTopology(cores=numcpus, sockets=1))
         try:
             if placement:
@@ -587,20 +580,10 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         for description in vm.description.split(','):
             desc = description.split('=')
             if len(desc) == 2:
-                if desc[0] == 'plan':
-                    yamlinfo['plan'] = desc[1]
-                if desc[0] == 'kube':
-                    yamlinfo['kube'] = desc[1]
-                if desc[0] == 'kubetype':
-                    yamlinfo['kubetype'] = desc[1]
-                elif desc[0] == 'profile':
-                    yamlinfo['profile'] = desc[1]
-                elif desc[0] == 'loadbalancer':
-                    yamlinfo['loadbalancer'] = desc[1]
-                elif desc[0] == 'ip':
-                    yamlinfo['ip'] = desc[1]
-                    if minimal:
-                        return yamlinfo
+                if desc[0] == 'filter':
+                    continue
+                else:
+                    yamlinfo[desc[0]] = desc[1]
         try:
             if status == 'up':
                 host = conn.follow_link(vm.host)

@@ -743,6 +743,18 @@ $INFO
             else:
                 msg = "Incorrect first disk spec"
                 return {'result': 'failure', 'reason': msg}
+        metadata = {'plan': plan, 'profile': profilename}
+        if reservedns and domain is not None:
+            metadata['domain'] = domain
+        if image is not None:
+            metadata['image'] = image
+        if dnsclient is not None:
+            metadata['dnsclient'] = dnsclient
+        if 'owner' in overrides:
+            metadata['owner'] = overrides['owner']
+        if kube is not None and kubetype is not None:
+            metadata['kubetype'] = kubetype
+            metadata['kube'] = kube
         result = k.create(name=name, virttype=virttype, plan=plan, profile=profilename, flavor=flavor,
                           cpumodel=cpumodel, cpuflags=cpuflags, cpupinning=cpupinning, numamode=numamode, numa=numa,
                           numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool,
@@ -751,10 +763,10 @@ $INFO
                           reserveip=bool(reserveip), reservedns=bool(reservedns), reservehost=bool(reservehost),
                           start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns,
                           domain=domain, nested=bool(nested), tunnel=tunnel, files=files, enableroot=enableroot,
-                          overrides=overrides, tags=tags, dnsclient=dnsclient, storemetadata=storemetadata,
+                          overrides=overrides, tags=tags, storemetadata=storemetadata,
                           sharedfolders=sharedfolders, kernel=kernel, initrd=initrd, cmdline=cmdline,
                           placement=placement, autostart=autostart, cpuhotplug=cpuhotplug, memoryhotplug=memoryhotplug,
-                          pcidevices=pcidevices, tpm=tpm, rng=rng, kube=kube, kubetype=kubetype)
+                          pcidevices=pcidevices, tpm=tpm, rng=rng, metadata=metadata)
         if result['result'] != 'success':
             return result
         if dnsclient is not None and domain is not None:

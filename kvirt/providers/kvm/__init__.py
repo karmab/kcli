@@ -8,7 +8,7 @@ from distutils.spawn import find_executable
 # from urllib.request import urlopen, urlretrieve
 from urllib.request import urlopen
 from kvirt import defaults
-from kvirt.defaults import UBUNTUS
+from kvirt.defaults import UBUNTUS, METADATA_FIELDS
 from kvirt import common
 from netaddr import IPAddress, IPNetwork
 from libvirt import open as libvirtopen, registerErrorHandler
@@ -175,20 +175,19 @@ class Kvirt(object):
                disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None,
                vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None,
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
-               files=[], enableroot=True, overrides={}, tags=[], dnsclient=None, storemetadata=False,
-               sharedfolders=[], kernel=None, initrd=None, cmdline=None, placement=[], autostart=False,
-               cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False,
-               kube=None, kubetype=None):
+               files=[], enableroot=True, overrides={}, tags=[], storemetadata=False, sharedfolders=[],
+               kernel=None, initrd=None, cmdline=None, placement=[], autostart=False, cpuhotplug=False,
+               memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False, metadata={}):
         namespace = ''
         ignition = False
         usermode = False
         macosx = False
         diskpath = None
         qemuextra = overrides.get('qemuextra')
-        owner = overrides.get('owner')
         if 'session' in self.url:
             usermode = True
             userport = common.get_free_port()
+            metadata['ip'] = userport
         if self.exists(name):
             return {'result': 'failure', 'reason': "VM %s already exists" % name}
         # if start and self.no_memory(memory):
@@ -203,22 +202,12 @@ class Kvirt(object):
         except:
             return {'result': 'failure', 'reason': "Pool %s not found" % default_pool}
         creationdate = time.strftime("%d-%m-%Y %H:%M", time.gmtime())
-        metadata = """<metadata>
+        metadata['creationdate'] = creationdate
+        metadataxml = """<metadata>
         <kvirt:info xmlns:kvirt="kvirt">
-        <kvirt:creationdate>%s</kvirt:creationdate>
-        <kvirt:profile>%s</kvirt:profile>""" % (creationdate, profile)
-        if usermode:
-            metadata += "\n<kvirt:ip >%s</kvirt:ip>" % userport
-        if domain is not None:
-            metadata += "\n<kvirt:domain>%s</kvirt:domain>" % domain
-        if image is not None:
-            metadata += "\n<kvirt:image>%s</kvirt:image>" % image
-        if dnsclient is not None:
-            metadata += "\n<kvirt:dnsclient>%s</kvirt:dnsclient>" % dnsclient
-        if owner is not None:
-            metadata += "\n<kvirt:owner>%s</kvirt:owner>" % owner
-        if kube is not None and kubetype is not None:
-            metadata += "<kvirt:kubetype>%s</kvirt:kubetype>\n<kvirt:kube>%s</kvirt:kube>" % (kubetype, kube)
+        <kvirt:creationdate>%s</kvirt:creationdate>""" % creationdate
+        for entry in [field for field in metadata if field in METADATA_FIELDS]:
+            metadataxml += "\n<kvirt:%s>%s</kvirt:%s>" % (entry, metadata[entry], entry)
         default_poolxml = default_storagepool.XMLDesc(0)
         root = ET.fromstring(default_poolxml)
         default_pooltype = list(root.getiterator('pool'))[0].get('type')
@@ -450,7 +439,7 @@ class Kvirt(object):
                 if 'ovs' in nets[index] and nets[index]['ovs']:
                     ovs = True
                 if 'ip' in nets[index] and index == 0:
-                    metadata = """%s<kvirt:ip >%s</kvirt:ip>""" % (metadata, nets[index]['ip'])
+                    metadataxml += "<kvirt:ip >%s</kvirt:ip>" % nets[index]['ip']
                 if 'numa' in nets[index] and numa:
                     nicnuma = nets[index]['numa']
             if ips and len(ips) > index and ips[index] is not None and\
@@ -499,10 +488,7 @@ class Kvirt(object):
                      %s
                      <model type='%s'/>
                      </interface>""" % (netxml, iftype, macxml, sourcexml, ovsxml, nicnumaxml, nettype)
-        metadata = """%s
-                    <kvirt:plan>%s</kvirt:plan>
-                    </kvirt:info>
-                    </metadata>""" % (metadata, plan)
+        metadataxml += "</kvirt:info></metadata>"
         if guestagent:
             gcmds = []
             if image is not None and 'cos' not in image and 'fedora-coreos' not in image:
@@ -929,10 +915,10 @@ class Kvirt(object):
                   </devices>
                     %s
                     %s
-                    </domain>""" % (virttype, namespace, name, metadata, memoryhotplugxml, cpupinningxml, numatunexml,
-                                    memory, vcpuxml, machine, firmwarexml, bootdev, kernelxml, disksxml, busxml,
-                                    netxml, isoxml, displayxml, serialxml, sharedxml, guestxml, videoxml, hostdevxml,
-                                    rngxml, tpmxml, cpuxml, qemuextraxml)
+                    </domain>""" % (virttype, namespace, name, metadataxml, memoryhotplugxml, cpupinningxml,
+                                    numatunexml, memory, vcpuxml, machine, firmwarexml, bootdev, kernelxml, disksxml,
+                                    busxml, netxml, isoxml, displayxml, serialxml, sharedxml, guestxml, videoxml,
+                                    hostdevxml, rngxml, tpmxml, cpuxml, qemuextraxml)
         if self.debug:
             common.pprint(vmxml, color='blue')
         conn.defineXML(vmxml)
