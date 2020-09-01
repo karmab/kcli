@@ -108,6 +108,7 @@ message vminfo{
     string owner = 28 ;
     string id = 29 ;
     string project = 30 ;
+    string domain = 31 ;
 }
 
 message vmlist{

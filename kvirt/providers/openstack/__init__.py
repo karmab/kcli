@@ -390,7 +390,7 @@ class Kopenstack(object):
             if 'loadbalancer' in metadata:
                 yamlinfo['loadbalancer'] = metadata['loadbalancer']
         if debug:
-            yamlinfo['debug'] = vars(vm)
+            yamlinfo['debug'] = str(vars(vm))
         return yamlinfo
 
     def ip(self, name):
