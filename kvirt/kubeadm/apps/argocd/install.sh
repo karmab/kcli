@@ -19,5 +19,5 @@ URL=http://$(kubectl get svc -n argocd argocd-server -o jsonpath='{.status.loadB
 {%- endif %}
 
 ARGO_PASSWORD=$(kubectl get pods -n argocd -l app.kubernetes.io/name=argocd-server -o name | cut -d'/' -f 2)
-echo argo ui available at http://$URL
+echo argo ui available at $URL
 echo Use Initial Credentials admin/$ARGO_PASSWORD
