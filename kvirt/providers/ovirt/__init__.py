@@ -632,7 +632,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             device = nic.name
             mac = nic.mac.address
             network = self.netprofiles[nic.vnic_profile.id] if nic.vnic_profile is not None else 'N/A'
-            network_type = nic.interface
+            network_type = str(nic.interface)
             yamlinfo['nets'].append({'device': device, 'mac': mac, 'net': network, 'type': network_type})
         attachments = self.vms_service.vm_service(vm.id).disk_attachments_service().list()
         for attachment in attachments:
@@ -640,8 +640,8 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             storagedomain = conn.follow_link(disk.storage_domains[0]).name if disk.storage_domains else ''
             device = disk.name
             disksize = int(disk.provisioned_size / 2**30)
-            diskformat = disk.format
-            drivertype = disk.content_type
+            diskformat = str(disk.format)
+            drivertype = str(disk.content_type)
             path = disk.id
             yamlinfo['disks'].append({'device': device, 'size': disksize, 'format': diskformat, 'type': drivertype,
                                       'path': "%s/%s" % (storagedomain, path)})

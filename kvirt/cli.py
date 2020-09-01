@@ -2694,7 +2694,7 @@ def cli():
     kvmhostcreate_parser.add_argument('-P', '--protocol', help='Protocol to use', default='ssh', metavar='PROTOCOL')
     kvmhostcreate_parser_group.add_argument('-U', '--url', help='URL to use', metavar='URL')
     kvmhostcreate_parser.add_argument('-u', '--user', help='User. Defaults to root', default='root', metavar='USER')
-    kvmhostcreate_parser.add_argument('name', metavar='NAME', nargs='?')
+    kvmhostcreate_parser.add_argument('name', metavar='NAME')
     kvmhostcreate_parser.set_defaults(func=create_host_kvm)
 
     kubevirthostcreate_desc = 'Create Kubevirt Host'
@@ -2708,7 +2708,7 @@ def cli():
     kubevirthostcreate_parser.add_argument('--port', help='Api Port', metavar='HOST')
     kubevirthostcreate_parser.add_argument('--token', help='Token', metavar='TOKEN')
     kubevirthostcreate_parser.add_argument('--multus', help='Multus Support', action='store_true', default=True)
-    kubevirthostcreate_parser.add_argument('name', metavar='NAME', nargs='?')
+    kubevirthostcreate_parser.add_argument('name', metavar='NAME')
     kubevirthostcreate_parser.set_defaults(func=create_host_kubevirt)
 
     openstackhostcreate_desc = 'Create Openstack Host'
@@ -2719,7 +2719,7 @@ def cli():
     openstackhostcreate_parser.add_argument('-p', '--password', help='Password', metavar='PASSWORD', required=True)
     openstackhostcreate_parser.add_argument('-project', help='Project', metavar='PROJECT', required=True)
     openstackhostcreate_parser.add_argument('-u', '--user', help='User', metavar='USER', required=True)
-    openstackhostcreate_parser.add_argument('name', metavar='NAME', nargs='?')
+    openstackhostcreate_parser.add_argument('name', metavar='NAME')
     openstackhostcreate_parser.set_defaults(func=create_host_openstack)
 
     ovirthostcreate_desc = 'Create Ovirt Host'
@@ -2736,7 +2736,7 @@ def cli():
     ovirthostcreate_parser.add_argument('--pool', help='Storage Domain', metavar='POOL')
     ovirthostcreate_parser.add_argument('-u', '--user', help='User. Defaults to admin@internal',
                                         metavar='USER', default='admin@internal')
-    ovirthostcreate_parser.add_argument('name', metavar='NAME', nargs='?')
+    ovirthostcreate_parser.add_argument('name', metavar='NAME')
     ovirthostcreate_parser.set_defaults(func=create_host_ovirt)
 
     vspherehostcreate_desc = 'Create Vsphere Host'
@@ -2747,13 +2747,14 @@ def cli():
     vspherehostcreate_parser.add_argument('-H', '--host', help='Vcenter Host', metavar='HOST', required=True)
     vspherehostcreate_parser.add_argument('-p', '--password', help='Password', metavar='PASSWORD', required=True)
     vspherehostcreate_parser.add_argument('-u', '--user', help='User', metavar='USER', required=True)
-    vspherehostcreate_parser.add_argument('name', metavar='NAME', nargs='?')
+    vspherehostcreate_parser.add_argument('--pool', help='Pool', metavar='POOL')
+    vspherehostcreate_parser.add_argument('name', metavar='NAME')
     vspherehostcreate_parser.set_defaults(func=create_host_vsphere)
 
     hostdelete_desc = 'Delete Host'
     hostdelete_parser = delete_subparsers.add_parser('host', description=hostdelete_desc, help=hostdelete_desc,
                                                      aliases=['client'])
-    hostdelete_parser.add_argument('name', metavar='NAME', nargs='?')
+    hostdelete_parser.add_argument('name', metavar='NAME')
     hostdelete_parser.set_defaults(func=delete_host)
 
     hostdisable_desc = 'Disable Host'
