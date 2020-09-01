@@ -746,11 +746,11 @@ class Ksphere:
                 yamlinfo['nets'].append(net)
             if type(dev).__name__ == 'vim.vm.device.VirtualDisk':
                 device = "disk%s" % dev.unitNumber
-                disksize = convert(1000 * dev.capacityInKB)
+                disksize = convert(1000 * dev.capacityInKB, GB=False)
                 diskformat = dev.backing.diskMode
                 drivertype = 'thin' if dev.backing.thinProvisioned else 'thick'
                 path = dev.backing.datastore.name
-                disk = {'device': device, 'size': disksize, 'format': diskformat, 'type': drivertype, 'path': path}
+                disk = {'device': device, 'size': int(disksize), 'format': diskformat, 'type': drivertype, 'path': path}
                 yamlinfo['disks'].append(disk)
         if vm.runtime.powerState == "poweredOn":
             yamlinfo['host'] = vm.runtime.host.name

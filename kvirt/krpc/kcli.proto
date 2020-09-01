@@ -106,6 +106,7 @@ message vminfo{
     string loadbalancer = 26 ; 
     string error = 27 ; 
     string owner = 28 ;
+    string id = 29 ;
 }
 
 message vmlist{
