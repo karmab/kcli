@@ -1062,6 +1062,58 @@ Precreating a list of plans
 
 If you’re running the same plan with different parameter files, you can simply create them in the directory where your plan lives, naming them parameters_XXX.yml (or .yaml). The UI will then show you those as separated plans so that they can be provisioned individually applying the corresponding values from the parameter files (after merging them with the user provided data).
 
+Using several clients
+~~~~~~~~~~~~~~~~~~~~~
+
+You can have the expose feature handling several clients at once. For this, launch the expose command with the flag -C and indicating several clients ( for instance *-C twix,bumblefoot*) and name your parameter files with the nomenclature *parameters\_\ :math:`client_`\ whatever.yml* . The code will then select the proper client for create/delete operations and report the vms belonging to those
+plans from the different clients declared.
+
+Using expose feature from a web server
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can use mod_wsgi with httpd or similar mechanisms to use the expose feature behind a web server so that you serve content from a specific port or add layer of security like htpasswd provided from outside the code.
+
+For instance, you could create the following kcli.conf in apache
+
+::
+
+    <VirtualHost *>
+        WSGIScriptAlias / /var/www/kcli.wsgi
+        <Directory /var/www/kcli>
+            Order deny,allow
+            Allow from all
+        </Directory>
+    #    <Location />
+    #   AuthType Basic
+    #   AuthName "Authentication Required"
+    #   AuthUserFile "/var/www/kcli.htpasswd"
+    #   Require valid-user
+    #    </Location>
+    </VirtualHost>
+
+::
+
+    import logging
+    import os
+    import sys
+    from kvirt.config import Kconfig
+    from kvirt.expose import Kexposer
+    logging.basicConfig(stream=sys.stdout)
+
+    os.environ['HOME'] = '/usr/share/httpd'
+    inputfile = '/var/www/myplans/plan1.yml'
+    overrides = {'param1': 'jimi_hendrix', 'param2': False}
+    config = Kconfig()
+    kexposer = Kexposer(config, inputfile, overrides=overrides)
+    application = kexposer.app
+    application.secret_key = ‘XXX’
+
+Note that further configuration will tipically be needed for apache user so that kcli can be used with it
+
+In the example invocation, the directive ``config = KConfig()`` can be changed to ``config = Kconfig('client1,client2')`` to handle several clients at once
+
+An alternative is to create different WSGI applications and tweak the *WSGIScriptAlias* to serve them from different paths.
+
 Overriding parameters
 =====================
 

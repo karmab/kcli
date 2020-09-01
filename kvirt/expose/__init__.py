@@ -7,7 +7,7 @@ import re
 
 
 class Kexposer():
-    def __init__(self, config, inputfile, overrides={}, plan=None, port=9000):
+    def __init__(self, config, inputfile, overrides={}, plan=None, port=9000, extraconfigs=[]):
         app = Flask(__name__)
         self.basedir = os.path.dirname(inputfile) if '/' in inputfile else '.'
         self.parametersfiles = glob("%s/parameters_*.y*ml" % self.basedir)
@@ -40,6 +40,14 @@ class Kexposer():
                     plans[vm['plan']].append(vm)
                     if 'owner' in vm and vm['plan'] not in planowners:
                         planowners[vm['plan']] = vm['owner']
+            for extraclient in config.extraclients:
+                for vm in config.extraclients[extraclient].list():
+                    if vm['plan'] in plans:
+                        if vm['plan'] not in creationdates:
+                            creationdates[vm['plan']] = vm['creationdate']
+                        plans[vm['plan']].append(vm)
+                        if 'owner' in vm and vm['plan'] not in planowners:
+                            planowners[vm['plan']] = vm['owner']
             finalplans = []
             for plan in plans:
                 finalplans.append({'name': plan, 'vms': plans[plan]})
@@ -53,7 +61,11 @@ class Kexposer():
             """
             if 'name' in request.form:
                 plan = request.form['name']
-                result = self.config.plan(plan, delete=True)
+                if '_' in plan and plan.split('_')[0] in self.extraconfigs:
+                    currentconfig = self.extraconfigs[plan.split('_')[0]]
+                else:
+                    currentconfig = self.config
+                result = currentconfig.plan(plan, delete=True)
                 response = jsonify(result)
                 response.status_code = 200
                 return response
@@ -69,8 +81,13 @@ class Kexposer():
             """
             if 'plan' in request.form:
                 plan = request.form['plan']
+                print(plan)
                 if plan not in self.plans:
                     return 'Invalid plan name %s' % plan
+                if '_' in plan and plan.split('_')[0] in self.extraconfigs:
+                    currentconfig = self.extraconfigs[plan.split('_')[0]]
+                else:
+                    currentconfig = self.config
                 parameters = {}
                 for p in request.form:
                     if p.startswith('parameter'):
@@ -87,16 +104,16 @@ class Kexposer():
                                 fileoverrides = get_overrides(paramfile=paramfile)
                                 fileoverrides.update(overrides)
                         overrides = fileoverrides
-                    if 'mail' in config.notifymethods and 'mailto' in overrides and overrides['mailto'] != "":
+                    if 'mail' in currentconfig.notifymethods and 'mailto' in overrides and overrides['mailto'] != "":
                         newmails = overrides['mailto'].split(',')
-                        if config.mailto:
-                            config.mailto.extend(newmails)
+                        if currentconfig.mailto:
+                            currentconfig.mailto.extend(newmails)
                         else:
-                            config.mailto = newmails
+                            currentconfig.mailto = newmails
                     if 'owner' in overrides and overrides['owner'] == '':
                         del overrides['owner']
-                    config.plan(plan, delete=True)
-                    result = config.plan(plan, inputfile=inputfile, overrides=overrides)
+                    currentconfig.plan(plan, delete=True)
+                    result = currentconfig.plan(plan, inputfile=inputfile, overrides=overrides)
                 except Exception as e:
                     error = 'Hit issue when running plan: %s' % str(e)
                     return render_template('error.html', plan=plan, error=error)
@@ -119,6 +136,7 @@ class Kexposer():
 
         self.app = app
         self.config = config
+        self.extraconfigs = extraconfigs
         self.overrides = overrides
         self.port = port
 

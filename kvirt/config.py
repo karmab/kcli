@@ -1997,11 +1997,11 @@ $INFO
         else:
             openshift.get_downstream_installer(tag=tag, macosx=macosx)
 
-    def expose_plan(self, plan, inputfile=None, overrides={}, port=9000):
+    def expose_plan(self, plan, inputfile=None, overrides={}, port=9000, extraconfigs={}):
         inputfile = os.path.expanduser(inputfile)
         if not os.path.exists(inputfile):
             common.pprint("No input file found nor default kcli_plan.yml.Leaving....", color='red')
             os._exit(1)
         common.pprint("Handling expose of plan with name %s and inputfile %s" % (plan, inputfile))
-        kexposer = Kexposer(self, inputfile, overrides=overrides, plan=plan, port=port)
+        kexposer = Kexposer(self, inputfile, overrides=overrides, plan=plan, port=port, extraconfigs=extraconfigs)
         kexposer.run()
