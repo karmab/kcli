@@ -107,6 +107,7 @@ message vminfo{
     string error = 27 ; 
     string owner = 28 ;
     string id = 29 ;
+    string project = 30 ;
 }
 
 message vmlist{

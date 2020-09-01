@@ -2714,10 +2714,10 @@ def cli():
     openstackhostcreate_desc = 'Create Openstack Host'
     openstackhostcreate_parser = hostcreate_subparsers.add_parser('openstack', help=openstackhostcreate_desc,
                                                                   description=openstackhostcreate_desc)
-    openstackhostcreate_parser.add_argument('-auth-url', help='Auth url', metavar='AUTH_URL', required=True)
-    openstackhostcreate_parser.add_argument('-domain', help='Domain', metavar='DOMAIN', default='Default')
+    openstackhostcreate_parser.add_argument('--auth-url', help='Auth url', metavar='AUTH_URL', required=True)
+    openstackhostcreate_parser.add_argument('--domain', help='Domain', metavar='DOMAIN', default='Default')
     openstackhostcreate_parser.add_argument('-p', '--password', help='Password', metavar='PASSWORD', required=True)
-    openstackhostcreate_parser.add_argument('-project', help='Project', metavar='PROJECT', required=True)
+    openstackhostcreate_parser.add_argument('--project', help='Project', metavar='PROJECT', required=True)
     openstackhostcreate_parser.add_argument('-u', '--user', help='User', metavar='USER', required=True)
     openstackhostcreate_parser.add_argument('name', metavar='NAME')
     openstackhostcreate_parser.set_defaults(func=create_host_openstack)

@@ -98,9 +98,8 @@ class Kopenstack(object):
                 common.pprint(e, color='red')
                 return {'result': 'failure', 'reason': "Network %s not found" % netname}
             nics.append({'net-id': net.id})
-        image = None
         if image is not None:
-            glanceimages = [img for img in glance.images.list() if img == image]
+            glanceimages = [img for img in glance.images.list() if img.name == image]
             if glanceimages:
                 glanceimage = glanceimages[0]
             else:
@@ -340,7 +339,14 @@ class Kopenstack(object):
                 yamlinfo['error'] = vm.fault['message']
             except:
                 pass
-        source = self.glance.images.get(vm.image['id']).name if 'id' in vm.image else ''
+
+        source = ''
+        if 'id' in vm.image:
+            source = vm.image['id']
+            try:
+                source = self.glance.images.get(vm.image['id']).name
+            except:
+                pass
         yamlinfo['image'] = source
         yamlinfo['user'] = common.get_user(source)
         flavor = nova.flavors.get(vm.flavor['id'])
@@ -361,7 +367,7 @@ class Kopenstack(object):
                         yamlinfo['privateip'] = entry2['addr']
                     yamlinfo['nets'].append(net)
                     index += 1
-        if 'ip' not in yamlinfo:
+        if 'ip' not in yamlinfo and 'privateip' in yamlinfo:
             yamlinfo['ip'] = yamlinfo['privateip']
         disks = []
         for disk in vm._info['os-extended-volumes:volumes_attached']:
@@ -395,7 +401,7 @@ class Kopenstack(object):
         glanceimages = []
         glance = self.glance
         for img in glance.images.list():
-            glanceimages.append(img)
+            glanceimages.append(img.name)
         return glanceimages
 
     def delete(self, name, snapshots=False):
