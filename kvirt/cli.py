@@ -3016,7 +3016,7 @@ def cli():
     networkdelete_parser = delete_subparsers.add_parser('network', description=networkdelete_desc,
                                                         help=networkdelete_desc)
     networkdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    networkdelete_parser.add_argument('name', metavar='NETWORK', nargs='+')
+    networkdelete_parser.add_argument('names', metavar='NETWORKS', nargs='+')
     networkdelete_parser.set_defaults(func=delete_network)
 
     pipelinecreate_desc = 'Create Pipeline'
