@@ -9,5 +9,5 @@ spec:
   - ReadWriteOnce
   nfs:
     path: /pv001
-    server: {{ cluster }}-master-0
+    server: IP
   persistentVolumeReclaimPolicy: Recycle
