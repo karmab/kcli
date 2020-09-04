@@ -1026,7 +1026,12 @@ class Kubevirt(Kubecommon):
         namespace = self.namespace
         apiversion = "%s/%s" % (MULTUSDOMAIN, MULTUSVERSION)
         vlanconfig = '"vlan": %s' % overrides['vlan'] if 'vlan' in overrides is not None else ''
-        config = '{ "cniVersion": "0.3.1", "type": "ovs", "bridge": "%s" %s}' % (name, vlanconfig)
+        if 'type' in overrides:
+            _type = overrides['type']
+        else:
+            common.pprint("Using default type bridge for network", color='blue')
+            _type = 'bridge'
+        config = '{ "cniVersion": "0.3.1", "type": "%s", "bridge": "%s" %s}' % (_type, name, vlanconfig)
         if cidr is not None and dhcp:
             ipam = '"ipam": { "type": "host-local", "subnet": "%s" }' % cidr
             details = '"isDefaultGateway": true, "forceAddress": false, "ipMasq": true, "hairpinMode": true, %s' % ipam
@@ -1042,8 +1047,7 @@ class Kubevirt(Kubecommon):
         namespace = self.namespace
         try:
             crds.delete_namespaced_custom_object(MULTUSDOMAIN, MULTUSVERSION, namespace,
-                                                 'network-attachment-definitions', name,
-                                                 client.V1DeleteOptions())
+                                                 'network-attachment-definitions', name)
         except:
             return {'result': 'failure', 'reason': "network %s not found" % name}
         return {'result': 'success'}
