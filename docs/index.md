@@ -979,7 +979,7 @@ If you're running the same plan with different parameter files, you can simply c
 ### Using several clients
 
 You can have the expose feature handling several clients at once.
-For this, launch the expose command with the flag -C and indicating several clients ( for instance *-C twix,bumblefoot*) and name your parameter files with the nomenclature *parameters_$client_$whatever.yml* .
+For this, launch the expose command with the flag -C to indicate several clients ( for instance *-C twix,bumblefoot*) and put your parameter files under a dedicated directory matching the client name.
 The code will then select the proper client for create/delete operations and report the vms belonging to those plans from the different clients declared.
 
 ### Using expose feature from a web server

@@ -1,22 +1,23 @@
 {% include "head.html" %}
 <div id="wheel"></div>
 <p>
-{% for plan in plans %}
-{% if plan['name'] in planowners %}
-{% set owner = "(" + planowners[plan['name']] + ")" %}
-{% else %}
-{% set owner = '' %}
+{% for client, plans in clients.items() %}
+{% for name, plan in plans.items() %}
+{% if 'owner' in plan %}
+{% set owner = "(" + plan['owner'] + ")" %}
 {% endif %}
 <table class="table table-bordered table-hover">
   <tbody>
   <tr class="table-primary">
     <th>Plan name</th>
+    <th>Client</th>
     <th>Creation Date</th>
     <th>Actions</th>
   <tr>
-  <th>{{ plan['name'] }}</th>
-  <th>{{ creationdates[plan['name']] }} {{ owner }}</th>
-  <th><button type="button" class="btn btn-success" onclick="location.href='{{ url_for('exposeform', plan=plan['name']) }}'" target="_blank" >Reprovision</button><button type="button" class="btn btn-danger" onclick="exposedelete('{{ plan['name'] }}');">Delete</button></th>
+  <th>{{ name }}</th>
+  <th>{{ client }}</th>
+  <th>{{ plan['creationdate']|default('') }} {{ owner|default('') }}</th>
+  <th><button type="button" class="btn btn-success" onclick="location.href='{{ url_for('exposeform', plan=name) }}'" target="_blank" >Reprovision</button><button type="button" class="btn btn-danger" onclick="exposedelete('{{ name }}');">Delete</button></th>
     <th></th>
   </tr>
 {% if plan['vms'] %}
@@ -36,6 +37,7 @@
   </tbody>
 </table>
 <br>
+{% endfor %}
 {% endfor %}
 
 </body>

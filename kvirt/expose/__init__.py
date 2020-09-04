@@ -1,60 +1,58 @@
 from flask import Flask
 from flask import render_template, request, jsonify
 from glob import glob
-from kvirt.common import pprint, get_overrides
+from kvirt.common import get_overrides
 import os
 import re
 
 
 class Kexposer():
-    def __init__(self, config, inputfile, overrides={}, plan=None, port=9000, extraconfigs=[]):
+    def __init__(self, config, plan, inputfile, overrides={}, port=9000, extraconfigs=[]):
         app = Flask(__name__)
         self.basedir = os.path.dirname(inputfile) if '/' in inputfile else '.'
-        self.parametersfiles = glob("%s/parameters_*.y*ml" % self.basedir)
-        if self.parametersfiles:
-            plans = []
-            for parameterfile in self.parametersfiles:
-                search = re.match('.*parameters_(.*)\.y*ml', parameterfile)
-                plans.append(search.group(1))
-        elif plan is not None:
-            plans = [plan]
-        else:
-            if 'PLAN' in os.environ:
-                plans = [os.environ['PLAN']]
+        clients = {}
+        plans = {}
+        for parameterfile in glob("%s/parameters_*.y*ml" % self.basedir):
+            search = re.match('.*parameters_(.*)\.(ya?ml)', parameterfile)
+            plan_name = search.group(1)
+            ext = search.group(2)
+            plans[plan_name] = config.client
+            if config.client in clients:
+                clients[config.client][plan_name] = "%s/parameters_%s.%s" % (self.basedir, plan_name, ext)
             else:
-                msg = 'Define plan as an env variable or create parameters files'
-                pprint(msg, color='red')
-                os._exit(1)
-        self.plans = plans
+                clients[config.client] = {plan_name: "%s/parameters_%s.%s" % (self.basedir, plan_name, ext)}
+        for client in [config.client] + list(config.extraclients.keys()):
+            self.parametersfiles = glob("%s/%s/parameters_*.y*ml" % (self.basedir, client))
+            for parameterfile in self.parametersfiles:
+                search = re.match('.*parameters_(.*)\.(ya?ml)', parameterfile)
+                plan_name = search.group(1)
+                ext = search.group(2)
+                plans[plan_name] = client
+                if client in clients:
+                    clients[client][plan_name] = "%s/%s/parameters_%s.%s" % (self.basedir, client, plan_name, ext)
+                else:
+                    clients[client] = {plan_name: "%s/%s/parameters_%s.%s" % (self.basedir, client, plan_name, ext)}
+        self.clients = clients if clients else {config.client: {plan: None}}
+        self.plans = plans if plans else {plan: config.client}
         self.overrides = overrides
 
         @app.route('/')
         def index():
-            creationdates = {}
-            plans = {plan: [] for plan in self.plans}
-            planowners = {}
-            for vm in config.k.list():
-                if vm['plan'] in plans:
-                    if vm['plan'] not in creationdates:
-                        creationdates[vm['plan']] = vm['creationdate']
-                    if vm not in plans[vm['plan']]:
-                        plans[vm['plan']].append(vm)
-                    if 'owner' in vm and vm['plan'] not in planowners:
-                        planowners[vm['plan']] = vm['owner']
-            for extraclient in config.extraclients:
-                for vm in config.extraclients[extraclient].list():
-                    if vm['plan'] in plans:
-                        if vm['plan'] not in creationdates:
-                            creationdates[vm['plan']] = vm['creationdate']
-                        if vm not in plans[vm['plan']]:
-                            plans[vm['plan']].append(vm)
-                        if 'owner' in vm and vm['plan'] not in planowners:
-                            planowners[vm['plan']] = vm['owner']
-            finalplans = []
-            for plan in plans:
-                finalplans.append({'name': plan, 'vms': plans[plan]})
-            return render_template('list.html', plans=sorted(finalplans, key=lambda p: p['name']),
-                                   planowners=planowners, creationdates=creationdates)
+            data = {}
+            for client in sorted(self.clients):
+                data[client] = {}
+                for plan_name in sorted(self.clients[client]):
+                    current_data = {'vms': []}
+                    currentk = config.k if client == config.client else config.extraclients[client]
+                    for vm in currentk.list():
+                        if vm['plan'] == plan_name:
+                            current_data['vms'].append(vm)
+                            if 'creationdate' not in current_data and 'creationdate' in vm:
+                                current_data['creationdate'] = vm['creationdate']
+                            if 'owner' not in current_data and 'owner' in vm:
+                                current_data['owner'] = vm['owner']
+                    data[client][plan_name] = current_data
+            return render_template('index.html', clients=data)
 
         @app.route("/exposedelete", methods=['POST'])
         def exposedelete():
@@ -63,10 +61,12 @@ class Kexposer():
             """
             if 'name' in request.form:
                 plan = request.form['name']
-                if '_' in plan and plan.split('_')[0] in self.extraconfigs:
-                    currentconfig = self.extraconfigs[plan.split('_')[0]]
-                else:
+                if plan not in self.plans:
+                    return 'Invalid plan name %s' % plan
+                elif self.plans[plan] == config.client:
                     currentconfig = self.config
+                else:
+                    currentconfig = self.extraconfigs[self.plans[plan]]
                 result = currentconfig.plan(plan, delete=True)
                 response = jsonify(result)
                 response.status_code = 200
@@ -83,13 +83,14 @@ class Kexposer():
             """
             if 'plan' in request.form:
                 plan = request.form['plan']
-                print(plan)
                 if plan not in self.plans:
                     return 'Invalid plan name %s' % plan
-                if '_' in plan and plan.split('_')[0] in self.extraconfigs:
-                    currentconfig = self.extraconfigs[plan.split('_')[0]]
-                else:
+                elif self.plans[plan] == config.client:
                     currentconfig = self.config
+                    client = config.client
+                else:
+                    client = self.plans[plan]
+                    currentconfig = self.extraconfigs[client]
                 parameters = {}
                 for p in request.form:
                     if p.startswith('parameter'):
@@ -100,11 +101,10 @@ class Kexposer():
                         parameters[key] = value
                 try:
                     overrides = parameters
-                    if self.parametersfiles:
-                        for paramfile in self.parametersfiles:
-                            if paramfile.startswith("%s/parameters_%s" % (self.basedir, plan)):
-                                fileoverrides = get_overrides(paramfile=paramfile)
-                                fileoverrides.update(overrides)
+                    paramfile = self.clients[client][plan]
+                    if paramfile is not None:
+                        fileoverrides = get_overrides(paramfile=paramfile)
+                        fileoverrides.update(overrides)
                         overrides = fileoverrides
                     if 'mail' in currentconfig.notifymethods and 'mailto' in overrides and overrides['mailto'] != "":
                         newmails = overrides['mailto'].split(',')
