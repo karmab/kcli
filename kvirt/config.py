@@ -43,7 +43,6 @@ class Kconfig(Kbaseconfig):
                 context = self.options.get('context')
                 cdi = self.options.get('cdi', True)
                 datavolumes = self.options.get('cdi', True)
-                multus = self.options.get('multus', True)
                 readwritemany = self.options.get('readwritemany', False)
                 ca_file = self.options.get('ca_file')
                 if ca_file is not None:
@@ -61,7 +60,7 @@ class Kconfig(Kbaseconfig):
                     else:
                         token = open(token_file).read()
                 from kvirt.providers.kubevirt import Kubevirt
-                k = Kubevirt(context=context, token=token, ca_file=ca_file, multus=multus, host=self.host,
+                k = Kubevirt(context=context, token=token, ca_file=ca_file, host=self.host,
                              port=self.port, user=self.user, debug=debug, namespace=namespace, cdi=cdi,
                              datavolumes=datavolumes, readwritemany=readwritemany)
                 self.host = k.host

@@ -58,17 +58,9 @@
   - metal_lb.sh
   - metal_lb_cm.yml
 {%- endif %}
-{%- if config_type == 'ovirt' %}
-  - ovirt_fix.sh
-{%- endif %}
 {%- if nfs %}
   - nfs.yml
   - nfs.sh
-{%- endif %}
-{%- if multus %}
-  - multus.yml
-  - cni-plugins.yml
-  - l2-bridge.yml
 {%- endif %}
 {%- endif %}
  scripts: 

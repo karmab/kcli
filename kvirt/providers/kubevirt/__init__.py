@@ -35,13 +35,12 @@ class Kubevirt(Kubecommon):
     """
 
     """
-    def __init__(self, token=None, ca_file=None, context=None, multus=True, host='127.0.0.1', port=443,
-                 user='root', debug=False, tags=None, namespace=None, cdi=False, datavolumes=True, readwritemany=False):
+    def __init__(self, token=None, ca_file=None, context=None, host='127.0.0.1', port=443, user='root', debug=False,
+                 tags=None, namespace=None, cdi=False, datavolumes=True, readwritemany=False):
         Kubecommon.__init__(self, token=token, ca_file=ca_file, context=context, host=host, port=port,
                             namespace=namespace, readwritemany=readwritemany)
         self.crds = client.CustomObjectsApi(api_client=self.api_client)
         self.debug = debug
-        self.multus = multus
         self.tags = tags
         self.cdi = False
         self.datavolumes = False
@@ -1061,9 +1060,9 @@ class Kubevirt(Kubecommon):
             # nodeip = node.status.addresses[0].address
             cidr = node.spec.pod_cidr
         networks = {'default': {'cidr': cidr, 'dhcp': True, 'type': 'bridge', 'mode': 'N/A'}}
-        if self.multus:
-            crds = self.crds
-            namespace = self.namespace
+        crds = self.crds
+        namespace = self.namespace
+        try:
             nafs = crds.list_namespaced_custom_object(MULTUSDOMAIN, MULTUSVERSION, namespace,
                                                       'network-attachment-definitions')["items"]
             for naf in nafs:
@@ -1078,7 +1077,9 @@ class Kubevirt(Kubecommon):
                     dhcp = True
                     cidr = config['ipam'].get('subnet', bridge)
                 networks[name] = {'cidr': cidr, 'dhcp': dhcp, 'type': _type, 'mode': vlan}
-            return networks
+        except:
+            pass
+        return networks
 
     def list_subnets(self):
         print("not implemented")
