@@ -6,6 +6,7 @@ from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from kvirt import common
+from kvirt.defaults import METADATA_FIELDS
 from math import ceil
 from pyVmomi import vim, vmodl
 from pyVim import connect
@@ -347,10 +348,9 @@ class Ksphere:
                disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None,
                vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None,
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
-               files=[], enableroot=True, overrides={}, tags=[], dnsclient=None, storemetadata=False,
-               sharedfolders=[], kernel=None, initrd=None, cmdline=None, placement=[], autostart=False,
-               cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False,
-               kube=None, kubetype=None):
+               files=[], enableroot=True, overrides={}, tags=[], storemetadata=False, sharedfolders=[],
+               kernel=None, initrd=None, cmdline=None, placement=[], autostart=False, cpuhotplug=False,
+               memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False, metadata={}):
         dc = self.dc
         vmFolder = dc.vmFolder
         distributed = self.distributed
@@ -431,22 +431,12 @@ class Ksphere:
         confspec.annotation = name
         confspec.memoryMB = memory
         confspec.numCPUs = numcpus
-        planopt = vim.option.OptionValue()
-        planopt.key = 'plan'
-        planopt.value = plan
-        profileopt = vim.option.OptionValue()
-        profileopt.key = 'profile'
-        profileopt.value = profile
-        confspec.extraConfig = [planopt, profileopt]
-        if kube is not None and kubetype is not None:
-            kubeopt = vim.option.OptionValue()
-            kubeopt.key = 'kube'
-            kubeopt.value = kube
-            confspec.extraConfig.append(kubeopt)
-            kubetypeopt = vim.option.OptionValue()
-            kubetypeopt.key = 'kubetype'
-            kubetypeopt.value = kubetype
-            confspec.extraConfig.append(kubetypeopt)
+        confspec.extraConfig = []
+        for entry in [field for field in metadata if field in METADATA_FIELDS]:
+            opt = vim.option.OptionValue()
+            opt.key = entry
+            opt.value = metadata[entry]
+            confspec.extraConfig.append(opt)
         if nested:
             confspec.nestedHVEnabled = True
         confspec.guestId = 'centos7_64Guest'
@@ -760,16 +750,9 @@ class Ksphere:
                 if currentmac == mainmac and currentips:
                     yamlinfo['ip'] = currentips[0]
         for entry in vm.config.extraConfig:
-            if entry.key == 'plan':
-                yamlinfo['plan'] = entry.value
-            if entry.key == 'kube':
-                yamlinfo['kube'] = entry.value
-            if entry.key == 'kubetype':
-                yamlinfo['kubetype'] = entry.value
-            if entry.key == 'profile':
-                yamlinfo['profile'] = entry.value
+            if entry.key in METADATA_FIELDS:
+                yamlinfo[entry.key] = entry.value
             if entry.key == 'image':
-                yamlinfo['image'] = entry.value
                 yamlinfo['user'] = common.get_user(entry.value)
         if debug:
             yamlinfo['debug'] = vm.config.extraConfig

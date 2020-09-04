@@ -9,7 +9,7 @@ from kubernetes import client
 from kvirt.kubecommon import Kubecommon
 from netaddr import IPAddress
 from kvirt import common
-from kvirt.defaults import IMAGES, UBUNTUS
+from kvirt.defaults import IMAGES, UBUNTUS, METADATA_FIELDS
 import datetime
 import os
 import time
@@ -95,10 +95,10 @@ class Kubevirt(Kubecommon):
                disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None,
                vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None,
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
-               files=[], enableroot=True, alias=[], overrides={}, tags=[], dnsclient=None, storemetadata=False,
+               files=[], enableroot=True, alias=[], overrides={}, tags=[], storemetadata=False,
                sharedfolders=[], kernel=None, initrd=None, cmdline=None, placement=[], autostart=False,
                cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False,
-               kube=None, kubetype=None):
+               metadata={}):
         guestagent = False
         if self.exists(name):
             return {'result': 'failure', 'reason': "VM %s already exists" % name}
@@ -147,16 +147,10 @@ class Kubevirt(Kubecommon):
               'apiVersion': 'kubevirt.io/%s' % VERSION, 'metadata': {'name': name, 'namespace': namespace,
                                                                      'labels': {'kubevirt.io/os': 'linux',
                                                                                 'special': 'vmi-migratable'},
-                                                                     'annotations': {'kcli/plan': plan,
-                                                                                     'kcli/profile': profile,
-                                                                                     'kcli/image': image}}}
-        if dnsclient is not None:
-            vm['metadata']['annotations']['kcli/dnsclient'] = dnsclient
-        if kube is not None and kubetype is not None:
-            vm['metadata']['annotations']['kcli/kube'] = kube
-            vm['metadata']['annotations']['kcli/kubetype'] = kubetype
+                                                                     'annotations': {}}}
+        for entry in [field for field in metadata if field in METADATA_FIELDS]:
+            vm['metadata']['annotations']['kcli/%s' % entry] = metadata[entry]
         if domain is not None:
-            vm['metadata']['annotations']['kcli/domain'] = domain
             if reservedns:
                 vm['spec']['template']['spec']['hostname'] = name
                 vm['spec']['template']['spec']['subdomain'] = domain

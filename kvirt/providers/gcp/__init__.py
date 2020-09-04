@@ -8,7 +8,7 @@ from jinja2 import Environment, FileSystemLoader
 from jinja2 import StrictUndefined as undefined
 from jinja2.exceptions import TemplateSyntaxError, TemplateError
 from kvirt import common
-from kvirt.defaults import UBUNTUS
+from kvirt.defaults import UBUNTUS, METADATA_FIELDS
 from dateutil import parser as dateparser
 from getpass import getuser
 import googleapiclient.discovery
@@ -93,10 +93,10 @@ class Kgcp(object):
                disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None,
                vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None,
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
-               files=[], enableroot=True, alias=[], overrides={}, tags=[], dnsclient=None, storemetadata=False,
+               files=[], enableroot=True, alias=[], overrides={}, tags=[], storemetadata=False,
                sharedfolders=[], kernel=None, initrd=None, cmdline=None, placement=[], autostart=False,
                cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False,
-               kube=None, kubetype=None):
+               metadata={}):
         conn = self.conn
         project = self.project
         zone = self.zone
@@ -186,6 +186,8 @@ class Kgcp(object):
                                     'scopes': ['https://www.googleapis.com/auth/devstorage.read_write',
                                                'https://www.googleapis.com/auth/logging.write']}]
         body['metadata'] = {'items': []}
+        for entry in [field for field in metadata if field in METADATA_FIELDS]:
+            body['metadata']['items'].append({'key': entry, 'value': metadata[entry]})
         startup_script = ''
         sshdircreated = False
         if storemetadata and overrides:
@@ -286,20 +288,8 @@ class Kgcp(object):
             keys = '\n'.join(finalkeys)
             newval = {'key': 'ssh-keys', 'value': keys}
             body['metadata']['items'].append(newval)
-        newval = {'key': 'plan', 'value': plan}
-        body['metadata']['items'].append(newval)
-        newval = {'key': 'profile', 'value': profile}
-        body['metadata']['items'].append(newval)
         if tags:
             body['tags'] = {'items': tags}
-        if reservedns:
-            newval = {'key': 'domain', 'value': domain}
-            body['metadata']['items'].append(newval)
-        if kube is not None and kubetype is not None:
-            newval = {'key': 'kube', 'value': kube}
-            body['metadata']['items'].append(newval)
-            newval = {'key': 'kubetype', 'value': kubetype}
-            body['metadata']['items'].append(newval)
         if image is not None and common.needs_ignition(image):
             version = common.ignition_version(image)
             userdata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
@@ -309,9 +299,6 @@ class Kgcp(object):
             body['metadata']['items'].append(newval)
         newval = {'key': 'serial-port-enable', 'value': 1}
         body['metadata']['items'].append(newval)
-        if dnsclient is not None:
-            newval = {'key': 'dnsclient', 'value': dnsclient}
-            body['metadata']['items'].append(newval)
         if self.debug:
             print(body)
         if storemetadata and overrides:
@@ -520,16 +507,7 @@ class Kgcp(object):
             yamlinfo['disks'] = disks
         if 'items' in vm['metadata']:
             for data in vm['metadata']['items']:
-                if data['key'] == 'plan':
-                    yamlinfo['plan'] = data['value']
-                if data['key'] == 'profile':
-                    yamlinfo['profile'] = data['value']
-                if data['key'] == 'loadbalancer':
-                    yamlinfo['loadbalancer'] = data['value']
-                if data['key'] == 'kube':
-                    yamlinfo['kube'] = data['value']
-                if data['key'] == 'kubetype':
-                    yamlinfo['kubetype'] = data['value']
+                yamlinfo[data['key']] = data['value']
         if 'tags' in vm and 'items' in vm['tags']:
             yamlinfo['tags'] = ','.join(vm['tags']['items'])
         if debug:
