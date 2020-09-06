@@ -667,6 +667,11 @@ def create(config, plandir, cluster, overrides):
     call("oc adm taint nodes -l node-role.kubernetes.io/master node-role.kubernetes.io/master:NoSchedule-", shell=True)
     pprint("Deploying certs autoapprover cronjob", color='blue')
     call("oc create -f %s/autoapprovercron.yml" % clusterdir, shell=True)
+    if masters == 1 and int(COS_VERSION) > 45:
+        pprint("Patching authentication for single master", color='yellow')
+        authcommand = "oc patch authentication cluster -p='{\"spec\": {\"unsupportedConfigOverrides\": "
+        authcommand += "{\"useUnsupportedUnsafeNonHANonProductionUnstableOAuthServer\": true}}}' --type=merge"
+        call(authcommand)
     if not minimal:
         installcommand = 'openshift-install --dir=%s wait-for install-complete' % clusterdir
         installcommand += " || %s" % installcommand
