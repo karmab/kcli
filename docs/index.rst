@@ -1103,7 +1103,7 @@ For instance, you could create the following kcli.conf in apache
     inputfile = '/var/www/myplans/plan1.yml'
     overrides = {'param1': 'jimi_hendrix', 'param2': False}
     config = Kconfig()
-    kexposer = Kexposer(config, inputfile, overrides=overrides)
+    kexposer = Kexposer(config, 'myplan', inputfile, overrides=overrides)
     application = kexposer.app
     application.secret_key = ‘XXX’
 
