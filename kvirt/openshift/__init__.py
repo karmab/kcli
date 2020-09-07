@@ -669,9 +669,10 @@ def create(config, plandir, cluster, overrides):
     call("oc create -f %s/autoapprovercron.yml" % clusterdir, shell=True)
     if masters == 1 and int(COS_VERSION) > 45:
         pprint("Patching authentication for single master", color='yellow')
-        authcommand = "oc patch authentication cluster -p='{\"spec\": {\"unsupportedConfigOverrides\": "
+        authcommand = "oc patch authentications.operator.openshift.io "
+        authcommand += "cluster -p='{\"spec\": {\"unsupportedConfigOverrides\": "
         authcommand += "{\"useUnsupportedUnsafeNonHANonProductionUnstableOAuthServer\": true}}}' --type=merge"
-        call(authcommand)
+        call(authcommand, shell=True)
     if not minimal:
         installcommand = 'openshift-install --dir=%s wait-for install-complete' % clusterdir
         installcommand += " || %s" % installcommand
