@@ -78,6 +78,7 @@ def get_downstream_installer(nightly=False, macosx=False, tag=None):
     cmd += "openshift-install-%s-%s.tar.gz " % (INSTALLSYSTEM, version)
     cmd += "| tar zxf - openshift-install"
     cmd += "; chmod 700 openshift-install"
+    # pprint("Running: %s" % cmd, color='blue')
     return call(cmd, shell=True)
 
 
@@ -102,6 +103,7 @@ def get_ci_installer(pull_secret, tag=None, macosx=False, upstream=False):
     else:
         cmd = "oc adm release extract --registry-config %s --command=openshift-install --to . %s" % (pull_secret, tag)
     cmd += "; chmod 700 openshift-install"
+    # pprint("Running: %s" % cmd, color='blue')
     return call(cmd, shell=True)
 
 
@@ -116,6 +118,7 @@ def get_upstream_installer(macosx=False, tag=None):
     cmd += "%s/openshift-install-%s-%s.tar.gz" % (version, INSTALLSYSTEM, version)
     cmd += "| tar zxf - openshift-install"
     cmd += "; chmod 700 openshift-install"
+    # pprint("Running: %s" % cmd, color='blue')
     return call(cmd, shell=True)
 
 
