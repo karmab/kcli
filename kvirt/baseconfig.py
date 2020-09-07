@@ -1031,3 +1031,21 @@ class Kbaseconfig:
         else:
             with open(default_parameter_file, 'r') as f:
                 print(f.read().strip())
+
+    def download_openshift_installer(self, overrides={}):
+        pull_secret = overrides.get('pull_secret', 'openshift_pull.json')
+        version = overrides.get('version', 'stable')
+        tag = overrides.get('tag', '4.5')
+        upstream = overrides.get('upstream', False)
+        macosx = True if os.path.exists('/Users') else False
+        if version == 'ci':
+            run = openshift.get_ci_installer(pull_secret, tag=tag, macosx=macosx, upstream=upstream)
+        elif version == 'nightly':
+            run = openshift.get_downstream_installer(nightly=True, tag=tag, macosx=macosx)
+        elif upstream:
+            run = openshift.get_upstream_installer(tag=tag, macosx=macosx)
+        else:
+            run = openshift.get_downstream_installer(tag=tag, macosx=macosx)
+        if run != 0:
+            common.pprint("Couldn't download openshift-install", color='red')
+            os._exit(run)

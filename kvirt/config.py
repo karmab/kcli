@@ -1993,21 +1993,6 @@ $INFO
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
         openshift.scale(self, plandir, cluster, overrides)
 
-    def download_openshift_installer(self, overrides={}):
-        pull_secret = overrides.get('pull_secret', 'openshift_pull.json')
-        version = overrides.get('version', 'stable')
-        tag = overrides.get('tag', '4.5')
-        upstream = overrides.get('upstream', False)
-        macosx = True if os.path.exists('/Users') else False
-        if version == 'ci':
-            openshift.get_ci_installer(pull_secret, tag=tag, macosx=macosx, upstream=upstream)
-        elif version == 'nightly':
-            openshift.get_downstream_installer(nightly=True, tag=tag, macosx=macosx)
-        elif upstream:
-            openshift.get_upstream_installer(tag=tag, macosx=macosx)
-        else:
-            openshift.get_downstream_installer(tag=tag, macosx=macosx)
-
     def expose_plan(self, plan, inputfile=None, overrides={}, port=9000, extraconfigs={}):
         inputfile = os.path.expanduser(inputfile)
         if not os.path.exists(inputfile):

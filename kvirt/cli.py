@@ -1710,9 +1710,11 @@ def download_openshift_installer(args):
         paramfile = "kcli_parameters.yml"
         common.pprint("Using default parameter file kcli_parameters.yml", color='blue')
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.download_openshift_installer(overrides)
-    return 0
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    run = baseconfig.download_openshift_installer(overrides)
+    if run != 0:
+        common.pprint("Couldn't download openshift-install", color='red')
+    return run
 
 
 def download_okd_installer(args):
@@ -1730,8 +1732,10 @@ def download_okd_installer(args):
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     overrides['upstream'] = True
-    config.download_openshift_installer(overrides)
-    return 0
+    run = config.download_openshift_installer(overrides)
+    if run != 0:
+        common.pprint("Couldn't download openshift-install", color='red')
+    return run
 
 
 def create_pipeline(args):

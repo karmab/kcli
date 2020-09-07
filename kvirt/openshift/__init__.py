@@ -73,12 +73,12 @@ def get_downstream_installer(nightly=False, macosx=False, tag=None):
             break
     if version is None:
         pprint("Coudldn't find version", color='red')
-        os._exit(1)
+        return 1
     cmd = "curl -s https://mirror.openshift.com/pub/openshift-v4/clients/%s/" % repo
     cmd += "openshift-install-%s-%s.tar.gz " % (INSTALLSYSTEM, version)
     cmd += "| tar zxf - openshift-install"
     cmd += "; chmod 700 openshift-install"
-    call(cmd, shell=True)
+    return call(cmd, shell=True)
 
 
 def get_ci_installer(pull_secret, tag=None, macosx=False, upstream=False):
@@ -102,7 +102,7 @@ def get_ci_installer(pull_secret, tag=None, macosx=False, upstream=False):
     else:
         cmd = "oc adm release extract --registry-config %s --command=openshift-install --to . %s" % (pull_secret, tag)
     cmd += "; chmod 700 openshift-install"
-    call(cmd, shell=True)
+    return call(cmd, shell=True)
 
 
 def get_upstream_installer(macosx=False, tag=None):
@@ -116,7 +116,7 @@ def get_upstream_installer(macosx=False, tag=None):
     cmd += "%s/openshift-install-%s-%s.tar.gz" % (version, INSTALLSYSTEM, version)
     cmd += "| tar zxf - openshift-install"
     cmd += "; chmod 700 openshift-install"
-    call(cmd, shell=True)
+    return call(cmd, shell=True)
 
 
 def gather_dhcp(data, platform):
@@ -341,13 +341,16 @@ def create(config, plandir, cluster, overrides):
         pprint("Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to %s" % tag, color='blue')
     if find_executable('openshift-install') is None:
         if version == 'ci':
-            get_ci_installer(pull_secret, tag=tag, upstream=upstream)
+            run = get_ci_installer(pull_secret, tag=tag, upstream=upstream)
         elif version == 'nightly':
-            get_downstream_installer(nightly=True, tag=tag)
+            run = get_downstream_installer(nightly=True, tag=tag)
         elif upstream:
-            get_upstream_installer(tag=tag)
+            run = get_upstream_installer(tag=tag)
         else:
-            get_downstream_installer(tag=tag)
+            run = get_downstream_installer(tag=tag)
+        if run != 0:
+            pprint("Couldn't download openshift-install", color='red')
+            os._exit(run)
         pprint("Move downloaded openshift-install somewhere in your path if you want to reuse it", color='blue')
     INSTALLER_VERSION = get_installer_version()
     COMMIT_ID = os.popen('openshift-install version').readlines()[1].replace('built from commit', '').strip()
