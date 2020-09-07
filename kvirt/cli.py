@@ -1730,9 +1730,9 @@ def download_okd_installer(args):
         paramfile = "kcli_parameters.yml"
         common.pprint("Using default parameter file kcli_parameters.yml", color='blue')
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     overrides['upstream'] = True
-    run = config.download_openshift_installer(overrides)
+    run = baseconfig.download_openshift_installer(overrides)
     if run != 0:
         common.pprint("Couldn't download openshift-install", color='red')
     return run
