@@ -11,5 +11,6 @@ kcli="docker run --rm --privileged --net host -t -a stdout -a stderr -v ${HOME}/
 ssh-keygen -t rsa -N '' -f ~/.ssh/id_rsa
 sudo ${kcli} create plan -f travis/test_plan.yml -P image_pool_dir="${image_pool_dir}" test_plan
 sudo ${kcli} list vm
+sudo ${kcli} list plan | grep -q test_plan
 sudo ${kcli} delete plan --yes test_plan
 tree -f /srv

@@ -1638,7 +1638,6 @@ def info_openshift_app(args):
 
 def info_plan(args):
     """Info plan """
-    plan = args.plan
     doc = args.doc
     quiet = args.quiet
     url = args.url
@@ -1647,13 +1646,12 @@ def info_plan(args):
     if os.path.exists("/i_am_a_container"):
         inputfile = "/workdir/%s" % inputfile if inputfile is not None else "/workdir/kcli_plan.yml"
     if url is None:
-        inputfile = plan if inputfile is None and plan is not None else inputfile
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
         baseconfig.info_plan(inputfile, quiet=quiet, doc=doc)
     else:
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
-        config.plan(plan, url=url, path=path, inputfile=inputfile, info=True, quiet=quiet, doc=doc)
+        config.plan('info', url=url, path=path, inputfile=inputfile, info=True, quiet=quiet, doc=doc)
     return 0
 
 
@@ -3068,7 +3066,7 @@ def cli():
     planexpose_parser.add_argument('-P', '--param', action='append',
                                    help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
     planexpose_parser.add_argument('--port', help='Port where to listen', type=int, default=9000, metavar='PORT')
-    plancreate_parser.add_argument('plan', metavar='PLAN', nargs='?')
+    planexpose_parser.add_argument('plan', metavar='PLAN', nargs='?')
     planexpose_parser.set_defaults(func=expose_plan)
     expose_subparsers.add_parser('plan', parents=[planexpose_parser], description=vmssh_desc, help=planexpose_desc,
                                  epilog=planexpose_epilog, formatter_class=rawhelp)
@@ -3083,7 +3081,6 @@ def cli():
     planinfo_parser.add_argument('-p', '--path', help='Path where to download plans. Defaults to plan', metavar='PATH')
     planinfo_parser.add_argument('-q', '--quiet', action='store_true', help='Provide parameter file output')
     planinfo_parser.add_argument('-u', '--url', help='Url for plan', metavar='URL')
-    planinfo_parser.add_argument('plan', metavar='PLAN', nargs='?')
     planinfo_parser.set_defaults(func=info_plan)
 
     planlist_desc = 'List Plans'
@@ -3093,27 +3090,27 @@ def cli():
 
     planrestart_desc = 'Restart Plan'
     planrestart_parser = restart_subparsers.add_parser('plan', description=planrestart_desc, help=planrestart_desc)
-    planrestart_parser.add_argument('plan', metavar='PLAN', nargs='?')
+    planrestart_parser.add_argument('plan', metavar='PLAN')
     planrestart_parser.set_defaults(func=restart_plan)
 
     planrevert_desc = 'Revert Snapshot Of Plan'
     planrevert_parser = revert_subparsers.add_parser('plan', description=planrevert_desc, help=planrevert_desc)
-    planrevert_parser.add_argument('plan', metavar='PLAN', nargs='?')
+    planrevert_parser.add_argument('plan', metavar='PLAN')
     planrevert_parser.set_defaults(func=revert_plan)
 
     plansnapshot_desc = 'Snapshot Plan'
     plansnapshot_parser = snapshot_subparsers.add_parser('plan', description=plansnapshot_desc, help=plansnapshot_desc)
-    plansnapshot_parser.add_argument('plan', metavar='PLAN', nargs='?')
+    plansnapshot_parser.add_argument('plan', metavar='PLAN')
     plansnapshot_parser.set_defaults(func=snapshot_plan)
 
     planstart_desc = 'Start Plan'
     planstart_parser = start_subparsers.add_parser('plan', description=planstart_desc, help=planstart_desc)
-    planstart_parser.add_argument('plan', metavar='PLAN', nargs='?')
+    planstart_parser.add_argument('plan', metavar='PLAN')
     planstart_parser.set_defaults(func=start_plan)
 
     planstop_desc = 'Stop Plan'
     planstop_parser = stop_subparsers.add_parser('plan', description=planstop_desc, help=planstop_desc)
-    planstop_parser.add_argument('plan', metavar='PLAN', nargs='?')
+    planstop_parser.add_argument('plan', metavar='PLAN')
     planstop_parser.set_defaults(func=stop_plan)
 
     planupdate_desc = 'Update Plan'
@@ -3128,7 +3125,7 @@ def cli():
     planupdate_parser.add_argument('-P', '--param', action='append',
                                    help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
     planupdate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
-    planupdate_parser.add_argument('plan', metavar='PLAN', nargs='?')
+    planupdate_parser.add_argument('plan', metavar='PLAN')
     planupdate_parser.set_defaults(func=update_plan)
 
     poolcreate_desc = 'Create Pool'

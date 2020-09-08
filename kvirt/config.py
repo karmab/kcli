@@ -1138,7 +1138,7 @@ $INFO
             onfly = os.path.dirname(url)
             path = plan if path is None else path
             if not quiet:
-                common.pprint("Retrieving specified plan from %s to %s" % (url, path))
+                common.pprint("Retrieving specified plan from %s to %s" % (url, path), color='blue')
             if os.path.exists("/i_am_a_container"):
                 path = "/workdir/%s" % path
             if not os.path.exists(path):
