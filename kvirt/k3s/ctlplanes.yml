@@ -1,0 +1,43 @@
+{{ image }}:
+  type: image
+
+{%- for number in range(0, ctlplanes) %}
+{%- if extra_ctlplane_networks %}
+ {% set extra_networks = extra_ctlplane_networks %}
+{%- endif %}
+{%- if extra_ctlplane_disks %}
+ {% set extra_disks = extra_ctlplane_disks %}
+{%- endif %}
+{%- if numa_ctlplane != None %}
+ {% set numa = numa_ctlplane %}
+{%- endif %}
+{%- if numamode_ctlplane != None %}
+ {% set numa_mode = numamode_ctlplane %}
+{%- endif %}
+{%- if cpupinning_ctlplane != None %}
+ {% set cpupinning = cpupinning_ctlplane %}
+{%- endif %}
+
+{{cluster}}-ctlplane-{{ number }}:
+ image: {{ image }}
+ pool: {{ pool }}
+ numcpus: {{ ctlplane_numcpus | default(numcpus, numcpus) }}
+ memory: {{ ctlplane_memory | default(memory, memory) }}
+ nets: {{ [network] + extra_networks }}
+ disks: {{ [disk_size] + extra_disks }}
+ files: [keepalived.conf]
+ scripts:
+  - ctlplanes.sh
+{%- if ctlplanes > 1 and config_type not in ['aws', 'gcp'] %}
+  - keepalived.sh
+{%- endif %}
+{%- if numa != None %}
+ numa: {{ numa }}
+{%- endif %}
+{%- if numamode != None %}
+ numamode: {{ numamode }}
+{%- endif %}
+{%- if cpupinning != None %}
+ cpupinning: {{ cpupinning }}
+{%- endif %}
+{%- endfor %}

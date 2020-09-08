@@ -69,10 +69,10 @@ plancreate = """# Create a plan named ocp311 from a file
 $ kcli create plan -f multi.yml ocp311
 
 # Do the same but customize some parameters
-$ kcli create plan -f multi.yml -P masters=1 -P nodes=2 -P crio=true
+$ kcli create plan -f multi.yml -P ctlplanes=1 -P nodes=2 -P crio=true
 
 # Create a plan from a remote url, customizing some parameters
-$ kcli create plan -u https://github.com/karmab/kcli-plans/blob/master/kubernetes/kubernetes.yml -P masters=3
+$ kcli create plan -u https://github.com/karmab/kcli-plans/blob/master/kubernetes/kubernetes.yml -P ctlplanes=3
 """
 
 planinfo = """# Get info from a local plan file
@@ -128,7 +128,7 @@ kubegenericcreate = """# Create a kube instance named mykube with default values
 $ kcli create kube generic mykube
 
 # Do the same but customize some parameters
-$ kcli create kube generic -P masters=1 -P workers=2 mykube
+$ kcli create kube generic -P ctlplanes=1 -P workers=2 mykube
 
 # Use a parameter file
 $ kcli create kube generic --paramfile=myparameters.yml mykube2
@@ -148,7 +148,7 @@ kubeopenshiftcreate = """# Create a kube instance named mykube with default valu
 $ kcli create kube openshift mykube
 
 # Do the same but customize some parameters
-$ kcli create kube openshift -P masters=1 -P workers=2 mykube
+$ kcli create kube openshift -P ctlplanes=1 -P workers=2 mykube
 
 # Use a parameter file
 $ kcli create kube openshift --paramfile=myparameters.yml mykube2

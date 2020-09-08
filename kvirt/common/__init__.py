@@ -1075,7 +1075,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     if enableroot:
         pprint("Ignoring request to add ssh keys for root user as ignition currently complains about it", color='blue')
     role = None
-    if len(name.split('-')) == 3 and name.split('-')[1] in ['master', 'worker']:
+    if len(name.split('-')) == 3 and name.split('-')[1] in ['ctlplane', 'worker']:
         role = name.split('-')[1]
     elif len(name.split('-')) == 2 and name.split('-')[1] == 'bootstrap':
         role = name.split('-')[1]
@@ -1107,7 +1107,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     for fileentry in data['storage']['files']:
         if fileentry['path'] not in paths:
             if fix_ceo and 'bootstrap' in name and fileentry['path'] == '/usr/local/bin/bootkube.sh':
-                pprint("Patching bootkube in bootstrap ignition to handle single master", color='yellow')
+                pprint("Patching bootkube in bootstrap ignition to handle single ctlplane", color='yellow')
                 content = base64.b64decode(fileentry['contents']['source'].split(',')[1])
                 ceofix = """cp etcd-bootstrap/manifests/* manifests/
                 cp /root/ceo.yaml manifests/0000_12_etcd-operator_01_operator.cr.yaml"""
@@ -1508,7 +1508,7 @@ def get_oc(macosx=False):
 
 
 def kube_create_app(config, appdir, overrides={}):
-    appdata = {'cluster': 'testk', 'domain': 'karmalabs.com', 'masters': 1}
+    appdata = {'cluster': 'testk', 'domain': 'karmalabs.com', 'ctlplanes': 1}
     cluster = appdata['cluster']
     cwd = os.getcwd()
     overrides['cwd'] = cwd

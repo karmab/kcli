@@ -8,7 +8,7 @@ compute:
   replicas: {{ workers }}
 controlPlane:
   name: master
-  replicas: {{ masters }}
+  replicas: {{ ctlplanes }}
 metadata:
   name: {{ cluster }}
 networking:
@@ -45,7 +45,7 @@ platform:
     provisioningNetworkInterface: {{ provisioning_nic }}
     hosts:
     - name: fake-0
-      role: master
+      role: ctlplane
       bmc:
         address: ipmi://192.168.125.254:6230
         username: xxx

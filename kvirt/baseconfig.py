@@ -914,7 +914,7 @@ class Kbaseconfig:
                     common.pprint("Incorrect kubernetes type %s. Choose betwen generic or openshift" % _type,
                                   color='red')
                     os._exit(1)
-                inputfile = "%s/masters.yml" % plandir
+                inputfile = "%s/ctlplane.yml" % plandir
         if 'jenkinsmode' in overrides:
             jenkinsmode = overrides['jenkinsmode']
             del overrides['jenkinsmode']
@@ -965,17 +965,17 @@ class Kbaseconfig:
 
     def info_kube_generic(self, quiet, web=False):
         plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
-        inputfile = '%s/masters.yml' % plandir
+        inputfile = '%s/ctlplane.yml' % plandir
         return self.info_plan(inputfile, quiet=quiet, web=web)
 
     def info_kube_k3s(self, quiet, web=False):
         plandir = os.path.dirname(k3s.create.__code__.co_filename)
-        inputfile = '%s/masters.yml' % plandir
+        inputfile = '%s/ctlplane.yml' % plandir
         return self.info_plan(inputfile, quiet=quiet, web=web)
 
     def info_kube_openshift(self, quiet, web=False):
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
-        inputfile = '%s/masters.yml' % plandir
+        inputfile = '%s/ctlplane.yml' % plandir
         return self.info_plan(inputfile, quiet=quiet, web=web)
 
     def list_apps_generic(self, quiet=True):

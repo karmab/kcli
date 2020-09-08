@@ -11,7 +11,7 @@ chmod 777 /pv${i}
 done
 exportfs -r
 systemctl start nfs-server ; systemctl enable nfs-server
-{% if masters > 1 %}
+{% if ctlplanes > 1 %}
 IP="{{ api_ip }}"
 {% else %}
 IP=$(hostname -I | cut -d" " -f1)

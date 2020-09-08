@@ -1267,7 +1267,7 @@ $INFO
                     path = '.'
                     inputfile = planentry
                 if no_overrides and parameters:
-                    common.pprint("Using parameters from master plan in child ones", color='blue')
+                    common.pprint("Using parameters from main plan in child ones", color='blue')
                     for override in overrides:
                         print("Using parameter %s: %s" % (override, overrides[override]))
                 self.plan(plan, ansible=False, url=planurl, path=path, autostart=False, container=False,
@@ -1367,8 +1367,8 @@ $INFO
                 kubetype = kubeprofile.get('kubetype', 'generic')
                 overrides = kubeprofile
                 overrides['cluster'] = cluster
-                existing_masters = [v for v in currentconfig.k.list() if '%s-master' % cluster in v['name']]
-                if existing_masters:
+                existing_ctlplanes = [v for v in currentconfig.k.list() if '%s-ctlplane' % cluster in v['name']]
+                if existing_ctlplanes:
                     common.pprint("Cluster %s found. skipped!" % cluster, color='blue')
                     continue
                 if kubetype == 'openshift':

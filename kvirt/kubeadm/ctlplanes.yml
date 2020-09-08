@@ -1,47 +1,47 @@
 {{ image }}:
   type: image
 
-{%- if masters > 1 and config_type in ['aws', 'gcp'] %}
-{{ cluster }}-master:
+{%- if ctlplanes > 1 and config_type in ['aws', 'gcp'] %}
+{{ cluster }}-ctlplane:
  type: loadbalancer
  nets:
  - name: {{ network }}
    alias:
-   - {{ cluster }}-master.{{ domain }}
-   - {{ cluster }}-master.{{ network }}
+   - {{ cluster }}-ctlplane.{{ domain }}
+   - {{ cluster }}-ctlplane.{{ network }}
    reservedns: true
  ports:
  - 6443
  vms:
-{%- for number in range(0, masters) %}
-  - {{cluster}}-master-{{ number }}
+{%- for number in range(0, ctlplanes) %}
+  - {{cluster}}-ctlplane-{{ number }}
 {%- endfor %}
 {%- endif %}
 
 
-{%- for number in range(0, masters) %}
-{%- if extra_master_networks %}
- {% set extra_networks = extra_master_networks %}
+{%- for number in range(0, ctlplanes) %}
+{%- if extra_ctlplane_networks %}
+ {% set extra_networks = extra_ctlplane_networks %}
 {%- endif %}
-{%- if extra_master_disks %}
- {% set extra_disks = extra_master_disks %}
+{%- if extra_ctlplane_disks %}
+ {% set extra_disks = extra_ctlplane_disks %}
 {%- endif %}
-{%- if numa_master != None %}
- {% set numa = numa_master %}
+{%- if numa_ctlplane != None %}
+ {% set numa = numa_ctlplane %}
 {%- endif %}
-{%- if numamode_master != None %}
- {% set numa_mode = numamode_master %}
+{%- if numamode_ctlplane != None %}
+ {% set numa_mode = numamode_ctlplane %}
 {%- endif %}
-{%- if cpupinning_master != None %}
- {% set cpupinning = cpupinning_master %}
+{%- if cpupinning_ctlplane != None %}
+ {% set cpupinning = cpupinning_ctlplane %}
 {%- endif %}
 
-{{cluster}}-master-{{ number }}:
+{{cluster}}-ctlplane-{{ number }}:
  image: {{ image }}
  pool: {{ pool }}
- numcpus: {{ master_numcpus | default(numcpus, numcpus) }}
- memory: {{ master_memory | default(memory, memory) }}
-{%- if masters > 1 %}
+ numcpus: {{ ctlplane_numcpus | default(numcpus, numcpus) }}
+ memory: {{ ctlplane_memory | default(memory, memory) }}
+{%- if ctlplanes > 1 %}
  sharedkey: true
 {%- endif %}
  domain: {{ domain }}
@@ -69,11 +69,11 @@
 {%- else %}
   - pre_el.sh
 {%- endif %}
-{%- if masters > 1 and config_type not in ['aws', 'gcp'] %}
+{%- if ctlplanes > 1 and config_type not in ['aws', 'gcp'] %}
   - keepalived.sh
 {%- endif %}
 {%- if number == 0 %}
-  - masters.sh
+  - ctlplanes.sh
 {%- if multus %}
   - multus.sh
 {%- endif %}
@@ -81,7 +81,7 @@
   - nfs.sh
 {%- endif %}
 {% else %}
-  - masters_extra.sh
+  - ctlplanes_extra.sh
 {% endif %}
 {%- if numa != None %}
  numa: {{ numa }}

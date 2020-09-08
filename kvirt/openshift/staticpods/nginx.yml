@@ -16,7 +16,7 @@ spec:
     hostPath:
       path: "/etc/kubernetes"
   initContainers:
-  - name: nginx-get-master-mco
+  - name: nginx-get-ctlplane-mco
     securityContext:
       privileged: true
     image: {{ disconnected_url if disconnected_url != None else 'docker.io' }}/karmab/curl
@@ -27,12 +27,12 @@ spec:
     - "-H"
     - "{{ curl_header }}"
 {%- if ipv6 %}
-    - "https://[{{ api_ip}}]:22623/config/master"
+    - "https://[{{ api_ip}}]:22623/config/ctlplane"
 {%- else %}
-    - "https://{{ api_ip}}:22623/config/master"
+    - "https://{{ api_ip}}:22623/config/ctlplane"
 {%- endif %}
     - "-o"
-    - "/usr/share/nginx/html/master"
+    - "/usr/share/nginx/html/ctlplane"
     volumeMounts:
     - name: data-dir
       mountPath: "/usr/share/nginx/html"

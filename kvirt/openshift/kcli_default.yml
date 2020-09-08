@@ -1,5 +1,5 @@
 info: |
-    Deploys an openshift cluster with an arbitray number of masters or workers using openshift-install
+    Deploys an openshift cluster with an arbitray number of ctlplanes or workers using openshift-install
     and creating the node with kcli instead of terraforms.
     This allows easily tweaking the hardware caracteristics of those nodes.
     When running on cloud platforms, loadbalancer and dns from the platform is used.
@@ -18,7 +18,7 @@ helper_image: CentOS-7-x86_64-GenericCloud.qcow2
 network: default
 api_ip: 
 ingress_ip: 
-masters: 1
+ctlplanes: 1
 workers: 0
 fips: false
 cluster: testk
@@ -28,18 +28,18 @@ minimal: false
 pool: default
 flavor:
 flavor_bootstrap:
-flavor_master:
+flavor_ctlplane:
 flavor_worker:
 numcpus: 4
 bootstrap_numcpus:
-master_numcpus:
+ctlplane_numcpus:
 worker_numcpus:
 memory: 8192
 bootstrap_memory:
-master_memory:
+ctlplane_memory:
 worker_memory:
-master_tpm: false
-master_rng: false
+ctlplane_tpm: false
+ctlplane_rng: false
 worker_tpm: false
 worker_rng: false
 disk_size: 30
@@ -47,26 +47,26 @@ autostart: false
 keys: []
 apps: []
 extra_disks: []
-extra_master_disks: []
+extra_ctlplane_disks: []
 extra_worker_disks: []
 extra_networks: []
-extra_master_networks: []
+extra_ctlplane_networks: []
 extra_worker_networks: []
-master_macs: []
-master_ips: []
+ctlplane_macs: []
+ctlplane_ips: []
 bootstrap_mac: 
 bootstrap_ip: 
 worker_macs: []
 worker_ips: []
 pcidevices:
 numa:
-numa_master:
+numa_ctlplane:
 numa_worker:
 numamode:
-numamode_master:
+numamode_ctlplane:
 numamode_worker:
 cpupinning:
-cpupinning_master:
+cpupinning_ctlplane:
 cpupinning_worker:
 disconnected_url:
 disconnected_user:

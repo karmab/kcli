@@ -749,7 +749,7 @@ class Kaws(object):
         zoneid = zone[0]
         dnsentry = name if cluster is None else "%s.%s" % (name, cluster)
         entry = "%s.%s." % (dnsentry, domain)
-        if cluster is not None and ('master' in name or 'worker' in name):
+        if cluster is not None and ('ctlplane' in name or 'worker' in name):
             counter = 0
             while counter != 100:
                 internalip = self.internalip(name)
@@ -782,7 +782,7 @@ class Kaws(object):
         if alias:
             for a in alias:
                 if a == '*':
-                    if cluster is not None and ('master' in name or 'worker' in name):
+                    if cluster is not None and ('ctlplane' in name or 'worker' in name):
                         new = '*.apps.%s.%s.' % (cluster, domain)
                     else:
                         new = '*.%s.%s.' % (name, domain)
@@ -792,7 +792,7 @@ class Kaws(object):
                     new = '%s.%s.' % (a, domain) if '.' not in a else '%s.' % a
                     changes.append({'Action': 'CREATE', 'ResourceRecordSet':
                                     {'Name': new, 'Type': 'CNAME', 'TTL': 300, 'ResourceRecords': [{'Value': entry}]}})
-        if cluster is not None and 'master' in name and internalip is not None:
+        if cluster is not None and 'ctlplane' in name and internalip is not None:
             etcd1 = "_etcd-server-ssl._tcp.%s.%s." % (cluster, domain)
             etcd2 = "etcd-%s.%s.%s." % (name[-1], cluster, domain)
             srventry = "0 10 2380 %s" % (etcd2)
@@ -828,7 +828,7 @@ class Kaws(object):
         recs = []
         clusterdomain = "%s.%s" % (cluster, domain)
         for record in dns.list_resource_record_sets(HostedZoneId=zoneid)['ResourceRecordSets']:
-            if entry in record['Name'] or ('master-0' in name and record['Name'].endswith("%s." % clusterdomain)):
+            if entry in record['Name'] or ('ctlplane-0' in name and record['Name'].endswith("%s." % clusterdomain)):
                 recs.append(record)
             else:
                 for rrdata in record['ResourceRecords']:

@@ -1,4 +1,4 @@
-masters: 1
+ctlplanes: 1
 workers: 0
 api_ip:
 datastore_endpoint:
@@ -14,12 +14,12 @@ cluster: testk
 domain: karmalabs.com
 numcpus: 2
 worker_numcpus:
-master_numcpus:
+ctlplane_numcpus:
 memory: 1024
-master_memory:
+ctlplane_memory:
 worker_memory:
-master_tpm: false
-master_rng: false
+ctlplane_tpm: false
+ctlplane_rng: false
 disk_size: 10
 worker_tpm: false
 worker_rng: false
@@ -27,19 +27,19 @@ metallb: false
 notifycmd: "kubectl get pod -A"
 notify: false
 numa:
-numa_master:
+numa_ctlplane:
 numa_worker:
 numamode:
-numamode_master:
+numamode_ctlplane:
 numamode_worker:
 cpupinning:
-cpupinning_master:
+cpupinning_ctlplane:
 cpupinning_worker:
 extra_disks: []
-extra_master_disks: []
+extra_ctlplane_disks: []
 extra_worker_disks: []
 extra_networks: []
-extra_master_networks: []
+extra_ctlplane_networks: []
 extra_worker_networks: []
 info: |
-    Deploys kubernetes using k3s on a single master and an arbitary number of workers.
+    Deploys kubernetes using k3s on a single ctlplane and an arbitary number of workers.

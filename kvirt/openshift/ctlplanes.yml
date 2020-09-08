@@ -51,48 +51,48 @@
     mode: 700
 {%- endif %}
 
-{%- for num in range(0, masters) %}
-{%- if master_macs and master_macs|length >= masters %}
-{% set net0 = {"name": network, "mac": master_macs[num]} %}
+{%- for num in range(0, ctlplanes) %}
+{%- if ctlplane_macs and ctlplane_macs|length >= ctlplanes %}
+{% set net0 = {"name": network, "mac": ctlplane_macs[num]} %}
 {%- else %}
 {% set net0 = network %}
 {%- endif %}
 {%- if baremetal and not extra_networks %}
 {% set extra_networks = [provisioning_net] %}
 {%- endif %}
-{%- if extra_master_networks %}
-{% set extra_networks = extra_master_networks %}
+{%- if extra_ctlplane_networks %}
+{% set extra_networks = extra_ctlplane_networks %}
 {%- endif %}
-{%- if extra_master_disks %}
-% set extra_disks = extra_master_disks %}
+{%- if extra_ctlplane_disks %}
+% set extra_disks = extra_ctlplane_disks %}
 {%- endif %}
-{%- if numa_master != None %}
-{% set numa = numa_master %}
+{%- if numa_ctlplane != None %}
+{% set numa = numa_ctlplane %}
 {%- endif %}
-{%- if numamode_master != None %}
-{% set numamode = numamode_master %}
+{%- if numamode_ctlplane != None %}
+{% set numamode = numamode_ctlplane %}
 {%- endif %}
-{%- if cpupinning_master != None %}
-{% set cpupinning = cpupinning_master %}
+{%- if cpupinning_ctlplane != None %}
+{% set cpupinning = cpupinning_ctlplane %}
 {%- endif %}
-{%- if flavor_master != None %}
-{% set flavor = flavor_master %}
+{%- if flavor_ctlplane != None %}
+{% set flavor = flavor_ctlplane %}
 {%- endif %}
 {%- if config_type == 'packet' %}
 {% set extra_networks = [{"name": network, "ip": "192.168.122.10" + num|string, "mask": "255.255.255.0", "gateway": "192.168.122.1"}] %}
 {%- endif %}
 
-{{ cluster }}-master-{{ num }}:
+{{ cluster }}-ctlplane-{{ num }}:
  domain: {{ domain }} 
  image: {{ image }}
  pool: {{ pool }}
  enableroot: false 
  flavor: {{ flavor }}
  keys: {{ keys }}
- numcpus: {{ master_numcpus | default(numcpus, numcpus) }}
- memory: {{ master_memory | default(memory, memory) }}
- rng: {{ master_rng }}
- tpm: {{ master_tpm }}
+ numcpus: {{ ctlplane_numcpus | default(numcpus, numcpus) }}
+ memory: {{ ctlplane_memory | default(memory, memory) }}
+ rng: {{ ctlplane_rng }}
+ tpm: {{ ctlplane_tpm }}
  autostart: {{ autostart }}
  nets: {{ [net0] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}

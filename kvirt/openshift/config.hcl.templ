@@ -10,7 +10,7 @@ service {
     ttl = 3200
 }
 
-{% if 'master' in name %}
+{% if 'ctlplane' in name %}
 service {
     name = "{{ cluster }} Etcd"
     host_name = "ETCD.local."

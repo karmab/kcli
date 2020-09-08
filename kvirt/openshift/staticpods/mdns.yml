@@ -32,7 +32,7 @@ spec:
       {%- endif %}
       [ -z "$IP" ] && exit 1
       HOSTNAME=$(hostname -s)
-      ETCD=$(echo "$HOSTNAME" | sed 's@{{ cluster }}-master@etcd@')
+      ETCD=$(echo "$HOSTNAME" | sed 's@{{ cluster }}-ctlplane@etcd@')
       sed "s/IP/$IP/" /etc/mdns/config.hcl.templ > /etc/mdns/config.hcl
       sed -i "s/HOSTNAME/$HOSTNAME/" /etc/mdns/config.hcl
       sed -i "s/ETCD/$ETCD/" /etc/mdns/config.hcl

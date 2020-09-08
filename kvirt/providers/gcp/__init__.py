@@ -941,7 +941,7 @@ class Kgcp(object):
             dnszone = dnszones[0]
         dnsentry = name if cluster is None else "%s.%s" % (name, cluster)
         entry = "%s.%s." % (dnsentry, domain)
-        if cluster is not None and ('master' in name or 'worker' in name):
+        if cluster is not None and ('ctlplane' in name or 'worker' in name):
             counter = 0
             while counter != 100:
                 internalip = self.internalip(name)
@@ -984,7 +984,7 @@ class Kgcp(object):
         if alias:
             for a in alias:
                 if a == '*':
-                    if cluster is not None and ('master' in name or 'worker' in name):
+                    if cluster is not None and ('ctlplane' in name or 'worker' in name):
                         new = '*.apps.%s.%s.' % (cluster, domain)
                     else:
                         new = '*.%s.%s.' % (name, domain)
@@ -993,7 +993,7 @@ class Kgcp(object):
                     new = '%s.%s.' % (a, domain) if '.' not in a else '%s.' % a
                     alias_record_set = dnszone.resource_record_set(new, 'CNAME', 300, [entry])
                 changes.add_record_set(alias_record_set)
-        if cluster is not None and 'master' in name and internalip is not None:
+        if cluster is not None and 'ctlplane' in name and internalip is not None:
             etcd1 = "_etcd-server-ssl._tcp.%s.%s." % (cluster, domain)
             etcd2 = "etcd-%s.%s.%s." % (name[-1], cluster, domain)
             srventries = ["0 10 2380 %s" % (etcd2)]
@@ -1036,9 +1036,9 @@ class Kgcp(object):
         records = []
         # records = [record for record in dnszone.list_resource_record_sets() if entry in record.name
         #           or name in record.rrdata
-        #           ('master-0' in name and record.name.endswith("%s.%s." % (cluster, domain)))]
+        #           ('ctlplane-0' in name and record.name.endswith("%s.%s." % (cluster, domain)))]
         for record in dnszone.list_resource_record_sets():
-            if entry in record.name or ('master-0' in name and record.name.endswith("%s.%s." % (cluster, domain))):
+            if entry in record.name or ('ctlplane-0' in name and record.name.endswith("%s.%s." % (cluster, domain))):
                 records.append(record)
             else:
                 for rrdata in record.rrdatas:

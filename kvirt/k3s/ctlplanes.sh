@@ -1,5 +1,5 @@
 apt-get -y install curl
-{% if masters > 1 %}
+{% if ctlplanes > 1 %}
 curl -sfL https://get.k3s.io | sh -s - server --datastore-endpoint="{{ datastore_endpoint }}"
 export IP={{ api_ip }}
 {% else %}

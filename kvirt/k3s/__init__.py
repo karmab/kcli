@@ -27,7 +27,7 @@ def scale(config, plandir, cluster, overrides):
     client = config.client
     k = config.k
     pprint("Scaling on client %s" % client, color='blue')
-    image = k.info("%s-master-0" % cluster).get('image')
+    image = k.info("%s-ctlplane-0" % cluster).get('image')
     if image is None:
         pprint("Missing image...", color='red')
         sys.exit(1)
@@ -45,13 +45,13 @@ def create(config, plandir, cluster, overrides):
     data['cluster'] = overrides.get('cluster', cluster if cluster is not None else 'testk')
     plan = cluster if cluster is not None else data['cluster']
     data['kube'] = data['cluster']
-    masters = data.get('masters', 1)
+    ctlplanes = data.get('ctlplanes', 1)
     network = data.get('network', 'default')
     api_ip = data.get('api_ip')
-    if masters > 1:
+    if ctlplanes > 1:
         if platform in cloudplatforms:
             domain = data.get('domain', 'karmalabs.com')
-            api_ip = "%s-master.%s" % (cluster, domain)
+            api_ip = "%s-ctlplane.%s" % (cluster, domain)
         elif api_ip is None:
             if network == 'default' and platform == 'kvm':
                 pprint("Using 192.168.122.253 as api_ip", color='yellow')
@@ -66,7 +66,7 @@ def create(config, plandir, cluster, overrides):
     data['basedir'] = '/workdir' if os.path.exists("/i_am_a_container") else '.'
     cluster = data.get('cluster')
     clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
-    firstmaster = "%s-master-0" % cluster
+    firstctlplane = "%s-ctlplane-0" % cluster
     if os.path.exists(clusterdir):
         pprint("Please remove existing directory %s first..." % clusterdir, color='red')
         sys.exit(1)
@@ -79,7 +79,7 @@ def create(config, plandir, cluster, overrides):
             installparam = overrides.copy()
             installparam['plan'] = plan
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
-    if masters > 1:
+    if ctlplanes > 1:
         datastore_endpoint = data.get('datastore_endpoint')
         if datastore_endpoint is None:
             result = config.plan(plan, inputfile='%s/datastore.yml' % plandir, overrides=data, wait=True)
@@ -96,17 +96,17 @@ def create(config, plandir, cluster, overrides):
                                                        datastore_ip, datastore_name)
         data['datastore_endpoint'] = datastore_endpoint
     k = config.k
-    result = config.plan(cluster, inputfile='%s/masters.yml' % plandir, overrides=data, wait=True)
+    result = config.plan(cluster, inputfile='%s/ctlplanes.yml' % plandir, overrides=data, wait=True)
     if result['result'] != "success":
         os._exit(1)
     source, destination = "/root/join.sh", "%s/join.sh" % clusterdir
-    firstmasterip = k.info(firstmaster)['ip']
-    scpcmd = scp(firstmaster, ip=firstmasterip, user='root', source=source, destination=destination,
+    firstctlplaneip = k.info(firstctlplane)['ip']
+    scpcmd = scp(firstctlplane, ip=firstctlplaneip, user='root', source=source, destination=destination,
                  tunnel=config.tunnel, tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
                  tunneluser=config.tunneluser, download=True, insecure=True)
     os.system(scpcmd)
     source, destination = "/root/kubeconfig", "%s/auth/kubeconfig" % clusterdir
-    scpcmd = scp(firstmaster, ip=firstmasterip, user='root', source=source, destination=destination,
+    scpcmd = scp(firstctlplane, ip=firstctlplaneip, user='root', source=source, destination=destination,
                  tunnel=config.tunnel, tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
                  tunneluser=config.tunneluser, download=True, insecure=True)
     os.system(scpcmd)

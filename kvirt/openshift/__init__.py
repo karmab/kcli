@@ -124,7 +124,7 @@ def get_upstream_installer(macosx=False, tag=None):
 
 def gather_dhcp(data, platform):
     cluster = data.get('cluster', 'testk')
-    masters = data.get('masters', 1)
+    ctlplanes = data.get('ctlplanes', 1)
     workers = data.get('workers', 0)
     bootstrap_name = "%s-bootstrap" % cluster
     bootstrap_mac = data.get('bootstrap_mac', gen_mac())
@@ -141,15 +141,15 @@ def gather_dhcp(data, platform):
         bootstrap_helper_ip = data.get('bootstrap_helper_ip')
         if bootstrap_helper_ip is None:
             return {}
-    master_names = ['%s-master-%s' % (cluster, num) for num in range(masters)]
+    ctlplane_names = ['%s-ctlplane-%s' % (cluster, num) for num in range(ctlplanes)]
     worker_names = ['%s-worker-%s' % (cluster, num) for num in range(workers)]
-    node_names = master_names + worker_names
-    master_macs = get_values(data, 'master', 'macs')
+    node_names = ctlplane_names + worker_names
+    ctlplane_macs = get_values(data, 'ctlplane', 'macs')
     worker_macs = get_values(data, 'worker', 'macs')
-    node_macs = master_macs + worker_macs
-    master_ips = get_values(data, 'master', 'ips')
+    node_macs = ctlplane_macs + worker_macs
+    ctlplane_ips = get_values(data, 'ctlplane', 'ips')
     worker_ips = get_values(data, 'worker', 'ips')
-    node_ips = master_ips + worker_ips
+    node_ips = ctlplane_ips + worker_ips
     if not node_macs:
         node_macs = [gen_mac() for x in node_names]
     if node_ips and len(node_macs) == len(node_ips) and len(node_names) == len(node_macs):
@@ -191,7 +191,7 @@ def scale(config, plandir, cluster, overrides):
         if network is None:
             pprint("You need to indicate a specific vlan network", color='red')
             os._exit(1)
-    image = k.info("%s-master-0" % cluster).get('image')
+    image = k.info("%s-ctlplane-0" % cluster).get('image')
     if image is None:
         pprint("Missing image...", color='red')
         sys.exit(1)
@@ -218,7 +218,7 @@ def create(config, plandir, cluster, overrides):
     data = {'helper_image': 'CentOS-7-x86_64-GenericCloud.qcow2',
             'domain': 'karmalabs.com',
             'network': 'default',
-            'masters': 1,
+            'ctlplanes': 1,
             'workers': 0,
             'tag': DEFAULT_TAG,
             'ipv6': False,
@@ -237,14 +237,14 @@ def create(config, plandir, cluster, overrides):
     overrides['kubetype'] = 'openshift'
     apps = overrides.get('apps', [])
     if ('localstorage' in apps or 'ocs' in apps) and 'extra_disks' not in overrides\
-            and 'extra_master_disks' not in overrides and 'extra_worker_disks' not in overrides:
+            and 'extra_ctlplane_disks' not in overrides and 'extra_worker_disks' not in overrides:
         pprint("Storage apps require extra disks to be set", color='yellow')
     data['cluster'] = overrides.get('cluster', cluster)
     overrides['kube'] = data['cluster']
     installparam = overrides.copy()
-    masters = data.get('masters', 1)
-    if masters == 0:
-        pprint("Invalid number of masters", color='red')
+    ctlplanes = data.get('ctlplanes', 1)
+    if ctlplanes == 0:
+        pprint("Invalid number of ctlplanes", color='red')
         os._exit(1)
     network = data.get('network')
     ipv6 = data['ipv6']
@@ -295,7 +295,7 @@ def create(config, plandir, cluster, overrides):
             elif k.facility not in facilities:
                 pprint("Vlan network %s not found in facility %s" % (network, k.facility), color='red')
                 os._exit(1)
-    masters = data.get('masters')
+    ctlplanes = data.get('ctlplanes')
     workers = data.get('workers')
     disconnected_deploy = data.get('disconnected_deploy', False)
     disconnected_url = data.get('disconnected_url')
@@ -430,7 +430,7 @@ def create(config, plandir, cluster, overrides):
         with open("%s/manifests/cvo-overrides.yaml" % clusterdir, "a") as f:
             f.write(cvo_override)
     if baremetal:
-        for f in glob("%s/openshift/99_openshift-cluster-api_master-machines-*.yaml" % clusterdir):
+        for f in glob("%s/openshift/99_openshift-cluster-api_ctlplane-machines-*.yaml" % clusterdir):
             os.remove(f)
         for f in glob("%s/openshift/99_openshift-cluster-api_worker-machineset-*.yaml" % clusterdir):
             os.remove(f)
@@ -441,8 +441,8 @@ def create(config, plandir, cluster, overrides):
             f.write(installconfig)
     for f in glob("%s/customisation/*.yaml" % plandir):
         if '99-ingress-controller.yaml' in f:
-            ingressrole = 'master' if workers == 0 else 'worker'
-            replicas = masters if workers == 0 else workers
+            ingressrole = 'ctlplane' if workers == 0 else 'worker'
+            replicas = ctlplanes if workers == 0 else workers
             ingressconfig = config.process_inputfile(cluster, f, overrides={'replicas': replicas, 'role': ingressrole})
             with open("%s/openshift/99-ingress-controller.yaml" % clusterdir, 'w') as f:
                 f.write(ingressconfig)
@@ -552,20 +552,20 @@ def create(config, plandir, cluster, overrides):
                          destination=destination, tunnel=config.tunnel, tunnelhost=config.tunnelhost,
                          tunnelport=config.tunnelport, tunneluser=config.tunneluser, download=False, insecure=True)
             os.system(scpcmd)
-            sedcmd = 'sed "s@https://api-int.%s.%s:22623/config/master@http://%s/bootstrap@" ' % (cluster, domain,
-                                                                                                  bootstrap_api_ip)
-            sedcmd += '%s/master.ign' % clusterdir
+            sedcmd = 'sed "s@https://api-int.%s.%s:22623/config/ctlplane@http://%s/bootstrap@" ' % (cluster, domain,
+                                                                                                    bootstrap_api_ip)
+            sedcmd += '%s/ctlplane.ign' % clusterdir
             sedcmd += ' > %s/bootstrap.ign' % clusterdir
             call(sedcmd, shell=True)
         if baremetal:
             new_api_ip = api_ip if not ipv6 else "[%s]" % api_ip
             sedcmd = 'sed -i "s@https://192.168.125.1:22623/config@http://%s@"' % new_api_ip
-            sedcmd += ' %s/master.ign' % clusterdir
+            sedcmd += ' %s/ctlplane.ign' % clusterdir
             call(sedcmd, shell=True)
         else:
             new_api_ip = api_ip if not ipv6 else "[%s]" % api_ip
             sedcmd = 'sed -i "s@https://api-int.%s.%s:22623/config@http://%s@"' % (cluster, domain, new_api_ip)
-            sedcmd += ' %s/master.ign' % clusterdir
+            sedcmd += ' %s/ctlplane.ign' % clusterdir
             call(sedcmd, shell=True)
     if platform in cloudplatforms:
         bootstrap_helper_name = "%s-bootstrap-helper" % cluster
@@ -589,12 +589,12 @@ def create(config, plandir, cluster, overrides):
                      tunnel=config.tunnel, tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
                      tunneluser=config.tunneluser, download=False, insecure=True)
         os.system(scpcmd)
-        sedcmd = 'sed "s@https://api-int.%s.%s:22623/config/master@' % (cluster, domain)
+        sedcmd = 'sed "s@https://api-int.%s.%s:22623/config/ctlplane@' % (cluster, domain)
         sedcmd += 'http://%s-bootstrap-helper.%s.%s/bootstrap@ "' % (cluster, domain)
-        sedcmd += '%s/master.ign' % clusterdir
+        sedcmd += '%s/ctlplane.ign' % clusterdir
         sedcmd += ' > %s/bootstrap.ign' % clusterdir
         call(sedcmd, shell=True)
-    if masters == 1:
+    if ctlplanes == 1:
         version_match = re.match("4.([0-9]*).*", INSTALLER_VERSION)
         COS_VERSION = "4%s" % version_match.group(1) if version_match is not None else '45'
         if upstream or int(COS_VERSION) > 43:
@@ -616,12 +616,12 @@ def create(config, plandir, cluster, overrides):
                 overrides['ca'] += disconnected_ca
             else:
                 overrides['ca'] = disconnected_ca
-        pprint("Deploying masters", color='blue')
-        result = config.plan(plan, inputfile='%s/masters.yml' % plandir, overrides=overrides)
+        pprint("Deploying ctlplanes", color='blue')
+        result = config.plan(plan, inputfile='%s/ctlplanes.yml' % plandir, overrides=overrides)
         if result['result'] != 'success':
             os._exit(1)
         if platform == 'packet':
-            allnodes = ["%s-bootstrap" % cluster] + ["%s-master-%s" % (cluster, num) for num in range(masters)]
+            allnodes = ["%s-bootstrap" % cluster] + ["%s-ctlplane-%s" % (cluster, num) for num in range(ctlplanes)]
             for node in allnodes:
                 try:
                     k.add_nic(node, network)
@@ -639,7 +639,7 @@ def create(config, plandir, cluster, overrides):
         if platform in ['kubevirt', 'openstack', 'vsphere', 'packet']:
             todelete.append("%s-bootstrap-helper" % cluster)
     else:
-        result = config.plan(plan, inputfile='%s/cloud_masters.yml' % plandir, overrides=overrides)
+        result = config.plan(plan, inputfile='%s/cloud_ctlplanes.yml' % plandir, overrides=overrides)
         if result['result'] != 'success':
             os._exit(1)
         call('openshift-install --dir=%s wait-for bootstrap-complete || exit 1' % clusterdir, shell=True)
@@ -673,8 +673,8 @@ def create(config, plandir, cluster, overrides):
     call("oc adm taint nodes -l node-role.kubernetes.io/master node-role.kubernetes.io/master:NoSchedule-", shell=True)
     pprint("Deploying certs autoapprover cronjob", color='blue')
     call("oc create -f %s/autoapprovercron.yml" % clusterdir, shell=True)
-    if masters == 1 and int(COS_VERSION) > 45:
-        pprint("Patching authentication for single master", color='yellow')
+    if ctlplanes == 1 and int(COS_VERSION) > 45:
+        pprint("Patching authentication for single ctlplane", color='yellow')
         authcommand = "oc patch authentications.operator.openshift.io "
         authcommand += "cluster -p='{\"spec\": {\"unsupportedConfigOverrides\": "
         authcommand += "{\"useUnsupportedUnsafeNonHANonProductionUnstableOAuthServer\": true}}}' --type=merge"

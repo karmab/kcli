@@ -11,8 +11,8 @@ api.{{ cluster }}:
  - 22623
  vms:
  - {{ cluster }}-bootstrap
-{% for num in range(0, masters) %}
- - {{ cluster }}-master-{{ num }}
+{% for num in range(0, ctlplanes) %}
+ - {{ cluster }}-ctlplane-{{ num }}
 {% endfor %}
 
 {% if cloud_api_internal %}
@@ -26,8 +26,8 @@ api-int.{{ cluster }}:
  - 22623
  vms:
  - {{ cluster }}-bootstrap
-{% for num in range(0, masters) %}
- - {{ cluster }}-master-{{ num }}
+{% for num in range(0, ctlplanes) %}
+ - {{ cluster }}-ctlplane-{{ num }}
 {% endfor %}
 {% endif %}
 
@@ -45,13 +45,13 @@ apps.{{ cluster }}:
  - {{ cluster }}-worker-{{ num }}
 {% endfor %}
 {% else %}
-{% for num in range(0, masters) %}
- - {{ cluster }}-master-{{ num }}
+{% for num in range(0, ctlplanes) %}
+ - {{ cluster }}-ctlplane-{{ num }}
 {% endfor %}
 {% endif %}
 
-{%- if flavor_master != None %}
-{% set flavor = flavor_master %}
+{%- if flavor_ctlplane != None %}
+{% set flavor = flavor_ctlplane %}
 {%- endif %}
 
 {{ cluster }}-bootstrap:
@@ -70,20 +70,20 @@ apps.{{ cluster }}:
  tags: [{{ cloud_tag }}]
 {%- endif %}
 
-{% for num in range(0, masters) %}
+{% for num in range(0, ctlplanes) %}
 
-{%- if flavor_master != None %}
-{% set flavor = flavor_master %}
+{%- if flavor_ctlplane != None %}
+{% set flavor = flavor_ctlplane %}
 {%- endif %}
 
-{{ cluster }}-master-{{ num }}:
+{{ cluster }}-ctlplane-{{ num }}:
  domain: {{ domain }} 
  image: {{ image }}
  pool: {{ pool }}
  flavor: {{ flavor }}
  enableroot: {{ enableroot }}
- numcpus: {{ master_numcpus | default(numcpus, numcpus) }}
- memory: {{ master_memory | default(memory, memory) }}
+ numcpus: {{ ctlplane_numcpus | default(numcpus, numcpus) }}
+ memory: {{ ctlplane_memory | default(memory, memory) }}
  nets:
  - name: {{ network }}
  reservedns: true

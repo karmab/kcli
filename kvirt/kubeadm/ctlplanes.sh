@@ -1,5 +1,5 @@
 CIDR="10.244.0.0/16"
-{% if masters > 1 %}
+{% if ctlplanes > 1 %}
 kubeadm init --control-plane-endpoint "{{ api_ip }}:6443" --pod-network-cidr $CIDR --upload-certs
 {% else %}
 kubeadm init --pod-network-cidr $CIDR
@@ -8,9 +8,9 @@ cp /etc/kubernetes/admin.conf /root/
 chown root:root /root/admin.conf
 export KUBECONFIG=/root/admin.conf
 echo "export KUBECONFIG=/root/admin.conf" >>/root/.bashrc
-kubectl taint nodes --all node-role.kubernetes.io/master-
+kubectl taint nodes --all node-role.kubernetes.io/ctlplane-
 {% if sdn == 'flannel' %}
-kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/ctlplane/Documentation/kube-flannel.yml
 {% elif sdn == 'weavenet' %}
 kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=`kubectl version | base64 | tr -d '\n'`"
 {% elif sdn == 'calico' %}
@@ -19,7 +19,7 @@ kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml | sed -e "
 kubectl apply -f https://docs.projectcalico.org/v3.1/getting-started/kubernetes/installation/hosted/canal/rbac.yaml
 kubectl apply -f https://docs.projectcalico.org/v3.1/getting-started/kubernetes/installation/hosted/canal/canal.yaml
 {% elif sdn == 'romana' %}
-kubectl apply -f https://raw.githubusercontent.com/romana/romana/master/containerize/specs/romana-kubeadm.yml
+kubectl apply -f https://raw.githubusercontent.com/romana/romana/ctlplane/containerize/specs/romana-kubeadm.yml
 {% endif %} 
 mkdir -p /root/.kube
 cp -i /etc/kubernetes/admin.conf /root/.kube/config
@@ -31,11 +31,11 @@ CMD="kubeadm join $IP:6443 --token $TOKEN --discovery-token-ca-cert-hash sha256:
 
 sleep 60
 
-{% if masters > 1 %}
+{% if ctlplanes > 1 %}
 LOGFILE="{{ '/var/log/cloud-init-output.log' if ubuntu else '/var/log/messages' }}"
 CERTKEY=$(grep certificate-key $LOGFILE | head -1 | sed 's/.*certificate-key \(.*\)/\1/')
-MASTERCMD="$CMD --control-plane --certificate-key $CERTKEY"
-echo $MASTERCMD > /root/mastercmd.sh
+CTLPLANECMD="$CMD --control-plane --certificate-key $CERTKEY"
+echo $CTLPLANECMD > /root/ctlplanecmd.sh
 {% endif %}
 
 echo ${CMD} > /root/join.sh
@@ -46,6 +46,6 @@ bash /root/metal_lb.sh
 
 {%- if ingress %}
 {% if ingress_method == 'nginx' %}
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/provider/{{ 'cloud' if metallb else 'baremetal' }}/deploy.yaml
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/ctlplane/deploy/static/provider/{{ 'cloud' if metallb else 'baremetal' }}/deploy.yaml
 {%- endif %}
 {%- endif %}
