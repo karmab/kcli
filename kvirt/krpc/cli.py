@@ -14,7 +14,8 @@ from kvirt.examples import hostcreate, _list, plancreate, planinfo, productinfo,
 from kvirt.examples import kubegenericcreate, kubeopenshiftcreate
 from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsole, vmexport, niccreate, nicdelete
 from kvirt.containerconfig import Kcontainerconfig
-from kvirt.defaults import IMAGES
+from kvirt.defaults import IMAGES, VERSION
+from kvirt import version
 from prettytable import PrettyTable
 import argcomplete
 import argparse
@@ -22,9 +23,8 @@ from kvirt.krpc import commoncli as common
 from kvirt import nameutils
 import os
 import random
-import re
+import requests
 import sys
-from urllib.request import urlopen
 
 
 class Kconfig():
@@ -97,24 +97,17 @@ def get_subparser(parser, subcommand):
 
 
 def get_version(args):
-    url = "https://github.com/karmab/kcli"
-    baseconfig = Kconfig(client=args.client, debug=args.debug).baseconfig
-    version = baseconfig.get_version(empty())
-    VERSION, git_version = version.version, version.git_version
     full_version = "version: %s" % VERSION
+    versiondir = os.path.dirname(version.__file__)
+    git_version = open('%s/git' % versiondir).read().rstrip() if os.path.exists('%s/git' % versiondir) else 'N/A'
     full_version += " commit: %s" % git_version
     update = 'N/A'
     if git_version != 'N/A':
-        update = False
-        r = urlopen("%s/commits/master" % url)
-        for line in r.readlines():
-            if '%s/commits/master?' % url in str(line, 'utf-8').strip():
-                tag_match = re.match('.*=(.*)\\+..".*', str(line, 'utf-8'))
-                if tag_match is not None:
-                    upstream_version = tag_match.group(1)[:7]
-                    if upstream_version != git_version:
-                        update = True
-                break
+        try:
+            upstream_version = requests.get("https://api.github.com/repos/karmab/kcli/commits/master").json()['sha'][:7]
+            update = True if upstream_version != git_version else False
+        except:
+            pass
     full_version += " Available Updates: %s" % update
     print(full_version)
 
