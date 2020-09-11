@@ -381,21 +381,20 @@ def info_vm(args):
     output = args.output
     fields = args.fields.split(',') if args.fields is not None else []
     values = args.values
-    k = None
     if args.cache:
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
         names = [common.get_lastvm(baseconfig.client)] if not args.names else args.names
         _list = cache_vms(baseconfig, args.region, args.zone, args.namespace)
         vms = {vm['name']: vm for vm in _list}
+    else:
+        config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
+                         namespace=args.namespace)
+        names = [common.get_lastvm(config.client)] if not args.names else args.names
     for name in names:
         if args.cache and name in vms:
             data = vms[name]
         else:
-            if k is None:
-                config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
-                                 namespace=args.namespace)
-                k = config.k
-            data = k.info(name, debug=args.debug)
+            data = config.k.info(name, debug=args.debug)
         if data:
             print(common.print_info(data, output=output, fields=fields, values=values, pretty=True))
 
@@ -467,8 +466,8 @@ def list_vm(args):
         print(vms)
     else:
         vms = PrettyTable(["Name", "Status", "Ips", "Source", "Plan", "Profile"])
-        baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
         if args.cache:
+            baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
             _list = cache_vms(baseconfig, args.region, args.zone, args.namespace)
         else:
             config = Kconfig(client=args.client, debug=args.debug, region=args.region,
