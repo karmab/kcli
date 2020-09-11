@@ -178,5 +178,4 @@ oEO8BRcXIiXiQqW9KnF99fXOiQ/cKYh3kWBBPnuEOhC77Ke5aMlqMNOPULf3PMix
 -----END CERTIFICATE-----"""
 VIRTTYPE = None
 ZEROTIER = []
-CACHE = False
 METADATA_FIELDS = ['plan', 'image', 'profile', 'owner', 'dnsclient', 'domain', 'kube', 'kubetype', 'loadbalancer']
