@@ -516,12 +516,23 @@ class Kvirt(object):
                                                                                   self.user, self.host, iso)
                     code = os.system(isocheckcmd)
                     if code != 0:
-                        return {'result': 'failure', 'reason': "Iso %s not found" % iso}
+                        if start:
+                            return {'result': 'failure', 'reason': "Iso %s not found" % iso}
+                        else:
+                            common.pprint("Iso %s not found. Make sure it's there before booting" % iso, color='yellow')
                 elif not os.path.exists(iso):
-                    return {'result': 'failure', 'reason': "Iso %s not found" % iso}
+                    if start:
+                        return {'result': 'failure', 'reason': "Iso %s not found" % iso}
+                    else:
+                        common.pprint("Iso %s not found. Make sure it's there before booting" % iso, color='yellow')
             else:
                 if iso not in volumes:
-                    return {'result': 'failure', 'reason': "Iso %s not found" % iso}
+                    if start:
+                        return {'result': 'failure', 'reason': "Iso %s not found" % iso}
+                    else:
+                        common.pprint("Iso %s not found. Make sure it's there before booting" % iso, color='yellow')
+                        iso = "%s/%s" % (default_poolpath, iso)
+                        common.pprint("Setting iso full path to %s" % iso, color='yellow')
                 else:
                     isovolume = volumes[iso]['object']
                     iso = isovolume.path()
