@@ -929,9 +929,8 @@ def get_cloudinitfile(image):
     :return:
     """
     lower = image.lower()
-    if 'fedora' in lower or 'debian' in lower or 'ubuntu' in lower or [x for x in UBUNTUS if x in lower]:
-        cloudinitfile = '/var/log/cloud-init-output.log'
-    else:
+    cloudinitfile = '/var/log/cloud-init-output.log'
+    if 'centos-7' in lower or 'centos7' in lower:
         cloudinitfile = '/var/log/messages'
     return cloudinitfile
 

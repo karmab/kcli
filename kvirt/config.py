@@ -1911,7 +1911,7 @@ $INFO
         else:
             return k.list_loadbalancers()
 
-    def wait(self, name, image=None):
+    def wait(self, name, image=None, quiet=False):
         k = self.k
         if image is None:
             image = k.info(name)['image']
@@ -1920,10 +1920,7 @@ $INFO
             cmd = 'journalctl --identifier=ignition --all --no-pager'
         else:
             cloudinitfile = common.get_cloudinitfile(image)
-            if common.is_debian(image):
-                cmd = "sudo grep -A5000 -i cloud-init %s" % cloudinitfile
-            else:
-                cmd = "sudo grep -i cloud-init %s" % cloudinitfile
+            cmd = "sudo tail -n 200 %s" % cloudinitfile
         user, ip = None, None
         while ip is None:
             info = k.info(name)
@@ -1940,7 +1937,8 @@ $INFO
             if 'finished' in output:
                 done = True
             output = output.replace(oldoutput, '')
-            print(output)
+            if not quiet:
+                print(output)
             oldoutput = output
         return True
 
