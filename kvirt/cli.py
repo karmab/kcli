@@ -1691,7 +1691,18 @@ def download_kubectl(args):
 
 def download_oc(args):
     """Download Oc"""
-    common.get_oc()
+    paramfile = args.paramfile
+    if os.path.exists("/i_am_a_container"):
+        if paramfile is not None:
+            paramfile = "/workdir/%s" % paramfile
+        elif os.path.exists("/workdir/kcli_parameters.yml"):
+            paramfile = "/workdir/kcli_parameters.yml"
+            common.pprint("Using default parameter file kcli_parameters.yml", color='blue')
+    elif paramfile is None and os.path.exists("kcli_parameters.yml"):
+        paramfile = "kcli_parameters.yml"
+        common.pprint("Using default parameter file kcli_parameters.yml", color='blue')
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    common.get_oc(version=overrides.get('version', 'latest'))
 
 
 def download_openshift_installer(args):

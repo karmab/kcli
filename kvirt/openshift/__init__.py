@@ -330,7 +330,7 @@ def create(config, plandir, cluster, overrides):
             rmtree(clusterdir)
     os.environ['KUBECONFIG'] = "%s/auth/kubeconfig" % clusterdir
     if find_executable('oc') is None:
-        get_oc(macosx)
+        get_oc(macosx=macosx)
     if version == 'ci':
         if '/' not in str(tag):
             basetag = 'ocp' if not upstream else 'origin'

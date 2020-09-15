@@ -1490,16 +1490,16 @@ def get_kubectl():
     call(kubecmd, shell=True)
 
 
-def get_oc(macosx=False):
+def get_oc(version='latest', macosx=False):
     SYSTEM = 'macosx' if os.path.exists('/Users') else 'linux'
     pprint("Downloading oc in current directory", color='blue')
-    occmd = "curl -s https://mirror.openshift.com/pub/openshift-v4/clients/oc/latest/%s/oc.tar.gz" % SYSTEM
+    occmd = "curl -s https://mirror.openshift.com/pub/openshift-v4/clients/oc/%s/%s/oc.tar.gz" % (version, SYSTEM)
     occmd += "| tar zxf - oc"
     occmd += "; chmod 700 oc"
     call(occmd, shell=True)
     if os.path.exists('/i_am_a_container'):
         if macosx:
-            occmd = "curl -s https://mirror.openshift.com/pub/openshift-v4/clients/oc/latest/macosx/oc.tar.gz"
+            occmd = "curl -s https://mirror.openshift.com/pub/openshift-v4/clients/oc/%s/macosx/oc.tar.gz" % version
             occmd += "| tar zxf -C /workdir - oc"
             occmd += "; chmod 700 /workdir/oc"
             call(occmd, shell=True)
