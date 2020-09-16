@@ -302,6 +302,19 @@ def download_image(args):
         os._exit(1)
 
 
+def download_iso(args):
+    """Download ISO"""
+    pool = args.pool
+    url = args.iso
+    iso = os.path.basename(url)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    result = config.handle_host(pool=pool, image=iso, download=True, url=url, update_profile=False)
+    if result['result'] == 'success':
+        os._exit(0)
+    else:
+        os._exit(1)
+
+
 def delete_image(args):
     images = args.images
     yes = args.yes
@@ -3236,7 +3249,7 @@ def cli():
     delete_subparsers.add_parser('image', parents=[imagedelete_parser], description=imagedelete_desc,
                                  help=imagedelete_desc)
 
-    imagedownload_desc = 'Download Cloud Image/Iso'
+    imagedownload_desc = 'Download Cloud Image'
     imagedownload_help = "Image to download. Choose between \n%s" % '\n'.join(IMAGES.keys())
     imagedownload_parser = argparse.ArgumentParser(add_help=False)
     imagedownload_parser.add_argument('-c', '--cmd', help='Extra command to launch after downloading', metavar='CMD')
@@ -3246,7 +3259,16 @@ def cli():
     imagedownload_parser.add_argument('image', help=imagedownload_help, metavar='IMAGE')
     imagedownload_parser.set_defaults(func=download_image)
     download_subparsers.add_parser('image', parents=[imagedownload_parser], description=imagedownload_desc,
-                                   help=imagedownload_desc, aliases=['iso'])
+                                   help=imagedownload_desc)
+
+    isodownload_desc = 'Download Iso'
+    isodownload_help = "Iso url"
+    isodownload_parser = argparse.ArgumentParser(add_help=False)
+    isodownload_parser.add_argument('-p', '--pool', help='Pool to use. Defaults to default', metavar='POOL')
+    isodownload_parser.add_argument('iso', help=isodownload_help, metavar='ISO')
+    isodownload_parser.set_defaults(func=download_iso)
+    download_subparsers.add_parser('iso', parents=[isodownload_parser], description=isodownload_desc,
+                                   help=isodownload_desc)
 
     okddownload_desc = 'Download Okd Installer'
     okddownload_parser = argparse.ArgumentParser(add_help=False)
