@@ -220,7 +220,7 @@ class Kconfig(Kbaseconfig):
         self.overrides.update(config_data)
 
     def create_vm(self, name, profile, overrides={}, customprofile={}, k=None,
-                  plan='kvirt', basedir='.', client=None, onfly=None, wait=False):
+                  plan='kvirt', basedir='.', client=None, onfly=None, wait=False, onlyassets=False):
         """
 
         :param k:
@@ -725,7 +725,7 @@ $INFO
             while 'reboot' in cmds:
                 cmds.remove('reboot')
             cmds.append('reboot')
-        if image is not None and ('rhel-8' in image or 'rhcos' in image) and disks:
+        if image is not None and ('rhel-8' in image or 'rhcos' in image) and disks and not onlyassets:
             firstdisk = disks[0]
             if isinstance(firstdisk, str) and firstdisk.isdigit():
                 firstdisk = int(firstdisk)
@@ -754,6 +754,19 @@ $INFO
         if kube is not None and kubetype is not None:
             metadata['kubetype'] = kubetype
             metadata['kube'] = kube
+        if onlyassets:
+            if image is not None and common.needs_ignition(image):
+                version = common.ignition_version(image)
+                data = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
+                                       domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
+                                       overrides=overrides, version=version, plan=plan, image=image)
+            else:
+                common.cloudinit(name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
+                                 domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
+                                 overrides=overrides, iso=iso, image=image, storemetadata=False)
+                data = open('/tmp/user-data', 'r').read()
+            print(data)
+            return {'result': 'success'}
         result = k.create(name=name, virttype=virttype, plan=plan, profile=profilename, flavor=flavor,
                           cpumodel=cpumodel, cpuflags=cpuflags, cpupinning=cpupinning, numamode=numamode, numa=numa,
                           numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool,
@@ -914,7 +927,7 @@ $INFO
     def plan(self, plan, ansible=False, url=None, path=None, autostart=False, container=False, noautostart=False,
              inputfile=None, inputstring=None, start=False, stop=False, delete=False, force=True, overrides={},
              info=False, snapshot=False, revert=False, update=False, embedded=False, restart=False, download=False,
-             wait=False, quiet=False, doc=False):
+             wait=False, quiet=False, doc=False, onlyassets=False):
         """Manage plan file"""
         k = self.k
         no_overrides = not overrides
@@ -1381,7 +1394,8 @@ $INFO
                     common.pprint("Incorrect kubetype %s specified. skipped!" % kubetype, color='blue')
                     continue
         if vmentries:
-            common.pprint("Deploying Vms...")
+            if not onlyassets:
+                common.pprint("Deploying Vms...")
             vmcounter = 0
             hosts = {}
             vms_to_host = {}
@@ -1565,8 +1579,10 @@ $INFO
                         profile['image'] = os.path.basename(IMAGES[imageprofile])
                         currentoverrides['image'] = profile['image']
                 result = self.create_vm(name, profilename, overrides=currentoverrides, customprofile=profile, k=z,
-                                        plan=plan, basedir=currentplandir, client=vmclient, onfly=onfly)
-                common.handle_response(result, name, client=vmclient)
+                                        plan=plan, basedir=currentplandir, client=vmclient, onfly=onfly,
+                                        onlyassets=onlyassets)
+                if not onlyassets:
+                    common.handle_response(result, name, client=vmclient)
                 if result['result'] == 'success':
                     newvms.append(name)
                     start = profile.get('start', True)

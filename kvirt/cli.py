@@ -1811,6 +1811,32 @@ def render_file(args):
     return 0
 
 
+def create_asset(args):
+    """Create cloudinit/ignition data"""
+    plan = None
+    inputfile = args.inputfile
+    paramfile = args.paramfile
+    if os.path.exists("/i_am_a_container"):
+        inputfile = "/workdir/%s" % inputfile if inputfile is not None else "/workdir/kcli_plan.yml"
+        if paramfile is not None:
+            paramfile = "/workdir/%s" % paramfile
+        elif os.path.exists("/workdir/kcli_parameters.yml"):
+            paramfile = "/workdir/kcli_parameters.yml"
+    elif paramfile is None and os.path.exists("kcli_parameters.yml"):
+        paramfile = "kcli_parameters.yml"
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
+                     namespace=args.namespace)
+    config_data = {'config_%s' % k: config.ini[config.client][k] for k in config.ini[config.client]}
+    config_data['config_type'] = config_data.get('config_type', 'kvm')
+    overrides.update(config_data)
+    if not os.path.exists(inputfile):
+        common.pprint("File %s not found" % inputfile, color='red')
+        return 0
+    config.plan(plan, inputfile=inputfile, overrides=overrides, onlyassets=True)
+    return 0
+
+
 def snapshot_plan(args):
     """Snapshot plan"""
     plan = args.plan
@@ -2427,6 +2453,14 @@ def cli():
                                help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
     render_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
     render_parser.set_defaults(func=render_file)
+
+    assetcreate_desc = 'Create Cloudinit/Ignition Assets from plan file'
+    assetcreate_parser = create_subparsers.add_parser('asset', description=assetcreate_desc, help=assetcreate_desc)
+    assetcreate_parser.add_argument('-f', '--inputfile', help='Input Plan file')
+    assetcreate_parser.add_argument('-P', '--param', action='append',
+                                    help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    assetcreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    assetcreate_parser.set_defaults(func=create_asset)
 
     restart_desc = 'Restart Vm/Plan/Container'
     restart_parser = subparsers.add_parser('restart', description=restart_desc, help=restart_desc)
