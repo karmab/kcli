@@ -251,10 +251,9 @@ class Kpacket(object):
                 validfacilities = flavors[0].available_in
         features = ['tpm'] if tpm else []
         if cloudinit and userdata is None:
-            common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
-                             reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides,
-                             iso=False, fqdn=True, storemetadata=storemetadata)
-            userdata = open('/tmp/user-data', 'r').read()
+            userdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
+                                        domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
+                                        overrides=overrides, fqdn=True, storemetadata=storemetadata)[0]
         validfacilities = [os.path.basename(e['href']) for e in validfacilities]
         validfacilities = [f.code for f in self.conn.list_facilities() if f.id in validfacilities]
         if not validfacilities:

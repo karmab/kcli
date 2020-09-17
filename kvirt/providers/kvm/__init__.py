@@ -23,6 +23,7 @@ import os
 from subprocess import call
 import re
 import string
+from tempfile import TemporaryDirectory
 import time
 import xml.etree.ElementTree as ET
 
@@ -554,7 +555,8 @@ class Kvirt(object):
                         msg = "You need to add -v /var/tmp:/ignitiondir to container alias"
                         return {'result': 'failure', 'reason': msg}
                 elif self.protocol == 'ssh' and self.host not in localhosts:
-                    ignitiondir = '/tmp'
+                    ignitiontmpdir = TemporaryDirectory()
+                    ignitiondir = ignitiontmpdir.name
                 version = common.ignition_version(image)
                 ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                                domain=domain, reserveip=reserveip, files=files,
@@ -577,6 +579,7 @@ class Kvirt(object):
                     code = os.system(ignitioncmd1)
                     if code != 0:
                         return {'result': 'failure', 'reason': "Unable to create ignition data file in /var/tmp"}
+                    ignitiontmpdir.cleanup()
             elif image is not None and not ignition and diskpath is not None:
                 cloudinitiso = "%s/%s.ISO" % (default_poolpath, name)
                 dtype = 'block' if '/dev' in diskpath else 'file'
@@ -587,10 +590,14 @@ class Kvirt(object):
                         <target dev='hdd' bus='ide'/>
                         <readonly/>
                         </disk>""" % (isoxml, dtype, dsource, cloudinitiso)
-                common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
-                                 reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides,
-                                 storemetadata=storemetadata, image=image, ipv6=ipv6)
-                self._uploadimage(name, pool=default_storagepool)
+                userdata, metadata, netdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets,
+                                                               gateway=gateway, dns=dns, domain=domain,
+                                                               reserveip=reserveip, files=files, enableroot=enableroot,
+                                                               overrides=overrides, storemetadata=storemetadata,
+                                                               image=image, ipv6=ipv6)
+                with TemporaryDirectory() as tmpdir:
+                        common.make_iso(name, tmpdir, userdata, metadata, netdata)
+                        self._uploadimage(name, pool=default_storagepool, origin=tmpdir)
         listen = '0.0.0.0' if self.host not in ['localhost', '127.0.0.1'] else '127.0.0.1'
         displayxml = """<input type='tablet' bus='usb'/>
                         <input type='mouse' bus='ps2'/>

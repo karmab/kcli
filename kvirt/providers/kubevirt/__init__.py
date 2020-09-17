@@ -293,13 +293,12 @@ class Kubevirt(Kubecommon):
                                                plan=plan, compact=True, image=image)
                 vm['spec']['template']['metadata']['annotations'] = {'kubevirt.io/ignitiondata': ignitiondata}
             else:
-                common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
-                                 reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides,
-                                 iso=False, storemetadata=storemetadata)
-                cloudinitdata = open('/tmp/user-data', 'r').read().strip()
+                userdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
+                                            domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
+                                            overrides=overrides, storemetadata=storemetadata)[0]
                 cloudinitdisk = {'cdrom': {'bus': 'sata'}, 'name': 'cloudinitdisk'}
                 vm['spec']['template']['spec']['domain']['devices']['disks'].append(cloudinitdisk)
-                cloudinitvolume = {'cloudInitNoCloud': {'userData': cloudinitdata}, 'name': 'cloudinitdisk'}
+                cloudinitvolume = {'cloudInitNoCloud': {'userData': userdata}, 'name': 'cloudinitdisk'}
                 vm['spec']['template']['spec']['volumes'].append(cloudinitvolume)
         if self.debug:
             common.pretty_print(vm)

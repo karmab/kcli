@@ -761,10 +761,9 @@ $INFO
                                        domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
                                        overrides=overrides, version=version, plan=plan, image=image)
             else:
-                common.cloudinit(name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
-                                 domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
-                                 overrides=overrides, iso=iso, image=image, storemetadata=False)
-                data = open('/tmp/user-data', 'r').read()
+                data = common.cloudinit(name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
+                                        domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
+                                        overrides=overrides, iso=iso, image=image, storemetadata=False)[0]
             print(data)
             return {'result': 'success'}
         result = k.create(name=name, virttype=virttype, plan=plan, profile=profilename, flavor=flavor,
