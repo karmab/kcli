@@ -156,10 +156,9 @@ class Kopenstack(object):
                                            domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
                                            overrides=overrides, version=version, plan=plan, image=image)
             else:
-                common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns, domain=domain,
-                                 reserveip=reserveip, files=files, enableroot=enableroot, overrides=overrides,
-                                 iso=False, storemetadata=storemetadata)
-                userdata = open('/tmp/user-data', 'r').read().strip()
+                userdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
+                                            domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
+                                            overrides=overrides, storemetadata=storemetadata)[0]
         meta = {x: metadata[x] for x in metadata if x in METADATA_FIELDS}
         instance = nova.servers.create(name=name, image=glanceimage, flavor=flavor, key_name=key_name, nics=nics,
                                        meta=meta, userdata=userdata, block_device_mapping=block_dev_mapping)

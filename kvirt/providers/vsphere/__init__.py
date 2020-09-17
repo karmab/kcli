@@ -14,6 +14,7 @@ import os
 import requests
 import random
 from ssl import _create_unverified_context, get_server_certificate
+from tempfile import TemporaryDirectory
 import time
 import pyVmomi
 import webbrowser
@@ -413,15 +414,19 @@ class Ksphere:
                     # customspec = makecuspec(name, nets=nets, gateway=gateway, dns=dns, domain=domain)
                     # clonespec.customization = customspec
                     cloudinitiso = "[%s]/%s/%s.ISO" % (default_pool, name, name)
-                    common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
-                                     domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
-                                     overrides=overrides, storemetadata=storemetadata)
+                    userdata, metadata, netdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets,
+                                                                   gateway=gateway, dns=dns, domain=domain,
+                                                                   reserveip=reserveip, files=files,
+                                                                   enableroot=enableroot, overrides=overrides,
+                                                                   storemetadata=storemetadata)
             confspec.extraConfig = extraconfig
             t = imageobj.CloneVM_Task(folder=vmfolder, name=name, spec=clonespec)
             waitForMe(t)
             if cloudinitiso is not None:
-                cloudinitisofile = "/tmp/%s.ISO" % name
-                self._uploadimage(default_pool, cloudinitisofile, name)
+                with TemporaryDirectory() as tmpdir:
+                    common.make_iso(name, tmpdir, userdata, metadata, netdata)
+                    cloudinitisofile = "%s/%s.ISO" % (tmpdir, name)
+                    self._uploadimage(default_pool, cloudinitisofile, name)
                 vm = findvm(si, vmFolder, name)
                 c = changecd(self.si, vm, cloudinitiso)
                 waitForMe(c)

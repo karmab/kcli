@@ -62,7 +62,7 @@ def fetch(url, path):
 
 
 def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[],
-              enableroot=True, overrides={}, iso=True, fqdn=False, storemetadata=True, image=None, ipv6=[]):
+              enableroot=True, overrides={}, fqdn=False, storemetadata=True, image=None, ipv6=[]):
     """
 
     :param name:
@@ -79,6 +79,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
     :param iso:
     :param fqdn:
     """
+    userdata, metadata, netdata = None, None, None
     default_gateway = gateway
     legacy = True if image is not None and is_7(image) else False
     prefix = 'ens' if image is not None and is_debian(image) else 'eth'
@@ -179,86 +180,78 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                         netdata[nicname] = {'dhcp6': True}
                     else:
                         netdata[nicname] = {'dhcp4': True}
-    with open('/tmp/meta-data', 'w') as metadatafile:
-        if domain is not None:
-            localhostname = "%s.%s" % (name, domain)
-        else:
-            localhostname = name
-        metadata = {"instance-id": localhostname, "local-hostname": localhostname}
-        if legacy and netdata != '':
-            metadata["network-interfaces"] = netdata
-        metadatafile.write(json.dumps(metadata))
-    if not legacy and netdata:
-        with open('/tmp/network-config', 'w') as netfile:
+    if domain is not None:
+        localhostname = "%s.%s" % (name, domain)
+    else:
+        localhostname = name
+    metadata = {"instance-id": localhostname, "local-hostname": localhostname}
+    if legacy and netdata != '':
+        metadata["network-interfaces"] = netdata
+    metadata = json.dumps(metadata)
+    if not legacy:
+        if netdata:
             netdata = {'version': 2, 'ethernets': netdata}
-            yaml.safe_dump(netdata, netfile, default_flow_style=False, encoding='utf-8')
+            netdata = yaml.safe_dump(netdata, default_flow_style=False, encoding='utf-8')
+        else:
+            netdata = ''
     existing = "%s.cloudinit" % name if not os.path.exists('/i_am_a_container') else "/workdir/%s.cloudinit" % name
     if os.path.exists(existing):
         pprint("using cloudinit from existing %s for %s" % (existing, name), color="blue")
-        with open('/tmp/user-data', 'w') as userdata:
-            userdata.write(open(existing).read())
+        userdata = open(existing).read()
     else:
-        with open('/tmp/user-data', 'w') as userdata:
-            userdata.write('#cloud-config\nhostname: %s\n' % name)
-            if fqdn:
-                fqdn = "%s.%s" % (name, domain) if domain is not None else name
-                userdata.write("fqdn: %s\n" % fqdn)
-            if enableroot:
-                userdata.write("ssh_pwauth: True\ndisable_root: false\n")
-            if domain is not None:
-                userdata.write("fqdn: %s.%s\n" % (name, domain))
-            if keys or os.path.exists(os.path.expanduser("~/.ssh/id_rsa.pub"))\
-                    or os.path.exists(os.path.expanduser("~/.ssh/id_dsa.pub"))\
-                    or os.path.exists(os.path.expanduser("~/.kcli/id_rsa.pub"))\
-                    or os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub")):
-                userdata.write("ssh_authorized_keys:\n")
-            else:
-                pprint("neither id_rsa or id_dsa public keys found in your .ssh or .kcli directory, you might have "
-                       "trouble accessing the vm", color='yellow')
-            if keys:
-                for key in list(set(keys)):
-                    userdata.write("- %s\n" % key)
-            publickeyfile = None
-            if os.path.exists(os.path.expanduser("~/.ssh/id_rsa.pub")):
-                publickeyfile = os.path.expanduser("~/.ssh/id_rsa.pub")
-            elif os.path.exists(os.path.expanduser("~/.ssh/id_dsa.pub")):
-                publickeyfile = os.path.expanduser("~/.ssh/id_dsa.pub")
-            elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa.pub")):
-                publickeyfile = os.path.expanduser("~/.kcli/id_rsa.pub")
-            elif os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub")):
-                publickeyfile = os.path.expanduser("~/.kcli/id_dsa.pub")
-            if publickeyfile is not None:
-                with open(publickeyfile, 'r') as ssh:
-                    key = ssh.read().rstrip()
-                    userdata.write("- %s\n" % key)
-            if cmds:
-                data = process_cmds(cmds, overrides)
-                if data != '':
-                    userdata.write("runcmd:\n")
-                    userdata.write(data)
-            userdata.write('ssh_pwauth: True\n')
-            userdata.write('disable_root: false\n')
-            if storemetadata and overrides:
-                storeoverrides = {k: overrides[k] for k in overrides if k not in ['password', 'rhnpassword', 'rhnak']}
-                storedata = {'path': '/root/.metadata', 'content': yaml.dump(storeoverrides, default_flow_style=False,
-                                                                             indent=2)}
-                if files:
-                    files.append(storedata)
-                else:
-                    files = [storedata]
+        userdata = '#cloud-config\nhostname: %s\n' % name
+        if fqdn:
+            fqdn = "%s.%s" % (name, domain) if domain is not None else name
+            userdata += "fqdn: %s\n" % fqdn
+        if enableroot:
+            userdata += "ssh_pwauth: True\ndisable_root: false\n"
+        if domain is not None:
+            userdata += "fqdn: %s.%s\n" % (name, domain)
+        if keys or os.path.exists(os.path.expanduser("~/.ssh/id_rsa.pub"))\
+                or os.path.exists(os.path.expanduser("~/.ssh/id_dsa.pub"))\
+                or os.path.exists(os.path.expanduser("~/.kcli/id_rsa.pub"))\
+                or os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub")):
+            userdata += "ssh_authorized_keys:\n"
+        else:
+            pprint("neither id_rsa or id_dsa public keys found in your .ssh or .kcli directory, you might have "
+                   "trouble accessing the vm", color='yellow')
+        if keys:
+            for key in list(set(keys)):
+                userdata += "- %s\n" % key
+        publickeyfile = None
+        if os.path.exists(os.path.expanduser("~/.ssh/id_rsa.pub")):
+            publickeyfile = os.path.expanduser("~/.ssh/id_rsa.pub")
+        elif os.path.exists(os.path.expanduser("~/.ssh/id_dsa.pub")):
+            publickeyfile = os.path.expanduser("~/.ssh/id_dsa.pub")
+        elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa.pub")):
+            publickeyfile = os.path.expanduser("~/.kcli/id_rsa.pub")
+        elif os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub")):
+            publickeyfile = os.path.expanduser("~/.kcli/id_dsa.pub")
+        if publickeyfile is not None:
+            with open(publickeyfile, 'r') as ssh:
+                key = ssh.read().rstrip()
+                userdata += "- %s\n" % key
+        if cmds:
+            data = process_cmds(cmds, overrides)
+            if data != '':
+                userdata += "runcmd:\n"
+                userdata += data
+        userdata += 'ssh_pwauth: True\n'
+        userdata += 'disable_root: false\n'
+        if storemetadata and overrides:
+            storeoverrides = {k: overrides[k] for k in overrides if k not in ['password', 'rhnpassword', 'rhnak']}
+            storedata = {'path': '/root/.metadata', 'content': yaml.dump(storeoverrides, default_flow_style=False,
+                                                                         indent=2)}
             if files:
-                data = process_files(files=files, overrides=overrides)
-                if data != '':
-                    userdata.write("write_files:\n")
-                    userdata.write(data)
-    if iso:
-        isocmd = 'mkisofs'
-        if find_executable('genisoimage') is not None:
-            isocmd = 'genisoimage'
-        isocmd += " --quiet -o /tmp/%s.ISO --volid cidata --joliet --rock /tmp/user-data /tmp/meta-data" % name
-        if not legacy and netdata:
-            isocmd += " /tmp/network-config"
-        os.system(isocmd)
+                files.append(storedata)
+            else:
+                files = [storedata]
+        if files:
+            data = process_files(files=files, overrides=overrides)
+            if data != '':
+                userdata += "write_files:\n"
+                userdata += data
+    return userdata.strip(), metadata, netdata
 
 
 def process_files(files=[], overrides={}):
@@ -1552,3 +1545,20 @@ def kube_delete_app(config, appdir, overrides={}):
             result = call('bash %s/uninstall.sh' % tmpdir, shell=True)
     os.chdir(cwd)
     return result
+
+
+def make_iso(name, tmpdir, userdata, metadata, netdata):
+    with open("%s/user-data" % tmpdir, 'w') as x:
+        x.write(userdata)
+    with open("%s/meta-data" % tmpdir, 'w') as y:
+        y.write(metadata)
+    isocmd = 'mkisofs'
+    if find_executable('genisoimage') is not None:
+        isocmd = 'genisoimage'
+    isocmd += " --quiet -o %s/%s.ISO --volid cidata" % (tmpdir, name)
+    isocmd += " --joliet --rock %s/user-data %s/meta-data" % (tmpdir, tmpdir)
+    if netdata is not None:
+        with open("%s/network-config" % tmpdir, 'w') as z:
+            z.write(netdata)
+        isocmd += " %s/network-config" % tmpdir
+    os.system(isocmd)
