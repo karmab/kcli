@@ -258,7 +258,8 @@ class Kconfig(Kbaseconfig):
                     self.handle_host(pool=self.pool, image=customprofileimage, download=True, update_profile=True)
                     vmprofiles[profile]['image'] = os.path.basename(IMAGES[customprofileimage])
         else:
-            common.pprint("Deploying vm %s from profile %s..." % (name, profile))
+            if not onlyassets:
+                common.pprint("Deploying vm %s from profile %s..." % (name, profile))
         if profile not in vmprofiles:
             clientprofile = "%s_%s" % (self.client, profile)
             if clientprofile in vmprofiles and 'image' in vmprofiles[clientprofile]:
@@ -269,7 +270,8 @@ class Kconfig(Kbaseconfig):
                 self.handle_host(pool=self.pool, image=profile, download=True, update_profile=True)
                 vmprofiles[profile] = {'image': os.path.basename(IMAGES[profile])}
             else:
-                common.pprint("Profile %s not found. Using the image as profile..." % profile, color='blue')
+                if not onlyassets:
+                    common.pprint("Profile %s not found. Using the image as profile..." % profile, color='blue')
                 vmprofiles[profile] = {'image': profile}
         profilename = profile
         profile = vmprofiles[profile]
@@ -763,7 +765,7 @@ $INFO
             else:
                 data = common.cloudinit(name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                         domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
-                                        overrides=overrides, iso=iso, image=image, storemetadata=False)[0]
+                                        overrides=overrides, image=image, storemetadata=False)[0]
             print(data)
             return {'result': 'success'}
         result = k.create(name=name, virttype=virttype, plan=plan, profile=profilename, flavor=flavor,

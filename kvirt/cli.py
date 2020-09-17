@@ -1024,6 +1024,7 @@ def list_vmdisk(args):
 def create_vm(args):
     """Create vms"""
     name = args.name
+    onlyassets = args.assets
     image = args.image
     profile = args.profile
     count = args.count
@@ -1051,10 +1052,10 @@ def create_vm(args):
         name = nameutils.get_random_name()
         if config.type in ['gcp', 'kubevirt']:
             name = name.replace('_', '-')
-        if config.type != 'aws':
+        if config.type != 'aws' and not onlyassets:
             common.pprint("Using %s as name of the vm" % name)
     if image is not None:
-        if image in config.profiles:
+        if image in config.profiles and not onlyassets:
             common.pprint("Using %s as profile" % image)
         profile = image
     elif profile is not None:
@@ -1082,18 +1083,22 @@ def create_vm(args):
         common.pprint("You need to either provide a profile, an image or some parameters", color='red')
         os._exit(1)
     if count == 1:
-        result = config.create_vm(name, profile, overrides=overrides, customprofile=customprofile, wait=wait)
-        code = common.handle_response(result, name, element='', action='created', client=config.client)
-        return code
+        result = config.create_vm(name, profile, overrides=overrides, customprofile=customprofile, wait=wait,
+                                  onlyassets=onlyassets)
+        if not onlyassets:
+            code = common.handle_response(result, name, element='', action='created', client=config.client)
+            return code
     else:
         codes = []
         if 'plan' not in overrides:
             overrides['plan'] = name
         for number in range(count):
             currentname = "%s-%d" % (name, number)
-            result = config.create_vm(currentname, profile, overrides=overrides, customprofile=customprofile, wait=wait)
-            codes.append(common.handle_response(result, currentname, element='', action='created',
-                                                client=config.client))
+            result = config.create_vm(currentname, profile, overrides=overrides, customprofile=customprofile, wait=wait,
+                                      onlyassets=onlyassets)
+            if not onlyassets:
+                codes.append(common.handle_response(result, currentname, element='', action='created',
+                                                    client=config.client))
         return max(codes)
 
 
@@ -3360,6 +3365,7 @@ def cli():
     vmcreate_desc = 'Create Vm'
     vmcreate_epilog = "examples:\n%s" % vmcreate
     vmcreate_parser = argparse.ArgumentParser(add_help=False)
+    vmcreate_parser.add_argument('-a', '--assets', action='store_true', help='Only print cloudinit/ignition asset')
     vmcreate_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
     vmcreate_parser.add_argument('-c', '--count', help='How many vms to create', type=int, default=1, metavar='COUNT')
     vmcreate_parser.add_argument('-i', '--image', help='Image to use', metavar='IMAGE')
