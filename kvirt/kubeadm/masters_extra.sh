@@ -1,6 +1,6 @@
 ready=false
 while [ "$ready" != "true" ] ; do
-scp -o StrictHostKeyChecking=no root@{{ api_ip }}:/root/mastercmd.sh /root && ready=true
+scp -o StrictHostKeyChecking=no root@{{ api_ip }}:/root/mastercmd.sh /root 2>/dev/null && ready=true
 sleep 5
 done
 scp -o StrictHostKeyChecking=no root@{{ api_ip }}:/etc/kubernetes/admin.conf /etc/kubernetes
