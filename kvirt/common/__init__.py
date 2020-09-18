@@ -1349,7 +1349,11 @@ def _ssh_credentials(k, name):
 def mergeignition(name, ignitionextrapath, data):
     pprint("Merging ignition data from existing %s for %s" % (ignitionextrapath, name), color="blue")
     with open(ignitionextrapath, 'r') as extra:
-        ignitionextra = json.load(extra)
+        try:
+            ignitionextra = json.load(extra)
+        except:
+            pprint("Couldn't process %s. Ignoring" % (ignitionextrapath), color="warning")
+            return data
         children = {'storage': 'files', 'passwd': 'users', 'systemd': 'units'}
         for key in children:
             childrenkey2 = 'path' if key == 'storage' else 'name'
