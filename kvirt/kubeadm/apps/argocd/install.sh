@@ -21,3 +21,9 @@ URL=http://$(kubectl get svc -n argocd argocd-server -o jsonpath='{.status.loadB
 ARGO_PASSWORD=$(kubectl get pods -n argocd -l app.kubernetes.io/name=argocd-server -o name | cut -d'/' -f 2)
 echo argo ui available at $URL
 echo Use Initial Credentials admin/$ARGO_PASSWORD
+{% if argocd_download_cli %}
+OS="linux"
+[ -d /Users ] && OS="darwin"
+curl https://github.com/argoproj/argo-cd/releases/download/$ARGOCD_VERSION/argocd-$OS-amd64 > {{ cwd }}/argcod
+chmod u+x {{ cwd }}/argcod
+{% endif %}

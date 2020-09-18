@@ -12,3 +12,9 @@ ARGOCD_SECRET=$(oc serviceaccounts get-token argocd-dex-server -n argocd)
 sed "s/SECRET/$ARGOCD_SECRET/" configmap.yml | oc replace -f - -n argocd
 echo argo ui available at https://$ARGOCD_HOST
 echo Use Openshift Credentials or Initial Password $ARGOCD_PASSWORD
+{% if argocd_download_cli %}
+OS="linux"
+[ -d /Users ] && OS="darwin"
+curl https://github.com/argoproj/argo-cd/releases/download/$ARGOCD_VERSION/argocd-$OS-amd64 > {{ cwd }}/argcod
+chmod u+x {{ cwd }}/argcod
+{% endif %}
