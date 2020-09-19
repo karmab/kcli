@@ -4,7 +4,7 @@
 
 from distutils.spawn import find_executable
 from kvirt.config import Kconfig
-from kvirt.examples import hostcreate, _list, plancreate, planinfo, productinfo, repocreate, start
+from kvirt.examples import assetcreate, hostcreate, _list, plancreate, planinfo, productinfo, repocreate, start
 from kvirt.examples import kubegenericcreate, kubek3screate, kubeopenshiftcreate
 from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsole, vmexport, niccreate, nicdelete
 from kvirt.baseconfig import Kbaseconfig
@@ -1024,7 +1024,7 @@ def list_vmdisk(args):
 def create_vm(args):
     """Create vms"""
     name = args.name
-    onlyassets = args.assets
+    onlyassets = True if 'assets' in vars(args) else False
     image = args.image
     profile = args.profile
     count = args.count
@@ -1076,7 +1076,7 @@ def create_vm(args):
                     else:
                         common.pprint("Cant' parse %s as profile file" % profilefile, color='red')
                         os._exit(1)
-    elif overrides:
+    elif overrides or onlyassets:
         profile = 'kvirt'
         config.profiles[profile] = {}
     else:
@@ -1820,6 +1820,13 @@ def create_asset(args):
     """Create cloudinit/ignition data"""
     plan = None
     inputfile = args.inputfile
+    if inputfile is None:
+        args.assets = True
+        args.profile = None
+        args.profilefile = None
+        args.wait = False
+        args.count = 1
+        return create_vm(args)
     paramfile = args.paramfile
     if os.path.exists("/i_am_a_container"):
         inputfile = "/workdir/%s" % inputfile if inputfile is not None else "/workdir/kcli_plan.yml"
@@ -2459,12 +2466,16 @@ def cli():
     render_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
     render_parser.set_defaults(func=render_file)
 
-    assetcreate_desc = 'Create Cloudinit/Ignition Assets from plan file'
-    assetcreate_parser = create_subparsers.add_parser('asset', description=assetcreate_desc, help=assetcreate_desc)
+    assetcreate_desc = 'Create Cloudinit/Ignition Assets for a single vm or from plan file'
+    assetcreate_epilog = "examples:\n%s" % assetcreate
+    assetcreate_parser = create_subparsers.add_parser('asset', description=assetcreate_desc, help=assetcreate_desc,
+                                                      epilog=assetcreate_epilog, formatter_class=rawhelp)
+    assetcreate_parser.add_argument('-i', '--image', help='Image to use', metavar='IMAGE')
     assetcreate_parser.add_argument('-f', '--inputfile', help='Input Plan file')
     assetcreate_parser.add_argument('-P', '--param', action='append',
                                     help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
     assetcreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    assetcreate_parser.add_argument('name', metavar='VMNAME', nargs='?', type=valid_fqdn)
     assetcreate_parser.set_defaults(func=create_asset)
 
     restart_desc = 'Restart Vm/Plan/Container'
@@ -3365,7 +3376,6 @@ def cli():
     vmcreate_desc = 'Create Vm'
     vmcreate_epilog = "examples:\n%s" % vmcreate
     vmcreate_parser = argparse.ArgumentParser(add_help=False)
-    vmcreate_parser.add_argument('-a', '--assets', action='store_true', help='Only print cloudinit/ignition asset')
     vmcreate_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
     vmcreate_parser.add_argument('-c', '--count', help='How many vms to create', type=int, default=1, metavar='COUNT')
     vmcreate_parser.add_argument('-i', '--image', help='Image to use', metavar='IMAGE')

@@ -1,3 +1,19 @@
+assetcreate = """# Generate a minimal ignition file
+$ kcli create asset -i rhcos46
+
+# Do the same but force the name
+$ kcli create asset -i rhcos46 myname
+
+# Inject a custom script and a file in /root
+$ kcli create asset -i rhcos -P scripts=[myscript.sh] -P files=[myfile.txt] zzz
+
+# Generate a cloudinit userdata
+$ kcli create asset -i centos8 myname
+
+# Generate all the ignition/cloudinit assets from a plan file
+$ kcli create asset -f my_plan.yml
+"""
+
 diskcreate = """# Add a 10G disk to vm, using default pool
 $ kcli create disk -s 10 vm1
 
