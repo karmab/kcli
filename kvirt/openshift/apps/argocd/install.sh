@@ -11,10 +11,15 @@ oc patch serviceaccount -n argocd argocd-dex-server --type='json' -p="[{\"op\": 
 ARGOCD_SECRET=$(oc serviceaccounts get-token argocd-dex-server -n argocd)
 sed "s/SECRET/$ARGOCD_SECRET/" configmap.yml | oc replace -f - -n argocd
 echo argo ui available at https://$ARGOCD_HOST
-echo Use Openshift Credentials or Initial Password $ARGOCD_PASSWORD
+echo Use Openshift Credentials or admin/$ARGOCD_PASSWORD
 {% if argocd_download_cli %}
-OS="linux"
-[ -d /Users ] && OS="darwin"
-curl https://github.com/argoproj/argo-cd/releases/download/$ARGOCD_VERSION/argocd-$OS-amd64 > {{ cwd }}/argcod
-chmod u+x {{ cwd }}/argcod
+  OS="linux"
+  [ -d /Users ] && OS="darwin"
+  curl https://github.com/argoproj/argo-cd/releases/download/$ARGOCD_VERSION/argocd-$OS-amd64 > {{ cwd }}/argcod
+  chmod u+x {{ cwd }}/argcod
+  {% if argocd_password != None %}
+    {{ cwd }}/argocd login argocd-server-argocd.apps.{ cluster }}.{{ domain }} --grpc-web --username admin --password $ARGOCD_PASSWORD --insecure
+    {{ cwd }}/argocd account update-password --current-password $ARGOCD_PASSWORD --new-password {{ argocd_password }} --grpc-web
+    echo Updated admin password to {{ argocd_password }}
+  {% endif %}
 {% endif %}
