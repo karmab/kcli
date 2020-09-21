@@ -24,8 +24,8 @@ echo Use Initial Credentials admin/$ARGO_PASSWORD
 {% if argocd_download_cli %}
   OS="linux"
   [ -d /Users ] && OS="darwin"
-  curl https://github.com/argoproj/argo-cd/releases/download/$ARGOCD_VERSION/argocd-$OS-amd64 > {{ cwd }}/argcod
-  chmod u+x {{ cwd }}/argcod
+  curl -Lk https://github.com/argoproj/argo-cd/releases/download/$ARGOCD_VERSION/argocd-$OS-amd64 > {{ cwd }}/argocd
+  chmod u+x {{ cwd }}/argocd
   {% if argocd_password != None %}
     {{ cwd }}/argocd login argocd-server-argocd.apps.{ cluster }}.{{ domain }} --grpc-web --username admin --password $ARGOCD_PASSWORD --insecure
     {{ cwd }}/argocd account update-password --current-password $ARGOCD_PASSWORD --new-password {{ argocd_password }} --grpc-web

@@ -1,2 +1,2 @@
 argocd_download_cli: true
-argocd_password:
+argocd_password: admin
