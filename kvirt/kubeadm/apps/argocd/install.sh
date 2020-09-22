@@ -27,6 +27,10 @@ echo Use Initial Credentials admin/$ARGO_PASSWORD
   curl -Lk https://github.com/argoproj/argo-cd/releases/download/$ARGOCD_VERSION/argocd-$OS-amd64 > {{ cwd }}/argocd
   chmod u+x {{ cwd }}/argocd
   {% if argocd_password != None %}
+    kubectl patch secret argocd argocd-secret  -p '{"data": {"admin.password": null, "admin.passwordMtime": null}}'
+    kubectl delete pod -n argocd -l app.kubernetes.io/name=argocd-server
+    kubectl wait -n argocd $(kubectl get pod -n argocd -l app.kubernetes.io/name=argocd-server -o name) --for=condition=Ready
+    ARGOCD_PASSWORD=$(kubectl -n argocd get pod -l "app.kubernetes.io/name=argocd-server" -o jsonpath='{.items[*].metadata.name}')
     {{ cwd }}/argocd login argocd-server-argocd.apps.{ cluster }}.{{ domain }} --grpc-web --username admin --password $ARGOCD_PASSWORD --insecure
     {{ cwd }}/argocd account update-password --current-password $ARGOCD_PASSWORD --new-password {{ argocd_password }} --grpc-web
     echo Updated admin password to {{ argocd_password }}
