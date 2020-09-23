@@ -19,7 +19,7 @@ echo Use Openshift Credentials or admin/$ARGOCD_PASSWORD
   chmod u+x {{ cwd }}/argocd
   {% if argocd_password != None %}
     sleep 20
-    oc patch secret argocd argocd-secret  -p '{"data": {"admin.password": null, "admin.passwordMtime": null}}'
+    oc patch -n argocd secret argocd-secret  -p '{"data": {"admin.password": null, "admin.passwordMtime": null}}'
     oc delete pod -n argocd -l app.kubernetes.io/name=argocd-server
     oc wait -n argocd $(oc get pod -n argocd -l app.kubernetes.io/name=argocd-server -o name) --for=condition=Ready
     ARGOCD_PASSWORD=$(oc -n argocd get pod -l "app.kubernetes.io/name=argocd-server" -o jsonpath='{.items[*].metadata.name}')
