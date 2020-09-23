@@ -5,9 +5,6 @@ Kvirt config class
 """
 
 from datetime import datetime
-from jinja2 import Environment, FileSystemLoader
-from jinja2 import StrictUndefined as undefined
-from jinja2.exceptions import TemplateSyntaxError, TemplateError
 from kvirt.defaults import IMAGES, IMAGESCOMMANDS
 from kvirt import ansibleutils
 from kvirt import nameutils
@@ -460,6 +457,99 @@ class Kconfig(Kbaseconfig):
         domain = profile.get('domain', default_domain)
         scripts = common.remove_duplicates(default_scripts + profile.get('scripts', []))
         files = profile.get('files', default_files)
+        enableroot = profile.get('enableroot', default_enableroot)
+        tags = profile.get('tags', [])
+        if default_tags:
+            tags = default_tags + tags if tags else default_tags
+        privatekey = profile.get('privatekey', default_privatekey)
+        rhnregister = profile.get('rhnregister', default_rhnregister)
+        rhnuser = profile.get('rhnuser', default_rhnuser)
+        rhnpassword = profile.get('rhnpassword', default_rhnpassword)
+        rhnak = profile.get('rhnactivationkey', default_rhnak)
+        rhnorg = profile.get('rhnorg', default_rhnorg)
+        rhnpool = profile.get('rhnpool', default_rhnpool)
+        rhnwait = profile.get('rhnwait', default_rhnwait)
+        flavor = profile.get('flavor', default_flavor)
+        dnsclient = profile.get('dnsclient', default_dnsclient)
+        storemetadata = profile.get('storemetadata', default_storemetadata)
+        notify = profile.get('notify', default_notify)
+        pushbullettoken = profile.get('pushbullettoken', default_pushbullettoken)
+        slacktoken = profile.get('slacktoken', default_slacktoken)
+        notifycmd = profile.get('notifycmd', default_notifycmd)
+        notifyscript = profile.get('notifyscript', default_notifyscript)
+        notifymethods = profile.get('notifymethods', default_notifymethods)
+        slackchannel = profile.get('slackchannel', default_slackchannel)
+        mailserver = profile.get('mailserver', default_mailserver)
+        mailfrom = profile.get('mailfrom', default_mailfrom)
+        mailto = profile.get('mailto', default_mailto)
+        sharedfolders = profile.get('sharedfolders', default_sharedfolders)
+        kernel = profile.get('kernel', default_kernel)
+        initrd = profile.get('initrd', default_initrd)
+        cmdline = profile.get('cmdline', default_cmdline)
+        placement = profile.get('placement', default_placement)
+        yamlinventory = profile.get('yamlinventory', default_yamlinventory)
+        cpuhotplug = profile.get('cpuhotplug', default_cpuhotplug)
+        memoryhotplug = profile.get('memoryhotplug', default_memoryhotplug)
+        virttype = profile.get('virttype', default_virttype)
+        overrides.update(profile)
+        skip_rhnregister_script = False
+        if rhnregister and image is not None and image.lower().startswith('rhel'):
+            if rhnuser is not None and rhnpassword is not None:
+                skip_rhnregister_script = True
+                overrides['rhnuser'] = rhnuser
+                overrides['rhnpassword'] = rhnpassword
+            elif rhnak is not None and rhnorg is not None:
+                skip_rhnregister_script = True
+                overrides['rhnak'] = rhnak
+                overrides['rhnorg'] = rhnorg
+            else:
+                msg = "Rhn registration required but missing credentials. Define rhnuser/rhnpassword or rhnak/rhnorg"
+                return {'result': 'failure', 'reason': msg}
+        if skip_rhnregister_script and cloudinit and image is not None and image.lower().startswith('rhel'):
+            rhncommands = ['sleep %s' % rhnwait] if rhnwait > 0 else []
+            if rhnak is not None and rhnorg is not None:
+                rhncommands.append('subscription-manager register --force --activationkey=%s --org=%s'
+                                   % (rhnak, rhnorg))
+                if image.startswith('rhel-8'):
+                    rhncommands.append('subscription-manager repos --enable=rhel-8-for-x86_64-baseos-rpms')
+                else:
+                    rhncommands.append('subscription-manager repos --enable=rhel-7-server-rpms')
+            elif rhnuser is not None and rhnpassword is not None:
+                rhncommands.append('subscription-manager register --force --username=%s --password=%s'
+                                   % (rhnuser, rhnpassword))
+                if rhnpool is not None:
+                    rhncommands.append('subscription-manager attach --pool=%s' % rhnpool)
+                else:
+                    rhncommands.append('subscription-manager attach --auto')
+        else:
+            rhncommands = []
+        sharedfoldercmds = []
+        if sharedfolders and self.type == 'kvm':
+            for sharedfolder in sharedfolders:
+                basefolder = os.path.basename(sharedfolder)
+                cmd1 = "mkdir -p /mnt/%s" % sharedfolder
+                cmd2 = "echo %s /mnt/%s 9p trans=virtio,version=9p2000.L,rw 0 0 >> /etc/fstab" % (basefolder,
+                                                                                                  sharedfolder)
+                sharedfoldercmds.append(cmd1)
+                sharedfoldercmds.append(cmd2)
+        if sharedfoldercmds:
+            sharedfoldercmds.append("mount -a")
+        zerotiercmds = []
+        if zerotier:
+            zerotiercmds.append("curl -s https://install.zerotier.com | bash")
+            for entry in zerotier:
+                zerotiercmds.append("zerotier-cli join %s" % entry)
+        scriptcmds = []
+        if scripts:
+            for index, script in enumerate(scripts):
+                if script.endswith('register.sh') and skip_rhnregister_script:
+                    continue
+                scriptfile = os.path.expanduser(script)
+                if not os.path.exists(scriptfile):
+                    return {'result': 'failure', 'reason': "Script %s not found in %s" % (scriptfile, name)}
+                scriptpath = "/root/%02d_%s" % (index + 1, script)
+                files.append({'path': scriptpath, 'origin': scriptfile})
+                scriptcmds.append("bash %s" % scriptpath)
         if files:
             for index, fil in enumerate(files):
                 if isinstance(fil, str):
@@ -496,120 +586,6 @@ class Kconfig(Kbaseconfig):
                 if path is None:
                     common.pprint("Using current directory for path in files of %s" % name, color='blue')
                     path = os.path.basename(origin)
-        enableroot = profile.get('enableroot', default_enableroot)
-        tags = profile.get('tags', [])
-        if default_tags:
-            tags = default_tags + tags if tags else default_tags
-        privatekey = profile.get('privatekey', default_privatekey)
-        rhnregister = profile.get('rhnregister', default_rhnregister)
-        rhnuser = profile.get('rhnuser', default_rhnuser)
-        rhnpassword = profile.get('rhnpassword', default_rhnpassword)
-        rhnak = profile.get('rhnactivationkey', default_rhnak)
-        rhnorg = profile.get('rhnorg', default_rhnorg)
-        rhnpool = profile.get('rhnpool', default_rhnpool)
-        rhnwait = profile.get('rhnwait', default_rhnwait)
-        flavor = profile.get('flavor', default_flavor)
-        dnsclient = profile.get('dnsclient', default_dnsclient)
-        storemetadata = profile.get('storemetadata', default_storemetadata)
-        notify = profile.get('notify', default_notify)
-        pushbullettoken = profile.get('pushbullettoken', default_pushbullettoken)
-        slacktoken = profile.get('slacktoken', default_slacktoken)
-        notifycmd = profile.get('notifycmd', default_notifycmd)
-        notifyscript = profile.get('notifyscript', default_notifyscript)
-        notifymethods = profile.get('notifymethods', default_notifymethods)
-        slackchannel = profile.get('slackchannel', default_slackchannel)
-        mailserver = profile.get('mailserver', default_mailserver)
-        mailfrom = profile.get('mailfrom', default_mailfrom)
-        mailto = profile.get('mailto', default_mailto)
-        sharedfolders = profile.get('sharedfolders', default_sharedfolders)
-        kernel = profile.get('kernel', default_kernel)
-        initrd = profile.get('initrd', default_initrd)
-        cmdline = profile.get('cmdline', default_cmdline)
-        placement = profile.get('placement', default_placement)
-        yamlinventory = profile.get('yamlinventory', default_yamlinventory)
-        cpuhotplug = profile.get('cpuhotplug', default_cpuhotplug)
-        memoryhotplug = profile.get('memoryhotplug', default_memoryhotplug)
-        virttype = profile.get('virttype', default_virttype)
-        overrides.update(profile)
-        scriptcmds = []
-        skip_rhnregister_script = False
-        if rhnregister and image is not None and image.lower().startswith('rhel'):
-            if rhnuser is not None and rhnpassword is not None:
-                skip_rhnregister_script = True
-                overrides['rhnuser'] = rhnuser
-                overrides['rhnpassword'] = rhnpassword
-            elif rhnak is not None and rhnorg is not None:
-                skip_rhnregister_script = True
-                overrides['rhnak'] = rhnak
-                overrides['rhnorg'] = rhnorg
-            else:
-                msg = "Rhn registration required but missing credentials. Define rhnuser/rhnpassword or rhnak/rhnorg"
-                return {'result': 'failure', 'reason': msg}
-        if scripts:
-            for script in scripts:
-                if onfly is not None and '~' not in script:
-                    destdir = basedir
-                    if '/' in script:
-                        destdir = os.path.dirname(script)
-                        os.makedirs(destdir, exist_ok=True)
-                    common.fetch("%s/%s" % (onfly, script), destdir)
-                script = os.path.expanduser(script)
-                if basedir != '.':
-                    script = '%s/%s' % (basedir, script)
-                if script.endswith('register.sh') and skip_rhnregister_script:
-                    continue
-                elif not os.path.exists(script):
-                    return {'result': 'failure', 'reason': "Script %s not found" % script}
-                else:
-                    scriptbasedir = os.path.dirname(script) if os.path.dirname(script) != '' else '.'
-                    env = Environment(loader=FileSystemLoader(scriptbasedir), undefined=undefined,
-                                      extensions=['jinja2.ext.do'])
-                    try:
-                        templ = env.get_template(os.path.basename(script))
-                        scriptentries = templ.render(overrides)
-                    except TemplateSyntaxError as e:
-                        msg = "Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message)
-                        return {'result': 'failure', 'reason': msg}
-                    except TemplateError as e:
-                        msg = "Error rendering script %s. Got: %s" % (script, e.message)
-                        return {'result': 'failure', 'reason': msg}
-                    scriptlines = [line.strip() for line in scriptentries.split('\n') if line.strip() != '']
-                    if scriptlines:
-                        scriptcmds.extend(scriptlines)
-        if skip_rhnregister_script and cloudinit and image is not None and image.lower().startswith('rhel'):
-            rhncommands = ['sleep %s' % rhnwait] if rhnwait > 0 else []
-            if rhnak is not None and rhnorg is not None:
-                rhncommands.append('subscription-manager register --force --activationkey=%s --org=%s'
-                                   % (rhnak, rhnorg))
-                if image.startswith('rhel-8'):
-                    rhncommands.append('subscription-manager repos --enable=rhel-8-for-x86_64-baseos-rpms')
-                else:
-                    rhncommands.append('subscription-manager repos --enable=rhel-7-server-rpms')
-            elif rhnuser is not None and rhnpassword is not None:
-                rhncommands.append('subscription-manager register --force --username=%s --password=%s'
-                                   % (rhnuser, rhnpassword))
-                if rhnpool is not None:
-                    rhncommands.append('subscription-manager attach --pool=%s' % rhnpool)
-                else:
-                    rhncommands.append('subscription-manager attach --auto')
-        else:
-            rhncommands = []
-        sharedfoldercmds = []
-        if sharedfolders and self.type == 'kvm':
-            for sharedfolder in sharedfolders:
-                basefolder = os.path.basename(sharedfolder)
-                cmd1 = "mkdir -p /mnt/%s" % sharedfolder
-                cmd2 = "echo %s /mnt/%s 9p trans=virtio,version=9p2000.L,rw 0 0 >> /etc/fstab" % (basefolder,
-                                                                                                  sharedfolder)
-                sharedfoldercmds.append(cmd1)
-                sharedfoldercmds.append(cmd2)
-        if sharedfoldercmds:
-            sharedfoldercmds.append("mount -a")
-        zerotiercmds = []
-        if zerotier:
-            zerotiercmds.append("curl -s https://install.zerotier.com | bash")
-            for entry in zerotier:
-                zerotiercmds.append("zerotier-cli join %s" % entry)
         cmds = rhncommands + sharedfoldercmds + zerotiercmds + cmds + scriptcmds
         if notify:
             if notifycmd is None and notifyscript is None:

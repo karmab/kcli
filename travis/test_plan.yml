@@ -1,6 +1,7 @@
----
+parameters:
+ image: fedora31
 
-fedora31:
+{{ image }}:
  type: image
  pool: image_pool
 
@@ -16,13 +17,17 @@ micro_network:
 
 micro_fedora:
   type: profile
-  image: Fedora-Cloud-Base-31-1.9.x86_64.qcow2
+  image: {{ image }}
   memory: 2048
   numcpus: 2
   disks:
-   - size: 10
+  - size: 10
   nets:
-      - micro_network
+  - micro_network
+  scripts:
+  - motd.sh
+  files:
+  - myfile.txt
 
 test_instance:
   profile: micro_fedora 
