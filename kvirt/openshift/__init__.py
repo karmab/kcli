@@ -322,7 +322,7 @@ def create(config, plandir, cluster, overrides):
             sys.exit(1)
     clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
     if os.path.exists(clusterdir):
-        if [v for v in config.k.list() if v['plan'] == cluster]:
+        if [v for v in config.k.list() if v.get('plan', 'kvirt') == cluster]:
             pprint("Please remove existing directory %s first..." % clusterdir, color='red')
             sys.exit(1)
         else:

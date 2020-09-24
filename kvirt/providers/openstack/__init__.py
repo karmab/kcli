@@ -30,7 +30,10 @@ class Kopenstack(object):
         loader = loading.get_plugin_loader('password')
         auth = loader.load_from_options(auth_url=auth_url, username=user, password=password, project_name=project,
                                         user_domain_name=domain, project_domain_name=domain)
-        sess = session.Session(auth=auth, verify=ca_file)
+        if ca_file is not None:
+            sess = session.Session(auth=auth, verify=ca_file)
+        else:
+            sess = session.Session(auth=auth)
         self.nova = novaclient.Client(version, session=sess)
         self.glance = glanceclient(version, session=sess)
         self.cinder = cinderclient.Client(version, session=sess)
@@ -88,6 +91,7 @@ class Kopenstack(object):
         else:
             flavor = nova.flavors.find(name=flavor)
         nics = []
+        need_floating = True
         for net in nets:
             if isinstance(net, str):
                 netname = net
@@ -95,6 +99,8 @@ class Kopenstack(object):
                 netname = net['name']
             try:
                 net = nova.neutron.find_network(name=netname)
+                if net.to_dict()['router:external']:
+                    need_floating = False
             except Exception as e:
                 common.pprint(e, color='red')
                 return {'result': 'failure', 'reason': "Network %s not found" % netname}
@@ -163,47 +169,48 @@ class Kopenstack(object):
         instance = nova.servers.create(name=name, image=glanceimage, flavor=flavor, key_name=key_name, nics=nics,
                                        meta=meta, userdata=userdata, block_device_mapping=block_dev_mapping)
         tenant_id = instance.tenant_id
-        floating_ips = [f['id'] for f in neutron.list_floatingips()['floatingips']
-                        if f['port_id'] is None]
-        if not floating_ips:
-            network_id = None
-            networks = [n for n in neutron.list_networks()['networks'] if n['router:external']]
-            if networks:
-                network_id = networks[0]['id']
-            if network_id is not None and tenant_id is not None:
-                args = dict(floating_network_id=network_id, tenant_id=tenant_id)
-                floating_ip = neutron.create_floatingip(body={'floatingip': args})
-                floatingip_id = floating_ip['floatingip']['id']
-                floatingip_ip = floating_ip['floatingip']['floating_ip_address']
-                common.pprint('Assigning new floating ip %s for this vm' % floatingip_ip)
-        else:
-            floatingip_id = floating_ips[0]
-        fixed_ip = None
-        timeout = 0
-        while fixed_ip is None:
-            common.pprint("Waiting 5 seconds for vm to get an ip")
-            sleep(5)
-            timeout += 5
-            if timeout >= 80:
-                common.pprint("Time out waiting for vm to get an ip", color='red')
-                break
-            vm = nova.servers.get(instance.id)
-            if vm.status.lower() == 'error':
-                msg = "Vm reports error status"
-                return {'result': 'failure', 'reason': msg}
-            for key in list(vm.addresses):
-                entry1 = vm.addresses[key]
-                for entry2 in entry1:
-                    if entry2['OS-EXT-IPS:type'] == 'fixed':
-                        fixed_ip = entry2['addr']
-                        break
-        if fixed_ip is not None:
-            fixedports = [i['id'] for i in neutron.list_ports()['ports']
-                          if i['fixed_ips'] and i['fixed_ips'][0]['ip_address'] == fixed_ip]
-            port_id = fixedports[0]
-            neutron.update_floatingip(floatingip_id, {'floatingip': {'port_id': port_id}})
-        securitygroups = [s for s in neutron.list_security_groups()['security_groups']
-                          if s['name'] == 'default' and s['tenant_id'] == tenant_id]
+        if need_floating:
+            floating_ips = [f['id'] for f in neutron.list_floatingips()['floatingips']
+                            if f['port_id'] is None]
+            if not floating_ips:
+                network_id = None
+                networks = [n for n in neutron.list_networks()['networks'] if n['router:external']]
+                if networks:
+                    network_id = networks[0]['id']
+                if network_id is not None and tenant_id is not None:
+                    args = dict(floating_network_id=network_id, tenant_id=tenant_id)
+                    floating_ip = neutron.create_floatingip(body={'floatingip': args})
+                    floatingip_id = floating_ip['floatingip']['id']
+                    floatingip_ip = floating_ip['floatingip']['floating_ip_address']
+                    common.pprint('Assigning new floating ip %s for this vm' % floatingip_ip)
+            else:
+                floatingip_id = floating_ips[0]
+            fixed_ip = None
+            timeout = 0
+            while fixed_ip is None:
+                common.pprint("Waiting 5 seconds for vm to get an ip")
+                sleep(5)
+                timeout += 5
+                if timeout >= 80:
+                    common.pprint("Time out waiting for vm to get an ip", color='red')
+                    break
+                vm = nova.servers.get(instance.id)
+                if vm.status.lower() == 'error':
+                    msg = "Vm reports error status"
+                    return {'result': 'failure', 'reason': msg}
+                for key in list(vm.addresses):
+                    entry1 = vm.addresses[key]
+                    for entry2 in entry1:
+                        if entry2['OS-EXT-IPS:type'] == 'fixed':
+                            fixed_ip = entry2['addr']
+                            break
+            if fixed_ip is not None:
+                fixedports = [i['id'] for i in neutron.list_ports()['ports']
+                              if i['fixed_ips'] and i['fixed_ips'][0]['ip_address'] == fixed_ip]
+                port_id = fixedports[0]
+                neutron.update_floatingip(floatingip_id, {'floatingip': {'port_id': port_id}})
+            securitygroups = [s for s in neutron.list_security_groups()['security_groups']
+                              if s['name'] == 'default' and s['tenant_id'] == tenant_id]
         if securitygroups:
             securitygroup = securitygroups[0]
             securitygroupid = securitygroup['id']

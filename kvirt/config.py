@@ -151,9 +151,6 @@ class Kconfig(Kbaseconfig):
                     os._exit(1)
                 if auth_url.endswith('v2.0'):
                     domain = None
-                if auth_url.startswith('https') and ca_file is None:
-                    common.pprint("Secure auth_url was specified and ca_file is missing. Leaving", color='red')
-                    os.exit(1)
                 from kvirt.providers.openstack import Kopenstack
                 k = Kopenstack(host=self.host, port=self.port, user=user, password=password, version=version,
                                debug=debug, project=project, domain=domain, auth_url=auth_url, ca_file=ca_file)
