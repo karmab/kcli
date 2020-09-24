@@ -17,6 +17,7 @@ from neutronclient.v2_0.client import Client as neutronclient
 import os
 from time import sleep
 import webbrowser
+from ipaddress import ip_address, ip_network
 
 
 class Kopenstack(object):
@@ -24,14 +25,14 @@ class Kopenstack(object):
 
     """
     def __init__(self, host='127.0.0.1', version='2', port=None, user='root', password=None, debug=False, project=None,
-                 domain='Default', auth_url=None, ca_file=None):
+                 domain='Default', auth_url=None, ca_file=None, external_network=None):
         self.debug = debug
         self.host = host
         loader = loading.get_plugin_loader('password')
         auth = loader.load_from_options(auth_url=auth_url, username=user, password=password, project_name=project,
                                         user_domain_name=domain, project_domain_name=domain)
         if ca_file is not None:
-            sess = session.Session(auth=auth, verify=ca_file)
+            sess = session.Session(auth=auth, verify=os.path.expanduser(ca_file))
         else:
             sess = session.Session(auth=auth)
         self.nova = novaclient.Client(version, session=sess)
@@ -40,6 +41,7 @@ class Kopenstack(object):
         self.neutron = neutronclient(session=sess)
         self.conn = self.nova
         self.project = project
+        self.external_network = external_network
         return
 
 # should cleanly close your connection, if needed
@@ -174,7 +176,11 @@ class Kopenstack(object):
                             if f['port_id'] is None]
             if not floating_ips:
                 network_id = None
-                networks = [n for n in neutron.list_networks()['networks'] if n['router:external']]
+                if self.external_network is not None:
+                    networks = [n for n in neutron.list_networks()['networks'] if n['router:external']
+                                if n['name'] == self.external_network]
+                else:
+                    networks = [n for n in neutron.list_networks()['networks'] if n['router:external']]
                 if networks:
                     network_id = networks[0]['id']
                 if network_id is not None and tenant_id is not None:
@@ -395,7 +401,7 @@ class Kopenstack(object):
         glance = self.glance
         for img in glance.images.list():
             glanceimages.append(img.name)
-        return glanceimages
+        return sorted(glanceimages)
 
     def delete(self, name, snapshots=False):
         cinder = self.cinder
@@ -853,3 +859,59 @@ class Kopenstack(object):
 
     def list_dns(self, domain):
         return []
+
+    def create_network_port(self, name, network, ip=None, floating=False, security=True):
+        neutron = self.neutron
+        matchingports = [i for i in neutron.list_ports()['ports'] if i['name'] == name]
+        if matchingports:
+            msg = "Port %s already exists" % name
+            common.pprint(msg, color='blue')
+            return {'result': 'success'}
+        networks = [net for net in neutron.list_networks()['networks'] if net['name'] == network]
+        if not networks:
+            msg = "Network %s not found" % network
+            common.pprint(msg, color='red')
+            return {'result': 'failure', 'reason': msg}
+        else:
+            network = networks[0]
+        network_id = network['id']
+        port = {'name': name, "admin_state_up": True, "network_id": network_id, 'port_security_enabled': security}
+        if ip is not None:
+            for subnet in neutron.list_subnets()['subnets']:
+                subnet_name = subnet['name']
+                subnet_id = subnet['id']
+                cidr = subnet['cidr']
+                if network_id == subnet['network_id'] and ip_address(ip) in ip_network(cidr):
+                    msg = "Using matching subnet %s with cidr %s" % (subnet_name, cidr)
+                    common.pprint(msg, color='blue')
+                    port['fixed_ips'] = [{'ip_address': ip, 'subnet_id': subnet_id}]
+        result = neutron.create_port({'port': port})
+        port_id = result['port']['id']
+        if floating:
+            tenant_id = network['tenant_id']
+            if self.external_network is not None:
+                network_id = self.external_network
+                external_networks = [n for n in neutron.list_networks()['networks'] if n['router:external']
+                                     if n['name'] == self.external_network]
+            else:
+                external_networks = [n for n in neutron.list_networks()['networks'] if n['router:external']]
+            if external_networks:
+                network_id = external_networks[0]['id']
+            else:
+                msg = "No valid external network found for floating ips"
+                common.pprint(msg, color='red')
+                return {'result': 'failure', 'reason': msg}
+            args = dict(floating_network_id=network_id, tenant_id=tenant_id, port_id=port_id)
+            floating_ip = neutron.create_floatingip(body={'floatingip': args})
+            floatingip_ip = floating_ip['floatingip']['floating_ip_address']
+            common.pprint('Assigning new floating ip %s for this port' % floatingip_ip)
+        return {'result': 'success'}
+
+    def delete_network_port(self, name, network=None, floating=False):
+        neutron = self.neutron
+        matchingports = [i for i in neutron.list_ports()['ports'] if i['name'] == name]
+        if not matchingports:
+            msg = "Port %s not found" % name
+            common.pprint(msg, color='red')
+            return {'result': 'failure', 'reason': msg}
+        self.neutron.delete_port(matchingports[0]['id'])
