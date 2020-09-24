@@ -212,6 +212,7 @@ def scale(config, plandir, cluster, overrides):
 
 def create(config, plandir, cluster, overrides):
     k = config.k
+    bootstrap_helper_ip = None
     client = config.client
     platform = config.type
     pprint("Deploying on client %s" % client, color='blue')
@@ -281,7 +282,6 @@ def create(config, plandir, cluster, overrides):
     if ingress_ip is None:
         ingress_ip = api_ip
     public_api_ip = data.get('public_api_ip')
-    bootstrap_api_ip = data.get('bootstrap_api_ip')
     network = data.get('network')
     if platform == 'packet':
         if network == 'default':
@@ -533,8 +533,8 @@ def create(config, plandir, cluster, overrides):
             helper_overrides['plan'] = cluster
             bootstrap_helper_name = "%s-bootstrap-helper" % cluster
             config.create_vm("%s-bootstrap-helper" % cluster, helper_image, overrides=helper_overrides)
-            while bootstrap_api_ip is None:
-                bootstrap_api_ip = k.info(bootstrap_helper_name).get(iptype)
+            while bootstrap_helper_ip is None:
+                bootstrap_helper_ip = k.info(bootstrap_helper_name).get(iptype)
                 pprint("Waiting 5s for bootstrap helper node to get an ip...", color='blue')
                 sleep(5)
             cmd = "iptables -F ; yum -y install httpd"
@@ -542,31 +542,36 @@ def create(config, plandir, cluster, overrides):
             if platform == 'packet':
                 cmd += "; sed 's/apache/root/' /etc/httpd/conf/httpd.conf"
                 status = 'provisioning'
-                config.k.tunnelhost = bootstrap_api_ip
+                config.k.tunnelhost = bootstrap_helper_ip
                 while status != 'active':
                     status = k.info(bootstrap_helper_name).get('status')
                     pprint("Waiting 5s for bootstrap helper node to be fully provisioned...", color='blue')
                     sleep(5)
             sleep(5)
             cmd += "; systemctl start httpd"
-            sshcmd = ssh(bootstrap_helper_name, ip=bootstrap_api_ip, user='root', tunnel=config.tunnel,
+            sshcmd = ssh(bootstrap_helper_name, ip=bootstrap_helper_ip, user='root', tunnel=config.tunnel,
                          tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
                          tunneluser=config.tunneluser, insecure=True, cmd=cmd)
             os.system(sshcmd)
             source, destination = "%s/bootstrap.ign" % clusterdir, "/var/www/html/bootstrap"
-            scpcmd = scp(bootstrap_helper_name, ip=bootstrap_api_ip, user='root', source=source,
+            scpcmd = scp(bootstrap_helper_name, ip=bootstrap_helper_ip, user='root', source=source,
                          destination=destination, tunnel=config.tunnel, tunnelhost=config.tunnelhost,
                          tunnelport=config.tunnelport, tunneluser=config.tunneluser, download=False, insecure=True)
             os.system(scpcmd)
             cmd = "chown apache.apache /var/www/html/bootstrap"
-            sshcmd = ssh(bootstrap_helper_name, ip=bootstrap_api_ip, user='root', tunnel=config.tunnel,
+            sshcmd = ssh(bootstrap_helper_name, ip=bootstrap_helper_ip, user='root', tunnel=config.tunnel,
                          tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
                          tunneluser=config.tunneluser, insecure=True, cmd=cmd)
             os.system(sshcmd)
             sedcmd = 'sed "s@https://api-int.%s.%s:22623/config/master@http://%s/bootstrap@" ' % (cluster, domain,
-                                                                                                  bootstrap_api_ip)
+                                                                                                  bootstrap_helper_ip)
             sedcmd += '%s/master.ign' % clusterdir
             sedcmd += ' > %s/bootstrap.ign' % clusterdir
+            call(sedcmd, shell=True)
+            sedcmd = 'sed "s@https://api-int.%s.%s:22623/config/master@http://%s/worker@" ' % (cluster, domain,
+                                                                                               bootstrap_helper_ip)
+            sedcmd += '%s/master.ign' % clusterdir
+            sedcmd += ' > %s/worker.ign' % clusterdir
             call(sedcmd, shell=True)
         if baremetal:
             new_api_ip = api_ip if not ipv6 else "[%s]" % api_ip
@@ -651,7 +656,7 @@ def create(config, plandir, cluster, overrides):
         call('openshift-install --dir=%s wait-for bootstrap-complete || exit 1' % clusterdir, shell=True)
         todelete = ["%s-bootstrap" % cluster, "%s-bootstrap-helper" % cluster]
     if platform in virtplatforms:
-        ignitionworkerfile = "%s/worker.ign" % clusterdir
+        ignitionworkerfile = "%s/worker.ign" % clusterdir if bootstrap_helper_ip is None else "%s/worker" % clusterdir
         os.remove(ignitionworkerfile)
         while not os.path.exists(ignitionworkerfile) or os.stat(ignitionworkerfile).st_size == 0:
             try:
@@ -662,6 +667,17 @@ def create(config, plandir, cluster, overrides):
             except:
                 pprint("Waiting 5s before retrieving workers ignition data", color='blue')
                 sleep(5)
+            if bootstrap_helper_ip is not None:
+                source, destination = "%s/worker" % clusterdir, "/var/www/html/worker"
+                scpcmd = scp(bootstrap_helper_name, ip=bootstrap_helper_ip, user='root', source=source,
+                             destination=destination, tunnel=config.tunnel, tunnelhost=config.tunnelhost,
+                             tunnelport=config.tunnelport, tunneluser=config.tunneluser, download=False, insecure=True)
+                os.system(scpcmd)
+                cmd = "chown apache.apache /var/www/html/worker"
+                sshcmd = ssh(bootstrap_helper_name, ip=bootstrap_helper_ip, user='root', tunnel=config.tunnel,
+                             tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
+                             tunneluser=config.tunneluser, insecure=True, cmd=cmd)
+                os.system(sshcmd)
         if workers > 0:
             pprint("Deploying workers", color='blue')
             if 'name' in overrides:
