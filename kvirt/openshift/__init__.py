@@ -7,7 +7,7 @@ import json
 import os
 import sys
 from kvirt.common import info, pprint, gen_mac, get_oc, get_values, pwd_path, insecure_fetch, fetch
-from kvirt.common import get_commit_rhcos, get_latest_fcos, kube_create_app
+from kvirt.common import get_commit_rhcos, get_latest_fcos, kube_create_app, patch_ceo
 from kvirt.common import ssh, scp, _ssh_credentials
 from kvirt.openshift.calico import calicoassets
 from random import randint
@@ -456,6 +456,11 @@ def create(config, plandir, cluster, overrides):
         for asset in calicoassets:
             fetch(asset, manifestsdir)
     call('openshift-install --dir=%s create ignition-configs' % clusterdir, shell=True)
+    if masters == 1:
+        version_match = re.match("4.([0-9]*).*", INSTALLER_VERSION)
+        COS_VERSION = "4%s" % version_match.group(1) if version_match is not None else '45'
+        if upstream or int(COS_VERSION) > 43:
+            patch_ceo("%s/bootstrap.ign" % clusterdir)
     staticdata = gather_dhcp(data, platform)
     domain = data.get('domain')
     if staticdata:
@@ -523,7 +528,7 @@ def create(config, plandir, cluster, overrides):
                 iptype = 'ip'
                 if platform == 'openstack':
                     helper_overrides['flavor'] = "m1.medium"
-                    iptype = "privateip"
+                    # iptype = "privateip"
             helper_overrides['nets'] = [network]
             helper_overrides['plan'] = cluster
             bootstrap_helper_name = "%s-bootstrap-helper" % cluster
@@ -533,6 +538,7 @@ def create(config, plandir, cluster, overrides):
                 pprint("Waiting 5s for bootstrap helper node to get an ip...", color='blue')
                 sleep(5)
             cmd = "iptables -F ; yum -y install httpd"
+            cmd += "; setenforce 0"
             if platform == 'packet':
                 cmd += "; sed 's/apache/root/' /etc/httpd/conf/httpd.conf"
                 status = 'provisioning'
@@ -552,6 +558,11 @@ def create(config, plandir, cluster, overrides):
                          destination=destination, tunnel=config.tunnel, tunnelhost=config.tunnelhost,
                          tunnelport=config.tunnelport, tunneluser=config.tunneluser, download=False, insecure=True)
             os.system(scpcmd)
+            cmd = "chown apache.apache /var/www/html/bootstrap"
+            sshcmd = ssh(bootstrap_helper_name, ip=bootstrap_api_ip, user='root', tunnel=config.tunnel,
+                         tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
+                         tunneluser=config.tunneluser, insecure=True, cmd=cmd)
+            os.system(sshcmd)
             sedcmd = 'sed "s@https://api-int.%s.%s:22623/config/master@http://%s/bootstrap@" ' % (cluster, domain,
                                                                                                   bootstrap_api_ip)
             sedcmd += '%s/master.ign' % clusterdir
@@ -594,11 +605,6 @@ def create(config, plandir, cluster, overrides):
         sedcmd += '%s/master.ign' % clusterdir
         sedcmd += ' > %s/bootstrap.ign' % clusterdir
         call(sedcmd, shell=True)
-    if masters == 1:
-        version_match = re.match("4.([0-9]*).*", INSTALLER_VERSION)
-        COS_VERSION = "4%s" % version_match.group(1) if version_match is not None else '45'
-        if upstream or int(COS_VERSION) > 43:
-            overrides['fix_ceo'] = True
     if platform in virtplatforms:
         if disconnected_deploy:
             disconnected_vm = "%s-disconnecter" % cluster
