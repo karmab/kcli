@@ -421,7 +421,10 @@ class Kopenstack(object):
         vm.delete()
         for floating in vm_floating_ips:
             floatingid = floating_ips[floating]
-            self.neutron.delete_floatingip(floatingid)
+            try:
+                self.neutron.delete_floatingip(floatingid)
+            except Exception as e:
+                common.pprint("Hit %s when tying to delete floating %s" % (str(e), floating))
         index = 0
         for disk in vm._info['os-extended-volumes:volumes_attached']:
             volume = cinder.volumes.get(disk['id'])

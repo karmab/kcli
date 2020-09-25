@@ -656,8 +656,11 @@ def create(config, plandir, cluster, overrides):
         call('openshift-install --dir=%s wait-for bootstrap-complete || exit 1' % clusterdir, shell=True)
         todelete = ["%s-bootstrap" % cluster, "%s-bootstrap-helper" % cluster]
     if platform in virtplatforms:
-        ignitionworkerfile = "%s/worker.ign" % clusterdir if bootstrap_helper_ip is None else "%s/worker" % clusterdir
-        os.remove(ignitionworkerfile)
+        if bootstrap_helper_ip is not None:
+            ignitionworkerfile = "%s/worker" % clusterdir
+        else:
+            ignitionworkerfile = "%s/worker.ign" % clusterdir
+            os.remove(ignitionworkerfile)
         while not os.path.exists(ignitionworkerfile) or os.stat(ignitionworkerfile).st_size == 0:
             try:
                 with open(ignitionworkerfile, 'w') as w:
@@ -667,17 +670,17 @@ def create(config, plandir, cluster, overrides):
             except:
                 pprint("Waiting 5s before retrieving workers ignition data", color='blue')
                 sleep(5)
-            if bootstrap_helper_ip is not None:
-                source, destination = "%s/worker" % clusterdir, "/var/www/html/worker"
-                scpcmd = scp(bootstrap_helper_name, ip=bootstrap_helper_ip, user='root', source=source,
-                             destination=destination, tunnel=config.tunnel, tunnelhost=config.tunnelhost,
-                             tunnelport=config.tunnelport, tunneluser=config.tunneluser, download=False, insecure=True)
-                os.system(scpcmd)
-                cmd = "chown apache.apache /var/www/html/worker"
-                sshcmd = ssh(bootstrap_helper_name, ip=bootstrap_helper_ip, user='root', tunnel=config.tunnel,
-                             tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
-                             tunneluser=config.tunneluser, insecure=True, cmd=cmd)
-                os.system(sshcmd)
+        if bootstrap_helper_ip is not None:
+            source, destination = "%s/worker" % clusterdir, "/var/www/html/worker"
+            scpcmd = scp(bootstrap_helper_name, ip=bootstrap_helper_ip, user='root', source=source,
+                         destination=destination, tunnel=config.tunnel, tunnelhost=config.tunnelhost,
+                         tunnelport=config.tunnelport, tunneluser=config.tunneluser, download=False, insecure=True)
+            os.system(scpcmd)
+            cmd = "chown apache.apache /var/www/html/worker"
+            sshcmd = ssh(bootstrap_helper_name, ip=bootstrap_helper_ip, user='root', tunnel=config.tunnel,
+                         tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
+                         tunneluser=config.tunneluser, insecure=True, cmd=cmd)
+            os.system(sshcmd)
         if workers > 0:
             pprint("Deploying workers", color='blue')
             if 'name' in overrides:
