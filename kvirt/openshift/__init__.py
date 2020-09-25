@@ -534,7 +534,10 @@ def create(config, plandir, cluster, overrides):
             bootstrap_helper_name = "%s-bootstrap-helper" % cluster
             config.create_vm("%s-bootstrap-helper" % cluster, helper_image, overrides=helper_overrides)
             while bootstrap_helper_ip is None:
-                bootstrap_helper_ip = k.info(bootstrap_helper_name).get(iptype)
+                helper_info = k.info(bootstrap_helper_name)
+                bootstrap_helper_ip = helper_info.get(iptype)
+                if platform == 'openstack' and helper_info.get('privateip') == helper_info.get('ip'):
+                    bootstrap_helper_ip = None
                 pprint("Waiting 5s for bootstrap helper node to get an ip...", color='blue')
                 sleep(5)
             cmd = "iptables -F ; yum -y install httpd"
