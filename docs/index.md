@@ -1333,7 +1333,7 @@ The main benefits of deploying Openshift with kcli are:
   - Ignition support 
      - (for Ovirt/Rhv, this means >= 4.3.4).
      - For Libvirt, support for fw_cfg in qemu (install qemu-kvm-ev on centos for instance).
-  - On Openstack, you will need to create a network with port security disabled (as we need a vip to be reachable on the masters). You will also need to create two ports on this network and map them to floating ips. Put the corresponding api_ip and public_api_ip in your parameter file. You can use [openstack.sh.sample](https://github.com/karmab/kcli/blob/master/extras/openstack.sh.sample) as a starting point. You also need to open relevant ports (80, 443, 6443 and 22623) in your security groups.
+  - On Openstack, you will need to create a network with port security disabled (as we need a vip to be reachable on the masters) and to create a port on this network and map it to a floating ip. Put the corresponding api_ip and public_api_ip in your parameter file. You can use The script [openstack.py](https://github.com/karmab/kcli/blob/master/extras/openstack.py) to do so with kcli. You also need to open relevant ports (80, 443, 6443 and 22623) in your security groups.
 
 ### How to Use
 
