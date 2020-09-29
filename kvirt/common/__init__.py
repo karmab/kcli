@@ -191,7 +191,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
     if not legacy:
         if netdata:
             netdata = {'version': 2, 'ethernets': netdata}
-            netdata = yaml.safe_dump(netdata, default_flow_style=False, encoding='utf-8')
+            netdata = yaml.safe_dump(netdata, default_flow_style=False, encoding='utf-8').decode("utf-8")
         else:
             netdata = ''
     existing = "%s.cloudinit" % name if not os.path.exists('/i_am_a_container') else "/workdir/%s.cloudinit" % name
