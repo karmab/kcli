@@ -311,13 +311,13 @@ class Kconfig(Kbaseconfig):
             default_files = father.get('files', self.files)
             default_enableroot = father.get('enableroot', self.enableroot)
             default_privatekey = father.get('privatekey', self.privatekey)
+            default_networkwait = father.get('networkwait', self.networkwait)
             default_rhnregister = father.get('rhnregister', self.rhnregister)
             default_rhnuser = father.get('rhnuser', self.rhnuser)
             default_rhnpassword = father.get('rhnpassword', self.rhnpassword)
             default_rhnak = father.get('rhnactivationkey', self.rhnak)
             default_rhnorg = father.get('rhnorg', self.rhnorg)
             default_rhnpool = father.get('rhnpool', self.rhnpool)
-            default_rhnwait = father.get('rhnwait', self.rhnwait)
             default_tags = father.get('tags', self.tags)
             default_flavor = father.get('flavor', self.flavor)
             default_cmds = common.remove_duplicates(self.cmds + father.get('cmds', []))
@@ -389,13 +389,13 @@ class Kconfig(Kbaseconfig):
             default_tags = self.tags
             default_flavor = self.flavor
             default_privatekey = self.privatekey
+            default_networkwait = self.networkwait
             default_rhnregister = self.rhnregister
             default_rhnuser = self.rhnuser
             default_rhnpassword = self.rhnpassword
             default_rhnak = self.rhnak
             default_rhnorg = self.rhnorg
             default_rhnpool = self.rhnpool
-            default_rhnwait = self.rhnwait
             default_cmds = self.cmds
             default_scripts = self.scripts
             default_dnsclient = self.dnsclient
@@ -503,13 +503,13 @@ class Kconfig(Kbaseconfig):
         if default_tags:
             tags = default_tags + tags if tags else default_tags
         privatekey = profile.get('privatekey', default_privatekey)
+        networkwait = profile.get('networkwait', default_networkwait)
         rhnregister = profile.get('rhnregister', default_rhnregister)
         rhnuser = profile.get('rhnuser', default_rhnuser)
         rhnpassword = profile.get('rhnpassword', default_rhnpassword)
         rhnak = profile.get('rhnactivationkey', default_rhnak)
         rhnorg = profile.get('rhnorg', default_rhnorg)
         rhnpool = profile.get('rhnpool', default_rhnpool)
-        rhnwait = profile.get('rhnwait', default_rhnwait)
         flavor = profile.get('flavor', default_flavor)
         dnsclient = profile.get('dnsclient', default_dnsclient)
         storemetadata = profile.get('storemetadata', default_storemetadata)
@@ -579,7 +579,7 @@ class Kconfig(Kbaseconfig):
                     if scriptlines:
                         scriptcmds.extend(scriptlines)
         if skip_rhnregister_script and cloudinit and image is not None and image.lower().startswith('rhel'):
-            rhncommands = ['sleep %s' % rhnwait] if rhnwait > 0 else []
+            rhncommands = []
             if rhnak is not None and rhnorg is not None:
                 rhncommands.append('subscription-manager register --force --activationkey=%s --org=%s'
                                    % (rhnak, rhnorg))
@@ -612,7 +612,8 @@ class Kconfig(Kbaseconfig):
             zerotiercmds.append("curl -s https://install.zerotier.com | bash")
             for entry in zerotier:
                 zerotiercmds.append("zerotier-cli join %s" % entry)
-        cmds = rhncommands + sharedfoldercmds + zerotiercmds + cmds + scriptcmds
+        networkwaitcommand = ['sleep %s' % networkwait] if networkwait > 0 else []
+        cmds = networkwaitcommand + rhncommands + sharedfoldercmds + zerotiercmds + cmds + scriptcmds
         if notify:
             if notifycmd is None and notifyscript is None:
                 if 'cos' in image:

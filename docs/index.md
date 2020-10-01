@@ -1145,13 +1145,13 @@ parameters:
 |*client*|None|Allows you to create the vm on a specific client. This field is not used for other types like network|
 |*base*|None|Allows you to point to a parent profile so that values are taken from parent when not found in the current profile. Scripts and commands are rather concatenated between default, father and children|
 |*tags*|[]|Array of tags to apply to gcp instances (usefull when matched in a firewall rule). In the case of kubevirt, it s rather a dict of key=value used as node selector (allowing to force vms to be scheduled on a matching node)|
+|*networkwait*|0|Delay in seconds before attempting to run further commands, to be used in environments where networking takes more time to come up|
 |*rhnregister*|None|Auto registers vms whose template starts with rhel Defaults to false. Requires to either rhnuser and rhnpassword, or rhnactivationkey and rhnorg, and an optional rhnpool|
 |*rhnuser*|None|Red Hat Network user|
 |*rhnpassword*|None|Red Hat Network password|
 |*rhnactivationkey*|None|Red Hat Network activation key|
 |*rhnorg*|None|Red Hat Network organization|
 |*rhnpool*|None|Red Hat Network pool|
-|*rhnwait*|0|Delay in seconds before attempting to subscribe machine, to be used in environments where networking takes more time to come up|
 |*enableroot*|true|Allows ssh access as root user|
 |*storemetadata*|false|Creates a /root/.metadata yaml file whith all the overrides applied. On gcp, those overrides are also stored as extra metadata|
 |*sharedfolders*|[]|List of paths to share between a kvm hypervisor and vm. You will also make sure that the path is accessible as qemu user (typically with id 107) and use an hypervisor and a guest with 9p support (centos/rhel lack it)|

@@ -12,7 +12,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             INSECURE, KEYS, CMDS, DNS, DOMAIN, SCRIPTS, FILES, ISO,
                             NETMASKS, GATEWAY, SHAREDKEY, IMAGE, ENABLEROOT,
                             PRIVATEKEY, TAGS, RHNREGISTER, RHNUSER, RHNPASSWORD, RHNAK, RHNORG, RHNPOOL,
-                            RHNWAIT, FLAVOR, KEEP_NETWORKS, DNSCLIENT, STORE_METADATA, NOTIFY, PUSHBULLETTOKEN,
+                            NETWORKWAIT, FLAVOR, KEEP_NETWORKS, DNSCLIENT, STORE_METADATA, NOTIFY, PUSHBULLETTOKEN,
                             NOTIFYSCRIPT, SLACKTOKEN, NOTIFYCMD, NOTIFYMETHODS, SLACKCHANNEL, SHAREDFOLDERS, KERNEL,
                             INITRD, CMDLINE, PLACEMENT, YAMLINVENTORY, CPUHOTPLUG, MEMORYHOTPLUG, CPUFLAGS, CPUPINNING,
                             NUMAMODE, NUMA, PCIDEVICES, VIRTTYPE, MAILSERVER, MAILFROM, MAILTO, TPM, JENKINSMODE, RNG,
@@ -137,13 +137,13 @@ class Kbaseconfig:
         defaults['sharedkey'] = default.get('sharedkey', SHAREDKEY)
         defaults['enableroot'] = default.get('enableroot', ENABLEROOT)
         defaults['privatekey'] = default.get('privatekey', PRIVATEKEY)
+        defaults['networkwait'] = default.get('networkwait', NETWORKWAIT)
         defaults['rhnregister'] = default.get('rhnregister', RHNREGISTER)
         defaults['rhnuser'] = default.get('rhnuser', RHNUSER)
         defaults['rhnpassword'] = default.get('rhnpassword', RHNPASSWORD)
         defaults['rhnactivationkey'] = default.get('rhnactivationkey', RHNAK)
         defaults['rhnorg'] = default.get('rhnorg', RHNORG)
         defaults['rhnpool'] = default.get('rhnpool', RHNPOOL)
-        defaults['rhnwait'] = default.get('rhnwait', RHNWAIT)
         defaults['tags'] = default.get('tags', TAGS)
         defaults['flavor'] = default.get('flavor', FLAVOR)
         defaults['keep_networks'] = default.get('keep_networks', KEEP_NETWORKS)
@@ -284,6 +284,7 @@ class Kbaseconfig:
         self.domain = options.get('domain', self.default['domain'])
         self.scripts = options.get('scripts', self.default['scripts'])
         self.files = options.get('files', self.default['files'])
+        self.networkwait = options.get('networkwait', self.default['networkwait'])
         self.privatekey = options.get('privatekey', self.default['privatekey'])
         self.rhnregister = options.get('rhnregister', self.default['rhnregister'])
         self.rhnuser = options.get('rhnuser', self.default['rhnuser'])
@@ -291,7 +292,6 @@ class Kbaseconfig:
         self.rhnak = options.get('rhnactivationkey', self.default['rhnactivationkey'])
         self.rhnorg = options.get('rhnorg', self.default['rhnorg'])
         self.rhnpool = options.get('rhnpool', self.default['rhnpool'])
-        self.rhnwait = options.get('rhnwait', self.default['rhnwait'])
         self.tags = options.get('tags', self.default['tags'])
         self.flavor = options.get('flavor', self.default['flavor'])
         self.dnsclient = options.get('dnsclient', self.default['dnsclient'])
