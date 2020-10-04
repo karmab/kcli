@@ -1359,6 +1359,9 @@ class Kvirt(object):
         for element in list(root.getiterator('disk')):
             disktype = element.get('device')
             if disktype == 'cdrom':
+                iso_file = element.find('source').get('file')
+                if iso_file is not None and not iso_file.endswith('%s.ISO' % name):
+                    yamlinfo['iso'] = iso_file
                 continue
             device = element.find('target').get('dev')
             diskformat = 'file'

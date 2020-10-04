@@ -406,6 +406,8 @@ def info_vm(args):
             if vm.snapshots:
                 data['snapshots'] = [{'snapshot': snapshot.snapshot, 'current': snapshot.current} for
                                      snapshot in vm.snapshots]
+            if vm.iso:
+                data['iso'] = vm.iso
             if args.debug:
                 data['debug'] = vm.debug
             print(common.print_info(data, output=output, fields=fields, values=values, pretty=True))
