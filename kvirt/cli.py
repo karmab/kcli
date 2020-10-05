@@ -1849,19 +1849,35 @@ def create_asset(args):
     return 0
 
 
-def snapshot_plan(args):
+def create_snapshot_plan(args):
     """Snapshot plan"""
     plan = args.plan
+    snapshot = args.snapshot
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.plan(plan, snapshot=True)
+    config.plan(plan, snapshot=True, snapshotname=snapshot)
     return 0
 
 
-def revert_plan(args):
+def delete_snapshot_plan(args):
+    """Snapshot plan"""
+    plan = args.plan
+    snapshot = args.snapshot
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    k = config.k
+    for vm in sorted(k.list(), key=lambda x: x['name']):
+        name = vm['name']
+        if vm['plan'] == plan:
+            common.pprint("Deleting snapshot %s of vm %s..." % (snapshot, name))
+            k.snapshot(snapshot, name, delete=True)
+    return 0
+
+
+def revert_snapshot_plan(args):
     """Revert snapshot of plan"""
     plan = args.plan
+    snapshot = args.snapshot
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.plan(plan, revert=True)
+    config.plan(plan, revert=True, snapshotname=snapshot)
     return 0
 
 
@@ -2502,10 +2518,6 @@ def cli():
     subparsers.add_parser('scp', parents=[vmscp_parser], description=vmscp_desc, help=vmscp_desc, epilog=vmscp_epilog,
                           formatter_class=rawhelp)
 
-    snapshot_desc = 'Snapshot Vm/Plan'
-    snapshot_parser = subparsers.add_parser('snapshot', description=snapshot_desc, help=snapshot_desc)
-    snapshot_subparsers = snapshot_parser.add_subparsers(metavar='', dest='subcommand_snapshot')
-
     vmssh_desc = 'Ssh Into Vm'
     vmssh_epilog = None
     vmssh_parser = argparse.ArgumentParser(add_help=False)
@@ -3133,6 +3145,13 @@ def cli():
     plandelete_parser.add_argument('plan', metavar='PLAN')
     plandelete_parser.set_defaults(func=delete_plan)
 
+    plansnapshotdelete_desc = 'Deletw Plan Snapshot'
+    plansnapshotdelete_parser = delete_subparsers.add_parser('plan-snapshot', description=plansnapshotdelete_desc,
+                                                             help=plansnapshotdelete_desc)
+    plansnapshotdelete_parser.add_argument('-p', '--plan', help='plan name', required=True, metavar='PLAN')
+    plansnapshotdelete_parser.add_argument('snapshot', metavar='SNAPSHOT')
+    plansnapshotdelete_parser.set_defaults(func=delete_snapshot_plan)
+
     planexpose_desc = 'Expose plan'
     planexpose_epilog = None
     planexpose_parser = argparse.ArgumentParser(add_help=False)
@@ -3168,14 +3187,19 @@ def cli():
     planrestart_parser.set_defaults(func=restart_plan)
 
     planrevert_desc = 'Revert Snapshot Of Plan'
-    planrevert_parser = revert_subparsers.add_parser('plan', description=planrevert_desc, help=planrevert_desc)
-    planrevert_parser.add_argument('plan', metavar='PLAN')
-    planrevert_parser.set_defaults(func=revert_plan)
+    planrevert_parser = revert_subparsers.add_parser('plan-snapshot', description=planrevert_desc, help=planrevert_desc,
+                                                     aliases=['plan'])
+    planrevert_parser.add_argument('-p', '--plan', help='Plan name', required=True, metavar='PLANNAME')
+    planrevert_parser.add_argument('snapshot', metavar='SNAPSHOT')
+    planrevert_parser.set_defaults(func=revert_snapshot_plan)
 
-    plansnapshot_desc = 'Snapshot Plan'
-    plansnapshot_parser = snapshot_subparsers.add_parser('plan', description=plansnapshot_desc, help=plansnapshot_desc)
-    plansnapshot_parser.add_argument('plan', metavar='PLAN')
-    plansnapshot_parser.set_defaults(func=snapshot_plan)
+    plansnapshotcreate_desc = 'Create Plan Snapshot'
+    plansnapshotcreate_parser = create_subparsers.add_parser('plan-snapshot', description=plansnapshotcreate_desc,
+                                                             help=plansnapshotcreate_desc)
+
+    plansnapshotcreate_parser.add_argument('-p', '--plan', help='plan name', required=True, metavar='PLAN')
+    plansnapshotcreate_parser.add_argument('snapshot', metavar='SNAPSHOT')
+    plansnapshotcreate_parser.set_defaults(func=create_snapshot_plan)
 
     planstart_desc = 'Start Plan'
     planstart_parser = start_subparsers.add_parser('plan', description=planstart_desc, help=planstart_desc)
@@ -3495,9 +3519,8 @@ def cli():
 
     vmsnapshotrevert_desc = 'Revert Snapshot Of Vm'
     vmsnapshotrevert_parser = revert_subparsers.add_parser('vm-snapshot', description=vmsnapshotrevert_desc,
-                                                           help=vmsnapshotrevert_desc)
-    vmsnapshotrevert_parser.add_argument('-n', '--name', help='Use vm name for creation/revert/delete',
-                                         required=True, metavar='VMNAME')
+                                                           help=vmsnapshotrevert_desc, aliases=['vm'])
+    vmsnapshotrevert_parser.add_argument('-n', '--name', help='vm name', required=True, metavar='VMNAME')
     vmsnapshotrevert_parser.add_argument('snapshot')
     vmsnapshotrevert_parser.set_defaults(func=snapshotrevert_vm)
 

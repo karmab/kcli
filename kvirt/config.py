@@ -930,8 +930,8 @@ $INFO
 
     def plan(self, plan, ansible=False, url=None, path=None, autostart=False, container=False, noautostart=False,
              inputfile=None, inputstring=None, start=False, stop=False, delete=False, force=True, overrides={},
-             info=False, snapshot=False, revert=False, update=False, embedded=False, restart=False, download=False,
-             wait=False, quiet=False, doc=False, onlyassets=False):
+             info=False, snapshot=False, snapshotname=None, revert=False, update=False, embedded=False, restart=False,
+             download=False, wait=False, quiet=False, doc=False, onlyassets=False):
         """Manage plan file"""
         k = self.k
         no_overrides = not overrides
@@ -1117,13 +1117,16 @@ $INFO
             if revert:
                 common.pprint("Can't revert and snapshot plan at the same time", color='red')
                 os._exit(1)
-            common.pprint("Snapshotting vms from plan %s" % plan)
+            common.pprint("Snapshotting vms from plan %s" % plan, color='blue')
+            if snapshotname is None:
+                common.pprint("Using %s as snapshot name as None was provider" % plan, color='yellow')
+                snapshotname = plan
             for vm in sorted(k.list(), key=lambda x: x['name']):
                 name = vm['name']
                 description = vm['plan']
                 if description == plan:
                     snapshotfound = True
-                    k.snapshot(plan, name)
+                    k.snapshot(snapshotname, name)
                     common.pprint("%s snapshotted!" % name)
             if snapshotfound:
                 common.pprint("Plan %s snapshotted!" % plan)
@@ -1133,17 +1136,20 @@ $INFO
         if revert:
             revertfound = False
             common.pprint("Reverting snapshots of vms from plan %s" % plan)
+            if snapshotname is None:
+                common.pprint("Using %s as snapshot name as None was provider" % plan, color='yellow')
+                snapshotname = plan
             for vm in sorted(k.list(), key=lambda x: x['name']):
                 name = vm['name']
                 description = vm['plan']
                 if description == plan:
                     revertfound = True
-                    k.snapshot(plan, name, revert=True)
+                    k.snapshot(snapshotname, name, revert=True)
                     common.pprint("snapshot of %s reverted!" % name)
             if revertfound:
-                common.pprint("Plan %s snapshot reverted!" % plan)
+                common.pprint("Plan %s reverted with snapshot %s!" % (plan, snapshotname))
             else:
-                common.pprint("No matching vms found", color='blue')
+                common.pprint("No matching vms found", color='yellow')
             return {'result': 'success'}
         if url is not None:
             if url.startswith('/'):
