@@ -49,3 +49,7 @@ bash /root/metal_lb.sh
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/provider/{{ 'cloud' if metallb else 'baremetal' }}/deploy.yaml
 {%- endif %}
 {%- endif %}
+
+{%- if autolabel %}
+kubectl apply -f https://raw.githubusercontent.com/karmab/autolabeller/master/autorules.yml
+{%- endif %}

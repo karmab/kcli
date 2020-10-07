@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    openshift.io/cluster-monitoring: "true"
+  name: autorules
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: autorules
+  namespace: autorules
+data:
+  rules1.properties: |
+    name: .*worker.*
+    labels:
+    - node-role.kubernetes.io/worker
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: autorules-cluster-admin
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: autorules
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: autoruler
+  namespace: autorules
+  labels:
+    app: autoruler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: autoruler
+  template:
+    metadata:
+      labels:
+        app: autoruler
+    spec:
+      containers:
+      - name: autosigner
+        image: karmab/autosigner:latest
+      - name: autolabeller
+        image: karmab/autolabeller:latest
