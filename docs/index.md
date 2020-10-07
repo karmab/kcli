@@ -1015,7 +1015,10 @@ os.environ['HOME'] = '/usr/share/httpd'
 inputfile = '/var/www/myplans/plan1.yml'
 overrides = {'param1': 'jimi_hendrix', 'param2': False}
 config = Kconfig()
-kexposer = Kexposer(config, 'myplan', inputfile, overrides=overrides)
+extraconfigs = {}
+for extraclient in config.extraclients:
+    extraconfigs[extraclient] = Kconfig(client=extraclient)
+kexposer = Kexposer(config, 'myplan', inputfile, overrides=overrides, extraconfigs=extraconfigs)
 application = kexposer.app
 application.secret_key = ‘XXX’
 ```
