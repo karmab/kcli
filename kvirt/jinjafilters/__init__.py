@@ -56,15 +56,12 @@ def githubversion(repo, version=None):
         data = requests.get("https://api.github.com/repos/%s/releases" % repo).json()
         if 'message' in data and data['message'] == 'Not Found':
             return ''
-        tags = sorted([x['tag_name'] for x in data], key=LooseVersion)
-        if len(tags) == 1:
-            version = tags[0]
-        else:
-            tag1 = tags[-2]
-            tag2 = tags[-1]
-            version = tag1 if tag1 in tag2 or 'rc' in tag2 else tag2
-    print('\033[0;36mUsing version %s\033[0;0m' % version)
-    return version
+        tags = sorted([x['tag_name'] for x in data], key=LooseVersion, reverse=True)
+        for tag in tags:
+            if 'rc' not in tag and 'alpha' not in tag and 'beta' not in tag:
+                print('\033[0;36mUsing version %s\033[0;0m' % tag)
+                return tag
+        return tags[0]
 
 
 def defaultnodes(replicas, cluster, domain, masters, workers):
