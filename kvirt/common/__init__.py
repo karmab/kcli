@@ -220,7 +220,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 userdata += "- %s\n" % key
         for path in ["~/.kcli/id_rsa.pub", "~/.kcli/id_dsa.pub", "~/.ssh/id_rsa.pub", "~/.ssh/id_dsa.pub"]:
             expanded_path = os.path.expanduser(path)
-            if os.path.exists(expanded_path):
+            if os.path.exists(expanded_path) and os.path.exists(expanded_path.replace('.pub', '')):
                 publickeyfile = expanded_path
                 with open(publickeyfile, 'r') as ssh:
                     key = ssh.read().rstrip()
@@ -406,9 +406,9 @@ def process_ignition_files(files=[], overrides={}):
             continue
         if not isinstance(content, str):
             content = '\n'.join(content) + '\n'
-        content = quote(content)
+        content = base64.b64encode(content.encode()).decode("UTF-8")
         data.append({'filesystem': 'root', 'path': path, 'mode': permissions, 'overwrite': True,
-                     "contents": {"source": "data:,%s" % content, "verification": {}}})
+                     "contents": {"source": "data:text/plain;charset=utf-8;base64,%s" % content, "verification": {}}})
     return data
 
 
@@ -455,9 +455,9 @@ def process_ignition_cmds(cmds, overrides):
     else:
         if not content.startswith('#!'):
             content = "#!/bin/sh\n%s" % content
-        content = quote(content)
+        content = base64.b64encode(content.encode()).decode("UTF-8")
         data = {'filesystem': 'root', 'path': path, 'mode': int(permissions, 8),
-                "contents": {"source": "data:,%s" % content, "verification": {}}}
+                "contents": {"source": "data:text/plain;charset=utf-8;base64,%s" % content, "verification": {}}}
         return data
 
 
@@ -955,7 +955,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     if not minimal:
         for path in ["~/.kcli/id_rsa.pub", "~/.kcli/id_dsa.pub", "~/.ssh/id_rsa.pub", "~/.ssh/id_dsa.pub"]:
             expanded_path = os.path.expanduser(path)
-            if os.path.exists(expanded_path):
+            if os.path.exists(expanded_path) and os.path.exists(expanded_path.replace('.pub', '')):
                 publickeyfile = expanded_path
                 with open(publickeyfile, 'r') as ssh:
                     publickeys.append(ssh.read().rstrip())
