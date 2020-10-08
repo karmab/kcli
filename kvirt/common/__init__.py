@@ -930,7 +930,7 @@ def get_cloudinitfile(image):
 
 def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[],
              enableroot=True, overrides={}, iso=True, fqdn=False, version='3.0.0', plan=None, compact=False,
-             removetls=False, ipv6=[], image=None):
+             removetls=False, ipv6=[], image=None, minimal=False):
     """
 
     :param name:
@@ -952,32 +952,33 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     indent = 0 if compact else 4
     default_gateway = gateway
     publickeys = []
-    publickeyfile = None
+    storage = {"files": []}
     if domain is not None:
         localhostname = "%s.%s" % (name, domain)
     else:
         localhostname = name
-    if os.path.exists(os.path.expanduser("~/.ssh/id_rsa.pub")):
-        publickeyfile = os.path.expanduser("~/.ssh/id_rsa.pub")
-    elif os.path.exists(os.path.expanduser("~/.ssh/id_dsa.pub")):
-        publickeyfile = os.path.expanduser("~/.ssh/id_dsa.pub")
-    elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa.pub")):
-        publickeyfile = os.path.expanduser("~/.kcli/id_rsa.pub")
-    elif os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub")):
-        publickeyfile = os.path.expanduser("~/.kcli/id_dsa.pub")
-    if publickeyfile is not None:
-        with open(publickeyfile, 'r') as ssh:
-            publickeys.append(ssh.read().rstrip())
-    if keys:
-        for key in list(set(keys)):
-            publickeys.append(key)
-    if not publickeys:
-        pprint("neither id_rsa or id_dsa public keys found in your .ssh or .kcli directory, you might have trouble "
-               "accessing the vm", color='red')
-    storage = {"files": []}
-    hostnameline = quote("%s\n" % localhostname)
-    storage["files"].append({"filesystem": "root", "path": "/etc/hostname", "overwrite": True,
-                             "contents": {"source": "data:,%s" % hostnameline, "verification": {}}, "mode": 420})
+    if not minimal:
+        publickeyfile = None
+        if os.path.exists(os.path.expanduser("~/.ssh/id_rsa.pub")):
+            publickeyfile = os.path.expanduser("~/.ssh/id_rsa.pub")
+        elif os.path.exists(os.path.expanduser("~/.ssh/id_dsa.pub")):
+            publickeyfile = os.path.expanduser("~/.ssh/id_dsa.pub")
+        elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa.pub")):
+            publickeyfile = os.path.expanduser("~/.kcli/id_rsa.pub")
+        elif os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub")):
+            publickeyfile = os.path.expanduser("~/.kcli/id_dsa.pub")
+        if publickeyfile is not None:
+            with open(publickeyfile, 'r') as ssh:
+                publickeys.append(ssh.read().rstrip())
+        if keys:
+            for key in list(set(keys)):
+                publickeys.append(key)
+        if not publickeys:
+            pprint("neither id_rsa or id_dsa public keys found in your .ssh or .kcli directory, you might have trouble "
+                   "accessing the vm", color='red')
+        hostnameline = quote("%s\n" % localhostname)
+        storage["files"].append({"filesystem": "root", "path": "/etc/hostname", "overwrite": True,
+                                 "contents": {"source": "data:,%s" % hostnameline, "verification": {}}, "mode": 420})
     if dns is not None:
         nmline = quote("[main]\ndhcp=dhclient\n")
         storage["files"].append({"filesystem": "root", "path": "/etc/NetworkManager/conf.d/dhcp-client.conf",
@@ -1063,9 +1064,9 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     else:
         systemd = {}
     data = {'ignition': {'version': version, 'config': {}}, 'storage': storage, 'systemd': systemd,
-            'networkd': {}, 'passwd': {'users': [{'name': 'core', 'sshAuthorizedKeys': publickeys}]}}
-    # if enableroot:
-    #    pprint("Ignoring request to add ssh keys for root user as ignition currently complains about it", color='blue')
+            'networkd': {}, 'passwd': {'users': []}}
+    if publickeys:
+        data['passwd']['users'] = [{'name': 'core', 'sshAuthorizedKeys': publickeys}]
     role = None
     if len(name.split('-')) == 3 and name.split('-')[1] in ['master', 'worker']:
         role = name.split('-')[1]
