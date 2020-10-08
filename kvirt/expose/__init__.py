@@ -97,6 +97,8 @@ class Kexposer():
                         value = request.form[p]
                         if value.isdigit():
                             value = int(value)
+                        elif value.lower() in ['true', 'false']:
+                            value = value.lower() == "true"
                         key = p.replace('parameter_', '')
                         parameters[key] = value
                 try:
