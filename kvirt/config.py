@@ -706,26 +706,22 @@ $INFO
         ips = [overrides[key] for key in overrides if key.startswith('ip')]
         netmasks = [overrides[key] for key in overrides if key.startswith('netmask')]
         if privatekey:
-            privatekeyfile = None
-            if 'HOME' not in os.environ:
-                msg = "HOME env variable not set and needed for privatekey"
-                return {'result': 'failure', 'reason': msg}
-            sshdir = "%s/.ssh" % os.environ['HOME']
-            if os.path.exists("%s/id_rsa" % sshdir) and os.path.exists("%s/id_rsa.pub" % sshdir):
-                privatekeyfile = "%s/id_rsa" % sshdir
-                pubkeyfile = "%s/id_rsa.pub" % sshdir
-            elif os.path.exists("%s/id_rsa" % sshdir) and os.path.exists("%s/id_dsa.pub" % sshdir):
-                privatekeyfile = "%s/id_dsa" % sshdir
-                pubkeyfile = "%s/id_dsa.pub" % sshdir
-            if privatekeyfile is not None:
+            privatekeyfile, publickeyfile = None, None
+            for path in ["~/.kcli/id_rsa", "~/.kcli/id_dsa", "~/.ssh/id_rsa", "~/.ssh/id_dsa"]:
+                expanded_path = os.path.expanduser(path)
+                if os.path.exists(expanded_path) and os.path.exists(expanded_path + ".pub"):
+                    privatekeyfile = expanded_path
+                    publickeyfile = expanded_path + ".pub"
+                    break
+            if privatekeyfile is not None and publickeyfile is not None:
                 privatekey = open(privatekeyfile).read().strip()
-                pubkey = open(pubkeyfile).read().strip()
+                publickey = open(publickeyfile).read().strip()
                 if files:
                     files.append({'path': '/root/.ssh/id_rsa', 'content': privatekey})
-                    files.append({'path': '/root/.ssh/id_rsa.pub', 'content': pubkey})
+                    files.append({'path': '/root/.ssh/id_rsa.pub', 'content': publickey})
                 else:
                     files = [{'path': '/root/.ssh/id_rsa', 'content': privatekey}]
-                    files = [{'path': '/root/.ssh/id_rsa.pub', 'content': pubkey}]
+                    files = [{'path': '/root/.ssh/id_rsa.pub', 'content': publickey}]
         if cmds and 'reboot' in cmds:
             while 'reboot' in cmds:
                 cmds.remove('reboot')

@@ -218,19 +218,14 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
         if keys:
             for key in list(set(keys)):
                 userdata += "- %s\n" % key
-        publickeyfile = None
-        if os.path.exists(os.path.expanduser("~/.ssh/id_rsa.pub")):
-            publickeyfile = os.path.expanduser("~/.ssh/id_rsa.pub")
-        elif os.path.exists(os.path.expanduser("~/.ssh/id_dsa.pub")):
-            publickeyfile = os.path.expanduser("~/.ssh/id_dsa.pub")
-        elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa.pub")):
-            publickeyfile = os.path.expanduser("~/.kcli/id_rsa.pub")
-        elif os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub")):
-            publickeyfile = os.path.expanduser("~/.kcli/id_dsa.pub")
-        if publickeyfile is not None:
-            with open(publickeyfile, 'r') as ssh:
-                key = ssh.read().rstrip()
-                userdata += "- %s\n" % key
+        for path in ["~/.kcli/id_rsa.pub", "~/.kcli/id_dsa.pub", "~/.ssh/id_rsa.pub", "~/.ssh/id_dsa.pub"]:
+            expanded_path = os.path.expanduser(path)
+            if os.path.exists(expanded_path):
+                publickeyfile = expanded_path
+                with open(publickeyfile, 'r') as ssh:
+                    key = ssh.read().rstrip()
+                    userdata += "- %s\n" % key
+                break
         if cmds:
             data = process_cmds(cmds, overrides)
             if data != '':
@@ -797,8 +792,8 @@ def ssh(name, ip='', user=None, local=None, remote=None, tunnel=False, tunnelhos
         identityfile = None
         if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
             identityfile = os.path.expanduser("~/.kcli/id_rsa")
-        elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
-            identityfile = os.path.expanduser("~/.kcli/id_rsa")
+        elif os.path.exists(os.path.expanduser("~/.kcli/id_dsa")):
+            identityfile = os.path.expanduser("~/.kcli/id_dsa")
         if identityfile is not None:
             sshcommand = "-i %s %s" % (identityfile, sshcommand)
         if D:
@@ -958,18 +953,13 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     else:
         localhostname = name
     if not minimal:
-        publickeyfile = None
-        if os.path.exists(os.path.expanduser("~/.ssh/id_rsa.pub")):
-            publickeyfile = os.path.expanduser("~/.ssh/id_rsa.pub")
-        elif os.path.exists(os.path.expanduser("~/.ssh/id_dsa.pub")):
-            publickeyfile = os.path.expanduser("~/.ssh/id_dsa.pub")
-        elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa.pub")):
-            publickeyfile = os.path.expanduser("~/.kcli/id_rsa.pub")
-        elif os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub")):
-            publickeyfile = os.path.expanduser("~/.kcli/id_dsa.pub")
-        if publickeyfile is not None:
-            with open(publickeyfile, 'r') as ssh:
-                publickeys.append(ssh.read().rstrip())
+        for path in ["~/.kcli/id_rsa.pub", "~/.kcli/id_dsa.pub", "~/.ssh/id_rsa.pub", "~/.ssh/id_dsa.pub"]:
+            expanded_path = os.path.expanduser(path)
+            if os.path.exists(expanded_path):
+                publickeyfile = expanded_path
+                with open(publickeyfile, 'r') as ssh:
+                    publickeys.append(ssh.read().rstrip())
+                break
         if keys:
             for key in list(set(keys)):
                 publickeys.append(key)
