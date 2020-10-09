@@ -8,6 +8,7 @@ info: |
     Upstream okd version can be specified with the upstream flag.
     the baremetal flag allows to get the baremetal operator deployed, so that you can deploy physical workers afterwards.
     Sdn defaults to OpenShiftSDN but OVNKubernetes or Calico can be specified instead.
+    To avoid keepalived collision, you can force virtual_router_id. Otherwise, the id is calculated from cluster variable
     You can deploy extra apps with the apps array and for each of the supported app, indicate with the variable
     ${app}_version with version to target (instead of latest)
 version: nightly
@@ -81,3 +82,4 @@ provisioning_nic: ens4
 cloud_tag:
 cloud_scale: false
 cloud_api_internal: false
+virtual_router_id:

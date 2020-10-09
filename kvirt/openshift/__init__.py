@@ -10,7 +10,6 @@ from kvirt.common import info, pprint, gen_mac, get_oc, get_values, pwd_path, in
 from kvirt.common import get_commit_rhcos, get_latest_fcos, kube_create_app, patch_ceo
 from kvirt.common import ssh, scp, _ssh_credentials
 from kvirt.openshift.calico import calicoassets
-from random import randint
 import re
 from shutil import copy2, rmtree
 from subprocess import call
@@ -22,6 +21,13 @@ import yaml
 virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere', 'packet']
 cloudplatforms = ['aws', 'gcp']
 DEFAULT_TAG = '4.5'
+
+
+def word2number(cluster):
+    result = 0
+    for c in cluster:
+        result += ord(c) - 96
+    return result if result < 255 else 200
 
 
 def get_installer_version():
@@ -186,6 +192,8 @@ def scale(config, plandir, cluster, overrides):
             data.update(installparam)
             plan = installparam.get('plan', plan)
     data.update(overrides)
+    if platform in virtplatforms and 'virtual_router_id' not in data:
+        data['virtual_router_id'] = word2number(cluster)
     if platform == 'packet':
         network = data.get('network')
         if network is None:
@@ -476,7 +484,7 @@ def create(config, plandir, cluster, overrides):
             os._exit(1)
     if platform in virtplatforms:
         if 'virtual_router_id' not in data:
-            data['virtual_router_id'] = randint(1, 255)
+            data['virtual_router_id'] = word2number(cluster)
         host_ip = ingress_ip if platform != "openstack" else public_api_ip
         pprint("Using %s for api vip...." % api_ip, color='blue')
         ignore_hosts = data.get('ignore_hosts', False)
