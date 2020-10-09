@@ -201,9 +201,9 @@ def scale(config, plandir, cluster, overrides):
     for role in ['masters', 'workers']:
         if platform in virtplatforms:
             os.chdir(os.path.expanduser("~/.kcli"))
-            result = config.plan(plan, inputfile='%s/%s.yml' % (role, plandir), overrides=data)
+            result = config.plan(plan, inputfile='%s/%s.yml' % (plandir, role), overrides=data)
         elif platform in cloudplatforms:
-            result = config.plan(plan, inputfile='%s/cloud_%s.yml' % (role, plandir), overrides=data)
+            result = config.plan(plan, inputfile='%s/cloud_%s.yml' % (plandir, role), overrides=data)
         if result['result'] != 'success':
             os._exit(1)
         elif platform == 'packet' and 'newvms' in result and result['newvms']:
@@ -671,9 +671,9 @@ def create(config, plandir, cluster, overrides):
     if platform in virtplatforms:
         for role in ['worker', 'master']:
             if bootstrap_helper_ip is not None:
-                ignitionrolefile = "%s/%s" % (role, clusterdir)
+                ignitionrolefile = "%s/%s" % (clusterdir, role)
             else:
-                ignitionrolefile = "%s/%s.ign" % (role, clusterdir)
+                ignitionrolefile = "%s/%s.ign" % (clusterdir, role)
                 os.remove(ignitionrolefile)
             while not os.path.exists(ignitionrolefile) or os.stat(ignitionrolefile).st_size == 0:
                 try:
