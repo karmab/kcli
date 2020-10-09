@@ -199,11 +199,14 @@ def scale(config, plandir, cluster, overrides):
         pprint("Using image %s" % image, color='blue')
     data['image'] = image
     for role in ['masters', 'workers']:
+        overrides = data.copy()
+        if overrides.get(role, 0) == 0:
+            continue
         if platform in virtplatforms:
             os.chdir(os.path.expanduser("~/.kcli"))
-            result = config.plan(plan, inputfile='%s/%s.yml' % (plandir, role), overrides=data)
+            result = config.plan(plan, inputfile='%s/%s.yml' % (plandir, role), overrides=overrides)
         elif platform in cloudplatforms:
-            result = config.plan(plan, inputfile='%s/cloud_%s.yml' % (plandir, role), overrides=data)
+            result = config.plan(plan, inputfile='%s/cloud_%s.yml' % (plandir, role), overrides=overrides)
         if result['result'] != 'success':
             os._exit(1)
         elif platform == 'packet' and 'newvms' in result and result['newvms']:
