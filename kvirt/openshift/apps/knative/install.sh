@@ -1,5 +1,5 @@
 oc create -f install.yml
-sleep 20
+{{ 'knativeeventing'| waitcrd }}
 oc create namespace knative-serving
 oc create -f serving.yml
 oc create namespace knative-eventing

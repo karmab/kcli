@@ -18,6 +18,7 @@ oc label node {{ node }} cluster.ocs.openshift.io/openshift-storage=''
 oc label node {{ node }} topology.rook.io/rack=rack{{ loop.index }}
 {%- endfor %}
 oc wait --for=condition=Ready pod -l name=ocs-operator -n openshift-storage
+{{ 'storagecluster'| waitcrd }}
 oc create -f cr.yml
 echo Run the following command to make ocs your default storage class
 # oc patch storageclass ocs-storagecluster-ceph-rbd -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'

@@ -75,6 +75,22 @@ def defaultnodes(replicas, cluster, domain, masters, workers):
     return nodes
 
 
+def waitcrd(crd, timeout=60):
+    result = """timeout=0
+ready=false
+while [ "$timeout" -lt "%s" ] ; do
+  oc get crd | grep %s 2>/dev/null && ready=true && break;
+  echo "Waiting for CRD %s to be created"
+  sleep 5
+  timeout=$(($timeout + 5))
+done
+if [ "$ready" == "false" ] ; then
+ echo timeout waiting for CRD %s
+ exit 1
+fi """ % (timeout, crd, crd, crd)
+    return result
+
+
 jinjafilters = {'basename': basename, 'dirname': dirname, 'ocpnodes': ocpnodes, 'none': none, 'type': _type,
                 'certificate': certificate, 'base64': base64, 'githubversion': githubversion,
-                'defaultnodes': defaultnodes}
+                'defaultnodes': defaultnodes, 'waitcrd': waitcrd}
