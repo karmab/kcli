@@ -26,7 +26,8 @@ DEFAULT_TAG = '4.5'
 def word2number(cluster):
     result = 0
     for c in cluster:
-        result += ord(c) - 96
+        entry = ord(c) - 96 if not c.isdigit() else int(c)
+        result += entry
     return result if result < 255 else 200
 
 
@@ -192,7 +193,7 @@ def scale(config, plandir, cluster, overrides):
             data.update(installparam)
             plan = installparam.get('plan', plan)
     data.update(overrides)
-    if platform in virtplatforms and 'virtual_router_id' not in data:
+    if platform in virtplatforms and data.get('virtual_router_id') is None:
         data['virtual_router_id'] = word2number(cluster)
     if platform == 'packet':
         network = data.get('network')
@@ -483,8 +484,8 @@ def create(config, plandir, cluster, overrides):
         if result['result'] != 'success':
             os._exit(1)
     if platform in virtplatforms:
-        if 'virtual_router_id' not in data:
-            data['virtual_router_id'] = word2number(cluster)
+        if data.get('virtual_router_id') is None:
+            overrides['virtual_router_id'] = word2number(cluster)
         host_ip = ingress_ip if platform != "openstack" else public_api_ip
         pprint("Using %s for api vip...." % api_ip, color='blue')
         ignore_hosts = data.get('ignore_hosts', False)
