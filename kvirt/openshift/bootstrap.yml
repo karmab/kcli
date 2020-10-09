@@ -1,0 +1,52 @@
+{%- if flavor_bootstrap != None %}
+{% set flavor = flavor_bootstrap %}
+{%- endif %}
+{{ cluster }}-bootstrap:
+ image: {{ image }}
+ pool: {{ pool }}
+ enableroot: false 
+ keys: {{ keys }}
+ numcpus: {{ bootstrap_numcpus | default(numcpus, numcpus) }}
+ flavor: {{ flavor }}
+ memory: {{ bootstrap_memory | default(memory, memory) }}
+ nets:
+  - name: {{ network }}
+{%- if bootstrap_mac != None %}
+    mac: {{ bootstrap_mac }}
+{%- endif %}
+{%- if config_type == 'packet' %}
+  - name: {{ network }}
+    ip: 192.168.122.99
+    mask: 255.255.255.0
+    gateway: 192.168.122.1
+    dns: 8.8.8.8
+{%- endif %}
+ disks:
+  - size: {{ disk_size }}
+ files:
+  - path: /etc/NetworkManager/dispatcher.d/99-forcedns
+    origin: 99-forcedns
+    mode: 755
+  - path: /etc/kubernetes/manifests/coredns.yml
+    origin: staticpods/coredns.yml
+  - path: /etc/kubernetes/Corefile
+    origin: Corefile
+  - path: /etc/kubernetes/manifests/mdns.yml
+    origin: staticpods/mdns.yml
+  - path: /etc/kubernetes/config.hcl.templ
+    origin: config.hcl.templ
+  - path: /etc/kubernetes/apps.db
+    origin: apps.db
+  - path: /etc/kubernetes/manifests/keepalived.yml
+    origin: staticpods/keepalived.yml
+  - path: /etc/kubernetes/keepalived.conf
+    origin: keepalived.conf
+  - path: /etc/kubernetes/manifests/nginx.yml
+    origin: staticpods/nginx.yml
+  - path: /etc/kubernetes/nginx.conf
+    origin: nginx.conf
+{%- if config_type == 'packet' %}
+  - path: /etc/kubernetes/packet-hack.sh
+    origin: packet-hack.sh
+    mode: 700
+{%- endif %}

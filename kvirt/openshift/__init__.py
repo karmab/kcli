@@ -198,16 +198,17 @@ def scale(config, plandir, cluster, overrides):
     else:
         pprint("Using image %s" % image, color='blue')
     data['image'] = image
-    if platform in virtplatforms:
-        os.chdir(os.path.expanduser("~/.kcli"))
-        result = config.plan(plan, inputfile='%s/workers.yml' % plandir, overrides=data)
-    elif platform in cloudplatforms:
-        result = config.plan(plan, inputfile='%s/cloud_workers.yml' % plandir, overrides=data)
-    if result['result'] != 'success':
-        os._exit(1)
-    elif platform == 'packet' and 'newvms' in result and result['newvms']:
-        for node in result['newvms']:
-            k.add_nic(node, network)
+    for role in ['masters', 'workers']:
+        if platform in virtplatforms:
+            os.chdir(os.path.expanduser("~/.kcli"))
+            result = config.plan(plan, inputfile='%s/%s.yml' % (role, plandir), overrides=data)
+        elif platform in cloudplatforms:
+            result = config.plan(plan, inputfile='%s/cloud_%s.yml' % (role, plandir), overrides=data)
+        if result['result'] != 'success':
+            os._exit(1)
+        elif platform == 'packet' and 'newvms' in result and result['newvms']:
+            for node in result['newvms']:
+                k.add_nic(node, network)
 
 
 def create(config, plandir, cluster, overrides):
@@ -630,6 +631,10 @@ def create(config, plandir, cluster, overrides):
                 overrides['ca'] += disconnected_ca
             else:
                 overrides['ca'] = disconnected_ca
+        pprint("Deploying bootstrap", color='blue')
+        result = config.plan(plan, inputfile='%s/bootstrap.yml' % plandir, overrides=overrides)
+        if result['result'] != 'success':
+            os._exit(1)
         pprint("Deploying masters", color='blue')
         result = config.plan(plan, inputfile='%s/masters.yml' % plandir, overrides=overrides)
         if result['result'] != 'success':
@@ -653,37 +658,43 @@ def create(config, plandir, cluster, overrides):
         if platform in ['kubevirt', 'openstack', 'vsphere', 'packet']:
             todelete.append("%s-bootstrap-helper" % cluster)
     else:
+        pprint("Deploying bootstrap", color='blue')
+        result = config.plan(plan, inputfile='%s/cloud_bootstrap.yml' % plandir, overrides=overrides)
+        if result['result'] != 'success':
+            os._exit(1)
+        pprint("Deploying masters", color='blue')
         result = config.plan(plan, inputfile='%s/cloud_masters.yml' % plandir, overrides=overrides)
         if result['result'] != 'success':
             os._exit(1)
         call('openshift-install --dir=%s wait-for bootstrap-complete || exit 1' % clusterdir, shell=True)
         todelete = ["%s-bootstrap" % cluster, "%s-bootstrap-helper" % cluster]
     if platform in virtplatforms:
-        if bootstrap_helper_ip is not None:
-            ignitionworkerfile = "%s/worker" % clusterdir
-        else:
-            ignitionworkerfile = "%s/worker.ign" % clusterdir
-            os.remove(ignitionworkerfile)
-        while not os.path.exists(ignitionworkerfile) or os.stat(ignitionworkerfile).st_size == 0:
-            try:
-                with open(ignitionworkerfile, 'w') as w:
-                    workerdata = insecure_fetch("https://api.%s.%s:22623/config/worker" % (cluster, domain),
-                                                headers=[curl_header])
-                    w.write(workerdata)
-            except:
-                pprint("Waiting 5s before retrieving workers ignition data", color='blue')
-                sleep(5)
-        if bootstrap_helper_ip is not None:
-            source, destination = "%s/worker" % clusterdir, "/var/www/html/worker"
-            scpcmd = scp(bootstrap_helper_name, ip=bootstrap_helper_ip, user='root', source=source,
-                         destination=destination, tunnel=config.tunnel, tunnelhost=config.tunnelhost,
-                         tunnelport=config.tunnelport, tunneluser=config.tunneluser, download=False, insecure=True)
-            os.system(scpcmd)
-            cmd = "chown apache.apache /var/www/html/worker"
-            sshcmd = ssh(bootstrap_helper_name, ip=bootstrap_helper_ip, user='root', tunnel=config.tunnel,
-                         tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
-                         tunneluser=config.tunneluser, insecure=True, cmd=cmd)
-            os.system(sshcmd)
+        for role in ['worker', 'master']:
+            if bootstrap_helper_ip is not None:
+                ignitionrolefile = "%s/%s" % (role, clusterdir)
+            else:
+                ignitionrolefile = "%s/%s.ign" % (role, clusterdir)
+                os.remove(ignitionrolefile)
+            while not os.path.exists(ignitionrolefile) or os.stat(ignitionrolefile).st_size == 0:
+                try:
+                    with open(ignitionrolefile, 'w') as w:
+                        roledata = insecure_fetch("https://api.%s.%s:22623/config/%s" % (cluster, domain, role),
+                                                  headers=[curl_header])
+                        w.write(roledata)
+                except:
+                    pprint("Waiting 5s before retrieving %s ignition data" % role, color='blue')
+                    sleep(5)
+            if bootstrap_helper_ip is not None:
+                source, destination = "%s/%s" % (clusterdir, role), "/var/www/html/%s" % role
+                scpcmd = scp(bootstrap_helper_name, ip=bootstrap_helper_ip, user='root', source=source,
+                             destination=destination, tunnel=config.tunnel, tunnelhost=config.tunnelhost,
+                             tunnelport=config.tunnelport, tunneluser=config.tunneluser, download=False, insecure=True)
+                os.system(scpcmd)
+                cmd = "chown apache.apache /var/www/html/%s" % role
+                sshcmd = ssh(bootstrap_helper_name, ip=bootstrap_helper_ip, user='root', tunnel=config.tunnel,
+                             tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
+                             tunneluser=config.tunneluser, insecure=True, cmd=cmd)
+                os.system(sshcmd)
         if workers > 0:
             pprint("Deploying workers", color='blue')
             if 'name' in overrides:
