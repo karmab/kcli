@@ -79,7 +79,7 @@ def waitcrd(crd, timeout=60):
     result = """timeout=0
 ready=false
 while [ "$timeout" -lt "%s" ] ; do
-  oc get crd | grep %s 2>/dev/null && ready=true && break;
+  oc get crd | grep -q %s && ready=true && break;
   echo "Waiting for CRD %s to be created"
   sleep 5
   timeout=$(($timeout + 5))
