@@ -819,7 +819,7 @@ def ssh(name, ip='', user=None, local=None, remote=None, tunnel=False, tunnelhos
         if vmport is not None:
             sshcommand = "-p %s %s" % (vmport, sshcommand)
         if insecure:
-            sshcommand = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no %s"\
+            sshcommand = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o LogLevel=ERROR %s"\
                 % sshcommand
         else:
             sshcommand = "ssh %s" % sshcommand

@@ -36,11 +36,13 @@ def scale(config, plandir, cluster, overrides):
     else:
         pprint("Using image %s" % image, color='blue')
     data['image'] = image
-    data['ubuntu'] = True if image in UBUNTUS or 'ubuntu' in image.lower() else False
-    if data['xip'] and data.get('masters', 1) > 1:
-        pprint("Note that your workers won't have a xip.io domain", color='yellow')
+    data['ubuntu'] = True if 'ubuntu' in image.lower() or [entry for entry in UBUNTUS if entry in image] else False
     os.chdir(os.path.expanduser("~/.kcli"))
-    config.plan(plan, inputfile='%s/workers.yml' % plandir, overrides=data)
+    for role in ['masters', 'workers']:
+        overrides = data.copy()
+        if overrides.get(role, 0) == 0:
+            continue
+        config.plan(plan, inputfile='%s/%s.yml' % (plandir, role), overrides=overrides)
 
 
 def create(config, plandir, cluster, overrides):
@@ -64,23 +66,22 @@ def create(config, plandir, cluster, overrides):
     network = data.get('network', 'default')
     xip = data['xip']
     api_ip = data.get('api_ip')
-    if masters > 1:
-        if platform in cloudplatforms:
-            domain = data.get('domain', 'karmalabs.com')
-            api_ip = "%s-master.%s" % (cluster, domain)
-        elif api_ip is None:
-            if network == 'default' and platform == 'kvm':
-                pprint("Using 192.168.122.253 as api_ip", color='yellow')
-                data['api_ip'] = "192.168.122.253"
-                api_ip = "192.168.122.253"
-            else:
-                pprint("You need to define api_ip in your parameters file", color='red')
-                os._exit(1)
-        if xip and platform not in cloudplatforms:
-            data['domain'] = "%s.xip.io" % api_ip
-        if data.get('virtual_router_id') is None:
-            data['virtual_router_id'] = word2number(cluster)
-        pprint("Using keepalived virtual_router_id %s" % data['virtual_router_id'], color='blue')
+    if platform in cloudplatforms:
+        domain = data.get('domain', 'karmalabs.com')
+        api_ip = "%s-master.%s" % (cluster, domain)
+    elif api_ip is None:
+        if network == 'default' and platform == 'kvm':
+            pprint("Using 192.168.122.253 as api_ip", color='yellow')
+            data['api_ip'] = "192.168.122.253"
+            api_ip = "192.168.122.253"
+        else:
+            pprint("You need to define api_ip in your parameters file", color='red')
+            os._exit(1)
+    if xip and platform not in cloudplatforms:
+        data['domain'] = "%s.xip.io" % api_ip
+    if data.get('virtual_router_id') is None:
+        data['virtual_router_id'] = word2number(data['cluster'])
+    pprint("Using keepalived virtual_router_id %s" % data['virtual_router_id'], color='blue')
     version = data.get('version')
     if version is not None and not version.startswith('1.'):
         pprint("Invalid version %s" % version, color='red')
@@ -88,7 +89,7 @@ def create(config, plandir, cluster, overrides):
     data['basedir'] = '/workdir' if os.path.exists("/i_am_a_container") else '.'
     cluster = data.get('cluster')
     image = data.get('image', 'centos7')
-    data['ubuntu'] = True if image in UBUNTUS or 'ubuntu' in image.lower() else False
+    data['ubuntu'] = True if 'ubuntu' in image.lower() or [entry for entry in UBUNTUS if entry in image] else False
     clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
     firstmaster = "%s-master-0" % cluster
     if os.path.exists(clusterdir):

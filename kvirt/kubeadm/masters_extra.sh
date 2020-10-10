@@ -1,10 +1,13 @@
 ready=false
 while [ "$ready" != "true" ] ; do
-scp -o StrictHostKeyChecking=no root@{{ api_ip }}:/root/mastercmd.sh /root 2>/dev/null && ready=true
-sleep 5
+curl -Lk http://{{ api_ip }}/mastercmd.sh > /var/www/html/mastercmd.sh 
+grep -q kubeadm /var/www/html/mastercmd.sh
+if [ "$?" == "0" ] ; then ready=true ; fi
+sleep 10
 done
-scp -o StrictHostKeyChecking=no root@{{ api_ip }}:/etc/kubernetes/admin.conf /etc/kubernetes
-bash /root/mastercmd.sh >> /root/$(hostname).log 2>&1
+curl -Lk http://{{ api_ip }}/admin.conf > /var/www/html/admin.conf
+cp /var/www/html/admin.conf /etc/kubernetes/admin.conf 
+bash /var/www/html/mastercmd.sh | tee /root/$(hostname).log 2>&1
 mkdir -p /root/.kube
 cp -i /etc/kubernetes/admin.conf /root/.kube/config
 chown root:root /root/.kube/config
