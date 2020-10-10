@@ -13,6 +13,7 @@ cloudplatforms = ['aws', 'gcp']
 
 def scale(config, plandir, cluster, overrides):
     plan = cluster
+    platform = config.type
     data = {'cluster': cluster, 'xip': False, 'kube': cluster, 'kubetype': 'generic'}
     data['basedir'] = '/workdir' if os.path.exists("/i_am_a_container") else '.'
     cluster = data.get('cluster')
@@ -26,6 +27,19 @@ def scale(config, plandir, cluster, overrides):
             data.update(installparam)
             plan = installparam.get('plan', plan)
     data.update(overrides)
+    api_ip = data.get('api_ip')
+    if platform not in cloudplatforms:
+        if api_ip is None:
+            network = data.get('network', 'default')
+            if network == 'default' and platform == 'kvm':
+                pprint("Using 192.168.122.253 as api_ip", color='yellow')
+                data['api_ip'] = "192.168.122.253"
+            else:
+                pprint("You need to define api_ip in your parameters file", color='red')
+                os._exit(1)
+        if data.get('virtual_router_id') is None:
+            data['virtual_router_id'] = word2number(cluster)
+        pprint("Using keepalived virtual_router_id %s" % data['virtual_router_id'], color='blue')
     client = config.client
     k = config.k
     pprint("Scaling on client %s" % client, color='blue')
