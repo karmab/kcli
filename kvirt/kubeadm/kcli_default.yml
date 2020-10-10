@@ -56,3 +56,4 @@ extra_master_networks: []
 extra_worker_networks: []
 xip: false
 autolabel: true
+virtual_router_id:

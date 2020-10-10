@@ -8,7 +8,7 @@ import os
 import sys
 from kvirt.common import info, pprint, gen_mac, get_oc, get_values, pwd_path, insecure_fetch, fetch
 from kvirt.common import get_commit_rhcos, get_latest_fcos, kube_create_app, patch_ceo
-from kvirt.common import ssh, scp, _ssh_credentials
+from kvirt.common import ssh, scp, _ssh_credentials, word2number
 from kvirt.openshift.calico import calicoassets
 import re
 from shutil import copy2, rmtree
@@ -21,14 +21,6 @@ import yaml
 virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere', 'packet']
 cloudplatforms = ['aws', 'gcp']
 DEFAULT_TAG = '4.5'
-
-
-def word2number(cluster):
-    result = 0
-    for c in cluster:
-        entry = ord(c) - 96 if not c.isdigit() else int(c)
-        result += entry
-    return result if result < 255 else 200
 
 
 def get_installer_version():
@@ -193,8 +185,19 @@ def scale(config, plandir, cluster, overrides):
             data.update(installparam)
             plan = installparam.get('plan', plan)
     data.update(overrides)
-    if platform in virtplatforms and data.get('virtual_router_id') is None:
-        data['virtual_router_id'] = word2number(cluster)
+    api_ip = data.get('api_ip')
+    if platform in virtplatforms:
+        if api_ip is None:
+            network = data.get('network')
+            if network == 'default' and platform == 'kvm':
+                pprint("Using 192.168.122.253 as api_ip", color='yellow')
+                data['api_ip'] = "192.168.122.253"
+            else:
+                pprint("You need to define api_ip in your parameters file", color='red')
+                os._exit(1)
+        if data.get('virtual_router_id') is None:
+            data['virtual_router_id'] = word2number(cluster)
+        pprint("Using keepalived virtual_router_id %s" % data['virtual_router_id'], color='blue')
     if platform == 'packet':
         network = data.get('network')
         if network is None:
@@ -486,6 +489,7 @@ def create(config, plandir, cluster, overrides):
     if platform in virtplatforms:
         if data.get('virtual_router_id') is None:
             overrides['virtual_router_id'] = word2number(cluster)
+        pprint("Using keepalived virtual_router_id %s" % overrides['virtual_router_id'], color='blue')
         host_ip = ingress_ip if platform != "openstack" else public_api_ip
         pprint("Using %s for api vip...." % api_ip, color='blue')
         ignore_hosts = data.get('ignore_hosts', False)

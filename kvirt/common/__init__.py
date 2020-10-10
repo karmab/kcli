@@ -1576,3 +1576,11 @@ def patch_ceo(path):
     with open(path, 'w') as ignition:
         ignition.write(result)
     return data
+
+
+def word2number(cluster):
+    result = 0
+    for c in cluster:
+        entry = ord(c) - 96 if not c.isdigit() else int(c)
+        result += entry
+    return result if result < 255 else 200
