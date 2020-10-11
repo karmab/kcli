@@ -33,7 +33,7 @@ CERTKEY=$(grep certificate-key $LOGFILE | head -1 | sed 's/.*certificate-key \(.
 MASTERCMD="$CMD --control-plane --certificate-key $CERTKEY"
 cp /root/admin.conf /var/www/html
 echo $MASTERCMD > /var/www/html/mastercmd.sh
-chown apache.apache /var/www/html/*
+chmod o+r /var/www/html/*
 
 echo ${CMD} > /root/join.sh
 
