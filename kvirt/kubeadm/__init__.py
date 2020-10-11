@@ -97,7 +97,7 @@ def create(config, plandir, cluster, overrides):
         data['virtual_router_id'] = word2number(data['cluster'])
     pprint("Using keepalived virtual_router_id %s" % data['virtual_router_id'], color='blue')
     version = data.get('version')
-    if version is not None and not version.startswith('1.'):
+    if version is not None and not str(version).startswith('1.'):
         pprint("Invalid version %s" % version, color='red')
         os._exit(1)
     data['basedir'] = '/workdir' if os.path.exists("/i_am_a_container") else '.'
