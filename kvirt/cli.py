@@ -4,7 +4,7 @@
 
 from distutils.spawn import find_executable
 from kvirt.config import Kconfig
-from kvirt.examples import assetcreate, hostcreate, _list, plancreate, planinfo, productinfo, repocreate, start
+from kvirt.examples import userdatacreate, hostcreate, _list, plancreate, planinfo, productinfo, repocreate, start
 from kvirt.examples import kubegenericcreate, kubek3screate, kubeopenshiftcreate
 from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsole, vmexport, niccreate, nicdelete
 from kvirt.baseconfig import Kbaseconfig
@@ -1816,7 +1816,7 @@ def render_file(args):
     return 0
 
 
-def create_asset(args):
+def create_userdata(args):
     """Create cloudinit/ignition data"""
     plan = None
     inputfile = args.inputfile
@@ -2482,17 +2482,18 @@ def cli():
     render_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
     render_parser.set_defaults(func=render_file)
 
-    assetcreate_desc = 'Create Cloudinit/Ignition Assets for a single vm or from plan file'
-    assetcreate_epilog = "examples:\n%s" % assetcreate
-    assetcreate_parser = create_subparsers.add_parser('asset', description=assetcreate_desc, help=assetcreate_desc,
-                                                      epilog=assetcreate_epilog, formatter_class=rawhelp)
-    assetcreate_parser.add_argument('-i', '--image', help='Image to use', metavar='IMAGE')
-    assetcreate_parser.add_argument('-f', '--inputfile', help='Input Plan file')
-    assetcreate_parser.add_argument('-P', '--param', action='append',
-                                    help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    assetcreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
-    assetcreate_parser.add_argument('name', metavar='VMNAME', nargs='?', type=valid_fqdn)
-    assetcreate_parser.set_defaults(func=create_asset)
+    userdatacreate_desc = 'Create Cloudinit/Ignition for a single vm or from plan file'
+    userdatacreate_epilog = "examples:\n%s" % userdatacreate
+    userdatacreate_parser = create_subparsers.add_parser('userdata', description=userdatacreate_desc,
+                                                         help=userdatacreate_desc, epilog=userdatacreate_epilog,
+                                                         formatter_class=rawhelp)
+    userdatacreate_parser.add_argument('-i', '--image', help='Image to use', metavar='IMAGE')
+    userdatacreate_parser.add_argument('-f', '--inputfile', help='Input Plan file')
+    userdatacreate_parser.add_argument('-P', '--param', action='append',
+                                       help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    userdatacreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    userdatacreate_parser.add_argument('name', metavar='VMNAME', nargs='?', type=valid_fqdn)
+    userdatacreate_parser.set_defaults(func=create_userdata)
 
     restart_desc = 'Restart Vm/Plan/Container'
     restart_parser = subparsers.add_parser('restart', description=restart_desc, help=restart_desc)
