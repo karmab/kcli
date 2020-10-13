@@ -990,7 +990,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
                 if image is not None and ('fcos' in image or 'fedora-coreos' in image):
                     nicname = "eth%d" % index
                 else:
-                    nicname = "ens%d" % index + 3
+                    nicname = "ens%d" % (index + 3)
                 ip = None
                 netmask = None
                 noconf = None

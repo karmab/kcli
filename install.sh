@@ -18,8 +18,8 @@ elif [ $(which apt-get) != "" ] ; then
 fi
 
 if [ "$packagefound" == "true" ] ; then
-  echo -e "${GREEN} kcli installed${NC}"
-  echo -e "${BLUE} Consider installing completion by following https://kcli.readthedocs.io/#auto-completion${NC}"
+  echo -e "${GREEN}kcli installed${NC}"
+  echo -e "${BLUE}Consider installing completion by following https://kcli.readthedocs.io/#auto-completion${NC}"
   exit 0
 fi
 
