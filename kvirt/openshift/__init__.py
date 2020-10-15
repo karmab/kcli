@@ -239,7 +239,7 @@ def create(config, plandir, cluster, overrides):
             'workers': 0,
             'tag': DEFAULT_TAG,
             'ipv6': False,
-            'pub_key': '%s/.ssh/id_rsa.pub' % os.environ['HOME'],
+            'pub_key': os.path.expanduser('~/.ssh/id_rsa.pub'),
             'pull_secret': 'openshift_pull.json',
             'version': 'nightly',
             'macosx': False,
@@ -331,8 +331,8 @@ def create(config, plandir, cluster, overrides):
         pprint("Missing pull secret file %s" % pull_secret, color='red')
         sys.exit(1)
     if not os.path.exists(pub_key):
-        if os.path.exists('/%s/.kcli/id_rsa.pub' % os.environ['HOME']):
-            pub_key = '%s/.kcli/id_rsa.pub' % os.environ['HOME']
+        if os.path.exists(os.path.expanduser('~/.kcli/id_rsa.pub')):
+            pub_key = os.path.expanduser('~/.kcli/id_rsa.pub')
         else:
             pprint("Missing public key file %s" % pub_key, color='red')
             sys.exit(1)
@@ -415,7 +415,8 @@ def create(config, plandir, cluster, overrides):
         with open("%s/kcli_parameters.yml" % clusterdir, 'w') as p:
             installparam['plan'] = plan
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
-    data['pub_key'] = open(pub_key).read().strip()
+    # data['pub_key'] = open(pub_key).read().strip()
+    data['pub_key'] = open(pub_key).read()
     if disconnected_url is not None and disconnected_user is not None and disconnected_password is not None:
         key = "%s:%s" % (disconnected_user, disconnected_password)
         key = str(b64encode(key.encode('utf-8')), 'utf-8')

@@ -958,7 +958,8 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
             if os.path.exists(expanded_path) and os.path.exists(expanded_path.replace('.pub', '')):
                 publickeyfile = expanded_path
                 with open(publickeyfile, 'r') as ssh:
-                    publickeys.append(ssh.read().rstrip())
+                    # publickeys.append(ssh.read().strip())
+                    publickeys.append(ssh.read())
                 break
         if keys:
             for key in list(set(keys)):
