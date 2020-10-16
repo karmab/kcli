@@ -179,3 +179,4 @@ oEO8BRcXIiXiQqW9KnF99fXOiQ/cKYh3kWBBPnuEOhC77Ke5aMlqMNOPULf3PMix
 VIRTTYPE = None
 ZEROTIER = []
 METADATA_FIELDS = ['plan', 'image', 'profile', 'owner', 'dnsclient', 'domain', 'kube', 'kubetype', 'loadbalancer']
+CLIENTRULES = []

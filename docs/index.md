@@ -1108,6 +1108,8 @@ parameters:
 
 |Parameter                 |Default Value                                |Comments|
 |--------------------------|---------------------------------------------|--------|
+|*client*|None|Allows to target a different client/host for the corresponding entry|
+|*clientrules*|[]|Allows to target a different client/host for the corresponding entry, if a regex on the entry name is matched. An entry of this parameter could be `vm1: myhost1` which would deploy all vms with vm1 in their name to myhost1|
 |*virttype*|None|Only used for libvirt where it evaluates to kvm if acceleration shows in capabilities, or qemu emulation otherwise. If a value is provided, it must be either kvm, qemu, xen or lxc|
 |*cpumodel*|host-model||
 |*cpuflags*|[]| You can specify a list of strings with features to enable or use dict entries with *name* of the feature and *policy* either set to require,disable, optional or force. The value for vmx is ignored, as it's handled by the nested flag|

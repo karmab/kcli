@@ -22,6 +22,7 @@ from kvirt.containerconfig import Kcontainerconfig
 from distutils.spawn import find_executable
 import glob
 import os
+import re
 from shutil import rmtree
 import sys
 from time import sleep
@@ -1434,7 +1435,18 @@ $INFO
                             profile[key] = baseprofile[key]
                         elif key in baseprofile and key in profile and key in appendkeys:
                             profile[key] = baseprofile[key] + profile[key]
-                vmclient = profile.get('client')
+                vmclient = None
+                vmrules = profile.get('clientrules', self.clientrules)
+                if vmrules:
+                    for entry in vmrules:
+                        if len(entry) != 1:
+                            common.pprint("Wrong client rule %s" % entry, color='red')
+                            os._exit(1)
+                        rule = list(entry.keys())[0]
+                        if re.match(rule, name):
+                            vmclient = entry[rule]
+                            break
+                vmclient = profile.get('client', vmclient)
                 if vmclient is None:
                     z = k
                     vmclient = self.client
