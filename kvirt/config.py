@@ -1600,8 +1600,7 @@ $INFO
                 result = self.create_vm(name, profilename, overrides=currentoverrides, customprofile=profile, k=z,
                                         plan=plan, basedir=currentplandir, client=vmclient, onfly=onfly,
                                         onlyassets=onlyassets)
-                if not onlyassets:
-                    common.handle_response(result, name, client=vmclient)
+                common.handle_response(result, name, client=vmclient)
                 if result['result'] == 'success':
                     newvms.append(name)
                     start = profile.get('start', True)

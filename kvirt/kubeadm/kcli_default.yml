@@ -57,3 +57,4 @@ extra_worker_networks: []
 xip: false
 autolabel: true
 virtual_router_id:
+zerotier: []

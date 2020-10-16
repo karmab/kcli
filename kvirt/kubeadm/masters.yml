@@ -1,3 +1,11 @@
+{%- if zerotier %}
+{% set ztier = zerotier %}
+{%- elif config_zerotier is defined %}
+{% set ztier = config_zerotier %}
+{%- else %}
+{% set ztier = [] %}
+{%- endif %}
+
 {{ image }}:
   type: image
 
@@ -42,6 +50,7 @@
  numcpus: {{ master_numcpus | default(numcpus, numcpus) }}
  memory: {{ master_memory | default(memory, memory) }}
  domain: {{ domain }}
+ zerotier: {{ ztier }}
 {%- if number == 0 %}
  notify: {{ notify }}
  notifycmd: {{ notifycmd }}
