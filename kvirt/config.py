@@ -29,6 +29,26 @@ from time import sleep
 import webbrowser
 import yaml
 
+zerotier_service = """[Unit]
+Description=Zero Tier service
+After=network-online.target
+Wants=network-online.target
+[Service]
+Type=forking
+KillMode=none
+Restart=on-failure
+RemainAfterExit=yes
+ExecStartPre=modprobe tun
+ExecStartPre=podman pull docker.io/karmab/zerotier-cli
+ExecStartPre=podman create --name=zerotier -it --cap-add=NET_ADMIN --device=/dev/net/tun --cap-add=SYS_ADMIN \
+--net=host --entrypoint=/bin/sh karmab/zerotier-cli -c "zerotier-one -d ; sleep 10 ; \
+{zerotier_join} ; sleep infinity"
+ExecStart=podman start zerotier
+ExecStop=podman stop -t 10 zerotier
+ExecStopPost=podman rm zerotier
+[Install]
+WantedBy=multi-user.target"""
+
 
 class Kconfig(Kbaseconfig):
     """
@@ -610,9 +630,14 @@ class Kconfig(Kbaseconfig):
             sharedfoldercmds.append("mount -a")
         zerotiercmds = []
         if zerotier:
-            zerotiercmds.append("curl -s https://install.zerotier.com | bash")
-            for entry in zerotier:
-                zerotiercmds.append("zerotier-cli join %s" % entry)
+            if image is not None and common.needs_ignition(image):
+                zerotier_join = ';'.join(['zerotier-cli join %s' % entry for entry in zerotier])
+                zerotiercontent = zerotier_service.format(zerotier_join=zerotier_join)
+                files.append({'path': '/root/zerotier.service', 'content': zerotiercontent})
+            else:
+                zerotiercmds.append("curl -s https://install.zerotier.com | bash")
+                for entry in zerotier:
+                    zerotiercmds.append("zerotier-cli join %s" % entry)
         networkwaitcommand = ['sleep %s' % networkwait] if networkwait > 0 else []
         cmds = networkwaitcommand + rhncommands + sharedfoldercmds + zerotiercmds + cmds + scriptcmds
         if notify:

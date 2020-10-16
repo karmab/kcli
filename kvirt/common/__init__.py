@@ -354,7 +354,8 @@ def process_ignition_files(files=[], overrides={}):
     :param overrides:
     :return:
     """
-    data = []
+    filesdata = []
+    unitsdata = []
     for directory in files:
         if not isinstance(directory, dict) or 'origin' not in directory\
                 or not os.path.isdir(os.path.expanduser(directory['origin'])):
@@ -406,10 +407,14 @@ def process_ignition_files(files=[], overrides={}):
             continue
         if not isinstance(content, str):
             content = '\n'.join(content) + '\n'
-        content = base64.b64encode(content.encode()).decode("UTF-8")
-        data.append({'filesystem': 'root', 'path': path, 'mode': permissions, 'overwrite': True,
-                     "contents": {"source": "data:text/plain;charset=utf-8;base64,%s" % content, "verification": {}}})
-    return data
+        if path.endswith('.service'):
+            unitsdata.append({"contents": content, "name": os.path.basename(path), "enabled": True})
+        else:
+            content = base64.b64encode(content.encode()).decode("UTF-8")
+            filesdata.append({'filesystem': 'root', 'path': path, 'mode': permissions, 'overwrite': True,
+                              "contents": {"source": "data:text/plain;charset=utf-8;base64,%s" % content,
+                                           "verification": {}}})
+    return filesdata, unitsdata
 
 
 def process_cmds(cmds, overrides):
@@ -948,6 +953,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     default_gateway = gateway
     publickeys = []
     storage = {"files": []}
+    systemd = {"units": []}
     if domain is not None:
         localhostname = "%s.%s" % (name, domain)
     else:
@@ -1040,9 +1046,11 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
                                          "contents": {"source": "data:,%s" % static, "verification": {}},
                                          "mode": int(static_nic_file_mode, 8)})
     if files:
-        filesdata = process_ignition_files(files=files, overrides=overrides)
+        filesdata, unitsdata = process_ignition_files(files=files, overrides=overrides)
         if filesdata:
             storage["files"].extend(filesdata)
+        if unitsdata:
+            systemd["units"].extend(unitsdata)
     cmdunit = None
     if cmds:
         cmdsdata = process_ignition_cmds(cmds, overrides)
@@ -1051,9 +1059,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
         content = "[Service]\nType=oneshot\nExecStart=%s\n[Install]\nWantedBy=multi-user.target\n" % firstpath
         cmdunit = {"contents": content, "name": "first-boot.service", "enabled": True}
     if cmdunit is not None:
-        systemd = {"units": [cmdunit]}
-    else:
-        systemd = {}
+        systemd["units"].append(cmdunit)
     data = {'ignition': {'version': version, 'config': {}}, 'storage': storage, 'systemd': systemd,
             'networkd': {}, 'passwd': {'users': []}}
     if publickeys:
