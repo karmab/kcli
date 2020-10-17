@@ -33,6 +33,7 @@ zerotier_service = """[Unit]
 Description=Zero Tier service
 After=network-online.target
 Wants=network-online.target
+Before=kubelet.service
 [Service]
 Type=forking
 KillMode=none
@@ -44,6 +45,11 @@ ExecStartPre=podman create --name=zerotier -it --cap-add=NET_ADMIN --device=/dev
 --net=host --entrypoint=/bin/sh karmab/zerotier-cli -c "zerotier-one -d ; sleep 10 ; \
 {zerotier_join} ; sleep infinity"
 ExecStart=podman start zerotier
+#ExecStartPost=/bin/bash -c 'sleep 20 ; IP=$(ip -4 -o addr show ztppiqixar | cut -f7 -d" " | cut -d "/" -f 1 | head -1)\
+#;if [ "$(grep $IP /etc/systemd/system/kubelet.service)" == "" ] ; then \
+#sed -i "/node-ip/d" /etc/systemd/system/kubelet.service ; \
+#sed -i "/.*node-labels*/a --node-ip=$IP --address=$IP \\" /etc/systemd/system/kubelet.service ; \
+#systemctl daemon-reload ; fi'
 ExecStop=podman stop -t 10 zerotier
 ExecStopPost=podman rm zerotier
 [Install]

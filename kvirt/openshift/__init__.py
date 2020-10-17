@@ -203,12 +203,15 @@ def scale(config, plandir, cluster, overrides):
         if network is None:
             pprint("You need to indicate a specific vlan network", color='red')
             os._exit(1)
-    image = k.info("%s-master-0" % cluster).get('image')
+    image = overrides.get('image')
     if image is None:
-        pprint("Missing image...", color='red')
-        sys.exit(1)
-    else:
-        pprint("Using image %s" % image, color='blue')
+        cluster_image = k.info("%s-master-0" % cluster).get('image')
+        if cluster_image is None:
+            pprint("Missing image...", color='red')
+            sys.exit(1)
+        else:
+            pprint("Using image %s" % cluster_image, color='blue')
+            image = cluster_image
     data['image'] = image
     for role in ['masters', 'workers']:
         overrides = data.copy()
@@ -415,8 +418,7 @@ def create(config, plandir, cluster, overrides):
         with open("%s/kcli_parameters.yml" % clusterdir, 'w') as p:
             installparam['plan'] = plan
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
-    # data['pub_key'] = open(pub_key).read().strip()
-    data['pub_key'] = open(pub_key).read()
+    data['pub_key'] = open(pub_key).read().strip()
     if disconnected_url is not None and disconnected_user is not None and disconnected_password is not None:
         key = "%s:%s" % (disconnected_user, disconnected_password)
         key = str(b64encode(key.encode('utf-8')), 'utf-8')

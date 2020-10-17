@@ -964,8 +964,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
             if os.path.exists(expanded_path) and os.path.exists(expanded_path.replace('.pub', '')):
                 publickeyfile = expanded_path
                 with open(publickeyfile, 'r') as ssh:
-                    # publickeys.append(ssh.read().strip())
-                    publickeys.append(ssh.read())
+                    publickeys.append(ssh.read().strip())
                 break
         if keys:
             for key in list(set(keys)):
@@ -1360,9 +1359,10 @@ def mergeignition(name, ignitionextrapath, data):
                                         sshkey2 = x['sshAuthorizedKeys'] if 'sshAuthorizedKeys' in x else []
                                         password = x.get('passwordHash')
                                 sshkeys = sshkey1
-                                if sshkey2 != sshkey1:
-                                    sshkeys += sshkey2
+                                if sshkey2:
+                                    sshkeys.extend(sshkey2)
                                 if sshkeys:
+                                    sshkeys = list(dict.fromkeys([sshkey.strip() for sshkey in sshkeys]))
                                     newuser['sshAuthorizedKeys'] = sshkeys
                                 if password is not None:
                                     newuser['passwordHash'] = password
