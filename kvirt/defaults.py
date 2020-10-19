@@ -180,3 +180,4 @@ VIRTTYPE = None
 ZEROTIER = []
 METADATA_FIELDS = ['plan', 'image', 'profile', 'owner', 'dnsclient', 'domain', 'kube', 'kubetype', 'loadbalancer']
 CLIENTRULES = []
+CACHE = False

@@ -394,17 +394,17 @@ def info_vm(args):
     output = args.output
     fields = args.fields.split(',') if args.fields is not None else []
     values = args.values
-    if args.cache:
-        baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-        names = [common.get_lastvm(baseconfig.client)] if not args.names else args.names
-        _list = cache_vms(baseconfig, args.region, args.zone, args.namespace)
+    config = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
+    if config.cache:
+        names = [common.get_lastvm(config.client)] if not args.names else args.names
+        _list = cache_vms(config, args.region, args.zone, args.namespace)
         vms = {vm['name']: vm for vm in _list}
     else:
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
         names = [common.get_lastvm(config.client)] if not args.names else args.names
     for name in names:
-        if args.cache and name in vms:
+        if config.cache and name in vms:
             data = vms[name]
         else:
             data = config.k.info(name, debug=args.debug)
@@ -479,9 +479,9 @@ def list_vm(args):
         print(vms)
     else:
         vms = PrettyTable(["Name", "Status", "Ips", "Source", "Plan", "Profile"])
-        if args.cache:
-            baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
-            _list = cache_vms(baseconfig, args.region, args.zone, args.namespace)
+        config = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
+        if config.cache:
+            _list = cache_vms(config, args.region, args.zone, args.namespace)
         else:
             config = Kconfig(client=args.client, debug=args.debug, region=args.region,
                              zone=args.zone, namespace=args.namespace)
@@ -1958,7 +1958,7 @@ def ssh_vm(args):
     Y = args.Y
     user = args.user
     vmport = args.port
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
     name = [common.get_lastvm(baseconfig.client)] if not args.name else args.name
     tunnel = baseconfig.tunnel
     tunnelhost = baseconfig.tunnelhost
@@ -1980,7 +1980,7 @@ def ssh_vm(args):
             and not os.path.exists("/root/.ssh/config"):
         insecure = True
     sshcommand = None
-    if args.cache:
+    if baseconfig.cache:
         _list = cache_vms(baseconfig, args.region, args.zone, args.namespace)
         vms = [vm for vm in _list if vm['name'] == name]
         if vms:
@@ -2035,7 +2035,7 @@ def scp_vm(args):
     destination = args.destination[0]
     user = args.user
     vmport = args.port
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
     tunnel = baseconfig.tunnel
     tunnelhost = baseconfig.tunnelhost
     tunneluser = baseconfig.tunneluser
@@ -2060,7 +2060,7 @@ def scp_vm(args):
     else:
         common.pprint("Copying file %s to %s" % (source, name), color='green')
     scpcommand = None
-    if args.cache:
+    if baseconfig.cache:
         _list = cache_vms(baseconfig, args.region, args.zone, args.namespace)
         vms = [vm for vm in _list if vm['name'] == name]
         if vms:
@@ -2390,7 +2390,6 @@ def cli():
     PARAMETERS_HELP = 'specify parameter or keyword for rendering (multiple can be specified)'
     parser = argparse.ArgumentParser(description='Libvirt/Ovirt/Vsphere/Gcp/Aws/Openstack/Kubevirt Wrapper')
     parser.add_argument('-C', '--client')
-    parser.add_argument('--cache', help='Whether to use a cache', action='store_true')
     parser.add_argument('--containerclient', help='Containerclient to use')
     parser.add_argument('--dnsclient', help='Dnsclient to use')
     parser.add_argument('-d', '--debug', action='store_true')

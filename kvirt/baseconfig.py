@@ -16,7 +16,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             NOTIFYSCRIPT, SLACKTOKEN, NOTIFYCMD, NOTIFYMETHODS, SLACKCHANNEL, SHAREDFOLDERS, KERNEL,
                             INITRD, CMDLINE, PLACEMENT, YAMLINVENTORY, CPUHOTPLUG, MEMORYHOTPLUG, CPUFLAGS, CPUPINNING,
                             NUMAMODE, NUMA, PCIDEVICES, VIRTTYPE, MAILSERVER, MAILFROM, MAILTO, TPM, JENKINSMODE, RNG,
-                            ZEROTIER, VMPORT, VMUSER, CLIENTRULES)
+                            ZEROTIER, VMPORT, VMUSER, CLIENTRULES, CACHE)
 from kvirt import common
 from kvirt import jinjafilters
 from kvirt import k3s
@@ -175,6 +175,7 @@ class Kbaseconfig:
         defaults['vmuser'] = default.get('vmuser', VMUSER)
         defaults['vmport'] = default.get('vmport', VMPORT)
         defaults['clientrules'] = default.get('clientrules', CLIENTRULES)
+        defaults['cache'] = default.get('cache', CACHE)
         currentplanfile = "%s/.kcli/plan" % os.environ.get('HOME')
         if os.path.exists(currentplanfile):
             self.currentplan = open(currentplanfile).read().strip()
@@ -321,6 +322,7 @@ class Kbaseconfig:
         self.vmuser = options.get('vmuser', self.default['vmuser'])
         self.vmport = options.get('vmport', self.default['vmport'])
         self.clientrules = options.get('clientrules', self.default['clientrules'])
+        self.cache = options.get('cache', self.default['cache'])
         self.overrides = {}
 
     def switch_host(self, client):
