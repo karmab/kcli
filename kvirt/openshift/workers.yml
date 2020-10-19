@@ -39,6 +39,8 @@
  tpm: {{ worker_tpm }}
  autostart: {{ autostart }}
  nets: {{ [net0] + extra_networks }}
+ zerotier_nets: {{ zerotier_nets }}
+ zerotier_kubelet: {{ zerotier_kubelet }}
  disks: {{ [disk_size] + extra_disks }}
  files:
   - path: /etc/NetworkManager/dispatcher.d/99-forcedns

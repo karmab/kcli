@@ -1,5 +1,5 @@
-{%- if zerotier %}
-{% set ztier = zerotier %}
+{%- if zerotier_nets %}
+{% set ztier = zerotier_nets %}
 {%- elif config_zerotier is defined %}
 {% set ztier = config_zerotier %}
 {%- else %}
@@ -30,7 +30,7 @@
  memory: {{ worker_memory | default(memory, memory) }}
  reservedns: false
  domain: {{ domain }}
- zerotier: {{ ztier }}
+ zerotier_nets: {{ ztier }}
  nets: {{ [network] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
  files:

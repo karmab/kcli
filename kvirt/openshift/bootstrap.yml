@@ -9,6 +9,7 @@
  numcpus: {{ bootstrap_numcpus | default(numcpus, numcpus) }}
  flavor: {{ flavor }}
  memory: {{ bootstrap_memory | default(memory, memory) }}
+ zerotier_nets: {{ zerotier_nets }}
  nets:
   - name: {{ network }}
 {%- if bootstrap_mac != None %}

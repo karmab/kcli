@@ -83,5 +83,6 @@ cloud_tag:
 cloud_scale: false
 cloud_api_internal: false
 virtual_router_id:
+zerotier_nets: []
 zerotier_ip:
 zerotier_kubelet: false
