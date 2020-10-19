@@ -335,6 +335,7 @@ class Kvirt(object):
             if image is not None and index == 0:
                 diskimage = image
             if diskimage is not None:
+                manual_disk_path = False
                 try:
                     if diskthinpool is not None:
                         matchingthinimages = self.thinimages(diskpoolpath, diskthinpool)
@@ -349,16 +350,25 @@ class Kvirt(object):
                         backingxml = backingvolume.XMLDesc(0)
                         root = ET.fromstring(backingxml)
                 except:
-                    shortname = [t for t in defaults.IMAGES if defaults.IMAGES[t] == diskimage]
-                    if shortname:
-                        msg = "you don't have image %s. Use kcli download %s" % (diskimage, shortname[0])
+                    if self.host in ['localhost', '127.0.0.1'] and os.path.exists(diskimage):
+                        common.pprint("Using image path although it's not in a pool", color='yellow')
+                        manual_disk_path = True
+                        backing = diskimage
+                        backingxml = """<backingStore type='file' index='1'>
+                                        <format type='qcow2'/>
+                                        <source file='%s'/>
+                                        </backingStore>""" % backing
                     else:
-                        msg = "you don't have image %s" % diskimage
-                    return {'result': 'failure', 'reason': msg}
+                        shortname = [t for t in defaults.IMAGES if defaults.IMAGES[t] == diskimage]
+                        if shortname:
+                            msg = "you don't have image %s. Use kcli download %s" % (diskimage, shortname[0])
+                        else:
+                            msg = "you don't have image %s" % diskimage
+                        return {'result': 'failure', 'reason': msg}
                 if diskthinpool is not None:
                     backing = None
                     backingxml = '<backingStore/>'
-                else:
+                elif not manual_disk_path:
                     backing = backingvolume.path()
                     if '/dev' in backing:
                         backingxml = """<backingStore type='block' index='1'>
