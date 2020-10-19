@@ -43,17 +43,23 @@ ExecStartPre=modprobe tun
 ExecStartPre=podman pull docker.io/karmab/zerotier-cli
 ExecStartPre=podman create --name=zerotier -it --cap-add=NET_ADMIN --device=/dev/net/tun --cap-add=SYS_ADMIN \
 --net=host --entrypoint=/bin/sh karmab/zerotier-cli -c "zerotier-one -d ; sleep 10 ; \
-{zerotier_join} ; sleep infinity"
+{zerotier_join} ; \
+sleep infinity"
 ExecStart=podman start zerotier
-#ExecStartPost=/bin/bash -c 'sleep 20 ; IP=$(ip -4 -o addr show ztppiqixar | cut -f7 -d" " | cut -d "/" -f 1 | head -1)\
-#;if [ "$(grep $IP /etc/systemd/system/kubelet.service)" == "" ] ; then \
-#sed -i "/node-ip/d" /etc/systemd/system/kubelet.service ; \
-#sed -i "/.*node-labels*/a --node-ip=$IP --address=$IP \\" /etc/systemd/system/kubelet.service ; \
-#systemctl daemon-reload ; fi'
 ExecStop=podman stop -t 10 zerotier
 ExecStopPost=podman rm zerotier
+{zerotier_kubelet_script}
 [Install]
 WantedBy=multi-user.target"""
+
+
+zerotier_kubelet_data = """ExecStartPost=/bin/bash -c 'sleep 20 ;\
+IP=$(ip -4 -o addr show ztppiqixar | cut -f7 -d" " | cut -d "/" -f 1 | head -1) ;\
+if [ "$(grep $IP /etc/systemd/system/kubelet.service)" == "" ] ; then \
+sed -i "/node-ip/d" /etc/systemd/system/kubelet.service ;\
+sed -i "/.*node-labels*/a --node-ip=$IP --address=$IP \\" /etc/systemd/system/kubelet.service ;\
+systemctl daemon-reload ;\
+fi'"""
 
 
 class Kconfig(Kbaseconfig):
@@ -375,7 +381,8 @@ class Kconfig(Kbaseconfig):
             default_pcidevices = father.get('pcidevices', self.pcidevices)
             default_tpm = father.get('tpm', self.tpm)
             default_rng = father.get('rng', self.rng)
-            default_zerotier = father.get('zerotier', self.zerotier)
+            default_zerotier_nets = father.get('zerotier_nets', self.zerotier_nets)
+            default_zerotier_kubelet = father.get('zerotier_kubelet', self.zerotier_kubelet)
             default_virttype = father.get('virttype', self.virttype)
         else:
             default_numcpus = self.numcpus
@@ -396,7 +403,8 @@ class Kconfig(Kbaseconfig):
             default_pcidevices = self.pcidevices
             default_tpm = self.tpm
             default_rng = self.rng
-            default_zerotier = self.zerotier
+            default_zerotier_nets = self.zerotier_nets
+            default_zerotier_kubelet = self.zerotier_kubelet
             default_disksize = self.disksize
             default_diskinterface = self.diskinterface
             default_diskthin = self.diskthin
@@ -458,7 +466,8 @@ class Kconfig(Kbaseconfig):
         pcidevices = profile.get('pcidevices', default_pcidevices)
         tpm = profile.get('tpm', default_tpm)
         rng = profile.get('rng', default_rng)
-        zerotier = profile.get('zerotier', default_zerotier)
+        zerotier_nets = profile.get('zerotier_nets', default_zerotier_nets)
+        zerotier_kubelet = profile.get('zerotier_kubelet', default_zerotier_kubelet)
         numcpus = profile.get('numcpus', default_numcpus)
         memory = profile.get('memory', default_memory)
         pool = profile.get('pool', default_pool)
@@ -635,14 +644,16 @@ class Kconfig(Kbaseconfig):
         if sharedfoldercmds:
             sharedfoldercmds.append("mount -a")
         zerotiercmds = []
-        if zerotier:
+        if zerotier_nets:
             if image is not None and common.needs_ignition(image):
-                zerotier_join = ';'.join(['zerotier-cli join %s' % entry for entry in zerotier])
-                zerotiercontent = zerotier_service.format(zerotier_join=zerotier_join)
+                zerotier_join = ';'.join([' zerotier-cli join %s ' % entry for entry in zerotier_nets])
+                zerotier_kubelet_script = zerotier_kubelet_data if zerotier_kubelet else ''
+                zerotiercontent = zerotier_service.format(zerotier_join=zerotier_join,
+                                                          zerotier_kubelet_script=zerotier_kubelet_script)
                 files.append({'path': '/root/zerotier.service', 'content': zerotiercontent})
             else:
                 zerotiercmds.append("curl -s https://install.zerotier.com | bash")
-                for entry in zerotier:
+                for entry in zerotier_nets:
                     zerotiercmds.append("zerotier-cli join %s" % entry)
         networkwaitcommand = ['sleep %s' % networkwait] if networkwait > 0 else []
         cmds = networkwaitcommand + rhncommands + sharedfoldercmds + zerotiercmds + cmds + scriptcmds

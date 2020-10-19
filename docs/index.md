@@ -1178,6 +1178,8 @@ parameters:
 |*mailserver*|None|Mail server where to send the notification (on port 25)|
 |*mailfrom*|None|Mail address to send mail from|
 |*mailto*|[]|List of mail addresses to send mail to|
+|*zerotier_net*|[]|List of zerotier public networks where to join. Will trigger installation of zerotier on the node|
+|*zerotier_kubelet*|False|Whether to configure kubelet to use the first zerotier address as node ip|
 
 
 # Ansible support

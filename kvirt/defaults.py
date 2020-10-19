@@ -177,7 +177,8 @@ oEO8BRcXIiXiQqW9KnF99fXOiQ/cKYh3kWBBPnuEOhC77Ke5aMlqMNOPULf3PMix
 2bqeJlbpLt7PkZBSawXeu6sAhRsqlpEmiPGn8ujH/oKwIAgm
 -----END CERTIFICATE-----"""
 VIRTTYPE = None
-ZEROTIER = []
+ZEROTIER_NETS = []
+ZEROTIER_KUBELET = False
 METADATA_FIELDS = ['plan', 'image', 'profile', 'owner', 'dnsclient', 'domain', 'kube', 'kubetype', 'loadbalancer']
 CLIENTRULES = []
 CACHE = False

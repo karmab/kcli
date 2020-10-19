@@ -16,7 +16,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             NOTIFYSCRIPT, SLACKTOKEN, NOTIFYCMD, NOTIFYMETHODS, SLACKCHANNEL, SHAREDFOLDERS, KERNEL,
                             INITRD, CMDLINE, PLACEMENT, YAMLINVENTORY, CPUHOTPLUG, MEMORYHOTPLUG, CPUFLAGS, CPUPINNING,
                             NUMAMODE, NUMA, PCIDEVICES, VIRTTYPE, MAILSERVER, MAILFROM, MAILTO, TPM, JENKINSMODE, RNG,
-                            ZEROTIER, VMPORT, VMUSER, CLIENTRULES, CACHE)
+                            ZEROTIER_NETS, ZEROTIER_KUBELET, VMPORT, VMUSER, CLIENTRULES, CACHE)
 from kvirt import common
 from kvirt import jinjafilters
 from kvirt import k3s
@@ -170,7 +170,8 @@ class Kbaseconfig:
         defaults['virttype'] = default.get('virttype', VIRTTYPE)
         defaults['tpm'] = default.get('tpm', TPM)
         defaults['rng'] = default.get('rng', RNG)
-        defaults['zerotier'] = default.get('zerotier', ZEROTIER)
+        defaults['zerotier_nets'] = default.get('zerotier_nets', ZEROTIER_NETS)
+        defaults['zerotier_kubelet'] = default.get('zerotier_kubelet', ZEROTIER_KUBELET)
         defaults['jenkinsmode'] = default.get('jenkinsmode', JENKINSMODE)
         defaults['vmuser'] = default.get('vmuser', VMUSER)
         defaults['vmport'] = default.get('vmport', VMPORT)
@@ -256,7 +257,8 @@ class Kbaseconfig:
         self.pcidevices = options.get('pcidevices', PCIDEVICES)
         self.tpm = options.get('tpm', self.default['tpm'])
         self.rng = options.get('rng', self.default['rng'])
-        self.zerotier = options.get('zerotier', self.default['zerotier'])
+        self.zerotier_nets = options.get('zerotier_nets', self.default['zerotier_nets'])
+        self.zerotier_kubelet = options.get('zerotier_kubelet', self.default['zerotier_kubelet'])
         self.jenkinsmode = options.get('jenkinsmode', self.default['jenkinsmode'])
         self.numcpus = options.get('numcpus', self.default['numcpus'])
         self.memory = options.get('memory', self.default['memory'])
