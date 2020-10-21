@@ -211,14 +211,14 @@ class Kvirt(object):
             metadataxml += "\n<kvirt:%s>%s</kvirt:%s>" % (entry, metadata[entry], entry)
         default_poolxml = default_storagepool.XMLDesc(0)
         root = ET.fromstring(default_poolxml)
-        default_pooltype = list(root.getiterator('pool'))[0].get('type')
+        default_pooltype = list(root.iter('pool'))[0].get('type')
         default_poolpath = None
-        product = list(root.getiterator('product'))
+        product = list(root.iter('product'))
         if product:
-            default_thinpool = list(root.getiterator('product'))[0].get('name')
+            default_thinpool = list(root.iter('product'))[0].get('name')
         else:
             default_thinpool = None
-        for element in root.getiterator('path'):
+        for element in root.iter('path'):
             default_poolpath = element.text
             break
         if vnc:
@@ -305,14 +305,14 @@ class Kvirt(object):
                     return {'result': 'failure', 'reason': "Pool %s not found" % diskpool}
                 diskpoolxml = storagediskpool.XMLDesc(0)
                 root = ET.fromstring(diskpoolxml)
-                diskpooltype = list(root.getiterator('pool'))[0].get('type')
+                diskpooltype = list(root.iter('pool'))[0].get('type')
                 diskpoolpath = None
-                for element in list(root.getiterator('path')):
+                for element in list(root.iter('path')):
                     diskpoolpath = element.text
                     break
-                product = list(root.getiterator('product'))
+                product = list(root.iter('product'))
                 if product:
-                    diskthinpool = list(root.getiterator('product'))[0].get('name')
+                    diskthinpool = list(root.iter('product'))[0].get('name')
                 else:
                     diskthinpool = None
             else:
@@ -1063,7 +1063,7 @@ class Kvirt(object):
                 continue
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
-            mem = list(root.getiterator('memory'))[0]
+            mem = list(root.iter('memory'))[0]
             unit = mem.attrib['unit']
             mem = mem.text
             if unit == 'KiB':
@@ -1089,7 +1089,7 @@ class Kvirt(object):
             totalvms += 1
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
-            memory = list(root.getiterator('memory'))[0]
+            memory = list(root.iter('memory'))[0]
             unit = memory.attrib['unit']
             memory = memory.text
             if unit == 'KiB':
@@ -1103,11 +1103,11 @@ class Kvirt(object):
             pool = conn.storagePoolLookupByName(pool)
             poolxml = pool.XMLDesc(0)
             root = ET.fromstring(poolxml)
-            pooltype = list(root.getiterator('pool'))[0].get('type')
+            pooltype = list(root.iter('pool'))[0].get('type')
             if pooltype in ['dir', 'zfs']:
-                poolpath = list(root.getiterator('path'))[0].text
+                poolpath = list(root.iter('path'))[0].text
             else:
-                poolpath = list(root.getiterator('device'))[0].get('path')
+                poolpath = list(root.iter('device'))[0].get('path')
             s = pool.info()
             used = "%.2f" % (float(s[2]) / 1024 / 1024 / 1024)
             available = "%.2f" % (float(s[3]) / 1024 / 1024 / 1024)
@@ -1125,7 +1125,7 @@ class Kvirt(object):
             netxml = network.XMLDesc(0)
             cidr = 'N/A'
             root = ET.fromstring(netxml)
-            ip = list(root.getiterator('ip'))
+            ip = list(root.iter('ip'))
             if ip:
                 attributes = ip[0].attrib
                 firstip = attributes.get('address')
@@ -1137,7 +1137,7 @@ class Kvirt(object):
                     cidr = ip.cidr
                 except:
                     cidr = "N/A"
-            dhcp = list(root.getiterator('dhcp'))
+            dhcp = list(root.iter('dhcp'))
             if dhcp:
                 dhcp = True
             else:
@@ -1174,7 +1174,7 @@ class Kvirt(object):
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
             host = self.host
-            for element in list(root.getiterator('graphics')):
+            for element in list(root.iter('graphics')):
                 attributes = element.attrib
                 if attributes['listen'] == '127.0.0.1':
                     if not os.path.exists("i_am_a_container") or self.host not in ['127.0.0.1', 'localhost']:
@@ -1216,7 +1216,7 @@ class Kvirt(object):
         else:
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
-            serial = list(root.getiterator('serial'))
+            serial = list(root.iter('serial'))
             if not serial:
                 common.pprint("No serial Console found. Leaving...", color='red')
                 return
@@ -1261,7 +1261,7 @@ class Kvirt(object):
         root = ET.fromstring(xml)
         status = 'down'
         autostart = starts[vm.autostart()]
-        description = list(root.getiterator('description'))
+        description = list(root.iter('description'))
         if description:
             description = description[0].text
         else:
@@ -1272,7 +1272,7 @@ class Kvirt(object):
         yamlinfo = {'name': name, 'autostart': autostart, 'nets': [], 'disks': [], 'status': status}
         plan, profile, image, ip, creationdate = '', None, None, None, None
         kube, kubetype = None, None
-        for element in list(root.getiterator('{kvirt}info')):
+        for element in list(root.iter('{kvirt}info')):
             e = element.find('{kvirt}plan')
             if e is not None:
                 plan = e.text
@@ -1314,7 +1314,7 @@ class Kvirt(object):
         leasefaces = {}
         ifaces = {}
         if vm.isActive():
-            networktypes = [element.get('type') for element in list(root.getiterator('interface'))]
+            networktypes = [element.get('type') for element in list(root.iter('interface'))]
             if 'bridge' in networktypes:
                 try:
                     agentfaces = vm.interfaceAddresses(vir_src_agent, 0)
@@ -1323,7 +1323,7 @@ class Kvirt(object):
             if 'network' in networktypes:
                 leasefaces = vm.interfaceAddresses(vir_src_lease, 0)
             ifaces = {**agentfaces, **leasefaces}
-        interfaces = list(root.getiterator('interface'))
+        interfaces = list(root.iter('interface'))
         for index, element in enumerate(interfaces):
             networktype = element.get('type').replace('network', 'routed')
             device = "eth%s" % index
@@ -1340,7 +1340,7 @@ class Kvirt(object):
                         networkdata = conn.networkLookupByName(network)
                         netxml = networkdata.XMLDesc()
                         netroot = ET.fromstring(netxml)
-                        hostentries = list(netroot.getiterator('host'))
+                        hostentries = list(netroot.iter('host'))
                         for host in hostentries:
                             if host.get('mac') == mac:
                                 ip = host.get('ip')
@@ -1366,7 +1366,7 @@ class Kvirt(object):
             if '.' not in ip and ':' not in ip:
                 usernetinfo = {'device': 'eth%s' % len(yamlinfo['nets']), 'mac': 'N/A', 'net': 'user', 'type': 'user'}
                 yamlinfo['nets'].append(usernetinfo)
-        for element in list(root.getiterator('disk')):
+        for element in list(root.iter('disk')):
             disktype = element.get('device')
             if disktype == 'cdrom':
                 iso_file = element.find('source').get('file')
@@ -1416,7 +1416,7 @@ class Kvirt(object):
             return None
         else:
             mac = None
-            interfaces = list(root.getiterator('interface'))
+            interfaces = list(root.iter('interface'))
             for element in interfaces:
                 networktype = element.get('type')
                 if mac is None:
@@ -1431,7 +1431,7 @@ class Kvirt(object):
                         networkdata = conn.networkLookupByName(network)
                         netxml = networkdata.XMLDesc()
                         netroot = ET.fromstring(netxml)
-                        hostentries = list(netroot.getiterator('host'))
+                        hostentries = list(netroot.iter('host'))
                         for host in hostentries:
                             if host.get('mac') == mac:
                                 return host.get('ip')
@@ -1440,7 +1440,7 @@ class Kvirt(object):
             agentfaces = {}
             leasefaces = {}
             ifaces = {}
-            networktypes = [element.get('type') for element in list(root.getiterator('interface'))]
+            networktypes = [element.get('type') for element in list(root.iter('interface'))]
             if 'bridge' in networktypes:
                 try:
                     agentfaces = vm.interfaceAddresses(vir_src_agent, 0)
@@ -1476,12 +1476,12 @@ class Kvirt(object):
             pool.refresh(0)
             poolxml = pool.XMLDesc(0)
             root = ET.fromstring(poolxml)
-            for element in list(root.getiterator('path')):
+            for element in list(root.iter('path')):
                 poolpath = element.text
                 break
-            product = list(root.getiterator('product'))
+            product = list(root.iter('product'))
             if product:
-                thinpool = list(root.getiterator('product'))[0].get('name')
+                thinpool = list(root.iter('product'))[0].get('name')
                 for volume in self.thinimages(poolpath, thinpool):
                     if volume.endswith('qcow2') or volume.endswith('qc2') or volume in default_images:
                         images.extend("%s/%s" % (poolpath, volume))
@@ -1504,7 +1504,7 @@ class Kvirt(object):
         vmxml = vm.XMLDesc(0)
         root = ET.fromstring(vmxml)
         dnsclient, domain = None, None
-        for element in list(root.getiterator('{kvirt}info')):
+        for element in list(root.iter('{kvirt}info')):
             e = element.find('{kvirt}dnsclient')
             if e is not None:
                 dnsclient = e.text
@@ -1534,14 +1534,14 @@ class Kvirt(object):
         vmxml = vm.XMLDesc(0)
         root = ET.fromstring(vmxml)
         disks = []
-        for element in list(root.getiterator('{kvirt}info')):
+        for element in list(root.iter('{kvirt}info')):
             e = element.find('{kvirt}image')
             if e is not None:
                 image = e.text
                 if image is not None and ('coreos' in image or 'rhcos' in image):
                     ignition = True
                 break
-        for index, element in enumerate(list(root.getiterator('disk'))):
+        for index, element in enumerate(list(root.iter('disk'))):
             source = element.find('source')
             if source is not None:
                 imagefiles = [element.find('source').get('file'), element.find('source').get('dev'),
@@ -1566,10 +1566,10 @@ class Kvirt(object):
             storage.refresh(0)
             poolxml = storage.XMLDesc(0)
             storageroot = ET.fromstring(poolxml)
-            for element in list(storageroot.getiterator('path')):
+            for element in list(storageroot.iter('path')):
                 poolpath = element.text
                 break
-            product = list(storageroot.getiterator('product'))
+            product = list(storageroot.iter('product'))
             if product:
                 thinpools.append(poolpath)
             for stor in storage.listVolumes():
@@ -1589,7 +1589,7 @@ class Kvirt(object):
             for disk in remainingdisks:
                 if disk.startswith(p):
                     self._deletelvm(disk)
-        for element in list(root.getiterator('interface')):
+        for element in list(root.iter('interface')):
             mac = element.find('mac').get('address')
             networktype = element.get('type')
             if networktype == 'user':
@@ -1599,7 +1599,7 @@ class Kvirt(object):
                 network = conn.networkLookupByName(network)
                 netxml = network.XMLDesc(0)
                 netroot = ET.fromstring(netxml)
-                for host in list(netroot.getiterator('host')):
+                for host in list(netroot.iter('host')):
                     hostmac = host.get('mac')
                     iphost = host.get('ip')
                     hostname = host.get('name')
@@ -1730,12 +1730,12 @@ class Kvirt(object):
         oldvm = conn.lookupByName(old)
         oldxml = oldvm.XMLDesc(0)
         tree = ET.fromstring(oldxml)
-        uuid = list(tree.getiterator('uuid'))[0]
+        uuid = list(tree.iter('uuid'))[0]
         tree.remove(uuid)
-        for vmname in list(tree.getiterator('name')):
+        for vmname in list(tree.iter('name')):
             vmname.text = new
         firstdisk = True
-        for disk in list(tree.getiterator('disk')):
+        for disk in list(tree.iter('disk')):
             if firstdisk or full:
                 source = disk.find('source')
                 oldpath = source.get('file')
@@ -1746,7 +1746,7 @@ class Kvirt(object):
                 oldvolumexml = oldvolume.XMLDesc(0)
                 backing = None
                 voltree = ET.fromstring(oldvolumexml)
-                for b in list(voltree.getiterator('backingStore')):
+                for b in list(voltree.iter('backingStore')):
                     backingstoresource = b.find('path')
                     if backingstoresource is not None:
                         backing = backingstoresource.text
@@ -1756,13 +1756,13 @@ class Kvirt(object):
                 pool.createXMLFrom(newvolumexml, oldvolume, 0)
                 firstdisk = False
             else:
-                devices = list(tree.getiterator('devices'))[0]
+                devices = list(tree.iter('devices'))[0]
                 devices.remove(disk)
-        for interface in list(tree.getiterator('interface')):
+        for interface in list(tree.iter('interface')):
             mac = interface.find('mac')
             interface.remove(mac)
         if self.host not in ['127.0.0.1', 'localhost']:
-            for serial in list(tree.getiterator('serial')):
+            for serial in list(tree.iter('serial')):
                 source = serial.find('source')
                 source.set('service', str(common.get_free_port()))
         newxml = ET.tostring(tree)
@@ -1775,7 +1775,7 @@ class Kvirt(object):
     def _reserve_ip(self, name, vmxml, nets, force=True, primary=False):
         conn = self.conn
         macs = []
-        for element in list(vmxml.getiterator('interface')):
+        for element in list(vmxml.iter('interface')):
             mac = element.find('mac').get('address')
             macs.append(mac)
         for index, net in enumerate(nets):
@@ -1798,13 +1798,13 @@ class Kvirt(object):
                 network.update(2, 4, 0, oldentry, 2)
             except:
                 pass
-            ipentry = list(root.getiterator('ip'))
+            ipentry = list(root.iter('ip'))
             if ipentry:
                 attributes = ipentry[0].attrib
                 firstip = attributes.get('address')
                 netmask = next(a for a in [attributes.get('netmask'), attributes.get('prefix')] if a is not None)
                 netip = IPNetwork('%s/%s' % (firstip, netmask))
-            dhcp = list(root.getiterator('dhcp'))
+            dhcp = list(root.iter('dhcp'))
             if not dhcp:
                 continue
             if not IPAddress(ip) in netip:
@@ -1853,9 +1853,9 @@ class Kvirt(object):
             else:
                 oldnetxml = network.XMLDesc()
                 root = ET.fromstring(oldnetxml)
-                dns = list(root.getiterator('dns'))
+                dns = list(root.iter('dns'))
                 if not dns:
-                    base = list(root.getiterator('network'))[0]
+                    base = list(root.iter('network'))[0]
                     dns = ET.Element("dns")
                     base.append(dns)
                     newxml = ET.tostring(root)
@@ -1868,12 +1868,12 @@ class Kvirt(object):
                     dnsentry += "%s<hostname>%s</hostname>" % (entry, entry)
                 dnsentry += "</host>"
                 if force:
-                    for host in list(root.getiterator('host')):
+                    for host in list(root.iter('host')):
                         iphost = host.get('ip')
                         machost = host.get('mac')
                         if iphost == ip and machost is None:
                             existing = []
-                            for hostname in list(host.getiterator('hostname')):
+                            for hostname in list(host.iter('hostname')):
                                 existing.append(hostname.text)
                             if name in existing:
                                 common.pprint("Skipping existing dns entry for %s" % name, color='blue')
@@ -1916,7 +1916,7 @@ class Kvirt(object):
         conn = self.conn
         poolxml = pool.XMLDesc(0)
         root = ET.fromstring(poolxml)
-        for element in list(root.getiterator('path')):
+        for element in list(root.iter('path')):
             poolpath = element.text
             break
         imagepath = "%s/%s" % (poolpath, name)
@@ -1942,10 +1942,10 @@ class Kvirt(object):
             common.pprint("Machine up. Change will only appear upon next reboot", color='yellow')
         metadata = root.find('metadata')
         kroot, kmeta = None, None
-        for element in list(root.getiterator('{kvirt}info')):
+        for element in list(root.iter('{kvirt}info')):
             kroot = element
             break
-        for element in list(root.getiterator('{kvirt}%s' % metatype)):
+        for element in list(root.iter('{kvirt}%s' % metatype)):
             kmeta = element
             break
         if metadata is None:
@@ -1998,7 +1998,7 @@ class Kvirt(object):
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         xml = vm.XMLDesc(0)
         root = ET.fromstring(xml)
-        cpunode = list(root.getiterator('vcpu'))[0]
+        cpunode = list(root.iter('vcpu'))[0]
         cpuattributes = cpunode.attrib
         if not vm.isActive():
             cpunode.text = str(numcpus)
@@ -2029,10 +2029,10 @@ class Kvirt(object):
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         xml = vm.XMLDesc(0)
         root = ET.fromstring(xml)
-        memorynode = list(root.getiterator('memory'))[0]
+        memorynode = list(root.iter('memory'))[0]
         memorynode.text = memory
-        currentmemory = list(root.getiterator('currentMemory'))[0]
-        maxmemory = list(root.getiterator('maxMemory'))
+        currentmemory = list(root.iter('currentMemory'))[0]
+        maxmemory = list(root.iter('maxMemory'))
         if maxmemory:
             diff = int(memory) - int(currentmemory.text)
             if diff > 0:
@@ -2068,7 +2068,7 @@ class Kvirt(object):
         except:
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        for element in list(root.getiterator('disk')):
+        for element in list(root.iter('disk')):
             disktype = element.get('device')
             if disktype != 'cdrom':
                 continue
@@ -2092,7 +2092,7 @@ class Kvirt(object):
         except:
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        for element in list(root.getiterator('disk')):
+        for element in list(root.iter('disk')):
             disktype = element.get('device')
             if disktype == 'cdrom':
                 source = element.find('source')
@@ -2144,8 +2144,8 @@ class Kvirt(object):
                 return None
         poolxml = pool.XMLDesc(0)
         poolroot = ET.fromstring(poolxml)
-        pooltype = list(poolroot.getiterator('pool'))[0].get('type')
-        for element in list(poolroot.getiterator('path')):
+        pooltype = list(poolroot.iter('pool'))[0].get('type')
+        for element in list(poolroot.iter('path')):
             poolpath = element.text
             break
         if image is not None:
@@ -2188,7 +2188,7 @@ class Kvirt(object):
         currentdisk = 0
         diskpaths = []
         virtio_index, scsi_index, ide_index = 0, 0, 0
-        for element in list(root.getiterator('disk')):
+        for element in list(root.iter('disk')):
             disktype = element.get('device')
             device = element.find('target').get('dev')
             imagefiles = [element.find('source').get('file'), element.find('source').get('dev'),
@@ -2264,7 +2264,7 @@ class Kvirt(object):
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         found = False
         missing_disks = []
-        for element in list(root.getiterator('disk')):
+        for element in list(root.iter('disk')):
             disktype = element.get('device')
             diskdev = element.find('target').get('dev')
             diskbus = element.find('target').get('bus')
@@ -2356,7 +2356,7 @@ class Kvirt(object):
             common.pprint("VM %s not found" % name, color='red')
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         networktype, mac, source = None, None, None
-        for element in list(root.getiterator('interface')):
+        for element in list(root.iter('interface')):
             device = "eth%s" % nicnumber
             if device == interface:
                 mac = element.find('mac').get('address')
@@ -2502,8 +2502,8 @@ class Kvirt(object):
             return {'result': 'failure', 'reason': "Pool %s not found" % poolname}
         poolxml = pool.XMLDesc(0)
         root = ET.fromstring(poolxml)
-        pooltype = list(root.getiterator('pool'))[0].get('type')
-        poolpath = list(root.getiterator('path'))[0].text
+        pooltype = list(root.iter('pool'))[0].get('type')
+        poolpath = list(root.iter('path'))[0].text
         downloadpath = poolpath if pooltype == 'dir' else '/tmp'
         if shortimage_uncompressed in volumes:
             common.pprint("Image %s already there.Leaving..." % shortimage_uncompressed, color="blue")
@@ -2556,9 +2556,9 @@ class Kvirt(object):
                                                                                              cmd)
                 os.system(cmd)
         if pooltype in ['logical', 'zfs']:
-            product = list(root.getiterator('product'))
+            product = list(root.iter('product'))
             if product:
-                thinpool = list(root.getiterator('product'))[0].get('name')
+                thinpool = list(root.iter('product'))[0].get('name')
             else:
                 thinpool = None
             self.add_image_to_deadpool(poolname, pooltype, poolpath, shortimage_uncompressed, thinpool)
@@ -2671,7 +2671,7 @@ class Kvirt(object):
             netxml = network.XMLDesc(0)
             cidr = 'N/A'
             root = ET.fromstring(netxml)
-            ip = list(root.getiterator('ip'))
+            ip = list(root.iter('ip'))
             if ip:
                 attributes = ip[0].attrib
                 firstip = attributes.get('address')
@@ -2682,18 +2682,18 @@ class Kvirt(object):
                 cidr = ipnet.cidr
             else:
                 ip = None
-            dhcp = list(root.getiterator('dhcp'))
+            dhcp = list(root.iter('dhcp'))
             if dhcp:
                 dhcp = True
             else:
                 dhcp = False
-            domain = list(root.getiterator('domain'))
+            domain = list(root.iter('domain'))
             if domain:
                 attributes = domain[0].attrib
                 domainname = attributes.get('name')
             else:
                 domainname = networkname
-            forward = list(root.getiterator('forward'))
+            forward = list(root.iter('forward'))
             if forward:
                 attributes = forward[0].attrib
                 mode = attributes.get('mode')
@@ -2703,7 +2703,7 @@ class Kvirt(object):
             # if ip is not None:
             #    networks[networkname]['ip'] = ip
             plan = 'N/A'
-            for element in list(root.getiterator('{kvirt}info')):
+            for element in list(root.iter('{kvirt}info')):
                 e = element.find('{kvirt}plan')
                 if e is not None:
                     plan = e.text
@@ -2713,10 +2713,10 @@ class Kvirt(object):
                 continue
             netxml = conn.interfaceLookupByName(interface).XMLDesc(0)
             root = ET.fromstring(netxml)
-            bridge = list(root.getiterator('bridge'))
+            bridge = list(root.iter('bridge'))
             if not bridge:
                 continue
-            ip = list(root.getiterator('ip'))
+            ip = list(root.iter('ip'))
             if ip:
                 attributes = ip[0].attrib
                 ip = attributes.get('address')
@@ -2730,7 +2730,7 @@ class Kvirt(object):
             if ip is not None:
                 networks[interface]['ip'] = ip
             plan = 'N/A'
-            for element in list(root.getiterator('{kvirt}info')):
+            for element in list(root.iter('{kvirt}info')):
                 e = element.find('{kvirt}plan')
                 if e is not None:
                     plan = e.text
@@ -2761,7 +2761,7 @@ class Kvirt(object):
         for vm in conn.listAllDomains(0):
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
-            for element in list(root.getiterator('interface')):
+            for element in list(root.iter('interface')):
                 networktype = element.get('type')
                 if networktype == 'bridge':
                     network = element.find('source').get('bridge')
@@ -2781,7 +2781,7 @@ class Kvirt(object):
             return networks
         xml = vm.XMLDesc(0)
         root = ET.fromstring(xml)
-        for element in list(root.getiterator('interface')):
+        for element in list(root.iter('interface')):
             networktype = element.get('type')
             if networktype == 'bridge':
                 network = element.find('source').get('bridge')
@@ -2801,7 +2801,7 @@ class Kvirt(object):
             return None
         netxml = net.XMLDesc(0)
         root = ET.fromstring(netxml)
-        bridge = list(root.getiterator('bridge'))
+        bridge = list(root.iter('bridge'))
         if bridge:
             attributes = bridge[0].attrib
             bridge = attributes.get('name')
@@ -2812,15 +2812,15 @@ class Kvirt(object):
         pool = conn.storagePoolLookupByName(pool)
         poolxml = pool.XMLDesc(0)
         root = ET.fromstring(poolxml)
-        pooltype = list(root.getiterator('pool'))[0].get('type')
+        pooltype = list(root.iter('pool'))[0].get('type')
         if pooltype in ['dir', 'logical', 'zfs']:
-            poolpath = list(root.getiterator('path'))[0].text
+            poolpath = list(root.iter('path'))[0].text
         else:
-            poolpath = list(root.getiterator('device'))[0].get('path')
+            poolpath = list(root.iter('device'))[0].get('path')
         if pooltype == 'logical':
-            product = list(root.getiterator('product'))
+            product = list(root.iter('product'))
             if product:
-                thinpool = list(root.getiterator('product'))[0].get('name')
+                thinpool = list(root.iter('product'))[0].get('name')
                 poolpath += " (thinpool:%s)" % thinpool
         return poolpath
 
@@ -2889,7 +2889,7 @@ class Kvirt(object):
         oldvm = conn.lookupByName(name)
         oldxml = oldvm.XMLDesc(0)
         tree = ET.fromstring(oldxml)
-        for disk in list(tree.getiterator('disk')):
+        for disk in list(tree.iter('disk')):
             source = disk.find('source')
             oldpath = source.get('file')
             oldvolume = self.conn.storageVolLookupByPath(oldpath)
@@ -2899,7 +2899,7 @@ class Kvirt(object):
             oldvolumexml = oldvolume.XMLDesc(0)
             backing = None
             voltree = ET.fromstring(oldvolumexml)
-            for b in list(voltree.getiterator('backingStore')):
+            for b in list(voltree.iter('backingStore')):
                 backingstoresource = b.find('path')
                 if backingstoresource is not None:
                     backing = backingstoresource.text
@@ -2947,9 +2947,9 @@ class Kvirt(object):
             return
         netxml = network.XMLDesc()
         netroot = ET.fromstring(netxml)
-        for host in list(netroot.getiterator('host')):
+        for host in list(netroot.iter('host')):
             iphost = host.get('ip')
-            for host in list(netroot.getiterator('host')):
+            for host in list(netroot.iter('host')):
                 iphost = host.get('ip')
                 hostname = host.find('hostname')
                 if hostname is not None and hostname.text == name:
@@ -2966,9 +2966,9 @@ class Kvirt(object):
             return {'result': 'failure', 'reason': "Network %s not found" % domain}
         netxml = network.XMLDesc()
         netroot = ET.fromstring(netxml)
-        for host in list(netroot.getiterator('host')):
+        for host in list(netroot.iter('host')):
             iphost = host.get('ip')
-            for host in list(netroot.getiterator('host')):
+            for host in list(netroot.iter('host')):
                 iphost = host.get('ip')
                 hostname = host.find('hostname')
                 results.append([hostname.text, 'A', '0', iphost])
