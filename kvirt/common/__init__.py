@@ -194,6 +194,8 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             netdata = yaml.safe_dump(netdata, default_flow_style=False, encoding='utf-8').decode("utf-8")
         else:
             netdata = ''
+    else:
+        netdata = None
     existing = "%s.cloudinit" % name if not os.path.exists('/i_am_a_container') else "/workdir/%s.cloudinit" % name
     if os.path.exists(existing):
         pprint("using cloudinit from existing %s for %s" % (existing, name), color="blue")
