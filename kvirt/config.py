@@ -671,14 +671,14 @@ class Kconfig(Kbaseconfig):
                 if not os.path.exists(notifyscript):
                     notifycmd = None
                     notifyscript = None
-                    common.pprint("Notification required but missing notifyscript", color='yellow')
+                    common.pprint("Notification required for %s but missing notifyscript" % name, color='yellow')
                 else:
                     files.append({'path': '/root/.notify.sh', 'origin': notifyscript})
                     notifycmd = "bash /root/.notify.sh"
             for notifymethod in notifymethods:
                 if notifymethod == 'pushbullet':
                     if pushbullettoken is None:
-                        common.pprint("Notification required but missing pushbullettoken", color='yellow')
+                        common.pprint("Notification required for %s but missing pushbullettoken" % name, color='yellow')
                     elif notifyscript is None and notifycmd is None:
                         continue
                     else:
@@ -694,9 +694,9 @@ class Kconfig(Kbaseconfig):
                             cmds.append(pbcmd)
                 elif notifymethod == 'slack':
                     if slackchannel is None:
-                        common.pprint("Notification required but missing slack channel", color='yellow')
+                        common.pprint("Notification required for %s but missing slack channel" % name, color='yellow')
                     elif slacktoken is None:
-                        common.pprint("Notification required but missing slacktoken", color='yellow')
+                        common.pprint("Notification required for %s but missing slacktoken" % name, color='yellow')
                     else:
                         title = "Vm %s on %s report" % (name, self.client)
                         slackcmd = "info=`%s 2>&1 | sed 's/\\x2/ /g'`;" % notifycmd
@@ -712,11 +712,11 @@ class Kconfig(Kbaseconfig):
                             cmds.append(slackcmd)
                 elif notifymethod == 'mail':
                     if mailserver is None:
-                        common.pprint("Notification required but missing mailserver", color='yellow')
+                        common.pprint("Notification required for %s but missing mailserver" % name, color='yellow')
                     elif mailfrom is None:
-                        common.pprint("Notification required but missing mailfrom", color='yellow')
+                        common.pprint("Notification required for %s but missing mailfrom" % name, color='yellow')
                     elif not mailto:
-                        common.pprint("Notification required but missing mailto", color='yellow')
+                        common.pprint("Notification required for %s but missing mailto" % name, color='yellow')
                     else:
                         title = "Vm %s on %s report" % (name, self.client)
                         now = datetime.now()
@@ -759,6 +759,7 @@ $INFO
             if privatekeyfile is not None and publickeyfile is not None:
                 privatekey = open(privatekeyfile).read().strip()
                 publickey = open(publickeyfile).read().strip()
+                common.pprint("Injecting private key for %s" % name, color='yellow')
                 if files:
                     files.append({'path': '/root/.ssh/id_rsa', 'content': privatekey})
                     files.append({'path': '/root/.ssh/id_rsa.pub', 'content': publickey})
