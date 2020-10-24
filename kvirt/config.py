@@ -748,7 +748,7 @@ $INFO
                     common.pprint("Invalid method %s" % notifymethod, color='red')
         ips = [overrides[key] for key in overrides if key.startswith('ip')]
         netmasks = [overrides[key] for key in overrides if key.startswith('netmask')]
-        if privatekey:
+        if privatekey and self.type == 'kvm':
             privatekeyfile, publickeyfile = None, None
             for path in ["~/.kcli/id_rsa", "~/.kcli/id_dsa", "~/.ssh/id_rsa", "~/.ssh/id_dsa"]:
                 expanded_path = os.path.expanduser(path)
@@ -765,6 +765,17 @@ $INFO
                 else:
                     files = [{'path': '/root/.ssh/id_rsa', 'content': privatekey}]
                     files = [{'path': '/root/.ssh/id_rsa.pub', 'content': publickey}]
+                if self.host in ['127.0.0.1', 'localhost']:
+                    authorized_keys_file = os.path.expanduser('~/.ssh/authorized_keys')
+                    found = False
+                    if os.path.exists(authorized_keys_file):
+                        for line in open(authorized_keys_file).readlines():
+                            if publickey in line:
+                                found = True
+                                break
+                        if not found:
+                            with open(authorized_keys_file, 'a') as f:
+                                f.write(publickey)
         if cmds and 'reboot' in cmds:
             while 'reboot' in cmds:
                 cmds.remove('reboot')
