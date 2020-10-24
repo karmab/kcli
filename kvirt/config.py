@@ -775,6 +775,7 @@ $INFO
                                 found = True
                                 break
                         if not found:
+                            common.pprint("Adding public key to authorized_keys_file for %s" % name, color='yellow')
                             with open(authorized_keys_file, 'a') as f:
                                 f.write(publickey)
         if cmds and 'reboot' in cmds:
