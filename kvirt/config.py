@@ -764,8 +764,8 @@ $INFO
                     files.append({'path': '/root/.ssh/id_rsa', 'content': privatekey})
                     files.append({'path': '/root/.ssh/id_rsa.pub', 'content': publickey})
                 else:
-                    files = [{'path': '/root/.ssh/id_rsa', 'content': privatekey}]
-                    files = [{'path': '/root/.ssh/id_rsa.pub', 'content': publickey}]
+                    files = [{'path': '/root/.ssh/id_rsa', 'content': privatekey},
+                             {'path': '/root/.ssh/id_rsa.pub', 'content': publickey}]
                 if self.host in ['127.0.0.1', 'localhost']:
                     authorized_keys_file = os.path.expanduser('~/.ssh/authorized_keys')
                     found = False
