@@ -109,6 +109,9 @@ $ kcli create vm -i centos7 -P memory=4096 -P numcpus=4
 # Pass disks, networks and even cmds
 $ kcli create vm -i CentOS-7-x86_64-GenericCloud.qcow2 -P disks=[10,20] -P nets=[default] -P cmds=['yum -y install nc']
 
+# Use more advanced information for nets
+$ kcli create vm -i centos8 -P nets=['{"name": "default", "type": "e1000"}']
+
 # Create a vm from a custom profile
 $ kcli create vm -p myprofile myvm
 """
