@@ -91,6 +91,11 @@ fi """ % (timeout, crd, crd, crd)
     return result
 
 
+def local_ip(network):
+    cmd = """ip a s %s | grep 'inet[[:space:]]' | tail -1 | awk '{print $2}' | cut -d "/" -f 1""" % network
+    return os.popen(cmd).read().strip()
+
+
 jinjafilters = {'basename': basename, 'dirname': dirname, 'ocpnodes': ocpnodes, 'none': none, 'type': _type,
                 'certificate': certificate, 'base64': base64, 'githubversion': githubversion,
-                'defaultnodes': defaultnodes, 'waitcrd': waitcrd}
+                'defaultnodes': defaultnodes, 'waitcrd': waitcrd, 'local_ip': local_ip}
