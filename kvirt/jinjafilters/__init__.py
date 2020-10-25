@@ -92,7 +92,7 @@ fi """ % (timeout, crd, crd, crd)
 
 
 def local_ip(network):
-    cmd = """ip a s %s | grep 'inet[[:space:]]' | tail -1 | awk '{print $2}' | cut -d "/" -f 1""" % network
+    cmd = """ip a s %s 2>/dev/null | grep 'inet[[:space:]]' | tail -1 | awk '{print $2}' | cut -d "/" -f 1""" % network
     return os.popen(cmd).read().strip()
 
 
