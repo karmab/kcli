@@ -20,7 +20,7 @@ import yaml
 
 virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere', 'packet']
 cloudplatforms = ['aws', 'gcp']
-DEFAULT_TAG = '4.5'
+DEFAULT_TAG = '4.6'
 
 
 def get_installer_version():
@@ -476,7 +476,7 @@ def create(config, plandir, cluster, overrides):
         for asset in calicoassets:
             fetch(asset, manifestsdir)
     call('openshift-install --dir=%s create ignition-configs' % clusterdir, shell=True)
-    if masters == 1:
+    if masters < 3:
         version_match = re.match("4.([0-9]*).*", INSTALLER_VERSION)
         COS_VERSION = "4%s" % version_match.group(1) if version_match is not None else '45'
         if upstream or int(COS_VERSION) > 43:
@@ -732,7 +732,7 @@ def create(config, plandir, cluster, overrides):
     call("oc adm taint nodes -l node-role.kubernetes.io/master node-role.kubernetes.io/master:NoSchedule-", shell=True)
     pprint("Deploying certs autoapprover cronjob", color='blue')
     call("oc create -f %s/autoapprovercron.yml" % clusterdir, shell=True)
-    if masters == 1 and int(COS_VERSION) > 45:
+    if masters < 3 and int(COS_VERSION) > 45:
         pprint("Patching authentication for single master", color='yellow')
         authcommand = "oc patch authentications.operator.openshift.io "
         authcommand += "cluster -p='{\"spec\": {\"unsupportedConfigOverrides\": "
