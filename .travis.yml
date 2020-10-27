@@ -1,24 +1,29 @@
 language: python
-dist: xenial
+dist: bionic
 sudo: required
 python:
-- 3.5
-virtualenv:	
-  system_site_packages: true
+    - 3.9
+
+addons:
+    apt:
+        update: true
+        packages:
+            - libvirt-daemon
+            - libvirt-daemon-system
+            - libvirt0
+            - qemu-system-x86
+            - qemu-utils
+            - qemu-kvm
+            - tree
 
 before_install:
-- pip3 install pep8 misspellings stdeb requests
+- pip3 install stdeb requests
 - pip3 install setuptools --upgrade
-
-install:
-    - sudo apt-get update
-    - sudo apt-get -y install libvirt-daemon libvirt0 qemu-system-x86 qemu-utils qemu-kvm tree
 
 before_script:
     - travis/setup_hypervisor.sh
 
 script:
-    - travis/linting.sh
     - travis/build.sh
     - travis/testing.sh
 
