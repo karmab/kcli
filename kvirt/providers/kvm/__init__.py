@@ -1097,7 +1097,7 @@ class Kvirt(object):
                 memory = int(memory)
             usedmemory += memory
         print("Vms Running: %s" % totalvms)
-        print("Memory Used: %sMB of %sMB" % (usedmemory, totalmemory))
+        print("Total Memory Assigned: %sMB of %sMB" % (usedmemory, totalmemory))
         for pool in conn.listStoragePools():
             poolname = pool
             pool = conn.storagePoolLookupByName(pool)

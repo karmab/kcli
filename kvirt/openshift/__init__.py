@@ -60,7 +60,7 @@ def get_downstream_installer(nightly=False, macosx=False, tag=None):
     elif str(tag).count('.') == 1:
         repo += '/latest-%s' % tag
     else:
-        repo += '/%s' % tag
+        repo += '/%s' % tag.replace('-x86_64', '')
     INSTALLSYSTEM = 'mac' if os.path.exists('/Users') or macosx else 'linux'
     msg = 'Downloading openshift-install from https://mirror.openshift.com/pub/openshift-v4/clients/%s' % repo
     pprint(msg, color='blue')
@@ -320,6 +320,7 @@ def create(config, plandir, cluster, overrides):
     disconnected_url = data.get('disconnected_url')
     disconnected_user = data.get('disconnected_user')
     disconnected_password = data.get('disconnected_password')
+    disconnected_prefix = data.get('disconnected_prefix', 'ocp4')
     tag = data.get('tag')
     pub_key = data.get('pub_key')
     pull_secret = pwd_path(data.get('pull_secret')) if not upstream else "%s/fake_pull.json" % plandir
@@ -356,11 +357,6 @@ def create(config, plandir, cluster, overrides):
             tag = 'registry.svc.ci.openshift.org/%s/release:%s' % (basetag, tag)
         os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = tag
         pprint("Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to %s" % tag, color='blue')
-    if disconnected_url is not None:
-        if '/' not in str(tag):
-            tag = '%s/release:%s' % (disconnected_url, tag)
-            os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = tag
-        pprint("Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to %s" % tag, color='blue')
     if find_executable('openshift-install') is None:
         if version == 'ci':
             run = get_ci_installer(pull_secret, tag=tag, upstream=upstream)
@@ -374,6 +370,11 @@ def create(config, plandir, cluster, overrides):
             pprint("Couldn't download openshift-install", color='red')
             os._exit(run)
         pprint("Move downloaded openshift-install somewhere in your path if you want to reuse it", color='blue')
+    if disconnected_url is not None:
+        if '/' not in str(tag):
+            tag = '%s/%s/release:%s' % (disconnected_url, disconnected_prefix, tag)
+            os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = tag
+        pprint("Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to %s" % tag, color='blue')
     INSTALLER_VERSION = get_installer_version()
     COMMIT_ID = os.popen('openshift-install version').readlines()[1].replace('built from commit', '').strip()
     if platform == 'packet' and not upstream:

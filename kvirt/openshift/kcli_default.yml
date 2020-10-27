@@ -72,6 +72,8 @@ cpupinning_worker:
 disconnected_url:
 disconnected_user:
 disconnected_password:
+disconnected_origin: quay.io
+disconnected_prefix: ocp4
 imagecontentsources: []
 ca:
 ipv6: false

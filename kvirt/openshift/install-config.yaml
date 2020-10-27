@@ -64,11 +64,11 @@ sshKey: |
 {% if disconnected_url != None -%}
 imageContentSources:
 - mirrors:
-  - {{ disconnected_url }}/ocp/release
+  - {{ disconnected_url }}/{{ disconnected_prefix }}/release
   source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
 - mirrors:
-  - {{ disconnected_url }}/ocp/release
-  source: registry.svc.ci.openshift.org/ocp/release
+  - {{ disconnected_url }}/{{ disconnected_prefix }}/release
+  source: {{ disconnected_origin }}/ocp/release
 {%- elif imagecontentsources %}
 imageContentSources:
 {%- for source in imagecontentsources %}
