@@ -1487,7 +1487,7 @@ def get_oc(version='latest', macosx=False):
 
 
 def kube_create_app(config, appdir, overrides={}):
-    appdata = {'cluster': 'testk', 'domain': 'karmalabs.com', 'masters': 1}
+    appdata = {'cluster': 'testk', 'domain': 'karmalabs.com', 'masters': 1, 'workers': 0}
     cluster = appdata['cluster']
     cwd = os.getcwd()
     overrides['cwd'] = cwd
