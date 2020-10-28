@@ -1554,7 +1554,7 @@ def make_iso(name, tmpdir, userdata, metadata, netdata):
 def patch_ceo(path):
     separators = (',', ':')
     indent = 0
-    pprint("Patching bootkube in bootstrap ignition to handle single master", color='yellow')
+    pprint("Patching bootkube in bootstrap ignition to handle less than 3 masters", color='yellow')
     paths = []
     storagefinal = []
     with open(path, 'r') as ignition:

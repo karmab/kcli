@@ -2014,6 +2014,13 @@ $INFO
         while ip is None:
             info = k.info(name)
             user, ip = info.get('user'), info.get('ip')
+            if user is not None and ip is not None:
+                testcmd = common.ssh(name, user=user, ip=ip, tunnel=self.tunnel, tunnelhost=self.tunnelhost,
+                                     tunnelport=self.tunnelport, tunneluser=self.tunneluser, insecure=self.insecure,
+                                     cmd='id -un')
+                if os.popen(testcmd).read().strip() != user:
+                    common.pprint("Gathered ip not functional...", color='yellow')
+                    ip = None
             common.pprint("Waiting for vm to be accessible...", color='blue')
             sleep(5)
         sleep(5)

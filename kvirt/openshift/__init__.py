@@ -733,7 +733,7 @@ def create(config, plandir, cluster, overrides):
     pprint("Deploying certs autoapprover cronjob", color='blue')
     call("oc create -f %s/autoapprovercron.yml" % clusterdir, shell=True)
     if masters < 3 and int(COS_VERSION) > 45:
-        pprint("Patching authentication for single master", color='yellow')
+        pprint("Patching authentication for less than 3 masters", color='yellow')
         authcommand = "oc patch authentications.operator.openshift.io "
         authcommand += "cluster -p='{\"spec\": {\"unsupportedConfigOverrides\": "
         authcommand += "{\"useUnsupportedUnsafeNonHANonProductionUnstableOAuthServer\": true}}}' --type=merge"
