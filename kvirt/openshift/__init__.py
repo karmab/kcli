@@ -252,14 +252,20 @@ def create(config, plandir, cluster, overrides):
             'apps': [],
             'minimal': False}
     data.update(overrides)
-    data['cluster'] = overrides.get('cluster', cluster if cluster is not None else 'testk')
-    plan = cluster if cluster is not None else data['cluster']
+    if 'cluster' in overrides:
+        clustervalue = overrides.get('cluster')
+    elif cluster is not None:
+        clustervalue = cluster
+    else:
+        clustervalue = 'testk'
+    data['cluster'] = clustervalue
+    pprint("Deploying cluster %s" % clustervalue, color='blue')
+    plan = cluster if cluster is not None else clustervalue
     overrides['kubetype'] = 'openshift'
     apps = overrides.get('apps', [])
     if ('localstorage' in apps or 'ocs' in apps) and 'extra_disks' not in overrides\
             and 'extra_master_disks' not in overrides and 'extra_worker_disks' not in overrides:
         pprint("Storage apps require extra disks to be set", color='yellow')
-    data['cluster'] = overrides.get('cluster', cluster)
     overrides['kube'] = data['cluster']
     installparam = overrides.copy()
     masters = data.get('masters', 1)
