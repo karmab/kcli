@@ -1486,7 +1486,7 @@ def get_oc(version='latest', macosx=False):
             move('oc', '/workdir/oc')
 
 
-def kube_create_app(config, appdir, overrides={}):
+def kube_create_app(config, appdir, overrides={}, outputdir=None):
     appdata = {'cluster': 'testk', 'domain': 'karmalabs.com', 'masters': 1, 'workers': 0}
     cluster = appdata['cluster']
     cwd = os.getcwd()
@@ -1500,12 +1500,16 @@ def kube_create_app(config, appdir, overrides={}):
     with TemporaryDirectory() as tmpdir:
         for root, dirs, files in os.walk(appdir):
             for name in files:
-                # pprint("Copying %s to tmpdir %s" % (name, tmpdir), color='blue')
                 rendered = config.process_inputfile(cluster, "%s/%s" % (appdir, name), overrides=appdata)
-                with open("%s/%s" % (tmpdir, name), 'w') as f:
+                destfile = "%s/%s" % (outputdir, name) if outputdir is not None else "%s/%s" % (tmpdir, name)
+                with open(destfile, 'w') as f:
                     f.write(rendered)
-        os.chdir(tmpdir)
-        result = call('bash %s/install.sh' % tmpdir, shell=True)
+        if outputdir is None:
+            os.chdir(tmpdir)
+            result = call('bash %s/install.sh' % tmpdir, shell=True)
+        else:
+            pprint("Copied artifacts to %s" % outputdir)
+            result = 0
     os.chdir(cwd)
     return result
 
@@ -1518,7 +1522,6 @@ def kube_delete_app(config, appdir, overrides={}):
     with TemporaryDirectory() as tmpdir:
         for root, dirs, files in os.walk(appdir):
             for name in files:
-                # pprint("Copying %s to tmpdir %s" % (name, tmpdir), color='blue')
                 if name == 'uninstall.sh':
                     found = True
                 rendered = config.process_inputfile(cluster, "%s/%s" % (appdir, name), overrides=overrides)

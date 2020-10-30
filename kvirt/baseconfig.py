@@ -991,10 +991,10 @@ class Kbaseconfig:
         appdir = plandir + '/apps'
         return sorted([x for x in os.listdir(appdir) if os.path.isdir("%s/%s" % (appdir, x)) and x != '__pycache__'])
 
-    def create_app_generic(self, app, overrides={}):
+    def create_app_generic(self, app, overrides={}, outputdir=None):
         plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
         appdir = "%s/apps/%s" % (plandir, app)
-        common.kube_create_app(self, appdir, overrides=overrides)
+        common.kube_create_app(self, appdir, overrides=overrides, outputdir=outputdir)
 
     def delete_app_generic(self, app, overrides={}):
         plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
@@ -1013,10 +1013,10 @@ class Kbaseconfig:
             with open(default_parameter_file, 'r') as f:
                 print(f.read().strip())
 
-    def create_app_openshift(self, app, overrides={}):
+    def create_app_openshift(self, app, overrides={}, outputdir=None):
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
         appdir = "%s/apps/%s" % (plandir, app)
-        common.kube_create_app(self, appdir, overrides=overrides)
+        common.kube_create_app(self, appdir, overrides=overrides, outputdir=outputdir)
 
     def delete_app_openshift(self, app, overrides={}):
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
