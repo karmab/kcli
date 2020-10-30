@@ -7,7 +7,7 @@ import json
 import os
 import sys
 from kvirt.common import info, pprint, gen_mac, get_oc, get_values, pwd_path, insecure_fetch, fetch
-from kvirt.common import get_commit_rhcos, get_latest_fcos, kube_create_app, patch_ceo
+from kvirt.common import get_commit_rhcos, get_latest_fcos, kube_create_app, patch_bootstrap
 from kvirt.common import ssh, scp, _ssh_credentials, word2number
 from kvirt.openshift.calico import calicoassets
 import re
@@ -486,7 +486,9 @@ def create(config, plandir, cluster, overrides):
         version_match = re.match("4.([0-9]*).*", INSTALLER_VERSION)
         COS_VERSION = "4%s" % version_match.group(1) if version_match is not None else '45'
         if upstream or int(COS_VERSION) > 43:
-            patch_ceo("%s/bootstrap.ign" % clusterdir)
+            bootstrap_patch = open('%s/bootstrap_patch.sh' % plandir).read()
+            bootstrap_service = open('%s/bootstrap_patch.service' % plandir).read()
+            patch_bootstrap("%s/bootstrap.ign" % clusterdir, bootstrap_patch, bootstrap_service)
     staticdata = gather_dhcp(data, platform)
     domain = data.get('domain')
     if staticdata:
@@ -738,12 +740,6 @@ def create(config, plandir, cluster, overrides):
     call("oc adm taint nodes -l node-role.kubernetes.io/master node-role.kubernetes.io/master:NoSchedule-", shell=True)
     pprint("Deploying certs autoapprover cronjob", color='blue')
     call("oc create -f %s/autoapprovercron.yml" % clusterdir, shell=True)
-    if masters < 3 and int(COS_VERSION) > 45:
-        pprint("Patching authentication for less than 3 masters", color='yellow')
-        authcommand = "oc patch authentications.operator.openshift.io "
-        authcommand += "cluster -p='{\"spec\": {\"unsupportedConfigOverrides\": "
-        authcommand += "{\"useUnsupportedUnsafeNonHANonProductionUnstableOAuthServer\": true}}}' --type=merge"
-        call(authcommand, shell=True)
     if not minimal:
         installcommand = 'openshift-install --dir=%s wait-for install-complete' % clusterdir
         installcommand += " || %s" % installcommand
