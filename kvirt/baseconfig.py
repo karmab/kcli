@@ -36,7 +36,7 @@ class Kbaseconfig:
     """
 
     """
-    def __init__(self, client=None, containerclient=None, debug=False, quiet=False):
+    def __init__(self, client=None, containerclient=None, debug=False, quiet=False, offline=False):
         self.debug = debug
         homedir = os.environ.get('HOME')
         cmdir = "%s/.kcli_cm" % homedir
@@ -56,9 +56,8 @@ class Kbaseconfig:
                     os._exit(1)
         if not os.path.exists(inifile):
             defaultclient = 'local'
-            if os.path.exists('/var/run/libvirt/libvirt-sock'):
-                _type = 'kvm'
-            else:
+            _type = 'kvm'
+            if not os.path.exists('/var/run/libvirt/libvirt-sock') and not offline:
                 common.pprint("No configuration found nor local hypervisor", color='red')
                 os._exit(1)
             self.ini = {'default': {'client': defaultclient}, defaultclient:

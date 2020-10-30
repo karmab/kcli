@@ -802,7 +802,7 @@ def create_app_generic(args):
     elif not os.path.isabs(os.environ['KUBECONFIG']):
         os.environ['KUBECONFIG'] = "%s/%s" % (os.getcwd(), os.environ['KUBECONFIG'])
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     available_apps = baseconfig.list_apps_generic(quiet=True)
     for app in apps:
         if app not in available_apps:
@@ -827,7 +827,7 @@ def create_app_openshift(args):
     OPENSHIFT_VERSION = os.popen('oc version').readlines()[1].split(" ")[2].strip().replace('v', '')[:3]
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     overrides['openshift_version'] = OPENSHIFT_VERSION
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     available_apps = baseconfig.list_apps_openshift(quiet=True)
     for app in apps:
         if app not in available_apps:
@@ -849,7 +849,7 @@ def delete_app_generic(args):
     elif not os.path.isabs(os.environ['KUBECONFIG']):
         os.environ['KUBECONFIG'] = "%s/%s" % (os.getcwd(), os.environ['KUBECONFIG'])
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     available_apps = baseconfig.list_apps_generic(quiet=True)
     for app in apps:
         if app not in available_apps:
@@ -874,7 +874,7 @@ def delete_app_openshift(args):
     OPENSHIFT_VERSION = os.popen('oc version').readlines()[1].split(" ")[2].strip().replace('v', '')[:3]
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     overrides['openshift_version'] = OPENSHIFT_VERSION
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     available_apps = baseconfig.list_apps_openshift(quiet=True)
     for app in apps:
         if app not in available_apps:
@@ -886,7 +886,7 @@ def delete_app_openshift(args):
 
 def list_apps_generic(args):
     """List generic kube apps"""
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     apps = PrettyTable(["Name"])
     for app in baseconfig.list_apps_generic(quiet=True):
         apps.add_row([app])
@@ -895,7 +895,7 @@ def list_apps_generic(args):
 
 def list_apps_openshift(args):
     """List openshift kube apps"""
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     apps = PrettyTable(["Name"])
     for app in baseconfig.list_apps_openshift(quiet=True):
         apps.add_row([app])
