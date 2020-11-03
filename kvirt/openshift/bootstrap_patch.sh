@@ -14,7 +14,7 @@ oc patch clusterversion/version -p="$(cat <<- EOF
         unmanaged: true
 EOF
 )" --type=merge || return 1
-oc --replicas=1 deployment/etcd-quorum-guard -n openshift-etcd || return 1
+oc scale --replicas=1 deployment/etcd-quorum-guard -n openshift-etcd || return 1
 return 0
 }
 
