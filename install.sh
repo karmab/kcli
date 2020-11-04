@@ -8,11 +8,11 @@ NC='\033[0m'
 
 shell=$(basename $SHELL)
 packagefound=false
-if [ "$(which dnf)" != "" ] ; then 
+if [ "$(which dnf &>/dev/null)" != "" ] ; then 
   packagefound=true
   sudo dnf -y copr enable karmab/kcli
   sudo dnf -y install kcli
-elif [ "$(which apt-get)" != "" ] ; then
+elif [ "$(which apt-get &>/dev/null)" != "" ] ; then
   packagefound=true
   curl -s https://packagecloud.io/install/repositories/karmab/kcli/script.deb.sh | sudo bash
 fi
