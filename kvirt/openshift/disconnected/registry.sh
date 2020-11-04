@@ -3,6 +3,7 @@ yum -y install podman httpd httpd-tools jq bind-utils
 IP=$(hostname -I | cut -d' ' -f1)
 REVERSE_NAME=$(dig -x $IP +short | sed 's/\.[^\.]*$//')
 REGISTRY_NAME=${REVERSE_NAME:-$(hostname -f)}
+echo $REGISTRY_NAME:5000 > /root/url.txt
 REGISTRY_USER={{ disconnected_user if disconnected_user != None else 'dummy' }}
 REGISTRY_PASSWORD={{ disconnected_password if disconnected_password != None else 'dummy' }}
 mkdir -p /opt/registry/{auth,certs,data}
@@ -23,15 +24,3 @@ jq ".auths += {\"$REGISTRY_NAME:5000\": {\"auth\": \"$KEY\",\"email\": \"jhendri
 mv /root/temp.json $PULL_SECRET
 oc adm release mirror -a $PULL_SECRET --from=$OPENSHIFT_RELEASE_IMAGE --to-release-image=$LOCAL_REG/$LOCAL_REPO:$OCP_RELEASE --to=$LOCAL_REG/$LOCAL_REPO
 echo "{\"auths\": {\"$REGISTRY_NAME:5000\": {\"auth\": \"$KEY\", \"email\": \"jhendrix@karmalabs.com\"}}}" > /root/temp.json
-
-echo "additionalTrustBundle: |" >> /root/results.txt
-sed -e 's/^/  /' /opt/registry/certs/domain.crt >>  /root/results.txt
-cat << EOF >> /root/results.txt
-imageContentSources:
-- mirrors:
-  - $REGISTRY_NAME:5000/ocp/release
-  source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
-- mirrors:
-  - $REGISTRY_NAME:5000/ocp/release
-  source: registry.svc.ci.openshift.org/ocp/release
-EOF

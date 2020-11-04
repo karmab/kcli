@@ -657,20 +657,30 @@ def create(config, plandir, cluster, overrides):
     if platform in virtplatforms:
         if disconnected_deploy:
             disconnected_vm = "%s-disconnecter" % cluster
-            cmd = "cat /opt/registry/certs/domain.crt"
             pprint("Deploying disconnected vm %s" % disconnected_vm, color='blue')
-            result = config.plan(plan, inputfile='%s/disconnected.yml' % plandir, overrides=overrides, wait=True)
+            result = config.plan(plan, inputfile='%s/disconnected.yml' % plandir, overrides=data, wait=True)
             if result['result'] != 'success':
                 os._exit(1)
             disconnected_ip = _ssh_credentials(k, disconnected_vm)[1]
+            cacmd = "cat /opt/registry/certs/domain.crt"
             cacmd = ssh(disconnected_vm, ip=disconnected_ip, user='root', tunnel=config.tunnel,
                         tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
-                        insecure=True, cmd=cmd)
+                        insecure=True, cmd=cacmd)
             disconnected_ca = os.popen(cacmd).read()
-            if 'ca' in overrides:
-                overrides['ca'] += disconnected_ca
+            if 'ca' in data:
+                data['ca'] += disconnected_ca
             else:
-                overrides['ca'] = disconnected_ca
+                data['ca'] = disconnected_ca
+            pullcmd = "cat /root/temp.json"
+            pullcmd = ssh(disconnected_vm, ip=disconnected_ip, user='root', tunnel=config.tunnel,
+                          tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
+                          insecure=True, cmd=pullcmd)
+            data['pull_secret'] = re.sub(r"\s", "", os.popen(pullcmd).read())
+            urlcmd = "cat /root/url.txt"
+            urlcmd = ssh(disconnected_vm, ip=disconnected_ip, user='root', tunnel=config.tunnel,
+                         tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
+                         insecure=True, cmd=urlcmd)
+            data['disconnected_url'] = os.popen(urlcmd).read()
         pprint("Deploying bootstrap", color='blue')
         result = config.plan(plan, inputfile='%s/bootstrap.yml' % plandir, overrides=overrides)
         if result['result'] != 'success':
