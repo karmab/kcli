@@ -2034,7 +2034,7 @@ $INFO
             sshcmd = common.ssh(name, user=user, ip=ip, tunnel=self.tunnel, tunnelhost=self.tunnelhost,
                                 tunnelport=self.tunnelport, tunneluser=self.tunneluser, insecure=self.insecure, cmd=cmd)
             output = os.popen(sshcmd).read()
-            if 'cloud-init' in output.lower() and 'finished' in output:
+            if 'kcli boot finished' in output:
                 done = True
             output = output.replace(oldoutput, '')
             if not quiet:
