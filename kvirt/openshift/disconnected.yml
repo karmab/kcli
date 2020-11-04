@@ -1,0 +1,30 @@
+{{ cluster }}-disconnecter:
+ image: centos8
+ pool: {{ pool }}
+ numcpus: {{ numcpus }}
+ keys: {{ keys }}
+ memory: {{ memory }}
+ nets:
+ - {{ network }}
+ - default
+ disks:
+ - {{ disk_size }}
+ files:
+ - origin: disconnected/get_oc.sh
+   path: /root/get_oc.sh
+   mode: 700
+ - origin: disconnected/extras.sh
+   path: /root/extras.sh
+   mode: 700
+ - origin: disconnected/pull_and_push.sh
+   path: /root/bin/pull_and_push.sh
+   mode: 700
+ - origin: {{ pullsecret }}
+   path: /root/openshift_pull.json
+ - origin: disconnected/registry.sh
+   path: /root/registry.sh
+   mode: 700
+ cmds:
+ - bash /root/get_oc.sh
+ - bash /root/registry.sh
+ - bash /root/extras.sh

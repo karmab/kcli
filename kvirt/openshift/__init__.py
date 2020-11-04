@@ -304,8 +304,6 @@ def create(config, plandir, cluster, overrides):
     if ':' in api_ip:
         ipv6 = True
     ingress_ip = data.get('ingress_ip')
-    if ingress_ip is None:
-        ingress_ip = api_ip
     public_api_ip = data.get('public_api_ip')
     network = data.get('network')
     if platform == 'packet':
@@ -661,7 +659,7 @@ def create(config, plandir, cluster, overrides):
             disconnected_vm = "%s-disconnecter" % cluster
             cmd = "cat /opt/registry/certs/domain.crt"
             pprint("Deploying disconnected vm %s" % disconnected_vm, color='blue')
-            result = config.plan(plan, inputfile='%s/disconnected' % plandir, overrides=overrides, wait=True)
+            result = config.plan(plan, inputfile='%s/disconnected.yml' % plandir, overrides=overrides, wait=True)
             if result['result'] != 'success':
                 os._exit(1)
             disconnected_ip = _ssh_credentials(k, disconnected_vm)[1]

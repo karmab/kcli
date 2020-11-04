@@ -12,7 +12,7 @@ info: |
     You can deploy extra apps with the apps array and for each of the supported app, indicate with the variable
     ${app}_version with version to target (instead of latest)
 version: nightly
-tag: '4.5'
+tag: '4.6'
 pull_secret: openshift_pull.json
 image: rhcos45
 helper_image: CentOS-7-x86_64-GenericCloud.qcow2
