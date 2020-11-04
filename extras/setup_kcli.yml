@@ -1,0 +1,38 @@
+---
+- name: Install KCLI
+  hosts: localhost
+  gather_facts: false
+  remote_user: root
+  connection: local
+  become: false
+  vars:
+    - tmp_path: /tmp/install.sh
+  tasks:
+    - name: gather package list
+      package_facts:
+        manager: "auto"
+    - name: setup kcli dependencies
+      package:
+        name:
+          - podman
+      when: "'podman' not in ansible_facts['packages'] and 'docker' not in ansible_facts['packages']"
+    - name: install argcomplete (needed for the auto completion)
+      pip:
+        name: argcomplete
+    - name: setup kcli
+      block:
+        - name: get the setup script
+          get_url:
+            url: https://raw.githubusercontent.com/karmab/kcli/master/install.sh
+            dest: "{{ tmp_path }}"
+        - name: execute the setup script
+          command: 'sh {{ tmp_path }}'
+        - name: remove the setup script
+          file:
+            state: absent
+            path: "{{ tmp_path }}"
+        - name: setup auto completion
+          copy:
+            dest: /etc/profile.d/kcli.sh
+            content: 'eval "$(register-python-argcomplete kcli)"'
+
