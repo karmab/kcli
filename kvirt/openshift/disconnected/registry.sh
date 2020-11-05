@@ -15,13 +15,13 @@ podman create --name registry --net host --security-opt label=disable -v /opt/re
 podman start registry
 export UPSTREAM_REGISTRY="{{ disconnected_origin }}"
 export RELEASE_NAME='ocp/release'
-export OCP_RELEASE="4.6"
+export OCP_RELEASE="{{ tag }}"
 export LOCAL_REGISTRY="$REGISTRY_NAME:5000"
 export PULL_SECRET="/root/openshift_pull.json"
 KEY=$( echo -n $REGISTRY_USER:$REGISTRY_PASSWORD | base64)
 jq ".auths += {\"$REGISTRY_NAME:5000\": {\"auth\": \"$KEY\",\"email\": \"jhendrix@karmalabs.com\"}}" < $PULL_SECRET > /root/temp.json
 mv /root/temp.json $PULL_SECRET
-oc adm release mirror -a $PULL_SECRET --from=${UPSTREAM_REGISTRY}/${RELEASE_NAME}:${OCP_RELEASE} --to-release-image=${LOCAL_REGISTRY}/${RELEASE_NAME}:${OCP_RELEASE} --to=${LOCAL_REGISTRY}/{{ disconnected_prefix }}
+oc adm release mirror -a $PULL_SECRET --from=${UPSTREAM_REGISTRY}/${RELEASE_NAME}:${OCP_RELEASE} --to-release-image=${LOCAL_REGISTRY}/{{ disconnected_prefix }}/release:${OCP_RELEASE} --to=${LOCAL_REGISTRY}/{{ disconnected_prefix }}
 echo "{\"auths\": {\"$REGISTRY_NAME:5000\": {\"auth\": \"$KEY\", \"email\": \"jhendrix@karmalabs.com\"}}}" > /root/temp.json
 OPENSHIFT_VERSION=$( grep cluster-openshift-apiserver-operator /var/log/cloud-init-output.log  | head -1 | awk '{print $NF}' | sed 's/-cluster-openshift-apiserver-operator//')
 echo $REGISTRY_NAME:5000/{{ disconnected_prefix }}/release:$OPENSHIFT_VERSION > /root/version.txt

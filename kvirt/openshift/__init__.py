@@ -448,18 +448,19 @@ def create(config, plandir, cluster, overrides):
                      tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
                      insecure=True, cmd=urlcmd)
         disconnected_url = os.popen(urlcmd).read().strip()
+        overrides['disconnected_url'] = disconnected_url
         data['disconnected_url'] = disconnected_url
         if disconnected_user is None:
             disconnected_user = 'dummy'
         if disconnected_password is None:
             disconnected_password = 'dummy'
-        # versioncmd = "cat /root/version.txt"
-        # versioncmd = ssh(disconnected_vm, ip=disconnected_ip, user='root', tunnel=config.tunnel,
-        #                 tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
-        #                 insecure=True, cmd=versioncmd)
-        # disconnected_version = os.popen(versioncmd).read().strip()
-        # os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = disconnected_version
-        # pprint("Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to %s" % disconnected_version, color='blue')
+        versioncmd = "cat /root/version.txt"
+        versioncmd = ssh(disconnected_vm, ip=disconnected_ip, user='root', tunnel=config.tunnel,
+                         tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
+                         insecure=True, cmd=versioncmd)
+        disconnected_version = os.popen(versioncmd).read().strip()
+        os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = disconnected_version
+        pprint("Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to %s" % disconnected_version, color='blue')
     if disconnected_url is not None and disconnected_user is not None and disconnected_password is not None:
         key = "%s:%s" % (disconnected_user, disconnected_password)
         key = str(b64encode(key.encode('utf-8')), 'utf-8')
