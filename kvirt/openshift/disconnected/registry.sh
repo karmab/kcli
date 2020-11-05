@@ -24,3 +24,5 @@ jq ".auths += {\"$REGISTRY_NAME:5000\": {\"auth\": \"$KEY\",\"email\": \"jhendri
 mv /root/temp.json $PULL_SECRET
 oc adm release mirror -a $PULL_SECRET --from=$OPENSHIFT_RELEASE_IMAGE --to-release-image=$LOCAL_REG/$LOCAL_REPO:$OCP_RELEASE --to=$LOCAL_REG/$LOCAL_REPO
 echo "{\"auths\": {\"$REGISTRY_NAME:5000\": {\"auth\": \"$KEY\", \"email\": \"jhendrix@karmalabs.com\"}}}" > /root/temp.json
+OPENSHIFT_VERSION=$( grep cluster-openshift-apiserver-operator /var/log/cloud-init-output.log  | head -1 | awk '{print $NF}' | sed 's/-cluster-openshift-apiserver-operator//')
+echo $REGISTRY_NAME:5000/ocp/release:$OPENSHIFT_VERSION > /root/version.txt
