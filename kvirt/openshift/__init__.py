@@ -321,6 +321,7 @@ def create(config, plandir, cluster, overrides):
     masters = data.get('masters')
     workers = data.get('workers')
     disconnected_deploy = data.get('disconnected_deploy', False)
+    disconnected_reuse = data.get('disconnected_reuse', False)
     disconnected_url = data.get('disconnected_url')
     disconnected_user = data.get('disconnected_user')
     disconnected_password = data.get('disconnected_password')
@@ -430,7 +431,8 @@ def create(config, plandir, cluster, overrides):
         disconnected_vm = "%s-disconnecter" % cluster
         pprint("Deploying disconnected vm %s" % disconnected_vm, color='blue')
         data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
-        result = config.plan(plan, inputfile='%s/disconnected.yml' % plandir, overrides=data, wait=True)
+        disconnected_plan = "%s-reuse" % plan if disconnected_reuse else plan
+        result = config.plan(disconnected_plan, inputfile='%s/disconnected.yml' % plandir, overrides=data, wait=True)
         if result['result'] != 'success':
             os._exit(1)
         disconnected_ip = _ssh_credentials(k, disconnected_vm)[1]
@@ -470,6 +472,8 @@ def create(config, plandir, cluster, overrides):
         data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
     if ipv6:
         data['network_type'] = 'OVNKubernetes'
+        data['ipv6'] = True
+        overrides['ipv6'] = True
     installconfig = config.process_inputfile(cluster, "%s/install-config.yaml" % plandir, overrides=data)
     with open("%s/install-config.yaml" % clusterdir, 'w') as f:
         f.write(installconfig)

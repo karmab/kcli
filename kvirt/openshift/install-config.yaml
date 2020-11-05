@@ -13,7 +13,7 @@ metadata:
   name: {{ cluster }}
 networking:
   networkType: {{ network_type | default('OpenShiftSDN') }}
-{%- if baremetal %}
+{%- if ipv6 %}
   machineCIDR: {{ baremetal_machine_cidr }}
 {%- endif %}
   clusterNetworks:
@@ -64,7 +64,7 @@ sshKey: |
 {% if disconnected_url != None -%}
 imageContentSources:
 - mirrors:
-  - {{ disconnected_url }}/{{ disconnected_prefix }}/release
+  - {{ disconnected_url }}/{{ disconnected_prefix }}
   source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
 - mirrors:
   - {{ disconnected_url }}/{{ disconnected_prefix }}

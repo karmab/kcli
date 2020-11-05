@@ -602,7 +602,7 @@ Cloudinit is enabled by default and handles static networking configuration, hos
 
 For vms based on coreos, ignition is used instead of cloudinit although the syntax is the same. If $name.ign or $plan.ign are found in the current directory, their content will be merged. The extension .cloudinit does the same for cloudinit.
 
-To ease openshift deployment, when a node has a name in the $cluster-role-$num, where role can either be master, worker or bootstrap, additional paths are searched, namely $cluster-$role.ign, clusters/$cluster/$role.ign and $HOME/.kcli/clusters/$cluster/$role.ign
+To ease openshift deployment, when a node has a name in the \$cluster-role-\$num, where role can either be master, worker or bootstrap, additional paths are searched, namely \$cluster-\$role.ign, clusters/\$cluster/\$role.ign and \$HOME/.kcli/clusters/\$cluster/\$role.ign
 
 For ignition support on ovirt, you will need a version of ovirt >= 4.3.4. Note that this requires to use an openstack based rhcos image.
 
