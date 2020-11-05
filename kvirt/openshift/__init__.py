@@ -536,13 +536,14 @@ def create(config, plandir, cluster, overrides):
             overrides['virtual_router_id'] = word2number(cluster)
         pprint("Using keepalived virtual_router_id %s" % overrides['virtual_router_id'], color='blue')
         pprint("Using %s for api vip...." % api_ip, color='blue')
+        host_ip = api_ip if platform != "openstack" else public_api_ip
         ignore_hosts = data.get('ignore_hosts', False)
         if ignore_hosts:
             pprint("Ignoring /etc/hosts", color='yellow')
         elif not os.path.exists("/i_am_a_container"):
             hosts = open("/etc/hosts").readlines()
             wronglines = [e for e in hosts if not e.startswith('#') and "api.%s.%s" % (cluster, domain) in e and
-                          api_ip not in e]
+                          host_ip not in e]
             if ingress_ip is not None:
                 o = "oauth-openshift.apps.%s.%s" % (cluster, domain)
                 wrongingresses = [e for e in hosts if not e.startswith('#') and o in e and ingress_ip not in e]
@@ -552,7 +553,7 @@ def create(config, plandir, cluster, overrides):
                 call("sudo sed -i '/%s/d' /etc/hosts" % wrong, shell=True)
             hosts = open("/etc/hosts").readlines()
             correct = [e for e in hosts if not e.startswith('#') and "api.%s.%s" % (cluster, domain) in e and
-                       api_ip in e]
+                       host_ip in e]
             if not correct:
                 entries = ["api.%s.%s" % (cluster, domain)]
                 ingress_entries = ["%s.%s.%s" % (x, cluster, domain) for x in ['console-openshift-console.apps',
@@ -560,7 +561,7 @@ def create(config, plandir, cluster, overrides):
                 if ingress_ip is None:
                     entries.extend(ingress_entries)
                 entries = ' '.join(entries)
-                call("sudo sh -c 'echo %s %s >> /etc/hosts'" % (api_ip, entries), shell=True)
+                call("sudo sh -c 'echo %s %s >> /etc/hosts'" % (host_ip, entries), shell=True)
                 if ingress_ip is not None:
                     entries = ' '.join(ingress_entries)
                     call("sudo sh -c 'echo %s %s >> /etc/hosts'" % (ingress_ip, entries), shell=True)
@@ -572,9 +573,9 @@ def create(config, plandir, cluster, overrides):
             if ingress_ip is None:
                 entries.extend(ingress_entries)
             entries = ' '.join(entries)
-            call("sh -c 'echo %s %s >> /etc/hosts'" % (api_ip, entries), shell=True)
+            call("sh -c 'echo %s %s >> /etc/hosts'" % (host_ip, entries), shell=True)
             if os.path.exists('/etcdir/hosts'):
-                call("sh -c 'echo %s %s >> /etcdir/hosts'" % (api_ip, entries), shell=True)
+                call("sh -c 'echo %s %s >> /etcdir/hosts'" % (host_ip, entries), shell=True)
                 if ingress_ip is not None:
                     entries = ' '.join(ingress_entries)
                     call("sudo sh -c 'echo %s %s >> /etcdir/hosts'" % (ingress_ip, entries), shell=True)

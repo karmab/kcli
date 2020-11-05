@@ -197,7 +197,7 @@ class Kopenstack(object):
                 common.pprint("Waiting 5 seconds for vm to get an ip")
                 sleep(5)
                 timeout += 5
-                if timeout >= 80:
+                if timeout >= 240:
                     common.pprint("Time out waiting for vm to get an ip", color='red')
                     break
                 vm = nova.servers.get(instance.id)
