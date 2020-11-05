@@ -425,6 +425,8 @@ def create(config, plandir, cluster, overrides):
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     data['pub_key'] = open(pub_key).read().strip()
     if platform in virtplatforms and disconnected_deploy:
+        if platform == 'kvm' and network in [n for n in k.list_networks() if k.list_networks()[n]['type'] == 'routed']:
+            data['disconnected_dns'] = True
         disconnected_vm = "%s-disconnecter" % cluster
         pprint("Deploying disconnected vm %s" % disconnected_vm, color='blue')
         data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
@@ -446,17 +448,18 @@ def create(config, plandir, cluster, overrides):
                      tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
                      insecure=True, cmd=urlcmd)
         disconnected_url = os.popen(urlcmd).read().strip()
+        data['disconnected_url'] = disconnected_url
         if disconnected_user is None:
             disconnected_user = 'dummy'
         if disconnected_password is None:
             disconnected_password = 'dummy'
-        versioncmd = "cat /root/version.txt"
-        versioncmd = ssh(disconnected_vm, ip=disconnected_ip, user='root', tunnel=config.tunnel,
-                         tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
-                         insecure=True, cmd=versioncmd)
-        disconnected_version = os.popen(versioncmd).read().strip()
-        os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = disconnected_version
-        pprint("Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to %s" % disconnected_version, color='blue')
+        # versioncmd = "cat /root/version.txt"
+        # versioncmd = ssh(disconnected_vm, ip=disconnected_ip, user='root', tunnel=config.tunnel,
+        #                 tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
+        #                 insecure=True, cmd=versioncmd)
+        # disconnected_version = os.popen(versioncmd).read().strip()
+        # os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = disconnected_version
+        # pprint("Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to %s" % disconnected_version, color='blue')
     if disconnected_url is not None and disconnected_user is not None and disconnected_password is not None:
         key = "%s:%s" % (disconnected_user, disconnected_password)
         key = str(b64encode(key.encode('utf-8')), 'utf-8')
