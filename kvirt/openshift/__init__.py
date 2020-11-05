@@ -424,6 +424,31 @@ def create(config, plandir, cluster, overrides):
             installparam['plan'] = plan
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     data['pub_key'] = open(pub_key).read().strip()
+    if platform in virtplatforms and disconnected_deploy:
+        disconnected_vm = "%s-disconnecter" % cluster
+        pprint("Deploying disconnected vm %s" % disconnected_vm, color='blue')
+        result = config.plan(plan, inputfile='%s/disconnected.yml' % plandir, overrides=data, wait=True)
+        if result['result'] != 'success':
+            os._exit(1)
+        disconnected_ip = _ssh_credentials(k, disconnected_vm)[1]
+        cacmd = "cat /opt/registry/certs/domain.crt"
+        cacmd = ssh(disconnected_vm, ip=disconnected_ip, user='root', tunnel=config.tunnel,
+                    tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
+                    insecure=True, cmd=cacmd)
+        disconnected_ca = os.popen(cacmd).read()
+        if data['ca'] is not None:
+            data['ca'] += disconnected_ca
+        else:
+            data['ca'] = disconnected_ca
+        urlcmd = "cat /root/url.txt"
+        urlcmd = ssh(disconnected_vm, ip=disconnected_ip, user='root', tunnel=config.tunnel,
+                     tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
+                     insecure=True, cmd=urlcmd)
+        disconnected_url = os.popen(urlcmd).read()
+        if disconnected_user is None:
+            disconnected_user = 'dummy'
+        if disconnected_password is None:
+            disconnected_password = 'dummy'
     if disconnected_url is not None and disconnected_user is not None and disconnected_password is not None:
         key = "%s:%s" % (disconnected_user, disconnected_password)
         key = str(b64encode(key.encode('utf-8')), 'utf-8')
@@ -655,32 +680,6 @@ def create(config, plandir, cluster, overrides):
         sedcmd += ' > %s/bootstrap.ign' % clusterdir
         call(sedcmd, shell=True)
     if platform in virtplatforms:
-        if disconnected_deploy:
-            disconnected_vm = "%s-disconnecter" % cluster
-            pprint("Deploying disconnected vm %s" % disconnected_vm, color='blue')
-            result = config.plan(plan, inputfile='%s/disconnected.yml' % plandir, overrides=data, wait=True)
-            if result['result'] != 'success':
-                os._exit(1)
-            disconnected_ip = _ssh_credentials(k, disconnected_vm)[1]
-            cacmd = "cat /opt/registry/certs/domain.crt"
-            cacmd = ssh(disconnected_vm, ip=disconnected_ip, user='root', tunnel=config.tunnel,
-                        tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
-                        insecure=True, cmd=cacmd)
-            disconnected_ca = os.popen(cacmd).read()
-            if 'ca' in data:
-                data['ca'] += disconnected_ca
-            else:
-                data['ca'] = disconnected_ca
-            pullcmd = "cat /root/temp.json"
-            pullcmd = ssh(disconnected_vm, ip=disconnected_ip, user='root', tunnel=config.tunnel,
-                          tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
-                          insecure=True, cmd=pullcmd)
-            data['pull_secret'] = re.sub(r"\s", "", os.popen(pullcmd).read())
-            urlcmd = "cat /root/url.txt"
-            urlcmd = ssh(disconnected_vm, ip=disconnected_ip, user='root', tunnel=config.tunnel,
-                         tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
-                         insecure=True, cmd=urlcmd)
-            data['disconnected_url'] = os.popen(urlcmd).read()
         pprint("Deploying bootstrap", color='blue')
         result = config.plan(plan, inputfile='%s/bootstrap.yml' % plandir, overrides=overrides)
         if result['result'] != 'success':

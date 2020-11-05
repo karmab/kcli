@@ -2013,7 +2013,7 @@ $INFO
             cmd = 'journalctl --identifier=ignition --all --no-pager'
         else:
             cloudinitfile = common.get_cloudinitfile(image)
-            cmd = "sudo tail -n 200 %s" % cloudinitfile
+            cmd = "sudo tail -n 50 %s" % cloudinitfile
         user, ip = None, None
         while ip is None:
             info = k.info(name)
@@ -2036,6 +2036,7 @@ $INFO
             output = os.popen(sshcmd).read()
             if 'kcli boot finished' in output:
                 done = True
+                break
             output = output.replace(oldoutput, '')
             if not quiet:
                 print(output)

@@ -19,8 +19,7 @@
  - origin: disconnected/pull_and_push.sh
    path: /root/bin/pull_and_push.sh
    mode: 700
- - content: |
-     {{ pull_secret }}
+ - origin: {{ pull_secret }}
    path: /root/openshift_pull.json
  - origin: disconnected/registry.sh
    path: /root/registry.sh
