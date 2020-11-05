@@ -67,7 +67,7 @@ imageContentSources:
   - {{ disconnected_url }}/{{ disconnected_prefix }}/release
   source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
 - mirrors:
-  - {{ disconnected_url }}/{{ disconnected_prefix }}/release
+  - {{ disconnected_url }}/{{ disconnected_prefix }}
   source: {{ disconnected_origin }}/ocp/release
 {%- elif imagecontentsources %}
 imageContentSources:
