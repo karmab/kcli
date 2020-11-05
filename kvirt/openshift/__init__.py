@@ -464,9 +464,8 @@ def create(config, plandir, cluster, overrides):
         data['pull_secret'] = json.dumps(auths)
     else:
         data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
-    if 'network_type' not in data:
-        default_sdn = 'OVNKubernetes' if ipv6 else 'OpenShiftSDN'
-        data['network_type'] = default_sdn
+    if ipv6:
+        data['network_type'] = 'OVNKubernetes'
     installconfig = config.process_inputfile(cluster, "%s/install-config.yaml" % plandir, overrides=data)
     with open("%s/install-config.yaml" % clusterdir, 'w') as f:
         f.write(installconfig)

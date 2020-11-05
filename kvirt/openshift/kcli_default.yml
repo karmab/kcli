@@ -70,6 +70,7 @@ cpupinning:
 cpupinning_master:
 cpupinning_worker:
 disconnected_url:
+disconnected_deploy: False
 disconnected_user:
 disconnected_password:
 disconnected_origin: quay.io
