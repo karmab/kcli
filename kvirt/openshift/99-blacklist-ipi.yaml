@@ -1,0 +1,25 @@
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  labels:
+    machineconfiguration.openshift.io/role: master
+  name: blacklist-ipi
+spec:
+  config:
+    ignition:
+      version: 2.2.0
+    systemd:
+      units:
+      - name: nodeip-configuration.service
+        enabled: true
+        contents: |
+          [Unit]
+          Description=Writes IP address configuration so that kubelet and crio services select a valid node IP
+          Wants=network-online.target
+          After=network-online.target ignition-firstboot-complete.service
+          Before=kubelet.service crio.service
+          [Service]
+          Type=oneshot
+          ExecStart=/bin/bash -c "exit 0"
+          [Install]
+          WantedBy=multi-user.target

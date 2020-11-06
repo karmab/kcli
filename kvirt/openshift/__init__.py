@@ -498,11 +498,8 @@ def create(config, plandir, cluster, overrides):
             os.remove(f)
         for f in glob("%s/openshift/99_openshift-cluster-api_worker-machineset-*.yaml" % clusterdir):
             os.remove(f)
-        rhcos_image_url = get_rhcos_openstack_url()
-        installconfig = config.process_inputfile(cluster, "%s/metal3-config.yaml" % plandir,
-                                                 overrides={'rhcos_image_url': rhcos_image_url})
-        with open("%s/openshift/99-metal3-config.yaml" % clusterdir, 'w') as f:
-            f.write(installconfig)
+    if ipv6:
+        copy2("%s/99-blacklist-ipi.yaml" % plandir, "%s/openshift" % clusterdir)
     for f in glob("%s/customisation/*.yaml" % plandir):
         if '99-ingress-controller.yaml' in f:
             ingressrole = 'master' if workers == 0 else 'worker'
