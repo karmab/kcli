@@ -9,7 +9,7 @@
  - {{ network }}
  - default
  disks:
- - {{ disk_size }}
+ - {{ disconnected_disk_size }}
  files:
  - origin: disconnected/get_oc.sh
    path: /root/get_oc.sh

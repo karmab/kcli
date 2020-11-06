@@ -2106,9 +2106,12 @@ def scp_vm(args):
             user = config.vmuser if config.vmuser is not None else u
         if vmport is None and config.vmport is not None:
             vmport = config.vmport
-        if config.type in ['kvm', 'packet'] and '.' not in ip:
-            vmport = ip
-            ip = '127.0.0.1'
+        if config.type in ['kvm', 'packet']:
+            if ':' in ip:
+                ip = '[%s]' % ip
+            elif '.' not in ip:
+                vmport = ip
+                ip = '127.0.0.1'
         scpcommand = common.scp(name, ip=ip, user=user, source=source, destination=destination, recursive=recursive,
                                 tunnel=tunnel, tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser,
                                 debug=config.debug, download=download, vmport=vmport, insecure=insecure)

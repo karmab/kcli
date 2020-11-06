@@ -614,7 +614,7 @@ Cloudinit is enabled by default and handles static networking configuration, hos
 
 For vms based on coreos, ignition is used instead of cloudinit although the syntax is the same. If $name.ign or $plan.ign are found in the current directory, their content will be merged. The extension .cloudinit does the same for cloudinit.
 
-To ease openshift deployment, when a node has a name in the :math:`cluster-role-`\ num, where role can either be master, worker or bootstrap, additional paths are searched, namely :math:`cluster-`\ role.ign, clusters/\ :math:`cluster/`\ role.ign and :math:`HOME/.kcli/clusters/`\ cluster/$role.ign
+To ease openshift deployment, when a node has a name in the $cluster-role-$num, where role can either be master, worker or bootstrap, additional paths are searched, namely $cluster-$role.ign, clusters/$cluster/$role.ign and $HOME/.kcli/clusters/$cluster/$role.ign
 
 For ignition support on ovirt, you will need a version of ovirt >= 4.3.4. Note that this requires to use an openstack based rhcos image.
 
@@ -1522,6 +1522,8 @@ Requirements
 
    -  On Openstack, you will need to create a network with port security disabled (as we need a vip to be reachable on the masters) and to create a port on this network and map it to a floating ip. Put the corresponding api_ip and public_api_ip in your parameter file. You can use The script `openstack.py <https://github.com/karmab/kcli/blob/master/extras/openstack.py>`__ to do so with kcli. You
       also need to open relevant ports (80, 443, 6443 and 22623) in your security groups.
+
+-  For ipv6, you run the following sysctl ``net.ipv6.conf.all.accept_ra=2``
 
 How to Use
 ~~~~~~~~~~
