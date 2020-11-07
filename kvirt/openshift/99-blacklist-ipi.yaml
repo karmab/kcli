@@ -2,8 +2,8 @@ apiVersion: machineconfiguration.openshift.io/v1
 kind: MachineConfig
 metadata:
   labels:
-    machineconfiguration.openshift.io/role: master
-  name: blacklist-ipi
+    machineconfiguration.openshift.io/role: {{ role }}
+  name: blacklist-ipi-{{ role }}
 spec:
   config:
     ignition:

@@ -499,7 +499,11 @@ def create(config, plandir, cluster, overrides):
         for f in glob("%s/openshift/99_openshift-cluster-api_worker-machineset-*.yaml" % clusterdir):
             os.remove(f)
     if ipv6:
-        copy2("%s/99-blacklist-ipi.yaml" % plandir, "%s/openshift" % clusterdir)
+        for role in ['master', 'worker']:
+            blacklist = config.process_inputfile(cluster, "%s/99-blacklist-ipi.yaml" % plandir,
+                                                 overrides={'role': role})
+            with open("%s/openshift/99-blacklist-ipi-%s.yaml" % (clusterdir, role), 'w') as f:
+                f.write(blacklist)
     for f in glob("%s/customisation/*.yaml" % plandir):
         if '99-ingress-controller.yaml' in f:
             ingressrole = 'master' if workers == 0 else 'worker'
