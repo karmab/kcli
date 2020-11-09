@@ -514,6 +514,9 @@ def create(config, plandir, cluster, overrides):
         for asset in calicoassets:
             fetch(asset, manifestsdir)
     call('openshift-install --dir=%s create ignition-configs' % clusterdir, shell=True)
+    for role in ['master', 'worker']:
+        ori = "%s/%s.ign" % (clusterdir, role)
+        copy2(ori, "%s.ori" % ori)
     if masters < 3:
         version_match = re.match("4.([0-9]*).*", INSTALLER_VERSION)
         COS_VERSION = "4%s" % version_match.group(1) if version_match is not None else '45'

@@ -31,7 +31,7 @@ def process(args):
     config = Kconfig()
     plandir = os.path.dirname(openshift.create.__code__.co_filename)
     if os.path.exists(ignitionfile):
-        pprint("Removing existing %s" % ignitionfile, color='blue')
+        pprint("Using existing %s" % ignitionfile, color='yellow')
         os.remove(ignitionfile)
     while not os.path.exists(ignitionfile) or os.stat(ignitionfile).st_size == 0:
         try:
