@@ -4,9 +4,6 @@
 {%- else %}
 {% set net0 = network %}
 {%- endif %}
-{%- if baremetal and not extra_networks %}
-{% set extra_networks = [provisioning_net] %}
-{%- endif %}
 {%- if extra_master_networks %}
 {% set extra_networks = extra_master_networks %}
 {%- endif %}

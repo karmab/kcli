@@ -247,7 +247,6 @@ def create(config, plandir, cluster, overrides):
             'version': 'nightly',
             'macosx': False,
             'upstream': False,
-            'baremetal': False,
             'fips': False,
             'apps': [],
             'minimal': False}
@@ -280,7 +279,6 @@ def create(config, plandir, cluster, overrides):
     if os.path.exists('openshift-install'):
         pprint("Removing old openshift-install", color='blue')
         os.remove('openshift-install')
-    baremetal = data.get('baremetal')
     minimal = data.get('minimal')
     if version not in ['ci', 'nightly']:
         pprint("Using stable version", color='blue')
@@ -298,8 +296,8 @@ def create(config, plandir, cluster, overrides):
         else:
             pprint("You need to define api_ip in your parameters file", color='red')
             os._exit(1)
-    if platform in virtplatforms and baremetal and data.get('baremetal_machine_cidr') is None:
-        pprint("You need to define baremetal_machine_cidr in your parameters file", color='red')
+    if platform in virtplatforms and ipv6 and data.get('machine_cidr') is None:
+        pprint("You need to define machine_cidr in your parameters file", color='red')
         os._exit(1)
     if ':' in api_ip:
         ipv6 = True
@@ -493,11 +491,6 @@ def create(config, plandir, cluster, overrides):
             cvo_override = f.read()
         with open("%s/manifests/cvo-overrides.yaml" % clusterdir, "a") as f:
             f.write(cvo_override)
-    if baremetal:
-        for f in glob("%s/openshift/99_openshift-cluster-api_master-machines-*.yaml" % clusterdir):
-            os.remove(f)
-        for f in glob("%s/openshift/99_openshift-cluster-api_worker-machineset-*.yaml" % clusterdir):
-            os.remove(f)
     if ipv6:
         for role in ['master', 'worker']:
             blacklist = config.process_inputfile(cluster, "%s/99-blacklist-ipi.yaml" % plandir,
@@ -659,16 +652,10 @@ def create(config, plandir, cluster, overrides):
             sedcmd += '%s/master.ign' % clusterdir
             sedcmd += ' > %s/worker.ign' % clusterdir
             call(sedcmd, shell=True)
-        if baremetal:
-            new_api_ip = api_ip if not ipv6 else "[%s]" % api_ip
-            sedcmd = 'sed -i "s@https://192.168.125.1:22623/config@http://%s@"' % new_api_ip
-            sedcmd += ' %s/master.ign' % clusterdir
-            call(sedcmd, shell=True)
-        else:
-            new_api_ip = api_ip if not ipv6 else "[%s]" % api_ip
-            sedcmd = 'sed -i "s@https://api-int.%s.%s:22623/config@http://%s@"' % (cluster, domain, new_api_ip)
-            sedcmd += ' %s/master.ign' % clusterdir
-            call(sedcmd, shell=True)
+        new_api_ip = api_ip if not ipv6 else "[%s]" % api_ip
+        sedcmd = 'sed -i "s@https://api-int.%s.%s:22623/config@http://%s@"' % (cluster, domain, new_api_ip)
+        sedcmd += ' %s/master.ign' % clusterdir
+        call(sedcmd, shell=True)
     if platform in cloudplatforms:
         bootstrap_helper_name = "%s-bootstrap-helper" % cluster
         helper_overrides = {'reservedns': True, 'domain': '%s.%s' % (cluster, domain), 'tags': [tag], 'plan': cluster,
