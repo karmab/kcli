@@ -10,6 +10,7 @@ from jinja2 import StrictUndefined as undefined
 from jinja2.exceptions import TemplateSyntaxError, TemplateError
 from kvirt.defaults import IMAGES, IMAGESCOMMANDS
 from kvirt import ansibleutils
+from kvirt import jinjafilters
 from kvirt import nameutils
 from kvirt import common
 from kvirt import k3s
@@ -605,6 +606,8 @@ class Kconfig(Kbaseconfig):
                     scriptbasedir = os.path.dirname(script) if os.path.dirname(script) != '' else '.'
                     env = Environment(loader=FileSystemLoader(scriptbasedir), undefined=undefined,
                                       extensions=['jinja2.ext.do'])
+                    for jinjafilter in jinjafilters.jinjafilters:
+                        env.filters[jinjafilter] = jinjafilters.jinjafilters[jinjafilter]
                     try:
                         templ = env.get_template(os.path.basename(script))
                         scriptentries = templ.render(overrides)
