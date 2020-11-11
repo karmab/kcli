@@ -43,7 +43,7 @@ export LOCAL_REGISTRY="$REGISTRY_NAME:5000"
 export PULL_SECRET="/root/openshift_pull.json"
 KEY=$( echo -n $REGISTRY_USER:$REGISTRY_PASSWORD | base64)
 jq ".auths += {\"$REGISTRY_NAME:5000\": {\"auth\": \"$KEY\",\"email\": \"jhendrix@karmalabs.com\"}}" < $PULL_SECRET > /root/temp.json
-mv /root/temp.json $PULL_SECRET
+cat /root/temp.json | tr -d [:space:] > $PULL_SECRET
 oc adm release mirror -a $PULL_SECRET --from=${UPSTREAM_REGISTRY}/${RELEASE_NAME}:${OCP_RELEASE} --to-release-image=${LOCAL_REGISTRY}/{{ disconnected_prefix }}/release:${OCP_RELEASE} --to=${LOCAL_REGISTRY}/{{ disconnected_prefix }}
 echo "{\"auths\": {\"$REGISTRY_NAME:5000\": {\"auth\": \"$KEY\", \"email\": \"jhendrix@karmalabs.com\"}}}" > /root/temp.json
 OPENSHIFT_VERSION=$( grep cluster-openshift-apiserver-operator /var/log/cloud-init-output.log  | head -1 | awk '{print $NF}' | sed 's/-cluster-openshift-apiserver-operator//')

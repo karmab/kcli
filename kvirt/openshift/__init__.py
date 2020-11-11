@@ -552,7 +552,7 @@ def create(config, plandir, cluster, overrides):
                 wronglines.extend(wrongingresses)
             for wrong in wronglines:
                 pprint("Cleaning wrong entry %s in /etc/hosts" % wrong, color='yellow')
-                call("sudo sed -i '/%s/d' /etc/hosts" % wrong, shell=True)
+                call("sudo sed -i '/%s/d' /etc/hosts" % wrong.strip(), shell=True)
             hosts = open("/etc/hosts").readlines()
             correct = [e for e in hosts if not e.startswith('#') and "api.%s.%s" % (cluster, domain) in e and
                        host_ip in e]
