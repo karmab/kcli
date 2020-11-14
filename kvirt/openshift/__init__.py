@@ -611,30 +611,14 @@ def create(config, plandir, cluster, overrides):
             helper_overrides['nets'] = [network]
             helper_overrides['plan'] = cluster
             bootstrap_helper_name = "%s-bootstrap-helper" % cluster
-            config.create_vm("%s-bootstrap-helper" % cluster, helper_image, overrides=helper_overrides)
-            while bootstrap_helper_ip is None:
-                helper_info = k.info(bootstrap_helper_name)
-                bootstrap_helper_ip = helper_info.get(iptype)
-                if platform == 'openstack' and helper_info.get('privateip') == helper_info.get('ip'):
-                    bootstrap_helper_ip = None
-                pprint("Waiting 5s for bootstrap helper node to get an ip...", color='blue')
-                sleep(5)
-            cmd = "iptables -F ; yum -y install httpd"
-            cmd += "; setenforce 0"
+            cmds = ["iptables -F", "yum -y install httpd", "setenforce 0"]
             if platform == 'packet':
-                cmd += "; sed 's/apache/root/' /etc/httpd/conf/httpd.conf"
-                status = 'provisioning'
                 config.k.tunnelhost = bootstrap_helper_ip
-                while status != 'active':
-                    status = k.info(bootstrap_helper_name).get('status')
-                    pprint("Waiting 5s for bootstrap helper node to be fully provisioned...", color='blue')
-                    sleep(5)
-            sleep(5)
-            cmd += "; systemctl start httpd"
-            sshcmd = ssh(bootstrap_helper_name, ip=bootstrap_helper_ip, user='root', tunnel=config.tunnel,
-                         tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
-                         tunneluser=config.tunneluser, insecure=True, cmd=cmd)
-            os.system(sshcmd)
+                cmds.append("sed -i 's/apache/root/' /etc/httpd/conf/httpd.conf")
+            cmds.append("systemctl enable --now httpd")
+            helper_overrides['cmds'] = cmds
+            config.create_vm("%s-bootstrap-helper" % cluster, helper_image, overrides=helper_overrides, wait=True)
+            bootstrap_helper_ip = k.info(bootstrap_helper_name).get(iptype)
             source, destination = "%s/bootstrap.ign" % clusterdir, "/var/www/html/bootstrap"
             scpcmd = scp(bootstrap_helper_name, ip=bootstrap_helper_ip, user='root', source=source,
                          destination=destination, tunnel=config.tunnel, tunnelhost=config.tunnelhost,

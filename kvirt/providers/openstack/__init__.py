@@ -217,20 +217,20 @@ class Kopenstack(object):
                 neutron.update_floatingip(floatingip_id, {'floatingip': {'port_id': port_id}})
             securitygroups = [s for s in neutron.list_security_groups()['security_groups']
                               if s['name'] == 'default' and s['tenant_id'] == tenant_id]
-        if securitygroups:
-            securitygroup = securitygroups[0]
-            securitygroupid = securitygroup['id']
-            sshrule = {'security_group_rule': {'direction': 'ingress', 'security_group_id': securitygroupid,
-                                               'port_range_min': '22', 'port_range_max': '22', 'protocol': 'tcp',
-                                               'remote_group_id': None, 'remote_ip_prefix': '0.0.0.0/0'}}
-            icmprule = {'security_group_rule': {'direction': 'ingress', 'security_group_id': securitygroupid,
-                                                'protocol': 'icmp', 'remote_group_id': None,
-                                                'remote_ip_prefix': '0.0.0.0/0'}}
-            try:
-                neutron.create_security_group_rule(sshrule)
-                neutron.create_security_group_rule(icmprule)
-            except:
-                pass
+            if securitygroups:
+                securitygroup = securitygroups[0]
+                securitygroupid = securitygroup['id']
+                sshrule = {'security_group_rule': {'direction': 'ingress', 'security_group_id': securitygroupid,
+                                                   'port_range_min': '22', 'port_range_max': '22', 'protocol': 'tcp',
+                                                   'remote_group_id': None, 'remote_ip_prefix': '0.0.0.0/0'}}
+                icmprule = {'security_group_rule': {'direction': 'ingress', 'security_group_id': securitygroupid,
+                                                    'protocol': 'icmp', 'remote_group_id': None,
+                                                    'remote_ip_prefix': '0.0.0.0/0'}}
+                try:
+                    neutron.create_security_group_rule(sshrule)
+                    neutron.create_security_group_rule(icmprule)
+                except:
+                    pass
         return {'result': 'success'}
 
     def start(self, name):
