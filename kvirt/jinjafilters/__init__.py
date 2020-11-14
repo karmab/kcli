@@ -1,6 +1,7 @@
 from base64 import b64encode
 import os
 from distutils.version import LooseVersion
+from netaddr import IPNetwork
 import requests
 
 
@@ -96,6 +97,14 @@ def local_ip(network):
     return os.popen(cmd).read().strip()
 
 
+def network_ip(network, num=0):
+    try:
+        return IPNetwork(network)[num]
+    except Exception as e:
+        print("Error processing filter network_ip with %s and %s. Got %s" % (network, num, e))
+        os._exit(1)
+
+
 jinjafilters = {'basename': basename, 'dirname': dirname, 'ocpnodes': ocpnodes, 'none': none, 'type': _type,
                 'certificate': certificate, 'base64': base64, 'githubversion': githubversion,
-                'defaultnodes': defaultnodes, 'waitcrd': waitcrd, 'local_ip': local_ip}
+                'defaultnodes': defaultnodes, 'waitcrd': waitcrd, 'local_ip': local_ip, 'network_ip': network_ip}
