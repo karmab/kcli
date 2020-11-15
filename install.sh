@@ -14,7 +14,9 @@ if [ $(which dnf) != "" ] ; then
   sudo dnf -y install kcli
 elif [ $(which apt-get) != "" ] ; then
   packagefound=true
-  curl -s https://packagecloud.io/install/repositories/karmab/kcli/script.deb.sh | sudo bash
+  curl -1sLf https://dl.cloudsmith.io/public/karmab/kcli/cfg/setup/bash.deb.sh | sudo -E bash
+  apt-get update 
+  apt-get -y install kcli
 fi
 
 if [ "$packagefound" == "true" ] ; then

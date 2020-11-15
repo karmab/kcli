@@ -12,6 +12,6 @@ if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == 'false' ] ; t
     fi
 
     "./pypi.sh"
-    "./packagecloud.sh"
-    "./packagecloud_clean.py"
+    "./cloudsmith.sh"
+    "./cloudsmith_clean.sh"
 fi
