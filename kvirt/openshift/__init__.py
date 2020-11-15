@@ -238,8 +238,6 @@ def create(config, plandir, cluster, overrides):
     bootstrap_helper_ip = None
     client = config.client
     platform = config.type
-    if 'nocolor' in overrides and overrides['nocolor']:
-        pprint = fake_pprint
     pprint("Deploying on client %s" % client, color='blue')
     data = {'helper_image': 'CentOS-7-x86_64-GenericCloud.qcow2',
             'domain': 'karmalabs.com',
