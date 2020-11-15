@@ -505,14 +505,14 @@ def pprint(text, color='green'):
     colors = {'blue': '36', 'red': '31', 'green': '32', 'yellow': '33', 'pink': '35', 'white': '37'}
     if color is not None and color in colors:
         color = colors[color]
-        print('\033[0;%sm%s\033[0;0m' % (color, text))
+        print('\033[%sm%s\033[0m' % (color, text))
     else:
         print(text)
 
 
 def info(text):
     color = '36'
-    print('\033[0;%smINFO\033[0;0m %s' % (color, text))
+    print('\033[%smINFO\033[0m %s' % (color, text))
 
 
 def handle_response(result, name, quiet=False, element='', action='deployed', client=None):
