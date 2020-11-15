@@ -23,6 +23,10 @@ cloudplatforms = ['aws', 'gcp']
 DEFAULT_TAG = '4.6'
 
 
+def fake_pprint(text, color='green'):
+    print(text)
+
+
 def get_installer_version():
     INSTALLER_VERSION = os.popen('openshift-install version').readlines()[0].split(" ")[1].strip()
     if INSTALLER_VERSION.startswith('v'):
@@ -234,6 +238,8 @@ def create(config, plandir, cluster, overrides):
     bootstrap_helper_ip = None
     client = config.client
     platform = config.type
+    if 'nocolor' in overrides and overrides['nocolor']:
+        pprint = fake_pprint
     pprint("Deploying on client %s" % client, color='blue')
     data = {'helper_image': 'CentOS-7-x86_64-GenericCloud.qcow2',
             'domain': 'karmalabs.com',
