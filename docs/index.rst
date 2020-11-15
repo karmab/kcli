@@ -124,7 +124,7 @@ Pull the latest image:
 
 .. code:: shell
 
-    docker pull karmab/kcli
+    docker pull quay.io/karmab/kcli
 
 To run it
 

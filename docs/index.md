@@ -120,7 +120,7 @@ In the commands below, use either docker or podman
 Pull the latest image:
 
 ```Shell
-docker pull karmab/kcli
+docker pull quay.io/karmab/kcli
 ```
 
 To run it

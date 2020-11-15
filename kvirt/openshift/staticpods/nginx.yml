@@ -19,7 +19,7 @@ spec:
   - name: nginx-get-master-mco
     securityContext:
       privileged: true
-    image: {{ disconnected_url if disconnected_url != None else 'docker.io' }}/karmab/curl
+    image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/karmab/curl
     command:
     - "curl"
     args:
@@ -40,7 +40,7 @@ spec:
       mountPath: "/etc/nginx"
   containers:
   - name: nginx
-    image: {{ disconnected_url if disconnected_url != None else 'docker.io' }}/library/nginx:alpine
+    image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/karmab/nginx:alpine
     resources:
       requests:
         cpu: 150m

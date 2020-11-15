@@ -41,7 +41,7 @@ KillMode=none
 Restart=on-failure
 RemainAfterExit=yes
 ExecStartPre=modprobe tun
-ExecStartPre=podman pull docker.io/karmab/zerotier-cli
+ExecStartPre=podman pull quay.io/karmab/zerotier-cli
 ExecStartPre=podman create --name=zerotier -it --cap-add=NET_ADMIN --device=/dev/net/tun --cap-add=SYS_ADMIN \
 --net=host --entrypoint=/bin/sh karmab/zerotier-cli -c "zerotier-one -d ; sleep 10 ; \
 {zerotier_join} ; \

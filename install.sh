@@ -36,7 +36,7 @@ ALIAS="$?"
 
 if [ "$ALIAS" != "0" ]; then
   echo -e "${BLUE}Installing as alias for $engine${NC}"
-  $engine pull docker.io/karmab/kcli:latest
+  $engine pull quay.io/karmab/kcli:latest
   SSHVOLUME="-v $(realpath $HOME/.ssh):/root/.ssh"
   if [ -d /var/lib/libvirt/images ] && [ -d /var/run/libvirt ]; then
     VOLUMES="-v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt"
