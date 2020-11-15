@@ -2047,19 +2047,22 @@ class Kvirt(object):
 
     def update_iso(self, name, iso):
         common.pprint("Note it will only be effective upon next start", color='yellow')
-        isos = self.volumes(iso=True)
-        isofound = False
-        for i in isos:
-            if i == iso:
-                isofound = True
-                break
-            elif i.endswith(iso):
-                iso = i
-                isofound = True
-                break
-        if not isofound:
-            common.pprint("Iso %s not found.Leaving..." % iso, color='red')
-            return {'result': 'failure', 'reason': "Iso %s not found" % iso}
+        if iso != 'None':
+            isos = self.volumes(iso=True)
+            isofound = False
+            for i in isos:
+                if i == iso:
+                    isofound = True
+                    break
+                elif i.endswith(iso):
+                    iso = i
+                    isofound = True
+                    break
+            if not isofound:
+                common.pprint("Iso %s not found.Leaving..." % iso, color='red')
+                return {'result': 'failure', 'reason': "Iso %s not found" % iso}
+        else:
+            iso = None
         conn = self.conn
         try:
             vm = conn.lookupByName(name)
@@ -2073,7 +2076,10 @@ class Kvirt(object):
             if disktype != 'cdrom':
                 continue
             source = element.find('source')
-            source.set('file', iso)
+            if iso is None:
+                element.remove(source)
+            else:
+                source.set('file', iso)
             break
         newxml = ET.tostring(root)
         conn.defineXML(newxml.decode("utf-8"))
