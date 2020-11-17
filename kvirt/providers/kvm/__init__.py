@@ -538,7 +538,14 @@ class Kvirt(object):
                         common.pprint("Iso %s not found. Make sure it's there before booting" % iso, color='yellow')
             else:
                 if iso not in volumes:
-                    if start:
+                    if 'http' in iso:
+                        if os.path.basename(iso) in volumes:
+                            self.delete_image(os.path.basename(iso))
+                        common.pprint("Trying to gather %s" % iso, color='blue')
+                        self.add_image(iso, pool=default_pool)
+                        conn.storagePoolLookupByName(default_pool).refresh()
+                        iso = "%s/%s" % (default_poolpath, os.path.basename(iso))
+                    elif start:
                         return {'result': 'failure', 'reason': "Iso %s not found" % iso}
                     else:
                         common.pprint("Iso %s not found. Make sure it's there before booting" % iso, color='yellow')
