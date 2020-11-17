@@ -21,5 +21,5 @@ spec:
   channel: "{{ openshift_version }}"
   installPlanApproval: Automatic
   name: local-storage-operator
-  source: redhat-operators
+  source: {{ catalog | default('redhat-operators') }}
   sourceNamespace: openshift-marketplace

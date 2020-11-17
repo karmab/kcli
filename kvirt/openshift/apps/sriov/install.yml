@@ -22,5 +22,5 @@ metadata:
 spec:
   channel: "{{ openshift_version }}"
   name: sriov-network-operator
-  source: "redhat-operators"
+  source: {{ catalog | default('redhat-operators') }}
   sourceNamespace: openshift-marketplace

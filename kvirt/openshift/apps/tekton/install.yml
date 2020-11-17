@@ -6,6 +6,6 @@ spec:
   channel: ocp-{{ openshift_version }}
   installPlanApproval: Automatic
   name: openshift-pipelines-operator-rh
-  source: redhat-operators
+  source: {{ catalog | default('redhat-operators') }}
   sourceNamespace: openshift-marketplace
   startingCSV: openshift-pipelines-operator.v{{ tekton_version }}

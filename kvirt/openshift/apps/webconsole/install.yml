@@ -9,6 +9,6 @@ spec:
   channel: {{ webconsole_channel }}
   installPlanApproval: Automatic
   name: web-terminal
-  source: redhat-operators
+  source: {{ catalog | default('redhat-operators') }}
   sourceNamespace: openshift-marketplace
   startingCSV: web-terminal.v{{ webconsole_version }}

@@ -22,7 +22,7 @@ metadata:
   namespace: openshift-storage
 spec:
   sourceNamespace: openshift-marketplace
-  source: redhat-operators
+  source: {{ catalog | default('redhat-operators') }}
   startingCSV: ocs-operator.v{{ ocs_version }}
   channel: {{ ocs_channel }}
   installPlanApproval: Automatic

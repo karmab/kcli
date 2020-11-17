@@ -8,5 +8,5 @@ spec:
   channel: "{{ openshift_version }}"
   installPlanApproval: Automatic
   name: serverless-operator
-  source: redhat-operators
+  source: {{ catalog | default('redhat-operators') }}
   sourceNamespace: openshift-marketplace
