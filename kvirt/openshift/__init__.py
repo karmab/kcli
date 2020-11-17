@@ -524,7 +524,7 @@ def create(config, plandir, cluster, overrides):
     if masters < 3:
         version_match = re.match("4.([0-9]*).*", INSTALLER_VERSION)
         COS_VERSION = "4%s" % version_match.group(1) if version_match is not None else '45'
-        if upstream or int(COS_VERSION) > 43:
+        if not upstream and int(COS_VERSION) > 43:
             bootstrap_patch = open('%s/bootstrap_patch.sh' % plandir).read()
             bootstrap_service = open('%s/bootstrap_patch.service' % plandir).read()
             patch_bootstrap("%s/bootstrap.ign" % clusterdir, bootstrap_patch, bootstrap_service)
