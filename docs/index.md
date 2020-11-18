@@ -90,7 +90,7 @@ curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | sh
 
 ## Package install method
 
-If using *fedora* or *rhel/centos8*,  you can use this:
+If using *fedora* or *rhel/centos8*,  you can run this as root:
 
 ```bash
 dnf -y copr enable karmab/kcli ; dnf -y install kcli
@@ -100,8 +100,8 @@ If using a debian based distribution, you can use this :
 
 ```bash
 curl -1sLf https://dl.cloudsmith.io/public/karmab/kcli/cfg/setup/bash.deb.sh | sudo -E bash
-apt-get update
-apt-get -y install python3-kcli
+sudo apt-get update
+sudo apt-get -y install python3-kcli
 ```
 
 The package version doesn't bundle the dependencies for anything else than libvirt, so you have to install the extra packages for each additional cloud platforms, which are listed in the *Provider specifics* section.
