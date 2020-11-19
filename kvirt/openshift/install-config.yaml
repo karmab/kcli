@@ -3,6 +3,14 @@ apiVersion: v1
 fips: True
 {%- endif %}
 baseDomain: {{ domain }}
+{%- if http_proxy != None %}
+proxy:
+  httpProxy: {{ http_proxy }}
+  httpsProxy: {{ http_proxy }}
+{%- if no_proxy != None %}
+  noProxy: {{ no_proxy }}
+{%- endif %}
+{%- endif %}
 compute:
 - name: worker
   replicas: {{ workers }}

@@ -87,3 +87,5 @@ virtual_router_id:
 zerotier_nets: []
 zerotier_ip:
 zerotier_kubelet: false
+http_proxy:
+no_proxy:
