@@ -13,6 +13,7 @@ from kvirt import ansibleutils
 from kvirt import jinjafilters
 from kvirt import nameutils
 from kvirt import common
+from kvirt.common import insecure_fetch
 from kvirt import k3s
 from kvirt import kubeadm
 from kvirt.expose import Kexposer
@@ -24,9 +25,11 @@ from distutils.spawn import find_executable
 import glob
 import os
 import re
+import socket
 from shutil import rmtree
 import sys
 from time import sleep
+from subprocess import call
 import webbrowser
 import yaml
 
@@ -830,8 +833,7 @@ $INFO
                 data = common.cloudinit(name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                         domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
                                         overrides=overrides, image=image, storemetadata=False)[0]
-            print(data)
-            return {'result': 'success'}
+            return {'result': 'success', 'data': data}
         result = k.create(name=name, virttype=virttype, plan=plan, profile=profilename, flavor=flavor,
                           cpumodel=cpumodel, cpuflags=cpuflags, cpupinning=cpupinning, numamode=numamode, numa=numa,
                           numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool,
@@ -997,6 +999,7 @@ $INFO
         k = self.k
         no_overrides = not overrides
         newvms = []
+        newassets = []
         failedvms = []
         existingvms = []
         waitvms = []
@@ -1669,7 +1672,9 @@ $INFO
                     newvms.append(name)
                     start = profile.get('start', True)
                     cloudinit = profile.get('cloudinit', True)
-                    if not wait:
+                    if onlyassets:
+                        newassets.append(result['data'])
+                    elif not wait:
                         continue
                     elif not start or not cloudinit or profile.get('image') is None:
                         common.pprint("Skipping wait on %s" % name, color='blue')
@@ -1820,6 +1825,7 @@ $INFO
         returndata['newvms'] = newvms if newvms else []
         returndata['existingvms'] = existingvms if existingvms else []
         returndata['failedvms'] = failedvms if failedvms else []
+        returndata['assets'] = newassets if newassets else []
         if failedvms:
             returndata['result'] = 'failure'
             returndata['reason'] = 'The following vm failed: %s' % ','.join(failedvms)
@@ -2114,3 +2120,51 @@ $INFO
         common.pprint("Handling expose of plan with name %s and inputfile %s" % (plan, inputfile))
         kexposer = Kexposer(self, plan, inputfile, overrides=overrides, port=port, extraconfigs=extraconfigs)
         kexposer.run()
+
+    def create_openshift_iso(self, cluster, api_ip=None, iso=False, domain='karmalabs.com', role='worker', path='.'):
+        curl_header = "Accept: application/vnd.coreos.ignition+json; version=3.1.0"
+        liveiso = "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/latest/latest/rhcos-live.x86_64.iso"
+        if api_ip is None:
+            try:
+                api_ip = socket.gethostbyname('api.%s.%s' % (cluster, domain))
+            except:
+                common.pprint("Couldn't figure out api_ip, indicate it explicitely", color='red')
+                os._exit(1)
+        ignitionfile = "%s.ign" % role
+        config = Kconfig()
+        plandir = os.path.dirname(openshift.create.__code__.co_filename)
+        if os.path.exists(ignitionfile):
+            common.pprint("Using existing %s" % ignitionfile, color='yellow')
+            os.remove(ignitionfile)
+        while not os.path.exists(ignitionfile) or os.stat(ignitionfile).st_size == 0:
+            try:
+                with open(ignitionfile, 'w') as w:
+                    ignitiondata = insecure_fetch("https://api.%s.%s:22623/config/master" % (cluster, domain),
+                                                  headers=[curl_header])
+                    w.write(ignitiondata)
+                    common.pprint("Downloaded %s ignition data" % role, color='green')
+            except:
+                common.pprint("Waiting 5s before retrieving %s ignition data" % role, color='blue')
+                sleep(5)
+        iso_overrides = {'scripts': ['%s/iso.sh' % plandir]}
+        hostscontent = "127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4\n"
+        hostscontent += "::1         localhost localhost.localdomain localhost6 localhost6.localdomain6\n"
+        hostscontent += "%s api-int.%s.%s api.%s.%s" % (api_ip, cluster, domain, cluster, domain)
+        with open("iso.ign", 'w') as f:
+            common.pprint("Writing file iso.ign for %s in %s.%s" % (role, cluster, domain), color='green')
+            iso_overrides['files'] = [{"path": "/root/config.ign", "origin": "%s/%s.ign" % (path, role)},
+                                      {"path": "/etc/hosts", "content": hostscontent}]
+            result = config.create_vm('autoinstaller', 'rhcos46', overrides=iso_overrides, onlyassets=True)
+            f.write(result['data'])
+        if iso:
+            if not os.path.exists('rhcos-live.x86_64.iso'):
+                common.pprint("Downloading rhcos-live.x86_64.iso", color='blue')
+                download = "curl %s > rhcos-live.x86_64.iso" % liveiso
+                call(download, shell=True)
+            engine = 'podman' if find_executable('podman') else 'docker'
+            coreosinstaller = "%s run --privileged --rm -w /data -v $PWD:/data -v /dev:/dev" % engine
+            if not os.path.exists('/Users'):
+                coreosinstaller += " -v /run/udev:/run/udev"
+            coreosinstaller += " quay.io/coreos/coreos-installer:release"
+            embedcmd = "%s iso ignition embed -fi iso.ign rhcos-live.x86_64.iso" % coreosinstaller
+            os.popen(embedcmd)

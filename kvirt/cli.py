@@ -5,7 +5,7 @@
 from distutils.spawn import find_executable
 from kvirt.config import Kconfig
 from kvirt.examples import userdatacreate, hostcreate, _list, plancreate, planinfo, productinfo, repocreate, start
-from kvirt.examples import kubegenericcreate, kubek3screate, kubeopenshiftcreate
+from kvirt.examples import isocreate, kubegenericcreate, kubek3screate, kubeopenshiftcreate
 from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsole, vmexport, niccreate, nicdelete
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
@@ -1041,6 +1041,17 @@ def list_vmdisk(args):
     return
 
 
+def create_openshift_iso(args):
+    api_ip = args.api_ip
+    iso = args.iso
+    cluster = args.cluster
+    domain = args.domain
+    role = args.role
+    path = args.path
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config.create_openshift_iso(cluster, api_ip=api_ip, iso=iso, domain=domain, role=role, path=path)
+
+
 def create_vm(args):
     """Create vms"""
     name = args.name
@@ -1108,6 +1119,8 @@ def create_vm(args):
         if not onlyassets:
             code = common.handle_response(result, name, element='', action='created', client=config.client)
             return code
+        else:
+            print(result['data'])
     else:
         codes = []
         if 'plan' not in overrides:
@@ -1846,7 +1859,8 @@ def create_userdata(args):
         args.profilefile = None
         args.wait = False
         args.count = 1
-        return create_vm(args)
+        create_vm(args)
+        return 0
     paramfile = args.paramfile
     if os.path.exists("/i_am_a_container"):
         inputfile = "/workdir/%s" % inputfile if inputfile is not None else "/workdir/kcli_plan.yml"
@@ -1865,7 +1879,10 @@ def create_userdata(args):
     if not os.path.exists(inputfile):
         common.pprint("File %s not found" % inputfile, color='red')
         return 0
-    config.plan(plan, inputfile=inputfile, overrides=overrides, onlyassets=True)
+    results = config.plan(plan, inputfile=inputfile, overrides=overrides, onlyassets=True)
+    if results.get('assets'):
+        for asset in results['assets']:
+            print(asset)
     return 0
 
 
@@ -3134,6 +3151,21 @@ def cli():
     networkdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     networkdelete_parser.add_argument('names', metavar='NETWORKS', nargs='+')
     networkdelete_parser.set_defaults(func=delete_network)
+
+    isocreate_desc = 'Create an iso ignition for baremetal install'
+    isocreate_epilog = "examples:\n%s" % isocreate
+    isocreate_parser = argparse.ArgumentParser(add_help=False)
+    isocreate_parser.add_argument('-a', '--api_ip', metavar='API_IP', help='Api vip from where to get assets')
+    isocreate_parser.add_argument('-d', '--domain', metavar='DOMAIN', default='karmalabs.com',
+                                  help='Domain. Defaults to karmalabs.com')
+    isocreate_parser.add_argument('-i', '--iso', action='store_true', help='Create iso')
+    isocreate_parser.add_argument('-p', '--path', metavar='PATH', default='.', help='Where to download asset')
+    isocreate_parser.add_argument('-r', '--role', metavar='ROLE', default='worker', choices=['master', 'worker'],
+                                  help='Role. Defaults to worker')
+    isocreate_parser.add_argument('cluster', metavar='CLUSTER', help='Cluster')
+    isocreate_parser.set_defaults(func=create_openshift_iso)
+    create_subparsers.add_parser('openshift-iso', parents=[isocreate_parser], description=isocreate_desc,
+                                 help=isocreate_desc, epilog=isocreate_epilog, formatter_class=rawhelp)
 
     pipelinecreate_desc = 'Create Pipeline'
     pipelinecreate_parser = create_subparsers.add_parser('pipeline', description=pipelinecreate_desc,

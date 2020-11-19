@@ -175,3 +175,7 @@ $ kcli create userdata -i centos8 myname
 # Generate all the ignition/cloudinit userdatas from a plan file
 $ kcli create userdata -f my_plan.yml
 """
+
+isocreate = """# Generate an iso ignition
+$ kcli create iso $cluster
+"""
