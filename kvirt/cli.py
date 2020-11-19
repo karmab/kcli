@@ -256,8 +256,10 @@ def delete_vm(args):
                 common.set_lastvm(name, cli, delete=True)
             else:
                 reason = result['reason']
-                common.pprint("Could not delete %s because %s" % (name, reason), color='red')
                 codes.append(1)
+                common.pprint("Could not delete %s because %s" % (name, reason), color='red')
+                common.pprint("Removing it from ~/.kcli/vm still", color='red')
+                common.set_lastvm(name, cli, delete=True)
             if dnsclient is not None and domain is not None:
                 z = Kconfig(client=dnsclient).k
                 z.delete_dns(name, domain)
