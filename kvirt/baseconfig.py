@@ -230,6 +230,8 @@ class Kbaseconfig:
             common.pprint("Disabled hypervisor %s.Leaving..." % client, color='red')
             os._exit(1)
         self.host = options.get('host', '127.0.0.1')
+        if ':' in self.host and '[' not in self.host:
+            self.host = '[%s]' % self.host
         self.port = options.get('port', 22)
         self.user = options.get('user', 'root')
         self.protocol = options.get('protocol', 'ssh')
