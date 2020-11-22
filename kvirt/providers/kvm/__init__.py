@@ -1227,6 +1227,26 @@ class Kvirt(object):
             if not serial:
                 common.pprint("No serial Console found. Leaving...", color='red')
                 return
+            for element in serial:
+                serialport = element.find('source').get('service')
+            if serialport is not None:
+                if self.host in ['localhost', '127.0.0.1']:
+                    serialcommand = "nc 127.0.0.1 %s" % serialport
+                elif self.protocol != 'ssh':
+                    common.pprint("Remote serial Console requires using ssh . Leaving...", color='red')
+                    return
+                else:
+                    if os.path.exists("/i_am_a_container"):
+                        self.identitycommand = self.identitycommand.replace('/root', '$HOME')
+                    serialcommand = "ssh %s -o LogLevel=QUIET -p %s %s@%s nc 127.0.0.1 %s" %\
+                        (self.identitycommand, self.port, self.user, self.host, serialport)
+                if web:
+                    return serialcommand
+                if self.debug or os.path.exists("/i_am_a_container"):
+                    msg = "Run the following command:\n%s" % serialcommand if not self.debug else serialcommand
+                    common.pprint(msg)
+                else:
+                    os.system(serialcommand)
             elif self.host in ['localhost', '127.0.0.1']:
                 cmd = 'virsh -c %s console %s' % (self.url, name)
                 if self.debug or os.path.exists("/i_am_a_container"):
@@ -1235,25 +1255,8 @@ class Kvirt(object):
                 else:
                     os.system(cmd)
             else:
-                for element in serial:
-                    serialport = element.find('source').get('service')
-                    if serialport:
-                        if self.protocol != 'ssh':
-                            common.pprint("Remote serial Console requires using ssh . Leaving...", color='red')
-                            return
-                        else:
-                            if os.path.exists("/i_am_a_container"):
-                                self.identitycommand = self.identitycommand.replace('/root', '$HOME')
-                            serialcommand = "ssh %s -o LogLevel=QUIET -p %s %s@%s nc 127.0.0.1 %s" %\
-                                (self.identitycommand, self.port, self.user, self.host, serialport)
-                        if web:
-                            return serialcommand
-                        if self.debug or os.path.exists("/i_am_a_container"):
-                            msg = "Run the following command:\n%s" % serialcommand if not self.debug else serialcommand
-                            common.pprint(msg)
-                        else:
-                            os.system(serialcommand)
-                            # os.system(serialcommand)
+                common.pprint("No serial Console port found. Leaving...", color='red')
+                return
 
     def info(self, name, vm=None, debug=False):
         starts = {0: False, 1: True}
