@@ -821,7 +821,7 @@ class Kpacket(object):
         print("not implemented")
         return
 
-    def delete_image(self, image):
+    def delete_image(self, image, pool=None):
         """
 
         :param image:

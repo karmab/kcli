@@ -319,6 +319,7 @@ def download_iso(args):
 
 def delete_image(args):
     images = args.images
+    pool = args.pool
     yes = args.yes
     yes_top = args.yes_top
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -340,13 +341,13 @@ def delete_image(args):
             if clientprofile in config.profiles and 'image' in config.profiles[clientprofile]:
                 profileimage = config.profiles[clientprofile]['image']
                 config.delete_profile(clientprofile, quiet=True)
-                result = k.delete_image(profileimage)
+                result = k.delete_image(profileimage, pool=pool)
             elif imgprofiles:
                 imgprofile = imgprofiles[0]
                 config.delete_profile(imgprofile, quiet=True)
-                result = k.delete_image(image)
+                result = k.delete_image(image, pool=pool)
             else:
-                result = k.delete_image(image)
+                result = k.delete_image(image, pool=pool)
             if result['result'] == 'success':
                 common.pprint("%s deleted" % image)
                 codes.append(0)
@@ -3375,6 +3376,7 @@ def cli():
     imagedelete_help = "Image to delete"
     imagedelete_parser = argparse.ArgumentParser(add_help=False)
     imagedelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    imagedelete_parser.add_argument('-p', '--pool', help='Pool to use', metavar='POOL')
     imagedelete_parser.add_argument('images', help=imagedelete_help, metavar='IMAGES', nargs='*')
     imagedelete_parser.set_defaults(func=delete_image)
     delete_subparsers.add_parser('image', parents=[imagedelete_parser], description=imagedelete_desc,

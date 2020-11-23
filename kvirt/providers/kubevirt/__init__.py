@@ -891,7 +891,7 @@ class Kubevirt(Kubecommon):
         print("not implemented")
         return
 
-    def delete_image(self, image):
+    def delete_image(self, image, pool=None):
         common.pprint("Deleting image %s" % image)
         core = self.core
         if self.cdi:

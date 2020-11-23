@@ -1163,7 +1163,7 @@ class Ksphere:
             for dts in clu.datastore:
                 print("Pool: %s" % dts.name)
 
-    def delete_image(self, image):
+    def delete_image(self, image, pool=None):
         si = self.si
         vmFolder = self.dc.vmFolder
         common.pprint("Deleting image %s" % image)

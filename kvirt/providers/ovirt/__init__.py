@@ -921,7 +921,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         print("not implemented")
         return
 
-    def delete_image(self, image):
+    def delete_image(self, image, pool=None):
         common.pprint("Deleting Template %s" % image)
         templates_service = self.templates_service
         templateslist = templates_service.list()

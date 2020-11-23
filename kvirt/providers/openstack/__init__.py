@@ -648,7 +648,7 @@ class Kopenstack(object):
         print("not implemented")
         return
 
-    def delete_image(self, image):
+    def delete_image(self, image, pool=None):
         common.pprint("Deleting image %s" % image)
         glance = self.glance
         for img in glance.images.list():
