@@ -22,6 +22,7 @@ from kvirt.internalplans import haproxy as haproxyplan
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
 from distutils.spawn import find_executable
+from getpass import getuser
 import glob
 import os
 import re
@@ -257,6 +258,9 @@ class Kconfig(Kbaseconfig):
         default_data = {'config_%s' % k: self.default[k] for k in self.default}
         config_data = {'config_%s' % k: self.ini[self.client][k] for k in self.ini[self.client]}
         config_data['config_type'] = config_data.get('config_type', 'kvm')
+        default_user = getuser() if config_data['config_type'] == 'kvm'\
+            and self.host in ['localhost', '127.0.0.1'] else 'root'
+        config_data['config_user'] = config_data.get('config_user', default_user)
         self.overrides.update(default_data)
         self.overrides.update(config_data)
 
@@ -2138,7 +2142,7 @@ $INFO
         while not os.path.exists(ignitionfile) or os.stat(ignitionfile).st_size == 0:
             try:
                 with open(ignitionfile, 'w') as w:
-                    ignitiondata = insecure_fetch("https://api.%s.%s:22623/config/master" % (cluster, domain),
+                    ignitiondata = insecure_fetch("https://api.%s.%s:22623/config/%s" % (cluster, domain, role),
                                                   headers=[curl_header])
                     w.write(ignitiondata)
                     common.pprint("Downloaded %s ignition data" % role, color='green')
