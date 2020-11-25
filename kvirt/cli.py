@@ -1048,6 +1048,10 @@ def create_openshift_iso(args):
     iso = args.iso
     cluster = args.cluster
     domain = args.domain
+    if '.' in cluster:
+        domain = '.'.join(cluster.split('.')[1:])
+        common.pprint("Using domain %s" % domain, color='blue')
+        cluster = cluster.replace(".%s" % domain, '')
     role = args.role
     path = args.path
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)

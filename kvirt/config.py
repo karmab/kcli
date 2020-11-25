@@ -2155,8 +2155,9 @@ $INFO
         hostscontent += "%s api-int.%s.%s api.%s.%s" % (api_ip, cluster, domain, cluster, domain)
         with open("iso.ign", 'w') as f:
             common.pprint("Writing file iso.ign for %s in %s.%s" % (role, cluster, domain), color='green')
-            iso_overrides['files'] = [{"path": "/root/config.ign", "origin": "%s/%s.ign" % (path, role)},
-                                      {"path": "/etc/hosts", "content": hostscontent}]
+            iso_overrides['files'] = [{"path": "/etc/hosts", "content": hostscontent}]
+            result = config.create_vm(role, 'rhcos46', overrides=iso_overrides, onlyassets=True)
+            iso_overrides['files'] = [{"path": "/root/config.ign", "content": result['data']}]
             result = config.create_vm('autoinstaller', 'rhcos46', overrides=iso_overrides, onlyassets=True)
             f.write(result['data'])
         if iso:
