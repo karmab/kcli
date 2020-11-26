@@ -177,5 +177,15 @@ $ kcli create userdata -f my_plan.yml
 """
 
 isocreate = """# Generate an iso ignition
-$ kcli create iso $cluster
+$ kcli create openshift-iso testk.karmalabs.com
+
+# Do the same but download and inject the iso ignition there
+$ kcli create openshift-iso -P iso=true testk.karmalabs.com
+
+# Force the ip to use in /etc/hosts of the machine at first boot
+$ kcli create openshift-iso -P api_ip=192.168.1.20 testk.karmalabs.com
+
+# Disable ens4 in the iso
+$ kcli create openshift-iso -P disable_nics=[ens4] testk.karmalabs.com
+
 """

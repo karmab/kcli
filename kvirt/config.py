@@ -2124,9 +2124,17 @@ $INFO
         kexposer = Kexposer(self, plan, inputfile, overrides=overrides, port=port, extraconfigs=extraconfigs)
         kexposer.run()
 
-    def create_openshift_iso(self, cluster, api_ip=None, iso=False, domain='karmalabs.com', role='worker', path='.'):
+    def create_openshift_iso(self, cluster, overrides={}):
         curl_header = "Accept: application/vnd.coreos.ignition+json; version=3.1.0"
         liveiso = "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/latest/latest/rhcos-live.x86_64.iso"
+        api_ip = overrides.get('api_ip')
+        domain = overrides.get('domain')
+        role = overrides.get('role', 'worker')
+        iso = overrides.get('iso', False)
+        if '.' in cluster:
+            domain = '.'.join(cluster.split('.')[1:])
+            common.pprint("Using domain %s" % domain, color='blue')
+            cluster = cluster.replace(".%s" % domain, '')
         if api_ip is None:
             try:
                 api_ip = socket.gethostbyname('api.%s.%s' % (cluster, domain))
@@ -2138,17 +2146,17 @@ $INFO
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
         if os.path.exists(ignitionfile):
             common.pprint("Using existing %s" % ignitionfile, color='yellow')
-            os.remove(ignitionfile)
-        while not os.path.exists(ignitionfile) or os.stat(ignitionfile).st_size == 0:
-            try:
-                with open(ignitionfile, 'w') as w:
-                    ignitiondata = insecure_fetch("https://api.%s.%s:22623/config/%s" % (cluster, domain, role),
-                                                  headers=[curl_header])
-                    w.write(ignitiondata)
-                    common.pprint("Downloaded %s ignition data" % role, color='green')
-            except:
-                common.pprint("Waiting 5s before retrieving %s ignition data" % role, color='blue')
-                sleep(5)
+        else:
+            while not os.path.exists(ignitionfile) or os.stat(ignitionfile).st_size == 0:
+                try:
+                    with open(ignitionfile, 'w') as w:
+                        ignitiondata = insecure_fetch("https://api.%s.%s:22623/config/%s" % (cluster, domain, role),
+                                                      headers=[curl_header])
+                        w.write(ignitiondata)
+                        common.pprint("Downloaded %s ignition data" % role, color='green')
+                except:
+                    common.pprint("Waiting 5s before retrieving %s ignition data" % role, color='blue')
+                    sleep(5)
         iso_overrides = {'scripts': ['%s/iso.sh' % plandir]}
         hostscontent = "127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4\n"
         hostscontent += "::1         localhost localhost.localdomain localhost6 localhost6.localdomain6\n"
@@ -2158,6 +2166,7 @@ $INFO
             iso_overrides['files'] = [{"path": "/etc/hosts", "content": hostscontent}]
             result = config.create_vm(role, 'rhcos46', overrides=iso_overrides, onlyassets=True)
             iso_overrides['files'] = [{"path": "/root/config.ign", "content": result['data']}]
+            iso_overrides.update(overrides)
             result = config.create_vm('autoinstaller', 'rhcos46', overrides=iso_overrides, onlyassets=True)
             f.write(result['data'])
         if iso:

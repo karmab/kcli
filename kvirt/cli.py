@@ -1044,18 +1044,10 @@ def list_vmdisk(args):
 
 
 def create_openshift_iso(args):
-    api_ip = args.api_ip
-    iso = args.iso
     cluster = args.cluster
-    domain = args.domain
-    if '.' in cluster:
-        domain = '.'.join(cluster.split('.')[1:])
-        common.pprint("Using domain %s" % domain, color='blue')
-        cluster = cluster.replace(".%s" % domain, '')
-    role = args.role
-    path = args.path
+    overrides = common.get_overrides(param=args.param)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.create_openshift_iso(cluster, api_ip=api_ip, iso=iso, domain=domain, role=role, path=path)
+    config.create_openshift_iso(cluster, overrides=overrides)
 
 
 def create_vm(args):
@@ -3164,13 +3156,9 @@ def cli():
     isocreate_desc = 'Create an iso ignition for baremetal install'
     isocreate_epilog = "examples:\n%s" % isocreate
     isocreate_parser = argparse.ArgumentParser(add_help=False)
-    isocreate_parser.add_argument('-a', '--api_ip', metavar='API_IP', help='Api vip from where to get assets')
-    isocreate_parser.add_argument('-d', '--domain', metavar='DOMAIN', default='karmalabs.com',
-                                  help='Domain. Defaults to karmalabs.com')
-    isocreate_parser.add_argument('-i', '--iso', action='store_true', help='Create iso')
-    isocreate_parser.add_argument('-p', '--path', metavar='PATH', default='.', help='Where to download asset')
-    isocreate_parser.add_argument('-r', '--role', metavar='ROLE', default='worker', choices=['master', 'worker'],
-                                  help='Role. Defaults to worker')
+    isocreate_parser.add_argument('-P', '--param', action='append',
+                                  help='specify parameter or keyword for rendering (can specify multiple)',
+                                  metavar='PARAM')
     isocreate_parser.add_argument('cluster', metavar='CLUSTER', help='Cluster')
     isocreate_parser.set_defaults(func=create_openshift_iso)
     create_subparsers.add_parser('openshift-iso', parents=[isocreate_parser], description=isocreate_desc,
