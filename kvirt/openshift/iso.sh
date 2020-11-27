@@ -19,6 +19,10 @@ else
   exit 1
 fi
 
+{% if ip is defined and netmask is defined and gateway is defined %}
+firstboot_args="$firstboot_args ip={{ "[" + ip + "]" if ':' in ip else ip }}::{{ "[" + gateway + "]" if ':' in gateway else gateway }}:{{ netmask }}:{{ hostname|default("") }}:{{ nic|default("ens3") }}:none nameserver={{ "[" + dns|default(gateway) + "]" if ':' in dns|default(gateway) else dns|default(gateway) }}"
+{% endif %}
+
 cmd="coreos-installer install --firstboot-args=\"${firstboot_args}\" --ignition=/root/config.ign ${install_device}"
 bash -c "$cmd"
 if [ "$?" == "0" ] ; then

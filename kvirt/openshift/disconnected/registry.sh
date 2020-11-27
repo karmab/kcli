@@ -38,12 +38,10 @@ podman create --name registry --net host --security-opt label=disable -v /opt/re
 podman start registry
 export UPSTREAM_REGISTRY={{ disconnected_origin }}
 {% if disconnected_origin != 'quay.io' -%}
-export UPSTREAM_REPOSITORY=openshift
 export RELEASE_NAME=ocp/release
 export OCP_RELEASE={{ tag }}
 {%- else -%}
-export UPSTREAM_REPOSITORY=openshift-release-dev
-export RELEASE_NAME=ocp-release
+export RELEASE_NAME=openshift-release-dev/ocp-release
 export OCP_RELEASE={{ tag }}-x86_64
 {%- endif %}
 export LOCAL_REGISTRY=$REGISTRY_NAME:5000

@@ -188,4 +188,6 @@ $ kcli create openshift-iso -P api_ip=192.168.1.20 testk.karmalabs.com
 # Disable ens4 in the iso
 $ kcli create openshift-iso -P disable_nics=[ens4] testk.karmalabs.com
 
+# Inject static ip for ens3
+#kcli create openshift-iso -P nic=ens3 -P ip=192.168.122.45 -P netmask=24 -P gateway=192.168.122.1 testk.karmalabs.com
 """
