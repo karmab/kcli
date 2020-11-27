@@ -97,9 +97,13 @@ def local_ip(network):
     return os.popen(cmd).read().strip()
 
 
-def network_ip(network, num=0):
+def network_ip(network, num=0, version=False):
     try:
-        return IPNetwork(network)[num]
+        ip = IPNetwork(network)[num]
+        if version and ':' in network:
+            return "[%s]" % ip
+        else:
+            return ip
     except Exception as e:
         print("Error processing filter network_ip with %s and %s. Got %s" % (network, num, e))
         os._exit(1)
