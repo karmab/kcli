@@ -5,10 +5,10 @@ fips: True
 baseDomain: {{ domain }}
 {%- if http_proxy != None %}
 proxy:
-  httpProxy: {{ http_proxy }}
-  httpsProxy: {{ http_proxy }}
+    httpProxy: {{ 'http://' + http_proxy if 'http' not in http_proxy else http_proxy }}
+    httpsProxy: {{ 'http://' + http_proxy if 'http' not in http_proxy else http_proxy }}
 {%- if no_proxy != None %}
-  noProxy: {{ no_proxy }}
+    noProxy: {{ no_proxy }}
 {%- endif %}
 {%- endif %}
 compute:
