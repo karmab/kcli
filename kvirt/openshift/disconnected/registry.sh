@@ -34,17 +34,24 @@ openssl req -newkey rsa:4096 -nodes -sha256 -keyout /opt/registry/certs/domain.k
 cp /opt/registry/certs/domain.crt /etc/pki/ca-trust/source/anchors/
 update-ca-trust extract
 htpasswd -bBc /opt/registry/auth/htpasswd $REGISTRY_USER $REGISTRY_PASSWORD
-podman create --name registry --net host --security-opt label=disable -v /opt/registry/data:/var/lib/registry:z -v /opt/registry/auth:/auth:z -v /opt/registry/conf/config.yml:/etc/docker/registry/config.yml -e "REGISTRY_AUTH=htpasswd" -e "REGISTRY_AUTH_HTPASSWD_REALM=Registry" -e "REGISTRY_HTTP_SECRET=ALongRandomSecretForRegistry" -e REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd -v /opt/registry/certs:/certs:z -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/domain.crt -e REGISTRY_HTTP_TLS_KEY=/certs/domain.key docker.io/library/registry:2
+podman create --name registry --net host --security-opt label=disable -v /opt/registry/data:/var/lib/registry:z -v /opt/registry/auth:/auth:z -v /opt/registry/conf/config.yml:/etc/docker/registry/config.yml -e "REGISTRY_AUTH=htpasswd" -e "REGISTRY_AUTH_HTPASSWD_REALM=Registry" -e "REGISTRY_HTTP_SECRET=ALongRandomSecretForRegistry" -e REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd -v /opt/registry/certs:/certs:z -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/domain.crt -e REGISTRY_HTTP_TLS_KEY=/certs/domain.key quay.io/saledort/registry:2
 podman start registry
-export UPSTREAM_REGISTRY="{{ disconnected_origin }}"
-export RELEASE_NAME='ocp/release'
-export OCP_RELEASE="{{ tag }}"
-export LOCAL_REGISTRY="$REGISTRY_NAME:5000"
-export PULL_SECRET="/root/openshift_pull.json"
+export UPSTREAM_REGISTRY={{ disconnected_origin }}
+{% if disconnected_origin != 'quay.io' -%}
+export UPSTREAM_REPOSITORY=openshift
+export RELEASE_NAME=ocp/release
+export OCP_RELEASE={{ tag }}
+{%- else -%}
+export UPSTREAM_REPOSITORY=openshift-release-dev
+export RELEASE_NAME=ocp-release
+export OCP_RELEASE={{ tag }}-x86_64
+{%- endif %}
+export LOCAL_REGISTRY=$REGISTRY_NAME:5000
+export PULL_SECRET=/root/openshift_pull.json
 KEY=$( echo -n $REGISTRY_USER:$REGISTRY_PASSWORD | base64)
 jq ".auths += {\"$REGISTRY_NAME:5000\": {\"auth\": \"$KEY\",\"email\": \"jhendrix@karmalabs.com\"}}" < $PULL_SECRET > /root/temp.json
 cat /root/temp.json | tr -d [:space:] > $PULL_SECRET
 oc adm release mirror -a $PULL_SECRET --from=${UPSTREAM_REGISTRY}/${RELEASE_NAME}:${OCP_RELEASE} --to-release-image=${LOCAL_REGISTRY}/{{ disconnected_prefix }}/release:${OCP_RELEASE} --to=${LOCAL_REGISTRY}/{{ disconnected_prefix }}
 echo "{\"auths\": {\"$REGISTRY_NAME:5000\": {\"auth\": \"$KEY\", \"email\": \"jhendrix@karmalabs.com\"}}}" > /root/temp.json
-OPENSHIFT_VERSION=$( grep cluster-openshift-apiserver-operator /var/log/cloud-init-output.log  | head -1 | awk '{print $NF}' | sed 's/-cluster-openshift-apiserver-operator//')
-echo $REGISTRY_NAME:5000/{{ disconnected_prefix }}/release:$OPENSHIFT_VERSION > /root/version.txt
+#OPENSHIFT_VERSION=$( grep cluster-openshift-apiserver-operator /var/log/cloud-init-output.log  | head -1 | awk '{print $NF}' | sed 's/-cluster-openshift-apiserver-operator//')
+echo $REGISTRY_NAME:5000/{{ disconnected_prefix }}/release:$OCP_RELEASE > /root/version.txt
