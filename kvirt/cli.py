@@ -1854,6 +1854,7 @@ def create_userdata(args):
     """Create cloudinit/ignition data"""
     plan = None
     inputfile = args.inputfile
+    outputdir = args.outputdir
     if inputfile is None:
         args.assets = True
         args.profile = None
@@ -1882,8 +1883,45 @@ def create_userdata(args):
         return 0
     results = config.plan(plan, inputfile=inputfile, overrides=overrides, onlyassets=True)
     if results.get('assets'):
-        for asset in results['assets']:
-            print(asset)
+        for num, asset in enumerate(results['assets']):
+            if outputdir is None:
+                print(asset)
+            else:
+                if not os.path.exists(outputdir):
+                    os.mkdir(outputdir)
+                # if 'ignition' in asset:
+                #    with open("%s/%s.ign" % (outputdir, "%0.2d" % num), 'w') as f:
+                #        f.write(asset)
+                assetdata = yaml.safe_load(asset)
+                hostname = assetdata.get('hostname')
+                if hostname is None:
+                    continue
+                common.pprint("Rendering %s" % hostname)
+                hostnamedir = "%s/%s" % (outputdir, hostname)
+                if not os.path.exists(hostnamedir):
+                    os.mkdir(hostnamedir)
+                runcmd = assetdata.get('runcmd', [])
+                write_files = assetdata.get('write_files', [])
+                with open("%s/runcmd" % hostnamedir, 'w') as f:
+                    f.write('\n'.join(runcmd))
+                for _file in write_files:
+                    content = _file['content']
+                    path = _file['path'].replace('/root/', '')
+                    if path.endswith('id_rsa') or path.endswith('id_dsa') or path.endswith('id_rsa.pub')\
+                            or path.endswith('id_dsa.pub') or 'openshift_pull.json' in path:
+                        common.pprint("Skipping %s" % path, color='yellow')
+                        continue
+                    if '/' in path and not os.path.exists("%s/%s" % (hostnamedir, os.path.dirname(path))):
+                        os.makedirs("%s/%s" % (hostnamedir, os.path.dirname(path)))
+                        with open("%s/%s/%s" % (hostnamedir, os.path.dirname(path), os.path.basename(path)), 'w') as f:
+                            f.write(content)
+                    else:
+                        with open("%s/%s" % (hostnamedir, path), 'w') as f:
+                            f.write(content)
+        if outputdir is not None:
+            renderplan = config.process_inputfile(plan, inputfile, overrides=overrides, onfly=False)
+            with open("%s/kcli_plan.yml" % outputdir, 'w') as f:
+                    f.write(renderplan)
     return 0
 
 
@@ -2529,6 +2567,7 @@ def cli():
                                                          formatter_class=rawhelp)
     userdatacreate_parser.add_argument('-i', '--image', help='Image to use', metavar='IMAGE')
     userdatacreate_parser.add_argument('-f', '--inputfile', help='Input Plan file')
+    userdatacreate_parser.add_argument('--outputdir', '-o', help='Output directory', metavar='OUTPUTDIR')
     userdatacreate_parser.add_argument('-P', '--param', action='append',
                                        help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
     userdatacreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
