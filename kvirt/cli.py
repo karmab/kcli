@@ -2927,7 +2927,8 @@ def cli():
     hostsync_parser.set_defaults(func=sync_host)
 
     kubecreate_desc = 'Create Kube'
-    kubecreate_parser = create_subparsers.add_parser('kube', description=kubecreate_desc, help=kubecreate_desc)
+    kubecreate_parser = create_subparsers.add_parser('kube', description=kubecreate_desc, help=kubecreate_desc,
+                                                     aliases=['cluster'])
     kubecreate_subparsers = kubecreate_parser.add_subparsers(metavar='', dest='subcommand_create_kube')
 
     kubegenericcreate_desc = 'Create Generic Kube'
@@ -2986,10 +2987,12 @@ def cli():
     kubedelete_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
     kubedelete_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubedelete_parser.set_defaults(func=delete_kube)
-    delete_subparsers.add_parser('kube', parents=[kubedelete_parser], description=kubedelete_desc, help=kubedelete_desc)
+    delete_subparsers.add_parser('kube', parents=[kubedelete_parser], description=kubedelete_desc, help=kubedelete_desc,
+                                 aliases=['cluster'])
 
     kubeinfo_desc = 'Info Kube'
-    kubeinfo_parser = info_subparsers.add_parser('kube', description=kubeinfo_desc, help=kubeinfo_desc)
+    kubeinfo_parser = info_subparsers.add_parser('kube', description=kubeinfo_desc, help=kubeinfo_desc,
+                                                 aliases=['cluster'])
     kubeinfo_subparsers = kubeinfo_parser.add_subparsers(metavar='', dest='subcommand_info_kube')
 
     kubegenericinfo_desc = 'Info Generic Kube'
@@ -3012,7 +3015,8 @@ def cli():
     kubelist_parser.set_defaults(func=list_kube)
 
     kubescale_desc = 'Scale Kube'
-    kubescale_parser = scale_subparsers.add_parser('kube', description=kubescale_desc, help=kubescale_desc)
+    kubescale_parser = scale_subparsers.add_parser('kube', description=kubescale_desc, help=kubescale_desc,
+                                                   aliases=['cluster'])
     kubescale_subparsers = kubescale_parser.add_subparsers(metavar='', dest='subcommand_scale_kube')
 
     kubegenericscale_desc = 'Scale Generic Kube'
