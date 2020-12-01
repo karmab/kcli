@@ -587,7 +587,7 @@ class Kconfig(Kbaseconfig):
         overrides.update(profile)
         scriptcmds = []
         skip_rhnregister_script = False
-        if rhnregister and image is not None and image.lower().startswith('rhel'):
+        if rhnregister and image is not None and 'rhel' in image.lower():
             if rhnuser is not None and rhnpassword is not None:
                 skip_rhnregister_script = True
                 overrides['rhnuser'] = rhnuser

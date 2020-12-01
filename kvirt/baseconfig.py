@@ -223,7 +223,11 @@ class Kbaseconfig:
         if self.client not in self.ini:
             common.pprint("Missing section for client %s in config file. Trying to connect..." % self.client,
                           color='blue')
-            self.ini[self.client] = {'host': self.client}
+            if '@' in self.client:
+                u, h = self.client.split('@')
+            else:
+                u, h = 'root', self.client
+            self.ini[self.client] = {'host': h, 'user': u}
         self.options = self.ini[self.client]
         options = self.options
         self.enabled = options.get('enabled', True)

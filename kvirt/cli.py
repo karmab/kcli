@@ -1575,6 +1575,36 @@ def create_plan(args):
     return 0
 
 
+def create_playbook(args):
+    """Create plan"""
+    plan = args.plan
+    url = args.url
+    path = args.path
+    inputfile = args.inputfile
+    paramfile = args.paramfile
+    if inputfile is None:
+        inputfile = 'kcli_plan.yml'
+    if os.path.exists("/i_am_a_container"):
+        inputfile = "/workdir/%s" % inputfile
+        if paramfile is not None:
+            paramfile = "/workdir/%s" % paramfile
+        elif os.path.exists("/workdir/kcli_parameters.yml"):
+            paramfile = "/workdir/kcli_parameters.yml"
+            common.pprint("Using default parameter file kcli_parameters.yml", color='blue')
+    elif paramfile is None and os.path.exists("kcli_parameters.yml"):
+        paramfile = "kcli_parameters.yml"
+        common.pprint("Using default parameter file kcli_parameters.yml", color='blue')
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    _type = config.ini[config.client].get('type', 'kvm')
+    overrides.update({'type': _type})
+    if plan is None:
+        plan = nameutils.get_random_name()
+        common.pprint("Using %s as name of the plan" % plan)
+    config.create_playbook(plan, url=url, path=path, inputfile=inputfile, overrides=overrides)
+    return 0
+
+
 def update_plan(args):
     """Update plan"""
     autostart = args.autostart
@@ -3326,6 +3356,15 @@ def cli():
     planupdate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
     planupdate_parser.add_argument('plan', metavar='PLAN')
     planupdate_parser.set_defaults(func=update_plan)
+
+#    playbookcreate_desc = 'Create playbook from plan'
+#    playbookcreate_parser = subparsers.add_parser('render', description=playbookcreate_desc, help=playbookcreate_desc)
+#    playbookcreate_parser.add_argument('-f', '--inputfile', help='Input Plan/File', default='kcli_plan.yml')
+#    playbookcreate_parser.add_argument('-i', '--ignore', action='store_true', help='Ignore missing variables')
+#    playbookcreate_parser.add_argument('-P', '--param', action='append',
+#                                       help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+#    playbookcreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+#    playbookcreate_parser.set_defaults(func=create_playbook)
 
     poolcreate_desc = 'Create Pool'
     poolcreate_parser = create_subparsers.add_parser('pool', description=poolcreate_desc, help=poolcreate_desc)
