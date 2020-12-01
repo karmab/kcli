@@ -5,8 +5,8 @@
 from distutils.spawn import find_executable
 from getpass import getuser
 from kvirt.config import Kconfig
-from kvirt.examples import userdatacreate, hostcreate, _list, plancreate, planinfo, productinfo, repocreate, start
-from kvirt.examples import isocreate, kubegenericcreate, kubek3screate, kubeopenshiftcreate
+from kvirt.examples import plandatacreate, vmdatacreate, hostcreate, _list, plancreate, planinfo, productinfo
+from kvirt.examples import repocreate, isocreate, kubegenericcreate, kubek3screate, kubeopenshiftcreate, start
 from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsole, vmexport, niccreate, nicdelete
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
@@ -1850,22 +1850,25 @@ def render_file(args):
     return 0
 
 
-def create_userdata(args):
+def create_vmdata(args):
+    """Create cloudinit/ignition data for vm"""
+    args.assets = True
+    args.profile = None
+    args.profilefile = None
+    args.wait = False
+    args.count = 1
+    create_vm(args)
+    return 0
+
+
+def create_plandata(args):
     """Create cloudinit/ignition data"""
     plan = None
     inputfile = args.inputfile
     outputdir = args.outputdir
-    if inputfile is None:
-        args.assets = True
-        args.profile = None
-        args.profilefile = None
-        args.wait = False
-        args.count = 1
-        create_vm(args)
-        return 0
     paramfile = args.paramfile
     if os.path.exists("/i_am_a_container"):
-        inputfile = "/workdir/%s" % inputfile if inputfile is not None else "/workdir/kcli_plan.yml"
+        inputfile = "/workdir/%s" % inputfile
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
         elif os.path.exists("/workdir/kcli_parameters.yml"):
@@ -2560,20 +2563,6 @@ def cli():
     render_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
     render_parser.set_defaults(func=render_file)
 
-    userdatacreate_desc = 'Create Cloudinit/Ignition for a single vm or from plan file'
-    userdatacreate_epilog = "examples:\n%s" % userdatacreate
-    userdatacreate_parser = create_subparsers.add_parser('userdata', description=userdatacreate_desc,
-                                                         help=userdatacreate_desc, epilog=userdatacreate_epilog,
-                                                         formatter_class=rawhelp)
-    userdatacreate_parser.add_argument('-i', '--image', help='Image to use', metavar='IMAGE')
-    userdatacreate_parser.add_argument('-f', '--inputfile', help='Input Plan file')
-    userdatacreate_parser.add_argument('--outputdir', '-o', help='Output directory', metavar='OUTPUTDIR')
-    userdatacreate_parser.add_argument('-P', '--param', action='append',
-                                       help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    userdatacreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
-    userdatacreate_parser.add_argument('name', metavar='VMNAME', nargs='?', type=valid_fqdn)
-    userdatacreate_parser.set_defaults(func=create_userdata)
-
     restart_desc = 'Restart Vm/Plan/Container'
     restart_parser = subparsers.add_parser('restart', description=restart_desc, help=restart_desc)
     restart_subparsers = restart_parser.add_subparsers(metavar='', dest='subcommand_restart')
@@ -2643,11 +2632,6 @@ def cli():
                           epilog=version_epilog, formatter_class=rawhelp)
 
     # sub subcommands
-    cachedelete_desc = 'Delete Cache'
-    cachedelete_parser = delete_subparsers.add_parser('cache', description=cachedelete_desc, help=cachedelete_desc)
-    cachedelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    cachedelete_parser.set_defaults(func=delete_cache)
-
     createapp_desc = 'Create Kube Apps'
     createapp_parser = create_subparsers.add_parser('app', description=createapp_desc,
                                                     help=createapp_desc, aliases=['apps'])
@@ -2740,6 +2724,11 @@ def cli():
     appopenshiftlist_parser = listapp_subparsers.add_parser('openshift', description=appopenshiftlist_desc,
                                                             help=appopenshiftlist_desc)
     appopenshiftlist_parser.set_defaults(func=list_apps_openshift)
+
+    cachedelete_desc = 'Delete Cache'
+    cachedelete_parser = delete_subparsers.add_parser('cache', description=cachedelete_desc, help=cachedelete_desc)
+    cachedelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    cachedelete_parser.set_defaults(func=delete_cache)
 
     containercreate_desc = 'Create Container'
     containercreate_epilog = None
@@ -2965,6 +2954,16 @@ def cli():
     hostsync_parser.add_argument('names', help='NAMES', nargs='*')
     hostsync_parser.set_defaults(func=sync_host)
 
+    imagedelete_desc = 'Delete Image'
+    imagedelete_help = "Image to delete"
+    imagedelete_parser = argparse.ArgumentParser(add_help=False)
+    imagedelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    imagedelete_parser.add_argument('-p', '--pool', help='Pool to use', metavar='POOL')
+    imagedelete_parser.add_argument('images', help=imagedelete_help, metavar='IMAGES', nargs='*')
+    imagedelete_parser.set_defaults(func=delete_image)
+    delete_subparsers.add_parser('image', parents=[imagedelete_parser], description=imagedelete_desc,
+                                 help=imagedelete_desc)
+
     kubecreate_desc = 'Create Kube'
     kubecreate_parser = create_subparsers.add_parser('kube', description=kubecreate_desc, help=kubecreate_desc,
                                                      aliases=['cluster'])
@@ -3137,14 +3136,6 @@ def cli():
     profilelist_parser.add_argument('--short', action='store_true')
     profilelist_parser.set_defaults(func=list_profile)
 
-    profiledelete_desc = 'Delete Profile'
-    profiledelete_help = "Profile to delete"
-    profiledelete_parser = argparse.ArgumentParser(add_help=False)
-    profiledelete_parser.add_argument('profile', help=profiledelete_help, metavar='PROFILE')
-    profiledelete_parser.set_defaults(func=delete_profile)
-    delete_subparsers.add_parser('profile', parents=[profiledelete_parser], description=profiledelete_desc,
-                                 help=profiledelete_desc)
-
     profileupdate_desc = 'Update Profile'
     profileupdate_parser = update_subparsers.add_parser('profile', description=profileupdate_desc,
                                                         help=profileupdate_desc)
@@ -3242,7 +3233,7 @@ def cli():
     plandelete_parser.add_argument('plan', metavar='PLAN')
     plandelete_parser.set_defaults(func=delete_plan)
 
-    plansnapshotdelete_desc = 'Deletw Plan Snapshot'
+    plansnapshotdelete_desc = 'Delete Plan Snapshot'
     plansnapshotdelete_parser = delete_subparsers.add_parser('plan-snapshot', description=plansnapshotdelete_desc,
                                                              help=plansnapshotdelete_desc)
     plansnapshotdelete_parser.add_argument('-p', '--plan', help='plan name', required=True, metavar='PLAN')
@@ -3282,6 +3273,19 @@ def cli():
     planrestart_parser = restart_subparsers.add_parser('plan', description=planrestart_desc, help=planrestart_desc)
     planrestart_parser.add_argument('plan', metavar='PLAN')
     planrestart_parser.set_defaults(func=restart_plan)
+
+    plandatacreate_desc = 'Create Cloudinit/Ignition from plan file'
+    plandatacreate_epilog = "examples:\n%s" % plandatacreate
+    plandatacreate_parser = create_subparsers.add_parser('plan-data', description=plandatacreate_desc,
+                                                         help=plandatacreate_desc, epilog=plandatacreate_epilog,
+                                                         formatter_class=rawhelp)
+    plandatacreate_parser.add_argument('-f', '--inputfile', help='Input Plan file', default='kcli_plan.yml')
+    plandatacreate_parser.add_argument('--outputdir', '-o', help='Output directory', metavar='OUTPUTDIR')
+    plandatacreate_parser.add_argument('-P', '--param', action='append',
+                                       help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    plandatacreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    plandatacreate_parser.add_argument('name', metavar='VMNAME', nargs='?', type=valid_fqdn)
+    plandatacreate_parser.set_defaults(func=create_plandata)
 
     planrevert_desc = 'Revert Snapshot Of Plan'
     planrevert_parser = revert_subparsers.add_parser('plan-snapshot', description=planrevert_desc, help=planrevert_desc,
@@ -3349,6 +3353,14 @@ def cli():
     poollist_parser.add_argument('--short', action='store_true')
     poollist_parser.set_defaults(func=list_pool)
 
+    profiledelete_desc = 'Delete Profile'
+    profiledelete_help = "Profile to delete"
+    profiledelete_parser = argparse.ArgumentParser(add_help=False)
+    profiledelete_parser.add_argument('profile', help=profiledelete_help, metavar='PROFILE')
+    profiledelete_parser.set_defaults(func=delete_profile)
+    delete_subparsers.add_parser('profile', parents=[profiledelete_parser], description=profiledelete_desc,
+                                 help=profiledelete_desc)
+
     productcreate_desc = 'Create Product'
     productcreate_parser = create_subparsers.add_parser('product', description=productcreate_desc,
                                                         help=productcreate_desc)
@@ -3410,16 +3422,6 @@ def cli():
     repoupdate_parser = update_subparsers.add_parser('repo', description=repoupdate_desc, help=repoupdate_desc)
     repoupdate_parser.add_argument('repo')
     repoupdate_parser.set_defaults(func=update_repo)
-
-    imagedelete_desc = 'Delete Image'
-    imagedelete_help = "Image to delete"
-    imagedelete_parser = argparse.ArgumentParser(add_help=False)
-    imagedelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    imagedelete_parser.add_argument('-p', '--pool', help='Pool to use', metavar='POOL')
-    imagedelete_parser.add_argument('images', help=imagedelete_help, metavar='IMAGES', nargs='*')
-    imagedelete_parser.set_defaults(func=delete_image)
-    delete_subparsers.add_parser('image', parents=[imagedelete_parser], description=imagedelete_desc,
-                                 help=imagedelete_desc)
 
     imagedownload_desc = 'Download Cloud Image'
     imagedownload_help = "Image to download. Choose between \n%s" % '\n'.join(IMAGES.keys())
@@ -3520,6 +3522,18 @@ def cli():
     vmdelete_parser.set_defaults(func=delete_vm)
     delete_subparsers.add_parser('vm', parents=[vmdelete_parser], description=vmdelete_desc, help=vmdelete_desc)
 
+    vmdatacreate_desc = 'Create Cloudinit/Ignition for a single vm'
+    vmdatacreate_epilog = "examples:\n%s" % vmdatacreate
+    vmdatacreate_parser = create_subparsers.add_parser('vm-data', description=vmdatacreate_desc,
+                                                       help=vmdatacreate_desc, epilog=vmdatacreate_epilog,
+                                                       formatter_class=rawhelp)
+    vmdatacreate_parser.add_argument('-i', '--image', help='Image to use', metavar='IMAGE')
+    vmdatacreate_parser.add_argument('-P', '--param', action='append',
+                                     help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    vmdatacreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    vmdatacreate_parser.add_argument('name', metavar='VMNAME', nargs='?', type=valid_fqdn)
+    vmdatacreate_parser.set_defaults(func=create_vmdata)
+
     vmdiskadd_desc = 'Add Disk To Vm'
     diskcreate_epilog = "examples:\n%s" % diskcreate
     vmdiskadd_parser = argparse.ArgumentParser(add_help=False)
@@ -3531,8 +3545,8 @@ def cli():
     vmdiskadd_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
     vmdiskadd_parser.add_argument('name', metavar='VMNAME')
     vmdiskadd_parser.set_defaults(func=create_vmdisk)
-    create_subparsers.add_parser('disk', parents=[vmdiskadd_parser], description=vmdiskadd_desc, help=vmdiskadd_desc,
-                                 aliases=['vm-disk'], epilog=diskcreate_epilog,
+    create_subparsers.add_parser('vm-disk', parents=[vmdiskadd_parser], description=vmdiskadd_desc, help=vmdiskadd_desc,
+                                 aliases=['disk'], epilog=diskcreate_epilog,
                                  formatter_class=rawhelp)
 
     vmdiskdelete_desc = 'Delete Vm Disk'
@@ -3542,8 +3556,8 @@ def cli():
     vmdiskdelete_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
     vmdiskdelete_parser.add_argument('diskname', metavar='DISKNAME')
     vmdiskdelete_parser.set_defaults(func=delete_vmdisk)
-    delete_subparsers.add_parser('disk', parents=[vmdiskdelete_parser], description=vmdiskdelete_desc,
-                                 aliases=['vm-disk'], help=vmdiskdelete_desc, epilog=diskdelete_epilog,
+    delete_subparsers.add_parser('vm-disk', parents=[vmdiskdelete_parser], description=vmdiskdelete_desc,
+                                 aliases=['disk'], help=vmdiskdelete_desc, epilog=diskdelete_epilog,
                                  formatter_class=rawhelp)
 
     vmdisklist_desc = 'List All Vm Disks'
@@ -3575,8 +3589,8 @@ def cli():
     create_vmnic_parser.add_argument('-n', '--network', help='Network', metavar='NETWORK')
     create_vmnic_parser.add_argument('name', metavar='VMNAME')
     create_vmnic_parser.set_defaults(func=create_vmnic)
-    create_subparsers.add_parser('nic', parents=[create_vmnic_parser], description=create_vmnic_desc,
-                                 help=create_vmnic_desc, aliases=['vm-nic'],
+    create_subparsers.add_parser('vm-nic', parents=[create_vmnic_parser], description=create_vmnic_desc,
+                                 help=create_vmnic_desc, aliases=['nic'],
                                  epilog=create_vmnic_epilog, formatter_class=rawhelp)
 
     delete_vmnic_desc = 'Delete Nic From vm'
@@ -3586,8 +3600,8 @@ def cli():
     delete_vmnic_parser.add_argument('-n', '--network', help='Network', metavar='NETWORK')
     delete_vmnic_parser.add_argument('name', metavar='VMNAME')
     delete_vmnic_parser.set_defaults(func=delete_vmnic)
-    delete_subparsers.add_parser('nic', parents=[delete_vmnic_parser], description=delete_vmnic_desc,
-                                 help=delete_vmnic_desc, aliases=['vm-nic'],
+    delete_subparsers.add_parser('vm-nic', parents=[delete_vmnic_parser], description=delete_vmnic_desc,
+                                 help=delete_vmnic_desc, aliases=['nic'],
                                  epilog=delete_vmnic_epilog, formatter_class=rawhelp)
 
     vmrestart_desc = 'Restart Vms'

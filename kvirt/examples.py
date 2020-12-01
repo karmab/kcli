@@ -157,23 +157,24 @@ $ kcli create kube openshift -P masters=1 -P workers=2 mykube
 $ kcli create kube openshift --paramfile=myparameters.yml mykube2
 """
 
-userdatacreate = """# Generate a basic ignition file for rhcos4.6
-$ kcli create userdata -i rhcos46
+vmdatacreate = """# Generate a basic ignition file for rhcos4.6
+$ kcli create vmdata -i rhcos46
 
 # Do the same without injecting any hostname
-$ kcli create userdata -i rhcos46 -P minimal=true
+$ kcli create vmdata -i rhcos46 -P minimal=true
 
 # Do the same but force the name
-$ kcli create userdata -i rhcos46 myname
+$ kcli create vmdata -i rhcos46 myname
 
 # Inject a custom script and a file in /root
-$ kcli create userdata -i rhcos -P scripts=[myscript.sh] -P files=[myfile.txt] zzz
+$ kcli create vmdata -i rhcos -P scripts=[myscript.sh] -P files=[myfile.txt] zzz
 
 # Generate a cloudinit userdata
-$ kcli create userdata -i centos8 myname
+$ kcli create vmdata -i centos8 myname
+"""
 
-# Generate all the ignition/cloudinit userdatas from a plan file
-$ kcli create userdata -f my_plan.yml
+plandatacreate = """# Generate all the ignition/cloudinit userdatas from a plan file
+$ kcli create plandata -f my_plan.yml
 """
 
 isocreate = """# Generate an iso ignition
