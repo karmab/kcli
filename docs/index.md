@@ -1154,6 +1154,7 @@ parameters:
 |*tags*|[]|Array of tags to apply to gcp instances (usefull when matched in a firewall rule). In the case of kubevirt, it s rather a dict of key=value used as node selector (allowing to force vms to be scheduled on a matching node)|
 |*networkwait*|0|Delay in seconds before attempting to run further commands, to be used in environments where networking takes more time to come up|
 |*rhnregister*|None|Auto registers vms whose template starts with rhel Defaults to false. Requires to either rhnuser and rhnpassword, or rhnactivationkey and rhnorg, and an optional rhnpool|
+|*rhnserver*|https://subscription.rhsm.redhat.com|Red Hat Network server (for registering to a Satellite server)|
 |*rhnuser*|None|Red Hat Network user|
 |*rhnpassword*|None|Red Hat Network password|
 |*rhnactivationkey*|None|Red Hat Network activation key|

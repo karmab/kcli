@@ -11,7 +11,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             START, AUTOSTART, NESTED, TUNNEL, TUNNELHOST, TUNNELPORT, TUNNELUSER, TUNNELDIR,
                             INSECURE, KEYS, CMDS, DNS, DOMAIN, SCRIPTS, FILES, ISO,
                             NETMASKS, GATEWAY, SHAREDKEY, IMAGE, ENABLEROOT,
-                            PRIVATEKEY, TAGS, RHNREGISTER, RHNUSER, RHNPASSWORD, RHNAK, RHNORG, RHNPOOL,
+                            PRIVATEKEY, TAGS, RHNREGISTER, RHNSERVER, RHNUSER, RHNPASSWORD, RHNAK, RHNORG, RHNPOOL,
                             NETWORKWAIT, FLAVOR, KEEP_NETWORKS, DNSCLIENT, STORE_METADATA, NOTIFY, PUSHBULLETTOKEN,
                             NOTIFYSCRIPT, SLACKTOKEN, NOTIFYCMD, NOTIFYMETHODS, SLACKCHANNEL, SHAREDFOLDERS, KERNEL,
                             INITRD, CMDLINE, PLACEMENT, YAMLINVENTORY, CPUHOTPLUG, MEMORYHOTPLUG, CPUFLAGS, CPUPINNING,
@@ -138,6 +138,7 @@ class Kbaseconfig:
         defaults['privatekey'] = default.get('privatekey', PRIVATEKEY)
         defaults['networkwait'] = default.get('networkwait', NETWORKWAIT)
         defaults['rhnregister'] = default.get('rhnregister', RHNREGISTER)
+        defaults['rhnserver'] = default.get('rhnserver', RHNSERVER)
         defaults['rhnuser'] = default.get('rhnuser', RHNUSER)
         defaults['rhnpassword'] = default.get('rhnpassword', RHNPASSWORD)
         defaults['rhnactivationkey'] = default.get('rhnactivationkey', RHNAK)
@@ -292,6 +293,7 @@ class Kbaseconfig:
         self.networkwait = options.get('networkwait', self.default['networkwait'])
         self.privatekey = options.get('privatekey', self.default['privatekey'])
         self.rhnregister = options.get('rhnregister', self.default['rhnregister'])
+        self.rhnserver = options.get('rhnserver', self.default['rhnserver'])
         self.rhnuser = options.get('rhnuser', self.default['rhnuser'])
         self.rhnpassword = options.get('rhnpassword', self.default['rhnpassword'])
         self.rhnak = options.get('rhnactivationkey', self.default['rhnactivationkey'])

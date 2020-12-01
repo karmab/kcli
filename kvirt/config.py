@@ -359,6 +359,7 @@ class Kconfig(Kbaseconfig):
             default_privatekey = father.get('privatekey', self.privatekey)
             default_networkwait = father.get('networkwait', self.networkwait)
             default_rhnregister = father.get('rhnregister', self.rhnregister)
+            default_rhnserver = father.get('rhnserver', self.rhnserver)
             default_rhnuser = father.get('rhnuser', self.rhnuser)
             default_rhnpassword = father.get('rhnpassword', self.rhnpassword)
             default_rhnak = father.get('rhnactivationkey', self.rhnak)
@@ -439,6 +440,7 @@ class Kconfig(Kbaseconfig):
             default_privatekey = self.privatekey
             default_networkwait = self.networkwait
             default_rhnregister = self.rhnregister
+            default_rhnserver = self.rhnserver
             default_rhnuser = self.rhnuser
             default_rhnpassword = self.rhnpassword
             default_rhnak = self.rhnak
@@ -554,6 +556,7 @@ class Kconfig(Kbaseconfig):
         privatekey = profile.get('privatekey', default_privatekey)
         networkwait = profile.get('networkwait', default_networkwait)
         rhnregister = profile.get('rhnregister', default_rhnregister)
+        rhnserver = profile.get('rhnserver', default_rhnserver)
         rhnuser = profile.get('rhnuser', default_rhnuser)
         rhnpassword = profile.get('rhnpassword', default_rhnpassword)
         rhnak = profile.get('rhnactivationkey', default_rhnak)
@@ -632,15 +635,15 @@ class Kconfig(Kbaseconfig):
         if skip_rhnregister_script and cloudinit and image is not None and image.lower().startswith('rhel'):
             rhncommands = []
             if rhnak is not None and rhnorg is not None:
-                rhncommands.append('subscription-manager register --force --activationkey=%s --org=%s'
-                                   % (rhnak, rhnorg))
+                rhncommands.append('subscription-manager register --serverurl=%s --force --activationkey=%s --org=%s'
+                                   % (rhnserver, rhnak, rhnorg))
                 if image.startswith('rhel-8'):
                     rhncommands.append('subscription-manager repos --enable=rhel-8-for-x86_64-baseos-rpms')
                 else:
                     rhncommands.append('subscription-manager repos --enable=rhel-7-server-rpms')
             elif rhnuser is not None and rhnpassword is not None:
-                rhncommands.append('subscription-manager register --force --username=%s --password=%s'
-                                   % (rhnuser, rhnpassword))
+                rhncommands.append('subscription-manager register --serverurl=%s --force --username=%s --password=%s'
+                                   % (rhnserver, rhnuser, rhnpassword))
                 if rhnpool is not None:
                     rhncommands.append('subscription-manager attach --pool=%s' % rhnpool)
                 else:

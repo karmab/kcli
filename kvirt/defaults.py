@@ -100,6 +100,7 @@ PRIVATEKEY = False
 TAGS = []
 NETWORKWAIT = 0
 RHNREGISTER = False
+RHNSERVER = "https://subscription.rhsm.redhat.com"
 RHNUSER = None
 RHNPASSWORD = None
 RHNAK = None
