@@ -2185,7 +2185,7 @@ class Kvirt(object):
         return diskpath
 
     def add_disk(self, name, size=1, pool=None, thin=True, image=None, shareable=False, existing=None,
-                 interface='virtio'):
+                 interface='virtio', novm=False):
         conn = self.conn
         diskformat = 'qcow2'
         diskbus = interface
@@ -2194,6 +2194,13 @@ class Kvirt(object):
             return {'result': 'failure', 'reason': "Incorrect size"}
         if not thin:
             diskformat = 'raw'
+        if novm:
+            try:
+                self.create_disk(name=name, size=size, pool=pool, thin=thin, image=image)
+                return {'result': 'success'}
+            except Exception as e:
+                common.pprint("Couldn't create disk. Hit %s" % e, color='red')
+                return {'result': 'failure', 'reason': "Couldn't create disk. Hit %s" % e}
         try:
             vm = conn.lookupByName(name)
             xml = vm.XMLDesc(0)
@@ -2295,10 +2302,14 @@ class Kvirt(object):
                 common.pprint("Disk %s was not found.Removing it from vm's definition" % diskpath, color='yellow')
                 diskxml = self._xmldisk(diskpath=diskpath, diskdev=diskdev, diskbus=diskbus, diskformat=diskformat)
                 missing_disks.append(diskxml)
+                found = True
                 continue
             if volume.name() == diskname or volume.path() == diskname or diskdev == diskname:
                 diskxml = self._xmldisk(diskpath=diskpath, diskdev=diskdev, diskbus=diskbus, diskformat=diskformat)
-                vm.detachDevice(diskxml)
+                if vm.isActive() == 1:
+                    vm.detachDeviceFlags(diskxml, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
+                else:
+                    vm.detachDeviceFlags(diskxml, VIR_DOMAIN_AFFECT_CONFIG)
                 volume.delete(0)
                 vm = conn.lookupByName(name)
                 vmxml = vm.XMLDesc(0)
@@ -2306,7 +2317,10 @@ class Kvirt(object):
                 found = True
         if missing_disks:
             for diskxml in missing_disks:
-                vm.detachDevice(diskxml)
+                if vm.isActive() == 1:
+                    vm.detachDeviceFlags(diskxml, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
+                else:
+                    vm.detachDeviceFlags(diskxml, VIR_DOMAIN_AFFECT_CONFIG)
             vm = conn.lookupByName(name)
             vmxml = vm.XMLDesc(0)
             conn.defineXML(vmxml)

@@ -1225,6 +1225,7 @@ def update_vm(args):
 def create_vmdisk(args):
     """Add disk to vm"""
     name = args.name
+    novm = args.novm
     size = args.size
     image = args.image
     interface = args.interface
@@ -1240,11 +1241,11 @@ def create_vmdisk(args):
     if pool is None:
         common.pprint("Missing pool. Leaving...", color='red')
         os._exit(1)
-    if name is None:
-        common.pprint("Missing name. Leaving...", color='red')
-        os._exit(1)
-    common.pprint("Adding disk to %s..." % name)
-    k.add_disk(name=name, size=size, pool=pool, image=image, interface=interface)
+    if novm:
+        common.pprint("Creating disk %s..." % name)
+    else:
+        common.pprint("Adding disk to %s..." % name)
+    k.add_disk(name=name, size=size, pool=pool, image=image, interface=interface, novm=novm)
 
 
 def delete_vmdisk(args):
@@ -3581,6 +3582,7 @@ def cli():
     vmdiskadd_parser.add_argument('-i', '--image', help='Name or Path of a Image', metavar='IMAGE')
     vmdiskadd_parser.add_argument('--interface', default='virtio', help='Disk Interface. Defaults to virtio',
                                   metavar='INTERFACE')
+    vmdiskadd_parser.add_argument('-n', '--novm', action='store_true', help='Dont attach to any vm')
     vmdiskadd_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
     vmdiskadd_parser.add_argument('name', metavar='VMNAME')
     vmdiskadd_parser.set_defaults(func=create_vmdisk)

@@ -578,7 +578,7 @@ class Kaws(object):
         return
 
     def add_disk(self, name, size, pool=None, thin=True, image=None, shareable=False, existing=None,
-                 interface='virtio'):
+                 interface='virtio', novm=False):
         conn = self.conn
         try:
             Filters = {'Name': "tag:Name", 'Values': [name]}

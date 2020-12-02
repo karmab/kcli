@@ -805,7 +805,7 @@ class Kubevirt(Kubecommon):
         return
 
     def add_disk(self, name, size, pool=None, thin=True, image=None, shareable=False, existing=None,
-                 interface='virtio'):
+                 interface='virtio', novm=False):
         crds = self.crds
         namespace = self.namespace
         try:
