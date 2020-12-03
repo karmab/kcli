@@ -16,13 +16,13 @@ micro_network:
 
 micro_fedora:
   type: profile
-  image: Fedora-Cloud-Base-31-1.9.x86_64.qcow2
+  image: fedora33
   memory: 2048
   numcpus: 2
   disks:
    - size: 10
   nets:
-      - micro_network
+   - micro_network
 
 test_instance:
   profile: micro_fedora 

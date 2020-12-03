@@ -41,18 +41,18 @@ IMAGES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-i
           'debian-8.11.0-openstack-amd64.qcow2',
           'debian9': 'https://cdimage.debian.org/cdimage/openstack/current-9/debian-9-openstack-amd64.qcow2',
           'debian10': 'https://cdimage.debian.org/cdimage/openstack/current-10/debian-10-openstack-amd64.qcow2',
-          'fedora28': 'https://download.fedoraproject.org/pub/fedora/linux/releases/28/Cloud/x86_64/images/'
-          'Fedora-Cloud-Base-28-1.1.x86_64.qcow2',
-          'fedora29': 'https://download.fedoraproject.org/pub/fedora/linux/releases/29/Cloud/x86_64/images/'
-          'Fedora-Cloud-Base-29-1.2.x86_64.qcow2',
-          'fedora30': 'https://download.fedoraproject.org/pub/fedora/linux/releases/30/Cloud/x86_64/images/'
-          'Fedora-Cloud-Base-30-1.2.x86_64.qcow2',
           'fcos': 'https://builds.coreos.fedoraproject.org/streams/stable.json',
-          'fedora31': 'https://download.fedoraproject.org/pub/fedora/linux/releases/31/Cloud/x86_64/images/'
+          'fedora28': 'https://archives.fedoraproject.org/pub/archive/fedora/linux/releases/28/Cloud/x86_64/images/'
+          'Fedora-Cloud-Base-28-1.1.x86_64.qcow2',
+          'fedora29': 'https://archives.fedoraproject.org/pub/archive/fedora/linux/releases/29/Cloud/x86_64/images/'
+          'Fedora-Cloud-Base-29-1.2.x86_64.qcow2',
+          'fedora30': 'https://archives.fedoraproject.org/pub/archive/fedora/linux/releases/30/Cloud/x86_64/images/'
+          'Fedora-Cloud-Base-30-1.2.x86_64.qcow2',
+          'fedora31': 'https://archives.fedoraproject.org/pub/archive/fedora/linux/releases/31/Cloud/x86_64/images/'
           'Fedora-Cloud-Base-31-1.9.x86_64.qcow2',
-          'fedora32': 'https://download.fedoraproject.org/pub/fedora/linux/releases/32/Cloud/x86_64/images/'
+          'fedora32': 'http://mirror.uv.es/mirror/fedora/linux/releases/32/Cloud/x86_64/images/'
           'Fedora-Cloud-Base-32-1.6.x86_64.qcow2',
-          'fedora33': 'https://download.fedoraproject.org/pub/fedora/linux/releases/33/Cloud/x86_64/images/'
+          'fedora33': 'http://mirror.uv.es/mirror/fedora/linux/releases/33/Cloud/x86_64/images/'
           'Fedora-Cloud-Base-33-1.2.x86_64.qcow2',
           'freebsd112': 'https://bsd-cloud-image.org/images/freebsd/11.2/freebsd-11.2.qcow2',
           'freebsd121': 'https://bsd-cloud-image.org/images/freebsd/12.1/freebsd-12.1.qcow2',
