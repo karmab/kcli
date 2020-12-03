@@ -177,11 +177,11 @@ plandatacreate = """# Generate all the ignition/cloudinit userdatas from a plan 
 $ kcli create plandata -f my_plan.yml
 """
 
-isocreate = """# Generate an iso ignition
+isocreate = """# Generate an openshift iso
 $ kcli create openshift-iso testk.karmalabs.com
 
-# Do the same but download and inject the iso ignition there
-$ kcli create openshift-iso -P iso=true testk.karmalabs.com
+# Only creates the ignition for the iso
+$ kcli create openshift-iso -P iso=false testk.karmalabs.com
 
 # Force the ip to use in /etc/hosts of the machine at first boot
 $ kcli create openshift-iso -P api_ip=192.168.1.20 testk.karmalabs.com

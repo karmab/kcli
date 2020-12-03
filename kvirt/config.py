@@ -2133,7 +2133,7 @@ $INFO
         api_ip = overrides.get('api_ip')
         domain = overrides.get('domain')
         role = overrides.get('role', 'worker')
-        iso = overrides.get('iso', False)
+        iso = overrides.get('iso', True)
         if '.' in cluster:
             domain = '.'.join(cluster.split('.')[1:])
             common.pprint("Using domain %s" % domain, color='blue')

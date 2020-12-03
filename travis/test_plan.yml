@@ -1,6 +1,6 @@
 ---
 
-fedora31:
+fedora33:
  type: image
  pool: image_pool
 
