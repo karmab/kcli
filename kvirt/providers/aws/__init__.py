@@ -6,7 +6,7 @@ Aws Provider Class
 
 from datetime import datetime
 from kvirt import common
-from kvirt.default import METADATA_FIELDS
+from kvirt.defaults import METADATA_FIELDS
 import boto3
 from netaddr import IPNetwork
 import os
