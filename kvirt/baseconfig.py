@@ -18,7 +18,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             NUMAMODE, NUMA, PCIDEVICES, VIRTTYPE, MAILSERVER, MAILFROM, MAILTO, TPM, JENKINSMODE, RNG,
                             ZEROTIER_NETS, ZEROTIER_KUBELET, VMPORT, VMUSER, CLIENTRULES, CACHE)
 from kvirt import common
-from kvirt import jinjafilters
+from kvirt.jinjafilters import jinjafilters
 from kvirt import k3s
 from kvirt import kubeadm
 from kvirt import openshift
@@ -1060,3 +1060,78 @@ class Kbaseconfig:
         if run != 0:
             common.pprint("Couldn't download openshift-install", color='red')
             os._exit(run)
+
+    def create_playbook(self, inputfile, overrides={}, store=False):
+        playbookdir = os.path.dirname(common.__file__)
+        env = Environment(loader=FileSystemLoader(playbookdir), extensions=['jinja2.ext.do'])
+        for jinjafilter in jinjafilters.jinjafilters:
+            env.filters[jinjafilter] = jinjafilters.jinjafilters[jinjafilter]
+        inputfile = os.path.expanduser(inputfile) if inputfile is not None else 'kcli_plan.yml'
+        basedir = os.path.dirname(inputfile)
+        if basedir == "":
+            basedir = '.'
+        common.pprint("Using plan %s..." % inputfile)
+        common.pprint("Make sure to export ANSIBLE_JINJA2_EXTENSIONS=jinja2.ext.do", color='blue')
+        jinjadir = os.path.dirname(jinjafilters.__file__)
+        if not os.path.exists('filter_plugins'):
+            common.pprint("Creating symlink to kcli jinja filters", color='blue')
+            os.symlink(jinjadir, 'filter_plugins')
+        if not os.path.exists(inputfile):
+            common.pprint("No input file found nor default kcli_plan.yml. Leaving....", color='red')
+            os._exit(1)
+        plan = 'xxx'
+        entries, overrides, basefile, basedir = self.process_inputfile(plan, inputfile, overrides=overrides, full=True)
+        renderfile = self.process_inputfile(plan, inputfile, overrides=overrides, onfly=False, ignore=True)
+        try:
+            data = yaml.safe_load(renderfile)
+        except:
+            common.pprint("Couldnt' parse plan. Leaving....", color='red')
+            os._exit(1)
+        for key in data:
+            if 'type' in data[key] and data[key]['type'] != 'kvm':
+                continue
+            elif 'scripts' not in data[key] and 'files' not in data[key] and 'cmds' not in data[key]:
+                continue
+            else:
+                dirs = []
+                if 'scripts' not in data[key]:
+                    data[key]['scripts'] = []
+                data[key]['cmds'] = '\n'.join(data[key]['cmds']) if 'cmds' in data[key] else None
+                if 'files' in data[key]:
+                    files = []
+                    for _file in data[key]['files']:
+                        if isinstance(_file, str):
+                            entry = {'path': '/root/%s' % _file, 'origin': _file, 'mode': 700}
+                        else:
+                            entry = _file
+                        if os.path.isdir(entry['origin']):
+                            dirs.append(entry['origin'])
+                            continue
+                        if entry['path'].count('/') > 2 and os.path.dirname(entry['path']) not in dirs:
+                            dirs.append(os.path.dirname(entry['path']))
+                        files.append(entry)
+                    data[key]['files'] = files
+                else:
+                    data[key]['files'] = []
+                try:
+                    templ = env.get_template(os.path.basename("playbook.j2"))
+                except TemplateSyntaxError as e:
+                    common.pprint("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message),
+                                  color='red')
+                    os._exit(1)
+                except TemplateError as e:
+                    common.pprint("Error rendering file %s. Got: %s" % (inputfile, e.message), color='red')
+                    os._exit(1)
+                hostname = overrides.get('hostname', key)
+                data[key]['hostname'] = hostname
+                if 'info' in overrides:
+                    del overrides['info']
+                data[key]['overrides'] = overrides
+                data[key]['dirs'] = dirs
+                playbookfile = templ.render(**data[key])
+                if store:
+                    common.pprint("Generating playbook_%s.yml" % hostname)
+                    with open("playbook_%s.yml" % hostname, 'w') as f:
+                        f.write(playbookfile)
+                else:
+                    print(playbookfile)
