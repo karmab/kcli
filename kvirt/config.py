@@ -10,7 +10,7 @@ from jinja2 import StrictUndefined as undefined
 from jinja2.exceptions import TemplateSyntaxError, TemplateError
 from kvirt.defaults import IMAGES, IMAGESCOMMANDS
 from kvirt import ansibleutils
-from kvirt import jinjafilters
+from kvirt.jinjafilters import jinjafilters
 from kvirt import nameutils
 from kvirt import common
 from kvirt.common import insecure_fetch

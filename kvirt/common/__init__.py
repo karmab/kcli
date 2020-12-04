@@ -2,7 +2,7 @@
 # coding=utf-8
 
 from ast import literal_eval
-from kvirt import jinjafilters
+from kvirt.jinjafilters import jinjafilters
 from kvirt.defaults import UBUNTUS
 from random import randint
 import base64
