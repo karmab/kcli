@@ -1129,6 +1129,7 @@ class Kbaseconfig:
                 data[key]['overrides'] = overrides
                 data[key]['dirs'] = dirs
                 playbookfile = templ.render(**data[key])
+                playbookfile = '\n'.join([line for line in playbookfile.split('\n') if line.strip() != ""])
                 if store:
                     common.pprint("Generating playbook_%s.yml" % hostname)
                     with open("playbook_%s.yml" % hostname, 'w') as f:
