@@ -40,7 +40,7 @@ spec:
       mountPath: "/etc/nginx"
   containers:
   - name: nginx
-    image: {{ disconnected_url if disconnected_url != None else 'docker.io' }}/library/nginx:alpine
+    image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/karmab/nginx:alpine
     resources:
       requests:
         cpu: 150m
