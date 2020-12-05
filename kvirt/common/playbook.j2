@@ -14,11 +14,14 @@
 {%- endfor %}
 {% for file in files %}
   - name: Template file {{ file['origin'] }}
-    template:
+    {{ 'template' if file['render']|default(True) else 'copy' }}:
       src: {{ file['origin'] }}
       dest: {{ file['path'] }}
       owner: {{ file['owner']|default('root') }} 
       mode: '{{ file['mode']|default(700 if file['origin'].endswith('.py') or file['origin'].endswith('.sh') else 600) }}'
+      {% if file['render']|default(True) -%}
+      trim_blocks: false
+      {%- endif %}
 {%- endfor %}
 {% if cmds != None %}
   - name: Copy cmds
@@ -39,9 +42,10 @@
       dest: /root/.{{ script }}
       owner: 'root'
       mode: '700'
-  - name: Run script {{ script }}
-    shell: /root/.{{ script }}
-    register: out
-  - name: Result of script {{ script }}
-    debug: var=out.stdout_lines
+      trim_blocks: false
+  - name: Run script {{ script }} and log in /root/.{{ script }}.log
+    shell: /root/.{{ script }} > /root/.{{ script }}.log 2>&1
+#    register: out
+#  - name: Result of script {{ script }}
+#    debug: var=out.stdout_lines
 {%- endfor %}

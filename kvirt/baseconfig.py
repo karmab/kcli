@@ -5,6 +5,7 @@ Kvirt config class
 """
 
 from distutils.spawn import find_executable
+from getpass import getuser
 from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID,
                             VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, RESERVEHOST,
@@ -1081,6 +1082,13 @@ class Kbaseconfig:
             os._exit(1)
         plan = 'xxx'
         entries, overrides, basefile, basedir = self.process_inputfile(plan, inputfile, overrides=overrides, full=True)
+        config_data = {}
+        config_data['config_host'] = self.ini[self.client]['host']
+        config_data['config_type'] = config_data.get('config_type', 'kvm')
+        default_user = getuser() if config_data['config_type'] == 'kvm'\
+            and config_data['config_host'] in ['localhost', '127.0.0.1'] else 'root'
+        config_data['config_user'] = config_data.get('config_user', default_user)
+        overrides.update(config_data)
         renderfile = self.process_inputfile(plan, inputfile, overrides=overrides, onfly=False, ignore=True)
         try:
             data = yaml.safe_load(renderfile)
