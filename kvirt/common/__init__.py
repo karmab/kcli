@@ -313,7 +313,8 @@ def process_files(files=[], overrides={}):
                     content = base64.b64encode(f.read())
             elif overrides and render:
                 basedir = os.path.dirname(origin) if os.path.dirname(origin) != '' else '.'
-                env = Environment(loader=FileSystemLoader(basedir), undefined=undefined, extensions=['jinja2.ext.do'])
+                env = Environment(loader=FileSystemLoader(basedir), undefined=undefined, extensions=['jinja2.ext.do'],
+                                  trim_blocks=True, lstrip_blocks=True)
                 for jinjafilter in jinjafilters.jinjafilters:
                     env.filters[jinjafilter] = jinjafilters.jinjafilters[jinjafilter]
                 try:

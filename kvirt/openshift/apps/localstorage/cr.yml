@@ -10,17 +10,17 @@ spec:
         - key: kubernetes.io/hostname
           operator: In
           values:
-{%- if not localstorage_nodes %}
-{%- set localstorage_nodes = 99|defaultnodes(cluster, domain, masters,workers) %}
-{%- endif %}
-{%- for node in localstorage_nodes %}
+{% if not localstorage_nodes %}
+{% set localstorage_nodes = 99|defaultnodes(cluster, domain, masters,workers) %}
+{% endif %}
+{% for node in localstorage_nodes %}
           - {{ node }}
-{%- endfor %}
+{% endfor %}
   storageClassDevices:
     - storageClassName: {{ localstorage_storageclass }}
       volumeMode: {{ localstorage_volumemode | capitalize }}
       fsType: xfs
       devicePaths:
-{%- for disk in localstorage_disks %}
+{% for disk in localstorage_disks %}
       - /dev/{{ disk | replace('/dev/', '') }}
-{%- endfor %}
+{% endfor %}

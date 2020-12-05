@@ -37,13 +37,13 @@ htpasswd -bBc /opt/registry/auth/htpasswd $REGISTRY_USER $REGISTRY_PASSWORD
 podman create --name registry --net host --security-opt label=disable -v /opt/registry/data:/var/lib/registry:z -v /opt/registry/auth:/auth:z -v /opt/registry/conf/config.yml:/etc/docker/registry/config.yml -e "REGISTRY_AUTH=htpasswd" -e "REGISTRY_AUTH_HTPASSWD_REALM=Registry" -e "REGISTRY_HTTP_SECRET=ALongRandomSecretForRegistry" -e REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd -v /opt/registry/certs:/certs:z -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/domain.crt -e REGISTRY_HTTP_TLS_KEY=/certs/domain.key quay.io/saledort/registry:2
 podman start registry
 export UPSTREAM_REGISTRY={{ disconnected_origin }}
-{% if disconnected_origin != 'quay.io' -%}
+{% if disconnected_origin != 'quay.io' %}
 export RELEASE_NAME=ocp/release
 export OCP_RELEASE={{ tag }}
-{%- else -%}
+{% else %}
 export RELEASE_NAME=openshift-release-dev/ocp-release
 export OCP_RELEASE={{ tag }}-x86_64
-{%- endif %}
+{% endif %}
 export LOCAL_REGISTRY=$REGISTRY_NAME:5000
 export PULL_SECRET=/root/openshift_pull.json
 KEY=$( echo -n $REGISTRY_USER:$REGISTRY_PASSWORD | base64)

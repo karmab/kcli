@@ -26,11 +26,11 @@ spec:
     - "-gkL"
     - "-H"
     - "{{ curl_header }}"
-{%- if ipv6 %}
+{% if ipv6 %}
     - "https://[{{ api_ip}}]:22623/config/master"
-{%- else %}
+{% else %}
     - "https://{{ api_ip}}:22623/config/master"
-{%- endif %}
+{% endif %}
     - "-o"
     - "/usr/share/nginx/html/master"
     volumeMounts:

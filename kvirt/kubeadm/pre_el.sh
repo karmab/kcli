@@ -8,11 +8,11 @@ echo net.bridge.bridge-nf-call-iptables=1 >> /etc/sysctl.d/99-sysctl.conf
 sysctl -p
 setenforce 0
 sed -i "s/SELINUX=enforcing/SELINUX=permissive/" /etc/selinux/config
-{%- if version != None %}
+{% if version != None %}
 VERSION=$(dnf --showduplicates list kubectl  | grep kubectl | grep {{ version }} | tail -1 | awk '{print $2}' | xargs)
-{%- else %}
+{% else %}
 VERSION=$(dnf --showduplicates list kubectl  | grep kubectl | tail -1 | awk '{print $2}' | xargs)
-{%- endif %}
+{% endif %}
 
 modprobe overlay
 modprobe br_netfilter

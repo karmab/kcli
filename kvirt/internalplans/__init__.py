@@ -43,20 +43,20 @@ loadbalancer-{{ ports | join('+') }}:
         timeout server 300000
         maxconn     60000
         retries     3
-      {%- for port in ports %}
+      {% for port in ports %}
       listen {{ name }}_{{ port }} *:{{ port }}
-      {%- if port in [80, 443] %}
+      {% if port in [80, 443] %}
         mode http
         # option httpchk HEAD {{ checkpath }} HTTP/1.0
-      {%- else %}
+      {% else %}
         mode tcp
-      {%- endif %}
+      {% endif %}
         balance roundrobin
         cookie JSESSIONID prefix
-        {%- for vm in vms %}
+        {% for vm in vms %}
         server {{ vm.name }} {{ vm.ip }}:{{ port }} cookie A check
-        {%- endfor %}
-       {%- endfor %}
+        {% endfor %}
+       {% endfor %}
  cmds:
   - yum -y install haproxy
   - sed -i "s/SELINUX=enforcing/SELINUX=permissive/" /etc/selinux/config

@@ -1,15 +1,15 @@
-{%- if zerotier_nets %}
+{% if zerotier_nets %}
 {% set ztier = zerotier_nets %}
-{%- elif config_zerotier is defined %}
+{% elif config_zerotier is defined %}
 {% set ztier = config_zerotier %}
-{%- else %}
+{% else %}
 {% set ztier = [] %}
-{%- endif %}
+{% endif %}
 
 {{ image }}:
   type: image
 
-{%- if masters > 1 and config_type in ['aws', 'gcp'] %}
+{% if masters > 1 and config_type in ['aws', 'gcp'] %}
 {{ cluster }}-master:
  type: loadbalancer
  nets:
@@ -21,28 +21,28 @@
  ports:
  - 6443
  vms:
-{%- for number in range(0, masters) %}
+{% for number in range(0, masters) %}
   - {{cluster}}-master-{{ number }}
-{%- endfor %}
-{%- endif %}
+{% endfor %}
+{% endif %}
 
 
-{%- for number in range(0, masters) %}
-{%- if extra_master_networks %}
+{% for number in range(0, masters) %}
+{% if extra_master_networks %}
  {% set extra_networks = extra_master_networks %}
-{%- endif %}
-{%- if extra_master_disks %}
+{% endif %}
+{% if extra_master_disks %}
  {% set extra_disks = extra_master_disks %}
-{%- endif %}
-{%- if numa_master != None %}
+{% endif %}
+{% if numa_master != None %}
  {% set numa = numa_master %}
-{%- endif %}
-{%- if numamode_master != None %}
+{% endif %}
+{% if numamode_master != None %}
  {% set numa_mode = numamode_master %}
-{%- endif %}
-{%- if cpupinning_master != None %}
+{% endif %}
+{% if cpupinning_master != None %}
  {% set cpupinning = cpupinning_master %}
-{%- endif %}
+{% endif %}
 
 {{cluster}}-master-{{ number }}:
  image: {{ image }}
@@ -51,53 +51,53 @@
  memory: {{ master_memory | default(memory, memory) }}
  domain: {{ domain }}
  zerotier_nets: {{ ztier }}
-{%- if number == 0 %}
+{% if number == 0 %}
  notify: {{ notify }}
  notifycmd: {{ notifycmd }}
-{%- endif %}
+{% endif %}
  nets: {{ [network] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
  files:
   - keepalived.conf
-{%- if number == 0 %}
-{%- if metallb %}
+{% if number == 0 %}
+{% if metallb %}
   - metal_lb.sh
   - metal_lb_cm.yml
-{%- endif %}
-{%- if nfs %}
+{% endif %}
+{% if nfs %}
   - nfs.yml
   - nfs.sh
-{%- endif %}
-{%- endif %}
+{% endif %}
+{% endif %}
  scripts: 
-{%- if ubuntu|default(False) %}
+{% if ubuntu|default(False) %}
   - pre_ubuntu.sh
-{%- else %}
+{% else %}
   - pre_el.sh
-{%- endif %}
-{%- if config_type not in ['aws', 'gcp'] %}
+{% endif %}
+{% if config_type not in ['aws', 'gcp'] %}
   - apache.sh
-{%- endif %}
-{%- if number == 0 %}
+{% endif %}
+{% if number == 0 %}
   - keepalived.sh
   - masters.sh
-{%- if multus %}
+{% if multus %}
   - multus.sh
-{%- endif %}
-{%- if nfs %}
+{% endif %}
+{% if nfs %}
   - nfs.sh
-{%- endif %}
+{% endif %}
 {% else %}
   - masters_extra.sh
   - keepalived.sh
 {% endif %}
-{%- if numa != None %}
+{% if numa != None %}
  numa: {{ numa }}
-{%- endif %}
-{%- if numamode != None %}
+{% endif %}
+{% if numamode != None %}
  numamode: {{ numamode }}
-{%- endif %}
-{%- if cpupinning != None %}
+{% endif %}
+{% if cpupinning != None %}
  cpupinning: {{ cpupinning }}
-{%- endif %}
-{%- endfor %}
+{% endif %}
+{% endfor %}

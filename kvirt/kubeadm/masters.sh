@@ -37,16 +37,16 @@ chmod o+r /var/www/html/*
 
 echo ${CMD} > /root/join.sh
 
-{%- if metallb %}
+{% if metallb %}
 bash /root/metal_lb.sh
-{%- endif %}
+{% endif %}
 
-{%- if ingress %}
+{% if ingress %}
 {% if ingress_method == 'nginx' %}
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/provider/{{ 'cloud' if metallb else 'baremetal' }}/deploy.yaml
-{%- endif %}
-{%- endif %}
+{% endif %}
+{% endif %}
 
-{%- if autolabel %}
+{% if autolabel %}
 kubectl apply -f https://raw.githubusercontent.com/karmab/autolabeller/master/autorules.yml
-{%- endif %}
+{% endif %}

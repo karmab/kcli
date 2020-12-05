@@ -668,7 +668,8 @@ class Kbaseconfig:
         basedir = os.path.dirname(inputfile) if os.path.dirname(inputfile) != '' else '.'
         basefile = None
         undefined = strictundefined if not ignore else defaultundefined
-        env = Environment(loader=FileSystemLoader(basedir), undefined=undefined, extensions=['jinja2.ext.do'])
+        env = Environment(loader=FileSystemLoader(basedir), undefined=undefined, extensions=['jinja2.ext.do'],
+                          trim_blocks=True, lstrip_blocks=True)
         for jinjafilter in jinjafilters.jinjafilters:
             env.filters[jinjafilter] = jinjafilters.jinjafilters[jinjafilter]
         try:
@@ -958,7 +959,8 @@ class Kbaseconfig:
             parameters = {}
         parameters.update(overrides)
         jenkinsdir = os.path.dirname(common.__file__)
-        env = Environment(loader=FileSystemLoader(jenkinsdir), extensions=['jinja2.ext.do'])
+        env = Environment(loader=FileSystemLoader(jenkinsdir), extensions=['jinja2.ext.do'], trim_blocks=True,
+                          lstrip_blocks=True)
         for jinjafilter in jinjafilters.jinjafilters:
             env.filters[jinjafilter] = jinjafilters.jinjafilters[jinjafilter]
         try:
@@ -1064,7 +1066,8 @@ class Kbaseconfig:
 
     def create_playbook(self, inputfile, overrides={}, store=False):
         playbookdir = os.path.dirname(common.__file__)
-        env = Environment(loader=FileSystemLoader(playbookdir), extensions=['jinja2.ext.do'])
+        env = Environment(loader=FileSystemLoader(playbookdir), extensions=['jinja2.ext.do'],
+                          trim_blocks=True, lstrip_blocks=True)
         for jinjafilter in jinjafilters.jinjafilters:
             env.filters[jinjafilter] = jinjafilters.jinjafilters[jinjafilter]
         inputfile = os.path.expanduser(inputfile) if inputfile is not None else 'kcli_plan.yml'

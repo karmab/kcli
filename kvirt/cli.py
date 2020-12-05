@@ -2580,7 +2580,7 @@ def cli():
                                         formatter_class=rawhelp)
     list_subparsers = list_parser.add_subparsers(metavar='', dest='subcommand_list')
 
-    render_desc = 'Render Plan/file'
+    render_desc = 'Render file'
     render_parser = subparsers.add_parser('render', description=render_desc, help=render_desc)
     render_parser.add_argument('-f', '--inputfile', help='Input Plan/File', default='kcli_plan.yml')
     render_parser.add_argument('-i', '--ignore', action='store_true', help='Ignore missing variables')

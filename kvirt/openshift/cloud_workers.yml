@@ -1,8 +1,8 @@
 {% for num in range(0, workers) %}
 
-{%- if flavor_worker != None %}
+{% if flavor_worker != None %}
 {% set flavor = flavor_worker %}
-{%- endif %}
+{% endif %}
 
 {{ cluster }}-worker-{{ num }}:
  domain: {{ domain }} 
@@ -16,7 +16,7 @@
  - name: {{ network }}
  reservedns: true
  disks: {{ [disk_size] + extra_disks }}
-{%- if cloud_tag != None %}
+{% if cloud_tag != None %}
  tags: [{{ cloud_tag }}]
-{%- endif %}
+{% endif %}
 {% endfor %}

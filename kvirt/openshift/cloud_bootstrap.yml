@@ -10,6 +10,6 @@
  reservedns: true
  disks:
  - size: {{ disk_size }}
-{%- if cloud_tag != None %}
+{% if cloud_tag != None %}
  tags: [{{ cloud_tag }}]
-{%- endif %}
+{% endif %}

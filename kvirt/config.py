@@ -617,7 +617,7 @@ class Kconfig(Kbaseconfig):
                 else:
                     scriptbasedir = os.path.dirname(script) if os.path.dirname(script) != '' else '.'
                     env = Environment(loader=FileSystemLoader(scriptbasedir), undefined=undefined,
-                                      extensions=['jinja2.ext.do'])
+                                      extensions=['jinja2.ext.do'], trim_blocks=True, lstrip_blocks=True)
                     for jinjafilter in jinjafilters.jinjafilters:
                         env.filters[jinjafilter] = jinjafilters.jinjafilters[jinjafilter]
                     try:

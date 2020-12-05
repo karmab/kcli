@@ -50,15 +50,15 @@ apps.{{ cluster }}:
 {% endfor %}
 {% endif %}
 
-{%- if flavor_master != None %}
+{% if flavor_master != None %}
 {% set flavor = flavor_master %}
-{%- endif %}
+{% endif %}
 
 {% for num in range(0, masters) %}
 
-{%- if flavor_master != None %}
+{% if flavor_master != None %}
 {% set flavor = flavor_master %}
-{%- endif %}
+{% endif %}
 
 {{ cluster }}-master-{{ num }}:
  domain: {{ domain }} 
@@ -85,7 +85,7 @@ apps.{{ cluster }}:
    origin: gcp-hack.preset
    mode: 644
 {% endif %}
-{%- if cloud_tag != None %}
+{% if cloud_tag != None %}
  tags: [{{ cloud_tag }}]
 {% endif %}
 {% endfor %}

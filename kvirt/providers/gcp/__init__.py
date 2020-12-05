@@ -221,7 +221,8 @@ class Kgcp(object):
                         content = f.read().encode("base64")
                 elif overrides and render:
                     basedir = os.path.dirname(origin) if os.path.dirname(origin) != '' else '.'
-                    env = Environment(loader=FileSystemLoader(basedir), undefined=undefined)
+                    env = Environment(loader=FileSystemLoader(basedir), undefined=undefined,
+                                      extensions=['jinja2.ext.do'], trim_blocks=True, lstrip_blocks=True)
                     try:
                         templ = env.get_template(os.path.basename(origin))
                         newfile = templ.render(overrides)

@@ -23,13 +23,13 @@ spec:
     - "-c"
     - |
       #/bin/sh
-      {%- if ipv6 %}
+      {% if ipv6 %}
       NIC=$(ip -6 r | grep -v lo | head -1 | sed 's/.*dev \(.*\) \(proto\|metric\).*/\1/' | awk '{print $1}')
       IP=$(ip -6 -o addr show $NIC | awk '{print $4}' | cut -d "/" -f 1 | head -1)
-      {%- else %}
+      {% else %}
       NIC=$(ip r | grep default | tail -1 | sed 's/.*dev \(.*\) \(proto\|metric\).*/\1/')
       IP=$(ip -4 -o addr show $NIC | awk '{print $4}' | cut -d "/" -f 1 | head -1)
-      {%- endif %}
+      {% endif %}
       [ -z "$IP" ] && exit 1
       HOSTNAME=$(hostname -s)
       ETCD=$(echo "$HOSTNAME" | sed 's@{{ cluster }}-master@etcd@')

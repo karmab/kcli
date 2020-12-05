@@ -1,6 +1,6 @@
-{%- if flavor_bootstrap != None %}
+{% if flavor_bootstrap != None %}
 {% set flavor = flavor_bootstrap %}
-{%- endif %}
+{% endif %}
 {{ cluster }}-bootstrap:
  image: {{ image }}
  pool: {{ pool }}
@@ -12,16 +12,16 @@
  zerotier_nets: {{ zerotier_nets }}
  nets:
   - name: {{ network }}
-{%- if bootstrap_mac != None %}
+{% if bootstrap_mac != None %}
     mac: {{ bootstrap_mac }}
-{%- endif %}
-{%- if config_type == 'packet' %}
+{% endif %}
+{% if config_type == 'packet' %}
   - name: {{ network }}
     ip: 192.168.122.99
     mask: 255.255.255.0
     gateway: 192.168.122.1
     dns: 8.8.8.8
-{%- endif %}
+{% endif %}
  disks:
   - size: {{ disk_size }}
  files:
@@ -46,8 +46,8 @@
     origin: staticpods/nginx.yml
   - path: /etc/kubernetes/nginx.conf
     origin: nginx.conf
-{%- if config_type == 'packet' %}
+{% if config_type == 'packet' %}
   - path: /etc/kubernetes/packet-hack.sh
     origin: packet-hack.sh
     mode: 700
-{%- endif %}
+{% endif %}
