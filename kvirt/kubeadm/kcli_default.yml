@@ -18,6 +18,7 @@ version:
 pool: default
 cluster: testk
 domain: karmalabs.com
+engine: docker
 numcpus: 4
 worker_numcpus:
 master_numcpus:
