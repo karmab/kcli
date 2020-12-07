@@ -38,6 +38,7 @@ memory: 8192
 bootstrap_memory:
 master_memory:
 worker_memory:
+mdns: true
 master_tpm: false
 master_rng: false
 worker_tpm: false
