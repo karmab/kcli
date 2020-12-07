@@ -1547,6 +1547,13 @@ $INFO
                 if customprofile:
                     customprofile.update(profile)
                     profile = customprofile
+                if 'playbook' in profile and profile['playbook']:
+                    if 'scripts' not in profile and 'files' not in profile and 'cmds' not in profile:
+                        common.pprint("Skipping empty playbook for %s" % name, color='blue')
+                    else:
+                        common.pprint("Make sure to export ANSIBLE_JINJA2_EXTENSIONS=jinja2.ext.do", color='blue')
+                        self.create_vm_playbook(name, profile, overrides=overrides, store=True)
+                        continue
                 if z.exists(name) and not onlyassets:
                     if not update:
                         common.pprint("%s skipped on %s!" % (name, vmclient), color='blue')
