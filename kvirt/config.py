@@ -1551,6 +1551,19 @@ $INFO
                     if 'scripts' not in profile and 'files' not in profile and 'cmds' not in profile:
                         common.pprint("Skipping empty playbook for %s" % name, color='blue')
                     else:
+                        if 'image' in profile and 'rhel' in profile['image']\
+                                and 'rhnregister' in profile and profile['rhnregister']:
+                            common.pprint("Make sure to subscribe %s to Red Hat network" % name, color='yellow')
+                        if 'privatekey' in profile and profile['privatekey']:
+                            common.pprint("Copy your private key to %s" % name, color='yellow')
+                        for net in profile.get('nets', []):
+                            if 'ip' in net and 'mask' in net and 'gateway' in net:
+                                ip, mask, gateway = net['ip'], net['mask'], net['gateway']
+                                common.pprint("Add manually this network %s/%s with gateway %s" % (ip, mask, gateway),
+                                              color='yellow')
+                            if 'vips' in net:
+                                vips = ','.join(net['vips'])
+                                common.pprint("Add manually vips %s" % vips, color='yellow')
                         common.pprint("Make sure to export ANSIBLE_JINJA2_EXTENSIONS=jinja2.ext.do", color='blue')
                         self.create_vm_playbook(name, profile, overrides=overrides, store=True)
                         continue

@@ -38,7 +38,6 @@
   - path: /etc/kubernetes/config.hcl.templ
     origin: config.hcl.templ
 {% endif %}
- disks:
   - path: /etc/kubernetes/apps.db
     origin: apps.db
   - path: /etc/kubernetes/manifests/keepalived.yml
