@@ -42,10 +42,6 @@
     origin: staticpods/keepalived.yml
   - path: /etc/kubernetes/keepalived.conf
     origin: keepalived.conf
-  - path: /etc/kubernetes/manifests/nginx.yml
-    origin: staticpods/nginx.yml
-  - path: /etc/kubernetes/nginx.conf
-    origin: nginx.conf
 {% if config_type == 'packet' %}
   - path: /etc/kubernetes/packet-hack.sh
     origin: packet-hack.sh
