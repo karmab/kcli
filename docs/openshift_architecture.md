@@ -19,7 +19,7 @@ Deployment of masters and bootstrap is then launched.
 
 Keepalived and Coredns with mdns are created on the fly on the bootstrap and master nodes as static pods. Initially, the api vip runs on the bootstrap node.
 
-Nginx is created as static pod on the bootstrap node to serve as a http only web server for some additional ignition files needed on the nodes and which can't get injected (they are generated on the bootstrap node).
+Ignition files are provided over 22624/http using api ip instead of fqdn. The ignition files for both master and worker are patched for it.
 
 Haproxy is created as static pod on the master nodes to load balance traffic to the routers. When there are no workers, routers are instead scheduled on the master nodes and the haproxy static pod isn't created, so routers are simply accessed through the vip without load balancing in this case.
 

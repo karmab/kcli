@@ -6,7 +6,7 @@ from glob import glob
 import json
 import os
 import sys
-from kvirt.common import info, pprint, gen_mac, get_oc, get_values, pwd_path, insecure_fetch, fetch
+from kvirt.common import info, pprint, gen_mac, get_oc, get_values, pwd_path, fetch
 from kvirt.common import get_commit_rhcos, get_latest_fcos, kube_create_app, patch_bootstrap
 from kvirt.common import ssh, scp, _ssh_credentials, word2number
 from kvirt.openshift.calico import calicoassets
@@ -644,8 +644,8 @@ def create(config, plandir, cluster, overrides):
             sedcmd += ' > %s/worker.ign' % clusterdir
             call(sedcmd, shell=True)
         new_api_ip = api_ip if not ipv6 else "[%s]" % api_ip
-        sedcmd = 'sed -i "s@https://api-int.%s.%s:22623/config@http://%s@"' % (cluster, domain, new_api_ip)
-        sedcmd += ' %s/master.ign' % clusterdir
+        sedcmd = 'sed -i "s@https://api-int.%s.%s:22623/config@http://%s:22624/config@"' % (cluster, domain, new_api_ip)
+        sedcmd += ' %s/master.ign %s/worker.ign' % (clusterdir, clusterdir)
         call(sedcmd, shell=True)
     if platform in cloudplatforms:
         bootstrap_helper_name = "%s-bootstrap-helper" % cluster
@@ -713,32 +713,6 @@ def create(config, plandir, cluster, overrides):
         call('openshift-install --dir=%s wait-for bootstrap-complete || exit 1' % clusterdir, shell=True)
         todelete = ["%s-bootstrap" % cluster, "%s-bootstrap-helper" % cluster]
     if platform in virtplatforms:
-        for role in ['worker', 'master']:
-            if bootstrap_helper_ip is not None:
-                ignitionrolefile = "%s/%s" % (clusterdir, role)
-            else:
-                ignitionrolefile = "%s/%s.ign" % (clusterdir, role)
-                os.remove(ignitionrolefile)
-            while not os.path.exists(ignitionrolefile) or os.stat(ignitionrolefile).st_size == 0:
-                try:
-                    with open(ignitionrolefile, 'w') as w:
-                        roledata = insecure_fetch("https://api.%s.%s:22623/config/%s" % (cluster, domain, role),
-                                                  headers=[curl_header])
-                        w.write(roledata)
-                except:
-                    pprint("Waiting 5s before retrieving %s ignition data" % role, color='blue')
-                    sleep(5)
-            if bootstrap_helper_ip is not None:
-                source, destination = "%s/%s" % (clusterdir, role), "/var/www/html/%s" % role
-                scpcmd = scp(bootstrap_helper_name, ip=bootstrap_helper_ip, user='root', source=source,
-                             destination=destination, tunnel=config.tunnel, tunnelhost=config.tunnelhost,
-                             tunnelport=config.tunnelport, tunneluser=config.tunneluser, download=False, insecure=True)
-                os.system(scpcmd)
-                cmd = "chown apache.apache /var/www/html/%s" % role
-                sshcmd = ssh(bootstrap_helper_name, ip=bootstrap_helper_ip, user='root', tunnel=config.tunnel,
-                             tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
-                             tunneluser=config.tunneluser, insecure=True, cmd=cmd)
-                os.system(sshcmd)
         if workers > 0:
             pprint("Deploying workers", color='blue')
             if 'name' in overrides:
