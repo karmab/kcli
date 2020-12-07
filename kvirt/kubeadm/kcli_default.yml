@@ -8,7 +8,7 @@ info: |
     You can deploy extra apps with the apps array and for each of the supported app, indicate with the variable
     ${app}_version with version to target (instead of latest)
     You can set xip to true to use $api_ip.xip.io as base domain
-    Default container is containerd, but containerd or docker can also be used through the engine variable
+    Default container engine is docker, but containerd or crio can also be used
 image: centos8
 network: default
 api_ip:

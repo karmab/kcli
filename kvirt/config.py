@@ -2050,7 +2050,7 @@ $INFO
                                              tunnelport=self.tunnelport, tunneluser=self.tunneluser,
                                              insecure=self.insecure, cmd='id -un')
                         if os.popen(testcmd).read().strip() != user:
-                            common.pprint("Gathered ip not functional...", color='yellow')
+                            common.pprint("Gathered ip not functional yet...", color='yellow')
                             ip = None
             common.pprint("Waiting for vm to be accessible...", color='blue')
             sleep(5)

@@ -34,7 +34,8 @@ OS="CentOS_8"
 CRIO_VERSION=$(echo $VERSION | cut -d. -f1,2)
 curl -L -o /etc/yum.repos.d/devel:kubic:libcontainers:stable.repo https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/devel:kubic:libcontainers:stable.repo
 curl -L -o /etc/yum.repos.d/devel:kubic:libcontainers:stable:cri-o:$CRIO_VERSION.repo https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable:cri-o:$CRIO_VERSION/$OS/devel:kubic:libcontainers:stable:cri-o:$CRIO_VERSION.repo
-yum -y install cri-o
+yum -y install cri-o conntrack
+sed -i 's@conmon = .*@conmon = "/bin/conmon"@' /etc/crio/crio.conf
 systemctl enable --now crio
 {% else %}
 yum install -y yum-utils device-mapper-persistent-data lvm2
@@ -48,4 +49,7 @@ systemctl restart containerd
 {% endif %}
 
 dnf -y install -y kubelet-$VERSION kubectl-$VERSION kubeadm-$VERSION git
+{% if engine == 'crio' %}
+echo KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime-endpoint=unix:///var/run/crio/crio.sock --cloud-provider=external > /etc/sysconfig/kubelet
+{% endif %}
 systemctl enable --now kubelet

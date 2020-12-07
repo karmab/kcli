@@ -34,7 +34,8 @@ EOF
 curl -L https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/Release.key | apt-key --keyring /etc/apt/trusted.gpg.d/libcontainers.gpg add -
 curl -L https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable:cri-o:$CRIO_VERSION/$OS/Release.key | apt-key --keyring /etc/apt/trusted.gpg.d/libcontainers-cri-o.gpg add -
 apt-get update
-apt-get install cri-o cri-o-runc
+apt-get -y install cri-o cri-o-runc
+sed -i 's@conmon = .*@conmon = "/bin/conmon"@' /etc/crio/crio.conf
 systemctl restart crio
 {% else %}
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key --keyring /etc/apt/trusted.gpg.d/docker.gpg add -
@@ -47,4 +48,7 @@ systemctl restart containerd
 {% endif %}
 {% endif %}
 apt-get -y install kubelet=$VERSION kubectl=$VERSION kubeadm=$VERSION
+{% if engine == 'crio' %}
+echo KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime-endpoint=unix:///var/run/crio/crio.sock --cloud-provider=external > /etc/default/kubelet
+{% endif %}
 systemctl enable --now kubelet
