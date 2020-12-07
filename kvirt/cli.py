@@ -1864,6 +1864,7 @@ def render_file(args):
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     config_data = {'config_%s' % k: baseconfig.ini[baseconfig.client][k] for k in baseconfig.ini[baseconfig.client]}
     config_data['config_type'] = config_data.get('config_type', 'kvm')
+    config_data['config_host'] = config_data.get('config_host', '127.0.0.1')
     default_user = getuser() if config_data['config_type'] == 'kvm'\
         and config_data['config_host'] in ['localhost', '127.0.0.1'] else 'root'
     config_data['config_user'] = config_data.get('config_user', default_user)

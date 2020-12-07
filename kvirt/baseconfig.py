@@ -1086,7 +1086,7 @@ class Kbaseconfig:
         plan = 'xxx'
         entries, overrides, basefile, basedir = self.process_inputfile(plan, inputfile, overrides=overrides, full=True)
         config_data = {}
-        config_data['config_host'] = self.ini[self.client]['host']
+        config_data['config_host'] = self.ini[self.client].get('host', '127.0.0.1')
         config_data['config_type'] = config_data.get('config_type', 'kvm')
         default_user = getuser() if config_data['config_type'] == 'kvm'\
             and config_data['config_host'] in ['localhost', '127.0.0.1'] else 'root'
