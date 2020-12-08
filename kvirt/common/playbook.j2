@@ -39,7 +39,6 @@
       dest: /root/.{{ script }}
       owner: 'root'
       mode: '700'
-      trim_blocks: false
   - name: Run script {{ script }} and log in /root/.{{ script }}.log
     shell: /root/.{{ script }} > /root/.{{ script }}.log 2>&1
 #    register: out
