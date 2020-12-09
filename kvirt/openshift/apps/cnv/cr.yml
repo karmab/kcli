@@ -5,3 +5,19 @@ metadata:
   namespace: openshift-cnv
 spec:
   BareMetalPlatform: true
+  infra:
+    nodePlacement:
+      nodeSelector:
+        node-role.kubernetes.io/{{ cnv_infra }}: ""
+      tolerations:
+      - effect: NoSchedule
+        key: "node-role.kubernetes.io/{{ cnv_infra }}"
+        operator: Exists
+  workloads:
+    nodePlacement:
+      nodeSelector:
+        node-role.kubernetes.io/{{ cnv_workloads }}: ""
+      tolerations:
+      - effect: NoSchedule
+        key: "node-role.kubernetes.io/{{ cnv_workloads }}"
+        operator: Exists

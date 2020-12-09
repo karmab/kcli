@@ -1,2 +1,4 @@
-cnv_channel: '2.4'
-cnv_version: '2.4.0'
+cnv_channel: '2.5'
+cnv_version: '2.5.1'
+cnv_infra: master
+cnv_workloads: worker
