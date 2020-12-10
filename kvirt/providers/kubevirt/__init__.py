@@ -562,6 +562,7 @@ class Kubevirt(Kubecommon):
         host = None
         state = 'down'
         foundmacs = {}
+        ips = []
         if running:
             try:
                 runvm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachineinstances', name)
@@ -572,9 +573,8 @@ class Kubevirt(Kubecommon):
                     if 'interfaces' in status:
                         interfaces = runvm['status']['interfaces']
                         for index, interface in enumerate(interfaces):
-                            if 'ipAddress' in interface\
-                                    and IPAddress(interface['ipAddress'].split('/')[0]).version == 4:
-                                ip = interface['ipAddress'].split('/')[0]
+                            if 'ipAddress' in interface:
+                                ips.append(interface['ipAddress'].split('/')[0])
                             if 'mac' in interface:
                                 foundmacs[index] = interface['mac']
 
@@ -582,6 +582,10 @@ class Kubevirt(Kubecommon):
                 pass
         else:
             state = 'down'
+        if ips:
+            ip4s = [i for i in ips if ':' not in i]
+            ip6s = [i for i in ips if i not in ip4s]
+            ip = ip4s[0] if ip4s else ip6s[0]
         yamlinfo = {'name': name, 'nets': [], 'disks': [], 'state': state, 'creationdate': creationdate, 'host': host,
                     'status': state, 'namespace': namespace}
         if 'cpu' in spectemplate['spec']['domain']:
