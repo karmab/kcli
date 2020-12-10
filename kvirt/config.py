@@ -97,10 +97,11 @@ class Kconfig(Kbaseconfig):
                         os._exit(1)
                     else:
                         token = open(token_file).read()
+                registry = self.options.get('registry')
                 from kvirt.providers.kubevirt import Kubevirt
                 k = Kubevirt(context=context, token=token, ca_file=ca_file, host=self.host,
                              port=self.port, user=self.user, debug=debug, namespace=namespace, cdi=cdi,
-                             datavolumes=datavolumes, readwritemany=readwritemany)
+                             datavolumes=datavolumes, readwritemany=readwritemany, registry=registry)
                 self.host = k.host
             elif self.type == 'gcp':
                 credentials = self.options.get('credentials')

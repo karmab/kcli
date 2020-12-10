@@ -24,9 +24,9 @@ VERSION = 'v1alpha3'
 MULTUSDOMAIN = 'k8s.cni.cncf.io'
 MULTUSVERSION = 'v1'
 CONTAINERDISKS = ['kubevirt/alpine-container-disk-demo', 'kubevirt/cirros-container-disk-demo',
-                  'karmab/debian-container-disk-demo', 'kubevirt/fedora-cloud-container-disk-demo',
-                  'karmab/fedora-coreos-container-disk-demo', 'karmab/gentoo-container-disk-demo',
-                  'karmab/ubuntu-container-disk-demo']
+                  'quay.io/karmab/debian-container-disk-demo', 'kubevirt/fedora-cloud-container-disk-demo',
+                  'quay.io/karmab/fedora-coreos-container-disk-demo', 'quay.io/karmab/gentoo-container-disk-demo',
+                  'quay.io/karmab/ubuntu-container-disk-demo']
 KUBECTL_LINUX = "https://storage.googleapis.com/kubernetes-release/release/v1.16.1/bin/linux/amd64/kubectl"
 KUBECTL_MACOSX = KUBECTL_LINUX.replace('linux', 'darwin')
 
@@ -36,7 +36,7 @@ class Kubevirt(Kubecommon):
 
     """
     def __init__(self, token=None, ca_file=None, context=None, host='127.0.0.1', port=443, user='root', debug=False,
-                 tags=None, namespace=None, cdi=False, datavolumes=True, readwritemany=False):
+                 tags=None, namespace=None, cdi=False, datavolumes=True, readwritemany=False, registry=None):
         Kubecommon.__init__(self, token=token, ca_file=ca_file, context=context, host=host, port=port,
                             namespace=namespace, readwritemany=readwritemany)
         self.crds = client.CustomObjectsApi(api_client=self.api_client)
@@ -44,6 +44,7 @@ class Kubevirt(Kubecommon):
         self.tags = tags
         self.cdi = False
         self.datavolumes = False
+        self.registry = registry
         if cdi:
             try:
                 cdipods = self.core.list_pod_for_all_namespaces(label_selector='app=containerized-data-importer').items
@@ -242,7 +243,8 @@ class Kubevirt(Kubecommon):
             myvolume = {'name': diskname}
             if image is not None and index == 0:
                 if image in CONTAINERDISKS or '/' in image:
-                    myvolume['containerDisk'] = {'image': image}
+                    containerdiskimage = "%s/%s" % (self.registry, image) if self.registry is not None else image
+                    myvolume['containerDisk'] = {'image': containerdiskimage}
                 elif cdi and datavolumes:
                     myvolume['dataVolume'] = {'name': diskname}
                 else:

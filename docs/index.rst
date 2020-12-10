@@ -370,6 +370,7 @@ You can use additional parameters for the kubevirt section:
 -  token: token, either from user or service account.
 -  tags: additional list of tags in a key=value format to put to all created vms in their *nodeSelector*. Can be further indicated at profile or plan level in which case values are combined. This provides an easy way to force vms to run on specific nodes, by matching labels.
 -  cdi: whether to use cdi. Defaults to true. A check on whether cdi is actually present will be performed.
+-  registry: Registry where to pull containerdisk images. Defaults to none, in which case, your configured registries will be used.
 
 You can use the following indications to gather context, create a suitable service account and retrieve its associated token:
 
