@@ -1262,24 +1262,17 @@ class Kvirt(object):
         starts = {0: False, 1: True}
         conn = self.conn
         if vm is None:
+            listinfo = False
             try:
                 vm = conn.lookupByName(name)
             except:
                 common.pprint("VM %s not found" % name, color='red')
                 return {}
+        else:
+            listinfo = True
         xml = vm.XMLDesc(0)
         root = ET.fromstring(xml)
-        status = 'down'
-        autostart = starts[vm.autostart()]
-        description = list(root.iter('description'))
-        if description:
-            description = description[0].text
-        else:
-            description = ''
-        [state, maxmem, memory, numcpus, cputime] = vm.info()
-        status = states.get(state)
-        memory = int(float(memory) / 1024)
-        yamlinfo = {'name': name, 'autostart': autostart, 'nets': [], 'disks': [], 'status': status}
+        yamlinfo = {'name': name, 'nets': [], 'disks': []}
         plan, profile, image, ip, creationdate = '', None, None, None, None
         kube, kubetype = None, None
         for element in list(root.iter('{kvirt}info')):
@@ -1318,14 +1311,12 @@ class Kvirt(object):
             yamlinfo['kubetype'] = kubetype
         if creationdate is not None:
             yamlinfo['creationdate'] = creationdate
-        yamlinfo['cpus'] = numcpus
-        yamlinfo['memory'] = memory
         agentfaces = {}
         leasefaces = {}
         ifaces = {}
         if vm.isActive():
             networktypes = [element.get('type') for element in list(root.iter('interface'))]
-            if 'bridge' in networktypes:
+            if 'bridge' in networktypes and image is not None:
                 try:
                     agentfaces = vm.interfaceAddresses(vir_src_agent, 0)
                 except:
@@ -1340,23 +1331,11 @@ class Kvirt(object):
             mac = element.find('mac').get('address')
             if networktype == 'user':
                 network = 'user'
+            elif networktype == 'bridge':
+                network = element.find('source').get('bridge')
             else:
-                if networktype == 'bridge':
-                    network = element.find('source').get('bridge')
-                else:
-                    network = element.find('source').get('network')
-                if ip is None:
-                    try:
-                        networkdata = conn.networkLookupByName(network)
-                        netxml = networkdata.XMLDesc()
-                        netroot = ET.fromstring(netxml)
-                        hostentries = list(netroot.iter('host'))
-                        for host in hostentries:
-                            if host.get('mac') == mac:
-                                ip = host.get('ip')
-                    except:
-                        pass
-            if ifaces and ip is None:
+                network = element.find('source').get('network')
+            if vm.isActive() and ip is None and ifaces:
                 ips = []
                 for x in ifaces:
                     if ifaces[x]['hwaddr'] == mac and ifaces[x]['addrs'] is not None:
@@ -1376,6 +1355,16 @@ class Kvirt(object):
             if '.' not in ip and ':' not in ip:
                 usernetinfo = {'device': 'eth%s' % len(yamlinfo['nets']), 'mac': 'N/A', 'net': 'user', 'type': 'user'}
                 yamlinfo['nets'].append(usernetinfo)
+        if listinfo:
+            state = vm.state()[0]
+            yamlinfo['status'] = states.get(state)
+            return yamlinfo
+        [state, maxmem, memory, numcpus, cputime] = vm.info()
+        yamlinfo['status'] = states.get(state)
+        yamlinfo['autostart'] = starts[vm.autostart()]
+        memory = int(float(memory) / 1024)
+        yamlinfo['cpus'] = numcpus
+        yamlinfo['memory'] = memory
         for element in list(root.iter('disk')):
             disktype = element.get('device')
             if disktype == 'cdrom':
