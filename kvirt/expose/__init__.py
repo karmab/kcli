@@ -7,7 +7,7 @@ import re
 
 
 class Kexposer():
-    def __init__(self, config, plan, inputfile, overrides={}, port=9000, extraconfigs=[]):
+    def __init__(self, config, plan, inputfile, overrides={}, port=9000, extraconfigs=[], installermode=False):
         app = Flask(__name__)
         self.basedir = os.path.dirname(inputfile) if '/' in inputfile else '.'
         clients = {}
@@ -35,6 +35,7 @@ class Kexposer():
         self.clients = clients if clients else {config.client: {plan: None}}
         self.plans = plans if plans else {plan: config.client}
         self.overrides = overrides
+        self.installermode = installermode
 
         @app.route('/')
         def index():
@@ -44,13 +45,20 @@ class Kexposer():
                 for plan_name in sorted(self.clients[client]):
                     current_data = {'vms': []}
                     currentk = config.k if client == config.client else config.extraclients[client]
-                    for vm in currentk.list():
-                        if vm['plan'] == plan_name:
-                            current_data['vms'].append(vm)
-                            if 'creationdate' not in current_data and 'creationdate' in vm:
-                                current_data['creationdate'] = vm['creationdate']
-                            if 'owner' not in current_data and 'owner' in vm:
-                                current_data['owner'] = vm['owner']
+                    if self.installermode:
+                        current_filtervm = '%s-installer' % plan_name
+                        try:
+                            current_data['vms'].append(currentk.info(current_filtervm))
+                        except:
+                            pass
+                    else:
+                        for vm in currentk.list():
+                            if vm['plan'] == plan_name:
+                                current_data['vms'].append(vm)
+                                if 'creationdate' not in current_data and 'creationdate' in vm:
+                                    current_data['creationdate'] = vm['creationdate']
+                                if 'owner' not in current_data and 'owner' in vm:
+                                    current_data['owner'] = vm['owner']
                     data[client][plan_name] = current_data
             return render_template('index.html', clients=data)
 

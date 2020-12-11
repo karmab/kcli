@@ -2139,13 +2139,14 @@ $INFO
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
         openshift.scale(self, plandir, cluster, overrides)
 
-    def expose_plan(self, plan, inputfile=None, overrides={}, port=9000, extraconfigs={}):
+    def expose_plan(self, plan, inputfile=None, overrides={}, port=9000, extraconfigs={}, installermode=False):
         inputfile = os.path.expanduser(inputfile)
         if not os.path.exists(inputfile):
             common.pprint("No input file found nor default kcli_plan.yml.Leaving....", color='red')
             os._exit(1)
         common.pprint("Handling expose of plan with name %s and inputfile %s" % (plan, inputfile))
-        kexposer = Kexposer(self, plan, inputfile, overrides=overrides, port=port, extraconfigs=extraconfigs)
+        kexposer = Kexposer(self, plan, inputfile, overrides=overrides, port=port, extraconfigs=extraconfigs,
+                            installermode=installermode)
         kexposer.run()
 
     def create_openshift_iso(self, cluster, overrides={}):
