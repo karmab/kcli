@@ -3012,7 +3012,7 @@ def cli():
                                      description=kubegenericcreate_desc,
                                      help=kubegenericcreate_desc,
                                      epilog=kubegenericcreate_epilog,
-                                     formatter_class=rawhelp)
+                                     formatter_class=rawhelp, aliases=['kubeadm'])
 
     kubek3screate_desc = 'Create K3s Kube'
     kubek3screate_epilog = "examples:\n%s" % kubek3screate
