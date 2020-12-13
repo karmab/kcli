@@ -3078,7 +3078,7 @@ def cli():
 
     kubelist_desc = 'List Kubes'
     kubelist_parser = list_subparsers.add_parser('kube', description=kubelist_desc, help=kubelist_desc,
-                                                 aliases=['kubes'])
+                                                 aliases=['kubes', 'cluster', 'clusters'])
     kubelist_parser.set_defaults(func=list_kube)
 
     kubescale_desc = 'Scale Kube'
