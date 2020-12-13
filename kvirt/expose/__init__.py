@@ -48,7 +48,12 @@ class Kexposer():
                     if self.installermode:
                         current_filtervm = '%s-installer' % plan_name
                         try:
-                            current_data['vms'].append(currentk.info(current_filtervm))
+                            vm = currentk.info(current_filtervm)
+                            current_data['vms'].append(vm)
+                            if 'creationdate' in vm:
+                                current_data['creationdate'] = vm['creationdate']
+                            if 'owner' in vm:
+                                current_data['owner'] = vm['owner']
                         except:
                             pass
                     else:
