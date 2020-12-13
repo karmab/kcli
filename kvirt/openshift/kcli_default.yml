@@ -80,7 +80,7 @@ disconnected_prefix: ocp4
 imagecontentsources: []
 ca:
 ipv6: false
-machine_cidr:
+dualstack: false
 cloud_tag:
 cloud_scale: false
 cloud_api_internal: false

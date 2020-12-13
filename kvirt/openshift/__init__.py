@@ -253,7 +253,8 @@ def create(config, plandir, cluster, overrides):
             'upstream': False,
             'fips': False,
             'apps': [],
-            'minimal': False}
+            'minimal': False,
+            'dualstack': False}
     data.update(overrides)
     if 'cluster' in overrides:
         clustervalue = overrides.get('cluster')
@@ -277,6 +278,7 @@ def create(config, plandir, cluster, overrides):
         os._exit(1)
     network = data.get('network')
     ipv6 = data['ipv6']
+    dualstack = data.get('dualstack')
     upstream = data.get('upstream')
     version = data.get('version')
     tag = data.get('tag')
@@ -300,9 +302,6 @@ def create(config, plandir, cluster, overrides):
         else:
             pprint("You need to define api_ip in your parameters file", color='red')
             os._exit(1)
-    if platform in virtplatforms and ipv6 and data.get('machine_cidr') is None:
-        pprint("You need to define machine_cidr in your parameters file", color='red')
-        os._exit(1)
     if ':' in api_ip:
         ipv6 = True
     ingress_ip = data.get('ingress_ip')
@@ -517,6 +516,8 @@ def create(config, plandir, cluster, overrides):
     if 'network_type' in data and data['network_type'] == 'Calico':
         for asset in calicoassets:
             fetch(asset, manifestsdir)
+    if dualstack:
+        copy2("%s/dualstack.yml" % plandir, "%s/openshift" % clusterdir)
     call('openshift-install --dir=%s create ignition-configs' % clusterdir, shell=True)
     for role in ['master', 'worker']:
         ori = "%s/%s.ign" % (clusterdir, role)

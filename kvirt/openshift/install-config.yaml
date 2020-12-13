@@ -1,3 +1,28 @@
+{% set cluster_network_ipv6 = {"cidr": "fd01::/48", "hostPrefix": 64} %}
+{% set network_type = network_type|default('OpenShiftSDN') %}
+{% set cluster_network_ipv4 = {"cidr": "10.132.0.0/14", "hostPrefix": 23} %}
+{% set service_network_ipv6 = ["fd02::/112"] %}
+{% set service_network_ipv4 = ["172.30.0.0/16"] %}
+{% set machine_cidr_ipv4 = ["10.0.0.0/16"] %}
+{% set machine_cidr_ipv6 = ["fc00::/48"] %}
+{% if dualstack|default(False) %}
+{% set machine_cidrs = machine_cidr_ipv4 + machine_cidr_ipv6 %}
+{% set cluster_networks = [cluster_network_ipv4] + [cluster_network_ipv6] %}
+{% set service_networks = service_network_ipv4 + service_network_ipv6 %}
+{% if ipv6 %}
+{% set machine_cidrs = machine_cidrs|reverse %}
+{% set cluster_networks = cluster_networks|reverse %}
+{% set service_networks = service_networks|reverse %}
+{% endif %}
+{% elif ipv6 %}
+{% set machine_cidrs = machine_cidr_ipv6 %}
+{% set cluster_networks = [cluster_network_ipv6] %}
+{% set service_networks = service_network_ipv6 %}
+{% else %}
+{% set machine_cidrs = machine_cidr_ipv4 %}
+{% set cluster_networks = [cluster_network_ipv4] %}
+{% set service_networks = service_network_ipv4 %}
+{% endif %}
 apiVersion: v1
 {% if fips %}
 fips: True
@@ -20,22 +45,22 @@ controlPlane:
 metadata:
   name: {{ cluster }}
 networking:
-  networkType: {{ network_type | default('OpenShiftSDN') }}
-{% if ipv6 %}
-  machineCIDR: {{ machine_cidr }}
+  networkType: {{ network_type }}
+{% if network_type == 'OVNKubernetes' %}
+  machineNetwork:
+{% for cidr in machine_cidrs %}
+  - cidr: {{ cidr }}
+{% endfor %}
 {% endif %}
-  clusterNetworks:
-{% if ipv6 %}
-  - cidr: fd01::/48
-    hostPrefix: 64
+  clusterNetwork:
+{% for network in cluster_networks %}
+  - cidr: {{ network['cidr'] }}
+    hostPrefix: {{ network['hostPrefix'] }}
+{% endfor %}
   serviceNetwork:
-  - fd02::/112
-{% else %}
-  - cidr: 10.132.0.0/14
-    hostPrefix: 23
-  serviceNetwork:
-  - 172.30.0.0/16
-{% endif %}
+{% for network in service_networks %}
+  - {{ network }}
+{% endfor %}
 platform:
 {% if config_type == 'vsphere' %}
   vsphere:
