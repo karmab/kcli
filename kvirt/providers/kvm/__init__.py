@@ -11,7 +11,7 @@ from kvirt import defaults
 from kvirt.defaults import UBUNTUS, METADATA_FIELDS
 from kvirt import common
 from netaddr import IPAddress, IPNetwork
-from libvirt import open as libvirtopen, registerErrorHandler
+from libvirt import open as libvirtopen, registerErrorHandler, libvirtError
 from libvirt import VIR_DOMAIN_AFFECT_LIVE, VIR_DOMAIN_AFFECT_CONFIG
 from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_AGENT as vir_src_agent
 from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE as vir_src_lease
@@ -1920,7 +1920,10 @@ class Kvirt(object):
             break
         imagepath = "%s/%s" % (poolpath, name)
         imagexml = self._xmlvolume(path=imagepath, size=size, diskformat='raw', pooltype=pooltype)
-        pool.createXML(imagexml, 0)
+        try:
+            pool.createXML(imagexml, 0)
+        except libvirtError as e:
+            common.pprint("Got %s when creating iso" % e, color='yellow')
         imagevolume = conn.storageVolLookupByPath(imagepath)
         stream = conn.newStream(0)
         imagevolume.upload(stream, 0, 0)
