@@ -457,6 +457,9 @@ def sync_host(args):
 def list_vm(args):
     """List vms"""
     filters = args.filters
+    if args.client is not None and args.client == 'all':
+        baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
+        args.client = ','.join(baseconfig.clients)
     if args.client is not None and ',' in args.client:
         vms = PrettyTable(["Name", "Host", "Status", "Ips", "Source", "Plan", "Profile"])
         for client in args.client.split(','):
