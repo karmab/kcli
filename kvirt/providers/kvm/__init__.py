@@ -227,9 +227,13 @@ class Kvirt(object):
             display = 'spice'
         volumes = {}
         volumespaths = {}
-        for p in conn.listStoragePools():
-            poo = conn.storagePoolLookupByName(p)
-            poo.refresh(0)
+        for poolname in conn.listStoragePools():
+            poo = conn.storagePoolLookupByName(poolname)
+            try:
+                poo.refresh(0)
+            except Exception as e:
+                common.pprint("Hit %s when refreshing pool %s" % (e, poolname), color='yellow')
+                continue
             for vol in poo.listAllVolumes():
                 volumes[vol.name()] = {'pool': poo, 'object': vol}
                 volumespaths[vol.path()] = {'pool': poo, 'object': vol}
@@ -962,7 +966,11 @@ class Kvirt(object):
         vm.setAutostart(autostart)
         for pool in volsxml:
             storagepool = conn.storagePoolLookupByName(pool)
-            storagepool.refresh(0)
+            try:
+                storagepool.refresh(0)
+            except Exception as e:
+                common.pprint("Hit %s when refreshing pool %s" % (e, pool), color='yellow')
+                continue
             for volxml in volsxml[pool]:
                 storagepool.createXML(volxml, 0)
         if fixqcow2path is not None and fixqcow2backing is not None:
@@ -1472,7 +1480,11 @@ class Kvirt(object):
         conn = self.conn
         for poolname in conn.listStoragePools():
             pool = conn.storagePoolLookupByName(poolname)
-            pool.refresh(0)
+            try:
+                pool.refresh(0)
+            except Exception as e:
+                common.pprint("Hit %s when refreshing pool %s" % (e, poolname), color='yellow')
+                continue
             poolxml = pool.XMLDesc(0)
             root = ET.fromstring(poolxml)
             for element in list(root.iter('path')):
@@ -1559,10 +1571,14 @@ class Kvirt(object):
         vm.undefine()
         founddisks = []
         thinpools = []
-        for storage in conn.listStoragePools():
+        for poolname in conn.listStoragePools():
             deleted = False
-            storage = conn.storagePoolLookupByName(storage)
-            storage.refresh(0)
+            storage = conn.storagePoolLookupByName(poolname)
+            try:
+                storage.refresh(0)
+            except Exception as e:
+                common.pprint("Hit %s when refreshing pool %s" % (e, poolname), color='yellow')
+                continue
             poolxml = storage.XMLDesc(0)
             storageroot = ET.fromstring(poolxml)
             for element in list(storageroot.iter('path')):
@@ -2516,7 +2532,11 @@ class Kvirt(object):
             for poolname in conn.listStoragePools():
                 try:
                     pool = conn.storagePoolLookupByName(poolname)
-                    pool.refresh(0)
+                    try:
+                        pool.refresh(0)
+                    except Exception as e:
+                        common.pprint("Hit %s when refreshing pool %s" % (e, poolname), color='yellow')
+                        continue
                     volume = pool.storageVolLookupByName(shortname)
                     volume.delete(0)
                     return {'result': 'success'}
