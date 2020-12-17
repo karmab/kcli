@@ -933,8 +933,8 @@ def get_cloudinitfile(image):
 
 
 def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[],
-             enableroot=True, overrides={}, iso=True, fqdn=False, version='3.0.0', plan=None, compact=False,
-             removetls=False, ipv6=[], image=None, minimal=False):
+             enableroot=True, overrides={}, iso=True, fqdn=False, version='3.1.0', plan=None, compact=False,
+             removetls=False, ipv6=[], image=None, nokeys=False, noname=False):
     """
 
     :param name:
@@ -962,7 +962,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
         localhostname = "%s.%s" % (name, domain)
     else:
         localhostname = name
-    if not minimal:
+    if not nokeys:
         for path in ["~/.kcli/id_rsa.pub", "~/.kcli/id_dsa.pub", "~/.ssh/id_rsa.pub", "~/.ssh/id_dsa.pub"]:
             expanded_path = os.path.expanduser(path)
             if os.path.exists(expanded_path) and os.path.exists(expanded_path.replace('.pub', '')):
@@ -976,6 +976,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
         if not publickeys:
             pprint("neither id_rsa or id_dsa public keys found in your .ssh or .kcli directory, you might have trouble "
                    "accessing the vm", color='red')
+    if not noname:
         hostnameline = quote("%s\n" % localhostname)
         storage["files"].append({"filesystem": "root", "path": "/etc/hostname", "overwrite": True,
                                  "contents": {"source": "data:,%s" % hostnameline, "verification": {}}, "mode": 420})
@@ -1451,13 +1452,13 @@ def needs_ignition(image):
 
 def ignition_version(image):
     if 'fedora-coreos' in image or 'fcos' in image:
-        version = '3.0.0'
+        version = '3.1.0'
     else:
         version = '2.2.0'
         image = os.path.basename(image)
         version_match = re.match('rhcos-*(..).*', image)
         if version_match is not None and int(version_match.group(1)) >= 46:
-            version = '3.0.0'
+            version = '3.1.0'
     return version
 
 

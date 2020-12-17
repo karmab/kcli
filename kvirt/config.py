@@ -833,10 +833,12 @@ $INFO
         if onlyassets:
             if image is not None and common.needs_ignition(image):
                 version = common.ignition_version(image)
-                minimal = overrides.get('minimal', False)
+                nokeys = overrides.get('nokeys', False)
+                noname = overrides.get('noname', False)
                 data = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                        domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
-                                       overrides=overrides, version=version, plan=plan, image=image, minimal=minimal)
+                                       overrides=overrides, version=version, plan=plan, image=image, nokeys=nokeys,
+                                       noname=noname)
             else:
                 data = common.cloudinit(name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                         domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
@@ -2156,6 +2158,7 @@ $INFO
         domain = overrides.get('domain')
         role = overrides.get('role', 'worker')
         iso = overrides.get('iso', True)
+        nokeys = overrides.get('nokeys', False)
         if '.' in cluster:
             domain = '.'.join(cluster.split('.')[1:])
             common.pprint("Using domain %s" % domain, color='blue')
@@ -2188,8 +2191,9 @@ $INFO
         hostscontent += "%s api-int.%s.%s api.%s.%s" % (api_ip, cluster, domain, cluster, domain)
         with open("iso.ign", 'w') as f:
             common.pprint("Writing file iso.ign for %s in %s.%s" % (role, cluster, domain), color='green')
-            iso_overrides['files'] = [{"path": "/etc/hosts", "content": hostscontent}]
-            result = config.create_vm(role, 'rhcos46', overrides=iso_overrides, onlyassets=True)
+            final_overrides = {'files': [{"path": "/etc/hosts", "content": hostscontent}], 'noname': True,
+                               'nokeys': nokeys}
+            result = config.create_vm(role, 'rhcos46', overrides=final_overrides, onlyassets=True)
             iso_overrides['files'] = [{"path": "/root/config.ign", "content": result['data']}]
             iso_overrides.update(overrides)
             result = config.create_vm('autoinstaller', 'rhcos46', overrides=iso_overrides, onlyassets=True)
