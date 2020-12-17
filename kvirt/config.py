@@ -1369,7 +1369,7 @@ $INFO
                           noautostart=False, inputfile=inputfile, start=False, stop=False, delete=False,
                           overrides=overrides, embedded=embedded, download=download)
             return {'result': 'success'}
-        if networkentries:
+        if networkentries and not onlyassets:
             common.pprint("Deploying Networks...")
             for net in networkentries:
                 netprofile = entries[net]
@@ -1386,7 +1386,7 @@ $INFO
                 result = k.create_network(name=net, cidr=cidr, dhcp=dhcp, nat=nat, domain=domain, plan=plan,
                                           overrides=netprofile)
                 common.handle_response(result, net, element='Network ')
-        if poolentries:
+        if poolentries and not onlyassets:
             common.pprint("Deploying Pools...")
             pools = k.list_pools()
             for pool in poolentries:
@@ -1400,7 +1400,7 @@ $INFO
                         common.pprint("Pool %s skipped as path is missing!" % pool, color='yellow')
                         continue
                     k.create_pool(pool, poolpath)
-        if imageentries:
+        if imageentries and not onlyassets:
             common.pprint("Deploying Images...")
             images = [os.path.basename(t) for t in k.volumes()]
             for image in imageentries:
@@ -1416,7 +1416,7 @@ $INFO
                         imageurl = None
                     cmd = imageprofile.get('cmd')
                     self.handle_host(pool=pool, image=image, download=True, cmd=cmd, url=imageurl, update_profile=True)
-        if dnsentries:
+        if dnsentries and not onlyassets:
             common.pprint("Deploying Dns Entries...")
             dnsclients = {}
             for dnsentry in dnsentries:
@@ -1445,7 +1445,7 @@ $INFO
                     return
                 z.reserve_dns(name=dnsentry, nets=[dnsnet], domain=dnsdomain, ip=dnsip, alias=dnsalias, force=True,
                               primary=True)
-        if kubeentries:
+        if kubeentries and not onlyassets:
             common.pprint("Deploying Kube Entries...")
             dnsclients = {}
             for cluster in kubeentries:
@@ -1710,7 +1710,7 @@ $INFO
                         waitvms.append(name)
                 else:
                     failedvms.append(name)
-        if diskentries:
+        if diskentries and not onlyassets:
             common.pprint("Deploying Disks...")
         for disk in diskentries:
             profile = entries[disk]
@@ -1745,7 +1745,7 @@ $INFO
                         common.pprint("Adding disk %s to %s" % (disk, vm))
                         k.add_disk(name=vm, size=size, pool=pool, image=image, shareable=shareable,
                                    existing=newdisk, thin=False)
-        if containerentries:
+        if containerentries and not onlyassets:
             cont = Kcontainerconfig(self, client=self.containerclient).cont
             common.pprint("Deploying Containers...")
             label = "plan=%s" % plan
@@ -1772,7 +1772,7 @@ $INFO
                 common.pprint("Container %s deployed!" % container)
                 cont.create_container(name=container, image=containerimage, nets=nets, cmds=cmds, ports=ports,
                                       volumes=volumes, environment=environment, label=label)
-        if ansibleentries:
+        if ansibleentries and not onlyassets:
             if not newvms:
                 common.pprint("Ansible skipped as no new vm within playbook provisioned", color='yellow')
                 return
@@ -1815,7 +1815,7 @@ $INFO
                 ansiblecommand += " -i  %s %s" % (inventoryfile, playbook)
                 common.pprint("Running: %s" % ansiblecommand, color='blue')
                 os.system(ansiblecommand)
-        if ansible:
+        if ansible and not onlyassets:
             common.pprint("Deploying Ansible Inventory...", color='blue')
             inventoryfile = "/tmp/%s.inv.yaml" % plan if self.yamlinventory else "/tmp/%s.inv" % plan
             if os.path.exists(inventoryfile):
@@ -1831,7 +1831,7 @@ $INFO
                 ansibleutils.make_plan_inventory(vms_to_host, plan, vms, yamlinventory=self.yamlinventory,
                                                  insecure=self.insecure)
                 return
-        if lbs:
+        if lbs and not onlyassets:
             common.pprint("Deploying Loadbalancers...")
             for index, lbentry in enumerate(lbs):
                 details = entries[lbentry]
