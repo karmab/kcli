@@ -633,13 +633,20 @@ def get_overrides(paramfile=None, param=[]):
     :return:
     """
     overrides = {}
-    if paramfile is not None and os.path.exists(os.path.expanduser(paramfile)):
-        with open(os.path.expanduser(paramfile)) as f:
-            try:
-                overrides = yaml.safe_load(f)
-            except:
-                pprint("Couldn't parse your parameters file %s. Leaving" % paramfile, color='red')
-                os._exit(1)
+    if paramfile is not None:
+        if os.path.exists(os.path.expanduser(paramfile)):
+            with open(os.path.expanduser(paramfile)) as f:
+                try:
+                    overrides = yaml.safe_load(f)
+                except:
+                    pprint("Couldn't parse your parameters file %s. Leaving" % paramfile, color='red')
+                    os._exit(1)
+        else:
+            pprint("Parameter file %s not found. Leaving" % paramfile, color='red')
+            os._exit(1)
+    if not isinstance(overrides, dict):
+        pprint("Couldn't parse your parameters file %s. Leaving" % paramfile, color='red')
+        os._exit(1)
     if param is not None:
         for x in param:
             if len(x.split('=')) < 2:
