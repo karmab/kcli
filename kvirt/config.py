@@ -4,6 +4,7 @@
 Kvirt config class
 """
 
+import base64
 from datetime import datetime
 from jinja2 import Environment, FileSystemLoader
 from jinja2 import StrictUndefined as undefined
@@ -13,7 +14,6 @@ from kvirt import ansibleutils
 from kvirt.jinjafilters import jinjafilters
 from kvirt import nameutils
 from kvirt import common
-from kvirt.common import insecure_fetch
 from kvirt import k3s
 from kvirt import kubeadm
 from kvirt.expose import Kexposer
@@ -2152,49 +2152,44 @@ $INFO
         kexposer.run()
 
     def create_openshift_iso(self, cluster, overrides={}):
-        curl_header = "Accept: application/vnd.coreos.ignition+json; version=3.1.0"
         liveiso = "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/latest/latest/rhcos-live.x86_64.iso"
         api_ip = overrides.get('api_ip')
         domain = overrides.get('domain')
         role = overrides.get('role', 'worker')
         iso = overrides.get('iso', True)
-        nokeys = overrides.get('nokeys', False)
         if '.' in cluster:
             domain = '.'.join(cluster.split('.')[1:])
             common.pprint("Using domain %s" % domain, color='blue')
             cluster = cluster.replace(".%s" % domain, '')
+        hosts_content = None
         if api_ip is None:
             try:
                 api_ip = socket.gethostbyname('api.%s.%s' % (cluster, domain))
             except:
-                common.pprint("Couldn't figure out api_ip, indicate it explicitely", color='red')
-                os._exit(1)
+                pass
+        if api_ip is None:
+            common.pprint("Couldn't figure out api_ip. Relying on dns", color='yellow')
+            api_ip = "api.%s.%s" % (cluster, domain)
+        else:
+            hosts_content = "127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4\n"
+            hosts_content += "::1         localhost localhost.localdomain localhost6 localhost6.localdomain6\n"
+            hosts_content += "%s api-int.%s.%s api.%s.%s" % (api_ip, cluster, domain, cluster, domain)
         ignitionfile = "%s.ign" % role
         config = Kconfig()
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
         if os.path.exists(ignitionfile):
             common.pprint("Using existing %s" % ignitionfile, color='yellow')
-        else:
-            while not os.path.exists(ignitionfile) or os.stat(ignitionfile).st_size == 0:
-                try:
-                    with open(ignitionfile, 'w') as w:
-                        ignitiondata = insecure_fetch("https://api.%s.%s:22623/config/%s" % (cluster, domain, role),
-                                                      headers=[curl_header])
-                        w.write(ignitiondata)
-                        common.pprint("Downloaded %s ignition data" % role, color='green')
-                except:
-                    common.pprint("Waiting 5s before retrieving %s ignition data" % role, color='blue')
-                    sleep(5)
-        iso_overrides = {'scripts': ['%s/iso.sh' % plandir]}
-        hostscontent = "127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4\n"
-        hostscontent += "::1         localhost localhost.localdomain localhost6 localhost6.localdomain6\n"
-        hostscontent += "%s api-int.%s.%s api.%s.%s" % (api_ip, cluster, domain, cluster, domain)
         with open("iso.ign", 'w') as f:
             common.pprint("Writing file iso.ign for %s in %s.%s" % (role, cluster, domain), color='green')
-            final_overrides = {'files': [{"path": "/etc/hosts", "content": hostscontent}], 'noname': True,
-                               'nokeys': nokeys}
-            result = config.create_vm(role, 'rhcos46', overrides=final_overrides, onlyassets=True)
-            iso_overrides['files'] = [{"path": "/root/config.ign", "content": result['data']}]
+            isodir = os.path.dirname(common.__file__)
+            env = Environment(loader=FileSystemLoader(isodir), extensions=['jinja2.ext.do'], trim_blocks=True,
+                              lstrip_blocks=True)
+            templ = env.get_template(os.path.basename("ignition.j2"))
+            if hosts_content is not None:
+                hosts_content = base64.b64encode(hosts_content.encode()).decode("UTF-8")
+            finaldata = templ.render(api_ip=api_ip, role=role, hosts_content=hosts_content)
+            _files = [{"path": "/root/config.ign", "content": finaldata}]
+            iso_overrides = {'scripts': ['%s/iso.sh' % plandir], 'files': _files}
             iso_overrides.update(overrides)
             result = config.create_vm('autoinstaller', 'rhcos46', overrides=iso_overrides, onlyassets=True)
             f.write(result['data'])

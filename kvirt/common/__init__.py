@@ -657,6 +657,8 @@ def get_overrides(paramfile=None, param=[]):
                     value = True
                 elif value.lower() == 'false':
                     value = False
+                elif value == 'None':
+                    value = None
                 elif value == '[]':
                     value = []
                 elif value.startswith('[') and value.endswith(']'):
