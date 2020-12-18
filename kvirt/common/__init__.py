@@ -1505,6 +1505,7 @@ def kube_create_app(config, appdir, overrides={}, outputdir=None):
     appdata = {'cluster': 'testk', 'domain': 'karmalabs.com', 'masters': 1, 'workers': 0}
     cluster = appdata['cluster']
     cwd = os.getcwd()
+    os.environ["PATH"] += cwd
     overrides['cwd'] = cwd
     default_parameter_file = "%s/kcli_default.yml" % appdir
     if os.path.exists(default_parameter_file):
@@ -1533,6 +1534,7 @@ def kube_delete_app(config, appdir, overrides={}):
     found = False
     cluster = 'xxx'
     cwd = os.getcwd()
+    os.environ["PATH"] += cwd
     overrides['cwd'] = cwd
     with TemporaryDirectory() as tmpdir:
         for root, dirs, files in os.walk(appdir):
