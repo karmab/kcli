@@ -376,7 +376,7 @@ def create(config, plandir, cluster, overrides):
             pprint("Couldn't download openshift-install", color='red')
             os._exit(run)
         pprint("Move downloaded openshift-install somewhere in your path if you want to reuse it", color='blue')
-    os.environ["PATH"] += os.getcwd()
+    os.environ["PATH"] += ":%s" % os.getcwd()
     if disconnected_url is not None:
         if '/' not in str(tag):
             tag = '%s/%s/release:%s' % (disconnected_url, disconnected_prefix, tag)

@@ -150,7 +150,7 @@ def create(config, plandir, cluster, overrides):
     os.environ['KUBECONFIG'] = "%s/auth/kubeconfig" % clusterdir
     apps = data.get('apps', [])
     if apps:
-        os.environ["PATH"] += os.getcwd()
+        os.environ["PATH"] += ":%s" % os.getcwd()
         for app in apps:
             appdir = "%s/apps/%s" % (plandir, app)
             if not os.path.exists(appdir):
