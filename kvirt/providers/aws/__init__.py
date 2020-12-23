@@ -78,12 +78,14 @@ class Kaws(object):
             return {'result': 'failure', 'reason': "VM %s already exists" % name}
         image = self.__evaluate_image(image)
         keypair = self.keypair
-        if image is not None and not image.startswith('ami-'):
+        if image is not None:
             Filters = [{'Name': 'name', 'Values': [image]}]
             images = conn.describe_images(Filters=Filters)
-            if 'Images' in image and images['Images']:
-                imageid = images['Images'][0]['ImageId']
-                common.pprint("Using ami %s" % image)
+            if not image.startswith('ami-') and 'Images' in images and images['Images']:
+                imageinfo = images['Images'][0]
+                imageid = imageinfo['ImageId']
+                common.pprint("Using ami %s" % imageid)
+                image = imageinfo['Name']
             else:
                 return {'result': 'failure', 'reason': 'Invalid image %s' % image}
         else:
@@ -362,6 +364,8 @@ class Kaws(object):
         if 'Tags' in vm:
             for tag in vm['Tags']:
                 yamlinfo[tag['Key']] = tag['Value']
+                if tag['Key'] == 'Name':
+                    name = tag['Value']
         yamlinfo['name'] = name
         yamlinfo['status'] = state
         yamlinfo['az'] = az
@@ -432,7 +436,7 @@ class Kaws(object):
         conn = self.conn
         images = []
         oses = ['CentOS Linux 7 x86_64*', 'CentOS Linux 8 x86_64*', 'RHEL-7.*GA*', 'ubuntu-xenial-*Standard*', 'kcli*',
-                'RHEL-8.0.0_HVM-*', 'rhcos-4*']
+                'RHEL-8.0.0_HVM-*', 'rhcos-4*', 'fedora-coreos*']
         Filters = [{'Name': 'name', 'Values': oses}]
         rhcos = {}
         allimages = conn.describe_images(Filters=Filters)
