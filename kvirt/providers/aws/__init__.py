@@ -438,12 +438,16 @@ class Kaws(object):
         oses = ['CentOS Linux 7 x86_64*', 'CentOS Linux 8 x86_64*', 'RHEL-7.*GA*', 'ubuntu-xenial-*Standard*', 'kcli*',
                 'RHEL-8.0.0_HVM-*', 'rhcos-4*', 'fedora-coreos*']
         Filters = [{'Name': 'name', 'Values': oses}]
+        centos = []
+        fedoracoreos = []
         rhcos = {}
+        rhels7 = []
+        rhels8 = []
+        ubuntus = []
         allimages = conn.describe_images(Filters=Filters)
         allimages = conn.describe_images(Filters=Filters)
         for image in allimages['Images']:
             name = image['Name']
-            amiid = image['ImageId']
             date = datetime.strptime(image['CreationDate'], '%Y-%m-%dT%H:%M:%S.000Z')
             if int("%s%s" % (date.year, date.month)) < self.ami_date:
                 continue
@@ -451,11 +455,31 @@ class Kaws(object):
                 continue
             if name.startswith('rhcos-4'):
                 number = name[6:8]
-                rhcos[number] = [name, amiid]
+                rhcos[number] = [name]
                 continue
-            images.append("%s - %s" % (name, amiid))
+            if name.lower().startswith('centos'):
+                centos.append(name)
+                continue
+            if name.startswith('fedora-coreos'):
+                fedoracoreos.append(name)
+                continue
+            if name.lower().startswith('rhel-7'):
+                rhels7.append(name)
+                continue
+            if name.lower().startswith('rhel-8'):
+                rhels8.append(name)
+                continue
+            if name.lower().startswith('ubuntu'):
+                ubuntus.append(name)
+                continue
+            images.append(name)
         for value in rhcos.values():
-            images.append("%s - %s" % (value[0], value[1]))
+            images.append(value[0])
+        images.append(centos[-1])
+        images.append(fedoracoreos[-1])
+        images.append(rhels7[-1])
+        images.append(rhels8[-1])
+        images.append(ubuntus[-1])
         return sorted(images, key=str.lower)
 
     def delete(self, name, snapshots=False):
