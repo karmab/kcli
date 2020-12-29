@@ -1551,7 +1551,6 @@ def create_plan(args):
     inputfile = args.inputfile
     force = args.force
     paramfile = args.paramfile
-    wait = args.wait
     if inputfile is None:
         inputfile = 'kcli_plan.yml'
     if os.path.exists("/i_am_a_container"):
@@ -1573,9 +1572,8 @@ def create_plan(args):
         common.pprint("Using %s as name of the plan" % plan)
     elif force:
         config.plan(plan, delete=True)
-    config.plan(plan, ansible=ansible, url=url, path=path,
-                container=container, inputfile=inputfile,
-                overrides=overrides, wait=wait)
+    config.plan(plan, ansible=ansible, url=url, path=path, container=container, inputfile=inputfile,
+                overrides=overrides)
     return 0
 
 
@@ -3255,7 +3253,6 @@ def cli():
     plancreate_parser.add_argument('-P', '--param', action='append',
                                    help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
     plancreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
-    plancreate_parser.add_argument('-w', '--wait', action='store_true', help='Wait for cloudinit to finish')
     plancreate_parser.add_argument('plan', metavar='PLAN', nargs='?')
     plancreate_parser.set_defaults(func=create_plan)
 

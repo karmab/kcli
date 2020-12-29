@@ -434,7 +434,7 @@ def create(config, plandir, cluster, overrides):
         pprint("Deploying disconnected vm %s" % disconnected_vm, color='blue')
         data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
         disconnected_plan = "%s-reuse" % plan if disconnected_reuse else plan
-        result = config.plan(disconnected_plan, inputfile='%s/disconnected.yml' % plandir, overrides=data, wait=True)
+        result = config.plan(disconnected_plan, inputfile='%s/disconnected.yml' % plandir, overrides=data)
         if result['result'] != 'success':
             os._exit(1)
         disconnected_ip = _ssh_credentials(k, disconnected_vm)[1]

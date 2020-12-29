@@ -1004,7 +1004,7 @@ $INFO
     def plan(self, plan, ansible=False, url=None, path=None, autostart=False, container=False, noautostart=False,
              inputfile=None, inputstring=None, start=False, stop=False, delete=False, force=True, overrides={},
              info=False, snapshot=False, snapshotname=None, revert=False, update=False, embedded=False, restart=False,
-             download=False, wait=False, quiet=False, doc=False, onlyassets=False):
+             download=False, quiet=False, doc=False, onlyassets=False):
         """Manage plan file"""
         k = self.k
         no_overrides = not overrides
@@ -1012,7 +1012,6 @@ $INFO
         newassets = []
         failedvms = []
         existingvms = []
-        waitvms = []
         onfly = None
         toclean = False
         getback = False
@@ -1702,6 +1701,7 @@ $INFO
                     newvms.append(name)
                     start = profile.get('start', True)
                     cloudinit = profile.get('cloudinit', True)
+                    wait = profile.get('wait', False)
                     if onlyassets:
                         newassets.append(result['data'])
                     elif not wait:
@@ -1709,7 +1709,7 @@ $INFO
                     elif not start or not cloudinit or profile.get('image') is None:
                         common.pprint("Skipping wait on %s" % name, color='blue')
                     else:
-                        waitvms.append(name)
+                        self.wait(name)
                 else:
                     failedvms.append(name)
         if diskentries and not onlyassets:
@@ -1865,9 +1865,6 @@ $INFO
             rmtree(path)
         if inputstring is not None and os.path.exists("temp_plan_%s.yml" % plan):
             os.remove("temp_plan_%s.yml" % plan)
-        if wait:
-            for vm in waitvms:
-                self.wait(vm)
         return returndata
 
     def handle_host(self, pool=None, image=None, switch=None, download=False,
