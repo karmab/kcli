@@ -118,7 +118,7 @@ def create(config, plandir, cluster, overrides):
             installparam = overrides.copy()
             installparam['plan'] = plan
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
-    result = config.plan(plan, inputfile='%s/masters.yml' % plandir, overrides=data, wait=True)
+    result = config.plan(plan, inputfile='%s/masters.yml' % plandir, overrides=data)
     if result['result'] != "success":
         os._exit(1)
     source, destination = "/root/join.sh", "%s/join.sh" % clusterdir

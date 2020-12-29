@@ -52,6 +52,7 @@
  domain: {{ domain }}
  zerotier_nets: {{ ztier }}
 {% if number == 0 %}
+ wait: true
  notify: {{ notify }}
  notifycmd: {{ notifycmd }}
 {% endif %}

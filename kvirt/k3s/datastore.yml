@@ -1,6 +1,7 @@
-{{cluster}}-datastore:
+{{ cluster }}-datastore:
  image: {{ image }}
  pool: {{ pool }}
+ wait: true
  numcpus: {{ datastore_numcpus | default(numcpus, numcpus) }}
  memory: {{ datastore_memory | default(memory, memory) }}
  scripts:

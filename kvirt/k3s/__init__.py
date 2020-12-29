@@ -82,7 +82,7 @@ def create(config, plandir, cluster, overrides):
     if masters > 1:
         datastore_endpoint = data.get('datastore_endpoint')
         if datastore_endpoint is None:
-            result = config.plan(plan, inputfile='%s/datastore.yml' % plandir, overrides=data, wait=True)
+            result = config.plan(plan, inputfile='%s/datastore.yml' % plandir, overrides=data)
             if result['result'] != "success":
                 os._exit(1)
             datastore_type = data['datastore_type']
@@ -96,7 +96,7 @@ def create(config, plandir, cluster, overrides):
                                                        datastore_ip, datastore_name)
         data['datastore_endpoint'] = datastore_endpoint
     k = config.k
-    result = config.plan(cluster, inputfile='%s/masters.yml' % plandir, overrides=data, wait=True)
+    result = config.plan(cluster, inputfile='%s/masters.yml' % plandir, overrides=data)
     if result['result'] != "success":
         os._exit(1)
     source, destination = "/root/join.sh", "%s/join.sh" % clusterdir

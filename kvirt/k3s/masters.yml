@@ -20,6 +20,9 @@
 
 {{cluster}}-master-{{ number }}:
  image: {{ image }}
+{% if number == 0 %}
+ wait: true
+{% endif %}
  pool: {{ pool }}
  numcpus: {{ master_numcpus | default(numcpus, numcpus) }}
  memory: {{ master_memory | default(memory, memory) }}
