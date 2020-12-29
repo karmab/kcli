@@ -1346,7 +1346,7 @@ def mergeignition(name, ignitionextrapath, data):
         try:
             ignitionextra = json.load(extra)
         except:
-            pprint("Couldn't process %s. Ignoring" % (ignitionextrapath), color="warning")
+            pprint("Couldn't process %s. Ignoring" % (ignitionextrapath), color="yellow")
             return data
         children = {'storage': 'files', 'passwd': 'users', 'systemd': 'units'}
         for key in children:

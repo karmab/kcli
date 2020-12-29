@@ -2152,7 +2152,12 @@ $INFO
         kexposer.run()
 
     def create_openshift_iso(self, cluster, overrides={}):
-        liveiso = "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/latest/latest/rhcos-live.x86_64.iso"
+        liveiso_version = overrides.get('version', 'latest')
+        if liveiso_version not in ['latest', 'pre-release']:
+            common.pprint("Incorrect live iso version. Choose between latest and pre-release", color='red')
+            os._exit(1)
+        liveiso = "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/"
+        liveiso += "%s/latest/rhcos-live.x86_64.iso" % liveiso_version
         api_ip = overrides.get('api_ip')
         domain = overrides.get('domain')
         role = overrides.get('role', 'worker')
@@ -2198,7 +2203,14 @@ $INFO
                 common.pprint("Downloading rhcos-live.x86_64.iso", color='blue')
                 download = "curl %s > rhcos-live.x86_64.iso" % liveiso
                 call(download, shell=True)
-            engine = 'podman' if find_executable('podman') else 'docker'
+            if find_executable('podman') is not None:
+                engine = 'podman'
+            elif find_executable('docker') is None:
+                engine = 'docker'
+            else:
+                common.pprint("Neither podman or docker found so can't embed iso ignition in live iso", color='red')
+                os._exit(1)
+            common.pprint("Using %s to embed iso ignition in live iso" % engine, color='blue')
             coreosinstaller = "%s run --privileged --rm -w /data -v $PWD:/data -v /dev:/dev" % engine
             if not os.path.exists('/Users'):
                 coreosinstaller += " -v /run/udev:/run/udev"
