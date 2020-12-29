@@ -1567,11 +1567,15 @@ def create_plan(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     _type = config.ini[config.client].get('type', 'kvm')
     overrides.update({'type': _type})
+    if force:
+        if plan is None:
+            common.pprint("Force requires specifying a plan name", color='red')
+            return
+        else:
+            config.plan(plan, delete=True)
     if plan is None:
         plan = nameutils.get_random_name()
-        common.pprint("Using %s as name of the plan" % plan)
-    elif force:
-        config.plan(plan, delete=True)
+        common.pprint("Using %s as name of the plan" % plan, color='blue')
     config.plan(plan, ansible=ansible, url=url, path=path, container=container, inputfile=inputfile,
                 overrides=overrides)
     return 0
