@@ -1012,6 +1012,7 @@ $INFO
         newassets = []
         failedvms = []
         existingvms = []
+        asyncwaitvms = []
         onfly = None
         toclean = False
         getback = False
@@ -1702,12 +1703,15 @@ $INFO
                     start = profile.get('start', True)
                     cloudinit = profile.get('cloudinit', True)
                     wait = profile.get('wait', False)
+                    asyncwait = profile.get('asyncwait', False)
                     if onlyassets:
                         newassets.append(result['data'])
-                    elif not wait:
+                    elif not wait and not asyncwait:
                         continue
                     elif not start or not cloudinit or profile.get('image') is None:
                         common.pprint("Skipping wait on %s" % name, color='blue')
+                    elif asyncwait:
+                        asyncwaitvms.append(name)
                     else:
                         self.wait(name)
                 else:
@@ -1865,6 +1869,8 @@ $INFO
             rmtree(path)
         if inputstring is not None and os.path.exists("temp_plan_%s.yml" % plan):
             os.remove("temp_plan_%s.yml" % plan)
+        for vm in asyncwaitvms:
+            self.wait(vm)
         return returndata
 
     def handle_host(self, pool=None, image=None, switch=None, download=False,
