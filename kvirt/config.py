@@ -901,6 +901,9 @@ $INFO
                 common.pprint("Skipping wait on %s" % name, color='blue')
             else:
                 self.wait(name, image=image)
+                finishfiles = profile.get('finishfiles', [])
+                if finishfiles:
+                    self.handle_finishfiles(name, finishfiles)
         return {'result': 'success', 'vm': name}
 
     def list_plans(self):
@@ -1704,6 +1707,7 @@ $INFO
                     cloudinit = profile.get('cloudinit', True)
                     wait = profile.get('wait', False)
                     asyncwait = profile.get('asyncwait', False)
+                    finishfiles = profile.get('finishfiles', [])
                     if onlyassets:
                         newassets.append(result['data'])
                     elif not wait and not asyncwait:
@@ -1711,9 +1715,12 @@ $INFO
                     elif not start or not cloudinit or profile.get('image') is None:
                         common.pprint("Skipping wait on %s" % name, color='blue')
                     elif asyncwait:
-                        asyncwaitvms.append(name)
+                        asyncwaitvm = {'name': name, 'finishfiles': finishfiles}
+                        asyncwaitvms.append(asyncwaitvm)
                     else:
                         self.wait(name)
+                        if finishfiles:
+                            self.handle_finishfiles(name, finishfiles)
                 else:
                     failedvms.append(name)
         if diskentries and not onlyassets:
@@ -1869,8 +1876,11 @@ $INFO
             rmtree(path)
         if inputstring is not None and os.path.exists("temp_plan_%s.yml" % plan):
             os.remove("temp_plan_%s.yml" % plan)
-        for vm in asyncwaitvms:
-            self.wait(vm)
+        for entry in asyncwaitvms:
+            name, finishfiles = entry['name'], entry['finishfiles']
+            self.wait(name)
+            if finishfiles:
+                self.handle_finishfiles(self, name, finishfiles)
         return returndata
 
     def handle_host(self, pool=None, image=None, switch=None, download=False,
@@ -2220,3 +2230,19 @@ $INFO
             coreosinstaller += " quay.io/coreos/coreos-installer:release"
             embedcmd = "%s iso ignition embed -fi iso.ign rhcos-live.x86_64.iso" % coreosinstaller
             os.popen(embedcmd)
+
+    def handle_finishfiles(self, name, finishfiles):
+        current_ip = common._ssh_credentials(self.k, name)[1]
+        for finishfile in finishfiles:
+            if isinstance(finishfile, str):
+                destination = '.'
+                source = finishfile if '/' in finishfile else '/root/%s' % finishfile
+            elif isinstance(finishfile, dict) and 'origin' in finishfile and 'path' in finishfile:
+                source, destination = finishfile.get('origin'), finishfile.get('path', '.')
+            else:
+                common.pprint("Incorrect finishfile entry %s. Skipping" % finishfile, color='yellow')
+                continue
+            scpcmd = common.scp(name, ip=current_ip, user='root', source=source, destination=destination,
+                                tunnel=self.tunnel, tunnelhost=self.tunnelhost, tunnelport=self.tunnelport,
+                                tunneluser=self.tunneluser, download=True, insecure=True)
+            os.system(scpcmd)
