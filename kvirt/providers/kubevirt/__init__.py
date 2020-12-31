@@ -206,6 +206,15 @@ class Kubevirt(Kubecommon):
             vm['spec']['template']['spec']['networks'] = networks
         pvcs = []
         sizes = []
+        if iso is not None:
+            if iso not in self.volumes(iso=True):
+                return {'result': 'failure', 'reason': "you don't have iso %s" % iso}
+            diskname = '%s-iso' % name
+            newdisk = {'disk': {'cdrom': {'readOnly': False, 'bus': 'sata'}}, 'name': diskname}
+            good_iso = iso.replace('_', '-').replace('.', '-').lower()
+            myvolume = {'name': diskname, 'persistentVolumeClaim': {'claimName': good_iso}}
+            vm['spec']['template']['spec']['domain']['devices']['disks'].append(newdisk)
+            vm['spec']['template']['spec']['volumes'].append(myvolume)
         for index, disk in enumerate(disks):
             existingpvc = False
             diskname = '%s-disk%d' % (name, index)
@@ -241,7 +250,7 @@ class Kubevirt(Kubecommon):
             newdisk = {'disk': {'bus': diskinterface}, 'name': diskname}
             vm['spec']['template']['spec']['domain']['devices']['disks'].append(newdisk)
             vm['spec']['template']['spec']['volumes'].append(myvolume)
-            if index == 0 and containerdisk:
+            if index == 0 and image is not None and containerdisk:
                 continue
             if existingpvc:
                 continue
@@ -294,7 +303,7 @@ class Kubevirt(Kubecommon):
         for pvc in pvcs:
             pvcname = pvc['metadata']['name']
             pvcsize = pvc['spec']['resources']['requests']['storage'].replace('Gi', '')
-            if image not in CONTAINERDISKS and index == 0:
+            if index == 0 and image is not None and image not in CONTAINERDISKS:
                 if cdi:
                     if datavolumes:
                         dvt = {'metadata': {'name': diskname},
@@ -665,19 +674,23 @@ class Kubevirt(Kubecommon):
         core = self.core
         namespace = self.namespace
         cdi = self.cdi
-        if iso:
-            return []
-        images = []
+        isos = []
+        allimages = []
         if cdi:
             pvc = core.list_namespaced_persistent_volume_claim(namespace)
-            images = [self.get_image_name(p.metadata.annotations['cdi.kubevirt.io/storage.import.endpoint'])
-                      for p in pvc.items if p.metadata.annotations is not None and
-                      'cdi.kubevirt.io/storage.import.endpoint' in p.metadata.annotations]
+            allimages = [self.get_image_name(p.metadata.annotations['cdi.kubevirt.io/storage.import.endpoint'])
+                         for p in pvc.items if p.metadata.annotations is not None and
+                         'cdi.kubevirt.io/storage.import.endpoint' in p.metadata.annotations]
         else:
             pvc = core.list_namespaced_persistent_volume_claim(namespace)
-            images = [p.metadata.annotations['kcli/image'] for p in pvc.items
-                      if p.metadata.annotations is not None and 'kcli/image' in p.metadata.annotations]
-        return sorted(images + CONTAINERDISKS)
+            allimages = [p.metadata.annotations['kcli/image'] for p in pvc.items
+                         if p.metadata.annotations is not None and 'kcli/image' in p.metadata.annotations]
+        if iso:
+            isos = [i for i in allimages if i.endswith('iso')]
+            return isos
+        else:
+            images = [i for i in allimages if not i.endswith('iso')]
+            return sorted(images + CONTAINERDISKS)
 
     def delete(self, name, snapshots=False):
         crds = self.crds
@@ -695,7 +708,7 @@ class Kubevirt(Kubecommon):
                       'persistentVolumeClaim' in v]
         pvcs = [pvc for pvc in core.list_namespaced_persistent_volume_claim(namespace).items
                 if pvc.metadata.name in pvcvolumes]
-        for p in sorted(pvcs):
+        for p in pvcs:
             pvcname = p.metadata.name
             common.pprint("Deleting pvc %s" % pvcname, color='blue')
             core.delete_namespaced_persistent_volume_claim(pvcname, namespace)
@@ -1171,7 +1184,6 @@ class Kubevirt(Kubecommon):
             storageclasses = [s.metadata.name for s in storageclasses]
             if pool in storageclasses:
                 return pool
-        common.pprint("Pool/Storage Class %s not found. Using None" % pool, color='yellow')
         return None
 
     def flavors(self):
