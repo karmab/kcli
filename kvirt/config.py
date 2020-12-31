@@ -77,10 +77,11 @@ class Kconfig(Kbaseconfig):
             k = None
         else:
             if self.type == 'kubevirt':
-                namespace = self.options.get('namespace') if namespace is None else namespace
+                if namespace is None:
+                    namespace = self.options.get('namespace')
                 context = self.options.get('context')
                 cdi = self.options.get('cdi', True)
-                datavolumes = self.options.get('cdi', True)
+                datavolumes = self.options.get('datavolumes', True)
                 readwritemany = self.options.get('readwritemany', False)
                 ca_file = self.options.get('ca_file')
                 if ca_file is not None:

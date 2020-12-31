@@ -36,14 +36,14 @@ class Kubevirt(Kubecommon):
 
     """
     def __init__(self, token=None, ca_file=None, context=None, host='127.0.0.1', port=443, user='root', debug=False,
-                 tags=None, namespace=None, cdi=False, datavolumes=True, readwritemany=False, registry=None):
+                 tags=None, namespace=None, cdi=True, datavolumes=False, readwritemany=False, registry=None):
         Kubecommon.__init__(self, token=token, ca_file=ca_file, context=context, host=host, port=port,
                             namespace=namespace, readwritemany=readwritemany)
         self.crds = client.CustomObjectsApi(api_client=self.api_client)
         self.debug = debug
         self.tags = tags
-        self.cdi = False
-        self.datavolumes = False
+        self.cdi = cdi
+        self.datavolumes = datavolumes
         self.registry = registry
         if cdi:
             try:
@@ -53,13 +53,6 @@ class Kubevirt(Kubecommon):
                         if pod.metadata.name.startswith('cdi-deployment'):
                             self.cdinamespace = pod.metadata.namespace
                             self.cdi = True
-                if self.cdi and datavolumes:
-                    try:
-                        cm = self.core.read_namespaced_config_map('kubevirt-config', KUBEVIRTNAMESPACE)
-                        if 'feature-gates' in cm.data and 'DataVolumes' in cm.data['feature-gates']:
-                            self.datavolumes = True
-                    except:
-                        pass
             except:
                 pass
         return
@@ -124,10 +117,9 @@ class Kubevirt(Kubecommon):
         datavolumes = self.datavolumes
         namespace = self.namespace
         if cdi:
-            cdinamespace = self.cdinamespace
-            allpvc = core.list_namespaced_persistent_volume_claim(cdinamespace)
+            allpvc = core.list_namespaced_persistent_volume_claim(namespace)
             images = {}
-            for p in core.list_namespaced_persistent_volume_claim(cdinamespace).items:
+            for p in core.list_namespaced_persistent_volume_claim(namespace).items:
                 if p.metadata.annotations is not None\
                         and 'cdi.kubevirt.io/storage.import.endpoint' in p.metadata.annotations:
                     cdiname = self.get_image_name(p.metadata.annotations['cdi.kubevirt.io/storage.import.endpoint'])
@@ -178,15 +170,12 @@ class Kubevirt(Kubecommon):
         networks = []
         allnetworks = {}
         for index, net in enumerate(nets):
-            netpublic = False
             newif = {'bridge': {}}
             newnet = {}
             if isinstance(net, str):
                 netname = net
                 newif['name'] = netname
                 newnet['name'] = netname
-                if index == 0 and netname == 'default':
-                    netpublic = True
             elif isinstance(net, dict):
                 if 'noconf' in net and net['noconf']:
                     vm['spec']['template']['spec']['domain']['devices']['autoattachPodInterface'] = False
@@ -198,7 +187,6 @@ class Kubevirt(Kubecommon):
                 if 'mac' in net:
                     newif['macAddress'] = net['mac']
                 if index == 0:
-                    netpublic = net.get('public', False)
                     if 'ip' in nets[index]:
                         vm['metadata']['annotations']['kcli/ip'] = nets[index]['ip']
             if netname != 'default':
@@ -207,7 +195,6 @@ class Kubevirt(Kubecommon):
                 if netname not in allnetworks:
                     return {'result': 'failure', 'reason': "network %s not found" % netname}
                 if index == 0:
-                    netpublic = False
                     newnet['multus'] = {'networkName': netname}
                     guestagent = True
             else:
@@ -264,7 +251,7 @@ class Kubevirt(Kubecommon):
                                                              'resources': {'requests': {'storage': '%sGi' % disksize}}},
                    'apiVersion': 'v1', 'metadata': {'name': diskname}}
             if image is not None and index == 0 and image not in CONTAINERDISKS and cdi:
-                annotation = "%s/%s" % (cdinamespace, images[image])
+                annotation = "%s/%s" % (namespace, images[image])
                 pvc['metadata']['annotations'] = {'k8s.io/CloneRequest': annotation}
                 pvc['metadata']['labels'] = {'app': 'Host-Assisted-Cloning'}
             pvcs.append(pvc)
@@ -314,7 +301,7 @@ class Kubevirt(Kubecommon):
                                'spec': {'pvc': {'accessModes': [self.accessmode],
                                                 'resources':
                                                 {'requests': {'storage': '%sGi' % pvcsize}}},
-                                        'source': {'pvc': {'name': image, 'namespace': self.cdinamespace}}},
+                                        'source': {'pvc': {'name': images[image], 'namespace': self.namespace}}},
                                'status': {}}
                         vm['spec']['dataVolumeTemplates'] = [dvt]
                         continue
@@ -351,7 +338,7 @@ class Kubevirt(Kubecommon):
                            'spec': {'selector': {'subdomain': domain}, 'clusterIP': 'None',
                                     'ports': [{'name': 'foo', 'port': 1234, 'targetPort': 1234}]}}
                 core.create_namespaced_service(namespace, dnsspec)
-        if netpublic:
+        if not tunnel:
             try:
                 core.read_namespaced_service('%s-ssh' % name, namespace)
             except:
@@ -452,22 +439,16 @@ class Kubevirt(Kubecommon):
                 podname = pod.metadata.name
                 localport = common.get_free_port()
                 break
-        # exe = ['/bin/sh', '-c', 'socat -d -d TCP4-LISTEN:%s,fork UNIX-CONNECT:/var/run/kubevirt-private/%s/virt-vnc'
-        #       % (localport, uid)]
-        # stream(core.connect_get_namespaced_pod_exec, podname, namespace, command=exe, stderr=True, stdin=False,
-        #       stdout=True, tty=True, _preload_content=False)
-        nccmd = "%s exec -n %s %s -- /bin/sh -c 'nc -l %s | nc -U /var/run/kubevirt-private/%s/virt-vnc'" % (kubectl,
+        nccmd = "%s exec -n %s %s -- /bin/sh -c 'nc -U /var/run/kubevirt-private/%s/virt-vnc | nc -l %s'" % (kubectl,
                                                                                                              namespace,
                                                                                                              podname,
-                                                                                                             localport,
-                                                                                                             uid)
+                                                                                                             uid,
+                                                                                                             localport)
         nccmd += " &"
         os.system(nccmd)
-        # stream(core.connect_post_namespaced_pod_portforward, podname, namespace, ports=localport,
-        # _preload_content=False)
         forwardcmd = "%s port-forward %s %s:%s &" % (kubectl, podname, localport, localport)
         os.system(forwardcmd)
-        time.sleep(15)
+        time.sleep(10)
         if web:
             return "vnc://127.0.0.1:%s" % localport
         consolecommand = "remote-viewer vnc://127.0.0.1:%s &" % localport
@@ -688,8 +669,7 @@ class Kubevirt(Kubecommon):
             return []
         images = []
         if cdi:
-            cdinamespace = self.cdinamespace
-            pvc = core.list_namespaced_persistent_volume_claim(cdinamespace)
+            pvc = core.list_namespaced_persistent_volume_claim(namespace)
             images = [self.get_image_name(p.metadata.annotations['cdi.kubevirt.io/storage.import.endpoint'])
                       for p in pvc.items if p.metadata.annotations is not None and
                       'cdi.kubevirt.io/storage.import.endpoint' in p.metadata.annotations]
@@ -708,8 +688,7 @@ class Kubevirt(Kubecommon):
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         try:
-            crds.delete_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name,
-                                                 client.V1DeleteOptions())
+            crds.delete_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
         except:
             crds.delete_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
         pvcvolumes = [v['persistentVolumeClaim']['claimName'] for v in vm['spec']['template']['spec']['volumes'] if
@@ -719,7 +698,7 @@ class Kubevirt(Kubecommon):
         for p in sorted(pvcs):
             pvcname = p.metadata.name
             common.pprint("Deleting pvc %s" % pvcname, color='blue')
-            core.delete_namespaced_persistent_volume_claim(pvcname, namespace, client.V1DeleteOptions())
+            core.delete_namespaced_persistent_volume_claim(pvcname, namespace)
         try:
             core.delete_namespaced_service('%s-ssh' % name, namespace)
         except:
@@ -843,26 +822,30 @@ class Kubevirt(Kubecommon):
         crds = self.crds
         core = self.core
         namespace = self.namespace
+        if name is None:
+            volname = diskname
+        else:
+            try:
+                vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
+            except:
+                common.pprint("VM %s not found" % name, color='red')
+                return {'result': 'failure', 'reason': "VM %s not found" % name}
+            t = 'Template' if 'Template' in vm['spec'] else 'template'
+            diskindex = [i for i, disk in enumerate(vm['spec'][t]['spec']['domain']['devices']['disks'])
+                         if disk['name'] == diskname]
+            if not diskindex:
+                common.pprint("Disk %s not found" % diskname, color='red')
+                return {'result': 'failure', 'reason': "disk %s not found in VM" % diskname}
+            diskindex = diskindex[0]
+            volname = vm['spec'][t]['spec']['domain']['devices']['disks'][diskindex]['name']
+            volindex = [i for i, vol in enumerate(vm['spec'][t]['spec']['volumes']) if vol['name'] == volname]
+            if volindex:
+                volindex = volindex[0]
+                del vm['spec'][t]['spec']['volumes'][volindex]
+            del vm['spec'][t]['spec']['domain']['devices']['disks'][diskindex]
+            crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
         try:
-            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
-        except:
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
-        t = 'Template' if 'Template' in vm['spec'] else 'template'
-        diskindex = [i for i, disk in enumerate(vm['spec'][t]['spec']['domain']['devices']['disks'])
-                     if disk['name'] == diskname]
-        if not diskindex:
-            common.pprint("Disk %s not found" % diskname, color='red')
-            return {'result': 'failure', 'reason': "disk %s not found in VM" % diskname}
-        diskindex = diskindex[0]
-        volname = vm['spec'][t]['spec']['domain']['devices']['disks'][diskindex]['name']
-        volindex = [i for i, vol in enumerate(vm['spec'][t]['spec']['volumes']) if vol['name'] == volname]
-        if volindex:
-            volindex = volindex[0]
-            del vm['spec'][t]['spec']['volumes'][volindex]
-        del vm['spec'][t]['spec']['domain']['devices']['disks'][diskindex]
-        crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
-        try:
-            core.delete_namespaced_persistent_volume_claim(volname, namespace, client.V1DeleteOptions())
+            core.delete_namespaced_persistent_volume_claim(volname, namespace)
         except:
             common.pprint("Disk %s not found" % volname, color='red')
             return 1
@@ -901,14 +884,13 @@ class Kubevirt(Kubecommon):
         common.pprint("Deleting image %s" % image)
         core = self.core
         if self.cdi:
-            cdinamespace = self.cdinamespace
-            pvc = core.list_namespaced_persistent_volume_claim(cdinamespace)
+            pvc = core.list_namespaced_persistent_volume_claim(self.namespace)
             images = [p.metadata.name for p in pvc.items if p.metadata.annotations is not None and
                       'cdi.kubevirt.io/storage.import.endpoint' in p.metadata.annotations and
                       self.get_image_name(p.metadata.annotations['cdi.kubevirt.io/storage.import.endpoint']) ==
                       image]
             if images:
-                core.delete_namespaced_persistent_volume_claim(images[0], cdinamespace, client.V1DeleteOptions())
+                core.delete_namespaced_persistent_volume_claim(images[0], self.namespace)
                 return {'result': 'success'}
         else:
             pvc = core.list_namespaced_persistent_volume_claim(self.namespace)
@@ -916,13 +898,19 @@ class Kubevirt(Kubecommon):
                       if p.metadata.annotations is not None and 'kcli/image' in p.metadata.annotations and
                       p.metadata.annotations['kcli/image'] == image]
             if images:
-                core.delete_namespaced_persistent_volume_claim(images[0], self.namespace, client.V1DeleteOptions())
+                core.delete_namespaced_persistent_volume_claim(images[0], self.namespace)
                 return {'result': 'success'}
         return {'result': 'failure', 'reason': 'image %s not found' % image}
 
-    def add_image(self, image, pool, short=None, cmd=None, name=None, size=1):
-        sizes = {'debian': 2, 'centos': 8, 'centos7': 8, 'fedora': 4, 'rhel': 10, 'trusty': 2.2, 'xenial': 2.2,
-                 'yakkety': 2.2, 'zesty': 2.2, 'artful': 2.2, 'bionic': 2.2, 'cosmic': 2.2}
+    def add_image(self, image, pool, short=None, cmd=None, name=None):
+        if common.is_debian(image):
+            size = 3
+        elif 'fedora' in image.lower():
+            size = 5
+        elif 'rhcos' in image.lower():
+            size = 20
+        else:
+            size = 11
         core = self.core
         pool = self.check_pool(pool)
         namespace = self.namespace
@@ -932,10 +920,6 @@ class Kubevirt(Kubecommon):
             volname = [k for k in IMAGES if IMAGES[k] == image][0]
         else:
             volname = name.replace('_', '-').replace('.', '-').lower()
-        for key in sizes:
-            if key in shortimage and shortimage.endswith('qcow2'):
-                size = sizes[key]
-                break
         now = datetime.datetime.now().strftime("%Y%M%d%H%M")
         podname = '%s-%s-importer' % (now, volname)
         pvc = {'kind': 'PersistentVolumeClaim', 'spec': {'storageClassName': pool,
@@ -943,9 +927,8 @@ class Kubevirt(Kubecommon):
                                                          'resources': {'requests': {'storage': '%sGi' % size}}},
                'apiVersion': 'v1', 'metadata': {'name': volname, 'annotations': {'kcli/image': shortimage}}}
         if cdi:
-            cdinamespace = self.cdinamespace
+            common.pprint("Cloning in namespace %s" % namespace, color='blue')
             pvc['metadata']['annotations'] = {'cdi.kubevirt.io/storage.import.endpoint': image}
-            namespace = cdinamespace
         else:
             pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'Never',
                                            'containers': [{'image': 'kubevirtci/disk-importer',
@@ -979,7 +962,7 @@ class Kubevirt(Kubecommon):
                 common.pprint("Issue with pod %s. Leaving it for debugging purposes" % podname, color='red')
                 return {'result': 'failure', 'reason': 'timeout waiting for importer pod to complete'}
             else:
-                core.delete_namespaced_pod(podname, namespace, client.V1DeleteOptions())
+                core.delete_namespaced_pod(podname, namespace)
         return {'result': 'success'}
 
     def copy_image(self, pool, ori, dest, size=1):
@@ -1023,7 +1006,7 @@ class Kubevirt(Kubecommon):
             common.pprint("Using with pod %s. Leaving it for debugging purposes" % podname, color='red')
             return {'result': 'failure', 'reason': 'timeout waiting for copy to finish'}
         else:
-            core.delete_namespaced_pod(podname, namespace, client.V1DeleteOptions())
+            core.delete_namespaced_pod(podname, namespace)
         return {'result': 'success'}
 
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
@@ -1178,7 +1161,7 @@ class Kubevirt(Kubecommon):
             common.pprint("Using with pod %s. Leaving it for debugging purposes" % podname, color='red')
             return {'result': 'failure', 'reason': 'timeout waiting for preparation of disk to finish'}
         else:
-            core.delete_namespaced_pod(podname, namespace, client.V1DeleteOptions())
+            core.delete_namespaced_pod(podname, namespace)
         return {'result': 'success'}
 
     def check_pool(self, pool):
@@ -1188,7 +1171,7 @@ class Kubevirt(Kubecommon):
             storageclasses = [s.metadata.name for s in storageclasses]
             if pool in storageclasses:
                 return pool
-        common.pprint("Pool %s not found. Using None" % pool, color='blue')
+        common.pprint("Pool/Storage Class %s not found. Using None" % pool, color='yellow')
         return None
 
     def flavors(self):
@@ -1209,3 +1192,12 @@ class Kubevirt(Kubecommon):
 
     def list_dns(self, domain):
         return []
+
+    def node_host(self):
+        ip = None
+        for node in self.core.list_node().items:
+            addresses = [x.address for x in node.status.addresses if x.type == 'InternalIP']
+            if addresses:
+                ip = addresses[0]
+                break
+        return ip

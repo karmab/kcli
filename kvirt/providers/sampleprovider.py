@@ -477,7 +477,7 @@ class Kbase(object):
         print("not implemented")
         return {'result': 'success'}
 
-    def add_image(self, image, pool, short=None, cmd=None, name=None, size=1):
+    def add_image(self, image, pool, short=None, cmd=None, name=None):
         """
 
         :param image:

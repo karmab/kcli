@@ -2544,7 +2544,7 @@ class Kvirt(object):
                     continue
         return {'result': 'failure', 'reason': 'Image %s not found' % image}
 
-    def add_image(self, image, pool, cmd=None, name=None, size=1):
+    def add_image(self, image, pool, cmd=None, name=None):
         poolname = pool
         shortimage = os.path.basename(image).split('?')[0]
         shortimage_uncompressed = shortimage.replace('.gz', '').replace('.xz', '').replace('.bz2', '')

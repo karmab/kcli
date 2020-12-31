@@ -2114,6 +2114,17 @@ def ssh_vm(args):
                          namespace=args.namespace)
         k = config.k
         u, ip = common._ssh_credentials(k, name)
+        if config.type == 'kubevirt' and not tunnel:
+            ip = k.node_host()
+            if ip is None:
+                common.pprint("No valid node ip found" % name, color='red')
+                return
+            nodeport = k._node_port(name, k.namespace)
+            if nodeport is None:
+                common.pprint("No valid node port found" % name, color='red')
+                return
+            else:
+                vmport = nodeport
         if ip is None:
             return
         if user is None:
@@ -2123,11 +2134,6 @@ def ssh_vm(args):
         if config.type in ['kvm', 'packet'] and '.' not in ip and ':' not in ip:
             vmport = ip
             ip = config.host
-        if config.type == 'kubevirt' and not tunnel:
-            nodeport = k._node_port(name, k.namespace)
-            if nodeport is not None:
-                ip = k.host
-                vmport = nodeport
         sshcommand = common.ssh(name, ip=ip, user=user, local=l, remote=r, tunnel=tunnel,
                                 tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser,
                                 insecure=insecure, cmd=cmd, X=X, Y=Y, D=D, debug=args.debug, vmport=vmport)
@@ -2509,7 +2515,7 @@ def cli():
     parser.add_argument('--containerclient', help='Containerclient to use')
     parser.add_argument('--dnsclient', help='Dnsclient to use')
     parser.add_argument('-d', '--debug', action='store_true')
-    parser.add_argument('-n', '--namespace', help='Namespace to use. specific to kubevirt')
+    parser.add_argument('-n', '--namespace', help='Namespace to use. specific to kubevirt', default='default')
     parser.add_argument('-r', '--region', help='Region to use. specific to aws/gcp')
     parser.add_argument('-z', '--zone', help='Zone to use. specific to gcp')
 

@@ -824,7 +824,11 @@ def ssh(name, ip='', user=None, local=None, remote=None, tunnel=False, tunnelhos
             sshcommand = "%s '%s'" % (sshcommand, cmd)
         if tunnelhost is not None and tunnelhost not in ['localhost', '127.0.0.1'] and tunnel and\
                 tunneluser is not None:
-            tunnelcommand = "-qp %s -W %%h:%%p %s@%s" % (tunnelport, tunneluser, tunnelhost)
+            if insecure:
+                tunnelcommand = "-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o LogLevel=ERROR "
+            else:
+                tunnelcommand = ""
+            tunnelcommand += "-qp %s -W %%h:%%p %s@%s" % (tunnelport, tunneluser, tunnelhost)
             if identityfile is not None:
                 tunnelcommand = "-i %s %s" % (identityfile, tunnelcommand)
             sshcommand = "-o ProxyCommand='ssh %s' %s" % (tunnelcommand, sshcommand)

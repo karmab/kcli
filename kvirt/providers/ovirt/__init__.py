@@ -932,7 +932,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                 return {'result': 'success'}
         return {'result': 'failure', 'reason': "Image %s not found" % image}
 
-    def add_image(self, image, pool, short=None, cmd=None, name=None, size=1):
+    def add_image(self, image, pool, short=None, cmd=None, name=None):
         shortimage = os.path.basename(image).split('?')[0]
         if shortimage in self.volumes():
             common.pprint("Template %s already there" % shortimage, color='blue')
