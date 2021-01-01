@@ -118,5 +118,5 @@ def create(config, plandir, cluster, overrides):
         os.chdir(os.path.expanduser("~/.kcli"))
         config.plan(cluster, inputfile='%s/workers.yml' % plandir, overrides=data)
     pprint("K3s cluster %s deployed!!!" % cluster)
-    info("export KUBECONFIG=clusters/%s/auth/kubeconfig" % cluster)
+    info("export KUBECONFIG=$HOME/.kcli/clusters/%s/auth/kubeconfig" % cluster)
     info("export PATH=$PWD:$PATH")
