@@ -1,17 +1,15 @@
+info: |
+    Deploys kubernetes using k3s an arbitrary number of masters and workers.
 masters: 1
 workers: 0
 api_ip:
-datastore_endpoint:
-datastore_type: postgres
-datastore_name: k3s
-datastore_user: admin
-datastore_password: password
 version:
 pool: default
 image: debian9
 network: default
 cluster: testk
 domain: karmalabs.com
+ha_token: supersecret
 numcpus: 2
 worker_numcpus:
 master_numcpus:
@@ -41,5 +39,3 @@ extra_worker_disks: []
 extra_networks: []
 extra_master_networks: []
 extra_worker_networks: []
-info: |
-    Deploys kubernetes using k3s on a single master and an arbitary number of workers.

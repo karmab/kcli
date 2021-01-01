@@ -79,26 +79,15 @@ def create(config, plandir, cluster, overrides):
             installparam = overrides.copy()
             installparam['plan'] = plan
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
-    if masters > 1:
-        datastore_endpoint = data.get('datastore_endpoint')
-        if datastore_endpoint is None:
-            result = config.plan(plan, inputfile='%s/datastore.yml' % plandir, overrides=data)
-            if result['result'] != "success":
-                os._exit(1)
-            datastore_type = data['datastore_type']
-            datastore_user = data['datastore_user']
-            datastore_password = data['datastore_password']
-            datastore_ip = config.k.info("%s-datastore" % cluster).get('ip')
-            datastore_name = data['datastore_name']
-            if datastore_type == 'mysql':
-                datastore_name = "tcp(%s)" % datastore_name
-            datastore_endpoint = "%s://%s:%s@%s/%s" % (datastore_type, datastore_user, datastore_password,
-                                                       datastore_ip, datastore_name)
-        data['datastore_endpoint'] = datastore_endpoint
     k = config.k
-    result = config.plan(cluster, inputfile='%s/masters.yml' % plandir, overrides=data)
+    result = config.plan(cluster, inputfile='%s/bootstrap.yml' % plandir, overrides=data)
     if result['result'] != "success":
         os._exit(1)
+    if masters > 1:
+        pprint("Deploying extra masters", color='blue')
+        if 'name' in data:
+            del data['name']
+        config.plan(cluster, inputfile='%s/masters.yml' % plandir, overrides=data)
     source, destination = "/root/join.sh", "%s/join.sh" % clusterdir
     firstmasterip = k.info(firstmaster)['ip']
     scpcmd = scp(firstmaster, ip=firstmasterip, user='root', source=source, destination=destination,

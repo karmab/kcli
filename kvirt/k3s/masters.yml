@@ -31,7 +31,7 @@
  files: [keepalived.conf]
  scripts:
   - masters.sh
-{% if masters > 1 and config_type not in ['aws', 'gcp'] %}
+{% if number == 0 and masters > 1 and config_type not in ['aws', 'gcp'] %}
   - keepalived.sh
 {% endif %}
 {% if numa != None %}
