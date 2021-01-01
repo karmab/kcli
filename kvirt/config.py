@@ -309,8 +309,11 @@ class Kconfig(Kbaseconfig):
                 common.pprint("Deploying vm %s from profile %s..." % (name, profile))
             if profile not in vmprofiles:
                 clientprofile = "%s_%s" % (self.client, profile)
-                if clientprofile in vmprofiles and 'image' in vmprofiles[clientprofile]:
-                    vmprofiles[profile] = {'image': vmprofiles[clientprofile]['image']}
+                if clientprofile in vmprofiles:
+                    if 'image' in vmprofiles[clientprofile]:
+                        vmprofiles[profile] = {'image': vmprofiles[clientprofile]['image']}
+                    if 'iso' in vmprofiles[clientprofile]:
+                        vmprofiles[profile] = {'iso': vmprofiles[clientprofile]['iso']}
                 elif profile in IMAGES and IMAGES[profile] not in [os.path.basename(v) for v in self.k.volumes()]\
                         and self.type not in ['aws', 'gcp', 'packet']:
                     common.pprint("Image %s not found. Downloading" % profile, color='blue')
@@ -1947,13 +1950,13 @@ $INFO
                     if self.type == 'vsphere':
                         shortname = image
                     clientprofile = "%s_%s" % (self.client, imagename)
-                    if not clientprofile.endswith('.iso'):
-                        if clientprofile not in self.profiles:
-                            common.pprint("Adding a profile named %s with default values" % clientprofile)
-                            self.create_profile(clientprofile, {'image': shortname}, quiet=True)
-                        else:
-                            common.pprint("Updating profile %s with image %s" % (clientprofile, shortname))
-                            self.update_profile(clientprofile, {'image': shortname}, quiet=True)
+                    profileinfo = {'iso': shortname} if shortname.endswith('.iso') else {'image': shortname}
+                    if clientprofile not in self.profiles:
+                        common.pprint("Adding a profile named %s with default values" % clientprofile)
+                        self.create_profile(clientprofile, profileinfo, quiet=True)
+                    else:
+                        common.pprint("Updating profile %s" % clientprofile)
+                        self.update_profile(clientprofile, profileinfo, quiet=True)
             return {'result': 'success'}
         elif switch:
             if switch not in self.clients:
