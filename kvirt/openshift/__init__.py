@@ -749,6 +749,10 @@ def create(config, plandir, cluster, overrides):
     for vm in todelete:
         pprint("Deleting %s" % vm)
         k.delete(vm)
+    if platform == 'kubevirt' and data.get('kubevirt_api_svc', False):
+        selector = {'kcli/plan': plan, 'kcli/role': 'master'}
+        config.k.create_service("%s-api" % cluster, config.k.namespace, selector, _type="LoadBalancer",
+                                nodeport=6443, targetport=6443)
     os.environ['KUBECONFIG'] = "%s/auth/kubeconfig" % clusterdir
     if apps:
         overrides['openshift_version'] = INSTALLER_VERSION[0:3]

@@ -106,6 +106,10 @@ def create(config, plandir, cluster, overrides):
             del data['name']
         os.chdir(os.path.expanduser("~/.kcli"))
         config.plan(cluster, inputfile='%s/workers.yml' % plandir, overrides=data)
+    if platform == 'kubevirt' and data.get('kubevirt_api_svc', False):
+        selector = {'kcli/plan': plan, 'kcli/role': 'master'}
+        config.k.create_service("%s-api" % cluster, config.k.namespace, selector, _type="LoadBalancer",
+                                nodeport=6443, targetport=6443)
     pprint("K3s cluster %s deployed!!!" % cluster)
     info("export KUBECONFIG=$HOME/.kcli/clusters/%s/auth/kubeconfig" % cluster)
     info("export PATH=$PWD:$PATH")

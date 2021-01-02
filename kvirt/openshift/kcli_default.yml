@@ -90,3 +90,4 @@ zerotier_ip:
 zerotier_kubelet: false
 http_proxy:
 no_proxy:
+kubevirt_api_svc: false

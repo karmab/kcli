@@ -128,9 +128,9 @@ class Kubevirt(Kubecommon):
             allpvc = core.list_namespaced_persistent_volume_claim(namespace)
             images = {p.metadata.annotations['kcli/image']: p.metadata.name for p in allpvc.items
                       if p.metadata.annotations is not None and 'kcli/image' in p.metadata.annotations}
+        labels = {'kubevirt.io/provider': 'kcli', 'kubevirt.io/domain': name}
         vm = {'kind': 'VirtualMachine', 'spec': {'running': start, 'template':
-                                                 {'metadata': {'labels': {'kubevirt.io/provider': 'kcli',
-                                                                          'kubevirt.io/domain': name}},
+                                                 {'metadata': {'labels': labels},
                                                   'spec': {'domain': {'resources':
                                                                       {'requests': {'memory': '%sM' % memory}},
                                                                       # 'cpu': {'cores': numcpus, 'model': cpumodel},
@@ -140,8 +140,15 @@ class Kubevirt(Kubecommon):
                                                                      'labels': {'kubevirt.io/os': 'linux',
                                                                                 'special': 'vmi-migratable'},
                                                                      'annotations': {}}}
-        for entry in [field for field in metadata if field in METADATA_FIELDS]:
+        kube = False
+        for entry in sorted([field for field in metadata if field in METADATA_FIELDS]):
             vm['metadata']['annotations']['kcli/%s' % entry] = metadata[entry]
+            if entry == 'kube':
+                kube = True
+                role = name.split('-')[1]
+                vm['spec']['template']['metadata']['labels']['kcli/role'] = role
+            if entry == 'plan' and kube:
+                vm['spec']['template']['metadata']['labels']['kcli/plan'] = metadata[entry]
         if domain is not None:
             if reservedns:
                 vm['spec']['template']['spec']['hostname'] = name
@@ -448,16 +455,13 @@ class Kubevirt(Kubecommon):
                 podname = pod.metadata.name
                 localport = common.get_free_port()
                 break
-        nccmd = "%s exec -n %s %s -- /bin/sh -c 'nc -U /var/run/kubevirt-private/%s/virt-vnc | nc -l %s'" % (kubectl,
-                                                                                                             namespace,
-                                                                                                             podname,
-                                                                                                             uid,
-                                                                                                             localport)
+        nccmd = "%s exec -n %s %s -- /bin/sh -c " % (kubectl, namespace, podname)
+        nccmd += "'nc -l %s --sh-exec \"nc -U /var/run/kubevirt-private/%s/virt-vnc\"'" % (localport, uid)
         nccmd += " &"
         os.system(nccmd)
         forwardcmd = "%s port-forward %s %s:%s &" % (kubectl, podname, localport, localport)
         os.system(forwardcmd)
-        time.sleep(10)
+        time.sleep(5)
         if web:
             return "vnc://127.0.0.1:%s" % localport
         consolecommand = "remote-viewer vnc://127.0.0.1:%s &" % localport
@@ -537,7 +541,6 @@ class Kubevirt(Kubecommon):
         spectemplate = vm['spec'].get('template')
         volumes = spectemplate['spec']['volumes']
         name = metadata["name"]
-        # creationdate = metadata["creationTimestamp"].strftime("%d-%m-%Y %H:%M")
         creationdate = metadata["creationTimestamp"]
         profile, plan, image = 'N/A', 'N/A', 'N/A'
         kube, kubetype = None, None
@@ -546,7 +549,7 @@ class Kubevirt(Kubecommon):
             profile = annotations['kcli/profile'] if 'kcli/profile' in annotations else 'N/A'
             plan = annotations['kcli/plan'] if 'kcli/plan' in annotations else 'N/A'
             image = annotations['kcli/image'] if 'kcli/image' in annotations else 'N/A'
-            ip = vm['metadata']['annotations']['kcli/ip'] if 'kcli/ip' in annotations else None
+            ip = annotations['kcli/ip'] if 'kcli/ip' in annotations else None
             kube = annotations['kcli/kube'] if 'kcli/kube' in annotations else None
             kubetype = annotations['kcli/kubetype'] if 'kcli/kubetype' in annotations else None
         host = None
@@ -637,7 +640,7 @@ class Kubevirt(Kubecommon):
                 network = 'default'
                 network_type = 'pod'
             yamlinfo['nets'].append({'device': device, 'mac': mac, 'net': network, 'type': network_type})
-        nodeport = self._node_port(name, namespace)
+        nodeport = self.ssh_node_port(name, namespace)
         if nodeport is not None:
             yamlinfo['nodeport'] = nodeport
         if debug:
@@ -1123,7 +1126,7 @@ class Kubevirt(Kubecommon):
 
     def import_completed(self, volname, namespace):
         core = self.core
-        pvctimeout = 400
+        pvctimeout = 600
         pvcruntime = 0
         phase = ''
         while phase != 'Succeeded':
@@ -1195,7 +1198,7 @@ class Kubevirt(Kubecommon):
         else:
             return os.path.basename(name)
 
-    def _node_port(self, name, namespace):
+    def ssh_node_port(self, name, namespace):
         try:
             sshservice = self.core.read_namespaced_service('%s-ssh' % name, namespace)
         except:
@@ -1213,3 +1216,14 @@ class Kubevirt(Kubecommon):
                 ip = addresses[0]
                 break
         return ip
+
+    def create_service(self, name, namespace, selector, _type="NodePort", nodeport=None, targetport=None):
+        spec = {'kind': 'Service', 'apiVersion': 'v1', 'metadata': {'namespace': namespace, 'name': '%s-svc' % name},
+                'spec': {'externalTrafficPolicy': 'Cluster', 'sessionAffinity': 'None',
+                         'selector': selector}}
+        spec['spec']['type'] = _type
+        portspec = {'protocol': 'TCP', 'targetPort': nodeport, 'nodePort': nodeport, 'port': targetport}
+        if _type == 'NodePort':
+            portspec['nodePort'] = nodeport
+        spec['spec']['ports'] = [portspec]
+        self.core.create_namespaced_service(namespace, spec)

@@ -2120,7 +2120,7 @@ def ssh_vm(args):
             if ip is None:
                 common.pprint("No valid node ip found" % name, color='red')
                 return
-            nodeport = k._node_port(name, k.namespace)
+            nodeport = k.ssh_node_port(name, k.namespace)
             if nodeport is None:
                 common.pprint("No valid node port found" % name, color='red')
                 return
@@ -2207,7 +2207,7 @@ def scp_vm(args):
             if ip is None:
                 common.pprint("No valid node ip found" % name, color='red')
                 return
-            nodeport = k._node_port(name, k.namespace)
+            nodeport = k.ssh_node_port(name, k.namespace)
             if nodeport is None:
                 common.pprint("No valid node port found" % name, color='red')
                 return

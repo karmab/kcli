@@ -61,3 +61,4 @@ autolabel: true
 virtual_router_id:
 zerotier_nets: []
 zerotier_kubelet: false
+kubevirt_api_svc: false

@@ -39,3 +39,4 @@ extra_worker_disks: []
 extra_networks: []
 extra_master_networks: []
 extra_worker_networks: []
+kubevirt_api_svc: false
