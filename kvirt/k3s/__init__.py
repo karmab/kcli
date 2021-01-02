@@ -47,6 +47,7 @@ def create(config, plandir, cluster, overrides):
     data['kube'] = data['cluster']
     masters = data.get('masters', 1)
     network = data.get('network', 'default')
+    token = data.get('token', 'supersecret')
     api_ip = data.get('api_ip')
     if masters > 1:
         if platform in cloudplatforms:
@@ -88,12 +89,11 @@ def create(config, plandir, cluster, overrides):
         if 'name' in data:
             del data['name']
         config.plan(cluster, inputfile='%s/masters.yml' % plandir, overrides=data)
-    source, destination = "/root/join.sh", "%s/join.sh" % clusterdir
     firstmasterip = k.info(firstmaster)['ip']
-    scpcmd = scp(firstmaster, ip=firstmasterip, user='root', source=source, destination=destination,
-                 tunnel=config.tunnel, tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
-                 tunneluser=config.tunneluser, download=True, insecure=True)
-    os.system(scpcmd)
+    with open("%s/join.sh" % clusterdir, 'w') as f:
+        if api_ip is None:
+            api_ip = firstmasterip
+        f.write("curl -sfL https://get.k3s.io | K3S_URL=https://%s:6443 K3S_TOKEN=%s sh -\n" % (api_ip, token))
     source, destination = "/root/kubeconfig", "%s/auth/kubeconfig" % clusterdir
     scpcmd = scp(firstmaster, ip=firstmasterip, user='root', source=source, destination=destination,
                  tunnel=config.tunnel, tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
