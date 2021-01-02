@@ -1048,7 +1048,7 @@ def create_vmdisk(args):
     image = args.image
     interface = args.interface
     if interface not in ['virtio', 'ide', 'scsi']:
-        common.pprint("Incorrect disk interface. Choose betwen virtio, scsi or ide...", color='red')
+        common.pprint("Incorrect disk interface. Choose between virtio, scsi or ide...", color='red')
         os._exit(1)
     pool = args.pool
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)

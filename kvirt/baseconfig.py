@@ -924,7 +924,7 @@ class Kbaseconfig:
                 if _type == 'openshift':
                     plandir = os.path.dirname(openshift.create.__code__.co_filename)
                 elif _type != 'generic':
-                    common.pprint("Incorrect kubernetes type %s. Choose betwen generic or openshift" % _type,
+                    common.pprint("Incorrect kubernetes type %s. Choose between generic or openshift" % _type,
                                   color='red')
                     os._exit(1)
                 inputfile = "%s/masters.yml" % plandir
@@ -934,7 +934,7 @@ class Kbaseconfig:
         else:
             jenkinsmode = self.jenkinsmode
         if jenkinsmode not in ['docker', 'podman', 'kubernetes']:
-            common.pprint("Incorrect jenkins mode %s. Choose betwen docker, podman or kubernetes" % self.jenkinsmode,
+            common.pprint("Incorrect jenkins mode %s. Choose between docker, podman or kubernetes" % self.jenkinsmode,
                           color='red')
             os._exit(1)
         inputfile = os.path.expanduser(inputfile) if inputfile is not None else 'kcli_plan.yml'
