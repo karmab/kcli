@@ -1,0 +1,42 @@
+{{ image }}:
+  type: image
+
+{% if extra_master_networks %}
+ {% set extra_networks = extra_master_networks %}
+{% endif %}
+{% if extra_master_disks %}
+ {% set extra_disks = extra_master_disks %}
+{% endif %}
+{% if numa_master != None %}
+ {% set numa = numa_master %}
+{% endif %}
+{% if numamode_master != None %}
+ {% set numa_mode = numamode_master %}
+{% endif %}
+{% if cpupinning_master != None %}
+ {% set cpupinning = cpupinning_master %}
+{% endif %}
+
+{{cluster}}-master-0:
+ image: {{ image }}
+ wait: true
+ pool: {{ pool }}
+ numcpus: {{ master_numcpus | default(numcpus, numcpus) }}
+ memory: {{ master_memory | default(memory, memory) }}
+ nets: {{ [network] + extra_networks }}
+ disks: {{ [disk_size] + extra_disks }}
+ files: [keepalived.conf]
+ scripts:
+  - bootstrap.sh
+{% if masters > 1 and config_type not in ['aws', 'gcp'] %}
+  - keepalived.sh
+{% endif %}
+{% if numa != None %}
+ numa: {{ numa }}
+{% endif %}
+{% if numamode != None %}
+ numamode: {{ numamode }}
+{% endif %}
+{% if cpupinning != None %}
+ cpupinning: {{ cpupinning }}
+{% endif %}
