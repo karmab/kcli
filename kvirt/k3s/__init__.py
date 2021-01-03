@@ -57,6 +57,12 @@ def create(config, plandir, cluster, overrides):
             if network == 'default' and platform == 'kvm':
                 pprint("Using 192.168.122.253 as api_ip", color='yellow')
                 data['api_ip'] = "192.168.122.253"
+            elif platform == 'kubevirt':
+                selector = {'kcli/plan': plan, 'kcli/role': 'master'}
+                api_ip = config.k.create_service("%s-api" % cluster, config.k.namespace, selector,
+                                                 _type="LoadBalancer", port=6443)
+                if api_ip is None:
+                    os._exit(1)
             else:
                 pprint("You need to define api_ip in your parameters file", color='red')
                 os._exit(1)
@@ -106,10 +112,6 @@ def create(config, plandir, cluster, overrides):
             del data['name']
         os.chdir(os.path.expanduser("~/.kcli"))
         config.plan(cluster, inputfile='%s/workers.yml' % plandir, overrides=data)
-    if platform == 'kubevirt' and data.get('kubevirt_api_svc', False):
-        selector = {'kcli/plan': plan, 'kcli/role': 'master'}
-        config.k.create_service("%s-api" % cluster, config.k.namespace, selector, _type="LoadBalancer",
-                                nodeport=6443, targetport=6443)
     pprint("K3s cluster %s deployed!!!" % cluster)
     info("export KUBECONFIG=$HOME/.kcli/clusters/%s/auth/kubeconfig" % cluster)
     info("export PATH=$PWD:$PATH")

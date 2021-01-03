@@ -1217,13 +1217,33 @@ class Kubevirt(Kubecommon):
                 break
         return ip
 
-    def create_service(self, name, namespace, selector, _type="NodePort", nodeport=None, targetport=None):
+    def create_service(self, name, namespace, selector, _type="NodePort", port=None, nodeport=None, targetport=None,
+                       wait=True):
         spec = {'kind': 'Service', 'apiVersion': 'v1', 'metadata': {'namespace': namespace, 'name': '%s-svc' % name},
                 'spec': {'externalTrafficPolicy': 'Cluster', 'sessionAffinity': 'None',
                          'selector': selector}}
         spec['spec']['type'] = _type
-        portspec = {'protocol': 'TCP', 'targetPort': nodeport, 'nodePort': nodeport, 'port': targetport}
+        if port is None and targetport is not None:
+            port = targetport
+        if port is not None and targetport is None:
+            targetport = port
+        portspec = {'protocol': 'TCP', 'targetPort': targetport, 'port': port}
         if _type == 'NodePort':
             portspec['nodePort'] = nodeport
         spec['spec']['ports'] = [portspec]
         self.core.create_namespaced_service(namespace, spec)
+        if _type == 'LoadBalancer' and wait:
+            ipassigned = False
+            timeout = 60
+            runtime = 0
+            while not ipassigned:
+                if runtime >= timeout:
+                    common.pprint("Time out waiting for a loadbalancer ip for service %s-svc" % name, color='red')
+                    return
+                else:
+                    try:
+                        api_service = self.core.read_namespaced_service('%s-svc' % name, namespace)
+                        return api_service.status.load_balancer.ingress[0].ip
+                    except:
+                        time.sleep(5)
+                        runtime += 5
