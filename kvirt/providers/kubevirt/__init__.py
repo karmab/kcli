@@ -1247,3 +1247,9 @@ class Kubevirt(Kubecommon):
                     except:
                         time.sleep(5)
                         runtime += 5
+
+    def delete_service(self, name, namespace):
+        try:
+            self.core.delete_namespaced_service(name, namespace)
+        except Exception as e:
+            common.pprint("Couldn't delete service %s. Hit %s" % (name, e), color='red')
