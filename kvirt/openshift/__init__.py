@@ -202,6 +202,9 @@ def scale(config, plandir, cluster, overrides):
                                                  _type="LoadBalancer", port=6443)
                 if api_ip is None:
                     os._exit(1)
+                else:
+                    pprint("Using api_ip %s" % api_ip, color='blue')
+                    data['api_ip'] = api_ip
             else:
                 pprint("You need to define api_ip in your parameters file", color='red')
                 os._exit(1)
