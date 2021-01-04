@@ -421,7 +421,7 @@ class Kgcp(object):
     def serialconsole(self, name, web=False):
         project = self.project
         zone = self.zone
-        user, ip = common._ssh_credentials(self, name)
+        user, ip = common._ssh_credentials(self, name)[:2]
         sshcommand = "ssh"
         identityfile = None
         if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):

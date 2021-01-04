@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from distutils.spawn import find_executable
-from kvirt.common import info, pprint, get_kubectl, scp
+from kvirt.common import info, pprint, get_kubectl, scp, _ssh_credentials
 import os
 import sys
 import yaml
@@ -95,15 +95,15 @@ def create(config, plandir, cluster, overrides):
         if 'name' in data:
             del data['name']
         config.plan(cluster, inputfile='%s/masters.yml' % plandir, overrides=data)
-    firstmasterip = k.info(firstmaster)['ip']
+    firstmasterip, firstmastervmport = _ssh_credentials(k, firstmaster)[1:]
     with open("%s/join.sh" % clusterdir, 'w') as f:
         if api_ip is None:
-            api_ip = firstmasterip
+            api_ip = k.info(firstmaster)['ip']
         f.write("curl -sfL https://get.k3s.io | K3S_URL=https://%s:6443 K3S_TOKEN=%s sh -\n" % (api_ip, token))
     source, destination = "/root/kubeconfig", "%s/auth/kubeconfig" % clusterdir
     scpcmd = scp(firstmaster, ip=firstmasterip, user='root', source=source, destination=destination,
                  tunnel=config.tunnel, tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
-                 tunneluser=config.tunneluser, download=True, insecure=True)
+                 tunneluser=config.tunneluser, download=True, insecure=True, vmport=firstmastervmport)
     os.system(scpcmd)
     workers = data.get('workers', 0)
     if workers > 0:

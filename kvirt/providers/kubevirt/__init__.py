@@ -36,7 +36,8 @@ class Kubevirt(Kubecommon):
 
     """
     def __init__(self, token=None, ca_file=None, context=None, host='127.0.0.1', port=443, user='root', debug=False,
-                 tags=None, namespace=None, cdi=True, datavolumes=False, readwritemany=False, registry=None):
+                 tags=None, namespace=None, cdi=True, datavolumes=False, readwritemany=False, registry=None,
+                 access_mode='NodePort'):
         Kubecommon.__init__(self, token=token, ca_file=ca_file, context=context, host=host, port=port,
                             namespace=namespace, readwritemany=readwritemany)
         self.crds = client.CustomObjectsApi(api_client=self.api_client)
@@ -45,6 +46,7 @@ class Kubevirt(Kubecommon):
         self.cdi = cdi
         self.datavolumes = datavolumes
         self.registry = registry
+        self.access_mode = access_mode
         if cdi:
             try:
                 cdipods = self.core.list_pod_for_all_namespaces(label_selector='app=containerized-data-importer').items
@@ -358,14 +360,10 @@ class Kubevirt(Kubecommon):
             try:
                 core.read_namespaced_service('%s-ssh' % name, namespace)
             except:
-                localport = common.get_free_nodeport()
-                sshspec = {'kind': 'Service', 'apiVersion': 'v1',
-                           'metadata': {'namespace': namespace, 'name': '%s-ssh' % name},
-                           'spec': {'externalTrafficPolicy': 'Cluster', 'sessionAffinity': 'None',
-                                    'type': 'NodePort', 'ports':
-                                    [{'protocol': 'TCP', 'targetPort': 22, 'nodePort': localport, 'port': 22}],
-                                    'selector': {'kubevirt.io/provider': 'kcli', 'kubevirt.io/domain': name}}}
-                core.create_namespaced_service(namespace, sshspec)
+                localport = common.get_free_nodeport() if self.access_mode == 'NodePort' else None
+                selector = {'kubevirt.io/provider': 'kcli', 'kubevirt.io/domain': name}
+                self.create_service('%s-ssh' % name, namespace, selector, _type=self.access_mode, port=22,
+                                    nodeport=localport)
         return {'result': 'success'}
 
     def start(self, name):
@@ -579,13 +577,14 @@ class Kubevirt(Kubecommon):
             ip4s = [i for i in ips if ':' not in i]
             ip6s = [i for i in ips if i not in ip4s]
             ip = ip4s[0] if ip4s else ip6s[0]
-        yamlinfo = {'name': name, 'nets': [], 'disks': [], 'state': state, 'creationdate': creationdate, 'host': host,
-                    'status': state, 'namespace': namespace}
+        yamlinfo = {'name': name, 'nets': [], 'disks': [], 'status': state, 'creationdate': creationdate, 'host': host,
+                    'namespace': namespace}
         if 'cpu' in spectemplate['spec']['domain']:
             numcpus = spectemplate['spec']['domain']['cpu']['cores']
             yamlinfo['cpus'] = numcpus
         if 'resources' in spectemplate['spec']['domain'] and 'requests' in spectemplate['spec']['domain']['resources']:
-            memory = spectemplate['spec']['domain']['resources']['requests']['memory']
+            memory = spectemplate['spec']['domain']['resources']['requests']['memory'].replace('M', '').replace('G', '')
+            memory = int(memory)
             yamlinfo['memory'] = memory
         if image is not None:
             yamlinfo['image'] = image
@@ -624,7 +623,7 @@ class Kubevirt(Kubecommon):
                 _type = 'containerdisk'
             else:
                 _type = 'other'
-            disk = {'device': d['name'], 'size': size, 'format': bus, 'type': _type, 'path': volumename}
+            disk = {'device': d['name'], 'size': int(size), 'format': bus, 'type': _type, 'path': volumename}
             disks.append(disk)
         yamlinfo['disks'] = disks
         interfaces = vm['spec']['template']['spec']['domain']['devices']['interfaces']
@@ -640,9 +639,14 @@ class Kubevirt(Kubecommon):
                 network = 'default'
                 network_type = 'pod'
             yamlinfo['nets'].append({'device': device, 'mac': mac, 'net': network, 'type': network_type})
-        nodeport = self.ssh_node_port(name, namespace)
-        if nodeport is not None:
-            yamlinfo['nodeport'] = nodeport
+        if self.access_mode == 'NodePort':
+            nodeport = self.ssh_node_port(name, namespace)
+            if nodeport is not None:
+                yamlinfo['nodeport'] = nodeport
+        elif self.access_mode == 'LoadBalancer':
+            loadbalancerip = self.ssh_loadbalancer_ip(name, namespace)
+            if loadbalancerip is not None:
+                yamlinfo['loadbalancerip'] = loadbalancerip
         if debug:
             yamlinfo['debug'] = common.pretty_print(vm)
         return yamlinfo
@@ -716,7 +720,7 @@ class Kubevirt(Kubecommon):
             common.pprint("Deleting pvc %s" % pvcname, color='blue')
             core.delete_namespaced_persistent_volume_claim(pvcname, namespace)
         try:
-            core.delete_namespaced_service('%s-ssh' % name, namespace)
+            core.delete_namespaced_service('%s-ssh-svc' % name, namespace)
         except:
             pass
         return {'result': 'success'}
@@ -1120,7 +1124,7 @@ class Kubevirt(Kubecommon):
             pvc = core.read_namespaced_persistent_volume_claim(volname, namespace)
             pvcstatus = pvc.status.phase
             time.sleep(2)
-            common.pprint("Waiting for pvc %s to get bound..." % volname)
+            common.pprint("Waiting for pvc %s to get bound..." % volname, color='blue')
             pvcruntime += 2
         return True
 
@@ -1139,7 +1143,7 @@ class Kubevirt(Kubecommon):
             else:
                 phase = pvc.metadata.annotations['cdi.kubevirt.io/storage.pod.phase']
             time.sleep(5)
-            common.pprint("Waiting for import to complete...")
+            common.pprint("Waiting for import to complete...", color='blue')
             pvcruntime += 5
         return True
 
@@ -1154,7 +1158,7 @@ class Kubevirt(Kubecommon):
             pod = core.read_namespaced_pod(podname, namespace)
             podstatus = pod.status.phase
             time.sleep(5)
-            common.pprint("Waiting for pod %s to complete..." % podname)
+            common.pprint("Waiting for pod %s to complete..." % podname, color='blue')
             podruntime += 5
         return True
 
@@ -1200,7 +1204,7 @@ class Kubevirt(Kubecommon):
 
     def ssh_node_port(self, name, namespace):
         try:
-            sshservice = self.core.read_namespaced_service('%s-ssh' % name, namespace)
+            sshservice = self.core.read_namespaced_service('%s-ssh-svc' % name, namespace)
         except:
             return None
         return sshservice.spec.ports[0].node_port
@@ -1246,6 +1250,7 @@ class Kubevirt(Kubecommon):
                         return api_service.status.load_balancer.ingress[0].ip
                     except:
                         time.sleep(5)
+                        common.pprint("Waiting to get a loadbalancer ip for service %s..." % name, color='blue')
                         runtime += 5
 
     def delete_service(self, name, namespace):
@@ -1253,3 +1258,10 @@ class Kubevirt(Kubecommon):
             self.core.delete_namespaced_service(name, namespace)
         except Exception as e:
             common.pprint("Couldn't delete service %s. Hit %s" % (name, e), color='red')
+
+    def ssh_loadbalancer_ip(self, name, namespace):
+        try:
+            api_service = self.core.read_namespaced_service('%s-ssh-svc' % name, namespace)
+            return api_service.status.load_balancer.ingress[0].ip
+        except:
+            return None

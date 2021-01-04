@@ -110,6 +110,7 @@ message vminfo{
     string project = 30 ;
     string domain = 31 ;
     string iso = 32 ;
+    string loadbalancerip = 33 ;
 }
 
 message vmlist{

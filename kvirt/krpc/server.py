@@ -125,14 +125,16 @@ class KcliServicer(kcli_pb2_grpc.KcliServicer):
             common.pprint("Tunnel requested but invalid tunnelhost", color='red')
             os._exit(1)
         insecure = config.insecure
-        u, ip = common._ssh_credentials(k, name)
+        u, ip, vmport = common._ssh_credentials(k, name)
         if ip is None:
             return
         if user is None:
             user = config.vmuser if config.vmuser is not None else u
+        if vmport is None and config.vmport is not None:
+            vmport = config.vmport
         scpcommand = common.scp(name, ip=ip, user=user, source=source, destination=destination,
                                 tunnel=tunnel, tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser,
-                                download=download, recursive=recursive, insecure=insecure)
+                                download=download, recursive=recursive, insecure=insecure, vmport=vmport)
         response = kcli_pb2.sshcmd(sshcmd=scpcommand)
         return response
 
@@ -162,13 +164,16 @@ class KcliServicer(kcli_pb2_grpc.KcliServicer):
         if os.path.exists("/i_am_a_container") and not os.path.exists("/root/.kcli/config.yml")\
                 and not os.path.exists("/root/.ssh/config"):
             insecure = True
-        u, ip = common._ssh_credentials(k, name)
+        u, ip, vmport = common._ssh_credentials(k, name)
         if ip is None:
             return kcli_pb2.sshcmd(sshcmd='')
         if user is None:
             user = config.vmuser if config.vmuser is not None else u
+        if vmport is None and config.vmport is not None:
+            vmport = config.vmport
         sshcmd = common.ssh(name, ip=ip, user=user, local=l, remote=r, tunnel=tunnel, tunnelhost=tunnelhost,
-                            tunnelport=tunnelport, tunneluser=tunneluser, insecure=insecure, cmd=cmd, X=X, Y=Y, D=D)
+                            tunnelport=tunnelport, tunneluser=tunneluser, insecure=insecure, cmd=cmd, X=X, Y=Y, D=D,
+                            vmport=vmport)
         response = kcli_pb2.sshcmd(sshcmd=sshcmd)
         return response
 

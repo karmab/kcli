@@ -422,7 +422,7 @@ class Kpacket(object):
         :param name:
         :return:
         """
-        user, ip = common._ssh_credentials(self, name)
+        user, ip = common._ssh_credentials(self, name)[:2]
         sshcommand = "ssh"
         identityfile = None
         if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):

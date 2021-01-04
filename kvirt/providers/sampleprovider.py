@@ -431,30 +431,6 @@ class Kbase(object):
         print("not implemented")
         return
 
-# should leverage if possible
-# should return a scpcommand string
-# u, ip = self._ssh_credentials(name)
-# scpcommand = common.scp(name, ip='', host=self.host, port=self.port,
-# hostuser=self.user, user=user,
-# source=source, destination=destination, recursive=recursive, tunnel=tunnel,
-# debug=self.debug, download=False)
-    def scp(self, name, user=None, source=None, destination=None, tunnel=False, tunnelhost=None, tunnelport=22,
-            tunneluser='root', download=False, recursive=False, insecure=False):
-        """
-
-        :param name:
-        :param user:
-        :param source:
-        :param destination:
-        :param tunnel:
-        :param download:
-        :param recursive:
-        :param insecure:
-        :return:
-        """
-        print("not implemented")
-        return
-
     def create_pool(self, name, poolpath, pooltype='dir', user='qemu', thinpool=None):
         """
 

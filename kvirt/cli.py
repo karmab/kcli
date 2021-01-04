@@ -2114,18 +2114,7 @@ def ssh_vm(args):
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
         k = config.k
-        u, ip = common._ssh_credentials(k, name)
-        if config.type == 'kubevirt' and not tunnel:
-            ip = k.node_host()
-            if ip is None:
-                common.pprint("No valid node ip found" % name, color='red')
-                return
-            nodeport = k.ssh_node_port(name, k.namespace)
-            if nodeport is None:
-                common.pprint("No valid node port found" % name, color='red')
-                return
-            else:
-                vmport = nodeport
+        u, ip, vmport = common._ssh_credentials(k, name)
         if ip is None:
             return
         if user is None:
@@ -2201,18 +2190,7 @@ def scp_vm(args):
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
         k = config.k
-        u, ip = common._ssh_credentials(k, name)
-        if config.type == 'kubevirt' and not tunnel:
-            ip = k.node_host()
-            if ip is None:
-                common.pprint("No valid node ip found" % name, color='red')
-                return
-            nodeport = k.ssh_node_port(name, k.namespace)
-            if nodeport is None:
-                common.pprint("No valid node port found" % name, color='red')
-                return
-            else:
-                vmport = nodeport
+        u, ip, vmport = common._ssh_credentials(k, name)
         if ip is None:
             return
         if user is None:

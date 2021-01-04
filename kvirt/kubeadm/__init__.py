@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from distutils.spawn import find_executable
-from kvirt.common import info, pprint, get_kubectl, kube_create_app, scp, word2number
+from kvirt.common import info, pprint, get_kubectl, kube_create_app, scp, word2number, _ssh_credentials
 from kvirt.defaults import UBUNTUS
 import os
 import sys
@@ -128,15 +128,15 @@ def create(config, plandir, cluster, overrides):
     if result['result'] != "success":
         os._exit(1)
     source, destination = "/root/join.sh", "%s/join.sh" % clusterdir
-    firstmasterip = k.info(firstmaster)['ip']
+    firstmasterip, firstmastervmport = _ssh_credentials(k, firstmaster)[1:]
     scpcmd = scp(firstmaster, ip=firstmasterip, user='root', source=source, destination=destination,
                  tunnel=config.tunnel, tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
-                 tunneluser=config.tunneluser, download=True, insecure=True)
+                 tunneluser=config.tunneluser, download=True, insecure=True, vmport=firstmastervmport)
     os.system(scpcmd)
     source, destination = "/etc/kubernetes/admin.conf", "%s/auth/kubeconfig" % clusterdir
     scpcmd = scp(firstmaster, ip=firstmasterip, user='root', source=source, destination=destination,
                  tunnel=config.tunnel, tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
-                 tunneluser=config.tunneluser, download=True, insecure=True)
+                 tunneluser=config.tunneluser, download=True, insecure=True, vmport=firstmastervmport)
     os.system(scpcmd)
     workers = data.get('workers', 0)
     if workers > 0:

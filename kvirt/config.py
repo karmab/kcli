@@ -99,10 +99,16 @@ class Kconfig(Kbaseconfig):
                     else:
                         token = open(token_file).read()
                 registry = self.options.get('registry')
+                access_mode = self.options.get('access_mode', 'NodePort')
+                if access_mode not in ['External', 'LoadBalancer', 'NodePort']:
+                        msg = "Incorrect access_mode %s. Should be External, NodePort or LoadBalancer" % access_mode
+                        common.pprint(msg, color='red')
+                        os._exit(1)
                 from kvirt.providers.kubevirt import Kubevirt
                 k = Kubevirt(context=context, token=token, ca_file=ca_file, host=self.host,
                              port=self.port, user=self.user, debug=debug, namespace=namespace, cdi=cdi,
-                             datavolumes=datavolumes, readwritemany=readwritemany, registry=registry)
+                             datavolumes=datavolumes, readwritemany=readwritemany, registry=registry,
+                             access_mode=access_mode)
                 self.host = k.host
             elif self.type == 'gcp':
                 credentials = self.options.get('credentials')
@@ -2072,14 +2078,23 @@ $INFO
         else:
             cloudinitfile = common.get_cloudinitfile(image)
             cmd = "sudo tail -n 50 %s" % cloudinitfile
-        user, ip = None, None
+        user, ip, vmport = None, None, None
+        hostip = None
         while ip is None:
             info = k.info(name)
             if self.type == 'packet' and info.get('status') != 'active':
-                common.pprint("Waiting for ndoe to be active", color='yellow')
+                common.pprint("Waiting for node to be active", color='yellow')
                 ip = None
             else:
                 user, ip = info.get('user'), info.get('ip')
+                if self.type == 'kubevirt':
+                    if k.access_mode == 'NodePort':
+                        vmport = info.get('nodeport')
+                        if hostip is None:
+                            hostip = k.node_host()
+                        ip = hostip
+                    elif k.access_mode == 'Loadbalancer':
+                        ip = info.get('loadbalancerip')
                 if user is not None and ip is not None:
                     if self.type == 'openstack' and info.get('privateip') == ip and self.k.external_network is not None\
                             and info.get('nets')[0]['net'] != self.k.external_network:
@@ -2088,7 +2103,7 @@ $INFO
                     else:
                         testcmd = common.ssh(name, user=user, ip=ip, tunnel=self.tunnel, tunnelhost=self.tunnelhost,
                                              tunnelport=self.tunnelport, tunneluser=self.tunneluser,
-                                             insecure=self.insecure, cmd='id -un')
+                                             insecure=self.insecure, cmd='id -un', vmport=vmport)
                         if os.popen(testcmd).read().strip() != user:
                             common.pprint("Gathered ip not functional yet...", color='yellow')
                             ip = None
@@ -2097,7 +2112,7 @@ $INFO
         sleep(5)
         oldoutput = ''
         while True:
-            sshcmd = common.ssh(name, user=user, ip=ip, tunnel=self.tunnel, tunnelhost=self.tunnelhost,
+            sshcmd = common.ssh(name, user=user, ip=ip, tunnel=self.tunnel, tunnelhost=self.tunnelhost, vmport=vmport,
                                 tunnelport=self.tunnelport, tunneluser=self.tunneluser, insecure=self.insecure, cmd=cmd)
             output = os.popen(sshcmd).read()
             if 'kcli boot finished' in output:

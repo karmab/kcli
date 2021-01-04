@@ -443,11 +443,11 @@ def create(config, plandir, cluster, overrides):
         result = config.plan(disconnected_plan, inputfile='%s/disconnected.yml' % plandir, overrides=data)
         if result['result'] != 'success':
             os._exit(1)
-        disconnected_ip = _ssh_credentials(k, disconnected_vm)[1]
+        disconnected_ip, disconnected_vmport = _ssh_credentials(k, disconnected_vm)[1:]
         cacmd = "cat /opt/registry/certs/domain.crt"
         cacmd = ssh(disconnected_vm, ip=disconnected_ip, user='root', tunnel=config.tunnel,
                     tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
-                    insecure=True, cmd=cacmd)
+                    insecure=True, cmd=cacmd, vmport=disconnected_vmport)
         disconnected_ca = os.popen(cacmd).read().strip()
         if data['ca'] is not None:
             data['ca'] += disconnected_ca
@@ -456,7 +456,7 @@ def create(config, plandir, cluster, overrides):
         urlcmd = "cat /root/url.txt"
         urlcmd = ssh(disconnected_vm, ip=disconnected_ip, user='root', tunnel=config.tunnel,
                      tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
-                     insecure=True, cmd=urlcmd)
+                     insecure=True, cmd=urlcmd, vmport=disconnected_vmport)
         disconnected_url = os.popen(urlcmd).read().strip()
         overrides['disconnected_url'] = disconnected_url
         data['disconnected_url'] = disconnected_url
@@ -467,7 +467,7 @@ def create(config, plandir, cluster, overrides):
         versioncmd = "cat /root/version.txt"
         versioncmd = ssh(disconnected_vm, ip=disconnected_ip, user='root', tunnel=config.tunnel,
                          tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
-                         insecure=True, cmd=versioncmd)
+                         insecure=True, cmd=versioncmd, vmport=disconnected_vmport)
         disconnected_version = os.popen(versioncmd).read().strip()
         os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = disconnected_version
         pprint("Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to %s" % disconnected_version, color='blue')
@@ -598,7 +598,6 @@ def create(config, plandir, cluster, overrides):
             helper_overrides = {}
             if platform == 'kubevirt':
                 helper_overrides['helper_image'] = "kubevirt/fedora-cloud-container-disk-demo"
-                iptype = "ip"
             else:
                 if helper_image is None:
                     images = [v for v in k.volumes() if 'centos' in v.lower() or 'fedora' in v.lower()]
@@ -616,10 +615,8 @@ def create(config, plandir, cluster, overrides):
                         pprint("Missing image %s. Indicate correct helper image in your parameters file" % helper_image,
                                color='red')
                         os._exit(1)
-                iptype = 'ip'
                 if platform == 'openstack':
                     helper_overrides['flavor'] = "m1.medium"
-                    # iptype = "privateip"
             helper_overrides['nets'] = [network]
             helper_overrides['plan'] = cluster
             bootstrap_helper_name = "%s-bootstrap-helper" % cluster
@@ -630,16 +627,17 @@ def create(config, plandir, cluster, overrides):
             cmds.append("systemctl enable --now httpd")
             helper_overrides['cmds'] = cmds
             config.create_vm("%s-bootstrap-helper" % cluster, helper_image, overrides=helper_overrides, wait=True)
-            bootstrap_helper_ip = k.info(bootstrap_helper_name).get(iptype)
+            bootstrap_helper_ip, bootstrap_helper_vmport = _ssh_credentials(bootstrap_helper_name)[1:]
             source, destination = "%s/bootstrap.ign" % clusterdir, "/var/www/html/bootstrap"
             scpcmd = scp(bootstrap_helper_name, ip=bootstrap_helper_ip, user='root', source=source,
                          destination=destination, tunnel=config.tunnel, tunnelhost=config.tunnelhost,
-                         tunnelport=config.tunnelport, tunneluser=config.tunneluser, download=False, insecure=True)
+                         tunnelport=config.tunnelport, tunneluser=config.tunneluser, download=False, insecure=True,
+                         vmport=bootstrap_helper_vmport)
             os.system(scpcmd)
             cmd = "chown apache.apache /var/www/html/bootstrap"
             sshcmd = ssh(bootstrap_helper_name, ip=bootstrap_helper_ip, user='root', tunnel=config.tunnel,
                          tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
-                         tunneluser=config.tunneluser, insecure=True, cmd=cmd)
+                         tunneluser=config.tunneluser, insecure=True, cmd=cmd, vmport=bootstrap_helper_vmport)
             os.system(sshcmd)
             sedcmd = 'sed "s@https://api-int.%s.%s:22623/config/master@http://%s/bootstrap@" ' % (cluster, domain,
                                                                                                   bootstrap_helper_ip)
@@ -666,16 +664,16 @@ def create(config, plandir, cluster, overrides):
             pprint("Waiting 5s for bootstrap helper node to be running...", color='blue')
             sleep(5)
         sleep(5)
-        bootstrap_helper_ip = _ssh_credentials(k, bootstrap_helper_name)[1]
+        bootstrap_helper_ip, bootstrap_helper_vmport = _ssh_credentials(k, bootstrap_helper_name)[1:]
         cmd = "iptables -F ; yum -y install httpd ; systemctl start httpd"
         sshcmd = ssh(bootstrap_helper_name, ip=bootstrap_helper_ip, user='root', tunnel=config.tunnel,
                      tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
-                     insecure=True, cmd=cmd)
+                     insecure=True, cmd=cmd, vmport=bootstrap_helper_vmport)
         os.system(sshcmd)
         source, destination = "%s/bootstrap.ign" % clusterdir, "/var/www/html/bootstrap"
         scpcmd = scp(bootstrap_helper_name, ip=bootstrap_helper_ip, user='root', source=source, destination=destination,
                      tunnel=config.tunnel, tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
-                     tunneluser=config.tunneluser, download=False, insecure=True)
+                     tunneluser=config.tunneluser, download=False, insecure=True, vmport=bootstrap_helper_vmport)
         os.system(scpcmd)
         sedcmd = 'sed "s@https://api-int.%s.%s:22623/config/master@' % (cluster, domain)
         sedcmd += 'http://%s-bootstrap-helper.%s.%s/bootstrap@ "' % (cluster, domain)
