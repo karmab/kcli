@@ -94,6 +94,12 @@ def create(config, plandir, cluster, overrides):
             pprint("Using 192.168.122.253 as api_ip", color='yellow')
             data['api_ip'] = "192.168.122.253"
             api_ip = "192.168.122.253"
+        elif platform == 'kubevirt':
+            selector = {'kcli/plan': plan, 'kcli/role': 'master'}
+            api_ip = config.k.create_service("%s-api" % cluster, config.k.namespace, selector,
+                                             _type="LoadBalancer", port=6443)
+            if api_ip is None:
+                os._exit(1)
         else:
             pprint("You need to define api_ip in your parameters file", color='red')
             os._exit(1)

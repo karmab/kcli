@@ -2093,7 +2093,7 @@ $INFO
                         if hostip is None:
                             hostip = k.node_host()
                         ip = hostip
-                    elif k.access_mode == 'Loadbalancer':
+                    elif k.access_mode == 'LoadBalancer':
                         ip = info.get('loadbalancerip')
                 if user is not None and ip is not None:
                     if self.type == 'openstack' and info.get('privateip') == ip and self.k.external_network is not None\
