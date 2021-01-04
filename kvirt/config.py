@@ -2162,7 +2162,7 @@ $INFO
         self.plan(plan, delete=True)
         if self.type == 'kubevirt' and self.k.access_mode == 'LoadBalancer':
             try:
-                self.k.delete_service("%s-api-svc" % cluster)
+                self.k.delete_service("%s-api-svc" % cluster, self.k.namespace)
             except:
                 pass
 

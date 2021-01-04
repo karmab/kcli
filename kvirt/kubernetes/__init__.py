@@ -191,7 +191,8 @@ class Kubernetes():
             state = pod.status.phase
             source = pod.spec.containers[0].image
             plan = ''
-            if 'kcli/plan' in pod.metadata.labels:
+            labels = pod.metadata.labels
+            if labels is not None and 'kcli/plan' in labels:
                 plan = pod.metadata.labels['kcli/plan']
             command = pod.spec.containers[0].command
             if command is not None:
