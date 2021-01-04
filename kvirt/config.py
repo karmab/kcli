@@ -2160,6 +2160,11 @@ $INFO
             common.pprint("Deleting %s" % clusterdir, color='green')
             rmtree(clusterdir)
         self.plan(plan, delete=True)
+        if self.type == 'kubevirt' and self.k.access_mode == 'LoadBalancer':
+            try:
+                self.k.delete_service("%s-api-svc" % cluster)
+            except:
+                pass
 
     def scale_kube_generic(self, cluster, overrides={}):
         plandir = os.path.dirname(kubeadm.create.__code__.co_filename)

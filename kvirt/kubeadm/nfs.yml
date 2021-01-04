@@ -4,7 +4,7 @@ metadata:
   name: pv001
 spec:
   capacity:
-    storage: 10Gi
+    storage: {{ nfs_pv_size }}Gi
   accessModes:
   - ReadWriteOnce
   nfs:

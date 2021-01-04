@@ -4,6 +4,7 @@
 Kubevirt Provider Class
 """
 
+import base64
 from kubernetes import client
 # from kubernetes.stream import stream
 from kvirt.kubecommon import Kubecommon
@@ -305,7 +306,9 @@ class Kubevirt(Kubecommon):
                                             overrides=overrides, storemetadata=storemetadata)[0]
                 cloudinitdisk = {'cdrom': {'bus': 'sata'}, 'name': 'cloudinitdisk'}
                 vm['spec']['template']['spec']['domain']['devices']['disks'].append(cloudinitdisk)
-                cloudinitvolume = {'cloudInitNoCloud': {'userData': userdata}, 'name': 'cloudinitdisk'}
+                self.create_secret("%s-userdata-secret" % name, namespace, userdata)
+                cloudinitvolume = {'cloudInitNoCloud': {'secretRef': {'name': "%s-userdata-secret" % name}},
+                                   'name': 'cloudinitdisk'}
                 vm['spec']['template']['spec']['volumes'].append(cloudinitvolume)
         if self.debug:
             common.pretty_print(vm)
@@ -721,6 +724,10 @@ class Kubevirt(Kubecommon):
             core.delete_namespaced_persistent_volume_claim(pvcname, namespace)
         try:
             core.delete_namespaced_service('%s-ssh-svc' % name, namespace)
+        except:
+            pass
+        try:
+            core.delete_namespaced_secret('%s-userdata-secret' % name, namespace)
         except:
             pass
         return {'result': 'success'}
@@ -1265,3 +1272,15 @@ class Kubevirt(Kubecommon):
             return api_service.status.load_balancer.ingress[0].ip
         except:
             return None
+
+    def create_secret(self, name, namespace, data):
+        userdata = base64.b64encode(data.encode()).decode("UTF-8")
+        spec = {'kind': 'Secret', 'apiVersion': 'v1', 'metadata': {'namespace': namespace, 'name': name},
+                'data': {'userdata': userdata}, 'type': 'Opaque'}
+        self.core.create_namespaced_secret(namespace, spec)
+
+    def delete_secret(self, name, namespace):
+        try:
+            self.core.delete_namespaced_secret(name, namespace)
+        except Exception as e:
+            common.pprint("Couldn't delete service %s. Hit %s" % (name, e), color='red')
