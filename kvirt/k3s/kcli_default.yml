@@ -1,5 +1,6 @@
 info: |
     Deploys kubernetes using k3s an arbitrary number of masters and workers.
+    specific components can be disabled by using the array disabled_components
 masters: 1
 workers: 0
 api_ip:
@@ -21,7 +22,6 @@ master_rng: false
 disk_size: 10
 worker_tpm: false
 worker_rng: false
-metallb: false
 notifycmd: "kubectl get pod -A"
 notify: false
 numa:
@@ -39,3 +39,4 @@ extra_worker_disks: []
 extra_networks: []
 extra_master_networks: []
 extra_worker_networks: []
+disabled_components: []
