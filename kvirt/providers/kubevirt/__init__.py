@@ -126,7 +126,7 @@ class Kubevirt(Kubecommon):
                 if p.metadata.annotations is not None\
                         and 'cdi.kubevirt.io/storage.import.endpoint' in p.metadata.annotations:
                     cdiname = self.get_image_name(p.metadata.annotations['cdi.kubevirt.io/storage.import.endpoint'])
-                    images[cdiname] = p.metadata.name
+                    images[common.filter_compression_extension(cdiname)] = p.metadata.name
         else:
             allpvc = core.list_namespaced_persistent_volume_claim(namespace)
             images = {p.metadata.annotations['kcli/image']: p.metadata.name for p in allpvc.items
@@ -294,22 +294,23 @@ class Kubevirt(Kubecommon):
             cmds = cmds[:idx] + gcmds + cmds[idx:]
         if cloudinit:
             if image is not None and common.needs_ignition(image):
+                cloudinitsource = "cloudInitConfigDrive"
                 version = common.ignition_version(image)
-                ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
-                                               domain=domain, reserveip=reserveip, files=files,
-                                               enableroot=enableroot, overrides=overrides, version=version,
-                                               plan=plan, compact=True, image=image)
-                vm['spec']['template']['metadata']['annotations'] = {'kubevirt.io/ignitiondata': ignitiondata}
+                userdata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
+                                           domain=domain, reserveip=reserveip, files=files,
+                                           enableroot=enableroot, overrides=overrides, version=version,
+                                           plan=plan, compact=True, image=image)
             else:
+                cloudinitsource = "cloudInitNoCloud"
                 userdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                             domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
                                             overrides=overrides, storemetadata=storemetadata)[0]
-                cloudinitdisk = {'cdrom': {'bus': 'sata'}, 'name': 'cloudinitdisk'}
-                vm['spec']['template']['spec']['domain']['devices']['disks'].append(cloudinitdisk)
-                self.create_secret("%s-userdata-secret" % name, namespace, userdata)
-                cloudinitvolume = {'cloudInitNoCloud': {'secretRef': {'name': "%s-userdata-secret" % name}},
-                                   'name': 'cloudinitdisk'}
-                vm['spec']['template']['spec']['volumes'].append(cloudinitvolume)
+            cloudinitdisk = {'cdrom': {'bus': 'sata'}, 'name': 'cloudinitdisk'}
+            vm['spec']['template']['spec']['domain']['devices']['disks'].append(cloudinitdisk)
+            self.create_secret("%s-userdata-secret" % name, namespace, userdata)
+            cloudinitvolume = {cloudinitsource: {'secretRef': {'name': "%s-userdata-secret" % name}},
+                               'name': 'cloudinitdisk'}
+            vm['spec']['template']['spec']['volumes'].append(cloudinitvolume)
         if self.debug:
             common.pretty_print(vm)
         for pvc in pvcs:
@@ -699,7 +700,7 @@ class Kubevirt(Kubecommon):
             isos = [i for i in allimages if i.endswith('iso')]
             return isos
         else:
-            images = [i for i in allimages if not i.endswith('iso')]
+            images = [common.filter_compression_extension(i) for i in allimages if not i.endswith('iso')]
             return sorted(images + CONTAINERDISKS)
 
     def delete(self, name, snapshots=False):
@@ -943,6 +944,7 @@ class Kubevirt(Kubecommon):
         namespace = self.namespace
         cdi = self.cdi
         shortimage = os.path.basename(image).split('?')[0]
+        uncompressed = shortimage.replace('.gz', '').replace('.xz', '').replace('.bz2', '')
         if name is None:
             volname = [k for k in IMAGES if IMAGES[k] == image][0]
         else:
@@ -952,7 +954,7 @@ class Kubevirt(Kubecommon):
         pvc = {'kind': 'PersistentVolumeClaim', 'spec': {'storageClassName': pool,
                                                          'accessModes': [self.accessmode],
                                                          'resources': {'requests': {'storage': '%sGi' % size}}},
-               'apiVersion': 'v1', 'metadata': {'name': volname, 'annotations': {'kcli/image': shortimage}}}
+               'apiVersion': 'v1', 'metadata': {'name': volname, 'annotations': {'kcli/image': uncompressed}}}
         if cdi:
             common.pprint("Cloning in namespace %s" % namespace, color='blue')
             pvc['metadata']['annotations'] = {'cdi.kubevirt.io/storage.import.endpoint': image}
