@@ -138,7 +138,7 @@ def gather_dhcp(data, platform):
     dhcp_dns = data.get('dhcp_dns')
     if bootstrap_ip is None or dhcp_ip is None or dhcp_netmask is None or dhcp_gateway is None or dhcp_dns is None:
         return {}
-    if platform in ['kubevirt', 'openstack', 'vsphere']:
+    if platform in ['openstack', 'vsphere']:
         bootstrap_helper_name = "%s-bootstrap-helper" % cluster
         bootstrap_helper_mac = data.get('bootstrap_helper_mac', gen_mac())
         bootstrap_helper_ip = data.get('bootstrap_helper_ip')
@@ -160,7 +160,7 @@ def gather_dhcp(data, platform):
         node_names.insert(0, bootstrap_name)
         node_macs.insert(0, bootstrap_mac)
         node_ips.insert(0, bootstrap_ip)
-        if platform in ['kubevirt', 'openstack', 'vsphere']:
+        if platform in ['openstack', 'vsphere']:
             nodes += 1
             node_names.insert(0, bootstrap_helper_name)
             node_macs.insert(0, bootstrap_helper_mac)
@@ -596,30 +596,27 @@ def create(config, plandir, cluster, overrides):
                 if ingress_ip is not None:
                     entries = ' '.join(ingress_entries)
                     call("sudo sh -c 'echo %s %s >> /etcdir/hosts'" % (ingress_ip, entries), shell=True)
-        if platform in ['kubevirt', 'openstack', 'vsphere'] or (platform == 'packet' and config.k.tunnelhost is None):
+        if platform in ['openstack', 'vsphere'] or (platform == 'packet' and config.k.tunnelhost is None):
             # bootstrap ignition is too big in those platforms so we deploy a temporary web server to serve it
             helper_overrides = {}
-            if platform == 'kubevirt':
-                helper_overrides['helper_image'] = "kubevirt/fedora-cloud-container-disk-demo"
-            else:
-                if helper_image is None:
-                    images = [v for v in k.volumes() if 'centos' in v.lower() or 'fedora' in v.lower()]
-                    if images:
-                        image = os.path.basename(images[0])
-                    else:
-                        helper_image = "CentOS-7-x86_64-GenericCloud.qcow2"
-                        pprint("Downloading centos helper image", color='blue')
-                        result = config.handle_host(pool=config.pool, image="centos7", download=True,
-                                                    update_profile=False)
-                    pprint("Using helper image %s" % helper_image, color='blue')
+            if helper_image is None:
+                images = [v for v in k.volumes() if 'centos' in v.lower() or 'fedora' in v.lower()]
+                if images:
+                    image = os.path.basename(images[0])
                 else:
-                    images = [v for v in k.volumes() if helper_image in v]
-                    if not images:
-                        pprint("Missing image %s. Indicate correct helper image in your parameters file" % helper_image,
-                               color='red')
-                        os._exit(1)
-                if platform == 'openstack':
-                    helper_overrides['flavor'] = "m1.medium"
+                    helper_image = "CentOS-7-x86_64-GenericCloud.qcow2"
+                    pprint("Downloading centos helper image", color='blue')
+                    result = config.handle_host(pool=config.pool, image="centos7", download=True,
+                                                update_profile=False)
+                pprint("Using helper image %s" % helper_image, color='blue')
+            else:
+                images = [v for v in k.volumes() if helper_image in v]
+                if not images:
+                    pprint("Missing image %s. Indicate correct helper image in your parameters file" % helper_image,
+                           color='red')
+                    os._exit(1)
+            if platform == 'openstack':
+                helper_overrides['flavor'] = "m1.medium"
             helper_overrides['nets'] = [network]
             helper_overrides['plan'] = cluster
             bootstrap_helper_name = "%s-bootstrap-helper" % cluster
@@ -708,7 +705,7 @@ def create(config, plandir, cluster, overrides):
             pprint("You can delete it with kcli delete kube --yes %s" % cluster, color='red')
             os._exit(run)
         todelete = ["%s-bootstrap" % cluster]
-        if platform in ['kubevirt', 'openstack', 'vsphere', 'packet']:
+        if platform in ['openstack', 'vsphere', 'packet']:
             todelete.append("%s-bootstrap-helper" % cluster)
     else:
         pprint("Deploying bootstrap", color='blue')
