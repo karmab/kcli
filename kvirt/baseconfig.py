@@ -17,7 +17,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             NOTIFYSCRIPT, SLACKTOKEN, NOTIFYCMD, NOTIFYMETHODS, SLACKCHANNEL, SHAREDFOLDERS, KERNEL,
                             INITRD, CMDLINE, PLACEMENT, YAMLINVENTORY, CPUHOTPLUG, MEMORYHOTPLUG, CPUFLAGS, CPUPINNING,
                             NUMAMODE, NUMA, PCIDEVICES, VIRTTYPE, MAILSERVER, MAILFROM, MAILTO, TPM, JENKINSMODE, RNG,
-                            ZEROTIER_NETS, ZEROTIER_KUBELET, VMPORT, VMUSER, CLIENTRULES, CACHE)
+                            ZEROTIER_NETS, ZEROTIER_KUBELET, VMPORT, VMUSER, VMRULES, CACHE)
 from kvirt import common
 from kvirt.jinjafilters import jinjafilters
 from kvirt import k3s
@@ -176,7 +176,7 @@ class Kbaseconfig:
         defaults['jenkinsmode'] = default.get('jenkinsmode', JENKINSMODE)
         defaults['vmuser'] = default.get('vmuser', VMUSER)
         defaults['vmport'] = default.get('vmport', VMPORT)
-        defaults['clientrules'] = default.get('clientrules', CLIENTRULES)
+        defaults['vmrules'] = default.get('vmrules', VMRULES)
         defaults['cache'] = default.get('cache', CACHE)
         currentplanfile = "%s/.kcli/plan" % os.environ.get('HOME')
         if os.path.exists(currentplanfile):
@@ -331,7 +331,7 @@ class Kbaseconfig:
         self.containerclient = containerclient
         self.vmuser = options.get('vmuser', self.default['vmuser'])
         self.vmport = options.get('vmport', self.default['vmport'])
-        self.clientrules = options.get('clientrules', self.default['clientrules'])
+        self.vmrules = options.get('vmrules', self.default['vmrules'])
         self.cache = options.get('cache', self.default['cache'])
         self.overrides = {}
 

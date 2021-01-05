@@ -1524,18 +1524,15 @@ $INFO
                             profile[key] = baseprofile[key]
                         elif key in baseprofile and key in profile and key in appendkeys:
                             profile[key] = baseprofile[key] + profile[key]
-                vmclient = None
-                vmrules = profile.get('clientrules', self.clientrules)
-                if vmrules:
-                    for entry in vmrules:
-                        if len(entry) != 1:
-                            common.pprint("Wrong client rule %s" % entry, color='red')
-                            os._exit(1)
-                        rule = list(entry.keys())[0]
-                        if re.match(rule, name):
-                            vmclient = entry[rule]
-                            break
-                vmclient = profile.get('client', vmclient)
+                for entry in overrides.get('vmrules', self.vmrules):
+                    if len(entry) != 1:
+                        common.pprint("Wrong vm rule %s" % entry, color='red')
+                        os._exit(1)
+                    rule = list(entry.keys())[0]
+                    if re.match(rule, name) and isinstance(entry[rule], dict):
+                        profile.update(entry[rule])
+                        break
+                vmclient = profile.get('client')
                 if vmclient is None:
                     z = k
                     vmclient = self.client

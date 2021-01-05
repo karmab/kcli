@@ -186,5 +186,5 @@ VIRTTYPE = None
 ZEROTIER_NETS = []
 ZEROTIER_KUBELET = False
 METADATA_FIELDS = ['dnsclient', 'domain', 'image', 'kube', 'kubetype', 'loadbalancer', 'owner', 'plan', 'profile']
-CLIENTRULES = []
+VMRULES = []
 CACHE = False

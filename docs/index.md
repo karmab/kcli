@@ -1113,7 +1113,6 @@ parameters:
 |Parameter                 |Default Value                                |Comments|
 |--------------------------|---------------------------------------------|--------|
 |*client*|None|Allows to target a different client/host for the corresponding entry|
-|*clientrules*|[]|Allows to target a different client/host for the corresponding entry, if a regex on the entry name is matched. An entry of this parameter could be `vm1: myhost1` which would deploy all vms with vm1 in their name to myhost1|
 |*virttype*|None|Only used for libvirt where it evaluates to kvm if acceleration shows in capabilities, or qemu emulation otherwise. If a value is provided, it must be either kvm, qemu, xen or lxc|
 |*cpumodel*|host-model||
 |*cpuflags*|[]| You can specify a list of strings with features to enable or use dict entries with *name* of the feature and *policy* either set to require,disable, optional or force. The value for vmx is ignored, as it's handled by the nested flag|
@@ -1186,7 +1185,7 @@ parameters:
 |*zerotier_net*|[]|List of zerotier public networks where to join. Will trigger installation of zerotier on the node|
 |*zerotier_kubelet*|False|Whether to configure kubelet to use the first zerotier address as node ip|
 |*playbook*|False|Generates a playbook for the vm of the plan instead of creating it. Useful to run parts of a plan on baremetal|
-
+|*vmrules*|[]|List of rules with an associated dict to apply for the corresponding entry, if a regex on the entry name is matched. The profile of the matching vm will be updated with the content of the rule|
 
 # Ansible support
 
