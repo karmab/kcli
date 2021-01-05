@@ -1123,7 +1123,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
 
 
 def get_latest_fcos(url, _type='kvm'):
-    keys = {'ovirt': 'openstack', 'kvm': 'qemu', 'vsphere': 'vmware'}
+    keys = {'ovirt': 'openstack', 'kubevirt': 'openstack', 'kvm': 'qemu', 'vsphere': 'vmware'}
     key = keys.get(_type, _type)
     _format = 'ova' if _type == 'vsphere' else 'qcow2.xz'
     with urlopen(url) as u:
@@ -1142,7 +1142,7 @@ def get_latest_fcos_metal(url):
 
 
 def get_latest_rhcos(url, _type='kvm'):
-    keys = {'ovirt': 'openstack', 'kvm': 'qemu', 'vsphere': 'vmware'}
+    keys = {'ovirt': 'openstack', 'kubevirt': 'openstack', 'kvm': 'qemu', 'vsphere': 'vmware'}
     key = keys.get(_type, _type)
     buildurl = '%s/builds.json' % url
     with urlopen(buildurl) as b:
@@ -1150,12 +1150,14 @@ def get_latest_rhcos(url, _type='kvm'):
         for build in data['builds']:
             if isinstance(build, dict):
                 build = build['id']
-                if _type in ['openstack', 'kvm']:
-                    return "%s/%s/x86_64/rhcos-%s-qemu.x86_64.qcow2.gz" % (url, build, build)
+                if _type in ['openstack', 'ovirt', 'kubevirt']:
+                    return "%s/%s/x86_64/rhcos-%s-openstack.x86_64.qcow2.gz" % (url, build, build)
                 elif _type == 'vsphere':
                     return "%s/%s/x86_64/rhcos-%s-vmware.x86_64.ova" % (url, build, build)
-                else:
+                elif _type == 'gcp':
                     return "https://storage.googleapis.com/rhcos/rhcos/%s.tar.gz" % build
+                else:
+                    return "%s/%s/x86_64/rhcos-%s-qemu.x86_64.qcow2.gz" % (url, build, build)
             else:
                 metaurl = '%s/%s/meta.json' % (url, build)
                 with urlopen(metaurl) as m:
@@ -1165,7 +1167,7 @@ def get_latest_rhcos(url, _type='kvm'):
 
 
 def get_commit_rhcos(commitid, _type='kvm'):
-    keys = {'ovirt': 'openstack', 'kvm': 'qemu', 'vsphere': 'vmware'}
+    keys = {'ovirt': 'openstack', 'kubevirt': 'openstack', 'kvm': 'qemu', 'vsphere': 'vmware'}
     key = keys.get(_type, _type)
     buildurl = "https://raw.githubusercontent.com/openshift/installer/%s/data/data/rhcos.json" % commitid
     with urlopen(buildurl) as b:
@@ -1610,3 +1612,7 @@ def word2number(cluster):
         entry = ord(c) - 96 if not c.isdigit() else int(c)
         result += entry
     return result if result < 255 else 200
+
+
+def filter_compression_extension(name):
+    return name.replace('.gz', '').replace('.xz', '').replace('.bz2', '')
