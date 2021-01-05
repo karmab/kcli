@@ -360,7 +360,7 @@ class Kubevirt(Kubecommon):
                            'spec': {'selector': {'subdomain': domain}, 'clusterIP': 'None',
                                     'ports': [{'name': 'foo', 'port': 1234, 'targetPort': 1234}]}}
                 core.create_namespaced_service(namespace, dnsspec)
-        if not tunnel:
+        if not tunnel and self.access_mode != 'External':
             try:
                 core.read_namespaced_service('%s-ssh' % name, namespace)
             except:
