@@ -1082,10 +1082,10 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     if publickeys:
         data['passwd']['users'] = [{'name': 'core', 'sshAuthorizedKeys': publickeys}]
     role = None
-    if len(name.split('-')) == 3 and name.split('-')[1] in ['master', 'worker']:
-        role = name.split('-')[1]
-    elif len(name.split('-')) == 2 and name.split('-')[1] == 'bootstrap':
-        role = name.split('-')[1]
+    if len(name.split('-')) >= 3 and name.split('-')[-2] in ['master', 'worker']:
+        role = name.split('-')[-2]
+    elif len(name.split('-')) >= 2 and name.split('-')[-1] == 'bootstrap':
+        role = name.split('-')[-1]
     if role is not None:
         cluster = overrides.get('cluster', plan)
         ignitionclusterpath = find_ignition_files(role, cluster=cluster)

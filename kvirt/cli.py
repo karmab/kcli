@@ -58,9 +58,6 @@ def valid_cluster(name):
         if '/' in name:
             msg = "Cluster name can't include /"
             raise argparse.ArgumentTypeError(msg)
-        elif '-' in name:
-            msg = "Cluster name can't include -"
-            raise argparse.ArgumentTypeError(msg)
     return name
 
 
