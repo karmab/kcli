@@ -358,10 +358,8 @@ class Kubevirt(Kubecommon):
             bound = self.pvc_bound(pvcname, namespace)
             if not bound:
                 return {'result': 'failure', 'reason': 'timeout waiting for pvc %s to get bound' % pvcname}
-            # prepare = self.prepare_pvc(pvcname, size=pvcsize)
-            # if prepare['result'] == 'failure':
-            #    reason = prepare['reason']
-            #    return {'result': 'failure', 'reason': reason}
+        if 'affinity' in overrides and isinstance(overrides['affinity'], dict):
+            vm['spec']['template']['spec']['affinity'] = overrides['affinity']
         crds.create_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', vm)
         if reservedns and domain is not None:
             try:
