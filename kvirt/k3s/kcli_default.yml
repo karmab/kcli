@@ -1,10 +1,11 @@
 info: |
     Deploys kubernetes using k3s an arbitrary number of masters and workers.
     specific components can be disabled by using the array disabled_components
+    version defaults to stable, although latest or testing can also be selected
 masters: 1
 workers: 0
 api_ip:
-version:
+version: stable
 pool: default
 image: debian9
 network: default

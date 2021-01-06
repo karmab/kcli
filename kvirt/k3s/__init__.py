@@ -70,7 +70,7 @@ def create(config, plandir, cluster, overrides):
                 pprint("You need to define api_ip in your parameters file", color='red')
                 os._exit(1)
     version = data.get('version')
-    if version is not None and not version.startswith('1.'):
+    if version not in ['stable', 'latest', 'testing']:
         pprint("Invalid version %s" % version, color='red')
         os._exit(1)
     data['basedir'] = '/workdir' if os.path.exists("/i_am_a_container") else '.'
