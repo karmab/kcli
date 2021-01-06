@@ -1344,7 +1344,7 @@ def _ssh_credentials(k, name):
         pprint("%s down" % name, color='red')
     if 'nodeport' in info:
         vmport = info['nodeport']
-        ip = k.node_host()
+        ip = k.node_host(name=info.get('host'))
         if ip is None:
             pprint("No valid node ip found" % name, color='red')
     elif 'loadbalancerip' in info:

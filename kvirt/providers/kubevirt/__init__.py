@@ -1230,9 +1230,11 @@ class Kubevirt(Kubecommon):
     def list_dns(self, domain):
         return []
 
-    def node_host(self):
+    def node_host(self, name=None):
         ip = None
         for node in self.core.list_node().items:
+            if name is not None and node.metadata.name != name:
+                continue
             addresses = [x.address for x in node.status.addresses if x.type == 'InternalIP']
             if addresses:
                 ip = addresses[0]

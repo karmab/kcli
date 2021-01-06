@@ -2088,7 +2088,7 @@ $INFO
                     if k.access_mode == 'NodePort':
                         vmport = info.get('nodeport')
                         if hostip is None:
-                            hostip = k.node_host()
+                            hostip = k.node_host(name=info.get('host'))
                         ip = hostip
                     elif k.access_mode == 'LoadBalancer':
                         ip = info.get('loadbalancerip')
