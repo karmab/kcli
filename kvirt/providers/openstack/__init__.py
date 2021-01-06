@@ -154,7 +154,7 @@ class Kopenstack(object):
             if key_name != 'kvirt':
                 common.pprint('Using keypair %s' % key_name)
         else:
-            common.pprint('Couldnt locate or create keypair for use. Leaving...', color='red')
+            common.pprint("Couldn't locate or create keypair for use. Leaving...", color='red')
             return {'result': 'failure', 'reason': "No usable keypair found"}
         userdata = None
         if cloudinit:
@@ -424,7 +424,7 @@ class Kopenstack(object):
             try:
                 self.neutron.delete_floatingip(floatingid)
             except Exception as e:
-                common.pprint("Hit %s when tying to delete floating %s" % (str(e), floating))
+                common.pprint("Hit %s when trying to delete floating %s" % (str(e), floating))
         index = 0
         for disk in vm._info['os-extended-volumes:volumes_attached']:
             volume = cinder.volumes.get(disk['id'])
@@ -469,7 +469,7 @@ class Kopenstack(object):
         flavors = [flavor for flavor in allflavors if flavor.ram >= int(memory) and flavor.vcpus >= currentflavor.vcpus]
         if flavors:
             flavor = flavors[0]
-            common.pprint("Using flavor %s" % flavor.name)
+            common.pprint("Using flavor %s" % flavor.name, color='blue')
             vm.resize(flavor.id)
             resizetimeout = 40
             resizeruntime = 0
@@ -481,7 +481,7 @@ class Kopenstack(object):
                 vm = nova.servers.find(name=name)
                 vmstatus = vm.status
                 sleep(2)
-                common.pprint("Waiting for vm %s to be in verify_resize" % name)
+                common.pprint("Waiting for vm %s to be in verify_resize" % name, color='blue')
                 resizeruntime += 2
             vm.confirm_resize()
             return {'result': 'success'}
@@ -851,7 +851,7 @@ class Kopenstack(object):
                 timeout = 0
                 while status != 'available':
                     status = cinder.volumes.get(disk['id']).status
-                    common.pprint("Waiting 5 seconds for export to complete")
+                    common.pprint("Waiting 5 seconds for export to complete", color='blue')
                     sleep(5)
                     timeout += 5
                     if timeout >= 90:

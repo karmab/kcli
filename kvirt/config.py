@@ -1315,7 +1315,7 @@ $INFO
             getback = True
         inputfile = os.path.expanduser(inputfile)
         if not os.path.exists(inputfile):
-            common.pprint("No input file found nor default kcli_plan.yml.Leaving....", color='red')
+            common.pprint("Input file %s not found.Leaving...." % inputfile, color='red')
             os._exit(1)
         if info:
             self.info_plan(inputfile, onfly=onfly, quiet=quiet, doc=doc)
