@@ -2146,20 +2146,22 @@ $INFO
         openshift.create(self, plandir, cluster, overrides)
 
     def delete_kube(self, cluster, overrides={}):
+        k = self.k
         cluster = overrides.get('cluster', cluster)
-        plan = cluster
         clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
         if os.path.exists(clusterdir):
-            if os.path.exists("%s/kcli_parameters.yml" % clusterdir):
-                with open("%s/kcli_parameters.yml" % clusterdir, 'r') as install:
-                    installparam = yaml.safe_load(install)
-                    plan = installparam.get('plan', plan)
-            common.pprint("Deleting %s" % clusterdir, color='green')
+            common.pprint("Deleting directory %s" % clusterdir, color='blue')
             rmtree(clusterdir)
-        self.plan(plan, delete=True)
+        for vm in sorted(k.list(), key=lambda x: x['name']):
+            name = vm['name']
+            currentcluster = vm.get('kube')
+            if currentcluster is not None and currentcluster == cluster:
+                k.delete(name, snapshots=True)
+                common.set_lastvm(name, self.client, delete=True)
+                common.pprint("%s deleted on %s!" % (name, self.client))
         if self.type == 'kubevirt' and self.k.access_mode == 'LoadBalancer':
             try:
-                self.k.delete_service("%s-api-svc" % cluster, self.k.namespace)
+                k.delete_service("%s-api-svc" % cluster, k.namespace)
             except:
                 pass
 
