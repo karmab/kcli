@@ -37,13 +37,12 @@ class Kubevirt(Kubecommon):
 
     """
     def __init__(self, token=None, ca_file=None, context=None, host='127.0.0.1', port=443, user='root', debug=False,
-                 tags=None, namespace=None, cdi=True, datavolumes=False, readwritemany=False, registry=None,
+                 namespace=None, cdi=True, datavolumes=False, readwritemany=False, registry=None,
                  access_mode='NodePort'):
         Kubecommon.__init__(self, token=token, ca_file=ca_file, context=context, host=host, port=port,
                             namespace=namespace, readwritemany=readwritemany)
         self.crds = client.CustomObjectsApi(api_client=self.api_client)
         self.debug = debug
-        self.tags = tags
         self.cdi = cdi
         self.datavolumes = datavolumes
         self.registry = registry
@@ -174,8 +173,20 @@ class Kubevirt(Kubecommon):
         if features:
             vm['spec']['template']['spec']['domain']['features'] = features
         if tags:
-            tags = {tag.split('=')[0]: tag.split('=')[1] for tag in tags}
-            vm['spec']['template']['spec']['nodeSelector'] = tags
+            final_tags = {}
+            if isinstance(tags, dict):
+                final_tags.update(tags)
+            else:
+                for tag in tags:
+                    if isinstance(tag, str) and len(tag.split('=')) == 2:
+                        final_tags[tag.split('=')[0]] = tag.split('=')[1]
+                    elif isinstance(tag, dict):
+                        final_tags.update(tag)
+                    else:
+                        common.pprint("Couldn't process tag %s. Skipping..." % tag, color='yellow')
+                        continue
+            if final_tags:
+                vm['spec']['template']['spec']['nodeSelector'] = final_tags
         interfaces = []
         networks = []
         allnetworks = {}
