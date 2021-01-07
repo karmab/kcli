@@ -187,22 +187,9 @@ class Kubevirt(Kubecommon):
                         continue
             if final_tags:
                 vm['spec']['template']['metadata']['labels'].update(final_tags)
-        selectors = overrides.get('selectors', [])
-        if selectors:
-            final_selectors = {}
-            if isinstance(selectors, dict):
-                final_selectors.update(selectors)
-            else:
-                for selector in selectors:
-                    if isinstance(selector, str) and len(selector.split('=')) == 2:
-                        final_selectors[selector.split('=')[0]] = selector.split('=')[1]
-                    elif isinstance(selector, dict):
-                        final_selectors.update(selector)
-                    else:
-                        common.pprint("Couldn't process selector %s. Skipping..." % selector, color='yellow')
-                        continue
-            if final_selectors:
-                vm['spec']['template']['spec']['nodeSelector'] = final_selectors
+        node_selector = overrides.get('nodeSelector', {})
+        if isinstance(node_selector, dict) and node_selector:
+            vm['spec']['template']['spec']['nodeSelector'] = node_selector
         interfaces = []
         networks = []
         allnetworks = {}
