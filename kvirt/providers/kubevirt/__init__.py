@@ -148,6 +148,8 @@ class Kubevirt(Kubecommon):
             if entry == 'kube':
                 kube = True
                 role = name.split('-')[1]
+                if role == 'bootstrap':
+                    role = 'master'
                 vm['spec']['template']['metadata']['labels']['kcli/role'] = role
             if entry == 'plan' and kube:
                 vm['spec']['template']['metadata']['labels']['kcli/plan'] = metadata[entry]
