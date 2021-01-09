@@ -37,7 +37,7 @@ def scale(config, plandir, cluster, overrides):
             elif platform == 'kubevirt':
                 selector = {'kcli/plan': plan, 'kcli/role': 'master'}
                 api_ip = config.k.create_service("%s-api" % cluster, config.k.namespace, selector,
-                                                 _type="LoadBalancer", port=6443)
+                                                 _type="LoadBalancer", ports=[6443])
                 if api_ip is None:
                     os._exit(1)
             else:
@@ -97,7 +97,7 @@ def create(config, plandir, cluster, overrides):
         elif platform == 'kubevirt':
             selector = {'kcli/plan': plan, 'kcli/role': 'master'}
             api_ip = config.k.create_service("%s-api" % cluster, config.k.namespace, selector,
-                                             _type="LoadBalancer", port=6443)
+                                             _type="LoadBalancer", ports=[6443])
             if api_ip is None:
                 os._exit(1)
             else:

@@ -378,8 +378,8 @@ class Kubevirt(Kubecommon):
             except:
                 localport = common.get_free_nodeport() if self.access_mode == 'NodePort' else None
                 selector = {'kubevirt.io/provider': 'kcli', 'kubevirt.io/domain': name}
-                self.create_service('%s-ssh' % name, namespace, selector, _type=self.access_mode, port=22,
-                                    nodeport=localport)
+                self.create_service('%s-ssh' % name, namespace, selector, _type=self.access_mode,
+                                    ports=[{'port': 22, 'nodePort': localport}])
         return {'result': 'success'}
 
     def start(self, name):
@@ -1244,20 +1244,32 @@ class Kubevirt(Kubecommon):
                 break
         return ip
 
-    def create_service(self, name, namespace, selector, _type="NodePort", port=None, nodeport=None, targetport=None,
-                       wait=True):
+    def create_service(self, name, namespace, selector, _type="NodePort", ports=[], wait=True):
         spec = {'kind': 'Service', 'apiVersion': 'v1', 'metadata': {'namespace': namespace, 'name': '%s-svc' % name},
                 'spec': {'externalTrafficPolicy': 'Cluster', 'sessionAffinity': 'None',
                          'selector': selector}}
         spec['spec']['type'] = _type
-        if port is None and targetport is not None:
-            port = targetport
-        if port is not None and targetport is None:
-            targetport = port
-        portspec = {'protocol': 'TCP', 'targetPort': targetport, 'port': port}
-        if _type == 'NodePort':
-            portspec['nodePort'] = nodeport
-        spec['spec']['ports'] = [portspec]
+        portspec = []
+        portname = True if len(ports) > 1 else False
+        for portinfo in ports:
+            newportspec = {}
+            if isinstance(portinfo, int):
+                port = portinfo
+                targetport = port
+                protocol = 'TCP'
+            elif isinstance(portinfo, dict):
+                port = portinfo.get('port')
+                protocol = portinfo.get('protocol', 'TCP')
+                targetport = portinfo.get('targetPort', port)
+                if _type == 'NodePort' and 'nodePort' in portinfo:
+                    newportspec['nodePort'] = portinfo['nodePort']
+            newportspec['protocol'] = protocol
+            newportspec['port'] = port
+            newportspec['targetPort'] = targetport
+            if portname:
+                newportspec['name'] = "port-%s" % port
+            portspec.append(newportspec)
+        spec['spec']['ports'] = portspec
         self.core.create_namespaced_service(namespace, spec)
         if _type == 'LoadBalancer' and wait:
             ipassigned = False
