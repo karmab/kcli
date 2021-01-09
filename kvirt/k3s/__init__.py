@@ -87,6 +87,7 @@ def create(config, plandir, cluster, overrides):
         os.mkdir("%s/auth" % clusterdir)
         with open("%s/kcli_parameters.yml" % clusterdir, 'w') as p:
             installparam = overrides.copy()
+            installparam['api_ip'] = plan
             installparam['plan'] = plan
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     k = config.k

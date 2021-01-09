@@ -13,7 +13,6 @@ cloudplatforms = ['aws', 'gcp']
 
 def scale(config, plandir, cluster, overrides):
     plan = cluster
-    platform = config.type
     data = {'cluster': cluster, 'xip': False, 'kube': cluster, 'kubetype': 'generic'}
     data['basedir'] = '/workdir' if os.path.exists("/i_am_a_container") else '.'
     cluster = data.get('cluster')
@@ -27,25 +26,6 @@ def scale(config, plandir, cluster, overrides):
             data.update(installparam)
             plan = installparam.get('plan', plan)
     data.update(overrides)
-    api_ip = data.get('api_ip')
-    if platform not in cloudplatforms:
-        if api_ip is None:
-            network = data.get('network', 'default')
-            if network == 'default' and platform == 'kvm':
-                pprint("Using 192.168.122.253 as api_ip", color='yellow')
-                data['api_ip'] = "192.168.122.253"
-            elif platform == 'kubevirt':
-                selector = {'kcli/plan': plan, 'kcli/role': 'master'}
-                api_ip = config.k.create_service("%s-api" % cluster, config.k.namespace, selector,
-                                                 _type="LoadBalancer", ports=[6443])
-                if api_ip is None:
-                    os._exit(1)
-            else:
-                pprint("You need to define api_ip in your parameters file", color='red')
-                os._exit(1)
-        if data.get('virtual_router_id') is None:
-            data['virtual_router_id'] = word2number(cluster)
-        pprint("Using keepalived virtual_router_id %s" % data['virtual_router_id'], color='blue')
     client = config.client
     k = config.k
     pprint("Scaling on client %s" % client, color='blue')
@@ -131,6 +111,8 @@ def create(config, plandir, cluster, overrides):
         os.mkdir("%s/auth" % clusterdir)
         with open("%s/kcli_parameters.yml" % clusterdir, 'w') as p:
             installparam = overrides.copy()
+            installparam['api_ip'] = api_ip
+            installparam['virtual_router_id'] = data['virtual_router_id']
             installparam['plan'] = plan
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     result = config.plan(plan, inputfile='%s/masters.yml' % plandir, overrides=data)
