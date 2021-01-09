@@ -82,9 +82,10 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
     userdata, metadata, netdata = None, None, None
     default_gateway = gateway
     legacy = True if image is not None and is_7(image) else False
-    prefix = 'ens' if image is not None and is_debian(image) else 'eth'
+    prefix = 'ens' if image is not None and is_ubuntu(image) else 'eth'
     netdata = {} if not legacy else ''
     if nets:
+        bridges = {}
         for index, net in enumerate(nets):
             if isinstance(net, str):
                 netname = net
@@ -101,14 +102,14 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 if index == 0:
                     if not legacy and netname in ipv6:
                         netdata[nicname] = {'dhcp6': True}
-                    # if not legacy:
-                    #    netdata[nicname] = {'dhcp6': True} if netname in ipv6 else {'dhcp4': True}
                     continue
                 ip = None
                 netmask = None
                 noconf = None
                 vips = []
                 enableipv6 = False
+                bridge = False
+                bridgename = 'br%s' % index
             elif isinstance(net, dict):
                 if index == 0 and 'type' in net and net.get('type') != 'virtio':
                     prefix = 'ens'
@@ -123,6 +124,8 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 noconf = net.get('noconf')
                 vips = net.get('vips')
                 enableipv6 = net.get('ipv6', False)
+                bridge = net.get('bridge', False)
+                bridgename = net.get('bridgename', 'br%s' % index)
             if legacy:
                 netdata += "  auto %s\n" % nicname
             if noconf is not None:
@@ -174,12 +177,25 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                             netdata[nicname]['addresses'].append("%s/%s" % (vip, netmask))
             else:
                 if legacy:
-                    netdata += "  iface %s inet dhcp\n" % nicname
+                    if not bridge:
+                        netdata += "  iface %s inet dhcp\n" % nicname
                 else:
                     if enableipv6 or netname in ipv6:
                         netdata[nicname] = {'dhcp6': True}
                     else:
                         netdata[nicname] = {'dhcp4': True}
+            if bridge:
+                if legacy:
+                    netdata += "  iface %s inet manual\n" % nicname
+                    netdata += "  auto %s\n" % bridgename
+                    netdata += "  iface %s inet dhcp\n" % bridgename
+                    netdata += "     bridge_ports %s\n" % nicname
+                else:
+                    bridges[bridgename] = {'interfaces': [nicname]}
+                    if enableipv6 or netname in ipv6:
+                        bridges[bridgename]['dhcp6'] = True
+                    else:
+                        bridges[bridgename]['dhcp4'] = True
     if domain is not None:
         localhostname = "%s.%s" % (name, domain)
     else:
@@ -191,6 +207,9 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
     if not legacy:
         if netdata:
             netdata = {'version': 2, 'ethernets': netdata}
+            if bridges:
+                netdata['bridges'] = bridges
+            # netdata = yaml.safe_dump({'network': netdata}, default_flow_style=False, encoding='utf-8').decode("utf-8")
             netdata = yaml.safe_dump(netdata, default_flow_style=False, encoding='utf-8').decode("utf-8")
         else:
             netdata = ''
@@ -1454,6 +1473,13 @@ def get_values(data, element, field):
 
 def is_debian(image):
     if [x for x in UBUNTUS if x in image.lower()] or 'ubuntu' in image.lower() or 'debian' in image.lower():
+        return True
+    else:
+        return False
+
+
+def is_ubuntu(image):
+    if [x for x in UBUNTUS if x in image.lower()] or 'ubuntu' in image.lower():
         return True
     else:
         return False
