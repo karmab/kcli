@@ -81,51 +81,50 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
     """
     userdata, metadata, netdata = None, None, None
     default_gateway = gateway
-    legacy = True if image is not None and is_7(image) else False
+    legacy = True if image is not None and (is_7(image) or is_debian(image)) else False
     prefix = 'ens' if image is not None and is_ubuntu(image) else 'eth'
     netdata = {} if not legacy else ''
     if nets:
         bridges = {}
-        for index, net in enumerate(nets):
-            if isinstance(net, str):
-                netname = net
-            elif 'name' in net:
-                netname = net['name']
+        for index, netinfo in enumerate(nets):
+            net = netinfo.copy
+            if isinstance(netinfo, str):
+                net = {'name': netinfo}
+            if isinstance(netinfo, dict):
+                net = netinfo.copy()
             else:
-                pprint("Missing name for net %s" % index, color='red')
-                continue
-            if isinstance(net, str) or (len(net) == 1 and 'name' in net):
+                pprint("Wrong net entry %s" % index, color='red')
+                os._exit(1)
+            if 'name' not in net:
+                pprint("Missing name in net %s" % index, color='red')
+                os._exit(1)
+            netname = net['name']
+            if index == 0 and 'type' in net and net.get('type') != 'virtio':
+                prefix = 'ens'
+            nicname = net.get('nic')
+            if nicname is None:
                 if prefix.startswith('ens'):
                     nicname = "%s%d" % (prefix, 3 + index)
                 else:
                     nicname = "%s%d" % (prefix, index)
-                if index == 0:
-                    if not legacy and netname in ipv6:
-                        netdata[nicname] = {'dhcp6': True}
-                    continue
-                ip = None
-                netmask = None
-                noconf = None
-                vips = []
-                enableipv6 = False
-                bridge = False
-                bridgename = 'br%s' % index
-            elif isinstance(net, dict):
-                if index == 0 and 'type' in net and net.get('type') != 'virtio':
-                    prefix = 'ens'
-                nicname = net.get('nic')
-                if nicname is None:
-                    if prefix.startswith('ens'):
-                        nicname = "%s%d" % (prefix, 3 + index)
-                    else:
-                        nicname = "%s%d" % (prefix, index)
-                ip = net.get('ip')
-                netmask = next((e for e in [net.get('mask'), net.get('netmask')] if e is not None), None)
-                noconf = net.get('noconf')
-                vips = net.get('vips')
-                enableipv6 = net.get('ipv6', False)
-                bridge = net.get('bridge', False)
-                bridgename = net.get('bridgename', 'br%s' % index)
+            ip = net.get('ip')
+            netmask = next((e for e in [net.get('mask'), net.get('netmask')] if e is not None), None)
+            noconf = net.get('noconf')
+            vips = net.get('vips', [])
+            enableipv6 = net.get('ipv6', False)
+            bridge = net.get('bridge', False)
+            bridgename = net.get('bridgename', 'br%s' % index)
+            if bridge:
+                if legacy:
+                    netdata += "  auto %s\n" % nicname
+                    netdata += "  iface %s inet manual\n" % nicname
+                    netdata += "  auto %s\n" % bridgename
+                    netdata += "  iface %s inet dhcp\n" % bridgename
+                    netdata += "     bridge_ports %s\n" % nicname
+                else:
+                    bridges[bridgename] = {'interfaces': [nicname]}
+                realnicname = nicname
+                nicname = bridgename
             if legacy:
                 netdata += "  auto %s\n" % nicname
             if noconf is not None:
@@ -184,18 +183,10 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                         netdata[nicname] = {'dhcp6': True}
                     else:
                         netdata[nicname] = {'dhcp4': True}
-            if bridge:
-                if legacy:
-                    netdata += "  iface %s inet manual\n" % nicname
-                    netdata += "  auto %s\n" % bridgename
-                    netdata += "  iface %s inet dhcp\n" % bridgename
-                    netdata += "     bridge_ports %s\n" % nicname
-                else:
-                    bridges[bridgename] = {'interfaces': [nicname]}
-                    if enableipv6 or netname in ipv6:
-                        bridges[bridgename]['dhcp6'] = True
-                    else:
-                        bridges[bridgename]['dhcp4'] = True
+            if bridge and not legacy:
+                bridges[bridgename].update(netdata[nicname])
+                del netdata[nicname]
+                netdata[realnicname] = {'match': {'name': realnicname}}
     if domain is not None:
         localhostname = "%s.%s" % (name, domain)
     else:
@@ -205,12 +196,13 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
         metadata["network-interfaces"] = netdata
     metadata = json.dumps(metadata)
     if not legacy:
-        if netdata:
-            netdata = {'version': 2, 'ethernets': netdata}
+        if netdata or bridges:
+            final_netdata = {'version': 2}
+            if netdata:
+                final_netdata['ethernets'] = netdata
             if bridges:
-                netdata['bridges'] = bridges
-            # netdata = yaml.safe_dump({'network': netdata}, default_flow_style=False, encoding='utf-8').decode("utf-8")
-            netdata = yaml.safe_dump(netdata, default_flow_style=False, encoding='utf-8').decode("utf-8")
+                final_netdata['bridges'] = bridges
+            netdata = yaml.safe_dump(final_netdata, default_flow_style=False, encoding='utf-8').decode("utf-8")
         else:
             netdata = ''
     else:
@@ -1472,7 +1464,7 @@ def get_values(data, element, field):
 
 
 def is_debian(image):
-    if [x for x in UBUNTUS if x in image.lower()] or 'ubuntu' in image.lower() or 'debian' in image.lower():
+    if 'debian' in image.lower():
         return True
     else:
         return False
