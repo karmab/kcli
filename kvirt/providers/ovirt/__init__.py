@@ -6,6 +6,7 @@ Ovirt Provider Class
 
 from distutils.spawn import find_executable
 from kvirt import common
+from kvirt.common import error, pprint, warning
 from kvirt.defaults import UBUNTUS, METADATA_FIELDS
 from kvirt.providers.ovirt.helpers import IMAGES as oimages
 from kvirt.providers.ovirt.helpers import get_home_ssh_key
@@ -38,7 +39,7 @@ class KOvirt(object):
                                        password=password, insecure=insecure,
                                        ca_file=ca_file)
         except oerror as e:
-            common.pprint("Unexpected error: %s" % e, color='red')
+            error("Unexpected error: %s" % e)
             return None
         self.debug = debug
         self.vms_service = self.conn.system_service().vms_service()
@@ -113,8 +114,7 @@ class KOvirt(object):
                 if temp.name == image:
                     if temp.memory > memory:
                         memory = temp.memory
-                        common.pprint("Using %sMb for memory as defined in template %s" % (memory, image),
-                                      color='blue')
+                        pprint("Using %sMb for memory as defined in template %s" % (memory, image))
                     _template = types.Template(name=image)
                     found = True
             if not found:
@@ -187,7 +187,7 @@ class KOvirt(object):
             else:
                 timeout += 5
                 sleep(5)
-                common.pprint("Waiting for vm %s to be ready" % name)
+                pprint("Waiting for vm %s to be ready" % name)
             if timeout > 80:
                 return {'result': 'failure', 'reason': 'timeout waiting for vm to be ready'}
         if 'default' not in self.netprofiles:
@@ -253,7 +253,6 @@ class KOvirt(object):
                 continue
             newdisk = self.add_disk(name, disksize, pool=diskpool, thin=diskthin)
             if newdisk['result'] == 'failure':
-                # common.pprint(newdisk['reason'], color='red')
                 return {'result': 'failure', 'reason': newdisk['reason']}
         if cloudinit and not custom_properties and initialization is None:
             custom_script = ''
@@ -336,7 +335,7 @@ class KOvirt(object):
     def start(self, name):
         vmsearch = self.vms_service.list(search='name=%s' % name)
         if not vmsearch:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         vminfo = vmsearch[0]
         if str(vminfo.status) == 'down':
@@ -347,7 +346,7 @@ class KOvirt(object):
     def stop(self, name):
         vmsearch = self.vms_service.list(search='name=%s' % name)
         if not vmsearch:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         vminfo = vmsearch[0]
         if str(vminfo.status) != 'down':
@@ -358,7 +357,7 @@ class KOvirt(object):
     def snapshot(self, name, base, revert=False, delete=False, listing=False):
         vmsearch = self.vms_service.list(search='name=%s' % base)
         if not vmsearch:
-            common.pprint("VM %s not found" % base, color='red')
+            error("VM %s not found" % base)
             return {'result': 'failure', 'reason': "VM %s not found" % base}
         vm = vmsearch[0]
         snapshots_service = self.vms_service.vm_service(vm.id).snapshots_service()
@@ -368,7 +367,7 @@ class KOvirt(object):
     def restart(self, name):
         vmsearch = self.vms_service.list(search='name=%s' % name)
         if not vmsearch:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         vm = vmsearch[0]
         status = str(vm.status)
@@ -424,7 +423,7 @@ class KOvirt(object):
         connectiondetails = None
         vmsearch = self.vms_service.list(search='name=%s' % name)
         if not vmsearch:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         vm = vmsearch[0]
         vm_service = self.vms_service.vm_service(vm.id)
@@ -494,7 +493,7 @@ delete-this-file=1
 toggle-fullscreen=shift+f11
 release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.value, name=name)
         if connectiondetails is None:
-            common.pprint("Couldn't retrieve connection details for %s" % name)
+            error("Couldn't retrieve connection details for %s" % name)
             os._exit(1)
         if web:
             return "%s://%s:%s+%s" % (c.protocol, address, sport if str(c.protocol) == 'spice' else port, ticket.value)
@@ -502,7 +501,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             f.write(connectiondetails)
         if self.debug or os.path.exists("/i_am_a_container"):
             msg = "Use remote-viewer with this:\n%s" % connectiondetails if not self.debug else connectiondetails
-            common.pprint(msg)
+            pprint(msg)
         else:
             os.popen("remote-viewer /tmp/console.vv &")
         return
@@ -523,7 +522,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         user_service = users_service.user_service(user.id)
         vmsearch = self.vms_service.list(search='name=%s' % name)
         if not vmsearch:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         vm = vmsearch[0]
         permissions_service = self.vms_service.vm_service(vm.id).permissions_service()
@@ -531,8 +530,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         keys_service = user_service.ssh_public_keys_service()
         key = get_home_ssh_key()
         if key is None:
-            common.pprint("neither id_rsa.pub or id_dsa public keys found in your .ssh directory. This is required",
-                          color='blue')
+            error("neither id_rsa.pub or id_dsa public keys found in your .ssh directory. This is required")
             return
         try:
             keys_service.add(key=types.SshPublicKey(content=key))
@@ -566,7 +564,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         if vm is None:
             vmsearch = self.vms_service.list(search='name=%s' % name)
             if not vmsearch:
-                common.pprint("VM %s not found" % name, color='red')
+                error("VM %s not found" % name)
                 return {}
             vm = vmsearch[0]
         else:
@@ -635,7 +633,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
     def ip(self, name):
         vmsearch = self.vms_service.list(search='name=%s' % name)
         if not vmsearch:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return None
         vm = vmsearch[0]
         ips = []
@@ -672,7 +670,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
     def delete(self, name, snapshots=False):
         vmsearch = self.vms_service.list(search='name=%s' % name)
         if not vmsearch:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         vminfo = vmsearch[0]
         vm = self.vms_service.vm_service(vminfo.id)
@@ -693,7 +691,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
     def update_metadata(self, name, metatype, metavalue, append=False):
         vmsearch = self.vms_service.list(search='name=%s' % name)
         if not vmsearch:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return
         vminfo = vmsearch[0]
         found = False
@@ -719,12 +717,12 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
     def update_memory(self, name, memory):
         vmsearch = self.vms_service.list(search='name=%s' % name)
         if not vmsearch:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         vminfo = vmsearch[0]
         vm = self.vms_service.vm_service(vminfo.id)
         if str(vminfo.status) == 'up':
-            common.pprint("Note it will only be effective upon next start", color='yellow')
+            warning("Note it will only be effective upon next start")
         memory = int(memory) * 1024 * 1024
         vm.update(vm=types.Vm(memory=memory))
         return {'result': 'success'}
@@ -732,11 +730,11 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
     def update_cpus(self, name, numcpus):
         vmsearch = self.vms_service.list(search='name=%s' % name)
         if not vmsearch:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         vminfo = vmsearch[0]
         if str(vminfo.status) == 'up':
-            common.pprint("Note it will only be effective upon next start", color='yellow')
+            warning("Note it will only be effective upon next start")
         vm = self.vms_service.vm_service(vminfo.id)
         cpu = types.Cpu(topology=types.CpuTopology(cores=numcpus, sockets=1))
         vm.update(vm=types.Vm(cpu=cpu))
@@ -753,7 +751,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
     def update_iso(self, name, iso):
         vmsearch = self.vms_service.list(search='name=%s' % name)
         if not vmsearch:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         vminfo = vmsearch[0]
         vm = self.vms_service.vm_service(vminfo.id)
@@ -766,7 +764,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         try:
             cdrom_service.update(cdrom=types.Cdrom(file=types.File(id=iso)), current=True)
         except:
-            common.pprint("Iso %s not found" % iso, color='red')
+            error("Iso %s not found" % iso)
             return {'result': 'failure', 'reason': "Iso %s not found" % iso}
         return {'result': 'success'}
 
@@ -785,11 +783,11 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         sds_service = system_service.storage_domains_service()
         poolcheck = sds_service.list(search='name=%s' % pool)
         if not poolcheck:
-            common.pprint("Pool %s not found" % pool, color='red')
+            error("Pool %s not found" % pool)
             return {'result': 'failure', 'reason': "Pool %s not found" % pool}
         vmsearch = self.vms_service.list(search='name=%s' % name)
         if not vmsearch:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         vm = self.vms_service.vm_service(vmsearch[0].id)
         disk_attachments_service = vm.disk_attachments_service()
@@ -812,7 +810,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             else:
                 timeout += 5
                 sleep(5)
-                common.pprint("Waiting for disk %s to be ready" % diskname)
+                pprint("Waiting for disk %s to be ready" % diskname)
             if timeout > 40:
                 return {'result': 'failure', 'reason': 'timeout waiting for disk %s to be ready' % diskname}
         return {'result': 'success'}
@@ -836,7 +834,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             else:
                 timeout += 5
                 sleep(5)
-                common.pprint("Waiting for image disk %s to be resized" % diskname)
+                pprint("Waiting for image disk %s to be resized" % diskname)
             if timeout > 40:
                 return {'result': 'failure', 'reason': 'timeout waiting for image disk %s to be resized' % diskname}
         return {'result': 'success'}
@@ -844,7 +842,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
     def delete_disk(self, name=None, diskname=None, pool=None):
         vmsearch = self.vms_service.list(search='name=%s' % name)
         if not vmsearch:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         vm = self.vms_service.vm_service(vmsearch[0].id)
         disk_attachments_service = vm.disk_attachments_service()
@@ -861,7 +859,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                 disk_service = disks_service.disk_service(disk.disk.id)
                 disk_service.remove()
                 return {'result': 'success'}
-        common.pprint("Disk %s not found" % diskname, color='red')
+        error("Disk %s not found" % diskname)
         return {'result': 'failure', 'reason': "Disk %s not found" % diskname}
 
     def list_disks(self):
@@ -878,7 +876,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
     def add_nic(self, name, network):
         vmsearch = self.vms_service.list(search='name=%s' % name)
         if not vmsearch:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         vm = vmsearch[0]
         nics_service = self.vms_service.vm_service(vm.id).nics_service()
@@ -905,7 +903,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
     def delete_nic(self, name, interface):
         vmsearch = self.vms_service.list(search='name=%s' % name)
         if not vmsearch:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         vmid = vmsearch[0].id
         for nic in self.vms_service.vm_service(vmid).nics_service().list():
@@ -914,7 +912,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                 nic_service = nics_service.nic_service(nic.id)
                 nic_service.remove()
                 return {'result': 'success'}
-        common.pprint("VM %s not found" % name, color='red')
+        error("VM %s not found" % name)
         return {'result': 'failure', 'reason': "VM %s not found" % name}
 
     def create_pool(self, name, poolpath, pooltype='dir', user='qemu', thinpool=None):
@@ -922,7 +920,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         return
 
     def delete_image(self, image, pool=None):
-        common.pprint("Deleting Template %s" % image)
+        pprint("Deleting Template %s" % image)
         templates_service = self.templates_service
         templateslist = templates_service.list()
         for template in templateslist:
@@ -935,7 +933,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
     def add_image(self, image, pool, short=None, cmd=None, name=None):
         shortimage = os.path.basename(image).split('?')[0]
         if shortimage in self.volumes():
-            common.pprint("Template %s already there" % shortimage, color='blue')
+            pprint("Template %s already there" % shortimage)
             return {'result': 'success'}
         system_service = self.conn.system_service()
         profiles_service = self.conn.system_service().vnic_profiles_service()
@@ -959,7 +957,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             return {'result': 'failure', 'reason': "Pool %s not found" % pool}
         sd = sds_service.list(search='name=%s' % self.imagerepository)
         if sd:
-            common.pprint("Trying to use glance repository %s" % self.imagerepository)
+            pprint("Trying to use glance repository %s" % self.imagerepository)
             sd_service = sds_service.storage_domain_service(sd[0].id)
             images_service = sd_service.images_service()
             images = images_service.list()
@@ -970,7 +968,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             if shortimage in ximages:
                 imageobject = next((i for i in images if ximages[shortimage] in i.name), None)
                 if imageobject is None:
-                    common.pprint("Unable to locate the image in glance repository", color='red')
+                    error("Unable to locate the image in glance repository")
                     return {'result': 'failure', 'reason': "Unable to locate the image in glance repository"}
                 image_service = images_service.image_service(imageobject.id)
                 image_service.import_(import_as_template=True, template=types.Template(name=shortimage),
@@ -978,20 +976,20 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                                       storage_domain=types.StorageDomain(name=pool))
                 return {'result': 'success'}
             else:
-                common.pprint("Image not found in %s. Manually downloading" % self.imagerepository, color='blue')
+                pprint("Image not found in %s. Manually downloading" % self.imagerepository)
         else:
-            common.pprint("No glance repository found. Manually downloading")
+            pprint("No glance repository found. Manually downloading")
         disks_service = self.conn.system_service().disks_service()
         disksearch = disks_service.list(search='alias=%s' % shortimage)
         if not disksearch:
             if not os.path.exists('/tmp/%s' % shortimage):
-                common.pprint("Downloading locally %s" % shortimage)
+                pprint("Downloading locally %s" % shortimage)
                 downloadcmd = "curl -Lo /tmp/%s -f '%s'" % (shortimage, image)
                 code = os.system(downloadcmd)
                 if code != 0:
                     return {'result': 'failure', 'reason': "Unable to download indicated image"}
             else:
-                common.pprint("Using found /tmp/%s" % shortimage, color='blue')
+                pprint("Using found /tmp/%s" % shortimage)
             BUF_SIZE = 128 * 1024
             image_path = '/tmp/%s' % shortimage
             extensions = {'bz2': 'bunzip2', 'gz': 'gunzip', 'xz': 'unxz'}
@@ -999,7 +997,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                 if shortimage.endswith(extension):
                     executable = extensions[extension]
                     if find_executable(executable) is None:
-                        common.pprint("%s not found. Can't uncompress image" % executable, color="blue")
+                        pprint("%s not found. Can't uncompress image" % executable)
                         os._exit(1)
                     else:
                         uncompresscmd = "%s %s" % (executable, image_path)
@@ -1042,7 +1040,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             proxy_connection.putheader('Content-Length', "%d" % (image_size,))
             proxy_connection.endheaders()
             last_progress = time()
-            common.pprint("Uploading image %s" % shortimage)
+            pprint("Uploading image %s" % shortimage)
             with open(image_path, "rb") as disk:
                 pos = 0
                 while pos < image_size:
@@ -1055,7 +1053,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                     pos += len(chunk)
                     now = time()
                     if now - last_progress > 10:
-                        common.pprint("Uploaded %.2f%%" % (float(pos) / image_size * 100), color='blue')
+                        pprint("Uploaded %.2f%%" % (float(pos) / image_size * 100))
                         last_progress = now
             response = proxy_connection.getresponse()
             if response.status != 200:
@@ -1076,7 +1074,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                                                memory=memory, cpu=cpu, template=_template, console=console, os=_os),
                                       clone=False)
         while True:
-            common.pprint("Preparing temporary vm %s" % tempname, color='blue')
+            pprint("Preparing temporary vm %s" % tempname)
             sleep(5)
             disk_service = disks_service.disk_service(disk_id)
             disk = disk_service.get()
@@ -1096,7 +1094,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         template = self.templates_service.add_from_vm(template=types.Template(name=shortimage, vm=tempvm))
         template_service = self.templates_service.template_service(template.id)
         while True:
-            common.pprint("Converting temporary vm to template", color='blue')
+            pprint("Converting temporary vm to template")
             sleep(5)
             template = template_service.get()
             if template.status == types.TemplateStatus.OK:
@@ -1159,7 +1157,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
     def get_pool_path(self, pool):
         poolsearch = self.conn.system_service().storage_domains_service().list(search='name=%s' % pool)
         if not poolsearch:
-            common.pprint("Pool %s not found" % pool, color='red')
+            error("Pool %s not found" % pool)
             return {'result': 'failure', 'reason': "Pool %s not found" % pool}
         pool = poolsearch[0]
         return pool.storage.path
@@ -1170,7 +1168,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
     def export(self, name, image=None):
         vmsearch = self.vms_service.list(search='name=%s' % name)
         if not vmsearch:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         vminfo = vmsearch[0]
         vm = self.vms_service.vm_service(vminfo.id)

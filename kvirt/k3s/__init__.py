@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from distutils.spawn import find_executable
-from kvirt.common import info, pprint, get_kubectl, scp, _ssh_credentials
+from kvirt.common import success, pprint, error, warning, get_kubectl, scp, _ssh_credentials, info2
 import os
 import sys
 import yaml
@@ -16,7 +16,7 @@ def scale(config, plandir, cluster, overrides):
     cluster = data.get('cluster')
     clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
     if not os.path.exists(clusterdir):
-        pprint("Cluster directory %s not found..." % clusterdir, color='red')
+        error("Cluster directory %s not found..." % clusterdir)
         sys.exit(1)
     if os.path.exists("%s/kcli_parameters.yml" % clusterdir):
         with open("%s/kcli_parameters.yml" % clusterdir, 'r') as install:
@@ -26,13 +26,13 @@ def scale(config, plandir, cluster, overrides):
     data.update(overrides)
     client = config.client
     k = config.k
-    pprint("Scaling on client %s" % client, color='blue')
+    pprint("Scaling on client %s" % client)
     image = k.info("%s-master-0" % cluster).get('image')
     if image is None:
-        pprint("Missing image...", color='red')
+        error("Missing image...")
         sys.exit(1)
     else:
-        pprint("Using image %s" % image, color='blue')
+        pprint("Using image %s" % image)
     data['image'] = image
     os.chdir(os.path.expanduser("~/.kcli"))
     config.plan(plan, inputfile='%s/workers.yml' % plandir, overrides=data)
@@ -55,7 +55,7 @@ def create(config, plandir, cluster, overrides):
             api_ip = "%s-master.%s" % (cluster, domain)
         elif api_ip is None:
             if network == 'default' and platform == 'kvm':
-                pprint("Using 192.168.122.253 as api_ip", color='yellow')
+                warning("Using 192.168.122.253 as api_ip")
                 data['api_ip'] = "192.168.122.253"
             elif platform == 'kubevirt':
                 selector = {'kcli/plan': plan, 'kcli/role': 'master'}
@@ -64,21 +64,21 @@ def create(config, plandir, cluster, overrides):
                 if api_ip is None:
                     os._exit(1)
                 else:
-                    pprint("Using api_ip %s" % api_ip, color='blue')
+                    pprint("Using api_ip %s" % api_ip)
                     data['api_ip'] = api_ip
             else:
-                pprint("You need to define api_ip in your parameters file", color='red')
+                error("You need to define api_ip in your parameters file")
                 os._exit(1)
     version = data.get('version')
     if version not in ['stable', 'latest', 'testing']:
-        pprint("Invalid version %s" % version, color='red')
+        error("Invalid version %s" % version)
         os._exit(1)
     data['basedir'] = '/workdir' if os.path.exists("/i_am_a_container") else '.'
     cluster = data.get('cluster')
     clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
     firstmaster = "%s-master-0" % cluster
     if os.path.exists(clusterdir):
-        pprint("Please remove existing directory %s first..." % clusterdir, color='red')
+        error("Please remove existing directory %s first..." % clusterdir)
         sys.exit(1)
     if find_executable('kubectl') is None:
         get_kubectl()
@@ -95,7 +95,7 @@ def create(config, plandir, cluster, overrides):
     if result['result'] != "success":
         os._exit(1)
     if masters > 1:
-        pprint("Deploying extra masters", color='blue')
+        pprint("Deploying extra masters")
         if 'name' in data:
             del data['name']
         config.plan(cluster, inputfile='%s/masters.yml' % plandir, overrides=data)
@@ -111,11 +111,11 @@ def create(config, plandir, cluster, overrides):
     os.system(scpcmd)
     workers = data.get('workers', 0)
     if workers > 0:
-        pprint("Deploying workers", color='blue')
+        pprint("Deploying workers")
         if 'name' in data:
             del data['name']
         os.chdir(os.path.expanduser("~/.kcli"))
         config.plan(cluster, inputfile='%s/workers.yml' % plandir, overrides=data)
-    pprint("K3s cluster %s deployed!!!" % cluster)
-    info("export KUBECONFIG=$HOME/.kcli/clusters/%s/auth/kubeconfig" % cluster)
-    info("export PATH=$PWD:$PATH")
+    success("K3s cluster %s deployed!!!" % cluster)
+    info2("export KUBECONFIG=$HOME/.kcli/clusters/%s/auth/kubeconfig" % cluster)
+    info2("export PATH=$PWD:$PATH")

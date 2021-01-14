@@ -8,6 +8,7 @@ from jinja2 import Environment, FileSystemLoader
 from jinja2 import StrictUndefined as undefined
 from jinja2.exceptions import TemplateSyntaxError, TemplateError
 from kvirt import common
+from kvirt.common import pprint, error, warning
 from kvirt.defaults import UBUNTUS, METADATA_FIELDS
 from dateutil import parser as dateparser
 from getpass import getuser
@@ -60,7 +61,7 @@ class Kgcp(object):
             httperror = check['httpErrorMessage']
             code = check['error']['errors'][0]["code"]
             message = check['error']['errors'][0]["message"]
-            common.pprint("Got %s Code %s Error %s" % (httperror, code, message), color='red')
+            error("Got %s Code %s Error %s" % (httperror, code, message))
         return
 
     def close(self):
@@ -107,11 +108,11 @@ class Kgcp(object):
             if memory != 512 and memory % 1024 != 0:
                 return {'result': 'failure', 'reason': "Memory is not multiple of 1024"}
             if numcpus > 1 and memory < 2048:
-                common.pprint("Rounding memory to 2048Mb as more than one cpu is used", color='blue')
+                pprint("Rounding memory to 2048Mb as more than one cpu is used")
                 memory = 2048
             machine_type = 'custom-%s-%s' % (numcpus, memory)
             if memory < 921.6:
-                common.pprint("Rounding memory to 1024Mb", color='blue')
+                pprint("Rounding memory to 1024Mb")
                 machine_type = 'f1-micro'
         else:
             machine_type = flavor
@@ -179,7 +180,7 @@ class Kgcp(object):
                     else:
                         timeout += 5
                         sleep(5)
-                        common.pprint("Waiting for disk %s to be ready" % diskname)
+                        pprint("Waiting for disk %s to be ready" % diskname)
                 newdisk['source'] = diskpath
             body['disks'].append(newdisk)
         body['serviceAccounts'] = [{'email': 'default',
@@ -227,11 +228,10 @@ class Kgcp(object):
                         templ = env.get_template(os.path.basename(origin))
                         newfile = templ.render(overrides)
                     except TemplateSyntaxError as e:
-                        common.pprint("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message),
-                                      color='red')
+                        error("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message))
                         os._exit(1)
                     except TemplateError as e:
-                        common.pprint("Error rendering file %s. Got: %s" % (origin, e.message), color='red')
+                        error("Error rendering file %s. Got: %s" % (origin, e.message))
                         os._exit(1)
                     startup_script += "cat <<'EOF' >%s\n%s\nEOF\nchmod %s %s\n" % (path, newfile, permissions, path)
                 else:
@@ -254,7 +254,7 @@ class Kgcp(object):
                     try:
                         newcmd = Environment(undefined=undefined).from_string(cmd).render(overrides)
                     except TemplateError as e:
-                        common.pprint("Error rendering cmd %s. Got: %s" % (cmd, e.message), color='red')
+                        error("Error rendering cmd %s. Got: %s" % (cmd, e.message))
                         os._exit(1)
                 startup_script += '%s\n' % newcmd
         if startup_script != '':
@@ -385,7 +385,7 @@ class Kgcp(object):
             vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
             status = vm['status']
         except:
-            common.pprint("Vm %s not found" % name, color='red')
+            error("Vm %s not found" % name)
         return status
 
     def list(self):
@@ -412,9 +412,9 @@ class Kgcp(object):
             return url
         if self.debug or os.path.exists("/i_am_a_container"):
             msg = "Open the following url:\n%s" % url if os.path.exists("/i_am_a_container") else url
-            common.pprint(msg)
+            pprint(msg)
         else:
-            common.pprint("Opening url: %s" % url)
+            pprint("Opening url: %s" % url)
             webbrowser.open(url, new=2, autoraise=True)
         return
 
@@ -464,7 +464,7 @@ class Kgcp(object):
             try:
                 vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
             except:
-                common.pprint("VM %s not found" % name, color='red')
+                error("VM %s not found" % name)
                 return {}
         yamlinfo['name'] = vm['name']
         yamlinfo['status'] = vm['status']
@@ -523,7 +523,7 @@ class Kgcp(object):
         try:
             vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
         except:
-            common.pprint("Vm %s not found" % name, color='red')
+            error("Vm %s not found" % name)
             return None
         if 'natIP' not in vm['networkInterfaces'][0]['accessConfigs'][0]:
             return None
@@ -539,7 +539,7 @@ class Kgcp(object):
         try:
             vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
         except:
-            common.pprint("Vm %s not found" % name, color='red')
+            error("Vm %s not found" % name)
             return None
         if 'networkIP' not in vm['networkInterfaces'][0]:
             return None
@@ -599,7 +599,7 @@ class Kgcp(object):
         try:
             vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
         except Exception:
-            common.pprint("VM %s not found" % name)
+            error("VM %s not found" % name)
             return 1
         metadata = vm['metadata']['items'] if 'items' in vm['metadata'] else []
         found = False
@@ -624,10 +624,10 @@ class Kgcp(object):
         try:
             vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
         except Exception:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if vm['status'] in ['RUNNING', 'STOPPING']:
-            common.pprint("Can't update flavor of VM %s while up" % name, color='red')
+            error("Can't update flavor of VM %s while up" % name)
             return {'result': 'failure', 'reason': "VM %s up" % name}
         machinetype = os.path.basename(vm['machineType'])
         if machinetype == flavor:
@@ -645,10 +645,10 @@ class Kgcp(object):
         try:
             vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
         except Exception:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if vm['status'] in ['RUNNING', 'STOPPING']:
-            common.pprint("Can't update memory of VM %s while up" % name, color='red')
+            error("Can't update memory of VM %s while up" % name)
             return {'result': 'failure', 'reason': "VM %s up" % name}
         machinetype = os.path.basename(vm['machineType'])
         if 'custom' in machinetype:
@@ -660,7 +660,7 @@ class Kgcp(object):
             body = {"machineType": newmachinetype}
             conn.instances().setMachineType(project=project, zone=zone, instance=name, body=body).execute()
         else:
-            common.pprint("No custom machine type found. Not updating memory of %s" % name, color='yellow')
+            warning("No custom machine type found. Not updating memory of %s" % name)
         return {'result': 'success'}
 
     def update_cpus(self, name, numcpus):
@@ -670,10 +670,10 @@ class Kgcp(object):
         try:
             vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
         except Exception:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if vm['status'] in ['RUNNING', 'STOPPING']:
-            common.pprint("Can't update cpus of VM %s while up" % name, color='red')
+            error("Can't update cpus of VM %s while up" % name)
             return {'result': 'failure', 'reason': "VM %s up" % name}
         machinetype = os.path.basename(vm['machineType'])
         if 'custom' in machinetype:
@@ -685,7 +685,7 @@ class Kgcp(object):
             body = {"machineType": newmachinetype}
             conn.instances().setMachineType(project=project, zone=zone, instance=name, body=body).execute()
         else:
-            common.pprint("No custom machine type found. Not updating memory of %s" % name, color='yellow')
+            warning("No custom machine type found. Not updating memory of %s" % name)
         return {'result': 'success'}
 
     def update_start(self, name, start=True):
@@ -727,7 +727,7 @@ class Kgcp(object):
             else:
                 timeout += 5
                 sleep(5)
-                common.pprint("Waiting for disk to be ready")
+                pprint("Waiting for disk to be ready")
         body = {'source': '/compute/v1/projects/%s/zones/%s/disks/%s' % (project, zone, diskname), 'autoDelete': True}
         conn.instances().attachDisk(zone=zone, project=project, instance=name, body=body).execute()
         return {'result': 'success'}
@@ -770,7 +770,7 @@ class Kgcp(object):
         return
 
     def delete_image(self, image, pool=None):
-        common.pprint("Deleting image %s" % image)
+        pprint("Deleting image %s" % image)
         conn = self.conn
         project = self.project
         try:
@@ -786,7 +786,7 @@ class Kgcp(object):
         shortimage = os.path.basename(image).split('?')[0].replace('.tar.gz', '').replace('.', '-').replace('-', '.')
         if 'rhcos' in image:
             shortimage = "rhcos-%s" % shortimage
-        common.pprint("Adding image %s" % shortimage)
+        pprint("Adding image %s" % shortimage)
         image_body = {'name': shortimage, 'licenses': ["projects/vm-options/global/licenses/enable-vmx"]}
         if image.endswith('tar.gz'):
             image_body['rawDisk'] = {'source': image}
@@ -933,10 +933,10 @@ class Kgcp(object):
             name = '.'.join(fqdn.split('.')[:1])
             domain = fqdn.replace("%s." % name, '').replace("%s." % cluster, '')
         domain_name = domain.replace('.', '-')
-        common.pprint("Assuming Domain name is %s..." % domain_name)
+        pprint("Assuming Domain name is %s..." % domain_name)
         dnszones = [z for z in client.list_zones() if z.name == domain_name]
         if not dnszones:
-            common.pprint("Domain %s not found" % domain_name, color='red')
+            error("Domain %s not found" % domain_name)
             return {'result': 'failure', 'reason': "Domain not found"}
         else:
             dnszone = dnszones[0]
@@ -948,8 +948,7 @@ class Kgcp(object):
                 internalip = self.internalip(name)
                 if internalip is None:
                     sleep(5)
-                    common.pprint("Waiting 5 seconds to grab internal ip and create DNS record for %s..." % name,
-                                  color='blue')
+                    pprint("Waiting 5 seconds to grab internal ip and create DNS record for %s..." % name)
                     counter += 10
                 else:
                     break
@@ -963,8 +962,7 @@ class Kgcp(object):
                     ip = self.ip(name)
                     if ip is None:
                         sleep(5)
-                        common.pprint("Waiting 5 seconds to grab ip and create DNS record for %s..." % name,
-                                      color='blue')
+                        pprint("Waiting 5 seconds to grab ip and create DNS record for %s..." % name)
                         counter += 10
                     else:
                         address_body = {"name": name, "address": ip}
@@ -976,7 +974,7 @@ class Kgcp(object):
                                                                  body=access_config_body).execute()
                         break
         if ip is None:
-            common.pprint("Couldn't assign DNS for %s" % name, color='red')
+            error("Couldn't assign DNS for %s" % name)
             return
         changes = dnszone.changes()
         dnsip = ip if internalip is None else internalip
@@ -1122,21 +1120,21 @@ class Kgcp(object):
             health_check_body = {"checkIntervalSec": "10", "timeoutSec": "10", "unhealthyThreshold": 3,
                                  "healthyThreshold": 3, "name": sane_name, "type": "TCP"}
             health_check_body["tcpHealthCheck"] = {"port": checkport}
-            common.pprint("Creating healthcheck %s" % name)
+            pprint("Creating healthcheck %s" % name)
             operation = conn.healthChecks().insert(project=project, body=health_check_body).execute()
             healthurl = operation['targetLink']
             self._wait_for_operation(operation)
         else:
             health_check_body = {"checkIntervalSec": "10", "timeoutSec": "10", "unhealthyThreshold": 3,
                                  "healthyThreshold": 3, "name": sane_name, "port": checkport, "requestPath": checkpath}
-            common.pprint("Creating http healthcheck %s" % name)
+            pprint("Creating http healthcheck %s" % name)
             operation = conn.httpHealthChecks().insert(project=project, body=health_check_body).execute()
             healthurl = operation['targetLink']
             self._wait_for_operation(operation)
         sane_name = name.replace('.', '-')
         if internal:
             instances_group_body = {"name": sane_name, "healthChecks": [healthurl]}
-            common.pprint("Creating instances group %s" % sane_name)
+            pprint("Creating instances group %s" % sane_name)
             operation = conn.instanceGroups().insert(project=project, zone=zone, body=instances_group_body).execute()
             instances_group_url = operation['targetLink']
             self._wait_for_operation(operation)
@@ -1148,13 +1146,13 @@ class Kgcp(object):
             backend_body = {"name": sane_name, "loadBalancingScheme": "INTERNAL",
                             "backends": [{"group": instances_group_url}],
                             "protocol": "TCP", "healthChecks": [healthurl]}
-            common.pprint("Creating backend service %s" % sane_name)
+            pprint("Creating backend service %s" % sane_name)
             operation = conn.regionBackendServices().insert(project=project, region=region, body=backend_body).execute()
             backendurl = operation['targetLink']
             self._wait_for_operation(operation)
         else:
             target_pool_body = {"name": sane_name, "healthChecks": [healthurl]}
-            common.pprint("Creating target pool %s" % sane_name)
+            pprint("Creating target pool %s" % sane_name)
             operation = conn.targetPools().insert(project=project, region=region, body=target_pool_body).execute()
             targeturl = operation['targetLink']
             self._wait_for_operation(operation)
@@ -1168,12 +1166,12 @@ class Kgcp(object):
             address_body["description"] = domain
         if internal:
             address_body["addressType"] = 'INTERNAL'
-        common.pprint("Creating address %s" % sane_name)
+        pprint("Creating address %s" % sane_name)
         operation = conn.addresses().insert(project=project, region=region, body=address_body).execute()
         ipurl = operation['targetLink']
         self._wait_for_operation(operation)
         ip = conn.addresses().get(project=project, region=region, address=sane_name).execute()['address']
-        common.pprint("Using load balancer ip %s" % ip)
+        pprint("Using load balancer ip %s" % ip)
         self._wait_for_operation(operation)
         if internal:
             forwarding_name = sane_name
@@ -1182,7 +1180,7 @@ class Kgcp(object):
             forwarding_rule_body["backendService"] = backendurl
             forwarding_rule_body["IPProtocol"] = "TCP"
             forwarding_rule_body["ports"] = ports
-            common.pprint("Creating forwarding rule %s" % forwarding_name)
+            pprint("Creating forwarding rule %s" % forwarding_name)
             operation = conn.forwardingRules().insert(project=project, region=region,
                                                       body=forwarding_rule_body).execute()
             self._wait_for_operation(operation)
@@ -1192,14 +1190,14 @@ class Kgcp(object):
                 forwarding_rule_body = {"IPAddress": ipurl, "name": forwarding_name}
                 forwarding_rule_body["target"] = targeturl
                 forwarding_rule_body["portRange"] = [port]
-                common.pprint("Creating forwarding rule %s" % forwarding_name)
+                pprint("Creating forwarding rule %s" % forwarding_name)
                 operation = conn.forwardingRules().insert(project=project, region=region,
                                                           body=forwarding_rule_body).execute()
                 self._wait_for_operation(operation)
         if not internal:
             firewall_body = {"name": sane_name, "direction": "INGRESS",
                              "allowed": [{"IPProtocol": "tcp", "ports": ports}]}
-            common.pprint("Creating firewall rule %s" % sane_name)
+            pprint("Creating firewall rule %s" % sane_name)
             operation = conn.firewalls().insert(project=project, body=firewall_body).execute()
             self._wait_for_operation(operation)
         if domain is not None:
@@ -1217,7 +1215,7 @@ class Kgcp(object):
             for firewall_rule in firewall_rules['items']:
                 firewall_rule_name = firewall_rule['name']
                 if firewall_rule_name == name:
-                    common.pprint("Deleting firewall rule %s" % name)
+                    pprint("Deleting firewall rule %s" % name)
                     operation = conn.firewalls().delete(project=project, firewall=name).execute()
                     self._wait_for_operation(operation)
         forwarding_rules = conn.forwardingRules().list(project=project, region=region).execute()
@@ -1225,7 +1223,7 @@ class Kgcp(object):
             for forwarding_rule in forwarding_rules['items']:
                 forwarding_rule_name = forwarding_rule['name']
                 if forwarding_rule_name == name or forwarding_rule_name.startswith('%s-' % name):
-                    common.pprint("Deleting forwarding rule %s" % forwarding_rule_name)
+                    pprint("Deleting forwarding rule %s" % forwarding_rule_name)
                     operation = conn.forwardingRules().delete(project=project, region=region,
                                                               forwardingRule=forwarding_rule_name).execute()
                     self._wait_for_operation(operation)
@@ -1234,7 +1232,7 @@ class Kgcp(object):
         #     for address in addresses['items']:
         #         address_name = address['name']
         #         if address_name == name:
-        #             common.pprint("Deleting address %s" % name)
+        #             pprint("Deleting address %s" % name)
         #             if '.' in address["description"]:
         #                 domain = address["description"]
         #                 self.delete_dns(name, domain=domain)
@@ -1245,7 +1243,7 @@ class Kgcp(object):
             if '.' in address["description"]:
                 domain = address["description"]
                 self.delete_dns(name, domain=domain)
-            common.pprint("Deleting address %s" % name)
+            pprint("Deleting address %s" % name)
             operation = conn.addresses().delete(project=project, region=region, address=name).execute()
             self._wait_for_operation(operation)
         except Exception as e:
@@ -1267,11 +1265,11 @@ class Kgcp(object):
                             self._wait_for_operation(operation)
                             for healthcheck in targetpool['healthChecks']:
                                 healthcheck_short = os.path.basename(healthcheck)
-                                common.pprint("Deleting http healthcheck %s" % healthcheck_short)
+                                pprint("Deleting http healthcheck %s" % healthcheck_short)
                                 operation = conn.httpHealthChecks().delete(project=project,
                                                                            httpHealthCheck=healthcheck_short).execute()
                                 self._wait_for_operation(operation)
-                    common.pprint("Deleting target pool %s" % name)
+                    pprint("Deleting target pool %s" % name)
                     operation = conn.targetPools().delete(project=project, region=region, targetPool=name).execute()
                     self._wait_for_operation(operation)
         backendservices = conn.regionBackendServices().list(project=project, region=region).execute()
@@ -1284,15 +1282,15 @@ class Kgcp(object):
                         healtchecks = [{'healthCheck': healthcheck} for healthcheck in backendservice['healthChecks']]
                         healtchecks_body = {"healthChecks": healtchecks}
                         healthchecks = backendservice['healthChecks']
-                    common.pprint("Waiting to make sure forwarding rule is gone")
+                    pprint("Waiting to make sure forwarding rule is gone")
                     sleep(10)
-                    common.pprint("Deleting backend service %s" % name)
+                    pprint("Deleting backend service %s" % name)
                     operation = conn.regionBackendServices().delete(project=project, region=region,
                                                                     backendService=name).execute()
                     self._wait_for_operation(operation)
                     for healthcheck in healthchecks:
                         healthcheck_short = os.path.basename(healthcheck)
-                        common.pprint("Deleting healthcheck %s" % healthcheck_short)
+                        pprint("Deleting healthcheck %s" % healthcheck_short)
                         operation = conn.healthChecks().delete(project=project, healthCheck=healthcheck_short).execute()
                         self._wait_for_operation(operation)
         instancegroups = conn.instanceGroups().list(project=project, zone=zone).execute()
@@ -1300,7 +1298,7 @@ class Kgcp(object):
             for instancegroup in instancegroups['items']:
                 instancegroup_name = instancegroup['name']
                 if instancegroup_name == name:
-                    common.pprint("Deleting instance group %s" % name)
+                    pprint("Deleting instance group %s" % name)
                     operation = conn.instanceGroups().delete(project=project, zone=zone, instanceGroup=name).execute()
                     self._wait_for_operation(operation)
         return {'result': 'success'}

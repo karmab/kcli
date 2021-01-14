@@ -93,10 +93,10 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             if isinstance(netinfo, dict):
                 net = netinfo.copy()
             else:
-                pprint("Wrong net entry %s" % index, color='red')
+                error("Wrong net entry %s" % index)
                 os._exit(1)
             if 'name' not in net:
-                pprint("Missing name in net %s" % index, color='red')
+                error("Missing name in net %s" % index)
                 os._exit(1)
             netname = net['name']
             if index == 0 and 'type' in net and net.get('type') != 'virtio':
@@ -209,7 +209,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
         netdata = None
     existing = "%s.cloudinit" % name if not os.path.exists('/i_am_a_container') else "/workdir/%s.cloudinit" % name
     if os.path.exists(existing):
-        pprint("using cloudinit from existing %s for %s" % (existing, name), color="blue")
+        pprint("using cloudinit from existing %s for %s" % (existing, name))
         userdata = open(existing).read()
     else:
         userdata = '#cloud-config\nhostname: %s\n' % name
@@ -227,8 +227,8 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 or os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub")):
             userdata += "ssh_authorized_keys:\n"
         else:
-            pprint("neither id_rsa or id_dsa public keys found in your .ssh or .kcli directory, you might have "
-                   "trouble accessing the vm", color='yellow')
+            warning("neither id_rsa or id_dsa public keys found in your .ssh or .kcli directory, you might have "
+                    "trouble accessing the vm")
         if keys:
             for key in list(set(keys)):
                 userdata += "- %s\n" % key
@@ -332,11 +332,10 @@ def process_files(files=[], overrides={}):
                     templ = env.get_template(os.path.basename(origin))
                     fileentries = templ.render(overrides)
                 except TemplateSyntaxError as e:
-                    pprint("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message),
-                           color='red')
+                    error("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message))
                     os._exit(1)
                 except TemplateError as e:
-                    pprint("Error rendering file %s. Got: %s" % (origin, e.message), color='red')
+                    error("Error rendering file %s. Got: %s" % (origin, e.message))
                     os._exit(1)
                 content = [line.rstrip() for line in fileentries.split('\n')]
                 # with open("/tmp/%s" % os.path.basename(path), 'w') as f:
@@ -408,11 +407,10 @@ def process_ignition_files(files=[], overrides={}):
                     templ = env.get_template(os.path.basename(origin))
                     fileentries = templ.render(overrides)
                 except TemplateSyntaxError as e:
-                    pprint("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message),
-                           color='red')
+                    error("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message))
                     os._exit(1)
                 except TemplateError as e:
-                    pprint("Error rendering file %s. Got: %s" % (origin, e.message), color='red')
+                    error("Error rendering file %s. Got: %s" % (origin, e.message))
                     os._exit(1)
                 # content = [line.rstrip() for line in fileentries.split('\n') if line.rstrip() != '']
                 content = [line for line in fileentries.split('\n')]
@@ -448,7 +446,7 @@ def process_cmds(cmds, overrides):
                 newcmd = Environment(undefined=undefined).from_string(cmd).render(overrides)
                 data += "- %s\n" % newcmd.replace(": ", "':' ")
             except TemplateError as e:
-                pprint("Error rendering cmd %s. Got: %s" % (cmd, e.message), color='red')
+                error("Error rendering cmd %s. Got: %s" % (cmd, e.message))
                 os._exit(1)
     return data
 
@@ -468,7 +466,7 @@ def process_ignition_cmds(cmds, overrides):
             newcmd = Environment(undefined=undefined).from_string(cmd).render(overrides)
             content += "%s\n" % newcmd
         except TemplateError as e:
-            pprint("Error rendering cmd %s. Got: %s" % (cmd, e.message), color='red')
+            error("Error rendering cmd %s. Got: %s" % (cmd, e.message))
             os._exit(1)
     if content == '':
         return content
@@ -508,21 +506,29 @@ def get_free_nodeport():
             continue
 
 
-def pprint(text, color='green'):
-    """
-
-    :param text:
-    :param color:
-    """
-    colors = {'blue': '36', 'red': '31', 'green': '32', 'yellow': '33', 'pink': '35', 'white': '37'}
-    if color is not None and color in colors:
-        color = colors[color]
-        print('\033[%sm%s\033[0m' % (color, text))
-    else:
-        print(text)
+def pprint(text):
+    # colors = {'blue': '36', 'red': '31', 'green': '32', 'yellow': '33', 'pink': '35', 'white': '37'}
+    # color = colors[color]
+    color = '36'
+    print('\033[%sm%s\033[0m' % (color, text))
 
 
-def info(text):
+def error(text):
+    color = '31'
+    print('\033[%sm%s\033[0m' % (color, text))
+
+
+def success(text):
+    color = '32'
+    print('\033[%sm%s\033[0m' % (color, text))
+
+
+def warning(text):
+    color = '33'
+    print('\033[%sm%s\033[0m' % (color, text))
+
+
+def info2(text):
     color = '36'
     print('\033[%smINFO\033[0m %s' % (color, text))
 
@@ -546,11 +552,11 @@ def handle_response(result, name, quiet=False, element='', action='deployed', cl
             response = "%s %s %s" % (element, name, action)
             if client is not None:
                 response += " on %s" % client
-            pprint(response.lstrip(), color='green')
+            success(response.lstrip())
     elif result['result'] == 'failure':
         if not quiet:
             response = "%s %s not %s because %s" % (element, name, action, result['reason'])
-            pprint(response.lstrip(), color='red')
+            error(response.lstrip())
         code = 1
     return code
 
@@ -564,7 +570,7 @@ def confirm(message):
     message = "%s [y/N]: " % message
     _input = input(message)
     if _input.lower() not in ['y', 'yes']:
-        pprint("Leaving...", color='red')
+        error("Leaving...")
         os._exit(1)
     return
 
@@ -576,7 +582,7 @@ def get_lastvm(client):
     :return:
     """
     if 'HOME' not in os.environ:
-        pprint("HOME variable not set", color='red')
+        error("HOME variable not set")
         os._exit(1)
     lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
     if os.path.exists(lastvm) and os.stat(lastvm).st_size > 0:
@@ -587,9 +593,9 @@ def get_lastvm(client):
             cli = line[0].strip()
             vm = line[1].strip()
             if cli == client:
-                pprint("Using %s from %s as vm" % (vm, cli), color='green')
+                pprint("Using %s from %s as vm" % (vm, cli))
                 return vm
-    pprint("Missing Vm's name", color='red')
+    error("Missing Vm's name")
     os._exit(1)
 
 
@@ -650,13 +656,13 @@ def get_overrides(paramfile=None, param=[]):
                 try:
                     overrides = yaml.safe_load(f)
                 except:
-                    pprint("Couldn't parse your parameters file %s. Leaving" % paramfile, color='red')
+                    error("Couldn't parse your parameters file %s. Leaving" % paramfile)
                     os._exit(1)
         else:
-            pprint("Parameter file %s not found. Leaving" % paramfile, color='red')
+            error("Parameter file %s not found. Leaving" % paramfile)
             os._exit(1)
     if not isinstance(overrides, dict):
-        pprint("Couldn't parse your parameters file %s. Leaving" % paramfile, color='red')
+        error("Couldn't parse your parameters file %s. Leaving" % paramfile)
         os._exit(1)
     if param is not None:
         for x in param:
@@ -857,7 +863,7 @@ def ssh(name, ip='', user=None, local=None, remote=None, tunnel=False, tunnelhos
         else:
             sshcommand = "ssh %s" % sshcommand
         if debug:
-            pprint(sshcommand, color='blue')
+            pprint(sshcommand)
         return sshcommand
 
 
@@ -906,7 +912,7 @@ def scp(name, ip='', user=None, source=None, destination=None, recursive=None, t
         else:
             scpcommand = "%s %s %s %s@%s:%s" % (scpcommand, arguments, source, user, ip, destination)
         if debug:
-            pprint(scpcommand, color='blue')
+            pprint(scpcommand)
         return scpcommand
 
 
@@ -998,8 +1004,8 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
             for key in list(set(keys)):
                 publickeys.append(key)
         if not publickeys:
-            pprint("neither id_rsa or id_dsa public keys found in your .ssh or .kcli directory, you might have trouble "
-                   "accessing the vm", color='red')
+            error("neither id_rsa or id_dsa public keys found in your .ssh or .kcli directory, you might have trouble "
+                  "accessing the vm")
     if not noname:
         hostnameline = quote("%s\n" % localhostname)
         storage["files"].append({"filesystem": "root", "path": "/etc/hostname", "overwrite": True,
@@ -1277,10 +1283,10 @@ def create_host(data):
             try:
                 oldini = yaml.safe_load(entries)
             except yaml.scanner.ScannerError as err:
-                pprint("Couldn't parse yaml in .kcli/config.yml. Got %s" % err, color='red')
+                error("Couldn't parse yaml in .kcli/config.yml. Got %s" % err)
                 os._exit(1)
         if name in oldini:
-            pprint("Skipping existing Host %s" % name, color='blue')
+            pprint("Skipping existing Host %s" % name)
             return
         ini = oldini
     ini[name] = {k: data[k] for k in data if data[k] is not None}
@@ -1301,17 +1307,17 @@ def delete_host(name):
     """
     path = os.path.expanduser('~/.kcli/config.yml')
     if not os.path.exists(path):
-        pprint("Skipping non existing Host %s" % name, color='blue')
+        pprint("Skipping non existing Host %s" % name)
         return
     else:
         with open(path, 'r') as entries:
             try:
                 ini = yaml.safe_load(entries)
             except yaml.scanner.ScannerError as err:
-                pprint("Couldn't parse yaml in .kcli/config.yml. Got %s" % err, color='red')
+                error("Couldn't parse yaml in .kcli/config.yml. Got %s" % err)
                 os._exit(1)
         if name not in ini:
-            pprint("Skipping non existing Host %s" % name, color='blue')
+            pprint("Skipping non existing Host %s" % name)
             return
         del ini[name]
         clients = [c for c in ini if c != 'default']
@@ -1324,7 +1330,7 @@ def delete_host(name):
                                    sort_keys=False)
                 except:
                     yaml.safe_dump(ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True)
-        pprint("Host %s deleted" % name)
+        success("Host %s deleted" % name)
 
 
 def get_binary(name, linuxurl, macosurl, compressed=False):
@@ -1332,9 +1338,9 @@ def get_binary(name, linuxurl, macosurl, compressed=False):
         return find_executable(name)
     binary = '/var/tmp/%s' % name
     if os.path.exists(binary):
-        pprint("Using %s from /var/tmp" % name, color='blue')
+        pprint("Using %s from /var/tmp" % name)
     else:
-        pprint("Downloading %s in /var/tmp" % name, color='green')
+        pprint("Downloading %s in /var/tmp" % name)
         url = macosurl if os.path.exists('/Users') else linuxurl
         if compressed:
             downloadcmd = "curl -L '%s' | gunzip > %s" % (url, binary)
@@ -1352,26 +1358,26 @@ def _ssh_credentials(k, name):
         return None, None, None
     user, ip, status = info.get('user', 'root'), info.get('ip'), info.get('status')
     if status in ['down', 'suspended', 'unknown']:
-        pprint("%s down" % name, color='red')
+        error("%s down" % name)
     if 'nodeport' in info:
         vmport = info['nodeport']
         ip = k.node_host(name=info.get('host'))
         if ip is None:
-            pprint("No valid node ip found" % name, color='red')
+            error("No valid node ip found" % name)
     elif 'loadbalancerip' in info:
         ip = info['loadbalancerip']
     if ip is None:
-        pprint("No ip found for %s" % name, color='red')
+        error("No ip found for %s" % name)
     return user, ip, vmport
 
 
 def mergeignition(name, ignitionextrapath, data):
-    pprint("Merging ignition data from existing %s for %s" % (ignitionextrapath, name), color="blue")
+    pprint("Merging ignition data from existing %s for %s" % (ignitionextrapath, name))
     with open(ignitionextrapath, 'r') as extra:
         try:
             ignitionextra = json.load(extra)
         except:
-            pprint("Couldn't process %s. Ignoring" % (ignitionextrapath), color="yellow")
+            warning("Couldn't process %s. Ignoring" % (ignitionextrapath))
             return data
         children = {'storage': 'files', 'passwd': 'users', 'systemd': 'units'}
         for key in children:
@@ -1515,7 +1521,7 @@ def get_kubectl():
 
 def get_oc(version='latest', macosx=False):
     SYSTEM = 'mac' if os.path.exists('/Users') else 'linux'
-    pprint("Downloading oc in current directory", color='blue')
+    pprint("Downloading oc in current directory")
     occmd = "curl -s "
     occmd += "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/%s/openshift-client-%s.tar.gz" % (version,
                                                                                                           SYSTEM)
@@ -1578,7 +1584,7 @@ def kube_delete_app(config, appdir, overrides={}):
                     f.write(rendered)
         os.chdir(tmpdir)
         if not found:
-            pprint("Uninstall not supported for this app", color='yellow')
+            warning("Uninstall not supported for this app")
             result = 1
         else:
             result = call('bash %s/uninstall.sh' % tmpdir, shell=True)
@@ -1606,7 +1612,7 @@ def make_iso(name, tmpdir, userdata, metadata, netdata):
 def patch_bootstrap(path, patch, service):
     separators = (',', ':')
     indent = 0
-    pprint("Patching bootkube in bootstrap ignition to handle less than 3 masters", color='yellow')
+    warning("Patching bootkube in bootstrap ignition to handle less than 3 masters")
     with open(path, 'r') as ignition:
         data = json.load(ignition)
     patch_base64 = base64.b64encode(patch.encode()).decode("UTF-8")

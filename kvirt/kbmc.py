@@ -2,7 +2,7 @@ import argparse
 import sys
 
 from kvirt.config import Kconfig
-from kvirt.common import pprint
+from kvirt.common import pprint, error, success
 import pyghmi.ipmi.bmc as bmc
 
 
@@ -12,13 +12,13 @@ class KBmc(bmc.Bmc):
         self.bootdevice = 'default'
         self.k = Kconfig(client=client).k
         if not self.k.exists(name):
-            pprint('%s not found.Leaving' % name, color='red')
+            error('%s not found.Leaving' % name)
             sys.exit(1)
         else:
             status = self.k.info(name)['status']
             self.powerstate = 'off' if status.lower() not in ['up', 'poweredon'] else 'on'
             pprint('Handling vm %s on port %s' % (name, port))
-            pprint('Initial state for vm %s: %s' % (name, self.powerstate), color='blue')
+            pprint('Initial state for vm %s: %s' % (name, self.powerstate))
         self.name = name
 
     def get_boot_device(self):
@@ -28,7 +28,7 @@ class KBmc(bmc.Bmc):
         self.bootdevice = bootdevice
 
     def cold_reset(self):
-        pprint('shutting down in response to BMC cold reset request', color='red')
+        pprint('shutting down in response to BMC cold reset request')
         sys.exit(0)
 
     def get_power_state(self):
@@ -37,18 +37,18 @@ class KBmc(bmc.Bmc):
     def power_off(self):
         result = self.k.stop(self.name)
         if result['result'] == 'success':
-            pprint('%s powered off!' % self.name)
+            success('%s powered off!' % self.name)
             self.powerstate = 'off'
         else:
-            pprint('%s not powered off because %s' % (self.name, result['reason']), color='red')
+            error('%s not powered off because %s' % (self.name, result['reason']))
 
     def power_on(self):
         result = self.k.start(self.name)
         if result['result'] == 'success':
             self.powerstate = 'on'
-            pprint('%s powered on!' % self.name)
+            success('%s powered on!' % self.name)
         else:
-            pprint('%s not powered on because %s' % (self.name, result['reason']), color='red')
+            error('%s not powered on because %s' % (self.name, result['reason']))
 
     def power_reset(self):
         pass

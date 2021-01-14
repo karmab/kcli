@@ -7,6 +7,7 @@ Openstack Provider Class
 from distutils.spawn import find_executable
 from netaddr import IPNetwork
 from kvirt import common
+from kvirt.common import pprint, error, warning
 from kvirt.defaults import METADATA_FIELDS
 from keystoneauth1 import loading
 from keystoneauth1 import session
@@ -87,7 +88,7 @@ class Kopenstack(object):
         if flavor is None:
             flavors = [flavor for flavor in allflavors if flavor.ram >= memory and flavor.vcpus >= numcpus]
             flavor = flavors[0] if flavors else nova.flavors.find(name="m1.tiny")
-            common.pprint("Using flavor %s" % flavor.name)
+            pprint("Using flavor %s" % flavor.name)
         elif flavor not in allflavornames:
             return {'result': 'failure', 'reason': "Flavor %s not found" % flavor}
         else:
@@ -104,7 +105,7 @@ class Kopenstack(object):
                 if net.to_dict()['router:external']:
                     need_floating = False
             except Exception as e:
-                common.pprint(e, color='red')
+                error(e)
                 return {'result': 'failure', 'reason': "Network %s not found" % netname}
             nics.append({'net-id': net.id})
         if image is not None:
@@ -152,9 +153,9 @@ class Kopenstack(object):
         elif keypairs:
             key_name = keypairs[0]
             if key_name != 'kvirt':
-                common.pprint('Using keypair %s' % key_name)
+                pprint('Using keypair %s' % key_name)
         else:
-            common.pprint("Couldn't locate or create keypair for use. Leaving...", color='red')
+            error("Couldn't locate or create keypair for use. Leaving...")
             return {'result': 'failure', 'reason': "No usable keypair found"}
         userdata = None
         if cloudinit:
@@ -188,17 +189,17 @@ class Kopenstack(object):
                     floating_ip = neutron.create_floatingip(body={'floatingip': args})
                     floatingip_id = floating_ip['floatingip']['id']
                     floatingip_ip = floating_ip['floatingip']['floating_ip_address']
-                    common.pprint('Assigning new floating ip %s for this vm' % floatingip_ip)
+                    pprint('Assigning new floating ip %s for this vm' % floatingip_ip)
             else:
                 floatingip_id = floating_ips[0]
             fixed_ip = None
             timeout = 0
             while fixed_ip is None:
-                common.pprint("Waiting 5 seconds for vm to get an ip")
+                pprint("Waiting 5 seconds for vm to get an ip")
                 sleep(5)
                 timeout += 5
                 if timeout >= 240:
-                    common.pprint("Time out waiting for vm to get an ip", color='red')
+                    error("Time out waiting for vm to get an ip")
                     break
                 vm = nova.servers.get(instance.id)
                 if vm.status.lower() == 'error':
@@ -238,7 +239,7 @@ class Kopenstack(object):
         try:
             vm = nova.servers.find(name=name)
         except:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         vm.start()
         return {'result': 'success'}
@@ -248,7 +249,7 @@ class Kopenstack(object):
         try:
             vm = nova.servers.find(name=name)
         except:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         vm.stop()
         return {'result': 'success'}
@@ -262,7 +263,7 @@ class Kopenstack(object):
         try:
             vm = nova.servers.find(name=name)
         except:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         vm.reboot()
         return {'result': 'success'}
@@ -289,16 +290,16 @@ class Kopenstack(object):
         try:
             vm = nova.servers.find(name=name)
         except:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         url = vm.get_vnc_console('novnc')['console']['url']
         if web:
             return url
         if self.debug or os.path.exists("/i_am_a_container"):
             msg = "Open the following url:\n%s" % url if os.path.exists("/i_am_a_container") else url
-            common.pprint(msg)
+            pprint(msg)
         else:
-            common.pprint("Opening url: %s" % url)
+            pprint("Opening url: %s" % url)
             webbrowser.open(url, new=2, autoraise=True)
         return
 
@@ -307,7 +308,7 @@ class Kopenstack(object):
         try:
             vm = nova.servers.find(name=name)
         except:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         cmd = vm.get_console_output()
         if web:
@@ -337,7 +338,7 @@ class Kopenstack(object):
             try:
                 vm = nova.servers.find(name=name)
             except:
-                common.pprint("VM %s not found" % name, color='red')
+                error("VM %s not found" % name)
                 return {}
         yamlinfo = {'name': vm.name, 'status': vm.status, 'project': self.project}
         if vm.status.lower() == 'error':
@@ -409,7 +410,7 @@ class Kopenstack(object):
         try:
             vm = nova.servers.find(name=name)
         except:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         floating_ips = {f['floating_ip_address']: f['id'] for f in self.neutron.list_floatingips()['floatingips']}
         vm_floating_ips = []
@@ -424,7 +425,7 @@ class Kopenstack(object):
             try:
                 self.neutron.delete_floatingip(floatingid)
             except Exception as e:
-                common.pprint("Hit %s when trying to delete floating %s" % (str(e), floating))
+                error("Hit %s when trying to delete floating %s" % (str(e), floating))
         index = 0
         for disk in vm._info['os-extended-volumes:volumes_attached']:
             volume = cinder.volumes.get(disk['id'])
@@ -444,7 +445,7 @@ class Kopenstack(object):
         try:
             vm = nova.servers.find(name=name)
         except:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return
         metadata = vm.metadata
         if append and metatype in metadata:
@@ -459,34 +460,34 @@ class Kopenstack(object):
         try:
             vm = nova.servers.find(name=name)
         except:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         currentflavor = nova.flavors.get(vm.flavor['id'])
         if currentflavor.ram >= int(memory):
-            common.pprint("No need to resize", color='yellow')
+            warning("No need to resize")
             return {'result': 'success'}
         allflavors = [f for f in nova.flavors.list() if f != currentflavor]
         flavors = [flavor for flavor in allflavors if flavor.ram >= int(memory) and flavor.vcpus >= currentflavor.vcpus]
         if flavors:
             flavor = flavors[0]
-            common.pprint("Using flavor %s" % flavor.name, color='blue')
+            pprint("Using flavor %s" % flavor.name)
             vm.resize(flavor.id)
             resizetimeout = 40
             resizeruntime = 0
             vmstatus = ''
             while vmstatus != 'VERIFY_RESIZE':
                 if resizeruntime >= resizetimeout:
-                    common.pprint("Time out waiting for resize to finish", color='red')
+                    error("Time out waiting for resize to finish")
                     return {'result': 'failure', 'reason': "Time out waiting for resize to finish"}
                 vm = nova.servers.find(name=name)
                 vmstatus = vm.status
                 sleep(2)
-                common.pprint("Waiting for vm %s to be in verify_resize" % name, color='blue')
+                pprint("Waiting for vm %s to be in verify_resize" % name)
                 resizeruntime += 2
             vm.confirm_resize()
             return {'result': 'success'}
         else:
-            common.pprint("Couldn't find matching flavor for this amount of memory", color='red')
+            error("Couldn't find matching flavor for this amount of memory")
             return {'result': 'failure', 'reason': "Couldn't find matching flavor for this amount of memory"}
 
     def update_flavor(self, name, flavor):
@@ -494,14 +495,14 @@ class Kopenstack(object):
         try:
             vm = nova.servers.find(name=name)
         except:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         currentflavor = nova.flavors.get(vm.flavor['id'])
         if currentflavor == flavor:
             return {'result': 'success'}
         flavors = [f for f in nova.flavors.list() if f.name == flavor]
         if not flavors:
-            common.pprint("Flavor %s doesn't exist" % flavor, color='red')
+            error("Flavor %s doesn't exist" % flavor)
             return {'result': 'failure', 'reason': "Flavor %s doesn't exist" % flavor}
         else:
             flavorid = flavors[0].id
@@ -511,12 +512,12 @@ class Kopenstack(object):
             vmstatus = ''
             while vmstatus != 'VERIFY_RESIZE':
                 if resizeruntime >= resizetimeout:
-                    common.pprint("Time out waiting for resize to finish", color='red')
+                    error("Time out waiting for resize to finish")
                     return {'result': 'failure', 'reason': "Time out waiting for resize to finish"}
                 vm = nova.servers.find(name=name)
                 vmstatus = vm.status
                 sleep(2)
-                common.pprint("Waiting for vm %s to be in verify_resize" % name)
+                pprint("Waiting for vm %s to be in verify_resize" % name)
                 resizeruntime += 2
             vm.confirm_resize()
             return {'result': 'success'}
@@ -526,34 +527,34 @@ class Kopenstack(object):
         try:
             vm = nova.servers.find(name=name)
         except:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         currentflavor = nova.flavors.get(vm.flavor['id'])
         if currentflavor.vcpus >= numcpus:
-            common.pprint("No need to resize", color='yellow')
+            warning("No need to resize")
             return {'result': 'success'}
         allflavors = [f for f in nova.flavors.list() if f != currentflavor]
         flavors = [flavor for flavor in allflavors if flavor.ram >= currentflavor.ram and flavor.vcpus >= numcpus]
         if flavors:
             flavor = flavors[0]
-            common.pprint("Using flavor %s" % flavor.name)
+            pprint("Using flavor %s" % flavor.name)
             vm.resize(flavor.id)
             resizetimeout = 40
             resizeruntime = 0
             vmstatus = ''
             while vmstatus != 'VERIFY_RESIZE':
                 if resizeruntime >= resizetimeout:
-                    common.pprint("Time out waiting for resize to finish", color='red')
+                    error("Time out waiting for resize to finish")
                     return {'result': 'failure', 'reason': "Time out waiting for resize to finish"}
                 vm = nova.servers.find(name=name)
                 vmstatus = vm.status
                 sleep(2)
-                common.pprint("Waiting for vm %s to be in verify_resize" % name)
+                pprint("Waiting for vm %s to be in verify_resize" % name)
                 resizeruntime += 2
             vm.confirm_resize()
             return {'result': 'success'}
         else:
-            common.pprint("Couldn't find matching flavor for this number of cpus", color='red')
+            error("Couldn't find matching flavor for this number of cpus")
             return {'result': 'failure', 'reason': "Couldn't find matching flavor for this number of cpus"}
 
     def update_start(self, name, start=True):
@@ -590,7 +591,7 @@ class Kopenstack(object):
         try:
             vm = nova.servers.find(name=name)
         except:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if image is not None:
             glanceimages = [img for img in glance.images.list() if img.name == image]
@@ -618,7 +619,7 @@ class Kopenstack(object):
         try:
             vm = nova.servers.find(name=name)
         except:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         for disk in vm._info['os-extended-volumes:volumes_attached']:
             volume = cinder.volumes.get(disk['id'])
@@ -649,7 +650,7 @@ class Kopenstack(object):
         return
 
     def delete_image(self, image, pool=None):
-        common.pprint("Deleting image %s" % image)
+        pprint("Deleting image %s" % image)
         glance = self.glance
         for img in glance.images.list():
             if img.name == image:
@@ -671,7 +672,7 @@ class Kopenstack(object):
                 uncompresscmd = "gunzip /tmp/%s" % (shortimage)
                 os.system(uncompresscmd)
             else:
-                common.pprint("gunzip not found. Can't uncompress image", color="red")
+                error("gunzip not found. Can't uncompress image")
                 return {'result': 'failure', 'reason': "gunzip not found. Can't uncompress image"}
             shortimage = shortimage.replace('.gz', '')
         glanceimage = self.glance.images.create(name=shortimage, disk_format='qcow2', container_format='bare')
@@ -700,7 +701,7 @@ class Kopenstack(object):
             network_id = network['network']['id']
             tenant_id = network['network']['tenant_id']
         else:
-            common.pprint("Network already there. Creating subnet", color='yellow')
+            warning("Network already there. Creating subnet")
         if cidr is not None:
             if network_id is None:
                 network_id = networks[name]
@@ -713,7 +714,7 @@ class Kopenstack(object):
                 subnet_id = subnet['subnet']['id']
                 tenant_id = subnet['subnet']['tenant_id']
             else:
-                common.pprint("Subnet already there. Leaving", color='yellow')
+                warning("Subnet already there. Leaving")
                 return {'result': 'success'}
         if nat:
             if externalnet_id is not None:
@@ -775,7 +776,7 @@ class Kopenstack(object):
         if routerports == 0:
             if router['external_gateway_info']:
                 neutron.remove_gateway_router(router_id)
-            common.pprint("Removing unused router kvirt")
+            pprint("Removing unused router kvirt")
             neutron.delete_router(router_id)
         return {'result': 'success'}
 
@@ -840,7 +841,7 @@ class Kopenstack(object):
         try:
             vm = nova.servers.find(name=name)
         except:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         for disk in vm._info['os-extended-volumes:volumes_attached']:
             volume = cinder.volumes.get(disk['id'])
@@ -851,11 +852,11 @@ class Kopenstack(object):
                 timeout = 0
                 while status != 'available':
                     status = cinder.volumes.get(disk['id']).status
-                    common.pprint("Waiting 5 seconds for export to complete", color='blue')
+                    pprint("Waiting 5 seconds for export to complete")
                     sleep(5)
                     timeout += 5
                     if timeout >= 90:
-                        common.pprint("Time out waiting for export to complete", color='red')
+                        error("Time out waiting for export to complete")
                         break
                 break
         return {'result': 'success'}
@@ -868,12 +869,12 @@ class Kopenstack(object):
         matchingports = [i for i in neutron.list_ports()['ports'] if i['name'] == name]
         if matchingports:
             msg = "Port %s already exists" % name
-            common.pprint(msg, color='blue')
+            pprint(msg)
             return {'result': 'success'}
         networks = [net for net in neutron.list_networks()['networks'] if net['name'] == network]
         if not networks:
             msg = "Network %s not found" % network
-            common.pprint(msg, color='red')
+            error(msg)
             return {'result': 'failure', 'reason': msg}
         else:
             network = networks[0]
@@ -886,7 +887,7 @@ class Kopenstack(object):
                 cidr = subnet['cidr']
                 if network_id == subnet['network_id'] and ip_address(ip) in ip_network(cidr):
                     msg = "Using matching subnet %s with cidr %s" % (subnet_name, cidr)
-                    common.pprint(msg, color='blue')
+                    pprint(msg)
                     port['fixed_ips'] = [{'ip_address': ip, 'subnet_id': subnet_id}]
         result = neutron.create_port({'port': port})
         port_id = result['port']['id']
@@ -902,12 +903,12 @@ class Kopenstack(object):
                 network_id = external_networks[0]['id']
             else:
                 msg = "No valid external network found for floating ips"
-                common.pprint(msg, color='red')
+                error(msg)
                 return {'result': 'failure', 'reason': msg}
             args = dict(floating_network_id=network_id, tenant_id=tenant_id, port_id=port_id)
             floating_ip = neutron.create_floatingip(body={'floatingip': args})
             floatingip_ip = floating_ip['floatingip']['floating_ip_address']
-            common.pprint('Assigning new floating ip %s for this port' % floatingip_ip)
+            pprint('Assigning new floating ip %s for this port' % floatingip_ip)
         return {'result': 'success'}
 
     def delete_network_port(self, name, network=None, floating=False):
@@ -915,6 +916,6 @@ class Kopenstack(object):
         matchingports = [i for i in neutron.list_ports()['ports'] if i['name'] == name]
         if not matchingports:
             msg = "Port %s not found" % name
-            common.pprint(msg, color='red')
+            error(msg)
             return {'result': 'failure', 'reason': msg}
         self.neutron.delete_port(matchingports[0]['id'])

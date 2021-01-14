@@ -7,6 +7,7 @@ Packet provider class
 from packet import Manager
 from packet.baseapi import Error
 from kvirt import common
+from kvirt.common import error, pprint, warning
 from kvirt.defaults import IMAGES, METADATA_FIELDS
 import json
 import requests
@@ -32,13 +33,13 @@ class Kpacket(object):
         try:
             projects = [p.id for p in conn.list_projects() if p.name == project or p.id == project]
         except Error as e:
-            common.pprint(e, color='red')
+            error(e)
             return
         if projects:
             self.project = projects[0]
             self.conn = conn
         else:
-            common.pprint("Invalid project %s" % project, color='red')
+            error("Invalid project %s" % project)
         return
 
 # should cleanly close your connection, if needed
@@ -159,7 +160,7 @@ class Kpacket(object):
         vlan = False
         for index, network in enumerate(nets):
             if index > 1:
-                common.pprint("Ignoring net higher than %s" % index, color='yellow')
+                warning("Ignoring net higher than %s" % index)
                 break
             if isinstance(network, str):
                 networkname = network
@@ -179,7 +180,7 @@ class Kpacket(object):
         if image is not None and not common.needs_ignition(image):
             if '_' not in image and image in ['rhel8', 'rhel7', 'centos7', 'centos8']:
                 image = image[:-1] + '_' + image[-1:]
-                common.pprint("Using image %s" % image, color='blue')
+                pprint("Using image %s" % image)
             found = False
             for img in self.conn.list_operating_systems():
                 if img.slug == image:
@@ -220,7 +221,7 @@ class Kpacket(object):
             with open('%s/%s.ign' % (ignitiondir, name), 'w') as ignitionfile:
                 ignitionfile.write(ignitiondata)
             if self.tunnelhost is not None:
-                common.pprint("Copying ignition data to %s" % self.tunnelhost, color='blue')
+                pprint("Copying ignition data to %s" % self.tunnelhost)
                 scpcmd = "scp -qP %s /tmp/%s.ign %s@%s:%s/%s.ign" % (self.tunnelport, name, self.tunneluser,
                                                                      self.tunnelhost, self.tunneldir, name)
                 os.system(scpcmd)
@@ -242,7 +243,7 @@ class Kpacket(object):
                     validfacilities = f.available_in
             if flavor is None:
                 return {'result': 'failure', 'reason': 'Couldnt find flavor matching requirements'}
-            common.pprint("Using flavor %s" % flavor, color='blue')
+            pprint("Using flavor %s" % flavor)
         else:
             flavors = [f for f in self.conn.list_plans() if f.slug == flavor]
             if not flavors:
@@ -295,13 +296,13 @@ class Kpacket(object):
             if networkid is None:
                 continue
             elif 'cluster' in overrides and name.startswith("%s-" % overrides['cluster']):
-                common.pprint("Not applying custom vlan to speed process for openshift...", color='yellow')
-                common.pprint("This will be applied manually later...", color='yellow')
+                warning("Not applying custom vlan to speed process for openshift...")
+                warning("This will be applied manually later...")
                 continue
             status = 'provisioning'
             while status != 'active':
                 status = self.info(name).get('status')
-                common.pprint("Waiting 5s for %s to be active..." % name, color='blue')
+                pprint("Waiting 5s for %s to be active..." % name)
                 sleep(5)
             device_port_id = device["network_ports"][2]["id"]
             self.conn.disbond_ports(device_port_id, False)
@@ -371,7 +372,7 @@ class Kpacket(object):
         """
         projects = [proj for proj in self.conn.list_projects() if proj.name == self.project or proj.id == self.project]
         if not projects:
-            common.pprint("Project %s not found" % self.project, code='red')
+            error("Project %s not found" % self.project)
             return
         project = projects[0]
         print("Project name: %s" % project.name)
@@ -459,7 +460,7 @@ class Kpacket(object):
         if devices:
             device = devices[0]
         else:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return {}
         if debug:
             print(vars(device))
@@ -679,11 +680,11 @@ class Kpacket(object):
         if devices:
             device = devices[0]
         else:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return
         flavors = [f for f in self.conn.list_plans() if f.slug == flavor]
         if not flavors:
-            common.pprint("Flavor %s not found" % flavor, color='red')
+            error("Flavor %s not found" % flavor)
             return
         device.plan = flavors[0]
         device.update()
@@ -700,10 +701,10 @@ class Kpacket(object):
         :return:
         """
         if size < 100:
-            common.pprint("Size must be greater than or equal to 100", color='red')
+            error("Size must be greater than or equal to 100")
             return None
         if self.facility is None:
-            common.pprint("a Facility needs to be set in order to create disk2")
+            error("a Facility needs to be set in order to create disk2")
             return None
         volume = self.conn.create_volume(project_id=self.project, description=name, plan="storage_1", size=size,
                                          facility=self.facility, snapshot_count=7, snapshot_frequency="1day")
@@ -775,23 +776,23 @@ class Kpacket(object):
         if devices:
             device = devices[0]
         else:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return
         flavorname = device.plan['slug']
         if flavorname in ['t1.small.x86', 'c1.small.x86']:
-            common.pprint("Layer2 is not supported with flavor %s" % flavorname, color='red')
+            error("Layer2 is not supported with flavor %s" % flavorname)
             return
         networks = [n for n in self.conn.list_vlans(self.project) if n.id == network or
                     (n.description is not None and n.description == network)]
         if not networks:
-            common.pprint("Network %s not found" % network, color='red')
+            error("Network %s not found" % network)
             return
         else:
             networkid = networks[0].id
         status = 'provisioning'
         while status != 'active':
             status = self.info(name).get('status')
-            common.pprint("Waiting 5s for %s to be active..." % name, color='blue')
+            pprint("Waiting 5s for %s to be active..." % name)
             sleep(5)
         device_eth1_port_id = device["network_ports"][2]["id"]
         self.conn.disbond_ports(device_eth1_port_id, False)
@@ -869,7 +870,7 @@ class Kpacket(object):
         """
         # networks = self.list_networks()
         # if name in networks:
-        #    common.pprint("Network %s already exists" % name, color='blue')
+        #    pprint("Network %s already exists" % name)
         #    return {'result': 'exist'}
         if 'facility' in overrides:
             facility = overrides['facility']

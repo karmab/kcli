@@ -6,7 +6,7 @@ interact with a local/remote libvirt daemon
 
 import os
 import time
-from kvirt.common import pprint
+from kvirt.common import pprint, error
 from yaml import dump
 
 
@@ -33,11 +33,11 @@ def play(k, name, playbook, variables=[], verbose=False, user=None, tunnel=False
         if ip is not None:
             break
         else:
-            pprint("Retrieving ip of %s..." % name, color='blue')
+            pprint("Retrieving ip of %s..." % name)
             time.sleep(5)
             counter += 10
     if ip is None:
-        pprint("No ip found for %s. Not running playbook" % name, color='red')
+        error("No ip found for %s. Not running playbook" % name)
         return
     if yamlinventory:
         info = {'ansible_user': user}
@@ -121,7 +121,7 @@ def make_plan_inventory(vms_to_host, plan, vms, groups={}, user=None, yamlinvent
     """
     inventory = {}
     inventoryfile = "/tmp/%s.inv.yaml" % plan if yamlinventory else "/tmp/%s.inv" % plan
-    pprint("Generating inventory %s" % inventoryfile, color='blue')
+    pprint("Generating inventory %s" % inventoryfile)
     allvms = vms
     inventory[plan] = {}
     if groups:

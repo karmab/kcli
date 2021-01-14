@@ -6,6 +6,7 @@ Aws Provider Class
 
 from datetime import datetime
 from kvirt import common
+from kvirt.common import pprint, error
 from kvirt.defaults import METADATA_FIELDS
 import boto3
 from netaddr import IPNetwork
@@ -84,7 +85,7 @@ class Kaws(object):
             if not image.startswith('ami-') and 'Images' in images and images['Images']:
                 imageinfo = images['Images'][0]
                 imageid = imageinfo['ImageId']
-                common.pprint("Using ami %s" % imageid)
+                pprint("Using ami %s" % imageid)
                 image = imageinfo['Name']
             else:
                 return {'result': 'failure', 'reason': 'Invalid image %s' % image}
@@ -95,7 +96,7 @@ class Kaws(object):
             matching = [f for f in staticf if staticf[f]['cpus'] >= numcpus and staticf[f]['memory'] >= memory]
             if matching:
                 flavor = matching[0]
-                common.pprint("Using instance type %s" % flavor)
+                pprint("Using instance type %s" % flavor)
             else:
                 return {'result': 'failure', 'reason': 'Couldnt find instance type matching requirements'}
         vmtags = [{'ResourceType': 'instance',
@@ -106,12 +107,12 @@ class Kaws(object):
             keypair = 'kvirt_%s' % self.access_key_id
         keypairs = [k for k in conn.describe_key_pairs()['KeyPairs'] if k['KeyName'] == keypair]
         if not keypairs:
-            common.pprint("Importing your public key as %s" % keypair)
+            pprint("Importing your public key as %s" % keypair)
             if not os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME'])\
                     and not os.path.exists("%s/.ssh/id_dsa.pub" % os.environ['HOME'])\
                     and not os.path.exists("%s/.kcli/id_rsa.pub" % os.environ['HOME'])\
                     and not os.path.exists("%s/.kcli/id_dsa.pub" % os.environ['HOME']):
-                common.pprint("No public key found. Leaving", color='red')
+                error("No public key found. Leaving")
                 return {'result': 'failure', 'reason': 'No public key found'}
             elif os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME']):
                 homekey = open("%s/.ssh/id_rsa.pub" % os.environ['HOME']).read()
@@ -161,7 +162,7 @@ class Kaws(object):
                                 if subnet['DefaultForAz'] and subnet['VpcId'] == vpcid][0]
                     netname = subnetid
                     defaultsubnetid = netname
-                    common.pprint("Using subnet %s as default" % defaultsubnetid)
+                    pprint("Using subnet %s as default" % defaultsubnetid)
             if ips and len(ips) > index and ips[index] is not None:
                 ip = ips[index]
                 if index == 0:
@@ -349,7 +350,7 @@ class Kaws(object):
                     Filters = {'Name': "tag:Name", 'Values': [name]}
                     vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
             except:
-                common.pprint("VM %s not found" % name, color='red')
+                error("VM %s not found" % name)
                 return {}
         instanceid = vm['InstanceId']
         name = instanceid
@@ -534,18 +535,18 @@ class Kaws(object):
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         state = vm['State']['Name']
         if state != 'stopped':
-            common.pprint("Can't update memory of VM %s while up" % name, color='red')
+            error("Can't update memory of VM %s while up" % name)
             return {'result': 'failure', 'reason': "VM %s up" % name}
         instanceid = vm['InstanceId']
         instancetype = [f for f in staticf if staticf[f]['memory'] >= int(memory)]
         if instancetype:
             flavor = instancetype[0]
-            common.pprint("Using flavor %s" % flavor)
+            pprint("Using flavor %s" % flavor)
             conn.modify_instance_attribute(InstanceId=instanceid, Attribute='instanceType', Value=flavor,
                                            DryRun=False)
             return {'result': 'success'}
         else:
-            common.pprint("Couldn't find matching flavor for this amount of memory", color='red')
+            error("Couldn't find matching flavor for this amount of memory")
             return {'result': 'failure', 'reason': "Couldn't find matching flavor for this amount of memory"}
 
     def update_flavor(self, name, flavor):
@@ -559,7 +560,7 @@ class Kaws(object):
         instancetype = vm['InstanceType']
         state = vm['State']['Name']
         if state != 'stopped':
-            common.pprint("Can't update cpus of VM %s while up" % name, color='red')
+            error("Can't update cpus of VM %s while up" % name)
             return {'result': 'failure', 'reason': "VM %s up" % name}
         if instancetype != flavor:
             conn.modify_instance_attribute(InstanceId=instanceid, Attribute='instanceType', Value=flavor,
@@ -576,17 +577,17 @@ class Kaws(object):
         instanceid = vm['InstanceId']
         state = vm['State']['Name']
         if state != 'stopped':
-            common.pprint("Can't update cpus of VM %s while up" % name, color='red')
+            error("Can't update cpus of VM %s while up" % name)
             return {'result': 'failure', 'reason': "VM %s up" % name}
         instancetype = [f for f in staticf if staticf[f]['cpus'] >= numcpus]
         if instancetype:
             flavor = instancetype[0]
-            common.pprint("Using flavor %s" % flavor)
+            pprint("Using flavor %s" % flavor)
             conn.modify_instance_attribute(InstanceId=instanceid, Attribute='instanceType', Value=flavor,
                                            DryRun=False)
             return {'result': 'success'}
         else:
-            common.pprint("Couldn't find matching flavor for this number of cpus", color='red')
+            error("Couldn't find matching flavor for this number of cpus")
             return {'result': 'failure', 'reason': "Couldn't find matching flavor for this number of cpus"}
 
     def update_start(self, name, start=True):
@@ -664,7 +665,7 @@ class Kaws(object):
         return
 
     def delete_image(self, image, pool=None):
-        common.pprint("Deleting image %s" % image)
+        pprint("Deleting image %s" % image)
         conn = self.conn
         try:
             conn.deregister_image(ImageId=image)
@@ -749,7 +750,7 @@ class Kaws(object):
     def __evaluate_image(self, image):
         if image.lower().startswith('centos'):
             amiid = 'ami-8352e3fe'
-            common.pprint("Using ami %s" % amiid)
+            pprint("Using ami %s" % amiid)
             return 'ami-8352e3fe'
         else:
             return image
@@ -759,7 +760,7 @@ class Kaws(object):
         if domain is None:
             domain = nets[0]
         internalip = None
-        common.pprint("Using domain %s..." % domain)
+        pprint("Using domain %s..." % domain)
         dns = self.dns
         net = nets[0]
         cluster = None
@@ -771,7 +772,7 @@ class Kaws(object):
         zone = [z['Id'].split('/')[2] for z in dns.list_hosted_zones_by_name()['HostedZones']
                 if z['Name'] == '%s.' % domain]
         if not zone:
-            common.pprint("Domain %s not found" % domain, color='red')
+            error("Domain %s not found" % domain)
             return {'result': 'failure', 'reason': "Domain not found"}
         zoneid = zone[0]
         dnsentry = name if cluster is None else "%s.%s" % (name, cluster)
@@ -782,8 +783,7 @@ class Kaws(object):
                 internalip = self.internalip(name)
                 if internalip is None:
                     sleep(5)
-                    common.pprint("Waiting 5 seconds to grab internal ip and create DNS record for %s..." % name,
-                                  color='blue')
+                    pprint("Waiting 5 seconds to grab internal ip and create DNS record for %s..." % name)
                     counter += 10
                 else:
                     break
@@ -801,7 +801,7 @@ class Kaws(object):
                     else:
                         break
         if ip is None:
-            common.pprint("Couldn't assign DNS for %s" % name, color='red')
+            error("Couldn't assign DNS for %s" % name)
             return
         dnsip = ip if internalip is None else internalip
         changes = [{'Action': 'CREATE', 'ResourceRecordSet':
@@ -843,14 +843,14 @@ class Kaws(object):
         zone = [z['Id'].split('/')[2] for z in dns.list_hosted_zones_by_name()['HostedZones']
                 if z['Name'] == '%s.' % domain]
         if not zone:
-            common.pprint("Domain not found", color='red')
+            error("Domain not found")
             return {'result': 'failure', 'reason': "Domain not found"}
         zoneid = zone[0]
         dnsentry = name if cluster is None else "%s.%s" % (name, cluster)
         entry = "%s.%s." % (dnsentry, domain)
         ip = self.ip(instanceid)
         if ip is None:
-            common.pprint("Couldn't Get DNS Ip for %s" % name, color='red')
+            error("Couldn't Get DNS Ip for %s" % name)
             return
         recs = []
         clusterdomain = "%s.%s" % (cluster, domain)
@@ -922,7 +922,7 @@ class Kaws(object):
         HealthCheck = {'Interval': 20, 'Target': HealthTarget, 'Timeout': 3, 'UnhealthyThreshold': 10,
                        'HealthyThreshold': 2}
         elb.configure_health_check(LoadBalancerName=name, HealthCheck=HealthCheck)
-        common.pprint("Reserved dns name %s" % lb['DNSName'])
+        pprint("Reserved dns name %s" % lb['DNSName'])
         if vms:
             Instances = []
             for vm in vms:

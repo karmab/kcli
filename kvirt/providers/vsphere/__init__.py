@@ -6,6 +6,7 @@ from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from kvirt import common
+from kvirt.common import error, pprint, success
 from kvirt.defaults import METADATA_FIELDS
 from math import ceil
 from pyVmomi import vim, vmodl
@@ -27,8 +28,8 @@ def waitForMe(t):
     while t.info.state not in [vim.TaskInfo.State.success, vim.TaskInfo.State.error]:
         time.sleep(1)
     if t.info.state == vim.TaskInfo.State.error:
-        common.pprint(t.info.description, color='red')
-        common.pprint(t.info.error, color='red')
+        error(t.info.description)
+        error(t.info.error)
         os._exit(1)
 
 
@@ -492,7 +493,7 @@ class Ksphere:
                 currentdisk = currentdisks[index]
                 currentsize = convert(1000 * currentdisk.capacityInKB, GB=False)
                 if int(currentsize) < disksize:
-                    common.pprint("Waiting for image disk %s to be resized" % index)
+                    pprint("Waiting for image disk %s to be resized" % index)
                     currentdisk.capacityInKB = disksize * 1048576
                     diskspec = vim.vm.ConfigSpec()
                     diskspec = vim.vm.device.VirtualDeviceSpec(device=currentdisk, operation="edit")
@@ -703,9 +704,9 @@ class Ksphere:
                 return vmurl
             if self.debug or os.path.exists("/i_am_a_container"):
                 msg = "Open the following url:\n%s" % vmurl if os.path.exists("/i_am_a_container") else vmurl
-                common.pprint(msg)
+                pprint(msg)
             else:
-                common.pprint("Opening url %s" % vmurl)
+                pprint("Opening url %s" % vmurl)
                 webbrowser.open(vmurl, new=2, autoraise=True)
 
     def info(self, name, output='plain', fields=[], values=False, vm=None, debug=False):
@@ -717,7 +718,7 @@ class Ksphere:
         if vm is None:
             vm = findvm(si, vmFolder, name)
             if vm is None:
-                common.pprint("VM %s not found" % name, color='red')
+                error("VM %s not found" % name)
                 return {}
         summary = vm.summary
         yamlinfo['name'] = name
@@ -894,7 +895,7 @@ class Ksphere:
         vm = findvm(si, vmFolder, name)
         isos = [i for i in self._getisos() if i.endswith(iso)]
         if not isos:
-            common.pprint("Iso %s not found.Leaving..." % iso, color='red')
+            error("Iso %s not found.Leaving..." % iso)
             return {'result': 'failure', 'reason': "Iso %s not found" % iso}
         else:
             iso = isos[0]
@@ -909,7 +910,7 @@ class Ksphere:
 
     def _uploadimage(self, pool, origin, directory, verbose=False, temp=False):
         if verbose:
-            common.pprint("Uploading %s to %s/%s" % (origin, pool, directory))
+            pprint("Uploading %s to %s/%s" % (origin, pool, directory))
         si = self.si
         rootFolder = self.rootFolder
         datastore = find(si, rootFolder, vim.Datastore, pool)
@@ -933,9 +934,9 @@ class Ksphere:
                 r = requests.put(url, data=f, headers=headers, cookies=cookie, verify=False)
                 if verbose:
                     if r.status_code not in [200, 201]:
-                        print(r.status_code, r.text)
+                        error(r.status_code, r.text)
                     else:
-                        common.pprint("Successfull upload of %s to %s" % (origin, pool))
+                        success("Successfull upload of %s to %s" % (origin, pool))
 
     def get_pool_path(self, pool):
         return pool
@@ -1112,18 +1113,18 @@ class Ksphere:
         if not image.endswith('ova'):
             return {'result': 'failure', 'reason': "Invalid image. Only ovas are supported"}
         if shortimage in self.volumes():
-            common.pprint("Template %s already there" % shortimage, color='blue')
+            pprint("Template %s already there" % shortimage)
             return {'result': 'success'}
         if not find(si, rootFolder, vim.Datastore, pool):
             return {'result': 'failure', 'reason': "Pool %s not found" % pool}
         if not os.path.exists('/tmp/%s' % shortimage):
-            common.pprint("Downloading locally %s" % shortimage)
+            pprint("Downloading locally %s" % shortimage)
             downloadcmd = "curl -Lo /tmp/%s -f '%s'" % (shortimage, image)
             code = os.system(downloadcmd)
             if code != 0:
                 return {'result': 'failure', 'reason': "Unable to download indicated image"}
         else:
-            common.pprint("Using found /tmp/%s" % shortimage, color='blue')
+            pprint("Using found /tmp/%s" % shortimage)
         govc = common.get_binary('govc', GOVC_LINUX, GOVC_MACOSX, compressed=True)
         opts = "-name=%s -ds=%s -k=true -u=%s" % (name, pool, self.url)
         ovacmd = "%s import.ova %s /tmp/%s" % (govc, opts, shortimage)
@@ -1166,7 +1167,7 @@ class Ksphere:
     def delete_image(self, image, pool=None):
         si = self.si
         vmFolder = self.dc.vmFolder
-        common.pprint("Deleting image %s" % image)
+        pprint("Deleting image %s" % image)
         vm = findvm(si, vmFolder, image)
         if vm is None or not vm.config.template:
             return {'result': 'failure', 'reason': 'Image %s not found' % image}

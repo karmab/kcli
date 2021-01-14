@@ -1,5 +1,5 @@
 # coding=utf-8
-from kvirt.common import pprint
+from kvirt.common import warning
 import os
 
 IMAGES = {'CentOS-6-x86_64-GenericCloud.qcow2': 'CentOS 6 Generic Cloud Image',
@@ -42,6 +42,6 @@ def get_home_ssh_key():
         with open(publickeyfile, 'r') as ssh:
             key = ssh.read().rstrip()
     else:
-        pprint("neither id_rsa or id_dsa public keys found in your .ssh or .kcli directory, you might have trouble "
-               "accessing the vm", color='yellow')
+        warning("neither id_rsa or id_dsa public keys found in your .ssh or .kcli directory, you might have trouble "
+                "accessing the vm")
     return key

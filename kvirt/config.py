@@ -14,6 +14,7 @@ from kvirt import ansibleutils
 from kvirt.jinjafilters import jinjafilters
 from kvirt import nameutils
 from kvirt import common
+from kvirt.common import error, pprint, success, warning
 from kvirt import k3s
 from kvirt import kubeadm
 from kvirt.expose import Kexposer
@@ -87,14 +88,14 @@ class Kconfig(Kbaseconfig):
                 if ca_file is not None:
                     ca_file = os.path.expanduser(ca_file)
                     if not os.path.exists(ca_file):
-                        common.pprint("Ca file %s doesn't exist. Leaving" % ca_file, color='red')
+                        error("Ca file %s doesn't exist. Leaving" % ca_file)
                         os._exit(1)
                 token = self.options.get('token')
                 token_file = self.options.get('token_file')
                 if token_file is not None:
                     token_file = os.path.expanduser(token_file)
                     if not os.path.exists(token_file):
-                        common.pprint("Token file path doesn't exist. Leaving", color='red')
+                        error("Token file path doesn't exist. Leaving")
                         os._exit(1)
                     else:
                         token = open(token_file).read()
@@ -102,7 +103,7 @@ class Kconfig(Kbaseconfig):
                 access_mode = self.options.get('access_mode', 'NodePort')
                 if access_mode not in ['External', 'LoadBalancer', 'NodePort']:
                         msg = "Incorrect access_mode %s. Should be External, NodePort or LoadBalancer" % access_mode
-                        common.pprint(msg, color='red')
+                        error(msg)
                         os._exit(1)
                 from kvirt.providers.kubevirt import Kubevirt
                 k = Kubevirt(context=context, token=token, ca_file=ca_file, host=self.host,
@@ -115,11 +116,11 @@ class Kconfig(Kbaseconfig):
                 if credentials is not None:
                     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = os.path.expanduser(credentials)
                 elif 'GOOGLE_APPLICATION_CREDENTIALS' not in os.environ:
-                    common.pprint("set GOOGLE_APPLICATION_CREDENTIALS variable.Leaving...", color='red')
+                    error("set GOOGLE_APPLICATION_CREDENTIALS variable.Leaving...")
                     os._exit(1)
                 project = self.options.get('project')
                 if project is None:
-                    common.pprint("Missing project in the configuration. Leaving", color='red')
+                    error("Missing project in the configuration. Leaving")
                     os._exit(1)
                 zone = self.options.get('zone', 'europe-west1-b') if zone is None else zone
                 region = self.options.get('region') if region is None else region
@@ -130,15 +131,15 @@ class Kconfig(Kbaseconfig):
             elif self.type == 'aws':
                 region = self.options.get('region') if region is None else region
                 if region is None:
-                    common.pprint("Missing region in the configuration. Leaving", color='red')
+                    error("Missing region in the configuration. Leaving")
                     os._exit(1)
                 access_key_id = self.options.get('access_key_id')
                 if access_key_id is None:
-                    common.pprint("Missing access_key_id in the configuration. Leaving", color='red')
+                    error("Missing access_key_id in the configuration. Leaving")
                     os._exit(1)
                 access_key_secret = self.options.get('access_key_secret')
                 if access_key_secret is None:
-                    common.pprint("Missing access_key_secret in the configuration. Leaving", color='red')
+                    error("Missing access_key_secret in the configuration. Leaving")
                     os._exit(1)
                 keypair = self.options.get('keypair')
                 from kvirt.providers.aws import Kaws
@@ -150,19 +151,19 @@ class Kconfig(Kbaseconfig):
                 user = self.options.get('user', 'admin@internal')
                 password = self.options.get('password')
                 if password is None:
-                    common.pprint("Missing password in the configuration. Leaving", color='red')
+                    error("Missing password in the configuration. Leaving")
                     os._exit(1)
                 org = self.options.get('org')
                 if org is None:
-                    common.pprint("Missing org in the configuration. Leaving", color='red')
+                    error("Missing org in the configuration. Leaving")
                     os._exit(1)
                 ca_file = self.options.get('ca_file')
                 if ca_file is None:
-                    common.pprint("Missing ca_file in the configuration. Leaving", color='red')
+                    error("Missing ca_file in the configuration. Leaving")
                     os._exit(1)
                 ca_file = os.path.expanduser(ca_file)
                 if not os.path.exists(ca_file):
-                    common.pprint("Ca file path doesn't exist. Leaving", color='red')
+                    error("Ca file path doesn't exist. Leaving")
                     os._exit(1)
                 imagerepository = self.options.get('imagerepository', 'ovirt-image-repository')
                 filtervms = self.options.get('filtervms', False)
@@ -182,7 +183,7 @@ class Kconfig(Kbaseconfig):
                                              os.environ.get("OS_AUTH_URL")] if e is not None),
                                 None)
                 if auth_url is None:
-                    common.pprint("Missing auth_url in the configuration. Leaving", color='red')
+                    error("Missing auth_url in the configuration. Leaving")
                     os._exit(1)
                 user = next((e for e in [self.options.get('user'),
                                          os.environ.get("OS_USERNAME")] if e is not None), 'admin')
@@ -194,12 +195,12 @@ class Kconfig(Kbaseconfig):
                                             os.environ.get("OS_CACERT")] if e is not None), None)
                 external_network = self.options.get('external_network')
                 if password is None:
-                    common.pprint("Missing password in the configuration. Leaving", color='red')
+                    error("Missing password in the configuration. Leaving")
                     os._exit(1)
                 if auth_url.endswith('v2.0'):
                     domain = None
                 if ca_file is not None and not os.path.exists(os.path.expanduser(ca_file)):
-                    common.pprint("Indicated ca_file %s not found. Leaving" % ca_file, color='red')
+                    error("Indicated ca_file %s not found. Leaving" % ca_file)
                     os._exit(1)
                 from kvirt.providers.openstack import Kopenstack
                 k = Kopenstack(host=self.host, port=self.port, user=user, password=password, version=version,
@@ -208,18 +209,18 @@ class Kconfig(Kbaseconfig):
             elif self.type == 'vsphere':
                 user = self.options.get('user')
                 if user is None:
-                    common.pprint("Missing user in the configuration. Leaving", color='red')
+                    error("Missing user in the configuration. Leaving")
                     os._exit(1)
                 password = self.options.get('password')
                 if password is None:
-                    common.pprint("Missing password in the configuration. Leaving", color='red')
+                    error("Missing password in the configuration. Leaving")
                     os._exit(1)
                 cluster = self.options.get('cluster')
                 if cluster is None:
-                    common.pprint("Missing cluster in the configuration. Leaving", color='red')
+                    error("Missing cluster in the configuration. Leaving")
                 datacenter = self.options.get('datacenter')
                 if datacenter is None:
-                    common.pprint("Missing datacenter in the configuration. Leaving", color='red')
+                    error("Missing datacenter in the configuration. Leaving")
                 filtervms = self.options.get('filtervms', False)
                 filteruser = self.options.get('filteruser', False)
                 filtertag = self.options.get('filtertag')
@@ -229,11 +230,11 @@ class Kconfig(Kbaseconfig):
             elif self.type == 'packet':
                 auth_token = self.options.get('auth_token')
                 if auth_token is None:
-                    common.pprint("Missing auth_token in the configuration. Leaving", color='red')
+                    error("Missing auth_token in the configuration. Leaving")
                     os._exit(1)
                 project = self.options.get('project')
                 if project is None:
-                    common.pprint("Missing project in the configuration. Leaving", color='red')
+                    error("Missing project in the configuration. Leaving")
                     os._exit(1)
                 facility = self.options.get('facility')
                 from kvirt.providers.packet import Kpacket
@@ -242,25 +243,24 @@ class Kconfig(Kbaseconfig):
                             tunneldir=self.tunneldir)
             else:
                 if self.host is None:
-                    common.pprint("Problem parsing your configuration file", color='red')
+                    error("Problem parsing your configuration file")
                     os._exit(1)
                 session = self.options.get('session', False)
                 from kvirt.providers.kvm import Kvirt
                 k = Kvirt(host=self.host, port=self.port, user=self.user, protocol=self.protocol, url=self.url,
                           debug=debug, insecure=self.insecure, session=session)
             if k.conn is None:
-                common.pprint("Couldn't connect to client %s. Leaving..." % self.client, color='red')
+                error("Couldn't connect to client %s. Leaving..." % self.client)
                 os._exit(1)
             for extraclient in self._extraclients:
                 if extraclient not in self.ini:
-                    common.pprint("Missing section for client %s in config file. Trying to connect..." % extraclient,
-                                  color='blue')
+                    warning("Missing section for client %s in config file. Trying to connect..." % extraclient)
                     self.ini[extraclient] = {'host': extraclient}
                 c = Kconfig(client=extraclient)
                 e = c.k
                 self.extraclients[extraclient] = e
                 if e.conn is None:
-                    common.pprint("Couldn't connect to specify hypervisor %s. Leaving..." % extraclient, color='red')
+                    error("Couldn't connect to specify hypervisor %s. Leaving..." % extraclient)
                     os._exit(1)
         self.k = k
         default_data = {'config_%s' % k: self.default[k] for k in self.default}
@@ -288,7 +288,7 @@ class Kconfig(Kbaseconfig):
         wrong_overrides = [y for y in overrides if '-' in y]
         if wrong_overrides:
             for wrong_override in wrong_overrides:
-                common.pprint("Incorrect parameter %s. Hyphens are not allowed" % wrong_override, color='red')
+                error("Incorrect parameter %s. Hyphens are not allowed" % wrong_override)
             os._exit(1)
         overrides['name'] = name
         kube = overrides.get('kube')
@@ -308,11 +308,11 @@ class Kconfig(Kbaseconfig):
                         vmprofiles[profile]['image'] = vmprofiles[clientprofile]['image']
                     elif customprofileimage in IMAGES and self.type != 'packet' and\
                             IMAGES[customprofileimage] not in [os.path.basename(v) for v in self.k.volumes()]:
-                        common.pprint("Image %s not found. Downloading" % customprofileimage, color='blue')
+                        pprint("Image %s not found. Downloading" % customprofileimage)
                         self.handle_host(pool=self.pool, image=customprofileimage, download=True, update_profile=True)
                         vmprofiles[profile]['image'] = os.path.basename(IMAGES[customprofileimage])
             else:
-                common.pprint("Deploying vm %s from profile %s..." % (name, profile))
+                pprint("Deploying vm %s from profile %s..." % (name, profile))
             if profile not in vmprofiles:
                 clientprofile = "%s_%s" % (self.client, profile)
                 if clientprofile in vmprofiles:
@@ -322,11 +322,11 @@ class Kconfig(Kbaseconfig):
                         vmprofiles[profile] = {'iso': vmprofiles[clientprofile]['iso']}
                 elif profile in IMAGES and IMAGES[profile] not in [os.path.basename(v) for v in self.k.volumes()]\
                         and self.type not in ['aws', 'gcp', 'packet']:
-                    common.pprint("Image %s not found. Downloading" % profile, color='blue')
+                    pprint("Image %s not found. Downloading" % profile)
                     self.handle_host(pool=self.pool, image=profile, download=True, update_profile=True)
                     vmprofiles[profile] = {'image': os.path.basename(IMAGES[profile])}
                 else:
-                    common.pprint("Profile %s not found. Using the image as profile..." % profile, color='blue')
+                    pprint("Profile %s not found. Using the image as profile..." % profile)
                     vmprofiles[profile] = {'image': profile}
         elif customprofile:
             vmprofiles[profile] = customprofile
@@ -536,7 +536,7 @@ class Kconfig(Kbaseconfig):
                 elif isinstance(fil, dict):
                     path = fil.get('path')
                     if not path.startswith('/'):
-                        common.pprint("Incorrect path %s.Leaving..." % path, color='red')
+                        error("Incorrect path %s.Leaving..." % path)
                         os._exit(1)
                     origin = fil.get('origin')
                     content = fil.get('content')
@@ -558,7 +558,7 @@ class Kconfig(Kbaseconfig):
                 elif content is None:
                     return {'result': 'failure', 'reason': "Content of file %s not found in %s" % (path, name)}
                 if path is None:
-                    common.pprint("Using current directory for path in files of %s" % name, color='blue')
+                    pprint("Using current directory for path in files of %s" % name)
                     path = os.path.basename(origin)
         enableroot = profile.get('enableroot', default_enableroot)
         tags = profile.get('tags', [])
@@ -700,14 +700,14 @@ class Kconfig(Kbaseconfig):
                 if not os.path.exists(notifyscript):
                     notifycmd = None
                     notifyscript = None
-                    common.pprint("Notification required for %s but missing notifyscript" % name, color='yellow')
+                    warning("Notification required for %s but missing notifyscript" % name)
                 else:
                     files.append({'path': '/root/.notify.sh', 'origin': notifyscript})
                     notifycmd = "bash /root/.notify.sh"
             for notifymethod in notifymethods:
                 if notifymethod == 'pushbullet':
                     if pushbullettoken is None:
-                        common.pprint("Notification required for %s but missing pushbullettoken" % name, color='yellow')
+                        warning("Notification required for %s but missing pushbullettoken" % name)
                     elif notifyscript is None and notifycmd is None:
                         continue
                     else:
@@ -723,9 +723,9 @@ class Kconfig(Kbaseconfig):
                             cmds.append(pbcmd)
                 elif notifymethod == 'slack':
                     if slackchannel is None:
-                        common.pprint("Notification required for %s but missing slack channel" % name, color='yellow')
+                        warning("Notification required for %s but missing slack channel" % name)
                     elif slacktoken is None:
-                        common.pprint("Notification required for %s but missing slacktoken" % name, color='yellow')
+                        warning("Notification required for %s but missing slacktoken" % name)
                     else:
                         title = "Vm %s on %s report" % (name, self.client)
                         slackcmd = "info=`%s 2>&1 | sed 's/\\x2/ /g'`;" % notifycmd
@@ -741,11 +741,11 @@ class Kconfig(Kbaseconfig):
                             cmds.append(slackcmd)
                 elif notifymethod == 'mail':
                     if mailserver is None:
-                        common.pprint("Notification required for %s but missing mailserver" % name, color='yellow')
+                        warning("Notification required for %s but missing mailserver" % name)
                     elif mailfrom is None:
-                        common.pprint("Notification required for %s but missing mailfrom" % name, color='yellow')
+                        warning("Notification required for %s but missing mailfrom" % name)
                     elif not mailto:
-                        common.pprint("Notification required for %s but missing mailto" % name, color='yellow')
+                        warning("Notification required for %s but missing mailto" % name)
                     else:
                         title = "Vm %s on %s report" % (name, self.client)
                         now = datetime.now()
@@ -774,7 +774,7 @@ $INFO
                         else:
                             cmds.extend(mailcmd)
                 else:
-                    common.pprint("Invalid method %s" % notifymethod, color='red')
+                    error("Invalid method %s" % notifymethod)
         ips = [overrides[key] for key in overrides if key.startswith('ip')]
         netmasks = [overrides[key] for key in overrides if key.startswith('netmask')]
         if privatekey and self.type == 'kvm':
@@ -788,7 +788,7 @@ $INFO
             if privatekeyfile is not None and publickeyfile is not None:
                 privatekey = open(privatekeyfile).read().strip()
                 publickey = open(publickeyfile).read().strip()
-                common.pprint("Injecting private key for %s" % name, color='yellow')
+                warning("Injecting private key for %s" % name)
                 if files:
                     files.append({'path': '/root/.ssh/id_rsa', 'content': privatekey})
                     files.append({'path': '/root/.ssh/id_rsa.pub', 'content': publickey})
@@ -804,7 +804,7 @@ $INFO
                                 found = True
                                 break
                         if not found:
-                            common.pprint("Adding public key to authorized_keys_file for %s" % name, color='yellow')
+                            warning("Adding public key to authorized_keys_file for %s" % name)
                             with open(authorized_keys_file, 'a') as f:
                                 f.write(publickey)
         if cmds and 'reboot' in cmds:
@@ -818,12 +818,12 @@ $INFO
             if isinstance(firstdisk, int):
                 firstdisksize = firstdisk
                 if firstdisksize < 20:
-                    common.pprint("Rounding up first disk to 20Gb", color='blue')
+                    pprint("Rounding up first disk to 20Gb")
                     disks[0] = 20
             elif isinstance(firstdisk, dict) and 'size' in firstdisk:
                 firstdisksize = firstdisk['size']
                 if firstdisksize < 20:
-                    common.pprint("Rounding up first disk to 20Gb", color='blue')
+                    pprint("Rounding up first disk to 20Gb")
                     disks[0]['size'] = 20
             else:
                 msg = "Incorrect first disk spec"
@@ -883,15 +883,15 @@ $INFO
                         else:
                             break
                 if ip is None:
-                    common.pprint("Couldn't assign DNS", color='red')
+                    error("Couldn't assign DNS")
                 else:
                     z.reserve_dns(name=name, nets=[domain], domain=domain, ip=ip, force=True)
             else:
-                common.pprint("Client %s not found. Skipping" % dnsclient, color='blue')
+                warning("Client %s not found. Skipping" % dnsclient)
         ansibleprofile = profile.get('ansible')
         if ansibleprofile is not None:
             if find_executable('ansible-playbook') is None:
-                common.pprint("ansible-playbook executable not found. Skipping ansible play", color='yellow')
+                warning("ansible-playbook executable not found. Skipping ansible play")
             else:
                 for element in ansibleprofile:
                     if 'playbook' not in element:
@@ -908,7 +908,7 @@ $INFO
             common.set_lastvm(name, client)
         if wait:
             if not cloudinit or not start or image is None:
-                common.pprint("Skipping wait on %s" % name, color='blue')
+                pprint("Skipping wait on %s" % name)
             else:
                 self.wait(name, image=image)
                 finishfiles = profile.get('finishfiles', [])
@@ -972,10 +972,10 @@ $INFO
         else:
             products = [product for product in self.list_products() if product['name'] == name]
         if len(products) == 0:
-            common.pprint("Product not found. Leaving...", color='red')
+            error("Product not found. Leaving...")
             os._exit(1)
         elif len(products) > 1:
-            common.pprint("Product found in several repos or groups. Specify one...", color='red')
+            error("Product found in several repos or groups. Specify one...")
             for product in products:
                 group = product['group']
                 repo = product['repo']
@@ -1006,12 +1006,12 @@ $INFO
             for parameter in extraparameters:
                 print("Using parameter %s: %s" % (parameter, overrides[parameter]))
             if not latest:
-                common.pprint("Using directory %s" % (repodir))
+                pprint("Using directory %s" % repodir)
                 self.plan(plan, path=repodir, inputfile=inputfile, overrides=overrides)
             else:
                 self.update_repo(repo)
                 self.plan(plan, path=repodir, inputfile=inputfile, overrides=overrides)
-            common.pprint("Product can be deleted with: kcli delete plan --yes %s" % plan)
+            pprint("Product can be deleted with: kcli delete plan --yes %s" % plan)
         return {'result': 'success', 'plan': plan}
 
     def plan(self, plan, ansible=False, url=None, path=None, autostart=False, container=False, noautostart=False,
@@ -1041,7 +1041,7 @@ $INFO
             dnsclients = []
             networks = []
             if plan == '':
-                common.pprint("That would delete every vm...Not doing that", color='red')
+                error("That would delete every vm...Not doing that")
                 os._exit(1)
             if not force:
                 common.confirm('Are you sure about deleting plan %s' % plan)
@@ -1076,7 +1076,7 @@ $INFO
                                 dnsclients[dnsclient] = z
                             z.delete_dns(dnsclient, domain)
                         common.set_lastvm(name, self.client, delete=True)
-                        common.pprint("%s deleted on %s!" % (name, hypervisor))
+                        success("%s deleted on %s!" % (name, hypervisor))
                         deletedvms.append(name)
                         found = True
             if container:
@@ -1086,7 +1086,7 @@ $INFO
                     container_plan = conta[3]
                     if container_plan == plan:
                         cont.delete_container(name)
-                        common.pprint("Container %s deleted!" % name)
+                        success("Container %s deleted!" % name)
                         found = True
             if not self.keep_networks:
                 if self.type == 'kvm':
@@ -1095,50 +1095,50 @@ $INFO
                         if 'plan' in networks[network] and networks[network]['plan'] == plan:
                             networkresult = k.delete_network(network)
                             if networkresult['result'] == 'success':
-                                common.pprint("network %s deleted!" % network)
+                                success("network %s deleted!" % network)
                                 found = True
                 elif networks:
                     found = True
                     for network in networks:
                         networkresult = k.delete_network(network)
                         if networkresult['result'] == 'success':
-                            common.pprint("Unused network %s deleted!" % network)
+                            success("Unused network %s deleted!" % network)
             for keyfile in glob.glob("%s.key*" % plan):
-                common.pprint("file %s from %s deleted!" % (keyfile, plan))
+                success("file %s from %s deleted!" % (keyfile, plan))
                 os.remove(keyfile)
             for ansiblefile in glob.glob("/tmp/%s*inv*" % plan):
-                common.pprint("file %s from %s deleted!" % (ansiblefile, plan))
+                success("file %s from %s deleted!" % (ansiblefile, plan))
                 os.remove(ansiblefile)
             if deletedlbs and self.type in ['aws', 'gcp']:
                 for lb in deletedlbs:
                     self.k.delete_loadbalancer(lb)
             if found:
-                common.pprint("Plan %s deleted!" % plan)
+                success("Plan %s deleted!" % plan)
             else:
-                common.pprint("Nothing to do for plan %s" % plan, color='blue')
+                pprint("Nothing to do for plan %s" % plan)
                 return {'result': 'success'}
             return {'result': 'success', 'deletedvm': deletedvms}
         if autostart:
-            common.pprint("Set vms from plan %s to autostart" % plan)
+            pprint("Set vms from plan %s to autostart" % plan)
             for vm in sorted(k.list(), key=lambda x: x['name']):
                 name = vm['name']
                 description = vm['plan']
                 if description == plan:
                     k.update_start(name, start=True)
-                    common.pprint("%s set to autostart!" % name)
+                    success("%s set to autostart!" % name)
             return {'result': 'success'}
         if noautostart:
-            common.pprint("Preventing vms from plan %s to autostart" % plan)
+            pprint("Preventing vms from plan %s to autostart" % plan)
             for vm in sorted(k.list(), key=lambda x: x['name']):
                 name = vm['name']
                 description = vm['plan']
                 if description == plan:
                     k.update_start(name, start=False)
-                    common.pprint("%s prevented to autostart!" % name)
+                    success("%s prevented to autostart!" % name)
             return {'result': 'success'}
         if stop or restart:
             stopfound = True
-            common.pprint("Stopping vms from plan %s" % plan)
+            pprint("Stopping vms from plan %s" % plan)
             if not self.extraclients:
                 stopclients = {self.client: k}
             else:
@@ -1152,7 +1152,7 @@ $INFO
                     if description == plan:
                         stopfound = True
                         c.stop(name)
-                        common.pprint("%s stopped on %s!" % (name, hypervisor))
+                        success("%s stopped on %s!" % (name, hypervisor))
             if container:
                 cont = Kcontainerconfig(self, client=self.containerclient).cont
                 for conta in sorted(cont.list_containers()):
@@ -1161,16 +1161,16 @@ $INFO
                     if containerplan == plan:
                         stopfound = True
                         cont.stop_container(name)
-                        common.pprint("Container %s stopped!" % name)
+                        success("Container %s stopped!" % name)
             if stopfound:
-                common.pprint("Plan %s stopped!" % plan)
+                success("Plan %s stopped!" % plan)
             else:
-                common.pprint("No matching objects found", color='yellow')
+                warning("No matching objects found")
             if not restart:
                 return {'result': 'success'}
         if start or restart:
             startfound = False
-            common.pprint("Starting vms from plan %s" % plan)
+            pprint("Starting vms from plan %s" % plan)
             if not self.extraclients:
                 startclients = {self.client: k}
             else:
@@ -1184,7 +1184,7 @@ $INFO
                     if description == plan:
                         startfound = True
                         c.start(name)
-                        common.pprint("%s started on %s!" % (name, hypervisor))
+                        success("%s started on %s!" % (name, hypervisor))
             if container:
                 cont = Kcontainerconfig(self, client=self.containerclient).cont
                 for conta in sorted(cont.list_containers(k)):
@@ -1193,20 +1193,20 @@ $INFO
                     if containerplan == plan:
                         startfound = True
                         cont.start_container(name)
-                        common.pprint("Container %s started!" % name)
+                        success("Container %s started!" % name)
             if startfound:
-                common.pprint("Plan %s started!" % plan)
+                success("Plan %s started!" % plan)
             else:
-                common.pprint("No matching objects found", color='yellow')
+                warning("No matching objects found")
             return {'result': 'success'}
         if snapshot:
             snapshotfound = False
             if revert:
-                common.pprint("Can't revert and snapshot plan at the same time", color='red')
+                error("Can't revert and snapshot plan at the same time")
                 os._exit(1)
-            common.pprint("Snapshotting vms from plan %s" % plan, color='blue')
+            pprint("Snapshotting vms from plan %s" % plan)
             if snapshotname is None:
-                common.pprint("Using %s as snapshot name as None was provider" % plan, color='yellow')
+                warning("Using %s as snapshot name as None was provider" % plan)
                 snapshotname = plan
             for vm in sorted(k.list(), key=lambda x: x['name']):
                 name = vm['name']
@@ -1214,17 +1214,17 @@ $INFO
                 if description == plan:
                     snapshotfound = True
                     k.snapshot(snapshotname, name)
-                    common.pprint("%s snapshotted!" % name)
+                    success("%s snapshotted!" % name)
             if snapshotfound:
-                common.pprint("Plan %s snapshotted!" % plan)
+                success("Plan %s snapshotted!" % plan)
             else:
-                common.pprint("No matching vms found", color='blue')
+                warning("No matching vms found")
             return {'result': 'success'}
         if revert:
             revertfound = False
-            common.pprint("Reverting snapshots of vms from plan %s" % plan)
+            pprint("Reverting snapshots of vms from plan %s" % plan)
             if snapshotname is None:
-                common.pprint("Using %s as snapshot name as None was provider" % plan, color='yellow')
+                warning("Using %s as snapshot name as None was provider" % plan)
                 snapshotname = plan
             for vm in sorted(k.list(), key=lambda x: x['name']):
                 name = vm['name']
@@ -1232,23 +1232,23 @@ $INFO
                 if description == plan:
                     revertfound = True
                     k.snapshot(snapshotname, name, revert=True)
-                    common.pprint("snapshot of %s reverted!" % name)
+                    success("snapshot of %s reverted!" % name)
             if revertfound:
-                common.pprint("Plan %s reverted with snapshot %s!" % (plan, snapshotname))
+                success("Plan %s reverted with snapshot %s!" % (plan, snapshotname))
             else:
-                common.pprint("No matching vms found", color='yellow')
+                warning("No matching vms found")
             return {'result': 'success'}
         if url is not None:
             if url.startswith('/'):
                 url = "file://%s" % url
             if not url.endswith('.yml'):
                 url = "%s/kcli_plan.yml" % url
-                common.pprint("Trying to retrieve %s" % url, color='blue')
+                pprint("Trying to retrieve %s" % url)
             inputfile = os.path.basename(url)
             onfly = os.path.dirname(url)
             path = plan if path is None else path
             if not quiet:
-                common.pprint("Retrieving specified plan from %s to %s" % (url, path), color='blue')
+                pprint("Retrieving specified plan from %s to %s" % (url, path))
             if os.path.exists("/i_am_a_container"):
                 path = "/workdir/%s" % path
             if not os.path.exists(path):
@@ -1257,10 +1257,10 @@ $INFO
                 common.fetch(url, path)
             elif download:
                 msg = "target directory %s already there" % (path)
-                common.pprint(msg, color='red')
+                error(msg)
                 return {'result': 'failure', 'reason': msg}
             else:
-                common.pprint("Using existing directory %s" % (path), color='blue')
+                pprint("Using existing directory %s" % path)
             if download:
                 inputfile = "%s/%s" % (path, inputfile)
                 entries, overrides, basefile, basedir = self.process_inputfile(plan, inputfile, overrides=overrides,
@@ -1285,21 +1285,21 @@ $INFO
                             if '/' in origin:
                                 destdir = os.path.dirname(origin)
                                 os.makedirs(destdir, exist_ok=True)
-                            common.pprint("Retrieving file %s/%s" % (onfly, origin))
+                            pprint("Retrieving file %s/%s" % (onfly, origin))
                             try:
                                 common.fetch("%s/%s" % (onfly, origin), destdir)
                             except:
                                 if common.url_exists("%s/%s/README.md" % (onfly, origin)):
                                     os.makedirs("%s/%s" % (destdir, os.path.basename(onfly)), exist_ok=True)
                                 else:
-                                    common.pprint("file %s/%s skipped" % (onfly, origin), color='blue')
+                                    pprint("file %s/%s skipped" % (onfly, origin))
                     for script in scriptfiles:
                         if '~' not in script:
                             destdir = "."
                             if '/' in script:
                                 destdir = os.path.dirname(script)
                                 os.makedirs(destdir, exist_ok=True)
-                            common.pprint("Retrieving script %s/%s" % (onfly, script))
+                            pprint("Retrieving script %s/%s" % (onfly, script))
                             common.fetch("%s/%s" % (onfly, script), destdir)
                 os.chdir('..')
                 return {'result': 'success'}
@@ -1309,13 +1309,13 @@ $INFO
                 f.write(inputstring)
         if inputfile is None:
             inputfile = 'kcli_plan.yml'
-            common.pprint("using default input file kcli_plan.yml")
+            pprint("using default input file kcli_plan.yml")
         if path is not None:
             os.chdir(path)
             getback = True
         inputfile = os.path.expanduser(inputfile)
         if not os.path.exists(inputfile):
-            common.pprint("Input file %s not found.Leaving...." % inputfile, color='red')
+            error("Input file %s not found.Leaving...." % inputfile)
             os._exit(1)
         if info:
             self.info_plan(inputfile, onfly=onfly, quiet=quiet, doc=doc)
@@ -1336,7 +1336,7 @@ $INFO
             del entries['parameters']
         dict_types = [entry for entry in entries if isinstance(entries[entry], dict)]
         if not dict_types:
-            common.pprint("%s doesn't look like a valid plan.Leaving...." % inputfile, color='red')
+            error("%s doesn't look like a valid plan.Leaving...." % inputfile)
             os._exit(1)
         vmentries = [entry for entry in entries if 'type' not in entries[entry] or entries[entry]['type'] == 'vm']
         diskentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'disk']
@@ -1358,13 +1358,13 @@ $INFO
         for p in profileentries:
             vmprofiles[p] = entries[p]
         if planentries:
-            common.pprint("Deploying Plans...")
+            pprint("Deploying Plans...")
             for planentry in planentries:
                 details = entries[planentry]
                 planurl = details.get('url')
                 planfile = details.get('file')
                 if planurl is None and planfile is None:
-                    common.pprint("Missing Url/File for plan %s. Not creating it..." % planentry, color='yellow')
+                    warning("Missing Url/File for plan %s. Not creating it..." % planentry)
                     continue
                 elif planurl is not None:
                     path = planentry
@@ -1377,7 +1377,7 @@ $INFO
                     path = '.'
                     inputfile = planentry
                 if no_overrides and parameters:
-                    common.pprint("Using parameters from master plan in child ones", color='blue')
+                    pprint("Using parameters from master plan in child ones")
                     for override in overrides:
                         print("Using parameter %s: %s" % (override, overrides[override]))
                 self.plan(plan, ansible=False, url=planurl, path=path, autostart=False, container=False,
@@ -1385,16 +1385,16 @@ $INFO
                           overrides=overrides, embedded=embedded, download=download)
             return {'result': 'success'}
         if networkentries and not onlyassets:
-            common.pprint("Deploying Networks...")
+            pprint("Deploying Networks...")
             for net in networkentries:
                 netprofile = entries[net]
                 if k.net_exists(net):
-                    common.pprint("Network %s skipped!" % net, color='blue')
+                    pprint("Network %s skipped!" % net)
                     continue
                 cidr = netprofile.get('cidr')
                 nat = bool(netprofile.get('nat', True))
                 if cidr is None:
-                    common.pprint("Missing Cidr for network %s. Not creating it..." % net, color='yellow')
+                    warning("Missing Cidr for network %s. Not creating it..." % net)
                     continue
                 dhcp = netprofile.get('dhcp', True)
                 domain = netprofile.get('domain')
@@ -1402,26 +1402,26 @@ $INFO
                                           overrides=netprofile)
                 common.handle_response(result, net, element='Network ')
         if poolentries and not onlyassets:
-            common.pprint("Deploying Pools...")
+            pprint("Deploying Pools...")
             pools = k.list_pools()
             for pool in poolentries:
                 if pool in pools:
-                    common.pprint("Pool %s skipped!" % pool, color='blue')
+                    pprint("Pool %s skipped!" % pool)
                     continue
                 else:
                     poolprofile = entries[pool]
                     poolpath = poolprofile.get('path')
                     if poolpath is None:
-                        common.pprint("Pool %s skipped as path is missing!" % pool, color='yellow')
+                        warning("Pool %s skipped as path is missing!" % pool)
                         continue
                     k.create_pool(pool, poolpath)
         if imageentries and not onlyassets:
-            common.pprint("Deploying Images...")
+            pprint("Deploying Images...")
             images = [os.path.basename(t) for t in k.volumes()]
             for image in imageentries:
                 clientprofile = "%s_%s" % (self.client, image)
                 if image in images or image in self.profiles or clientprofile in self.profiles:
-                    common.pprint("Image %s skipped!" % image, color='blue')
+                    pprint("Image %s skipped!" % image)
                     continue
                 else:
                     imageprofile = entries[image]
@@ -1432,7 +1432,7 @@ $INFO
                     cmd = imageprofile.get('cmd')
                     self.handle_host(pool=pool, image=image, download=True, cmd=cmd, url=imageurl, update_profile=True)
         if dnsentries and not onlyassets:
-            common.pprint("Deploying Dns Entries...")
+            pprint("Deploying Dns Entries...")
             dnsclients = {}
             for dnsentry in dnsentries:
                 dnsprofile = entries[dnsentry]
@@ -1450,21 +1450,21 @@ $INFO
                     z = Kconfig(client=dnsclient).k
                     dnsclients[dnsclient] = z
                 else:
-                    common.pprint("Client %s not found. Skipping" % dnsclient, color='yellow')
+                    warning("Client %s not found. Skipping" % dnsclient)
                     return
                 if dnsip is None:
-                    common.pprint("Missing ip. Skipping!", color='yellow')
+                    warning("Missing ip. Skipping!")
                     return
                 if dnsnet is None:
-                    common.pprint("Missing net. Skipping!", color='yellow')
+                    warning("Missing net. Skipping!")
                     return
                 z.reserve_dns(name=dnsentry, nets=[dnsnet], domain=dnsdomain, ip=dnsip, alias=dnsalias, force=True,
                               primary=True)
         if kubeentries and not onlyassets:
-            common.pprint("Deploying Kube Entries...")
+            pprint("Deploying Kube Entries...")
             dnsclients = {}
             for cluster in kubeentries:
-                common.pprint("Deploying Cluster %s..." % cluster)
+                pprint("Deploying Cluster %s..." % cluster)
                 kubeprofile = entries[cluster]
                 kubeclient = kubeprofile.get('client')
                 if kubeclient is None:
@@ -1472,14 +1472,14 @@ $INFO
                 elif kubeclient in self.clients:
                     currentconfig = Kconfig(client=kubeclient)
                 else:
-                    common.pprint("Client %s not found. skipped" % kubeclient, color='red')
+                    error("Client %s not found. skipped" % kubeclient)
                     continue
                 kubetype = kubeprofile.get('kubetype', 'generic')
                 overrides = kubeprofile
                 overrides['cluster'] = cluster
                 existing_masters = [v for v in currentconfig.k.list() if '%s-master' % cluster in v['name']]
                 if existing_masters:
-                    common.pprint("Cluster %s found. skipped!" % cluster, color='blue')
+                    pprint("Cluster %s found. skipped!" % cluster)
                     continue
                 if kubetype == 'openshift':
                     currentconfig.create_kube_openshift(plan, overrides=overrides)
@@ -1488,11 +1488,11 @@ $INFO
                 elif kubetype == 'generic':
                     currentconfig.create_kube_generic(plan, overrides=overrides)
                 else:
-                    common.pprint("Incorrect kubetype %s specified. skipped!" % kubetype, color='blue')
+                    warning("Incorrect kubetype %s specified. skipped!" % kubetype)
                     continue
         if vmentries:
             if not onlyassets:
-                common.pprint("Deploying Vms...")
+                pprint("Deploying Vms...")
             vmcounter = 0
             hosts = {}
             vms_to_host = {}
@@ -1517,7 +1517,7 @@ $INFO
                     elif 'basevm' in profile and profile['basevm'] in baseentries:
                         baseprofile = baseentries[profile['basevm']]
                     else:
-                        common.pprint("Incorrect base entry for %s. skipping..." % name, color='blue')
+                        warning("Incorrect base entry for %s. skipping..." % name)
                         continue
                     for key in baseprofile:
                         if key not in profile:
@@ -1526,7 +1526,7 @@ $INFO
                             profile[key] = baseprofile[key] + profile[key]
                 for entry in overrides.get('vmrules', self.vmrules):
                     if len(entry) != 1:
-                        common.pprint("Wrong vm rule %s" % entry, color='red')
+                        error("Wrong vm rule %s" % entry)
                         os._exit(1)
                     rule = list(entry.keys())[0]
                     if re.match(rule, name) and isinstance(entry[rule], dict):
@@ -1545,7 +1545,7 @@ $INFO
                     z = newclient.k
                     hosts[vmclient] = newclient
                 else:
-                    common.pprint("Client %s not found. Using default one" % vmclient, color='blue')
+                    pprint("Client %s not found. Using default one" % vmclient)
                     z = k
                     vmclient = self.client
                     if vmclient not in hosts:
@@ -1562,27 +1562,26 @@ $INFO
                     profile = customprofile
                 if 'playbook' in profile and profile['playbook']:
                     if 'scripts' not in profile and 'files' not in profile and 'cmds' not in profile:
-                        common.pprint("Skipping empty playbook for %s" % name, color='blue')
+                        pprint("Skipping empty playbook for %s" % name)
                     else:
                         if 'image' in profile and 'rhel' in profile['image']\
                                 and 'rhnregister' in profile and profile['rhnregister']:
-                            common.pprint("Make sure to subscribe %s to Red Hat network" % name, color='yellow')
+                            warning("Make sure to subscribe %s to Red Hat network" % name)
                         if 'privatekey' in profile and profile['privatekey']:
-                            common.pprint("Copy your private key to %s" % name, color='yellow')
+                            warning("Copy your private key to %s" % name)
                         for net in profile.get('nets', []):
                             if 'ip' in net and 'mask' in net and 'gateway' in net:
                                 ip, mask, gateway = net['ip'], net['mask'], net['gateway']
-                                common.pprint("Add manually this network %s/%s with gateway %s" % (ip, mask, gateway),
-                                              color='yellow')
+                                warning("Add manually this network %s/%s with gateway %s" % (ip, mask, gateway))
                             if 'vips' in net:
                                 vips = ','.join(net['vips'])
-                                common.pprint("Add manually vips %s" % vips, color='yellow')
-                        common.pprint("Make sure to export ANSIBLE_JINJA2_EXTENSIONS=jinja2.ext.do", color='blue')
+                                warning("Add manually vips %s" % vips)
+                        pprint("Make sure to export ANSIBLE_JINJA2_EXTENSIONS=jinja2.ext.do")
                         self.create_vm_playbook(name, profile, overrides=overrides, store=True)
                         continue
                 if z.exists(name) and not onlyassets:
                     if not update:
-                        common.pprint("%s skipped on %s!" % (name, vmclient), color='blue')
+                        pprint("%s skipped on %s!" % (name, vmclient))
                     else:
                         updated = False
                         currentvm = z.info(name)
@@ -1596,32 +1595,32 @@ $INFO
                         currentflavor = currentvm.get('flavor')
                         if 'image' in currentvm:
                             if 'image' in profile and currentimage != profile['image']:
-                                common.pprint("Existing %s has a different image. skipped!" % name, color='blue')
+                                pprint("Existing %s has a different image. skipped!" % name)
                                 continue
                         elif 'image' in profile:
-                            common.pprint("Existing %s has a different image. skipped!" % name, color='blue')
+                            pprint("Existing %s has a different image. skipped!" % name)
                             continue
                         if 'autostart' in profile and currentstart != profile['autostart']:
                             updated = True
-                            common.pprint("Updating autostart of %s to %s" % (name, profile['autostart']))
+                            pprint("Updating autostart of %s to %s" % (name, profile['autostart']))
                             z.update_start(name, profile['autostart'])
                         if 'flavor' in profile and currentflavor != profile['flavor']:
                             updated = True
-                            common.pprint("Updating flavor of %s to %s" % (name, profile['flavor']))
+                            pprint("Updating flavor of %s to %s" % (name, profile['flavor']))
                             z.update_flavor(name, profile['flavor'])
                         else:
                             if 'memory' in profile and currentmemory != profile['memory']:
                                 updated = True
-                                common.pprint("Updating memory of %s to %s" % (name, profile['memory']))
+                                pprint("Updating memory of %s to %s" % (name, profile['memory']))
                                 z.update_memory(name, profile['memory'])
                             if 'numcpus' in profile and currentcpus != profile['numcpus']:
                                 updated = True
-                                common.pprint("Updating cpus of %s to %s" % (name, profile['numcpus']))
+                                pprint("Updating cpus of %s to %s" % (name, profile['numcpus']))
                                 z.update_cpus(name, profile['numcpus'])
                         if 'disks' in profile:
                             if len(currentdisks) < len(profile['disks']):
                                 updated = True
-                                common.pprint("Adding Disks to %s" % name)
+                                pprint("Adding Disks to %s" % name)
                                 for disk in profile['disks'][len(currentdisks):]:
                                     if isinstance(disk, int):
                                         size = disk
@@ -1637,7 +1636,7 @@ $INFO
                                     z.add_disk(name=name, size=size, pool=pool)
                             if len(currentdisks) > len(profile['disks']):
                                 updated = True
-                                common.pprint("Removing Disks of %s" % name)
+                                pprint("Removing Disks of %s" % name)
                                 for disk in currentdisks[len(currentdisks) - len(profile['disks']):]:
                                     diskname = os.path.basename(disk['path'])
                                     diskpool = os.path.dirname(disk['path'])
@@ -1645,7 +1644,7 @@ $INFO
                         if 'nets' in profile:
                             if len(currentnets) < len(profile['nets']):
                                 updated = True
-                                common.pprint("Adding Nics to %s" % name)
+                                pprint("Adding Nics to %s" % name)
                                 for net in profile['nets'][len(currentnets):]:
                                     if isinstance(net, str):
                                         network = net
@@ -1656,12 +1655,12 @@ $INFO
                                     z.add_nic(name, network)
                             if len(currentnets) > len(profile['nets']):
                                 updated = True
-                                common.pprint("Removing Nics of %s" % name)
+                                pprint("Removing Nics of %s" % name)
                                 for net in range(len(currentnets) - len(profile['nets']), len(currentnets)):
                                     interface = "eth%s" % net
                                     z.delete_nic(name, interface)
                         if not updated:
-                            common.pprint("%s skipped on %s!" % (name, vmclient), color='blue')
+                            pprint("%s skipped on %s!" % (name, vmclient))
                     existingvms.append(name)
                     continue
                 # cmds = default_cmds + customprofile.get('cmds', []) + profile.get('cmds', [])
@@ -1699,7 +1698,7 @@ $INFO
                     imageprofile = profile['image']
                     if imageprofile in IMAGES and self.type != 'packet' and\
                             IMAGES[imageprofile] not in [os.path.basename(v) for v in self.k.volumes()]:
-                        common.pprint("Image %s not found. Downloading" % imageprofile, color='blue')
+                        pprint("Image %s not found. Downloading" % imageprofile)
                         self.handle_host(pool=self.pool, image=imageprofile, download=True, update_profile=True)
                         profile['image'] = os.path.basename(IMAGES[imageprofile])
                         currentoverrides['image'] = profile['image']
@@ -1720,7 +1719,7 @@ $INFO
                     elif not wait and not asyncwait:
                         continue
                     elif not start or not cloudinit or profile.get('image') is None:
-                        common.pprint("Skipping wait on %s" % name, color='blue')
+                        pprint("Skipping wait on %s" % name)
                     elif asyncwait:
                         asyncwaitvm = {'name': name, 'finishfiles': finishfiles}
                         asyncwaitvms.append(asyncwaitvm)
@@ -1731,7 +1730,7 @@ $INFO
                 else:
                     failedvms.append(name)
         if diskentries and not onlyassets:
-            common.pprint("Deploying Disks...")
+            pprint("Deploying Disks...")
         for disk in diskentries:
             profile = entries[disk]
             pool = profile.get('pool')
@@ -1740,38 +1739,37 @@ $INFO
             image = profile.get('image', template)
             size = int(profile.get('size', 10))
             if pool is None:
-                common.pprint("Missing Key Pool for disk section %s. Not creating it..." % disk, color='red')
+                error("Missing Key Pool for disk section %s. Not creating it..." % disk)
                 continue
             if vms is None:
-                common.pprint("Missing or Incorrect Key Vms for disk section %s. Not creating it..." % disk,
-                              color='red')
+                error("Missing or Incorrect Key Vms for disk section %s. Not creating it..." % disk)
                 continue
             shareable = True if len(vms) > 1 else False
             if k.disk_exists(pool, disk):
-                common.pprint("Creation for Disk %s skipped!" % disk, color='blue')
+                pprint("Creation for Disk %s skipped!" % disk)
                 poolpath = k.get_pool_path(pool)
                 newdisk = "%s/%s" % (poolpath, disk)
                 for vm in vms:
-                    common.pprint("Adding disk %s to %s" % (disk, vm))
+                    pprint("Adding disk %s to %s" % (disk, vm))
                     k.add_disk(name=vm, size=size, pool=pool, image=image, shareable=shareable, existing=newdisk,
                                thin=False)
             else:
                 newdisk = k.create_disk(disk, size=size, pool=pool, image=image, thin=False)
                 if newdisk is None:
-                    common.pprint("Disk %s not deployed. It won't be added to any vm" % disk, color='red')
+                    error("Disk %s not deployed. It won't be added to any vm" % disk)
                 else:
                     common.pprint("Disk %s deployed!" % disk)
                     for vm in vms:
-                        common.pprint("Adding disk %s to %s" % (disk, vm))
+                        pprint("Adding disk %s to %s" % (disk, vm))
                         k.add_disk(name=vm, size=size, pool=pool, image=image, shareable=shareable,
                                    existing=newdisk, thin=False)
         if containerentries and not onlyassets:
             cont = Kcontainerconfig(self, client=self.containerclient).cont
-            common.pprint("Deploying Containers...")
+            pprint("Deploying Containers...")
             label = "plan=%s" % plan
             for container in containerentries:
                 if cont.exists_container(container):
-                    common.pprint("Container %s skipped!" % container, color='blue')
+                    pprint("Container %s skipped!" % container)
                     continue
                 profile = entries[container]
                 if 'profile' in profile and profile['profile'] in containerprofiles:
@@ -1789,17 +1787,17 @@ $INFO
                 environment = next((e for e in [profile.get('environment'), customprofile.get('environment')]
                                     if e is not None), None)
                 cmds = next((e for e in [profile.get('cmds'), customprofile.get('cmds')] if e is not None), [])
-                common.pprint("Container %s deployed!" % container)
+                success("Container %s deployed!" % container)
                 cont.create_container(name=container, image=containerimage, nets=nets, cmds=cmds, ports=ports,
                                       volumes=volumes, environment=environment, label=label)
         if ansibleentries and not onlyassets:
             if not newvms:
-                common.pprint("Ansible skipped as no new vm within playbook provisioned", color='yellow')
+                warning("Ansible skipped as no new vm within playbook provisioned")
                 return
             for entry in sorted(ansibleentries):
                 _ansible = entries[entry]
                 if 'playbook' not in _ansible:
-                    common.pprint("Missing Playbook for ansible.Ignoring...", color='red')
+                    error("Missing Playbook for ansible.Ignoring...")
                     os._exit(1)
                 playbook = _ansible['playbook']
                 verbose = _ansible['verbose'] if 'verbose' in _ansible else False
@@ -1815,7 +1813,7 @@ $INFO
                 else:
                     vms = newvms
                 if not vms:
-                    common.pprint("Ansible skipped as no new vm within playbook provisioned", color='yellow')
+                    warning("Ansible skipped as no new vm within playbook provisioned")
                     return
                 ansiblecommand = "ansible-playbook"
                 if verbose:
@@ -1833,15 +1831,15 @@ $INFO
                         yaml.dump(variables, f, default_flow_style=False)
                     ansiblecommand += " --extra-vars @%s" % (varsfile)
                 ansiblecommand += " -i  %s %s" % (inventoryfile, playbook)
-                common.pprint("Running: %s" % ansiblecommand, color='blue')
+                pprint("Running: %s" % ansiblecommand)
                 os.system(ansiblecommand)
         if ansible and not onlyassets:
-            common.pprint("Deploying Ansible Inventory...", color='blue')
+            pprint("Deploying Ansible Inventory...")
             inventoryfile = "/tmp/%s.inv.yaml" % plan if self.yamlinventory else "/tmp/%s.inv" % plan
             if os.path.exists(inventoryfile):
-                common.pprint("Inventory in %s skipped!" % inventoryfile, color='blue')
+                pprint("Inventory in %s skipped!" % inventoryfile)
             else:
-                common.pprint("Creating ansible inventory for plan %s in %s" % (plan, inventoryfile))
+                pprint("Creating ansible inventory for plan %s in %s" % (plan, inventoryfile))
                 vms = []
                 for vm in sorted(k.list(), key=lambda x: x['name']):
                     name = vm['name']
@@ -1852,12 +1850,12 @@ $INFO
                                                  insecure=self.insecure)
                 return
         if lbs and not onlyassets:
-            common.pprint("Deploying Loadbalancers...")
+            pprint("Deploying Loadbalancers...")
             for index, lbentry in enumerate(lbs):
                 details = entries[lbentry]
                 ports = details.get('ports', [])
                 if not ports:
-                    common.pprint("Missing Ports for loadbalancer. Not creating it...", color='red')
+                    error("Missing Ports for loadbalancer. Not creating it...")
                     return
                 checkpath = details.get('checkpath', '/')
                 checkport = details.get('checkport', 80)
@@ -1909,11 +1907,11 @@ $INFO
             k = self.k
             if pool is None:
                 pool = self.pool
-                common.pprint("Using pool %s" % pool, color='blue')
+                pprint("Using pool %s" % pool)
             if image is not None:
                 if url is None:
                     if image not in IMAGES:
-                        common.pprint("Image %s has no associated url" % image, color='red')
+                        error("Image %s has no associated url" % image)
                         return {'result': 'failure', 'reason': "Incorrect image"}
                     url = IMAGES[image]
                     if 'rhcos' in image:
@@ -1927,24 +1925,22 @@ $INFO
                     if image.startswith('rhel'):
                         if 'web' in sys.argv[0]:
                             return {'result': 'failure', 'reason': "Missing url"}
-                        common.pprint("Opening url %s for you to grab complete url for %s kvm guest image" % (url,
-                                                                                                              image),
-                                      'blue')
+                        pprint("Opening url %s for you to grab complete url for %s kvm guest image" % (url, image))
                         webbrowser.open(url, new=2, autoraise=True)
                         url = input("Copy Url:\n")
                         if url.strip() == '':
-                            common.pprint("Missing proper url.Leaving...", color='red')
+                            error("Missing proper url.Leaving...")
                             return {'result': 'failure', 'reason': "Missing image"}
                 if cmd is None and image != '' and image in IMAGESCOMMANDS:
                     cmd = IMAGESCOMMANDS[image]
-                common.pprint("Using url %s..." % url)
-                common.pprint("Grabbing image %s..." % image)
+                pprint("Using url %s..." % url)
+                pprint("Grabbing image %s..." % image)
                 shortname = os.path.basename(url).split('?')[0]
                 try:
                     result = k.add_image(url, pool, cmd=cmd, name=image)
                 except Exception as e:
-                    common.pprint("Got %s" % e, color='red')
-                    common.pprint("Please run kcli delete image --yes %s" % shortname, color='red')
+                    error("Got %s" % e)
+                    error("Please run kcli delete image --yes %s" % shortname)
                     return {'result': 'failure', 'reason': "User interruption"}
                 common.handle_response(result, image, element='Image', action='Added')
                 if update_profile and result['result'] == 'success':
@@ -1955,21 +1951,21 @@ $INFO
                     clientprofile = "%s_%s" % (self.client, imagename)
                     profileinfo = {'iso': shortname} if shortname.endswith('.iso') else {'image': shortname}
                     if clientprofile not in self.profiles:
-                        common.pprint("Adding a profile named %s with default values" % clientprofile)
+                        pprint("Adding a profile named %s with default values" % clientprofile)
                         self.create_profile(clientprofile, profileinfo, quiet=True)
                     else:
-                        common.pprint("Updating profile %s" % clientprofile)
+                        pprint("Updating profile %s" % clientprofile)
                         self.update_profile(clientprofile, profileinfo, quiet=True)
             return {'result': 'success'}
         elif switch:
             if switch not in self.clients:
-                common.pprint("Client %s not found in config.Leaving...." % switch, color='red')
+                error("Client %s not found in config.Leaving...." % switch)
                 return {'result': 'failure', 'reason': "Client %s not found in config" % switch}
             enabled = self.ini[switch].get('enabled', True)
             if not enabled:
-                common.pprint("Client %s is disabled.Leaving...." % switch, color='red')
+                error("Client %s is disabled.Leaving...." % switch)
                 return {'result': 'failure', 'reason': "Client %s is disabled" % switch}
-            common.pprint("Switching to client %s..." % switch)
+            pprint("Switching to client %s..." % switch)
             inifile = "%s/.kcli/config.yml" % os.environ.get('HOME')
             if os.path.exists(inifile):
                 newini = ''
@@ -1983,16 +1979,16 @@ $INFO
         elif sync:
             k = self.k
             if not self.extraclients:
-                common.pprint("Nothing to do. Leaving...", color='yellow')
+                warning("Nothing to do. Leaving...")
                 return {'result': 'success'}
             for cli in self.extraclients:
                 dest = self.extraclients[cli]
-                common.pprint("syncing client images from %s to %s" % (self.client, cli))
-                common.pprint("Note rhel images are currently not synced")
+                pprint("syncing client images from %s to %s" % (self.client, cli))
+                warning("Note rhel images are currently not synced")
             for vol in k.volumes():
                 image = os.path.basename(vol)
                 if image in [os.path.basename(v) for v in dest.volumes()]:
-                    common.pprint("Ignoring %s as it's already there" % image, color='yellow')
+                    warning("Ignoring %s as it's already there" % image)
                     continue
                 url = None
                 for n in list(IMAGES.values()):
@@ -2005,17 +2001,16 @@ $INFO
                 if image.startswith('rhel'):
                     if 'web' in sys.argv[0]:
                         return {'result': 'failure', 'reason': "Missing url"}
-                    common.pprint("Opening url %s for you to grab complete url for %s kvm guest image" % (url, vol),
-                                  color='blue')
+                    pprint("Opening url %s for you to grab complete url for %s kvm guest image" % (url, vol))
                     webbrowser.open(url, new=2, autoraise=True)
                     url = input("Copy Url:\n")
                     if url.strip() == '':
-                        common.pprint("Missing proper url.Leaving...", color='red')
+                        error("Missing proper url.Leaving...")
                         return {'result': 'failure', 'reason': "Missing image"}
                 cmd = None
                 if vol in IMAGESCOMMANDS:
                     cmd = IMAGESCOMMANDS[image]
-                common.pprint("Grabbing image %s..." % image)
+                pprint("Grabbing image %s..." % image)
                 dest.add_image(url, pool, cmd=cmd)
         return {'result': 'success'}
 
@@ -2025,11 +2020,11 @@ $INFO
         k = self.k
         if self.type in ['aws', 'gcp']:
             if delete:
-                common.pprint("Deleting loadbalancer %s" % name)
+                pprint("Deleting loadbalancer %s" % name)
                 k.delete_loadbalancer(name)
                 return
             else:
-                common.pprint("Deploying loadbalancer %s" % name)
+                pprint("Deploying loadbalancer %s" % name)
                 k.create_loadbalancer(name, ports=ports, checkpath=checkpath, vms=vms, domain=domain,
                                       checkport=checkport, alias=alias, internal=internal)
         elif delete:
@@ -2037,7 +2032,7 @@ $INFO
                 k.delete(name)
             return
         else:
-            common.pprint("Deploying loadbalancer %s" % name)
+            pprint("Deploying loadbalancer %s" % name)
             vminfo = []
             for vm in vms:
                 counter = 0
@@ -2069,7 +2064,7 @@ $INFO
         k = self.k
         if image is None:
             image = k.info(name)['image']
-        common.pprint("Waiting for vm %s to finish customisation" % name, color='blue')
+        pprint("Waiting for vm %s to finish customisation" % name)
         if 'cos' in image:
             cmd = 'journalctl --identifier=ignition --all --no-pager'
         else:
@@ -2080,7 +2075,7 @@ $INFO
         while ip is None:
             info = k.info(name)
             if self.type == 'packet' and info.get('status') != 'active':
-                common.pprint("Waiting for node to be active", color='yellow')
+                warning("Waiting for node to be active")
                 ip = None
             else:
                 user, ip = info.get('user'), info.get('ip')
@@ -2095,16 +2090,16 @@ $INFO
                 if user is not None and ip is not None:
                     if self.type == 'openstack' and info.get('privateip') == ip and self.k.external_network is not None\
                             and info.get('nets')[0]['net'] != self.k.external_network:
-                        common.pprint("Waiting for floating ip instead of a private ip...", color='yellow')
+                        warning("Waiting for floating ip instead of a private ip...")
                         ip = None
                     else:
                         testcmd = common.ssh(name, user=user, ip=ip, tunnel=self.tunnel, tunnelhost=self.tunnelhost,
                                              tunnelport=self.tunnelport, tunneluser=self.tunneluser,
                                              insecure=self.insecure, cmd='id -un', vmport=vmport)
                         if os.popen(testcmd).read().strip() != user:
-                            common.pprint("Gathered ip not functional yet...", color='yellow')
+                            warning("Gathered ip not functional yet...")
                             ip = None
-            common.pprint("Waiting for vm to be accessible...", color='blue')
+            pprint("Waiting for vm to be accessible...")
             sleep(5)
         sleep(5)
         oldoutput = ''
@@ -2150,7 +2145,7 @@ $INFO
         cluster = overrides.get('cluster', cluster)
         clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
         if os.path.exists(clusterdir):
-            common.pprint("Deleting directory %s" % clusterdir, color='blue')
+            pprint("Deleting directory %s" % clusterdir)
             rmtree(clusterdir)
         for vm in sorted(k.list(), key=lambda x: x['name']):
             name = vm['name']
@@ -2158,7 +2153,7 @@ $INFO
             if currentcluster is not None and currentcluster == cluster:
                 k.delete(name, snapshots=True)
                 common.set_lastvm(name, self.client, delete=True)
-                common.pprint("%s deleted on %s!" % (name, self.client))
+                success("%s deleted on %s!" % (name, self.client))
         if self.type == 'kubevirt' and self.k.access_mode == 'LoadBalancer':
             try:
                 k.delete_service("%s-api-svc" % cluster, k.namespace)
@@ -2180,9 +2175,9 @@ $INFO
     def expose_plan(self, plan, inputfile=None, overrides={}, port=9000, extraconfigs={}, installermode=False):
         inputfile = os.path.expanduser(inputfile)
         if not os.path.exists(inputfile):
-            common.pprint("No input file found nor default kcli_plan.yml.Leaving....", color='red')
+            error("No input file found nor default kcli_plan.yml.Leaving....")
             os._exit(1)
-        common.pprint("Handling expose of plan with name %s and inputfile %s" % (plan, inputfile))
+        pprint("Handling expose of plan with name %s and inputfile %s" % (plan, inputfile))
         kexposer = Kexposer(self, plan, inputfile, overrides=overrides, port=port, extraconfigs=extraconfigs,
                             installermode=installermode)
         kexposer.run()
@@ -2190,7 +2185,7 @@ $INFO
     def create_openshift_iso(self, cluster, overrides={}):
         liveiso_version = overrides.get('version', 'latest')
         if liveiso_version not in ['latest', 'pre-release']:
-            common.pprint("Incorrect live iso version. Choose between latest and pre-release", color='red')
+            error("Incorrect live iso version. Choose between latest and pre-release")
             os._exit(1)
         liveiso = "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/"
         liveiso += "%s/latest/rhcos-live.x86_64.iso" % liveiso_version
@@ -2200,7 +2195,7 @@ $INFO
         iso = overrides.get('iso', True)
         if '.' in cluster:
             domain = '.'.join(cluster.split('.')[1:])
-            common.pprint("Using domain %s" % domain, color='blue')
+            pprint("Using domain %s" % domain)
             cluster = cluster.replace(".%s" % domain, '')
         hosts_content = None
         if api_ip is None:
@@ -2209,7 +2204,7 @@ $INFO
             except:
                 pass
         if api_ip is None:
-            common.pprint("Couldn't figure out api_ip. Relying on dns", color='yellow')
+            warning("Couldn't figure out api_ip. Relying on dns")
             api_ip = "api.%s.%s" % (cluster, domain)
         else:
             hosts_content = "127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4\n"
@@ -2219,9 +2214,9 @@ $INFO
         config = Kconfig()
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
         if os.path.exists(ignitionfile):
-            common.pprint("Using existing %s" % ignitionfile, color='yellow')
+            warning("Using existing %s" % ignitionfile)
         with open("iso.ign", 'w') as f:
-            common.pprint("Writing file iso.ign for %s in %s.%s" % (role, cluster, domain), color='green')
+            pprint("Writing file iso.ign for %s in %s.%s" % (role, cluster, domain))
             isodir = os.path.dirname(common.__file__)
             env = Environment(loader=FileSystemLoader(isodir), extensions=['jinja2.ext.do'], trim_blocks=True,
                               lstrip_blocks=True)
@@ -2236,7 +2231,7 @@ $INFO
             f.write(result['data'])
         if iso:
             if not os.path.exists('rhcos-live.x86_64.iso'):
-                common.pprint("Downloading rhcos-live.x86_64.iso", color='blue')
+                pprint("Downloading rhcos-live.x86_64.iso")
                 download = "curl %s > rhcos-live.x86_64.iso" % liveiso
                 call(download, shell=True)
             if find_executable('podman') is not None:
@@ -2244,9 +2239,9 @@ $INFO
             elif find_executable('docker') is None:
                 engine = 'docker'
             else:
-                common.pprint("Neither podman or docker found so can't embed iso ignition in live iso", color='red')
+                error("Neither podman or docker found so can't embed iso ignition in live iso")
                 os._exit(1)
-            common.pprint("Using %s to embed iso ignition in live iso" % engine, color='blue')
+            pprint("Using %s to embed iso ignition in live iso" % engine)
             coreosinstaller = "%s run --privileged --rm -w /data -v $PWD:/data -v /dev:/dev" % engine
             if not os.path.exists('/Users'):
                 coreosinstaller += " -v /run/udev:/run/udev"
@@ -2263,7 +2258,7 @@ $INFO
             elif isinstance(finishfile, dict) and 'origin' in finishfile and 'path' in finishfile:
                 source, destination = finishfile.get('origin'), finishfile.get('path', '.')
             else:
-                common.pprint("Incorrect finishfile entry %s. Skipping" % finishfile, color='yellow')
+                warning("Incorrect finishfile entry %s. Skipping" % finishfile)
                 continue
             scpcmd = common.scp(name, ip=current_ip, user='root', source=source, destination=destination,
                                 tunnel=self.tunnel, tunnelhost=self.tunnelhost, tunnelport=self.tunnelport,

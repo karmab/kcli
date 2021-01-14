@@ -4,7 +4,7 @@
 Kvirt containerconfig class
 """
 
-from kvirt.common import pprint
+from kvirt.common import error
 import os
 
 
@@ -27,8 +27,7 @@ class Kcontainerconfig():
                 currentconfig = config.ini[client]
                 if 'containerclient' in currentconfig:
                     if currentconfig['containerclient'] not in config.ini:
-                        pprint("No section found for containerclient %s. Leaving" % currentconfig['containerclient'],
-                               color='red')
+                        error("No section found for containerclient %s. Leaving" % currentconfig['containerclient'])
                         os._exit(1)
                     else:
                         currentconfig = config.ini[currentconfig['containerclient']]
@@ -51,14 +50,14 @@ class Kcontainerconfig():
                 if ca_file is not None:
                     ca_file = os.path.expanduser(ca_file)
                     if not os.path.exists(ca_file):
-                        pprint("Ca file %s doesn't exist. Leaving" % ca_file, color='red')
+                        error("Ca file %s doesn't exist. Leaving" % ca_file)
                         os._exit(1)
                 token = currentconfig.get('token')
                 token_file = currentconfig.get('token_file')
                 if token_file is not None:
                     token_file = os.path.expanduser(token_file)
                     if not os.path.exists(token_file):
-                        pprint("Token file path doesn't exist. Leaving", color='red')
+                        error("Token file path doesn't exist. Leaving")
                         os._exit(1)
                     else:
                         token = open(token_file).read()

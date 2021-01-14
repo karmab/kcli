@@ -10,6 +10,7 @@ from kubernetes import client
 from kvirt.kubecommon import Kubecommon
 from netaddr import IPAddress
 from kvirt import common
+from kvirt.common import error, pprint, warning
 from kvirt.defaults import IMAGES, UBUNTUS, METADATA_FIELDS
 import datetime
 import os
@@ -102,10 +103,10 @@ class Kubevirt(Kubecommon):
             if image not in self.volumes():
                 if image in ['alpine', 'cirros', 'fedora-cloud']:
                     image = "kubevirt/%s-container-disk-demo" % image
-                    common.pprint("Using container disk %s as image" % image)
+                    pprint("Using container disk %s as image" % image)
                 elif image in ['debian', 'gentoo', 'ubuntu']:
                     image = "karmab/%s-container-disk-demo" % image
-                    common.pprint("Using container disk %s as image" % image)
+                    pprint("Using container disk %s as image" % image)
                 elif '/' not in image:
                     return {'result': 'failure', 'reason': "you don't have image %s" % image}
             if image.startswith('kubevirt/fedora-cloud-registry-disk-demo') and memory <= 512:
@@ -185,7 +186,7 @@ class Kubevirt(Kubecommon):
                     elif isinstance(tag, dict):
                         final_tags.update(tag)
                     else:
-                        common.pprint("Couldn't process tag %s. Skipping..." % tag, color='yellow')
+                        warning("Couldn't process tag %s. Skipping..." % tag)
                         continue
             if final_tags:
                 vm['spec']['template']['metadata']['labels'].update(final_tags)
@@ -350,7 +351,7 @@ class Kubevirt(Kubecommon):
                             return {'result': 'failure', 'reason': 'timeout waiting for pvc %s to get bound' % pvcname}
                         completed = self.import_completed(pvcname, namespace)
                         if not completed:
-                            common.pprint("Issue with cdi import", color='red')
+                            error("Issue with cdi import")
                             return {'result': 'failure', 'reason': 'timeout waiting for cdi importer pod to complete'}
                         continue
                 else:
@@ -453,7 +454,7 @@ class Kubevirt(Kubecommon):
 
     def console(self, name, tunnel=False, web=False):
         if os.path.exists("/i_am_a_container"):
-            common.pprint("This functionality is not supported in container mode", color='red')
+            error("This functionality is not supported in container mode")
             return
         kubectl = common.get_binary('kubectl', KUBECTL_LINUX, KUBECTL_MACOSX, compressed=True)
         crds = self.crds
@@ -462,7 +463,7 @@ class Kubevirt(Kubecommon):
         try:
             vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachineinstances', name)
         except:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         uid = vm.get("metadata")['uid']
         for pod in core.list_namespaced_pod(namespace).items:
@@ -483,7 +484,7 @@ class Kubevirt(Kubecommon):
         consolecommand = "remote-viewer vnc://127.0.0.1:%s &" % localport
         if self.debug:
             msg = "Run the following command:\n%s" % consolecommand if not self.debug else consolecommand
-            common.pprint(msg)
+            pprint(msg)
         else:
             os.system(consolecommand)
         return
@@ -501,7 +502,7 @@ class Kubevirt(Kubecommon):
         try:
             vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachineinstances', name)
         except:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         uid = vm.get("metadata")['uid']
         for pod in core.list_namespaced_pod(namespace).items:
@@ -548,7 +549,7 @@ class Kubevirt(Kubecommon):
             try:
                 vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
             except:
-                common.pprint("VM %s not found" % name, color='red')
+                error("VM %s not found" % name)
                 return {}
         metadata = vm.get("metadata")
         spec = vm.get("spec")
@@ -633,7 +634,7 @@ class Kubevirt(Kubecommon):
                     pvc = core.read_namespaced_persistent_volume_claim(pvcname, namespace)
                     size = pvc.spec.resources.requests['storage'].replace('Gi', '')
                 except:
-                    common.pprint("pvc %s not found. That can't be good" % pvcname, color='red')
+                    error("pvc %s not found. That can't be good" % pvcname)
                     size = 'N/A'
             elif 'cloudInitNoCloud' in volumeinfo:
                 continue
@@ -691,7 +692,7 @@ class Kubevirt(Kubecommon):
                         ip = interface['ipAddress'].split('/')[0]
                         break
         except Exception:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             os._exit(1)
         return ip
 
@@ -735,7 +736,7 @@ class Kubevirt(Kubecommon):
                 if pvc.metadata.name in pvcvolumes]
         for p in pvcs:
             pvcname = p.metadata.name
-            common.pprint("Deleting pvc %s" % pvcname, color='blue')
+            pprint("Deleting pvc %s" % pvcname)
             core.delete_namespaced_persistent_volume_claim(pvcname, namespace)
         try:
             core.delete_namespaced_service('%s-ssh-svc' % name, namespace)
@@ -757,7 +758,7 @@ class Kubevirt(Kubecommon):
         try:
             vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
         except:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if append and "kcli/%s" % metatype in vm["metadata"]["annotations"]:
             oldvalue = vm["metadata"]["annotations"]["kcli/%s" % metatype]
@@ -772,12 +773,12 @@ class Kubevirt(Kubecommon):
         try:
             vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
         except:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         t = 'Template' if 'Template' in vm['spec'] else 'template'
         vm['spec'][t]['spec']['domain']['resources']['requests']['memory'] = "%sM" % memory
         crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
-        common.pprint("Change will only appear next full lifeclyclereboot", color='yellow')
+        warning("Change will only appear next full lifeclyclereboot")
         return
 
     def update_cpus(self, name, numcpus):
@@ -786,11 +787,11 @@ class Kubevirt(Kubecommon):
         try:
             vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
         except:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         t = 'Template' if 'Template' in vm['spec'] else 'template'
         vm['spec'][t]['spec']['domain']['cpu']['cores'] = int(numcpus)
-        common.pprint("Change will only appear next full lifeclyclereboot", color='yellow')
+        warning("Change will only appear next full lifeclyclereboot")
         crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
         return
 
@@ -818,7 +819,7 @@ class Kubevirt(Kubecommon):
                   if p.metadata.annotations is not None and 'kcli/image' in p.metadata.annotations}
         try:
             pvc = core.read_namespaced_persistent_volume(name, namespace)
-            common.pprint("Disk %s already there" % name, color='red')
+            error("Disk %s already there" % name)
             return 1
         except:
             pass
@@ -838,7 +839,7 @@ class Kubevirt(Kubecommon):
         try:
             vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
         except:
-            common.pprint("VM %s not found" % name, color='red')
+            error("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         t = 'Template' if 'Template' in vm['spec'] else 'template'
         currentdisks = [disk for disk in vm['spec'][t]['spec']['domain']['devices']['disks']
@@ -870,13 +871,13 @@ class Kubevirt(Kubecommon):
             try:
                 vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
             except:
-                common.pprint("VM %s not found" % name, color='red')
+                error("VM %s not found" % name)
                 return {'result': 'failure', 'reason': "VM %s not found" % name}
             t = 'Template' if 'Template' in vm['spec'] else 'template'
             diskindex = [i for i, disk in enumerate(vm['spec'][t]['spec']['domain']['devices']['disks'])
                          if disk['name'] == diskname]
             if not diskindex:
-                common.pprint("Disk %s not found" % diskname, color='red')
+                error("Disk %s not found" % diskname)
                 return {'result': 'failure', 'reason': "disk %s not found in VM" % diskname}
             diskindex = diskindex[0]
             volname = vm['spec'][t]['spec']['domain']['devices']['disks'][diskindex]['name']
@@ -889,7 +890,7 @@ class Kubevirt(Kubecommon):
         try:
             core.delete_namespaced_persistent_volume_claim(volname, namespace)
         except:
-            common.pprint("Disk %s not found" % volname, color='red')
+            error("Disk %s not found" % volname)
             return 1
         return
 
@@ -923,7 +924,7 @@ class Kubevirt(Kubecommon):
         return
 
     def delete_image(self, image, pool=None):
-        common.pprint("Deleting image %s" % image)
+        pprint("Deleting image %s" % image)
         core = self.core
         if self.cdi:
             pvc = core.list_namespaced_persistent_volume_claim(self.namespace)
@@ -970,7 +971,7 @@ class Kubevirt(Kubecommon):
                                                          'resources': {'requests': {'storage': '%sGi' % size}}},
                'apiVersion': 'v1', 'metadata': {'name': volname, 'annotations': {'kcli/image': uncompressed}}}
         if cdi:
-            common.pprint("Cloning in namespace %s" % namespace, color='blue')
+            pprint("Cloning in namespace %s" % namespace)
             pvc['metadata']['annotations'] = {'cdi.kubevirt.io/storage.import.endpoint': image}
         else:
             pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'Never',
@@ -987,7 +988,7 @@ class Kubevirt(Kubecommon):
                    'apiVersion': 'v1', 'metadata': {'name': podname}}
         try:
             core.read_namespaced_persistent_volume_claim(volname, namespace)
-            common.pprint("Using existing pvc")
+            pprint("Using existing pvc")
         except:
             core.create_namespaced_persistent_volume_claim(namespace, pvc)
             bound = self.pvc_bound(volname, namespace)
@@ -996,13 +997,13 @@ class Kubevirt(Kubecommon):
         if cdi:
             completed = self.import_completed(volname, namespace)
             if not completed:
-                common.pprint("Issue with cdi import", color='red')
+                error("Issue with cdi import")
                 return {'result': 'failure', 'reason': 'timeout waiting for cdi importer pod to complete'}
         else:
             core.create_namespaced_pod(namespace, pod)
             completed = self.pod_completed(podname, namespace)
             if not completed:
-                common.pprint("Issue with pod %s. Leaving it for debugging purposes" % podname, color='red')
+                error("Issue with pod %s. Leaving it for debugging purposes" % podname)
                 return {'result': 'failure', 'reason': 'timeout waiting for importer pod to complete'}
             else:
                 core.delete_namespaced_pod(podname, namespace)
@@ -1037,7 +1038,7 @@ class Kubevirt(Kubecommon):
                'apiVersion': 'v1', 'metadata': {'name': podname}}
         try:
             core.read_namespaced_persistent_volume_claim(dest, namespace)
-            common.pprint("Using existing pvc")
+            pprint("Using existing pvc")
         except:
             core.create_namespaced_persistent_volume_claim(namespace, pvc)
             bound = self.pvc_bound(dest, namespace)
@@ -1046,7 +1047,7 @@ class Kubevirt(Kubecommon):
         core.create_namespaced_pod(namespace, pod)
         completed = self.pod_completed(podname, namespace)
         if not completed:
-            common.pprint("Using with pod %s. Leaving it for debugging purposes" % podname, color='red')
+            error("Using with pod %s. Leaving it for debugging purposes" % podname)
             return {'result': 'failure', 'reason': 'timeout waiting for copy to finish'}
         else:
             core.delete_namespaced_pod(podname, namespace)
@@ -1060,7 +1061,7 @@ class Kubevirt(Kubecommon):
         if 'type' in overrides:
             _type = overrides['type']
         else:
-            common.pprint("Using default type bridge for network", color='blue')
+            pprint("Using default type bridge for network")
             _type = 'bridge'
         config = '{ "cniVersion": "0.3.1", "type": "%s", "bridge": "%s" %s}' % (_type, name, vlanconfig)
         if cidr is not None and dhcp:
@@ -1147,7 +1148,7 @@ class Kubevirt(Kubecommon):
             pvc = core.read_namespaced_persistent_volume_claim(volname, namespace)
             pvcstatus = pvc.status.phase
             time.sleep(2)
-            common.pprint("Waiting for pvc %s to get bound..." % volname, color='blue')
+            pprint("Waiting for pvc %s to get bound..." % volname)
             pvcruntime += 2
         return True
 
@@ -1166,7 +1167,7 @@ class Kubevirt(Kubecommon):
             else:
                 phase = pvc.metadata.annotations['cdi.kubevirt.io/storage.pod.phase']
             time.sleep(5)
-            common.pprint("Waiting for import to complete...", color='blue')
+            pprint("Waiting for import to complete...")
             pvcruntime += 5
         return True
 
@@ -1181,7 +1182,7 @@ class Kubevirt(Kubecommon):
             pod = core.read_namespaced_pod(podname, namespace)
             podstatus = pod.status.phase
             time.sleep(5)
-            common.pprint("Waiting for pod %s to complete..." % podname, color='blue')
+            pprint("Waiting for pod %s to complete..." % podname)
             podruntime += 5
         return True
 
@@ -1201,7 +1202,7 @@ class Kubevirt(Kubecommon):
         core.create_namespaced_pod(namespace, pod)
         completed = self.pod_completed(podname, namespace)
         if not completed:
-            common.pprint("Using with pod %s. Leaving it for debugging purposes" % podname, color='red')
+            error("Using with pod %s. Leaving it for debugging purposes" % podname)
             return {'result': 'failure', 'reason': 'timeout waiting for preparation of disk to finish'}
         else:
             core.delete_namespaced_pod(podname, namespace)
@@ -1279,7 +1280,7 @@ class Kubevirt(Kubecommon):
             runtime = 0
             while not ipassigned:
                 if runtime >= timeout:
-                    common.pprint("Time out waiting for a loadbalancer ip for service %s-svc" % name, color='red')
+                    error("Time out waiting for a loadbalancer ip for service %s-svc" % name)
                     return
                 else:
                     try:
@@ -1287,14 +1288,14 @@ class Kubevirt(Kubecommon):
                         return api_service.status.load_balancer.ingress[0].ip
                     except:
                         time.sleep(5)
-                        common.pprint("Waiting to get a loadbalancer ip for service %s..." % name, color='blue')
+                        pprint("Waiting to get a loadbalancer ip for service %s..." % name)
                         runtime += 5
 
     def delete_service(self, name, namespace):
         try:
             self.core.delete_namespaced_service(name, namespace)
         except Exception as e:
-            common.pprint("Couldn't delete service %s. Hit %s" % (name, e), color='red')
+            error("Couldn't delete service %s. Hit %s" % (name, e))
 
     def ssh_loadbalancer_ip(self, name, namespace):
         try:
@@ -1313,4 +1314,4 @@ class Kubevirt(Kubecommon):
         try:
             self.core.delete_namespaced_secret(name, namespace)
         except Exception as e:
-            common.pprint("Couldn't delete service %s. Hit %s" % (name, e), color='red')
+            error("Couldn't delete service %s. Hit %s" % (name, e))

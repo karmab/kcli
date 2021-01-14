@@ -6,7 +6,8 @@ from glob import glob
 import json
 import os
 import sys
-from kvirt.common import info, pprint, gen_mac, get_oc, get_values, pwd_path, fetch
+from kvirt.common import error, pprint, success, warning, info2
+from kvirt.common import gen_mac, get_oc, get_values, pwd_path, fetch
 from kvirt.common import get_commit_rhcos, get_latest_fcos, kube_create_app, patch_bootstrap
 from kvirt.common import ssh, scp, _ssh_credentials, word2number
 from kvirt.openshift.calico import calicoassets
@@ -21,10 +22,6 @@ import yaml
 virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere', 'packet']
 cloudplatforms = ['aws', 'gcp']
 DEFAULT_TAG = '4.6'
-
-
-def fake_pprint(text, color='green'):
-    print(text)
 
 
 def get_installer_version():
@@ -67,7 +64,7 @@ def get_downstream_installer(nightly=False, macosx=False, tag=None):
         repo += '/%s' % tag.replace('-x86_64', '')
     INSTALLSYSTEM = 'mac' if os.path.exists('/Users') or macosx else 'linux'
     msg = 'Downloading openshift-install from https://mirror.openshift.com/pub/openshift-v4/clients/%s' % repo
-    pprint(msg, color='blue')
+    pprint(msg)
     r = urlopen("https://mirror.openshift.com/pub/openshift-v4/clients/%s/release.txt" % repo).readlines()
     version = None
     for line in r:
@@ -75,13 +72,12 @@ def get_downstream_installer(nightly=False, macosx=False, tag=None):
             version = str(line).split(':')[1].strip().replace('\\n', '').replace("'", "")
             break
     if version is None:
-        pprint("Coudldn't find version", color='red')
+        error("Coudldn't find version")
         return 1
     cmd = "curl -s https://mirror.openshift.com/pub/openshift-v4/clients/%s/" % repo
     cmd += "openshift-install-%s-%s.tar.gz " % (INSTALLSYSTEM, version)
     cmd += "| tar zxf - openshift-install"
     cmd += "; chmod 700 openshift-install"
-    # pprint("Running: %s" % cmd, color='blue')
     return call(cmd, shell=True)
 
 
@@ -100,20 +96,19 @@ def get_ci_installer(pull_secret, tag=None, macosx=False, upstream=False):
         tag = 'registry.ci.openshift.org/%s/release:%s' % (basetag, tag)
     os.environ['OPENSHIFT_RELEASE_IMAGE'] = tag
     msg = 'Downloading openshift-install %s in current directory' % tag
-    pprint(msg, color='blue')
+    pprint(msg)
     if upstream:
         cmd = "oc adm release extract --command=openshift-install --to . %s" % tag
     else:
         cmd = "oc adm release extract --registry-config %s --command=openshift-install --to . %s" % (pull_secret, tag)
     cmd += "; chmod 700 openshift-install"
-    # pprint("Running: %s" % cmd, color='blue')
     return call(cmd, shell=True)
 
 
 def get_upstream_installer(macosx=False, tag=None):
     INSTALLSYSTEM = 'mac' if os.path.exists('/Users') or macosx else 'linux'
     msg = 'Downloading okd openshift-install from github in current directory'
-    pprint(msg, color='blue')
+    pprint(msg)
     r = urlopen("https://api.github.com/repos/openshift/okd/releases")
     data = json.loads(r.read())
     version = sorted([x['tag_name'] for x in data])[-1]
@@ -121,7 +116,6 @@ def get_upstream_installer(macosx=False, tag=None):
     cmd += "%s/openshift-install-%s-%s.tar.gz" % (version, INSTALLSYSTEM, version)
     cmd += "| tar zxf - openshift-install"
     cmd += "; chmod 700 openshift-install"
-    # pprint("Running: %s" % cmd, color='blue')
     return call(cmd, shell=True)
 
 
@@ -177,11 +171,11 @@ def scale(config, plandir, cluster, overrides):
     platform = config.type
     k = config.k
     data = {}
-    pprint("Scaling on client %s" % client, color='blue')
+    pprint("Scaling on client %s" % client)
     cluster = overrides.get('cluster', 'testk')
     clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
     if not os.path.exists(clusterdir):
-        pprint("Cluster directory %s not found..." % clusterdir, color='red')
+        error("Cluster directory %s not found..." % clusterdir)
         sys.exit(1)
     if os.path.exists("%s/kcli_parameters.yml" % clusterdir):
         with open("%s/kcli_parameters.yml" % clusterdir, 'r') as install:
@@ -194,7 +188,7 @@ def scale(config, plandir, cluster, overrides):
         if api_ip is None:
             network = data.get('network')
             if network == 'default' and platform == 'kvm':
-                pprint("Using 192.168.122.253 as api_ip", color='yellow')
+                warning("Using 192.168.122.253 as api_ip")
                 data['api_ip'] = "192.168.122.253"
             elif platform == 'kubevirt':
                 selector = {'kcli/plan': plan, 'kcli/role': 'master'}
@@ -203,27 +197,27 @@ def scale(config, plandir, cluster, overrides):
                 if api_ip is None:
                     os._exit(1)
                 else:
-                    pprint("Using api_ip %s" % api_ip, color='blue')
+                    pprint("Using api_ip %s" % api_ip)
                     data['api_ip'] = api_ip
             else:
-                pprint("You need to define api_ip in your parameters file", color='red')
+                error("You need to define api_ip in your parameters file")
                 os._exit(1)
         if data.get('virtual_router_id') is None:
             data['virtual_router_id'] = word2number(cluster)
-        pprint("Using keepalived virtual_router_id %s" % data['virtual_router_id'], color='blue')
+        pprint("Using keepalived virtual_router_id %s" % data['virtual_router_id'])
     if platform == 'packet':
         network = data.get('network')
         if network is None:
-            pprint("You need to indicate a specific vlan network", color='red')
+            error("You need to indicate a specific vlan network")
             os._exit(1)
     image = overrides.get('image')
     if image is None:
         cluster_image = k.info("%s-master-0" % cluster).get('image')
         if cluster_image is None:
-            pprint("Missing image...", color='red')
+            error("Missing image...")
             sys.exit(1)
         else:
-            pprint("Using image %s" % cluster_image, color='blue')
+            pprint("Using image %s" % cluster_image)
             image = cluster_image
     data['image'] = image
     for role in ['masters', 'workers']:
@@ -247,7 +241,7 @@ def create(config, plandir, cluster, overrides):
     bootstrap_helper_ip = None
     client = config.client
     platform = config.type
-    pprint("Deploying on client %s" % client, color='blue')
+    pprint("Deploying on client %s" % client)
     data = {'helper_image': 'CentOS-7-x86_64-GenericCloud.qcow2',
             'domain': 'karmalabs.com',
             'network': 'default',
@@ -272,18 +266,18 @@ def create(config, plandir, cluster, overrides):
     else:
         clustervalue = 'testk'
     data['cluster'] = clustervalue
-    pprint("Deploying cluster %s" % clustervalue, color='blue')
+    pprint("Deploying cluster %s" % clustervalue)
     plan = cluster if cluster is not None else clustervalue
     overrides['kubetype'] = 'openshift'
     apps = overrides.get('apps', [])
     if ('localstorage' in apps or 'ocs' in apps) and 'extra_disks' not in overrides\
             and 'extra_master_disks' not in overrides and 'extra_worker_disks' not in overrides:
-        pprint("Storage apps require extra disks to be set", color='yellow')
+        warning("Storage apps require extra disks to be set")
     overrides['kube'] = data['cluster']
     installparam = overrides.copy()
     masters = data.get('masters', 1)
     if masters == 0:
-        pprint("Invalid number of masters", color='red')
+        error("Invalid number of masters")
         os._exit(1)
     network = data.get('network')
     ipv6 = data['ipv6']
@@ -292,24 +286,24 @@ def create(config, plandir, cluster, overrides):
     version = data.get('version')
     tag = data.get('tag')
     if os.path.exists('openshift-install'):
-        pprint("Removing old openshift-install", color='blue')
+        pprint("Removing old openshift-install")
         os.remove('openshift-install')
     minimal = data.get('minimal')
     if version not in ['ci', 'nightly']:
-        pprint("Using stable version", color='blue')
+        pprint("Using stable version")
     else:
-        pprint("Using %s version" % version, color='blue')
+        pprint("Using %s version" % version)
     cluster = data.get('cluster')
     helper_image = data.get('helper_image')
     image = data.get('image')
     api_ip = data.get('api_ip')
     if platform in virtplatforms and api_ip is None:
         if network == 'default' and platform == 'kvm':
-            pprint("Using 192.168.122.253 as api_ip", color='yellow')
+            warning("Using 192.168.122.253 as api_ip")
             overrides['api_ip'] = "192.168.122.253"
             api_ip = "192.168.122.253"
         else:
-            pprint("You need to define api_ip in your parameters file", color='red')
+            error("You need to define api_ip in your parameters file")
             os._exit(1)
     if ':' in api_ip:
         ipv6 = True
@@ -318,15 +312,15 @@ def create(config, plandir, cluster, overrides):
     network = data.get('network')
     if platform == 'packet':
         if network == 'default':
-            pprint("You need to indicate a specific vlan network", color='red')
+            error("You need to indicate a specific vlan network")
             os._exit(1)
         else:
             facilities = [n['domain'] for n in k.list_networks().values() if str(n['cidr']) == network]
             if not facilities:
-                pprint("Vlan network %s not found in any facility" % network, color='red')
+                error("Vlan network %s not found in any facility" % network)
                 os._exit(1)
             elif k.facility not in facilities:
-                pprint("Vlan network %s not found in facility %s" % (network, k.facility), color='red')
+                error("Vlan network %s not found in facility %s" % (network, k.facility))
                 os._exit(1)
     masters = data.get('masters')
     workers = data.get('workers')
@@ -344,24 +338,24 @@ def create(config, plandir, cluster, overrides):
     if macosx and not os.path.exists('/i_am_a_container'):
         macosx = False
     if platform == 'openstack' and (api_ip is None or public_api_ip is None):
-        pprint("You need to define both api_ip and public_api_ip in your parameters file", color='red')
+        error("You need to define both api_ip and public_api_ip in your parameters file")
         os._exit(1)
     if not os.path.exists(pull_secret):
-        pprint("Missing pull secret file %s" % pull_secret, color='red')
+        error("Missing pull secret file %s" % pull_secret)
         sys.exit(1)
     if not os.path.exists(pub_key):
         if os.path.exists(os.path.expanduser('~/.kcli/id_rsa.pub')):
             pub_key = os.path.expanduser('~/.kcli/id_rsa.pub')
         else:
-            pprint("Missing public key file %s" % pub_key, color='red')
+            error("Missing public key file %s" % pub_key)
             sys.exit(1)
     clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
     if os.path.exists(clusterdir):
         if [v for v in config.k.list() if v.get('plan', 'kvirt') == cluster]:
-            pprint("Please remove existing directory %s first..." % clusterdir, color='red')
+            error("Please remove existing directory %s first..." % clusterdir)
             sys.exit(1)
         else:
-            pprint("Removing directory %s" % clusterdir, color='blue')
+            pprint("Removing directory %s" % clusterdir)
             rmtree(clusterdir)
     os.environ['KUBECONFIG'] = "%s/auth/kubeconfig" % clusterdir
     if find_executable('oc') is None:
@@ -371,7 +365,7 @@ def create(config, plandir, cluster, overrides):
             basetag = 'ocp' if not upstream else 'origin'
             tag = 'registry.ci.openshift.org/%s/release:%s' % (basetag, tag)
         os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = tag
-        pprint("Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to %s" % tag, color='blue')
+        pprint("Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to %s" % tag)
     if find_executable('openshift-install') is None:
         if version == 'ci':
             run = get_ci_installer(pull_secret, tag=tag, upstream=upstream)
@@ -382,20 +376,20 @@ def create(config, plandir, cluster, overrides):
         else:
             run = get_downstream_installer(tag=tag)
         if run != 0:
-            pprint("Couldn't download openshift-install", color='red')
+            error("Couldn't download openshift-install")
             os._exit(run)
-        pprint("Move downloaded openshift-install somewhere in your path if you want to reuse it", color='blue')
+        pprint("Move downloaded openshift-install somewhere in your path if you want to reuse it")
     os.environ["PATH"] += ":%s" % os.getcwd()
     if disconnected_url is not None:
         if '/' not in str(tag):
             tag = '%s/%s/release:%s' % (disconnected_url, disconnected_prefix, tag)
             os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = tag
-        pprint("Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to %s" % tag, color='blue')
+        pprint("Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to %s" % tag)
     INSTALLER_VERSION = get_installer_version()
     COMMIT_ID = os.popen('openshift-install version').readlines()[1].replace('built from commit', '').strip()
     if platform == 'packet' and not upstream:
         overrides['commit_id'] = COMMIT_ID
-    pprint("Using installer version %s" % INSTALLER_VERSION, color='blue')
+    pprint("Using installer version %s" % INSTALLER_VERSION)
     OPENSHIFT_VERSION = INSTALLER_VERSION[0:3].replace('.', '')
     curl_header = "Accept: application/vnd.coreos.ignition+json; version=3.1.0"
     if upstream:
@@ -418,15 +412,15 @@ def create(config, plandir, cluster, overrides):
             if result['result'] != 'success':
                 os._exit(1)
         else:
-            pprint("Using image %s" % image, color='blue')
+            pprint("Using image %s" % image)
     elif platform != 'packet':
-        pprint("Checking if image %s is available" % image, color='blue')
+        pprint("Checking if image %s is available" % image)
         images = [v for v in k.volumes() if image in v]
         if not images:
-            pprint("Missing %s. Indicate correct image in your parameters file..." % image, color='red')
+            error("Missing %s. Indicate correct image in your parameters file..." % image)
             os._exit(1)
     else:
-        pprint("Missing image in your parameters file. This is required for packet", color='red')
+        error("Missing image in your parameters file. This is required for packet")
         os._exit(1)
     overrides['image'] = image
     overrides['cluster'] = cluster
@@ -440,7 +434,7 @@ def create(config, plandir, cluster, overrides):
         if platform == 'kvm' and network in [n for n in k.list_networks() if k.list_networks()[n]['type'] == 'routed']:
             data['disconnected_dns'] = True
         disconnected_vm = "%s-disconnecter" % cluster
-        pprint("Deploying disconnected vm %s" % disconnected_vm, color='blue')
+        pprint("Deploying disconnected vm %s" % disconnected_vm)
         data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
         disconnected_plan = "%s-reuse" % plan if disconnected_reuse else plan
         result = config.plan(disconnected_plan, inputfile='%s/disconnected.yml' % plandir, overrides=data)
@@ -473,7 +467,7 @@ def create(config, plandir, cluster, overrides):
                          insecure=True, cmd=versioncmd, vmport=disconnected_vmport)
         disconnected_version = os.popen(versioncmd).read().strip()
         os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = disconnected_version
-        pprint("Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to %s" % disconnected_version, color='blue')
+        pprint("Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to %s" % disconnected_version)
     if disconnected_url is not None and disconnected_user is not None and disconnected_password is not None:
         key = "%s:%s" % (disconnected_user, disconnected_password)
         key = str(b64encode(key.encode('utf-8')), 'utf-8')
@@ -495,11 +489,11 @@ def create(config, plandir, cluster, overrides):
         f.write(autoapprover)
     run = call('openshift-install --dir=%s create manifests' % clusterdir, shell=True)
     if run != 0:
-        pprint("Leaving environment for debugging purposes", color='red')
-        pprint("You can delete it with kcli delete kube --yes %s" % cluster, color='red')
+        error("Leaving environment for debugging purposes")
+        error("You can delete it with kcli delete kube --yes %s" % cluster)
         os._exit(run)
     if minimal:
-        pprint("Deploying cvo overrides to provide a minimal install", color='yellow')
+        warning("Deploying cvo overrides to provide a minimal install")
         with open("%s/cvo-overrides.yaml" % plandir) as f:
             cvo_override = f.read()
         with open("%s/manifests/cvo-overrides.yaml" % clusterdir, "a") as f:
@@ -542,7 +536,7 @@ def create(config, plandir, cluster, overrides):
     staticdata = gather_dhcp(data, platform)
     domain = data.get('domain')
     if staticdata:
-        pprint("Deploying helper dhcp node" % image, color='green')
+        pprint("Deploying helper dhcp node" % image)
         staticdata.update({'network': network, 'dhcp_image': helper_image, 'prefix': cluster,
                           domain: '%s.%s' % (cluster, domain)})
         result = config.plan(plan, inputfile='%s/dhcp.yml' % plandir, overrides=staticdata)
@@ -551,12 +545,12 @@ def create(config, plandir, cluster, overrides):
     if platform in virtplatforms:
         if data.get('virtual_router_id') is None:
             overrides['virtual_router_id'] = word2number(cluster)
-        pprint("Using keepalived virtual_router_id %s" % overrides['virtual_router_id'], color='blue')
-        pprint("Using %s for api vip...." % api_ip, color='blue')
+        pprint("Using keepalived virtual_router_id %s" % overrides['virtual_router_id'])
+        pprint("Using %s for api vip...." % api_ip)
         host_ip = api_ip if platform != "openstack" else public_api_ip
         ignore_hosts = data.get('ignore_hosts', False)
         if ignore_hosts:
-            pprint("Ignoring /etc/hosts", color='yellow')
+            warning("Ignoring /etc/hosts")
         elif not os.path.exists("/i_am_a_container"):
             hosts = open("/etc/hosts").readlines()
             wronglines = [e for e in hosts if not e.startswith('#') and "api.%s.%s" % (cluster, domain) in e and
@@ -566,7 +560,7 @@ def create(config, plandir, cluster, overrides):
                 wrongingresses = [e for e in hosts if not e.startswith('#') and o in e and ingress_ip not in e]
                 wronglines.extend(wrongingresses)
             for wrong in wronglines:
-                pprint("Cleaning wrong entry %s in /etc/hosts" % wrong, color='yellow')
+                warning("Cleaning wrong entry %s in /etc/hosts" % wrong)
                 call("sudo sed -i '/%s/d' /etc/hosts" % wrong.strip(), shell=True)
             hosts = open("/etc/hosts").readlines()
             correct = [e for e in hosts if not e.startswith('#') and "api.%s.%s" % (cluster, domain) in e and
@@ -605,15 +599,14 @@ def create(config, plandir, cluster, overrides):
                     image = os.path.basename(images[0])
                 else:
                     helper_image = "CentOS-7-x86_64-GenericCloud.qcow2"
-                    pprint("Downloading centos helper image", color='blue')
+                    pprint("Downloading centos helper image")
                     result = config.handle_host(pool=config.pool, image="centos7", download=True,
                                                 update_profile=False)
-                pprint("Using helper image %s" % helper_image, color='blue')
+                pprint("Using helper image %s" % helper_image)
             else:
                 images = [v for v in k.volumes() if helper_image in v]
                 if not images:
-                    pprint("Missing image %s. Indicate correct helper image in your parameters file" % helper_image,
-                           color='red')
+                    error("Missing image %s. Indicate correct helper image in your parameters file" % helper_image)
                     os._exit(1)
             if platform == 'openstack':
                 helper_overrides['flavor'] = "m1.medium"
@@ -661,7 +654,7 @@ def create(config, plandir, cluster, overrides):
         status = ""
         while status != "running":
             status = k.info(bootstrap_helper_name).get('status')
-            pprint("Waiting 5s for bootstrap helper node to be running...", color='blue')
+            pprint("Waiting 5s for bootstrap helper node to be running...")
             sleep(5)
         sleep(5)
         bootstrap_helper_ip, bootstrap_helper_vmport = _ssh_credentials(k, bootstrap_helper_name)[1:]
@@ -681,11 +674,11 @@ def create(config, plandir, cluster, overrides):
         sedcmd += ' > %s/bootstrap.ign' % clusterdir
         call(sedcmd, shell=True)
     if platform in virtplatforms:
-        pprint("Deploying bootstrap", color='blue')
+        pprint("Deploying bootstrap")
         result = config.plan(plan, inputfile='%s/bootstrap.yml' % plandir, overrides=overrides)
         if result['result'] != 'success':
             os._exit(1)
-        pprint("Deploying masters", color='blue')
+        pprint("Deploying masters")
         result = config.plan(plan, inputfile='%s/masters.yml' % plandir, overrides=overrides)
         if result['result'] != 'success':
             os._exit(1)
@@ -695,24 +688,24 @@ def create(config, plandir, cluster, overrides):
                 try:
                     k.add_nic(node, network)
                 except Exception as e:
-                    pprint("Hit %s. Continuing still" % str(e), color='red')
+                    error("Hit %s. Continuing still" % str(e))
                     continue
         bootstrapcommand = 'openshift-install --dir=%s wait-for bootstrap-complete' % clusterdir
         bootstrapcommand += ' || %s' % bootstrapcommand
         run = call(bootstrapcommand, shell=True)
         if run != 0:
-            pprint("Leaving environment for debugging purposes", color='red')
-            pprint("You can delete it with kcli delete kube --yes %s" % cluster, color='red')
+            error("Leaving environment for debugging purposes")
+            error("You can delete it with kcli delete cluster --yes %s" % cluster)
             os._exit(run)
         todelete = ["%s-bootstrap" % cluster]
         if platform in ['openstack', 'vsphere', 'packet']:
             todelete.append("%s-bootstrap-helper" % cluster)
     else:
-        pprint("Deploying bootstrap", color='blue')
+        pprint("Deploying bootstrap")
         result = config.plan(plan, inputfile='%s/cloud_bootstrap.yml' % plandir, overrides=overrides)
         if result['result'] != 'success':
             os._exit(1)
-        pprint("Deploying masters", color='blue')
+        pprint("Deploying masters")
         result = config.plan(plan, inputfile='%s/cloud_masters.yml' % plandir, overrides=overrides)
         if result['result'] != 'success':
             os._exit(1)
@@ -720,7 +713,7 @@ def create(config, plandir, cluster, overrides):
         todelete = ["%s-bootstrap" % cluster, "%s-bootstrap-helper" % cluster]
     if platform in virtplatforms:
         if workers > 0:
-            pprint("Deploying workers", color='blue')
+            pprint("Deploying workers")
             if 'name' in overrides:
                 del overrides['name']
             if platform in virtplatforms:
@@ -734,22 +727,21 @@ def create(config, plandir, cluster, overrides):
                 for node in allnodes:
                     k.add_nic(node, network)
     call("oc adm taint nodes -l node-role.kubernetes.io/master node-role.kubernetes.io/master:NoSchedule-", shell=True)
-    pprint("Deploying certs autoapprover cronjob", color='blue')
+    pprint("Deploying certs autoapprover cronjob")
     call("oc create -f %s/autoapprovercron.yml" % clusterdir, shell=True)
     if not minimal:
         installcommand = 'openshift-install --dir=%s wait-for install-complete' % clusterdir
         installcommand += " || %s" % installcommand
-        pprint("Launching install-complete step. It will be retried one extra time in case of timeouts",
-               color='blue')
+        pprint("Launching install-complete step. It will be retried one extra time in case of timeouts")
         call(installcommand, shell=True)
     else:
         kubeconf = os.environ['KUBECONFIG']
         kubepassword = open("%s/auth/auth/kubeadmin-password" % clusterdir).read()
-        info("Minimal Cluster ready to be used")
-        info("INFO Install Complete")
-        info("To access the cluster as the system:admin user when running 'oc', run export KUBECONFIG=%s" % kubeconf)
-        info("Access the Openshift web-console here: https://console-openshift-console.apps.%s.%s" % (cluster, domain))
-        info("Login to the console with user: kubeadmin, password: %s" % kubepassword)
+        success("Minimal Cluster ready to be used")
+        success("INFO Install Complete")
+        info2("To access the cluster as the system:admin user when running 'oc', run export KUBECONFIG=%s" % kubeconf)
+        info2("Access the Openshift web-console here: https://console-openshift-console.apps.%s.%s" % (cluster, domain))
+        info2("Login to the console with user: kubeadmin, password: %s" % kubepassword)
     for vm in todelete:
         pprint("Deleting %s" % vm)
         k.delete(vm)
@@ -759,7 +751,7 @@ def create(config, plandir, cluster, overrides):
         for app in apps:
             appdir = "%s/apps/%s" % (plandir, app)
             if not os.path.exists(appdir):
-                pprint("Skipping unsupported app %s" % app, color='yellow')
+                warning("Skipping unsupported app %s" % app)
             else:
-                pprint("Adding app %s" % app, color='blue')
+                pprint("Adding app %s" % app)
                 kube_create_app(config, appdir, overrides=overrides)

@@ -7,6 +7,7 @@ import kvirt.krpc.kcli_pb2_grpc as kcli_pb2_grpc
 
 from kvirt.config import Kconfig, Kbaseconfig, Kcontainerconfig
 from kvirt import common, nameutils
+from kvirt.common import pprint, error
 from kvirt import version
 from kvirt.defaults import VERSION
 import os
@@ -122,7 +123,7 @@ class KcliServicer(kcli_pb2_grpc.KcliServicer):
         tunnelport = config.tunnelport
         tunneluser = config.tunneluser
         if tunnel and tunnelhost is None:
-            common.pprint("Tunnel requested but invalid tunnelhost", color='red')
+            error("Tunnel requested but invalid tunnelhost")
             os._exit(1)
         insecure = config.insecure
         u, ip, vmport = common._ssh_credentials(k, name)
@@ -153,7 +154,7 @@ class KcliServicer(kcli_pb2_grpc.KcliServicer):
         tunnel = config.tunnel
         tunnelhost = config.tunnelhost
         if tunnel and tunnelhost is None:
-            common.pprint("Tunnel requested but invalid tunnelhost", color='red')
+            error("Tunnel requested but invalid tunnelhost")
             os._exit(1)
         tunnelport = config.tunnelport
         tunneluser = config.tunneluser
@@ -275,17 +276,17 @@ class KconfigServicer(kcli_pb2_grpc.KconfigServicer):
             if config.type in ['gcp', 'kubevirt']:
                 name = name.replace('_', '-')
             if config.type != 'aws':
-                common.pprint("Using %s as name of the vm" % name)
+                pprint("Using %s as name of the vm" % name)
         if request.image != '':
             if request.image in config.profiles:
-                common.pprint("Using %s as profile" % request.image)
+                pprint("Using %s as profile" % request.image)
             profile = request.image
         elif profile is not None:
             if profile.endswith('.yml'):
                 profilefile = profile
                 profile = None
                 if not os.path.exists(profilefile):
-                    common.pprint("Missing profile file %s" % profilefile, color='red')
+                    error("Missing profile file %s" % profilefile)
                     result = {'result': 'failure', 'reason': "Missing profile file %s" % profilefile}
                     response = kcli_pb2.result(**result)
                     return response
@@ -296,9 +297,9 @@ class KconfigServicer(kcli_pb2_grpc.KconfigServicer):
                         if len(entrieskeys) == 1:
                             profile = entrieskeys[0]
                             customprofile = entries[profile]
-                            common.pprint("Using data from %s as profile" % profilefile, color='blue')
+                            pprint("Using data from %s as profile" % profilefile)
                         else:
-                            common.pprint("Cant' parse %s as profile file" % profilefile, color='red')
+                            error("Cant' parse %s as profile file" % profilefile)
                             result = {'result': 'failure', 'reason': "Missing profile file %s" % profilefile}
                             response = kcli_pb2.result(**result)
                             return response
@@ -306,7 +307,7 @@ class KconfigServicer(kcli_pb2_grpc.KconfigServicer):
             profile = 'kvirt'
             config.profiles[profile] = {}
         else:
-            common.pprint("You need to either provide a profile, an image or some parameters", color='red')
+            error("You need to either provide a profile, an image or some parameters")
             result = {'result': 'failure',
                       'reason': "You need to either provide a profile, an image or some parameters"}
             response = kcli_pb2.result(**result)

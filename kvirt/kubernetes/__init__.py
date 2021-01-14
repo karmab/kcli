@@ -6,7 +6,7 @@ kubernetes utilites
 
 import os
 from kvirt.kubecommon import Kubecommon
-from kvirt.common import pprint
+from kvirt.common import error
 from kubernetes import client
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -148,7 +148,7 @@ class Kubernetes():
             try:
                 self.core.delete_namespaced_pod(name, self.namespace, client.V1DeleteOptions())
             except client.rest.ApiException:
-                pprint("Container %s not found" % name)
+                error("Container %s not found" % name)
                 return {'result': 'failure', 'reason': "Missing template"}
         return {'result': 'success'}
 

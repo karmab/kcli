@@ -57,18 +57,24 @@ def get_free_nodeport():
             continue
 
 
-def pprint(text, color='green'):
-    """
+def pprint(text):
+    color = '36'
+    print('\033[%sm%s\033[0m' % (color, text))
 
-    :param text:
-    :param color:
-    """
-    colors = {'blue': '36', 'red': '31', 'green': '32', 'yellow': '33', 'pink': '35', 'white': '37'}
-    if color is not None and color in colors:
-        color = colors[color]
-        print('\033[0;%sm%s\033[0;0m' % (color, text))
-    else:
-        print(text)
+
+def error(text):
+    color = '31'
+    print('\033[%sm%s\033[0m' % (color, text))
+
+
+def success(text):
+    color = '32'
+    print('\033[%sm%s\033[0m' % (color, text))
+
+
+def warning(text):
+    color = '33'
+    print('\033[%sm%s\033[0m' % (color, text))
 
 
 def handle_response(result, name, quiet=False, element='', action='deployed', client=None):
@@ -90,11 +96,11 @@ def handle_response(result, name, quiet=False, element='', action='deployed', cl
             response = "%s %s %s" % (element, name, action)
             if client is not None:
                 response += " on %s" % client
-            pprint(response.lstrip(), color='green')
+            success(response.lstrip())
     elif result['result'] == 'failure':
         if not quiet:
             response = "%s %s not %s because %s" % (element, name, action, result['reason'])
-            pprint(response.lstrip(), color='red')
+            error(response.lstrip())
         code = 1
     return code
 
@@ -108,7 +114,7 @@ def confirm(message):
     message = "%s [y/N]: " % message
     _input = input(message)
     if _input.lower() not in ['y', 'yes']:
-        pprint("Leaving...", color='red')
+        error("Leaving...")
         os._exit(1)
     return
 
@@ -126,7 +132,7 @@ def get_overrides(paramfile=None, param=[]):
             try:
                 overrides = yaml.safe_load(f)
             except:
-                pprint("Couldn't parse your parameters file %s. Not using it" % paramfile, color='red')
+                error("Couldn't parse your parameters file %s. Not using it" % paramfile)
                 os._exit(1)
     if param is not None:
         for x in param:
@@ -270,7 +276,7 @@ def get_kubectl():
 
 def get_oc(macosx=False):
     SYSTEM = 'macosx' if os.path.exists('/Users') else 'linux'
-    pprint("Downloading oc in current directory", color='blue')
+    pprint("Downloading oc in current directory")
     occmd = "curl -s https://mirror.openshift.com/pub/openshift-v4/clients/oc/latest/%s/oc.tar.gz" % SYSTEM
     occmd += "| tar zxf - oc"
     occmd += "; chmod 700 oc"
