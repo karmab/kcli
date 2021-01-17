@@ -87,10 +87,9 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
     if nets:
         bridges = {}
         for index, netinfo in enumerate(nets):
-            net = netinfo.copy
             if isinstance(netinfo, str):
                 net = {'name': netinfo}
-            if isinstance(netinfo, dict):
+            elif isinstance(netinfo, dict):
                 net = netinfo.copy()
             else:
                 error("Wrong net entry %s" % index)

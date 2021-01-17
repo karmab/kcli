@@ -436,8 +436,8 @@ class Kaws(object):
     def volumes(self, iso=False):
         conn = self.conn
         images = []
-        oses = ['CentOS Linux 7 x86_64*', 'CentOS Linux 8 x86_64*', 'RHEL-7.*GA*', 'ubuntu-xenial-*Standard*', 'kcli*',
-                'RHEL-8.0.0_HVM-*', 'rhcos-4*', 'fedora-coreos*']
+        oses = ['CentOS Linux 7 x86_64*', 'CentOS Linux 8 x86_64*', 'RHEL-7.*GA*',
+                'ubuntu-xenial-*', 'kcli*', 'RHEL-8.0.0_HVM-*', 'rhcos-4*', 'fedora-coreos*', 'Debian*', 'Ubuntu*']
         Filters = [{'Name': 'name', 'Values': oses}]
         centos = []
         fedoracoreos = []
