@@ -344,7 +344,7 @@ class Kvirt(object):
                     if diskthinpool is not None:
                         matchingthinimages = self.thinimages(diskpoolpath, diskthinpool)
                         if diskimage not in matchingthinimages:
-                            raise NameError('No Template found')
+                            raise NameError('No Image found')
                     else:
                         default_storagepool.refresh(0)
                         if '/' in diskimage:

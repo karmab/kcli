@@ -90,7 +90,7 @@ class Kaws(object):
             else:
                 return {'result': 'failure', 'reason': 'Invalid image %s' % image}
         else:
-            imageid = image
+            return {'result': 'failure', 'reason': 'An image (or amid) is required'}
         defaultsubnetid = None
         if flavor is None:
             matching = [f for f in staticf if staticf[f]['cpus'] >= numcpus and staticf[f]['memory'] >= memory]
@@ -748,12 +748,9 @@ class Kaws(object):
         return
 
     def __evaluate_image(self, image):
-        if image.lower().startswith('centos'):
-            amiid = 'ami-8352e3fe'
-            pprint("Using ami %s" % amiid)
-            return 'ami-8352e3fe'
-        else:
-            return image
+        if image is not None and image.lower().startswith('centos7'):
+            image = 'ami-8352e3fe'
+            pprint("Using ami %s" % image)
         return image
 
     def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, primary=False, instanceid=None):
