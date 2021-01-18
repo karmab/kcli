@@ -796,7 +796,8 @@ def print_info(yamlinfo, output='plain', fields=[], values=False, pretty=True):
 
 
 def ssh(name, ip='', user=None, local=None, remote=None, tunnel=False, tunnelhost=None, tunnelport=22,
-        tunneluser='root', insecure=False, cmd=None, X=False, Y=False, debug=False, D=None, vmport=None):
+        tunneluser='root', insecure=False, cmd=None, X=False, Y=False, debug=False, D=None, vmport=None,
+        identityfile=None):
     """
 
     :param name:
@@ -823,11 +824,11 @@ def ssh(name, ip='', user=None, local=None, remote=None, tunnel=False, tunnelhos
         return None
     else:
         sshcommand = "%s@%s" % (user, ip)
-        identityfile = None
-        if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
-            identityfile = os.path.expanduser("~/.kcli/id_rsa")
-        elif os.path.exists(os.path.expanduser("~/.kcli/id_dsa")):
-            identityfile = os.path.expanduser("~/.kcli/id_dsa")
+        if identityfile is None:
+            if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
+                identityfile = os.path.expanduser("~/.kcli/id_rsa")
+            elif os.path.exists(os.path.expanduser("~/.kcli/id_dsa")):
+                identityfile = os.path.expanduser("~/.kcli/id_dsa")
         if identityfile is not None:
             sshcommand = "-i %s %s" % (identityfile, sshcommand)
         if D:
@@ -867,7 +868,7 @@ def ssh(name, ip='', user=None, local=None, remote=None, tunnel=False, tunnelhos
 
 
 def scp(name, ip='', user=None, source=None, destination=None, recursive=None, tunnel=False, tunnelhost=None,
-        tunnelport=22, tunneluser='root', debug=False, download=False, vmport=None, insecure=False):
+        tunnelport=22, tunneluser='root', debug=False, download=False, vmport=None, insecure=False, identityfile=None):
     """
 
     :param name:
@@ -895,11 +896,11 @@ def scp(name, ip='', user=None, source=None, destination=None, recursive=None, t
         if insecure:
             arguments += " -o LogLevel=quiet -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
         scpcommand = 'scp -q'
-        identityfile = None
-        if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
-            identityfile = os.path.expanduser("~/.kcli/id_rsa")
-        elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
-            identityfile = os.path.expanduser("~/.kcli/id_rsa")
+        if identityfile is None:
+            if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
+                identityfile = os.path.expanduser("~/.kcli/id_rsa")
+            elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
+                identityfile = os.path.expanduser("~/.kcli/id_rsa")
         if identityfile is not None:
             scpcommand = "%s -i %s" % (scpcommand, identityfile)
         if recursive:

@@ -2068,6 +2068,7 @@ def ssh_vm(args):
     D = args.D
     X = args.X
     Y = args.Y
+    identityfile = args.identityfile
     user = args.user
     vmport = args.port
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
@@ -2107,7 +2108,8 @@ def ssh_vm(args):
                     vmport = baseconfig.vmport if baseconfig.vmport is not None else vm.get('vmport')
                 sshcommand = common.ssh(name, ip=ip, user=user, local=l, remote=r, tunnel=tunnel,
                                         tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser,
-                                        insecure=insecure, cmd=cmd, X=X, Y=Y, D=D, debug=args.debug, vmport=vmport)
+                                        insecure=insecure, cmd=cmd, X=X, Y=Y, D=D, debug=args.debug, vmport=vmport,
+                                        identityfile=identityfile)
     if sshcommand is None:
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
@@ -2124,7 +2126,8 @@ def ssh_vm(args):
             ip = config.host
         sshcommand = common.ssh(name, ip=ip, user=user, local=l, remote=r, tunnel=tunnel,
                                 tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser,
-                                insecure=insecure, cmd=cmd, X=X, Y=Y, D=D, debug=args.debug, vmport=vmport)
+                                insecure=insecure, cmd=cmd, X=X, Y=Y, D=D, debug=args.debug, vmport=vmport,
+                                identityfile=identityfile)
     if sshcommand is not None:
         if find_executable('ssh') is not None:
             os.system(sshcommand)
@@ -2136,6 +2139,7 @@ def ssh_vm(args):
 
 def scp_vm(args):
     """Scp into vm"""
+    identityfile = args.identityfile
     recursive = args.recursive
     source = args.source[0]
     source = source if not os.path.exists("/i_am_a_container") else "/workdir/%s" % source
@@ -2183,7 +2187,7 @@ def scp_vm(args):
                 scpcommand = common.scp(name, ip=ip, user=user, source=source, destination=destination,
                                         recursive=recursive, tunnel=tunnel, tunnelhost=tunnelhost,
                                         tunnelport=tunnelport, tunneluser=tunneluser, debug=args.debug,
-                                        download=download, vmport=vmport, insecure=insecure)
+                                        download=download, vmport=vmport, insecure=insecure, identityfile=identityfile)
     if scpcommand is None:
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
@@ -2203,7 +2207,8 @@ def scp_vm(args):
                 ip = '127.0.0.1'
         scpcommand = common.scp(name, ip=ip, user=user, source=source, destination=destination, recursive=recursive,
                                 tunnel=tunnel, tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser,
-                                debug=config.debug, download=download, vmport=vmport, insecure=insecure)
+                                debug=config.debug, download=download, vmport=vmport, insecure=insecure,
+                                identityfile=identityfile)
     if scpcommand is not None:
         if find_executable('scp') is not None:
             os.system(scpcommand)
@@ -2606,6 +2611,7 @@ def cli():
     vmscp_desc = 'Scp Into Vm'
     vmscp_epilog = None
     vmscp_parser = argparse.ArgumentParser(add_help=False)
+    vmscp_parser.add_argument('-i', '--identityfile', help='Identity file')
     vmscp_parser.add_argument('-r', '--recursive', help='Recursive', action='store_true')
     vmscp_parser.add_argument('-u', '-l', '--user', help='User for ssh')
     vmscp_parser.add_argument('-p', '-P', '--port', help='Port for ssh')
@@ -2623,6 +2629,7 @@ def cli():
     vmssh_parser.add_argument('-R', help='Remote Forwarding', metavar='REMOTE')
     vmssh_parser.add_argument('-X', action='store_true', help='Enable X11 Forwarding')
     vmssh_parser.add_argument('-Y', action='store_true', help='Enable X11 Forwarding(Insecure)')
+    vmssh_parser.add_argument('-i', '--identityfile', help='Identity file')
     vmssh_parser.add_argument('-p', '--port', '--port', help='Port for ssh')
     vmssh_parser.add_argument('-u', '-l', '--user', help='User for ssh')
     vmssh_parser.add_argument('name', metavar='VMNAME', nargs='*')
