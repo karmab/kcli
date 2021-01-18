@@ -409,6 +409,7 @@ class Kconfig(Kbaseconfig):
             default_zerotier_nets = father.get('zerotier_nets', self.zerotier_nets)
             default_zerotier_kubelet = father.get('zerotier_kubelet', self.zerotier_kubelet)
             default_virttype = father.get('virttype', self.virttype)
+            default_securitygroups = father.get('securitygroups', self.securitygroups)
         else:
             default_numcpus = self.numcpus
             default_memory = self.memory
@@ -480,6 +481,7 @@ class Kconfig(Kbaseconfig):
             default_cpuhotplug = self.cpuhotplug
             default_memoryhotplug = self.memoryhotplug
             default_virttype = self.virttype
+            default_securitygroups = self.securitygroups
         plan = profile.get('plan', plan)
         template = profile.get('template', default_image)
         image = profile.get('image', template)
@@ -494,6 +496,7 @@ class Kconfig(Kbaseconfig):
         rng = profile.get('rng', default_rng)
         zerotier_nets = profile.get('zerotier_nets', default_zerotier_nets)
         zerotier_kubelet = profile.get('zerotier_kubelet', default_zerotier_kubelet)
+        securitygroups = profile.get('securitygroups', default_securitygroups)
         numcpus = profile.get('numcpus', default_numcpus)
         memory = profile.get('memory', default_memory)
         pool = profile.get('pool', default_pool)
@@ -865,7 +868,7 @@ $INFO
                           overrides=overrides, tags=tags, storemetadata=storemetadata,
                           sharedfolders=sharedfolders, kernel=kernel, initrd=initrd, cmdline=cmdline,
                           placement=placement, autostart=autostart, cpuhotplug=cpuhotplug, memoryhotplug=memoryhotplug,
-                          pcidevices=pcidevices, tpm=tpm, rng=rng, metadata=metadata)
+                          pcidevices=pcidevices, tpm=tpm, rng=rng, metadata=metadata, securitygroups=securitygroups)
         if result['result'] != 'success':
             return result
         if dnsclient is not None and domain is not None:

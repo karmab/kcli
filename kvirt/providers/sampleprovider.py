@@ -69,7 +69,7 @@ class Kbase(object):
                tunnel=False, files=[], enableroot=True, alias=[], overrides={},
                tags=[], storemetadata=False, sharedfolders=[], kernel=None, initrd=None, cmdline=None,
                cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False,
-               placement=[], autostart=False, rng=False, metadata={}):
+               placement=[], autostart=False, rng=False, metadata={}, securitygroups=[]):
         """
 
         :param name:

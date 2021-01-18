@@ -94,7 +94,7 @@ class Kubevirt(Kubecommon):
                files=[], enableroot=True, alias=[], overrides={}, tags=[], storemetadata=False,
                sharedfolders=[], kernel=None, initrd=None, cmdline=None, placement=[], autostart=False,
                cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False,
-               metadata={}):
+               metadata={}, securitygroups=[]):
         guestagent = False
         if self.exists(name):
             return {'result': 'failure', 'reason': "VM %s already exists" % name}

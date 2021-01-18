@@ -72,9 +72,9 @@ class Kopenstack(object):
                reservehost=False, start=True, keys=None, cmds=[], ips=None,
                netmasks=None, gateway=None, nested=True, dns=None, domain=None,
                tunnel=False, files=[], enableroot=True, alias=[], overrides={},
-               tags={}, storemetadata=False, sharedfolders=[], kernel=None, initrd=None,
+               tags=[], storemetadata=False, sharedfolders=[], kernel=None, initrd=None,
                cmdline=None, placement=[], autostart=False, cpuhotplug=False, memoryhotplug=False, numamode=None,
-               numa=[], pcidevices=[], tpm=False, rng=False, metadata={}):
+               numa=[], pcidevices=[], tpm=False, rng=False, metadata={}, securitygroups=[]):
         glance = self.glance
         nova = self.nova
         neutron = self.neutron
@@ -170,7 +170,8 @@ class Kopenstack(object):
                                             overrides=overrides, storemetadata=storemetadata)[0]
         meta = {x: metadata[x] for x in metadata if x in METADATA_FIELDS}
         instance = nova.servers.create(name=name, image=glanceimage, flavor=flavor, key_name=key_name, nics=nics,
-                                       meta=meta, userdata=userdata, block_device_mapping=block_dev_mapping)
+                                       meta=meta, userdata=userdata, block_device_mapping=block_dev_mapping,
+                                       security_groups=securitygroups)
         tenant_id = instance.tenant_id
         if need_floating:
             floating_ips = [f['id'] for f in neutron.list_floatingips()['floatingips']
@@ -216,22 +217,24 @@ class Kopenstack(object):
                               if i['fixed_ips'] and i['fixed_ips'][0]['ip_address'] == fixed_ip]
                 port_id = fixedports[0]
                 neutron.update_floatingip(floatingip_id, {'floatingip': {'port_id': port_id}})
-            securitygroups = [s for s in neutron.list_security_groups()['security_groups']
-                              if s['name'] == 'default' and s['tenant_id'] == tenant_id]
-            if securitygroups:
-                securitygroup = securitygroups[0]
-                securitygroupid = securitygroup['id']
-                sshrule = {'security_group_rule': {'direction': 'ingress', 'security_group_id': securitygroupid,
-                                                   'port_range_min': '22', 'port_range_max': '22', 'protocol': 'tcp',
-                                                   'remote_group_id': None, 'remote_ip_prefix': '0.0.0.0/0'}}
-                icmprule = {'security_group_rule': {'direction': 'ingress', 'security_group_id': securitygroupid,
-                                                    'protocol': 'icmp', 'remote_group_id': None,
-                                                    'remote_ip_prefix': '0.0.0.0/0'}}
-                try:
-                    neutron.create_security_group_rule(sshrule)
-                    neutron.create_security_group_rule(icmprule)
-                except:
-                    pass
+            if not securitygroups:
+                default_securitygroups = [s for s in neutron.list_security_groups()['security_groups']
+                                          if s['name'] == 'default' and s['tenant_id'] == tenant_id]
+                if default_securitygroups:
+                    securitygroup = default_securitygroups[0]
+                    securitygroupid = securitygroup['id']
+                    sshrule = {'security_group_rule': {'direction': 'ingress', 'security_group_id': securitygroupid,
+                                                       'port_range_min': '22', 'port_range_max': '22',
+                                                       'protocol': 'tcp', 'remote_group_id': None,
+                                                       'remote_ip_prefix': '0.0.0.0/0'}}
+                    icmprule = {'security_group_rule': {'direction': 'ingress', 'security_group_id': securitygroupid,
+                                                        'protocol': 'icmp', 'remote_group_id': None,
+                                                        'remote_ip_prefix': '0.0.0.0/0'}}
+                    try:
+                        neutron.create_security_group_rule(sshrule)
+                        neutron.create_security_group_rule(icmprule)
+                    except:
+                        pass
         return {'result': 'success'}
 
     def start(self, name):

@@ -73,7 +73,7 @@ class Kaws(object):
                files=[], enableroot=True, alias=[], overrides={}, tags=[], storemetadata=False,
                sharedfolders=[], kernel=None, initrd=None, cmdline=None, placement=[], autostart=False,
                cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False,
-               metadata={}):
+               metadata={}, securitygroups=[]):
         conn = self.conn
         if self.exists(name):
             return {'result': 'failure', 'reason': "VM %s already exists" % name}
@@ -193,13 +193,10 @@ class Kaws(object):
             blockdevicemapping['Ebs']['VolumeSize'] = disksize
             blockdevicemappings.append(blockdevicemapping)
         SecurityGroupIds = []
-        for tag in tags:
-            sgid = self.get_security_group_id(tag, vpcid)
+        for sg in securitygroups:
+            sgid = self.get_security_group_id(sg, vpcid)
             if sgid is not None:
                 SecurityGroupIds.append(sgid)
-        # reservation = conn.run_instances(ImageId=imageid, MinCount=1, MaxCount=1, InstanceType=flavor,
-        #                   KeyName=keypair, BlockDeviceMappings=blockdevicemappings,
-        #                   UserData=userdata, TagSpecifications=vmtags, SecurityGroupIds=SecurityGroupIds)
         conn.run_instances(ImageId=imageid, MinCount=1, MaxCount=1, InstanceType=flavor,
                            KeyName=keypair, BlockDeviceMappings=blockdevicemappings,
                            UserData=userdata, TagSpecifications=vmtags, SecurityGroupIds=SecurityGroupIds)
@@ -334,7 +331,7 @@ class Kaws(object):
     def get_security_group_id(self, name, vpcid):
         conn = self.conn
         for sg in conn.describe_security_groups()['SecurityGroups']:
-            if sg['GroupName'] == name and sg['VpcId'] == vpcid:
+            if sg['VpcId'] == vpcid and (sg['GroupName'] == name or sg['GroupId'] == name):
                 return sg['GroupId']
         return None
 

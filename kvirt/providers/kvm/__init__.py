@@ -178,7 +178,8 @@ class Kvirt(object):
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
                files=[], enableroot=True, overrides={}, tags=[], storemetadata=False, sharedfolders=[],
                kernel=None, initrd=None, cmdline=None, placement=[], autostart=False, cpuhotplug=False,
-               memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False, metadata={}):
+               memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False, metadata={},
+               securitygroups=[]):
         namespace = ''
         ignition = False
         usermode = False

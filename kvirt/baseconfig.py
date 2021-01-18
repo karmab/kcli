@@ -17,7 +17,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             NOTIFYSCRIPT, SLACKTOKEN, NOTIFYCMD, NOTIFYMETHODS, SLACKCHANNEL, SHAREDFOLDERS, KERNEL,
                             INITRD, CMDLINE, PLACEMENT, YAMLINVENTORY, CPUHOTPLUG, MEMORYHOTPLUG, CPUFLAGS, CPUPINNING,
                             NUMAMODE, NUMA, PCIDEVICES, VIRTTYPE, MAILSERVER, MAILFROM, MAILTO, TPM, JENKINSMODE, RNG,
-                            ZEROTIER_NETS, ZEROTIER_KUBELET, VMPORT, VMUSER, VMRULES, CACHE)
+                            ZEROTIER_NETS, ZEROTIER_KUBELET, VMPORT, VMUSER, VMRULES, CACHE, SECURITYGROUPS)
 from kvirt import common
 from kvirt.common import error, pprint, warning
 from kvirt.jinjafilters import jinjafilters
@@ -179,6 +179,7 @@ class Kbaseconfig:
         defaults['vmport'] = default.get('vmport', VMPORT)
         defaults['vmrules'] = default.get('vmrules', VMRULES)
         defaults['cache'] = default.get('cache', CACHE)
+        defaults['securitygroups'] = default.get('securitygroups', SECURITYGROUPS)
         currentplanfile = "%s/.kcli/plan" % os.environ.get('HOME')
         if os.path.exists(currentplanfile):
             self.currentplan = open(currentplanfile).read().strip()
@@ -333,6 +334,7 @@ class Kbaseconfig:
         self.vmport = options.get('vmport', self.default['vmport'])
         self.vmrules = options.get('vmrules', self.default['vmrules'])
         self.cache = options.get('cache', self.default['cache'])
+        self.securitygroups = options.get('securitygroups', self.default['securitygroups'])
         self.overrides = {}
 
     def switch_host(self, client):
