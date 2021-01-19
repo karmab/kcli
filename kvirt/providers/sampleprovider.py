@@ -391,7 +391,7 @@ class Kbase(object):
         print("not implemented")
         return
 
-    def delete_disk(self, name, diskname, pool=None):
+    def delete_disk(self, name, diskname, pool=None, novm=False):
         """
 
         :param name:

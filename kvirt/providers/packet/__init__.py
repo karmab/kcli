@@ -735,7 +735,7 @@ class Kpacket(object):
         volume.attach(device.id)
         return {'result': 'success'}
 
-    def delete_disk(self, name, diskname, pool=None):
+    def delete_disk(self, name, diskname, pool=None, novm=False):
         """
 
         :param name:

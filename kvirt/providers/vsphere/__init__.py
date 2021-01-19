@@ -976,7 +976,7 @@ class Ksphere:
         waitForMe(t)
         return {'result': 'success'}
 
-    def delete_disk(self, name=None, diskname=None, pool=None):
+    def delete_disk(self, name=None, diskname=None, pool=None, novm=False):
         si = self.si
         dc = self.dc
         vmFolder = dc.vmFolder

@@ -627,7 +627,7 @@ class Kaws(object):
         conn.attach_volume(VolumeId=volumeid, InstanceId=instanceid, Device=device)
         return
 
-    def delete_disk(self, name=None, diskname=None, pool=None):
+    def delete_disk(self, name=None, diskname=None, pool=None, novm=False):
         conn = self.conn
         volumeid = diskname
         try:

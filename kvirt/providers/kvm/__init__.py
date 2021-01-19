@@ -2277,8 +2277,11 @@ class Kvirt(object):
             error("Disk %s not found in pool %s. Leaving..." % (name, poolname))
             return {'result': 'failure', 'reason': "Disk %s not found in pool %s. Leaving..." % (name, poolname)}
 
-    def delete_disk(self, name=None, diskname=None, pool=None):
+    def delete_disk(self, name=None, diskname=None, pool=None, novm=False):
         conn = self.conn
+        if novm:
+            result = self.delete_disk_by_name(os.path.basename(diskname), pool)
+            return result
         if name is None:
             if '_' in os.path.basename(diskname) and diskname.endswith('.img'):
                 name = os.path.basename(diskname).split('_')[0]

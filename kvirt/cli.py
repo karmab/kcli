@@ -1254,11 +1254,12 @@ def delete_vmdisk(args):
     """Delete disk of vm"""
     name = args.vm
     diskname = args.diskname
+    novm = args.novm
     pool = args.pool
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     pprint("Deleting disk %s" % diskname)
-    k.delete_disk(name=name, diskname=diskname, pool=pool)
+    k.delete_disk(name=name, diskname=diskname, pool=pool, novm=novm)
     return
 
 
@@ -3598,6 +3599,7 @@ def cli():
     vmdiskdelete_desc = 'Delete Vm Disk'
     diskdelete_epilog = "examples:\n%s" % diskdelete
     vmdiskdelete_parser = argparse.ArgumentParser(add_help=False)
+    vmdiskdelete_parser.add_argument('-n', '--novm', action='store_true', help='Dont try to locate vm')
     vmdiskdelete_parser.add_argument('--vm', help='Name of the vm', metavar='VMNAME')
     vmdiskdelete_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
     vmdiskdelete_parser.add_argument('diskname', metavar='DISKNAME')

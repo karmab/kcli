@@ -607,7 +607,7 @@ class Kopenstack(object):
         cinder.volumes.attach(volume, vm.id, '/dev/vdi', mode='rw')
         return {'result': 'success'}
 
-    def delete_disk(self, name=None, diskname=None, pool=None):
+    def delete_disk(self, name=None, diskname=None, pool=None, novm=False):
         cinder = self.cinder
         nova = self.nova
         if name is None:

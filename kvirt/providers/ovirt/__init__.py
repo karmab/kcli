@@ -839,7 +839,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                 return {'result': 'failure', 'reason': 'timeout waiting for image disk %s to be resized' % diskname}
         return {'result': 'success'}
 
-    def delete_disk(self, name=None, diskname=None, pool=None):
+    def delete_disk(self, name=None, diskname=None, pool=None, novm=False):
         vmsearch = self.vms_service.list(search='name=%s' % name)
         if not vmsearch:
             error("VM %s not found" % name)
