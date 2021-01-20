@@ -1509,10 +1509,11 @@ def ignition_version(image):
     return version
 
 
-def get_kubectl():
+def get_kubectl(version='latest'):
     SYSTEM = 'darwin' if os.path.exists('/Users') else 'linux'
-    r = urlopen("https://storage.googleapis.com/kubernetes-release/release/stable.txt")
-    version = str(r.read(), 'utf-8').strip()
+    if version == 'latest':
+        r = urlopen("https://storage.googleapis.com/kubernetes-release/release/stable.txt")
+        version = str(r.read(), 'utf-8').strip()
     kubecmd = "curl -LO https://storage.googleapis.com/kubernetes-release/release/%s/bin/%s/amd64/kubectl" % (version,
                                                                                                               SYSTEM)
     kubecmd += "; chmod 700 kubectl"
@@ -1537,6 +1538,18 @@ def get_oc(version='latest', macosx=False):
             call(occmd, shell=True)
         else:
             move('oc', '/workdir/oc')
+
+
+def get_helm(version='latest'):
+    SYSTEM = 'darwin' if os.path.exists('/Users') else 'linux'
+    if version == 'latest':
+        version = jinjafilters.githubversion('helm/helm')
+    elif not version.startswith('v'):
+        version = "v%s" % version
+    helmcmd = "curl -s https://get.helm.sh/helm-%s-%s-amd64.tar.gz |" % (version, SYSTEM)
+    helmcmd += "tar zxf - --strip-components 1 %s-amd64/helm;" % SYSTEM
+    helmcmd += "chmod 700 helm"
+    call(helmcmd, shell=True)
 
 
 def kube_create_app(config, appdir, overrides={}, outputdir=None):

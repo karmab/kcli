@@ -1768,7 +1768,34 @@ def download_plan(args):
 
 def download_kubectl(args):
     """Download Kubectl"""
-    common.get_kubectl()
+    paramfile = args.paramfile
+    if os.path.exists("/i_am_a_container"):
+        if paramfile is not None:
+            paramfile = "/workdir/%s" % paramfile
+        elif os.path.exists("/workdir/kcli_parameters.yml"):
+            paramfile = "/workdir/kcli_parameters.yml"
+            pprint("Using default parameter file kcli_parameters.yml")
+    elif paramfile is None and os.path.exists("kcli_parameters.yml"):
+        paramfile = "kcli_parameters.yml"
+        pprint("Using default parameter file kcli_parameters.yml")
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    common.get_kubectl(version=overrides.get('version', 'latest'))
+
+
+def download_helm(args):
+    """Download Helm"""
+    paramfile = args.paramfile
+    if os.path.exists("/i_am_a_container"):
+        if paramfile is not None:
+            paramfile = "/workdir/%s" % paramfile
+        elif os.path.exists("/workdir/kcli_parameters.yml"):
+            paramfile = "/workdir/kcli_parameters.yml"
+            pprint("Using default parameter file kcli_parameters.yml")
+    elif paramfile is None and os.path.exists("kcli_parameters.yml"):
+        paramfile = "kcli_parameters.yml"
+        pprint("Using default parameter file kcli_parameters.yml")
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    common.get_helm(version=overrides.get('version', 'latest'))
 
 
 def download_oc(args):
@@ -3509,6 +3536,16 @@ def cli():
     download_subparsers.add_parser('openshift-installer', parents=[openshiftdownload_parser],
                                    description=openshiftdownload_desc,
                                    help=openshiftdownload_desc)
+
+    helmdownload_desc = 'Download Helm'
+    helmdownload_parser = argparse.ArgumentParser(add_help=False)
+    helmdownload_parser.add_argument('-P', '--param', action='append',
+                                     help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    helmdownload_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    helmdownload_parser.set_defaults(func=download_helm)
+    download_subparsers.add_parser('helm', parents=[helmdownload_parser],
+                                   description=helmdownload_desc,
+                                   help=helmdownload_desc)
 
     kubectldownload_desc = 'Download Kubectl'
     kubectldownload_parser = argparse.ArgumentParser(add_help=False)
