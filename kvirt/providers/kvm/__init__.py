@@ -253,6 +253,9 @@ class Kvirt(object):
                 ipv6networks.append(n)
         ipv6 = []
         machine = 'pc'
+        if 'machine' in overrides:
+            warning("Forcing machine type to %s" % machine)
+            machine = overrides['machine']
         # sysinfo = "<smbios mode='sysinfo'/>"
         disksxml = ''
         fixqcow2path, fixqcow2backing = None, None
@@ -561,7 +564,7 @@ class Kvirt(object):
             isoxml = """<disk type='file' device='cdrom'>
 <driver name='qemu' type='raw'/>
 <source file='%s'/>
-<target dev='hdc' bus='ide'/>
+<target dev='hdc' bus='sata'/>
 <readonly/>
 </disk>""" % iso
         if cloudinit:
@@ -608,7 +611,7 @@ class Kvirt(object):
                 isoxml = """%s<disk type='%s' device='cdrom'>
 <driver name='qemu' type='raw'/>
 <source %s='%s'/>
-<target dev='hdd' bus='ide'/>
+<target dev='hdd' bus='sata'/>
 <readonly/>
 </disk>""" % (isoxml, dtype, dsource, cloudinitiso)
                 userdata, metadata, netdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets,
@@ -920,10 +923,10 @@ class Kvirt(object):
         secureboot = overrides.get('secureboot', False)
         secure = 'yes' if secureboot else 'no'
         if uefi or secureboot:
-            isoxml = ''
-            machine = 'q35'
             code = "OVMF_CODE"
             if secureboot:
+                machine = 'q35'
+                # isoxml = ''
                 code += ".secboot"
                 smmxml = "<smm state='on'/>"
             # ramxml = """<loader readonly='yes' type='pflash'>/usr/share/OVMF/%s.fd</loader>
