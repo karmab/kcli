@@ -17,7 +17,7 @@ from libvirt import VIR_DOMAIN_AFFECT_LIVE, VIR_DOMAIN_AFFECT_CONFIG
 from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_AGENT as vir_src_agent
 from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE as vir_src_lease
 from libvirt import (VIR_DOMAIN_NOSTATE, VIR_DOMAIN_RUNNING, VIR_DOMAIN_BLOCKED, VIR_DOMAIN_PAUSED,
-                     VIR_DOMAIN_SHUTDOWN, VIR_DOMAIN_SHUTOFF, VIR_DOMAIN_CRASHED)
+                     VIR_DOMAIN_SHUTDOWN, VIR_DOMAIN_SHUTOFF, VIR_DOMAIN_CRASHED, VIR_DOMAIN_UNDEFINE_KEEP_NVRAM)
 from pwd import getpwuid
 import json
 import os
@@ -206,8 +206,8 @@ class Kvirt(object):
         creationdate = time.strftime("%d-%m-%Y %H:%M", time.gmtime())
         metadata['creationdate'] = creationdate
         metadataxml = """<metadata>
-        <kvirt:info xmlns:kvirt="kvirt">
-        <kvirt:creationdate>%s</kvirt:creationdate>""" % creationdate
+<kvirt:info xmlns:kvirt="kvirt">
+<kvirt:creationdate>%s</kvirt:creationdate>""" % creationdate
         for entry in [field for field in metadata if field in METADATA_FIELDS]:
             metadataxml += "\n<kvirt:%s>%s</kvirt:%s>" % (entry, metadata[entry], entry)
         default_poolxml = default_storagepool.XMLDesc(0)
@@ -360,9 +360,9 @@ class Kvirt(object):
                         manual_disk_path = True
                         backing = diskimage
                         backingxml = """<backingStore type='file' index='1'>
-                                        <format type='qcow2'/>
-                                        <source file='%s'/>
-                                        </backingStore>""" % backing
+<format type='qcow2'/>
+<source file='%s'/>
+</backingStore>""" % backing
                     else:
                         shortname = [t for t in defaults.IMAGES if defaults.IMAGES[t] == diskimage]
                         if shortname:
@@ -377,14 +377,14 @@ class Kvirt(object):
                     backing = backingvolume.path()
                     if '/dev' in backing:
                         backingxml = """<backingStore type='block' index='1'>
-                                        <format type='raw'/>
-                                        <source dev='%s'/>
-                                        </backingStore>""" % backing
+<format type='raw'/>
+<source dev='%s'/>
+</backingStore>""" % backing
                     else:
                         backingxml = """<backingStore type='file' index='1'>
-                                        <format type='qcow2'/>
-                                        <source file='%s'/>
-                                        </backingStore>""" % backing
+<format type='qcow2'/>
+<source file='%s'/>
+</backingStore>""" % backing
             else:
                 backing = None
                 backingxml = '<backingStore/>'
@@ -420,13 +420,12 @@ class Kvirt(object):
             if diskpooltype in ['logical', 'zfs'] and (backing is None or backing.startswith('/dev')):
                 diskformat = 'raw'
             disksxml = """%s<disk type='%s' device='disk'>
-                    <driver name='qemu' type='%s'/>
-                    <source %s='%s'/>
-                    %s
-                    <target dev='%s' bus='%s'/>
-                    %s
-                    </disk>""" % (disksxml, dtype, diskformat, dsource, diskpath, backingxml, diskdev, diskbus,
-                                  diskwwn)
+<driver name='qemu' type='%s'/>
+<source %s='%s'/>
+%s
+<target dev='%s' bus='%s'/>
+%s
+</disk>""" % (disksxml, dtype, diskformat, dsource, diskpath, backingxml, diskdev, diskbus, diskwwn)
         netxml = ''
         nicslots = {k: 0 for k in range(0, 20)}
         alias = []
@@ -497,13 +496,13 @@ class Kvirt(object):
             else:
                 nicnumaxml = ""
             netxml = """%s
-                     <interface type='%s'>
-                     %s
-                     %s
-                     %s
-                     %s
-                     <model type='%s'/>
-                     </interface>""" % (netxml, iftype, macxml, sourcexml, ovsxml, nicnumaxml, nettype)
+<interface type='%s'>
+%s
+%s
+%s
+%s
+<model type='%s'/>
+</interface>""" % (netxml, iftype, macxml, sourcexml, ovsxml, nicnumaxml, nettype)
         metadataxml += "</kvirt:info></metadata>"
         if guestagent:
             gcmds = []
@@ -560,11 +559,11 @@ class Kvirt(object):
                     isovolume = volumes[iso]['object']
                     iso = isovolume.path()
             isoxml = """<disk type='file' device='cdrom'>
-                        <driver name='qemu' type='raw'/>
-                        <source file='%s'/>
-                        <target dev='hdc' bus='ide'/>
-                        <readonly/>
-                        </disk>""" % iso
+<driver name='qemu' type='raw'/>
+<source file='%s'/>
+<target dev='hdc' bus='ide'/>
+<readonly/>
+</disk>""" % iso
         if cloudinit:
             if image is not None and common.needs_ignition(image):
                 localhosts = ['localhost', '127.0.0.1']
@@ -607,11 +606,11 @@ class Kvirt(object):
                 dtype = 'block' if '/dev' in diskpath else 'file'
                 dsource = 'dev' if '/dev' in diskpath else 'file'
                 isoxml = """%s<disk type='%s' device='cdrom'>
-                        <driver name='qemu' type='raw'/>
-                        <source %s='%s'/>
-                        <target dev='hdd' bus='ide'/>
-                        <readonly/>
-                        </disk>""" % (isoxml, dtype, dsource, cloudinitiso)
+<driver name='qemu' type='raw'/>
+<source %s='%s'/>
+<target dev='hdd' bus='ide'/>
+<readonly/>
+</disk>""" % (isoxml, dtype, dsource, cloudinitiso)
                 userdata, metadata, netdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets,
                                                                gateway=gateway, dns=dns, domain=domain,
                                                                reserveip=reserveip, files=files, enableroot=enableroot,
@@ -622,20 +621,20 @@ class Kvirt(object):
                         self._uploadimage(name, pool=default_storagepool, origin=tmpdir)
         listen = '0.0.0.0' if self.host not in ['localhost', '127.0.0.1'] else '127.0.0.1'
         displayxml = """<input type='tablet' bus='usb'/>
-                        <input type='mouse' bus='ps2'/>
-                        <graphics type='%s' port='-1' autoport='yes' listen='%s'>
-                        <listen type='address' address='%s'/>
-                        </graphics>
-                        <memballoon model='virtio'/>""" % (display, listen, listen)
+<input type='mouse' bus='ps2'/>
+<graphics type='%s' port='-1' autoport='yes' listen='%s'>
+<listen type='address' address='%s'/>
+</graphics>
+<memballoon model='virtio'/>""" % (display, listen, listen)
         if cpumodel == 'host-model':
             cpuxml = """<cpu mode='host-model'>
-                        <model fallback='allow'/>"""
+<model fallback='allow'/>"""
         elif cpumodel == 'host-passthrough':
             cpuxml = """<cpu mode='host-passthrough'>
-                        <model fallback='allow'/>"""
+<model fallback='allow'/>"""
         else:
             cpuxml = """<cpu mode='custom' match='exact'>
-                        <model fallback='allow'>%s</model>""" % cpumodel
+<model fallback='allow'>%s</model>""" % cpumodel
         capabilities = self.conn.getCapabilities()
         nestedfeature = 'vmx' if 'vmx' in capabilities else 'svm'
         nestedflag = 'require' if nested else 'disable'
@@ -683,13 +682,13 @@ class Kvirt(object):
                         numaxml += "<cell id='%s' cpus='%s' memory='%s' unit='MiB'/>" % (cellid, cellcpus, cellmemory)
                         numamemory += int(cellmemory)
                         busxml += """<controller type='pci' index='%s' model='pci-expander-bus'>
-                        <model name='pxb'/>
-                        <target busNr='%s'>
-                        <node>%s</node>
-                        </target>
-                        <alias name='pci.%s'/>
-                        <address type='pci' domain='0x0000' bus='0x00' function='0x0'/>
-                        </controller>""" % (index + 1, 254 - index * 2, cellid, index + 1)
+<model name='pxb'/>
+<target busNr='%s'>
+<node>%s</node>
+</target>
+<alias name='pci.%s'/>
+<address type='pci' domain='0x0000' bus='0x00' function='0x0'/>
+</controller>""" % (index + 1, 254 - index * 2, cellid, index + 1)
                 cpuxml += '%s</numa>' % numaxml
                 if numamemory > memory:
                     msg = "Can't use more memory for numa than assigned memory"
@@ -736,21 +735,21 @@ class Kvirt(object):
             cpuxml = ""
         if self.host in ['localhost', '127.0.0.1']:
             serialxml = """<serial type='pty'>
-                       <target port='0'/>
-                       </serial>
-                       <console type='pty'>
-                       <target type='serial' port='0'/>
-                       </console>"""
+<target port='0'/>
+</serial>
+<console type='pty'>
+<target type='serial' port='0'/>
+</console>"""
         else:
             serialxml = """ <serial type="tcp">
-                     <source mode="bind" host="127.0.0.1" service="%s"/>
-                     <protocol type="telnet"/>
-                     <target port="0"/>
-                     </serial>""" % common.get_free_port()
+<source mode="bind" host="127.0.0.1" service="%s"/>
+<protocol type="telnet"/>
+<target port="0"/>
+</serial>""" % common.get_free_port()
         guestxml = """<channel type='unix'>
-                      <source mode='bind'/>
-                      <target type='virtio' name='org.qemu.guest_agent.0'/>
-                      </channel>"""
+<source mode='bind'/>
+<target type='virtio' name='org.qemu.guest_agent.0'/>
+</channel>"""
         if cpuhotplug:
             vcpuxml = "<vcpu  placement='static' current='%d'>64</vcpu>" % (numcpus)
         else:
@@ -761,25 +760,25 @@ class Kvirt(object):
             ignitionxml = ""
             if ignition:
                 ignitionxml = """<qemu:arg value='-fw_cfg' />
-                                  <qemu:arg value='name=opt/com.coreos/config,file=/var/tmp/%s.ign' />""" % name
+<qemu:arg value='name=opt/com.coreos/config,file=/var/tmp/%s.ign' />""" % name
             usermodexml = ""
             if usermode:
                 netmodel = 'virtio-net-pci' if not macosx else 'e1000-82545em'
                 usermodexml = """<qemu:arg value='-netdev'/>
-                                 <qemu:arg value='user,id=mynet.0,net=10.0.10.0/24,hostfwd=tcp::%s-:22'/>
-                                 <qemu:arg value='-device'/>
-                                 <qemu:arg value='%s,netdev=mynet.0'/>""" % (userport, netmodel)
+<qemu:arg value='user,id=mynet.0,net=10.0.10.0/24,hostfwd=tcp::%s-:22'/>
+<qemu:arg value='-device'/>
+<qemu:arg value='%s,netdev=mynet.0'/>""" % (userport, netmodel)
             macosxml = ""
             if macosx:
                 osk = "ourhardworkbythesewordsguardedpleasedontsteal(c)AppleComputerInc"
                 cpuflags = "+invtsc,vmware-cpuid-freq=on,+pcid,+ssse3,+sse4.2,+popcnt,+avx,+aes,+xsave,+xsaveopt"
                 cpuinfo = "Penryn,kvm=on,vendor=GenuineIntel,%s,check" % cpuflags
                 macosxml = """<qemu:arg value='-cpu'/>
-                              <qemu:arg value='%s'/>
-                              <qemu:arg value='-device'/>
-                              <qemu:arg value='isa-applesmc,osk=%s'/>
-                             <qemu:arg value='-smbios'/>
-                             <qemu:arg value='type=2'/>""" % (cpuinfo, osk)
+<qemu:arg value='%s'/>
+<qemu:arg value='-device'/>
+<qemu:arg value='isa-applesmc,osk=%s'/>
+<qemu:arg value='-smbios'/>
+<qemu:arg value='type=2'/>""" % (cpuinfo, osk)
             if qemuextra is not None:
                 freeformxml = ""
                 freeform = qemuextra.split(" ")
@@ -788,11 +787,11 @@ class Kvirt(object):
             else:
                 freeformxml = ""
             qemuextraxml = """<qemu:commandline>
-                              %s
-                              %s
-                              %s
-                              %s
-                              </qemu:commandline>""" % (ignitionxml, usermodexml, macosxml, freeformxml)
+%s
+%s
+%s
+%s
+</qemu:commandline>""" % (ignitionxml, usermodexml, macosxml, freeformxml)
         sharedxml = ""
         if sharedfolders:
             for folder in sharedfolders:
@@ -883,7 +882,7 @@ class Kvirt(object):
         firmwarexml = ""
         if macosx:
             firmwarexml = """<loader readonly='yes' type='pflash'>%s/OVMF_CODE.fd</loader>
-                             <nvram>%s/OVMF_VARS-1024x768.fd</nvram>""" % (default_poolpath, default_poolpath)
+<nvram>%s/OVMF_VARS-1024x768.fd</nvram>""" % (default_poolpath, default_poolpath)
             videoxml = """<video><model type='qxl' vram='65536'/></video>"""
             guestxml = ""
         hostdevxml = ""
@@ -899,68 +898,88 @@ class Kvirt(object):
                 newslot = pcidevice.split('.')[0].replace('%s:' % newbus, '')
                 newfunction = pcidevice.split('.')[1]
                 newhostdev = """<hostdev mode='subsystem' type='pci' managed='yes'>
-                                <source><address domain='0x%s' bus='0x%s' slot='0x%s' function='0x%s'/></source>
-                                </hostdev>""" % (newdomain, newbus, newslot, newfunction)
+<source><address domain='0x%s' bus='0x%s' slot='0x%s' function='0x%s'/></source>
+</hostdev>""" % (newdomain, newbus, newslot, newfunction)
                 hostdevxml += newhostdev
         rngxml = ""
         if rng:
             rngxml = """<rng model='virtio'>
-                        <rate bytes='1024' period='1000'/>
-                        <backend model='random'>/dev/random</backend>
-                        <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0'/>
-                        </rng>"""
+<rate bytes='1024' period='1000'/>
+<backend model='random'>/dev/random</backend>
+<address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0'/>
+</rng>"""
         tpmxml = ""
         if tpm:
             tpmxml = """<tpm model='tpm-tis'>
-                        <backend type='emulator' version='2.0'>
-                        </backend>
-                        </tpm>"""
-        vmxml = """<domain type='%s' %s>
-                  <name>%s</name>
-                  %s
-                  %s
-                  %s
-                  %s
-                  <memory unit='MiB'>%d</memory>
-                  %s
-                  <os>
-                    <type arch='x86_64' machine='%s'>hvm</type>
-                    %s
-                    %s
-                    %s
-                    <bootmenu enable='yes'/>
-                  </os>
-                  <features>
-                    <acpi/>
-                    <apic/>
-                    <pae/>
-                  </features>
-                  <clock offset='utc'/>
-                  <on_poweroff>destroy</on_poweroff>
-                  <on_reboot>restart</on_reboot>
-                  <on_crash>restart</on_crash>
-                  <devices>
-                    %s
-                    %s
-                    %s
-                    %s
-                    %s
-                    %s
-                    %s
-                    %s
-                    %s
-                    %s
-                    %s
-                    %s
-                  </devices>
-                    %s
-                    %s
-                    </domain>""" % (virttype, namespace, name, metadataxml, memoryhotplugxml, cpupinningxml,
-                                    numatunexml, memory, vcpuxml, machine, firmwarexml, bootdev, kernelxml, disksxml,
-                                    busxml, netxml, isoxml, displayxml, serialxml, sharedxml, guestxml, videoxml,
-                                    hostdevxml, rngxml, tpmxml, cpuxml, qemuextraxml)
+<backend type='emulator' version='2.0'>
+</backend>
+</tpm>"""
+        ramxml = ""
+        smmxml = ""
+        uefi = overrides.get('uefi', False)
+        secureboot = overrides.get('secureboot', False)
+        secure = 'yes' if secureboot else 'no'
+        if uefi or secureboot:
+            isoxml = ''
+            machine = 'q35'
+            code = "OVMF_CODE"
+            if secureboot:
+                code += ".secboot"
+                smmxml = "<smm state='on'/>"
+            # ramxml = """<loader readonly='yes' type='pflash'>/usr/share/OVMF/%s.fd</loader>
+            #            <nvram>/usr/share/OVMF/OVMF_VARS.fd</nvram>""" % code
+            ramxml = "<loader readonly='yes' secure='%s' type='pflash'>/usr/share/OVMF/%s.fd</loader>" % (secure, code)
+        vmxml = """<domain type='{virttype}' {namespace}>
+<name>{name}</name>
+{metadataxml}
+{memoryhotplugxml}
+{cpupinningxml}
+{numatunexml}
+<memory unit='MiB'>{memory}</memory>
+{vcpuxml}
+<os>
+<type arch='x86_64' machine='{machine}'>hvm</type>
+{ramxml}
+{firmwarexml}
+{bootdev}
+{kernelxml}
+<bootmenu enable="yes" timeout="3000"/>
+</os>
+<features>
+{smmxml}
+<acpi/>
+<apic/>
+<pae/>
+</features>
+<clock offset='utc'/>
+<on_poweroff>destroy</on_poweroff>
+<on_reboot>restart</on_reboot>
+<on_crash>restart</on_crash>
+<devices>
+{disksxml}
+{busxml}
+{netxml}
+{isoxml}
+{displayxml}
+{serialxml}
+{sharedxml}
+{guestxml}
+{videoxml}
+{hostdevxml}
+{rngxml}
+{tpmxml}
+</devices>
+{cpuxml}
+{qemuextraxml}
+</domain>""".format(virttype=virttype, namespace=namespace, name=name, metadataxml=metadataxml,
+                    memoryhotplugxml=memoryhotplugxml, cpupinningxml=cpupinningxml, numatunexml=numatunexml,
+                    memory=memory, vcpuxml=vcpuxml, machine=machine, ramxml=ramxml, firmwarexml=firmwarexml,
+                    bootdev=bootdev, kernelxml=kernelxml, smmxml=smmxml, disksxml=disksxml, busxml=busxml,
+                    netxml=netxml, isoxml=isoxml, displayxml=displayxml, serialxml=serialxml, sharedxml=sharedxml,
+                    guestxml=guestxml, videoxml=videoxml, hostdevxml=hostdevxml, rngxml=rngxml, tpmxml=tpmxml,
+                    cpuxml=cpuxml, qemuextraxml=qemuextraxml)
         if self.debug:
-            pprint(vmxml)
+            print(vmxml.replace('\n\n', ''))
         conn.defineXML(vmxml)
         vm = conn.lookupByName(name)
         autostart = 1 if autostart else 0
@@ -1569,7 +1588,16 @@ class Kvirt(object):
                     continue
         if status[vm.isActive()] != "down":
             vm.destroy()
-        vm.undefine()
+        nvram = False
+        for element in list(root.iter('os')):
+            if element.find('nvram') is not None:
+                nvram = True
+                break
+        if nvram:
+            # vm.undefineFlags(flags=VIR_DOMAIN_UNDEFINE_NVRAM)
+            vm.undefineFlags(flags=VIR_DOMAIN_UNDEFINE_KEEP_NVRAM)
+        else:
+            vm.undefine()
         founddisks = []
         thinpools = []
         for poolname in conn.listStoragePools():
