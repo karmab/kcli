@@ -919,19 +919,16 @@ class Kvirt(object):
 </tpm>"""
         ramxml = ""
         smmxml = ""
+        osfirmware = ""
         uefi = overrides.get('uefi', False)
         secureboot = overrides.get('secureboot', False)
         secure = 'yes' if secureboot else 'no'
         if uefi or secureboot:
-            code = "OVMF_CODE"
+            osfirmware = "firmware='efi'"
             if secureboot:
                 machine = 'q35'
-                # isoxml = ''
-                code += ".secboot"
                 smmxml = "<smm state='on'/>"
-            # ramxml = """<loader readonly='yes' type='pflash'>/usr/share/OVMF/%s.fd</loader>
-            #            <nvram>/usr/share/OVMF/OVMF_VARS.fd</nvram>""" % code
-            ramxml = "<loader readonly='yes' secure='%s' type='pflash'>/usr/share/OVMF/%s.fd</loader>" % (secure, code)
+            ramxml = "<loader readonly='yes' secure='%s'/>" % secure
         vmxml = """<domain type='{virttype}' {namespace}>
 <name>{name}</name>
 {metadataxml}
@@ -940,7 +937,7 @@ class Kvirt(object):
 {numatunexml}
 <memory unit='MiB'>{memory}</memory>
 {vcpuxml}
-<os>
+<os {osfirmware}>
 <type arch='x86_64' machine='{machine}'>hvm</type>
 {ramxml}
 {firmwarexml}
@@ -976,11 +973,11 @@ class Kvirt(object):
 {qemuextraxml}
 </domain>""".format(virttype=virttype, namespace=namespace, name=name, metadataxml=metadataxml,
                     memoryhotplugxml=memoryhotplugxml, cpupinningxml=cpupinningxml, numatunexml=numatunexml,
-                    memory=memory, vcpuxml=vcpuxml, machine=machine, ramxml=ramxml, firmwarexml=firmwarexml,
-                    bootdev=bootdev, kernelxml=kernelxml, smmxml=smmxml, disksxml=disksxml, busxml=busxml,
-                    netxml=netxml, isoxml=isoxml, displayxml=displayxml, serialxml=serialxml, sharedxml=sharedxml,
-                    guestxml=guestxml, videoxml=videoxml, hostdevxml=hostdevxml, rngxml=rngxml, tpmxml=tpmxml,
-                    cpuxml=cpuxml, qemuextraxml=qemuextraxml)
+                    memory=memory, vcpuxml=vcpuxml, osfirmware=osfirmware, machine=machine, ramxml=ramxml,
+                    firmwarexml=firmwarexml, bootdev=bootdev, kernelxml=kernelxml, smmxml=smmxml, disksxml=disksxml,
+                    busxml=busxml, netxml=netxml, isoxml=isoxml, displayxml=displayxml, serialxml=serialxml,
+                    sharedxml=sharedxml, guestxml=guestxml, videoxml=videoxml, hostdevxml=hostdevxml, rngxml=rngxml,
+                    tpmxml=tpmxml, cpuxml=cpuxml, qemuextraxml=qemuextraxml)
         if self.debug:
             print(vmxml.replace('\n\n', ''))
         conn.defineXML(vmxml)
