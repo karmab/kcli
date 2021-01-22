@@ -378,7 +378,7 @@ class Kvirt(object):
                     backingxml = '<backingStore/>'
                 elif not manual_disk_path:
                     backing = backingvolume.path()
-                    if '/dev' in backing:
+                    if backing.startswith('/dev'):
                         backingxml = """<backingStore type='block' index='1'>
 <format type='raw'/>
 <source dev='%s'/>
@@ -418,8 +418,8 @@ class Kvirt(object):
                 diskwwn = "<wwn>%s</wwn>" % diskwwn
             else:
                 diskwwn = ''
-            dtype = 'block' if '/dev' in diskpath else 'file'
-            dsource = 'dev' if '/dev' in diskpath else 'file'
+            dtype = 'block' if diskpath.startswith('/dev') else 'file'
+            dsource = 'dev' if diskpath.startswith('/dev') else 'file'
             if diskpooltype in ['logical', 'zfs'] and (backing is None or backing.startswith('/dev')):
                 diskformat = 'raw'
             disksxml = """%s<disk type='%s' device='disk'>
