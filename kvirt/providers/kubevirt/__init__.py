@@ -48,16 +48,7 @@ class Kubevirt(Kubecommon):
         self.datavolumes = datavolumes
         self.registry = registry
         self.access_mode = access_mode
-        if cdi:
-            try:
-                cdipods = self.core.list_pod_for_all_namespaces(label_selector='app=containerized-data-importer').items
-                if cdipods:
-                    for pod in cdipods:
-                        if pod.metadata.name.startswith('cdi-deployment'):
-                            self.cdinamespace = pod.metadata.namespace
-                            self.cdi = True
-            except:
-                pass
+        self.cdi = cdi
         return
 
     def close(self):
@@ -433,9 +424,6 @@ class Kubevirt(Kubecommon):
             print("Context: %s" % self.contextname)
         print("Namespace: %s" % self.namespace)
         print("Cdi: %s" % cdi)
-        if cdi:
-            cdinamespace = self.cdinamespace
-            print("Cdi Namespace: %s" % cdinamespace)
         return
 
     def status(self, name):
